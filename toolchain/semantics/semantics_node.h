@@ -65,34 +65,34 @@ class SemanticsNode {
   static auto MakeAssign(ParseTree::Node parse_node, SemanticsNodeId type,
                          SemanticsNodeId lhs, SemanticsNodeId rhs)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::Assign(), type,
-                         lhs.index, rhs.index);
+    return SemanticsNode(parse_node, SemanticsNodeKind::Assign, type, lhs.index,
+                         rhs.index);
   }
   auto GetAsAssign() const -> std::pair<SemanticsNodeId, SemanticsNodeId> {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::Assign());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::Assign);
     return {SemanticsNodeId(arg0_), SemanticsNodeId(arg1_)};
   }
 
   static auto MakeBinaryOperatorAdd(ParseTree::Node parse_node,
                                     SemanticsNodeId type, SemanticsNodeId lhs,
                                     SemanticsNodeId rhs) -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::BinaryOperatorAdd(),
-                         type, lhs.index, rhs.index);
+    return SemanticsNode(parse_node, SemanticsNodeKind::BinaryOperatorAdd, type,
+                         lhs.index, rhs.index);
   }
   auto GetAsBinaryOperatorAdd() const
       -> std::pair<SemanticsNodeId, SemanticsNodeId> {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::BinaryOperatorAdd());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::BinaryOperatorAdd);
     return {SemanticsNodeId(arg0_), SemanticsNodeId(arg1_)};
   }
 
   static auto MakeBindName(ParseTree::Node parse_node, SemanticsNodeId type,
                            SemanticsStringId name, SemanticsNodeId node)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::BindName(), type,
+    return SemanticsNode(parse_node, SemanticsNodeKind::BindName, type,
                          name.index, node.index);
   }
   auto GetAsBindName() const -> std::pair<SemanticsStringId, SemanticsNodeId> {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::BindName());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::BindName);
     return {SemanticsStringId(arg0_), SemanticsNodeId(arg1_)};
   }
 
@@ -100,21 +100,21 @@ class SemanticsNode {
                           SemanticsNodeId type) -> SemanticsNode {
     // Builtins won't have a ParseTree node associated, so we provide the
     // default invalid one.
-    return SemanticsNode(ParseTree::Node(), SemanticsNodeKind::Builtin(), type,
+    return SemanticsNode(ParseTree::Node(), SemanticsNodeKind::Builtin, type,
                          builtin_kind.AsInt());
   }
   auto GetAsBuiltin() const -> SemanticsBuiltinKind {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::Builtin());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::Builtin);
     return SemanticsBuiltinKind::FromInt(arg0_);
   }
 
   static auto MakeCodeBlock(ParseTree::Node parse_node,
                             SemanticsNodeBlockId node_block) -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::CodeBlock(),
+    return SemanticsNode(parse_node, SemanticsNodeKind::CodeBlock,
                          SemanticsNodeId(), node_block.index);
   }
   auto GetAsCodeBlock() const -> SemanticsNodeBlockId {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::CodeBlock());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::CodeBlock);
     return SemanticsNodeBlockId(arg0_);
   }
 
@@ -122,23 +122,23 @@ class SemanticsNode {
                                  SemanticsCrossReferenceIRId ir,
                                  SemanticsNodeId node) -> SemanticsNode {
     return SemanticsNode(ParseTree::Node::MakeInvalid(),
-                         SemanticsNodeKind::CrossReference(), type, ir.index,
+                         SemanticsNodeKind::CrossReference, type, ir.index,
                          node.index);
   }
   auto GetAsCrossReference() const
       -> std::pair<SemanticsCrossReferenceIRId, SemanticsNodeBlockId> {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::CrossReference());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::CrossReference);
     return {SemanticsCrossReferenceIRId(arg0_), SemanticsNodeBlockId(arg1_)};
   }
 
   // TODO: The signature should be added as a parameter.
   static auto MakeFunctionDeclaration(ParseTree::Node parse_node)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDeclaration(),
+    return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDeclaration,
                          SemanticsNodeId());
   }
   auto GetAsFunctionDeclaration() const -> NoArgs {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDeclaration());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDeclaration);
     return {};
   }
 
@@ -146,35 +146,35 @@ class SemanticsNode {
                                      SemanticsNodeId decl,
                                      SemanticsNodeBlockId node_block)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDefinition(),
+    return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDefinition,
                          SemanticsNodeId(), decl.index, node_block.index);
   }
   auto GetAsFunctionDefinition() const
       -> std::pair<SemanticsNodeId, SemanticsNodeBlockId> {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDefinition());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDefinition);
     return {SemanticsNodeId(arg0_), SemanticsNodeBlockId(arg1_)};
   }
 
   static auto MakeIntegerLiteral(ParseTree::Node parse_node,
                                  SemanticsIntegerLiteralId integer)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::IntegerLiteral(),
+    return SemanticsNode(parse_node, SemanticsNodeKind::IntegerLiteral,
                          SemanticsNodeId::MakeBuiltinReference(
-                             SemanticsBuiltinKind::IntegerType()),
+                             SemanticsBuiltinKind::IntegerType),
                          integer.index);
   }
   auto GetAsIntegerLiteral() const -> SemanticsIntegerLiteralId {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::IntegerLiteral());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::IntegerLiteral);
     return SemanticsIntegerLiteralId(arg0_);
   }
 
   static auto MakeRealLiteral(ParseTree::Node parse_node) -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::RealLiteral(),
-                         SemanticsNodeId::MakeBuiltinReference(
-                             SemanticsBuiltinKind::RealType()));
+    return SemanticsNode(
+        parse_node, SemanticsNodeKind::RealLiteral,
+        SemanticsNodeId::MakeBuiltinReference(SemanticsBuiltinKind::RealType));
   }
   auto GetAsRealLiteral() const -> NoArgs {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::RealLiteral());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::RealLiteral);
     return {};
   }
 
@@ -182,36 +182,36 @@ class SemanticsNode {
     // The actual type is `()`. However, code dealing with `return;` should
     // understand the type without checking, so it's not necessary but could be
     // specified if needed.
-    return SemanticsNode(parse_node, SemanticsNodeKind::Return(),
+    return SemanticsNode(parse_node, SemanticsNodeKind::Return,
                          SemanticsNodeId());
   }
   auto GetAsReturn() const -> NoArgs {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::Return());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::Return);
     return {};
   }
 
   static auto MakeReturnExpression(ParseTree::Node parse_node,
                                    SemanticsNodeId type, SemanticsNodeId expr)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::ReturnExpression(),
-                         type, expr.index);
+    return SemanticsNode(parse_node, SemanticsNodeKind::ReturnExpression, type,
+                         expr.index);
   }
   auto GetAsReturnExpression() const -> SemanticsNodeId {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression);
     return SemanticsNodeId(arg0_);
   }
 
   static auto MakeVarStorage(ParseTree::Node parse_node, SemanticsNodeId type)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::VarStorage(), type);
+    return SemanticsNode(parse_node, SemanticsNodeKind::VarStorage, type);
   }
   auto GetAsVarStorage() const -> NoArgs {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::VarStorage());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::VarStorage);
     return NoArgs();
   }
 
   SemanticsNode()
-      : SemanticsNode(ParseTree::Node(), SemanticsNodeKind::Invalid(),
+      : SemanticsNode(ParseTree::Node(), SemanticsNodeKind::Invalid,
                       SemanticsNodeId()) {}
 
   auto parse_node() const -> ParseTree::Node { return parse_node_; }
