@@ -234,7 +234,7 @@ class Parser {
 
   // Pushes a new expression state with specific precedence.
   auto PushStateForExpression(PrecedenceGroup ambient_precedence) -> void {
-    PushState(StateStackEntry(ParserState::Expression(), ambient_precedence,
+    PushState(StateStackEntry(ParserState::Expression, ambient_precedence,
                               PrecedenceGroup::ForTopLevelExpression(),
                               *position_, tree_->size()));
   }

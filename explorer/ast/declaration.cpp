@@ -342,14 +342,15 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
                                  Nonnull<TuplePattern*> param_pattern,
                                  ReturnTerm return_term,
                                  std::optional<Nonnull<Block*>> body,
-                                 bool is_virtual)
+                                 VirtualOverride virt_override)
     -> ErrorOr<Nonnull<FunctionDeclaration*>> {
   DeducedParameters split_params;
   CARBON_ASSIGN_OR_RETURN(split_params,
                           SplitDeducedParameters(source_loc, deduced_params));
   return arena->New<FunctionDeclaration>(
       source_loc, name, std::move(split_params.resolved_params),
-      split_params.self_pattern, param_pattern, return_term, body, is_virtual);
+      split_params.self_pattern, param_pattern, return_term, body,
+      virt_override);
 }
 
 void CallableDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {

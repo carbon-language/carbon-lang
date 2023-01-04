@@ -35,22 +35,7 @@ cc_library(
     srcs = ["parser_state.cpp"],
     hdrs = ["parser_state.h"],
     textual_hdrs = ["parser_state.def"],
-    deps = [
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_test(
-    name = "parser_state_test",
-    size = "small",
-    srcs = ["parser_state_test.cpp"],
-    deps = [
-        ":parser_state",
-        "//common:gtest_main",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
-    ],
+    deps = ["//toolchain/common:enum_base"],
 )
 
 cc_library(

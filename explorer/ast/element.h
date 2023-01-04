@@ -9,6 +9,7 @@
 #include <string>
 #include <string_view>
 
+#include "common/ostream.h"
 #include "explorer/ast/ast_rtti.h"
 #include "explorer/common/nonnull.h"
 #include "llvm/ADT/PointerUnion.h"

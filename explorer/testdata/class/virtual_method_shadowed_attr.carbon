@@ -21,8 +21,7 @@ base class C {
 
 base class D extends C {
   var value: i32;
-  // TODO: This should instead use `impl` when supported
-  virtual fn Foo[self: Self]() -> i32 {
+  impl fn Foo[self: Self]() -> i32 {
     return self.value;
   }
 }
