@@ -325,9 +325,9 @@ operand_start         [(A-Za-z0-9_\"]
       case '\f':  // Fall through.
       case '\r':
         return context.RecordSyntaxError(
-              llvm::formatv("missing closing quote in single-line string: {0}",
-                            str_lex_helper.str()));
-                  break;
+            llvm::formatv("missing closing quote in single-line string: {0}",
+                          str_lex_helper.str()));
+        break;
       case '"':
         if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
           // Reach closing quotes, break out of the loop.
@@ -378,7 +378,7 @@ operand_start         [(A-Za-z0-9_\"]
           // Reach closing quotes, break out of the loop.
           return Carbon::ProcessMultiLineString(str_lex_helper.str(), context,
                                                 hashtag_num);
-          }
+        }
         break;
       case '\\':
         if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
