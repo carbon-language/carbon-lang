@@ -9,7 +9,7 @@
 
 package ExplorerTest api;
 
-fn fst[T:! Type](x: T, y: T) -> T {
+fn fst[T:! type](x: T, y: T) -> T {
   return x;
 }
 

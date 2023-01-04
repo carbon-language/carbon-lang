@@ -9,7 +9,7 @@
 
 package ExplorerTest api;
 
-interface Vector(Scalar:! Type) {
+interface Vector(Scalar:! type) {
   fn Zero() -> Self;
   fn Add[self: Self](b: Self) -> Self;
   fn Scale[self: Self](v: Scalar) -> Self;
@@ -31,7 +31,7 @@ class Point {
   }
 }
 
-fn AddAndScaleGeneric[T:! Type, U:! Vector(T)](a: U, s: T) -> U {
+fn AddAndScaleGeneric[T:! type, U:! Vector(T)](a: U, s: T) -> U {
   return a.Add(U.Zero()).Scale(s);
 }
 

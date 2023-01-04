@@ -79,7 +79,7 @@ auto ActionStack::ValueOfNode(ValueNodeView value_node,
   // We don't know the value of this node, but at compile time we may still be
   // able to form a symbolic value for it. For example, in
   //
-  //   fn F[T:! Type](x: T) {}
+  //   fn F[T:! type](x: T) {}
   //
   // ... we don't know the value of `T` but can still symbolically evaluate it
   // to a `VariableType`. At runtime we need actual values.

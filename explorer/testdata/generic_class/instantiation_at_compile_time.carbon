@@ -9,9 +9,9 @@
 
 package ExplorerTest api;
 
-class C(T:! Type) {}
+class C(T:! type) {}
 
-fn F(T:! Type) -> Type {
+fn F(T:! type) -> type {
   return C(T);
 }
 

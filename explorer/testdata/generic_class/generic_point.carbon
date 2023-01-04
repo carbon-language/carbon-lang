@@ -9,7 +9,7 @@
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
+class Point(T:! type) {
   fn Origin(zero: T) -> Point(T) {
     return {.x = zero, .y = zero};
   }

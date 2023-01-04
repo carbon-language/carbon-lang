@@ -9,7 +9,7 @@
 
 package ExplorerTest api;
 
-fn Id(t: Type) -> auto { return t; }
+fn Id(t: type) -> auto { return t; }
 
 // Test non-trivial type expression in parameter type.
 

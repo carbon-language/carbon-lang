@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 interface Iface {
-  let T:! Type;
+  let T:! type;
 }
 
 fn F(T:! Iface where .T == i32) {}

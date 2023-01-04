@@ -48,13 +48,13 @@ left-to-right with all of them.
 Its semantics are defined in terms of the following interfaces:
 
 ```
-interface IndexWith(SubscriptType:! Type) {
-  let ElementType:! Type;
+interface IndexWith(SubscriptType:! type) {
+  let ElementType:! type;
   fn At[me: Self](subscript: SubscriptType) -> ElementType;
   fn Addr[addr me: Self*](subscript: SubscriptType) -> ElementType*;
 }
 
-interface IndirectIndexWith(SubscriptType:! Type) {
+interface IndirectIndexWith(SubscriptType:! type) {
   impl as IndexWith(SubscriptType);
   fn Addr[me: Self](subscript: SubscriptType) -> ElementType*;
 }
@@ -75,9 +75,9 @@ implement `IndirectIndexWith(I)`:
 
 ```
 final external impl forall
-    [SubscriptType:! Type, T:! IndirectIndexWith(SubscriptType)]
+    [SubscriptType:! type, T:! IndirectIndexWith(SubscriptType)]
     T as IndexWith(SubscriptType) {
-  let ElementType:! Type = T.(IndirectIndexWith(SubscriptType)).ElementType;
+  let ElementType:! type = T.(IndirectIndexWith(SubscriptType)).ElementType;
   fn At[me: Self](subscript: SubscriptType) -> ElementType {
     return *(me.(IndirectIndexWith(SubscriptType).Addr)(index));
   }
@@ -95,9 +95,9 @@ its own definitions of `IndexWith.At` and `IndexWith.Addr`.
 An array type could implement subscripting like so:
 
 ```
-class Array(template T:! Type) {
+class Array(template T:! type) {
   external impl as IndexWith(like i64) {
-    let ElementType:! Type = T;
+    let ElementType:! type = T;
     fn At[me: Self](subscript: i64) -> T;
     fn Addr[addr me: Self*](subscript: i64) -> T*;
   }
@@ -107,9 +107,9 @@ class Array(template T:! Type) {
 And a type such as `std::span` could look like this:
 
 ```
-class Span(T:! Type) {
+class Span(T:! type) {
   external impl as IndirectIndexWith(like i64) {
-    let ElementType:! Type = T;
+    let ElementType:! type = T;
     fn Addr[me: Self](subscript: i64) -> T*;
   }
 }

@@ -9,15 +9,15 @@
 package ExplorerTest api;
 
 interface A {
-  let TA:! Type;
+  let TA:! type;
   fn FA() -> TA;
 }
 interface B {
-  let TB:! Type;
+  let TB:! type;
   fn FB() -> TB;
 }
 
-class C(T:! Type) {
+class C(T:! type) {
   impl as A & B where .TA = i32 and .TB = i32 {
     fn FA() -> i32 {
       // OK, know that TA is i32 here.

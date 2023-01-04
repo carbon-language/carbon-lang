@@ -20,7 +20,7 @@
 // CHECK:STDOUT:   {kind: 'VariableDeclaration', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:       {kind: 'DeclaredName', text: 't'},
-// CHECK:STDOUT:       {kind: 'NameReference', text: 'Type'},
+// CHECK:STDOUT:       {kind: 'NameReference', text: 'type'},
 // CHECK:STDOUT:     {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:       {kind: 'Literal', text: 'i32'},
@@ -32,5 +32,5 @@
 
 fn F() {
   var q: i32* = p;
-  var t: Type = i32*;
+  var t: type = i32*;
 }

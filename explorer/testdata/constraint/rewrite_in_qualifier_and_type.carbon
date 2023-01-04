@@ -10,13 +10,13 @@
 package ExplorerTest api;
 
 interface HasAssoc {
-  let Assoc:! Type;
+  let Assoc:! type;
 }
 class X {
   external impl as HasAssoc where .Assoc = i32 {}
 }
 
-fn H[T:! HasAssoc where .Assoc = i32, U:! Type where .Self == i32](a: T, b: U) -> i32 {
+fn H[T:! HasAssoc where .Assoc = i32, U:! type where .Self == i32](a: T, b: U) -> i32 {
   var a: T.((HasAssoc where .Assoc = U).Assoc) = 3;
   return a;
 }
