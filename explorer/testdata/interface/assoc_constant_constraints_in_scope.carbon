@@ -9,9 +9,9 @@
 
 package ExplorerTest api;
 
-interface A(T:! Type) { let AResult:! Type; }
-interface B(T:! Type) { let BResult:! A(T); }
-interface I(T:! Type) {
+interface A(T:! type) { let AResult:! type; }
+interface B(T:! type) { let BResult:! A(T); }
+interface I(T:! type) {
   let X:! B(T);
   // The constraints introduced by X should be in scope here.
   let Y:! X.BResult.AResult;

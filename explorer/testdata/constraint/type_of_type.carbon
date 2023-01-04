@@ -13,7 +13,7 @@ interface I {}
 
 fn Main() -> i32 {
   var a: auto = I where .Self == i32;
-  // OK: Type of `I where ...` is `Type`.
+  // OK: type of `I where ...` is `type`.
   a = i32;
   return 0;
 }

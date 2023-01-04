@@ -10,7 +10,7 @@
 package ExplorerTest api;
 
 interface Container {
-  let Element:! Type;
+  let Element:! type;
   fn Front[self: Self]() -> Element;
 }
 

@@ -491,7 +491,7 @@ auto Parser::HandleBraceExpressionParameterError(StateStackEntry state,
   bool can_be_type = kind != BraceExpressionKind::Value;
   bool can_be_value = kind != BraceExpressionKind::Type;
   emitter_->Emit(*position_, ExpectedStructLiteralField,
-                 can_be_type ? "`.field: type`" : "",
+                 can_be_type ? "`.field: Type`" : "",
                  (can_be_type && can_be_value) ? " or " : "",
                  can_be_value ? "`.field = value`" : "");
 

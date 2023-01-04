@@ -14,11 +14,11 @@
 
 package ExplorerTest api;
 
-interface Maker(T:! Type) {
+interface Maker(T:! type) {
   fn Make[self: Self]() -> T;
 }
 
-constraint IndirectMaker(T:! Type) {
+constraint IndirectMaker(T:! type) {
   extends Maker(T*);
 }
 

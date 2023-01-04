@@ -7,7 +7,7 @@
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'v'},
-// CHECK:STDOUT:     {kind: 'NameReference', text: 'Type'},
+// CHECK:STDOUT:     {kind: 'NameReference', text: 'type'},
 // CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:     {kind: 'Literal', text: 'i8'},
@@ -16,4 +16,4 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-var v: Type = i8* ;
+var v: type = i8* ;

@@ -482,7 +482,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "i32";
       break;
     case Value::Kind::TypeType:
-      out << "Type";
+      out << "type";
       break;
     case Value::Kind::AutoType:
       out << "auto";
@@ -571,7 +571,7 @@ void Value::Print(llvm::raw_ostream& out) const {
         out << combine << *ctx.context;
       }
       if (constraint.lookup_contexts().empty()) {
-        out << "Type";
+        out << "type";
       }
       out << " where ";
       llvm::ListSeparator sep(" and ");

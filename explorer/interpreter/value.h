@@ -312,7 +312,7 @@ class BoolValue : public Value {
 };
 
 // A value of a struct type. Note that the expression `{}` is a value of type
-// `{} as Type`; the former is a `StructValue` and the latter is a
+// `{} as type`; the former is a `StructValue` and the latter is a
 // `StructType`.
 class StructValue : public Value {
  public:
@@ -479,8 +479,8 @@ class TupleValue : public TupleValueBase {
   }
 };
 
-// A tuple type. This is the result of converting a tuple value containing
-// only types to type Type.
+// A tuple type. These values are produced by converting a tuple value
+// containing only types to type `type`.
 class TupleType : public TupleValueBase {
  public:
   // The unit type.
@@ -618,7 +618,7 @@ class FunctionType : public Value {
  public:
   // An explicit function parameter that is a `:!` binding:
   //
-  //     fn MakeEmptyVector(T:! Type) -> Vector(T);
+  //     fn MakeEmptyVector(T:! type) -> Vector(T);
   struct GenericParameter {
     size_t index;
     Nonnull<const GenericBinding*> binding;

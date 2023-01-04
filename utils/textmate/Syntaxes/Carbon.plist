@@ -68,7 +68,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
                 <key>name</key>
                 <string>storage.type.carbon</string>
                 <key>match</key>
-                <string>\b(As|bool|Carbon\.Int|Carbon\.UInt|f16|f32|f64|f128|i8|i16|i32|i64|i128|i256|Slice|String|StringView|Type|u8|u16|u32|u64|u128|u256)\b</string>
+                <string>\b(As|bool|Carbon\.Int|Carbon\.UInt|f16|f32|f64|f128|i8|i16|i32|i64|i128|i256|Slice|String|StringView|type|u8|u16|u32|u64|u128|u256)\b</string>
             </dict>
             <!-- Rule: boolean literals - has keyword coloring -->
             <dict>

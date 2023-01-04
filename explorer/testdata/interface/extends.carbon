@@ -10,7 +10,7 @@
 
 package ExplorerTest api;
 
-interface Apple(T:! Type) {
+interface Apple(T:! type) {
   fn F[self: Self]() -> T;
 }
 

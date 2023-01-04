@@ -532,7 +532,7 @@ class ConstraintTypeDeclaration : public Declaration {
   auto params() -> std::optional<Nonnull<TuplePattern*>> { return params_; }
   // Get the type of `Self`, which is a reference to the interface itself, with
   // parameters mapped to their values. For example, in `interface X(T:!
-  // Type)`, the self type is `X(T)`.
+  // type)`, the self type is `X(T)`.
   auto self_type() const -> Nonnull<const SelfDeclaration*> {
     return self_type_;
   }

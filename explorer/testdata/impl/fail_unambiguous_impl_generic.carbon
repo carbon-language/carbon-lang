@@ -8,12 +8,12 @@
 
 package ExplorerTest api;
 
-interface Vector(T:! Type) {
+interface Vector(T:! type) {
   fn Add[self: Self](b: Self) -> Self;
   fn Scale[self: Self](v: T) -> Self;
 }
 
-class Point(T:! Type) {
+class Point(T:! type) {
   var x: T;
   var y: T;
 }
@@ -27,7 +27,7 @@ external impl Point(i32) as Vector(i32) {
   }
 }
 
-external impl forall [T:! Type] Point(T) as Vector(T) {
+external impl forall [T:! type] Point(T) as Vector(T) {
   fn Add[self: Self](b: Self) -> Self {
     return self;
   }

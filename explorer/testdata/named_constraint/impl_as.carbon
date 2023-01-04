@@ -10,7 +10,7 @@
 package ExplorerTest api;
 
 interface MyHashable {
-  let Result:! Type;
+  let Result:! type;
   fn Hash[self: Self]() -> Result;
 }
 

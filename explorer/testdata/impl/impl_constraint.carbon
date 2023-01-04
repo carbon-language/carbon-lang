@@ -16,7 +16,7 @@ interface B {
   fn F() -> i32;
   fn G() -> i32;
 }
-interface C(T:! Type) {
+interface C(T:! type) {
   fn H() -> T;
 }
 

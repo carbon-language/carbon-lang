@@ -9,49 +9,49 @@ package Carbon api;
 // ----------------------
 
 // Explicitly convert `Self` to `T`.
-interface As(T:! Type) {
+interface As(T:! type) {
   fn Convert[self: Self]() -> T;
 }
 
 // Implicitly convert `Self` to `T`.
-interface ImplicitAs(T:! Type) {
+interface ImplicitAs(T:! type) {
   extends As(T);
 }
 
 // TODO: This should be private.
 interface __EqualConverter {
-  let T:! Type;
+  let T:! type;
   fn Convert(t: T) -> Self;
 }
-fn __EqualConvert[T:! Type](t: T, U:! __EqualConverter where .T = T) -> U {
+fn __EqualConvert[T:! type](t: T, U:! __EqualConverter where .T = T) -> U {
   return U.Convert(t);
 }
-impl forall [U:! Type] U as __EqualConverter where .T = U {
+impl forall [U:! type] U as __EqualConverter where .T = U {
   fn Convert(u: U) -> U { return u; }
 }
 
 // Every type implicitly converts to single-step-equal types.
-impl forall [T:! Type, U:! Type where .Self == T] T as ImplicitAs(U) {
+impl forall [T:! type, U:! type where .Self == T] T as ImplicitAs(U) {
   fn Convert[self: Self]() -> U { return __EqualConvert(self, U); }
 }
 
 // TODO: Simplify this once we have variadics.
 // TODO: Should these be final?
-impl forall [U1:! Type, T1:! ImplicitAs(U1)]
+impl forall [U1:! type, T1:! ImplicitAs(U1)]
     (T1,) as ImplicitAs((U1,)) {
   fn Convert[self: Self]() -> (U1,) {
     let (v1: T1,) = self;
     return (v1.Convert(),);
   }
 }
-impl forall [U1:! Type, U2:! Type, T1:! ImplicitAs(U1), T2:! ImplicitAs(U2)]
+impl forall [U1:! type, U2:! type, T1:! ImplicitAs(U1), T2:! ImplicitAs(U2)]
     (T1, T2) as ImplicitAs((U1, U2)) {
   fn Convert[self: Self]() -> (U1, U2) {
     let (v1: T1, v2: T2) = self;
     return (v1.Convert(), v2.Convert());
   }
 }
-impl forall [U1:! Type, U2:! Type, U3:! Type,
+impl forall [U1:! type, U2:! type, U3:! type,
              T1:! ImplicitAs(U1), T2:! ImplicitAs(U2), T3:! ImplicitAs(U3)]
     (T1, T2, T3) as ImplicitAs((U1, U2, U3)) {
   fn Convert[self: Self]() -> (U1, U2, U3) {
@@ -68,7 +68,7 @@ impl forall [U1:! Type, U2:! Type, U3:! Type,
 // EQUAL
 // ----------------------
 
-interface EqWith(U:! Type) {
+interface EqWith(U:! type) {
   fn Equal[self: Self](other: U) -> bool;
   fn NotEqual[self: Self](other: U) -> bool;
 }
@@ -78,7 +78,7 @@ constraint Eq {
 }
 
 // TODO: Simplify this once we have variadics
-impl forall [T2:! Type, U2:! Type, T1:! EqWith(T2), U1:! EqWith(U2)]
+impl forall [T2:! type, U2:! type, T1:! EqWith(T2), U1:! EqWith(U2)]
     (T1, U1) as EqWith((T2, U2)) {
   fn Equal[self: Self](other: (T2, U2)) -> bool {
     let (l1: T1, l2: U1) = self;
@@ -133,7 +133,7 @@ choice Ordering {
 }
 
 // TODO: Per the design, this should be named `OrderedWith`.
-interface CompareWith(U:! Type) {
+interface CompareWith(U:! type) {
   fn Compare[self: Self](u: U) -> Ordering;
   // TODO: Add `default fn` for Less, LessOrEquivalent, Greater, and GreaterOrEquivalent once it's available.
 }
@@ -174,19 +174,19 @@ impl String as CompareWith(Self) {
   }
 }
 
-interface LessWith(U:! Type) {
+interface LessWith(U:! type) {
   fn Less[self: Self](other: U) -> bool;
 }
 
-interface LessEqWith(U:! Type) {
+interface LessEqWith(U:! type) {
   fn LessEq[self: Self](other: U) -> bool;
 }
 
-interface GreaterWith(U:! Type) {
+interface GreaterWith(U:! type) {
   fn Greater[self: Self](other: U) -> bool;
 }
 
-interface GreaterEqWith(U:! Type) {
+interface GreaterEqWith(U:! type) {
   fn GreaterEq[self: Self](other: U) -> bool;
 }
 
@@ -304,49 +304,49 @@ impl String as GreaterEqWith(Self) {
 
 interface Negate {
   // TODO: = Self
-  let Result:! Type;
+  let Result:! type;
   fn Op[self: Self]() -> Result;
 }
 
-interface AddWith(U:! Type) {
+interface AddWith(U:! type) {
   // TODO: = Self
-  let Result:! Type;
+  let Result:! type;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Add {
   extends AddWith(Self) where .Result = Self;
 }
 
-interface SubWith(U:! Type) {
+interface SubWith(U:! type) {
   // TODO: = Self
-  let Result:! Type;
+  let Result:! type;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Sub {
   extends SubWith(Self) where .Result = Self;
 }
 
-interface MulWith(U:! Type) {
+interface MulWith(U:! type) {
   // TODO: = Self
-  let Result:! Type;
+  let Result:! type;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Mul {
   extends MulWith(Self) where .Result = Self;
 }
 
-interface DivWith(U:! Type) {
+interface DivWith(U:! type) {
   // TODO: = Self
-  let Result:! Type;
+  let Result:! type;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Div {
   extends DivWith(Self) where .Result = Self;
 }
 
-interface ModWith(U:! Type) {
+interface ModWith(U:! type) {
   // TODO: = Self
-  let Result:! Type;
+  let Result:! type;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Mod {
@@ -380,14 +380,14 @@ external impl i32 as ModWith(i32) where .Result = i32 {
 // Unary `^`.
 interface BitComplement {
   // TODO: = Self
-  let Result:! Type;
+  let Result:! type;
   fn Op[self: Self]() -> Result;
 }
 
 // Binary `&`.
-interface BitAndWith(U:! Type) {
+interface BitAndWith(U:! type) {
   // TODO: = Self
-  let Result:! Type;
+  let Result:! type;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint BitAnd {
@@ -395,9 +395,9 @@ constraint BitAnd {
 }
 
 // Binary `|`.
-interface BitOrWith(U:! Type) {
+interface BitOrWith(U:! type) {
   // TODO: = Self
-  let Result:! Type;
+  let Result:! type;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint BitOr {
@@ -405,9 +405,9 @@ constraint BitOr {
 }
 
 // Binary `^`.
-interface BitXorWith(U:! Type) {
+interface BitXorWith(U:! type) {
   // TODO: = Self
-  let Result:! Type;
+  let Result:! type;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint BitXor {
@@ -415,9 +415,9 @@ constraint BitXor {
 }
 
 // Binary `<<`.
-interface LeftShiftWith(U:! Type) {
+interface LeftShiftWith(U:! type) {
   // TODO: = Self
-  let Result:! Type;
+  let Result:! type;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint LeftShift {
@@ -425,9 +425,9 @@ constraint LeftShift {
 }
 
 // Binary `>>`.
-interface RightShiftWith(U:! Type) {
+interface RightShiftWith(U:! type) {
   // TODO: = Self
-  let Result:! Type;
+  let Result:! type;
   fn Op[self: Self](other: U) -> Result;
 }
 constraint RightShift {
@@ -468,12 +468,12 @@ external impl i32 as RightShiftWith(i32) where .Result = i32 {
 //-------------------------
 // Optional
 //-------------------------
-choice OptionalElement(T:! Type) {
+choice OptionalElement(T:! type) {
   None(),
   Element(T)
 }
 
-class Optional(T:! Type) {
+class Optional(T:! type) {
   fn CreateEmpty() -> Optional(T) {
     return {.element = OptionalElement(T).None()};
   }
@@ -522,10 +522,10 @@ fn Rand(low: i32, high: i32) -> i32{
 }
 
 class Heap {
-  fn New[T:! Type, self: Self](x : T) -> T* {
+  fn New[T:! type, self: Self](x : T) -> T* {
     return __intrinsic_new(x);
   }
-  fn Delete[T:! Type, self: Self](p : T*) {
+  fn Delete[T:! type, self: Self](p : T*) {
     __intrinsic_delete(p);
   }
 }

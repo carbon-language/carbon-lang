@@ -8,7 +8,7 @@
 
 package ExplorerTest api;
 
-interface FrobWith(T:! Type) {}
+interface FrobWith(T:! type) {}
 
 fn F[T:! FrobWith(.Self)]
   // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_dot_self_after_scope.carbon:[[@LINE+1]]: could not resolve '.Self'

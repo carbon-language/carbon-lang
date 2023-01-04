@@ -9,15 +9,15 @@
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
+class Point(T:! type) {
   var x: T;
   var y: T;
 }
 
-fn GetX[T:! Type](pt: Point(T)) -> T {
+fn GetX[T:! type](pt: Point(T)) -> T {
   return pt.x;
 }
-fn GetY(T:! Type, pt: Point(T)) -> T {
+fn GetY(T:! type, pt: Point(T)) -> T {
   return pt.y;
 }
 

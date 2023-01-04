@@ -9,7 +9,7 @@
 
 package ExplorerTest api;
 
-interface SwizzleWith(T:! Type) {
+interface SwizzleWith(T:! type) {
   fn Op[self: Self](x: T) -> i32;
 }
 

@@ -195,8 +195,8 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
       // type-of-type.
       const auto& assoc = cast<AssociatedConstant>(*value);
       // TODO: Should we substitute in the arguments? Given
-      //   interface I(T:! Type) { let V:! T; }
-      // ... is T.(I(Type).V) considered to be a type?
+      //   interface I(T:! type) { let V:! T; }
+      // ... is T.(I(type).V) considered to be a type?
       return IsTypeOfType(&assoc.constant().static_type());
     }
     case Value::Kind::MixinPseudoType:
@@ -659,11 +659,11 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
     // A type only implicitly converts to a constraint if there is an impl of
     // that constraint for that type in scope.
     // TODO: Instead of excluding the special case where the destination is
-    // `Type`, we should check if the source type has a subset of the
+    // `type`, we should check if the source type has a subset of the
     // constraints of the destination type. In that case, the source should not
     // be required to be constant.
     if (IsTypeOfType(destination) && !isa<TypeType>(destination)) {
-      // First convert the source expression to type `Type`.
+      // First convert the source expression to type `type`.
       CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> source_as_type,
                               ImplicitlyConvert(context, impl_scope, source,
                                                 arena_->New<TypeType>()));
@@ -878,7 +878,7 @@ class TypeChecker::ArgumentDeduction {
   }
 
   // Adds a value for a binding that is not deduced but still participates in
-  // substitution. For example, the `T` parameter in `fn F(T:! Type, x: T)`.
+  // substitution. For example, the `T` parameter in `fn F(T:! type, x: T)`.
   void AddNonDeducedBindingValue(Nonnull<const GenericBinding*> binding,
                                  Nonnull<Expression*> argument) {
     non_deduced_values_.push_back({binding, argument});
@@ -1228,7 +1228,7 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
   // Evaluate and add non-deduced values. These are assumed to lexically follow
   // the deduced bindings, so any bindings the type might reference are now
   // known.
-  // TODO: This is not the case for `fn F(T:! Type, u: (V:! ImplicitAs(T)))`.
+  // TODO: This is not the case for `fn F(T:! type, u: (V:! ImplicitAs(T)))`.
   // However, we intend to disallow that.
   for (auto [binding, arg] : non_deduced_values_) {
     // Form the binding's resolved type and convert the argument expression to
@@ -4524,7 +4524,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     class_vtable[fun->name()] = {fun, class_level};
   }
 
-  // For class declaration `class MyType(T:! Type, U:! AnInterface)`, `Self`
+  // For class declaration `class MyType(T:! type, U:! AnInterface)`, `Self`
   // should have the value `MyType(T, U)`.
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
       class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class,
