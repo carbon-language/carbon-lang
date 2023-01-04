@@ -10,14 +10,14 @@
 package ExplorerTest api;
 
 interface ManyTypes {
-  let T0:! Type;
-  let T1:! Type;
-  let T2:! Type;
-  let T3:! Type;
-  let T4:! Type;
-  let T5:! Type;
-  let T6:! Type;
-  let T7:! Type;
+  let T0:! type;
+  let T1:! type;
+  let T2:! type;
+  let T3:! type;
+  let T4:! type;
+  let T5:! type;
+  let T6:! type;
+  let T7:! type;
 }
 
 interface Splat { fn Op(n: i32) -> Self; }

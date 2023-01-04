@@ -9,15 +9,15 @@
 
 package ExplorerTest api;
 
-interface Has(T:! Type) {
+interface Has(T:! type) {
   fn Get() -> T;
 }
-impl i32 as Has(Type) {
-  fn Get() -> Type { return Self; }
+impl i32 as Has(type) {
+  fn Get() -> type { return Self; }
 }
 
-class WithType(T:! Has(Type)) {
-  fn Get() -> Type { return T.Get(); }
+class WithType(T:! Has(type)) {
+  fn Get() -> type { return T.Get(); }
 }
 
 fn Main() -> i32 {

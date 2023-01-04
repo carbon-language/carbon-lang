@@ -202,9 +202,9 @@ class IdentifierExpression : public Expression {
 // A `.Self` expression within either a `:!` binding or a standalone `where`
 // expression.
 //
-// In a `:!` binding, the type of `.Self` is always `Type`. For example, in
+// In a `:!` binding, the type of `.Self` is always `type`. For example, in
 // `A:! AddableWith(.Self)`, the expression `.Self` refers to the same type as
-// `A`, but with type `Type`.
+// `A`, but with type `type`.
 //
 // In a `where` binding, the type of `.Self` is the constraint preceding the
 // `where` keyword. For example, in `Foo where .Result is Bar(.Self)`, the type

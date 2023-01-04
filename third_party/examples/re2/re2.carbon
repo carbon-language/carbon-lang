@@ -353,7 +353,7 @@ class RE2 {
   fn FindAndConsumeN(input: StringPiece*, re: RE2,
                      args: Array(const Arg*), n: i32) -> bool;
 
-  private fn Apply[template F:! Type, SP:! Type](f: F, sp: SP, re: Self) {
+  private fn Apply[template F:! type, SP:! type](f: F, sp: SP, re: Self) {
     return f(sp, re, nullptr, 0);
   }
 

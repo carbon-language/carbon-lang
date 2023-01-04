@@ -71,7 +71,7 @@ fn Widget.Print[addr self: Self*](var i: i64, x: f32, _: bool, 47) {
       """);
 }
 
-class FancyWidget(T:! Type) extends Widget {
+class FancyWidget(T:! type) extends Widget {
   impl fn Print[self: Self]();
 
   impl as Add(T) {
@@ -79,11 +79,11 @@ class FancyWidget(T:! Type) extends Widget {
   }
 }
 
-fn FancyWidget(T:! Type).Print[self: Self]() {
+fn FancyWidget(T:! type).Print[self: Self]() {
   Carbon.Print("more test");
 }
 
-impl forall [T:! Type] FancyWidget(T) as Printable {
+impl forall [T:! type] FancyWidget(T) as Printable {
   alias Print = FancyWidget(T).Print;
 }
 </code></pre>

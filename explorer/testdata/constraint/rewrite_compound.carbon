@@ -10,7 +10,7 @@
 package ExplorerTest api;
 
 interface HasAssoc {
-  let Assoc:! Type;
+  let Assoc:! type;
 }
 class X {
   external impl as HasAssoc where .Assoc = i32 {}

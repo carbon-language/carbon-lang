@@ -10,9 +10,9 @@
 package ExplorerTest api;
 
 class Class { var a: i32; }
-class GenericClass(T:! Type) { var a: T; }
+class GenericClass(T:! type) { var a: T; }
 interface Interface { fn Make() -> Self; }
-interface GenericInterface(T:! Type) { fn Make() -> (Self, T); }
+interface GenericInterface(T:! type) { fn Make() -> (Self, T); }
 
 alias ClassAlias = Class;
 alias GenericClassAlias = GenericClass;

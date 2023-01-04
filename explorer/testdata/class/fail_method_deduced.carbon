@@ -13,7 +13,7 @@ class C {
   fn G[self: Self]() {}
 }
 
-fn H[T:! Type](x: T) {}
+fn H[T:! type](x: T) {}
 
 fn Main() -> i32 {
   H(C.F);

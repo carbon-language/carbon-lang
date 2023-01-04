@@ -204,18 +204,18 @@ parameter is unknown. Evaluation of an expression involving the parameter may
 still succeed, but will result in a symbolic value involving that parameter.
 
 ```
-class GenericWrapper(T:! Type) {
+class GenericWrapper(T:! type) {
   var field: T;
 }
-fn F[T:! Type](x: GenericWrapper(T)) -> T {
+fn F[T:! type](x: GenericWrapper(T)) -> T {
   // ✅ OK, finds `GenericWrapper(T).field`.
   return x.field;
 }
 
-class TemplateWrapper(template T:! Type) {
+class TemplateWrapper(template T:! type) {
   var field: T;
 }
-fn G[template T:! Type](x: TemplateWrapper(T)) -> T {
+fn G[template T:! type](x: TemplateWrapper(T)) -> T {
   // 🤷 Not yet decided.
   return x.field;
 }
@@ -564,10 +564,10 @@ fn CallStaticMethod(c: C) {
   c.(C.field) = 1;
 
   // ✅ OK
-  let T:! Type = C.Nested;
+  let T:! type = C.Nested;
   // ❌ Error: value of `:!` binding is not constant because it
   // refers to local variable `c`.
-  let U:! Type = c.Nested;
+  let U:! type = c.Nested;
 }
 ```
 

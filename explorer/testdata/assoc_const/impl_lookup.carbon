@@ -10,7 +10,7 @@
 package ExplorerTest api;
 
 interface Frob {
-  let Result:! Type;
+  let Result:! type;
   fn F[self: Self]() -> Result;
 }
 

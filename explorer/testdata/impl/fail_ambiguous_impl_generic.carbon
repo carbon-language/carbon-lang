@@ -8,11 +8,11 @@
 
 package ExplorerTest api;
 
-class A(T:! Type) {}
-interface B(T:! Type) {}
+class A(T:! type) {}
+interface B(T:! type) {}
 
-external impl forall [T:! Type] A(T) as B(i32) {}
-external impl forall [T:! Type] A(i32) as B(T) {}
+external impl forall [T:! type] A(T) as B(i32) {}
+external impl forall [T:! type] A(i32) as B(T) {}
 
 fn F[T:! B(i32)](x: T) {}
 fn G[T:! B(bool)](x: T) {}

@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 interface X {
-  fn F() -> Type;
+  fn F() -> type;
 }
 
 // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_use_symbolic_member.carbon:[[@LINE+1]]: member lookup for F in symbolic witness 0 of witness for T:! X
