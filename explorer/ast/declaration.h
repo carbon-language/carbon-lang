@@ -125,6 +125,7 @@ class Declaration : public AstNode {
   bool is_type_checked_ = false;
 };
 
+// A function's virtual override keyword.
 enum class VirtualOverride { None, Abstract, Virtual, Impl };
 
 class CallableDeclaration : public Declaration {
@@ -233,7 +234,7 @@ class DestructorDeclaration : public CallableDeclaration {
                             "destructor", std::move(deduced_params),
                             self_pattern, param_pattern, return_term, body,
                             // TODO: Add virtual destructors
-                            /*override=*/VirtualOverride::None) {}
+                            VirtualOverride::None) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDestructorDeclaration(node->kind());
