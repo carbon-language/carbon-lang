@@ -448,7 +448,7 @@ auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
   // Figure out the operator for the token.
   auto token = parse_tree_->node_token(parse_node);
   switch (auto token_kind = tokens_->GetKind(token)) {
-    case TokenKind::Plus():
+    case TokenKind::Plus:
       Push(parse_node, SemanticsNode::MakeBinaryOperatorAdd(
                            parse_node, result_type, lhs_id, rhs_id));
       break;
@@ -476,18 +476,18 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
     -> void {
   auto token = parse_tree_->node_token(parse_node);
   switch (auto token_kind = tokens_->GetKind(token)) {
-    case TokenKind::IntegerLiteral(): {
+    case TokenKind::IntegerLiteral: {
       auto id =
           semantics_->AddIntegerLiteral(tokens_->GetIntegerLiteral(token));
       Push(parse_node, SemanticsNode::MakeIntegerLiteral(parse_node, id));
       break;
     }
-    case TokenKind::RealLiteral(): {
+    case TokenKind::RealLiteral: {
       // TODO: Add storage of the Real literal.
       Push(parse_node, SemanticsNode::MakeRealLiteral(parse_node));
       break;
     }
-    case TokenKind::IntegerTypeLiteral(): {
+    case TokenKind::IntegerTypeLiteral: {
       auto text = tokens_->GetTokenText(token);
       CARBON_CHECK(text == "i32") << "Currently only i32 is allowed";
       Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
