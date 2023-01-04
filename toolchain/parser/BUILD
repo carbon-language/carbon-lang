@@ -13,8 +13,7 @@ cc_library(
     textual_hdrs = ["parse_node_kind.def"],
     deps = [
         "//common:check",
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
+        "//toolchain/common:enum_base",
     ],
 )
 
