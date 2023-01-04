@@ -136,7 +136,7 @@ class CallableDeclaration : public Declaration {
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body,
-                      VirtualOverride override)
+                      VirtualOverride virt_override)
       : Declaration(kind, loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
@@ -144,7 +144,7 @@ class CallableDeclaration : public Declaration {
         param_pattern_(param_pattern),
         return_term_(return_term),
         body_(body),
-        override_(override) {}
+        override_(virt_override) {}
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
@@ -191,7 +191,7 @@ class FunctionDeclaration : public CallableDeclaration {
                      Nonnull<TuplePattern*> param_pattern,
                      ReturnTerm return_term,
                      std::optional<Nonnull<Block*>> body,
-                     VirtualOverride override)
+                     VirtualOverride virt_override)
       -> ErrorOr<Nonnull<FunctionDeclaration*>>;
 
   // Use `Create()` instead. This is public only so Arena::New() can call it.
@@ -201,11 +201,11 @@ class FunctionDeclaration : public CallableDeclaration {
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body,
-                      VirtualOverride override)
+                      VirtualOverride virt_override)
       : CallableDeclaration(AstNodeKind::FunctionDeclaration, source_loc,
                             std::move(name), std::move(deduced_params),
                             self_pattern, param_pattern, return_term, body,
-                            override) {}
+                            virt_override) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());

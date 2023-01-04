@@ -8,16 +8,15 @@
 
 package ExplorerTest api;
 
-base class C {
-  virtual fn Foo[self:Self]() {}
+base class A {
+  virtual fn Foo[self: Self]() {}
 }
 
-class D extends C {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_redeclare_virtual_method.carbon:[[@LINE+1]]: Error declaring `Foo`: method is declared virtual in base class, use `impl` to override it.
-  virtual fn Foo[self:Self]() {}
+class B extends A {
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_override_virtual_with_non_virtual.carbon:[[@LINE+1]]: Error declaring `Foo`: method is declared virtual in base class, use `impl` to override it.
+  fn Foo[self: Self]() {}
 }
 
 fn Main() -> i32 {
-  let c: C = {};
   return 0;
 }
