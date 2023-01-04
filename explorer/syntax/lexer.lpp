@@ -109,10 +109,11 @@ SLASH                "/"
 STRING               "String"
 THEN                 "then"
 TRUE                 "true"
-TYPE                 "Type"
+TYPE                 "type"
 UNDERSCORE           "_"
 UNIMPL_EXAMPLE       "__unimplemented_example_infix"
 VAR                  "var"
+VIRTUAL              "virtual"
 WHERE                "where"
 WHILE                "while"
 /* table-end */
@@ -217,6 +218,7 @@ operand_start         [(A-Za-z0-9_\"]
 {UNDERSCORE}          { return CARBON_SIMPLE_TOKEN(UNDERSCORE);          }
 {UNIMPL_EXAMPLE}      { return CARBON_SIMPLE_TOKEN(UNIMPL_EXAMPLE);      }
 {VAR}                 { return CARBON_SIMPLE_TOKEN(VAR);                 }
+{VIRTUAL}             { return CARBON_SIMPLE_TOKEN(VIRTUAL);             }
 {WHERE}               { return CARBON_SIMPLE_TOKEN(WHERE);               }
 {WHILE}               { return CARBON_SIMPLE_TOKEN(WHILE);               }
  /* table-end */

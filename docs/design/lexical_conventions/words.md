@@ -78,6 +78,7 @@ The following words are interpreted as keywords:
 -   `returned`
 -   `Self`
 -   `then`
+-   `type`
 -   `var`
 -   `virtual`
 -   `where`

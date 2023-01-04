@@ -133,8 +133,9 @@ def _impl(ctx):
                             "-Wimplicit-fallthrough",
                             "-Wctad-maybe-unsupported",
                             "-Wnon-virtual-dtor",
-                            # Unfortunately, LLVM isn't clean for this warning.
-                            "-Wno-unused-parameter",
+                            # Don't warn on external code as we can't
+                            # necessarily patch it easily.
+                            "--system-header-prefix=external/",
                             # Compile actions shouldn't link anything.
                             "-c",
                         ],
@@ -286,6 +287,32 @@ def _impl(ctx):
                 actions = codegen_compile_actions,
                 flag_groups = [flag_group(flags = [
                     "-O3",
+                ])],
+            ),
+        ],
+    )
+
+    x86_64_cpu_flags = feature(
+        name = "x86_64_cpu_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-march=x86-64-v2",
+                ])],
+            ),
+        ],
+    )
+
+    aarch64_cpu_flags = feature(
+        name = "aarch64_cpu_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-march=armv8.2-a",
                 ])],
             ),
         ],
@@ -574,6 +601,39 @@ def _impl(ctx):
         ],
     )
 
+    freebsd_flags_feature = feature(
+        name = "freebsd_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.c_compile,
+                    ACTION_NAMES.cpp_compile,
+                    ACTION_NAMES.cpp_header_parsing,
+                    ACTION_NAMES.cpp_module_compile,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = [
+                            "-DHAVE_MALLCTL",
+                        ],
+                    ),
+                ],
+            ),
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cpp_link_executable,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-fpie"],
+                        expand_if_available = "force_pic",
+                    ),
+                ],
+            ),
+        ],
+    )
+
     default_link_libraries_feature = feature(
         name = "default_link_libraries",
         enabled = True,
@@ -811,8 +871,17 @@ def _impl(ctx):
     elif ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
         features += [macos_flags_feature]
         sysroot = sysroot_dir
+    elif ctx.attr.target_cpu == "freebsd":
+        features += [freebsd_flags_feature]
+        sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")
+
+    # TODO: Need to support non-macOS ARM platforms here.
+    if ctx.attr.target_cpu == "darwin_arm64":
+        features += [aarch64_cpu_flags]
+    else:
+        features += [x86_64_cpu_flags]
 
     # Finally append the libraries to link and any final flags.
     features += [

@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 interface A {
-  let T:! Type;
+  let T:! type;
 }
 
 fn F1[T:! A where .T == i32](x: T.T) -> i32 {

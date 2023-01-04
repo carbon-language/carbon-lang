@@ -2,16 +2,16 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// This doesn't test trace ouptut because it's too slow.
+// NOAUTOUPDATE
 // RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: String list length is: 7
 // CHECK:STDOUT: This is a String Entry 4
 // CHECK:STDOUT: Value 1337
 // CHECK:STDOUT: result: 0
 package ExplorerTest api;
 
-class Node(T:! Type) {
+class Node(T:! type) {
   fn Create(value: T)-> Node(T) {
     return {
       .value = Optional(T).Create(value),
@@ -30,7 +30,7 @@ class Node(T:! Type) {
   var prev: Optional(Node(T)*);
 }
 
-class LinkedList(T:! Type) {
+class LinkedList(T:! type) {
   fn Create() -> LinkedList(T) {
     return {
       .head = Optional(Node(T)*).CreateEmpty(),
@@ -90,7 +90,7 @@ class LinkedList(T:! Type) {
 
 // This function exists as a helper the context of this test case specifically and does not represent
 // the common case for index based lookups in list like structures.
-fn GetListEntryByIndex[T:! Type](list: LinkedList(T)*, target_index: i32) -> Optional(T) {
+fn GetListEntryByIndex[T:! type](list: LinkedList(T)*, target_index: i32) -> Optional(T) {
   let list_length: i32 = (*list).Length();
   if(target_index > list_length - 1 or target_index < 0) {
     // Not in possible range

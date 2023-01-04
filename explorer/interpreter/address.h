@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "common/ostream.h"
-#include "explorer/interpreter/field_path.h"
+#include "explorer/interpreter/element_path.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -57,18 +57,18 @@ class Address {
   // Prints a human-readable representation of `a` to `out`.
   //
   // Currently, that representation consists of an AllocationId followed by an
-  // optional FieldPath specifying a particular field within that allocation.
+  // optional ElementPath specifying a particular field within that allocation.
   void Print(llvm::raw_ostream& out) const {
-    out << allocation_ << field_path_;
+    out << allocation_ << element_path_;
   }
 
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // If *this represents the address of an object with a field named
   // `field_name`, this method returns the address of that field.
-  auto SubobjectAddress(Member member) const -> Address {
+  auto ElementAddress(Nonnull<const Element*> element) const -> Address {
     Address result = *this;
-    result.field_path_.Append(member);
+    result.element_path_.Append(element);
     return result;
   }
 
@@ -79,7 +79,7 @@ class Address {
   friend class Heap;
 
   AllocationId allocation_;
-  FieldPath field_path_;
+  ElementPath element_path_;
 };
 
 }  // namespace Carbon

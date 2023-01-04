@@ -39,7 +39,8 @@ jobs:
             activity in the 14 days since the `inactive` label was added.
           stale-issue-label: 'inactive'
           stale-pr-label: 'inactive'
-          exempt-issue-labels: 'long term'
+          exempt-issue-labels:
+            'long term,design idea,design update,good first issue'
           days-before-stale: 90
           days-before-close: 14
           days-before-issue-close: -1

@@ -61,32 +61,38 @@ CARBON_DIAGNOSTIC_KIND(ExpectedStructLiteralField)
 CARBON_DIAGNOSTIC_KIND(ExpectedVariableDeclaration)
 CARBON_DIAGNOSTIC_KIND(ExpectedVariableName)
 CARBON_DIAGNOSTIC_KIND(OperatorRequiresParentheses)
-CARBON_DIAGNOSTIC_KIND(StackLimitExceeded)
 CARBON_DIAGNOSTIC_KIND(UnaryOperatorHasWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnaryOperatorRequiresWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenAfterListElement)
-CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInCodeBlock)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedDeclaration)
 
-// Packaged-related diagnostics
+// Package-related diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterPackage)
 CARBON_DIAGNOSTIC_KIND(ExpectedLibraryName)
 CARBON_DIAGNOSTIC_KIND(MissingLibraryKeyword)
 CARBON_DIAGNOSTIC_KIND(ExpectedApiOrImpl)
 CARBON_DIAGNOSTIC_KIND(ExpectedSemiToEndPackageDirective)
 
-// For-specific diagnostics
+// For-specific diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedIn)
+CARBON_DIAGNOSTIC_KIND(ExpectedInNotColon)
 
-// Interface-specific diagnostics
+// Interface-specific diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceName)
 CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceOpenCurlyBrace)
+CARBON_DIAGNOSTIC_KIND(MethodImplNotAllowed)
+
+// Class and interface diagnostics
+CARBON_DIAGNOSTIC_KIND(ExpectedDeducedParam)
 
 // ============================================================================
 // Semantics diagnostics
 // ============================================================================
 
 CARBON_DIAGNOSTIC_KIND(TypeMismatch)
+CARBON_DIAGNOSTIC_KIND(NameNotFound)
+CARBON_DIAGNOSTIC_KIND(NameRedefined)
+CARBON_DIAGNOSTIC_KIND(PreviousDefinition)
 
 // ============================================================================
 // Other diagnostics
@@ -94,5 +100,6 @@ CARBON_DIAGNOSTIC_KIND(TypeMismatch)
 
 // TestDiagnostic is only for unit tests.
 CARBON_DIAGNOSTIC_KIND(TestDiagnostic)
+CARBON_DIAGNOSTIC_KIND(TestDiagnosticNote)
 
 #undef CARBON_DIAGNOSTIC_KIND

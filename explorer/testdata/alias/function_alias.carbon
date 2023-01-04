@@ -12,7 +12,7 @@ package ExplorerTest api;
 alias TypeAlias = i32;
 
 fn Function(a: i32, b: TypeAlias) -> i32 { return a + b; }
-fn GenericFunction[T:! Type](x: T) -> T { return x; }
+fn GenericFunction[T:! type](x: T) -> T { return x; }
 
 alias FunctionAlias = Function;
 alias GenericFunctionAlias = GenericFunction;

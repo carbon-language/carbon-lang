@@ -25,7 +25,7 @@ void SemanticsNode::Print(llvm::raw_ostream& out) const {
   out << kind_ << "(";
   switch (kind_) {
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
-  case SemanticsNodeKind::Name():        \
+  case SemanticsNodeKind::Name:          \
     PrintArgs(out, GetAs##Name());       \
     break;
 #include "toolchain/semantics/semantics_node_kind.def"

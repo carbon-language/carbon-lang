@@ -20,11 +20,13 @@ CARBON_SEMANTICS_BUILTIN_KIND(TypeType)
 // for future type checking.
 CARBON_SEMANTICS_BUILTIN_KIND(InvalidType)
 
-// The type of an integer literal.
-CARBON_SEMANTICS_BUILTIN_KIND(IntegerLiteralType)
+// The type of integers and integer literals, currently always i32. Long-term
+// we may not want it this way, but for now this is the approach.
+CARBON_SEMANTICS_BUILTIN_KIND(IntegerType)
 
-// The type of a real literal.
-CARBON_SEMANTICS_BUILTIN_KIND(RealLiteralType)
+// The type of reals and real literals, currently always f64. Long-term
+// we may not want it this way, but for now this is the approach.
+CARBON_SEMANTICS_BUILTIN_KIND(RealType)
 
 // Keep invalid last, so that we can use values as array indices without needing
 // an invalid entry.

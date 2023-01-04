@@ -9,10 +9,7 @@ cc_library(
     srcs = ["semantics_builtin_kind.cpp"],
     hdrs = ["semantics_builtin_kind.h"],
     textual_hdrs = ["semantics_builtin_kind.def"],
-    deps = [
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
+    deps = ["//toolchain/common:enum_base"],
 )
 
 cc_library(
@@ -20,10 +17,7 @@ cc_library(
     srcs = ["semantics_node_kind.cpp"],
     hdrs = ["semantics_node_kind.h"],
     textual_hdrs = ["semantics_node_kind.def"],
-    deps = [
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
+    deps = ["//toolchain/common:enum_base"],
 )
 
 cc_library(
@@ -49,6 +43,7 @@ cc_library(
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
+        "//toolchain/parser:parse_tree_node_location_translator",
         "@llvm-project//llvm:Support",
     ],
 )

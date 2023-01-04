@@ -24,11 +24,11 @@ impl i32 as AnotherInterface {}
 
 // TODO: These are intended to be called at compile time. Mark them as
 // constexpr once we have syntax for that.
-fn GetStruct() -> Type { return {.n: i32}; }
-fn GetChoice() -> Type { return Choice; }
-fn GetClass() -> Type { return Class; }
-fn GetInterface() -> Type { return Interface; }
-fn GetConstraint() -> Type { return Interface & AnotherInterface; }
+fn GetStruct() -> type { return {.n: i32}; }
+fn GetChoice() -> type { return Choice; }
+fn GetClass() -> type { return Class; }
+fn GetInterface() -> type { return Interface; }
+fn GetConstraint() -> type { return Interface & AnotherInterface; }
 
 fn TestStruct() {
   var s: GetStruct() = {.n = 1};

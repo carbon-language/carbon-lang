@@ -15,7 +15,7 @@ interface Vector {
   fn Scale[self: Self](v: i32) -> Self;
 }
 
-class Point(T:! Type) {
+class Point(T:! type) {
   var x: T;
   var y: T;
 }

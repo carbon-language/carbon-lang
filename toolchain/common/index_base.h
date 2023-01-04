@@ -29,7 +29,7 @@ struct IndexBase {
 
   auto Print(llvm::raw_ostream& output) const -> void { output << index; }
 
-  auto is_valid() -> bool { return index != InvalidIndex; }
+  auto is_valid() const -> bool { return index != InvalidIndex; }
 
   int32_t index;
 };

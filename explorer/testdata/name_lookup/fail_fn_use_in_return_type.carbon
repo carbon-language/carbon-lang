@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_fn_use_in_return_type.carbon:[[@LINE+1]]: 'F' is not usable until after it has been completely declared
 fn F() -> F() {
-  return Type;
+  return type;
 }
 
 fn Main() -> i32 {

@@ -4,16 +4,16 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
-// CHECK:STDOUT: cross_reference_irs.size == 2,
-// CHECK:STDOUT: cross_references = {
-// CHECK:STDOUT:   node_xref0 = xref(ir0, block0, node0);
-// CHECK:STDOUT:   node_xref1 = xref(ir0, block0, node1);
-// CHECK:STDOUT:   node_xref2 = xref(ir0, block0, node2);
-// CHECK:STDOUT:   node_xref3 = xref(ir0, block0, node3);
-// CHECK:STDOUT: },
-// CHECK:STDOUT: identifiers = {
-// CHECK:STDOUT: },
+// CHECK:STDOUT: cross_reference_irs.size == 1,
 // CHECK:STDOUT: integer_literals = {
+// CHECK:STDOUT: },
+// CHECK:STDOUT: strings = {
+// CHECK:STDOUT: },
+// CHECK:STDOUT: nodes = {
+// CHECK:STDOUT:   node0 = CrossReference(ir0, block0): node0;
+// CHECK:STDOUT:   node1 = CrossReference(ir0, block1): node1;
+// CHECK:STDOUT:   node2 = CrossReference(ir0, block2): node0;
+// CHECK:STDOUT:   node3 = CrossReference(ir0, block3): node0;
 // CHECK:STDOUT: },
 // CHECK:STDOUT: node_blocks = {
 // CHECK:STDOUT:   block0 = {

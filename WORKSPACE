@@ -119,8 +119,8 @@ http_archive(
     build_file_content = "# empty",
     patch_args = ["-p1"],
     patches = [
-        "@carbon//bazel/llvm_patches:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
-        "@carbon//bazel/llvm_patches:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
+        "@carbon//bazel/patches/llvm:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
+        "@carbon//bazel/patches/llvm:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
     ],
     sha256 = "8e9cbb937b1a40536cd809e09603a1810d86a8c314fee0cca36fc493e78289e5",
     strip_prefix = "llvm-project-{0}".format(llvm_version),
@@ -156,6 +156,11 @@ rules_m4_version = "0.2.1"
 
 http_archive(
     name = "rules_m4",
+    patch_args = ["-p1"],
+    patches = [
+        # Trying to upstream: https://github.com/jmillikin/rules_m4/pull/15
+        "@carbon//bazel/patches/m4:0001_Support_M4_building_on_FreeBSD.patch",
+    ],
     sha256 = "eaa674cd84546038ecbcc49cdd346134a20961a41fa1a541e80d8bf4b470c34d",
     strip_prefix = "rules_m4-{0}".format(rules_m4_version),
     urls = ["https://github.com/jmillikin/rules_m4/archive/v{0}.tar.gz".format(rules_m4_version)],
@@ -190,6 +195,11 @@ rules_bison_version = "478079b28605a38000eaf83719568d756b3383a0"
 
 http_archive(
     name = "rules_bison",
+    patch_args = ["-p1"],
+    patches = [
+        # Trying to upstream: https://github.com/jmillikin/rules_bison/pull/13
+        "@carbon//bazel/patches/bison:0001_Support_Bison_building_on_FreeBSD.patch",
+    ],
     sha256 = "6bc2d382e4ffccd66e60a74521c24722fc8fdfe9af49ff182f79bb5994fa1ba4",
     strip_prefix = "rules_bison-{0}".format(rules_bison_version),
     urls = ["https://github.com/jmillikin/rules_bison/archive/{0}.tar.gz".format(rules_bison_version)],
@@ -205,24 +215,22 @@ bison_register_toolchains(extra_copts = ["-w"])
 # Protocol buffers - for structured fuzzer testing.
 ###############################################################################
 
-# TODO: `rules_proto` pulls in a version of `rules_cc` with a frozenset bug.
-rules_cc_version = "0.0.1"
+rules_cc_version = "0.0.4"
 
 http_archive(
     name = "rules_cc",
-    sha256 = "4dccbfd22c0def164c8f47458bd50e0c7148f3d92002cdb459c2a96a68498241",
+    sha256 = "af6cc82d87db94585bceeda2561cb8a9d55ad435318ccb4ddfee18a43580fb5d",
+    strip_prefix = "rules_cc-{0}".format(rules_cc_version),
     urls = ["https://github.com/bazelbuild/rules_cc/releases/download/{0}/rules_cc-{0}.tar.gz".format(rules_cc_version)],
 )
 
-rules_proto_version = "4.0.0-3.20.0"
+rules_proto_version = "5.3.0-21.7"
 
 http_archive(
     name = "rules_proto",
-    sha256 = "e017528fd1c91c5a33f15493e3a398181a9e821a804eb7ff5acdd1d2d6c2b18d",
+    sha256 = "dc3fb206a2cb3441b485eb1e423165b231235a1ea9b031b4433cf7bc1fa460dd",
     strip_prefix = "rules_proto-{0}".format(rules_proto_version),
-    urls = [
-        "https://github.com/bazelbuild/rules_proto/archive/refs/tags/{0}.tar.gz".format(rules_proto_version),
-    ],
+    urls = ["https://github.com/bazelbuild/rules_proto/archive/refs/tags/{0}.tar.gz".format(rules_proto_version)],
 )
 
 load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
@@ -235,15 +243,14 @@ rules_proto_toolchains()
 # libprotobuf_mutator - for structured fuzzer testing.
 ###############################################################################
 
-# Head as of 2022-09-13.
-libprotobuf_mutator_version = "a304ec48dcf15d942607032151f7e9ee504b5dcf"
+libprotobuf_mutator_version = "1.1"
 
 http_archive(
     name = "com_google_libprotobuf_mutator",
     build_file = "@//:third_party/libprotobuf_mutator/BUILD.txt",
-    sha256 = "0ce80217393fe6b01dac9818127e664801d865fefd708b98183181c0ed457878",
+    sha256 = "fd299fd72c5cf664259d9bd43a72cb74dc6a8b9604d107fe2d2e90885aeb7c16",
     strip_prefix = "libprotobuf-mutator-{0}".format(libprotobuf_mutator_version),
-    urls = ["https://github.com/google/libprotobuf-mutator/archive/{0}.tar.gz".format(libprotobuf_mutator_version)],
+    urls = ["https://github.com/google/libprotobuf-mutator/archive/v{0}.tar.gz".format(libprotobuf_mutator_version)],
 )
 
 ###############################################################################

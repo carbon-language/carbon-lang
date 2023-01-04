@@ -181,6 +181,11 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << access.object() << ".(" << access.path() << ")";
       break;
     }
+    case ExpressionKind::BaseAccessExpression: {
+      const auto& access = cast<BaseAccessExpression>(*this);
+      out << access.object() << ".base";
+      break;
+    }
     case ExpressionKind::TupleLiteral: {
       out << "(";
       llvm::ListSeparator sep;
@@ -324,7 +329,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       out << "String";
       break;
     case ExpressionKind::TypeTypeLiteral:
-      out << "Type";
+      out << "type";
       break;
     case ExpressionKind::ContinuationTypeLiteral:
       out << "Continuation";
@@ -336,6 +341,7 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::IndexExpression:
     case ExpressionKind::SimpleMemberAccessExpression:
     case ExpressionKind::CompoundMemberAccessExpression:
+    case ExpressionKind::BaseAccessExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::WhereExpression:
     case ExpressionKind::BuiltinConvertExpression:
