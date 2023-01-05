@@ -61,7 +61,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
   for (auto parse_node : parse_tree_->postorder()) {
     switch (auto parse_kind = parse_tree_->node_kind(parse_node)) {
 #define CARBON_PARSE_NODE_KIND(Name) \
-  case ParseNodeKind::Name(): {      \
+  case ParseNodeKind::Name: {        \
     Handle##Name(parse_node);        \
     break;                           \
   }
@@ -92,8 +92,7 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
                                          SemanticsNodeId type_id,
                                          SemanticsNodeId target_id)
     -> SemanticsStringId {
-  CARBON_CHECK(parse_tree_->node_kind(name_node) ==
-               ParseNodeKind::DeclaredName())
+  CARBON_CHECK(parse_tree_->node_kind(name_node) == ParseNodeKind::DeclaredName)
       << parse_tree_->node_kind(name_node);
   auto name_str = parse_tree_->GetNodeText(name_node);
   auto name_id = semantics_->AddString(name_str);
@@ -283,7 +282,7 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
     ParseTree::Node parse_node) -> void {
   // Merges code block children up under the FunctionDefinitionStart.
   while (parse_tree_->node_kind(node_stack_.PeekParseNode()) !=
-         ParseNodeKind::FunctionDefinitionStart()) {
+         ParseNodeKind::FunctionDefinitionStart) {
     node_stack_.PopAndIgnore();
   }
   node_stack_.PopAndIgnore();
@@ -295,10 +294,10 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
 
 auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
     ParseTree::Node parse_node) -> void {
-  node_stack_.PopAndDiscard(ParseNodeKind::ParameterList());
-  auto name_node = node_stack_.PopForParseNode(ParseNodeKind::DeclaredName());
+  node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ParameterList);
+  auto name_node = node_stack_.PopForSoloParseNode(ParseNodeKind::DeclaredName);
   auto fn_node =
-      node_stack_.PopForParseNode(ParseNodeKind::FunctionIntroducer());
+      node_stack_.PopForSoloParseNode(ParseNodeKind::FunctionIntroducer);
 
   auto decl_id = AddNode(SemanticsNode::MakeFunctionDeclaration(fn_node));
   // TODO: Propagate the type of the function.
@@ -346,7 +345,7 @@ auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
   // Figure out the operator for the token.
   auto token = parse_tree_->node_token(parse_node);
   switch (auto token_kind = tokens_->GetKind(token)) {
-    case TokenKind::Plus():
+    case TokenKind::Plus:
       AddNodeAndPush(parse_node, SemanticsNode::MakeBinaryOperatorAdd(
                                      parse_node, result_type, lhs_id, rhs_id));
       break;
@@ -374,19 +373,19 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
     -> void {
   auto token = parse_tree_->node_token(parse_node);
   switch (auto token_kind = tokens_->GetKind(token)) {
-    case TokenKind::IntegerLiteral(): {
+    case TokenKind::IntegerLiteral: {
       auto id =
           semantics_->AddIntegerLiteral(tokens_->GetIntegerLiteral(token));
       AddNodeAndPush(parse_node,
                      SemanticsNode::MakeIntegerLiteral(parse_node, id));
       break;
     }
-    case TokenKind::RealLiteral(): {
+    case TokenKind::RealLiteral: {
       // TODO: Add storage of the Real literal.
       AddNodeAndPush(parse_node, SemanticsNode::MakeRealLiteral(parse_node));
       break;
     }
-    case TokenKind::IntegerTypeLiteral(): {
+    case TokenKind::IntegerTypeLiteral: {
       auto text = tokens_->GetTokenText(token);
       CARBON_CHECK(text == "i32") << "Currently only i32 is allowed";
       node_stack_.Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
@@ -456,7 +455,7 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
     -> void {
   // TODO: This should transform into a usable parameter list. For now
   // it's unused and only stored so that node counts match.
-  node_stack_.PopAndDiscard(ParseNodeKind::ParameterListStart());
+  node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ParameterListStart);
   node_stack_.Push(parse_node);
 }
 
@@ -486,7 +485,7 @@ auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
   auto type = node_stack_.PopForNodeId();
 
   // Get the name.
-  auto name_node = node_stack_.PopForParseNode();
+  auto name_node = node_stack_.PopForSoloParseNode();
 
   // Allocate storage, linked to the name for error locations.
   auto storage_id = AddNode(SemanticsNode::MakeVarStorage(name_node, type));
@@ -513,13 +512,13 @@ auto SemanticsParseTreeHandler::HandlePrefixOperator(
 auto SemanticsParseTreeHandler::HandleReturnStatement(
     ParseTree::Node parse_node) -> void {
   if (parse_tree_->node_kind(node_stack_.PeekParseNode()) ==
-      ParseNodeKind::ReturnStatementStart()) {
-    node_stack_.PopAndDiscard(ParseNodeKind::ReturnStatementStart());
+      ParseNodeKind::ReturnStatementStart) {
+    node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ReturnStatementStart);
     AddNodeAndPush(parse_node, SemanticsNode::MakeReturn(parse_node));
   } else {
     auto arg = node_stack_.PopForNodeId();
     auto arg_type = semantics_->GetType(arg);
-    node_stack_.PopAndDiscard(ParseNodeKind::ReturnStatementStart());
+    node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ReturnStatementStart);
     AddNodeAndPush(parse_node, SemanticsNode::MakeReturnExpression(
                                    parse_node, arg_type, arg));
   }
@@ -601,13 +600,13 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
   auto last_child = node_stack_.PopForParseNodeAndNodeId();
 
   if (parse_tree_->node_kind(last_child.first) !=
-      ParseNodeKind::PatternBinding()) {
+      ParseNodeKind::PatternBinding) {
     auto storage_id =
-        node_stack_.PopForNodeId(ParseNodeKind::VariableInitializer());
+        node_stack_.PopForNodeId(ParseNodeKind::VariableInitializer);
 
     auto binding = node_stack_.PopForParseNodeAndNameId();
     CARBON_CHECK(parse_tree_->node_kind(binding.first) ==
-                 ParseNodeKind::PatternBinding());
+                 ParseNodeKind::PatternBinding);
     CARBON_CHECK(binding.second.is_valid());
 
     // Restore the name now that the initializer is complete.
@@ -620,7 +619,7 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
                                       last_child.second));
   }
 
-  node_stack_.PopAndDiscard(ParseNodeKind::VariableIntroducer());
+  node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::VariableIntroducer);
   node_stack_.Push(parse_node);
 }
 

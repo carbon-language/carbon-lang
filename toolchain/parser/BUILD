@@ -13,20 +13,7 @@ cc_library(
     textual_hdrs = ["parse_node_kind.def"],
     deps = [
         "//common:check",
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_test(
-    name = "parse_node_kind_test",
-    size = "small",
-    srcs = ["parse_node_kind_test.cpp"],
-    deps = [
-        ":parse_node_kind",
-        "//common:gtest_main",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
+        "//toolchain/common:enum_base",
     ],
 )
 
