@@ -132,8 +132,8 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
     }
 
     CARBON_CHECK(!expected.string_contents ||
-                 expected.kind == TokenKind::StringLiteral());
-    if (expected.string_contents && actual_kind == TokenKind::StringLiteral()) {
+                 expected.kind == TokenKind::StringLiteral);
+    if (expected.string_contents && actual_kind == TokenKind::StringLiteral) {
       llvm::StringRef actual_contents = buffer.GetStringLiteral(token);
       if (actual_contents != *expected.string_contents) {
         *result_listener << "\nToken " << index << " has contents `"

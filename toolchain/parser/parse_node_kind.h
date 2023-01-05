@@ -9,7 +9,7 @@
 
 namespace Carbon {
 
-CARBON_DEFINE_RAW_ENUM_CLASS(ParseNodeKind, uint8_t){
+CARBON_DEFINE_RAW_ENUM_CLASS(ParseNodeKind, uint8_t) {
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/parser/parse_node_kind.def"
 };
