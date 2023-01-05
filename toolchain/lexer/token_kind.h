@@ -71,7 +71,9 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
     return false;
   }
 
-  // Prints the TokenKind, typically for diagnostics.
+  // Override the EnumBase printing to use the fixed spelling rather than the
+  // name for tokens as this better corresponds to the source code the
+  // represent.
   void Print(llvm::raw_ostream& out) const { out << fixed_spelling(); }
 };
 
