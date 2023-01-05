@@ -741,21 +741,6 @@ class StructType : public Value {
 // A class type.
 class NominalClassType : public Value {
  public:
-  // Construct a non-generic class type.
-  explicit NominalClassType(
-      Nonnull<const ClassDeclaration*> declaration,
-      std::optional<Nonnull<const NominalClassType*>> base, VTable class_vtable)
-      : Value(Kind::NominalClassType),
-        declaration_(declaration),
-        base_(base),
-        vtable_(std::move(class_vtable)),
-        hierarchy_level_(base ? (*base)->hierarchy_level() + 1 : 0) {
-    CARBON_CHECK(!declaration->type_params().has_value())
-        << "missing arguments for parameterized class type";
-  }
-
-  // Construct a fully instantiated generic class type to represent the
-  // run-time type of an object.
   explicit NominalClassType(
       Nonnull<const ClassDeclaration*> declaration,
       Nonnull<const Bindings*> bindings,
