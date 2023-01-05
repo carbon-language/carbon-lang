@@ -8,7 +8,7 @@
 
 namespace Carbon {
 
-CARBON_DEFINE_RAW_ENUM_CLASS(TestKind, uint8_t){
+CARBON_DEFINE_RAW_ENUM_CLASS(TestKind, uint8_t) {
 #define CARBON_ENUM_BASE_TEST_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/common/enum_base_test.def"
 };

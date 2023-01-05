@@ -4487,7 +4487,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
         ClassExtensibility::None) {
       return ProgramError(class_decl->source_loc())
              << "Base class `" << base_class.value()->declaration().name()
-             << "` is `final` and cannot inherited. Add the `base` or "
+             << "` is `final` and cannot be inherited. Add the `base` or "
                 "`abstract` class prefix to `"
              << base_class.value()->declaration().name()
              << "` to allow it to be inherited";
