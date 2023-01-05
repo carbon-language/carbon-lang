@@ -30,7 +30,7 @@ namespace Carbon::Internal {
 //
 // In `my_kind.h`:
 //   ```
-//   CARBON_DEFINE_RAW_ENUM_CLASS(MyKind, uint8_t){
+//   CARBON_DEFINE_RAW_ENUM_CLASS(MyKind, uint8_t) {
 //   #define CARBON_MY_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 //   #include "toolchain/.../my_kind.def"
 //   };

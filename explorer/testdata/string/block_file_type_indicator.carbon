@@ -10,10 +10,10 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var s: String = """filetype
+  var s: String = '''filetype
     A "block" ""string"" literal
       with file type indicator.
-    """;
+    ''';
   if (s == "A \"block\" \"\"string\"\" literal\n  with file type indicator.\n") {
     return 0;
   } else {

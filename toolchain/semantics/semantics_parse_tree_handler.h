@@ -11,6 +11,7 @@
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
+#include "toolchain/semantics/semantics_node_stack.h"
 
 namespace Carbon {
 
@@ -26,7 +27,8 @@ class SemanticsParseTreeHandler {
         emitter_(&emitter),
         parse_tree_(&parse_tree),
         semantics_(&semantics),
-        vlog_stream_(vlog_stream) {}
+        vlog_stream_(vlog_stream),
+        node_stack_(parse_tree, vlog_stream) {}
 
   // Outputs the ParseTree information into SemanticsIR.
   auto Build() -> void;
@@ -56,18 +58,6 @@ class SemanticsParseTreeHandler {
     }
   };
 
-  // An entry in node_stack_.
-  struct NodeStackEntry {
-    ParseTree::Node parse_node;
-    union {
-      // The result_id may be invalid if there's no result.
-      SemanticsNodeId result_id;
-      // The name_id is provided for PatternBindings.
-      SemanticsStringId name_id;
-    };
-  };
-  static_assert(sizeof(NodeStackEntry) == 8, "Unexpected NodeStackEntry size");
-
   // An entry in scope_stack_.
   struct ScopeStackEntry {
     // Names which are registered with name_lookup_, and will need to be
@@ -80,6 +70,10 @@ class SemanticsParseTreeHandler {
   // Adds a node to the current block, returning the produced ID.
   auto AddNode(SemanticsNode node) -> SemanticsNodeId;
 
+  // Pushes a parse tree node onto the stack, storing the SemanticsNode as the
+  // result.
+  auto AddNodeAndPush(ParseTree::Node parse_node, SemanticsNode node) -> void;
+
   // Adds a name to name lookup. This is typically done through BindName, but
   // can also be used to restore removed names.
   auto AddNameToLookup(SemanticsStringId name_id, SemanticsNodeId storage_id)
@@ -90,36 +84,6 @@ class SemanticsParseTreeHandler {
   // Binds a DeclaredName to a target node with the given type.
   auto BindName(ParseTree::Node name_node, SemanticsNodeId type_id,
                 SemanticsNodeId target_id) -> SemanticsStringId;
-
-  // Pushes a parse tree node onto the stack. Used when there is no IR generated
-  // by the node.
-  auto Push(ParseTree::Node parse_node) -> void;
-
-  // Pushes a parse tree node onto the stack, storing the SemanticsNode as the
-  // result.
-  auto Push(ParseTree::Node parse_node, SemanticsNode node) -> void;
-
-  // Pushes a parse tree node onto the stack with an already-built node ID.
-  auto Push(ParseTree::Node parse_node, SemanticsNodeId node_id) -> void;
-
-  // Pushes a PatternBinding parse tree node onto the stack with its name.
-  auto Push(ParseTree::Node parse_node, SemanticsStringId name_id) -> void;
-
-  // Pops the top of the stack, verifying that it's the expected kind.
-  auto Pop(ParseNodeKind pop_parse_kind) -> void;
-
-  // Pops the top of the stack, returning the result_id. Must only be called for
-  // nodes that have results.
-  auto PopWithResult() -> SemanticsNodeId;
-
-  // Pops the top of the stack, verifying that it's the expected kind and
-  // returning the result_id. Must only be called for nodes that have results.
-  auto PopWithResult(ParseNodeKind pop_parse_kind) -> SemanticsNodeId;
-
-  // Pops the top of the stack, verifying that it's the expected kind and
-  // returning the result_id. Must only be called for nodes that have results.
-  auto PopWithResultIf(ParseNodeKind pop_parse_kind)
-      -> std::optional<SemanticsNodeId>;
 
   // Pushes a new scope onto scope_stack_.
   auto PushScope() -> void;
@@ -161,7 +125,7 @@ class SemanticsParseTreeHandler {
   llvm::raw_ostream* vlog_stream_;
 
   // The stack during Build. Will contain file-level parse nodes on return.
-  llvm::SmallVector<NodeStackEntry> node_stack_;
+  SemanticsNodeStack node_stack_;
 
   // The stack of node blocks during build. Only updated on ParseTree nodes that
   // affect the stack.
