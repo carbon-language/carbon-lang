@@ -21,6 +21,9 @@ class SemanticsBuiltinKind : public CARBON_ENUM_BASE(SemanticsBuiltinKind) {
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
   // The count of enum values excluding Invalid.
+  //
+  // Note that we *define* this as `constexpr` making it a true compile-time
+  // constant, and so we name it accordingly and disable the lint error here.
   // NOLINTNEXTLINE(readability-identifier-naming)
   static const uint8_t ValidCount;
 
@@ -34,6 +37,12 @@ class SemanticsBuiltinKind : public CARBON_ENUM_BASE(SemanticsBuiltinKind) {
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
 constexpr uint8_t SemanticsBuiltinKind::ValidCount = Invalid.AsInt();
+
+static_assert(
+    SemanticsBuiltinKind::ValidCount != 0,
+    "The above `constexpr` definition of `ValidCount` makes it available in "
+    "a `constexpr` context despite being declared as merely `const`. We use it "
+    "in a static assert here to ensure that.");
 
 // We expect the builtin kind to fit compactly into 8 bits.
 static_assert(sizeof(SemanticsBuiltinKind) == 1,
