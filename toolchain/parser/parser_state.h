@@ -9,7 +9,7 @@
 
 namespace Carbon {
 
-CARBON_DEFINE_RAW_ENUM_CLASS(ParserState, uint8_t){
+CARBON_DEFINE_RAW_ENUM_CLASS(ParserState, uint8_t) {
 #define CARBON_PARSER_STATE(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/parser/parser_state.def"
 };
