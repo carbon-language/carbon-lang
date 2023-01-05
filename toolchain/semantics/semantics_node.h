@@ -28,31 +28,46 @@ struct SemanticsNodeId : public IndexBase {
   static auto MakeInvalid() -> SemanticsNodeId { return SemanticsNodeId(); }
 
   using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "node" << index; }
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "node";
+    IndexBase::Print(out);
+  }
 };
 
 // The ID of a cross-referenced IR.
 struct SemanticsCrossReferenceIRId : public IndexBase {
   using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "ir" << index; }
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "ir";
+    IndexBase::Print(out);
+  }
 };
 
 // Type-safe storage of integer literals.
 struct SemanticsIntegerLiteralId : public IndexBase {
   using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "int" << index; }
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "int";
+    IndexBase::Print(out);
+  }
 };
 
 // Type-safe storage of node blocks.
 struct SemanticsNodeBlockId : public IndexBase {
   using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "block" << index; }
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "block";
+    IndexBase::Print(out);
+  }
 };
 
 // Type-safe storage of strings.
 struct SemanticsStringId : public IndexBase {
   using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "str" << index; }
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "str";
+    IndexBase::Print(out);
+  }
 };
 
 // The standard structure for nodes.
