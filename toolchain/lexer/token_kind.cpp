@@ -10,7 +10,7 @@
 namespace Carbon {
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(TokenKind) = {
-#define CARBON_TOKEN(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
+#define CARBON_TOKEN(TokenName) CARBON_ENUM_CLASS_NAME_STRING(TokenName)
 #include "toolchain/lexer/token_kind.def"
 };
 

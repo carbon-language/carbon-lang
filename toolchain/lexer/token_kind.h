@@ -13,13 +13,13 @@
 namespace Carbon {
 
 CARBON_DEFINE_RAW_ENUM_CLASS(TokenKind, uint8_t){
-#define CARBON_TOKEN(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
+#define CARBON_TOKEN(TokenName) CARBON_RAW_ENUM_ENUMERATOR(TokenName)
 #include "toolchain/lexer/token_kind.def"
 };
 
 class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
  public:
-#define CARBON_TOKEN(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#define CARBON_TOKEN(TokenName) CARBON_ENUM_CONSTANT_DECLARATION(TokenName)
 #include "toolchain/lexer/token_kind.def"
 
   // Test whether this kind of token is a simple symbol sequence (punctuation,
@@ -75,7 +75,8 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
   void Print(llvm::raw_ostream& out) const { out << fixed_spelling(); }
 };
 
-#define CARBON_TOKEN(Name) CARBON_ENUM_CONSTANT_DEFINITION(TokenKind, Name)
+#define CARBON_TOKEN(TokenName) \
+  CARBON_ENUM_CONSTANT_DEFINITION(TokenKind, TokenName)
 #include "toolchain/lexer/token_kind.def"
 
 }  // namespace Carbon
