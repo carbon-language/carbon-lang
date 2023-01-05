@@ -5,17 +5,13 @@
 #include "toolchain/parser/parse_node_kind.h"
 
 #include "common/check.h"
-#include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
 
-auto ParseNodeKind::name() const -> llvm::StringRef {
-  static constexpr llvm::StringLiteral Names[] = {
-#define CARBON_PARSE_NODE_KIND(Name) #Name,
+CARBON_DEFINE_ENUM_CLASS_NAMES(ParseNodeKind) = {
+#define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "toolchain/parser/parse_node_kind.def"
-  };
-  return Names[static_cast<int>(kind_)];
-}
+};
 
 auto ParseNodeKind::has_bracket() const -> bool {
   static constexpr bool HasBracket[] = {
@@ -23,7 +19,7 @@ auto ParseNodeKind::has_bracket() const -> bool {
 #define CARBON_PARSE_NODE_KIND_CHILD_COUNT(...) false,
 #include "toolchain/parser/parse_node_kind.def"
   };
-  return HasBracket[static_cast<int>(kind_)];
+  return HasBracket[AsInt()];
 }
 
 auto ParseNodeKind::bracket() const -> ParseNodeKind {
@@ -31,12 +27,12 @@ auto ParseNodeKind::bracket() const -> ParseNodeKind {
   // child_count.
   static constexpr ParseNodeKind Bracket[] = {
 #define CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName) \
-  ParseNodeKind::BracketName(),
-#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ...) ParseNodeKind::Name(),
+  ParseNodeKind::BracketName,
+#define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ...) ParseNodeKind::Name,
 #include "toolchain/parser/parse_node_kind.def"
   };
-  auto bracket = Bracket[static_cast<int>(kind_)];
-  CARBON_CHECK(bracket != kind_) << *this;
+  auto bracket = Bracket[AsInt()];
+  CARBON_CHECK(bracket != *this) << *this;
   return bracket;
 }
 
@@ -46,7 +42,7 @@ auto ParseNodeKind::child_count() const -> int32_t {
 #define CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, Size) Size,
 #include "toolchain/parser/parse_node_kind.def"
   };
-  auto child_count = ChildCount[static_cast<int>(kind_)];
+  auto child_count = ChildCount[AsInt()];
   CARBON_CHECK(child_count >= 0) << *this;
   return child_count;
 }
