@@ -12,7 +12,7 @@
 
 namespace Carbon {
 
-CARBON_DEFINE_RAW_ENUM_CLASS(TokenKind, uint8_t){
+CARBON_DEFINE_RAW_ENUM_CLASS(TokenKind, uint8_t) {
 #define CARBON_TOKEN(TokenName) CARBON_RAW_ENUM_ENUMERATOR(TokenName)
 #include "toolchain/lexer/token_kind.def"
 };
