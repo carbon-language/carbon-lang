@@ -120,11 +120,11 @@ class SemanticsNodeStack {
   // Require an entry to have the given ParseNodeKind.
   auto RequireParseKind(Entry entry, ParseNodeKind require_kind) -> void;
 
-  // Requires an entry to have a valid node_id.
+  // Requires an entry to have a invalid node_id.
   // Also works with name_id in the union due to type compatibility.
   auto RequireSoloParseNode(Entry entry) -> void;
 
-  // Requires an entry to have a invalid node_id.
+  // Requires an entry to have a valid node_id.
   // Also works with name_id in the union due to type compatibility.
   auto RequireNodeId(Entry entry) -> void;
 
