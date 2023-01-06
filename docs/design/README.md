@@ -47,7 +47,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Parameters](#parameters)
     -   [`auto` return type](#auto-return-type)
     -   [Blocks and statements](#blocks-and-statements)
-    -   [Assignment statements](#assignment-statements)
     -   [Control flow](#control-flow)
         -   [`if` and `else`](#if-and-else)
         -   [Loops](#loops)
@@ -252,7 +251,7 @@ A [variable declaration](#variable-var-declarations) has three parts:
 ```
 
 You can modify the value of a variable with an
-[assignment statement](#assignment-statements):
+[assignment statement](assignment.md):
 
 ```carbon
       i = 3;
@@ -1222,25 +1221,6 @@ fn Foo() {
 > -   [Blocks and statements](blocks_and_statements.md)
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
-
-### Assignment statements
-
-Assignment statements mutate the value of the
-[l-value](#value-categories-and-value-phases) described on the left-hand side of
-the assignment.
-
--   Assignment: `x = y;`. `x` is assigned the value of `y`.
--   Increment and decrement: `++i;`, `--j;`. `i` is set to `i + 1`, `j` is set
-    to `j - 1`.
--   Compound assignment: `x += y;`, `x -= y;`, `x *= y;`, `x /= y;`, `x &= y;`,
-    `x |= y;`, `x ^= y;`, `x <<= y;`, `x >>= y;`. `x @= y;` is equivalent to
-    `x = x @ y;` for each operator `@`.
-
-Unlike C++, these assignments are statements, not expressions, and don't return
-a value.
-
-> **Note:** The semantics of assignment are provisional. See pending proposal
-> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
 
 ### Control flow
 
@@ -3074,8 +3054,6 @@ The interfaces that correspond to each operator are given by:
 -   Indexing:
     -   `x[y]` is rewritten to use the
         [`IndexWith` or `IndirectIndexWith`](expressions/indexing.md) interface.
--   **TODO:** [Assignment](#assignment-statements): `x = y`, `++x`, `x += y`,
-    and so on
 -   **TODO:** Dereference: `*p`
 -   **TODO:** [Move](#move): `~x`
 -   **TODO:** Function call: `f(4)`
