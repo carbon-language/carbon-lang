@@ -292,7 +292,7 @@ impl forall [U:! type, T:! OpAssignWith(U)] T as OpWith(U) where .Result = T {
 ```
 
 This default is not sufficient to provide implicit conversions on the left-hand
-side of an operator. If such conversions are desired, as separate implementation
+side of an operator. If such conversions are desired, a separate implementation
 is necessary:
 
 ```
