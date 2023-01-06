@@ -36,7 +36,7 @@ a = 6;
 
 For each binary [arithmetic](expressions/arithmetic.md) or
 [bitwise](expressions/bitwise.md) operator `$`, a corresponding compound
-assignment is provided that performs the operation in-place:
+assignment `$=` is provided that performs the operation in-place:
 
 ```
 // Same as `a = a + 1;`
