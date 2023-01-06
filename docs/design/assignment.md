@@ -324,6 +324,6 @@ impl like MyInt as AddWith(like MyInt) where .Result = MyInt {
 -   Proposal
     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
 -   Proposal
-    [#1191: Bitwise and shift operators](https://github.com/carbon-language/carbon-lang/pull/1191).
+    [#1191: Bitwise and shift operators](https://github.com/carbon-language/carbon-lang/pull/1191)
 -   Proposal
     [#2511: Assignment statements](https://github.com/carbon-language/carbon-lang/pull/2511)
