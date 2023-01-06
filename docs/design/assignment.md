@@ -160,7 +160,7 @@ constraint Assign { extends AssignFrom(Self); }
 
 Given `var x: T` and `y: U`:
 
--   The statement `x = y;` is rewritten to `x.(AssignFrom(U).Op)(u);`.
+-   The statement `x = y;` is rewritten to `x.(AssignFrom(U).Op)(y);`.
 
 ### Arithmetic
 
