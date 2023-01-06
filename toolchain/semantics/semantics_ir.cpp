@@ -77,35 +77,41 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
 
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
 
-  out << "integer_literals:\n";
+  out << "integer_literals: [\n";
   for (int32_t i = 0; i < static_cast<int32_t>(integer_literals_.size()); ++i) {
     out.indent(Indent);
-    out << "- " << integer_literals_[i] << "\n";
+    out << integer_literals_[i] << ",\n";
   }
+  out << "]\n";
 
-  out << "strings:\n";
+  out << "strings: [\n";
   for (int32_t i = 0; i < static_cast<int32_t>(strings_.size()); ++i) {
     out.indent(Indent);
-    out << "- " << strings_[i] << "\n";
+    out << strings_[i] << ",\n";
   }
+  out << "]\n";
 
-  out << "nodes:\n";
+  out << "nodes: [\n";
   for (int32_t i = 0; i < static_cast<int32_t>(nodes_.size()); ++i) {
     out.indent(Indent);
-    out << "- " << nodes_[i] << "\n";
+    out << nodes_[i] << ",\n";
   }
+  out << "]\n";
 
-  out << "node_blocks:\n";
+  out << "node_blocks: [\n";
   for (int32_t i = 0; i < static_cast<int32_t>(node_blocks_.size()); ++i) {
     out.indent(Indent);
-    out << "-\n";
+    out << "[\n";
 
     const auto& node_block = node_blocks_[i];
     for (int32_t i = 0; i < static_cast<int32_t>(node_block.size()); ++i) {
       out.indent(2 * Indent);
-      out << "- " << node_block[i] << "\n";
+      out << node_block[i] << ",\n";
     }
+    out.indent(Indent);
+    out << "],\n";
   }
+  out << "]\n";
 }
 
 }  // namespace Carbon
