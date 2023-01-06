@@ -4232,11 +4232,16 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         return ProgramError(assign.source_loc())
                << "Cannot assign to rvalue '" << assign.lhs() << "'";
       }
+      // TODO: Interface lookup and compound assignment.
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<Expression*> converted_rhs,
           ImplicitlyConvert("assignment", impl_scope, &assign.rhs(),
                             &assign.lhs().static_type()));
       assign.set_rhs(converted_rhs);
+      return Success();
+    }
+    case StatementKind::IncrementDecrement: {
+      // TODO: Interface lookup.
       return Success();
     }
     case StatementKind::ExpressionStatement: {
@@ -4380,6 +4385,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Run:
     case StatementKind::Await:
     case StatementKind::Assign:
+    case StatementKind::IncrementDecrement:
     case StatementKind::ExpressionStatement:
     case StatementKind::While:
     case StatementKind::For:

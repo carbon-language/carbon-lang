@@ -35,6 +35,7 @@ ABSTRACT             "abstract"
 ADDR                 "addr"
 ALIAS                "alias"
 AMPERSAND            "&"
+AMPERSAND_EQUAL      "&="
 AND                  "and"
 API                  "api"
 ARROW                "->"
@@ -45,6 +46,7 @@ BASE                 "base"
 BOOL                 "bool"
 BREAK                "break"
 CARET                "^"
+CARET_EQUAL          "^="
 CASE                 "case"
 CHOICE               "choice"
 CLASS                "class"
@@ -71,6 +73,7 @@ FORALL               "forall"
 GREATER              ">"
 GREATER_EQUAL        ">="
 GREATER_GREATER      ">>"
+GREATER_GREATER_EQUAL ">>="
 IF                   "if"
 IMPL                 "impl"
 IMPORT               "import"
@@ -83,11 +86,14 @@ LEFT_SQUARE_BRACKET  "["
 LESS                 "<"
 LESS_EQUAL           "<="
 LESS_LESS            "<<"
+LESS_LESS_EQUAL      "<<="
 LET                  "let"
 LIBRARY              "library"
 MATCH                "match"
 MATCH_FIRST          "__match_first"
 MINUS                "-"
+MINUS_EQUAL          "-="
+MINUS_MINUS          "--"
 MIX                  "__mix"
 MIXIN                "__mixin"
 NOT                  "not"
@@ -95,9 +101,13 @@ NOT_EQUAL            "!="
 OR                   "or"
 PACKAGE              "package"
 PERCENT              "%"
+PERCENT_EQUAL        "%="
 PERIOD               "."
 PIPE                 "|"
+PIPE_EQUAL           "|="
 PLUS                 "+"
+PLUS_EQUAL           "+="
+PLUS_PLUS            "++"
 RETURN               "return"
 RETURNED             "returned"
 RIGHT_CURLY_BRACE    "}"
@@ -107,6 +117,8 @@ RUN                  "__run"
 SELF                 "Self"
 SEMICOLON            ";"
 SLASH                "/"
+SLASH_EQUAL          "/="
+STAR_EQUAL           "*="
 STRING               "String"
 THEN                 "then"
 TRUE                 "true"
@@ -144,6 +156,7 @@ operand_start         [(A-Za-z0-9_\"]
 {ADDR}                { return CARBON_SIMPLE_TOKEN(ADDR);                }
 {ALIAS}               { return CARBON_SIMPLE_TOKEN(ALIAS);               }
 {AMPERSAND}           { return CARBON_SIMPLE_TOKEN(AMPERSAND);           }
+{AMPERSAND_EQUAL}     { return CARBON_SIMPLE_TOKEN(AMPERSAND_EQUAL);     }
 {AND}                 { return CARBON_SIMPLE_TOKEN(AND);                 }
 {API}                 { return CARBON_SIMPLE_TOKEN(API);                 }
 {ARROW}               { return CARBON_SIMPLE_TOKEN(ARROW);               }
@@ -154,6 +167,7 @@ operand_start         [(A-Za-z0-9_\"]
 {BOOL}                { return CARBON_SIMPLE_TOKEN(BOOL);                }
 {BREAK}               { return CARBON_SIMPLE_TOKEN(BREAK);               }
 {CARET}               { return CARBON_SIMPLE_TOKEN(CARET);               }
+{CARET_EQUAL}         { return CARBON_SIMPLE_TOKEN(CARET_EQUAL);         }
 {CASE}                { return CARBON_SIMPLE_TOKEN(CASE);                }
 {CHOICE}              { return CARBON_SIMPLE_TOKEN(CHOICE);              }
 {CLASS}               { return CARBON_SIMPLE_TOKEN(CLASS);               }
@@ -179,6 +193,7 @@ operand_start         [(A-Za-z0-9_\"]
 {FOR}                 { return CARBON_SIMPLE_TOKEN(FOR);                 }
 {GREATER_EQUAL}       { return CARBON_SIMPLE_TOKEN(GREATER_EQUAL);       }
 {GREATER_GREATER}     { return CARBON_SIMPLE_TOKEN(GREATER_GREATER);     }
+{GREATER_GREATER_EQUAL} { return CARBON_SIMPLE_TOKEN(GREATER_GREATER_EQUAL); }
 {GREATER}             { return CARBON_SIMPLE_TOKEN(GREATER);             }
 {IF}                  { return CARBON_SIMPLE_TOKEN(IF);                  }
 {IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }
@@ -191,12 +206,15 @@ operand_start         [(A-Za-z0-9_\"]
 {LEFT_SQUARE_BRACKET} { return CARBON_SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
 {LESS_EQUAL}          { return CARBON_SIMPLE_TOKEN(LESS_EQUAL);          }
 {LESS_LESS}           { return CARBON_SIMPLE_TOKEN(LESS_LESS);           }
+{LESS_LESS_EQUAL}     { return CARBON_SIMPLE_TOKEN(LESS_LESS_EQUAL);     }
 {LESS}                { return CARBON_SIMPLE_TOKEN(LESS);                }
 {LET}                 { return CARBON_SIMPLE_TOKEN(LET);                 }
 {LIBRARY}             { return CARBON_SIMPLE_TOKEN(LIBRARY);             }
 {MATCH_FIRST}         { return CARBON_SIMPLE_TOKEN(MATCH_FIRST);         }
 {MATCH}               { return CARBON_SIMPLE_TOKEN(MATCH);               }
 {MINUS}               { return CARBON_SIMPLE_TOKEN(MINUS);               }
+{MINUS_EQUAL}         { return CARBON_SIMPLE_TOKEN(MINUS_EQUAL);         }
+{MINUS_MINUS}         { return CARBON_SIMPLE_TOKEN(MINUS_MINUS);         }
 {MIXIN}               { return CARBON_SIMPLE_TOKEN(MIXIN);               }
 {MIX}                 { return CARBON_SIMPLE_TOKEN(MIX);                 }
 {NOT_EQUAL}           { return CARBON_SIMPLE_TOKEN(NOT_EQUAL);           }
@@ -204,15 +222,21 @@ operand_start         [(A-Za-z0-9_\"]
 {OR}                  { return CARBON_SIMPLE_TOKEN(OR);                  }
 {PACKAGE}             { return CARBON_SIMPLE_TOKEN(PACKAGE);             }
 {PERCENT}             { return CARBON_SIMPLE_TOKEN(PERCENT);             }
+{PERCENT_EQUAL}       { return CARBON_SIMPLE_TOKEN(PERCENT_EQUAL);       }
 {PERIOD}              { return CARBON_SIMPLE_TOKEN(PERIOD);              }
 {PIPE}                { return CARBON_SIMPLE_TOKEN(PIPE);                }
+{PIPE_EQUAL}          { return CARBON_SIMPLE_TOKEN(PIPE_EQUAL);          }
 {PLUS}                { return CARBON_SIMPLE_TOKEN(PLUS);                }
+{PLUS_EQUAL}          { return CARBON_SIMPLE_TOKEN(PLUS_EQUAL);          }
+{PLUS_PLUS}           { return CARBON_SIMPLE_TOKEN(PLUS_PLUS);           }
 {RETURNED}            { return CARBON_SIMPLE_TOKEN(RETURNED);            }
 {RETURN}              { return CARBON_SIMPLE_TOKEN(RETURN);              }
 {RUN}                 { return CARBON_SIMPLE_TOKEN(RUN);                 }
 {SELF}                { return CARBON_SIMPLE_TOKEN(SELF);                }
 {SEMICOLON}           { return CARBON_SIMPLE_TOKEN(SEMICOLON);           }
 {SLASH}               { return CARBON_SIMPLE_TOKEN(SLASH);               }
+{SLASH_EQUAL}         { return CARBON_SIMPLE_TOKEN(SLASH_EQUAL);         }
+{STAR_EQUAL}          { return CARBON_SIMPLE_TOKEN(STAR_EQUAL);          }
 {STRING}              { return CARBON_SIMPLE_TOKEN(STRING);              }
 {THEN}                { return CARBON_SIMPLE_TOKEN(THEN);                }
 {TRUE}                { return CARBON_SIMPLE_TOKEN(TRUE);                }

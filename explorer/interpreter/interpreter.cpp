@@ -1935,6 +1935,13 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
     case StatementKind::Assign: {
       const auto& assign = cast<Assign>(stmt);
+      if (auto rewrite = assign.rewritten_form()) {
+        if (act.pos() == 0) {
+          return todo_.Spawn(std::make_unique<ExpressionAction>(*rewrite));
+        } else {
+          return todo_.FinishAction();
+        }
+      }
       if (act.pos() == 0) {
         //    { {(lv = e) :: C, E, F} :: S, H}
         // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
@@ -1953,6 +1960,15 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                     stmt.source_loc()));
         CARBON_RETURN_IF_ERROR(
             heap_.Write(lval.address(), rval, stmt.source_loc()));
+        return todo_.FinishAction();
+      }
+    }
+    case StatementKind::IncrementDecrement: {
+      const auto& inc_dec = cast<IncrementDecrement>(stmt);
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+          std::make_unique<ExpressionAction>(*inc_dec.rewritten_form()));
+      } else {
         return todo_.FinishAction();
       }
     }
