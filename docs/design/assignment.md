@@ -301,7 +301,7 @@ impl MyInt as AddAssignWith(like MyInt) {
 }
 
 impl like MyInt as AddWith(like MyInt) where .Result = MyInt {
- // ...
+  // ...
 }
 ```
 
