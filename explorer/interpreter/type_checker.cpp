@@ -4420,7 +4420,10 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
         ExpectExactType(f->return_term().source_loc(), "return type of `Main`",
                         arena_->New<IntType>(), &f->return_term().static_type(),
                         function_scope));
-    // TODO: Check that main doesn't have any parameters.
+    if (!f->param_pattern().fields().empty()) {
+      return ProgramError(f->source_loc())
+             << "`Main` must not take any parameters";
+    }
   }
 
   if (trace_stream_) {
