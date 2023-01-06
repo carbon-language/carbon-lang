@@ -154,8 +154,8 @@ provided for built-in types as necessary to give the semantics described above.
 // Simple `=`.
 interface AssignFrom(U:! type) {
   fn Op[addr self: Self*](other: U);
-} constraint Assign { extends AssignFrom(Self);
 }
+constraint Assign { extends AssignFrom(Self); }
 ```
 
 Given `var x: T` and `y: U`:
