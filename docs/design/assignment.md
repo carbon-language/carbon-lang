@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Built-in types](#built-in-types)
 -   [Tuples, structs, and classes](#tuples-structs-and-classes)
 -   [Extensibility](#extensibility)
-    -   [Simple assignment.](#simple-assignment)
+    -   [Simple assignment](#simple-assignment)
     -   [Arithmetic](#arithmetic)
     -   [Bitwise and bit-shift](#bitwise-and-bit-shift)
     -   [Defaults](#defaults)
@@ -148,7 +148,7 @@ Assignment operators can be provided for user-defined types by implementing the
 following families of interfaces. Implementations of these interfaces are
 provided for built-in types as necessary to give the semantics described above.
 
-### Simple assignment.
+### Simple assignment
 
 ```
 // Simple `=`.
