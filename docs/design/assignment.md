@@ -307,6 +307,12 @@ impl like MyInt as AddWith(like MyInt) where .Result = MyInt {
 
 ## Alternatives considered
 
+-   [Allow assignment as a subexpression](/proposals/p2511.md#allow-assignment-as-a-subexpression)
+-   [Allow chained assignment](/proposals/p2511.md#allow-chained-assignment)
+-   [Do not provide increment and decrement](/proposals/p2511.md#do-not-provide-increment-and-decrement)
+-   [Define `$=` in terms of `$`](/proposals/p2511.md#define--in-terms-of-)
+-   [Do not allow overloading the behavior of `=`](/proposals/p2511.md#do-not-allow-overloading-the-behavior-of-)
+
 ## References
 
 -   Leads issue
