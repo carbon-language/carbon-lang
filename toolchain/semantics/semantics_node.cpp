@@ -9,20 +9,21 @@
 namespace Carbon {
 
 static auto PrintArgs(llvm::raw_ostream& /*out*/,
-                      const SemanticsNode::NoArgs /*no_args*/) {}
+                      const SemanticsNode::NoArgs /*no_args*/) -> void {}
 
 template <typename T>
-static auto PrintArgs(llvm::raw_ostream& out, T arg) {
-  out << arg;
+static auto PrintArgs(llvm::raw_ostream& out, T arg) -> void {
+  out << ", arg0: " << arg;
 }
 
 template <typename T0, typename T1>
-static auto PrintArgs(llvm::raw_ostream& out, std::pair<T0, T1> args) {
-  out << args.first << ", " << args.second;
+static auto PrintArgs(llvm::raw_ostream& out, std::pair<T0, T1> args) -> void {
+  PrintArgs(out, args.first);
+  out << ", arg1: " << args.second;
 }
 
 void SemanticsNode::Print(llvm::raw_ostream& out) const {
-  out << kind_ << "(";
+  out << "{kind: " << kind_;
   switch (kind_) {
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
   case SemanticsNodeKind::Name:          \
@@ -30,10 +31,10 @@ void SemanticsNode::Print(llvm::raw_ostream& out) const {
     break;
 #include "toolchain/semantics/semantics_node_kind.def"
   }
-  out << ")";
-  if (type_.index != -1) {
-    out << ": " << type_;
+  if (type_.is_valid()) {
+    out << ", type: " << type_;
   }
+  out << "}";
 }
 
 }  // namespace Carbon
