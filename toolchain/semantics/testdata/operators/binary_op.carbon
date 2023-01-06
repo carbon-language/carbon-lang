@@ -6,8 +6,8 @@
 // RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: integer_literals:
-// CHECK:STDOUT:   - "12"
-// CHECK:STDOUT:   - "34"
+// CHECK:STDOUT:   - 12
+// CHECK:STDOUT:   - 34
 // CHECK:STDOUT: strings:
 // CHECK:STDOUT:   - Main
 // CHECK:STDOUT: nodes:
