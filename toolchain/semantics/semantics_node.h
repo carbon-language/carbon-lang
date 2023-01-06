@@ -34,6 +34,12 @@ struct SemanticsNodeId : public IndexBase {
   }
 };
 
+// The ID of a callable, such as a function.
+struct SemanticsCallableId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void { out << "fn" << index; }
+};
+
 // The ID of a cross-referenced IR.
 struct SemanticsCrossReferenceIRId : public IndexBase {
   using IndexBase::IndexBase;
@@ -41,12 +47,6 @@ struct SemanticsCrossReferenceIRId : public IndexBase {
     out << "ir";
     IndexBase::Print(out);
   }
-};
-
-// The ID of a function signature.
-struct SemanticsFunctionSignatureId : public IndexBase {
-  using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "fn" << index; }
 };
 
 // Type-safe storage of integer literals.
@@ -154,14 +154,14 @@ class SemanticsNode {
 
   // TODO: The signature should be added as a parameter.
   static auto MakeFunctionDeclaration(ParseTree::Node parse_node,
-                                      SemanticsFunctionSignatureId signature)
+                                      SemanticsCallableId signature)
       -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDeclaration,
                          SemanticsNodeId(), signature.index);
   }
-  auto GetAsFunctionDeclaration() const -> SemanticsFunctionSignatureId {
+  auto GetAsFunctionDeclaration() const -> SemanticsCallableId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDeclaration);
-    return {SemanticsFunctionSignatureId(arg0_)};
+    return {SemanticsCallableId(arg0_)};
   }
 
   static auto MakeFunctionDefinition(ParseTree::Node parse_node,

@@ -16,6 +16,12 @@ class SemanticsIRForTest;
 
 namespace Carbon {
 
+// A callable object.
+struct SemanticsCallable {
+  SemanticsNodeBlockId params_id;
+  SemanticsNodeId return_id;
+};
+
 // Provides semantic analysis on a ParseTree.
 class SemanticsIR {
  public:
@@ -49,6 +55,12 @@ class SemanticsIR {
   // Returns the type of the requested node.
   auto GetType(SemanticsNodeId node_id) -> SemanticsNodeId {
     return GetNode(node_id).type();
+  }
+
+  auto AddCallable(SemanticsCallable callable) -> SemanticsCallableId {
+    SemanticsCallableId id(callables_.size());
+    callables_.push_back(callable);
+    return id;
   }
 
   // Adds an integer literal, returning an ID to reference it.
@@ -100,6 +112,9 @@ class SemanticsIR {
   }
 
   bool has_errors_ = false;
+
+  // Storage for callable objects.
+  llvm::SmallVector<SemanticsCallable> callables_;
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references

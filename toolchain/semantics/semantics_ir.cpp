@@ -77,6 +77,15 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
 
   out << "cross_reference_irs.size == " << cross_reference_irs_.size() << ",\n";
 
+  out << "callables = {\n";
+  for (int32_t i = 0; i < static_cast<int32_t>(callables_.size()); ++i) {
+    out.indent(Indent);
+    auto callable = callables_[i];
+    out << SemanticsCallableId(i) << " = " << callable.params_id << " -> "
+        << callable.return_id << ";\n";
+  }
+  out << "},\n";
+
   out << "integer_literals = {\n";
   for (int32_t i = 0; i < static_cast<int32_t>(integer_literals_.size()); ++i) {
     out.indent(Indent);

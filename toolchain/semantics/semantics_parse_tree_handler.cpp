@@ -10,6 +10,7 @@
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
+#include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
 
 namespace Carbon {
@@ -299,7 +300,10 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
   auto fn_node =
       node_stack_.PopForSoloParseNode(ParseNodeKind::FunctionIntroducer);
 
-  auto decl_id = AddNode(SemanticsNode::MakeFunctionDeclaration(fn_node));
+  SemanticsCallable callable;
+  auto callable_id = semantics_->AddCallable(callable);
+  auto decl_id =
+      AddNode(SemanticsNode::MakeFunctionDeclaration(fn_node, callable_id));
   // TODO: Propagate the type of the function.
   BindName(name_node, SemanticsNodeId::MakeInvalid(), decl_id);
   auto block_id = semantics_->AddNodeBlock();
