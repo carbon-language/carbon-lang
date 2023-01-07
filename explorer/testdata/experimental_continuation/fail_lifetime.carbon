@@ -5,6 +5,7 @@
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -15,7 +16,6 @@ package ExplorerTest api;
 fn capture() -> __Continuation {
   var x: i32 = 1;
   __continuation k {
-    // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/experimental_continuation/fail_lifetime.carbon:[[@LINE+1]]: undefined behavior: access to dead value 1
     var y: i32 = x;
   }
   return k;

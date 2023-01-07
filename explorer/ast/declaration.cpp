@@ -340,14 +340,15 @@ auto DestructorDeclaration::CreateDestructor(
     Nonnull<Arena*> arena, SourceLocation source_loc,
     std::vector<Nonnull<AstNode*>> deduced_params,
     Nonnull<TuplePattern*> param_pattern, ReturnTerm return_term,
-    std::optional<Nonnull<Block*>> body)
+    std::optional<Nonnull<Block*>> body, VirtualOverride virt_override)
     -> ErrorOr<Nonnull<DestructorDeclaration*>> {
   DeducedParameters split_params;
   CARBON_ASSIGN_OR_RETURN(split_params,
                           SplitDeducedParameters(source_loc, deduced_params));
   return arena->New<DestructorDeclaration>(
       source_loc, std::move(split_params.resolved_params),
-      split_params.self_pattern, param_pattern, return_term, body);
+      split_params.self_pattern, param_pattern, return_term, body,
+      virt_override);
 }
 
 auto FunctionDeclaration::Create(Nonnull<Arena*> arena,

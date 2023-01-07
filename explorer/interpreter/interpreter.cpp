@@ -27,6 +27,7 @@
 #include "explorer/interpreter/action_stack.h"
 #include "explorer/interpreter/stack.h"
 #include "explorer/interpreter/value.h"
+#include "explorer/interpreter/value_transform.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
@@ -1087,6 +1088,19 @@ auto Interpreter::CallFunction(const CallExpression& call,
   }
 }
 
+class DeepCopyTransform : public ValueTransform<DeepCopyTransform> {
+ public:
+  explicit DeepCopyTransform(Nonnull<Arena*> arena) : ValueTransform(arena) {}
+
+  using ValueTransform::operator();
+
+  // Preserve class type.
+  auto operator()(Nonnull<const NominalClassType*> class_type)
+      -> Nonnull<const NominalClassType*> {
+    return class_type;
+  }
+};
+
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
@@ -1450,13 +1464,44 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Alloc: {
+          const auto* value = args[0];
+          // Perform a deep copy of the class value to allocated the "newed"
+          // value separately from `heap.New`'s function parameter. Avoids
+          // deallocation and destructor from being called on the returned
+          // value.
+          // TODO: Implement copy elision by moving value ownership
+          if (const auto* class_val = dyn_cast<NominalClassValue>(value)) {
+            value = DeepCopyTransform(arena_).Transform(class_val);
+          }
           CARBON_CHECK(args.size() == 1);
-          Address addr(heap_.AllocateValue(args[0]));
+          Address addr(heap_.AllocateValue(value));
           return todo_.FinishAction(arena_->New<PointerValue>(addr));
         }
         case IntrinsicExpression::Intrinsic::Dealloc: {
           CARBON_CHECK(args.size() == 1);
-          heap_.Deallocate(cast<PointerValue>(args[0])->address());
+          const auto* ptr = cast<PointerValue>(args[0]);
+          CARBON_ASSIGN_OR_RETURN(
+              const auto* pointee,
+              this->heap_.Read(ptr->address(), exp.source_loc()));
+          if (const auto* class_value = dyn_cast<NominalClassValue>(pointee); class_value /*&& class_value != *class_value->class_value_ptr()*/) {
+            const auto* child_class_value = *class_value->class_value_ptr();
+
+            // Value delete at different allocation, FAILS
+            const auto alloc_id = heap_.GetAllocationId(child_class_value);
+            CARBON_CHECK(alloc_id)
+                << "Unable to get allocation ID for `" << *ptr << "`"
+                << "\n"
+                << heap_;
+            if (act.pos() == 1) {
+              return todo_.Spawn(std::make_unique<DestroyAction>(
+                  arena_->New<LValue>(Address(*alloc_id)), child_class_value));
+            } else {
+              heap_.Deallocate(*alloc_id);
+            }
+          } else {
+            // Dealloc allocation, even though value already dead
+            heap_.Deallocate(ptr->address());
+          }
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Rand: {
@@ -2217,6 +2262,9 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
       return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
     }
   }
+  // for (const auto alloc : act.scope()->allocations()) {
+  //   heap_.Deallocate(alloc);
+  // }
   todo_.Pop();
   return Success();
 }

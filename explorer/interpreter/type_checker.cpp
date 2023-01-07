@@ -3369,6 +3369,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           const auto* arg_type = &args[0]->static_type();
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", arg_type));
+          // TODO: Check that destructor is virtual.
           e->set_static_type(TupleType::Empty());
           e->set_value_category(ValueCategory::Let);
           return Success();

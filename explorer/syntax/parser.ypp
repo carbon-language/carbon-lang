@@ -105,6 +105,7 @@
 %type <std::string> optional_library_path
 %type <bool> api_or_impl
 %type <VirtualOverride> fn_virtual_override_intro
+%type <VirtualOverride> destructor_virtual_override_intro
 %type <ClassExtensibility> class_declaration_extensibility
 %type <std::optional<Nonnull<Expression*>>> class_declaration_extends
 %type <Nonnull<Declaration*>> declaration
@@ -1309,16 +1310,23 @@ match_first_declaration_list:
       $$ = std::move($1);
       $$.push_back($2);
     }
+destructor_virtual_override_intro:
+  DESTRUCTOR
+  { $$ = VirtualOverride::None; }
+| VIRTUAL DESTRUCTOR
+  { $$ = VirtualOverride::Virtual; }
+| IMPL DESTRUCTOR
+  { $$ = VirtualOverride::Impl; }
 ;
 destructor_declaration:
-  DESTRUCTOR deduced_params block
+  destructor_virtual_override_intro deduced_params block
   {
     ErrorOr<DestructorDeclaration*> fn =
         DestructorDeclaration::CreateDestructor(
             arena, context.source_loc(), $2,
             arena->New<TuplePattern>(context.source_loc(),
                                      std::vector<Nonnull<Pattern*>>()),
-            ReturnTerm::Omitted(context.source_loc()), $3);
+            ReturnTerm::Omitted(context.source_loc()), $3, $1);
     if (fn.ok()) {
       $$ = *fn;
     } else {
