@@ -51,7 +51,26 @@ class Builtins {
     LeftShiftWith,
     RightShiftWith,
 
-    Last = RightShiftWith
+    // Simple assignment.
+    AssignFrom,
+
+    // Compound assignment.
+    AssignAddWith,
+    AssignSubWith,
+    AssignMulWith,
+    AssignDivWith,
+    AssignModWith,
+    AssignBitAndWith,
+    AssignBitOrWith,
+    AssignBitXorWith,
+    AssignLeftShiftWith,
+    AssignRightShiftWith,
+
+    // Increment and decrement.
+    Inc,
+    Dec,
+
+    Last = Dec
   };
   // TODO: In C++20, replace with `using enum Builtin;`.
   static constexpr Builtin As = Builtin::As;
@@ -61,6 +80,7 @@ class Builtins {
   static constexpr Builtin LessEqWith = Builtin::LessEqWith;
   static constexpr Builtin GreaterWith = Builtin::GreaterWith;
   static constexpr Builtin GreaterEqWith = Builtin::GreaterEqWith;
+  static constexpr Builtin CompareWith = Builtin::CompareWith;
   static constexpr Builtin Negate = Builtin::Negate;
   static constexpr Builtin AddWith = Builtin::AddWith;
   static constexpr Builtin SubWith = Builtin::SubWith;
@@ -73,7 +93,19 @@ class Builtins {
   static constexpr Builtin BitXorWith = Builtin::BitXorWith;
   static constexpr Builtin LeftShiftWith = Builtin::LeftShiftWith;
   static constexpr Builtin RightShiftWith = Builtin::RightShiftWith;
-  static constexpr Builtin CompareWith = Builtin::CompareWith;
+  static constexpr Builtin AssignFrom = Builtin::AssignFrom;
+  static constexpr Builtin AssignAddWith = Builtin::AssignAddWith;
+  static constexpr Builtin AssignSubWith = Builtin::AssignSubWith;
+  static constexpr Builtin AssignMulWith = Builtin::AssignMulWith;
+  static constexpr Builtin AssignDivWith = Builtin::AssignDivWith;
+  static constexpr Builtin AssignModWith = Builtin::AssignModWith;
+  static constexpr Builtin AssignBitAndWith = Builtin::AssignBitAndWith;
+  static constexpr Builtin AssignBitOrWith = Builtin::AssignBitOrWith;
+  static constexpr Builtin AssignBitXorWith = Builtin::AssignBitXorWith;
+  static constexpr Builtin AssignLeftShiftWith = Builtin::AssignLeftShiftWith;
+  static constexpr Builtin AssignRightShiftWith = Builtin::AssignRightShiftWith;
+  static constexpr Builtin Inc = Builtin::Inc;
+  static constexpr Builtin Dec = Builtin::Dec;
 
   // Register a declaration that might be a builtin.
   void Register(Nonnull<const Declaration*> decl);
@@ -87,14 +119,45 @@ class Builtins {
     return BuiltinNames[static_cast<int>(builtin)];
   }
 
+  // Get the builtin interface to use for an assignment operator.
+  static Builtin BuiltinInterfaceForAssignOperator(AssignOperator op);
+
  private:
   static constexpr int NumBuiltins = static_cast<int>(Builtin::Last) + 1;
   static constexpr const char* BuiltinNames[NumBuiltins] = {
-      "As",         "ImplicitAs",  "EqWith",        "LessWith",
-      "LessEqWith", "GreaterWith", "GreaterEqWith", "CompareWith",
-      "Negate",     "AddWith",     "SubWith",       "MulWith",
-      "DivWith",    "ModWith",     "BitComplement", "BitAndWith",
-      "BitOrWith",  "BitXorWith",  "LeftShiftWith", "RightShiftWith"};
+      "As",
+      "ImplicitAs",
+      "EqWith",
+      "LessWith",
+      "LessEqWith",
+      "GreaterWith",
+      "GreaterEqWith",
+      "CompareWith",
+      "Negate",
+      "AddWith",
+      "SubWith",
+      "MulWith",
+      "DivWith",
+      "ModWith",
+      "BitComplement",
+      "BitAndWith",
+      "BitOrWith",
+      "BitXorWith",
+      "LeftShiftWith",
+      "RightShiftWith",
+      "AssignFrom",
+      "AssignAddWith",
+      "AssignSubWith",
+      "AssignMulWith",
+      "AssignDivWith",
+      "AssignModWith",
+      "AssignBitAndWith",
+      "AssignBitOrWith",
+      "AssignBitXorWith",
+      "AssignLeftShiftWith",
+      "AssignRightShiftWith",
+      "Inc",
+      "Dec"};
 
   std::optional<Nonnull<const Declaration*>> builtins_[NumBuiltins] = {};
 };

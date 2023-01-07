@@ -474,6 +474,81 @@ external impl i32 as RightShiftWith(i32) where .Result = i32 {
   }
 }
 
+// -------------------------------------------
+// Assignment, compound assignment, increment.
+// -------------------------------------------
+
+interface AssignFrom(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint Assign { extends AssignFrom(Self); }
+
+interface AssignAddWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint AssignAdd { extends AssignAddWith(Self); }
+
+interface AssignSubWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint AssignSub { extends AssignSubWith(Self); }
+
+interface AssignMulWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint AssignMul { extends AssignMulWith(Self); }
+
+interface AssignDivWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint AssignDiv { extends AssignDivWith(Self); }
+
+interface AssignModWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint AssignMod { extends AssignModWith(Self); }
+
+interface AssignBitAndWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint AssignBitAnd { extends AssignBitAndWith(Self); }
+
+interface AssignBitOrWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint AssignBitOr { extends AssignBitOrWith(Self); }
+
+interface AssignBitXorWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint AssignBitXor { extends AssignBitXorWith(Self); }
+
+interface AssignLeftShiftWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint AssignLeftShift { extends AssignLeftShiftWith(Self); }
+
+interface AssignRightShiftWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint AssignRightShift { extends AssignRightShiftWith(Self); }
+
+impl forall [T:! type, U:! ImplicitAs(T)]
+    T as AssignFrom(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = other.Convert();
+  }
+}
+
+//impl forall [U:! type, T:! AddWith(U) & AssignFrom(.Self.(AddWith(U).Result))]
+// TODO
+impl forall [U:! type, T:! AddWith(U) where .Self is AssignFrom(.Self.(AddWith(U).Result)) and .Self.(AddWith(U).Result) is ImplicitAs(.Self)]
+     T as AssignAddWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self + other;
+  }
+}
+
 //-------------------------
 // Optional
 //-------------------------
