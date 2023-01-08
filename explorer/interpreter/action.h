@@ -256,9 +256,9 @@ class DeclarationAction : public Action {
 };
 
 // An Action which implements destroying all local allocations in a scope.
-class CleanupAction : public Action {
+class CleanUpAction : public Action {
  public:
-  explicit CleanupAction(RuntimeScope scope)
+  explicit CleanUpAction(RuntimeScope scope)
       : Action(Kind::CleanUpAction),
         allocations_count_(scope.allocations().size()) {
     StartScope(std::move(scope));

@@ -2150,7 +2150,7 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
 
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
-  CleanupAction& cleanup = cast<CleanupAction>(act);
+  CleanUpAction& cleanup = cast<CleanUpAction>(act);
   if (act.pos() < cleanup.allocations_count()) {
     auto allocation =
         act.scope()->allocations()[cleanup.allocations_count() - act.pos() - 1];
