@@ -478,10 +478,10 @@ external impl i32 as RightShiftWith(i32) where .Result = i32 {
 // Assignment, compound assignment, increment.
 // -------------------------------------------
 
-interface AssignFrom(U:! type) {
+interface AssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint Assign { extends AssignFrom(Self); }
+constraint Assign { extends AssignWith(Self); }
 
 interface AssignAddWith(U:! type) {
   fn Op[addr self: Self*](other: U);
@@ -533,16 +533,19 @@ interface AssignRightShiftWith(U:! type) {
 }
 constraint AssignRightShift { extends AssignRightShiftWith(Self); }
 
+// TODO: This is temporary, and should eventually be replaced by
+// something more fine-grained. Not all class types should be
+// assignable.
 impl forall [T:! type, U:! ImplicitAs(T)]
-    T as AssignFrom(U) {
+    T as AssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = other.Convert();
   }
 }
 
-//impl forall [U:! type, T:! AddWith(U) & AssignFrom(.Self.(AddWith(U).Result))]
+//impl forall [U:! type, T:! AddWith(U) & AssignWith(.Self.(AddWith(U).Result))]
 // TODO
-impl forall [U:! type, T:! AddWith(U) where .Self is AssignFrom(.Self.(AddWith(U).Result)) and .Self.(AddWith(U).Result) is ImplicitAs(.Self)]
+impl forall [U:! type, T:! AddWith(U) where .Self is AssignWith(.Self.(AddWith(U).Result)) and .Self.(AddWith(U).Result) is ImplicitAs(.Self)]
      T as AssignAddWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self + other;

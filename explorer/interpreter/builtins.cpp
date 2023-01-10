@@ -42,7 +42,7 @@ Builtins::Builtin Builtins::BuiltinInterfaceForAssignOperator(
     AssignOperator op) {
   switch (op) {
     case AssignOperator::Plain:
-      return Builtin::AssignFrom;
+      return Builtin::AssignWith;
     case AssignOperator::Add:
       return Builtin::AssignAddWith;
     case AssignOperator::Sub:

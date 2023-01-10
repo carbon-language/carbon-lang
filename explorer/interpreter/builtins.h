@@ -52,7 +52,7 @@ class Builtins {
     RightShiftWith,
 
     // Simple assignment.
-    AssignFrom,
+    AssignWith,
 
     // Compound assignment.
     AssignAddWith,
@@ -93,7 +93,7 @@ class Builtins {
   static constexpr Builtin BitXorWith = Builtin::BitXorWith;
   static constexpr Builtin LeftShiftWith = Builtin::LeftShiftWith;
   static constexpr Builtin RightShiftWith = Builtin::RightShiftWith;
-  static constexpr Builtin AssignFrom = Builtin::AssignFrom;
+  static constexpr Builtin AssignWith = Builtin::AssignWith;
   static constexpr Builtin AssignAddWith = Builtin::AssignAddWith;
   static constexpr Builtin AssignSubWith = Builtin::AssignSubWith;
   static constexpr Builtin AssignMulWith = Builtin::AssignMulWith;
@@ -145,7 +145,7 @@ class Builtins {
       "BitXorWith",
       "LeftShiftWith",
       "RightShiftWith",
-      "AssignFrom",
+      "AssignWith",
       "AssignAddWith",
       "AssignSubWith",
       "AssignMulWith",
