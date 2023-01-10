@@ -14,7 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Syntax](#syntax)
 -   [Simple assignment semantics](#simple-assignment-semantics)
 -   [Built-in types](#built-in-types)
--   [Tuples, structs, and classes](#tuples-structs-and-classes)
+-   [Tuples, structs, choice types, and data classes](#tuples-structs-choice-types-and-data-classes)
 -   [Extensibility](#extensibility)
     -   [Simple assignment](#simple-assignment)
     -   [Arithmetic](#arithmetic)
@@ -104,7 +104,7 @@ This equivalence is not enforced, but when an object is in an unformed state,
 running the assignment function is _optional_, just like running the destructor
 is. If the assignment function is not run, the object will be directly
 initialized from the right-hand side instead. The type is still required to
-implement `AssignFrom` for the assignment to be valid.
+implement `AssignWith` for the assignment to be valid.
 
 ```
 class C { ... }
@@ -123,19 +123,18 @@ fn G() {
 
 ## Built-in types
 
-For built-in types:
+Integers and floating-point types, `bool`, and pointer types support simple
+assignment with `=`. The right-hand operand is implicitly converted to the type
+of the left-hand operand, and the converted value replaces the value of that
+operand.
 
--   For `=`, the right-hand operand is implicitly converted to the type of the
-    left-hand operand, and the converted value replaces the value of that
-    operand.
--   A `$=` operator is supported in each case where a built-in `$` operator is
-    supported, and `a $= b;` behaves the same as `a = a $ b;` except that `a` is
-    only evaluated once.
--   For integer types, `++n;` and `--n;` behave the same as `n += 1;` and
-    `n -= 1;` respectively. For floating-point types, these operators are not
-    provided.
+Compound assignment `$=` for integer and floating point types is
+[provided automatically](#defaults) for each supported operator `$`.
 
-## Tuples, structs, and classes
+For integer types, `++n;` and `--n;` behave the same as `n += 1;` and `n -= 1;`
+respectively. For floating-point types, these operators are not provided.
+
+## Tuples, structs, choice types, and data classes
 
 _TODO_: Describe the rules for assignment in these cases.
 
@@ -152,56 +151,56 @@ provided for built-in types as necessary to give the semantics described above.
 
 ```
 // Simple `=`.
-interface AssignFrom(U:! type) {
+interface AssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint Assign { extends AssignFrom(Self); }
+constraint Assign { extends AssignWith(Self); }
 ```
 
 Given `var x: T` and `y: U`:
 
--   The statement `x = y;` is rewritten to `x.(AssignFrom(U).Op)(y);`.
+-   The statement `x = y;` is rewritten to `x.(AssignWith(U).Op)(y);`.
 
 ### Arithmetic
 
 ```
 // Compound `+=`.
-interface AddAssignWith(U:! type) {
+interface AssignAddWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AddAssign { extends AddAssignWith(Self); }
+constraint AssignAdd { extends AssignAddWith(Self); }
 ```
 
 ```
 // Compound `-=`.
-interface SubAssignWith(U:! type) {
+interface AssignSubWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint SubAssign { extends SubAssignWith(Self); }
+constraint AssignSub { extends AssignSubWith(Self); }
 ```
 
 ```
 // Compound `*=`.
-interface MulAssignWith(U:! type) {
+interface AssignMulWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint MulAssign { extends MulAssignWith(Self); }
+constraint AssignMul { extends AssignMulWith(Self); }
 ```
 
 ```
 // Compound `/=`.
-interface DivAssignWith(U:! type) {
+interface AssignDivWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint DivAssign { extends DivAssignWith(Self); }
+constraint AssignDiv { extends AssignDivWith(Self); }
 ```
 
 ```
 // Compound `%=`.
-interface ModAssignWith(U:! type) {
+interface AssignModWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint ModAssign { extends ModAssignWith(Self); }
+constraint AssignMod { extends AssignModWith(Self); }
 ```
 
 ```
@@ -213,11 +212,11 @@ interface Dec { fn Op[addr self: Self*](); }
 
 Given `var x: T` and `y: U`:
 
--   The statement `x += y;` is rewritten to `x.(AddAssignWith(U).Op)(y);`.
--   The statement `x -= y;` is rewritten to `x.(SubAssignWith(U).Op)(y);`.
--   The statement `x *= y;` is rewritten to `x.(MulAssignWith(U).Op)(y);`.
--   The statement `x /= y;` is rewritten to `x.(DivAssignWith(U).Op)(y);`.
--   The statement `x %= y;` is rewritten to `x.(ModAssignWith(U).Op)(y);`.
+-   The statement `x += y;` is rewritten to `x.(AssignAddWith(U).Op)(y);`.
+-   The statement `x -= y;` is rewritten to `x.(AssignSubWith(U).Op)(y);`.
+-   The statement `x *= y;` is rewritten to `x.(AssignMulWith(U).Op)(y);`.
+-   The statement `x /= y;` is rewritten to `x.(AssignDivWith(U).Op)(y);`.
+-   The statement `x %= y;` is rewritten to `x.(AssignModWith(U).Op)(y);`.
 -   The statement `++x;` is rewritten to `x.(Inc.Op)();`.
 -   The statement `--x;` is rewritten to `x.(Dec.Op)();`.
 
@@ -225,83 +224,86 @@ Given `var x: T` and `y: U`:
 
 ```
 // Compound `&=`.
-interface BitAndAssignWith(U:! type) {
+interface AssignBitAndWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint BitAndAssign { extends BitAndAssignWith(Self); }
+constraint AssignBitAnd { extends AssignBitAndWith(Self); }
 ```
 
 ```
 // Compound `|=`.
-interface BitOrAssignWith(U:! type) {
+interface AssignBitOrWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint BitOrAssign { extends BitOrAssignWith(Self); }
+constraint AssignBitOr { extends AssignBitOrWith(Self); }
 ```
 
 ```
 // Compound `^=`.
-interface BitXorAssignWith(U:! type) {
+interface AssignBitXorWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint BitXorAssign { extends BitXorAssignWith(Self); }
+constraint AssignBitXor { extends AssignBitXorWith(Self); }
 ```
 
 ```
 // Compound `<<=`.
-interface LeftShiftAssignWith(U:! type) {
+interface AssignLeftShiftWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint LeftShiftAssign { extends LeftShiftAssignWith(Self); }
+constraint AssignLeftShift { extends AssignLeftShiftWith(Self); }
 ```
 
 ```
 // Compound `>>=`.
-interface RightShiftAssignWith(U:! type) {
+interface AssignRightShiftWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint RightShiftAssign { extends RightShiftAssignWith(Self); }
+constraint AssignRightShift { extends AssignRightShiftWith(Self); }
 ```
 
 Given `var x: T` and `y: U`:
 
--   The statement `x &= y;` is rewritten to `x.(BitAndAssignWith(U).Op)(y);`.
--   The statement `x |= y;` is rewritten to `x.(BitOrAssignWith(U).Op)(y);`.
--   The statement `x ^= y;` is rewritten to `x.(BitXorAssignWith(U).Op)(y);`.
+-   The statement `x &= y;` is rewritten to `x.(AssignBitAndWith(U).Op)(y);`.
+-   The statement `x |= y;` is rewritten to `x.(AssignBitOrWith(U).Op)(y);`.
+-   The statement `x ^= y;` is rewritten to `x.(AssignBitXorWith(U).Op)(y);`.
 -   The statement `x <<= y;` is rewritten to
-    `x.(LeftShiftAssignWith(U).Op)(y);`.
+    `x.(AssignLeftShiftWith(U).Op)(y);`.
 -   The statement `x >>= y;` is rewritten to
-    `x.(RightShiftAssignWith(U).Op)(y)`;.
+    `x.(AssignRightShiftWith(U).Op)(y)`;.
 
 Implementations of these interfaces are provided for built-in types as necessary
 to give the semantics described above.
 
 ### Defaults
 
-An implementation of `OpAssignWith(U)` automatically provides an implementation
-of `OpWith(U)`:
+When a type provides both an assignment and a binary operator `$`, so that
+`a = a $ b;` is valid, Carbon provides a default `$=` implementation so that
+`a $= b;` is valid and has the same meaning as `a = a $ b;`.
+
+This defaulting is accomplished by a parameterized implementation of
+`AssignOpWith(U)` defined in terms of `AssignWith` and `OpWith`:
 
 ```
-impl forall [U:! type, T:! OpAssignWith(U)] T as OpWith(U) where .Result = T {
-  fn Op[self: Self](other: U) -> Self {
-    returned var result: Self = self;
-    result.Op(other);
-    return var;
+impl forall [U:! type, T:! OpWith(U) & AssignWith(.Self.(OpWith(U).Result))]
+    T as AssignOpWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    // Here, `$` is the operator described by `OpWith`.
+    *self = *self $ other;
   }
 }
 ```
 
-This default is not sufficient to provide implicit conversions on the left-hand
-side of an operator. If such conversions are desired, a separate implementation
-is necessary:
+If a more efficient form of compound assignment is possible for a type, a more
+specific `impl` can be provided:
 
 ```
-impl MyInt as AddAssignWith(like MyInt) {
-  // ...
+impl like MyString as AddWith(like MyString) {
+  // Allocate new memory and perform addition.
 }
 
-impl like MyInt as AddWith(like MyInt) where .Result = MyInt {
-  // ...
+impl MyString as AssignAddWith(like MyString) {
+  // Reuse existing storage where possible.
 }
 ```
 
@@ -310,8 +312,10 @@ impl like MyInt as AddWith(like MyInt) where .Result = MyInt {
 -   [Allow assignment as a subexpression](/proposals/p2511.md#allow-assignment-as-a-subexpression)
 -   [Allow chained assignment](/proposals/p2511.md#allow-chained-assignment)
 -   [Do not provide increment and decrement](/proposals/p2511.md#do-not-provide-increment-and-decrement)
--   [Define `$=` in terms of `$`](/proposals/p2511.md#define--in-terms-of-)
+-   [Define `$` in terms of `$=`](/proposals/p2511.md#define--in-terms-of-)
 -   [Do not allow overloading the behavior of `=`](/proposals/p2511.md#do-not-allow-overloading-the-behavior-of-)
+-   [Treat the left hand side of `=` as a pattern](/proposals/p2511.md#treat-the-left-hand-side-of--as-a-pattern)
+-   [Different names for interfaces](/proposals/p2511.md#different-names-for-interfaces)
 
 ## References
 
