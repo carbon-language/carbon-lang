@@ -543,9 +543,9 @@ impl forall [T:! type, U:! ImplicitAs(T)]
   }
 }
 
-//impl forall [U:! type, T:! AddWith(U) & AssignWith(.Self.(AddWith(U).Result))]
-// TODO
-impl forall [U:! type, T:! AddWith(U) where .Self is AssignWith(.Self.(AddWith(U).Result)) and .Self.(AddWith(U).Result) is ImplicitAs(.Self)]
+// TODO: Shouldn't need `ImplicitAs` here once we do assignment lookup properly.
+impl forall [U:! type, T:! AddWith(U) where .Self is AssignWith(.Self.Result)]
+//impl forall [U:! type, T:! AddWith(U) where .Self is AssignWith(.Self.Result) and .Self.(AddWith(U).Result) is ImplicitAs(.Self)]
      T as AssignAddWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self + other;

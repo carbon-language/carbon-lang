@@ -4232,7 +4232,9 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         return ProgramError(assign.source_loc())
                << "Cannot assign to rvalue '" << assign.lhs() << "'";
       }
-      if (assign.op() == AssignOperator::Plain) {
+      if (assign.op() == AssignOperator::Plain &&
+          IsSameType(&assign.lhs().static_type(), &assign.rhs().static_type(),
+                     impl_scope)) {
         // TODO: Interface lookup.
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<Expression*> converted_rhs,
