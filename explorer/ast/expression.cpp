@@ -31,6 +31,8 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
        {"new", Intrinsic::Alloc},
        {"delete", Intrinsic::Dealloc},
        {"rand", Intrinsic::Rand},
+       {"implicit_as", Intrinsic::ImplicitAs},
+       {"implicit_as_convert", Intrinsic::ImplicitAsConvert},
        {"int_eq", Intrinsic::IntEq},
        {"int_compare", Intrinsic::IntCompare},
        {"int_bit_complement", Intrinsic::IntBitComplement},
@@ -61,6 +63,10 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_delete";
     case IntrinsicExpression::Intrinsic::Rand:
       return "__intrinsic_rand";
+    case IntrinsicExpression::Intrinsic::ImplicitAs:
+      return "__intrinsic_implicit_as";
+    case IntrinsicExpression::Intrinsic::ImplicitAsConvert:
+      return "__intrinsic_implicit_as_convert";
     case IntrinsicExpression::Intrinsic::IntEq:
       return "__intrinsic_int_eq";
     case IntrinsicExpression::Intrinsic::IntCompare:
