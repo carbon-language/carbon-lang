@@ -890,6 +890,17 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       break;
     }
 
+    case Fuzzing::Declaration::kMatchFirst: {
+      const auto& match_first = declaration.match_first();
+      out << "match_first {\n";
+      for (const auto& impl : match_first.impls()) {
+        DeclarationToCarbon(impl, out);
+        out << "\n";
+      }
+      out << "}";
+      break;
+    }
+
     case Fuzzing::Declaration::kAlias: {
       const auto& alias = declaration.alias();
       out << "alias ";

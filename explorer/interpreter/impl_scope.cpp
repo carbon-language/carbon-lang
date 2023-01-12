@@ -215,6 +215,7 @@ static auto CombineResults(Nonnull<const InterfaceType*> iface_type,
   if (!a) {
     return b;
   }
+
   // If either of them was a symbolic result, then they'll end up being
   // equivalent. In that case, pick `a`.
   const auto* impl_a = dyn_cast<ImplWitness>(*a);
@@ -225,13 +226,32 @@ static auto CombineResults(Nonnull<const InterfaceType*> iface_type,
   if (!impl_a) {
     return b;
   }
+
   // If they refer to the same `impl` declaration, it doesn't matter which one
   // we pick, so we pick `a`.
   // TODO: Compare the identities of the `impl`s, not the declarations.
   if (&impl_a->declaration() == &impl_b->declaration()) {
     return a;
   }
+
   // TODO: Order the `impl`s based on type structure.
+
+  // If the declarations appear in the same `match_first` block, whichever
+  // appears first wins.
+  // TODO: Once we support an impl being declared more than once, we will need
+  // to check this more carefully.
+  if (impl_a->declaration().match_first() &&
+      impl_a->declaration().match_first() ==
+          impl_b->declaration().match_first()) {
+    for (auto* impl : (*impl_a->declaration().match_first())->impls()) {
+      if (impl == &impl_a->declaration()) {
+        return a;
+      }
+      if (impl == &impl_b->declaration()) {
+        return b;
+      }
+    }
+  }
   return ProgramError(source_loc)
          << "ambiguous implementations of " << *iface_type << " for " << *type;
 }

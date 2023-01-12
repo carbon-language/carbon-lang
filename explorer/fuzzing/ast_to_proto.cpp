@@ -774,6 +774,15 @@ static auto DeclarationToProto(const Declaration& declaration)
       break;
     }
 
+    case DeclarationKind::MatchFirstDeclaration: {
+      const auto& match_first = cast<MatchFirstDeclaration>(declaration);
+      auto* match_first_proto = declaration_proto.mutable_match_first();
+      for (const auto* impl : match_first.impls()) {
+        *match_first_proto->add_impls() = DeclarationToProto(*impl);
+      }
+      break;
+    }
+
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable SelfDeclaration in DeclarationToProto().";
     }

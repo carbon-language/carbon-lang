@@ -86,6 +86,7 @@ LESS_LESS            "<<"
 LET                  "let"
 LIBRARY              "library"
 MATCH                "match"
+MATCH_FIRST          "match_first"
 MINUS                "-"
 MIX                  "__mix"
 MIXIN                "__mixin"
@@ -193,6 +194,7 @@ operand_start         [(A-Za-z0-9_\"]
 {LESS}                { return CARBON_SIMPLE_TOKEN(LESS);                }
 {LET}                 { return CARBON_SIMPLE_TOKEN(LET);                 }
 {LIBRARY}             { return CARBON_SIMPLE_TOKEN(LIBRARY);             }
+{MATCH_FIRST}         { return CARBON_SIMPLE_TOKEN(MATCH_FIRST);         }
 {MATCH}               { return CARBON_SIMPLE_TOKEN(MATCH);               }
 {MINUS}               { return CARBON_SIMPLE_TOKEN(MINUS);               }
 {MIXIN}               { return CARBON_SIMPLE_TOKEN(MIXIN);               }

@@ -410,6 +410,10 @@ message ImplDeclaration {
   repeated Declaration members = 4;
 }
 
+message MatchFirstDeclaration {
+  repeated Declaration impls = 1;
+}
+
 message AliasDeclaration {
   optional string name = 1;
   optional Expression target = 2;
@@ -445,6 +449,7 @@ message Declaration {
     InterfaceExtendsDeclaration interface_extends = 12;
     InterfaceImplDeclaration interface_impl = 13;
     ConstraintDeclaration constraint = 14;
+    MatchFirstDeclaration match_first = 15;
   }
 }
 

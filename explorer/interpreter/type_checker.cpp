@@ -5455,6 +5455,14 @@ auto TypeChecker::TypeCheckDeclaration(
           TypeCheckImplDeclaration(&cast<ImplDeclaration>(*d), impl_scope));
       break;
     }
+    case DeclarationKind::MatchFirstDeclaration: {
+      auto* match_first = cast<MatchFirstDeclaration>(d);
+      for (auto* impl : match_first->impls()) {
+        impl->set_match_first(match_first);
+        CARBON_RETURN_IF_ERROR(TypeCheckImplDeclaration(impl, impl_scope));
+      }
+      break;
+    }
     case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration:
       CARBON_RETURN_IF_ERROR(TypeCheckCallableDeclaration(
@@ -5530,6 +5538,12 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
     case DeclarationKind::ImplDeclaration: {
       auto& impl_decl = cast<ImplDeclaration>(*d);
       CARBON_RETURN_IF_ERROR(DeclareImplDeclaration(&impl_decl, scope_info));
+      break;
+    }
+    case DeclarationKind::MatchFirstDeclaration: {
+      for (auto* impl : cast<MatchFirstDeclaration>(d)->impls()) {
+        CARBON_RETURN_IF_ERROR(DeclareImplDeclaration(impl, scope_info));
+      }
       break;
     }
     case DeclarationKind::FunctionDeclaration: {
