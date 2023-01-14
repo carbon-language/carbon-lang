@@ -5,7 +5,9 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: result: 2
+// CHECK:STDOUT: 6
+// CHECK:STDOUT: 3
+// CHECK:STDOUT: result: 1
 
 package ExplorerTest api;
 
@@ -16,7 +18,10 @@ external impl A as DivWith(i32) where .Result = A {
 }
 
 fn Main() -> i32 {
-  var a: A = {.n = 8};
+  var a: A = {.n = 19};
   a = a / 3;
-  return a.n;
+  Print("{0}", a.n);
+  a /= 2;
+  Print("{0}", a.n);
+  return (a / 2).n;
 }

@@ -54,11 +54,11 @@ Builtins::Builtin Builtins::BuiltinInterfaceForAssignOperator(
     case AssignOperator::Mod:
       return Builtin::ModAssignWith;
     case AssignOperator::And:
-      return Builtin::BitAssignAndWith;
+      return Builtin::BitAndAssignWith;
     case AssignOperator::Or:
-      return Builtin::BitAssignOrWith;
+      return Builtin::BitOrAssignWith;
     case AssignOperator::Xor:
-      return Builtin::BitAssignXorWith;
+      return Builtin::BitXorAssignWith;
     case AssignOperator::ShiftLeft:
       return Builtin::LeftShiftAssignWith;
     case AssignOperator::ShiftRight:

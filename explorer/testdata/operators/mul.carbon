@@ -5,7 +5,9 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: result: 10
+// CHECK:STDOUT: 10
+// CHECK:STDOUT: 30
+// CHECK:STDOUT: result: 210
 
 package ExplorerTest api;
 
@@ -18,5 +20,8 @@ external impl A as MulWith(i32) where .Result = A {
 fn Main() -> i32 {
   var a: A = {.n = 5};
   a = a * 2;
-  return a.n;
+  Print("{0}", a.n);
+  a *= 3;
+  Print("{0}", a.n);
+  return (a * 7).n;
 }

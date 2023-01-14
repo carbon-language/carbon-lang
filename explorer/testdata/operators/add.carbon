@@ -5,7 +5,9 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: result: 12
+// CHECK:STDOUT: 12
+// CHECK:STDOUT: 19
+// CHECK:STDOUT: result: 26
 
 package ExplorerTest api;
 
@@ -18,5 +20,9 @@ external impl A as Add {
 fn Main() -> i32 {
   var a: A = {.n = 5};
   var b: A = {.n = 7};
+  a = a + b;
+  Print("{0}", a.n);
+  a += b;
+  Print("{0}", a.n);
   return (a + b).n;
 }

@@ -5,23 +5,23 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: 7
-// CHECK:STDOUT: 3
+// CHECK:STDOUT: Before: 1
+// CHECK:STDOUT: Interface: 2
+// CHECK:STDOUT: Op: 3
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-class A { var n: i32; }
-
-external impl A as ModWith(i32) where .Result = A {
-  fn Op[self: Self](rhs: i32) -> A { return {.n = self.n % rhs}; }
+class C {
+  var n: i32;
 }
 
 fn Main() -> i32 {
-  var a: A = {.n = 15};
-  a = a % 8;
-  Print("{0}", a.n);
-  a %= 4;
-  Print("{0}", a.n);
-  return (a % 3).n;
+  var c: C = {.n = 1};
+  Print("Before: {0}", c.n);
+  c.(AssignWith({.n: i32}).Op)({.n = 2});
+  Print("Interface: {0}", c.n);
+  c = {.n = 3};
+  Print("Op: {0}", c.n);
+  return 0;
 }

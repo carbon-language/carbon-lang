@@ -5,7 +5,9 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: result: 4
+// CHECK:STDOUT: 6
+// CHECK:STDOUT: 0
+// CHECK:STDOUT: result: -1
 
 package ExplorerTest api;
 
@@ -17,6 +19,9 @@ external impl A as BitXorWith(i32) where .Result = A {
 
 fn Main() -> i32 {
   var a: A = {.n = 5};
-  a = a ^ 1;
-  return a.n;
+  a = a ^ 3;
+  Print("{0}", a.n);
+  a ^= 6;
+  Print("{0}", a.n);
+  return (a ^ -1).n;
 }

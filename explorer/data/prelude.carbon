@@ -508,20 +508,20 @@ interface ModAssignWith(U:! type) {
 }
 constraint ModAssign { extends ModAssignWith(Self); }
 
-interface BitAssignAndWith(U:! type) {
+interface BitAndAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint BitAssignAnd { extends BitAssignAndWith(Self); }
+constraint BitAssignAnd { extends BitAndAssignWith(Self); }
 
-interface BitAssignOrWith(U:! type) {
+interface BitOrAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint BitAssignOr { extends BitAssignOrWith(Self); }
+constraint BitAssignOr { extends BitOrAssignWith(Self); }
 
-interface BitAssignXorWith(U:! type) {
+interface BitXorAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint BitAssignXor { extends BitAssignXorWith(Self); }
+constraint BitAssignXor { extends BitXorAssignWith(Self); }
 
 interface LeftShiftAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
@@ -543,12 +543,74 @@ impl forall [T:! type, U:! ImplicitAs(T)]
   }
 }
 
-// TODO: Shouldn't need `ImplicitAs` here once we do assignment lookup properly.
+// TODO: Should `AddWith(U) & AssignWith(.Self.(AddWith(U).Result))` work?
 impl forall [U:! type, T:! AddWith(U) where .Self is AssignWith(.Self.Result)]
-//impl forall [U:! type, T:! AddWith(U) where .Self is AssignWith(.Self.Result) and .Self.(AddWith(U).Result) is ImplicitAs(.Self)]
      T as AddAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self + other;
+  }
+}
+
+impl forall [U:! type, T:! SubWith(U) where .Self is AssignWith(.Self.Result)]
+     T as SubAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self - other;
+  }
+}
+
+impl forall [U:! type, T:! MulWith(U) where .Self is AssignWith(.Self.Result)]
+     T as MulAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self * other;
+  }
+}
+
+impl forall [U:! type, T:! DivWith(U) where .Self is AssignWith(.Self.Result)]
+     T as DivAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self / other;
+  }
+}
+
+impl forall [U:! type, T:! ModWith(U) where .Self is AssignWith(.Self.Result)]
+     T as ModAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self % other;
+  }
+}
+
+impl forall [U:! type, T:! BitAndWith(U) where .Self is AssignWith(.Self.Result)]
+     T as BitAndAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self & other;
+  }
+}
+
+impl forall [U:! type, T:! BitOrWith(U) where .Self is AssignWith(.Self.Result)]
+     T as BitOrAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self | other;
+  }
+}
+
+impl forall [U:! type, T:! BitXorWith(U) where .Self is AssignWith(.Self.Result)]
+     T as BitXorAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self ^ other;
+  }
+}
+
+impl forall [U:! type, T:! LeftShiftWith(U) where .Self is AssignWith(.Self.Result)]
+     T as LeftShiftAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self << other;
+  }
+}
+
+impl forall [U:! type, T:! RightShiftWith(U) where .Self is AssignWith(.Self.Result)]
+     T as RightShiftAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self >> other;
   }
 }
 

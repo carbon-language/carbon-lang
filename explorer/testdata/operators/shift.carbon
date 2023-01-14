@@ -5,6 +5,8 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
+// CHECK:STDOUT: 8
+// CHECK:STDOUT: 4
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
@@ -20,6 +22,12 @@ fn Main() -> i32 {
   if (not (3 >> 1 == 1)) { return 8; }
   if (not (-1 >> 1 == -1)) { return 9; }
   if (not (-2 >> 1 == -1)) { return 10; }
+
+  var n: i32 = 1;
+  n <<= 3;
+  Print("{0}", n);
+  n >>= 1;
+  Print("{0}", n);
 
   return 0;
 }
