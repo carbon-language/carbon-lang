@@ -474,9 +474,9 @@ external impl i32 as RightShiftWith(i32) where .Result = i32 {
   }
 }
 
-// -------------------------------------------
-// Assignment, compound assignment, increment.
-// -------------------------------------------
+// -----------------------------------
+// Assignment and compound assignment.
+// -----------------------------------
 
 interface AssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
@@ -611,6 +611,27 @@ impl forall [U:! type, T:! RightShiftWith(U) where .Self is AssignWith(.Self.Res
      T as RightShiftAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self >> other;
+  }
+}
+
+//-------------------------
+// Increment and decrement.
+//-------------------------
+interface Inc {
+  fn Op[addr self: Self*]();
+}
+interface Dec {
+  fn Op[addr self: Self*]();
+}
+
+impl i32 as Inc {
+  fn Op[addr self: Self*]() {
+    *self = *self + 1;
+  }
+}
+impl i32 as Dec {
+  fn Op[addr self: Self*]() {
+    *self = *self - 1;
   }
 }
 
