@@ -44,25 +44,25 @@ Builtins::Builtin Builtins::BuiltinInterfaceForAssignOperator(
     case AssignOperator::Plain:
       return Builtin::AssignWith;
     case AssignOperator::Add:
-      return Builtin::AssignAddWith;
+      return Builtin::AddAssignWith;
     case AssignOperator::Sub:
-      return Builtin::AssignSubWith;
+      return Builtin::SubAssignWith;
     case AssignOperator::Mul:
-      return Builtin::AssignMulWith;
+      return Builtin::MulAssignWith;
     case AssignOperator::Div:
-      return Builtin::AssignDivWith;
+      return Builtin::DivAssignWith;
     case AssignOperator::Mod:
-      return Builtin::AssignModWith;
+      return Builtin::ModAssignWith;
     case AssignOperator::And:
-      return Builtin::AssignBitAndWith;
+      return Builtin::BitAssignAndWith;
     case AssignOperator::Or:
-      return Builtin::AssignBitOrWith;
+      return Builtin::BitAssignOrWith;
     case AssignOperator::Xor:
-      return Builtin::AssignBitXorWith;
+      return Builtin::BitAssignXorWith;
     case AssignOperator::ShiftLeft:
-      return Builtin::AssignLeftShiftWith;
+      return Builtin::LeftShiftAssignWith;
     case AssignOperator::ShiftRight:
-      return Builtin::AssignRightShiftWith;
+      return Builtin::RightShiftAssignWith;
   }
 }
 

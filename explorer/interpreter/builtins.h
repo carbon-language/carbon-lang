@@ -55,16 +55,16 @@ class Builtins {
     AssignWith,
 
     // Compound assignment.
-    AssignAddWith,
-    AssignSubWith,
-    AssignMulWith,
-    AssignDivWith,
-    AssignModWith,
-    AssignBitAndWith,
-    AssignBitOrWith,
-    AssignBitXorWith,
-    AssignLeftShiftWith,
-    AssignRightShiftWith,
+    AddAssignWith,
+    SubAssignWith,
+    MulAssignWith,
+    DivAssignWith,
+    ModAssignWith,
+    BitAndAssignWith,
+    BitOrAssignWith,
+    BitXorAssignWith,
+    LeftShiftAssignWith,
+    RightShiftAssignWith,
 
     // Increment and decrement.
     Inc,
@@ -94,16 +94,16 @@ class Builtins {
   static constexpr Builtin LeftShiftWith = Builtin::LeftShiftWith;
   static constexpr Builtin RightShiftWith = Builtin::RightShiftWith;
   static constexpr Builtin AssignWith = Builtin::AssignWith;
-  static constexpr Builtin AssignAddWith = Builtin::AssignAddWith;
-  static constexpr Builtin AssignSubWith = Builtin::AssignSubWith;
-  static constexpr Builtin AssignMulWith = Builtin::AssignMulWith;
-  static constexpr Builtin AssignDivWith = Builtin::AssignDivWith;
-  static constexpr Builtin AssignModWith = Builtin::AssignModWith;
-  static constexpr Builtin AssignBitAndWith = Builtin::AssignBitAndWith;
-  static constexpr Builtin AssignBitOrWith = Builtin::AssignBitOrWith;
-  static constexpr Builtin AssignBitXorWith = Builtin::AssignBitXorWith;
-  static constexpr Builtin AssignLeftShiftWith = Builtin::AssignLeftShiftWith;
-  static constexpr Builtin AssignRightShiftWith = Builtin::AssignRightShiftWith;
+  static constexpr Builtin AddAssignWith = Builtin::AddAssignWith;
+  static constexpr Builtin SubAssignWith = Builtin::SubAssignWith;
+  static constexpr Builtin MulAssignWith = Builtin::MulAssignWith;
+  static constexpr Builtin DivAssignWith = Builtin::DivAssignWith;
+  static constexpr Builtin ModAssignWith = Builtin::ModAssignWith;
+  static constexpr Builtin BitAndAssignWith = Builtin::BitAndAssignWith;
+  static constexpr Builtin BitOrAssignWith = Builtin::BitOrAssignWith;
+  static constexpr Builtin BitXorAssignWith = Builtin::BitXorAssignWith;
+  static constexpr Builtin LeftShiftAssignWith = Builtin::LeftShiftAssignWith;
+  static constexpr Builtin RightShiftAssignWith = Builtin::RightShiftAssignWith;
   static constexpr Builtin Inc = Builtin::Inc;
   static constexpr Builtin Dec = Builtin::Dec;
 
@@ -146,16 +146,16 @@ class Builtins {
       "LeftShiftWith",
       "RightShiftWith",
       "AssignWith",
-      "AssignAddWith",
-      "AssignSubWith",
-      "AssignMulWith",
-      "AssignDivWith",
-      "AssignModWith",
-      "AssignBitAndWith",
-      "AssignBitOrWith",
-      "AssignBitXorWith",
-      "AssignLeftShiftWith",
-      "AssignRightShiftWith",
+      "AddAssignWith",
+      "SubAssignWith",
+      "MulAssignWith",
+      "DivAssignWith",
+      "ModAssignWith",
+      "BitAndAssignWith",
+      "BitOrAssignWith",
+      "BitXorAssignWith",
+      "LeftShiftAssignWith",
+      "RightShiftAssignWith",
       "Inc",
       "Dec"};
 

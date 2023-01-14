@@ -483,55 +483,55 @@ interface AssignWith(U:! type) {
 }
 constraint Assign { extends AssignWith(Self); }
 
-interface AssignAddWith(U:! type) {
+interface AddAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignAdd { extends AssignAddWith(Self); }
+constraint AddAssign { extends AddAssignWith(Self); }
 
-interface AssignSubWith(U:! type) {
+interface SubAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignSub { extends AssignSubWith(Self); }
+constraint SubAssign { extends SubAssignWith(Self); }
 
-interface AssignMulWith(U:! type) {
+interface MulAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignMul { extends AssignMulWith(Self); }
+constraint MulAssign { extends MulAssignWith(Self); }
 
-interface AssignDivWith(U:! type) {
+interface DivAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignDiv { extends AssignDivWith(Self); }
+constraint DivAssign { extends DivAssignWith(Self); }
 
-interface AssignModWith(U:! type) {
+interface ModAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignMod { extends AssignModWith(Self); }
+constraint ModAssign { extends ModAssignWith(Self); }
 
-interface AssignBitAndWith(U:! type) {
+interface BitAssignAndWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignBitAnd { extends AssignBitAndWith(Self); }
+constraint BitAssignAnd { extends BitAssignAndWith(Self); }
 
-interface AssignBitOrWith(U:! type) {
+interface BitAssignOrWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignBitOr { extends AssignBitOrWith(Self); }
+constraint BitAssignOr { extends BitAssignOrWith(Self); }
 
-interface AssignBitXorWith(U:! type) {
+interface BitAssignXorWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignBitXor { extends AssignBitXorWith(Self); }
+constraint BitAssignXor { extends BitAssignXorWith(Self); }
 
-interface AssignLeftShiftWith(U:! type) {
+interface LeftShiftAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignLeftShift { extends AssignLeftShiftWith(Self); }
+constraint LeftShiftAssign { extends LeftShiftAssignWith(Self); }
 
-interface AssignRightShiftWith(U:! type) {
+interface RightShiftAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignRightShift { extends AssignRightShiftWith(Self); }
+constraint RightShiftAssign { extends RightShiftAssignWith(Self); }
 
 // TODO: This is temporary, and should eventually be replaced by
 // something more fine-grained. Not all class types should be
@@ -546,7 +546,7 @@ impl forall [T:! type, U:! ImplicitAs(T)]
 // TODO: Shouldn't need `ImplicitAs` here once we do assignment lookup properly.
 impl forall [U:! type, T:! AddWith(U) where .Self is AssignWith(.Self.Result)]
 //impl forall [U:! type, T:! AddWith(U) where .Self is AssignWith(.Self.Result) and .Self.(AddWith(U).Result) is ImplicitAs(.Self)]
-     T as AssignAddWith(U) {
+     T as AddAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self + other;
   }
