@@ -1496,9 +1496,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         }
         case IntrinsicExpression::Intrinsic::ImplicitAsConvert: {
           CARBON_CHECK(args.size() == 2);
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> result,
-              Convert(args[0], args[1], exp.source_loc()));
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> result,
+                                  Convert(args[0], args[1], exp.source_loc()));
           return todo_.FinishAction(result);
         }
         case IntrinsicExpression::Intrinsic::IntEq: {
