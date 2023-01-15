@@ -34,6 +34,21 @@ using GlobalMembersMap =
 
 class TypeChecker {
  public:
+  // TODO (@cradtke): delete me
+  auto CheckPatternEquality(Nonnull<const Pattern*> o_patt,
+                            Nonnull<const Pattern*> e_patt) -> ErrorOr<Success>;
+  auto CheckFunctionSignatureEquality(Nonnull<const CallableDeclaration*> o_fn,
+                                      Nonnull<const CallableDeclaration*> e_fn)
+      -> ErrorOr<Success>;
+  auto CheckReturnTermEquality(Nonnull<const ReturnTerm*> o_ret_term,
+                               Nonnull<const ReturnTerm*> e_ret_term)
+      -> ErrorOr<Success>;
+
+  auto CheckExpressionEquality(Nonnull<const Expression*> o_exp,
+                               Nonnull<const Expression*> e_exp)
+      -> ErrorOr<Success>;
+  // end TODO (@cradtke)
+
   explicit TypeChecker(Nonnull<Arena*> arena,
                        std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
       : arena_(arena), trace_stream_(trace_stream) {}

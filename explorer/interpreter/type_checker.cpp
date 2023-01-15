@@ -21,6 +21,8 @@
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/pattern.h"
+#include "explorer/ast/return_term.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/common/nonnull.h"
@@ -4691,6 +4693,93 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
   return Success();
 }
 
+auto TypeChecker::CheckPatternEquality(Nonnull<const Pattern*> o_patt,
+                                       Nonnull<const Pattern*> e_patt)
+    -> ErrorOr<Success> {
+  if (o_patt->kind() != e_patt->kind()) {
+    return ProgramError(o_patt->source_loc())
+           << __FUNCTION__ << ":" << __LINE__ << " failed. kind mismatch";
+  }
+  switch (e_patt->kind()) {
+    case PatternKind::BindingPattern: {
+      const auto* o = cast<BindingPattern>(o_patt);
+      const auto* e = cast<BindingPattern>(e_patt);
+
+      CARBON_RETURN_IF_ERROR(CheckPatternEquality(&o->type(), &e->type()));
+
+      break;
+    }
+    case PatternKind::TuplePattern: {
+      const auto* o = cast<TuplePattern>(o_patt);
+      const auto* e = cast<TuplePattern>(e_patt);
+
+      if (o->fields().size() != e->fields().size()) {
+        return ProgramError(o->source_loc())
+               << __FUNCTION__ << ":" << __LINE__ << " failed. size mismatch";
+      }
+
+      for (auto pair : llvm::zip(o->fields(), e->fields())) {
+        CARBON_RETURN_IF_ERROR(
+            CheckPatternEquality(std::get<0>(pair), std::get<1>(pair)));
+      }
+
+      break;
+    }
+    case PatternKind::ExpressionPattern: {
+      const auto* o = cast<ExpressionPattern>(o_patt);
+      const auto* e = cast<ExpressionPattern>(e_patt);
+
+      CARBON_RETURN_IF_ERROR(
+          CheckExpressionEquality(&o->expression(), &e->expression()));
+      break;
+    }
+    default:
+      if (trace_stream_) {
+        **trace_stream_ << "cradtke: unexpected pattern kind - "
+                        << PatternKindName(e_patt->kind()) << "\n";
+      }
+      //      CARBON_CHECK(0 && "unreachable");
+      break;
+  }
+  return Success();
+}
+
+auto TypeChecker::CheckExpressionEquality(Nonnull<const Expression*> o_exp,
+                                          Nonnull<const Expression*> e_exp)
+    -> ErrorOr<Success> {
+  if (o_exp->kind() != e_exp->kind()) {
+    return ProgramError(o_exp->source_loc())
+           << __FUNCTION__ << ":" << __LINE__ << " failed. kind mismatch";
+  }
+
+  return Success();
+}
+
+auto TypeChecker::CheckReturnTermEquality(Nonnull<const ReturnTerm*> o_ret_term,
+                                          Nonnull<const ReturnTerm*> e_ret_term)
+    -> ErrorOr<Success> {
+  if (o_ret_term->type_expression().has_value() !=
+      o_ret_term->type_expression().has_value()) {
+    return ProgramError(o_ret_term->source_loc())
+           << __FUNCTION__ << ":" << __LINE__
+           << " failed. has type expression mismatch";
+  }
+
+  return CheckExpressionEquality(*o_ret_term->type_expression(),
+                                 *e_ret_term->type_expression());
+}
+
+auto TypeChecker::CheckFunctionSignatureEquality(
+    Nonnull<const CallableDeclaration*> o_fn,
+    Nonnull<const CallableDeclaration*> e_fn) -> ErrorOr<Success> {
+  CARBON_RETURN_IF_ERROR(
+      CheckPatternEquality(&o_fn->param_pattern(), &e_fn->param_pattern()));
+  CARBON_RETURN_IF_ERROR(
+      CheckReturnTermEquality(&o_fn->return_term(), &e_fn->return_term()));
+
+  return Success();
+}
+
 auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                                           const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
@@ -4785,6 +4874,10 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                  << ": cannot override a method that is not declared "
                     "`abstract` or `virtual` in base class.";
         }
+
+        CARBON_RETURN_IF_ERROR(CheckFunctionSignatureEquality(
+            fun, class_vtable[fun->name()].first));
+
         break;
     }
     class_vtable[fun->name().inner_name()] = {fun, class_level};
