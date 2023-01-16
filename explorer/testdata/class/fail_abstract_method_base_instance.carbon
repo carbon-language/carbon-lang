@@ -8,17 +8,16 @@
 
 package ExplorerTest api;
 
-base class C {
+abstract class A {
+    abstract fn Foo[self: Self]();
 }
 
-class D extends C {
-  abstract fn Foo[self:Self]() -> i32 {
-    return 1;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_not_supported.carbon:[[@LINE+1]]: Error declaring `Foo`: `abstract` methods are not yet supported.
-  }
+base class B extends A {
+
 }
 
 fn Main() -> i32 {
-  let d: D = {};
+  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_base_instance.carbon:[[@LINE+1]]: Cannot instantiate base class `B`: abstract method `Foo` should be implemented.
+  var b: B = { .base = {} };
   return 0;
 }

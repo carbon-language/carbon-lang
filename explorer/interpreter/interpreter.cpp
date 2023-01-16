@@ -1859,6 +1859,25 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                  << "Cannot instantiate abstract class "
                  << dest_class->declaration().name();
         }
+
+        if (dest_class->declaration().extensibility() ==
+            ClassExtensibility::Base) {
+          for (const auto& vt : dest_class->vtable()) {
+            const auto* const fun = vt.getValue().first;
+
+            if (!fun->is_method()) {
+              continue;
+            }
+
+            if (fun->virt_override() == VirtualOverride::Abstract) {
+              return ProgramError(stmt.source_loc())
+                     << "Cannot instantiate base class `"
+                     << dest_class->declaration().name()
+                     << "`: abstract method `" << fun->name()
+                     << "` should be implemented.";
+            }
+          }
+        }
       }
       if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}

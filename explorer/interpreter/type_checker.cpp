@@ -4519,16 +4519,27 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
              << "Error declaring `" << fun->name() << "`"
              << ": class functions cannot be virtual.";
     }
+
+    if (fun->virt_override() == VirtualOverride::Abstract &&
+        fun->body().has_value()) {
+      return ProgramError(fun->source_loc())
+             << "Error declaring `" << fun->name() << "`"
+             << ": abstract method cannot have a body.";
+    }
+
     bool has_vtable_entry =
         class_vtable.find(fun->name()) != class_vtable.end();
     // TODO: Implement complete declaration logic from
     // `/docs/design/classes.md#virtual-methods`.
     switch (fun->virt_override()) {
       case VirtualOverride::Abstract:
-        // Not supported yet.
-        return ProgramError(fun->source_loc())
-               << "Error declaring `" << fun->name() << "`"
-               << ": `abstract` methods are not yet supported.";
+        if (class_decl->extensibility() != ClassExtensibility::Abstract) {
+          return ProgramError(fun->source_loc())
+                 << "Error declaring `" << fun->name() << "`"
+                 << ": `abstract` methods are allowed only in abstract "
+                    "classes.";
+        }
+        break;
       case VirtualOverride::None:
       case VirtualOverride::Virtual:
         if (has_vtable_entry) {
@@ -4554,6 +4565,22 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
         break;
     }
     class_vtable[fun->name()] = {fun, class_level};
+  }
+
+  if (class_decl->extensibility() == ClassExtensibility::None) {
+    for (const auto& vt : class_vtable) {
+      const auto* const fun = vt.getValue().first;
+      if (!fun->is_method()) {
+        continue;
+      }
+
+      if (fun->virt_override() == VirtualOverride::Abstract) {
+        return ProgramError(class_decl->source_loc())
+               << "Error declaring `" << class_decl->name() << "`"
+               << ": final class should implement abstract method `"
+               << fun->name() << "`.";
+      }
+    }
   }
 
   // For class declaration `class MyType(T:! type, U:! AnInterface)`, `Self`
