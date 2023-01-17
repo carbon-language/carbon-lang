@@ -165,42 +165,42 @@ Given `var x: T` and `y: U`:
 
 ```
 // Compound `+=`.
-interface AssignAddWith(U:! type) {
+interface AddAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignAdd { extends AssignAddWith(Self); }
+constraint AddAssign { extends AddAssignWith(Self); }
 ```
 
 ```
 // Compound `-=`.
-interface AssignSubWith(U:! type) {
+interface SubAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignSub { extends AssignSubWith(Self); }
+constraint SubAssign { extends SubAssignWith(Self); }
 ```
 
 ```
 // Compound `*=`.
-interface AssignMulWith(U:! type) {
+interface MulAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignMul { extends AssignMulWith(Self); }
+constraint MulAssign { extends MulAssignWith(Self); }
 ```
 
 ```
 // Compound `/=`.
-interface AssignDivWith(U:! type) {
+interface DivAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignDiv { extends AssignDivWith(Self); }
+constraint DivAssign { extends DivAssignWith(Self); }
 ```
 
 ```
 // Compound `%=`.
-interface AssignModWith(U:! type) {
+interface ModAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignMod { extends AssignModWith(Self); }
+constraint ModAssign { extends ModAssignWith(Self); }
 ```
 
 ```
@@ -212,11 +212,11 @@ interface Dec { fn Op[addr self: Self*](); }
 
 Given `var x: T` and `y: U`:
 
--   The statement `x += y;` is rewritten to `x.(AssignAddWith(U).Op)(y);`.
--   The statement `x -= y;` is rewritten to `x.(AssignSubWith(U).Op)(y);`.
--   The statement `x *= y;` is rewritten to `x.(AssignMulWith(U).Op)(y);`.
--   The statement `x /= y;` is rewritten to `x.(AssignDivWith(U).Op)(y);`.
--   The statement `x %= y;` is rewritten to `x.(AssignModWith(U).Op)(y);`.
+-   The statement `x += y;` is rewritten to `x.(AddAssignWith(U).Op)(y);`.
+-   The statement `x -= y;` is rewritten to `x.(SubAssignWith(U).Op)(y);`.
+-   The statement `x *= y;` is rewritten to `x.(MulAssignWith(U).Op)(y);`.
+-   The statement `x /= y;` is rewritten to `x.(DivAssignWith(U).Op)(y);`.
+-   The statement `x %= y;` is rewritten to `x.(ModAssignWith(U).Op)(y);`.
 -   The statement `++x;` is rewritten to `x.(Inc.Op)();`.
 -   The statement `--x;` is rewritten to `x.(Dec.Op)();`.
 
@@ -224,53 +224,53 @@ Given `var x: T` and `y: U`:
 
 ```
 // Compound `&=`.
-interface AssignBitAndWith(U:! type) {
+interface BitAndAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignBitAnd { extends AssignBitAndWith(Self); }
+constraint BitAndAssign { extends BitAndAssignWith(Self); }
 ```
 
 ```
 // Compound `|=`.
-interface AssignBitOrWith(U:! type) {
+interface BitOrAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignBitOr { extends AssignBitOrWith(Self); }
+constraint BitOrAssign { extends BitOrAssignWith(Self); }
 ```
 
 ```
 // Compound `^=`.
-interface AssignBitXorWith(U:! type) {
+interface BitXorAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignBitXor { extends AssignBitXorWith(Self); }
+constraint BitXorAssign { extends BitXorAssignWith(Self); }
 ```
 
 ```
 // Compound `<<=`.
-interface AssignLeftShiftWith(U:! type) {
+interface LeftShiftAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignLeftShift { extends AssignLeftShiftWith(Self); }
+constraint LeftShiftAssign { extends LeftShiftAssignWith(Self); }
 ```
 
 ```
 // Compound `>>=`.
-interface AssignRightShiftWith(U:! type) {
+interface RightShiftAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AssignRightShift { extends AssignRightShiftWith(Self); }
+constraint RightShiftAssign { extends RightShiftAssignWith(Self); }
 ```
 
 Given `var x: T` and `y: U`:
 
--   The statement `x &= y;` is rewritten to `x.(AssignBitAndWith(U).Op)(y);`.
--   The statement `x |= y;` is rewritten to `x.(AssignBitOrWith(U).Op)(y);`.
--   The statement `x ^= y;` is rewritten to `x.(AssignBitXorWith(U).Op)(y);`.
+-   The statement `x &= y;` is rewritten to `x.(BitAndAssignWith(U).Op)(y);`.
+-   The statement `x |= y;` is rewritten to `x.(BitOrAssignWith(U).Op)(y);`.
+-   The statement `x ^= y;` is rewritten to `x.(BitXorAssignWith(U).Op)(y);`.
 -   The statement `x <<= y;` is rewritten to
-    `x.(AssignLeftShiftWith(U).Op)(y);`.
+    `x.(LeftShiftAssignWith(U).Op)(y);`.
 -   The statement `x >>= y;` is rewritten to
-    `x.(AssignRightShiftWith(U).Op)(y)`;.
+    `x.(RightShiftAssignWith(U).Op)(y)`;.
 
 Implementations of these interfaces are provided for built-in types as necessary
 to give the semantics described above.
@@ -282,11 +282,11 @@ When a type provides both an assignment and a binary operator `$`, so that
 `a $= b;` is valid and has the same meaning as `a = a $ b;`.
 
 This defaulting is accomplished by a parameterized implementation of
-`AssignOpWith(U)` defined in terms of `AssignWith` and `OpWith`:
+`OpAssignWith(U)` defined in terms of `AssignWith` and `OpWith`:
 
 ```
 impl forall [U:! type, T:! OpWith(U) where .Self is AssignWith(.Self.Result)]
-    T as AssignOpWith(U) {
+    T as OpAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     // Here, `$` is the operator described by `OpWith`.
     *self = *self $ other;
@@ -302,7 +302,7 @@ impl like MyString as AddWith(like MyString) {
   // Allocate new memory and perform addition.
 }
 
-impl MyString as AssignAddWith(like MyString) {
+impl MyString as AddAssignWith(like MyString) {
   // Reuse existing storage where possible.
 }
 ```
