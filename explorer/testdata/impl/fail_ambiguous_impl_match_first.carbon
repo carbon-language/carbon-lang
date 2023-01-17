@@ -15,7 +15,7 @@ interface B(T:! type) {}
 // these impls and the one below.
 // TODO: Once we order by type structure, the second impl
 // in this block should win.
-match_first {
+__match_first {
   external impl A(i32) as B(i32) {}
   external impl forall [T:! type] A(i32) as B(T) {}
 }

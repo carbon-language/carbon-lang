@@ -892,7 +892,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
 
     case Fuzzing::Declaration::kMatchFirst: {
       const auto& match_first = declaration.match_first();
-      out << "match_first {\n";
+      out << "__match_first {\n";
       for (const auto& impl : match_first.impls()) {
         DeclarationToCarbon(impl, out);
         out << "\n";

@@ -25,7 +25,7 @@ interface X {}
 interface Y {}
 interface Z {}
 
-match_first {
+__match_first {
   external impl forall [T:! X] T as A {
     fn Which() -> i32 { return 1; }
   }
