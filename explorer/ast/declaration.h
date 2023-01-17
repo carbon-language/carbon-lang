@@ -29,6 +29,7 @@ namespace Carbon {
 class MixinPseudoType;
 class ConstraintType;
 class NominalClassType;
+class MatchFirstDeclaration;
 
 // Abstract base class of all AST nodes representing patterns.
 //
@@ -740,6 +741,17 @@ class ImplDeclaration : public Declaration {
   auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
   auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
 
+  // Set the enclosing match_first declaration. Should only be called once,
+  // during type-checking.
+  void set_match_first(Nonnull<const MatchFirstDeclaration*> match_first) {
+    match_first_ = match_first;
+  }
+  // Get the enclosing match_first declaration, if any exists.
+  auto match_first() const
+      -> std::optional<Nonnull<const MatchFirstDeclaration*>> {
+    return match_first_;
+  }
+
  private:
   ImplKind kind_;
   Nonnull<Expression*> impl_type_;
@@ -749,6 +761,27 @@ class ImplDeclaration : public Declaration {
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::vector<Nonnull<Declaration*>> members_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
+  std::optional<Nonnull<const MatchFirstDeclaration*>> match_first_;
+};
+
+class MatchFirstDeclaration : public Declaration {
+ public:
+  MatchFirstDeclaration(SourceLocation source_loc,
+                        std::vector<Nonnull<ImplDeclaration*>> impls)
+      : Declaration(AstNodeKind::MatchFirstDeclaration, source_loc),
+        impls_(std::move(impls)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromMatchFirstDeclaration(node->kind());
+  }
+
+  auto impls() const -> llvm::ArrayRef<Nonnull<const ImplDeclaration*>> {
+    return impls_;
+  }
+  auto impls() -> llvm::ArrayRef<Nonnull<ImplDeclaration*>> { return impls_; }
+
+ private:
+  std::vector<Nonnull<ImplDeclaration*>> impls_;
 };
 
 class AliasDeclaration : public Declaration {

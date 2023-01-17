@@ -36,6 +36,16 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       out << "}\n";
       break;
     }
+    case DeclarationKind::MatchFirstDeclaration: {
+      const auto& match_first_decl = cast<MatchFirstDeclaration>(*this);
+      PrintID(out);
+      out << " {\n";
+      for (Nonnull<const ImplDeclaration*> m : match_first_decl.impls()) {
+        out << *m;
+      }
+      out << "}\n";
+      break;
+    }
     case DeclarationKind::FunctionDeclaration:
       cast<FunctionDeclaration>(*this).PrintDepth(-1, out);
       break;
@@ -139,6 +149,9 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
           << impl_decl.interface();
       break;
     }
+    case DeclarationKind::MatchFirstDeclaration:
+      out << "match_first";
+      break;
     case DeclarationKind::FunctionDeclaration:
       out << "fn " << cast<FunctionDeclaration>(*this).name();
       break;
@@ -232,6 +245,7 @@ auto GetName(const Declaration& declaration)
     case DeclarationKind::InterfaceExtendsDeclaration:
     case DeclarationKind::InterfaceImplDeclaration:
     case DeclarationKind::ImplDeclaration:
+    case DeclarationKind::MatchFirstDeclaration:
       return std::nullopt;
     case DeclarationKind::SelfDeclaration:
       return SelfDeclaration::name();

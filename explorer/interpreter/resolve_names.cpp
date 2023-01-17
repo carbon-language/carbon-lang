@@ -94,6 +94,7 @@ static auto AddExposedNames(const Declaration& declaration,
       break;
     }
     case DeclarationKind::ImplDeclaration:
+    case DeclarationKind::MatchFirstDeclaration:
     case DeclarationKind::MixDeclaration:
     case DeclarationKind::InterfaceExtendsDeclaration:
     case DeclarationKind::InterfaceImplDeclaration: {
@@ -556,6 +557,13 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       CARBON_RETURN_IF_ERROR(ResolveNames(impl.interface(), impl_scope));
       CARBON_RETURN_IF_ERROR(
           ResolveMemberNames(impl.members(), impl_scope, bodies));
+      break;
+    }
+    case DeclarationKind::MatchFirstDeclaration: {
+      // A `match_first` declaration does not introduce a scope.
+      for (auto* impl : cast<MatchFirstDeclaration>(declaration).impls()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(*impl, enclosing_scope, bodies));
+      }
       break;
     }
     case DeclarationKind::DestructorDeclaration:

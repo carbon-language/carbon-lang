@@ -306,6 +306,7 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration:
     case DeclarationKind::ImplDeclaration:
+    case DeclarationKind::MatchFirstDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::VariableDeclaration:
     case DeclarationKind::InterfaceExtendsDeclaration:
