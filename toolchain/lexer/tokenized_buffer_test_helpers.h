@@ -28,7 +28,7 @@ namespace Testing {
 struct ExpectedToken {
   friend auto operator<<(std::ostream& output, const ExpectedToken& expected)
       -> std::ostream& {
-    output << "\ntoken: { kind: '" << expected.kind.name().str() << "'";
+    output << "\ntoken: { kind: '" << expected.kind << "'";
     if (expected.line != -1) {
       output << ", line: " << expected.line;
     }
@@ -82,9 +82,8 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
 
     TokenKind actual_kind = buffer.GetKind(token);
     if (actual_kind != expected.kind) {
-      *result_listener << "\nToken " << index << " is a "
-                       << actual_kind.name().str() << ", expected a "
-                       << expected.kind.name().str() << ".";
+      *result_listener << "\nToken " << index << " is a " << actual_kind
+                       << ", expected a " << expected.kind << ".";
       matches = false;
     }
 
