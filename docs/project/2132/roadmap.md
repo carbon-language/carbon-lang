@@ -11,7 +11,7 @@ The timeline will likely change regularly as goals will likely be achieved well 
 
 By the end of 2023, a PR that intends to close issue 2023 needs to be submitted.
 
-Closure of issue 2132 may be possible prematurely if this roadmap,
+Closure of issue 2132 may be possible 'prematurely' if this roadmap,
 is referenced to from within the PR,
 and this roadmap has evolved to outline a clear path to completion of working regression testing.
 
