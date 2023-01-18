@@ -155,7 +155,8 @@ these.
 ### Declaration order
 
 -   For a struct without constructors or factory functions, fields should be
-    declared at the start of the struct, not at the end.
+    declared at the start of the struct, immediately after any member types or
+    typedefs, not at the end.
 
 ### Copyable and movable types
 
