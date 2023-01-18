@@ -4420,7 +4420,10 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
         ExpectExactType(f->return_term().source_loc(), "return type of `Main`",
                         arena_->New<IntType>(), &f->return_term().static_type(),
                         function_scope));
-    // TODO: Check that main doesn't have any parameters.
+    if (!f->param_pattern().fields().empty()) {
+      return ProgramError(f->source_loc())
+             << "`Main` must not take any parameters";
+    }
   }
 
   if (trace_stream_) {
@@ -5455,6 +5458,14 @@ auto TypeChecker::TypeCheckDeclaration(
           TypeCheckImplDeclaration(&cast<ImplDeclaration>(*d), impl_scope));
       break;
     }
+    case DeclarationKind::MatchFirstDeclaration: {
+      auto* match_first = cast<MatchFirstDeclaration>(d);
+      for (auto* impl : match_first->impls()) {
+        impl->set_match_first(match_first);
+        CARBON_RETURN_IF_ERROR(TypeCheckImplDeclaration(impl, impl_scope));
+      }
+      break;
+    }
     case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration:
       CARBON_RETURN_IF_ERROR(TypeCheckCallableDeclaration(
@@ -5530,6 +5541,12 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
     case DeclarationKind::ImplDeclaration: {
       auto& impl_decl = cast<ImplDeclaration>(*d);
       CARBON_RETURN_IF_ERROR(DeclareImplDeclaration(&impl_decl, scope_info));
+      break;
+    }
+    case DeclarationKind::MatchFirstDeclaration: {
+      for (auto* impl : cast<MatchFirstDeclaration>(d)->impls()) {
+        CARBON_RETURN_IF_ERROR(DeclareImplDeclaration(impl, scope_info));
+      }
       break;
     }
     case DeclarationKind::FunctionDeclaration: {

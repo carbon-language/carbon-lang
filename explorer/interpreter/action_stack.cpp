@@ -238,7 +238,7 @@ auto ActionStack::UnwindToWithCaptureScopesToDestroy(
     auto& scope = item->scope();
     if (scope && item->kind() != Action::Kind::CleanUpAction) {
       std::unique_ptr<Action> cleanup_action =
-          std::make_unique<CleanupAction>(std::move(*scope));
+          std::make_unique<CleanUpAction>(std::move(*scope));
       scopes_to_destroy.push(std::move(cleanup_action));
     }
   }
@@ -332,7 +332,7 @@ void ActionStack::PushCleanUpActions(
     auto& act = actions.top();
     if (act->scope()) {
       std::unique_ptr<Action> cleanup_action =
-          std::make_unique<CleanupAction>(std::move(*act->scope()));
+          std::make_unique<CleanUpAction>(std::move(*act->scope()));
       todo_.Push(std::move(cleanup_action));
     }
     actions.pop();
@@ -343,7 +343,7 @@ void ActionStack::PushCleanUpAction(std::unique_ptr<Action> act) {
   auto& scope = act->scope();
   if (scope && act->kind() != Action::Kind::CleanUpAction) {
     std::unique_ptr<Action> cleanup_action =
-        std::make_unique<CleanupAction>(std::move(*scope));
+        std::make_unique<CleanUpAction>(std::move(*scope));
     todo_.Push(std::move(cleanup_action));
   }
 }

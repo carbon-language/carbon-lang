@@ -178,6 +178,13 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
       }
       break;
     }
+    case DeclarationKind::MatchFirstDeclaration: {
+      auto& match_first_decl = cast<MatchFirstDeclaration>(*declaration);
+      for (Nonnull<Declaration*> impl : match_first_decl.impls()) {
+        CARBON_RETURN_IF_ERROR(ResolveControlFlow(impl));
+      }
+      break;
+    }
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::VariableDeclaration:
     case DeclarationKind::InterfaceExtendsDeclaration:
