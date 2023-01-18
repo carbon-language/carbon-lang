@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_COMMON_ENUM_BASE_H_
 #define CARBON_TOOLCHAIN_COMMON_ENUM_BASE_H_
 
-#include <cstdint>
 #include <type_traits>
 
 #include "common/ostream.h"

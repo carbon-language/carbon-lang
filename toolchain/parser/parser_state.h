@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_PARSER_PARSER_STATE_H_
 #define CARBON_TOOLCHAIN_PARSER_PARSER_STATE_H_
 
+#include <cstdint>
+
 #include "toolchain/common/enum_base.h"
 
 namespace Carbon {
