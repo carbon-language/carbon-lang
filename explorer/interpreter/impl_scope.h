@@ -156,7 +156,7 @@ class ImplScope {
 // An equality context that considers two values to be equal if they are a
 // single step apart according to an equality constraint in the given impl
 // scope.
-struct SingleStepEqualityContext : public EqualityContext {
+class SingleStepEqualityContext : public EqualityContext {
  public:
   explicit SingleStepEqualityContext(Nonnull<const ImplScope*> impl_scope)
       : impl_scope_(impl_scope) {}

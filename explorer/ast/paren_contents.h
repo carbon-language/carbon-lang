@@ -26,13 +26,13 @@ namespace Carbon {
 // either `Expression` or `Pattern`.
 template <typename Term>
 struct ParenContents {
+  std::vector<Nonnull<Term*>> elements;
+  bool has_trailing_comma;
+
   // If this object represents a single term with no trailing comma, this
   // method returns that term. This typically means the parentheses can be
   // interpreted as grouping.
   auto SingleTerm() const -> std::optional<Nonnull<Term*>>;
-
-  std::vector<Nonnull<Term*>> elements;
-  bool has_trailing_comma;
 };
 
 // Implementation details only below here.

@@ -16,6 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [General naming rules](#general-naming-rules)
     -   [File names](#file-names)
     -   [Syntax and formatting](#syntax-and-formatting)
+    -   [Declaration order](#declaration-order)
     -   [Copyable and movable types](#copyable-and-movable-types)
     -   [Static and global variables](#static-and-global-variables)
     -   [Foundational libraries and data types](#foundational-libraries-and-data-types)
@@ -150,6 +151,11 @@ these.
     -   Tests are an exception and should typically be wrapped with
         `namespace Carbon::Testing { namespace { ... } }` to keep everything
         internal.
+
+### Declaration order
+
+-   For a struct without constructors or factory functions, fields should be
+    declared at the start of the struct, not at the end.
 
 ### Copyable and movable types
 

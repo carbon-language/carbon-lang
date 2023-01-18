@@ -311,15 +311,15 @@ class TokenizedBuffer {
   // Specifies minimum widths to use when printing a token's fields via
   // `printToken`.
   struct PrintWidths {
-    // Widens `this` to the maximum of `this` and `new_width` for each
-    // dimension.
-    auto Widen(const PrintWidths& widths) -> void;
-
     int index;
     int kind;
     int line;
     int column;
     int indent;
+
+    // Widens `this` to the maximum of `this` and `new_width` for each
+    // dimension.
+    auto Widen(const PrintWidths& widths) -> void;
   };
 
   struct TokenInfo {

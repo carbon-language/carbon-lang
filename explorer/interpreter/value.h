@@ -937,6 +937,8 @@ struct ImplConstraint {
 
 // A constraint that a collection of values are known to be the same.
 struct EqualityConstraint {
+  std::vector<Nonnull<const Value*>> values;
+
   // Visit the values in this equality constraint that are a single step away
   // from the given value according to this equality constraint. That is: if
   // `value` is identical to a value in `values`, then call the visitor on all
@@ -948,8 +950,6 @@ struct EqualityConstraint {
   auto VisitEqualValues(
       Nonnull<const Value*> value,
       llvm::function_ref<bool(Nonnull<const Value*>)> visitor) const -> bool;
-
-  std::vector<Nonnull<const Value*>> values;
 };
 
 // A constraint indicating that access to an associated constant should be
