@@ -41,7 +41,7 @@ def load_diagnostic_kind() -> Set[str]:
 
     This isn't validated for uniqueness because the compiler does that.
     """
-    path = Path("toolchain/diagnostics/diagnostic_registry.def")
+    path = Path("toolchain/diagnostics/diagnostic_kind.def")
     content = path.read_text()
     decls = set(re.findall(r"CARBON_DIAGNOSTIC_KIND\((.+)\)", content))
     return decls.difference(IGNORED)
