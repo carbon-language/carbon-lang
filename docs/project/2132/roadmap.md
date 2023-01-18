@@ -14,5 +14,4 @@ By the end of 2023, a PR that intends to close issue 2023 needs to be submitted.
 ## 2024-2025 Carbon Project 1.0 Release 
 
 By the time Carbon Project releases version 1.0,
-
 a PR that closes issue 2132 needs to be approved.
