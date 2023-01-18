@@ -1469,6 +1469,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         }
         case IntrinsicExpression::Intrinsic::ImplicitAs: {
           CARBON_CHECK(args.size() == 1);
+          // Build a constraint type that constrains its .Self type to satisfy
+          // the "ImplicitAs" intrinsic constraint. This involves creating a
+          // number of objects that all point to each other.
           // TODO: Factor out a simple version of ConstraintTypeBuilder and use
           // it from here.
           auto* self_binding = arena_->New<GenericBinding>(
