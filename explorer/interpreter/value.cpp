@@ -707,7 +707,7 @@ void IntrinsicConstraint::Print(llvm::raw_ostream& out) const {
   }
   if (!arguments.empty()) {
     out << "(";
-    llvm::ListSeparator comma(", ");
+    llvm::ListSeparator comma;
     for (Nonnull<const Value*> argument : arguments) {
       out << comma << *argument;
     }

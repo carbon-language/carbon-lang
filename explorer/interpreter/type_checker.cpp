@@ -739,7 +739,7 @@ auto TypeChecker::IsIntrinsicConstraintSatisfied(
           << "wrong number of arguments for `__intrinsic_implicit_as`";
       return IsImplicitlyConvertible(constraint.type, constraint.arguments[0],
                                      impl_scope,
-                                     /*allow_user_defined_conversions*/ false);
+                                     /*allow_user_defined_conversions=*/false);
   }
 }
 
