@@ -105,7 +105,6 @@ auto TupleExpressionFromParenContents(
 
 Expression::~Expression() = default;
 
-// Returns the lexical representation of `op`, such as "+" for `Add`.
 auto OperatorToString(Operator op) -> std::string_view {
   switch (op) {
     case Operator::Add:
