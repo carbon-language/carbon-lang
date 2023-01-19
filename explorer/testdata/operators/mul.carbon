@@ -7,7 +7,8 @@
 // RUN: %{explorer-run-trace}
 // CHECK:STDOUT: 10
 // CHECK:STDOUT: 30
-// CHECK:STDOUT: result: 210
+// CHECK:STDOUT: 210
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -23,5 +24,6 @@ fn Main() -> i32 {
   Print("{0}", a.n);
   a *= 3;
   Print("{0}", a.n);
-  return (a * 7).n;
+  Print("{0}", (a * 7).n);
+  return 0;
 }
