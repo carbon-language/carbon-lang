@@ -614,9 +614,10 @@ impl forall [U:! type, T:! RightShiftWith(U) where .Self is AssignWith(.Self.Res
   }
 }
 
-//-------------------------
+// ------------------------
 // Increment and decrement.
-//-------------------------
+// ------------------------
+
 interface Inc {
   fn Op[addr self: Self*]();
 }
