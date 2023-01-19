@@ -10,13 +10,25 @@
 
 namespace Carbon {
 
-auto SemanticsNodeStack::PushEntry(Entry entry, bool is_node_id) -> void {
+auto SemanticsNodeStack::PushEntry(Entry entry, DebugLog debug_log) -> void {
   CARBON_VLOG() << "Push " << stack_.size() << ": "
                 << parse_tree_->node_kind(entry.parse_node) << " -> ";
-  if (is_node_id) {
-    CARBON_VLOG() << entry.node_id;
-  } else {
-    CARBON_VLOG() << entry.name_id;
+  switch (debug_log) {
+    case DebugLog::None:
+      CARBON_VLOG() << "<none>";
+      break;
+    case DebugLog::NodeId:
+      CARBON_VLOG() << entry.node_id;
+      break;
+    case DebugLog::NodeBlockId:
+      CARBON_VLOG() << entry.node_block_id;
+      break;
+    case DebugLog::NodeBlockVectorId:
+      CARBON_VLOG() << entry.node_block_vector_id;
+      break;
+    case DebugLog::NameId:
+      CARBON_VLOG() << entry.name_id;
+      break;
   }
   CARBON_VLOG() << "\n";
   CARBON_CHECK(stack_.size() < (1 << 20))
@@ -49,14 +61,13 @@ auto SemanticsNodeStack::RequireParseKind(Entry entry,
 
 auto SemanticsNodeStack::RequireSoloParseNode(Entry entry) -> void {
   CARBON_CHECK(!entry.node_id.is_valid())
-      << "Expected invalid node_id on "
-      << parse_tree_->node_kind(entry.parse_node) << ", was " << entry.node_id;
+      << "Expected invalid id on " << parse_tree_->node_kind(entry.parse_node)
+      << ", was " << entry.node_id << " (may not be node)";
 }
 
-auto SemanticsNodeStack::RequireNodeId(Entry entry) -> void {
+auto SemanticsNodeStack::RequireValidId(Entry entry) -> void {
   CARBON_CHECK(entry.node_id.is_valid())
-      << "Expected valid node_id on "
-      << parse_tree_->node_kind(entry.parse_node);
+      << "Expected valid id on " << parse_tree_->node_kind(entry.parse_node);
 }
 
 auto SemanticsNodeStack::PopAndDiscardSoloParseNode(
@@ -80,42 +91,56 @@ auto SemanticsNodeStack::PopForSoloParseNode(ParseNodeKind pop_parse_kind)
 
 auto SemanticsNodeStack::PopForNodeId() -> SemanticsNodeId {
   auto back = PopEntry();
-  RequireNodeId(back);
+  RequireValidId(back);
   return back.node_id;
 }
 
 auto SemanticsNodeStack::PopForNodeId(ParseNodeKind pop_parse_kind)
     -> SemanticsNodeId {
   auto back = PopEntry(pop_parse_kind);
-  RequireNodeId(back);
+  RequireValidId(back);
   return back.node_id;
+}
+
+auto SemanticsNodeStack::PopForNodeBlockId(ParseNodeKind pop_parse_kind)
+    -> SemanticsNodeBlockId {
+  auto back = PopEntry(pop_parse_kind);
+  RequireValidId(back);
+  return back.node_block_id;
+}
+
+auto SemanticsNodeStack::PopForNodeBlockVectorId(ParseNodeKind pop_parse_kind)
+    -> SemanticsNodeBlockVectorId {
+  auto back = PopEntry(pop_parse_kind);
+  RequireValidId(back);
+  return back.node_block_vector_id;
 }
 
 auto SemanticsNodeStack::PopForParseNodeAndNodeId()
     -> std::pair<ParseTree::Node, SemanticsNodeId> {
   auto back = PopEntry();
-  RequireNodeId(back);
+  RequireValidId(back);
   return {back.parse_node, back.node_id};
 }
 
 auto SemanticsNodeStack::PopForParseNodeAndNodeId(ParseNodeKind pop_parse_kind)
     -> std::pair<ParseTree::Node, SemanticsNodeId> {
   auto back = PopEntry(pop_parse_kind);
-  RequireNodeId(back);
+  RequireValidId(back);
   return {back.parse_node, back.node_id};
 }
 
 auto SemanticsNodeStack::PopForParseNodeAndNameId()
     -> std::pair<ParseTree::Node, SemanticsStringId> {
   auto back = PopEntry(ParseNodeKind::PatternBinding);
-  RequireNodeId(back);
+  RequireValidId(back);
   return {back.parse_node, back.name_id};
 }
 
 auto SemanticsNodeStack::PeekForNameId() -> SemanticsStringId {
   auto back = stack_.back();
   RequireParseKind(back, ParseNodeKind::PatternBinding);
-  RequireNodeId(back);
+  RequireValidId(back);
   return back.name_id;
 }
 

@@ -37,7 +37,9 @@ struct SemanticsNodeId : public IndexBase {
 // The ID of a callable, such as a function.
 struct SemanticsCallableId : public IndexBase {
   using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "fn" << index; }
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "callable" << index;
+  }
 };
 
 // The ID of a cross-referenced IR.
@@ -63,6 +65,15 @@ struct SemanticsNodeBlockId : public IndexBase {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "block";
+    IndexBase::Print(out);
+  }
+};
+
+// Type-safe storage of vectors of node blocks.
+struct SemanticsNodeBlockVectorId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "block_vector";
     IndexBase::Print(out);
   }
 };

@@ -59,7 +59,9 @@ auto SemanticsParseTreeHandler::Build() -> void {
   node_block_stack_.push_back(semantics_->AddNodeBlock());
   PushScope();
 
-  for (auto parse_node : parse_tree_->postorder()) {
+  while (postorder_it_ != postorder_end_) {
+    auto parse_node = *postorder_it_;
+    ++postorder_it_;
     switch (auto parse_kind = parse_tree_->node_kind(parse_node)) {
 #define CARBON_PARSE_NODE_KIND(Name) \
   case ParseNodeKind::Name: {        \
@@ -114,6 +116,19 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
         .Emit();
   }
   return name_id;
+}
+
+auto SemanticsParseTreeHandler::NextParseNodeIs(
+    std::initializer_list<ParseNodeKind> kinds) -> bool {
+  if (postorder_it_ == postorder_end_) {
+    return false;
+  }
+  for (auto kind : kinds) {
+    if (parse_tree_->node_kind(*postorder_it_) == kind) {
+      return true;
+    }
+  }
+  return false;
 }
 
 auto SemanticsParseTreeHandler::PushScope() -> void {
@@ -295,12 +310,14 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
 
 auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
     ParseTree::Node parse_node) -> void {
-  node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ParameterList);
+  auto params_id =
+      node_stack_.PopForNodeBlockVectorId(ParseNodeKind::ParameterList);
   auto name_node = node_stack_.PopForSoloParseNode(ParseNodeKind::DeclaredName);
   auto fn_node =
       node_stack_.PopForSoloParseNode(ParseNodeKind::FunctionIntroducer);
 
   SemanticsCallable callable;
+  callable.params_id = params_id;
   auto callable_id = semantics_->AddCallable(callable);
   auto decl_id =
       AddNode(SemanticsNode::MakeFunctionDeclaration(fn_node, callable_id));
@@ -457,21 +474,48 @@ auto SemanticsParseTreeHandler::HandlePackageLibrary(
 
 auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
     -> void {
-  // TODO: This should transform into a usable parameter list. For now
-  // it's unused and only stored so that node counts match.
-  node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ParameterListStart);
-  node_stack_.Push(parse_node);
+  llvm::SmallVector<SemanticsNodeBlockId> vec;
+  while (true) {
+    switch (parse_tree_->node_kind(node_stack_.PeekParseNode())) {
+      case ParseNodeKind::ParameterListStart:
+        node_stack_.Push(parse_node,
+                         semantics_->AddNodeBlockVector(std::move(vec)));
+        break;
+      case ParseNodeKind::ParameterListComma:
+        vec.push_back(
+            node_stack_.PopForNodeBlockId(ParseNodeKind::ParameterListComma));
+        break;
+      default:
+        if (vec.empty()) {
+          // This can only happen for the first argument. There was no comma, so
+          // we pop the block off the stack here.
+          vec.push_back(node_block_stack_.pop_back_val());
+        }
+        node_stack_.PopAndIgnore();
+        break;
+    }
+  }
 }
 
 auto SemanticsParseTreeHandler::HandleParameterListComma(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> void {
+  node_stack_.Push(parse_node, node_block_stack_.pop_back_val());
+
+  // Possibly add a node block for the next parameter.
+  if (!NextParseNodeIs({ParseNodeKind::ParameterList})) {
+    node_block_stack_.push_back(semantics_->AddNodeBlock());
+  }
 }
 
 auto SemanticsParseTreeHandler::HandleParameterListStart(
     ParseTree::Node parse_node) -> void {
-  // TODO: See HandleParameterList.
   node_stack_.Push(parse_node);
+
+  // Possibly add a node block for the first parameter.
+  if (!NextParseNodeIs(
+          {ParseNodeKind::ParameterList, ParseNodeKind::ParameterListComma})) {
+    node_block_stack_.push_back(semantics_->AddNodeBlock());
+  }
 }
 
 auto SemanticsParseTreeHandler::HandleParenExpression(

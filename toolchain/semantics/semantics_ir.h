@@ -18,7 +18,11 @@ namespace Carbon {
 
 // A callable object.
 struct SemanticsCallable {
-  SemanticsNodeBlockId params_id;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{params: " << params_id << ", return: " << return_id << "}";
+  }
+
+  SemanticsNodeBlockVectorId params_id;
   SemanticsNodeId return_id;
 };
 
@@ -45,7 +49,9 @@ class SemanticsIR {
   friend class SemanticsParseTreeHandler;
 
   explicit SemanticsIR(const SemanticsIR* builtin_ir)
-      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {}
+      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {
+    node_block_vectors_.resize(1);
+  }
 
   // Returns the requested node.
   auto GetNode(SemanticsNodeId node_id) const -> const SemanticsNode& {
@@ -71,6 +77,15 @@ class SemanticsIR {
     return id;
   }
 
+  // Adds a node to a specified block, returning an ID to reference the node.
+  auto AddNode(SemanticsNodeBlockId block_id, SemanticsNode node)
+      -> SemanticsNodeId {
+    SemanticsNodeId node_id(nodes_.size());
+    nodes_.push_back(node);
+    node_blocks_[block_id.index].push_back(node_id);
+    return node_id;
+  }
+
   // Adds an empty new node block, returning an ID to reference it and add
   // items.
   auto AddNodeBlock() -> SemanticsNodeBlockId {
@@ -79,13 +94,14 @@ class SemanticsIR {
     return id;
   }
 
-  // Adds a node to a specified block, returning an ID to reference the node.
-  auto AddNode(SemanticsNodeBlockId block_id, SemanticsNode node)
-      -> SemanticsNodeId {
-    SemanticsNodeId node_id(nodes_.size());
-    nodes_.push_back(node);
-    node_blocks_[block_id.index].push_back(node_id);
-    return node_id;
+  // Adds an empty new node block vector with the input contents, returning an
+  // ID to reference it.
+  auto AddNodeBlockVector(
+      llvm::SmallVector<SemanticsNodeBlockId> node_block_vector)
+      -> SemanticsNodeBlockVectorId {
+    SemanticsNodeBlockVectorId id(node_block_vectors_.size());
+    node_block_vectors_.push_back(std::move(node_block_vector));
+    return id;
   }
 
   // Adds an string, returning an ID to reference it.
@@ -135,6 +151,11 @@ class SemanticsIR {
 
   // Storage for blocks within the IR. These reference entries in nodes_.
   llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>> node_blocks_;
+
+  // Storage for vectors of blocks within the IR. These reference entries in
+  // node_blocks_.
+  llvm::SmallVector<llvm::SmallVector<SemanticsNodeBlockId>>
+      node_block_vectors_;
 };
 
 }  // namespace Carbon

@@ -36,21 +36,34 @@ class SemanticsNodeStack {
   auto Push(ParseTree::Node parse_node) -> void {
     PushEntry(
         {.parse_node = parse_node, .node_id = SemanticsNodeId::MakeInvalid()},
-        /*is_node_id=*/true);
+        DebugLog::None);
   }
 
   // Pushes a parse tree node onto the stack.
   auto Push(ParseTree::Node parse_node, SemanticsNodeId node_id) -> void {
-    PushEntry({.parse_node = parse_node, .node_id = node_id},
-              /*is_node_id=*/true);
+    PushEntry({.parse_node = parse_node, .node_id = node_id}, DebugLog::NodeId);
+  }
+
+  // Pushes a parse tree node onto the stack with a node block vector.
+  auto Push(ParseTree::Node parse_node, SemanticsNodeBlockId node_block_id)
+      -> void {
+    PushEntry({.parse_node = parse_node, .node_block_id = node_block_id},
+              DebugLog::NodeBlockId);
+  }
+
+  // Pushes a parse tree node onto the stack with a node block vector.
+  auto Push(ParseTree::Node parse_node,
+            SemanticsNodeBlockVectorId node_block_vector_id) -> void {
+    PushEntry({.parse_node = parse_node,
+               .node_block_vector_id = node_block_vector_id},
+              DebugLog::NodeBlockVectorId);
   }
 
   // Pushes a PatternBinding parse tree node onto the stack with its name.
   auto Push(ParseTree::Node parse_node, SemanticsStringId name_id) -> void {
     CARBON_CHECK(parse_tree_->node_kind(parse_node) ==
                  ParseNodeKind::PatternBinding);
-    PushEntry({.parse_node = parse_node, .name_id = name_id},
-              /*is_node_id=*/false);
+    PushEntry({.parse_node = parse_node, .name_id = name_id}, DebugLog::NameId);
   }
 
   // Pops the top of the stack without any verification.
@@ -67,6 +80,13 @@ class SemanticsNodeStack {
 
   // Pops the top of the stack and returns the node_id.
   auto PopForNodeId(ParseNodeKind pop_parse_kind) -> SemanticsNodeId;
+
+  // Pops the top of the stack and returns the node_block_id.
+  auto PopForNodeBlockId(ParseNodeKind pop_parse_kind) -> SemanticsNodeBlockId;
+
+  // Pops the top of the stack and returns the node_block_vector_id.
+  auto PopForNodeBlockVectorId(ParseNodeKind pop_parse_kind)
+      -> SemanticsNodeBlockVectorId;
 
   // Pops the top of the stack and returns the parse_node and node_id.
   auto PopForParseNodeAndNodeId()
@@ -97,19 +117,36 @@ class SemanticsNodeStack {
  private:
   // An entry in node_stack_.
   struct Entry {
+    // The node associated with the stack entry.
     ParseTree::Node parse_node;
+
+    // The entries will evaluate as invalid if and only if they're a solo
+    // parse_node. Invalid is used instead of optional to save space.
+    //
+    // A discriminator isn't needed because the caller can determine which field
+    // is used based on the ParseNodeKind.
     union {
-      // The node_id will be invalid if and only if it's a solo parse_node.
       SemanticsNodeId node_id;
-      // The name_id is provided for PatternBindings.
+      SemanticsNodeBlockId node_block_id;
+      SemanticsNodeBlockVectorId node_block_vector_id;
+
+      // Right now name_id is exclusively for PatternBinding, which is enforced.
       SemanticsStringId name_id;
     };
   };
   static_assert(sizeof(Entry) == 8, "Unexpected Entry size");
 
-  // Pushes an entry onto the stack. is_node_id is provided for debug output
-  // only.
-  auto PushEntry(Entry entry, bool is_node_id) -> void;
+  // Which Entry union member to log.
+  enum DebugLog {
+    None,
+    NodeId,
+    NodeBlockId,
+    NodeBlockVectorId,
+    NameId,
+  };
+
+  // Pushes an entry onto the stack.
+  auto PushEntry(Entry entry, DebugLog debug_log) -> void;
 
   // Pops an entry.
   auto PopEntry() -> Entry;
@@ -124,9 +161,9 @@ class SemanticsNodeStack {
   // Also works with name_id in the union due to type compatibility.
   auto RequireSoloParseNode(Entry entry) -> void;
 
-  // Requires an entry to have a valid node_id.
-  // Also works with name_id in the union due to type compatibility.
-  auto RequireNodeId(Entry entry) -> void;
+  // Requires an entry to have a valid id.
+  // Also works with all items in the union due to type compatibility.
+  auto RequireValidId(Entry entry) -> void;
 
   // The file's parse tree.
   const ParseTree* parse_tree_;

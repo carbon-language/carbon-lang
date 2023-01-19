@@ -4,35 +4,24 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
-// CHECK:STDOUT: cross_reference_irs.size == 1,
-// CHECK:STDOUT: integer_literals = {
-// CHECK:STDOUT: },
-// CHECK:STDOUT: strings = {
-// CHECK:STDOUT:   str0 = "Main";
-// CHECK:STDOUT:   str1 = "x";
-// CHECK:STDOUT: },
-// CHECK:STDOUT: nodes = {
-// CHECK:STDOUT:   node0 = CrossReference(ir0, block0): node0;
-// CHECK:STDOUT:   node1 = CrossReference(ir0, block1): node1;
-// CHECK:STDOUT:   node2 = CrossReference(ir0, block2): node0;
-// CHECK:STDOUT:   node3 = CrossReference(ir0, block3): node0;
-// CHECK:STDOUT:   node4 = FunctionDeclaration();
-// CHECK:STDOUT:   node5 = BindName(str0, node4);
-// CHECK:STDOUT:   node6 = FunctionDefinition(node4, block1);
-// CHECK:STDOUT:   node7 = VarStorage(): node2;
-// CHECK:STDOUT:   node8 = BindName(str1, node7): node2;
-// CHECK:STDOUT: },
-// CHECK:STDOUT: node_blocks = {
-// CHECK:STDOUT:   block0 = {
-// CHECK:STDOUT:     node4;
-// CHECK:STDOUT:     node5;
-// CHECK:STDOUT:     node6;
-// CHECK:STDOUT:   },
-// CHECK:STDOUT:   block1 = {
-// CHECK:STDOUT:     node7;
-// CHECK:STDOUT:     node8;
-// CHECK:STDOUT:   },
-// CHECK:STDOUT: }
+// CHECK:STDERR: Please report issues to https://github.com/carbon-language/carbon-lang/issues and include the crash backtrace.
+// CHECK:STDERR: Stack dump:
+// CHECK:STDERR: 0.	Program arguments: ./bazel-bin/toolchain/driver/carbon dump semantics-ir {{.*}}/toolchain/semantics/testdata/var/decl.carbon
+// CHECK:STDERR: 1.	node_stack_:
+// CHECK:STDERR: 	0.	FunctionIntroducer
+// CHECK:STDERR: 	1.	DeclaredName
+// CHECK:STDERR: 2.	node_block_stack_:
+// CHECK:STDERR: 	0.	block0
+// CHECK:STDERR: Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xf29f3)[0x5601ea5e89f3]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xf073e)[0x5601ea5e673e]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xf2dea)[0x5601ea5e8dea]
+// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(+0x3bf90)[0x7f7a48484f90]
+// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(+0x8accc)[0x7f7a484d3ccc]
+// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(gsignal+0x12)[0x7f7a48484ef2]
+// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7f7a4846f472]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xc7302)[0x5601ea5bd302]
+// CHECK:STDERR: CHECK failure at toolchain/semantics/semantics_node_stack.cpp:57: entry.node_id.is_valid(): Expected valid node_id on ParameterList
 
 fn Main() {
   var x: i32;

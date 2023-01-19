@@ -75,3 +75,18 @@ cc_library(
         "@llvm-project//llvm:Support",
     ],
 )
+
+cc_test(
+    name = "semantics_ir_test",
+    size = "small",
+    srcs = ["semantics_ir_test.cpp"],
+    deps = [
+        ":semantics_ir",
+        "//common:gtest_main",
+        "//toolchain/common:yaml_test_helpers",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/lexer:tokenized_buffer",
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
