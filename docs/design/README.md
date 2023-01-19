@@ -256,6 +256,8 @@ You can modify the value of a variable with an
 ```carbon
       i = 3;
       ...
+      ++i;
+      ...
       i += 2;
 ```
 
@@ -1194,9 +1196,9 @@ fn Positive(a: i64) -> auto {
 A _block_ is a sequence of _statements_. A block defines a
 [scope](#declarations-definitions-and-scopes) and, like other scopes, is
 enclosed in curly braces (`{`...`}`). Each statement is terminated by a
-semicolon or block. [Expressions](#expressions) and
-[`var`](#variable-var-declarations) and [`let`](#constant-let-declarations) are
-valid statements.
+semicolon or block. [Expressions](#expressions), [assignments](assignment.md)
+and [`var`](#variable-var-declarations) and [`let`](#constant-let-declarations)
+are valid statements.
 
 Statements within a block are normally executed in the order they appear in the
 source code, except when modified by control-flow statements.
