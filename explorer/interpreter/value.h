@@ -937,21 +937,22 @@ struct ImplConstraint {
 
 // A constraint that requires an intrinsic property of a type.
 struct IntrinsicConstraint {
+  // Print the intrinsic constraint.
+  void Print(llvm::raw_ostream& out) const;
+
   // The type that is required to satisfy the intrinsic property.
   Nonnull<const Value*> type;
   // The kind of the intrinsic property.
   enum Kind {
     // `type` intrinsically implicitly converts to `parameters[0]`.
-    // TODO: Split ImplicitAs into more specific constraints (such as derived-to-base pointer conversions).
+    // TODO: Split ImplicitAs into more specific constraints (such as
+    // derived-to-base pointer conversions).
     ImplicitAs,
   };
   Kind kind;
   // Arguments for the intrinsic property. The meaning of these depends on
   // `kind`.
   std::vector<Nonnull<const Value*>> arguments;
-
-  // Print the intrinsic constraint.
-  void Print(llvm::raw_ostream& out) const;
 };
 
 // A constraint that a collection of values are known to be the same.
