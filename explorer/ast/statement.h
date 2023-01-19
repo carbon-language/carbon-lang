@@ -153,7 +153,8 @@ class IncrementDecrement : public Statement {
   IncrementDecrement(SourceLocation source_loc, Nonnull<Expression*> argument,
                      bool is_increment)
       : Statement(AstNodeKind::IncrementDecrement, source_loc),
-        argument_(argument), is_increment_(is_increment) {}
+        argument_(argument),
+        is_increment_(is_increment) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIncrementDecrement(node->kind());

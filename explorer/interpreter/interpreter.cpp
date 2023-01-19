@@ -1967,7 +1967,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       const auto& inc_dec = cast<IncrementDecrement>(stmt);
       if (act.pos() == 0) {
         return todo_.Spawn(
-          std::make_unique<ExpressionAction>(*inc_dec.rewritten_form()));
+            std::make_unique<ExpressionAction>(*inc_dec.rewritten_form()));
       } else {
         return todo_.FinishAction();
       }
