@@ -431,10 +431,11 @@ def main() -> None:
     parsed_args = parse_args()
 
     # Remaining script logic should be relative to the repository root.
-    os.chdir(Path(__file__).parent.parent.parent)
+    root = Path(__file__).parent.parent.parent
+    os.chdir(root)
 
     if parsed_args.tests:
-        tests = set(parsed_args.tests)
+        tests = {test.relative_to(root) for test in parsed_args.tests}
     else:
         print("HINT: run `update_checks.py f1 f2 ...` to update specific tests")
         tests = get_tests(parsed_args.testdata)
