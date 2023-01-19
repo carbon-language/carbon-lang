@@ -942,7 +942,7 @@ struct IntrinsicConstraint {
   // The kind of the intrinsic property.
   enum Kind {
     // `type` intrinsically implicitly converts to `parameters[0]`.
-    // TODO: Split this up into finer-grained checks.
+    // TODO: Split ImplicitAs into more specific constraints (such as derived-to-base pointer conversions).
     ImplicitAs,
   };
   Kind kind;
