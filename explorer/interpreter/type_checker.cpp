@@ -729,6 +729,20 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
   return *converted;
 }
 
+auto TypeChecker::IsIntrinsicConstraintSatisfied(
+    const IntrinsicConstraint& constraint, const ImplScope& impl_scope) const
+    -> bool {
+  // TODO: Check to see if this constraint is known in the current impl scope.
+  switch (constraint.kind) {
+    case IntrinsicConstraint::ImplicitAs:
+      CARBON_CHECK(constraint.arguments.size() == 1)
+          << "wrong number of arguments for `__intrinsic_implicit_as`";
+      return IsImplicitlyConvertible(constraint.type, constraint.arguments[0],
+                                     impl_scope,
+                                     /*allow_user_defined_conversions=*/false);
+  }
+}
+
 auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
                                           BuiltinInterfaceName interface) const
     -> ErrorOr<Nonnull<const InterfaceType*>> {
@@ -1397,6 +1411,12 @@ class TypeChecker::ConstraintTypeBuilder {
     return impl_constraints_.size() - 1;
   }
 
+  // Adds an intrinsic constraint, if not already present.
+  void AddIntrinsicConstraint(IntrinsicConstraint intrinsic) {
+    // TODO: Consider performing deduplication.
+    intrinsic_constraints_.push_back(std::move(intrinsic));
+  }
+
   // Adds an equality constraint -- `A == B`.
   void AddEqualityConstraint(EqualityConstraint equal) {
     if (equal.values.size() < 2) {
@@ -1514,6 +1534,21 @@ class TypeChecker::ConstraintTypeBuilder {
       AddEqualityConstraint({.values = std::move(values)});
     }
 
+    for (const auto& intrinsic_constraint :
+         constraint->intrinsic_constraints()) {
+      IntrinsicConstraint converted = {
+          .type = type_checker.Substitute(local_bindings,
+                                          intrinsic_constraint.type),
+          .kind = intrinsic_constraint.kind,
+          .arguments = {}};
+      converted.arguments.reserve(intrinsic_constraint.arguments.size());
+      for (Nonnull<const Value*> argument : intrinsic_constraint.arguments) {
+        converted.arguments.push_back(
+            type_checker.Substitute(local_bindings, argument));
+      }
+      AddIntrinsicConstraint(std::move(converted));
+    }
+
     if (add_lookup_contexts) {
       for (const auto& lookup_context : constraint->lookup_contexts()) {
         AddLookupContext({.context = type_checker.Substitute(
@@ -1578,8 +1613,8 @@ class TypeChecker::ConstraintTypeBuilder {
     // Create the new type.
     auto* result = arena_->New<ConstraintType>(
         self_binding_, std::move(impl_constraints_),
-        std::move(equality_constraints_), std::move(rewrite_constraints_),
-        std::move(lookup_contexts_));
+        std::move(intrinsic_constraints_), std::move(equality_constraints_),
+        std::move(rewrite_constraints_), std::move(lookup_contexts_));
     // Update the impl binding to denote the constraint type itself.
     impl_binding_->set_interface(result);
     return result;
@@ -1740,6 +1775,15 @@ class TypeChecker::ConstraintTypeBuilder {
           type_checker.RebuildValue(impl_constraint.interface));
     }
 
+    // Apply rewrites throughout intrinsic constraints.
+    for (auto& intrinsic_constraint : intrinsic_constraints_) {
+      intrinsic_constraint.type =
+          type_checker.RebuildValue(intrinsic_constraint.type);
+      for (auto& argument : intrinsic_constraint.arguments) {
+        argument = type_checker.RebuildValue(argument);
+      }
+    }
+
     // Apply rewrites throughout equality constraints.
     for (auto& equality_constraint : equality_constraints_) {
       for (auto*& value : equality_constraint.values) {
@@ -1758,6 +1802,7 @@ class TypeChecker::ConstraintTypeBuilder {
   Nonnull<GenericBinding*> self_binding_;
   Nonnull<ImplBinding*> impl_binding_;
   std::vector<ImplConstraint> impl_constraints_;
+  std::vector<IntrinsicConstraint> intrinsic_constraints_;
   std::vector<EqualityConstraint> equality_constraints_;
   std::vector<RewriteConstraint> rewrite_constraints_;
   std::vector<LookupContext> lookup_contexts_;
@@ -3342,7 +3387,30 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               &args[1]->static_type(), impl_scope));
 
           e->set_static_type(arena_->New<IntType>());
-
+          e->set_value_category(ValueCategory::Let);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::ImplicitAs: {
+          if (args.size() != 1) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_implicit_as takes 1 argument";
+          }
+          CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(args[0], impl_scope));
+          e->set_static_type(arena_->New<TypeType>());
+          e->set_value_category(ValueCategory::Let);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::ImplicitAsConvert: {
+          if (args.size() != 2) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_implicit_as_convert takes 2 arguments";
+          }
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> result,
+                                  TypeCheckTypeExp(args[1], impl_scope));
+          // TODO: Check that the type of args[0] implicitly converts to
+          // args[1].
+          e->set_static_type(result);
+          e->set_value_category(ValueCategory::Let);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::IntEq: {

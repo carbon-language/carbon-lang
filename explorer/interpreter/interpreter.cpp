@@ -1467,6 +1467,42 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           int r = (generator() % (high - low)) + low;
           return todo_.FinishAction(arena_->New<IntValue>(r));
         }
+        case IntrinsicExpression::Intrinsic::ImplicitAs: {
+          CARBON_CHECK(args.size() == 1);
+          // Build a constraint type that constrains its .Self type to satisfy
+          // the "ImplicitAs" intrinsic constraint. This involves creating a
+          // number of objects that all point to each other.
+          // TODO: Factor out a simple version of ConstraintTypeBuilder and use
+          // it from here.
+          auto* self_binding = arena_->New<GenericBinding>(
+              exp.source_loc(), ".Self",
+              arena_->New<TypeTypeLiteral>(exp.source_loc()));
+          auto* self = arena_->New<VariableType>(self_binding);
+          auto* impl_binding = arena_->New<ImplBinding>(
+              exp.source_loc(), self_binding, std::nullopt);
+          impl_binding->set_symbolic_identity(
+              arena_->New<BindingWitness>(impl_binding));
+          self_binding->set_symbolic_identity(self);
+          self_binding->set_value(self);
+          self_binding->set_impl_binding(impl_binding);
+          IntrinsicConstraint constraint = {
+              .type = self,
+              .kind = IntrinsicConstraint::ImplicitAs,
+              .arguments = args};
+          auto* result = arena_->New<ConstraintType>(
+              self_binding, std::vector<ImplConstraint>{},
+              std::vector<IntrinsicConstraint>{std::move(constraint)},
+              std::vector<EqualityConstraint>{},
+              std::vector<RewriteConstraint>{}, std::vector<LookupContext>{});
+          impl_binding->set_interface(result);
+          return todo_.FinishAction(result);
+        }
+        case IntrinsicExpression::Intrinsic::ImplicitAsConvert: {
+          CARBON_CHECK(args.size() == 2);
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> result,
+                                  Convert(args[0], args[1], exp.source_loc()));
+          return todo_.FinishAction(result);
+        }
         case IntrinsicExpression::Intrinsic::IntEq: {
           CARBON_CHECK(args.size() == 2);
           auto lhs = cast<IntValue>(*args[0]).value();
