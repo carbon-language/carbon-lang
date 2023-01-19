@@ -37,6 +37,7 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
       "Please report issues to "
       "https://github.com/carbon-language/carbon-lang/issues and include the "
       "crash backtrace.\n");
+      
   llvm::InitLLVM init_llvm(argc, argv);
 
   // Printing to stderr should flush stdout. This is most noticeable when stderr
