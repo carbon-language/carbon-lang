@@ -105,7 +105,8 @@ auto TupleExpressionFromParenContents(
 
 Expression::~Expression() = default;
 
-auto ToString(Operator op) -> std::string_view {
+// Returns the lexical representation of `op`, such as "+" for `Add`.
+auto OperatorToString(Operator op) -> std::string_view {
   switch (op) {
     case Operator::Add:
       return "+";
@@ -211,13 +212,13 @@ void Expression::Print(llvm::raw_ostream& out) const {
       const auto& op = cast<OperatorExpression>(*this);
       switch (op.arguments().size()) {
         case 0:
-          out << ToString(op.op());
+          out << OperatorToString(op.op());
           break;
         case 1:
-          out << ToString(op.op()) << " " << *op.arguments()[0];
+          out << OperatorToString(op.op()) << " " << *op.arguments()[0];
           break;
         case 2:
-          out << *op.arguments()[0] << " " << ToString(op.op()) << " "
+          out << *op.arguments()[0] << " " << OperatorToString(op.op()) << " "
               << *op.arguments()[1];
           break;
         default:

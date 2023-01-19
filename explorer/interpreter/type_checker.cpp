@@ -2989,7 +2989,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         if (!result.ok()) {
           // We couldn't find a matching `impl`.
           return ProgramError(e->source_loc())
-                 << "type error in `" << ToString(op.op()) << "`:\n"
+                 << "type error in `" << OperatorToString(op.op()) << "`:\n"
                  << result.error().message();
         }
         op.set_rewritten_form(*result);
@@ -3004,7 +3004,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         if (!result.ok()) {
           // We couldn't find a matching `impl`.
           return ProgramError(e->source_loc())
-                 << "type error in `" << ToString(op.op()) << "`:\n"
+                 << "type error in `" << OperatorToString(op.op()) << "`:\n"
                  << result.error().message();
         }
         op.set_rewritten_form(*result);
@@ -3158,7 +3158,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Operator::AddressOf:
           if (op.arguments()[0]->value_category() != ValueCategory::Var) {
             return ProgramError(op.arguments()[0]->source_loc())
-                   << "Argument to " << ToString(op.op())
+                   << "Argument to " << OperatorToString(op.op())
                    << " should be an lvalue.";
           }
           op.set_static_type(arena_->New<PointerType>(ts[0]));
