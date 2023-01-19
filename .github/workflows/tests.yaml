@@ -65,6 +65,10 @@ jobs:
         if: matrix.os == 'macos-12'
         run: |
           echo "$(brew --prefix llvm@14)/bin" >> $GITHUB_PATH
+          echo '*** ls "$(brew --prefix llvm@14)"'
+          ls "$(brew --prefix llvm@14)"
+          echo '*** ls "$(brew --prefix llvm@14)/bin"'
+          ls "$(brew --prefix llvm@14)/bin"
 
       # Use LLVM 14 following:
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md
@@ -72,6 +76,8 @@ jobs:
         if: matrix.os == 'ubuntu-22.04'
         run: |
           echo "/usr/lib/llvm-14/bin" >> $GITHUB_PATH
+          echo '*** ls /usr/lib/llvm-14/bin'
+          ls /usr/lib/llvm-14/bin
 
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
@@ -84,10 +90,6 @@ jobs:
           echo '*** python'
           which python
           python --version
-          echo '*** ls "$(brew --prefix llvm@14)'
-          ls "$(brew --prefix llvm@14)"
-          echo '*** ls "$(brew --prefix llvm@14)/bin'
-          ls "$(brew --prefix llvm@14)/bin"
           echo '*** clang'
           which clang
           clang --version
