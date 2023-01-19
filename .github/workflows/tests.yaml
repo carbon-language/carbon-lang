@@ -84,6 +84,10 @@ jobs:
           echo '*** python'
           which python
           python --version
+          echo '*** ls "$(brew --prefix llvm@14)'
+          ls "$(brew --prefix llvm@14)"
+          echo '*** ls "$(brew --prefix llvm@14)/bin'
+          ls "$(brew --prefix llvm@14)/bin"
           echo '*** clang'
           which clang
           clang --version
