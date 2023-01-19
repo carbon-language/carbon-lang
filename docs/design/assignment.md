@@ -80,7 +80,6 @@ than:
 -   A dereference of a pointer.
 -   Array indexing that produces a modifiable result.
 -   Member access naming a field, where the object is one of these expressions.
--   A conditional expression selecting between these expressions.
 
 ## Simple assignment semantics
 
