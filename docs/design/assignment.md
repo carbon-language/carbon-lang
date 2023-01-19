@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Syntax](#syntax)
 -   [Simple assignment semantics](#simple-assignment-semantics)
+-   [Compound assignment semantics](#compound-assignment-semantics)
 -   [Built-in types](#built-in-types)
 -   [Tuples, structs, choice types, and data classes](#tuples-structs-choice-types-and-data-classes)
 -   [Extensibility](#extensibility)
@@ -119,6 +120,29 @@ fn G() {
   y = F();
 }
 ```
+
+## Compound assignment semantics
+
+The syntax `a $= b;` is intended to be syntactic sugar for `a = a $ b;`, except
+as follows:
+
+-   A type might be able to provide a more efficient implementation for the
+    compound assignment form than for the uncombined form.
+-   A type might not be able to, or might not want to, provide the uncombined
+    form at all, for example because creating a new instance requires additional
+    resources that might not be available, such as a context object or an
+    allocator.
+
+This syntactic sugar is provided by a [default implementation](#defaults) of
+`$=` in terms of `$` and `=`.
+
+In contrast, `++a;` and `--a;` are not simply syntactic sugar for `a = a + 1;`
+and `a = a - 1;`. Instead, we interpret these operators as meaning "move to the
+next value" and "move to the previous value". These operations may be available
+and meaningful in cases where adding an integer is not a desirable operation,
+such as for an iterator into a linked list, and may not be available in cases
+where adding an integer is meaningful, such as for a type representing a
+rational number.
 
 ## Built-in types
 
@@ -311,6 +335,7 @@ impl MyString as AddAssignWith(like MyString) {
 -   [Allow assignment as a subexpression](/proposals/p2511.md#allow-assignment-as-a-subexpression)
 -   [Allow chained assignment](/proposals/p2511.md#allow-chained-assignment)
 -   [Do not provide increment and decrement](/proposals/p2511.md#do-not-provide-increment-and-decrement)
+-   [Treat increment as syntactic sugar for adding `1`](/proposals/p2511.md#treat-increment-as-syntactic-sugar-for-adding-1)
 -   [Define `$` in terms of `$=`](/proposals/p2511.md#define--in-terms-of-)
 -   [Do not allow overloading the behavior of `=`](/proposals/p2511.md#do-not-allow-overloading-the-behavior-of-)
 -   [Treat the left hand side of `=` as a pattern](/proposals/p2511.md#treat-the-left-hand-side-of--as-a-pattern)
