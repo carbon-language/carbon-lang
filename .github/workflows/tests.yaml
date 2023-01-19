@@ -6,7 +6,7 @@ name: test
 
 on:
   push:
-    branches: [action-test]
+    branches: [trunk]
     paths:
       # Conservatively run the tests. However, skip them if the only paths in
       # the pull request match files that we know don't impact the build.
@@ -38,8 +38,8 @@ jobs:
         # At present, these images are newer than "latest". We use them to test
         # against more recent tooling versions.
         # https://github.com/actions/runner-images
-        os: [macos-12]
-        build_mode: [opt]
+        os: [ubuntu-22.04, macos-12]
+        build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
       # Checkout the pull request head or the branch.
