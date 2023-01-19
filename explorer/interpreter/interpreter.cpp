@@ -716,6 +716,8 @@ auto Interpreter::ConvertStructToClass(
       struct_values.push_back(field);
     }
   }
+  CARBON_CHECK(!cast<NominalClassType>(inst_class)->base() || base_instance)
+      << "Invalid conversion for `" << *inst_class << "`: base class missing";
   auto* converted_init_struct =
       arena_->New<StructValue>(std::move(struct_values));
   Nonnull<const NominalClassValue** const> class_value_ptr =
