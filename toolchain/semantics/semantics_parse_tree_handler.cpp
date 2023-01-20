@@ -478,9 +478,10 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
   while (true) {
     switch (parse_tree_->node_kind(node_stack_.PeekParseNode())) {
       case ParseNodeKind::ParameterListStart:
+        node_stack_.PopForSoloParseNode(ParseNodeKind::ParameterListStart);
         node_stack_.Push(parse_node,
                          semantics_->AddNodeBlockVector(std::move(vec)));
-        break;
+        return;
       case ParseNodeKind::ParameterListComma:
         vec.push_back(
             node_stack_.PopForNodeBlockId(ParseNodeKind::ParameterListComma));
