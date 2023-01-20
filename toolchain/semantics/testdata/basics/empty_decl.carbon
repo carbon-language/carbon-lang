@@ -5,8 +5,6 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: callables: [
-// CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
@@ -18,10 +16,6 @@
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block3, type: node0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: node_blocks_vectors: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]

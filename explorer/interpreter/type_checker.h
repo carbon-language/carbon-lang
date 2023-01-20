@@ -92,6 +92,12 @@ class TypeChecker {
                                    int impl_offset) const
       -> Nonnull<const Witness*>;
 
+  // Determine whether the given intrinsic constraint is known to be satisfied
+  // in the given scope.
+  auto IsIntrinsicConstraintSatisfied(const IntrinsicConstraint& constraint,
+                                      const ImplScope& impl_scope) const
+      -> bool;
+
  private:
   class ConstraintTypeBuilder;
   class SubstitutedGenericBindings;
