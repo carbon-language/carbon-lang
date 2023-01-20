@@ -10,18 +10,23 @@
 // CHECK:STDERR: 1.	node_stack_:
 // CHECK:STDERR: 	0.	FunctionIntroducer
 // CHECK:STDERR: 	1.	DeclaredName
+// CHECK:STDERR: 	2.	ParameterListStart
+// CHECK:STDERR: 	3.	ParameterList -> node3
 // CHECK:STDERR: 2.	node_block_stack_:
-// CHECK:STDERR: 	0.	block0
 // CHECK:STDERR: Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
-// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xf29f3)[0x55c75a34e9f3]
-// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xf073e)[0x55c75a34c73e]
-// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xf2dea)[0x55c75a34edea]
-// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(+0x3bf90)[0x7efd9756cf90]
-// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(+0x8accc)[0x7efd975bbccc]
-// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(gsignal+0x12)[0x7efd9756cef2]
-// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7efd97557472]
-// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xc7302)[0x55c75a323302]
-// CHECK:STDERR: CHECK failure at toolchain/semantics/semantics_node_stack.cpp:57: entry.node_id.is_valid(): Expected valid node_id on ParameterList
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xf3ad3)[0x55d666505ad3]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xf181e)[0x55d66650381e]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xf3eca)[0x55d666505eca]
+// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(+0x3bf90)[0x7f62c1d57f90]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0x9e27c)[0x55d6664b027c]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0x9b768)[0x55d6664ad768]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0x99bc6)[0x55d6664abbc6]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0x93b93)[0x55d6664a5b93]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0x930ea)[0x55d6664a50ea]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0x92ccb)[0x55d6664a4ccb]
+// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(+0x2718a)[0x7f62c1d4318a]
+// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x85)[0x7f62c1d43245]
+// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0x92aa1)[0x55d6664a4aa1]
 
 fn Main() {
   var x: i32;
