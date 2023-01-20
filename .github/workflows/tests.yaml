@@ -78,7 +78,8 @@ jobs:
 
       # Use LLVM following:
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md
-      # Both 14 and 15 are candidates because GitHub is testing new images.
+      # Both 14 and 15 are candidates for forwards compatibility, although 15
+      # isn't provided.
       - name: Setup LLVM and Clang (Linux)
         if: matrix.os == 'ubuntu-22.04'
         run: |
