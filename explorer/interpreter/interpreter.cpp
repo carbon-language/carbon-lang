@@ -253,7 +253,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
     case Operator::BitShiftLeft:
     case Operator::BitShiftRight:
     case Operator::Complement:
-      CARBON_FATAL() << "operator " << ToString(op)
+      CARBON_FATAL() << "operator " << OperatorToString(op)
                      << " should always be rewritten";
   }
 }
