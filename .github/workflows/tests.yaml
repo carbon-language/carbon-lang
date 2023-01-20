@@ -69,6 +69,7 @@ jobs:
           if [[ ! -e "${LLVM_PATH}" ]]; then
             LLVM_PATH="$(brew --prefix llvm@14)"
           fi
+          echo "Using ${LLVM_PATH}"
           echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
           echo '*** ls "${LLVM_PATH}"'
           ls "${LLVM_PATH}"
@@ -85,6 +86,7 @@ jobs:
           if [[ ! -e "${LLVM_PATH}" ]]; then
             LLVM_PATH="/usr/lib/llvm-14"
           fi
+          echo "Using ${LLVM_PATH}"
           echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
           echo '*** ls "${LLVM_PATH}"'
           ls "${LLVM_PATH}"
