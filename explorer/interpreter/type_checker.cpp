@@ -4090,6 +4090,36 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
   return Success();
 }
 
+// Get the builtin interface that should be used for the given kind of
+// assignment operator.
+static Builtins::Builtin GetBuiltinInterfaceForAssignOperator(
+    AssignOperator op) {
+  switch (op) {
+    case AssignOperator::Plain:
+      return Builtins::AssignWith;
+    case AssignOperator::Add:
+      return Builtins::AddAssignWith;
+    case AssignOperator::Sub:
+      return Builtins::SubAssignWith;
+    case AssignOperator::Mul:
+      return Builtins::MulAssignWith;
+    case AssignOperator::Div:
+      return Builtins::DivAssignWith;
+    case AssignOperator::Mod:
+      return Builtins::ModAssignWith;
+    case AssignOperator::And:
+      return Builtins::BitAndAssignWith;
+    case AssignOperator::Or:
+      return Builtins::BitOrAssignWith;
+    case AssignOperator::Xor:
+      return Builtins::BitXorAssignWith;
+    case AssignOperator::ShiftLeft:
+      return Builtins::LeftShiftAssignWith;
+    case AssignOperator::ShiftRight:
+      return Builtins::RightShiftAssignWith;
+  }
+}
+
 auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                 const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -4232,11 +4262,38 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         return ProgramError(assign.source_loc())
                << "Cannot assign to rvalue '" << assign.lhs() << "'";
       }
+      if (assign.op() == AssignOperator::Plain &&
+          IsSameType(&assign.lhs().static_type(), &assign.rhs().static_type(),
+                     impl_scope)) {
+        // TODO: Interface lookup.
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> converted_rhs,
+            ImplicitlyConvert("assignment", impl_scope, &assign.rhs(),
+                              &assign.lhs().static_type()));
+        assign.set_rhs(converted_rhs);
+      } else {
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> rewritten,
+            BuildBuiltinMethodCall(
+                impl_scope, &assign.lhs(),
+                BuiltinInterfaceName{
+                    GetBuiltinInterfaceForAssignOperator(assign.op()),
+                    {&assign.rhs().static_type()}},
+                BuiltinMethodCall{"Op", {&assign.rhs()}}));
+        assign.set_rewritten_form(rewritten);
+      }
+      return Success();
+    }
+    case StatementKind::IncrementDecrement: {
+      auto& inc_dec = cast<IncrementDecrement>(*s);
       CARBON_ASSIGN_OR_RETURN(
-          Nonnull<Expression*> converted_rhs,
-          ImplicitlyConvert("assignment", impl_scope, &assign.rhs(),
-                            &assign.lhs().static_type()));
-      assign.set_rhs(converted_rhs);
+          Nonnull<Expression*> rewritten,
+          BuildBuiltinMethodCall(
+              impl_scope, &inc_dec.argument(),
+              BuiltinInterfaceName{
+                  inc_dec.is_increment() ? Builtins::Inc : Builtins::Dec, {}},
+              BuiltinMethodCall{"Op"}));
+      inc_dec.set_rewritten_form(rewritten);
       return Success();
     }
     case StatementKind::ExpressionStatement: {
@@ -4380,6 +4437,7 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::Run:
     case StatementKind::Await:
     case StatementKind::Assign:
+    case StatementKind::IncrementDecrement:
     case StatementKind::ExpressionStatement:
     case StatementKind::While:
     case StatementKind::For:

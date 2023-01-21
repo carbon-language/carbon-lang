@@ -130,6 +130,7 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       return Success();
     case StatementKind::ExpressionStatement:
     case StatementKind::Assign:
+    case StatementKind::IncrementDecrement:
     case StatementKind::VariableDefinition:
     case StatementKind::Run:
     case StatementKind::Await:

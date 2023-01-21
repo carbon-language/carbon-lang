@@ -501,6 +501,168 @@ external impl i32 as RightShiftWith(i32) where .Result = i32 {
   }
 }
 
+// -----------------------------------
+// Assignment and compound assignment.
+// -----------------------------------
+
+interface AssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint Assign { extends AssignWith(Self); }
+
+interface AddAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint AddAssign { extends AddAssignWith(Self); }
+
+interface SubAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint SubAssign { extends SubAssignWith(Self); }
+
+interface MulAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint MulAssign { extends MulAssignWith(Self); }
+
+interface DivAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint DivAssign { extends DivAssignWith(Self); }
+
+interface ModAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint ModAssign { extends ModAssignWith(Self); }
+
+interface BitAndAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint BitAssignAnd { extends BitAndAssignWith(Self); }
+
+interface BitOrAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint BitAssignOr { extends BitOrAssignWith(Self); }
+
+interface BitXorAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint BitAssignXor { extends BitXorAssignWith(Self); }
+
+interface LeftShiftAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint LeftShiftAssign { extends LeftShiftAssignWith(Self); }
+
+interface RightShiftAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint RightShiftAssign { extends RightShiftAssignWith(Self); }
+
+// TODO: This is temporary, and should eventually be replaced by
+// something more fine-grained. Not all class types should be
+// assignable.
+impl forall [T:! type, U:! ImplicitAs(T)]
+    T as AssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = other.Convert();
+  }
+}
+
+// TODO: Should `AddWith(U) & AssignWith(.Self.(AddWith(U).Result))` work?
+impl forall [U:! type, T:! AddWith(U) where .Self is AssignWith(.Self.Result)]
+     T as AddAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self + other;
+  }
+}
+
+impl forall [U:! type, T:! SubWith(U) where .Self is AssignWith(.Self.Result)]
+     T as SubAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self - other;
+  }
+}
+
+impl forall [U:! type, T:! MulWith(U) where .Self is AssignWith(.Self.Result)]
+     T as MulAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self * other;
+  }
+}
+
+impl forall [U:! type, T:! DivWith(U) where .Self is AssignWith(.Self.Result)]
+     T as DivAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self / other;
+  }
+}
+
+impl forall [U:! type, T:! ModWith(U) where .Self is AssignWith(.Self.Result)]
+     T as ModAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self % other;
+  }
+}
+
+impl forall [U:! type, T:! BitAndWith(U) where .Self is AssignWith(.Self.Result)]
+     T as BitAndAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self & other;
+  }
+}
+
+impl forall [U:! type, T:! BitOrWith(U) where .Self is AssignWith(.Self.Result)]
+     T as BitOrAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self | other;
+  }
+}
+
+impl forall [U:! type, T:! BitXorWith(U) where .Self is AssignWith(.Self.Result)]
+     T as BitXorAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self ^ other;
+  }
+}
+
+impl forall [U:! type, T:! LeftShiftWith(U) where .Self is AssignWith(.Self.Result)]
+     T as LeftShiftAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self << other;
+  }
+}
+
+impl forall [U:! type, T:! RightShiftWith(U) where .Self is AssignWith(.Self.Result)]
+     T as RightShiftAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self >> other;
+  }
+}
+
+// ------------------------
+// Increment and decrement.
+// ------------------------
+
+interface Inc {
+  fn Op[addr self: Self*]();
+}
+interface Dec {
+  fn Op[addr self: Self*]();
+}
+
+impl i32 as Inc {
+  fn Op[addr self: Self*]() {
+    *self = *self + 1;
+  }
+}
+impl i32 as Dec {
+  fn Op[addr self: Self*]() {
+    *self = *self - 1;
+  }
+}
+
 //-------------------------
 // Optional
 //-------------------------
