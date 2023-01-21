@@ -122,7 +122,7 @@
 %type <std::vector<Nonnull<Declaration*>>> impl_body
 %type <Nonnull<Statement*>> statement
 %type <Nonnull<Statement*>> assignment_statement
-%type <AssignOperator> assignment_operator;
+%type <AssignOperator> assign_operator
 %type <Nonnull<If*>> if_statement
 %type <std::optional<Nonnull<Block*>>> optional_else
 %type <std::pair<Nonnull<Expression*>, bool>> return_expression
@@ -1004,14 +1004,14 @@ statement:
     { $$ = arena->New<For>(context.source_loc(), $3, $5, $7); }
 ;
 assignment_statement:
-  statement_expression assignment_operator expression SEMICOLON
+  statement_expression assign_operator expression SEMICOLON
     { $$ = arena->New<Assign>(context.source_loc(), $1, $2, $3); }
 | PLUS_PLUS expression SEMICOLON
     { $$ = arena->New<IncrementDecrement>(context.source_loc(), $2, true); }
 | MINUS_MINUS expression SEMICOLON
     { $$ = arena->New<IncrementDecrement>(context.source_loc(), $2, false); }
 ;
-assignment_operator:
+assign_operator:
   EQUAL
     { $$ = AssignOperator::Plain; }
 | PLUS_EQUAL

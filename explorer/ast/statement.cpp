@@ -72,8 +72,8 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       break;
     case StatementKind::Assign: {
       const auto& assign = cast<Assign>(*this);
-      out << assign.lhs() << " " << ToString(assign.op()) << " " << assign.rhs()
-          << ";";
+      out << assign.lhs() << " " << AssignOperatorToString(assign.op()) << " "
+          << assign.rhs() << ";";
       break;
     }
     case StatementKind::IncrementDecrement: {
@@ -143,7 +143,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
   }
 }
 
-auto ToString(AssignOperator op) -> std::string_view {
+auto AssignOperatorToString(AssignOperator op) -> std::string_view {
   switch (op) {
     case AssignOperator::Plain:
       return "=";

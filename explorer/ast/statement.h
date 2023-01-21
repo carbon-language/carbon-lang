@@ -101,7 +101,7 @@ enum class AssignOperator {
 };
 
 // Returns the spelling of this assignment operator token.
-auto ToString(AssignOperator op) -> std::string_view;
+auto AssignOperatorToString(AssignOperator op) -> std::string_view;
 
 class Assign : public Statement {
  public:
