@@ -121,7 +121,7 @@
 %type <std::vector<Nonnull<Declaration*>>> interface_body
 %type <std::vector<Nonnull<Declaration*>>> impl_body
 %type <Nonnull<Statement*>> statement
-%type <Nonnull<Statement*>> assignment_statement
+%type <Nonnull<Statement*>> assign_statement
 %type <AssignOperator> assign_operator
 %type <Nonnull<If*>> if_statement
 %type <std::optional<Nonnull<Block*>>> optional_else
@@ -942,7 +942,7 @@ clause_list:
     }
 ;
 statement:
-  assignment_statement
+  assign_statement
 | VAR pattern SEMICOLON
     {
       $$ = arena->New<VariableDefinition>(
@@ -1003,7 +1003,7 @@ statement:
 | FOR LEFT_PARENTHESIS variable_declaration IN type_expression RIGHT_PARENTHESIS block
     { $$ = arena->New<For>(context.source_loc(), $3, $5, $7); }
 ;
-assignment_statement:
+assign_statement:
   statement_expression assign_operator expression SEMICOLON
     { $$ = arena->New<Assign>(context.source_loc(), $1, $2, $3); }
 | PLUS_PLUS expression SEMICOLON
