@@ -4090,6 +4090,36 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
   return Success();
 }
 
+// Get the builtin interface that should be used for the given kind of
+// assignment operator.
+static Builtins::Builtin GetBuiltinInterfaceForAssignOperator(
+    AssignOperator op) {
+  switch (op) {
+    case AssignOperator::Plain:
+      return Builtins::AssignWith;
+    case AssignOperator::Add:
+      return Builtins::AddAssignWith;
+    case AssignOperator::Sub:
+      return Builtins::SubAssignWith;
+    case AssignOperator::Mul:
+      return Builtins::MulAssignWith;
+    case AssignOperator::Div:
+      return Builtins::DivAssignWith;
+    case AssignOperator::Mod:
+      return Builtins::ModAssignWith;
+    case AssignOperator::And:
+      return Builtins::BitAndAssignWith;
+    case AssignOperator::Or:
+      return Builtins::BitOrAssignWith;
+    case AssignOperator::Xor:
+      return Builtins::BitXorAssignWith;
+    case AssignOperator::ShiftLeft:
+      return Builtins::LeftShiftAssignWith;
+    case AssignOperator::ShiftRight:
+      return Builtins::RightShiftAssignWith;
+  }
+}
+
 auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                 const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -4247,7 +4277,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
             BuildBuiltinMethodCall(
                 impl_scope, &assign.lhs(),
                 BuiltinInterfaceName{
-                    Builtins::BuiltinInterfaceForAssignOperator(assign.op()),
+                    GetBuiltinInterfaceForAssignOperator(assign.op()),
                     {&assign.rhs().static_type()}},
                 BuiltinMethodCall{"Op", {&assign.rhs()}}));
         assign.set_rewritten_form(rewritten);

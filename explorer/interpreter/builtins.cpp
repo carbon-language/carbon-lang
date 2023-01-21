@@ -38,32 +38,4 @@ auto Builtins::Get(SourceLocation source_loc, Builtin builtin) const
   return result.value();
 }
 
-Builtins::Builtin Builtins::BuiltinInterfaceForAssignOperator(
-    AssignOperator op) {
-  switch (op) {
-    case AssignOperator::Plain:
-      return Builtin::AssignWith;
-    case AssignOperator::Add:
-      return Builtin::AddAssignWith;
-    case AssignOperator::Sub:
-      return Builtin::SubAssignWith;
-    case AssignOperator::Mul:
-      return Builtin::MulAssignWith;
-    case AssignOperator::Div:
-      return Builtin::DivAssignWith;
-    case AssignOperator::Mod:
-      return Builtin::ModAssignWith;
-    case AssignOperator::And:
-      return Builtin::BitAndAssignWith;
-    case AssignOperator::Or:
-      return Builtin::BitOrAssignWith;
-    case AssignOperator::Xor:
-      return Builtin::BitXorAssignWith;
-    case AssignOperator::ShiftLeft:
-      return Builtin::LeftShiftAssignWith;
-    case AssignOperator::ShiftRight:
-      return Builtin::RightShiftAssignWith;
-  }
-}
-
 }  // namespace Carbon

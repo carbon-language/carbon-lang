@@ -119,9 +119,6 @@ class Builtins {
     return BuiltinNames[static_cast<int>(builtin)];
   }
 
-  // Get the builtin interface to use for an assignment operator.
-  static Builtin BuiltinInterfaceForAssignOperator(AssignOperator op);
-
  private:
   static constexpr int NumBuiltins = static_cast<int>(Builtin::Last) + 1;
   static constexpr const char* BuiltinNames[NumBuiltins] = {
