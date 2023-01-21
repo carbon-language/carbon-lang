@@ -188,6 +188,29 @@ class ValueTransform : public TransformBase<Derived> {
       -> Nonnull<const NominalClassValue** const> {
     return value_ptr;
   }
+
+  // Implementation needed for `TransformDerived` to visit all `Value`
+  // descendent classes and their content. Preserve values.
+  auto operator()(const EqualityConstraint& constraint) -> EqualityConstraint {
+    return constraint;
+  }
+  auto operator()(const RewriteConstraint& constraint) -> RewriteConstraint {
+    return constraint;
+  }
+  auto operator()(const ImplConstraint& constraint) -> ImplConstraint {
+    return constraint;
+  }
+  auto operator()(const IntrinsicConstraint& constraint)
+      -> IntrinsicConstraint {
+    return constraint;
+  }
+  auto operator()(const FunctionType::GenericParameter& param)
+      -> FunctionType::GenericParameter {
+    return param;
+  }
+  auto operator()(const LookupContext& context) -> const LookupContext& {
+    return context;
+  }
 };
 
 }  // namespace Carbon

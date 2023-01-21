@@ -27,6 +27,7 @@
 #include "explorer/interpreter/action_stack.h"
 #include "explorer/interpreter/stack.h"
 #include "explorer/interpreter/value.h"
+#include "explorer/interpreter/value_transform.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
@@ -1087,6 +1088,19 @@ auto Interpreter::CallFunction(const CallExpression& call,
   }
 }
 
+class DeepCopyTransform : public ValueTransform<DeepCopyTransform> {
+ public:
+  explicit DeepCopyTransform(Nonnull<Arena*> arena) : ValueTransform(arena) {}
+
+  using ValueTransform::operator();
+
+  // Preserve class type.
+  auto operator()(Nonnull<const NominalClassType*> class_type)
+      -> Nonnull<const NominalClassType*> {
+    return class_type;
+  }
+};
+
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
@@ -1450,13 +1464,32 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Alloc: {
+          const auto* value = args[0];
+          // Perform a deep copy of the class value to allocated the "newed"
+          // value separately from `heap.New`'s function parameter. Avoids
+          // deallocation and destructor from being called on the returned
+          // value.
+          // TODO: Implement copy elision by moving value ownership.
+          if (const auto* class_val = dyn_cast<NominalClassValue>(value)) {
+            value = DeepCopyTransform(arena_).Transform(class_val);
+          }
           CARBON_CHECK(args.size() == 1);
-          Address addr(heap_.AllocateValue(args[0]));
+          Address addr(heap_.AllocateValue(value));
           return todo_.FinishAction(arena_->New<PointerValue>(addr));
         }
         case IntrinsicExpression::Intrinsic::Dealloc: {
           CARBON_CHECK(args.size() == 1);
-          heap_.Deallocate(cast<PointerValue>(args[0])->address());
+          const auto* ptr = cast<PointerValue>(args[0]);
+          CARBON_ASSIGN_OR_RETURN(
+              const auto* pointee,
+              this->heap_.Read(ptr->address(), exp.source_loc()));
+          if (const auto* class_value = dyn_cast<NominalClassValue>(pointee);
+              class_value && act.pos() == 1) {
+            return todo_.Spawn(std::make_unique<DestroyAction>(
+                arena_->New<LValue>(ptr->address()), class_value));
+          } else {
+            heap_.Deallocate(ptr->address());
+          }
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Rand: {
@@ -2204,17 +2237,23 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
 }
 
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
-  Action& act = todo_.CurrentAction();
-  CleanUpAction& cleanup = cast<CleanUpAction>(act);
-  if (act.pos() < cleanup.allocations_count()) {
+  const Action& act = todo_.CurrentAction();
+  const auto& cleanup = cast<CleanUpAction>(act);
+  if (act.pos() < cleanup.allocations_count() * 2) {
     auto allocation =
-        act.scope()->allocations()[cleanup.allocations_count() - act.pos() - 1];
-    auto lvalue = arena_->New<LValue>(Address(allocation));
-    SourceLocation source_loc("destructor", 1);
-    auto value = heap_.Read(lvalue->address(), source_loc);
-    // Step over uninitialized values
-    if (value.ok()) {
-      return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
+        act.scope()
+            ->allocations()[cleanup.allocations_count() - act.pos() / 2 - 1];
+    if (act.pos() % 2 == 0) {
+      auto* lvalue = arena_->New<LValue>(Address(allocation));
+      SourceLocation source_loc("destructor", 1);
+      auto value = heap_.Read(lvalue->address(), source_loc);
+      // Step over uninitialized values
+      if (value.ok()) {
+        return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
+      }
+    } else {
+      heap_.Deallocate(allocation);
+      return todo_.RunAgain();
     }
   }
   todo_.Pop();
