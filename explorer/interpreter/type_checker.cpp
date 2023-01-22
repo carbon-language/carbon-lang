@@ -4524,7 +4524,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
         fun->body().has_value()) {
       return ProgramError(fun->source_loc())
              << "Error declaring `" << fun->name() << "`"
-             << ": abstract method cannot have a body.";
+             << ": abstract methods cannot have a body.";
     }
 
     bool has_vtable_entry =
