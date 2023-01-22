@@ -2207,13 +2207,12 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   const Action& act = todo_.CurrentAction();
   const auto& cleanup = cast<CleanUpAction>(act);
   if (act.pos() < cleanup.allocations_count() * 2) {
-    auto allocation =
-        act.scope()
-            ->allocations()[cleanup.allocations_count() - act.pos() / 2 - 1];
+    const size_t alloc_index = cleanup.allocations_count() - act.pos() / 2 - 1;
+    auto allocation = act.scope()->allocations()[alloc_index];
     if (act.pos() % 2 == 0) {
       auto* lvalue = arena_->New<LValue>(Address(allocation));
-      SourceLocation source_loc("destructor", 1);
-      auto value = heap_.Read(lvalue->address(), source_loc);
+      auto value =
+          heap_.Read(lvalue->address(), SourceLocation("destructor", 1));
       // Step over uninitialized values
       if (value.ok()) {
         return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
