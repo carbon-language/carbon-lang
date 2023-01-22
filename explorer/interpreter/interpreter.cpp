@@ -1456,7 +1456,17 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         }
         case IntrinsicExpression::Intrinsic::Dealloc: {
           CARBON_CHECK(args.size() == 1);
-          heap_.Deallocate(cast<PointerValue>(args[0])->address());
+          const auto* ptr = cast<PointerValue>(args[0]);
+          CARBON_ASSIGN_OR_RETURN(
+              const auto* pointee,
+              this->heap_.Read(ptr->address(), exp.source_loc()));
+          if (const auto* class_value = dyn_cast<NominalClassValue>(pointee);
+              class_value && act.pos() == 1) {
+            return todo_.Spawn(std::make_unique<DestroyAction>(
+                arena_->New<LValue>(ptr->address()), class_value));
+          } else {
+            heap_.Deallocate(ptr->address());
+          }
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Rand: {
@@ -2204,17 +2214,23 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
 }
 
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
-  Action& act = todo_.CurrentAction();
-  CleanUpAction& cleanup = cast<CleanUpAction>(act);
-  if (act.pos() < cleanup.allocations_count()) {
+  const Action& act = todo_.CurrentAction();
+  const auto& cleanup = cast<CleanUpAction>(act);
+  if (act.pos() < cleanup.allocations_count() * 2) {
     auto allocation =
-        act.scope()->allocations()[cleanup.allocations_count() - act.pos() - 1];
-    auto lvalue = arena_->New<LValue>(Address(allocation));
-    SourceLocation source_loc("destructor", 1);
-    auto value = heap_.Read(lvalue->address(), source_loc);
-    // Step over uninitialized values
-    if (value.ok()) {
-      return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
+        act.scope()
+            ->allocations()[cleanup.allocations_count() - act.pos() / 2 - 1];
+    if (act.pos() % 2 == 0) {
+      auto* lvalue = arena_->New<LValue>(Address(allocation));
+      SourceLocation source_loc("destructor", 1);
+      auto value = heap_.Read(lvalue->address(), source_loc);
+      // Step over uninitialized values
+      if (value.ok()) {
+        return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
+      }
+    } else {
+      heap_.Deallocate(allocation);
+      return todo_.RunAgain();
     }
   }
   todo_.Pop();
