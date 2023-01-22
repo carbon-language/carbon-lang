@@ -13,7 +13,9 @@ base class B {
 }
 
 class D extends B {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_fn_check_signature_return_type.carbon:[[@LINE+1]]: CheckExpressionEquality:4520 failed. kind mismatch
+    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_fn_check_signature_return_type.carbon:[[@LINE+3]]: type error in impl method
+    // CHECK:STDERR: expected: fn (i32) -> i32
+    // CHECK:STDERR: actual: fn (i32) -> String
     impl fn foo[self: Self](i: i32) -> String { return ""; }
 }
 

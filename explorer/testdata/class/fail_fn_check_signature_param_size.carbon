@@ -13,7 +13,9 @@ base class B {
 }
 
 class D extends B {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_fn_check_signature_param_size.carbon:[[@LINE+1]]: CheckPatternEquality:4488 failed. size mismatch
+    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_fn_check_signature_param_size.carbon:[[@LINE+3]]: type error in impl method
+    // CHECK:STDERR: expected: fn (i32) -> i32
+    // CHECK:STDERR: actual: fn (i32, i32) -> i32
     impl fn foo[self: Self](a: i32, b: i32) -> i32 { return a + b; }
 }
 
