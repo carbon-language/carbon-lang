@@ -5,7 +5,6 @@
 #include "explorer/interpreter/type_checker.h"
 
 #include <algorithm>
-#include <cstddef>
 #include <deque>
 #include <iterator>
 #include <map>
@@ -22,8 +21,6 @@
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
-#include "explorer/ast/pattern.h"
-#include "explorer/ast/return_term.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/common/nonnull.h"
@@ -4788,7 +4785,6 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                  << ": cannot override a method that is not declared "
                     "`abstract` or `virtual` in base class.";
         }
-
         break;
     }
     class_vtable[fun->name().inner_name()] = {fun, class_level};

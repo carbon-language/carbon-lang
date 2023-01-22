@@ -11,18 +11,11 @@ package ExplorerTest api;
 
 base class B {
     virtual fn foo[self: Self](i: i32) -> i32 { return i; }
-    // * should be part of the test when abstract is implemented *
-    // abstract fn bar[self: Self](a: i32, b: i32);
 }
 
 class D1 extends B {
     impl fn foo[self: Self](i: i32) -> i32 { return 0; }
 }
-
-// * Doesn't work right now, but should as 0 is narrower than i32 *
-// class D2 extends B {
-//     impl fn foo[self: Self](i: i32) -> 0 { return 0; }
-// }
 
 fn Main() -> i32 {
     return 0;
