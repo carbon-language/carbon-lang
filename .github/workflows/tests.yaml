@@ -59,19 +59,40 @@ jobs:
           # Match the min version listed in docs/project/contribution_tools.md
           python-version: '3.9'
 
-      # Use LLVM 14 following:
+      # Use LLVM following:
       # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
+      # Both 14 and 15 are candidates because GitHub is testing new images.
       - name: Setup LLVM and Clang (macOS)
         if: matrix.os == 'macos-12'
         run: |
-          echo "$(brew --prefix llvm@14)/bin" >> $GITHUB_PATH
+          LLVM_PATH="$(brew --prefix llvm@15)"
+          if [[ ! -e "${LLVM_PATH}" ]]; then
+            LLVM_PATH="$(brew --prefix llvm@14)"
+          fi
+          echo "Using ${LLVM_PATH}"
+          echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
+          echo '*** ls "${LLVM_PATH}"'
+          ls "${LLVM_PATH}"
+          echo '*** ls "${LLVM_PATH}/bin"'
+          ls "${LLVM_PATH}/bin"
 
-      # Use LLVM 14 following:
+      # Use LLVM following:
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md
+      # Both 14 and 15 are candidates for forwards compatibility, although 15
+      # isn't provided.
       - name: Setup LLVM and Clang (Linux)
         if: matrix.os == 'ubuntu-22.04'
         run: |
-          echo "/usr/lib/llvm-14/bin" >> $GITHUB_PATH
+          LLVM_PATH="/usr/lib/llvm-15"
+          if [[ ! -e "${LLVM_PATH}" ]]; then
+            LLVM_PATH="/usr/lib/llvm-14"
+          fi
+          echo "Using ${LLVM_PATH}"
+          echo "${LLVM_PATH}/bin" >> $GITHUB_PATH
+          echo '*** ls "${LLVM_PATH}"'
+          ls "${LLVM_PATH}"
+          echo '*** ls "${LLVM_PATH}/bin"'
+          ls "${LLVM_PATH}/bin"
 
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
