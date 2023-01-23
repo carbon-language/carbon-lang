@@ -49,9 +49,7 @@ class SemanticsIR {
   friend class SemanticsParseTreeHandler;
 
   explicit SemanticsIR(const SemanticsIR* builtin_ir)
-      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {
-    node_block_vectors_.resize(1);
-  }
+      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {}
 
   // Returns the requested node.
   auto GetNode(SemanticsNodeId node_id) const -> const SemanticsNode& {

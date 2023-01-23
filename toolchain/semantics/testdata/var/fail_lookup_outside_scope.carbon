@@ -6,7 +6,7 @@
 // RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {params: block_vector1, return: node<invalid>}
+// CHECK:STDOUT:   {params: block_vector0, return: node<invalid>}
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -44,8 +44,6 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks_vectors: [
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
