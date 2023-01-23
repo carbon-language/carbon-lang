@@ -380,6 +380,11 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       CARBON_RETURN_IF_ERROR(ResolveNames(assign.rhs(), enclosing_scope));
       break;
     }
+    case StatementKind::IncrementDecrement: {
+      auto& inc_dec = cast<IncrementDecrement>(statement);
+      CARBON_RETURN_IF_ERROR(ResolveNames(inc_dec.argument(), enclosing_scope));
+      break;
+    }
     case StatementKind::VariableDefinition: {
       auto& def = cast<VariableDefinition>(statement);
       if (def.has_init()) {

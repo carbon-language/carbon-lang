@@ -72,7 +72,13 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       break;
     case StatementKind::Assign: {
       const auto& assign = cast<Assign>(*this);
-      out << assign.lhs() << " = " << assign.rhs() << ";";
+      out << assign.lhs() << " " << AssignOperatorToString(assign.op()) << " "
+          << assign.rhs() << ";";
+      break;
+    }
+    case StatementKind::IncrementDecrement: {
+      const auto& inc_dec = cast<IncrementDecrement>(*this);
+      out << (inc_dec.is_increment() ? "++" : "--") << inc_dec.argument();
       break;
     }
     case StatementKind::If: {
@@ -134,6 +140,33 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
     case StatementKind::Await:
       out << "await;";
       break;
+  }
+}
+
+auto AssignOperatorToString(AssignOperator op) -> std::string_view {
+  switch (op) {
+    case AssignOperator::Plain:
+      return "=";
+    case AssignOperator::Add:
+      return "+=";
+    case AssignOperator::Div:
+      return "/=";
+    case AssignOperator::Mul:
+      return "*=";
+    case AssignOperator::Mod:
+      return "%=";
+    case AssignOperator::Sub:
+      return "-=";
+    case AssignOperator::And:
+      return "&=";
+    case AssignOperator::Or:
+      return "|=";
+    case AssignOperator::Xor:
+      return "^=";
+    case AssignOperator::ShiftLeft:
+      return "<<=";
+    case AssignOperator::ShiftRight:
+      return ">>=";
   }
 }
 

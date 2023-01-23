@@ -5,26 +5,23 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: 12
-// CHECK:STDOUT: 19
-// CHECK:STDOUT: 26
+// CHECK:STDOUT: Destructor A 3
+// CHECK:STDOUT: Destructor A 1
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-class A { var n: i32; }
-
-external impl A as Add {
-  fn Op[self: Self](rhs: A) -> A { return {.n = self.n + rhs.n}; }
+class A {
+  var i: i32;
+  destructor[self: Self] {
+    Print("Destructor A {0}", self.i);
+  }
 }
 
 fn Main() -> i32 {
-  var a: A = {.n = 5};
-  var b: A = {.n = 7};
-  a = a + b;
-  Print("{0}", a.n);
-  a += b;
-  Print("{0}", a.n);
-  Print("{0}", (a + b).n);
+  var a0: A;
+  var a1: A = {.i = 1};
+  var a2: A;
+  var a3: A = {.i = 3};
   return 0;
 }

@@ -241,8 +241,27 @@ message ExpressionStatement {
 }
 
 message AssignStatement {
+  enum Operator {
+    Plain = 0;
+    Add = 1;
+    And = 2;
+    Div = 3;
+    Mul = 4;
+    Or = 5;
+    Sub = 6;
+    Mod = 7;
+    Xor = 8;
+    ShiftLeft = 9;
+    ShiftRight = 10;
+  }
   optional Expression lhs = 1;
   optional Expression rhs = 2;
+  optional Operator op = 3;
+}
+
+message IncrementDecrementStatement {
+  optional Expression operand = 1;
+  optional bool is_increment = 2;
 }
 
 message VariableDefinitionStatement {
@@ -321,6 +340,7 @@ message Statement {
     BreakStatement break_statement = 13;
     ContinueStatement continue_statement = 14;
     ForStatement for_statement = 15;
+    IncrementDecrementStatement inc_dec = 16;
   }
 }
 
