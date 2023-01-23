@@ -1090,7 +1090,7 @@ auto Parser::HandleFunctionParameterFinishState() -> void {
 
   if (ConsumeListToken(ParseNodeKind::ParameterListComma, TokenKind::CloseParen,
                        state.has_error) == ListTokenKind::Comma) {
-    PushState(ParserState::PatternAsFunctionParameter);
+    PushState(ParserState::FunctionParameter);
   }
 }
 
