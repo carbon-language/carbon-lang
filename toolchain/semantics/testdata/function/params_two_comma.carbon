@@ -4,22 +4,54 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
-// CHECK:STDERR: Please report issues to https://github.com/carbon-language/carbon-lang/issues and include the crash backtrace.
-// CHECK:STDERR: Stack dump:
-// CHECK:STDERR: 0.	Program arguments: ./bazel-bin/toolchain/driver/carbon dump semantics-ir {{.*}}/toolchain/semantics/testdata/function/params_two_comma.carbon
-// CHECK:STDERR: 1.	Parser stack:
-// CHECK:STDERR: 	0.	DeclarationLoop @ 25:1: token 0 : Fn
-// CHECK:STDERR: 	1.	FunctionAfterParameterList @ 25:1: token 0 : Fn
-// CHECK:STDERR: 	cursor	position_ @ 25:22: token 10 : Comma
-// CHECK:STDERR: Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
-// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xf3213)[0x55e886349213]
-// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xf0f5e)[0x55e886346f5e]
-// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xf360a)[0x55e88634960a]
-// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(+0x3bf90)[0x7f6e5776ef90]
-// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(+0x8accc)[0x7f6e577bdccc]
-// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(gsignal+0x12)[0x7f6e5776eef2]
-// CHECK:STDERR: /lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7f6e57759472]
-// CHECK:STDERR: ./bazel-bin/toolchain/driver/carbon(+0xc7b22)[0x55e88631db22]
-// CHECK:STDERR: CHECK failure at toolchain/parser/parser.cpp:166: PositionIs(kind): Required CloseParen, found Comma
+// CHECK:STDOUT: cross_reference_irs_size: 1
+// CHECK:STDOUT: callables: [
+// CHECK:STDOUT:   {params: block_vector1, return: node<invalid>}
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: integer_literals: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: strings: [
+// CHECK:STDOUT:   a,
+// CHECK:STDOUT:   b,
+// CHECK:STDOUT:   Foo,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: nodes: [
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block0, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block1, type: node1},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block2, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block3, type: node0},
+// CHECK:STDOUT:   {kind: VarStorage, type: node2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node4, type: node2},
+// CHECK:STDOUT:   {kind: VarStorage, type: node2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node6, type: node2},
+// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: callable0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node8},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node8, arg1: block3},
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: node_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node8,
+// CHECK:STDOUT:     node9,
+// CHECK:STDOUT:     node10,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node4,
+// CHECK:STDOUT:     node5,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node6,
+// CHECK:STDOUT:     node7,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: node_blocks_vectors: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     block2,
+// CHECK:STDOUT:     block1,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT: ]
 
 fn Foo(a: i32, b: i32,) {}
