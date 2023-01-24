@@ -120,7 +120,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   }
   out << "]\n";
 
-  out << "node_blocks_vectors: [\n";
+  out << "node_block_vectors: [\n";
   for (int32_t i = 0; i < static_cast<int32_t>(node_block_vectors_.size());
        ++i) {
     out.indent(Indent);
