@@ -1,10 +1,13 @@
-# Issue 2132 subteam project
+# Issue 2132 sub-team project
 
-Issue 2132 subteam project files are not intended to be added to the main Carbon Project docs project folders.
+<!--
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-->
 
-Referencing this 2132_subteam_roadmap branch of my fork from within PR's submitted by this 2132 subteam should be a sufficient way to keep the Carbon Project leads aware of the existence of this subteam project.
+This directory contains issue-related documentation for issue 2138 in
+Carbon Project. Information about how issue 2132 works, goals, and
+any relevant community information belong here.
 
-This README.md file makes no unique or significant changes are made to the main Carbon Project README.md.
-
-Please refer to the main Carbon Project README.md file:
-https://github.com/eeshvardasikcm/carbon-lang/blob/2132_subteam_roadmap/docs/project/README.md
+-   [Roadmap](roadmap.md)
