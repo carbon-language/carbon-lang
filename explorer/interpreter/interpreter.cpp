@@ -1454,8 +1454,18 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         }
         case IntrinsicExpression::Intrinsic::Dealloc: {
           CARBON_CHECK(args.size() == 1);
-          heap_.Deallocate(cast<PointerValue>(args[0])->address());
-          return todo_.FinishAction(TupleValue::Empty());
+          CARBON_CHECK(act.pos() > 0);
+          const auto* ptr = cast<PointerValue>(args[0]);
+          if (act.pos() == 1) {
+            CARBON_ASSIGN_OR_RETURN(
+                const auto* pointee,
+                this->heap_.Read(ptr->address(), exp.source_loc()));
+            return todo_.Spawn(std::make_unique<DestroyAction>(
+                arena_->New<LValue>(ptr->address()), pointee));
+          } else {
+            heap_.Deallocate(ptr->address());
+            return todo_.FinishAction(TupleValue::Empty());
+          }
         }
         case IntrinsicExpression::Intrinsic::Rand: {
           CARBON_CHECK(args.size() == 2);
