@@ -1454,6 +1454,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         }
         case IntrinsicExpression::Intrinsic::Dealloc: {
           CARBON_CHECK(args.size() == 1);
+          CARBON_CHECK(act.pos() > 0);
           const auto* ptr = cast<PointerValue>(args[0]);
           if (act.pos() == 1) {
             CARBON_ASSIGN_OR_RETURN(
@@ -1463,8 +1464,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                 arena_->New<LValue>(ptr->address()), pointee));
           } else {
             heap_.Deallocate(ptr->address());
+            return todo_.FinishAction(TupleValue::Empty());
           }
-          return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Rand: {
           CARBON_CHECK(args.size() == 2);
