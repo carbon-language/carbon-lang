@@ -92,13 +92,19 @@ class SemanticsIR {
     return id;
   }
 
-  // Adds an empty new node block vector with the input contents, returning an
-  // ID to reference it.
-  auto AddNodeBlockVector(
-      llvm::SmallVector<SemanticsNodeBlockId> node_block_vector)
-      -> SemanticsNodeBlockVectorId {
+  // Like AddNodeBlock(), but also adds to block to a block vector.
+  auto AddNodeBlockInVector(SemanticsNodeBlockVectorId node_block_vector)
+      -> SemanticsNodeBlockId {
+    auto id = AddNodeBlock();
+    node_block_vectors_[node_block_vector.index].push_back(id);
+    return id;
+  }
+
+  // Adds an empty new node block vector, returning an ID to reference it and
+  // add items.
+  auto AddNodeBlockVector() -> SemanticsNodeBlockVectorId {
     SemanticsNodeBlockVectorId id(node_block_vectors_.size());
-    node_block_vectors_.push_back(std::move(node_block_vector));
+    node_block_vectors_.resize(node_block_vectors_.size() + 1);
     return id;
   }
 

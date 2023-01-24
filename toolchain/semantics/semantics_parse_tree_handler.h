@@ -144,6 +144,10 @@ class SemanticsParseTreeHandler {
   // affect the stack.
   llvm::SmallVector<SemanticsNodeBlockId> node_block_stack_;
 
+  // The stack of node block vectors during build. Only updated on ParseTree
+  // nodes that affect the stack.
+  llvm::SmallVector<SemanticsNodeBlockVectorId> node_block_vector_stack_;
+
   // A stack for scope context.
   llvm::SmallVector<ScopeStackEntry> scope_stack_;
 

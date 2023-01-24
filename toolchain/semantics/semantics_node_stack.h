@@ -45,13 +45,6 @@ class SemanticsNodeStack {
   }
 
   // Pushes a parse tree node onto the stack with a node block vector.
-  auto Push(ParseTree::Node parse_node, SemanticsNodeBlockId node_block_id)
-      -> void {
-    PushEntry({.parse_node = parse_node, .node_block_id = node_block_id},
-              DebugLog::NodeBlockId);
-  }
-
-  // Pushes a parse tree node onto the stack with a node block vector.
   auto Push(ParseTree::Node parse_node,
             SemanticsNodeBlockVectorId node_block_vector_id) -> void {
     PushEntry({.parse_node = parse_node,
@@ -72,6 +65,12 @@ class SemanticsNodeStack {
   // Pops the top of the stack.
   auto PopAndDiscardSoloParseNode(ParseNodeKind pop_parse_kind) -> void;
 
+  // Pops the top of the stack, and discards the ID.
+  auto PopAndDiscardId() -> void;
+
+  // Pops the top of the stack, and discards the ID.
+  auto PopAndDiscardId(ParseNodeKind pop_parse_kind) -> void;
+
   // Pops the top of the stack and returns the parse_node.
   auto PopForSoloParseNode() -> ParseTree::Node;
 
@@ -80,9 +79,6 @@ class SemanticsNodeStack {
 
   // Pops the top of the stack and returns the node_id.
   auto PopForNodeId(ParseNodeKind pop_parse_kind) -> SemanticsNodeId;
-
-  // Pops the top of the stack and returns the node_block_id.
-  auto PopForNodeBlockId(ParseNodeKind pop_parse_kind) -> SemanticsNodeBlockId;
 
   // Pops the top of the stack and returns the node_block_vector_id.
   auto PopForNodeBlockVectorId(ParseNodeKind pop_parse_kind)
@@ -127,7 +123,6 @@ class SemanticsNodeStack {
     // is used based on the ParseNodeKind.
     union {
       SemanticsNodeId node_id;
-      SemanticsNodeBlockId node_block_id;
       SemanticsNodeBlockVectorId node_block_vector_id;
 
       // Right now name_id is exclusively for PatternBinding, which is enforced.
@@ -140,7 +135,6 @@ class SemanticsNodeStack {
   enum DebugLog {
     None,
     NodeId,
-    NodeBlockId,
     NodeBlockVectorId,
     NameId,
   };

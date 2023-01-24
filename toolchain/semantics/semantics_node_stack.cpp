@@ -20,9 +20,6 @@ auto SemanticsNodeStack::PushEntry(Entry entry, DebugLog debug_log) -> void {
     case DebugLog::NodeId:
       CARBON_VLOG() << entry.node_id;
       break;
-    case DebugLog::NodeBlockId:
-      CARBON_VLOG() << entry.node_block_id;
-      break;
     case DebugLog::NodeBlockVectorId:
       CARBON_VLOG() << entry.node_block_vector_id;
       break;
@@ -70,6 +67,16 @@ auto SemanticsNodeStack::RequireValidId(Entry entry) -> void {
       << "Expected valid id on " << parse_tree_->node_kind(entry.parse_node);
 }
 
+auto SemanticsNodeStack::PopAndDiscardId() -> void {
+  auto back = PopEntry();
+  RequireValidId(back);
+}
+
+auto SemanticsNodeStack::PopAndDiscardId(ParseNodeKind pop_parse_kind) -> void {
+  auto back = PopEntry(pop_parse_kind);
+  RequireValidId(back);
+}
+
 auto SemanticsNodeStack::PopAndDiscardSoloParseNode(
     ParseNodeKind pop_parse_kind) -> void {
   auto back = PopEntry(pop_parse_kind);
@@ -100,13 +107,6 @@ auto SemanticsNodeStack::PopForNodeId(ParseNodeKind pop_parse_kind)
   auto back = PopEntry(pop_parse_kind);
   RequireValidId(back);
   return back.node_id;
-}
-
-auto SemanticsNodeStack::PopForNodeBlockId(ParseNodeKind pop_parse_kind)
-    -> SemanticsNodeBlockId {
-  auto back = PopEntry(pop_parse_kind);
-  RequireValidId(back);
-  return back.node_block_id;
 }
 
 auto SemanticsNodeStack::PopForNodeBlockVectorId(ParseNodeKind pop_parse_kind)

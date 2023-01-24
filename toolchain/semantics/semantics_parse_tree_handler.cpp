@@ -260,7 +260,7 @@ auto SemanticsParseTreeHandler::HandleExpressionStatement(
   // Pop the expression without investigating its contents.
   // TODO: This will probably eventually need to do some "do not discard"
   // analysis.
-  node_stack_.PopAndIgnore();
+  node_stack_.PopAndDiscardId();
   node_stack_.Push(parse_node);
 }
 
@@ -474,50 +474,57 @@ auto SemanticsParseTreeHandler::HandlePackageLibrary(
 
 auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
     -> void {
-  llvm::SmallVector<SemanticsNodeBlockId> vec;
+  // If the final child node is a parameter, then we need to pop the node
+  // block for the final parameter off the stack.
+  if (auto parse_kind = parse_tree_->node_kind(node_stack_.PeekParseNode());
+      parse_kind != ParseNodeKind::ParameterListStart &&
+      parse_kind != ParseNodeKind::ParameterListComma) {
+    node_block_stack_.pop_back();
+  }
+
   while (true) {
-    switch (parse_tree_->node_kind(node_stack_.PeekParseNode())) {
+    switch (auto parse_kind =
+                parse_tree_->node_kind(node_stack_.PeekParseNode())) {
       case ParseNodeKind::ParameterListStart:
-        node_stack_.PopForSoloParseNode(ParseNodeKind::ParameterListStart);
-        // Reverse the block vector so that the first parameter is first.
-        std::reverse(vec.begin(), vec.end());
-        node_stack_.Push(parse_node,
-                         semantics_->AddNodeBlockVector(std::move(vec)));
+        node_stack_.PopAndDiscardSoloParseNode(
+            ParseNodeKind::ParameterListStart);
+        node_stack_.Push(parse_node, node_block_vector_stack_.pop_back_val());
         return;
       case ParseNodeKind::ParameterListComma:
-        vec.push_back(
-            node_stack_.PopForNodeBlockId(ParseNodeKind::ParameterListComma));
+        node_stack_.PopAndDiscardSoloParseNode(
+            ParseNodeKind::ParameterListComma);
+        break;
+      case ParseNodeKind::PatternBinding:
+        node_stack_.PopAndDiscardId(ParseNodeKind::PatternBinding);
         break;
       default:
-        if (vec.empty()) {
-          // This can only happen for the first argument. There was no comma, so
-          // we pop the block off the stack here.
-          vec.push_back(node_block_stack_.pop_back_val());
-        }
-        node_stack_.PopAndIgnore();
-        break;
+        // This should only occur for invalid parse trees.
+        CARBON_FATAL() << "TODO: " << parse_kind;
     }
   }
 }
 
 auto SemanticsParseTreeHandler::HandleParameterListComma(
     ParseTree::Node parse_node) -> void {
-  node_stack_.Push(parse_node, node_block_stack_.pop_back_val());
+  node_block_stack_.pop_back();
+  node_stack_.Push(parse_node);
 
   // Possibly add a node block for the next parameter.
   if (!NextParseNodeIs({ParseNodeKind::ParameterList})) {
-    node_block_stack_.push_back(semantics_->AddNodeBlock());
+    node_block_stack_.push_back(
+        semantics_->AddNodeBlockInVector(node_block_vector_stack_.back()));
   }
 }
 
 auto SemanticsParseTreeHandler::HandleParameterListStart(
     ParseTree::Node parse_node) -> void {
   node_stack_.Push(parse_node);
+  node_block_vector_stack_.push_back(semantics_->AddNodeBlockVector());
 
   // Possibly add a node block for the first parameter.
-  if (!NextParseNodeIs(
-          {ParseNodeKind::ParameterList, ParseNodeKind::ParameterListComma})) {
-    node_block_stack_.push_back(semantics_->AddNodeBlock());
+  if (!NextParseNodeIs({ParseNodeKind::ParameterList})) {
+    node_block_stack_.push_back(
+        semantics_->AddNodeBlockInVector(node_block_vector_stack_.back()));
   }
 }
 
