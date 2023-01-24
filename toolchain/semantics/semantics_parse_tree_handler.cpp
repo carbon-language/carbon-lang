@@ -490,18 +490,23 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
             ParseNodeKind::ParameterListStart);
         node_stack_.Push(parse_node, node_block_vector_stack_.pop_back_val());
         return;
+
       case ParseNodeKind::ParameterListComma:
         node_stack_.PopAndDiscardSoloParseNode(
             ParseNodeKind::ParameterListComma);
         break;
+
       case ParseNodeKind::PatternBinding:
         node_stack_.PopAndDiscardId(ParseNodeKind::PatternBinding);
         break;
+
       default:
         // This should only occur for invalid parse trees.
         CARBON_FATAL() << "TODO: " << parse_kind;
     }
   }
+
+  llvm_unreachable("loop always exits");
 }
 
 auto SemanticsParseTreeHandler::HandleParameterListComma(
