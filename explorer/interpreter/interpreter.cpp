@@ -2229,6 +2229,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
       }
     } else {
       heap_.Deallocate(allocation);
+      return todo_.RunAgain();
     }
   }
   todo_.Pop();
