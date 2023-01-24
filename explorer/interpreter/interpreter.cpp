@@ -2213,7 +2213,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
       auto* lvalue = arena_->New<LValue>(Address(allocation));
       auto value =
           heap_.Read(lvalue->address(), SourceLocation("destructor", 1));
-      // Step over uninitialized values
+      // Step over uninitialized values.
       if (value.ok()) {
         return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
       }
