@@ -2103,16 +2103,12 @@ to coordinate to avoid name conflicts, but not across packages.
 
 ### Package declaration
 
-> **Note:** This is provisional, designs for a default package, making the
-> package name optional, and omitting the `package` declaration have not been
-> through the proposal process yet. See
-> [#2323](https://github.com/carbon-language/carbon-lang/issues/2323).
-
 Files start with an optional package declaration, consisting of:
 
--   the `package` keyword introducer,
--   an optional identifier specifying the package name,
--   optional `library` followed by a string with the library name,
+-   optionally, the `package` keyword followed by an identifier specifying the
+    package name,
+-   optionally, the `library` keyword followed by a string with the library
+    name,
 -   either `api` or `impl`, and
 -   a terminating semicolon (`;`).
 
@@ -2127,38 +2123,42 @@ package Geometry library "Shapes" api;
 
 Parts of this declaration may be omitted:
 
--   If the package name is omitted, as in `package library "Main" api;`, the
-    file contributes to the default package. No other package may import from
-    the default package.
+-   If the package keyword is not specified, as in `library "Main" api;`, the
+    file contributes to the main package. No other package may import from the
+    main package.
 
 -   If the library keyword is not specified, as in `package Geometry api;`, this
     file contributes to the default library.
 
--   If a file has no package declaration at all, it is the `api` file belonging
-    to the default package and default library. This is particularly for tests
-    and smaller examples. No other library can import this library even from
-    within the default package. It can be split across multiple `impl` files
-    using a `package impl;` package declaration.
+-   If both keywords are omitted, the package declaration must be omitted
+    entirely. In this case, the file is an `impl` file belonging to the default
+    library of the main package, which implicitly has an empty `api` file. This
+    library is used to define the entry point for the program, and tests and
+    smaller examples may choose to reside entirely within this library. No other
+    library can import this library even from within the default package.
 
-A program need not use the default package, but if it does, it should contain
-the entry-point function. By default, the entry-point function is `Run` from the
-default package.
+If the default library of the main package contains a function named `Main`,
+that function is the program entry point. Otherwise, the program's entry point
+may be defined in another language, such as by defining a C++ `main` function.
+
+> **Note:** Valid signatures for the entry point have not yet been decided.
 
 > References:
 >
 > -   [Code and name organization](code_and_name_organization)
 > -   Proposal
 >     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
+> -   Proposal
+>     [#2550: Simplified package declaration for the main package](https://github.com/carbon-language/carbon-lang/pull/2550)
 
 ### Imports
 
-> **Note:** This is provisional, designs for making the package name optional
-> have not been through the proposal process yet. See
-> [#2001](https://github.com/carbon-language/carbon-lang/issues/2001).
+After the package declaration, files may include `import` declarations. The
+`import` keyword is followed by the package name, `library` followed by the
+library name, or both. If the library is omitted, the default library for that
+package is imported.
 
-After the package declaration, files may include `import` declarations. These
-include the package name and optionally `library` followed by the library name.
-If the library is omitted, the default library for that package is imported.
+Libraries from other packages are imported by specifying the package name.
 
 ```carbon
 // Import the "Vector" library from the
@@ -2179,14 +2179,21 @@ Libraries from the current package are imported by omitting the package name.
 ```carbon
 // Import the "Vertex" library from the same package.
 import library "Vertex";
-// Import the default library from the same package.
-import library default;
 ```
 
 The `import library ...` syntax adds all the public top-level names within the
 given library to the top-level scope of the current file as
 [`private`](#name-visibility) names, and similarly for names in
 [namespaces](#namespaces).
+
+An `import` declaration is not permitted to omit both the package name and the
+library. As a special case, for packages other than the main package, the
+default library can be imported with the syntax `import library default;`:
+
+```carbon
+// Import the default library from the same package.
+import library default;
+```
 
 Every `impl` file automatically imports the `api` file for its library.
 
@@ -2198,6 +2205,8 @@ declarations in the file.
 > -   [Code and name organization](code_and_name_organization)
 > -   Proposal
 >     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
+> -   Proposal
+>     [#2550: Simplified package declaration for the main package](https://github.com/carbon-language/carbon-lang/pull/2550)
 
 ### Name visibility
 
