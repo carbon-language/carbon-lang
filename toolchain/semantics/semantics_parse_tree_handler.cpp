@@ -479,6 +479,8 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
     switch (parse_tree_->node_kind(node_stack_.PeekParseNode())) {
       case ParseNodeKind::ParameterListStart:
         node_stack_.PopForSoloParseNode(ParseNodeKind::ParameterListStart);
+        // Reverse the block vector so that the first parameter is first.
+        std::reverse(vec.begin(), vec.end());
         node_stack_.Push(parse_node,
                          semantics_->AddNodeBlockVector(std::move(vec)));
         return;
