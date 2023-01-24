@@ -36,6 +36,7 @@ class AlternativeSignature : AstNode;
 abstract class Statement : AstNode;
   class ExpressionStatement : Statement;
   class Assign : Statement;
+  class IncrementDecrement : Statement;
   class VariableDefinition : Statement;
   class If : Statement;
   abstract class Return : Statement;

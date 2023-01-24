@@ -35,13 +35,6 @@ auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
   return *this;
 }
 
-RuntimeScope::~RuntimeScope() {
-  for (auto allocation : allocations_) {
-    // TODO: move this into StepCleanUp
-    heap_->Deallocate(allocation);
-  }
-}
-
 void RuntimeScope::Print(llvm::raw_ostream& out) const {
   out << "{";
   llvm::ListSeparator sep;

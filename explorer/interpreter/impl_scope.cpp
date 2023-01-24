@@ -128,13 +128,15 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
       witnesses.push_back(result);
     }
 
-    // Check that all equality and rewrite constraints are satisfied in this
-    // scope.
+    // Check that all intrinsic, equality, and rewrite constraints
+    // are satisfied in this scope.
+    llvm::ArrayRef<IntrinsicConstraint> intrinsics =
+        constraint->intrinsic_constraints();
     llvm::ArrayRef<EqualityConstraint> equals =
         constraint->equality_constraints();
     llvm::ArrayRef<RewriteConstraint> rewrites =
         constraint->rewrite_constraints();
-    if (!equals.empty() || !rewrites.empty()) {
+    if (!intrinsics.empty() || !equals.empty() || !rewrites.empty()) {
       std::optional<Nonnull<const Witness*>> witness;
       if (constraint->self_binding()->impl_binding()) {
         witness = type_checker.MakeConstraintWitness(witnesses);
@@ -142,6 +144,21 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
       Bindings local_bindings = bindings;
       local_bindings.Add(constraint->self_binding(), impl_type, witness);
       SingleStepEqualityContext equality_ctx(this);
+      for (const auto& intrinsic : intrinsics) {
+        IntrinsicConstraint converted = {
+            .type = type_checker.Substitute(local_bindings, intrinsic.type),
+            .kind = intrinsic.kind,
+            .arguments = {}};
+        converted.arguments.reserve(intrinsic.arguments.size());
+        for (Nonnull<const Value*> argument : intrinsic.arguments) {
+          converted.arguments.push_back(
+              type_checker.Substitute(local_bindings, argument));
+        }
+        if (!type_checker.IsIntrinsicConstraintSatisfied(converted, *this)) {
+          return ProgramError(source_loc)
+                 << "constraint requires that " << converted;
+        }
+      }
       for (const auto& equal : equals) {
         auto it = equal.values.begin();
         Nonnull<const Value*> first =

@@ -169,7 +169,7 @@ enum class Operator {
 };
 
 // Returns the lexical representation of `op`, such as "+" for `Add`.
-auto ToString(Operator op) -> std::string_view;
+auto OperatorToString(Operator op) -> std::string_view;
 
 class IdentifierExpression : public Expression {
  public:
@@ -751,6 +751,8 @@ class IntrinsicExpression : public Expression {
     Alloc,
     Dealloc,
     Rand,
+    ImplicitAs,
+    ImplicitAsConvert,
     IntEq,
     StrEq,
     StrCompare,

@@ -935,6 +935,26 @@ struct ImplConstraint {
   Nonnull<const InterfaceType*> interface;
 };
 
+// A constraint that requires an intrinsic property of a type.
+struct IntrinsicConstraint {
+  // Print the intrinsic constraint.
+  void Print(llvm::raw_ostream& out) const;
+
+  // The type that is required to satisfy the intrinsic property.
+  Nonnull<const Value*> type;
+  // The kind of the intrinsic property.
+  enum Kind {
+    // `type` intrinsically implicitly converts to `parameters[0]`.
+    // TODO: Split ImplicitAs into more specific constraints (such as
+    // derived-to-base pointer conversions).
+    ImplicitAs,
+  };
+  Kind kind;
+  // Arguments for the intrinsic property. The meaning of these depends on
+  // `kind`.
+  std::vector<Nonnull<const Value*>> arguments;
+};
+
 // A constraint that a collection of values are known to be the same.
 struct EqualityConstraint {
   // Visit the values in this equality constraint that are a single step away
@@ -979,6 +999,8 @@ struct LookupContext {
 //
 // * A collection of (type, interface) pairs for interfaces that are known to
 //   be implemented by a type satisfying the constraint.
+// * A collection of (type, intrinsic) pairs for intrinsic properties that are
+//   known to be satisfied by a type satisfying the constraint.
 // * A collection of sets of values, typically associated constants, that are
 //   known to be the same.
 // * A collection of contexts in which member name lookups will be performed
@@ -988,14 +1010,17 @@ struct LookupContext {
 // `VariableType` naming the `self_binding`.
 class ConstraintType : public Value {
  public:
-  explicit ConstraintType(Nonnull<const GenericBinding*> self_binding,
-                          std::vector<ImplConstraint> impl_constraints,
-                          std::vector<EqualityConstraint> equality_constraints,
-                          std::vector<RewriteConstraint> rewrite_constraints,
-                          std::vector<LookupContext> lookup_contexts)
+  explicit ConstraintType(
+      Nonnull<const GenericBinding*> self_binding,
+      std::vector<ImplConstraint> impl_constraints,
+      std::vector<IntrinsicConstraint> intrinsic_constraints,
+      std::vector<EqualityConstraint> equality_constraints,
+      std::vector<RewriteConstraint> rewrite_constraints,
+      std::vector<LookupContext> lookup_contexts)
       : Value(Kind::ConstraintType),
         self_binding_(self_binding),
         impl_constraints_(std::move(impl_constraints)),
+        intrinsic_constraints_(std::move(intrinsic_constraints)),
         equality_constraints_(std::move(equality_constraints)),
         rewrite_constraints_(std::move(rewrite_constraints)),
         lookup_contexts_(std::move(lookup_contexts)) {}
@@ -1006,8 +1031,8 @@ class ConstraintType : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(self_binding_, impl_constraints_, equality_constraints_,
-             rewrite_constraints_, lookup_contexts_);
+    return f(self_binding_, impl_constraints_, intrinsic_constraints_,
+             equality_constraints_, rewrite_constraints_, lookup_contexts_);
   }
 
   auto self_binding() const -> Nonnull<const GenericBinding*> {
@@ -1016,6 +1041,10 @@ class ConstraintType : public Value {
 
   auto impl_constraints() const -> llvm::ArrayRef<ImplConstraint> {
     return impl_constraints_;
+  }
+
+  auto intrinsic_constraints() const -> llvm::ArrayRef<IntrinsicConstraint> {
+    return intrinsic_constraints_;
   }
 
   auto equality_constraints() const -> llvm::ArrayRef<EqualityConstraint> {
@@ -1044,6 +1073,7 @@ class ConstraintType : public Value {
  private:
   Nonnull<const GenericBinding*> self_binding_;
   std::vector<ImplConstraint> impl_constraints_;
+  std::vector<IntrinsicConstraint> intrinsic_constraints_;
   std::vector<EqualityConstraint> equality_constraints_;
   std::vector<RewriteConstraint> rewrite_constraints_;
   std::vector<LookupContext> lookup_contexts_;

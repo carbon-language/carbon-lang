@@ -27,14 +27,12 @@ constexpr llvm::StringLiteral KeywordRegex = "[a-z_]+|Self";
 
 #define CARBON_TOKEN(TokenName)                           \
   TEST(TokenKindTest, TokenName) {                        \
-    EXPECT_EQ(#TokenName, TokenKind::TokenName.name());   \
     EXPECT_FALSE(TokenKind::TokenName.is_symbol());       \
     EXPECT_FALSE(TokenKind::TokenName.is_keyword());      \
     EXPECT_EQ("", TokenKind::TokenName.fixed_spelling()); \
   }
 #define CARBON_SYMBOL_TOKEN(TokenName, Spelling)                \
   TEST(TokenKindTest, TokenName) {                              \
-    EXPECT_EQ(#TokenName, TokenKind::TokenName.name());         \
     EXPECT_TRUE(TokenKind::TokenName.is_symbol());              \
     EXPECT_FALSE(TokenKind::TokenName.is_grouping_symbol());    \
     EXPECT_FALSE(TokenKind::TokenName.is_opening_symbol());     \
@@ -45,7 +43,6 @@ constexpr llvm::StringLiteral KeywordRegex = "[a-z_]+|Self";
   }
 #define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName)   \
   TEST(TokenKindTest, TokenName) {                                            \
-    EXPECT_EQ(#TokenName, TokenKind::TokenName.name());                       \
     EXPECT_TRUE(TokenKind::TokenName.is_symbol());                            \
     EXPECT_TRUE(TokenKind::TokenName.is_grouping_symbol());                   \
     EXPECT_TRUE(TokenKind::TokenName.is_opening_symbol());                    \
@@ -57,7 +54,6 @@ constexpr llvm::StringLiteral KeywordRegex = "[a-z_]+|Self";
   }
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName)   \
   TEST(TokenKindTest, TokenName) {                                            \
-    EXPECT_EQ(#TokenName, TokenKind::TokenName.name());                       \
     EXPECT_TRUE(TokenKind::TokenName.is_symbol());                            \
     EXPECT_TRUE(TokenKind::TokenName.is_grouping_symbol());                   \
     EXPECT_FALSE(TokenKind::TokenName.is_opening_symbol());                   \
@@ -69,7 +65,6 @@ constexpr llvm::StringLiteral KeywordRegex = "[a-z_]+|Self";
   }
 #define CARBON_KEYWORD_TOKEN(TokenName, Spelling)               \
   TEST(TokenKindTest, TokenName) {                              \
-    EXPECT_EQ(#TokenName, TokenKind::TokenName.name());         \
     EXPECT_FALSE(TokenKind::TokenName.is_symbol());             \
     EXPECT_TRUE(TokenKind::TokenName.is_keyword());             \
     EXPECT_EQ(Spelling, TokenKind::TokenName.fixed_spelling()); \
