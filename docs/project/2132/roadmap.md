@@ -1,4 +1,4 @@
-# Roadmap for Issue 2132 Sub-Team
+# Roadmap for Issue 2132 Unofficial Sub-Team
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
