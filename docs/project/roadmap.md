@@ -10,18 +10,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Objective for 2022: make Carbon public, finish 0.1 language](#objective-for-2022-make-carbon-public-finish-01-language)
-    -   [Completing the language design](#completing-the-language-design)
-    -   [Going public](#going-public)
--   [Key results in 2022](#key-results-in-2022)
-    -   [Broaden participation so no organization is >50%](#broaden-participation-so-no-organization-is-50)
-    -   [Example ports of C++ libraries to Carbon (100% of woff2, 99% of RE2)](#example-ports-of-c-libraries-to-carbon-100-of-woff2-99-of-re2)
-        -   [Language design covers the syntax and semantics of the example port code.](#language-design-covers-the-syntax-and-semantics-of-the-example-port-code)
-    -   [Demo implementation of core features with working examples](#demo-implementation-of-core-features-with-working-examples)
-    -   [Carbon explorer implementation of core features with test cases](#carbon-explorer-implementation-of-core-features-with-test-cases)
--   [Beyond 2022](#beyond-2022)
-    -   [Potential 2023 goals: finish 0.2 language, stop experimenting](#potential-2023-goals-finish-02-language-stop-experimenting)
-    -   [Potential 2024-2025 goals: _ship_ 1.0 language & organization](#potential-2024-2025-goals-ship-10-language--organization)
+-   [Objective for 2023: get ready to evaluate the Carbon Language.](#objective-for-2023-get-ready-to-evaluate-the-carbon-language)
+-   [Key results in 2023](#key-results-in-2023)
+    -   [A concrete definition of our Minimum Viable Product for evaluation, the 0.1 language](#a-concrete-definition-of-our-minimum-viable-product-for-evaluation-the-01-language)
+    -   [Complete design coverage of the 0.1 language's necessary features](#complete-design-coverage-of-the-01-languages-necessary-features)
+    -   [Complete 0.1 language implementation coverage in the Carbon Explorer](#complete-01-language-implementation-coverage-in-the-carbon-explorer)
+    -   [A toolchain that can build a minimal mixed C++ and Carbon program](#a-toolchain-that-can-build-a-minimal-mixed-c-and-carbon-program)
+    -   [Give talks at 2-3 conferences covering 3-4 different Carbon topics](#give-talks-at-2-3-conferences-covering-3-4-different-carbon-topics)
+-   [Beyond 2023](#beyond-2023)
+    -   [Potential 2024 goals: ship a working 0.1 language for evaluation](#potential-2024-goals-ship-a-working-01-language-for-evaluation)
+    -   [Potential 2025-2026 goals: finish 0.2 language, stop experimenting](#potential-2025-2026-goals-finish-02-language-stop-experimenting)
+    -   [Potential goals _beyond_ 2026: ship 1.0 language & organization](#potential-goals-beyond-2026-ship-10-language--organization)
 
 <!-- tocstop -->
 
@@ -59,8 +58,7 @@ We expect this to include a reasonably precise set of requirements across:
 -   Necessary documentation, strategy, or other supporting material
 
 We expect this to also include at least enough of Carbon's features and C++
-interop to support
-[our basic example](/docs/images/snippets.md#mixed).
+interop to support [our basic example](/docs/images/snippets.md#mixed).
 
 Note that we don't expect to finish the 0.1 language work in 2023. Our goal is
 to make sufficient progress that we can complete it in 2024, but there are still
