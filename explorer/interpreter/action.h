@@ -42,9 +42,6 @@ class RuntimeScope {
   RuntimeScope(RuntimeScope&&) noexcept;
   auto operator=(RuntimeScope&&) noexcept -> RuntimeScope&;
 
-  // Deallocates any allocations in this scope from `heap`.
-  ~RuntimeScope();
-
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
