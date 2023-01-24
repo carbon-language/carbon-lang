@@ -103,7 +103,7 @@ class RewritableMixin : public Base {
 
   // Set the rewritten form of this expression. Can only be called during type
   // checking.
-  auto set_rewritten_form(const Expression* rewritten_form) -> void {
+  auto set_rewritten_form(Nonnull<const Expression*> rewritten_form) -> void {
     CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
     rewritten_form_ = rewritten_form;
     this->set_static_type(&rewritten_form->static_type());
@@ -169,7 +169,7 @@ enum class Operator {
 };
 
 // Returns the lexical representation of `op`, such as "+" for `Add`.
-auto ToString(Operator op) -> std::string_view;
+auto OperatorToString(Operator op) -> std::string_view;
 
 class IdentifierExpression : public Expression {
  public:
@@ -202,9 +202,9 @@ class IdentifierExpression : public Expression {
 // A `.Self` expression within either a `:!` binding or a standalone `where`
 // expression.
 //
-// In a `:!` binding, the type of `.Self` is always `Type`. For example, in
+// In a `:!` binding, the type of `.Self` is always `type`. For example, in
 // `A:! AddableWith(.Self)`, the expression `.Self` refers to the same type as
-// `A`, but with type `Type`.
+// `A`, but with type `type`.
 //
 // In a `where` binding, the type of `.Self` is the constraint preceding the
 // `where` keyword. For example, in `Foo where .Result is Bar(.Self)`, the type
@@ -417,6 +417,28 @@ class IndexExpression : public Expression {
  private:
   Nonnull<Expression*> object_;
   Nonnull<Expression*> offset_;
+};
+
+class BaseAccessExpression : public MemberAccessExpression {
+ public:
+  explicit BaseAccessExpression(SourceLocation source_loc,
+                                Nonnull<Expression*> object,
+                                Nonnull<const BaseElement*> base)
+      : MemberAccessExpression(AstNodeKind::BaseAccessExpression, source_loc,
+                               object),
+        base_(base) {
+    set_static_type(&base->type());
+    set_value_category(ValueCategory::Let);
+  }
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromBaseAccessExpression(node->kind());
+  }
+
+  auto element() const -> const BaseElement& { return *base_; }
+
+ private:
+  const Nonnull<const BaseElement*> base_;
 };
 
 class IntLiteral : public Expression {
@@ -729,6 +751,8 @@ class IntrinsicExpression : public Expression {
     Alloc,
     Dealloc,
     Rand,
+    ImplicitAs,
+    ImplicitAsConvert,
     IntEq,
     StrEq,
     StrCompare,
@@ -975,8 +999,22 @@ class BuiltinConvertExpression : public Expression {
     return source_expression_;
   }
 
+  // Set the rewritten form of this expression. Can only be called during type
+  // checking.
+  auto set_rewritten_form(Nonnull<const Expression*> rewritten_form) -> void {
+    CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
+    rewritten_form_ = rewritten_form;
+  }
+
+  // Get the rewritten form of this expression. A rewritten form can be used to
+  // prepare the conversion during type checking.
+  auto rewritten_form() const -> std::optional<Nonnull<const Expression*>> {
+    return rewritten_form_;
+  }
+
  private:
   Nonnull<Expression*> source_expression_;
+  std::optional<Nonnull<const Expression*>> rewritten_form_;
 };
 
 // An expression whose semantics have not been implemented. This can be used

@@ -93,8 +93,6 @@ class Interpreter {
   // State transition for object destruction.
   auto StepCleanUp() -> ErrorOr<Success>;
   auto StepDestroy() -> ErrorOr<Success>;
-  // State transition for tuple destruction.
-  auto StepCleanUpTuple() -> ErrorOr<Success>;
 
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
@@ -128,7 +126,7 @@ class Interpreter {
   // appear in constraints:
   //
   //   interface Iface { let N:! i32; }
-  //   fn PickType(N: i32) -> Type { return i32; }
+  //   fn PickType(N: i32) -> type { return i32; }
   //   fn F[T:! Iface where .N == 5](x: T) {
   //     var x: PickType(T.N) = 0;
   //   }
@@ -253,7 +251,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
     case Operator::BitShiftLeft:
     case Operator::BitShiftRight:
     case Operator::Complement:
-      CARBON_FATAL() << "operator " << ToString(op)
+      CARBON_FATAL() << "operator " << OperatorToString(op)
                      << " should always be rewritten";
   }
 }
@@ -453,6 +451,18 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         return todo_.FinishAction(arena_->New<LValue>(field));
       }
     }
+    case ExpressionKind::BaseAccessExpression: {
+      const auto& access = cast<BaseAccessExpression>(exp);
+      if (act.pos() == 0) {
+        // Get LValue for expression.
+        return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+      } else {
+        // Append `.base` element to the address, and return the new LValue.
+        Address object = cast<LValue>(*act.results()[0]).address();
+        Address base = object.ElementAddress(&access.element());
+        return todo_.FinishAction(arena_->New<LValue>(base));
+      }
+    }
     case ExpressionKind::IndexExpression: {
       if (act.pos() == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
@@ -626,7 +636,7 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
           Nonnull<const Bindings*> bindings,
           InstantiateBindings(&class_type.bindings(), source_loc));
       return arena_->New<NominalClassType>(&class_type.declaration(), bindings,
-                                           base);
+                                           base, class_type.vtable());
     }
     case Value::Kind::ChoiceType: {
       const auto& choice_type = cast<ChoiceType>(*type);
@@ -704,10 +714,15 @@ auto Interpreter::ConvertStructToClass(
       struct_values.push_back(field);
     }
   }
+  CARBON_CHECK(!cast<NominalClassType>(inst_class)->base() || base_instance)
+      << "Invalid conversion for `" << *inst_class << "`: base class missing";
   auto* converted_init_struct =
       arena_->New<StructValue>(std::move(struct_values));
+  Nonnull<const NominalClassValue** const> class_value_ptr =
+      base_instance ? (*base_instance)->class_value_ptr()
+                    : arena_->New<const NominalClassValue*>();
   return arena_->New<NominalClassValue>(inst_class, converted_init_struct,
-                                        base_instance);
+                                        base_instance, class_value_ptr);
 }
 
 auto Interpreter::Convert(Nonnull<const Value*> value,
@@ -790,7 +805,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         case Value::Kind::NamedConstraintType:
         case Value::Kind::InterfaceType: {
           CARBON_CHECK(struct_val.elements().empty())
-              << "only empty structs convert to Type";
+              << "only empty structs convert to `type`";
           return arena_->New<StructType>();
         }
         default: {
@@ -884,6 +899,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       CARBON_CHECK(pointee->kind() == Value::Kind::NominalClassValue)
           << "Unexpected pointer type";
 
+      // Conversion logic for subtyping for function arguments only.
+      // TODO: Drop when able to rewrite subtyping in TypeChecker for arguments.
       const auto* dest_ptr = cast<PointerType>(destination_type);
       std::optional<Nonnull<const NominalClassValue*>> class_subobj =
           cast<NominalClassValue>(pointee);
@@ -1047,7 +1064,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
         case DeclarationKind::ClassDeclaration: {
           const auto& class_decl = cast<ClassDeclaration>(decl);
           return todo_.FinishAction(arena_->New<NominalClassType>(
-              &class_decl, bindings, class_decl.base_type()));
+              &class_decl, bindings, class_decl.base_type(), VTable()));
         }
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(
@@ -1268,6 +1285,21 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         }
       }
     }
+    case ExpressionKind::BaseAccessExpression: {
+      const auto& access = cast<BaseAccessExpression>(exp);
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(&access.object()));
+      } else {
+        ElementPath::Component base_elt(&access.element(), std::nullopt,
+                                        std::nullopt);
+        const Value* value = act.results()[0];
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base_value,
+                                value->GetElement(arena_, ElementPath(base_elt),
+                                                  exp.source_loc(), value));
+        return todo_.FinishAction(base_value);
+      }
+    }
     case ExpressionKind::IdentifierExpression: {
       CARBON_CHECK(act.pos() == 0);
       const auto& ident = cast<IdentifierExpression>(exp);
@@ -1422,8 +1454,18 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         }
         case IntrinsicExpression::Intrinsic::Dealloc: {
           CARBON_CHECK(args.size() == 1);
-          heap_.Deallocate(cast<PointerValue>(args[0])->address());
-          return todo_.FinishAction(TupleValue::Empty());
+          CARBON_CHECK(act.pos() > 0);
+          const auto* ptr = cast<PointerValue>(args[0]);
+          if (act.pos() == 1) {
+            CARBON_ASSIGN_OR_RETURN(
+                const auto* pointee,
+                this->heap_.Read(ptr->address(), exp.source_loc()));
+            return todo_.Spawn(std::make_unique<DestroyAction>(
+                arena_->New<LValue>(ptr->address()), pointee));
+          } else {
+            heap_.Deallocate(ptr->address());
+            return todo_.FinishAction(TupleValue::Empty());
+          }
         }
         case IntrinsicExpression::Intrinsic::Rand: {
           CARBON_CHECK(args.size() == 2);
@@ -1434,6 +1476,42 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           // reproducible across builds/platforms.
           int r = (generator() % (high - low)) + low;
           return todo_.FinishAction(arena_->New<IntValue>(r));
+        }
+        case IntrinsicExpression::Intrinsic::ImplicitAs: {
+          CARBON_CHECK(args.size() == 1);
+          // Build a constraint type that constrains its .Self type to satisfy
+          // the "ImplicitAs" intrinsic constraint. This involves creating a
+          // number of objects that all point to each other.
+          // TODO: Factor out a simple version of ConstraintTypeBuilder and use
+          // it from here.
+          auto* self_binding = arena_->New<GenericBinding>(
+              exp.source_loc(), ".Self",
+              arena_->New<TypeTypeLiteral>(exp.source_loc()));
+          auto* self = arena_->New<VariableType>(self_binding);
+          auto* impl_binding = arena_->New<ImplBinding>(
+              exp.source_loc(), self_binding, std::nullopt);
+          impl_binding->set_symbolic_identity(
+              arena_->New<BindingWitness>(impl_binding));
+          self_binding->set_symbolic_identity(self);
+          self_binding->set_value(self);
+          self_binding->set_impl_binding(impl_binding);
+          IntrinsicConstraint constraint = {
+              .type = self,
+              .kind = IntrinsicConstraint::ImplicitAs,
+              .arguments = args};
+          auto* result = arena_->New<ConstraintType>(
+              self_binding, std::vector<ImplConstraint>{},
+              std::vector<IntrinsicConstraint>{std::move(constraint)},
+              std::vector<EqualityConstraint>{},
+              std::vector<RewriteConstraint>{}, std::vector<LookupContext>{});
+          impl_binding->set_interface(result);
+          return todo_.FinishAction(result);
+        }
+        case IntrinsicExpression::Intrinsic::ImplicitAsConvert: {
+          CARBON_CHECK(args.size() == 2);
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> result,
+                                  Convert(args[0], args[1], exp.source_loc()));
+          return todo_.FinishAction(result);
         }
         case IntrinsicExpression::Intrinsic::IntEq: {
           CARBON_CHECK(args.size() == 2);
@@ -1578,6 +1656,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::BuiltinConvertExpression: {
       const auto& convert_expr = cast<BuiltinConvertExpression>(exp);
+      if (auto rewrite = convert_expr.rewritten_form()) {
+        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+      }
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             convert_expr.source_expression()));
@@ -1864,6 +1945,13 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
     case StatementKind::Assign: {
       const auto& assign = cast<Assign>(stmt);
+      if (auto rewrite = assign.rewritten_form()) {
+        if (act.pos() == 0) {
+          return todo_.Spawn(std::make_unique<ExpressionAction>(*rewrite));
+        } else {
+          return todo_.FinishAction();
+        }
+      }
       if (act.pos() == 0) {
         //    { {(lv = e) :: C, E, F} :: S, H}
         // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
@@ -1882,6 +1970,15 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                     stmt.source_loc()));
         CARBON_RETURN_IF_ERROR(
             heap_.Write(lval.address(), rval, stmt.source_loc()));
+        return todo_.FinishAction();
+      }
+    }
+    case StatementKind::IncrementDecrement: {
+      const auto& inc_dec = cast<IncrementDecrement>(stmt);
+      if (act.pos() == 0) {
+        return todo_.Spawn(
+            std::make_unique<ExpressionAction>(*inc_dec.rewritten_form()));
+      } else {
         return todo_.FinishAction();
       }
     }
@@ -2026,6 +2123,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::InterfaceImplDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::ImplDeclaration:
+    case DeclarationKind::MatchFirstDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:
       // These declarations have no run-time effects.
@@ -2114,17 +2212,24 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
 }
 
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
-  Action& act = todo_.CurrentAction();
-  CleanupAction& cleanup = cast<CleanupAction>(act);
-  if (act.pos() < cleanup.allocations_count()) {
-    auto allocation =
-        act.scope()->allocations()[cleanup.allocations_count() - act.pos() - 1];
-    auto lvalue = arena_->New<LValue>(Address(allocation));
-    SourceLocation source_loc("destructor", 1);
-    auto value = heap_.Read(lvalue->address(), source_loc);
-    // Step over uninitialized values
-    if (value.ok()) {
-      return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
+  const Action& act = todo_.CurrentAction();
+  const auto& cleanup = cast<CleanUpAction>(act);
+  if (act.pos() < cleanup.allocations_count() * 2) {
+    const size_t alloc_index = cleanup.allocations_count() - act.pos() / 2 - 1;
+    auto allocation = act.scope()->allocations()[alloc_index];
+    if (act.pos() % 2 == 0) {
+      auto* lvalue = arena_->New<LValue>(Address(allocation));
+      auto value =
+          heap_.Read(lvalue->address(), SourceLocation("destructor", 1));
+      // Step over uninitialized values.
+      if (value.ok()) {
+        return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
+      } else {
+        return todo_.RunAgain();
+      }
+    } else {
+      heap_.Deallocate(allocation);
+      return todo_.RunAgain();
     }
   }
   todo_.Pop();

@@ -11,12 +11,12 @@
 // CHECK:STDOUT:       {kind: 'StructFieldUnknown', text: 'a', has_error: yes},
 // CHECK:STDOUT:     {kind: 'StructLiteral', text: '}', subtree_size: 3},
 // CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:     {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'VariableInitializer', text: '=', subtree_size: 3},
+// CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:     {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
+// CHECK:STDOUT:   {kind: 'StructLiteral', text: '}', subtree_size: 2},
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 10},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/struct/fail_identifier_only.carbon:[[@LINE+1]]:9: Expected `.field: type` or `.field = value`.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/struct/fail_identifier_only.carbon:[[@LINE+1]]:9: Expected `.field: field_type` or `.field = value`.
 var x: {a} = {};

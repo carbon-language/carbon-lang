@@ -36,6 +36,16 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       out << "}\n";
       break;
     }
+    case DeclarationKind::MatchFirstDeclaration: {
+      const auto& match_first_decl = cast<MatchFirstDeclaration>(*this);
+      PrintID(out);
+      out << " {\n";
+      for (Nonnull<const ImplDeclaration*> m : match_first_decl.impls()) {
+        out << *m;
+      }
+      out << "}\n";
+      break;
+    }
     case DeclarationKind::FunctionDeclaration:
       cast<FunctionDeclaration>(*this).PrintDepth(-1, out);
       break;
@@ -139,6 +149,9 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
           << impl_decl.interface();
       break;
     }
+    case DeclarationKind::MatchFirstDeclaration:
+      out << "match_first";
+      break;
     case DeclarationKind::FunctionDeclaration:
       out << "fn " << cast<FunctionDeclaration>(*this).name();
       break;
@@ -232,6 +245,7 @@ auto GetName(const Declaration& declaration)
     case DeclarationKind::InterfaceExtendsDeclaration:
     case DeclarationKind::InterfaceImplDeclaration:
     case DeclarationKind::ImplDeclaration:
+    case DeclarationKind::MatchFirstDeclaration:
       return std::nullopt;
     case DeclarationKind::SelfDeclaration:
       return SelfDeclaration::name();
@@ -341,14 +355,16 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
                                  std::vector<Nonnull<AstNode*>> deduced_params,
                                  Nonnull<TuplePattern*> param_pattern,
                                  ReturnTerm return_term,
-                                 std::optional<Nonnull<Block*>> body)
+                                 std::optional<Nonnull<Block*>> body,
+                                 VirtualOverride virt_override)
     -> ErrorOr<Nonnull<FunctionDeclaration*>> {
   DeducedParameters split_params;
   CARBON_ASSIGN_OR_RETURN(split_params,
                           SplitDeducedParameters(source_loc, deduced_params));
   return arena->New<FunctionDeclaration>(
       source_loc, name, std::move(split_params.resolved_params),
-      split_params.self_pattern, param_pattern, return_term, body);
+      split_params.self_pattern, param_pattern, return_term, body,
+      virt_override);
 }
 
 void CallableDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {

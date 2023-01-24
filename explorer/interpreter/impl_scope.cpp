@@ -128,13 +128,15 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
       witnesses.push_back(result);
     }
 
-    // Check that all equality and rewrite constraints are satisfied in this
-    // scope.
+    // Check that all intrinsic, equality, and rewrite constraints
+    // are satisfied in this scope.
+    llvm::ArrayRef<IntrinsicConstraint> intrinsics =
+        constraint->intrinsic_constraints();
     llvm::ArrayRef<EqualityConstraint> equals =
         constraint->equality_constraints();
     llvm::ArrayRef<RewriteConstraint> rewrites =
         constraint->rewrite_constraints();
-    if (!equals.empty() || !rewrites.empty()) {
+    if (!intrinsics.empty() || !equals.empty() || !rewrites.empty()) {
       std::optional<Nonnull<const Witness*>> witness;
       if (constraint->self_binding()->impl_binding()) {
         witness = type_checker.MakeConstraintWitness(witnesses);
@@ -142,6 +144,21 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
       Bindings local_bindings = bindings;
       local_bindings.Add(constraint->self_binding(), impl_type, witness);
       SingleStepEqualityContext equality_ctx(this);
+      for (const auto& intrinsic : intrinsics) {
+        IntrinsicConstraint converted = {
+            .type = type_checker.Substitute(local_bindings, intrinsic.type),
+            .kind = intrinsic.kind,
+            .arguments = {}};
+        converted.arguments.reserve(intrinsic.arguments.size());
+        for (Nonnull<const Value*> argument : intrinsic.arguments) {
+          converted.arguments.push_back(
+              type_checker.Substitute(local_bindings, argument));
+        }
+        if (!type_checker.IsIntrinsicConstraintSatisfied(converted, *this)) {
+          return ProgramError(source_loc)
+                 << "constraint requires that " << converted;
+        }
+      }
       for (const auto& equal : equals) {
         auto it = equal.values.begin();
         Nonnull<const Value*> first =
@@ -215,6 +232,7 @@ static auto CombineResults(Nonnull<const InterfaceType*> iface_type,
   if (!a) {
     return b;
   }
+
   // If either of them was a symbolic result, then they'll end up being
   // equivalent. In that case, pick `a`.
   const auto* impl_a = dyn_cast<ImplWitness>(*a);
@@ -225,13 +243,32 @@ static auto CombineResults(Nonnull<const InterfaceType*> iface_type,
   if (!impl_a) {
     return b;
   }
+
   // If they refer to the same `impl` declaration, it doesn't matter which one
   // we pick, so we pick `a`.
   // TODO: Compare the identities of the `impl`s, not the declarations.
   if (&impl_a->declaration() == &impl_b->declaration()) {
     return a;
   }
+
   // TODO: Order the `impl`s based on type structure.
+
+  // If the declarations appear in the same `match_first` block, whichever
+  // appears first wins.
+  // TODO: Once we support an impl being declared more than once, we will need
+  // to check this more carefully.
+  if (impl_a->declaration().match_first() &&
+      impl_a->declaration().match_first() ==
+          impl_b->declaration().match_first()) {
+    for (auto* impl : (*impl_a->declaration().match_first())->impls()) {
+      if (impl == &impl_a->declaration()) {
+        return a;
+      }
+      if (impl == &impl_b->declaration()) {
+        return b;
+      }
+    }
+  }
   return ProgramError(source_loc)
          << "ambiguous implementations of " << *iface_type << " for " << *type;
 }

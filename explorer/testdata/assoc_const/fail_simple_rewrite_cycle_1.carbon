@@ -9,8 +9,8 @@
 package ExplorerTest api;
 
 interface TwoTypes {
-  let T:! Type;
-  let U:! Type;
+  let T:! type;
+  let U:! type;
 }
 
 // Attempting to fully resolve the replacement for `.T` would never create a

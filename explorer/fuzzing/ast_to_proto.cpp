@@ -89,6 +89,34 @@ static auto OperatorToProtoEnum(const Operator op)
   }
 }
 
+static auto AssignOperatorToProtoEnum(const AssignOperator op)
+    -> Fuzzing::AssignStatement::Operator {
+  switch (op) {
+    case AssignOperator::Plain:
+      return Fuzzing::AssignStatement::Plain;
+    case AssignOperator::Add:
+      return Fuzzing::AssignStatement::Add;
+    case AssignOperator::And:
+      return Fuzzing::AssignStatement::And;
+    case AssignOperator::Mul:
+      return Fuzzing::AssignStatement::Mul;
+    case AssignOperator::Div:
+      return Fuzzing::AssignStatement::Div;
+    case AssignOperator::Mod:
+      return Fuzzing::AssignStatement::Mod;
+    case AssignOperator::Or:
+      return Fuzzing::AssignStatement::Or;
+    case AssignOperator::ShiftLeft:
+      return Fuzzing::AssignStatement::ShiftLeft;
+    case AssignOperator::ShiftRight:
+      return Fuzzing::AssignStatement::ShiftRight;
+    case AssignOperator::Sub:
+      return Fuzzing::AssignStatement::Sub;
+    case AssignOperator::Xor:
+      return Fuzzing::AssignStatement::Xor;
+  }
+}
+
 static auto FieldInitializerToProto(const FieldInitializer& field)
     -> Fuzzing::FieldInitializer {
   Fuzzing::FieldInitializer field_proto;
@@ -110,6 +138,7 @@ static auto ExpressionToProto(const Expression& expression)
     -> Fuzzing::Expression {
   Fuzzing::Expression expression_proto;
   switch (expression.kind()) {
+    case ExpressionKind::BaseAccessExpression:
     case ExpressionKind::ValueLiteral: {
       // This does not correspond to source syntax.
       break;
@@ -434,6 +463,15 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       auto* assign_proto = statement_proto.mutable_assign();
       *assign_proto->mutable_lhs() = ExpressionToProto(assign.lhs());
       *assign_proto->mutable_rhs() = ExpressionToProto(assign.rhs());
+      assign_proto->set_op(AssignOperatorToProtoEnum(assign.op()));
+      break;
+    }
+
+    case StatementKind::IncrementDecrement: {
+      const auto& inc_dec = cast<IncrementDecrement>(statement);
+      auto* inc_dec_proto = statement_proto.mutable_inc_dec();
+      *inc_dec_proto->mutable_operand() = ExpressionToProto(inc_dec.argument());
+      inc_dec_proto->set_is_increment(inc_dec.is_increment());
       break;
     }
 
@@ -769,6 +807,15 @@ static auto DeclarationToProto(const Declaration& declaration)
       *impl_proto->mutable_interface() = ExpressionToProto(impl.interface());
       for (const auto& member : impl.members()) {
         *impl_proto->add_members() = DeclarationToProto(*member);
+      }
+      break;
+    }
+
+    case DeclarationKind::MatchFirstDeclaration: {
+      const auto& match_first = cast<MatchFirstDeclaration>(declaration);
+      auto* match_first_proto = declaration_proto.mutable_match_first();
+      for (const auto* impl : match_first.impls()) {
+        *match_first_proto->add_impls() = DeclarationToProto(*impl);
       }
       break;
     }

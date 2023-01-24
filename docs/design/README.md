@@ -2583,10 +2583,10 @@ given any type `T` that implements the `Ordered` interface. Subsequent calls to
 `Ordered`.
 
 The parameter could alternatively be declared to be a _template_ generic
-parameter by prefixing with the `template` keyword, as in `template T:! Type`.
+parameter by prefixing with the `template` keyword, as in `template T:! type`.
 
 ```carbon
-fn Convert[template T:! Type](source: T, template U:! Type) -> U {
+fn Convert[template T:! type](source: T, template U:! type) -> U {
   var converted: U = source;
   return converted;
 }
@@ -2621,7 +2621,7 @@ declaration, and the condition can only use constant values known at
 type-checking time, including `template` parameters.
 
 ```carbon
-class Array(template T:! Type, template N:! i64)
+class Array(template T:! type, template N:! i64)
     if N >= 0 and N < MaxArraySize / sizeof(T);
 ```
 
@@ -2630,7 +2630,7 @@ provided by the caller, _in addition_ to any constraints. This means member name
 lookup and type checking for anything
 [dependent](generics/terminology.md#dependent-names) on the template parameter
 can't be completed until the template is instantiated with a specific concrete
-type. When the constraint is just `Type`, this gives semantics similar to C++
+type. When the constraint is just `type`, this gives semantics similar to C++
 templates. Constraints can then be added incrementally, with the compiler
 verifying that the semantics stay the same. Once all constraints have been
 added, removing the word `template` to switch to a checked parameter is safe.
@@ -2825,7 +2825,7 @@ to a class must be generic, and so defined with `:!`, either with or without the
 type `T`:
 
 ```carbon
-class Stack(T:! Type) {
+class Stack(T:! type) {
   fn Push[addr self: Self*](value: T);
   fn Pop[addr self: Self*]() -> T;
 
@@ -2847,7 +2847,7 @@ The values of type parameters are part of a type's value, and so may be deduced
 in a function call, as in this example:
 
 ```carbon
-fn PeekTopOfStack[T:! Type](s: Stack(T)*) -> T {
+fn PeekTopOfStack[T:! type](s: Stack(T)*) -> T {
   var top: T = s->Pop();
   s->Push(top);
   return top;
@@ -2868,7 +2868,7 @@ PeekTopOfStack(&int_stack);
 [Choice types](#choice-types) may be parameterized similarly to classes:
 
 ```carbon
-choice Result(T:! Type, Error:! Type) {
+choice Result(T:! type, Error:! type) {
   Success(value: T),
   Failure(error: Error)
 }
@@ -2880,7 +2880,7 @@ Interfaces are always parameterized by a `Self` type, but in some cases they
 will have additional parameters.
 
 ```carbon
-interface AddWith(U:! Type);
+interface AddWith(U:! type);
 ```
 
 Interfaces without parameters may only be implemented once for a given type, but
@@ -2904,11 +2904,11 @@ parameter list_`]` after the `impl` keyword introducer, as in:
 
 ```carbon
 external impl forall [T:! Printable] Vector(T) as Printable;
-external impl forall [Key:! Hashable, Value:! Type]
+external impl forall [Key:! Hashable, Value:! type]
     HashMap(Key, Value) as Has(Key);
 external impl forall [T:! Ordered] T as PartiallyOrdered;
 external impl forall [T:! ImplicitAs(i32)] BigInt as AddWith(T);
-external impl forall [U:! Type, T:! As(U)]
+external impl forall [U:! type, T:! As(U)]
     Optional(T) as As(Optional(U));
 ```
 
@@ -3123,7 +3123,7 @@ There are some situations where the common type for two types is needed:
     will be set to the common type of the corresponding arguments, as in:
 
     ```carbon
-    fn F[T:! Type](x: T, y: T);
+    fn F[T:! type](x: T, y: T);
 
     // Calls `F` with `T` set to the
     // common type of `G()` and `H()`:

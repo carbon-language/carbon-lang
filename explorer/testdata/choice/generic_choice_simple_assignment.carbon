@@ -10,7 +10,7 @@
 package ExplorerTest api;
 
 
-choice MyOptionalElement(ZZ:! Type) {
+choice MyOptionalElement(ZZ:! type) {
   None(ZZ),
   Element(ZZ)
 }

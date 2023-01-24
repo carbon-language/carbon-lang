@@ -95,7 +95,7 @@ auto ParseTree::PrintNode(llvm::raw_ostream& output, Node n, int depth,
   if (preorder) {
     output << "node_index: " << n << ", ";
   }
-  output << "kind: '" << n_impl.kind.name() << "', text: '"
+  output << "kind: '" << n_impl.kind << "', text: '"
          << tokens_->GetTokenText(n_impl.token) << "'";
 
   if (n_impl.has_error) {

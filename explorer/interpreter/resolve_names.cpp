@@ -94,6 +94,7 @@ static auto AddExposedNames(const Declaration& declaration,
       break;
     }
     case DeclarationKind::ImplDeclaration:
+    case DeclarationKind::MatchFirstDeclaration:
     case DeclarationKind::MixDeclaration:
     case DeclarationKind::InterfaceExtendsDeclaration:
     case DeclarationKind::InterfaceImplDeclaration: {
@@ -275,6 +276,7 @@ static auto ResolveNames(Expression& expression,
       break;
     case ExpressionKind::ValueLiteral:
     case ExpressionKind::BuiltinConvertExpression:
+    case ExpressionKind::BaseAccessExpression:
       CARBON_FATAL() << "should not exist before type checking";
     case ExpressionKind::UnimplementedExpression:
       return ProgramError(expression.source_loc()) << "Unimplemented";
@@ -376,6 +378,11 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       auto& assign = cast<Assign>(statement);
       CARBON_RETURN_IF_ERROR(ResolveNames(assign.lhs(), enclosing_scope));
       CARBON_RETURN_IF_ERROR(ResolveNames(assign.rhs(), enclosing_scope));
+      break;
+    }
+    case StatementKind::IncrementDecrement: {
+      auto& inc_dec = cast<IncrementDecrement>(statement);
+      CARBON_RETURN_IF_ERROR(ResolveNames(inc_dec.argument(), enclosing_scope));
       break;
     }
     case StatementKind::VariableDefinition: {
@@ -555,6 +562,13 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       CARBON_RETURN_IF_ERROR(ResolveNames(impl.interface(), impl_scope));
       CARBON_RETURN_IF_ERROR(
           ResolveMemberNames(impl.members(), impl_scope, bodies));
+      break;
+    }
+    case DeclarationKind::MatchFirstDeclaration: {
+      // A `match_first` declaration does not introduce a scope.
+      for (auto* impl : cast<MatchFirstDeclaration>(declaration).impls()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(*impl, enclosing_scope, bodies));
+      }
       break;
     }
     case DeclarationKind::DestructorDeclaration:

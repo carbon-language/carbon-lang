@@ -7,58 +7,44 @@
 
 #include <cstdint>
 
-#include "common/ostream.h"
+#include "toolchain/common/enum_base.h"
 
 namespace Carbon {
 
-class SemanticsBuiltinKind {
- private:
-  // Note that this must be declared earlier in the class so that its type can
-  // be used, for example in the conversion operator.
-  enum class KindEnum : uint8_t {
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name) Name,
+CARBON_DEFINE_RAW_ENUM_CLASS(SemanticsBuiltinKind, uint8_t) {
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/semantics/semantics_builtin_kind.def"
-  };
+};
 
+class SemanticsBuiltinKind : public CARBON_ENUM_BASE(SemanticsBuiltinKind) {
  public:
-  // The count of enum values excluding Invalid.
-  static constexpr uint8_t ValidCount = static_cast<uint8_t>(KindEnum::Invalid);
-
-  // `clang-format` has a bug with spacing around `->` returns in macros. See
-  // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name)            \
-  static constexpr auto Name()->SemanticsBuiltinKind { \
-    return SemanticsBuiltinKind(KindEnum::Name);       \
-  }
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name) \
+  CARBON_ENUM_CONSTANT_DECLARATION(Name)
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
-  // The default constructor is deleted because objects of this type should
-  // always be constructed using the above factory functions for each unique
-  // kind.
-  SemanticsBuiltinKind() = delete;
-
-  // Gets a friendly name for the token for logging or debugging.
-  [[nodiscard]] auto name() const -> llvm::StringRef;
+  // The count of enum values excluding Invalid.
+  //
+  // Note that we *define* this as `constexpr` making it a true compile-time
+  // constant, and so we name it accordingly and disable the lint error here.
+  // NOLINTNEXTLINE(readability-identifier-naming)
+  static const uint8_t ValidCount;
 
   // Support conversion to and from an int32_t for SemanticNode storage.
-  auto AsInt() -> int32_t { return static_cast<int32_t>(kind_); }
-  static auto FromInt(int32_t val) -> SemanticsBuiltinKind {
-    return SemanticsBuiltinKind(static_cast<KindEnum>(val));
-  }
-
-  // Enable conversion to our private enum, including in a `constexpr`
-  // context, to enable usage in `switch` and `case`. The enum remains
-  // private and nothing else should be using this function.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr operator KindEnum() const { return kind_; }
-
-  void Print(llvm::raw_ostream& out) const { out << name(); }
-
- private:
-  constexpr explicit SemanticsBuiltinKind(KindEnum k) : kind_(k) {}
-
-  KindEnum kind_;
+  using EnumBase::AsInt;
+  using EnumBase::FromInt;
 };
+
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name) \
+  CARBON_ENUM_CONSTANT_DEFINITION(SemanticsBuiltinKind, Name)
+#include "toolchain/semantics/semantics_builtin_kind.def"
+
+constexpr uint8_t SemanticsBuiltinKind::ValidCount = Invalid.AsInt();
+
+static_assert(
+    SemanticsBuiltinKind::ValidCount != 0,
+    "The above `constexpr` definition of `ValidCount` makes it available in "
+    "a `constexpr` context despite being declared as merely `const`. We use it "
+    "in a static assert here to ensure that.");
 
 // We expect the builtin kind to fit compactly into 8 bits.
 static_assert(sizeof(SemanticsBuiltinKind) == 1,

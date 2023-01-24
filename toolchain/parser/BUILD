@@ -13,20 +13,7 @@ cc_library(
     textual_hdrs = ["parse_node_kind.def"],
     deps = [
         "//common:check",
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_test(
-    name = "parse_node_kind_test",
-    size = "small",
-    srcs = ["parse_node_kind_test.cpp"],
-    deps = [
-        ":parse_node_kind",
-        "//common:gtest_main",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
+        "//toolchain/common:enum_base",
     ],
 )
 
@@ -35,22 +22,7 @@ cc_library(
     srcs = ["parser_state.cpp"],
     hdrs = ["parser_state.h"],
     textual_hdrs = ["parser_state.def"],
-    deps = [
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_test(
-    name = "parser_state_test",
-    size = "small",
-    srcs = ["parser_state_test.cpp"],
-    deps = [
-        ":parser_state",
-        "//common:gtest_main",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
-    ],
+    deps = ["//toolchain/common:enum_base"],
 )
 
 cc_library(
@@ -107,6 +79,12 @@ cc_fuzz_test(
         "//toolchain/lexer:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_library(
+    name = "parse_tree_node_location_translator",
+    hdrs = ["parse_tree_node_location_translator.h"],
+    deps = [":parse_tree"],
 )
 
 cc_library(

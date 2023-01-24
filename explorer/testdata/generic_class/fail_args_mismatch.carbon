@@ -8,7 +8,7 @@
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
+class Point(T:! type) {
   // Point(T, T) does not match class declaration
   // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_args_mismatch.carbon:[[@LINE+1]]: wrong number of arguments in function call, expected 1 but got 2
   fn Origin(zero: T) -> Point(T, T) {

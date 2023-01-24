@@ -9,7 +9,7 @@
 
 package ExplorerTest api;
 
-fn snd[T:! Type](x: i32, y: T) -> T {
+fn snd[T:! type](x: i32, y: T) -> T {
   return y;
 }
 

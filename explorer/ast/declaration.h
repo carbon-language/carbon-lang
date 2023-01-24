@@ -29,6 +29,7 @@ namespace Carbon {
 class MixinPseudoType;
 class ConstraintType;
 class NominalClassType;
+class MatchFirstDeclaration;
 
 // Abstract base class of all AST nodes representing patterns.
 //
@@ -125,6 +126,9 @@ class Declaration : public AstNode {
   bool is_type_checked_ = false;
 };
 
+// A function's virtual override keyword.
+enum class VirtualOverride { None, Abstract, Virtual, Impl };
+
 class CallableDeclaration : public Declaration {
  public:
   CallableDeclaration(AstNodeKind kind, SourceLocation loc, std::string name,
@@ -132,14 +136,16 @@ class CallableDeclaration : public Declaration {
                       std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
-                      std::optional<Nonnull<Block*>> body)
+                      std::optional<Nonnull<Block*>> body,
+                      VirtualOverride virt_override)
       : Declaration(kind, loc),
         name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
         self_pattern_(self_pattern),
         param_pattern_(param_pattern),
         return_term_(return_term),
-        body_(body) {}
+        body_(body),
+        virt_override_(virt_override) {}
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
@@ -160,6 +166,7 @@ class CallableDeclaration : public Declaration {
   auto return_term() -> ReturnTerm& { return return_term_; }
   auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
+  auto virt_override() const -> VirtualOverride { return virt_override_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
@@ -172,6 +179,7 @@ class CallableDeclaration : public Declaration {
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
+  VirtualOverride virt_override_;
 };
 
 class FunctionDeclaration : public CallableDeclaration {
@@ -183,7 +191,8 @@ class FunctionDeclaration : public CallableDeclaration {
                      std::vector<Nonnull<AstNode*>> deduced_params,
                      Nonnull<TuplePattern*> param_pattern,
                      ReturnTerm return_term,
-                     std::optional<Nonnull<Block*>> body)
+                     std::optional<Nonnull<Block*>> body,
+                     VirtualOverride virt_override)
       -> ErrorOr<Nonnull<FunctionDeclaration*>>;
 
   // Use `Create()` instead. This is public only so Arena::New() can call it.
@@ -192,10 +201,12 @@ class FunctionDeclaration : public CallableDeclaration {
                       std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
-                      std::optional<Nonnull<Block*>> body)
+                      std::optional<Nonnull<Block*>> body,
+                      VirtualOverride virt_override)
       : CallableDeclaration(AstNodeKind::FunctionDeclaration, source_loc,
                             std::move(name), std::move(deduced_params),
-                            self_pattern, param_pattern, return_term, body) {}
+                            self_pattern, param_pattern, return_term, body,
+                            virt_override) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
@@ -222,7 +233,9 @@ class DestructorDeclaration : public CallableDeclaration {
                         std::optional<Nonnull<Block*>> body)
       : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
                             "destructor", std::move(deduced_params),
-                            self_pattern, param_pattern, return_term, body) {}
+                            self_pattern, param_pattern, return_term, body,
+                            // TODO: Add virtual destructors
+                            VirtualOverride::None) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDestructorDeclaration(node->kind());
@@ -526,7 +539,7 @@ class ConstraintTypeDeclaration : public Declaration {
   auto params() -> std::optional<Nonnull<TuplePattern*>> { return params_; }
   // Get the type of `Self`, which is a reference to the interface itself, with
   // parameters mapped to their values. For example, in `interface X(T:!
-  // Type)`, the self type is `X(T)`.
+  // type)`, the self type is `X(T)`.
   auto self_type() const -> Nonnull<const SelfDeclaration*> {
     return self_type_;
   }
@@ -728,6 +741,17 @@ class ImplDeclaration : public Declaration {
   auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
   auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
 
+  // Set the enclosing match_first declaration. Should only be called once,
+  // during type-checking.
+  void set_match_first(Nonnull<const MatchFirstDeclaration*> match_first) {
+    match_first_ = match_first;
+  }
+  // Get the enclosing match_first declaration, if any exists.
+  auto match_first() const
+      -> std::optional<Nonnull<const MatchFirstDeclaration*>> {
+    return match_first_;
+  }
+
  private:
   ImplKind kind_;
   Nonnull<Expression*> impl_type_;
@@ -737,6 +761,27 @@ class ImplDeclaration : public Declaration {
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::vector<Nonnull<Declaration*>> members_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
+  std::optional<Nonnull<const MatchFirstDeclaration*>> match_first_;
+};
+
+class MatchFirstDeclaration : public Declaration {
+ public:
+  MatchFirstDeclaration(SourceLocation source_loc,
+                        std::vector<Nonnull<ImplDeclaration*>> impls)
+      : Declaration(AstNodeKind::MatchFirstDeclaration, source_loc),
+        impls_(std::move(impls)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromMatchFirstDeclaration(node->kind());
+  }
+
+  auto impls() const -> llvm::ArrayRef<Nonnull<const ImplDeclaration*>> {
+    return impls_;
+  }
+  auto impls() -> llvm::ArrayRef<Nonnull<ImplDeclaration*>> { return impls_; }
+
+ private:
+  std::vector<Nonnull<ImplDeclaration*>> impls_;
 };
 
 class AliasDeclaration : public Declaration {

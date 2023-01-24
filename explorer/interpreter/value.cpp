@@ -38,6 +38,19 @@ auto StructValue::FindField(std::string_view name) const
   return std::nullopt;
 }
 
+NominalClassValue::NominalClassValue(
+    Nonnull<const Value*> type, Nonnull<const Value*> inits,
+    std::optional<Nonnull<const NominalClassValue*>> base,
+    Nonnull<const NominalClassValue** const> class_value_ptr)
+    : Value(Kind::NominalClassValue),
+      type_(type),
+      inits_(inits),
+      base_(base),
+      class_value_ptr_(class_value_ptr) {
+  // Update ancestors's class value to point to latest child.
+  *class_value_ptr_ = this;
+}
+
 static auto FindClassField(Nonnull<const NominalClassValue*> object,
                            std::string_view name)
     -> std::optional<Nonnull<const Value*>> {
@@ -148,8 +161,30 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         } else if ((*func)->declaration().is_method()) {
           // Found a method. Turn it into a bound method.
           const auto& m = cast<FunctionValue>(**func);
-          return arena->New<BoundMethodValue>(&m.declaration(), me_value,
-                                              &class_type.bindings());
+          if (m.declaration().virt_override() == VirtualOverride::None) {
+            return arena->New<BoundMethodValue>(&m.declaration(), me_value,
+                                                &class_type.bindings());
+          }
+          // Method is virtual, get child-most class value and perform vtable
+          // lookup.
+          const auto& last_child_value = **object.class_value_ptr();
+          const auto& last_child_type =
+              cast<NominalClassType>(last_child_value.type());
+          const auto res = last_child_type.vtable().find(f);
+          CARBON_CHECK(res != last_child_type.vtable().end());
+          const auto [virtual_method, level] = res->second;
+          const auto level_diff = last_child_type.hierarchy_level() - level;
+          const auto* m_class_value = &last_child_value;
+          // Get class value matching the virtual method, and turn it into a
+          // bound method.
+          for (int i = 0; i < level_diff; ++i) {
+            CARBON_CHECK(m_class_value->base())
+                << "Error trying to access function class value";
+            m_class_value = *m_class_value->base();
+          }
+          return arena->New<BoundMethodValue>(
+              cast<FunctionDeclaration>(virtual_method), m_class_value,
+              &class_type.bindings());
         } else {
           // Found a class function
           // TODO: This should not be reachable.
@@ -199,10 +234,16 @@ static auto GetElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
       }
     }
     case ElementKind::BaseElement:
-      if (const auto* class_value = dyn_cast<NominalClassValue>(v)) {
-        return GetBaseElement(class_value, source_loc);
-      } else {
-        CARBON_FATAL() << "Invalid value for base element";
+      switch (v->kind()) {
+        case Value::Kind::NominalClassValue:
+          return GetBaseElement(cast<NominalClassValue>(v), source_loc);
+        case Value::Kind::PointerValue: {
+          const auto* ptr = cast<PointerValue>(v);
+          return arena->New<PointerValue>(
+              ptr->address().ElementAddress(path_comp.element()));
+        }
+        default:
+          CARBON_FATAL() << "Invalid value for base element";
       }
   }
 }
@@ -249,15 +290,15 @@ static auto SetFieldImpl(
       if (auto inits = SetFieldImpl(arena, &object.inits(), path_begin,
                                     path_end, field_value, source_loc);
           inits.ok()) {
-        return arena->New<NominalClassValue>(&object.type(), *inits,
-                                             object.base());
+        return arena->New<NominalClassValue>(
+            &object.type(), *inits, object.base(), object.class_value_ptr());
       } else if (object.base().has_value()) {
         auto new_base = SetFieldImpl(arena, object.base().value(), path_begin,
                                      path_end, field_value, source_loc);
         if (new_base.ok()) {
           return arena->New<NominalClassValue>(
               &object.type(), &object.inits(),
-              cast<NominalClassValue>(*new_base));
+              cast<NominalClassValue>(*new_base), object.class_value_ptr());
         }
       }
       // Failed to match, show full object content
@@ -441,7 +482,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "i32";
       break;
     case Value::Kind::TypeType:
-      out << "Type";
+      out << "type";
       break;
     case Value::Kind::AutoType:
       out << "auto";
@@ -530,7 +571,7 @@ void Value::Print(llvm::raw_ostream& out) const {
         out << combine << *ctx.context;
       }
       if (constraint.lookup_contexts().empty()) {
-        out << "Type";
+        out << "type";
       }
       out << " where ";
       llvm::ListSeparator sep(" and ");
@@ -654,6 +695,23 @@ void Value::Print(llvm::raw_ostream& out) const {
           << "]";
       break;
     }
+  }
+}
+
+void IntrinsicConstraint::Print(llvm::raw_ostream& out) const {
+  out << *type << " is ";
+  switch (kind) {
+    case IntrinsicConstraint::ImplicitAs:
+      out << "__intrinsic_implicit_as";
+      break;
+  }
+  if (!arguments.empty()) {
+    out << "(";
+    llvm::ListSeparator comma;
+    for (Nonnull<const Value*> argument : arguments) {
+      out << comma << *argument;
+    }
+    out << ")";
   }
 }
 

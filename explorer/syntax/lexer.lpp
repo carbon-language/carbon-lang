@@ -31,90 +31,104 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 %s AFTER_OPERAND
 
 /* table-begin */
-ABSTRACT             "abstract"
-ADDR                 "addr"
-ALIAS                "alias"
-AMPERSAND            "&"
-AND                  "and"
-API                  "api"
-ARROW                "->"
-AS                   "as"
-AUTO                 "auto"
-AWAIT                "__await"
-BASE                 "base"
-BOOL                 "bool"
-BREAK                "break"
-CARET                "^"
-CASE                 "case"
-CHOICE               "choice"
-CLASS                "class"
-COLON                ":"
-COLON_BANG           ":!"
-COMMA                ","
-CONSTRAINT           "constraint"
-CONTINUATION         "__continuation"
-CONTINUATION_TYPE    "__Continuation"
-CONTINUE             "continue"
-DEFAULT              "default"
-DESTRUCTOR           "destructor"
-DOUBLE_ARROW         "=>"
-ELSE                 "else"
-EQUAL                "="
-EQUAL_EQUAL          "=="
-EXTENDS              "extends"
-EXTERNAL             "external"
-FALSE                "false"
-FN                   "fn"
-FN_TYPE              "__Fn"
-FOR                  "for"
-FORALL               "forall"
-GREATER              ">"
-GREATER_EQUAL        ">="
-GREATER_GREATER      ">>"
-IF                   "if"
-IMPL                 "impl"
-IMPORT               "import"
-IN                   "in"
-INTERFACE            "interface"
-IS                   "is"
-LEFT_CURLY_BRACE     "{"
-LEFT_PARENTHESIS     "("
-LEFT_SQUARE_BRACKET  "["
-LESS                 "<"
-LESS_EQUAL           "<="
-LESS_LESS            "<<"
-LET                  "let"
-LIBRARY              "library"
-MATCH                "match"
-MINUS                "-"
-MIX                  "__mix"
-MIXIN                "__mixin"
-NOT                  "not"
-NOT_EQUAL            "!="
-OR                   "or"
-PACKAGE              "package"
-PERCENT              "%"
-PERIOD               "."
-PIPE                 "|"
-PLUS                 "+"
-RETURN               "return"
-RETURNED             "returned"
-RIGHT_CURLY_BRACE    "}"
-RIGHT_PARENTHESIS    ")"
-RIGHT_SQUARE_BRACKET "]"
-RUN                  "__run"
-SELF                 "Self"
-SEMICOLON            ";"
-SLASH                "/"
-STRING               "String"
-THEN                 "then"
-TRUE                 "true"
-TYPE                 "Type"
-UNDERSCORE           "_"
-UNIMPL_EXAMPLE       "__unimplemented_example_infix"
-VAR                  "var"
-WHERE                "where"
-WHILE                "while"
+ABSTRACT              "abstract"
+ADDR                  "addr"
+ALIAS                 "alias"
+AMPERSAND             "&"
+AMPERSAND_EQUAL       "&="
+AND                   "and"
+API                   "api"
+ARROW                 "->"
+AS                    "as"
+AUTO                  "auto"
+AWAIT                 "__await"
+BASE                  "base"
+BOOL                  "bool"
+BREAK                 "break"
+CARET                 "^"
+CARET_EQUAL           "^="
+CASE                  "case"
+CHOICE                "choice"
+CLASS                 "class"
+COLON                 ":"
+COLON_BANG            ":!"
+COMMA                 ","
+CONSTRAINT            "constraint"
+CONTINUATION          "__continuation"
+CONTINUATION_TYPE     "__Continuation"
+CONTINUE              "continue"
+DEFAULT               "default"
+DESTRUCTOR            "destructor"
+DOUBLE_ARROW          "=>"
+ELSE                  "else"
+EQUAL                 "="
+EQUAL_EQUAL           "=="
+EXTENDS               "extends"
+EXTERNAL              "external"
+FALSE                 "false"
+FN                    "fn"
+FN_TYPE               "__Fn"
+FOR                   "for"
+FORALL                "forall"
+GREATER               ">"
+GREATER_EQUAL         ">="
+GREATER_GREATER       ">>"
+GREATER_GREATER_EQUAL ">>="
+IF                    "if"
+IMPL                  "impl"
+IMPORT                "import"
+IN                    "in"
+INTERFACE             "interface"
+IS                    "is"
+LEFT_CURLY_BRACE      "{"
+LEFT_PARENTHESIS      "("
+LEFT_SQUARE_BRACKET   "["
+LESS                  "<"
+LESS_EQUAL            "<="
+LESS_LESS             "<<"
+LESS_LESS_EQUAL       "<<="
+LET                   "let"
+LIBRARY               "library"
+MATCH                 "match"
+MATCH_FIRST           "__match_first"
+MINUS                 "-"
+MINUS_EQUAL           "-="
+MINUS_MINUS           "--"
+MIX                   "__mix"
+MIXIN                 "__mixin"
+NOT                   "not"
+NOT_EQUAL             "!="
+OR                    "or"
+PACKAGE               "package"
+PERCENT               "%"
+PERCENT_EQUAL         "%="
+PERIOD                "."
+PIPE                  "|"
+PIPE_EQUAL            "|="
+PLUS                  "+"
+PLUS_EQUAL            "+="
+PLUS_PLUS             "++"
+RETURN                "return"
+RETURNED              "returned"
+RIGHT_CURLY_BRACE     "}"
+RIGHT_PARENTHESIS     ")"
+RIGHT_SQUARE_BRACKET  "]"
+RUN                   "__run"
+SELF                  "Self"
+SEMICOLON             ";"
+SLASH                 "/"
+SLASH_EQUAL           "/="
+STAR_EQUAL            "*="
+STRING                "String"
+THEN                  "then"
+TRUE                  "true"
+TYPE                  "type"
+UNDERSCORE            "_"
+UNIMPL_EXAMPLE        "__unimplemented_example_infix"
+VAR                   "var"
+VIRTUAL               "virtual"
+WHERE                 "where"
+WHILE                 "while"
 /* table-end */
 
 /* This should be kept table-like, but isn't automatic due to spaces. */
@@ -138,87 +152,101 @@ operand_start         [(A-Za-z0-9_\"]
 %}
 
  /* table-begin */
-{ABSTRACT}            { return CARBON_SIMPLE_TOKEN(ABSTRACT);            }
-{ADDR}                { return CARBON_SIMPLE_TOKEN(ADDR);                }
-{ALIAS}               { return CARBON_SIMPLE_TOKEN(ALIAS);               }
-{AMPERSAND}           { return CARBON_SIMPLE_TOKEN(AMPERSAND);           }
-{AND}                 { return CARBON_SIMPLE_TOKEN(AND);                 }
-{API}                 { return CARBON_SIMPLE_TOKEN(API);                 }
-{ARROW}               { return CARBON_SIMPLE_TOKEN(ARROW);               }
-{AS}                  { return CARBON_SIMPLE_TOKEN(AS);                  }
-{AUTO}                { return CARBON_SIMPLE_TOKEN(AUTO);                }
-{AWAIT}               { return CARBON_SIMPLE_TOKEN(AWAIT);               }
-{BASE}                { return CARBON_SIMPLE_TOKEN(BASE);                }
-{BOOL}                { return CARBON_SIMPLE_TOKEN(BOOL);                }
-{BREAK}               { return CARBON_SIMPLE_TOKEN(BREAK);               }
-{CARET}               { return CARBON_SIMPLE_TOKEN(CARET);               }
-{CASE}                { return CARBON_SIMPLE_TOKEN(CASE);                }
-{CHOICE}              { return CARBON_SIMPLE_TOKEN(CHOICE);              }
-{CLASS}               { return CARBON_SIMPLE_TOKEN(CLASS);               }
-{COLON_BANG}          { return CARBON_SIMPLE_TOKEN(COLON_BANG);          }
-{COLON}               { return CARBON_SIMPLE_TOKEN(COLON);               }
-{COMMA}               { return CARBON_SIMPLE_TOKEN(COMMA);               }
-{CONSTRAINT}          { return CARBON_SIMPLE_TOKEN(CONSTRAINT);          }
-{CONTINUATION_TYPE}   { return CARBON_SIMPLE_TOKEN(CONTINUATION_TYPE);   }
-{CONTINUATION}        { return CARBON_SIMPLE_TOKEN(CONTINUATION);        }
-{CONTINUE}            { return CARBON_SIMPLE_TOKEN(CONTINUE);            }
-{DEFAULT}             { return CARBON_SIMPLE_TOKEN(DEFAULT);             }
-{DESTRUCTOR}          { return CARBON_SIMPLE_TOKEN(DESTRUCTOR);          }
-{DOUBLE_ARROW}        { return CARBON_SIMPLE_TOKEN(DOUBLE_ARROW);        }
-{ELSE}                { return CARBON_SIMPLE_TOKEN(ELSE);                }
-{EQUAL_EQUAL}         { return CARBON_SIMPLE_TOKEN(EQUAL_EQUAL);         }
-{EQUAL}               { return CARBON_SIMPLE_TOKEN(EQUAL);               }
-{EXTENDS}             { return CARBON_SIMPLE_TOKEN(EXTENDS);             }
-{EXTERNAL}            { return CARBON_SIMPLE_TOKEN(EXTERNAL);            }
-{FALSE}               { return CARBON_SIMPLE_TOKEN(FALSE);               }
-{FN_TYPE}             { return CARBON_SIMPLE_TOKEN(FN_TYPE);             }
-{FN}                  { return CARBON_SIMPLE_TOKEN(FN);                  }
-{FORALL}              { return CARBON_SIMPLE_TOKEN(FORALL);              }
-{FOR}                 { return CARBON_SIMPLE_TOKEN(FOR);                 }
-{GREATER_EQUAL}       { return CARBON_SIMPLE_TOKEN(GREATER_EQUAL);       }
-{GREATER_GREATER}     { return CARBON_SIMPLE_TOKEN(GREATER_GREATER);     }
-{GREATER}             { return CARBON_SIMPLE_TOKEN(GREATER);             }
-{IF}                  { return CARBON_SIMPLE_TOKEN(IF);                  }
-{IMPL}                { return CARBON_SIMPLE_TOKEN(IMPL);                }
-{IMPORT}              { return CARBON_SIMPLE_TOKEN(IMPORT);              }
-{INTERFACE}           { return CARBON_SIMPLE_TOKEN(INTERFACE);           }
-{IN}                  { return CARBON_SIMPLE_TOKEN(IN);                  }
-{IS}                  { return CARBON_SIMPLE_TOKEN(IS);                  }
-{LEFT_CURLY_BRACE}    { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);    }
-{LEFT_PARENTHESIS}    { return CARBON_SIMPLE_TOKEN(LEFT_PARENTHESIS);    }
-{LEFT_SQUARE_BRACKET} { return CARBON_SIMPLE_TOKEN(LEFT_SQUARE_BRACKET); }
-{LESS_EQUAL}          { return CARBON_SIMPLE_TOKEN(LESS_EQUAL);          }
-{LESS_LESS}           { return CARBON_SIMPLE_TOKEN(LESS_LESS);           }
-{LESS}                { return CARBON_SIMPLE_TOKEN(LESS);                }
-{LET}                 { return CARBON_SIMPLE_TOKEN(LET);                 }
-{LIBRARY}             { return CARBON_SIMPLE_TOKEN(LIBRARY);             }
-{MATCH}               { return CARBON_SIMPLE_TOKEN(MATCH);               }
-{MINUS}               { return CARBON_SIMPLE_TOKEN(MINUS);               }
-{MIXIN}               { return CARBON_SIMPLE_TOKEN(MIXIN);               }
-{MIX}                 { return CARBON_SIMPLE_TOKEN(MIX);                 }
-{NOT_EQUAL}           { return CARBON_SIMPLE_TOKEN(NOT_EQUAL);           }
-{NOT}                 { return CARBON_SIMPLE_TOKEN(NOT);                 }
-{OR}                  { return CARBON_SIMPLE_TOKEN(OR);                  }
-{PACKAGE}             { return CARBON_SIMPLE_TOKEN(PACKAGE);             }
-{PERCENT}             { return CARBON_SIMPLE_TOKEN(PERCENT);             }
-{PERIOD}              { return CARBON_SIMPLE_TOKEN(PERIOD);              }
-{PIPE}                { return CARBON_SIMPLE_TOKEN(PIPE);                }
-{PLUS}                { return CARBON_SIMPLE_TOKEN(PLUS);                }
-{RETURNED}            { return CARBON_SIMPLE_TOKEN(RETURNED);            }
-{RETURN}              { return CARBON_SIMPLE_TOKEN(RETURN);              }
-{RUN}                 { return CARBON_SIMPLE_TOKEN(RUN);                 }
-{SELF}                { return CARBON_SIMPLE_TOKEN(SELF);                }
-{SEMICOLON}           { return CARBON_SIMPLE_TOKEN(SEMICOLON);           }
-{SLASH}               { return CARBON_SIMPLE_TOKEN(SLASH);               }
-{STRING}              { return CARBON_SIMPLE_TOKEN(STRING);              }
-{THEN}                { return CARBON_SIMPLE_TOKEN(THEN);                }
-{TRUE}                { return CARBON_SIMPLE_TOKEN(TRUE);                }
-{TYPE}                { return CARBON_SIMPLE_TOKEN(TYPE);                }
-{UNDERSCORE}          { return CARBON_SIMPLE_TOKEN(UNDERSCORE);          }
-{UNIMPL_EXAMPLE}      { return CARBON_SIMPLE_TOKEN(UNIMPL_EXAMPLE);      }
-{VAR}                 { return CARBON_SIMPLE_TOKEN(VAR);                 }
-{WHERE}               { return CARBON_SIMPLE_TOKEN(WHERE);               }
-{WHILE}               { return CARBON_SIMPLE_TOKEN(WHILE);               }
+{ABSTRACT}              { return CARBON_SIMPLE_TOKEN(ABSTRACT);              }
+{ADDR}                  { return CARBON_SIMPLE_TOKEN(ADDR);                  }
+{ALIAS}                 { return CARBON_SIMPLE_TOKEN(ALIAS);                 }
+{AMPERSAND_EQUAL}       { return CARBON_SIMPLE_TOKEN(AMPERSAND_EQUAL);       }
+{AMPERSAND}             { return CARBON_SIMPLE_TOKEN(AMPERSAND);             }
+{AND}                   { return CARBON_SIMPLE_TOKEN(AND);                   }
+{API}                   { return CARBON_SIMPLE_TOKEN(API);                   }
+{ARROW}                 { return CARBON_SIMPLE_TOKEN(ARROW);                 }
+{AS}                    { return CARBON_SIMPLE_TOKEN(AS);                    }
+{AUTO}                  { return CARBON_SIMPLE_TOKEN(AUTO);                  }
+{AWAIT}                 { return CARBON_SIMPLE_TOKEN(AWAIT);                 }
+{BASE}                  { return CARBON_SIMPLE_TOKEN(BASE);                  }
+{BOOL}                  { return CARBON_SIMPLE_TOKEN(BOOL);                  }
+{BREAK}                 { return CARBON_SIMPLE_TOKEN(BREAK);                 }
+{CARET_EQUAL}           { return CARBON_SIMPLE_TOKEN(CARET_EQUAL);           }
+{CARET}                 { return CARBON_SIMPLE_TOKEN(CARET);                 }
+{CASE}                  { return CARBON_SIMPLE_TOKEN(CASE);                  }
+{CHOICE}                { return CARBON_SIMPLE_TOKEN(CHOICE);                }
+{CLASS}                 { return CARBON_SIMPLE_TOKEN(CLASS);                 }
+{COLON_BANG}            { return CARBON_SIMPLE_TOKEN(COLON_BANG);            }
+{COLON}                 { return CARBON_SIMPLE_TOKEN(COLON);                 }
+{COMMA}                 { return CARBON_SIMPLE_TOKEN(COMMA);                 }
+{CONSTRAINT}            { return CARBON_SIMPLE_TOKEN(CONSTRAINT);            }
+{CONTINUATION_TYPE}     { return CARBON_SIMPLE_TOKEN(CONTINUATION_TYPE);     }
+{CONTINUATION}          { return CARBON_SIMPLE_TOKEN(CONTINUATION);          }
+{CONTINUE}              { return CARBON_SIMPLE_TOKEN(CONTINUE);              }
+{DEFAULT}               { return CARBON_SIMPLE_TOKEN(DEFAULT);               }
+{DESTRUCTOR}            { return CARBON_SIMPLE_TOKEN(DESTRUCTOR);            }
+{DOUBLE_ARROW}          { return CARBON_SIMPLE_TOKEN(DOUBLE_ARROW);          }
+{ELSE}                  { return CARBON_SIMPLE_TOKEN(ELSE);                  }
+{EQUAL_EQUAL}           { return CARBON_SIMPLE_TOKEN(EQUAL_EQUAL);           }
+{EQUAL}                 { return CARBON_SIMPLE_TOKEN(EQUAL);                 }
+{EXTENDS}               { return CARBON_SIMPLE_TOKEN(EXTENDS);               }
+{EXTERNAL}              { return CARBON_SIMPLE_TOKEN(EXTERNAL);              }
+{FALSE}                 { return CARBON_SIMPLE_TOKEN(FALSE);                 }
+{FN_TYPE}               { return CARBON_SIMPLE_TOKEN(FN_TYPE);               }
+{FN}                    { return CARBON_SIMPLE_TOKEN(FN);                    }
+{FORALL}                { return CARBON_SIMPLE_TOKEN(FORALL);                }
+{FOR}                   { return CARBON_SIMPLE_TOKEN(FOR);                   }
+{GREATER_EQUAL}         { return CARBON_SIMPLE_TOKEN(GREATER_EQUAL);         }
+{GREATER_GREATER_EQUAL} { return CARBON_SIMPLE_TOKEN(GREATER_GREATER_EQUAL); }
+{GREATER_GREATER}       { return CARBON_SIMPLE_TOKEN(GREATER_GREATER);       }
+{GREATER}               { return CARBON_SIMPLE_TOKEN(GREATER);               }
+{IF}                    { return CARBON_SIMPLE_TOKEN(IF);                    }
+{IMPL}                  { return CARBON_SIMPLE_TOKEN(IMPL);                  }
+{IMPORT}                { return CARBON_SIMPLE_TOKEN(IMPORT);                }
+{INTERFACE}             { return CARBON_SIMPLE_TOKEN(INTERFACE);             }
+{IN}                    { return CARBON_SIMPLE_TOKEN(IN);                    }
+{IS}                    { return CARBON_SIMPLE_TOKEN(IS);                    }
+{LEFT_CURLY_BRACE}      { return CARBON_SIMPLE_TOKEN(LEFT_CURLY_BRACE);      }
+{LEFT_PARENTHESIS}      { return CARBON_SIMPLE_TOKEN(LEFT_PARENTHESIS);      }
+{LEFT_SQUARE_BRACKET}   { return CARBON_SIMPLE_TOKEN(LEFT_SQUARE_BRACKET);   }
+{LESS_EQUAL}            { return CARBON_SIMPLE_TOKEN(LESS_EQUAL);            }
+{LESS_LESS_EQUAL}       { return CARBON_SIMPLE_TOKEN(LESS_LESS_EQUAL);       }
+{LESS_LESS}             { return CARBON_SIMPLE_TOKEN(LESS_LESS);             }
+{LESS}                  { return CARBON_SIMPLE_TOKEN(LESS);                  }
+{LET}                   { return CARBON_SIMPLE_TOKEN(LET);                   }
+{LIBRARY}               { return CARBON_SIMPLE_TOKEN(LIBRARY);               }
+{MATCH_FIRST}           { return CARBON_SIMPLE_TOKEN(MATCH_FIRST);           }
+{MATCH}                 { return CARBON_SIMPLE_TOKEN(MATCH);                 }
+{MINUS_EQUAL}           { return CARBON_SIMPLE_TOKEN(MINUS_EQUAL);           }
+{MINUS_MINUS}           { return CARBON_SIMPLE_TOKEN(MINUS_MINUS);           }
+{MINUS}                 { return CARBON_SIMPLE_TOKEN(MINUS);                 }
+{MIXIN}                 { return CARBON_SIMPLE_TOKEN(MIXIN);                 }
+{MIX}                   { return CARBON_SIMPLE_TOKEN(MIX);                   }
+{NOT_EQUAL}             { return CARBON_SIMPLE_TOKEN(NOT_EQUAL);             }
+{NOT}                   { return CARBON_SIMPLE_TOKEN(NOT);                   }
+{OR}                    { return CARBON_SIMPLE_TOKEN(OR);                    }
+{PACKAGE}               { return CARBON_SIMPLE_TOKEN(PACKAGE);               }
+{PERCENT_EQUAL}         { return CARBON_SIMPLE_TOKEN(PERCENT_EQUAL);         }
+{PERCENT}               { return CARBON_SIMPLE_TOKEN(PERCENT);               }
+{PERIOD}                { return CARBON_SIMPLE_TOKEN(PERIOD);                }
+{PIPE_EQUAL}            { return CARBON_SIMPLE_TOKEN(PIPE_EQUAL);            }
+{PIPE}                  { return CARBON_SIMPLE_TOKEN(PIPE);                  }
+{PLUS_EQUAL}            { return CARBON_SIMPLE_TOKEN(PLUS_EQUAL);            }
+{PLUS_PLUS}             { return CARBON_SIMPLE_TOKEN(PLUS_PLUS);             }
+{PLUS}                  { return CARBON_SIMPLE_TOKEN(PLUS);                  }
+{RETURNED}              { return CARBON_SIMPLE_TOKEN(RETURNED);              }
+{RETURN}                { return CARBON_SIMPLE_TOKEN(RETURN);                }
+{RUN}                   { return CARBON_SIMPLE_TOKEN(RUN);                   }
+{SELF}                  { return CARBON_SIMPLE_TOKEN(SELF);                  }
+{SEMICOLON}             { return CARBON_SIMPLE_TOKEN(SEMICOLON);             }
+{SLASH_EQUAL}           { return CARBON_SIMPLE_TOKEN(SLASH_EQUAL);           }
+{SLASH}                 { return CARBON_SIMPLE_TOKEN(SLASH);                 }
+{STAR_EQUAL}            { return CARBON_SIMPLE_TOKEN(STAR_EQUAL);            }
+{STRING}                { return CARBON_SIMPLE_TOKEN(STRING);                }
+{THEN}                  { return CARBON_SIMPLE_TOKEN(THEN);                  }
+{TRUE}                  { return CARBON_SIMPLE_TOKEN(TRUE);                  }
+{TYPE}                  { return CARBON_SIMPLE_TOKEN(TYPE);                  }
+{UNDERSCORE}            { return CARBON_SIMPLE_TOKEN(UNDERSCORE);            }
+{UNIMPL_EXAMPLE}        { return CARBON_SIMPLE_TOKEN(UNIMPL_EXAMPLE);        }
+{VAR}                   { return CARBON_SIMPLE_TOKEN(VAR);                   }
+{VIRTUAL}               { return CARBON_SIMPLE_TOKEN(VIRTUAL);               }
+{WHERE}                 { return CARBON_SIMPLE_TOKEN(WHERE);                 }
+{WHILE}                 { return CARBON_SIMPLE_TOKEN(WHILE);                 }
  /* table-end */
 
  /* More modern Bisons provide make_EOF. */
@@ -306,29 +334,15 @@ operand_start         [(A-Za-z0-9_\"]
   return CARBON_ARG_TOKEN(integer_literal, val);
 }
 
-#*(\"\"\"|\") {
-  // Raw string literal.
-  // yytext (the token that matches the above regex) and chars scanned by
-  // str_lex_helper hold the source text, not the string the source represents.
+#*\" {
+  // Found a double quote character.
   Carbon::StringLexHelper str_lex_helper(yytext, yyscanner, context);
   const std::string& s = str_lex_helper.str();
   const int hashtag_num = s.find_first_of('"');
-  const int leading_quotes = s.size() - hashtag_num;
-  if (leading_quotes == 3 && hashtag_num > 0) {
-    // Check if it's a single-line string, like #"""#.
-    // TODO: Extend with other single-line string cases, like #""""#, based on
-    // the definition of block string in the design doc.
-    if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
-      return Carbon::ProcessSingleLineString(str_lex_helper.str(), context,
-                                             hashtag_num);
-    } else if (str_lex_helper.is_eof()) {
-      return CARBON_SIMPLE_TOKEN(END_OF_FILE);
-    }
-  } else if (!str_lex_helper.Advance()) {
+
+  if (!str_lex_helper.Advance()) {
     return CARBON_SIMPLE_TOKEN(END_OF_FILE);
   }
-  // 3 quotes indicates multi-line, otherwise it'll be one.
-  const bool multi_line = leading_quotes == 3;
 
   while (!str_lex_helper.is_eof()) {
     switch (str_lex_helper.last_char()) {
@@ -336,36 +350,60 @@ operand_start         [(A-Za-z0-9_\"]
       case '\v':  // Fall through.
       case '\f':  // Fall through.
       case '\r':
-        if (!multi_line) {
-          return context.RecordSyntaxError(
-              llvm::formatv("missing closing quote in single-line string: {0}",
-                            str_lex_helper.str()));
-        }
-        str_lex_helper.Advance();
+        return context.RecordSyntaxError(
+            llvm::formatv("missing closing quote in single-line string: {0}",
+                          str_lex_helper.str()));
         break;
       case '"':
-        if (multi_line) {
-          // Check for 2 more '"'s on block string.
-          if (!(str_lex_helper.Advance() &&
-                str_lex_helper.last_char() == '"')) {
-            continue;
-          }
-          if (!(str_lex_helper.Advance() &&
-                str_lex_helper.last_char() == '"')) {
-            continue;
-          }
-          // Now we are at the last " of """.
-        }
-
         if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
           // Reach closing quotes, break out of the loop.
-          if (leading_quotes == 3) {
-            return Carbon::ProcessMultiLineString(str_lex_helper.str(), context,
-                                                  hashtag_num);
-          } else {
-            return Carbon::ProcessSingleLineString(str_lex_helper.str(),
-                                                   context, hashtag_num);
+          return Carbon::ProcessSingleLineString(str_lex_helper.str(), context,
+                                                 hashtag_num);
+        }
+        break;
+      case '\\':
+        if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
+          // Read the escaped char.
+          if (!str_lex_helper.Advance()) {
+            continue;
           }
+          // Read the next char.
+          str_lex_helper.Advance();
+        }
+        break;
+      default:
+        str_lex_helper.Advance();
+    }
+  }
+
+  return CARBON_SIMPLE_TOKEN(END_OF_FILE);
+}
+
+#*\'\'\' {
+  // Multi-line string literal.
+  Carbon::StringLexHelper str_lex_helper(yytext, yyscanner, context);
+  const std::string& s = str_lex_helper.str();
+  const int hashtag_num = s.find_first_of('\'');
+
+  if (!str_lex_helper.Advance()) {
+    return CARBON_SIMPLE_TOKEN(END_OF_FILE);
+  }
+
+  while (!str_lex_helper.is_eof()) {
+    switch (str_lex_helper.last_char()) {
+      case '\'':
+        // Check for 2 more '\''s on block string.
+        if (!(str_lex_helper.Advance() && str_lex_helper.last_char() == '\'')) {
+          continue;
+        }
+        if (!(str_lex_helper.Advance() && str_lex_helper.last_char() == '\'')) {
+          continue;
+        }
+        // Now we are at the last ' of '''.
+        if (Carbon::ReadHashTags(str_lex_helper, hashtag_num)) {
+          // Reach closing quotes, break out of the loop.
+          return Carbon::ProcessMultiLineString(str_lex_helper.str(), context,
+                                                hashtag_num);
         }
         break;
       case '\\':

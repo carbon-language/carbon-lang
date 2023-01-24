@@ -4,33 +4,40 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
-// CHECK:STDOUT: cross_reference_irs.size == 2,
-// CHECK:STDOUT: cross_references = {
-// CHECK:STDOUT:   node_xref0 = xref(ir0, block0, node0);
-// CHECK:STDOUT:   node_xref1 = xref(ir0, block0, node1);
-// CHECK:STDOUT:   node_xref2 = xref(ir0, block0, node2);
-// CHECK:STDOUT:   node_xref3 = xref(ir0, block0, node3);
-// CHECK:STDOUT: },
-// CHECK:STDOUT: identifiers = {
-// CHECK:STDOUT:   ident0 = "Main";
-// CHECK:STDOUT:   ident1 = "x";
-// CHECK:STDOUT: },
-// CHECK:STDOUT: integer_literals = {
-// CHECK:STDOUT:   int0 = 0;
-// CHECK:STDOUT: },
-// CHECK:STDOUT: node_blocks = {
-// CHECK:STDOUT:   block0 = {
-// CHECK:STDOUT:     node0 = FunctionDeclaration();
-// CHECK:STDOUT:     node1 = BindName(ident0, node0);
-// CHECK:STDOUT:     node2 = FunctionDefinition(node0, block1);
-// CHECK:STDOUT:   },
-// CHECK:STDOUT:   block1 = {
-// CHECK:STDOUT:     node0 = VarStorage(): node_xref2;
-// CHECK:STDOUT:     node1 = BindName(ident1, node0): node_xref2;
-// CHECK:STDOUT:     node2 = IntegerLiteral(int0): node_xref2;
-// CHECK:STDOUT:     node3 = Assign(node0, node2): node_xref2;
-// CHECK:STDOUT:   },
-// CHECK:STDOUT: }
+// CHECK:STDOUT: cross_reference_irs_size: 1
+// CHECK:STDOUT: integer_literals: [
+// CHECK:STDOUT:   0,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: strings: [
+// CHECK:STDOUT:   Main,
+// CHECK:STDOUT:   x,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: nodes: [
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block0, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block1, type: node1},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block2, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block3, type: node0},
+// CHECK:STDOUT:   {kind: FunctionDeclaration},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node4},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node4, arg1: block1},
+// CHECK:STDOUT:   {kind: VarStorage, type: node2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node7, type: node2},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: node2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node7, arg1: node9, type: node2},
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: node_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node4,
+// CHECK:STDOUT:     node5,
+// CHECK:STDOUT:     node6,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node7,
+// CHECK:STDOUT:     node8,
+// CHECK:STDOUT:     node9,
+// CHECK:STDOUT:     node10,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT: ]
 
 fn Main() {
   var x: i32 = 0;

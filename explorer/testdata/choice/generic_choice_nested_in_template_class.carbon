@@ -11,12 +11,12 @@
 package ExplorerTest api;
 
 
-choice MyOptionalElement(T:! Type) {
+choice MyOptionalElement(T:! type) {
   None(),
   Element(T)
 }
 
-class MyOptional(T:! Type){
+class MyOptional(T:! type){
    fn CreateEmpty() -> MyOptional(T){
        return { .element = MyOptionalElement(T).None() };
    }

@@ -133,8 +133,9 @@ def _impl(ctx):
                             "-Wimplicit-fallthrough",
                             "-Wctad-maybe-unsupported",
                             "-Wnon-virtual-dtor",
-                            # Unfortunately, LLVM isn't clean for this warning.
-                            "-Wno-unused-parameter",
+                            # Don't warn on external code as we can't
+                            # necessarily patch it easily.
+                            "--system-header-prefix=external/",
                             # Compile actions shouldn't link anything.
                             "-c",
                         ],

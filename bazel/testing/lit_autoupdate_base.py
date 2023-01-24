@@ -257,6 +257,7 @@ def get_matchable_test_output(
     autoupdate_args: List[str],
     extra_check_replacements: List[Tuple[Pattern, Pattern, str]],
     tool: str,
+    llvm_symbolizer: str,
     test: str,
 ) -> List[str]:
     """Runs the autoupdate command and returns the output lines."""
@@ -264,6 +265,7 @@ def get_matchable_test_output(
     # (`bazel run` would serialize)
     p = subprocess.run(
         tools[tool].autoupdate_cmd + autoupdate_args + [test],
+        env={"LLVM_SYMBOLIZER_PATH": llvm_symbolizer},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -346,7 +348,9 @@ def merge_lines(
     return result_lines
 
 
-def update_check(parsed_args: ParsedArgs, test: Path) -> bool:
+def update_check(
+    parsed_args: ParsedArgs, llvm_symbolizer: str, test: Path
+) -> bool:
     """Updates the CHECK: lines for `test` by running the tool.
 
     Returns true if a change was made.
@@ -364,6 +368,7 @@ def update_check(parsed_args: ParsedArgs, test: Path) -> bool:
         parsed_args.autoupdate_args,
         parsed_args.extra_check_replacements,
         parsed_args.tool,
+        llvm_symbolizer,
         str(test),
     )
     result_lines = merge_lines(
@@ -405,12 +410,14 @@ def update_check(parsed_args: ParsedArgs, test: Path) -> bool:
         return True
 
 
-def update_checks(parsed_args: ParsedArgs, tests: Set[Path]) -> None:
+def update_checks(
+    parsed_args: ParsedArgs, llvm_symbolizer: str, tests: Set[Path]
+) -> None:
     """Updates CHECK: lines in lit tests."""
 
     def map_helper(test: Path) -> bool:
         try:
-            updated = update_check(parsed_args, test)
+            updated = update_check(parsed_args, llvm_symbolizer, test)
         except Exception as e:
             raise ValueError(f"Failed to update {test}") from e
         print(".", end="", flush=True)
@@ -431,10 +438,11 @@ def main() -> None:
     parsed_args = parse_args()
 
     # Remaining script logic should be relative to the repository root.
-    os.chdir(Path(__file__).parent.parent.parent)
+    root = Path(__file__).parent.parent.parent
+    os.chdir(root)
 
     if parsed_args.tests:
-        tests = set(parsed_args.tests)
+        tests = {test.relative_to(root) for test in parsed_args.tests}
     else:
         print("HINT: run `update_checks.py f1 f2 ...` to update specific tests")
         tests = get_tests(parsed_args.testdata)
@@ -452,8 +460,18 @@ def main() -> None:
         ]
     )
 
+    # Grab the symbolizer.
+    clang_var_content = Path(
+        "bazel-execroot/external/bazel_cc_toolchain/"
+        "clang_detected_variables.bzl"
+    ).read_text()
+    llvm_symbolizer = re.search(
+        '(?m)^llvm_symbolizer = "(.*)"$', clang_var_content
+    )
+    assert llvm_symbolizer is not None
+
     # Run updates.
-    update_checks(parsed_args, tests)
+    update_checks(parsed_args, llvm_symbolizer[1], tests)
 
 
 if __name__ == "__main__":

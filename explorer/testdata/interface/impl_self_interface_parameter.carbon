@@ -9,7 +9,7 @@
 
 package ExplorerTest api;
 
-interface MyAddWith(T:! Type) {
+interface MyAddWith(T:! type) {
   fn Op[self: Self](b: T) -> Self;
 }
 
@@ -25,7 +25,7 @@ impl Point as MyAddWith(Self) {
   }
 }
 
-fn DoAddGeneric[T:! Type, U:! MyAddWith(T)](a: U, b: T) -> U {
+fn DoAddGeneric[T:! type, U:! MyAddWith(T)](a: U, b: T) -> U {
   return a.Op(b);
 }
 

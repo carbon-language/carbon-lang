@@ -19,6 +19,7 @@
 #include "explorer/interpreter/address.h"
 #include "explorer/interpreter/element_path.h"
 #include "explorer/interpreter/stack.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
@@ -35,6 +36,9 @@ struct AllocateTrait {
     return arena->New<T>(std::forward<Args>(args)...);
   }
 };
+
+using VTable =
+    llvm::StringMap<std::pair<Nonnull<const CallableDeclaration*>, int>>;
 
 // Abstract base class of all AST nodes representing values.
 //
@@ -308,7 +312,7 @@ class BoolValue : public Value {
 };
 
 // A value of a struct type. Note that the expression `{}` is a value of type
-// `{} as Type`; the former is a `StructValue` and the latter is a
+// `{} as type`; the former is a `StructValue` and the latter is a
 // `StructType`.
 class StructValue : public Value {
  public:
@@ -340,12 +344,14 @@ class NominalClassValue : public Value {
  public:
   static constexpr llvm::StringLiteral BaseField{"base"};
 
+  // Takes the class type, inits, an optional base, a pointer to a
+  // NominalClassValue*, that must be common to all NominalClassValue of the
+  // same object. The pointee is updated, when `NominalClassValue`s are
+  // constructed, to point to the `NominalClassValue` corresponding to the
+  // child-most class type.
   NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
-                    std::optional<Nonnull<const NominalClassValue*>> base)
-      : Value(Kind::NominalClassValue),
-        type_(type),
-        inits_(inits),
-        base_(base) {}
+                    std::optional<Nonnull<const NominalClassValue*>> base,
+                    Nonnull<const NominalClassValue** const> class_value_ptr);
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassValue;
@@ -353,7 +359,7 @@ class NominalClassValue : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(type_, inits_, base_);
+    return f(type_, inits_, base_, class_value_ptr_);
   }
 
   auto type() const -> const Value& { return *type_; }
@@ -361,11 +367,16 @@ class NominalClassValue : public Value {
   auto base() const -> std::optional<Nonnull<const NominalClassValue*>> {
     return base_;
   }
+  // Returns a pointer of pointer to the child-most class value.
+  auto class_value_ptr() const -> Nonnull<const NominalClassValue** const> {
+    return class_value_ptr_;
+  }
 
  private:
   Nonnull<const Value*> type_;
   Nonnull<const Value*> inits_;  // The initializing StructValue.
   std::optional<Nonnull<const NominalClassValue*>> base_;
+  Nonnull<const NominalClassValue** const> class_value_ptr_;
 };
 
 // An alternative constructor value.
@@ -468,8 +479,8 @@ class TupleValue : public TupleValueBase {
   }
 };
 
-// A tuple type. This is the result of converting a tuple value containing
-// only types to type Type.
+// A tuple type. These values are produced by converting a tuple value
+// containing only types to type `type`.
 class TupleType : public TupleValueBase {
  public:
   // The unit type.
@@ -607,7 +618,7 @@ class FunctionType : public Value {
  public:
   // An explicit function parameter that is a `:!` binding:
   //
-  //     fn MakeEmptyVector(T:! Type) -> Vector(T);
+  //     fn MakeEmptyVector(T:! type) -> Vector(T);
   struct GenericParameter {
     size_t index;
     Nonnull<const GenericBinding*> binding;
@@ -730,23 +741,16 @@ class StructType : public Value {
 // A class type.
 class NominalClassType : public Value {
  public:
-  // Construct a non-generic class type.
-  explicit NominalClassType(Nonnull<const ClassDeclaration*> declaration)
-      : Value(Kind::NominalClassType), declaration_(declaration) {
-    CARBON_CHECK(!declaration->type_params().has_value())
-        << "missing arguments for parameterized class type";
-  }
-
-  // Construct a fully instantiated generic class type to represent the
-  // run-time type of an object.
   explicit NominalClassType(
       Nonnull<const ClassDeclaration*> declaration,
       Nonnull<const Bindings*> bindings,
-      std::optional<Nonnull<const NominalClassType*>> base)
+      std::optional<Nonnull<const NominalClassType*>> base, VTable class_vtable)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         bindings_(bindings),
-        base_(base) {}
+        base_(base),
+        vtable_(std::move(class_vtable)),
+        hierarchy_level_(base ? (*base)->hierarchy_level() + 1 : 0) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::NominalClassType;
@@ -754,7 +758,7 @@ class NominalClassType : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(declaration_, bindings_, base_);
+    return f(declaration_, bindings_, base_, vtable_);
   }
 
   auto declaration() const -> const ClassDeclaration& { return *declaration_; }
@@ -772,6 +776,13 @@ class NominalClassType : public Value {
     return bindings_->witnesses();
   }
 
+  auto vtable() const -> const VTable& { return vtable_; }
+
+  // Returns how many levels from the top ancestor class it is. i.e. a class
+  // with no base returns `0`, while a class with a `.base` and `.base.base`
+  // returns `2`.
+  auto hierarchy_level() const -> int { return hierarchy_level_; }
+
   // Returns whether this a parameterized class. That is, a class with
   // parameters and no corresponding arguments.
   auto IsParameterized() const -> bool {
@@ -784,7 +795,9 @@ class NominalClassType : public Value {
  private:
   Nonnull<const ClassDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
-  std::optional<Nonnull<const NominalClassType*>> base_;
+  const std::optional<Nonnull<const NominalClassType*>> base_;
+  const VTable vtable_;
+  int hierarchy_level_;
 };
 
 class MixinPseudoType : public Value {
@@ -922,6 +935,26 @@ struct ImplConstraint {
   Nonnull<const InterfaceType*> interface;
 };
 
+// A constraint that requires an intrinsic property of a type.
+struct IntrinsicConstraint {
+  // Print the intrinsic constraint.
+  void Print(llvm::raw_ostream& out) const;
+
+  // The type that is required to satisfy the intrinsic property.
+  Nonnull<const Value*> type;
+  // The kind of the intrinsic property.
+  enum Kind {
+    // `type` intrinsically implicitly converts to `parameters[0]`.
+    // TODO: Split ImplicitAs into more specific constraints (such as
+    // derived-to-base pointer conversions).
+    ImplicitAs,
+  };
+  Kind kind;
+  // Arguments for the intrinsic property. The meaning of these depends on
+  // `kind`.
+  std::vector<Nonnull<const Value*>> arguments;
+};
+
 // A constraint that a collection of values are known to be the same.
 struct EqualityConstraint {
   // Visit the values in this equality constraint that are a single step away
@@ -966,6 +999,8 @@ struct LookupContext {
 //
 // * A collection of (type, interface) pairs for interfaces that are known to
 //   be implemented by a type satisfying the constraint.
+// * A collection of (type, intrinsic) pairs for intrinsic properties that are
+//   known to be satisfied by a type satisfying the constraint.
 // * A collection of sets of values, typically associated constants, that are
 //   known to be the same.
 // * A collection of contexts in which member name lookups will be performed
@@ -975,14 +1010,17 @@ struct LookupContext {
 // `VariableType` naming the `self_binding`.
 class ConstraintType : public Value {
  public:
-  explicit ConstraintType(Nonnull<const GenericBinding*> self_binding,
-                          std::vector<ImplConstraint> impl_constraints,
-                          std::vector<EqualityConstraint> equality_constraints,
-                          std::vector<RewriteConstraint> rewrite_constraints,
-                          std::vector<LookupContext> lookup_contexts)
+  explicit ConstraintType(
+      Nonnull<const GenericBinding*> self_binding,
+      std::vector<ImplConstraint> impl_constraints,
+      std::vector<IntrinsicConstraint> intrinsic_constraints,
+      std::vector<EqualityConstraint> equality_constraints,
+      std::vector<RewriteConstraint> rewrite_constraints,
+      std::vector<LookupContext> lookup_contexts)
       : Value(Kind::ConstraintType),
         self_binding_(self_binding),
         impl_constraints_(std::move(impl_constraints)),
+        intrinsic_constraints_(std::move(intrinsic_constraints)),
         equality_constraints_(std::move(equality_constraints)),
         rewrite_constraints_(std::move(rewrite_constraints)),
         lookup_contexts_(std::move(lookup_contexts)) {}
@@ -993,8 +1031,8 @@ class ConstraintType : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(self_binding_, impl_constraints_, equality_constraints_,
-             rewrite_constraints_, lookup_contexts_);
+    return f(self_binding_, impl_constraints_, intrinsic_constraints_,
+             equality_constraints_, rewrite_constraints_, lookup_contexts_);
   }
 
   auto self_binding() const -> Nonnull<const GenericBinding*> {
@@ -1003,6 +1041,10 @@ class ConstraintType : public Value {
 
   auto impl_constraints() const -> llvm::ArrayRef<ImplConstraint> {
     return impl_constraints_;
+  }
+
+  auto intrinsic_constraints() const -> llvm::ArrayRef<IntrinsicConstraint> {
+    return intrinsic_constraints_;
   }
 
   auto equality_constraints() const -> llvm::ArrayRef<EqualityConstraint> {
@@ -1031,6 +1073,7 @@ class ConstraintType : public Value {
  private:
   Nonnull<const GenericBinding*> self_binding_;
   std::vector<ImplConstraint> impl_constraints_;
+  std::vector<IntrinsicConstraint> intrinsic_constraints_;
   std::vector<EqualityConstraint> equality_constraints_;
   std::vector<RewriteConstraint> rewrite_constraints_;
   std::vector<LookupContext> lookup_contexts_;

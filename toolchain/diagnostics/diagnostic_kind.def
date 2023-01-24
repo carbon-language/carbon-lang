@@ -10,7 +10,11 @@
 //
 // The viable X-macros to define prior to including the header are:
 //
-// - `DIAGNOSTIC_KIND`
+// - `CARBON_DIAGNOSTIC_KIND`
+
+#ifndef CARBON_DIAGNOSTIC_KIND
+#error "Must define the x-macro to use this file."
+#endif
 
 // ============================================================================
 // Lexer diagnostics
@@ -61,11 +65,9 @@ CARBON_DIAGNOSTIC_KIND(ExpectedStructLiteralField)
 CARBON_DIAGNOSTIC_KIND(ExpectedVariableDeclaration)
 CARBON_DIAGNOSTIC_KIND(ExpectedVariableName)
 CARBON_DIAGNOSTIC_KIND(OperatorRequiresParentheses)
-CARBON_DIAGNOSTIC_KIND(StackLimitExceeded)
 CARBON_DIAGNOSTIC_KIND(UnaryOperatorHasWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnaryOperatorRequiresWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenAfterListElement)
-CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInCodeBlock)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedDeclaration)
 
 // Package-related diagnostics.
@@ -77,6 +79,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedSemiToEndPackageDirective)
 
 // For-specific diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedIn)
+CARBON_DIAGNOSTIC_KIND(ExpectedInNotColon)
 
 // Interface-specific diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceName)
@@ -91,6 +94,9 @@ CARBON_DIAGNOSTIC_KIND(ExpectedDeducedParam)
 // ============================================================================
 
 CARBON_DIAGNOSTIC_KIND(TypeMismatch)
+CARBON_DIAGNOSTIC_KIND(NameNotFound)
+CARBON_DIAGNOSTIC_KIND(NameRedefined)
+CARBON_DIAGNOSTIC_KIND(PreviousDefinition)
 
 // ============================================================================
 // Other diagnostics
@@ -98,5 +104,6 @@ CARBON_DIAGNOSTIC_KIND(TypeMismatch)
 
 // TestDiagnostic is only for unit tests.
 CARBON_DIAGNOSTIC_KIND(TestDiagnostic)
+CARBON_DIAGNOSTIC_KIND(TestDiagnosticNote)
 
 #undef CARBON_DIAGNOSTIC_KIND

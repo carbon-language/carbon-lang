@@ -19,9 +19,9 @@
 // CHECK:STDOUT:       {kind: 'StructFieldValue', text: '=', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'StructLiteral', text: '}', subtree_size: 11},
 // CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 13},
-// CHECK:STDOUT:       {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:     {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'VariableInitializer', text: '=', subtree_size: 3},
+// CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:     {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
+// CHECK:STDOUT:   {kind: 'StructLiteral', text: '}', subtree_size: 2},
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 18},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]

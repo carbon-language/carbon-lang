@@ -29,6 +29,12 @@ build --experimental_guard_against_concurrent_changes
 # https://github.com/bazelbuild/bazel/issues/13315
 build --incompatible_dont_enable_host_nonhost_crosstool_features=false
 
+# Disable warnings for all external compilations. These involve code that isn't
+# developed as part of Carbon and may be difficult or impossible to patch, so
+# warnings aren't likely to be actionable.
+build --per_file_copt=external/.*\.(c|cc|cpp|cxx)$@-w
+build --host_per_file_copt=external/.*\.(c|cc|cpp|cxx)$@-w
+
 # Default dynamic linking to off. While this can help build performance in some
 # edge cases with very large linked executables and a slow linker, between using
 # fast linkers on all platforms (LLD and the Apple linker), as well as having

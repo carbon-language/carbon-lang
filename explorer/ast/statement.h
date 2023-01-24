@@ -86,11 +86,31 @@ class ExpressionStatement : public Statement {
   Nonnull<Expression*> expression_;
 };
 
+enum class AssignOperator {
+  Plain,
+  Add,
+  Div,
+  Mul,
+  Mod,
+  Sub,
+  And,
+  Or,
+  Xor,
+  ShiftLeft,
+  ShiftRight,
+};
+
+// Returns the spelling of this assignment operator token.
+auto AssignOperatorToString(AssignOperator op) -> std::string_view;
+
 class Assign : public Statement {
  public:
-  Assign(SourceLocation source_loc, Nonnull<Expression*> lhs,
+  Assign(SourceLocation source_loc, Nonnull<Expression*> lhs, AssignOperator op,
          Nonnull<Expression*> rhs)
-      : Statement(AstNodeKind::Assign, source_loc), lhs_(lhs), rhs_(rhs) {}
+      : Statement(AstNodeKind::Assign, source_loc),
+        lhs_(lhs),
+        rhs_(rhs),
+        op_(op) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAssign(node->kind());
@@ -101,12 +121,66 @@ class Assign : public Statement {
   auto rhs() const -> const Expression& { return *rhs_; }
   auto rhs() -> Expression& { return *rhs_; }
 
+  auto op() const -> AssignOperator { return op_; }
+
   // Can only be called by type-checking, if a conversion was required.
   void set_rhs(Nonnull<Expression*> rhs) { rhs_ = rhs; }
+
+  // Set the rewritten form of this statement. Can only be called during type
+  // checking.
+  auto set_rewritten_form(Nonnull<const Expression*> rewritten_form) -> void {
+    CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
+    rewritten_form_ = rewritten_form;
+  }
+
+  // Get the rewritten form of this statement. A rewritten form is used when
+  // the statement is rewritten as a function call on an interface. A
+  // rewritten form is not used when providing built-in operator semantics for
+  // a plain assignment.
+  auto rewritten_form() const -> std::optional<Nonnull<const Expression*>> {
+    return rewritten_form_;
+  }
 
  private:
   Nonnull<Expression*> lhs_;
   Nonnull<Expression*> rhs_;
+  AssignOperator op_;
+  std::optional<Nonnull<const Expression*>> rewritten_form_;
+};
+
+class IncrementDecrement : public Statement {
+ public:
+  IncrementDecrement(SourceLocation source_loc, Nonnull<Expression*> argument,
+                     bool is_increment)
+      : Statement(AstNodeKind::IncrementDecrement, source_loc),
+        argument_(argument),
+        is_increment_(is_increment) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromIncrementDecrement(node->kind());
+  }
+
+  auto argument() const -> const Expression& { return *argument_; }
+  auto argument() -> Expression& { return *argument_; }
+
+  bool is_increment() const { return is_increment_; }
+
+  // Set the rewritten form of this statement. Can only be called during type
+  // checking.
+  auto set_rewritten_form(Nonnull<const Expression*> rewritten_form) -> void {
+    CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
+    rewritten_form_ = rewritten_form;
+  }
+
+  // Get the rewritten form of this statement.
+  auto rewritten_form() const -> std::optional<Nonnull<const Expression*>> {
+    return rewritten_form_;
+  }
+
+ private:
+  Nonnull<Expression*> argument_;
+  bool is_increment_;
+  std::optional<Nonnull<const Expression*>> rewritten_form_;
 };
 
 class VariableDefinition : public Statement {
