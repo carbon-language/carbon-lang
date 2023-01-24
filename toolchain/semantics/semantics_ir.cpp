@@ -78,9 +78,9 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
 
   out << "callables: [\n";
-  for (int32_t i = 0; i < static_cast<int32_t>(callables_.size()); ++i) {
+  for (auto callable : callables_) {
     out.indent(Indent);
-    out << callables_[i] << "\n";
+    out << callable << "\n";
   }
   out << "]\n";
 
@@ -121,16 +121,13 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   out << "]\n";
 
   out << "node_block_vectors: [\n";
-  for (int32_t i = 0; i < static_cast<int32_t>(node_block_vectors_.size());
-       ++i) {
+  for (const auto& node_block_vector : node_block_vectors_) {
     out.indent(Indent);
     out << "[\n";
 
-    const auto& node_block_vector = node_block_vectors_[i];
-    for (int32_t i = 0; i < static_cast<int32_t>(node_block_vector.size());
-         ++i) {
+    for (auto node_block : node_block_vector) {
       out.indent(2 * Indent);
-      out << node_block_vector[i] << ",\n";
+      out << node_block << ",\n";
     }
     out.indent(Indent);
     out << "],\n";
