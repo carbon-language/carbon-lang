@@ -93,8 +93,6 @@ class Interpreter {
   // State transition for object destruction.
   auto StepCleanUp() -> ErrorOr<Success>;
   auto StepDestroy() -> ErrorOr<Success>;
-  // State transition for tuple destruction.
-  auto StepCleanUpTuple() -> ErrorOr<Success>;
 
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
@@ -2216,10 +2214,11 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
       // Step over uninitialized values.
       if (value.ok()) {
         return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
+      } else {
+        return todo_.RunAgain();
       }
     } else {
       heap_.Deallocate(allocation);
-      return todo_.RunAgain();
     }
   }
   todo_.Pop();
