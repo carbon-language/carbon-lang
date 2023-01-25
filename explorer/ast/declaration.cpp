@@ -156,7 +156,7 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       out << "fn " << cast<FunctionDeclaration>(*this).name();
       break;
     case DeclarationKind::DestructorDeclaration:
-      out << cast<DestructorDeclaration>(*this).name();
+      out << "destructor";
       break;
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
@@ -224,7 +224,7 @@ auto GetName(const Declaration& declaration)
     case DeclarationKind::FunctionDeclaration:
       return cast<FunctionDeclaration>(declaration).name();
     case DeclarationKind::DestructorDeclaration:
-      return cast<DestructorDeclaration>(declaration).name();
+      return "destructor";
     case DeclarationKind::ClassDeclaration:
       return cast<ClassDeclaration>(declaration).name();
     case DeclarationKind::MixinDeclaration: {

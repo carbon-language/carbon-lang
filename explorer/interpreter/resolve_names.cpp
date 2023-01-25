@@ -576,7 +576,8 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       auto& function = cast<CallableDeclaration>(declaration);
       StaticScope function_scope;
       function_scope.AddParent(&enclosing_scope);
-      enclosing_scope.MarkDeclared(function.name());
+      auto name = std::string(GetName(*declaration));
+      enclosing_scope.MarkDeclared(name);
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*binding, function_scope));
       }
@@ -590,7 +591,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
         CARBON_RETURN_IF_ERROR(ResolveNames(
             **function.return_term().type_expression(), function_scope));
       }
-      enclosing_scope.MarkUsable(function.name());
+      enclosing_scope.MarkUsable(name);
       if (function.body().has_value() &&
           bodies != ResolveFunctionBodies::Skip) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**function.body(), function_scope));
