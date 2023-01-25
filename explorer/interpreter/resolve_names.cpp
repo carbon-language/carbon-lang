@@ -576,7 +576,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       auto& function = cast<CallableDeclaration>(declaration);
       StaticScope function_scope;
       function_scope.AddParent(&enclosing_scope);
-      auto name = std::string(GetName(*declaration));
+      std::string name(*GetName(declaration));
       enclosing_scope.MarkDeclared(name);
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*binding, function_scope));

@@ -4554,8 +4554,8 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   }
 
   if (trace_stream_ && name) {
-    **trace_stream_ << "** finished declaring function " << *name
-                    << " of type " << f->static_type() << "\n";
+    **trace_stream_ << "** finished declaring function " << *name << " of type "
+                    << f->static_type() << "\n";
   }
   return Success();
 }
