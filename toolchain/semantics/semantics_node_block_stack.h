@@ -25,21 +25,31 @@ class SemanticsNodeBlockStack {
 
   ~SemanticsNodeBlockStack() { CARBON_CHECK(stack_.empty()) << stack_.size(); }
 
+  // Pushes a new node block. It will be invalid unless PeekForAdd is called in
+  // order to support lazy allocation.
   auto Push() -> void;
 
+  // Pushes a new node block.
   // TODO: Try to remove this in favor of the lazy alloc in Push.
   auto PushWithUnconditionalAlloc() -> SemanticsNodeBlockId;
 
+  // Peeks at the top node block. This does not trigger lazy allocation, so the
+  // returned node block may be invalid.
   auto Peek() -> SemanticsNodeBlockId { return stack_.back(); }
+
+  // Returns the top node block, allocating one if it's still invalid.
   auto PeekForAdd() -> SemanticsNodeBlockId;
 
+  // Pops the top node block. This will always return a valid node block;
+  // SemanticsNodeBlockId::Empty is returned if one wasn't allocated.
   auto Pop() -> SemanticsNodeBlockId;
 
   // Prints the stack for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
  private:
-  llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>>* node_blocks_;
+  // The underlying node block storage on SemanticsIR. Always non-null.
+  llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>>* const node_blocks_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
