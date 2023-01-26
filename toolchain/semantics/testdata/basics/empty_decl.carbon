@@ -5,6 +5,8 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
+// CHECK:STDOUT: callables: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [

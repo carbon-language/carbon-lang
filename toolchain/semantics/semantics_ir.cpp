@@ -38,8 +38,8 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
   semantics.AddNode(block_id, SemanticsNode::MakeBuiltin(
                                   SemanticsBuiltinKind::RealType, type_type));
 
-  CARBON_CHECK(semantics.node_blocks_.size() == 1)
-      << "BuildBuiltins should only produce 1 block, actual: "
+  CARBON_CHECK(semantics.node_blocks_.size() == 2)
+      << "BuildBuiltins should produce 2 blocks, actual: "
       << semantics.node_blocks_.size();
   return semantics;
 }
@@ -76,6 +76,13 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   constexpr int Indent = 2;
 
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
+
+  out << "callables: [\n";
+  for (auto callable : callables_) {
+    out.indent(Indent);
+    out << callable << "\n";
+  }
+  out << "]\n";
 
   out << "integer_literals: [\n";
   for (const auto& integer_literal : integer_literals_) {
