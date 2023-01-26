@@ -806,7 +806,6 @@ class AliasDeclaration : public Declaration {
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
-  std::string name_;
   Nonnull<Expression*> target_;
 };
 
