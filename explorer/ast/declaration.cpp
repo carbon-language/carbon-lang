@@ -368,7 +368,9 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
 }
 
 void CallableDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
-  out << "fn " << name_ << " ";
+  if (auto name = GetName(*this)) {
+    out << "fn " << *name << " ";
+  }
   if (!deduced_parameters_.empty()) {
     out << "[";
     llvm::ListSeparator sep;
