@@ -92,22 +92,6 @@ class SemanticsIR {
     return id;
   }
 
-  // Like AddNodeBlock(), but also adds to block to a block vector.
-  auto AddNodeBlockInVector(SemanticsNodeBlockVectorId node_block_vector)
-      -> SemanticsNodeBlockId {
-    auto id = AddNodeBlock();
-    node_block_vectors_[node_block_vector.index].push_back(id);
-    return id;
-  }
-
-  // Adds an empty new node block vector, returning an ID to reference it and
-  // add items.
-  auto AddNodeBlockVector() -> SemanticsNodeBlockVectorId {
-    SemanticsNodeBlockVectorId id(node_block_vectors_.size());
-    node_block_vectors_.resize(node_block_vectors_.size() + 1);
-    return id;
-  }
-
   // Adds an string, returning an ID to reference it.
   auto AddString(llvm::StringRef str) -> SemanticsStringId {
     // If the string has already been stored, return the corresponding ID.
@@ -155,11 +139,6 @@ class SemanticsIR {
 
   // Storage for blocks within the IR. These reference entries in nodes_.
   llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>> node_blocks_;
-
-  // Storage for vectors of blocks within the IR. These reference entries in
-  // node_blocks_.
-  llvm::SmallVector<llvm::SmallVector<SemanticsNodeBlockId>>
-      node_block_vectors_;
 };
 
 }  // namespace Carbon

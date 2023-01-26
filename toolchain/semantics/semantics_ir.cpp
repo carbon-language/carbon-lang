@@ -119,20 +119,6 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
     out << "],\n";
   }
   out << "]\n";
-
-  out << "node_block_vectors: [\n";
-  for (const auto& node_block_vector : node_block_vectors_) {
-    out.indent(Indent);
-    out << "[\n";
-
-    for (auto node_block : node_block_vector) {
-      out.indent(2 * Indent);
-      out << node_block << ",\n";
-    }
-    out.indent(Indent);
-    out << "],\n";
-  }
-  out << "]\n";
 }
 
 }  // namespace Carbon

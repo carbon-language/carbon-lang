@@ -20,8 +20,8 @@ auto SemanticsNodeStack::PushEntry(Entry entry, DebugLog debug_log) -> void {
     case DebugLog::NodeId:
       CARBON_VLOG() << entry.node_id;
       break;
-    case DebugLog::NodeBlockVectorId:
-      CARBON_VLOG() << entry.node_block_vector_id;
+    case DebugLog::NodeBlockId:
+      CARBON_VLOG() << entry.node_block_id;
       break;
     case DebugLog::NameId:
       CARBON_VLOG() << entry.name_id;
@@ -62,7 +62,7 @@ auto SemanticsNodeStack::RequireParseKind(Entry entry,
 // TODO: Use is_layout_compatible in C++20.
 static_assert(std::is_standard_layout_v<SemanticsNodeId>,
               "Need standard layout for type punning");
-static_assert(std::is_standard_layout_v<SemanticsNodeBlockVectorId>,
+static_assert(std::is_standard_layout_v<SemanticsNodeBlockId>,
               "Need standard layout for type punning");
 static_assert(std::is_standard_layout_v<SemanticsStringId>,
               "Need standard layout for type punning");
@@ -122,11 +122,11 @@ auto SemanticsNodeStack::PopForNodeId(ParseNodeKind pop_parse_kind)
   return back.node_id;
 }
 
-auto SemanticsNodeStack::PopForNodeBlockVectorId(ParseNodeKind pop_parse_kind)
-    -> SemanticsNodeBlockVectorId {
+auto SemanticsNodeStack::PopForNodeBlockId(ParseNodeKind pop_parse_kind)
+    -> SemanticsNodeBlockId {
   auto back = PopEntry(pop_parse_kind);
   RequireValidId(back);
-  return back.node_block_vector_id;
+  return back.node_block_id;
 }
 
 auto SemanticsNodeStack::PopForParseNodeAndNodeId()

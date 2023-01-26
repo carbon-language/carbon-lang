@@ -69,15 +69,6 @@ struct SemanticsNodeBlockId : public IndexBase {
   }
 };
 
-// Type-safe storage of vectors of node blocks.
-struct SemanticsNodeBlockVectorId : public IndexBase {
-  using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "block_vector";
-    IndexBase::Print(out);
-  }
-};
-
 // Type-safe storage of strings.
 struct SemanticsStringId : public IndexBase {
   using IndexBase::IndexBase;
