@@ -5,13 +5,12 @@
 #include "toolchain/semantics/semantics_node_stack.h"
 
 #include "common/vlog.h"
-#include "llvm/Support/PrettyStackTrace.h"
 #include "toolchain/semantics/semantics_node.h"
 
 namespace Carbon {
 
 auto SemanticsNodeStack::PushEntry(Entry entry, DebugLog debug_log) -> void {
-  CARBON_VLOG() << "Push " << stack_.size() << ": "
+  CARBON_VLOG() << "Node Push " << stack_.size() << ": "
                 << parse_tree_->node_kind(entry.parse_node) << " -> ";
   switch (debug_log) {
     case DebugLog::None:
@@ -35,7 +34,7 @@ auto SemanticsNodeStack::PushEntry(Entry entry, DebugLog debug_log) -> void {
 
 auto SemanticsNodeStack::PopEntry() -> Entry {
   auto back = stack_.pop_back_val();
-  CARBON_VLOG() << "Pop " << stack_.size() << ": any ("
+  CARBON_VLOG() << "Node Pop " << stack_.size() << ": any ("
                 << parse_tree_->node_kind(back.parse_node) << ") -> "
                 << back.node_id << "\n";
   return back;
@@ -43,8 +42,8 @@ auto SemanticsNodeStack::PopEntry() -> Entry {
 
 auto SemanticsNodeStack::PopEntry(ParseNodeKind pop_parse_kind) -> Entry {
   auto back = stack_.pop_back_val();
-  CARBON_VLOG() << "Pop " << stack_.size() << ": " << pop_parse_kind << " -> "
-                << back.node_id << "\n";
+  CARBON_VLOG() << "Node Pop " << stack_.size() << ": " << pop_parse_kind
+                << " -> " << back.node_id << "\n";
   RequireParseKind(back, pop_parse_kind);
   return back;
 }
@@ -159,7 +158,7 @@ auto SemanticsNodeStack::PeekForNameId() -> SemanticsStringId {
 
 auto SemanticsNodeStack::PrintForStackDump(llvm::raw_ostream& output) const
     -> void {
-  output << "node_stack_:\n";
+  output << "SemanticsNodeStack:\n";
   for (int i = 0; i < static_cast<int>(stack_.size()); ++i) {
     const auto& entry = stack_[i];
     auto parse_node_kind = parse_tree_->node_kind(entry.parse_node);

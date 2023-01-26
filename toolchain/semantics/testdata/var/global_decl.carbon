@@ -22,11 +22,11 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node4,
 // CHECK:STDOUT:     node5,
 // CHECK:STDOUT:   ],
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: node_block_vectors: [
 // CHECK:STDOUT: ]
 
 var x: i32;

@@ -62,12 +62,25 @@ struct SemanticsIntegerLiteralId : public IndexBase {
 
 // Type-safe storage of node blocks.
 struct SemanticsNodeBlockId : public IndexBase {
+  // All SemanticsIR instances must provide the 0th node block as empty.
+  // NOLINTNEXTLINE(readability-identifier-naming)
+  static const SemanticsNodeBlockId Empty;
+
+  // An explicitly invalid ID.
+  // NOLINTNEXTLINE(readability-identifier-naming)
+  static const SemanticsNodeBlockId Invalid;
+
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "block";
     IndexBase::Print(out);
   }
 };
+
+constexpr SemanticsNodeBlockId SemanticsNodeBlockId::Empty =
+    SemanticsNodeBlockId(0);
+constexpr SemanticsNodeBlockId SemanticsNodeBlockId::Invalid =
+    SemanticsNodeBlockId();
 
 // Type-safe storage of strings.
 struct SemanticsStringId : public IndexBase {

@@ -19,10 +19,15 @@ namespace Carbon {
 // A callable object.
 struct SemanticsCallable {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{params: " << params_id << ", return: " << return_id << "}";
+    out << "{param_ir: " << param_ir_id << ", param_refs: " << param_refs_id
+        << ", return: " << return_id << "}";
   }
 
-  SemanticsNodeBlockVectorId params_id;
+  // The full IR for parameters.
+  SemanticsNodeBlockId param_ir_id;
+  // A block containing a single reference node per parameter.
+  SemanticsNodeBlockId param_refs_id;
+  // The return information.
   SemanticsNodeId return_id;
 };
 
@@ -49,7 +54,10 @@ class SemanticsIR {
   friend class SemanticsParseTreeHandler;
 
   explicit SemanticsIR(const SemanticsIR* builtin_ir)
-      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {}
+      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {
+    // For SemanticsNodeBlockId::Empty.
+    node_blocks_.resize(1);
+  }
 
   // Returns the requested node.
   auto GetNode(SemanticsNodeId node_id) const -> const SemanticsNode& {
@@ -90,6 +98,11 @@ class SemanticsIR {
     SemanticsNodeBlockId id(node_blocks_.size());
     node_blocks_.resize(node_blocks_.size() + 1);
     return id;
+  }
+
+  auto GetNodeBlock(SemanticsNodeBlockId block_id)
+      -> llvm::SmallVector<SemanticsNodeId>& {
+    return node_blocks_[block_id.index];
   }
 
   // Adds an string, returning an ID to reference it.

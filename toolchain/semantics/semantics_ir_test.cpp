@@ -71,8 +71,8 @@ TEST(SemanticsIRTest, YAML) {
                        Pair("arg1", node_id), Pair("type", node_id))))))),
           // This production has only one node block.
           Pair("node_blocks",
-               Yaml::Sequence(ElementsAre(Yaml::Sequence(Each(node_id))))),
-          Pair("node_block_vectors", Yaml::Sequence(IsEmpty()))))));
+               Yaml::Sequence(ElementsAre(Yaml::Sequence(IsEmpty()),
+                                          Yaml::Sequence(Each(node_id)))))))));
 }
 
 }  // namespace

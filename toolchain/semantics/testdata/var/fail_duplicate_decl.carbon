@@ -6,7 +6,7 @@
 // RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {params: block_vector0, return: node<invalid>}
+// CHECK:STDOUT:   {param_ir: block0, param_refs: block0, return: node<invalid>}
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -23,7 +23,7 @@
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block3, type: node0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: callable0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node4},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node4, arg1: block1},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node4, arg1: block2},
 // CHECK:STDOUT:   {kind: VarStorage, type: node2},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node7, type: node2},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: node2},
@@ -34,6 +34,8 @@
 // CHECK:STDOUT:   {kind: Assign, arg0: node7, arg1: node13, type: node2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node4,
 // CHECK:STDOUT:     node5,
@@ -48,10 +50,6 @@
 // CHECK:STDOUT:     node12,
 // CHECK:STDOUT:     node13,
 // CHECK:STDOUT:     node14,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: node_block_vectors: [
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

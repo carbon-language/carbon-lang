@@ -111,7 +111,7 @@ class SemanticsNodeStack {
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
  private:
-  // An entry in node_stack_.
+  // An entry in stack_.
   struct Entry {
     // The node associated with the stack entry.
     ParseTree::Node parse_node;

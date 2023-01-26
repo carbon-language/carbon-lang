@@ -21,7 +21,5 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT: node_block_vectors: [
-// CHECK:STDOUT: ]
 
 ;

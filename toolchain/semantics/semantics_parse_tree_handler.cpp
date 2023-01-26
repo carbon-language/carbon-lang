@@ -4,6 +4,9 @@
 
 #include "toolchain/semantics/semantics_parse_tree_handler.h"
 
+#include <functional>
+#include <utility>
+
 #include "common/vlog.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "toolchain/lexer/token_kind.h"
@@ -15,48 +18,29 @@
 
 namespace Carbon {
 
-class SemanticsParseTreeHandler::PrettyStackTraceNodeStack
-    : public llvm::PrettyStackTraceEntry {
+class PrettyStackTraceFunction : public llvm::PrettyStackTraceEntry {
  public:
-  explicit PrettyStackTraceNodeStack(const SemanticsParseTreeHandler* handler)
-      : handler_(handler) {}
-  ~PrettyStackTraceNodeStack() override = default;
+  explicit PrettyStackTraceFunction(std::function<void(llvm::raw_ostream&)> fn)
+      : fn_(std::move(fn)) {}
+  ~PrettyStackTraceFunction() override = default;
 
-  auto print(llvm::raw_ostream& output) const -> void override {
-    handler_->node_stack_.PrintForStackDump(output);
-  }
+  auto print(llvm::raw_ostream& output) const -> void override { fn_(output); }
 
  private:
-  const SemanticsParseTreeHandler* handler_;
-};
-
-class SemanticsParseTreeHandler::PrettyStackTraceNodeBlockStack
-    : public llvm::PrettyStackTraceEntry {
- public:
-  explicit PrettyStackTraceNodeBlockStack(
-      const SemanticsParseTreeHandler* handler)
-      : handler_(handler) {}
-  ~PrettyStackTraceNodeBlockStack() override = default;
-
-  auto print(llvm::raw_ostream& output) const -> void override {
-    output << "node_block_stack_:\n";
-    for (int i = 0; i < static_cast<int>(handler_->node_block_stack_.size());
-         ++i) {
-      const auto& entry = handler_->node_block_stack_[i];
-      output << "\t" << i << ".\t" << entry << "\n";
-    }
-  }
-
- private:
-  const SemanticsParseTreeHandler* handler_;
+  const std::function<void(llvm::raw_ostream&)> fn_;
 };
 
 auto SemanticsParseTreeHandler::Build() -> void {
-  PrettyStackTraceNodeStack pretty_node_stack(this);
-  PrettyStackTraceNodeBlockStack pretty_node_block_stack(this);
+  PrettyStackTraceFunction pretty_node_stack([&](llvm::raw_ostream& output) {
+    node_stack_.PrintForStackDump(output);
+  });
+  PrettyStackTraceFunction pretty_node_block_stack(
+      [&](llvm::raw_ostream& output) {
+        node_block_stack_.PrintForStackDump(output);
+      });
 
   // Add a block for the ParseTree.
-  node_block_stack_.push_back(semantics_->AddNodeBlock());
+  node_block_stack_.Push();
   PushScope();
 
   for (auto parse_node : parse_tree_->postorder()) {
@@ -70,8 +54,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
     }
   }
 
-  node_block_stack_.pop_back();
-  CARBON_CHECK(node_block_stack_.empty()) << node_block_stack_.size();
+  node_block_stack_.Pop();
 
   PopScope();
   CARBON_CHECK(name_lookup_.empty()) << name_lookup_.size();
@@ -79,8 +62,9 @@ auto SemanticsParseTreeHandler::Build() -> void {
 }
 
 auto SemanticsParseTreeHandler::AddNode(SemanticsNode node) -> SemanticsNodeId {
-  CARBON_VLOG() << "AddNode " << current_block_id() << ": " << node << "\n";
-  return semantics_->AddNode(current_block_id(), node);
+  auto block = node_block_stack_.PeekForAdd();
+  CARBON_VLOG() << "AddNode " << block << ": " << node << "\n";
+  return semantics_->AddNode(block, node);
 }
 
 auto SemanticsParseTreeHandler::AddNodeAndPush(ParseTree::Node parse_node,
@@ -289,28 +273,35 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
   node_stack_.PopAndIgnore();
 
   PopScope();
-  node_block_stack_.pop_back();
+  node_block_stack_.Pop();
   node_stack_.Push(parse_node);
 }
 
 auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
     ParseTree::Node parse_node) -> void {
-  auto params_id =
-      node_stack_.PopForNodeBlockVectorId(ParseNodeKind::ParameterList);
+  node_stack_.PopForSoloParseNode(ParseNodeKind::ParameterList);
+  auto [param_ir_id, param_refs_id] = finished_params_stack_.pop_back_val();
   auto name_node = node_stack_.PopForSoloParseNode(ParseNodeKind::DeclaredName);
   auto fn_node =
       node_stack_.PopForSoloParseNode(ParseNodeKind::FunctionIntroducer);
 
   SemanticsCallable callable;
-  callable.params_id = params_id;
+  callable.param_ir_id = param_ir_id;
+  callable.param_refs_id = param_refs_id;
   auto callable_id = semantics_->AddCallable(callable);
   auto decl_id =
       AddNode(SemanticsNode::MakeFunctionDeclaration(fn_node, callable_id));
   // TODO: Propagate the type of the function.
   BindName(name_node, SemanticsNodeId::MakeInvalid(), decl_id);
-  auto block_id = semantics_->AddNodeBlock();
-  AddNode(SemanticsNode::MakeFunctionDefinition(parse_node, decl_id, block_id));
-  node_block_stack_.push_back(block_id);
+
+  // TODO: Consider approaches that allow lazy creation of the definition block.
+  auto outer_block = node_block_stack_.PeekForAdd();
+  auto def_block = node_block_stack_.PushWithUnconditionalAlloc();
+  auto node =
+      SemanticsNode::MakeFunctionDefinition(parse_node, decl_id, def_block);
+  CARBON_VLOG() << "AddNode " << outer_block << ": " << node << "\n";
+  semantics_->AddNode(outer_block, node);
+
   PushScope();
   node_stack_.Push(parse_node);
 }
@@ -457,10 +448,30 @@ auto SemanticsParseTreeHandler::HandlePackageLibrary(
   CARBON_FATAL() << "TODO";
 }
 
+auto SemanticsParseTreeHandler::SaveParam() -> bool {
+  // Copy the last node added to the IR block into the params block.
+  auto ir_id = node_block_stack_.Peek();
+  if (!ir_id.is_valid()) {
+    return false;
+  }
+  auto& ir = semantics_->GetNodeBlock(ir_id);
+  CARBON_CHECK(!ir.empty())
+      << "Should only have a valid ID if a node was added";
+  auto& param = ir.back();
+  auto& params = semantics_->GetNodeBlock(params_stack_.PeekForAdd());
+  if (!params.empty() && param == params.back()) {
+    // The param was already added after a comma.
+    return false;
+  }
+  params.push_back(ir.back());
+  return true;
+}
+
 auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
     -> void {
-  // TODO: If the node block is empty, erase it and remove it from the vector.
-  node_block_stack_.pop_back();
+  // If there's a node in the IR block that has yet to be added to the params
+  // block, add it now.
+  SaveParam();
 
   while (true) {
     switch (auto parse_kind =
@@ -468,7 +479,9 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
       case ParseNodeKind::ParameterListStart:
         node_stack_.PopAndDiscardSoloParseNode(
             ParseNodeKind::ParameterListStart);
-        node_stack_.Push(parse_node, node_block_vector_stack_.pop_back_val());
+        finished_params_stack_.push_back(
+            {node_block_stack_.Pop(), params_stack_.Pop()});
+        node_stack_.Push(parse_node);
         return;
 
       case ParseNodeKind::ParameterListComma:
@@ -491,20 +504,19 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
 
 auto SemanticsParseTreeHandler::HandleParameterListComma(
     ParseTree::Node parse_node) -> void {
-  node_block_stack_.pop_back();
   node_stack_.Push(parse_node);
 
-  node_block_stack_.push_back(
-      semantics_->AddNodeBlockInVector(node_block_vector_stack_.back()));
+  // Copy the last node added to the IR block into the params block.
+  CARBON_CHECK(SaveParam())
+      << "TODO: Should have a param before comma, will need error recovery";
 }
 
 auto SemanticsParseTreeHandler::HandleParameterListStart(
     ParseTree::Node parse_node) -> void {
   node_stack_.Push(parse_node);
-  node_block_vector_stack_.push_back(semantics_->AddNodeBlockVector());
 
-  node_block_stack_.push_back(
-      semantics_->AddNodeBlockInVector(node_block_vector_stack_.back()));
+  params_stack_.Push();
+  node_block_stack_.Push();
 }
 
 auto SemanticsParseTreeHandler::HandleParenExpression(
