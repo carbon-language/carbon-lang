@@ -249,8 +249,7 @@ static auto ResolveNames(Expression& expression,
             &cast<GenericBinding>(enclosing_dot_self->base()));
       }
       // Introduce `.Self` into scope on the right of the `where` keyword.
-      StaticScope where_scope;
-      where_scope.AddParent(&enclosing_scope);
+      StaticScope where_scope(&enclosing_scope);
       CARBON_RETURN_IF_ERROR(where_scope.Add(".Self", &where.self_binding()));
       for (Nonnull<WhereClause*> clause : where.clauses()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*clause, where_scope));
@@ -327,8 +326,7 @@ static auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
     case PatternKind::GenericBinding: {
       auto& binding = cast<GenericBinding>(pattern);
       // `.Self` is in scope in the context of the type.
-      StaticScope self_scope;
-      self_scope.AddParent(&enclosing_scope);
+      StaticScope self_scope(&enclosing_scope);
       CARBON_RETURN_IF_ERROR(self_scope.Add(".Self", &binding));
       CARBON_RETURN_IF_ERROR(ResolveNames(binding.type(), self_scope));
       if (binding.name() != AnonymousName) {
@@ -440,8 +438,7 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
     }
     case StatementKind::Block: {
       auto& block = cast<Block>(statement);
-      StaticScope block_scope;
-      block_scope.AddParent(&enclosing_scope);
+      StaticScope block_scope(&enclosing_scope);
       for (Nonnull<Statement*> sub_statement : block.statements()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*sub_statement, block_scope));
       }
@@ -455,8 +452,7 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       break;
     }
     case StatementKind::For: {
-      StaticScope statement_scope;
-      statement_scope.AddParent(&enclosing_scope);
+      StaticScope statement_scope(&enclosing_scope);
       auto& for_stmt = cast<For>(statement);
       CARBON_RETURN_IF_ERROR(
           ResolveNames(for_stmt.loop_target(), statement_scope));
@@ -470,8 +466,7 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       auto& match = cast<Match>(statement);
       CARBON_RETURN_IF_ERROR(ResolveNames(match.expression(), enclosing_scope));
       for (Match::Clause& clause : match.clauses()) {
-        StaticScope clause_scope;
-        clause_scope.AddParent(&enclosing_scope);
+        StaticScope clause_scope(&enclosing_scope);
         CARBON_RETURN_IF_ERROR(ResolveNames(clause.pattern(), clause_scope));
         CARBON_RETURN_IF_ERROR(ResolveNames(clause.statement(), clause_scope));
       }
@@ -482,8 +477,7 @@ static auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       CARBON_RETURN_IF_ERROR(
           enclosing_scope.Add(continuation.name(), &continuation,
                               StaticScope::NameStatus::DeclaredButNotUsable));
-      StaticScope continuation_scope;
-      continuation_scope.AddParent(&enclosing_scope);
+      StaticScope continuation_scope(&enclosing_scope);
       CARBON_RETURN_IF_ERROR(ResolveNames(cast<Continuation>(statement).body(),
                                           continuation_scope));
       enclosing_scope.MarkUsable(continuation.name());
@@ -528,8 +522,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       auto& iface = cast<ConstraintTypeDeclaration>(declaration);
-      StaticScope iface_scope;
-      iface_scope.AddParent(&enclosing_scope);
+      StaticScope iface_scope(&enclosing_scope);
       enclosing_scope.MarkDeclared(iface.name());
       if (iface.params().has_value()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**iface.params(), iface_scope));
@@ -544,8 +537,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
     }
     case DeclarationKind::ImplDeclaration: {
       auto& impl = cast<ImplDeclaration>(declaration);
-      StaticScope impl_scope;
-      impl_scope.AddParent(&enclosing_scope);
+      StaticScope impl_scope(&enclosing_scope);
       for (Nonnull<GenericBinding*> binding : impl.deduced_parameters()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(binding->type(), impl_scope));
         CARBON_RETURN_IF_ERROR(impl_scope.Add(binding->name(), binding));
@@ -574,8 +566,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
     case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration: {
       auto& function = cast<CallableDeclaration>(declaration);
-      StaticScope function_scope;
-      function_scope.AddParent(&enclosing_scope);
+      StaticScope function_scope(&enclosing_scope);
       enclosing_scope.MarkDeclared(function.name());
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*binding, function_scope));
@@ -599,8 +590,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
     }
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(declaration);
-      StaticScope class_scope;
-      class_scope.AddParent(&enclosing_scope);
+      StaticScope class_scope(&enclosing_scope);
       enclosing_scope.MarkDeclared(class_decl.name());
       if (class_decl.base_expr().has_value()) {
         CARBON_RETURN_IF_ERROR(
@@ -618,8 +608,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
     }
     case DeclarationKind::MixinDeclaration: {
       auto& mixin_decl = cast<MixinDeclaration>(declaration);
-      StaticScope mixin_scope;
-      mixin_scope.AddParent(&enclosing_scope);
+      StaticScope mixin_scope(&enclosing_scope);
       enclosing_scope.MarkDeclared(mixin_decl.name());
       if (mixin_decl.params().has_value()) {
         CARBON_RETURN_IF_ERROR(
@@ -638,8 +627,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
     }
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
-      StaticScope choice_scope;
-      choice_scope.AddParent(&enclosing_scope);
+      StaticScope choice_scope(&enclosing_scope);
       enclosing_scope.MarkDeclared(choice.name());
       if (choice.type_params().has_value()) {
         CARBON_RETURN_IF_ERROR(
@@ -683,8 +671,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
     }
     case DeclarationKind::AssociatedConstantDeclaration: {
       auto& let = cast<AssociatedConstantDeclaration>(declaration);
-      StaticScope constant_scope;
-      constant_scope.AddParent(&enclosing_scope);
+      StaticScope constant_scope(&enclosing_scope);
       CARBON_RETURN_IF_ERROR(ResolveNames(let.binding(), constant_scope));
       break;
     }
