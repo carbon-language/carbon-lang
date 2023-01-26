@@ -20,15 +20,13 @@ namespace Carbon {
 struct SemanticsCallable {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{param_ir: " << param_ir_id << ", param_refs: " << param_refs_id
-        << ", return: " << return_id << "}";
+        << "}";
   }
 
   // The full IR for parameters.
   SemanticsNodeBlockId param_ir_id;
   // A block containing a single reference node per parameter.
   SemanticsNodeBlockId param_refs_id;
-  // The return information.
-  SemanticsNodeId return_id;
 };
 
 // Provides semantic analysis on a ParseTree.
