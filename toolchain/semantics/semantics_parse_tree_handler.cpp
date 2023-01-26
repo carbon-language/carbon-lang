@@ -156,61 +156,61 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
 
 auto SemanticsParseTreeHandler::HandleAddress(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleAddress");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleBreakStatement(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleBreakStatement");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleBreakStatementStart(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleBreakStatementStart");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleCallExpression(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleCallExpression");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleCallExpressionComma(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleCallExpressionComma");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleCallExpressionStart(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleCallExpressionStart");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleCodeBlock(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleCodeBlock");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleCodeBlockStart(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleCodeBlockStart");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleContinueStatement(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleContinueStatement");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleContinueStatementStart(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleContinueStatementStart");
   return false;
 }
 
@@ -223,25 +223,25 @@ auto SemanticsParseTreeHandler::HandleDeclaredName(ParseTree::Node parse_node)
 
 auto SemanticsParseTreeHandler::HandleDeducedParameterList(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleDeducedParameterList");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleDeducedParameterListStart(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleDeducedParameterListStart");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleDesignatedName(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleDesignatedName");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleDesignatorExpression(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleDesignatorExpression");
   return false;
 }
 
@@ -271,31 +271,31 @@ auto SemanticsParseTreeHandler::HandleFileEnd(ParseTree::Node /*parse_node*/)
 
 auto SemanticsParseTreeHandler::HandleForHeader(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleForHeader");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleForHeaderStart(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleForHeaderStart");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleForIn(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleForIn");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleForStatement(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleForStatement");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleFunctionDeclaration(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleFunctionDeclaration");
   return false;
 }
 
@@ -355,25 +355,25 @@ auto SemanticsParseTreeHandler::HandleFunctionIntroducer(
 
 auto SemanticsParseTreeHandler::HandleIfCondition(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleIfCondition");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleIfConditionStart(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleIfConditionStart");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleIfStatement(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleIfStatement");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleIfStatementElse(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleIfStatementElse");
   return false;
 }
 
@@ -402,19 +402,19 @@ auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
 
 auto SemanticsParseTreeHandler::HandleInterfaceBody(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleInterfaceBody");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleInterfaceBodyStart(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleInterfaceBodyStart");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleInterfaceDefinition(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleInterfaceDefinition");
   return false;
 }
 
@@ -486,31 +486,31 @@ auto SemanticsParseTreeHandler::HandleNameReference(ParseTree::Node parse_node)
 
 auto SemanticsParseTreeHandler::HandlePackageApi(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePackageApi");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandlePackageDirective(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePackageDirective");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandlePackageImpl(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePackageImpl");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandlePackageIntroducer(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePackageIntroducer");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandlePackageLibrary(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePackageLibrary");
   return false;
 }
 
@@ -596,13 +596,14 @@ auto SemanticsParseTreeHandler::HandleParameterListStart(
 
 auto SemanticsParseTreeHandler::HandleParenExpression(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleParenExpression");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleParenExpressionOrTupleLiteralStart(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo,
+                 "HandleParenExpressionOrTupleLiteralStart");
   return false;
 }
 
@@ -629,13 +630,13 @@ auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
 
 auto SemanticsParseTreeHandler::HandlePostfixOperator(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePostfixOperator");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandlePrefixOperator(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePrefixOperator");
   return false;
 }
 
@@ -664,79 +665,80 @@ auto SemanticsParseTreeHandler::HandleReturnStatementStart(
 
 auto SemanticsParseTreeHandler::HandleReturnType(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleReturnType");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleSelfDeducedParameter(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfDeducedParameter");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleSelfType(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfType");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructComma(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructComma");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructFieldDesignator(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructFieldDesignator");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructFieldType(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructFieldType");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructFieldUnknown(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructFieldUnknown");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructFieldValue(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructFieldValue");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructLiteral(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructLiteral");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructLiteralOrStructTypeLiteralStart(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo,
+                 "HandleStructLiteralOrStructTypeLiteralStart");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructTypeLiteral(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructTypeLiteral");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleTupleLiteral(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleTupleLiteral");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleTupleLiteralComma(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleTupleLiteralComma");
   return false;
 }
 
@@ -800,19 +802,19 @@ auto SemanticsParseTreeHandler::HandleVariableInitializer(
 
 auto SemanticsParseTreeHandler::HandleWhileCondition(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleWhileCondition");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleWhileConditionStart(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleWhileConditionStart");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleWhileStatement(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "Handle");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleWhileStatement");
   return false;
 }
 
