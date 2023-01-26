@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_NODE_STACK_H_
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_NODE_STACK_H_
 
+#include <type_traits>
+
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_tree.h"
@@ -152,11 +154,9 @@ class SemanticsNodeStack {
   auto RequireParseKind(Entry entry, ParseNodeKind require_kind) -> void;
 
   // Requires an entry to have a invalid node_id.
-  // Also works with name_id in the union due to type compatibility.
   auto RequireSoloParseNode(Entry entry) -> void;
 
   // Requires an entry to have a valid id.
-  // Also works with all items in the union due to type compatibility.
   auto RequireValidId(Entry entry) -> void;
 
   // The file's parse tree.

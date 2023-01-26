@@ -56,13 +56,26 @@ auto SemanticsNodeStack::RequireParseKind(Entry entry,
       << "Expected " << require_kind << ", found " << actual_kind;
 }
 
+// RequireSoloParseNode and RequireValidId rely on type punning. They read
+// node_id.is_valid, even though that may not be the active union member.
+// These asserts enforce standard layout in order to help ensure that works.
+// TODO: Use is_layout_compatible in C++20.
+static_assert(std::is_standard_layout_v<SemanticsNodeId>,
+              "Need standard layout for type punning");
+static_assert(std::is_standard_layout_v<SemanticsNodeBlockVectorId>,
+              "Need standard layout for type punning");
+static_assert(std::is_standard_layout_v<SemanticsStringId>,
+              "Need standard layout for type punning");
+
 auto SemanticsNodeStack::RequireSoloParseNode(Entry entry) -> void {
+  // See above comment on type punning.
   CARBON_CHECK(!entry.node_id.is_valid())
       << "Expected invalid id on " << parse_tree_->node_kind(entry.parse_node)
       << ", was " << entry.node_id << " (may not be node)";
 }
 
 auto SemanticsNodeStack::RequireValidId(Entry entry) -> void {
+  // See above comment on type punning.
   CARBON_CHECK(entry.node_id.is_valid())
       << "Expected valid id on " << parse_tree_->node_kind(entry.parse_node);
 }

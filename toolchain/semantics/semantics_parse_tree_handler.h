@@ -28,11 +28,7 @@ class SemanticsParseTreeHandler {
         parse_tree_(&parse_tree),
         semantics_(&semantics),
         vlog_stream_(vlog_stream),
-        node_stack_(parse_tree, vlog_stream) {
-    auto range = parse_tree_->postorder();
-    postorder_it_ = range.begin();
-    postorder_end_ = range.end();
-  }
+        node_stack_(parse_tree, vlog_stream) {}
 
   // Outputs the ParseTree information into SemanticsIR.
   auto Build() -> void;
@@ -89,9 +85,6 @@ class SemanticsParseTreeHandler {
   auto BindName(ParseTree::Node name_node, SemanticsNodeId type_id,
                 SemanticsNodeId target_id) -> SemanticsStringId;
 
-  // Returns true if the next parse node is the given kind.
-  auto NextParseNodeIs(std::initializer_list<ParseNodeKind> kinds) -> bool;
-
   // Pushes a new scope onto scope_stack_.
   auto PushScope() -> void;
 
@@ -124,12 +117,6 @@ class SemanticsParseTreeHandler {
 
   // The file's parse tree.
   const ParseTree* parse_tree_;
-
-  // The postorder cursor.
-  ParseTree::PostorderIterator postorder_it_;
-
-  // The end of the postorder range.
-  ParseTree::PostorderIterator postorder_end_;
 
   // The SemanticsIR being added to.
   SemanticsIR* semantics_;

@@ -59,9 +59,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
   node_block_stack_.push_back(semantics_->AddNodeBlock());
   PushScope();
 
-  while (postorder_it_ != postorder_end_) {
-    auto parse_node = *postorder_it_;
-    ++postorder_it_;
+  for (auto parse_node : parse_tree_->postorder()) {
     switch (auto parse_kind = parse_tree_->node_kind(parse_node)) {
 #define CARBON_PARSE_NODE_KIND(Name) \
   case ParseNodeKind::Name: {        \
@@ -116,19 +114,6 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
         .Emit();
   }
   return name_id;
-}
-
-auto SemanticsParseTreeHandler::NextParseNodeIs(
-    std::initializer_list<ParseNodeKind> kinds) -> bool {
-  if (postorder_it_ == postorder_end_) {
-    return false;
-  }
-  for (auto kind : kinds) {
-    if (parse_tree_->node_kind(*postorder_it_) == kind) {
-      return true;
-    }
-  }
-  return false;
 }
 
 auto SemanticsParseTreeHandler::PushScope() -> void {
@@ -474,13 +459,8 @@ auto SemanticsParseTreeHandler::HandlePackageLibrary(
 
 auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
     -> void {
-  // If the final child node is a parameter, then we need to pop the node
-  // block for the final parameter off the stack.
-  if (auto parse_kind = parse_tree_->node_kind(node_stack_.PeekParseNode());
-      parse_kind != ParseNodeKind::ParameterListStart &&
-      parse_kind != ParseNodeKind::ParameterListComma) {
-    node_block_stack_.pop_back();
-  }
+  // TODO: If the node block is empty, erase it and remove it from the vector.
+  node_block_stack_.pop_back();
 
   while (true) {
     switch (auto parse_kind =
@@ -514,11 +494,8 @@ auto SemanticsParseTreeHandler::HandleParameterListComma(
   node_block_stack_.pop_back();
   node_stack_.Push(parse_node);
 
-  // Possibly add a node block for the next parameter.
-  if (!NextParseNodeIs({ParseNodeKind::ParameterList})) {
-    node_block_stack_.push_back(
-        semantics_->AddNodeBlockInVector(node_block_vector_stack_.back()));
-  }
+  node_block_stack_.push_back(
+      semantics_->AddNodeBlockInVector(node_block_vector_stack_.back()));
 }
 
 auto SemanticsParseTreeHandler::HandleParameterListStart(
@@ -526,11 +503,8 @@ auto SemanticsParseTreeHandler::HandleParameterListStart(
   node_stack_.Push(parse_node);
   node_block_vector_stack_.push_back(semantics_->AddNodeBlockVector());
 
-  // Possibly add a node block for the first parameter.
-  if (!NextParseNodeIs({ParseNodeKind::ParameterList})) {
-    node_block_stack_.push_back(
-        semantics_->AddNodeBlockInVector(node_block_vector_stack_.back()));
-  }
+  node_block_stack_.push_back(
+      semantics_->AddNodeBlockInVector(node_block_vector_stack_.back()));
 }
 
 auto SemanticsParseTreeHandler::HandleParenExpression(
