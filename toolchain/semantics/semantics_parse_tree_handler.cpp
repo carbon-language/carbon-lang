@@ -507,7 +507,8 @@ auto SemanticsParseTreeHandler::HandleParameterListComma(
   node_stack_.Push(parse_node);
 
   // Copy the last node added to the IR block into the params block.
-  CARBON_CHECK(SaveParam())
+  bool had_param_before_comma = SaveParam();
+  CARBON_CHECK(had_param_before_comma)
       << "TODO: Should have a param before comma, will need error recovery";
 }
 
