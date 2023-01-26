@@ -105,9 +105,9 @@ class SemanticsParseTreeHandler {
   // params_stack_. Returns false if nothing is copied.
   auto SaveParam() -> bool;
 
-  // Parse node handlers.
+  // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(ParseTree::Node parse_node)->void;
+  auto Handle##Name(ParseTree::Node parse_node)->bool;
 #include "toolchain/parser/parse_node_kind.def"
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
