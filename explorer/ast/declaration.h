@@ -170,7 +170,6 @@ class CallableDeclaration : public Declaration {
   auto is_method() const -> bool { return self_pattern_.has_value(); }
 
  private:
-  std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::optional<Nonnull<Pattern*>> self_pattern_;
   Nonnull<TuplePattern*> param_pattern_;
@@ -806,6 +805,7 @@ class AliasDeclaration : public Declaration {
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
+  std::string name_;
   Nonnull<Expression*> target_;
 };
 
