@@ -19,9 +19,6 @@ auto SemanticsNodeStack::PushEntry(Entry entry, DebugLog debug_log) -> void {
     case DebugLog::NodeId:
       CARBON_VLOG() << entry.node_id;
       break;
-    case DebugLog::NodeBlockId:
-      CARBON_VLOG() << entry.node_block_id;
-      break;
     case DebugLog::NameId:
       CARBON_VLOG() << entry.name_id;
       break;
@@ -60,8 +57,6 @@ auto SemanticsNodeStack::RequireParseKind(Entry entry,
 // These asserts enforce standard layout in order to help ensure that works.
 // TODO: Use is_layout_compatible in C++20.
 static_assert(std::is_standard_layout_v<SemanticsNodeId>,
-              "Need standard layout for type punning");
-static_assert(std::is_standard_layout_v<SemanticsNodeBlockId>,
               "Need standard layout for type punning");
 static_assert(std::is_standard_layout_v<SemanticsStringId>,
               "Need standard layout for type punning");
@@ -119,13 +114,6 @@ auto SemanticsNodeStack::PopForNodeId(ParseNodeKind pop_parse_kind)
   auto back = PopEntry(pop_parse_kind);
   RequireValidId(back);
   return back.node_id;
-}
-
-auto SemanticsNodeStack::PopForNodeBlockId(ParseNodeKind pop_parse_kind)
-    -> SemanticsNodeBlockId {
-  auto back = PopEntry(pop_parse_kind);
-  RequireValidId(back);
-  return back.node_block_id;
 }
 
 auto SemanticsNodeStack::PopForParseNodeAndNodeId()
