@@ -18,6 +18,8 @@
 
 namespace Carbon {
 
+CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: {0}", std::string);
+
 class PrettyStackTraceFunction : public llvm::PrettyStackTraceEntry {
  public:
   explicit PrettyStackTraceFunction(std::function<void(llvm::raw_ostream&)> fn)
@@ -43,22 +45,33 @@ auto SemanticsParseTreeHandler::Build() -> void {
   node_block_stack_.Push();
   PushScope();
 
+  // Loops over all nodes in the tree. On some errors, this may return early,
+  // for example if an unrecoverable state is encountered.
   for (auto parse_node : parse_tree_->postorder()) {
     switch (auto parse_kind = parse_tree_->node_kind(parse_node)) {
 #define CARBON_PARSE_NODE_KIND(Name) \
   case ParseNodeKind::Name: {        \
-    Handle##Name(parse_node);        \
+    if (!Handle##Name(parse_node)) { \
+      return;                        \
+    }                                \
     break;                           \
   }
 #include "toolchain/parser/parse_node_kind.def"
     }
   }
 
+  // Pop information for the file-level scope.
   node_block_stack_.Pop();
-
   PopScope();
+
+  // Information in all the various context objects should be cleaned up as
+  // various pieces of context go out of scope. At this point, nothing should
+  // remain.
+  // node_stack_ will still contain top-level entities.
   CARBON_CHECK(name_lookup_.empty()) << name_lookup_.size();
   CARBON_CHECK(scope_stack_.empty()) << scope_stack_.size();
+  CARBON_CHECK(node_block_stack_.empty()) << node_block_stack_.size();
+  CARBON_CHECK(params_stack_.empty()) << params_stack_.size();
 }
 
 auto SemanticsParseTreeHandler::AddNode(SemanticsNode node) -> SemanticsNodeId {
@@ -141,130 +154,153 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
   return lhs_type;
 }
 
-auto SemanticsParseTreeHandler::HandleAddress(ParseTree::Node /*parse_node*/)
-    -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleAddress(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleAddress");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleBreakStatement(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleBreakStatement(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleBreakStatement");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleBreakStatementStart(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleBreakStatementStart");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleCallExpression(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleCallExpression(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleCallExpression");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleCallExpressionComma(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleCallExpressionComma");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleCallExpressionStart(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleCallExpressionStart");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleCodeBlock(ParseTree::Node /*parse_node*/)
-    -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleCodeBlock(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleCodeBlock");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleCodeBlockStart(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleCodeBlockStart(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleCodeBlockStart");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleContinueStatement(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleContinueStatement");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleContinueStatementStart(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleContinueStatementStart");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleDeclaredName(ParseTree::Node parse_node)
-    -> void {
+    -> bool {
   // The parent is responsible for binding the name.
   node_stack_.Push(parse_node);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleDeducedParameterList(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleDeducedParameterList");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleDeducedParameterListStart(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleDeducedParameterListStart");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleDesignatedName(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleDesignatedName(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleDesignatedName");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleDesignatorExpression(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleDesignatorExpression");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleEmptyDeclaration(
-    ParseTree::Node parse_node) -> void {
+    ParseTree::Node parse_node) -> bool {
   // Empty declarations have no actions associated, but we still balance the
   // tree.
   node_stack_.Push(parse_node);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleExpressionStatement(
-    ParseTree::Node parse_node) -> void {
+    ParseTree::Node parse_node) -> bool {
   // Pop the expression without investigating its contents.
   // TODO: This will probably eventually need to do some "do not discard"
   // analysis.
   node_stack_.PopAndDiscardId();
   node_stack_.Push(parse_node);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleFileEnd(ParseTree::Node /*parse_node*/)
-    -> void {
+    -> bool {
   // Do nothing, no need to balance this node.
+  return true;
 }
 
-auto SemanticsParseTreeHandler::HandleForHeader(ParseTree::Node /*parse_node*/)
-    -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleForHeader(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleForHeader");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleForHeaderStart(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleForHeaderStart(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleForHeaderStart");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleForIn(ParseTree::Node /*parse_node*/)
-    -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleForIn(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleForIn");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleForStatement(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleForStatement(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleForStatement");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleFunctionDeclaration(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleFunctionDeclaration");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleFunctionDefinition(
-    ParseTree::Node parse_node) -> void {
+    ParseTree::Node parse_node) -> bool {
   // Merges code block children up under the FunctionDefinitionStart.
   while (parse_tree_->node_kind(node_stack_.PeekParseNode()) !=
          ParseNodeKind::FunctionDefinitionStart) {
@@ -275,10 +311,12 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
   PopScope();
   node_block_stack_.Pop();
   node_stack_.Push(parse_node);
+
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
-    ParseTree::Node parse_node) -> void {
+    ParseTree::Node parse_node) -> bool {
   node_stack_.PopForSoloParseNode(ParseNodeKind::ParameterList);
   auto [param_ir_id, param_refs_id] = finished_params_stack_.pop_back_val();
   auto name_node = node_stack_.PopForSoloParseNode(ParseNodeKind::DeclaredName);
@@ -304,36 +342,43 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
 
   PushScope();
   node_stack_.Push(parse_node);
+
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleFunctionIntroducer(
-    ParseTree::Node parse_node) -> void {
+    ParseTree::Node parse_node) -> bool {
   // No action, just a bracketing node.
   node_stack_.Push(parse_node);
+  return true;
 }
 
-auto SemanticsParseTreeHandler::HandleIfCondition(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleIfCondition(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleIfCondition");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleIfConditionStart(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleIfConditionStart");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleIfStatement(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleIfStatement(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleIfStatement");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleIfStatementElse(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleIfStatementElse");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
-    -> void {
+    -> bool {
   auto rhs_id = node_stack_.PopForNodeId();
   auto lhs_id = node_stack_.PopForNodeId();
   SemanticsNodeId result_type =
@@ -347,27 +392,34 @@ auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
                                      parse_node, result_type, lhs_id, rhs_id));
       break;
     default:
-      CARBON_FATAL() << "Unrecognized token kind: " << token_kind;
+      emitter_->Emit(parse_node, SemanticsTodo,
+                     llvm::formatv("Handle {0}", token_kind));
+      return false;
   }
+
+  return true;
 }
 
-auto SemanticsParseTreeHandler::HandleInterfaceBody(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleInterfaceBody(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleInterfaceBody");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleInterfaceBodyStart(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleInterfaceBodyStart");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleInterfaceDefinition(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleInterfaceDefinition");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
-    -> void {
+    -> bool {
   auto token = parse_tree_->node_token(parse_node);
   switch (auto token_kind = tokens_->GetKind(token)) {
     case TokenKind::IntegerLiteral: {
@@ -384,18 +436,25 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
     }
     case TokenKind::IntegerTypeLiteral: {
       auto text = tokens_->GetTokenText(token);
-      CARBON_CHECK(text == "i32") << "Currently only i32 is allowed";
+      if (text != "i32") {
+        emitter_->Emit(parse_node, SemanticsTodo,
+                       "Currently only i32 is allowed");
+        return false;
+      }
       node_stack_.Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
                                        SemanticsBuiltinKind::IntegerType));
       break;
     }
     default:
-      CARBON_FATAL() << "Unhandled kind: " << token_kind;
+      emitter_->Emit(parse_node, SemanticsTodo,
+                     llvm::formatv("Handle {0}", token_kind));
   }
+
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleNameReference(ParseTree::Node parse_node)
-    -> void {
+    -> bool {
   auto name_str = parse_tree_->GetNodeText(parse_node);
 
   auto name_not_found = [&] {
@@ -409,43 +468,50 @@ auto SemanticsParseTreeHandler::HandleNameReference(ParseTree::Node parse_node)
   auto name_id = semantics_->GetString(name_str);
   if (!name_id) {
     name_not_found();
-    return;
+    return true;
   }
 
   auto it = name_lookup_.find(*name_id);
   if (it == name_lookup_.end()) {
     name_not_found();
-    return;
+    return true;
   }
   CARBON_CHECK(!it->second.empty()) << "Should have been erased: " << name_str;
 
   // TODO: Check for ambiguous lookups.
   node_stack_.Push(parse_node, it->second.back());
+
+  return true;
 }
 
-auto SemanticsParseTreeHandler::HandlePackageApi(ParseTree::Node /*parse_node*/)
-    -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandlePackageApi(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePackageApi");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandlePackageDirective(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePackageDirective");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandlePackageImpl(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandlePackageImpl(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePackageImpl");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandlePackageIntroducer(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePackageIntroducer");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandlePackageLibrary(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandlePackageLibrary(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePackageLibrary");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::SaveParam() -> bool {
@@ -468,7 +534,7 @@ auto SemanticsParseTreeHandler::SaveParam() -> bool {
 }
 
 auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
-    -> void {
+    -> bool {
   // If there's a node in the IR block that has yet to be added to the params
   // block, add it now.
   SaveParam();
@@ -482,7 +548,7 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
         finished_params_stack_.push_back(
             {node_block_stack_.Pop(), params_stack_.Pop()});
         node_stack_.Push(parse_node);
-        return;
+        return true;
 
       case ParseNodeKind::ParameterListComma:
         node_stack_.PopAndDiscardSoloParseNode(
@@ -495,7 +561,8 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
 
       default:
         // This should only occur for invalid parse trees.
-        CARBON_FATAL() << "TODO: " << parse_kind;
+        emitter_->Emit(parse_node, SemanticsTodo, "Need error recovery");
+        return false;
     }
   }
 
@@ -503,35 +570,45 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
 }
 
 auto SemanticsParseTreeHandler::HandleParameterListComma(
-    ParseTree::Node parse_node) -> void {
+    ParseTree::Node parse_node) -> bool {
   node_stack_.Push(parse_node);
 
   // Copy the last node added to the IR block into the params block.
-  bool had_param_before_comma = SaveParam();
-  CARBON_CHECK(had_param_before_comma)
-      << "TODO: Should have a param before comma, will need error recovery";
+  if (!SaveParam()) {
+    emitter_->Emit(
+        parse_node, SemanticsTodo,
+        "Should have a param before comma, will need error recovery");
+    return false;
+  }
+
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleParameterListStart(
-    ParseTree::Node parse_node) -> void {
+    ParseTree::Node parse_node) -> bool {
   node_stack_.Push(parse_node);
 
   params_stack_.Push();
   node_block_stack_.Push();
+
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleParenExpression(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleParenExpression");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleParenExpressionOrTupleLiteralStart(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo,
+                 "HandleParenExpressionOrTupleLiteralStart");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
-    -> void {
+    -> bool {
   auto type = node_stack_.PopForNodeId();
 
   // Get the name.
@@ -547,20 +624,24 @@ auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
   // address. The storage address can be found through the name, so we push the
   // name.
   node_stack_.Push(parse_node, name_id);
+
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandlePostfixOperator(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePostfixOperator");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandlePrefixOperator(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandlePrefixOperator(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandlePrefixOperator");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleReturnStatement(
-    ParseTree::Node parse_node) -> void {
+    ParseTree::Node parse_node) -> bool {
   if (parse_tree_->node_kind(node_stack_.PeekParseNode()) ==
       ParseNodeKind::ReturnStatementStart) {
     node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ReturnStatementStart);
@@ -572,81 +653,97 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
     AddNodeAndPush(parse_node, SemanticsNode::MakeReturnExpression(
                                    parse_node, arg_type, arg));
   }
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleReturnStatementStart(
-    ParseTree::Node parse_node) -> void {
+    ParseTree::Node parse_node) -> bool {
   // No action, just a bracketing node.
   node_stack_.Push(parse_node);
+  return true;
 }
 
-auto SemanticsParseTreeHandler::HandleReturnType(ParseTree::Node /*parse_node*/)
-    -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleReturnType(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleReturnType");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleSelfDeducedParameter(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfDeducedParameter");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleSelfType(ParseTree::Node /*parse_node*/)
-    -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleSelfType(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfType");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleStructComma(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleStructComma(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructComma");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructFieldDesignator(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructFieldDesignator");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructFieldType(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructFieldType");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructFieldUnknown(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructFieldUnknown");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructFieldValue(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructFieldValue");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleStructLiteral(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleStructLiteral(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructLiteral");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructLiteralOrStructTypeLiteralStart(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo,
+                 "HandleStructLiteralOrStructTypeLiteralStart");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleStructTypeLiteral(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructTypeLiteral");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleTupleLiteral(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleTupleLiteral(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleTupleLiteral");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleTupleLiteralComma(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleTupleLiteralComma");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleVariableDeclaration(
-    ParseTree::Node parse_node) -> void {
+    ParseTree::Node parse_node) -> bool {
   auto last_child = node_stack_.PopForParseNodeAndNodeId();
 
   if (parse_tree_->node_kind(last_child.first) !=
@@ -655,9 +752,6 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
         node_stack_.PopForNodeId(ParseNodeKind::VariableInitializer);
 
     auto binding = node_stack_.PopForParseNodeAndNameId();
-    CARBON_CHECK(parse_tree_->node_kind(binding.first) ==
-                 ParseNodeKind::PatternBinding);
-    CARBON_CHECK(binding.second.is_valid());
 
     // Restore the name now that the initializer is complete.
     AddNameToLookup(binding.second, storage_id);
@@ -671,16 +765,19 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
 
   node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::VariableIntroducer);
   node_stack_.Push(parse_node);
+
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleVariableIntroducer(
-    ParseTree::Node parse_node) -> void {
+    ParseTree::Node parse_node) -> bool {
   // No action, just a bracketing node.
   node_stack_.Push(parse_node);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleVariableInitializer(
-    ParseTree::Node parse_node) -> void {
+    ParseTree::Node parse_node) -> bool {
   // Temporarily remove name lookup entries added by the `var`. These will be
   // restored by `VariableDeclaration`.
 
@@ -699,21 +796,26 @@ auto SemanticsParseTreeHandler::HandleVariableInitializer(
   }
 
   node_stack_.Push(parse_node, storage_id);
+
+  return true;
 }
 
-auto SemanticsParseTreeHandler::HandleWhileCondition(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleWhileCondition(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleWhileCondition");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandleWhileConditionStart(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleWhileConditionStart");
+  return false;
 }
 
-auto SemanticsParseTreeHandler::HandleWhileStatement(
-    ParseTree::Node /*parse_node*/) -> void {
-  CARBON_FATAL() << "TODO";
+auto SemanticsParseTreeHandler::HandleWhileStatement(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleWhileStatement");
+  return false;
 }
 
 }  // namespace Carbon

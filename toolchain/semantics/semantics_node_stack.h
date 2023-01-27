@@ -100,6 +100,9 @@ class SemanticsNodeStack {
   // Prints the stack for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
+  auto empty() const -> bool { return stack_.empty(); }
+  auto size() const -> size_t { return stack_.size(); }
+
  private:
   // An entry in stack_.
   struct Entry {

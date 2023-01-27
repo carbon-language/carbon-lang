@@ -93,6 +93,8 @@ CARBON_DIAGNOSTIC_KIND(ExpectedDeducedParam)
 // Semantics diagnostics
 // ============================================================================
 
+CARBON_DIAGNOSTIC_KIND(SemanticsTodo)
+
 CARBON_DIAGNOSTIC_KIND(TypeMismatch)
 CARBON_DIAGNOSTIC_KIND(NameNotFound)
 CARBON_DIAGNOSTIC_KIND(NameRedefined)
