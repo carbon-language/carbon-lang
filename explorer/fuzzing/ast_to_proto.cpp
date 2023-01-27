@@ -618,6 +618,12 @@ static auto DeclarationToProto(const Declaration& declaration)
     -> Fuzzing::Declaration {
   Fuzzing::Declaration declaration_proto;
   switch (declaration.kind()) {
+    case DeclarationKind::NamespaceDeclaration: {
+      const auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
+      auto* namespace_proto = declaration_proto.mutable_namespace_();
+      namespace_proto->set_name(std::string(namespace_decl.name()));
+      break;
+    }
     case DeclarationKind::DestructorDeclaration: {
       const auto& function = cast<DestructorDeclaration>(declaration);
       auto* function_proto = declaration_proto.mutable_destructor();

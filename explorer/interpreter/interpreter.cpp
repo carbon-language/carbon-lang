@@ -2111,6 +2111,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
         return todo_.FinishAction();
       }
     }
+    case DeclarationKind::NamespaceDeclaration:
     case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration:
     case DeclarationKind::ClassDeclaration:

@@ -453,6 +453,10 @@ message MixDeclaration {
   optional Expression mixin = 1;
 }
 
+message NamespaceDeclaration {
+  optional string name = 1;
+}
+
 message Declaration {
   oneof kind {
     FunctionDeclaration function = 1;
@@ -470,6 +474,7 @@ message Declaration {
     InterfaceImplDeclaration interface_impl = 13;
     ConstraintDeclaration constraint = 14;
     MatchFirstDeclaration match_first = 15;
+    NamespaceDeclaration namespace = 16;
   }
 }
 

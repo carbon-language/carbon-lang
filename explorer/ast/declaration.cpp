@@ -15,6 +15,10 @@ Declaration::~Declaration() = default;
 
 void Declaration::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
+    case DeclarationKind::NamespaceDeclaration:
+      PrintID(out);
+      out << ";";
+      break;
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       const auto& iface_decl = cast<ConstraintTypeDeclaration>(*this);
@@ -126,6 +130,9 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
 void Declaration::PrintID(llvm::raw_ostream& out) const {
   switch (kind()) {
+    case DeclarationKind::NamespaceDeclaration:
+      out << "namespace " << cast<NamespaceDeclaration>(*this).name();
+      break;
     case DeclarationKind::InterfaceDeclaration: {
       const auto& iface_decl = cast<InterfaceDeclaration>(*this);
       out << "interface " << iface_decl.name();
@@ -221,6 +228,8 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
 auto GetName(const Declaration& declaration)
     -> std::optional<std::string_view> {
   switch (declaration.kind()) {
+    case DeclarationKind::NamespaceDeclaration:
+      return cast<NamespaceDeclaration>(declaration).name();
     case DeclarationKind::FunctionDeclaration:
       return cast<FunctionDeclaration>(declaration).name();
     case DeclarationKind::DestructorDeclaration:

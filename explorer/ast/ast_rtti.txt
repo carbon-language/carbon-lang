@@ -13,6 +13,7 @@ abstract class Pattern : AstNode;
   class AlternativePattern : Pattern;
   class ExpressionPattern : Pattern;
 abstract class Declaration : AstNode;
+  class NamespaceDeclaration : Declaration;
   abstract class CallableDeclaration : Declaration;
     class FunctionDeclaration : CallableDeclaration;
     class DestructorDeclaration : CallableDeclaration;

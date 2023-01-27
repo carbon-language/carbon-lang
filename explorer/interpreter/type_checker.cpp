@@ -5577,6 +5577,8 @@ auto TypeChecker::TypeCheckDeclaration(
     **trace_stream_ << "checking " << DeclarationKindName(d->kind()) << "\n";
   }
   switch (d->kind()) {
+    case DeclarationKind::NamespaceDeclaration:
+      break;
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       CARBON_RETURN_IF_ERROR(TypeCheckConstraintTypeDeclaration(
@@ -5661,6 +5663,8 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
                                      const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   switch (d->kind()) {
+    case DeclarationKind::NamespaceDeclaration:
+      break;
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       auto& iface_decl = cast<ConstraintTypeDeclaration>(*d);
