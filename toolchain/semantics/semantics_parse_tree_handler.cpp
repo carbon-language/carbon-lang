@@ -306,10 +306,12 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
          ParseNodeKind::FunctionDefinitionStart) {
     node_stack_.PopAndIgnore();
   }
-  node_stack_.PopAndIgnore();
+  auto decl_id =
+      node_stack_.PopForNodeId(ParseNodeKind::FunctionDefinitionStart);
 
   PopScope();
-  node_block_stack_.Pop();
+  auto block_id = node_block_stack_.Pop();
+  AddNode(SemanticsNode::MakeFunctionDefinition(parse_node, decl_id, block_id));
   node_stack_.Push(parse_node);
 
   return true;
@@ -332,16 +334,9 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
   // TODO: Propagate the type of the function.
   BindName(name_node, SemanticsNodeId::MakeInvalid(), decl_id);
 
-  // TODO: Consider approaches that allow lazy creation of the definition block.
-  auto outer_block = node_block_stack_.PeekForAdd();
-  auto def_block = node_block_stack_.PushWithUnconditionalAlloc();
-  auto node =
-      SemanticsNode::MakeFunctionDefinition(parse_node, decl_id, def_block);
-  CARBON_VLOG() << "AddNode " << outer_block << ": " << node << "\n";
-  semantics_->AddNode(outer_block, node);
-
+  node_block_stack_.Push();
   PushScope();
-  node_stack_.Push(parse_node);
+  node_stack_.Push(parse_node, decl_id);
 
   return true;
 }
