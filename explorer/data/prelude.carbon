@@ -30,33 +30,69 @@ impl forall [U:! type] U as __EqualConverter where .T = U {
   fn Convert(u: U) -> U { return u; }
 }
 
-// Every type implicitly converts to single-step-equal types.
-impl forall [T:! type, U:! type where .Self == T] T as ImplicitAs(U) {
-  fn Convert[self: Self]() -> U { return __EqualConvert(self, U); }
-}
+__match_first {
+  // Pick up implicit conversions that are built into the compiler.
+  // TODO: Split these into individual categories and implement as many as we can
+  // in the prelude.
+  impl forall [U:! type, T:! __intrinsic_implicit_as(U)] T as ImplicitAs(U) {
+    fn Convert[self: Self]() -> U { return __intrinsic_implicit_as_convert(self, U); }
+  }
 
-// TODO: Simplify this once we have variadics.
-// TODO: Should these be final?
-impl forall [U1:! type, T1:! ImplicitAs(U1)]
-    (T1,) as ImplicitAs((U1,)) {
-  fn Convert[self: Self]() -> (U1,) {
-    let (v1: T1,) = self;
-    return (v1.Convert(),);
+  // Every type implicitly converts to single-step-equal types.
+  impl forall [T:! type, U:! type where .Self == T] T as ImplicitAs(U) {
+    fn Convert[self: Self]() -> U { return __EqualConvert(self, U); }
   }
-}
-impl forall [U1:! type, U2:! type, T1:! ImplicitAs(U1), T2:! ImplicitAs(U2)]
-    (T1, T2) as ImplicitAs((U1, U2)) {
-  fn Convert[self: Self]() -> (U1, U2) {
-    let (v1: T1, v2: T2) = self;
-    return (v1.Convert(), v2.Convert());
+
+  // A tuple implicitly converts to another tuple if all its elements do.
+  // TODO: Simplify this once we have variadics.
+  // TODO: Should these be final?
+  impl forall [U1:! type, T1:! ImplicitAs(U1)]
+      (T1,) as ImplicitAs((U1,)) {
+    fn Convert[self: Self]() -> (U1,) {
+      let (v1: T1,) = self;
+      return (v1.Convert(),);
+    }
   }
-}
-impl forall [U1:! type, U2:! type, U3:! type,
-             T1:! ImplicitAs(U1), T2:! ImplicitAs(U2), T3:! ImplicitAs(U3)]
-    (T1, T2, T3) as ImplicitAs((U1, U2, U3)) {
-  fn Convert[self: Self]() -> (U1, U2, U3) {
-    let (v1: T1, v2: T2, v3: T3) = self;
-    return (v1.Convert(), v2.Convert(), v3.Convert());
+  impl forall [U1:! type, U2:! type, T1:! ImplicitAs(U1), T2:! ImplicitAs(U2)]
+      (T1, T2) as ImplicitAs((U1, U2)) {
+    fn Convert[self: Self]() -> (U1, U2) {
+      let (v1: T1, v2: T2) = self;
+      return (v1.Convert(), v2.Convert());
+    }
+  }
+  impl forall [U1:! type, U2:! type, U3:! type,
+               T1:! ImplicitAs(U1), T2:! ImplicitAs(U2), T3:! ImplicitAs(U3)]
+      (T1, T2, T3) as ImplicitAs((U1, U2, U3)) {
+    fn Convert[self: Self]() -> (U1, U2, U3) {
+      let (v1: T1, v2: T2, v3: T3) = self;
+      return (v1.Convert(), v2.Convert(), v3.Convert());
+    }
+  }
+
+  // A tuple explicitly converts to another tuple if all its elements do. Note
+  // that this fully overlaps with the previous set of impls for the case where
+  // an implicit conversion is possible.
+  impl forall [U1:! type, T1:! As(U1)]
+      (T1,) as As((U1,)) {
+    fn Convert[self: Self]() -> (U1,) {
+      let (v1: T1,) = self;
+      return (v1.Convert(),);
+    }
+  }
+  impl forall [U1:! type, U2:! type, T1:! As(U1), T2:! As(U2)]
+      (T1, T2) as As((U1, U2)) {
+    fn Convert[self: Self]() -> (U1, U2) {
+      let (v1: T1, v2: T2) = self;
+      return (v1.Convert(), v2.Convert());
+    }
+  }
+  impl forall [U1:! type, U2:! type, U3:! type,
+               T1:! As(U1), T2:! As(U2), T3:! As(U3)]
+      (T1, T2, T3) as As((U1, U2, U3)) {
+    fn Convert[self: Self]() -> (U1, U2, U3) {
+      let (v1: T1, v2: T2, v3: T3) = self;
+      return (v1.Convert(), v2.Convert(), v3.Convert());
+    }
   }
 }
 
@@ -462,6 +498,168 @@ external impl i32 as LeftShiftWith(i32) where .Result = i32 {
 external impl i32 as RightShiftWith(i32) where .Result = i32 {
   fn Op[self: i32](other: i32) -> i32 {
     return __intrinsic_int_right_shift(self, other);
+  }
+}
+
+// -----------------------------------
+// Assignment and compound assignment.
+// -----------------------------------
+
+interface AssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint Assign { extends AssignWith(Self); }
+
+interface AddAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint AddAssign { extends AddAssignWith(Self); }
+
+interface SubAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint SubAssign { extends SubAssignWith(Self); }
+
+interface MulAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint MulAssign { extends MulAssignWith(Self); }
+
+interface DivAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint DivAssign { extends DivAssignWith(Self); }
+
+interface ModAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint ModAssign { extends ModAssignWith(Self); }
+
+interface BitAndAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint BitAssignAnd { extends BitAndAssignWith(Self); }
+
+interface BitOrAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint BitAssignOr { extends BitOrAssignWith(Self); }
+
+interface BitXorAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint BitAssignXor { extends BitXorAssignWith(Self); }
+
+interface LeftShiftAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint LeftShiftAssign { extends LeftShiftAssignWith(Self); }
+
+interface RightShiftAssignWith(U:! type) {
+  fn Op[addr self: Self*](other: U);
+}
+constraint RightShiftAssign { extends RightShiftAssignWith(Self); }
+
+// TODO: This is temporary, and should eventually be replaced by
+// something more fine-grained. Not all class types should be
+// assignable.
+impl forall [T:! type, U:! ImplicitAs(T)]
+    T as AssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = other.Convert();
+  }
+}
+
+// TODO: Should `AddWith(U) & AssignWith(.Self.(AddWith(U).Result))` work?
+impl forall [U:! type, T:! AddWith(U) where .Self is AssignWith(.Self.Result)]
+     T as AddAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self + other;
+  }
+}
+
+impl forall [U:! type, T:! SubWith(U) where .Self is AssignWith(.Self.Result)]
+     T as SubAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self - other;
+  }
+}
+
+impl forall [U:! type, T:! MulWith(U) where .Self is AssignWith(.Self.Result)]
+     T as MulAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self * other;
+  }
+}
+
+impl forall [U:! type, T:! DivWith(U) where .Self is AssignWith(.Self.Result)]
+     T as DivAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self / other;
+  }
+}
+
+impl forall [U:! type, T:! ModWith(U) where .Self is AssignWith(.Self.Result)]
+     T as ModAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self % other;
+  }
+}
+
+impl forall [U:! type, T:! BitAndWith(U) where .Self is AssignWith(.Self.Result)]
+     T as BitAndAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self & other;
+  }
+}
+
+impl forall [U:! type, T:! BitOrWith(U) where .Self is AssignWith(.Self.Result)]
+     T as BitOrAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self | other;
+  }
+}
+
+impl forall [U:! type, T:! BitXorWith(U) where .Self is AssignWith(.Self.Result)]
+     T as BitXorAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self ^ other;
+  }
+}
+
+impl forall [U:! type, T:! LeftShiftWith(U) where .Self is AssignWith(.Self.Result)]
+     T as LeftShiftAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self << other;
+  }
+}
+
+impl forall [U:! type, T:! RightShiftWith(U) where .Self is AssignWith(.Self.Result)]
+     T as RightShiftAssignWith(U) {
+  fn Op[addr self: Self*](other: U) {
+    *self = *self >> other;
+  }
+}
+
+// ------------------------
+// Increment and decrement.
+// ------------------------
+
+interface Inc {
+  fn Op[addr self: Self*]();
+}
+interface Dec {
+  fn Op[addr self: Self*]();
+}
+
+impl i32 as Inc {
+  fn Op[addr self: Self*]() {
+    *self = *self + 1;
+  }
+}
+impl i32 as Dec {
+  fn Op[addr self: Self*]() {
+    *self = *self - 1;
   }
 }
 

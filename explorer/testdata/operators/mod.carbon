@@ -5,7 +5,10 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: result: 1
+// CHECK:STDOUT: 7
+// CHECK:STDOUT: 3
+// CHECK:STDOUT: 0
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -16,7 +19,11 @@ external impl A as ModWith(i32) where .Result = A {
 }
 
 fn Main() -> i32 {
-  var a: A = {.n = 5};
-  a = a % 2;
-  return a.n;
+  var a: A = {.n = 15};
+  a = a % 8;
+  Print("{0}", a.n);
+  a %= 4;
+  Print("{0}", a.n);
+  Print("{0}", (a % 3).n);
+  return 0;
 }

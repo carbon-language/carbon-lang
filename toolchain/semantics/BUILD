@@ -35,6 +35,19 @@ cc_library(
 )
 
 cc_library(
+    name = "semantics_node_block_stack",
+    srcs = ["semantics_node_block_stack.cpp"],
+    hdrs = ["semantics_node_block_stack.h"],
+    deps = [
+        ":semantics_node",
+        "//common:check",
+        "//common:ostream",
+        "//common:vlog",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "semantics_node_stack",
     srcs = ["semantics_node_stack.cpp"],
     hdrs = ["semantics_node_stack.h"],
@@ -62,6 +75,7 @@ cc_library(
     deps = [
         ":semantics_builtin_kind",
         ":semantics_node",
+        ":semantics_node_block_stack",
         ":semantics_node_stack",
         "//common:check",
         "//common:ostream",
@@ -72,6 +86,21 @@ cc_library(
         "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
         "//toolchain/parser:parse_tree_node_location_translator",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "semantics_ir_test",
+    size = "small",
+    srcs = ["semantics_ir_test.cpp"],
+    deps = [
+        ":semantics_ir",
+        "//common:gtest_main",
+        "//toolchain/common:yaml_test_helpers",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/lexer:tokenized_buffer",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -34,6 +34,14 @@ struct SemanticsNodeId : public IndexBase {
   }
 };
 
+// The ID of a callable, such as a function.
+struct SemanticsCallableId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "callable" << index;
+  }
+};
+
 // The ID of a cross-referenced IR.
 struct SemanticsCrossReferenceIRId : public IndexBase {
   using IndexBase::IndexBase;
@@ -54,12 +62,25 @@ struct SemanticsIntegerLiteralId : public IndexBase {
 
 // Type-safe storage of node blocks.
 struct SemanticsNodeBlockId : public IndexBase {
+  // All SemanticsIR instances must provide the 0th node block as empty.
+  // NOLINTNEXTLINE(readability-identifier-naming)
+  static const SemanticsNodeBlockId Empty;
+
+  // An explicitly invalid ID.
+  // NOLINTNEXTLINE(readability-identifier-naming)
+  static const SemanticsNodeBlockId Invalid;
+
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "block";
     IndexBase::Print(out);
   }
 };
+
+constexpr SemanticsNodeBlockId SemanticsNodeBlockId::Empty =
+    SemanticsNodeBlockId(0);
+constexpr SemanticsNodeBlockId SemanticsNodeBlockId::Invalid =
+    SemanticsNodeBlockId();
 
 // Type-safe storage of strings.
 struct SemanticsStringId : public IndexBase {
@@ -147,14 +168,15 @@ class SemanticsNode {
   }
 
   // TODO: The signature should be added as a parameter.
-  static auto MakeFunctionDeclaration(ParseTree::Node parse_node)
+  static auto MakeFunctionDeclaration(ParseTree::Node parse_node,
+                                      SemanticsCallableId signature)
       -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDeclaration,
-                         SemanticsNodeId());
+                         SemanticsNodeId(), signature.index);
   }
-  auto GetAsFunctionDeclaration() const -> NoArgs {
+  auto GetAsFunctionDeclaration() const -> SemanticsCallableId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDeclaration);
-    return {};
+    return {SemanticsCallableId(arg0_)};
   }
 
   static auto MakeFunctionDefinition(ParseTree::Node parse_node,

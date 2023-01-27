@@ -4,20 +4,22 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
-// CHECK:STDOUT: cross_reference_irs.size == 1,
-// CHECK:STDOUT: integer_literals = {
-// CHECK:STDOUT: },
-// CHECK:STDOUT: strings = {
-// CHECK:STDOUT: },
-// CHECK:STDOUT: nodes = {
-// CHECK:STDOUT:   node0 = CrossReference(ir0, block0): node0;
-// CHECK:STDOUT:   node1 = CrossReference(ir0, block1): node1;
-// CHECK:STDOUT:   node2 = CrossReference(ir0, block2): node0;
-// CHECK:STDOUT:   node3 = CrossReference(ir0, block3): node0;
-// CHECK:STDOUT: },
-// CHECK:STDOUT: node_blocks = {
-// CHECK:STDOUT:   block0 = {
-// CHECK:STDOUT:   },
-// CHECK:STDOUT: }
+// CHECK:STDOUT: cross_reference_irs_size: 1
+// CHECK:STDOUT: callables: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: integer_literals: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: strings: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: nodes: [
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block0, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block1, type: node1},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block2, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block3, type: node0},
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: node_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT: ]
 
 ;

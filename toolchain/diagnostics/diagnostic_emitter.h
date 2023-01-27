@@ -168,6 +168,9 @@ struct DiagnosticBase {
 
  private:
   // Handles the cast of llvm::Any to Args types for formatv.
+  // TODO: Custom formatting can be provided with an format_provider, but that
+  // affects all formatv calls. Consider replacing formatv with a custom call
+  // that allows diagnostic-specific formatting.
   template <std::size_t... N>
   inline auto FormatFnImpl(const DiagnosticMessage& message,
                            std::index_sequence<N...> /*indices*/) const

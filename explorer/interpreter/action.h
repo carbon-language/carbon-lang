@@ -42,9 +42,6 @@ class RuntimeScope {
   RuntimeScope(RuntimeScope&&) noexcept;
   auto operator=(RuntimeScope&&) noexcept -> RuntimeScope&;
 
-  // Deallocates any allocations in this scope from `heap`.
-  ~RuntimeScope();
-
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
@@ -256,9 +253,9 @@ class DeclarationAction : public Action {
 };
 
 // An Action which implements destroying all local allocations in a scope.
-class CleanupAction : public Action {
+class CleanUpAction : public Action {
  public:
-  explicit CleanupAction(RuntimeScope scope)
+  explicit CleanUpAction(RuntimeScope scope)
       : Action(Kind::CleanUpAction),
         allocations_count_(scope.allocations().size()) {
     StartScope(std::move(scope));

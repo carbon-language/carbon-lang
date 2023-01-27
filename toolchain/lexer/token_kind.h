@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-#include "common/ostream.h"
+#include "llvm/Support/FormatVariadicDetails.h"
 #include "toolchain/common/enum_base.h"
 
 namespace Carbon {
@@ -70,11 +70,6 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
     }
     return false;
   }
-
-  // Override the EnumBase printing to use the fixed spelling rather than the
-  // name for tokens as this better corresponds to the source code the
-  // represent.
-  void Print(llvm::raw_ostream& out) const { out << fixed_spelling(); }
 };
 
 #define CARBON_TOKEN(TokenName) \
@@ -82,5 +77,19 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
 #include "toolchain/lexer/token_kind.def"
 
 }  // namespace Carbon
+
+namespace llvm {
+
+// We use formatv primarily for diagnostics. In these cases, it's expected that
+// the spelling in source code should be used.
+template <>
+struct format_provider<Carbon::TokenKind> {
+  static void format(const Carbon::TokenKind& kind, raw_ostream& out,
+                     StringRef /*style*/) {
+    out << kind.fixed_spelling();
+  }
+};
+
+}  // namespace llvm
 
 #endif  // CARBON_TOOLCHAIN_LEXER_TOKEN_KIND_H_

@@ -77,8 +77,8 @@ class Parser::PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
     auto line = parser_->tokens_->GetLine(token);
     output << " @ " << parser_->tokens_->GetLineNumber(line) << ":"
            << parser_->tokens_->GetColumnNumber(token) << ":"
-           << " token " << token << " : "
-           << parser_->tokens_->GetKind(token).name() << "\n";
+           << " token " << token << " : " << parser_->tokens_->GetKind(token)
+           << "\n";
   }
 
   const Parser* parser_;
@@ -97,7 +97,7 @@ Parser::Parser(ParseTree& tree, TokenizedBuffer& tokens,
   --end_;
   CARBON_CHECK(tokens_->GetKind(*end_) == TokenKind::EndOfFile)
       << "TokenizedBuffer should end with EndOfFile, ended with "
-      << tokens_->GetKind(*end_).name();
+      << tokens_->GetKind(*end_);
 }
 
 auto Parser::AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token,
@@ -164,7 +164,7 @@ auto Parser::ConsumeAndAddLeafNodeIf(TokenKind token_kind,
 
 auto Parser::ConsumeChecked(TokenKind kind) -> TokenizedBuffer::Token {
   CARBON_CHECK(PositionIs(kind))
-      << "Required " << kind.name() << ", found " << PositionKind().name();
+      << "Required " << kind << ", found " << PositionKind();
   return Consume();
 }
 
@@ -1090,7 +1090,7 @@ auto Parser::HandleFunctionParameterFinishState() -> void {
 
   if (ConsumeListToken(ParseNodeKind::ParameterListComma, TokenKind::CloseParen,
                        state.has_error) == ListTokenKind::Comma) {
-    PushState(ParserState::PatternAsFunctionParameter);
+    PushState(ParserState::FunctionParameter);
   }
 }
 
