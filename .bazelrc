@@ -35,13 +35,6 @@ build --incompatible_dont_enable_host_nonhost_crosstool_features=false
 build --per_file_copt=external/.*\.(c|cc|cpp|cxx)$@-w
 build --host_per_file_copt=external/.*\.(c|cc|cpp|cxx)$@-w
 
-# Default dynamic linking to off. While this can help build performance in some
-# edge cases with very large linked executables and a slow linker, between using
-# fast linkers on all platforms (LLD and the Apple linker), as well as having
-# relatively few such executables, shared objects simply waste too much space in
-# our builds.
-build --dynamic_mode=off
-
 # Always compile PIC code. There are few if any disadvantages on the platforms
 # and architectures we care about and it avoids the need to compile files twice.
 build --force_pic

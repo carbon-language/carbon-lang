@@ -535,19 +535,6 @@ def _impl(ctx):
                             "-fuse-ld=lld",
                             "-stdlib=libc++",
                             "-unwindlib=libunwind",
-                            # Force the C++ standard library and runtime
-                            # libraries to be statically linked. This works even
-                            # with libc++ and libunwind despite the names,
-                            # provided libc++ is built with two CMake options:
-                            # - `-DCMAKE_POSITION_INDEPENDENT_CODE=ON`
-                            # - `-DLIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY`
-                            # These are both required because of PR43604
-                            # (impacting at least Debian packages of libc++) and
-                            # PR46321 (impacting most other packages).
-                            # We recommend using Homebrew's LLVM install on
-                            # Linux.
-                            "-static-libstdc++",
-                            "-static-libgcc",
                             # Link with Clang's runtime library. This is always
                             # linked statically.
                             "-rtlib=compiler-rt",
