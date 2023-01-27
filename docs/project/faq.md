@@ -490,8 +490,8 @@ which would accept Carbon 1.0 code and replace `except` identifier uses with
 ([like Rust provides](https://doc.rust-lang.org/rust-by-example/compatibility/raw_identifiers.html)),
 automatically fixing the conflict.
 
-While Carbon remains in flux, such tooling should not be expected. It is instead
-a consideration for declaring Carbon
+While Carbon remains in early development, upgrade tooling is not ready. It is
+instead a consideration for declaring Carbon
 [ready for use](#how-soon-can-we-use-carbon).
 
 This upgrade approach stands in comparison to enforcing
