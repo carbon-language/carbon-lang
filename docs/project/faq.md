@@ -485,7 +485,8 @@ Carbon will provide tooling to assist upgrades of code in response to language
 syntax changes, similar to
 [C++ to Carbon migration tooling](#what-would-migrating-c-code-to-carbon-look-like).
 For example, if a new keyword `except` is added in Carbon 1.1, an upgrade tool
-which would accept Carbon 1.0 code and replace `except` identifier uses with
+might be provided
+that would accept Carbon 1.0 code and replace `except` identifier uses with
 `r#except` raw identifiers
 ([like Rust provides](https://doc.rust-lang.org/rust-by-example/compatibility/raw_identifiers.html)),
 automatically fixing the conflict.
