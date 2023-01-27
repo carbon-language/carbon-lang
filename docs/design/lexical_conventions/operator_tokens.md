@@ -52,7 +52,6 @@ The initial tokens interpreted. More to be added as needed.
 ## Alternatives Considered
 
 -   [Using the longest sequence of symbols rather than the longest known.](/proposals/p0601.md#alternatives-considered)
-
 -   [Allow extensible operator set for developer created operators](/proposals/p0601.md/#alternatives-considered)
 
 ## References
