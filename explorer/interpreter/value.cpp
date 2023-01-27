@@ -1166,8 +1166,8 @@ auto FindFunction(std::string_view name,
         break;
       }
       case DeclarationKind::FunctionDeclaration: {
-        const auto& fun = cast<CallableDeclaration>(*member);
-        if (GetName(fun) == name) {
+        const auto& fun = cast<FunctionDeclaration>(*member);
+        if (fun.name() == name) {
           return &cast<FunctionValue>(**fun.constant_value());
         }
         break;
@@ -1194,8 +1194,8 @@ auto MixinPseudoType::FindFunction(const std::string_view& name) const
         break;
       }
       case DeclarationKind::FunctionDeclaration: {
-        const auto& fun = cast<CallableDeclaration>(*member);
-        if (GetName(fun) == name) {
+        const auto& fun = cast<FunctionDeclaration>(*member);
+        if (fun.name() == name) {
           return &cast<FunctionValue>(**fun.constant_value());
         }
         break;

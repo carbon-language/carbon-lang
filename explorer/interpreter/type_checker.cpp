@@ -4455,8 +4455,9 @@ auto TypeChecker::ExpectReturnOnAllPaths(
 auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
                                              const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
-  auto name = GetName(*f);
-  if (trace_stream_ && name) {
+  const auto name = GetName(*f);
+  CARBON_CHECK(name) << "Unexpected missing name for `" << *f << "`.";
+  if (trace_stream_) {
     **trace_stream_ << "** declaring function " << *name << "\n";
   }
   ImplScope function_scope;
@@ -4553,7 +4554,7 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
     }
   }
 
-  if (trace_stream_ && name) {
+  if (trace_stream_) {
     **trace_stream_ << "** finished declaring function " << *name << " of type "
                     << f->static_type() << "\n";
   }
