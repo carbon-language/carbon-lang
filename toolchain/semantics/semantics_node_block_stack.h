@@ -23,8 +23,6 @@ class SemanticsNodeBlockStack {
       llvm::raw_ostream* vlog_stream)
       : node_blocks_(&node_blocks), vlog_stream_(vlog_stream) {}
 
-  ~SemanticsNodeBlockStack() { CARBON_CHECK(stack_.empty()) << stack_.size(); }
-
   // Pushes a new node block. It will be invalid unless PeekForAdd is called in
   // order to support lazy allocation.
   auto Push() -> void;
@@ -42,6 +40,9 @@ class SemanticsNodeBlockStack {
 
   // Prints the stack for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
+
+  auto empty() const -> bool { return stack_.empty(); }
+  auto size() const -> size_t { return stack_.size(); }
 
  private:
   // The underlying node block storage on SemanticsIR. Always non-null.
