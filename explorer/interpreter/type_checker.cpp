@@ -122,6 +122,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+    case Value::Kind::TypeOfNamespaceName:
       // These are types whose values are not types.
       return false;
     case Value::Kind::AutoType:
@@ -188,6 +189,7 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
     case Value::Kind::TypeOfMixinPseudoType:
+    case Value::Kind::TypeOfNamespaceName:
       // These aren't first-class types, but they are still types.
       return true;
     case Value::Kind::AssociatedConstant: {
@@ -252,7 +254,8 @@ static auto ExpectCompleteType(SourceLocation source_loc,
     case Value::Kind::AssociatedConstant:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
-    case Value::Kind::TypeOfMixinPseudoType: {
+    case Value::Kind::TypeOfMixinPseudoType:
+    case Value::Kind::TypeOfNamespaceName: {
       // These types are always complete.
       return Success();
     }
@@ -344,6 +347,7 @@ static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
     case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+    case Value::Kind::TypeOfNamespaceName:
       // These types do not contain other types.
       return false;
     case Value::Kind::FunctionType:
@@ -378,7 +382,7 @@ static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
 static auto IsPlaceholderType(Nonnull<const Value*> type) -> bool {
   CARBON_CHECK(IsType(type)) << "expected a type, but found " << *type;
   return isa<TypeOfParameterizedEntityName, TypeOfMemberName,
-             TypeOfMixinPseudoType>(type);
+             TypeOfMixinPseudoType, TypeOfNamespaceName>(type);
 }
 
 // Returns whether `value` is a concrete type, which would be valid as the
@@ -826,6 +830,10 @@ auto TypeChecker::ExpectNonPlaceholderType(SourceLocation source_loc,
            << "invalid use of mixin "
            << mixin_type->mixin_type().declaration().name();
   }
+  if (auto* namespace_type = dyn_cast<TypeOfNamespaceName>(type)) {
+    return ProgramError(source_loc)
+           << "expected `.member_name` after name of " << *namespace_type;
+  }
   CARBON_FATAL() << "unknown kind of placeholder type " << *type;
 }
 
@@ -1141,7 +1149,8 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfParameterizedEntityName:
-    case Value::Kind::TypeOfMemberName: {
+    case Value::Kind::TypeOfMemberName:
+    case Value::Kind::TypeOfNamespaceName: {
       return handle_non_deduced_type();
     }
     case Value::Kind::ImplWitness:
@@ -2842,6 +2851,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                      << "unsupported member access into type " << *type;
           }
         }
+        case Value::Kind::TypeOfNamespaceName: {
+          // TODO: Implement this.
+          return ProgramError(e->source_loc())
+                 << "member access into namespace is not implemented yet";
+        }
         default:
           return ProgramError(e->source_loc())
                  << "member access, unexpected " << object_type << " in " << *e;
@@ -4297,8 +4311,10 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       return Success();
     }
     case StatementKind::ExpressionStatement: {
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(
-          &cast<ExpressionStatement>(*s).expression(), impl_scope));
+      auto& expr_stmt = cast<ExpressionStatement>(*s);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&expr_stmt.expression(), impl_scope));
+      CARBON_RETURN_IF_ERROR(ExpectNonPlaceholderType(
+          expr_stmt.source_loc(), &expr_stmt.expression().static_type()));
       return Success();
     }
     case StatementKind::If: {
@@ -5525,6 +5541,7 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::TypeType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+    case Value::Kind::TypeOfNamespaceName:
       return true;
   }
 }
@@ -5663,8 +5680,12 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
                                      const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   switch (d->kind()) {
-    case DeclarationKind::NamespaceDeclaration:
+    case DeclarationKind::NamespaceDeclaration: {
+      auto& namespace_decl = cast<NamespaceDeclaration>(*d);
+      namespace_decl.set_static_type(
+          arena_->New<TypeOfNamespaceName>(&namespace_decl));
       break;
+    }
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       auto& iface_decl = cast<ConstraintTypeDeclaration>(*d);
