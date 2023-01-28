@@ -133,8 +133,8 @@ as follows:
     resources that might not be available, such as a context object or an
     allocator.
 
-The syntactic sugar is implemented by a [default implementation](#defaults)
-of `$=` in terms of `$` and `=`.
+The syntactic sugar is implemented by a [default implementation](#defaults) of
+`$=` in terms of `$` and `=`.
 
 In contrast, `++a;` and `--a;` are not simply syntactic sugar for `a = a + 1;`
 and `a = a - 1;`. Instead, we interpret these operators as meaning "move to the
