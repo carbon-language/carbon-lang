@@ -4564,7 +4564,9 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
 auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
                                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  if (auto name = GetName(*f); trace_stream_ && name) {
+  auto name = GetName(*f);
+  CARBON_CHECK(name) << "Unexpected missing name for `" << *f << "`.";
+  if (trace_stream_) {
     **trace_stream_ << "** checking function " << *name << "\n";
   }
   // If f->return_term().is_auto(), the function body was already
@@ -4584,7 +4586,7 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
           ExpectReturnOnAllPaths(f->body(), f->source_loc()));
     }
   }
-  if (auto name = GetName(*f); trace_stream_ && name) {
+  if (trace_stream_) {
     **trace_stream_ << "** finished checking function " << *name << "\n";
   }
   return Success();
