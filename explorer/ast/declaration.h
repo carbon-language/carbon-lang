@@ -131,7 +131,7 @@ enum class VirtualOverride { None, Abstract, Virtual, Impl };
 
 class CallableDeclaration : public Declaration {
  public:
-  CallableDeclaration(AstNodeKind kind, SourceLocation loc, std::string name,
+  CallableDeclaration(AstNodeKind kind, SourceLocation loc,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
                       std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
@@ -139,7 +139,6 @@ class CallableDeclaration : public Declaration {
                       std::optional<Nonnull<Block*>> body,
                       VirtualOverride virt_override)
       : Declaration(kind, loc),
-        name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
         self_pattern_(self_pattern),
         param_pattern_(param_pattern),
@@ -149,8 +148,6 @@ class CallableDeclaration : public Declaration {
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
-  // TODO: Move name() and name_ to FunctionDeclaration
-  auto name() const -> const std::string& { return name_; }
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;
@@ -173,7 +170,6 @@ class CallableDeclaration : public Declaration {
   auto is_method() const -> bool { return self_pattern_.has_value(); }
 
  private:
-  std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::optional<Nonnull<Pattern*>> self_pattern_;
   Nonnull<TuplePattern*> param_pattern_;
@@ -204,13 +200,18 @@ class FunctionDeclaration : public CallableDeclaration {
                       std::optional<Nonnull<Block*>> body,
                       VirtualOverride virt_override)
       : CallableDeclaration(AstNodeKind::FunctionDeclaration, source_loc,
-                            std::move(name), std::move(deduced_params),
-                            self_pattern, param_pattern, return_term, body,
-                            virt_override) {}
+                            std::move(deduced_params), self_pattern,
+                            param_pattern, return_term, body, virt_override),
+        name_(std::move(name)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
   }
+
+  auto name() const -> const std::string& { return name_; }
+
+ private:
+  std::string name_;
 };
 
 class DestructorDeclaration : public CallableDeclaration {
@@ -232,8 +233,8 @@ class DestructorDeclaration : public CallableDeclaration {
                         ReturnTerm return_term,
                         std::optional<Nonnull<Block*>> body)
       : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
-                            "destructor", std::move(deduced_params),
-                            self_pattern, param_pattern, return_term, body,
+                            std::move(deduced_params), self_pattern,
+                            param_pattern, return_term, body,
                             // TODO: Add virtual destructors
                             VirtualOverride::None) {}
 
