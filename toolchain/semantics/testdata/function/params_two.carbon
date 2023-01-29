@@ -26,7 +26,7 @@
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node6, type: node2},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: callable0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node8},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node8, arg1: block4},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node8, arg1: block0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -45,8 +45,6 @@
 // CHECK:STDOUT:     node8,
 // CHECK:STDOUT:     node9,
 // CHECK:STDOUT:     node10,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

@@ -40,6 +40,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [How do Carbon generics differ from templates?](#how-do-carbon-generics-differ-from-templates)
     -   [What is Carbon's memory model?](#what-is-carbons-memory-model)
     -   [How will Carbon achieve memory safety?](#how-will-carbon-achieve-memory-safety)
+    -   [How will language version upgrades work?](#how-will-language-version-upgrades-work)
 -   [How will the Carbon _project_ work?](#how-will-the-carbon-project-work)
     -   [Where does development occur?](#where-does-development-occur)
     -   [How does Carbon make decisions?](#how-does-carbon-make-decisions)
@@ -477,6 +478,24 @@ References:
 
 -   [Lifetime annotations for C++](https://discourse.llvm.org/t/rfc-lifetime-annotations-for-c/61377)
 -   [Carbon principle: Safety strategy](principles/safety_strategy.md)
+
+### How will language version upgrades work?
+
+Carbon will provide tooling to assist upgrades of code in response to language
+syntax changes, similar to
+[C++ to Carbon migration tooling](#what-would-migrating-c-code-to-carbon-look-like).
+For example, if a new keyword `except` is added in Carbon 1.1, an upgrade tool
+might be provided that would accept Carbon 1.0 code and replace `except`
+identifier uses with `r#except` raw identifiers
+([like Rust provides](https://doc.rust-lang.org/rust-by-example/compatibility/raw_identifiers.html)),
+automatically fixing the conflict.
+
+While Carbon remains in early development, upgrade tooling is not ready. It is
+instead a consideration for declaring Carbon
+[ready for use](#how-soon-can-we-use-carbon).
+
+This upgrade approach stands in comparison to enforcing
+[backwards or forwards compatibility](goals.md#backwards-or-forwards-compatibility).
 
 ## How will the Carbon _project_ work?
 
