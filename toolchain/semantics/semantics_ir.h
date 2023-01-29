@@ -16,6 +16,19 @@ class SemanticsIRForTest;
 
 namespace Carbon {
 
+// A callable object.
+struct SemanticsCallable {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{param_ir: " << param_ir_id << ", param_refs: " << param_refs_id
+        << "}";
+  }
+
+  // The full IR for parameters.
+  SemanticsNodeBlockId param_ir_id;
+  // A block containing a single reference node per parameter.
+  SemanticsNodeBlockId param_refs_id;
+};
+
 // Provides semantic analysis on a ParseTree.
 class SemanticsIR {
  public:
@@ -39,7 +52,10 @@ class SemanticsIR {
   friend class SemanticsParseTreeHandler;
 
   explicit SemanticsIR(const SemanticsIR* builtin_ir)
-      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {}
+      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {
+    // For SemanticsNodeBlockId::Empty.
+    node_blocks_.resize(1);
+  }
 
   // Returns the requested node.
   auto GetNode(SemanticsNodeId node_id) const -> const SemanticsNode& {
@@ -51,19 +67,17 @@ class SemanticsIR {
     return GetNode(node_id).type();
   }
 
+  auto AddCallable(SemanticsCallable callable) -> SemanticsCallableId {
+    SemanticsCallableId id(callables_.size());
+    callables_.push_back(callable);
+    return id;
+  }
+
   // Adds an integer literal, returning an ID to reference it.
   auto AddIntegerLiteral(llvm::APInt integer_literal)
       -> SemanticsIntegerLiteralId {
     SemanticsIntegerLiteralId id(integer_literals_.size());
     integer_literals_.push_back(integer_literal);
-    return id;
-  }
-
-  // Adds an empty new node block, returning an ID to reference it and add
-  // items.
-  auto AddNodeBlock() -> SemanticsNodeBlockId {
-    SemanticsNodeBlockId id(node_blocks_.size());
-    node_blocks_.resize(node_blocks_.size() + 1);
     return id;
   }
 
@@ -74,6 +88,19 @@ class SemanticsIR {
     nodes_.push_back(node);
     node_blocks_[block_id.index].push_back(node_id);
     return node_id;
+  }
+
+  // Adds an empty new node block, returning an ID to reference it and add
+  // items.
+  auto AddNodeBlock() -> SemanticsNodeBlockId {
+    SemanticsNodeBlockId id(node_blocks_.size());
+    node_blocks_.resize(node_blocks_.size() + 1);
+    return id;
+  }
+
+  auto GetNodeBlock(SemanticsNodeBlockId block_id)
+      -> llvm::SmallVector<SemanticsNodeId>& {
+    return node_blocks_[block_id.index];
   }
 
   // Adds an string, returning an ID to reference it.
@@ -100,6 +127,9 @@ class SemanticsIR {
   }
 
   bool has_errors_ = false;
+
+  // Storage for callable objects.
+  llvm::SmallVector<SemanticsCallable> callables_;
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references

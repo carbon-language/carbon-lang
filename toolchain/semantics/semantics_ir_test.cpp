@@ -23,6 +23,7 @@ using ::testing::AllOf;
 using ::testing::Contains;
 using ::testing::Each;
 using ::testing::ElementsAre;
+using ::testing::IsEmpty;
 using ::testing::MatchesRegex;
 using ::testing::Pair;
 
@@ -50,6 +51,7 @@ TEST(SemanticsIRTest, YAML) {
       Yaml::Value::FromText(print_output),
       ElementsAre(Yaml::Mapping(ElementsAre(
           Pair("cross_reference_irs_size", "1"),
+          Pair("callables", Yaml::Sequence(IsEmpty())),
           Pair("integer_literals", Yaml::Sequence(ElementsAre("0"))),
           Pair("strings", Yaml::Sequence(ElementsAre("x"))),
           Pair("nodes",
@@ -69,7 +71,8 @@ TEST(SemanticsIRTest, YAML) {
                        Pair("arg1", node_id), Pair("type", node_id))))))),
           // This production has only one node block.
           Pair("node_blocks",
-               Yaml::Sequence(ElementsAre(Yaml::Sequence(Each(node_id)))))))));
+               Yaml::Sequence(ElementsAre(Yaml::Sequence(IsEmpty()),
+                                          Yaml::Sequence(Each(node_id)))))))));
 }
 
 }  // namespace

@@ -270,6 +270,10 @@ Most expressions are modeled as operators:
 | Logical    | [`or`](logical_operators.md)    | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.    |
 | Logical    | [`not`](logical_operators.md)   | `not x`   | Logical NOT: `true` if the operand is `false`.                        |
 
+The binary arithmetic and bitwise operators also have
+[compound assignment](/docs/design/assignment.md) forms. These are statements
+rather than expressions, and do not produce a value.
+
 ## Conversions and casts
 
 When an expression appears in a context in which an expression of a specific

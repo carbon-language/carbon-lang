@@ -4455,8 +4455,10 @@ auto TypeChecker::ExpectReturnOnAllPaths(
 auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
                                              const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
+  const auto name = GetName(*f);
+  CARBON_CHECK(name) << "Unexpected missing name for `" << *f << "`.";
   if (trace_stream_) {
-    **trace_stream_ << "** declaring function " << f->name() << "\n";
+    **trace_stream_ << "** declaring function " << *name << "\n";
   }
   ImplScope function_scope;
   function_scope.AddParent(scope_info.innermost_scope);
@@ -4537,7 +4539,7 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
       CARBON_FATAL() << "f is not a callable declaration";
   }
 
-  if (f->name() == "Main") {
+  if (name == "Main") {
     if (!f->return_term().type_expression().has_value()) {
       return ProgramError(f->return_term().source_loc())
              << "`Main` must have an explicit return type";
@@ -4553,8 +4555,8 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   }
 
   if (trace_stream_) {
-    **trace_stream_ << "** finished declaring function " << f->name()
-                    << " of type " << f->static_type() << "\n";
+    **trace_stream_ << "** finished declaring function " << *name << " of type "
+                    << f->static_type() << "\n";
   }
   return Success();
 }
@@ -4562,8 +4564,10 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
 auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
                                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
+  auto name = GetName(*f);
+  CARBON_CHECK(name) << "Unexpected missing name for `" << *f << "`.";
   if (trace_stream_) {
-    **trace_stream_ << "** checking function " << f->name() << "\n";
+    **trace_stream_ << "** checking function " << *name << "\n";
   }
   // If f->return_term().is_auto(), the function body was already
   // type checked in DeclareFunctionDeclaration.
@@ -4583,7 +4587,7 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
     }
   }
   if (trace_stream_) {
-    **trace_stream_ << "** finished checking function " << f->name() << "\n";
+    **trace_stream_ << "** finished checking function " << *name << "\n";
   }
   return Success();
 }
