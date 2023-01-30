@@ -126,6 +126,59 @@ class Declaration : public AstNode {
   bool is_type_checked_ = false;
 };
 
+// A name being declared in a named declaration.
+class DeclaredName {
+ public:
+  struct NameComponent {
+    SourceLocation source_loc;
+    std::string name;
+  };
+
+  // This is required by bison, and should not be used elsewhere.
+  explicit DeclaredName() {}
+
+  explicit DeclaredName(SourceLocation loc, std::string name)
+      : components_{{loc, name}} {}
+
+  void Print(llvm::raw_ostream& out) const;
+
+  void Append(SourceLocation loc, std::string name) {
+    components_.push_back({loc, name});
+  }
+
+  // Returns the location of the first name component.
+  auto source_loc() const -> SourceLocation {
+    return components_.front().source_loc;
+  }
+
+  // Returns whether this is a qualified name, as opposed to a simple
+  // single-identifier name.
+  auto is_qualified() const { return components_.size() > 1; }
+
+  // Returns a range containing the components of the name, from outermost to
+  // innermost.
+  auto components() const
+      -> llvm::iterator_range<std::vector<NameComponent>::const_iterator> {
+    return {components_.begin(), components_.end()};
+  }
+
+  // Returns a range containing the components of the name other than the final
+  // component.
+  auto qualifiers() const
+      -> llvm::iterator_range<std::vector<NameComponent>::const_iterator> {
+    return {components_.begin(), components_.end() - 1};
+  }
+
+  // Returns the innermost name, which is the unqualified name of the entity
+  // being declared. For example in `fn Namespace.Func();`, returns `"Func"`.
+  auto inner_name() const -> std::string_view {
+    return components_.back().name;
+  }
+
+ private:
+  std::vector<NameComponent> components_;
+};
+
 // A declaration of a namespace.
 class NamespaceDeclaration : public Declaration {
  public:
@@ -203,7 +256,7 @@ class FunctionDeclaration : public CallableDeclaration {
   using ImplementsCarbonValueNode = void;
 
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
-                     std::string name,
+                     DeclaredName name,
                      std::vector<Nonnull<AstNode*>> deduced_params,
                      Nonnull<TuplePattern*> param_pattern,
                      ReturnTerm return_term,
@@ -212,7 +265,7 @@ class FunctionDeclaration : public CallableDeclaration {
       -> ErrorOr<Nonnull<FunctionDeclaration*>>;
 
   // Use `Create()` instead. This is public only so Arena::New() can call it.
-  FunctionDeclaration(SourceLocation source_loc, std::string name,
+  FunctionDeclaration(SourceLocation source_loc, DeclaredName name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
                       std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
@@ -228,10 +281,10 @@ class FunctionDeclaration : public CallableDeclaration {
     return InheritsFromFunctionDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto name() const -> const DeclaredName& { return name_; }
 
  private:
-  std::string name_;
+  DeclaredName name_;
 };
 
 class DestructorDeclaration : public CallableDeclaration {
@@ -829,7 +882,7 @@ class AliasDeclaration : public Declaration {
   Nonnull<Expression*> target_;
 };
 
-// Return the name of a declaration, if it has one.
+// Return the unqualified name of a declaration, if it has one.
 auto GetName(const Declaration&) -> std::optional<std::string_view>;
 
 }  // namespace Carbon

@@ -4668,8 +4668,10 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
              << "Error declaring `" << fun->name() << "`"
              << ": class functions cannot be virtual.";
     }
+    CARBON_CHECK(!fun->name().is_qualified())
+        << "qualified function name not permitted in class scope";
     bool has_vtable_entry =
-        class_vtable.find(fun->name()) != class_vtable.end();
+        class_vtable.find(fun->name().inner_name()) != class_vtable.end();
     // TODO: Implement complete declaration logic from
     // `/docs/design/classes.md#virtual-methods`.
     switch (fun->virt_override()) {
@@ -4702,7 +4704,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
         }
         break;
     }
-    class_vtable[fun->name()] = {fun, class_level};
+    class_vtable[fun->name().inner_name()] = {fun, class_level};
   }
 
   // For class declaration `class MyType(T:! type, U:! AnInterface)`, `Self`

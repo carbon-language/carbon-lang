@@ -16,6 +16,8 @@
 #include "llvm/Support/Error.h"
 
 using llvm::cast;
+using llvm::dyn_cast;
+using llvm::isa;
 
 namespace Carbon {
 namespace {
@@ -35,11 +37,23 @@ class NameResolver {
     Immediately,
   };
 
-  auto AddExposedNames(const Declaration& declaration,
-                       StaticScope& enclosing_scope) -> ErrorOr<Success>;
+  // Resolve the qualifier of the given declared name to a scope.
+  auto ResolveQualifier(DeclaredName name, StaticScope& enclosing_scope,
+                        bool allow_undeclared = false)
+      -> ErrorOr<Nonnull<StaticScope*>>;
 
-  // Traverses the sub-AST rooted at the given node, resolving all names within
-  // it using enclosing_scope, and updating enclosing_scope to add names to
+  // Add the given name to enclosing_scope.
+  auto AddExposedName(DeclaredName name, ValueNodeView value,
+                      StaticScope& enclosing_scope, bool allow_qualified_names)
+      -> ErrorOr<Success>;
+
+  // Add the names exposed by the given AST node to enclosing_scope.
+  auto AddExposedNames(const Declaration& declaration,
+                       StaticScope& enclosing_scope,
+                       bool allow_qualified_names = false) -> ErrorOr<Success>;
+
+  // Traverse the sub-AST rooted at the given node, resolve all names within
+  // it using enclosing_scope, and update enclosing_scope to add names to
   // it as they become available. In scopes where names are only visible below
   // their point of declaration (such as block scopes in C++), this is
   // implemented as a single pass, recursively calling ResolveNames on the
@@ -67,14 +81,59 @@ class NameResolver {
 
  private:
   // Mapping from namespaces to their scopes.
-  llvm::DenseMap<const NamespaceDeclaration*, StaticScope> namespace_scopes;
+  llvm::DenseMap<const NamespaceDeclaration*, StaticScope> namespace_scopes_;
+
+  // Mapping from declarations to the scope in which they expose a name.
+  llvm::DenseMap<const Declaration*, StaticScope*> exposed_name_scopes_;
 };
 
 }  // namespace
 
-// Adds the names exposed by the given AST node to enclosing_scope.
+auto NameResolver::ResolveQualifier(DeclaredName name,
+                                    StaticScope& enclosing_scope,
+                                    bool allow_undeclared)
+    -> ErrorOr<Nonnull<StaticScope*>> {
+  Nonnull<StaticScope*> scope = &enclosing_scope;
+  for (auto& [loc, qualifier] : name.qualifiers()) {
+    // TODO: If we permit qualified names anywhere other than the top level, we
+    // will need to decide whether the first name in the qualifier is looked up
+    // only in the innermost enclosing scope or in all enclosing scopes.
+    CARBON_ASSIGN_OR_RETURN(
+        ValueNodeView node,
+        scope->ResolveHere(qualifier, loc, allow_undeclared));
+
+    if (auto* namespace_decl = dyn_cast<NamespaceDeclaration>(&node.base())) {
+      scope = &namespace_scopes_[namespace_decl];
+    } else {
+      return ProgramError(name.source_loc())
+             << "qualifier `" << qualifier << "` is not a namespace";
+    }
+  }
+  return scope;
+}
+
+auto NameResolver::AddExposedName(DeclaredName name, ValueNodeView value,
+                                  StaticScope& enclosing_scope,
+                                  bool allow_qualified_names)
+    -> ErrorOr<Success> {
+  if (name.is_qualified() && !allow_qualified_names) {
+    return ProgramError(name.source_loc())
+           << "qualified declaration names are not permitted in this context";
+  }
+
+  // We are just collecting names at this stage, so nothing is marked as
+  // declared yet. Therefore we don't complain if the qualifier contains a
+  // known but not declared namespace name.
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<StaticScope*> scope,
+      ResolveQualifier(name, enclosing_scope, /*allow_undeclared=*/true));
+  return scope->Add(name.inner_name(), value,
+                    StaticScope::NameStatus::KnownButNotDeclared);
+}
+
 auto NameResolver::AddExposedNames(const Declaration& declaration,
-                                   StaticScope& enclosing_scope)
+                                   StaticScope& enclosing_scope,
+                                   bool allow_qualified_names)
     -> ErrorOr<Success> {
   switch (declaration.kind()) {
     case DeclarationKind::NamespaceDeclaration: {
@@ -82,6 +141,7 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
       CARBON_RETURN_IF_ERROR(
           enclosing_scope.Add(namespace_decl.name(), &namespace_decl,
                               StaticScope::NameStatus::KnownButNotDeclared));
+      namespace_scopes_.try_emplace(&namespace_decl, &enclosing_scope);
       break;
     }
     case DeclarationKind::InterfaceDeclaration:
@@ -93,18 +153,21 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
       break;
     }
     case DeclarationKind::DestructorDeclaration: {
-      // TODO: Remove this code. With this code, it is possible to create not
-      // useful carbon code.
-      //       Without this code, a Segfault is generated
+      // TODO: It should not be possible to name the destructor by unqualified
+      // name.
       const auto& func = cast<DestructorDeclaration>(declaration);
+      // TODO: Add support for qualified destructor declarations. Currently the
+      // syntax for this is
+      //   destructor Class [self: Self] { ... }
+      // but see #2567.
       CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
           "destructor", &func, StaticScope::NameStatus::KnownButNotDeclared));
       break;
     }
     case DeclarationKind::FunctionDeclaration: {
       const auto& func = cast<FunctionDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
-          func.name(), &func, StaticScope::NameStatus::KnownButNotDeclared));
+      CARBON_RETURN_IF_ERROR(AddExposedName(func.name(), &func, enclosing_scope,
+                                            allow_qualified_names));
       break;
     }
     case DeclarationKind::ClassDeclaration: {
@@ -596,10 +659,15 @@ auto NameResolver::ResolveNames(Declaration& declaration,
     case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration: {
       auto& function = cast<CallableDeclaration>(declaration);
-      StaticScope function_scope(&enclosing_scope);
-      const auto name = GetName(function);
-      CARBON_CHECK(name) << "Unexpected missing name for `" << function << "`.";
-      enclosing_scope.MarkDeclared(*name);
+      // TODO: Destructors should track their qualified name.
+      const DeclaredName& name =
+          isa<FunctionDeclaration>(declaration)
+              ? cast<FunctionDeclaration>(declaration).name()
+              : DeclaredName(function.source_loc(), "destructor");
+      CARBON_ASSIGN_OR_RETURN(Nonnull<StaticScope*> scope,
+                              ResolveQualifier(name, enclosing_scope));
+      StaticScope function_scope(scope);
+      scope->MarkDeclared(name.inner_name());
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*binding, function_scope));
       }
@@ -613,7 +681,7 @@ auto NameResolver::ResolveNames(Declaration& declaration,
         CARBON_RETURN_IF_ERROR(ResolveNames(
             **function.return_term().type_expression(), function_scope));
       }
-      enclosing_scope.MarkUsable(*name);
+      scope->MarkUsable(name.inner_name());
       if (function.body().has_value() &&
           bodies != ResolveFunctionBodies::Skip) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**function.body(), function_scope));
@@ -728,7 +796,8 @@ auto ResolveNames(AST& ast) -> ErrorOr<Success> {
 
   StaticScope file_scope;
   for (auto* declaration : ast.declarations) {
-    CARBON_RETURN_IF_ERROR(resolver.AddExposedNames(*declaration, file_scope));
+    CARBON_RETURN_IF_ERROR(resolver.AddExposedNames(
+        *declaration, file_scope, /*allow_qualified_names=*/true));
   }
   for (auto* declaration : ast.declarations) {
     CARBON_RETURN_IF_ERROR(resolver.ResolveNames(
