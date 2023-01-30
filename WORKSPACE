@@ -163,7 +163,7 @@ http_archive(
     ],
     sha256 = "5b60656f8a2581a0e87d72859318ff3638426f196feb66e75e5e2bdcc37b878c",
     strip_prefix = "rules_m4-{0}".format(rules_m4_version),
-    urls = ["https://github.com/jmillikin/rules_m4/archive/v{0}.tar.gz".format(rules_m4_version)],
+    urls = ["https://github.com/jmillikin/rules_m4/archive/refs/tags/v{0}.tar.gz".format(rules_m4_version)],
 )
 
 load("@rules_m4//m4:m4.bzl", "m4_register_toolchains")
@@ -250,7 +250,7 @@ http_archive(
     build_file = "@//:third_party/libprotobuf_mutator/BUILD.txt",
     sha256 = "9b862857a725a07287dc2dd182f32b76b38b8129b38aad3e26ebceccd9d6c620",
     strip_prefix = "libprotobuf-mutator-{0}".format(libprotobuf_mutator_version),
-    urls = ["https://github.com/google/libprotobuf-mutator/archive/v{0}.tar.gz".format(libprotobuf_mutator_version)],
+    urls = ["https://github.com/google/libprotobuf-mutator/archive/refs/tags/v{0}.tar.gz".format(libprotobuf_mutator_version)],
 )
 
 ###############################################################################
