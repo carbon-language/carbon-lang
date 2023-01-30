@@ -60,7 +60,7 @@ abseil_version = "530cd52f585c9d31b2b28cea7e53915af7a878e3"
 
 http_archive(
     name = "com_google_absl",
-    sha256 = "f8a6789514a3b109111252af92da41d6e64f90efca9fb70515d86debee57dc24",
+    sha256 = "fdd6d5ca699fc4a3cd685d9d98dfe1d17367134614c03a4042596a790a16542f",
     strip_prefix = "abseil-cpp-{0}".format(abseil_version),
     urls = ["https://github.com/abseil/abseil-cpp/archive/{0}.tar.gz".format(abseil_version)],
 )
@@ -74,7 +74,7 @@ re2_version = "cc1c9db8bf5155d89d10d65998cdb226f676492c"
 
 http_archive(
     name = "com_googlesource_code_re2",
-    sha256 = "8ef976c79a300f8c5e880535665bd4ba146fb09fb6d2342f8f1a02d9af29f365",
+    sha256 = "4d15d790a40966c4402031b4a719bc47541e1a143a3b9e5664a1de082c8e34cd",
     strip_prefix = "re2-{0}".format(re2_version),
     urls = ["https://github.com/google/re2/archive/{0}.tar.gz".format(re2_version)],
 )
@@ -88,7 +88,7 @@ googletest_version = "1336c4b6d1a6f4bc6beebccb920e5ff858889292"
 
 http_archive(
     name = "com_google_googletest",
-    sha256 = "d701aaeb9a258afba27210d746d971042be96c371ddc5a49f1e8914d9ea17e3c",
+    sha256 = "e84fc4e14e7ebc30f7203995762e242eeae7acbee2bf8024ce38e802d35d68a2",
     strip_prefix = "googletest-{0}".format(googletest_version),
     urls = ["https://github.com/google/googletest/archive/{0}.tar.gz".format(googletest_version)],
 )
@@ -101,7 +101,7 @@ benchmark_version = "1.6.1"
 
 http_archive(
     name = "com_github_google_benchmark",
-    sha256 = "6132883bc8c9b0df5375b16ab520fac1a85dc9e4cf5be59480448ece74b278d4",
+    sha256 = "6a1bf5984387551ca286a8cdbfc63243215e3e1320e3b1e2a7443b300758e27d",
     strip_prefix = "benchmark-{0}".format(benchmark_version),
     urls = ["https://github.com/google/benchmark/archive/refs/tags/v{0}.tar.gz".format(benchmark_version)],
 )
@@ -122,7 +122,7 @@ http_archive(
         "@carbon//bazel/patches/llvm:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
         "@carbon//bazel/patches/llvm:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
     ],
-    sha256 = "8e9cbb937b1a40536cd809e09603a1810d86a8c314fee0cca36fc493e78289e5",
+    sha256 = "eb11068c04e207a20168d69210579a1eef18c249f47d25ef52e750e3027edd6b",
     strip_prefix = "llvm-project-{0}".format(llvm_version),
     urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_version)],
 )
@@ -161,7 +161,7 @@ http_archive(
         # Trying to upstream: https://github.com/jmillikin/rules_m4/pull/15
         "@carbon//bazel/patches/m4:0001_Support_M4_building_on_FreeBSD.patch",
     ],
-    sha256 = "eaa674cd84546038ecbcc49cdd346134a20961a41fa1a541e80d8bf4b470c34d",
+    sha256 = "5b60656f8a2581a0e87d72859318ff3638426f196feb66e75e5e2bdcc37b878c",
     strip_prefix = "rules_m4-{0}".format(rules_m4_version),
     urls = ["https://github.com/jmillikin/rules_m4/archive/v{0}.tar.gz".format(rules_m4_version)],
 )
@@ -178,7 +178,7 @@ rules_flex_version = "1f1d9c306c2b4b8be2cb899a3364b84302124e77"
 
 http_archive(
     name = "rules_flex",
-    sha256 = "a4e99a0a241c8a5aa238e81724ea3529722522c3702fd3aa674add5eb9807002",
+    sha256 = "a5fbea7b7d892c89ca741852838219a6af74ad3474baaee0d494e38c6ea619b3",
     strip_prefix = "rules_flex-{0}".format(rules_flex_version),
     urls = ["https://github.com/jmillikin/rules_flex/archive/{0}.tar.gz".format(rules_flex_version)],
 )
@@ -200,7 +200,7 @@ http_archive(
         # Trying to upstream: https://github.com/jmillikin/rules_bison/pull/13
         "@carbon//bazel/patches/bison:0001_Support_Bison_building_on_FreeBSD.patch",
     ],
-    sha256 = "6bc2d382e4ffccd66e60a74521c24722fc8fdfe9af49ff182f79bb5994fa1ba4",
+    sha256 = "e3020f96ccdab2d40e740849eefed3f113b3b4b72ac4fbad39f486b57a773090",
     strip_prefix = "rules_bison-{0}".format(rules_bison_version),
     urls = ["https://github.com/jmillikin/rules_bison/archive/{0}.tar.gz".format(rules_bison_version)],
 )
@@ -248,7 +248,7 @@ libprotobuf_mutator_version = "1.1"
 http_archive(
     name = "com_google_libprotobuf_mutator",
     build_file = "@//:third_party/libprotobuf_mutator/BUILD.txt",
-    sha256 = "fd299fd72c5cf664259d9bd43a72cb74dc6a8b9604d107fe2d2e90885aeb7c16",
+    sha256 = "9b862857a725a07287dc2dd182f32b76b38b8129b38aad3e26ebceccd9d6c620",
     strip_prefix = "libprotobuf-mutator-{0}".format(libprotobuf_mutator_version),
     urls = ["https://github.com/google/libprotobuf-mutator/archive/v{0}.tar.gz".format(libprotobuf_mutator_version)],
 )
