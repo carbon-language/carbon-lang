@@ -6,7 +6,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-This directory contains issue-related documentation for issue 2138 in
+This directory contains issue-related documentation for issue 2132 in
 Carbon Project. Information about how issue 2132 works, goals, and
 any relevant community information belong here.
 
