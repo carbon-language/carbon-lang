@@ -156,7 +156,7 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       out << "fn " << cast<FunctionDeclaration>(*this).name();
       break;
     case DeclarationKind::DestructorDeclaration:
-      out << cast<DestructorDeclaration>(*this).name();
+      out << *GetName(*this);
       break;
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
@@ -224,7 +224,7 @@ auto GetName(const Declaration& declaration)
     case DeclarationKind::FunctionDeclaration:
       return cast<FunctionDeclaration>(declaration).name();
     case DeclarationKind::DestructorDeclaration:
-      return cast<DestructorDeclaration>(declaration).name();
+      return "destructor";
     case DeclarationKind::ClassDeclaration:
       return cast<ClassDeclaration>(declaration).name();
     case DeclarationKind::MixinDeclaration: {
@@ -368,7 +368,9 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
 }
 
 void CallableDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
-  out << "fn " << name_ << " ";
+  auto name = GetName(*this);
+  CARBON_CHECK(name) << "Unexpected missing name for `" << *this << "`.";
+  out << "fn " << *name << " ";
   if (!deduced_parameters_.empty()) {
     out << "[";
     llvm::ListSeparator sep;

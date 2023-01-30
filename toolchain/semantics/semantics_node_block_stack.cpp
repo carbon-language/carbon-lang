@@ -16,18 +16,6 @@ auto SemanticsNodeBlockStack::Push() -> void {
   stack_.push_back(SemanticsNodeBlockId::Invalid);
 }
 
-auto SemanticsNodeBlockStack::PushWithUnconditionalAlloc()
-    -> SemanticsNodeBlockId {
-  SemanticsNodeBlockId block_id(node_blocks_->size());
-  CARBON_VLOG() << "NodeBlock Push " << stack_.size() << ": " << block_id
-                << "\n";
-  CARBON_CHECK(stack_.size() < (1 << 20))
-      << "Excessive stack size: likely infinite loop";
-  node_blocks_->resize(block_id.index + 1);
-  stack_.push_back(block_id);
-  return block_id;
-}
-
 auto SemanticsNodeBlockStack::PeekForAdd() -> SemanticsNodeBlockId {
   auto& back = stack_.back();
   if (!back.is_valid()) {
