@@ -288,7 +288,7 @@ A license is required at the top of all documents and files.
 ### Google Docs
 
 Google Docs all use
-[this template](https://docs.google.com/document/d/1tAwE0230PDxweVruHUVY6DSfSnrJF2LnLOWXQYqNJuI/edit?resourcekey=0-zsrwCWP7ictbxhCuePk-fw).
+[this template](https://docs.google.com/document/d/1tAwE0230PDxweVruHUVY6DSfSnrJF2LnLOWXQYqNJuI/template/preview?usp=sharing&resourcekey=0-zsrwCWP7ictbxhCuePk-fw).
 It puts the license at the top of every page if printed.
 
 ### Markdown
