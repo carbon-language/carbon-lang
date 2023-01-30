@@ -1967,7 +1967,8 @@ There are some opportunities to improve on and simplify the C++ story:
     overload resolution on instances of the derived class, in functions that
     aren't friends of the base class.
 
-**References:** This was discussed in the open discussion on 2021-07-12.
+**References:** This was discussed in
+[the open discussion on 2021-07-12](https://docs.google.com/document/d/1TvHK6HWAcCtnseMpcNsLYrgdtNy9qNrv6EaY9n063ok/edit#heading=h.40jlsrcgp8mr).
 
 #### Interop with C++ inheritance
 
