@@ -11,17 +11,24 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Objective for 2023: Issue 2132 Resolved and Regression Testing Potential Explored](#objective-for-2023--issue-2132-resolved-and-regression-testing-potential-explored)
--   [Key results in 2023](#key-results-in-2023)
+    -   [Completing Issue 2132](#completing-issue-2132)
+        -   [Submit PR](#submit-pr) 
+    -   [Regression Testing](#regression-testing)
+        -   [Premature Closure of Issue](#premature-closure-of-issue)
+- [Key results in 2023](#key-results-in-2023)
     -   [Regression Testing and Benchmark Regressions Potential](#regression-testing-and-benchmark-regressions-potential)
     -   [Broaden Potential for increased Contributor Participation](#broaden-potential-for-increased-contributor-participation)
+        -   [Range of Issues Commented on by eeshvardasikcm](#range-of-issues-commented-on-by-eeshvardasikcm)
+        -   [Regression Testing as a Means to Manage Issues](#regression-testing-as-a-means-to-manage-issues)
+        -   [Involvement of Other Carbon Project Community Contributors on Issue 2132](#involvement-of-other-carbon-project-community-contributors-on-issue-2132)
     -   [Example Manual Regression Testing Protocol](#example-manual-regression-testing-protocol)
 -   [2024-2025 Carbon Project 1.0 Release ](#2024-2025-carbon-project-10-release)
     -   [Potential Toolchain Advances are Part of this Issue 2132](#potential-toolchain-advances-are-part-of-this-issue-2132)
 -   [Gaols](#goals)
 -   [Other Information](#other-information)
     -   [Groups](#groups)
-    - [Contributing to Carbon:](#contributing-to-carbon-)
-    - [Issue 2132 Sub-team Not Officially Part of the Main Carbon Project](#issue-2132-sub-team-not-officially-part-of-the-main-carbon-project)
+    -   [Contributing to Carbon:](#contributing-to-carbon-)
+    -   [Issue 2132 Sub-team Not Officially Part of the Main Carbon Project](#issue-2132-sub-team-not-officially-part-of-the-main-carbon-project)
 
 <!-- tocstop -->
 
