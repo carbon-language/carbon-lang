@@ -12,6 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Objective for 2023: Issue 2132 Resolved and Regression Testing Potential Explored](#objective-for-2023--issue-2132-resolved-and-regression-testing-potential-explored)
 -   [Key results in 2023](#key-results-in-2023)
+    -   [Regression Testing and Benchmark Regressions Potential](#regression-testing-and-benchmark-regressions-potential)
     -   [Broaden Potential for increased Contributor Participation](#broaden-potential-for-increased-contributor-participation)
     -   [Example Manual Regression Testing Protocol](#example-manual-regression-testing-protocol)
 -   [2024-2025 Carbon Project 1.0 Release ](#2024-2025-carbon-project-10-release)
@@ -38,15 +39,34 @@ submitted. Eeshvardasikcm is planning on submitting a simple PR soon with only
 one or two little tests added to verify that the string literal issue even
 exists.
 
+#### Submit PR
+
+Draft PR changed to live PR as soon as one test is written. The test should
+handle the `\t\n` pattern.
+
+### Regression Testing
+
 Closure of issue 2132 may be possible 'prematurely' if this roadmap,
 is referenced to from within the PR,
 and this roadmap has evolved to outline a clear path to completion of working
 regression testing.
 
+#### Premature Closure of Issue
+
 The goal is that if any string literal bugs concerning line ending tabs appear
 after the closure of this issue,
 then the regression testing system should be able to either catch the bug or
 be manually informed of any new bugs.
+
+## Key results in 2023
+
+There are several milestones that eeshvardasikcm believes are on the critical
+path to successfully achieving our main goal for the year, and point to
+concrete areas of focus for the project.
+
+This issue number 2132 is a "good first issue" that eeshvardasikcm has been
+working on. As soon as he is completed with this issue, he will enjoy getting
+caught up to discuss and contribute to other issues.
 
 ### Regression Testing and Benchmark Regressions Potential
 
@@ -61,16 +81,6 @@ sub-team, are important for him to finish this issue 2132 and continue on
 contributing to Carbon Project using this new regression testing and roadmap
 format.
 
-## Key results in 2023
-
-There are several milestones that we believe are on the critical path to
-successfully achieving our main goal for the year, and point to concrete areas
-of focus for the project.
-
-This issue number 2132 is a "good first issue" that eeshvardasikcm has been
-working on. As soon as he is completed with this issue, he will enjoy getting
-caught up to discuss and contribute to other issues.
-
 ### Broaden Potential for increased Contributor Participation
 
 eeshvardasikcm was commenting on GitHub with one of the leads about this
@@ -78,16 +88,38 @@ issue. The lead asked for this issue to also do regression testing if
 possible. It is Possible for eeshvardasikcm to do regression testing.
 
 Benchmarking should be integrated with regression testing. There's no reason
-to allow fast code to become slower.
+to allow fast code to become slower. Benchmarking was mentioned in toolchain
+discussion.
+
+#### Range of Issues Commented on by eeshvardasikcm
+
+eeshvardasikcm has commented on a few different issues on the Carbon Project
+GitHub. Each one of these issues that eeshvardasikcm has commented on can be
+analyzed by him and brought under the scope of the regression testing.
+
+#### Regression Testing as a Means to Manage Issues
+
+A smart regression testing system in Carbon Project would be able to reference
+multiple tests and types of tests within the Carbon Project.
+
+In the interests of preserving comments publicly made on GitHub concerning a
+small sample of Carbon Project issues listed on GitHub, an analysis can be
+made that categorizes issues, design keywords, and other design concepts.
+
+#### Involvement of Other Carbon Project Community Contributors on Issue 2132
 
 This issue can be assigned to someone else. Eeshvardasikcm would not mind at
 all. Eeshvardasikcm is currently working on this issue and is not sure how
-quickly Carbon leads want to make new "good first issue's" available, and he
-doesn't want to get in the way.
+quickly Carbon leads can maintain availability of new "good first issue's".
+Eeshvardasikcm doesn't want to get in the way of making good progress.
 
 Eeshvardasikcm is taking a while to get a PR done because it's been 20 years
-since he has written game cod in C++. He was surprised to be asked to
-contribute C++. He is doubling his time commitment to Carbon Project until he
+since he has written game cod in C++, he is gradually adjusting his priorities,
+and is a disabled person almost ready to get back to work. He was surprised 
+when he was asked to contribute C++ code. He originally got involved with
+Carbon Project expecting that he would be notifying developers of build issues.
+
+Eeshvardasikcm is doubling his time commitment to Carbon Project until he
 can write C++ more fluently.
 
 ### Example Manual Regression Testing Protocol
