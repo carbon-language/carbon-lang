@@ -5,6 +5,8 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
+// CHECK:STDOUT: callables: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
 // CHECK:STDOUT: ]
@@ -22,6 +24,8 @@
 // CHECK:STDOUT:   {kind: Assign, arg0: node4, arg1: node6, type: node2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node4,
 // CHECK:STDOUT:     node5,

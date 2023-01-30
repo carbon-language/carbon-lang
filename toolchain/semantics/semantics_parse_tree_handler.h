@@ -11,6 +11,7 @@
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
+#include "toolchain/semantics/semantics_node_block_stack.h"
 #include "toolchain/semantics/semantics_node_stack.h"
 
 namespace Carbon {
@@ -28,7 +29,9 @@ class SemanticsParseTreeHandler {
         parse_tree_(&parse_tree),
         semantics_(&semantics),
         vlog_stream_(vlog_stream),
-        node_stack_(parse_tree, vlog_stream) {}
+        node_stack_(parse_tree, vlog_stream),
+        node_block_stack_(semantics.node_blocks_, vlog_stream),
+        params_stack_(semantics.node_blocks_, vlog_stream) {}
 
   // Outputs the ParseTree information into SemanticsIR.
   auto Build() -> void;
@@ -98,14 +101,14 @@ class SemanticsParseTreeHandler {
                          SemanticsNodeId rhs_id, bool can_convert_lhs)
       -> SemanticsNodeId;
 
-  // Parse node handlers.
-#define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(ParseTree::Node parse_node)->void;
-#include "toolchain/parser/parse_node_kind.def"
+  // Saves a parameter from the top block in node_stack_ to the top block in
+  // params_stack_. Returns false if nothing is copied.
+  auto SaveParam() -> bool;
 
-  auto current_block_id() -> SemanticsNodeBlockId {
-    return node_block_stack_.back();
-  }
+  // Parse node handlers. Returns false for unrecoverable errors.
+#define CARBON_PARSE_NODE_KIND(Name) \
+  auto Handle##Name(ParseTree::Node parse_node)->bool;
+#include "toolchain/parser/parse_node_kind.def"
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
 
@@ -127,9 +130,14 @@ class SemanticsParseTreeHandler {
   // The stack during Build. Will contain file-level parse nodes on return.
   SemanticsNodeStack node_stack_;
 
-  // The stack of node blocks during build. Only updated on ParseTree nodes that
-  // affect the stack.
-  llvm::SmallVector<SemanticsNodeBlockId> node_block_stack_;
+  // The stack of node blocks being used for general IR generation.
+  SemanticsNodeBlockStack node_block_stack_;
+
+  // The stack of node blocks being used for parameters.
+  SemanticsNodeBlockStack params_stack_;
+
+  llvm::SmallVector<std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId>>
+      finished_params_stack_;
 
   // A stack for scope context.
   llvm::SmallVector<ScopeStackEntry> scope_stack_;

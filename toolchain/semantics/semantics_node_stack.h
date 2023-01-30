@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_NODE_STACK_H_
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_NODE_STACK_H_
 
+#include <type_traits>
+
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_tree.h"
@@ -36,21 +38,19 @@ class SemanticsNodeStack {
   auto Push(ParseTree::Node parse_node) -> void {
     PushEntry(
         {.parse_node = parse_node, .node_id = SemanticsNodeId::MakeInvalid()},
-        /*is_node_id=*/true);
+        DebugLog::None);
   }
 
   // Pushes a parse tree node onto the stack.
   auto Push(ParseTree::Node parse_node, SemanticsNodeId node_id) -> void {
-    PushEntry({.parse_node = parse_node, .node_id = node_id},
-              /*is_node_id=*/true);
+    PushEntry({.parse_node = parse_node, .node_id = node_id}, DebugLog::NodeId);
   }
 
   // Pushes a PatternBinding parse tree node onto the stack with its name.
   auto Push(ParseTree::Node parse_node, SemanticsStringId name_id) -> void {
     CARBON_CHECK(parse_tree_->node_kind(parse_node) ==
                  ParseNodeKind::PatternBinding);
-    PushEntry({.parse_node = parse_node, .name_id = name_id},
-              /*is_node_id=*/false);
+    PushEntry({.parse_node = parse_node, .name_id = name_id}, DebugLog::NameId);
   }
 
   // Pops the top of the stack without any verification.
@@ -58,6 +58,12 @@ class SemanticsNodeStack {
 
   // Pops the top of the stack.
   auto PopAndDiscardSoloParseNode(ParseNodeKind pop_parse_kind) -> void;
+
+  // Pops the top of the stack, and discards the ID.
+  auto PopAndDiscardId() -> void;
+
+  // Pops the top of the stack, and discards the ID.
+  auto PopAndDiscardId(ParseNodeKind pop_parse_kind) -> void;
 
   // Pops the top of the stack and returns the parse_node.
   auto PopForSoloParseNode() -> ParseTree::Node;
@@ -94,22 +100,38 @@ class SemanticsNodeStack {
   // Prints the stack for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
+  auto empty() const -> bool { return stack_.empty(); }
+  auto size() const -> size_t { return stack_.size(); }
+
  private:
-  // An entry in node_stack_.
+  // An entry in stack_.
   struct Entry {
+    // The node associated with the stack entry.
     ParseTree::Node parse_node;
+
+    // The entries will evaluate as invalid if and only if they're a solo
+    // parse_node. Invalid is used instead of optional to save space.
+    //
+    // A discriminator isn't needed because the caller can determine which field
+    // is used based on the ParseNodeKind.
     union {
-      // The node_id will be invalid if and only if it's a solo parse_node.
       SemanticsNodeId node_id;
-      // The name_id is provided for PatternBindings.
+
+      // Right now name_id is exclusively for PatternBinding, which is enforced.
       SemanticsStringId name_id;
     };
   };
   static_assert(sizeof(Entry) == 8, "Unexpected Entry size");
 
-  // Pushes an entry onto the stack. is_node_id is provided for debug output
-  // only.
-  auto PushEntry(Entry entry, bool is_node_id) -> void;
+  // Which Entry union member to log.
+  enum DebugLog {
+    None,
+    NodeId,
+    NameId,
+  };
+
+  // Pushes an entry onto the stack.
+  auto PushEntry(Entry entry, DebugLog debug_log) -> void;
 
   // Pops an entry.
   auto PopEntry() -> Entry;
@@ -121,12 +143,10 @@ class SemanticsNodeStack {
   auto RequireParseKind(Entry entry, ParseNodeKind require_kind) -> void;
 
   // Requires an entry to have a invalid node_id.
-  // Also works with name_id in the union due to type compatibility.
   auto RequireSoloParseNode(Entry entry) -> void;
 
-  // Requires an entry to have a valid node_id.
-  // Also works with name_id in the union due to type compatibility.
-  auto RequireNodeId(Entry entry) -> void;
+  // Requires an entry to have a valid id.
+  auto RequireValidId(Entry entry) -> void;
 
   // The file's parse tree.
   const ParseTree* parse_tree_;
