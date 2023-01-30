@@ -581,7 +581,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       StaticScope function_scope(&enclosing_scope);
       const auto name = GetName(function);
       CARBON_CHECK(name) << "Unexpected missing name for `" << function << "`.";
-      enclosing_scope.MarkDeclared(std::string(*name));
+      enclosing_scope.MarkDeclared(*name);
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*binding, function_scope));
       }
@@ -595,7 +595,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
         CARBON_RETURN_IF_ERROR(ResolveNames(
             **function.return_term().type_expression(), function_scope));
       }
-      enclosing_scope.MarkUsable(std::string(*name));
+      enclosing_scope.MarkUsable(*name);
       if (function.body().has_value() &&
           bodies != ResolveFunctionBodies::Skip) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**function.body(), function_scope));
