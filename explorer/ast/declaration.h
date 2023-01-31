@@ -17,8 +17,8 @@
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/return_term.h"
 #include "explorer/ast/statement.h"
-#include "explorer/ast/static_scope.h"
 #include "explorer/ast/value_category.h"
+#include "explorer/ast/value_node.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -82,12 +82,12 @@ class Declaration : public AstNode {
     constant_value_ = value;
   }
 
-  // See static_scope.h for API.
+  // See value_node.h for API.
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
 
-  // See static_scope.h for API.
+  // See value_node.h for API.
   auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
