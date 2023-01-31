@@ -26,7 +26,7 @@ rules_python_version = "0.8.1"
 # Add Bazel's python rules and set up pip.
 http_archive(
     name = "rules_python",
-    sha256 = "cdf6b84084aad8f10bf20b46b77cb48d83c319ebe6458a18e9d2cebf57807cdd",
+    sha256 = "7e3f729d1baac617b3a153326799e761f78446624a43bc9eb7bd17bd8ad8f445",
     strip_prefix = "rules_python-{0}".format(rules_python_version),
     url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/{0}.tar.gz".format(rules_python_version),
 )
@@ -228,7 +228,7 @@ rules_proto_version = "5.3.0-21.7"
 
 http_archive(
     name = "rules_proto",
-    sha256 = "dc3fb206a2cb3441b485eb1e423165b231235a1ea9b031b4433cf7bc1fa460dd",
+    sha256 = "84581391956550f11673a72054248f15c957a70744d23fcc7d03a18de33cbfd1",
     strip_prefix = "rules_proto-{0}".format(rules_proto_version),
     urls = ["https://github.com/bazelbuild/rules_proto/archive/refs/tags/{0}.tar.gz".format(rules_proto_version)],
 )
