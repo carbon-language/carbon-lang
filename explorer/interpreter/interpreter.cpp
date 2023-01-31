@@ -769,6 +769,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+    case Value::Kind::TypeOfNamespaceName:
     case Value::Kind::StaticArrayType:
     case Value::Kind::MemberName:
       // TODO: add `CARBON_CHECK(TypeEqual(type, value->dynamic_type()))`, once
@@ -2111,6 +2112,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
         return todo_.FinishAction();
       }
     }
+    case DeclarationKind::NamespaceDeclaration:
     case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration:
     case DeclarationKind::ClassDeclaration:

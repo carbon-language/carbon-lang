@@ -270,6 +270,7 @@
   MINUS_MINUS
   MIX
   MIXIN
+  NAMESPACE
   NOT
   NOT_EQUAL
   OR
@@ -1221,7 +1222,9 @@ class_declaration_extends:
     { $$ = $2; }
 ;
 declaration:
-  function_declaration
+  NAMESPACE identifier SEMICOLON
+    { $$ = arena->New<NamespaceDeclaration>(context.source_loc(), $2); }
+| function_declaration
     { $$ = $1; }
 | destructor_declaration
     { $$ = $1; }

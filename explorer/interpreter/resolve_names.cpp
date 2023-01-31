@@ -22,6 +22,13 @@ namespace Carbon {
 static auto AddExposedNames(const Declaration& declaration,
                             StaticScope& enclosing_scope) -> ErrorOr<Success> {
   switch (declaration.kind()) {
+    case DeclarationKind::NamespaceDeclaration: {
+      const auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(
+          enclosing_scope.Add(namespace_decl.name(), &namespace_decl,
+                              StaticScope::NameStatus::KnownButNotDeclared));
+      break;
+    }
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       const auto& iface_decl = cast<ConstraintTypeDeclaration>(declaration);
@@ -519,6 +526,11 @@ static auto ResolveMemberNames(llvm::ArrayRef<Nonnull<Declaration*>> members,
 static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
                          ResolveFunctionBodies bodies) -> ErrorOr<Success> {
   switch (declaration.kind()) {
+    case DeclarationKind::NamespaceDeclaration: {
+      auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
+      enclosing_scope.MarkUsable(namespace_decl.name());
+      break;
+    }
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       auto& iface = cast<ConstraintTypeDeclaration>(declaration);
@@ -569,7 +581,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
       StaticScope function_scope(&enclosing_scope);
       const auto name = GetName(function);
       CARBON_CHECK(name) << "Unexpected missing name for `" << function << "`.";
-      enclosing_scope.MarkDeclared(std::string(*name));
+      enclosing_scope.MarkDeclared(*name);
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*binding, function_scope));
       }
@@ -583,7 +595,7 @@ static auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
         CARBON_RETURN_IF_ERROR(ResolveNames(
             **function.return_term().type_expression(), function_scope));
       }
-      enclosing_scope.MarkUsable(std::string(*name));
+      enclosing_scope.MarkUsable(*name);
       if (function.body().has_value() &&
           bodies != ResolveFunctionBodies::Skip) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**function.body(), function_scope));

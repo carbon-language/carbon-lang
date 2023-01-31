@@ -126,6 +126,26 @@ class Declaration : public AstNode {
   bool is_type_checked_ = false;
 };
 
+// A declaration of a namespace.
+class NamespaceDeclaration : public Declaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  explicit NamespaceDeclaration(SourceLocation source_loc, std::string name)
+      : Declaration(AstNodeKind::NamespaceDeclaration, source_loc),
+        name_(name) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromNamespaceDeclaration(node->kind());
+  }
+
+  auto name() const -> std::string_view { return name_; }
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+ private:
+  std::string name_;
+};
+
 // A function's virtual override keyword.
 enum class VirtualOverride { None, Abstract, Virtual, Impl };
 

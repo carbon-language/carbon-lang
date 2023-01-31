@@ -1600,6 +1600,33 @@ class TypeOfMemberName : public Value {
   NamedElement member_;
 };
 
+// The type of a namespace name.
+//
+// Such expressions can appear only as the target of an `alias` declaration or
+// as the left-hand side of a simple member access expression.
+class TypeOfNamespaceName : public Value {
+ public:
+  explicit TypeOfNamespaceName(
+      Nonnull<const NamespaceDeclaration*> namespace_decl)
+      : Value(Kind::TypeOfNamespaceName), namespace_decl_(namespace_decl) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::TypeOfNamespaceName;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(namespace_decl_);
+  }
+
+  auto namespace_decl() const -> Nonnull<const NamespaceDeclaration*> {
+    return namespace_decl_;
+  }
+
+ private:
+  Nonnull<const NamespaceDeclaration*> namespace_decl_;
+};
+
 // The type of a statically-sized array.
 //
 // Note that values of this type are represented as tuples.

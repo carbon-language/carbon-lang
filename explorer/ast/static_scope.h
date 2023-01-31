@@ -6,12 +6,13 @@
 #define CARBON_EXPLORER_AST_STATIC_SCOPE_H_
 
 #include <string>
-#include <unordered_map>
+#include <string_view>
 
 #include "common/error.h"
 #include "explorer/ast/value_node.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
+#include "llvm/ADT/StringMap.h"
 
 namespace Carbon {
 
@@ -44,18 +45,18 @@ class StaticScope {
   // if `name` is already defined to be a different entity in this scope.
   // If `usable` is `false`, `name` cannot yet be referenced and `Resolve()`
   // methods will fail for it.
-  auto Add(const std::string& name, ValueNodeView entity,
+  auto Add(std::string_view name, ValueNodeView entity,
            NameStatus status = NameStatus::Usable) -> ErrorOr<Success>;
 
   // Marks `name` as being past its point of declaration.
-  void MarkDeclared(const std::string& name);
+  void MarkDeclared(std::string_view name);
   // Marks `name` as being completely declared and hence usable.
-  void MarkUsable(const std::string& name);
+  void MarkUsable(std::string_view name);
 
   // Returns the nearest definition of `name` in the ancestor graph of this
   // scope, or reports a compilation error at `source_loc` there isn't exactly
   // one such definition.
-  auto Resolve(const std::string& name, SourceLocation source_loc) const
+  auto Resolve(std::string_view name, SourceLocation source_loc) const
       -> ErrorOr<ValueNodeView>;
 
   // Returns the value node of the BindingPattern of the returned var definition
@@ -71,7 +72,7 @@ class StaticScope {
   // Equivalent to Resolve, but returns `nullopt` instead of raising an error
   // if no definition can be found. Still raises a compilation error if more
   // than one definition is found.
-  auto TryResolve(const std::string& name, SourceLocation source_loc) const
+  auto TryResolve(std::string_view name, SourceLocation source_loc) const
       -> ErrorOr<std::optional<ValueNodeView>>;
 
   struct Entry {
@@ -79,7 +80,7 @@ class StaticScope {
     NameStatus status;
   };
   // Maps locally declared names to their entities.
-  std::unordered_map<std::string, Entry> declared_names_;
+  llvm::StringMap<Entry> declared_names_;
 
   // The parent scope of this scope, if it not the root scope.
   std::optional<Nonnull<const StaticScope*>> parent_scope_;

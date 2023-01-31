@@ -11,7 +11,7 @@
 
 namespace Carbon {
 
-auto StaticScope::Add(const std::string& name, ValueNodeView entity,
+auto StaticScope::Add(std::string_view name, ValueNodeView entity,
                       NameStatus status) -> ErrorOr<Success> {
   auto [it, inserted] = declared_names_.insert({name, {entity, status}});
   if (!inserted) {
@@ -27,7 +27,7 @@ auto StaticScope::Add(const std::string& name, ValueNodeView entity,
   return Success();
 }
 
-void StaticScope::MarkDeclared(const std::string& name) {
+void StaticScope::MarkDeclared(std::string_view name) {
   auto it = declared_names_.find(name);
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
   if (it->second.status == NameStatus::KnownButNotDeclared) {
@@ -35,13 +35,13 @@ void StaticScope::MarkDeclared(const std::string& name) {
   }
 }
 
-void StaticScope::MarkUsable(const std::string& name) {
+void StaticScope::MarkUsable(std::string_view name) {
   auto it = declared_names_.find(name);
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
   it->second.status = NameStatus::Usable;
 }
 
-auto StaticScope::Resolve(const std::string& name,
+auto StaticScope::Resolve(std::string_view name,
                           SourceLocation source_loc) const
     -> ErrorOr<ValueNodeView> {
   CARBON_ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
@@ -52,7 +52,7 @@ auto StaticScope::Resolve(const std::string& name,
   return *result;
 }
 
-auto StaticScope::TryResolve(const std::string& name,
+auto StaticScope::TryResolve(std::string_view name,
                              SourceLocation source_loc) const
     -> ErrorOr<std::optional<ValueNodeView>> {
   for (const StaticScope* scope = this; scope;
