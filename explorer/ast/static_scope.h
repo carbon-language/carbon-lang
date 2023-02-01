@@ -82,6 +82,7 @@ class StaticScope {
   // TODO: This diagnosis of multiple declarations is not implemented yet.
   auto TryResolve(std::string_view name, SourceLocation source_loc) const
       -> ErrorOr<std::optional<ValueNodeView>>;
+
   // Equivalent to ResolveHere, but returns `nullopt` if no definition can be
   // found. Raises an error if the name is found but is not usable yet.
   auto TryResolveHere(std::string_view name, SourceLocation source_loc,

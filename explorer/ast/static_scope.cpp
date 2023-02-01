@@ -84,23 +84,23 @@ auto StaticScope::TryResolveHere(std::string_view name,
                                  bool allow_undeclared) const
     -> ErrorOr<std::optional<ValueNodeView>> {
   auto it = declared_names_.find(name);
-  if (it != declared_names_.end()) {
-    if (allow_undeclared) {
-      return {it->second.entity};
-    }
-    switch (it->second.status) {
-      case NameStatus::KnownButNotDeclared:
-        return ProgramError(source_loc)
-               << "'" << name << "' has not been declared yet";
-      case NameStatus::DeclaredButNotUsable:
-        return ProgramError(source_loc) << "'" << name
-                                        << "' is not usable until after it "
-                                           "has been completely declared";
-      case NameStatus::Usable:
-        return {it->second.entity};
-    }
+  if (it == declared_names_.end()) {
+    return {std::nullopt};
   }
-  return {std::nullopt};
+  if (allow_undeclared) {
+    return {it->second.entity};
+  }
+  switch (it->second.status) {
+    case NameStatus::KnownButNotDeclared:
+      return ProgramError(source_loc)
+             << "'" << name << "' has not been declared yet";
+    case NameStatus::DeclaredButNotUsable:
+      return ProgramError(source_loc) << "'" << name
+                                      << "' is not usable until after it "
+                                         "has been completely declared";
+    case NameStatus::Usable:
+      return {it->second.entity};
+  }
 }
 
 auto StaticScope::AddReturnedVar(ValueNodeView returned_var_def_view)

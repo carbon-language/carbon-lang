@@ -138,12 +138,12 @@ class DeclaredName {
   explicit DeclaredName() {}
 
   explicit DeclaredName(SourceLocation loc, std::string name)
-      : components_{{loc, name}} {}
+      : components_{{loc, std::move(name)}} {}
 
   void Print(llvm::raw_ostream& out) const;
 
   void Append(SourceLocation loc, std::string name) {
-    components_.push_back({loc, name});
+    components_.push_back({loc, std::move(name)});
   }
 
   // Returns the location of the first name component.
@@ -159,7 +159,7 @@ class DeclaredName {
   // innermost.
   auto components() const
       -> llvm::iterator_range<std::vector<NameComponent>::const_iterator> {
-    return {components_.begin(), components_.end()};
+    return components_;
   }
 
   // Returns a range containing the components of the name other than the final
