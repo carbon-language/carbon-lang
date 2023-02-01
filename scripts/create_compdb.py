@@ -128,6 +128,7 @@ subprocess.check_call(
         bazel,
         "build",
         "--keep_going",
+        "@antlr4_runtimes//:LICENSE.txt",
         "@llvm-project//llvm:LICENSE.TXT",
         "@com_google_absl//:LICENSE",
         "@com_google_googletest//:LICENSE",

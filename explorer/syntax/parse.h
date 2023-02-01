@@ -13,10 +13,17 @@
 
 namespace Carbon {
 
+// Available parsers.
+enum class ParserChoice {
+  Bison,
+  Antlr,
+};
+
 // Returns the AST representing the contents of the named file, or an error code
 // if parsing fails. Allocations go into the provided arena.
 auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name,
-           bool parser_debug) -> ErrorOr<Carbon::AST>;
+           ParserChoice parser_choice, bool parser_debug)
+    -> ErrorOr<Carbon::AST>;
 
 // Equivalent to `Parse`, but parses the contents of `file_contents`.
 // `input_file_name` is used only for reporting source locations, and does

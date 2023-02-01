@@ -82,7 +82,7 @@ auto ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit)
   // Can't do anything without a prelude, so it's a fatal error.
   CARBON_CHECK(prelude_path.ok()) << prelude_path.error();
 
-  AddPrelude(*prelude_path, &arena, &ast.declarations);
+  AddPrelude(*prelude_path, &arena, &ast.declarations, ParserChoice::Bison);
   CARBON_ASSIGN_OR_RETURN(
       ast, AnalyzeProgram(&arena, ast, /*trace_stream=*/std::nullopt));
   return ExecProgram(&arena, ast, /*trace_stream=*/std::nullopt);

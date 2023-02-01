@@ -70,8 +70,8 @@ static auto CarbonToTextProto(std::string_view input_file_name,
                               std::string_view output_file_name)
     -> ErrorOr<Success> {
   Carbon::Arena arena;
-  const ErrorOr<AST> ast = Carbon::Parse(&arena, input_file_name,
-                                         /*parser_debug=*/false);
+  const ErrorOr<AST> ast = Carbon::Parse(
+      &arena, input_file_name, ParserChoice::Bison, /*parser_debug=*/false);
   if (!ast.ok()) {
     return ErrorBuilder() << "Parsing failed: " << ast.error().message();
   }

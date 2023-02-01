@@ -32,9 +32,15 @@ class [[nodiscard]] Error {
   // TODO: Consider using two different types.
   explicit Error(llvm::Twine message) : Error("", message) {}
 
+  // Moves held state.
   Error(Error&& other) noexcept
       : location_(std::move(other.location_)),
         message_(std::move(other.message_)) {}
+  auto operator=(Error&& other) noexcept -> Error& {
+    location_ = std::move(other.location_);
+    message_ = std::move(other.message_);
+    return *this;
+  }
 
   // Prints the error string.
   void Print(llvm::raw_ostream& out) const {

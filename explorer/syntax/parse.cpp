@@ -7,6 +7,7 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "explorer/common/error_builders.h"
+#include "explorer/syntax/antlr/parse.h"
 #include "explorer/syntax/lexer.h"
 #include "explorer/syntax/parse_and_lex_context.h"
 #include "explorer/syntax/parser.h"
@@ -43,29 +44,36 @@ static auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
 }
 
 auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name,
-           bool parser_debug) -> ErrorOr<AST> {
-  std::string name_str(input_file_name);
-  FILE* input_file = fopen(name_str.c_str(), "r");
-  if (input_file == nullptr) {
-    return ProgramError(SourceLocation(name_str.c_str(), 0))
-           << "Error opening file: " << std::strerror(errno);
+           ParserChoice parser_choice, bool parser_debug) -> ErrorOr<AST> {
+  switch (parser_choice) {
+    case ParserChoice::Antlr: {
+      return Antlr::Parse(arena, input_file_name, parser_debug);
+    }
+    case ParserChoice::Bison: {
+      std::string name_str(input_file_name);
+      FILE* input_file = fopen(name_str.c_str(), "r");
+      if (input_file == nullptr) {
+        return ProgramError(SourceLocation(input_file_name, 0))
+               << "Error opening file: " << std::strerror(errno);
+      }
+
+      // Prepare the lexer.
+      yyscan_t scanner;
+      yylex_init(&scanner);
+      auto* buffer = yy_create_buffer(input_file, YY_BUF_SIZE, scanner);
+      yy_switch_to_buffer(buffer, scanner);
+
+      ErrorOr<AST> result =
+          ParseImpl(scanner, arena, input_file_name, parser_debug);
+
+      // Clean up the lexer.
+      yy_delete_buffer(buffer, scanner);
+      yylex_destroy(scanner);
+      fclose(input_file);
+
+      return result;
+    }
   }
-
-  // Prepare the lexer.
-  yyscan_t scanner;
-  yylex_init(&scanner);
-  auto* buffer = yy_create_buffer(input_file, YY_BUF_SIZE, scanner);
-  yy_switch_to_buffer(buffer, scanner);
-
-  ErrorOr<AST> result =
-      ParseImpl(scanner, arena, input_file_name, parser_debug);
-
-  // Clean up the lexer.
-  yy_delete_buffer(buffer, scanner);
-  yylex_destroy(scanner);
-  fclose(input_file);
-
-  return result;
 }
 
 auto ParseFromString(Nonnull<Arena*> arena, std::string_view input_file_name,

@@ -4,17 +4,18 @@
 
 #include "explorer/syntax/prelude.h"
 
-#include "explorer/syntax/parse.h"
-
 namespace Carbon {
 
 // Adds the Carbon prelude to `declarations`.
 void AddPrelude(std::string_view prelude_file_name, Nonnull<Arena*> arena,
-                std::vector<Nonnull<Declaration*>>* declarations) {
-  ErrorOr<AST> parse_result = Parse(arena, prelude_file_name, false);
+                std::vector<Nonnull<Declaration*>>* declarations,
+                ParserChoice parser_choice) {
+  ErrorOr<AST> parse_result =
+      Parse(arena, prelude_file_name, parser_choice, false);
   if (!parse_result.ok()) {
     // Try again with tracing, to help diagnose the problem.
-    ErrorOr<AST> trace_parse_result = Parse(arena, prelude_file_name, true);
+    ErrorOr<AST> trace_parse_result =
+        Parse(arena, prelude_file_name, parser_choice, true);
     CARBON_FATAL() << "Failed to parse prelude:\n"
                    << trace_parse_result.error();
   }

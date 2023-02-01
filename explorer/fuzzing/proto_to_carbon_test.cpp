@@ -31,7 +31,8 @@ TEST(ProtoToCarbonTest, Roundtrip) {
   int parsed_ok_count = 0;
   for (const llvm::StringRef f : *carbon_files) {
     Carbon::Arena arena;
-    const ErrorOr<AST> ast = Carbon::Parse(&arena, f, /*parser_debug=*/false);
+    const ErrorOr<AST> ast =
+        Carbon::Parse(&arena, f, ParserChoice::Bison, /*parser_debug=*/false);
     if (ast.ok()) {
       ++parsed_ok_count;
       const std::string source_from_proto = ProtoToCarbon(AstToProto(*ast));

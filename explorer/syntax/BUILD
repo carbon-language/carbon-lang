@@ -87,6 +87,7 @@ cc_library(
         "//explorer/common:arena",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
+        "//explorer/syntax/antlr:parse",
         "@llvm-project//llvm:Support",
     ],
 )

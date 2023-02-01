@@ -62,6 +62,11 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   std::string default_prelude_file_str(default_prelude_file);
   cl::opt<std::string> prelude_file_name("prelude", cl::desc("<prelude file>"),
                                          cl::init(default_prelude_file_str));
+  cl::opt<ParserChoice> parser_choice(
+      "parser", cl::desc("The parser to use."),
+      cl::values(clEnumValN(ParserChoice::Bison, "bison", "Bison"),
+                 clEnumValN(ParserChoice::Antlr, "antlr", "Antlr")),
+      cl::init(ParserChoice::Bison));
 
   cl::ParseCommandLineOptions(argc, argv);
 
@@ -85,7 +90,8 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
 
   Arena arena;
   AST ast;
-  if (ErrorOr<AST> parse_result = Parse(&arena, input_file_name, parser_debug);
+  if (ErrorOr<AST> parse_result =
+          Parse(&arena, input_file_name, parser_choice, parser_debug);
       parse_result.ok()) {
     ast = *std::move(parse_result);
   } else {
@@ -93,7 +99,7 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
     return EXIT_FAILURE;
   }
 
-  AddPrelude(prelude_file_name, &arena, &ast.declarations);
+  AddPrelude(prelude_file_name, &arena, &ast.declarations, parser_choice);
 
   // Semantically analyze the parsed program.
   if (ErrorOr<AST> analyze_result = AnalyzeProgram(&arena, ast, trace_stream);

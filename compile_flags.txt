@@ -42,6 +42,8 @@
 -iquote
 bazel-bin
 -iquote
+bazel-execroot/external/antlr4_runtimes/runtime/Cpp/runtime/src
+-iquote
 bazel-execroot/external/llvm-project
 -iquote
 bazel-bin/external/llvm-project
