@@ -364,6 +364,7 @@ message FunctionDeclaration {
   optional TuplePattern param_pattern = 4;
   optional ReturnTerm return_term = 5;
   optional BlockStatement body = 6;
+  repeated string qualifiers = 7;
 }
 
 message DestructorDeclaration {
@@ -375,6 +376,7 @@ message ClassDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
   optional TuplePattern type_params = 3;
+  repeated string qualifiers = 4;
 }
 
 message AlternativeSignature {
@@ -385,6 +387,7 @@ message AlternativeSignature {
 message ChoiceDeclaration {
   optional string name = 1;
   repeated AlternativeSignature alternatives = 2;
+  repeated string qualifiers = 3;
 }
 
 message VariableDeclaration {
@@ -410,11 +413,13 @@ message InterfaceImplDeclaration {
 message InterfaceDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
+  repeated string qualifiers = 3;
 }
 
 message ConstraintDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
+  repeated string qualifiers = 3;
 }
 
 message ImplDeclaration {
@@ -437,6 +442,7 @@ message MatchFirstDeclaration {
 message AliasDeclaration {
   optional string name = 1;
   optional Expression target = 2;
+  repeated string qualifiers = 3;
 }
 
 // EXPERIMENTAL MIXIN FEATURE
@@ -446,6 +452,7 @@ message MixinDeclaration {
   // Type params not implemented yet
   // optional TuplePattern params = 3;
   optional GenericBinding self = 4;
+  repeated string qualifiers = 5;
 }
 
 // EXPERIMENTAL MIXIN FEATURE
@@ -455,6 +462,7 @@ message MixDeclaration {
 
 message NamespaceDeclaration {
   optional string name = 1;
+  repeated string qualifiers = 2;
 }
 
 message Declaration {
