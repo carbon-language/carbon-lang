@@ -108,7 +108,7 @@
 %type <ClassExtensibility> class_declaration_extensibility
 %type <std::optional<Nonnull<Expression*>>> class_declaration_extends
 %type <Nonnull<Declaration*>> declaration
-%type <DeclaredName> declared_name
+%type <BisonWrap<DeclaredName>> declared_name
 %type <Nonnull<FunctionDeclaration*>> function_declaration
 %type <Nonnull<DestructorDeclaration*>> destructor_declaration
 %type <Nonnull<MixDeclaration*>> mix_declaration
@@ -1122,7 +1122,7 @@ declared_name:
 | declared_name PERIOD identifier
     {
       $$ = std::move($1);
-      $$.Append(context.source_loc(), $3);
+      $$.Unwrap().Append(context.source_loc(), $3);
     }
 | LEFT_PARENTHESIS declared_name RIGHT_PARENTHESIS
     { $$ = $2; }

@@ -106,7 +106,7 @@ auto NameResolver::ResolveQualifier(DeclaredName name,
       scope = &namespace_scopes_[namespace_decl];
     } else {
       return ProgramError(name.source_loc())
-             << "qualifier `" << qualifier << "` is not a namespace";
+             << PrintAsID(node.base()) << " cannot be used as a name qualifier";
     }
   }
   return scope;

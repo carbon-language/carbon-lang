@@ -41,6 +41,17 @@ void StaticScope::MarkUsable(std::string_view name) {
   it->second.status = NameStatus::Usable;
 }
 
+auto StaticScope::Resolve(std::string_view name,
+                          SourceLocation source_loc) const
+    -> ErrorOr<ValueNodeView> {
+  CARBON_ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
+                          TryResolve(name, source_loc));
+  if (!result) {
+    return ProgramError(source_loc) << "could not resolve '" << name << "'";
+  }
+  return *result;
+}
+
 auto StaticScope::ResolveHere(std::string_view name, SourceLocation source_loc,
                               bool allow_undeclared) const
     -> ErrorOr<ValueNodeView> {
@@ -49,17 +60,6 @@ auto StaticScope::ResolveHere(std::string_view name, SourceLocation source_loc,
   if (!result) {
     return ProgramError(source_loc)
            << "could not resolve '" << name << "' in this scope";
-  }
-  return *result;
-}
-
-auto StaticScope::Resolve(std::string_view name,
-                          SourceLocation source_loc) const
-    -> ErrorOr<ValueNodeView> {
-  CARBON_ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
-                          TryResolve(name, source_loc));
-  if (!result) {
-    return ProgramError(source_loc) << "could not resolve '" << name << "'";
   }
   return *result;
 }

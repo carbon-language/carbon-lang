@@ -134,9 +134,6 @@ class DeclaredName {
     std::string name;
   };
 
-  // This is required by bison, and should not be used elsewhere.
-  explicit DeclaredName() {}
-
   explicit DeclaredName(SourceLocation loc, std::string name)
       : components_{{loc, std::move(name)}} {}
 
@@ -155,18 +152,10 @@ class DeclaredName {
   // single-identifier name.
   auto is_qualified() const { return components_.size() > 1; }
 
-  // Returns a range containing the components of the name, from outermost to
-  // innermost.
-  auto components() const
-      -> llvm::iterator_range<std::vector<NameComponent>::const_iterator> {
-    return components_;
-  }
-
   // Returns a range containing the components of the name other than the final
   // component.
-  auto qualifiers() const
-      -> llvm::iterator_range<std::vector<NameComponent>::const_iterator> {
-    return {components_.begin(), components_.end() - 1};
+  auto qualifiers() const -> llvm::ArrayRef<NameComponent> {
+    return llvm::makeArrayRef(components_).drop_back();
   }
 
   // Returns the innermost name, which is the unqualified name of the entity

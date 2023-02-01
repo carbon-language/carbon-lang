@@ -226,10 +226,10 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
 }
 
 void DeclaredName::Print(llvm::raw_ostream& out) const {
-  llvm::ListSeparator sep(".");
-  for (auto& [loc, name] : components()) {
-    out << sep << name;
+  for (auto& [loc, name] : qualifiers()) {
+    out << name << ".";
   }
+  out << inner_name();
 }
 
 auto GetName(const Declaration& declaration)
