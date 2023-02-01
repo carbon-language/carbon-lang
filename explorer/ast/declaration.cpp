@@ -226,7 +226,7 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
 }
 
 void DeclaredName::Print(llvm::raw_ostream& out) const {
-  for (auto& [loc, name] : qualifiers()) {
+  for (const auto& [loc, name] : qualifiers()) {
     out << name << ".";
   }
   out << inner_name();

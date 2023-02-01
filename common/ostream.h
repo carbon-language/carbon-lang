@@ -68,7 +68,7 @@ void PrintTo(T* p, std::ostream* out) {
 template <typename T>
 class PrintAsID {
  public:
-  PrintAsID(const T& object) : object_(&object) {}
+  explicit PrintAsID(const T& object) : object_(&object) {}
 
   friend auto operator<<(llvm::raw_ostream& out, const PrintAsID& self)
       -> llvm::raw_ostream& {

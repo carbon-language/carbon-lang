@@ -94,7 +94,7 @@ auto NameResolver::ResolveQualifier(DeclaredName name,
                                     bool allow_undeclared)
     -> ErrorOr<Nonnull<StaticScope*>> {
   Nonnull<StaticScope*> scope = &enclosing_scope;
-  for (auto& [loc, qualifier] : name.qualifiers()) {
+  for (const auto& [loc, qualifier] : name.qualifiers()) {
     // TODO: If we permit qualified names anywhere other than the top level, we
     // will need to decide whether the first name in the qualifier is looked up
     // only in the innermost enclosing scope or in all enclosing scopes.
@@ -102,7 +102,8 @@ auto NameResolver::ResolveQualifier(DeclaredName name,
         ValueNodeView node,
         scope->ResolveHere(qualifier, loc, allow_undeclared));
 
-    if (auto* namespace_decl = dyn_cast<NamespaceDeclaration>(&node.base())) {
+    if (const auto* namespace_decl =
+            dyn_cast<NamespaceDeclaration>(&node.base())) {
       scope = &namespace_scopes_[namespace_decl];
     } else {
       return ProgramError(name.source_loc())
