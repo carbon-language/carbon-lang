@@ -48,7 +48,6 @@ repos:
     rev: b0d1fba7ac3be53c71fb0d3211d911e629f8aecb # frozen: 23.1.0
     hooks:
       - id: black
-        language: python
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: cafd5506f18eea191804850dacc0a4264772d59d # frozen: v3.0.0-alpha.4
     hooks:
