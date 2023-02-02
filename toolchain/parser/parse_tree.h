@@ -154,8 +154,8 @@ class ParseTree {
   // The in-memory representation of data used for a particular node in the
   // tree.
   struct NodeImpl {
-    NodeImpl(ParseNodeKind kind, bool has_error, TokenizedBuffer::Token token,
-             int subtree_size)
+    explicit NodeImpl(ParseNodeKind kind, bool has_error,
+                      TokenizedBuffer::Token token, int subtree_size)
         : kind(kind),
           has_error(has_error),
           token(token),
@@ -259,7 +259,7 @@ class ParseTree::PostorderIterator
   // Default construction is only provided to satisfy iterator requirements. It
   // produces an unusable iterator, and you must assign a valid iterator to it
   // before performing any operations.
-  PostorderIterator() = default;
+  explicit PostorderIterator() = default;
 
   auto operator==(const PostorderIterator& rhs) const -> bool {
     return node_ == rhs.node_;
@@ -309,7 +309,7 @@ class ParseTree::SiblingIterator
     : public llvm::iterator_facade_base<
           SiblingIterator, std::forward_iterator_tag, Node, int, Node*, Node> {
  public:
-  SiblingIterator() = default;
+  explicit SiblingIterator() = default;
 
   auto operator==(const SiblingIterator& rhs) const -> bool {
     return node_ == rhs.node_;

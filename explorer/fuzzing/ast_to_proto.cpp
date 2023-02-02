@@ -657,7 +657,7 @@ static auto DeclarationToProto(const Declaration& declaration)
     case DeclarationKind::FunctionDeclaration: {
       const auto& function = cast<FunctionDeclaration>(declaration);
       auto* function_proto = declaration_proto.mutable_function();
-      function_proto->set_name(function.name());
+      function_proto->set_name(std::string(function.name().inner_name()));
       for (Nonnull<const GenericBinding*> binding :
            function.deduced_parameters()) {
         *function_proto->add_deduced_parameters() =

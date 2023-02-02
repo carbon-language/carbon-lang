@@ -42,9 +42,9 @@ class LexedStringLiteral {
 
   struct Introducer;
 
-  LexedStringLiteral(llvm::StringRef text, llvm::StringRef content,
-                     int hash_level, MultiLineKind multi_line,
-                     bool is_terminated)
+  explicit LexedStringLiteral(llvm::StringRef text, llvm::StringRef content,
+                              int hash_level, MultiLineKind multi_line,
+                              bool is_terminated)
       : text_(text),
         content_(content),
         hash_level_(hash_level),
