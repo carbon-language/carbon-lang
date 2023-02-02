@@ -52,27 +52,55 @@ auto StaticScope::Resolve(std::string_view name,
   return *result;
 }
 
+auto StaticScope::ResolveHere(std::string_view name, SourceLocation source_loc,
+                              bool allow_undeclared) const
+    -> ErrorOr<ValueNodeView> {
+  CARBON_ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
+                          TryResolveHere(name, source_loc, allow_undeclared));
+  if (!result) {
+    return ProgramError(source_loc)
+           << "could not resolve '" << name << "' in this scope";
+  }
+  return *result;
+}
+
 auto StaticScope::TryResolve(std::string_view name,
                              SourceLocation source_loc) const
     -> ErrorOr<std::optional<ValueNodeView>> {
   for (const StaticScope* scope = this; scope;
        scope = scope->parent_scope_.value_or(nullptr)) {
-    auto it = scope->declared_names_.find(name);
-    if (it != scope->declared_names_.end()) {
-      switch (it->second.status) {
-        case NameStatus::KnownButNotDeclared:
-          return ProgramError(source_loc)
-                 << "'" << name << "' has not been declared yet";
-        case NameStatus::DeclaredButNotUsable:
-          return ProgramError(source_loc) << "'" << name
-                                          << "' is not usable until after it "
-                                             "has been completely declared";
-        case NameStatus::Usable:
-          return std::make_optional(it->second.entity);
-      }
+    CARBON_ASSIGN_OR_RETURN(
+        std::optional<ValueNodeView> value,
+        scope->TryResolveHere(name, source_loc, /*allow_undeclared=*/false));
+    if (value) {
+      return value;
     }
   }
   return {std::nullopt};
+}
+
+auto StaticScope::TryResolveHere(std::string_view name,
+                                 SourceLocation source_loc,
+                                 bool allow_undeclared) const
+    -> ErrorOr<std::optional<ValueNodeView>> {
+  auto it = declared_names_.find(name);
+  if (it == declared_names_.end()) {
+    return {std::nullopt};
+  }
+  if (allow_undeclared) {
+    return {it->second.entity};
+  }
+  switch (it->second.status) {
+    case NameStatus::KnownButNotDeclared:
+      return ProgramError(source_loc)
+             << "'" << name << "' has not been declared yet";
+    case NameStatus::DeclaredButNotUsable:
+      return ProgramError(source_loc) << "'" << name
+                                      << "' is not usable until after it "
+                                         "has been completely declared";
+    case NameStatus::Usable:
+      return {it->second.entity};
+  }
 }
 
 auto StaticScope::AddReturnedVar(ValueNodeView returned_var_def_view)

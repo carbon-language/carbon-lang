@@ -53,11 +53,20 @@ class StaticScope {
   // Marks `name` as being completely declared and hence usable.
   void MarkUsable(std::string_view name);
 
-  // Returns the nearest definition of `name` in the ancestor graph of this
-  // scope, or reports a compilation error at `source_loc` there isn't exactly
-  // one such definition.
+  // Returns the nearest declaration of `name` in the ancestor graph of this
+  // scope, or reports a compilation error at `source_loc` there isn't such a
+  // declaration.
+  // TODO: This should also diagnose if there's a shadowed declaration of the
+  // name in an enclosing scope, but does not do so yet.
   auto Resolve(std::string_view name, SourceLocation source_loc) const
       -> ErrorOr<ValueNodeView>;
+
+  // Returns the declaration of `name` in this scope, or reports a compilation
+  // error at `source_loc` if the name is not declared in this scope. If
+  // `allow_undeclared` is `true`, names that have been added but not yet marked
+  // declared or usable do not result in an error.
+  auto ResolveHere(std::string_view name, SourceLocation source_loc,
+                   bool allow_undeclared) const -> ErrorOr<ValueNodeView>;
 
   // Returns the value node of the BindingPattern of the returned var definition
   // if it exists in the ancestor graph.
@@ -70,9 +79,14 @@ class StaticScope {
 
  private:
   // Equivalent to Resolve, but returns `nullopt` instead of raising an error
-  // if no definition can be found. Still raises a compilation error if more
-  // than one definition is found.
+  // if no declaration can be found.
   auto TryResolve(std::string_view name, SourceLocation source_loc) const
+      -> ErrorOr<std::optional<ValueNodeView>>;
+
+  // Equivalent to ResolveHere, but returns `nullopt` if no definition can be
+  // found. Raises an error if the name is found but is not usable yet.
+  auto TryResolveHere(std::string_view name, SourceLocation source_loc,
+                      bool allow_undeclared) const
       -> ErrorOr<std::optional<ValueNodeView>>;
 
   struct Entry {

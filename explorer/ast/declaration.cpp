@@ -225,13 +225,20 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
   }
 }
 
+void DeclaredName::Print(llvm::raw_ostream& out) const {
+  for (const auto& [loc, name] : qualifiers()) {
+    out << name << ".";
+  }
+  out << inner_name();
+}
+
 auto GetName(const Declaration& declaration)
     -> std::optional<std::string_view> {
   switch (declaration.kind()) {
     case DeclarationKind::NamespaceDeclaration:
       return cast<NamespaceDeclaration>(declaration).name();
     case DeclarationKind::FunctionDeclaration:
-      return cast<FunctionDeclaration>(declaration).name();
+      return cast<FunctionDeclaration>(declaration).name().inner_name();
     case DeclarationKind::DestructorDeclaration:
       return "destructor";
     case DeclarationKind::ClassDeclaration:
@@ -360,7 +367,7 @@ auto DestructorDeclaration::CreateDestructor(
 }
 
 auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
-                                 SourceLocation source_loc, std::string name,
+                                 SourceLocation source_loc, DeclaredName name,
                                  std::vector<Nonnull<AstNode*>> deduced_params,
                                  Nonnull<TuplePattern*> param_pattern,
                                  ReturnTerm return_term,
@@ -371,7 +378,7 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
   CARBON_ASSIGN_OR_RETURN(split_params,
                           SplitDeducedParameters(source_loc, deduced_params));
   return arena->New<FunctionDeclaration>(
-      source_loc, name, std::move(split_params.resolved_params),
+      source_loc, std::move(name), std::move(split_params.resolved_params),
       split_params.self_pattern, param_pattern, return_term, body,
       virt_override);
 }
