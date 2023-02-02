@@ -59,9 +59,11 @@ class Parser {
 
   // Used to track state on state_stack_.
   struct StateStackEntry {
-    StateStackEntry(ParserState state, PrecedenceGroup ambient_precedence,
-                    PrecedenceGroup lhs_precedence,
-                    TokenizedBuffer::Token token, int32_t subtree_start)
+    explicit StateStackEntry(ParserState state,
+                             PrecedenceGroup ambient_precedence,
+                             PrecedenceGroup lhs_precedence,
+                             TokenizedBuffer::Token token,
+                             int32_t subtree_start)
         : state(state),
           ambient_precedence(ambient_precedence),
           lhs_precedence(lhs_precedence),
@@ -107,8 +109,9 @@ class Parser {
   static_assert(sizeof(StateStackEntry) == 12,
                 "StateStackEntry has unexpected size!");
 
-  Parser(ParseTree& tree, TokenizedBuffer& tokens,
-         TokenDiagnosticEmitter& emitter, llvm::raw_ostream* vlog_stream);
+  explicit Parser(ParseTree& tree, TokenizedBuffer& tokens,
+                  TokenDiagnosticEmitter& emitter,
+                  llvm::raw_ostream* vlog_stream);
 
   auto Parse() -> void;
 

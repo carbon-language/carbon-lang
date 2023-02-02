@@ -62,9 +62,9 @@ class SourceBuffer {
   };
 
   // Constructor for mmapped content.
-  SourceBuffer(std::string filename, llvm::StringRef text);
+  explicit SourceBuffer(std::string filename, llvm::StringRef text);
   // Constructor for owned content.
-  SourceBuffer(std::string filename, std::string text);
+  explicit SourceBuffer(std::string filename, std::string text);
 
   ContentMode content_mode_;
   std::string filename_;
