@@ -133,7 +133,7 @@ class NamespaceDeclaration : public Declaration {
 
   explicit NamespaceDeclaration(SourceLocation source_loc, std::string name)
       : Declaration(AstNodeKind::NamespaceDeclaration, source_loc),
-        name_(name) {}
+        name_(std::move(name)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromNamespaceDeclaration(node->kind());

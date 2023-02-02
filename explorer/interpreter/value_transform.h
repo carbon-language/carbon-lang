@@ -37,7 +37,7 @@ constexpr bool IsRecursivelyTransformable<
 template <typename Derived>
 class TransformBase {
  public:
-  TransformBase(Nonnull<Arena*> arena) : arena_(arena) {}
+  explicit TransformBase(Nonnull<Arena*> arena) : arena_(arena) {}
 
   template <typename T>
   auto Transform(T&& v) -> decltype(auto) {
@@ -134,7 +134,7 @@ class ValueTransform : public TransformBase<Derived> {
   // T*)` in the base class. We can remove this once we start using a compiler
   // that implements P1787R6.
   template <typename NodeT>
-  auto operator()(Nonnull<const NodeT*> node, int = 0)
+  auto operator()(Nonnull<const NodeT*> node, int /*unused*/ = 0)
       -> std::enable_if_t<std::is_base_of_v<AstNode, NodeT>,
                           Nonnull<const NodeT*>> {
     return node;
