@@ -35,7 +35,7 @@ class StaticScope {
   };
 
   // Construct a root scope.
-  StaticScope() {}
+  StaticScope() = default;
 
   // Construct a scope that is nested within the given scope.
   explicit StaticScope(Nonnull<const StaticScope*> parent)

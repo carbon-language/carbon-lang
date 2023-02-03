@@ -163,7 +163,7 @@ class IncrementDecrement : public Statement {
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
 
-  bool is_increment() const { return is_increment_; }
+  auto is_increment() const -> bool { return is_increment_; }
 
   // Set the rewritten form of this statement. Can only be called during type
   // checking.
