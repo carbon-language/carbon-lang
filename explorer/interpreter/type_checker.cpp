@@ -2566,6 +2566,18 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
       auto& access = cast<SimpleMemberAccessExpression>(*e);
+
+      // If name lookup resolved this member access statically, rewrite it to
+      // an identifier expression.
+      if (auto value_node = access.value_node()) {
+        auto* rewritten = arena_->New<IdentifierExpression>(
+            access.source_loc(), access.member_name());
+        rewritten->set_value_node(*value_node);
+        CARBON_RETURN_IF_ERROR(TypeCheckExp(rewritten, impl_scope));
+        access.set_rewritten_form(rewritten);
+        return Success();
+      }
+
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
       const Value& object_type = access.object().static_type();
       CARBON_RETURN_IF_ERROR(ExpectCompleteType(access.source_loc(),
@@ -2852,11 +2864,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               return ProgramError(access.source_loc())
                      << "unsupported member access into type " << *type;
           }
-        }
-        case Value::Kind::TypeOfNamespaceName: {
-          // TODO: Implement this.
-          return ProgramError(e->source_loc())
-                 << "member access into namespace is not implemented yet";
         }
         default:
           return ProgramError(e->source_loc())
