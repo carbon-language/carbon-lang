@@ -52,14 +52,21 @@ auto StaticScope::Resolve(std::string_view name,
   return *result;
 }
 
-auto StaticScope::ResolveHere(std::string_view name, SourceLocation source_loc,
+auto StaticScope::ResolveHere(std::optional<ValueNodeView> this_scope,
+                              std::string_view name, SourceLocation source_loc,
                               bool allow_undeclared) const
     -> ErrorOr<ValueNodeView> {
   CARBON_ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
                           TryResolveHere(name, source_loc, allow_undeclared));
   if (!result) {
-    return ProgramError(source_loc)
-           << "could not resolve '" << name << "' in this scope";
+    if (this_scope) {
+      return ProgramError(source_loc)
+             << "name '" << name << "' has not been declared in "
+             << PrintAsID(this_scope->base());
+    } else {
+      return ProgramError(source_loc)
+             << "name '" << name << "' has not been declared in this scope";
+    }
   }
   return *result;
 }
