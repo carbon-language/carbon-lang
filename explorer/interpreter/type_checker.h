@@ -63,7 +63,7 @@ class TypeChecker {
   auto MatchImpl(const InterfaceType& iface, Nonnull<const Value*> type,
                  const ImplScope::Impl& impl, const ImplScope& impl_scope,
                  SourceLocation source_loc) const
-      -> std::optional<Nonnull<const Witness*>>;
+      -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 
   // Return the declaration of the member with the given name and the class type
   // that owns it, from the class and its parents
@@ -140,6 +140,27 @@ class TypeChecker {
   struct ConstraintLookupResult {
     Nonnull<const InterfaceType*> interface;
     Nonnull<const Declaration*> member;
+  };
+
+  // A set of impls that we're currently matching against. Used to detect and
+  // reject non-termination.
+  class MatchingImplSet {
+   public:
+    class Match;
+
+   private:
+    enum class ValueKey : int {
+      TypeType,
+      BoolType,
+      IntType,
+      StringType,
+      ArrayType,
+      PointerType,
+      FirstDeclarationKey
+    };
+    ValueKey next_value_key_ = ValueKey::FirstDeclarationKey;
+    llvm::DenseMap<const Declaration*, ValueKey> declaration_keys_;
+    std::vector<Match*> matches_;
   };
 
   // Checks a member access that might be accessing a function taking `addr
@@ -525,6 +546,10 @@ class TypeChecker {
   // Constraint types that are currently being resolved. These may have
   // rewrites that are not yet visible in any type.
   std::vector<ConstraintTypeBuilder*> partial_constraint_types_;
+
+  // A set of impls we're currently matching.
+  // TODO: Drop the 'mutable'.
+  mutable MatchingImplSet matching_impl_set_;
 };
 
 }  // namespace Carbon
