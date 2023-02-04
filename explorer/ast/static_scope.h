@@ -65,7 +65,8 @@ class StaticScope {
   // error at `source_loc` if the name is not declared in this scope. If
   // `allow_undeclared` is `true`, names that have been added but not yet marked
   // declared or usable do not result in an error.
-  auto ResolveHere(std::string_view name, SourceLocation source_loc,
+  auto ResolveHere(std::optional<ValueNodeView> this_scope,
+                   std::string_view name, SourceLocation source_loc,
                    bool allow_undeclared) const -> ErrorOr<ValueNodeView>;
 
   // Returns the value node of the BindingPattern of the returned var definition
