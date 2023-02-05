@@ -54,12 +54,12 @@ cc_library(
         "pattern.h",
         "return_term.h",
         "statement.h",
+        "value_node.h",
     ],
     deps = [
         ":ast_node",
         ":library_name",
         ":paren_contents",
-        ":static_scope",
         ":value_category",
         "//common:check",
         "//common:error",
@@ -160,8 +160,7 @@ cc_library(
     srcs = ["static_scope.cpp"],
     hdrs = ["static_scope.h"],
     deps = [
-        ":ast_node",
-        ":value_category",
+        ":ast",
         "//common:check",
         "//common:error",
         "//explorer/common:error_builders",

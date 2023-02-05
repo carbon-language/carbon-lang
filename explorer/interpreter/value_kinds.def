@@ -54,6 +54,7 @@ CARBON_VALUE_KIND(StringValue)
 CARBON_VALUE_KIND(TypeOfMixinPseudoType)
 CARBON_VALUE_KIND(TypeOfParameterizedEntityName)
 CARBON_VALUE_KIND(TypeOfMemberName)
+CARBON_VALUE_KIND(TypeOfNamespaceName)
 CARBON_VALUE_KIND(StaticArrayType)
 
 #undef CARBON_VALUE_KIND

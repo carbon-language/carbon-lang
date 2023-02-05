@@ -718,10 +718,16 @@ static auto ReturnTermToCarbon(const Fuzzing::ReturnTerm& return_term,
 static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
                                 llvm::raw_ostream& out) -> void {
   switch (declaration.kind_case()) {
-    case Fuzzing::Declaration::KIND_NOT_SET:
+    case Fuzzing::Declaration::KIND_NOT_SET: {
       // Arbitrary default to avoid getting invalid syntax.
       out << "var x: i32;";
       break;
+    }
+
+    case Fuzzing::Declaration::kNamespace: {
+      out << "namespace " << declaration.namespace_().name() << ";";
+      break;
+    }
 
     case Fuzzing::Declaration::kDestructor: {
       const auto& function = declaration.destructor();

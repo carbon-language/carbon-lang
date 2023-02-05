@@ -150,7 +150,8 @@ auto MatchesFunctionDeclarationMatcher::MatchAndExplainImpl(
   llvm::ListSeparator sep(", and");
   if (name_matcher_.has_value()) {
     out << sep << "whose name ";
-    if (!name_matcher_->MatchAndExplain(decl->name(), listener)) {
+    if (!name_matcher_->MatchAndExplain(std::string(decl->name().inner_name()),
+                                        listener)) {
       // We short-circuit here because if the name doesn't match, that's
       // probably the only information the user cares about.
       return false;

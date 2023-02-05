@@ -17,8 +17,8 @@
 #include "explorer/ast/bindings.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/paren_contents.h"
-#include "explorer/ast/static_scope.h"
 #include "explorer/ast/value_category.h"
+#include "explorer/ast/value_node.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -304,13 +304,14 @@ class MemberAccessExpression : public Expression {
   std::optional<Nonnull<const Value*>> constant_value_;
 };
 
-class SimpleMemberAccessExpression : public MemberAccessExpression {
+class SimpleMemberAccessExpression
+    : public RewritableMixin<MemberAccessExpression> {
  public:
   explicit SimpleMemberAccessExpression(SourceLocation source_loc,
                                         Nonnull<Expression*> object,
                                         std::string member_name)
-      : MemberAccessExpression(AstNodeKind::SimpleMemberAccessExpression,
-                               source_loc, object),
+      : RewritableMixin(AstNodeKind::SimpleMemberAccessExpression, source_loc,
+                        object),
         member_name_(std::move(member_name)) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -343,10 +344,24 @@ class SimpleMemberAccessExpression : public MemberAccessExpression {
     found_in_interface_ = interface;
   }
 
+  // Returns the ValueNodeView this identifier refers to, if this was
+  // determined by name resolution. Cannot be called before name resolution.
+  auto value_node() const -> std::optional<ValueNodeView> {
+    return value_node_;
+  }
+
+  // Sets the value returned by value_node. Can be called only during name
+  // resolution.
+  void set_value_node(ValueNodeView value_node) {
+    CARBON_CHECK(!value_node_.has_value() || value_node_ == value_node);
+    value_node_ = std::move(value_node);
+  }
+
  private:
   std::string member_name_;
   std::optional<Nonnull<const NamedElement*>> member_;
   std::optional<Nonnull<const InterfaceType*>> found_in_interface_;
+  std::optional<ValueNodeView> value_node_;
 };
 
 // A compound member access expression of the form `object.(path)`.

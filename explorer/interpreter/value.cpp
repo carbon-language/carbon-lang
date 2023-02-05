@@ -689,6 +689,10 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "member name " << cast<TypeOfMemberName>(*this).member();
       break;
     }
+    case Value::Kind::TypeOfNamespaceName: {
+      cast<TypeOfNamespaceName>(*this).namespace_decl()->PrintID(out);
+      break;
+    }
     case Value::Kind::StaticArrayType: {
       const auto& array_type = cast<StaticArrayType>(*this);
       out << "[" << array_type.element_type() << "; " << array_type.size()
@@ -923,6 +927,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::TypeOfMemberName:
     case Value::Kind::MixinPseudoType:
     case Value::Kind::TypeOfMixinPseudoType:
+    case Value::Kind::TypeOfNamespaceName:
       CARBON_FATAL() << "TypeEqual used to compare non-type values\n"
                      << *t1 << "\n"
                      << *t2;
@@ -1045,6 +1050,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+    case Value::Kind::TypeOfNamespaceName:
     case Value::Kind::StaticArrayType:
       return TypeEqual(v1, v2, equality_ctx);
     case Value::Kind::NominalClassValue:
@@ -1167,7 +1173,7 @@ auto FindFunction(std::string_view name,
       }
       case DeclarationKind::FunctionDeclaration: {
         const auto& fun = cast<FunctionDeclaration>(*member);
-        if (fun.name() == name) {
+        if (fun.name().inner_name() == name) {
           return &cast<FunctionValue>(**fun.constant_value());
         }
         break;
@@ -1195,7 +1201,7 @@ auto MixinPseudoType::FindFunction(const std::string_view& name) const
       }
       case DeclarationKind::FunctionDeclaration: {
         const auto& fun = cast<FunctionDeclaration>(*member);
-        if (fun.name() == name) {
+        if (fun.name().inner_name() == name) {
           return &cast<FunctionValue>(**fun.constant_value());
         }
         break;

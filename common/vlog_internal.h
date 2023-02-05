@@ -18,7 +18,7 @@ class VLoggingStream {
   // Internal type used in macros to dispatch to the `operator|` overload.
   struct Helper {};
 
-  VLoggingStream(llvm::raw_ostream* stream)
+  explicit VLoggingStream(llvm::raw_ostream* stream)
       // Prefix the buffer with the current bug report message.
       : stream_(stream) {}
 

@@ -29,8 +29,8 @@ namespace Carbon {
 // method. The main exception is PopAndIgnore, which doesn't do verification.
 class SemanticsNodeStack {
  public:
-  SemanticsNodeStack(const ParseTree& parse_tree,
-                     llvm::raw_ostream* vlog_stream)
+  explicit SemanticsNodeStack(const ParseTree& parse_tree,
+                              llvm::raw_ostream* vlog_stream)
       : parse_tree_(&parse_tree), vlog_stream_(vlog_stream) {}
 
   // Pushes a solo parse tree node onto the stack. Used when there is no

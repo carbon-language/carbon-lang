@@ -895,7 +895,7 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   // Find the first line starting after the given location. Note that we can't
   // inspect `line.length` here because it is not necessarily correct for the
   // final line during lexing (but will be correct later for the parse tree).
-  auto* line_it = std::partition_point(
+  const auto* line_it = std::partition_point(
       buffer_->line_infos_.begin(), buffer_->line_infos_.end(),
       [offset](const LineInfo& line) { return line.start <= offset; });
   bool incomplete_line_info = last_line_lexed_to_column_ != nullptr &&
@@ -932,8 +932,8 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
 auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
     -> DiagnosticLocation {
   // Map the token location into a position within the source buffer.
-  auto& token_info = buffer_->GetTokenInfo(token);
-  auto& line_info = buffer_->GetLineInfo(token_info.token_line);
+  const auto& token_info = buffer_->GetTokenInfo(token);
+  const auto& line_info = buffer_->GetLineInfo(token_info.token_line);
   const char* token_start =
       buffer_->source_->text().begin() + line_info.start + token_info.column;
 
