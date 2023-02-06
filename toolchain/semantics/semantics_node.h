@@ -42,6 +42,12 @@ constexpr SemanticsNodeId SemanticsNodeId::Invalid = SemanticsNodeId();
       SemanticsNodeId(SemanticsBuiltinKind::Name.AsInt());
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
+// The ID of a call.
+struct SemanticsCallId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void { out << "call" << index; }
+};
+
 // The ID of a callable, such as a function.
 struct SemanticsCallableId : public IndexBase {
   using IndexBase::IndexBase;
@@ -144,12 +150,25 @@ class SemanticsNode {
                           SemanticsNodeId type) -> SemanticsNode {
     // Builtins won't have a ParseTree node associated, so we provide the
     // default invalid one.
-    return SemanticsNode(ParseTree::Node(), SemanticsNodeKind::Builtin, type,
-                         builtin_kind.AsInt());
+    return SemanticsNode(ParseTree::Node::Invalid, SemanticsNodeKind::Builtin,
+                         type, builtin_kind.AsInt());
   }
   auto GetAsBuiltin() const -> SemanticsBuiltinKind {
     CARBON_CHECK(kind_ == SemanticsNodeKind::Builtin);
     return SemanticsBuiltinKind::FromInt(arg0_);
+  }
+
+  static auto MakeCall(ParseTree::Node parse_node, SemanticsNodeId type,
+                       SemanticsCallId call_id, SemanticsCallableId callable_id)
+      -> SemanticsNode {
+    // Builtins won't have a ParseTree node associated, so we provide the
+    // default invalid one.
+    return SemanticsNode(parse_node, SemanticsNodeKind::Call, type,
+                         call_id.index, callable_id.index);
+  }
+  auto GetAsCall() const -> std::pair<SemanticsCallId, SemanticsCallableId> {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::Call);
+    return {SemanticsCallId(arg0_), SemanticsCallableId(arg1_)};
   }
 
   static auto MakeCodeBlock(ParseTree::Node parse_node,

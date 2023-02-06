@@ -5,9 +5,12 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
+// CHECK:STDOUT: calls: [
+// CHECK:STDOUT:   {arg_ir: block4, arg_refs: block5},
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block1, param_refs: block2}
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0}
+// CHECK:STDOUT:   {param_ir: block1, param_refs: block2},
+// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,
@@ -24,47 +27,52 @@
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block1, type: node1},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block2, type: node0},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block3, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block4, type: node0},
 // CHECK:STDOUT:   {kind: VarStorage, type: node2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node4, type: node2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node5, type: node2},
 // CHECK:STDOUT:   {kind: VarStorage, type: node2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node6, type: node2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node7, type: node2},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: callable0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node8},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node8, arg1: block0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node9},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node9, arg1: block0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: callable1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node11},
+// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node12},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: node2},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: node2},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node11, arg1: block0},
+// CHECK:STDOUT:   {kind: Call, arg0: call0, arg1: callable0, type: node4},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node12, arg1: block6},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node4,
 // CHECK:STDOUT:     node5,
 // CHECK:STDOUT:     node6,
 // CHECK:STDOUT:     node7,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node5,
-// CHECK:STDOUT:     node7,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node8,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node6,
+// CHECK:STDOUT:     node8,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node9,
 // CHECK:STDOUT:     node10,
 // CHECK:STDOUT:     node11,
 // CHECK:STDOUT:     node12,
+// CHECK:STDOUT:     node13,
+// CHECK:STDOUT:     node17,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node14,
 // CHECK:STDOUT:     node15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node13,
 // CHECK:STDOUT:     node14,
+// CHECK:STDOUT:     node15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node13,
-// CHECK:STDOUT:     node14,
+// CHECK:STDOUT:     node16,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

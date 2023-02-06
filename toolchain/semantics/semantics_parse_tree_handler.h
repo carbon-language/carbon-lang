@@ -96,9 +96,20 @@ class SemanticsParseTreeHandler {
   // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
   auto PopScope() -> void;
 
-  // Attempts a type conversion between arguments of the two arguments with
-  // provided types, returning the result type. The result type will be invalid
-  // for errors; this handles printing diagnostics.
+  // Attempts a type conversion between two types. Returns:
+  // - The result type if valid.
+  // - BuiltinInvalidType if either lhs_id or rhs_id is BuiltinInvalidType.
+  // - Invalid if no conversion is supported.
+  //
+  // The caller might choose to print a diagnostic if Invalid is returned,
+  // whereas BuiltinInvalidType means there was a previous error that may be
+  // related and another diagnostic is undesirable.
+  auto CanTypeConvert(SemanticsNodeId from_type, SemanticsNodeId to_type)
+      -> SemanticsNodeId;
+
+  // Attempts a type conversion between two arguments, returning the result
+  // type. The result type will be BuiltinInvalidType for errors; this handles
+  // printing diagnostics.
   auto TryTypeConversion(ParseTree::Node parse_node, SemanticsNodeId lhs_id,
                          SemanticsNodeId rhs_id, bool can_convert_lhs)
       -> SemanticsNodeId;

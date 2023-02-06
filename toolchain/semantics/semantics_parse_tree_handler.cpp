@@ -131,19 +131,19 @@ auto SemanticsParseTreeHandler::PopScope() -> void {
   }
 }
 
-auto SemanticsParseTreeHandler::CanConvert(SemanticsNodeId lhs_id,
-                                           SemanticsNodeId rhs_id) {
-  auto lhs_type = semantics_->GetType(lhs_id);
-  auto rhs_type = semantics_->GetType(rhs_id);
-  if (lhs_type != rhs_type) {
-    auto invalid_type = SemanticsNodeId::MakeBuiltinReference(
-        SemanticsBuiltinKind::InvalidType);
-    bool has_invalid_type =
-        lhs_type != invalid_type && rhs_type != invalid_type;
-    conversion_failure(lhs_type, rhs_type, has_invalid_type);
-    return false;
+auto SemanticsParseTreeHandler::CanTypeConvert(SemanticsNodeId from_type,
+                                               SemanticsNodeId to_type)
+    -> SemanticsNodeId {
+  // TODO: This should attempt implicit conversions, but there's not enough
+  // implemented to do that right now.
+  if (from_type == SemanticsNodeId::BuiltinInvalidType ||
+      to_type == SemanticsNodeId::BuiltinInvalidType) {
+    return SemanticsNodeId::BuiltinInvalidType;
   }
-  return true;
+  if (from_type == to_type) {
+    return from_type;
+  }
+  return SemanticsNodeId::Invalid;
 }
 
 auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
@@ -153,26 +153,25 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
     -> SemanticsNodeId {
   auto lhs_type = semantics_->GetType(lhs_id);
   auto rhs_type = semantics_->GetType(rhs_id);
-  // TODO: This should attempt a type conversion, but there's not enough
-  // implemented to do that right now.
-  if (lhs_type != rhs_type) {
-    if (lhs_type != SemanticsNodeId::BuiltinInvalidType &&
-        rhs_type != SemanticsNodeId::BuiltinInvalidType) {
-      // TODO: This is a poor diagnostic, and should be expanded.
-      CARBON_DIAGNOSTIC(TypeMismatch, Error,
-                        "Type mismatch: lhs is {0}, rhs is {1}",
-                        SemanticsNodeId, SemanticsNodeId);
-      emitter_->Emit(parse_node, TypeMismatch, lhs_type, rhs_type);
-    }
-    return SemanticsNodeId::BuiltinInvalidType;
+  // TODO: CanTypeConvert can be assumed to handle rhs conversions, and we'll
+  // either want to call it twice or refactor it to be aware of lhs conversions.
+  auto type = CanTypeConvert(rhs_type, lhs_type);
+  if (type.is_valid()) {
+    return type;
   }
-  return lhs_type;
+  CARBON_DIAGNOSTIC(TypeMismatch, Error,
+                    "Type mismatch: lhs is {0}, rhs is {1}", SemanticsNodeId,
+                    SemanticsNodeId);
+  emitter_->Emit(parse_node, TypeMismatch, lhs_type, rhs_type);
+  return SemanticsNodeId::BuiltinInvalidType;
 }
 
 auto SemanticsParseTreeHandler::TryTypeConversionOnArgs(
     ParseTree::Node arg_parse_node, SemanticsNodeBlockId /*arg_ir_id*/,
     SemanticsNodeBlockId arg_refs_id, ParseTree::Node param_parse_node,
     SemanticsNodeBlockId param_refs_id) -> bool {
+  CARBON_DIAGNOSTIC(NoMatchingCall, Error, "No matching callable was found.");
+
   // If both arguments and parameters are empty, return quickly. Otherwise,
   // we'll fetch both so that errors are consistent.
   if (arg_refs_id == SemanticsNodeBlockId::Empty &&
@@ -180,27 +179,42 @@ auto SemanticsParseTreeHandler::TryTypeConversionOnArgs(
     return true;
   }
 
-  // TODO: arg_ir_id is passed so that implicit conversions can be inserted.
-  // It's currently not supported, but will be needed.
   auto arg_refs = semantics_->GetNodeBlock(arg_refs_id);
   auto param_refs = semantics_->GetNodeBlock(param_refs_id);
 
+  // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
-    CARBON_DIAGNOSTIC(NoMatchingCall, Error, "No matching call.");
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Note,
-                      "Received {0} arguments, but have {1} parameters.", int,
-                      int);
+                      "Received {0} arguments, but require {1} parameters.",
+                      int, int);
     emitter_->Build(arg_parse_node, NoMatchingCall)
         .Note(param_parse_node, CallArgCountMismatch, arg_refs.size(),
               param_refs.size())
         .Emit();
-
     return false;
   }
 
+  // Check type conversions per-element.
+  // TODO: arg_ir_id is passed so that implicit conversions can be inserted.
+  // It's currently not supported, but will be needed.
   for (size_t i = 0; i < arg_refs.size(); ++i) {
     const auto& arg_ref = arg_refs[i];
+    auto arg_ref_type = semantics_->GetType(arg_ref);
     const auto& param_ref = param_refs[i];
+    auto param_ref_type = semantics_->GetType(param_ref);
+
+    auto result_type = CanTypeConvert(arg_ref_type, param_ref_type);
+    if (!result_type.is_valid()) {
+      CARBON_DIAGNOSTIC(
+          CallArgTypeMismatch, Note,
+          "Type mismatch: cannot convert argument {0} from {1} to {2}.", size_t,
+          SemanticsNodeId, SemanticsNodeId);
+      emitter_->Build(arg_parse_node, NoMatchingCall)
+          .Note(param_parse_node, CallArgTypeMismatch, i, arg_ref_type,
+                param_ref_type)
+          .Emit();
+      return false;
+    }
   }
 
   return true;
@@ -293,7 +307,7 @@ auto SemanticsParseTreeHandler::HandleCallExpression(ParseTree::Node parse_node)
   auto on_start = [&](SemanticsNodeBlockId ir_id,
                       SemanticsNodeBlockId refs_id) -> bool {
     // TODO: Convert to call expression.
-    auto [name_parse_node, name_id] = node_stack_.PopForParseNodeAndNodeId(
+    auto [call_expr_parse_node, name_id] = node_stack_.PopForParseNodeAndNodeId(
         ParseNodeKind::CallExpressionStart);
     auto name_node = semantics_->GetNode(name_id);
     if (name_node.kind() != SemanticsNodeKind::FunctionDeclaration) {
@@ -303,23 +317,23 @@ auto SemanticsParseTreeHandler::HandleCallExpression(ParseTree::Node parse_node)
       return true;
     }
 
-    // TODO: Type check against the function.
     auto callable_id = name_node.GetAsFunctionDeclaration();
     auto callable = semantics_->callables_[callable_id.index];
 
-    if (!TryTypeConversionOnArgs(name_parse_node, ir_id, refs_id,
+    if (!TryTypeConversionOnArgs(call_expr_parse_node, ir_id, refs_id,
                                  name_node.parse_node(),
                                  callable.param_refs_id)) {
-      node_stack_.Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
-                                       SemanticsBuiltinKind::InvalidType));
+      node_stack_.Push(parse_node, SemanticsNodeId::BuiltinInvalidType);
       return true;
     }
 
-    // TODO: Emit call.
+    auto call_id = semantics_->AddCall({ir_id, refs_id});
+    // TODO: Propagate return types from callable.
+    auto call_node_id = AddNode(SemanticsNode::MakeCall(
+        call_expr_parse_node, SemanticsNodeId::BuiltinEmptyTuple, call_id,
+        callable_id));
 
-    // TODO: Propagate return types.
-    node_stack_.Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
-                                     SemanticsBuiltinKind::EmptyTuple));
+    node_stack_.Push(parse_node, call_node_id);
     return true;
   };
   return ParamOrArgEnd(ParseNodeKind::CallExpressionStart,
