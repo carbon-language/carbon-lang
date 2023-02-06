@@ -156,16 +156,15 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
   // TODO: This should attempt a type conversion, but there's not enough
   // implemented to do that right now.
   if (lhs_type != rhs_type) {
-    auto invalid_type = SemanticsNodeId::MakeBuiltinReference(
-        SemanticsBuiltinKind::InvalidType);
-    if (lhs_type != invalid_type && rhs_type != invalid_type) {
+    if (lhs_type != SemanticsNodeId::BuiltinInvalidType &&
+        rhs_type != SemanticsNodeId::BuiltinInvalidType) {
       // TODO: This is a poor diagnostic, and should be expanded.
       CARBON_DIAGNOSTIC(TypeMismatch, Error,
                         "Type mismatch: lhs is {0}, rhs is {1}",
                         SemanticsNodeId, SemanticsNodeId);
       emitter_->Emit(parse_node, TypeMismatch, lhs_type, rhs_type);
     }
-    return invalid_type;
+    return SemanticsNodeId::BuiltinInvalidType;
   }
   return lhs_type;
 }
@@ -482,7 +481,7 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
   auto decl_id =
       AddNode(SemanticsNode::MakeFunctionDeclaration(fn_node, callable_id));
   // TODO: Propagate the type of the function.
-  BindName(name_node, SemanticsNodeId::MakeInvalid(), decl_id);
+  BindName(name_node, SemanticsNodeId::Invalid, decl_id);
 
   node_block_stack_.Push();
   PushScope();
@@ -586,8 +585,7 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
                        "Currently only i32 is allowed");
         return false;
       }
-      node_stack_.Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
-                                       SemanticsBuiltinKind::IntegerType));
+      node_stack_.Push(parse_node, SemanticsNodeId::BuiltinIntegerType);
       break;
     }
     default:
@@ -606,8 +604,7 @@ auto SemanticsParseTreeHandler::HandleNameReference(ParseTree::Node parse_node)
     CARBON_DIAGNOSTIC(NameNotFound, Error, "Name {0} not found",
                       llvm::StringRef);
     emitter_->Emit(parse_node, NameNotFound, name_str);
-    node_stack_.Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
-                                     SemanticsBuiltinKind::InvalidType));
+    node_stack_.Push(parse_node, SemanticsNodeId::BuiltinInvalidType);
   };
 
   auto name_id = semantics_->GetString(name_str);
