@@ -15,6 +15,7 @@
 #include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
+#include "toolchain/semantics/semantics_node_block_stack.h"
 
 namespace Carbon {
 
@@ -71,7 +72,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
   CARBON_CHECK(name_lookup_.empty()) << name_lookup_.size();
   CARBON_CHECK(scope_stack_.empty()) << scope_stack_.size();
   CARBON_CHECK(node_block_stack_.empty()) << node_block_stack_.size();
-  CARBON_CHECK(params_stack_.empty()) << params_stack_.size();
+  CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
 }
 
 auto SemanticsParseTreeHandler::AddNode(SemanticsNode node) -> SemanticsNodeId {
@@ -130,6 +131,21 @@ auto SemanticsParseTreeHandler::PopScope() -> void {
   }
 }
 
+auto SemanticsParseTreeHandler::CanConvert(SemanticsNodeId lhs_id,
+                                           SemanticsNodeId rhs_id) {
+  auto lhs_type = semantics_->GetType(lhs_id);
+  auto rhs_type = semantics_->GetType(rhs_id);
+  if (lhs_type != rhs_type) {
+    auto invalid_type = SemanticsNodeId::MakeBuiltinReference(
+        SemanticsBuiltinKind::InvalidType);
+    bool has_invalid_type =
+        lhs_type != invalid_type && rhs_type != invalid_type;
+    conversion_failure(lhs_type, rhs_type, has_invalid_type);
+    return false;
+  }
+  return true;
+}
+
 auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
                                                   SemanticsNodeId lhs_id,
                                                   SemanticsNodeId rhs_id,
@@ -154,6 +170,107 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
   return lhs_type;
 }
 
+auto SemanticsParseTreeHandler::TryTypeConversionOnArgs(
+    ParseTree::Node arg_parse_node, SemanticsNodeBlockId /*arg_ir_id*/,
+    SemanticsNodeBlockId arg_refs_id, ParseTree::Node param_parse_node,
+    SemanticsNodeBlockId param_refs_id) -> bool {
+  // If both arguments and parameters are empty, return quickly. Otherwise,
+  // we'll fetch both so that errors are consistent.
+  if (arg_refs_id == SemanticsNodeBlockId::Empty &&
+      param_refs_id == SemanticsNodeBlockId::Empty) {
+    return true;
+  }
+
+  // TODO: arg_ir_id is passed so that implicit conversions can be inserted.
+  // It's currently not supported, but will be needed.
+  auto arg_refs = semantics_->GetNodeBlock(arg_refs_id);
+  auto param_refs = semantics_->GetNodeBlock(param_refs_id);
+
+  if (arg_refs.size() != param_refs.size()) {
+    CARBON_DIAGNOSTIC(NoMatchingCall, Error, "No matching call.");
+    CARBON_DIAGNOSTIC(CallArgCountMismatch, Note,
+                      "Received {0} arguments, but have {1} parameters.", int,
+                      int);
+    emitter_->Build(arg_parse_node, NoMatchingCall)
+        .Note(param_parse_node, CallArgCountMismatch, arg_refs.size(),
+              param_refs.size())
+        .Emit();
+
+    return false;
+  }
+
+  for (size_t i = 0; i < arg_refs.size(); ++i) {
+    const auto& arg_ref = arg_refs[i];
+    const auto& param_ref = param_refs[i];
+  }
+
+  return true;
+}
+
+auto SemanticsParseTreeHandler::ParamOrArgStart() -> void {
+  params_or_args_stack_.Push();
+  node_block_stack_.Push();
+}
+
+auto SemanticsParseTreeHandler::ParamOrArgComma(ParseTree::Node parse_node)
+    -> bool {
+  node_stack_.Push(parse_node);
+
+  // Copy the last node added to the IR block into the params block.
+  if (!ParamOrArgSave()) {
+    emitter_->Emit(
+        parse_node, SemanticsTodo,
+        "Should have a param before comma, will need error recovery");
+    return false;
+  }
+
+  return true;
+}
+
+auto SemanticsParseTreeHandler::ParamOrArgEnd(
+    ParseNodeKind start_kind, ParseNodeKind comma_kind,
+    std::function<bool(SemanticsNodeBlockId, SemanticsNodeBlockId)> on_start)
+    -> bool {
+  // If there's a node in the IR block that has yet to be added to the params
+  // block, add it now.
+  ParamOrArgSave();
+
+  while (true) {
+    auto parse_kind = parse_tree_->node_kind(node_stack_.PeekParseNode());
+    if (parse_kind == start_kind) {
+      return on_start(node_block_stack_.Pop(), params_or_args_stack_.Pop());
+    } else if (parse_kind == comma_kind) {
+      node_stack_.PopAndDiscardSoloParseNode(comma_kind);
+    } else {
+      node_stack_.PopAndIgnore();
+    }
+  }
+}
+
+auto SemanticsParseTreeHandler::ParamOrArgSave() -> bool {
+  // Copy the last node added to the IR block into the params block.
+  auto ir_id = node_block_stack_.Peek();
+  if (!ir_id.is_valid()) {
+    return false;
+  }
+
+  // We get params before ir because it may add a node block, which can
+  // invalidate the ir reference.
+  auto& params = semantics_->GetNodeBlock(params_or_args_stack_.PeekForAdd());
+
+  auto& ir = semantics_->GetNodeBlock(ir_id);
+  CARBON_CHECK(!ir.empty())
+      << "Should only have a valid ID if a node was added";
+  auto& param = ir.back();
+
+  if (!params.empty() && param == params.back()) {
+    // The param was already added after a comma.
+    return false;
+  }
+  params.push_back(ir.back());
+  return true;
+}
+
 auto SemanticsParseTreeHandler::HandleAddress(ParseTree::Node parse_node)
     -> bool {
   emitter_->Emit(parse_node, SemanticsTodo, "HandleAddress");
@@ -174,20 +291,53 @@ auto SemanticsParseTreeHandler::HandleBreakStatementStart(
 
 auto SemanticsParseTreeHandler::HandleCallExpression(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleCallExpression");
-  return false;
+  auto on_start = [&](SemanticsNodeBlockId ir_id,
+                      SemanticsNodeBlockId refs_id) -> bool {
+    // TODO: Convert to call expression.
+    auto [name_parse_node, name_id] = node_stack_.PopForParseNodeAndNodeId(
+        ParseNodeKind::CallExpressionStart);
+    auto name_node = semantics_->GetNode(name_id);
+    if (name_node.kind() != SemanticsNodeKind::FunctionDeclaration) {
+      // TODO: Work on error.
+      emitter_->Emit(parse_node, SemanticsTodo, "Not a callable name");
+      node_stack_.Push(parse_node, name_id);
+      return true;
+    }
+
+    // TODO: Type check against the function.
+    auto callable_id = name_node.GetAsFunctionDeclaration();
+    auto callable = semantics_->callables_[callable_id.index];
+
+    if (!TryTypeConversionOnArgs(name_parse_node, ir_id, refs_id,
+                                 name_node.parse_node(),
+                                 callable.param_refs_id)) {
+      node_stack_.Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
+                                       SemanticsBuiltinKind::InvalidType));
+      return true;
+    }
+
+    // TODO: Emit call.
+
+    // TODO: Propagate return types.
+    node_stack_.Push(parse_node, SemanticsNodeId::MakeBuiltinReference(
+                                     SemanticsBuiltinKind::EmptyTuple));
+    return true;
+  };
+  return ParamOrArgEnd(ParseNodeKind::CallExpressionStart,
+                       ParseNodeKind::CallExpressionComma, on_start);
 }
 
 auto SemanticsParseTreeHandler::HandleCallExpressionComma(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleCallExpressionComma");
-  return false;
+  return ParamOrArgComma(parse_node);
 }
 
 auto SemanticsParseTreeHandler::HandleCallExpressionStart(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleCallExpressionStart");
-  return false;
+  auto name_id = node_stack_.PopForNodeId(ParseNodeKind::NameReference);
+  node_stack_.Push(parse_node, name_id);
+  ParamOrArgStart();
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleCodeBlock(ParseTree::Node parse_node)
@@ -509,83 +659,28 @@ auto SemanticsParseTreeHandler::HandlePackageLibrary(ParseTree::Node parse_node)
   return false;
 }
 
-auto SemanticsParseTreeHandler::SaveParam() -> bool {
-  // Copy the last node added to the IR block into the params block.
-  auto ir_id = node_block_stack_.Peek();
-  if (!ir_id.is_valid()) {
-    return false;
-  }
-  auto& ir = semantics_->GetNodeBlock(ir_id);
-  CARBON_CHECK(!ir.empty())
-      << "Should only have a valid ID if a node was added";
-  auto& param = ir.back();
-  auto& params = semantics_->GetNodeBlock(params_stack_.PeekForAdd());
-  if (!params.empty() && param == params.back()) {
-    // The param was already added after a comma.
-    return false;
-  }
-  params.push_back(ir.back());
-  return true;
-}
-
 auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
     -> bool {
-  // If there's a node in the IR block that has yet to be added to the params
-  // block, add it now.
-  SaveParam();
-
-  while (true) {
-    switch (auto parse_kind =
-                parse_tree_->node_kind(node_stack_.PeekParseNode())) {
-      case ParseNodeKind::ParameterListStart:
-        node_stack_.PopAndDiscardSoloParseNode(
-            ParseNodeKind::ParameterListStart);
-        finished_params_stack_.push_back(
-            {node_block_stack_.Pop(), params_stack_.Pop()});
-        node_stack_.Push(parse_node);
-        return true;
-
-      case ParseNodeKind::ParameterListComma:
-        node_stack_.PopAndDiscardSoloParseNode(
-            ParseNodeKind::ParameterListComma);
-        break;
-
-      case ParseNodeKind::PatternBinding:
-        node_stack_.PopAndDiscardId(ParseNodeKind::PatternBinding);
-        break;
-
-      default:
-        // This should only occur for invalid parse trees.
-        emitter_->Emit(parse_node, SemanticsTodo, "Need error recovery");
-        return false;
-    }
-  }
-
-  llvm_unreachable("loop always exits");
+  auto on_start = [&](SemanticsNodeBlockId ir_id,
+                      SemanticsNodeBlockId refs_id) -> bool {
+    node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ParameterListStart);
+    finished_params_stack_.push_back({ir_id, refs_id});
+    node_stack_.Push(parse_node);
+    return true;
+  };
+  return ParamOrArgEnd(ParseNodeKind::ParameterListStart,
+                       ParseNodeKind::ParameterListComma, on_start);
 }
 
 auto SemanticsParseTreeHandler::HandleParameterListComma(
     ParseTree::Node parse_node) -> bool {
-  node_stack_.Push(parse_node);
-
-  // Copy the last node added to the IR block into the params block.
-  if (!SaveParam()) {
-    emitter_->Emit(
-        parse_node, SemanticsTodo,
-        "Should have a param before comma, will need error recovery");
-    return false;
-  }
-
-  return true;
+  return ParamOrArgComma(parse_node);
 }
 
 auto SemanticsParseTreeHandler::HandleParameterListStart(
     ParseTree::Node parse_node) -> bool {
   node_stack_.Push(parse_node);
-
-  params_stack_.Push();
-  node_block_stack_.Push();
-
+  ParamOrArgStart();
   return true;
 }
 

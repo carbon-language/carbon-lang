@@ -28,6 +28,10 @@ CARBON_SEMANTICS_BUILTIN_KIND(IntegerType)
 // we may not want it this way, but for now this is the approach.
 CARBON_SEMANTICS_BUILTIN_KIND(RealType)
 
+// The canonical empty tuple. Long-term we may want to change the
+// representation, but for now it's an easy way to identify uses.
+CARBON_SEMANTICS_BUILTIN_KIND(EmptyTuple)
+
 // Keep invalid last, so that we can use values as array indices without needing
 // an invalid entry.
 CARBON_SEMANTICS_BUILTIN_KIND(Invalid)
