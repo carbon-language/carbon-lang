@@ -159,6 +159,7 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
   if (type.is_valid()) {
     return type;
   }
+  // TODO: This should use type names instead of nodes.
   CARBON_DIAGNOSTIC(TypeMismatch, Error,
                     "Type mismatch: lhs is {0}, rhs is {1}", SemanticsNodeId,
                     SemanticsNodeId);
@@ -205,6 +206,7 @@ auto SemanticsParseTreeHandler::TryTypeConversionOnArgs(
 
     auto result_type = CanTypeConvert(arg_ref_type, param_ref_type);
     if (!result_type.is_valid()) {
+      // TODO: This should use type names instead of nodes.
       CARBON_DIAGNOSTIC(
           CallArgTypeMismatch, Note,
           "Type mismatch: cannot convert argument {0} from {1} to {2}.", size_t,
