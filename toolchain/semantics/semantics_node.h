@@ -17,15 +17,14 @@ namespace Carbon {
 
 // Type-safe storage of Node IDs.
 struct SemanticsNodeId : public IndexBase {
-  // Uses the cross-reference node ID for a builtin. This relies on SemanticsIR
-  // guarantees for builtin cross-reference placement.
-  static auto MakeBuiltinReference(SemanticsBuiltinKind kind)
-      -> SemanticsNodeId {
-    return SemanticsNodeId(kind.AsInt());
-  }
+  // An explicitly invalid node ID.
+  // NOLINTNEXTLINE(readability-identifier-naming)
+  static const SemanticsNodeId Invalid;
 
-  // Constructs an explicitly invalid instance.
-  static auto MakeInvalid() -> SemanticsNodeId { return SemanticsNodeId(); }
+// Builtin node IDs.
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name) \
+  static const SemanticsNodeId Builtin##Name;
+#include "toolchain/semantics/semantics_builtin_kind.def"
 
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -33,6 +32,15 @@ struct SemanticsNodeId : public IndexBase {
     IndexBase::Print(out);
   }
 };
+
+constexpr SemanticsNodeId SemanticsNodeId::Invalid = SemanticsNodeId();
+
+// Uses the cross-reference node ID for a builtin. This relies on SemanticsIR
+// guarantees for builtin cross-reference placement.
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name)                  \
+  constexpr SemanticsNodeId SemanticsNodeId::Builtin##Name = \
+      SemanticsNodeId(SemanticsBuiltinKind::Name.AsInt());
+#include "toolchain/semantics/semantics_builtin_kind.def"
 
 // The ID of a callable, such as a function.
 struct SemanticsCallableId : public IndexBase {
@@ -157,7 +165,7 @@ class SemanticsNode {
   static auto MakeCrossReference(SemanticsNodeId type,
                                  SemanticsCrossReferenceIRId ir,
                                  SemanticsNodeId node) -> SemanticsNode {
-    return SemanticsNode(ParseTree::Node::MakeInvalid(),
+    return SemanticsNode(ParseTree::Node::Invalid,
                          SemanticsNodeKind::CrossReference, type, ir.index,
                          node.index);
   }
@@ -196,9 +204,7 @@ class SemanticsNode {
                                  SemanticsIntegerLiteralId integer)
       -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::IntegerLiteral,
-                         SemanticsNodeId::MakeBuiltinReference(
-                             SemanticsBuiltinKind::IntegerType),
-                         integer.index);
+                         SemanticsNodeId::BuiltinIntegerType, integer.index);
   }
   auto GetAsIntegerLiteral() const -> SemanticsIntegerLiteralId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::IntegerLiteral);
@@ -206,9 +212,8 @@ class SemanticsNode {
   }
 
   static auto MakeRealLiteral(ParseTree::Node parse_node) -> SemanticsNode {
-    return SemanticsNode(
-        parse_node, SemanticsNodeKind::RealLiteral,
-        SemanticsNodeId::MakeBuiltinReference(SemanticsBuiltinKind::RealType));
+    return SemanticsNode(parse_node, SemanticsNodeKind::RealLiteral,
+                         SemanticsNodeId::BuiltinRealType);
   }
   auto GetAsRealLiteral() const -> NoArgs {
     CARBON_CHECK(kind_ == SemanticsNodeKind::RealLiteral);
