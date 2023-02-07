@@ -17,26 +17,11 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
   auto block_id = semantics.AddNodeBlock();
   semantics.nodes_.reserve(SemanticsBuiltinKind::ValidCount);
 
-  constexpr int32_t TypeOfTypeType = 0;
-  auto type_type = semantics.AddNode(
-      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::TypeType,
-                                           SemanticsNodeId(TypeOfTypeType)));
-  CARBON_CHECK(type_type.index == TypeOfTypeType)
-      << "TypeType's type must be self-referential.";
-
-  constexpr int32_t TypeOfInvalidType = 1;
-  auto invalid_type = semantics.AddNode(
-      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::InvalidType,
-                                           SemanticsNodeId(TypeOfInvalidType)));
-  CARBON_CHECK(invalid_type.index == TypeOfInvalidType)
-      << "InvalidType's type must be self-referential.";
-
-  semantics.AddNode(
-      block_id,
-      SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::IntegerType, type_type));
-
-  semantics.AddNode(block_id, SemanticsNode::MakeBuiltin(
-                                  SemanticsBuiltinKind::RealType, type_type));
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type)                      \
+  semantics.AddNode(                                                   \
+      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::Name, \
+                                           SemanticsNodeId::Builtin##Type));
+#include "toolchain/semantics/semantics_builtin_kind.def"
 
   CARBON_CHECK(semantics.node_blocks_.size() == 2)
       << "BuildBuiltins should produce 2 blocks, actual: "
