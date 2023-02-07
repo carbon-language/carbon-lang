@@ -14,18 +14,19 @@ namespace Carbon {
 
 auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
   SemanticsIR semantics(/*builtin_ir=*/nullptr);
-  auto block_id = semantics.AddNodeBlock();
   semantics.nodes_.reserve(SemanticsBuiltinKind::ValidCount);
 
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type)                      \
-  semantics.AddNode(                                                   \
-      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::Name, \
-                                           SemanticsNodeId::Builtin##Type));
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type)        \
+  semantics.nodes_.push_back(SemanticsNode::MakeBuiltin( \
+      SemanticsBuiltinKind::Name, SemanticsNodeId::Builtin##Type));
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
-  CARBON_CHECK(semantics.node_blocks_.size() == 2)
-      << "BuildBuiltins should produce 2 blocks, actual: "
+  CARBON_CHECK(semantics.node_blocks_.size() == 1)
+      << "BuildBuiltins should only have the empty block, actual: "
       << semantics.node_blocks_.size();
+  CARBON_CHECK(semantics.nodes_.size() == SemanticsBuiltinKind::ValidCount)
+      << "BuildBuiltins should produce " << SemanticsBuiltinKind::ValidCount
+      << " nodes, actual: " << semantics.nodes_.size();
   return semantics;
 }
 
