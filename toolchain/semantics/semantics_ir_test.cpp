@@ -9,8 +9,6 @@
 
 #include <forward_list>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/tokenized_buffer.h"

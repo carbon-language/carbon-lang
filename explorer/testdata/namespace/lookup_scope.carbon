@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: result: 0
+// CHECK:STDOUT: result: 6
 
 package ExplorerTest api;
 
@@ -18,4 +18,4 @@ fn N.I32() -> type { return i32; }
 fn N.Five() -> I32() { return 5; }
 fn N.Six() -> OuterI32() { return Five() + One(); }
 
-fn Main() -> i32 { return 0; }
+fn Main() -> i32 { return N.Six(); }

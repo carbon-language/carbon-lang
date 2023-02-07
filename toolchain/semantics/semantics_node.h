@@ -45,14 +45,18 @@ constexpr SemanticsNodeId SemanticsNodeId::Invalid = SemanticsNodeId();
 // The ID of a call.
 struct SemanticsCallId : public IndexBase {
   using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "call" << index; }
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "call";
+    IndexBase::Print(out);
+  }
 };
 
 // The ID of a callable, such as a function.
 struct SemanticsCallableId : public IndexBase {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "callable" << index;
+    out << "callable";
+    IndexBase::Print(out);
   }
 };
 

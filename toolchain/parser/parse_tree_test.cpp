@@ -18,9 +18,7 @@
 namespace Carbon::Testing {
 namespace {
 
-using ::testing::AtLeast;
 using ::testing::ElementsAre;
-using ::testing::Eq;
 
 class ParseTreeTest : public ::testing::Test {
  protected:

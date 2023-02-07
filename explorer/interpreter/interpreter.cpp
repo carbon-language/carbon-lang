@@ -411,6 +411,9 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
+      if (auto rewrite = access.rewritten_form()) {
+        return todo_.ReplaceWith(std::make_unique<LValAction>(*rewrite));
+      }
       if (act.pos() == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
@@ -576,7 +579,7 @@ auto Interpreter::EvalAssociatedConstant(
   Nonnull<const ConstraintType*> constraint =
       impl_witness->declaration().constraint_type();
   std::optional<Nonnull<const Value*>> result;
-  for (auto& rewrite : constraint->rewrite_constraints()) {
+  for (const auto& rewrite : constraint->rewrite_constraints()) {
     if (&rewrite.constant->constant() == &assoc->constant() &&
         TypeEqual(&rewrite.constant->interface(), interface, std::nullopt)) {
       // TODO: The value might depend on the parameters of the impl. We need to
@@ -869,7 +872,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           EvalAssociatedConstant(cast<AssociatedConstant>(value), source_loc));
-      if (auto* new_const = dyn_cast<AssociatedConstant>(value)) {
+      if (const auto* new_const = dyn_cast<AssociatedConstant>(value)) {
         // TODO: Detect whether conversions are required in type-checking.
         if (isa<TypeType, ConstraintType, NamedConstraintType, InterfaceType>(
                 destination_type) &&
@@ -933,7 +936,7 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
   BindingMap generic_args;
 
   // TODO: move this logic into PatternMatch, and call it here.
-  auto p = &method.self_pattern().value();
+  const auto* p = &method.self_pattern().value();
   const auto& placeholder = cast<BindingPlaceholderValue>(*p);
   if (placeholder.value_node().has_value()) {
     method_scope.Bind(*placeholder.value_node(), receiver);
@@ -1015,7 +1018,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
       RuntimeScope method_scope(&heap_);
       BindingMap generic_args;
       // Bind the receiver to the `self` parameter.
-      auto p = &method.self_pattern().value();
+      const auto* p = &method.self_pattern().value();
       if (p->kind() == Value::Kind::BindingPlaceholderValue) {
         // TODO: move this logic into PatternMatch
         const auto& placeholder = cast<BindingPlaceholderValue>(*p);
@@ -1140,6 +1143,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
+      if (auto rewrite = access.rewritten_form()) {
+        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+      }
       bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
         // First, evaluate the first operand.
@@ -1627,7 +1633,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::ArrayTypeLiteral:
     case ExpressionKind::ValueLiteral: {
       CARBON_CHECK(act.pos() == 0);
-      auto* value = &cast<ConstantValueLiteral>(exp).constant_value();
+      const auto* value = &cast<ConstantValueLiteral>(exp).constant_value();
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> destination,
           InstantiateType(&exp.static_type(), exp.source_loc()));

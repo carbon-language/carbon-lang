@@ -9,8 +9,13 @@
 package ExplorerTest api;
 
 namespace N;
+alias M = N;
+// TODO: It's unclear whether this should be permitted. If not, we should
+// produce a better diagnostic.
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/namespace/fail_namespace_alias_member.carbon:[[@LINE+1]]: alias M cannot be used as a name qualifier
+fn M.F() {}
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/namespace/fail_unknown_member.carbon:[[@LINE+1]]: name 'value' has not been declared in namespace N
-  return N.value;
+  N.F();
+  return 0;
 }

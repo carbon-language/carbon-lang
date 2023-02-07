@@ -171,7 +171,7 @@ auto ImplScope::Resolve(Nonnull<const Value*> constraint_type,
                                    current, &equality_ctx));
         }
       }
-      for (auto& rewrite : rewrites) {
+      for (const auto& rewrite : rewrites) {
         Nonnull<const Value*> constant =
             type_checker.Substitute(local_bindings, rewrite.constant);
         Nonnull<const Value*> value = type_checker.Substitute(
@@ -260,7 +260,7 @@ static auto CombineResults(Nonnull<const InterfaceType*> iface_type,
   if (impl_a->declaration().match_first() &&
       impl_a->declaration().match_first() ==
           impl_b->declaration().match_first()) {
-    for (auto* impl : (*impl_a->declaration().match_first())->impls()) {
+    for (const auto* impl : (*impl_a->declaration().match_first())->impls()) {
       if (impl == &impl_a->declaration()) {
         return a;
       }
