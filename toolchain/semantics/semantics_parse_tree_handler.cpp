@@ -424,7 +424,11 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
       break;
     }
     case TokenKind::RealLiteral: {
-      auto id = semantics_->AddRealLiteral(tokens_->GetRealLiteral(token));
+      auto token_value = tokens_->GetRealLiteral(token);
+      auto id =
+          semantics_->AddRealLiteral({.mantissa = token_value.Mantissa(),
+                                      .exponent = token_value.Exponent(),
+                                      .is_decimal = token_value.IsDecimal()});
       AddNodeAndPush(parse_node,
                      SemanticsNode::MakeRealLiteral(parse_node, id));
       break;

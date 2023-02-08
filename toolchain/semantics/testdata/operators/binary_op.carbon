@@ -12,6 +12,8 @@
 // CHECK:STDOUT:   12,
 // CHECK:STDOUT:   34,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: real_literals: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT: ]

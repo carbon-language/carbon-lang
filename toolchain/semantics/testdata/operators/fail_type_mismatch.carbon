@@ -11,6 +11,9 @@
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   12,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: real_literals: [
+// CHECK:STDOUT:   {mantissa: 34, exponent: -1, is_decimal: 1},
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT: ]
@@ -23,7 +26,7 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: callable0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node5},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: node2},
-// CHECK:STDOUT:   {kind: RealLiteral, type: node3},
+// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: node3},
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node7, arg1: node8, type: node1},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node9, type: node1},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node5, arg1: block2},

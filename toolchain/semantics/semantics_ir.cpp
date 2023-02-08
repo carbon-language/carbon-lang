@@ -77,6 +77,13 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   }
   out << "]\n";
 
+  out << "real_literals: [\n";
+  for (const auto& real_literal : real_literals_) {
+    out.indent(Indent);
+    out << real_literal << ",\n";
+  }
+  out << "]\n";
+
   out << "strings: [\n";
   for (const auto& string : strings_) {
     out.indent(Indent);

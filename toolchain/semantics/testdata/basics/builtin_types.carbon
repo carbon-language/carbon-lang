@@ -10,10 +10,14 @@
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: real_literals: [
+// CHECK:STDOUT:   {mantissa: 1, exponent: -1, is_decimal: 1},
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   test_i32,
 // CHECK:STDOUT:   test_f64,
 // CHECK:STDOUT:   test_str,
+// CHECK:STDOUT:   Test,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block0, type: node0},
@@ -27,11 +31,11 @@
 // CHECK:STDOUT:   {kind: Assign, arg0: node5, arg1: node7, type: node2},
 // CHECK:STDOUT:   {kind: VarStorage, type: node3},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node9, type: node3},
-// CHECK:STDOUT:   {kind: RealLiteral, type: node3},
+// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: node3},
 // CHECK:STDOUT:   {kind: Assign, arg0: node9, arg1: node11, type: node3},
 // CHECK:STDOUT:   {kind: VarStorage, type: node4},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node13, type: node4},
-// CHECK:STDOUT:   {kind: StringLiteral, type: node4},
+// CHECK:STDOUT:   {kind: StringLiteral, arg0: str3, type: node4},
 // CHECK:STDOUT:   {kind: Assign, arg0: node13, arg1: node15, type: node4},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
