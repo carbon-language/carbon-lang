@@ -17,36 +17,36 @@ fn Main() -> i32 {
   var x : i32 = 7 % 2;
 
 
-  if(  not (x == 1) ){
+  if(  x != 1){
       return 1;
   }
   x = (3*3) % 3;
-  if( not (x == 0)){
+  if( x != 0){
       return 2;
   }
 
   x = (4+4+4+4) % (2+1);
-  if(  not (x == 1) ){
+  if(  x != 1){
       return 3;
   }
 
   x = 15 % (identFn(2)+1);
-  if( not (x == 0)){
+  if( x != 0){
       return 4;
   }
 
   x = -15 % 7;
-  if( not (x == -1)){
+  if( x != -1){
       return 5;
   }
 
   x = 15 % -7;
-  if( not ( x == 1)){
+  if(  x != 1){
       return 6;
   }
 
   x = -15 % -identFn(7);
-  if( not (x == -1)){
+  if( x != -1){
       return 7;
   }
 

@@ -11,6 +11,6 @@ package ExplorerTest api;
 namespace N;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/namespace/fail_unknown_member.carbon:[[@LINE+1]]: could not resolve 'value' in this scope
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/namespace/fail_unknown_member.carbon:[[@LINE+1]]: name 'value' has not been declared in namespace N
   return N.value;
 }

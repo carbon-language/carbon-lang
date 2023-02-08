@@ -114,14 +114,16 @@ auto NameResolver::ResolveQualifier(DeclaredName name,
                                     bool allow_undeclared)
     -> ErrorOr<Nonnull<StaticScope*>> {
   Nonnull<StaticScope*> scope = &enclosing_scope;
+  std::optional<ValueNodeView> scope_node;
   for (const auto& [loc, qualifier] : name.qualifiers()) {
     // TODO: If we permit qualified names anywhere other than the top level, we
     // will need to decide whether the first name in the qualifier is looked up
     // only in the innermost enclosing scope or in all enclosing scopes.
     CARBON_ASSIGN_OR_RETURN(
         ValueNodeView node,
-        scope->ResolveHere(qualifier, loc, allow_undeclared));
+        scope->ResolveHere(scope_node, qualifier, loc, allow_undeclared));
 
+    scope_node = node;
     if (const auto* namespace_decl =
             dyn_cast<NamespaceDeclaration>(&node.base())) {
       scope = &namespace_scopes_[namespace_decl];
@@ -284,7 +286,8 @@ auto NameResolver::ResolveNames(Expression& expression,
             << "name resolved to undeclared namespace";
         CARBON_ASSIGN_OR_RETURN(
             const auto value_node,
-            ns_it->second.ResolveHere(access.member_name(), access.source_loc(),
+            ns_it->second.ResolveHere(scope, access.member_name(),
+                                      access.source_loc(),
                                       /*allow_undeclared=*/false));
         access.set_value_node(value_node);
         return {value_node};
