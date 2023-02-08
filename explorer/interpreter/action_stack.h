@@ -33,9 +33,6 @@ class ActionStack {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // TODO: consider unifying with Print.
-  void PrintScopes(llvm::raw_ostream& out) const;
-
   // Starts execution with `action` at the top of the stack. Cannot be called
   // when IsEmpty() is false.
   void Start(std::unique_ptr<Action> action);

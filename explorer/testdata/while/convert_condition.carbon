@@ -14,7 +14,7 @@ class LazyNe {
   var v2: i32;
   impl as ImplicitAs(bool) {
     fn Convert[self: Self]() -> bool {
-      return not (self.v1 == self.v2);
+      return self.v1 != self.v2;
     }
   }
   fn Make(v1: i32, v2: i32) -> Self {

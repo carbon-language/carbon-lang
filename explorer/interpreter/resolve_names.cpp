@@ -56,10 +56,11 @@ class NameResolver {
                         bool allow_undeclared = false)
       -> ErrorOr<Nonnull<StaticScope*>>;
 
-  // Add the given name to enclosing_scope.
+  // Add the given name to enclosing_scope. Returns the scope in which the name
+  // was declared.
   auto AddExposedName(DeclaredName name, ValueNodeView value,
                       StaticScope& enclosing_scope, bool allow_qualified_names)
-      -> ErrorOr<Success>;
+      -> ErrorOr<Nonnull<StaticScope*>>;
 
   // Add the names exposed by the given AST node to enclosing_scope.
   auto AddExposedNames(const Declaration& declaration,
@@ -137,7 +138,7 @@ auto NameResolver::ResolveQualifier(DeclaredName name,
 auto NameResolver::AddExposedName(DeclaredName name, ValueNodeView value,
                                   StaticScope& enclosing_scope,
                                   bool allow_qualified_names)
-    -> ErrorOr<Success> {
+    -> ErrorOr<Nonnull<StaticScope*>> {
   if (name.is_qualified() && !allow_qualified_names) {
     return ProgramError(name.source_loc())
            << "qualified declaration names are not permitted in this context";
@@ -149,8 +150,9 @@ auto NameResolver::AddExposedName(DeclaredName name, ValueNodeView value,
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<StaticScope*> scope,
       ResolveQualifier(name, enclosing_scope, /*allow_undeclared=*/true));
-  return scope->Add(name.inner_name(), value,
-                    StaticScope::NameStatus::KnownButNotDeclared);
+  CARBON_RETURN_IF_ERROR(scope->Add(
+      name.inner_name(), value, StaticScope::NameStatus::KnownButNotDeclared));
+  return scope;
 }
 
 auto NameResolver::AddExposedNames(const Declaration& declaration,
@@ -160,18 +162,19 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
   switch (declaration.kind()) {
     case DeclarationKind::NamespaceDeclaration: {
       const auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(namespace_decl.name(), &namespace_decl,
-                              StaticScope::NameStatus::KnownButNotDeclared));
-      namespace_scopes_.try_emplace(&namespace_decl, &enclosing_scope);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<StaticScope*> scope,
+          AddExposedName(namespace_decl.name(), &namespace_decl,
+                         enclosing_scope, allow_qualified_names));
+      namespace_scopes_.try_emplace(&namespace_decl, scope);
       break;
     }
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       const auto& iface_decl = cast<ConstraintTypeDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(iface_decl.name(), &iface_decl,
-                              StaticScope::NameStatus::KnownButNotDeclared));
+      CARBON_RETURN_IF_ERROR(AddExposedName(iface_decl.name(), &iface_decl,
+                                            enclosing_scope,
+                                            allow_qualified_names));
       break;
     }
     case DeclarationKind::DestructorDeclaration: {
@@ -194,23 +197,22 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
     }
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(class_decl.name(), &class_decl,
-                              StaticScope::NameStatus::KnownButNotDeclared));
+      CARBON_RETURN_IF_ERROR(AddExposedName(class_decl.name(), &class_decl,
+                                            enclosing_scope,
+                                            allow_qualified_names));
       break;
     }
     case DeclarationKind::MixinDeclaration: {
       const auto& mixin_decl = cast<MixinDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(mixin_decl.name(), &mixin_decl,
-                              StaticScope::NameStatus::KnownButNotDeclared));
+      CARBON_RETURN_IF_ERROR(AddExposedName(mixin_decl.name(), &mixin_decl,
+                                            enclosing_scope,
+                                            allow_qualified_names));
       break;
     }
     case DeclarationKind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(choice.name(), &choice,
-                              StaticScope::NameStatus::KnownButNotDeclared));
+      CARBON_RETURN_IF_ERROR(AddExposedName(
+          choice.name(), &choice, enclosing_scope, allow_qualified_names));
       break;
     }
     case DeclarationKind::VariableDeclaration: {
@@ -236,8 +238,8 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
     }
     case DeclarationKind::AliasDeclaration: {
       const auto& alias = cast<AliasDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(enclosing_scope.Add(
-          alias.name(), &alias, StaticScope::NameStatus::KnownButNotDeclared));
+      CARBON_RETURN_IF_ERROR(AddExposedName(
+          alias.name(), &alias, enclosing_scope, allow_qualified_names));
       break;
     }
     case DeclarationKind::ImplDeclaration:
@@ -648,18 +650,23 @@ auto NameResolver::ResolveNames(Declaration& declaration,
   switch (declaration.kind()) {
     case DeclarationKind::NamespaceDeclaration: {
       auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
-      enclosing_scope.MarkUsable(namespace_decl.name());
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<StaticScope*> scope,
+          ResolveQualifier(namespace_decl.name(), enclosing_scope));
+      scope->MarkUsable(namespace_decl.name().inner_name());
       break;
     }
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       auto& iface = cast<ConstraintTypeDeclaration>(declaration);
-      StaticScope iface_scope(&enclosing_scope);
-      enclosing_scope.MarkDeclared(iface.name());
+      CARBON_ASSIGN_OR_RETURN(Nonnull<StaticScope*> scope,
+                              ResolveQualifier(iface.name(), enclosing_scope));
+      StaticScope iface_scope(scope);
+      scope->MarkDeclared(iface.name().inner_name());
       if (iface.params().has_value()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**iface.params(), iface_scope));
       }
-      enclosing_scope.MarkUsable(iface.name());
+      scope->MarkUsable(iface.name().inner_name());
       // Don't resolve names in the type of the self binding. The
       // ConstraintTypeDeclaration constructor already did that.
       CARBON_RETURN_IF_ERROR(iface_scope.Add("Self", iface.self()));
@@ -729,8 +736,11 @@ auto NameResolver::ResolveNames(Declaration& declaration,
     }
     case DeclarationKind::ClassDeclaration: {
       auto& class_decl = cast<ClassDeclaration>(declaration);
-      StaticScope class_scope(&enclosing_scope);
-      enclosing_scope.MarkDeclared(class_decl.name());
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<StaticScope*> scope,
+          ResolveQualifier(class_decl.name(), enclosing_scope));
+      StaticScope class_scope(scope);
+      scope->MarkDeclared(class_decl.name().inner_name());
       if (class_decl.base_expr().has_value()) {
         CARBON_RETURN_IF_ERROR(
             ResolveNames(**class_decl.base_expr(), class_scope));
@@ -739,7 +749,7 @@ auto NameResolver::ResolveNames(Declaration& declaration,
         CARBON_RETURN_IF_ERROR(
             ResolveNames(**class_decl.type_params(), class_scope));
       }
-      enclosing_scope.MarkUsable(class_decl.name());
+      scope->MarkUsable(class_decl.name().inner_name());
       CARBON_RETURN_IF_ERROR(AddExposedNames(*class_decl.self(), class_scope));
       CARBON_RETURN_IF_ERROR(
           ResolveMemberNames(class_decl.members(), class_scope, bodies));
@@ -747,13 +757,16 @@ auto NameResolver::ResolveNames(Declaration& declaration,
     }
     case DeclarationKind::MixinDeclaration: {
       auto& mixin_decl = cast<MixinDeclaration>(declaration);
-      StaticScope mixin_scope(&enclosing_scope);
-      enclosing_scope.MarkDeclared(mixin_decl.name());
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<StaticScope*> scope,
+          ResolveQualifier(mixin_decl.name(), enclosing_scope));
+      StaticScope mixin_scope(scope);
+      scope->MarkDeclared(mixin_decl.name().inner_name());
       if (mixin_decl.params().has_value()) {
         CARBON_RETURN_IF_ERROR(
             ResolveNames(**mixin_decl.params(), mixin_scope));
       }
-      enclosing_scope.MarkUsable(mixin_decl.name());
+      scope->MarkUsable(mixin_decl.name().inner_name());
       CARBON_RETURN_IF_ERROR(mixin_scope.Add("Self", mixin_decl.self()));
       CARBON_RETURN_IF_ERROR(
           ResolveMemberNames(mixin_decl.members(), mixin_scope, bodies));
@@ -766,8 +779,10 @@ auto NameResolver::ResolveNames(Declaration& declaration,
     }
     case DeclarationKind::ChoiceDeclaration: {
       auto& choice = cast<ChoiceDeclaration>(declaration);
-      StaticScope choice_scope(&enclosing_scope);
-      enclosing_scope.MarkDeclared(choice.name());
+      CARBON_ASSIGN_OR_RETURN(Nonnull<StaticScope*> scope,
+                              ResolveQualifier(choice.name(), enclosing_scope));
+      StaticScope choice_scope(scope);
+      scope->MarkDeclared(choice.name().inner_name());
       if (choice.type_params().has_value()) {
         CARBON_RETURN_IF_ERROR(
             ResolveNames(**choice.type_params(), choice_scope));
@@ -785,7 +800,7 @@ auto NameResolver::ResolveNames(Declaration& declaration,
                  << "` in choice type";
         }
       }
-      enclosing_scope.MarkUsable(choice.name());
+      scope->MarkUsable(choice.name().inner_name());
       break;
     }
     case DeclarationKind::VariableDeclaration: {
@@ -821,9 +836,11 @@ auto NameResolver::ResolveNames(Declaration& declaration,
 
     case DeclarationKind::AliasDeclaration: {
       auto& alias = cast<AliasDeclaration>(declaration);
-      enclosing_scope.MarkDeclared(alias.name());
-      CARBON_RETURN_IF_ERROR(ResolveNames(alias.target(), enclosing_scope));
-      enclosing_scope.MarkUsable(alias.name());
+      CARBON_ASSIGN_OR_RETURN(Nonnull<StaticScope*> scope,
+                              ResolveQualifier(alias.name(), enclosing_scope));
+      scope->MarkDeclared(alias.name().inner_name());
+      CARBON_RETURN_IF_ERROR(ResolveNames(alias.target(), *scope));
+      scope->MarkUsable(alias.name().inner_name());
       break;
     }
   }

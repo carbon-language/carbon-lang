@@ -126,6 +126,12 @@ class Declaration : public AstNode {
   bool is_type_checked_ = false;
 };
 
+// Determine whether two declarations declare the same entity.
+inline auto DeclaresSameEntity(const Declaration& first,
+                               const Declaration& second) -> bool {
+  return &first == &second;
+}
+
 // A name being declared in a named declaration.
 class DeclaredName {
  public:
@@ -173,7 +179,7 @@ class NamespaceDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  explicit NamespaceDeclaration(SourceLocation source_loc, std::string name)
+  explicit NamespaceDeclaration(SourceLocation source_loc, DeclaredName name)
       : Declaration(AstNodeKind::NamespaceDeclaration, source_loc),
         name_(std::move(name)) {}
 
@@ -181,11 +187,11 @@ class NamespaceDeclaration : public Declaration {
     return InheritsFromNamespaceDeclaration(node->kind());
   }
 
-  auto name() const -> std::string_view { return name_; }
+  auto name() const -> const DeclaredName& { return name_; }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
-  std::string name_;
+  DeclaredName name_;
 };
 
 // A function's virtual override keyword.
@@ -326,7 +332,7 @@ class ClassDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  ClassDeclaration(SourceLocation source_loc, std::string name,
+  ClassDeclaration(SourceLocation source_loc, DeclaredName name,
                    Nonnull<SelfDeclaration*> self_decl,
                    ClassExtensibility extensibility,
                    std::optional<Nonnull<TuplePattern*>> type_params,
@@ -344,7 +350,7 @@ class ClassDeclaration : public Declaration {
     return InheritsFromClassDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto name() const -> const DeclaredName& { return name_; }
   auto extensibility() const -> ClassExtensibility { return extensibility_; }
   auto type_params() const -> std::optional<Nonnull<const TuplePattern*>> {
     return type_params_;
@@ -384,7 +390,7 @@ class ClassDeclaration : public Declaration {
   }
 
  private:
-  std::string name_;
+  DeclaredName name_;
   ClassExtensibility extensibility_;
   Nonnull<SelfDeclaration*> self_decl_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
@@ -400,7 +406,7 @@ class MixinDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  MixinDeclaration(SourceLocation source_loc, std::string name,
+  MixinDeclaration(SourceLocation source_loc, DeclaredName name,
                    std::optional<Nonnull<TuplePattern*>> params,
                    Nonnull<GenericBinding*> self,
                    std::vector<Nonnull<Declaration*>> members)
@@ -414,7 +420,7 @@ class MixinDeclaration : public Declaration {
     return InheritsFromMixinDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto name() const -> const DeclaredName& { return name_; }
   auto params() const -> std::optional<Nonnull<const TuplePattern*>> {
     return params_;
   }
@@ -428,7 +434,7 @@ class MixinDeclaration : public Declaration {
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
-  std::string name_;
+  DeclaredName name_;
   std::optional<Nonnull<TuplePattern*>> params_;
   Nonnull<GenericBinding*> self_;
   std::vector<Nonnull<Declaration*>> members_;
@@ -487,7 +493,7 @@ class ChoiceDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  ChoiceDeclaration(SourceLocation source_loc, std::string name,
+  ChoiceDeclaration(SourceLocation source_loc, DeclaredName name,
                     std::optional<Nonnull<TuplePattern*>> type_params,
                     std::vector<Nonnull<AlternativeSignature*>> alternatives)
       : Declaration(AstNodeKind::ChoiceDeclaration, source_loc),
@@ -499,7 +505,7 @@ class ChoiceDeclaration : public Declaration {
     return InheritsFromChoiceDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto name() const -> const DeclaredName& { return name_; }
 
   auto type_params() const -> std::optional<Nonnull<const TuplePattern*>> {
     return type_params_;
@@ -524,7 +530,7 @@ class ChoiceDeclaration : public Declaration {
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
-  std::string name_;
+  DeclaredName name_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
   std::vector<Nonnull<AlternativeSignature*>> alternatives_;
   std::vector<NamedValue> members_;
@@ -577,7 +583,7 @@ class ConstraintTypeDeclaration : public Declaration {
   using ImplementsCarbonValueNode = void;
 
   ConstraintTypeDeclaration(AstNodeKind kind, Nonnull<Arena*> arena,
-                            SourceLocation source_loc, std::string name,
+                            SourceLocation source_loc, DeclaredName name,
                             std::optional<Nonnull<TuplePattern*>> params,
                             std::vector<Nonnull<Declaration*>> members)
       : Declaration(kind, source_loc),
@@ -586,7 +592,8 @@ class ConstraintTypeDeclaration : public Declaration {
         self_type_(arena->New<SelfDeclaration>(source_loc)),
         members_(std::move(members)) {
     // `interface X` has `Self:! X`.
-    auto* self_type_ref = arena->New<IdentifierExpression>(source_loc, name);
+    auto* self_type_ref = arena->New<IdentifierExpression>(
+        source_loc, std::string(name_.inner_name()));
     self_type_ref->set_value_node(self_type_);
     self_ = arena->New<GenericBinding>(source_loc, "Self", self_type_ref);
   }
@@ -595,7 +602,7 @@ class ConstraintTypeDeclaration : public Declaration {
     return InheritsFromConstraintTypeDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto name() const -> const DeclaredName& { return name_; }
   auto params() const -> std::optional<Nonnull<const TuplePattern*>> {
     return params_;
   }
@@ -630,7 +637,7 @@ class ConstraintTypeDeclaration : public Declaration {
   }
 
  private:
-  std::string name_;
+  DeclaredName name_;
   std::optional<Nonnull<TuplePattern*>> params_;
   Nonnull<SelfDeclaration*> self_type_;
   Nonnull<GenericBinding*> self_;
@@ -644,7 +651,7 @@ class InterfaceDeclaration : public ConstraintTypeDeclaration {
   using ImplementsCarbonValueNode = void;
 
   InterfaceDeclaration(Nonnull<Arena*> arena, SourceLocation source_loc,
-                       std::string name,
+                       DeclaredName name,
                        std::optional<Nonnull<TuplePattern*>> params,
                        std::vector<Nonnull<Declaration*>> members)
       : ConstraintTypeDeclaration(AstNodeKind::InterfaceDeclaration, arena,
@@ -662,7 +669,7 @@ class ConstraintDeclaration : public ConstraintTypeDeclaration {
   using ImplementsCarbonValueNode = void;
 
   ConstraintDeclaration(Nonnull<Arena*> arena, SourceLocation source_loc,
-                        std::string name,
+                        DeclaredName name,
                         std::optional<Nonnull<TuplePattern*>> params,
                         std::vector<Nonnull<Declaration*>> members)
       : ConstraintTypeDeclaration(AstNodeKind::ConstraintDeclaration, arena,
@@ -851,7 +858,7 @@ class AliasDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  explicit AliasDeclaration(SourceLocation source_loc, std::string name,
+  explicit AliasDeclaration(SourceLocation source_loc, DeclaredName name,
                             Nonnull<Expression*> target)
       : Declaration(AstNodeKind::AliasDeclaration, source_loc),
         name_(std::move(name)),
@@ -861,13 +868,13 @@ class AliasDeclaration : public Declaration {
     return InheritsFromAliasDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto name() const -> const DeclaredName& { return name_; }
   auto target() const -> const Expression& { return *target_; }
   auto target() -> Expression& { return *target_; }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
-  std::string name_;
+  DeclaredName name_;
   Nonnull<Expression*> target_;
 };
 

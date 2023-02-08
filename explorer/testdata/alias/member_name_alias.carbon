@@ -36,44 +36,43 @@ alias i32IM = i32.(IM);
 
 fn Main() -> i32 {
   var a: A = {.n = 0};
-  // TODO: Use != once we support it.
-  if (not (A.(IF)() == 1)) {
+  if (A.(IF)() != 1) {
     return 1;
   }
-  if (not (a.(IF)() == 1)) {
+  if (a.(IF)() != 1) {
     return 2;
   }
-  if (not (a.(IM)() == 2)) {
+  if (a.(IM)() != 2) {
     return 3;
   }
-  if (not (a.(A.(IM))() == 2)) {
+  if (a.(A.(IM))() != 2) {
     return 4;
   }
-  if (not (AIF() == 1)) {
+  if (AIF() != 1) {
     return 5;
   }
-  if (not (a.(AIM)() == 2)) {
+  if (a.(AIM)() != 2) {
     return 6;
   }
-  if (not (a.(AG)() == 3)) {
+  if (a.(AG)() != 3) {
     return 7;
   }
-  if (not (i32.(IF)() == 4)) {
+  if (i32.(IF)() != 4) {
     return 8;
   }
-  if (not (0.(IF)() == 4)) {
+  if (0.(IF)() != 4) {
     return 9;
   }
-  if (not (0.(IM)() == 5)) {
+  if (0.(IM)() != 5) {
     return 10;
   }
-  if (not (0.(i32.(IM))() == 5)) {
+  if (0.(i32.(IM))() != 5) {
     return 11;
   }
-  if (not (i32IF() == 4)) {
+  if (i32IF() != 4) {
     return 12;
   }
-  if (not (0.(i32IM)() == 5)) {
+  if (0.(i32IM)() != 5) {
     return 13;
   }
   return 0;
