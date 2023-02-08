@@ -96,28 +96,23 @@ compilation_unit {
                   return_expression_statement {
                     expression {
                       operator {
-                        op: Not
+                        op: NotEq
                         arguments {
-                          operator {
-                            op: Eq
-                            arguments {
-                              simple_member_access {
-                                field: "v1"
-                                object {
-                                  identifier {
-                                    name: "self"
-                                  }
-                                }
+                          simple_member_access {
+                            field: "v1"
+                            object {
+                              identifier {
+                                name: "self"
                               }
                             }
-                            arguments {
-                              simple_member_access {
-                                field: "v2"
-                                object {
-                                  identifier {
-                                    name: "self"
-                                  }
-                                }
+                          }
+                        }
+                        arguments {
+                          simple_member_access {
+                            field: "v2"
+                            object {
+                              identifier {
+                                name: "self"
                               }
                             }
                           }

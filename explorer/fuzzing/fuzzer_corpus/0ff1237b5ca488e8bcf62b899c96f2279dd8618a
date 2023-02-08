@@ -95,20 +95,15 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      identifier {
-                        name: "x"
-                      }
-                    }
-                    arguments {
-                      int_literal {
-                        value: 1
-                      }
-                    }
+                  identifier {
+                    name: "x"
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 1
                   }
                 }
               }
@@ -165,20 +160,15 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      identifier {
-                        name: "x"
-                      }
-                    }
-                    arguments {
-                      int_literal {
-                        value: 0
-                      }
-                    }
+                  identifier {
+                    name: "x"
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 0
                   }
                 }
               }
@@ -265,20 +255,15 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      identifier {
-                        name: "x"
-                      }
-                    }
-                    arguments {
-                      int_literal {
-                        value: 1
-                      }
-                    }
+                  identifier {
+                    name: "x"
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 1
                   }
                 }
               }
@@ -348,20 +333,15 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      identifier {
-                        name: "x"
-                      }
-                    }
-                    arguments {
-                      int_literal {
-                        value: 0
-                      }
-                    }
+                  identifier {
+                    name: "x"
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 0
                   }
                 }
               }
@@ -413,23 +393,18 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
+                arguments {
+                  identifier {
+                    name: "x"
+                  }
+                }
                 arguments {
                   operator {
-                    op: Eq
+                    op: Neg
                     arguments {
-                      identifier {
-                        name: "x"
-                      }
-                    }
-                    arguments {
-                      operator {
-                        op: Neg
-                        arguments {
-                          int_literal {
-                            value: 1
-                          }
-                        }
+                      int_literal {
+                        value: 1
                       }
                     }
                   }
@@ -483,20 +458,15 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      identifier {
-                        name: "x"
-                      }
-                    }
-                    arguments {
-                      int_literal {
-                        value: 1
-                      }
-                    }
+                  identifier {
+                    name: "x"
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 1
                   }
                 }
               }
@@ -566,23 +536,18 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
+                arguments {
+                  identifier {
+                    name: "x"
+                  }
+                }
                 arguments {
                   operator {
-                    op: Eq
+                    op: Neg
                     arguments {
-                      identifier {
-                        name: "x"
-                      }
-                    }
-                    arguments {
-                      operator {
-                        op: Neg
-                        arguments {
-                          int_literal {
-                            value: 1
-                          }
-                        }
+                      int_literal {
+                        value: 1
                       }
                     }
                   }

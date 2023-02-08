@@ -22,25 +22,20 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
                   operator {
-                    op: Eq
+                    op: Complement
                     arguments {
-                      operator {
-                        op: BitShiftLeft
-                        arguments {
-                          int_literal {
-                            value: 1
-                          }
-                        }
-                        arguments {
-                          int_literal {
-                            value: 0
-                          }
-                        }
+                      int_literal {
+                        value: 0
                       }
                     }
+                  }
+                }
+                arguments {
+                  operator {
+                    op: Neg
                     arguments {
                       int_literal {
                         value: 1
@@ -55,7 +50,7 @@ compilation_unit {
                 return_expression_statement {
                   expression {
                     int_literal {
-                      value: 1
+                      value: 11
                     }
                   }
                 }
@@ -67,28 +62,23 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
                   operator {
-                    op: Eq
-                    arguments {
-                      operator {
-                        op: BitShiftLeft
-                        arguments {
-                          int_literal {
-                            value: 1
-                          }
-                        }
-                        arguments {
-                          int_literal {
-                            value: 3
-                          }
-                        }
-                      }
-                    }
+                    op: Complement
                     arguments {
                       int_literal {
-                        value: 8
+                        value: 1
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  operator {
+                    op: Neg
+                    arguments {
+                      int_literal {
+                        value: 2
                       }
                     }
                   }
@@ -100,7 +90,7 @@ compilation_unit {
                 return_expression_statement {
                   expression {
                     int_literal {
-                      value: 2
+                      value: 12
                     }
                   }
                 }
@@ -112,18 +102,13 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
                   operator {
-                    op: Eq
+                    op: Complement
                     arguments {
                       operator {
-                        op: BitShiftLeft
-                        arguments {
-                          int_literal {
-                            value: 0
-                          }
-                        }
+                        op: Neg
                         arguments {
                           int_literal {
                             value: 3
@@ -131,11 +116,11 @@ compilation_unit {
                         }
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 0
-                      }
-                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 2
                   }
                 }
               }
@@ -145,7 +130,7 @@ compilation_unit {
                 return_expression_statement {
                   expression {
                     int_literal {
-                      value: 3
+                      value: 13
                     }
                   }
                 }
@@ -157,23 +142,13 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
                   operator {
-                    op: Eq
+                    op: BitwiseAnd
                     arguments {
-                      operator {
-                        op: BitShiftLeft
-                        arguments {
-                          int_literal {
-                            value: 3
-                          }
-                        }
-                        arguments {
-                          int_literal {
-                            value: 1
-                          }
-                        }
+                      int_literal {
+                        value: 3
                       }
                     }
                     arguments {
@@ -183,6 +158,11 @@ compilation_unit {
                     }
                   }
                 }
+                arguments {
+                  int_literal {
+                    value: 2
+                  }
+                }
               }
             }
             then_block {
@@ -190,7 +170,7 @@ compilation_unit {
                 return_expression_statement {
                   expression {
                     int_literal {
-                      value: 4
+                      value: 21
                     }
                   }
                 }
@@ -202,23 +182,323 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
                   operator {
-                    op: Eq
+                    op: BitwiseAnd
                     arguments {
                       operator {
-                        op: BitShiftLeft
+                        op: Neg
                         arguments {
-                          operator {
-                            op: Neg
-                            arguments {
-                              int_literal {
-                                value: 1
-                              }
-                            }
+                          int_literal {
+                            value: 1
                           }
                         }
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 4
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 4
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 22
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: NotEq
+                arguments {
+                  operator {
+                    op: BitwiseAnd
+                    arguments {
+                      operator {
+                        op: Neg
+                        arguments {
+                          int_literal {
+                            value: 1
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      operator {
+                        op: Neg
+                        arguments {
+                          int_literal {
+                            value: 2
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  operator {
+                    op: Neg
+                    arguments {
+                      int_literal {
+                        value: 2
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 23
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: NotEq
+                arguments {
+                  operator {
+                    op: BitwiseOr
+                    arguments {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 4
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 5
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 31
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: NotEq
+                arguments {
+                  operator {
+                    op: BitwiseOr
+                    arguments {
+                      int_literal {
+                        value: 5
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 3
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 7
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 32
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: NotEq
+                arguments {
+                  operator {
+                    op: BitwiseOr
+                    arguments {
+                      operator {
+                        op: Neg
+                        arguments {
+                          int_literal {
+                            value: 2
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  operator {
+                    op: Neg
+                    arguments {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 33
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: NotEq
+                arguments {
+                  operator {
+                    op: BitwiseXor
+                    arguments {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 4
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 5
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 41
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: NotEq
+                arguments {
+                  operator {
+                    op: BitwiseXor
+                    arguments {
+                      int_literal {
+                        value: 5
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 3
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 6
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    int_literal {
+                      value: 42
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: NotEq
+                arguments {
+                  operator {
+                    op: BitwiseXor
+                    arguments {
+                      operator {
+                        op: Neg
                         arguments {
                           int_literal {
                             value: 2
@@ -231,201 +511,16 @@ compilation_unit {
                         op: Neg
                         arguments {
                           int_literal {
-                            value: 4
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            then_block {
-              statements {
-                return_expression_statement {
-                  expression {
-                    int_literal {
-                      value: 5
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        statements {
-          if_statement {
-            condition {
-              operator {
-                op: Not
-                arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      operator {
-                        op: BitShiftRight
-                        arguments {
-                          int_literal {
-                            value: 1
-                          }
-                        }
-                        arguments {
-                          int_literal {
-                            value: 0
-                          }
-                        }
-                      }
-                    }
-                    arguments {
-                      int_literal {
-                        value: 1
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            then_block {
-              statements {
-                return_expression_statement {
-                  expression {
-                    int_literal {
-                      value: 6
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        statements {
-          if_statement {
-            condition {
-              operator {
-                op: Not
-                arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      operator {
-                        op: BitShiftRight
-                        arguments {
-                          int_literal {
-                            value: 1
-                          }
-                        }
-                        arguments {
-                          int_literal {
-                            value: 1
-                          }
-                        }
-                      }
-                    }
-                    arguments {
-                      int_literal {
-                        value: 0
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            then_block {
-              statements {
-                return_expression_statement {
-                  expression {
-                    int_literal {
-                      value: 7
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        statements {
-          if_statement {
-            condition {
-              operator {
-                op: Not
-                arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      operator {
-                        op: BitShiftRight
-                        arguments {
-                          int_literal {
                             value: 3
                           }
                         }
-                        arguments {
-                          int_literal {
-                            value: 1
-                          }
-                        }
-                      }
-                    }
-                    arguments {
-                      int_literal {
-                        value: 1
                       }
                     }
                   }
                 }
-              }
-            }
-            then_block {
-              statements {
-                return_expression_statement {
-                  expression {
-                    int_literal {
-                      value: 8
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        statements {
-          if_statement {
-            condition {
-              operator {
-                op: Not
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      operator {
-                        op: BitShiftRight
-                        arguments {
-                          operator {
-                            op: Neg
-                            arguments {
-                              int_literal {
-                                value: 1
-                              }
-                            }
-                          }
-                        }
-                        arguments {
-                          int_literal {
-                            value: 1
-                          }
-                        }
-                      }
-                    }
-                    arguments {
-                      operator {
-                        op: Neg
-                        arguments {
-                          int_literal {
-                            value: 1
-                          }
-                        }
-                      }
-                    }
+                  int_literal {
+                    value: 3
                   }
                 }
               }
@@ -435,169 +530,7 @@ compilation_unit {
                 return_expression_statement {
                   expression {
                     int_literal {
-                      value: 9
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        statements {
-          if_statement {
-            condition {
-              operator {
-                op: Not
-                arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      operator {
-                        op: BitShiftRight
-                        arguments {
-                          operator {
-                            op: Neg
-                            arguments {
-                              int_literal {
-                                value: 2
-                              }
-                            }
-                          }
-                        }
-                        arguments {
-                          int_literal {
-                            value: 1
-                          }
-                        }
-                      }
-                    }
-                    arguments {
-                      operator {
-                        op: Neg
-                        arguments {
-                          int_literal {
-                            value: 1
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            then_block {
-              statements {
-                return_expression_statement {
-                  expression {
-                    int_literal {
-                      value: 10
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        statements {
-          variable_definition {
-            pattern {
-              binding_pattern {
-                name: "n"
-                type {
-                  expression_pattern {
-                    expression {
-                      int_type_literal {
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            init {
-              int_literal {
-                value: 1
-              }
-            }
-            is_returned: false
-          }
-        }
-        statements {
-          assign {
-            lhs {
-              identifier {
-                name: "n"
-              }
-            }
-            rhs {
-              int_literal {
-                value: 3
-              }
-            }
-            op: ShiftLeft
-          }
-        }
-        statements {
-          expression_statement {
-            expression {
-              call {
-                function {
-                  identifier {
-                    name: "Print"
-                  }
-                }
-                argument {
-                  tuple_literal {
-                    fields {
-                      string_literal {
-                        value: "{0}"
-                      }
-                    }
-                    fields {
-                      identifier {
-                        name: "n"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        statements {
-          assign {
-            lhs {
-              identifier {
-                name: "n"
-              }
-            }
-            rhs {
-              int_literal {
-                value: 1
-              }
-            }
-            op: ShiftRight
-          }
-        }
-        statements {
-          expression_statement {
-            expression {
-              call {
-                function {
-                  identifier {
-                    name: "Print"
-                  }
-                }
-                argument {
-                  tuple_literal {
-                    fields {
-                      string_literal {
-                        value: "{0}"
-                      }
-                    }
-                    fields {
-                      identifier {
-                        name: "n"
-                      }
+                      value: 43
                     }
                   }
                 }

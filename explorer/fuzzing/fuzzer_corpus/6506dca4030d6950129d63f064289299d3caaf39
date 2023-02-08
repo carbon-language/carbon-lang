@@ -467,37 +467,32 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      call {
-                        function {
-                          compound_member_access {
-                            object {
-                              identifier {
-                                name: "A"
-                              }
-                            }
-                            path {
-                              identifier {
-                                name: "IF"
-                              }
-                            }
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          identifier {
+                            name: "A"
                           }
                         }
-                        argument {
-                          tuple_literal {
+                        path {
+                          identifier {
+                            name: "IF"
                           }
                         }
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 1
+                    argument {
+                      tuple_literal {
                       }
                     }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 1
                   }
                 }
               }
@@ -519,37 +514,32 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      call {
-                        function {
-                          compound_member_access {
-                            object {
-                              identifier {
-                                name: "a"
-                              }
-                            }
-                            path {
-                              identifier {
-                                name: "IF"
-                              }
-                            }
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          identifier {
+                            name: "a"
                           }
                         }
-                        argument {
-                          tuple_literal {
+                        path {
+                          identifier {
+                            name: "IF"
                           }
                         }
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 1
+                    argument {
+                      tuple_literal {
                       }
                     }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 1
                   }
                 }
               }
@@ -571,37 +561,32 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      call {
-                        function {
-                          compound_member_access {
-                            object {
-                              identifier {
-                                name: "a"
-                              }
-                            }
-                            path {
-                              identifier {
-                                name: "IM"
-                              }
-                            }
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          identifier {
+                            name: "a"
                           }
                         }
-                        argument {
-                          tuple_literal {
+                        path {
+                          identifier {
+                            name: "IM"
                           }
                         }
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 2
+                    argument {
+                      tuple_literal {
                       }
                     }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 2
                   }
                 }
               }
@@ -623,46 +608,41 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      call {
-                        function {
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          identifier {
+                            name: "a"
+                          }
+                        }
+                        path {
                           compound_member_access {
                             object {
                               identifier {
-                                name: "a"
+                                name: "A"
                               }
                             }
                             path {
-                              compound_member_access {
-                                object {
-                                  identifier {
-                                    name: "A"
-                                  }
-                                }
-                                path {
-                                  identifier {
-                                    name: "IM"
-                                  }
-                                }
+                              identifier {
+                                name: "IM"
                               }
                             }
                           }
                         }
-                        argument {
-                          tuple_literal {
-                          }
-                        }
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 2
+                    argument {
+                      tuple_literal {
                       }
                     }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 2
                   }
                 }
               }
@@ -684,28 +664,23 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      call {
-                        function {
-                          identifier {
-                            name: "AIF"
-                          }
-                        }
-                        argument {
-                          tuple_literal {
-                          }
-                        }
+                  call {
+                    function {
+                      identifier {
+                        name: "AIF"
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 1
+                    argument {
+                      tuple_literal {
                       }
                     }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 1
                   }
                 }
               }
@@ -727,37 +702,32 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      call {
-                        function {
-                          compound_member_access {
-                            object {
-                              identifier {
-                                name: "a"
-                              }
-                            }
-                            path {
-                              identifier {
-                                name: "AIM"
-                              }
-                            }
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          identifier {
+                            name: "a"
                           }
                         }
-                        argument {
-                          tuple_literal {
+                        path {
+                          identifier {
+                            name: "AIM"
                           }
                         }
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 2
+                    argument {
+                      tuple_literal {
                       }
                     }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 2
                   }
                 }
               }
@@ -779,37 +749,32 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      call {
-                        function {
-                          compound_member_access {
-                            object {
-                              identifier {
-                                name: "a"
-                              }
-                            }
-                            path {
-                              identifier {
-                                name: "AG"
-                              }
-                            }
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          identifier {
+                            name: "a"
                           }
                         }
-                        argument {
-                          tuple_literal {
+                        path {
+                          identifier {
+                            name: "AG"
                           }
                         }
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 3
+                    argument {
+                      tuple_literal {
                       }
                     }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 3
                   }
                 }
               }
@@ -831,36 +796,31 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      call {
-                        function {
-                          compound_member_access {
-                            object {
-                              int_type_literal {
-                              }
-                            }
-                            path {
-                              identifier {
-                                name: "IF"
-                              }
-                            }
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          int_type_literal {
                           }
                         }
-                        argument {
-                          tuple_literal {
+                        path {
+                          identifier {
+                            name: "IF"
                           }
                         }
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 4
+                    argument {
+                      tuple_literal {
                       }
                     }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 4
                   }
                 }
               }
@@ -882,37 +842,32 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      call {
-                        function {
-                          compound_member_access {
-                            object {
-                              int_literal {
-                                value: 0
-                              }
-                            }
-                            path {
-                              identifier {
-                                name: "IF"
-                              }
-                            }
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          int_literal {
+                            value: 0
                           }
                         }
-                        argument {
-                          tuple_literal {
+                        path {
+                          identifier {
+                            name: "IF"
                           }
                         }
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 4
+                    argument {
+                      tuple_literal {
                       }
                     }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 4
                   }
                 }
               }
@@ -934,37 +889,32 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      call {
-                        function {
-                          compound_member_access {
-                            object {
-                              int_literal {
-                                value: 0
-                              }
-                            }
-                            path {
-                              identifier {
-                                name: "IM"
-                              }
-                            }
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          int_literal {
+                            value: 0
                           }
                         }
-                        argument {
-                          tuple_literal {
+                        path {
+                          identifier {
+                            name: "IM"
                           }
                         }
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 5
+                    argument {
+                      tuple_literal {
                       }
                     }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 5
                   }
                 }
               }
@@ -986,45 +936,40 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      call {
-                        function {
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          int_literal {
+                            value: 0
+                          }
+                        }
+                        path {
                           compound_member_access {
                             object {
-                              int_literal {
-                                value: 0
+                              int_type_literal {
                               }
                             }
                             path {
-                              compound_member_access {
-                                object {
-                                  int_type_literal {
-                                  }
-                                }
-                                path {
-                                  identifier {
-                                    name: "IM"
-                                  }
-                                }
+                              identifier {
+                                name: "IM"
                               }
                             }
                           }
                         }
-                        argument {
-                          tuple_literal {
-                          }
-                        }
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 5
+                    argument {
+                      tuple_literal {
                       }
                     }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 5
                   }
                 }
               }
@@ -1046,28 +991,23 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      call {
-                        function {
-                          identifier {
-                            name: "i32IF"
-                          }
-                        }
-                        argument {
-                          tuple_literal {
-                          }
-                        }
+                  call {
+                    function {
+                      identifier {
+                        name: "i32IF"
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 4
+                    argument {
+                      tuple_literal {
                       }
                     }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 4
                   }
                 }
               }
@@ -1089,37 +1029,32 @@ compilation_unit {
           if_statement {
             condition {
               operator {
-                op: Not
+                op: NotEq
                 arguments {
-                  operator {
-                    op: Eq
-                    arguments {
-                      call {
-                        function {
-                          compound_member_access {
-                            object {
-                              int_literal {
-                                value: 0
-                              }
-                            }
-                            path {
-                              identifier {
-                                name: "i32IM"
-                              }
-                            }
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          int_literal {
+                            value: 0
                           }
                         }
-                        argument {
-                          tuple_literal {
+                        path {
+                          identifier {
+                            name: "i32IM"
                           }
                         }
                       }
                     }
-                    arguments {
-                      int_literal {
-                        value: 5
+                    argument {
+                      tuple_literal {
                       }
                     }
+                  }
+                }
+                arguments {
+                  int_literal {
+                    value: 5
                   }
                 }
               }
