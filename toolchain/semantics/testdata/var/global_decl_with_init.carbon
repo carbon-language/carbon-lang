@@ -18,19 +18,20 @@
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block1, type: node1},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block2, type: node0},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block3, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block4, type: node0},
 // CHECK:STDOUT:   {kind: VarStorage, type: node2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node4, type: node2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node5, type: node2},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: node2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node4, arg1: node6, type: node2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node5, arg1: node7, type: node2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node4,
 // CHECK:STDOUT:     node5,
 // CHECK:STDOUT:     node6,
 // CHECK:STDOUT:     node7,
+// CHECK:STDOUT:     node8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

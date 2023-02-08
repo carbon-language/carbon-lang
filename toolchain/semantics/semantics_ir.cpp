@@ -35,8 +35,12 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
       block_id,
       SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::IntegerType, type_type));
 
+  semantics.AddNode(block_id,
+                    SemanticsNode::MakeBuiltin(
+                        SemanticsBuiltinKind::FloatingPointType, type_type));
+
   semantics.AddNode(block_id, SemanticsNode::MakeBuiltin(
-                                  SemanticsBuiltinKind::RealType, type_type));
+                                  SemanticsBuiltinKind::StringType, type_type));
 
   CARBON_CHECK(semantics.node_blocks_.size() == 2)
       << "BuildBuiltins should produce 2 blocks, actual: "

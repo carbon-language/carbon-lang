@@ -213,7 +213,7 @@ class SemanticsNode {
 
   static auto MakeRealLiteral(ParseTree::Node parse_node) -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::RealLiteral,
-                         SemanticsNodeId::BuiltinRealType);
+                         SemanticsNodeId::BuiltinFloatingPointType);
   }
   auto GetAsRealLiteral() const -> NoArgs {
     CARBON_CHECK(kind_ == SemanticsNodeKind::RealLiteral);
@@ -241,6 +241,15 @@ class SemanticsNode {
   auto GetAsReturnExpression() const -> SemanticsNodeId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression);
     return SemanticsNodeId(arg0_);
+  }
+
+  static auto MakeStringLiteral(ParseTree::Node parse_node) -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::StringLiteral,
+                         SemanticsNodeId::BuiltinStringType);
+  }
+  auto GetAsStringLiteral() const -> NoArgs {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::StringLiteral);
+    return {};
   }
 
   static auto MakeVarStorage(ParseTree::Node parse_node, SemanticsNodeId type)
