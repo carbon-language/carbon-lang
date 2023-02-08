@@ -3,18 +3,18 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-semantics}
+// RUN: %{carbon-run-parser}
 // CHECK:STDERR: Please report issues to https://github.com/carbon-language/carbon-lang/issues and include the crash backtrace.
 // CHECK:STDERR: Stack dump:
-// CHECK:STDERR: 0.	Program arguments: ./bazel-bin/toolchain/driver/carbon dump semantics-ir {{.*}}/toolchain/semantics/testdata/basics/builtin_types.carbon
-// CHECK:STDERR: #0 0x000055f038f4aa13 llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (./bazel-bin/toolchain/driver/carbon+0xeca13)
-// CHECK:STDERR: #1 0x000055f038f4875e llvm::sys::RunSignalHandlers() (./bazel-bin/toolchain/driver/carbon+0xea75e)
-// CHECK:STDERR: #2 0x000055f038f4ae0a SignalHandler(int) Signals.cpp:0:0
-// CHECK:STDERR: #3 0x00007f0f3b4f4f90 (/lib/x86_64-linux-gnu/libc.so.6+0x3bf90)
-// CHECK:STDERR: #4 0x00007f0f3b543ccc __pthread_kill_implementation ./nptl/./nptl/pthread_kill.c:44:76
-// CHECK:STDERR: #5 0x00007f0f3b4f4ef2 raise ./signal/../sysdeps/posix/raise.c:27:6
-// CHECK:STDERR: #6 0x00007f0f3b4df472 abort ./stdlib/./stdlib/abort.c:81:7
-// CHECK:STDERR: #7 0x000055f038f1f322 Carbon::Internal::ExitingStream::Done() (./bazel-bin/toolchain/driver/carbon+0xc1322)
+// CHECK:STDERR: 0.	Program arguments: ./bazel-bin/toolchain/driver/carbon dump parse-tree {{.*}}/toolchain/parser/testdata/basics/builtin_types.carbon
+// CHECK:STDERR: #0 0x00005588ce939a13 llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (./bazel-bin/toolchain/driver/carbon+0xeca13)
+// CHECK:STDERR: #1 0x00005588ce93775e llvm::sys::RunSignalHandlers() (./bazel-bin/toolchain/driver/carbon+0xea75e)
+// CHECK:STDERR: #2 0x00005588ce939e0a SignalHandler(int) Signals.cpp:0:0
+// CHECK:STDERR: #3 0x00007f3ef0196f90 (/lib/x86_64-linux-gnu/libc.so.6+0x3bf90)
+// CHECK:STDERR: #4 0x00007f3ef01e5ccc __pthread_kill_implementation ./nptl/./nptl/pthread_kill.c:44:76
+// CHECK:STDERR: #5 0x00007f3ef0196ef2 raise ./signal/../sysdeps/posix/raise.c:27:6
+// CHECK:STDERR: #6 0x00007f3ef0181472 abort ./stdlib/./stdlib/abort.c:81:7
+// CHECK:STDERR: #7 0x00005588ce90e322 Carbon::Internal::ExitingStream::Done() (./bazel-bin/toolchain/driver/carbon+0xc1322)
 // CHECK:STDERR: CHECK failure at toolchain/parser/parse_tree.cpp:29: !verify_error: [
 // CHECK:STDERR:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDERR:     {kind: 'DeclaredName', text: 'test_i32'},
