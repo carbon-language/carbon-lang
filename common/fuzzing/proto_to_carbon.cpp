@@ -715,14 +715,13 @@ static auto ReturnTermToCarbon(const Fuzzing::ReturnTerm& return_term,
   }
 }
 
-template <typename ProtoT>
-static auto DeclaredNameToCarbon(const ProtoT& proto, llvm::raw_ostream& out)
-    -> void {
-  for (const std::string& qual : proto.qualifiers()) {
+static auto DeclaredNameToCarbon(const Fuzzing::DeclaredName& name,
+                                 llvm::raw_ostream& out) -> void {
+  for (const std::string& qual : name.qualifiers()) {
     IdentifierToCarbon(qual, out);
     out << ".";
   }
-  IdentifierToCarbon(proto.name(), out);
+  IdentifierToCarbon(name.name(), out);
 }
 
 static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
@@ -736,7 +735,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
 
     case Fuzzing::Declaration::kNamespace: {
       out << "namespace ";
-      DeclaredNameToCarbon(declaration.namespace_(), out);
+      DeclaredNameToCarbon(declaration.namespace_().name(), out);
       out << ";";
       break;
     }
@@ -765,7 +764,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
     case Fuzzing::Declaration::kFunction: {
       const auto& function = declaration.function();
       out << "fn ";
-      DeclaredNameToCarbon(function, out);
+      DeclaredNameToCarbon(function.name(), out);
 
       if (!function.deduced_parameters().empty() ||
           function.has_self_pattern()) {
@@ -798,7 +797,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
     case Fuzzing::Declaration::kClassDeclaration: {
       const auto& class_declaration = declaration.class_declaration();
       out << "class ";
-      DeclaredNameToCarbon(class_declaration, out);
+      DeclaredNameToCarbon(class_declaration.name(), out);
 
       // type_params is optional.
       if (class_declaration.has_type_params()) {
@@ -818,7 +817,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
     case Fuzzing::Declaration::kMixin: {
       const auto& mixin_declaration = declaration.mixin();
       out << "__mixin ";
-      DeclaredNameToCarbon(mixin_declaration, out);
+      DeclaredNameToCarbon(mixin_declaration.name(), out);
 
       // type params are not implemented yet
       // if (mixin_declaration.has_params()) {
@@ -847,7 +846,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
     case Fuzzing::Declaration::kChoice: {
       const auto& choice = declaration.choice();
       out << "choice ";
-      DeclaredNameToCarbon(choice, out);
+      DeclaredNameToCarbon(choice.name(), out);
 
       out << "{";
       llvm::ListSeparator sep;
@@ -909,7 +908,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
     case Fuzzing::Declaration::kInterface: {
       const auto& interface = declaration.interface();
       out << "interface ";
-      DeclaredNameToCarbon(interface, out);
+      DeclaredNameToCarbon(interface.name(), out);
       out << " {\n";
       for (const auto& member : interface.members()) {
         DeclarationToCarbon(member, out);
@@ -922,7 +921,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
     case Fuzzing::Declaration::kConstraint: {
       const auto& constraint = declaration.constraint();
       out << "constraint ";
-      DeclaredNameToCarbon(constraint, out);
+      DeclaredNameToCarbon(constraint.name(), out);
       out << " {\n";
       for (const auto& member : constraint.members()) {
         DeclarationToCarbon(member, out);
@@ -964,7 +963,7 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
     case Fuzzing::Declaration::kAlias: {
       const auto& alias = declaration.alias();
       out << "alias ";
-      DeclaredNameToCarbon(alias, out);
+      DeclaredNameToCarbon(alias.name(), out);
       out << " = ";
       ExpressionToCarbon(alias.target(), out);
       out << ";";

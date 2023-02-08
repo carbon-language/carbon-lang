@@ -1,0 +1,103 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    variable {
+      binding {
+        name: "n"
+        type {
+          expression_pattern {
+            expression {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+      initializer {
+        int_literal {
+          value: 0
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "F"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          type_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          assign {
+            lhs {
+              identifier {
+                name: "n"
+              }
+            }
+            rhs {
+              int_literal {
+                value: 1
+              }
+            }
+            op: Plain
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          call {
+            function {
+              identifier {
+                name: "F"
+              }
+            }
+            argument {
+              tuple_literal {
+              }
+            }
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "n"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
