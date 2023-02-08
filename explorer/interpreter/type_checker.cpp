@@ -1093,8 +1093,8 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
         return handle_non_deduced_type();
       }
       const auto& arg_class_type = cast<NominalClassType>(*arg);
-      if (param_class_type.declaration().name() !=
-          arg_class_type.declaration().name()) {
+      if (!DeclaresSameEntity(param_class_type.declaration(),
+                              arg_class_type.declaration())) {
         return handle_non_deduced_type();
       }
       for (const auto& [ty, param_ty] : param_class_type.type_args()) {
@@ -1110,8 +1110,8 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
         return handle_non_deduced_type();
       }
       const auto& arg_iface_type = cast<InterfaceType>(*arg);
-      if (param_iface_type.declaration().name() !=
-          arg_iface_type.declaration().name()) {
+      if (!DeclaresSameEntity(param_iface_type.declaration(),
+                              arg_iface_type.declaration())) {
         return handle_non_deduced_type();
       }
       for (const auto& [ty, param_ty] : param_iface_type.args()) {
@@ -1126,8 +1126,8 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
         return handle_non_deduced_type();
       }
       const auto& arg_constraint_type = cast<NamedConstraintType>(*arg);
-      if (param_constraint_type.declaration().name() !=
-          arg_constraint_type.declaration().name()) {
+      if (!DeclaresSameEntity(param_constraint_type.declaration(),
+                              arg_constraint_type.declaration())) {
         return handle_non_deduced_type();
       }
       for (const auto& [ty, param_ty] :
@@ -2098,7 +2098,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
   // have worked.
   // TODO: Eventually, ImplScope should filter by type structure before calling
   // into here.
-  if (impl.interface->declaration().name() != iface.declaration().name()) {
+  if (!DeclaresSameEntity(impl.interface->declaration(), iface.declaration())) {
     return std::nullopt;
   }
 
