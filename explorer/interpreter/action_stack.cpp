@@ -19,20 +19,6 @@ void ActionStack::Print(llvm::raw_ostream& out) const {
   }
 }
 
-// OBSOLETE
-void ActionStack::PrintScopes(llvm::raw_ostream& out) const {
-  llvm::ListSeparator sep(" ## ");
-  for (const std::unique_ptr<Action>& action : todo_) {
-    if (action->scope().has_value()) {
-      out << sep << *action->scope();
-    }
-  }
-  if (globals_.has_value()) {
-    out << sep << *globals_;
-  }
-  // TODO: should we print constants as well?
-}
-
 void ActionStack::Start(std::unique_ptr<Action> action) {
   result_ = std::nullopt;
   CARBON_CHECK(todo_.IsEmpty());
