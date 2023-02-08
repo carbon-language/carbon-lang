@@ -22,7 +22,7 @@ struct SemanticsNodeId : public IndexBase {
   static const SemanticsNodeId Invalid;
 
 // Builtin node IDs.
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name) \
+#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
   static const SemanticsNodeId Builtin##Name;
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
@@ -37,7 +37,7 @@ constexpr SemanticsNodeId SemanticsNodeId::Invalid = SemanticsNodeId();
 
 // Uses the cross-reference node ID for a builtin. This relies on SemanticsIR
 // guarantees for builtin cross-reference placement.
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name)                  \
+#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name)             \
   constexpr SemanticsNodeId SemanticsNodeId::Builtin##Name = \
       SemanticsNodeId(SemanticsBuiltinKind::Name.AsInt());
 #include "toolchain/semantics/semantics_builtin_kind.def"
