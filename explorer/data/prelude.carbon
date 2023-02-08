@@ -663,8 +663,27 @@ impl i32 as Dec {
   }
 }
 
+// ------------------------
+// Miscellaneous utilities.
+// ------------------------
+
+// Note that Print is experimental, and not part of an accepted proposal, but
+// is included here for printing state in tests.
+// TODO: Remove Print special casing once we have variadics or overloads.
+// fn Print(format_str: String) {
+//   __intrinsic_print(format_str);
+// }
+
+fn Assert(condition: bool, message: String){
+    __intrinsic_assert(condition, message);
+}
+
+fn Rand(low: i32, high: i32) -> i32{
+    return __intrinsic_rand(low,high);
+}
+
 //-------------------------
-// Optional
+// Optional.
 //-------------------------
 choice OptionalElement(T:! type) {
   None(),
@@ -693,31 +712,17 @@ class Optional(T:! type) {
         return x;
       }
     }
-    // TODO: Use assert as soon as available
+    Assert(false, "Attempted to unwrap empty Optional");
+    // TODO: Drop uninitialized variable & return when we can flag unreachable paths.
     return y;
   }
 
   var element: OptionalElement(T);
 }
 
-// ------------------------
-// Miscellaneous utilities.
-// ------------------------
-
-// Note that Print is experimental, and not part of an accepted proposal, but
-// is included here for printing state in tests.
-// TODO: Remove Print special casing once we have variadics or overloads.
-// fn Print(format_str: String) {
-//   __intrinsic_print(format_str);
-// }
-
-fn Assert(condition: bool, message: String){
-    __intrinsic_assert(condition, message);
-}
-
-fn Rand(low: i32, high: i32) -> i32{
-    return __intrinsic_rand(low,high);
-}
+//-------------------------
+// Heap.
+//-------------------------
 
 class Heap {
   fn New[T:! type, self: Self](x : T) -> T* {
