@@ -424,13 +424,15 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
       break;
     }
     case TokenKind::RealLiteral: {
-      // TODO: Add storage of the Real literal.
-      AddNodeAndPush(parse_node, SemanticsNode::MakeRealLiteral(parse_node));
+      auto id = semantics_->AddRealLiteral(tokens_->GetRealLiteral(token));
+      AddNodeAndPush(parse_node,
+                     SemanticsNode::MakeRealLiteral(parse_node, id));
       break;
     }
     case TokenKind::StringLiteral: {
-      // TODO: Add storage of the Real literal.
-      AddNodeAndPush(parse_node, SemanticsNode::MakeStringLiteral(parse_node));
+      auto id = semantics_->AddString(tokens_->GetStringLiteral(token));
+      AddNodeAndPush(parse_node,
+                     SemanticsNode::MakeStringLiteral(parse_node, id));
       break;
     }
     case TokenKind::IntegerTypeLiteral: {

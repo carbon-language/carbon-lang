@@ -103,6 +103,13 @@ class SemanticsIR {
     return node_blocks_[block_id.index];
   }
 
+  // Adds a real literal, returning an ID to reference it.
+  auto AddRealLiteral(llvm::APInt real_literal) -> SemanticsRealLiteralId {
+    SemanticsRealLiteralId id(real_literals_.size());
+    integer_literals_.push_back(real_literal);
+    return id;
+  }
+
   // Adds an string, returning an ID to reference it.
   auto AddString(llvm::StringRef str) -> SemanticsStringId {
     // If the string has already been stored, return the corresponding ID.
@@ -138,6 +145,9 @@ class SemanticsIR {
 
   // Storage for integer literals.
   llvm::SmallVector<llvm::APInt> integer_literals_;
+
+  // Storage for real literals.
+  llvm::SmallVector<llvm::APInt> real_literals_;
 
   // Storage for strings. strings_ provides a list of allocated strings, while
   // string_to_id_ provides a mapping to identify strings.

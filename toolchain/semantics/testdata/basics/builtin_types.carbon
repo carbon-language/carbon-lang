@@ -4,40 +4,54 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
-// CHECK:STDERR: Please report issues to https://github.com/carbon-language/carbon-lang/issues and include the crash backtrace.
-// CHECK:STDERR: Stack dump:
-// CHECK:STDERR: 0.	Program arguments: ./bazel-bin/toolchain/driver/carbon dump semantics-ir {{.*}}/toolchain/semantics/testdata/basics/builtin_types.carbon
-// CHECK:STDERR: #0 0x000055f038f4aa13 llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (./bazel-bin/toolchain/driver/carbon+0xeca13)
-// CHECK:STDERR: #1 0x000055f038f4875e llvm::sys::RunSignalHandlers() (./bazel-bin/toolchain/driver/carbon+0xea75e)
-// CHECK:STDERR: #2 0x000055f038f4ae0a SignalHandler(int) Signals.cpp:0:0
-// CHECK:STDERR: #3 0x00007f0f3b4f4f90 (/lib/x86_64-linux-gnu/libc.so.6+0x3bf90)
-// CHECK:STDERR: #4 0x00007f0f3b543ccc __pthread_kill_implementation ./nptl/./nptl/pthread_kill.c:44:76
-// CHECK:STDERR: #5 0x00007f0f3b4f4ef2 raise ./signal/../sysdeps/posix/raise.c:27:6
-// CHECK:STDERR: #6 0x00007f0f3b4df472 abort ./stdlib/./stdlib/abort.c:81:7
-// CHECK:STDERR: #7 0x000055f038f1f322 Carbon::Internal::ExitingStream::Done() (./bazel-bin/toolchain/driver/carbon+0xc1322)
-// CHECK:STDERR: CHECK failure at toolchain/parser/parse_tree.cpp:29: !verify_error: [
-// CHECK:STDERR:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDERR:     {kind: 'DeclaredName', text: 'test_i32'},
-// CHECK:STDERR:     {kind: 'Literal', text: 'i32'},
-// CHECK:STDERR:   {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDERR:   {kind: 'VariableInitializer', text: '='},
-// CHECK:STDERR:   {kind: 'Literal', text: '0'},
-// CHECK:STDERR: {kind: 'VariableDeclaration', text: ';', subtree_size: 7},
-// CHECK:STDERR:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDERR:     {kind: 'DeclaredName', text: 'test_f64'},
-// CHECK:STDERR:     {kind: 'Literal', text: 'f64'},
-// CHECK:STDERR:   {kind: 'PatternBinding', text: ':', subtree_size: 3},
-// CHECK:STDERR:   {kind: 'VariableInitializer', text: '='},
-// CHECK:STDERR:   {kind: 'Literal', text: '0.1'},
-// CHECK:STDERR: {kind: 'VariableDeclaration', text: ';', subtree_size: 7},
-// CHECK:STDERR:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDERR:   {kind: 'DeclaredName', text: 'test_str'},
-// CHECK:STDERR:   {kind: 'VariableInitializer', text: '='},
-// CHECK:STDERR:   {kind: 'Literal', text: '"Test"'},
-// CHECK:STDERR: {kind: 'VariableDeclaration', text: ';', subtree_size: 5},
-// CHECK:STDERR: {kind: 'FileEnd', text: ''},
-// CHECK:STDERR: ]
-// CHECK:STDERR: ParseTree has 20 nodes and no errors, but TokenizedBuffer has 22 tokens.
+// CHECK:STDOUT: cross_reference_irs_size: 1
+// CHECK:STDOUT: callables: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: integer_literals: [
+// CHECK:STDOUT:   0,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: strings: [
+// CHECK:STDOUT:   test_i32,
+// CHECK:STDOUT:   test_f64,
+// CHECK:STDOUT:   test_str,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: nodes: [
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block0, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block1, type: node1},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block2, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block3, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: block4, type: node0},
+// CHECK:STDOUT:   {kind: VarStorage, type: node2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node5, type: node2},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: node2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node5, arg1: node7, type: node2},
+// CHECK:STDOUT:   {kind: VarStorage, type: node3},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node9, type: node3},
+// CHECK:STDOUT:   {kind: RealLiteral, type: node3},
+// CHECK:STDOUT:   {kind: Assign, arg0: node9, arg1: node11, type: node3},
+// CHECK:STDOUT:   {kind: VarStorage, type: node4},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node13, type: node4},
+// CHECK:STDOUT:   {kind: StringLiteral, type: node4},
+// CHECK:STDOUT:   {kind: Assign, arg0: node13, arg1: node15, type: node4},
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: node_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node5,
+// CHECK:STDOUT:     node6,
+// CHECK:STDOUT:     node7,
+// CHECK:STDOUT:     node8,
+// CHECK:STDOUT:     node9,
+// CHECK:STDOUT:     node10,
+// CHECK:STDOUT:     node11,
+// CHECK:STDOUT:     node12,
+// CHECK:STDOUT:     node13,
+// CHECK:STDOUT:     node14,
+// CHECK:STDOUT:     node15,
+// CHECK:STDOUT:     node16,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT: ]
 
 var test_i32: i32 = 0;
 var test_f64: f64 = 0.1;
