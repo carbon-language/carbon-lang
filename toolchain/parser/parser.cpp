@@ -846,7 +846,8 @@ auto Parser::HandleExpressionInPostfixState() -> void {
     case TokenKind::StringLiteral:
     case TokenKind::IntegerTypeLiteral:
     case TokenKind::UnsignedIntegerTypeLiteral:
-    case TokenKind::FloatingPointTypeLiteral: {
+    case TokenKind::FloatingPointTypeLiteral:
+    case TokenKind::StringTypeLiteral: {
       AddLeafNode(ParseNodeKind::Literal, Consume());
       PushState(state);
       break;
