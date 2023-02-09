@@ -81,6 +81,8 @@ class TokenizedBuffer {
   // All other APIs to query a `Identifier` are on the `TokenizedBuffer`.
   struct Identifier : public IndexBase {
     using IndexBase::IndexBase;
+
+    static const Identifier Invalid;
   };
 
   // Random-access iterator over tokens within the buffer.
@@ -88,7 +90,7 @@ class TokenizedBuffer {
       : public llvm::iterator_facade_base<
             TokenIterator, std::random_access_iterator_tag, const Token, int> {
    public:
-    TokenIterator() = default;
+    TokenIterator() = delete;
 
     explicit TokenIterator(Token token) : token_(token) {}
 
@@ -343,7 +345,7 @@ class TokenizedBuffer {
           sizeof(Token) <= sizeof(int32_t),
           "Unable to pack token and identifier index into the same space!");
 
-      Identifier id;
+      Identifier id = Identifier::Invalid;
       int32_t literal_index;
       Token closing_token;
       Token opening_token;
@@ -403,6 +405,9 @@ class TokenizedBuffer {
 
   bool has_errors_ = false;
 };
+
+constexpr TokenizedBuffer::Identifier TokenizedBuffer::Identifier::Invalid =
+    TokenizedBuffer::Identifier(TokenizedBuffer::Identifier::InvalidIndex);
 
 // A diagnostic emitter that uses positions within a source buffer's text as
 // its source of location information.
