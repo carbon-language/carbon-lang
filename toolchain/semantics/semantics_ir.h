@@ -31,14 +31,20 @@ struct SemanticsCall {
 // A callable object.
 struct SemanticsCallable {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{param_ir: " << param_ir_id << ", param_refs: " << param_refs_id
-        << "}";
+    out << "{param_ir: " << param_ir_id << ", param_refs: " << param_refs_id;
+    if (return_type_id.is_valid()) {
+      out << ", return_type: " << return_type_id;
+    }
+    out << "}";
   }
 
   // The full IR for parameters.
   SemanticsNodeBlockId param_ir_id;
   // A block containing a single reference node per parameter.
   SemanticsNodeBlockId param_refs_id;
+  // The return type. This will be invalid if the return type wasn't specified.
+  // The IR corresponding to the return type will be in a node block.
+  SemanticsNodeId return_type_id;
 };
 
 // Provides semantic analysis on a ParseTree.

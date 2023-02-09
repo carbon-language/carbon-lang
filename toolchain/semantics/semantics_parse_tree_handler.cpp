@@ -484,19 +484,23 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
 
 auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
     ParseTree::Node parse_node) -> bool {
+  SemanticsNodeId return_type_id;
+  if (parse_tree_->node_kind(node_stack_.PeekParseNode()) ==
+      ParseNodeKind::ReturnType) {
+    return_type_id = node_stack_.PopForNodeId(ParseNodeKind::ReturnType);
+  }
   node_stack_.PopForSoloParseNode(ParseNodeKind::ParameterList);
   auto [param_ir_id, param_refs_id] = finished_params_stack_.pop_back_val();
   auto name_node = node_stack_.PopForSoloParseNode(ParseNodeKind::DeclaredName);
   auto fn_node =
       node_stack_.PopForSoloParseNode(ParseNodeKind::FunctionIntroducer);
 
-  SemanticsCallable callable;
-  callable.param_ir_id = param_ir_id;
-  callable.param_refs_id = param_refs_id;
-  auto callable_id = semantics_->AddCallable(callable);
+  auto callable_id =
+      semantics_->AddCallable({.param_ir_id = param_ir_id,
+                               .param_refs_id = param_refs_id,
+                               .return_type_id = return_type_id});
   auto decl_id =
       AddNode(SemanticsNode::MakeFunctionDeclaration(fn_node, callable_id));
-  // TODO: Propagate the type of the function.
   BindName(name_node, SemanticsNodeId::Invalid, decl_id);
 
   node_block_stack_.Push();
@@ -768,8 +772,9 @@ auto SemanticsParseTreeHandler::HandleReturnStatementStart(
 
 auto SemanticsParseTreeHandler::HandleReturnType(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleReturnType");
-  return false;
+  // Propagate the type expression.
+  node_stack_.Push(parse_node, node_stack_.PopForNodeId());
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleSelfDeducedParameter(
