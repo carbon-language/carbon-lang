@@ -170,9 +170,9 @@ class SemanticsNode {
                          node.index);
   }
   auto GetAsCrossReference() const
-      -> std::pair<SemanticsCrossReferenceIRId, SemanticsNodeBlockId> {
+      -> std::pair<SemanticsCrossReferenceIRId, SemanticsNodeId> {
     CARBON_CHECK(kind_ == SemanticsNodeKind::CrossReference);
-    return {SemanticsCrossReferenceIRId(arg0_), SemanticsNodeBlockId(arg1_)};
+    return {SemanticsCrossReferenceIRId(arg0_), SemanticsNodeId(arg1_)};
   }
 
   // TODO: The signature should be added as a parameter.
