@@ -1,0 +1,1432 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name {
+        name: "ManyTypes"
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T0"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T1"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T2"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T3"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T4"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T5"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T6"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "T7"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
+      name {
+        name: "Splat"
+      }
+      members {
+        function {
+          name {
+            name: "Op"
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "n"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        identifier {
+          name: "Splat"
+        }
+      }
+      members {
+        function {
+          name {
+            name: "Op"
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "n"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  identifier {
+                    name: "n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        tuple_literal {
+          fields {
+            identifier {
+              name: "T"
+            }
+          }
+          fields {
+            identifier {
+              name: "T"
+            }
+          }
+          fields {
+            identifier {
+              name: "T"
+            }
+          }
+        }
+      }
+      interface {
+        identifier {
+          name: "Splat"
+        }
+      }
+      members {
+        function {
+          name {
+            name: "Op"
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "n"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "Self"
+              }
+            }
+          }
+          body {
+            statements {
+              variable_definition {
+                pattern {
+                  binding_pattern {
+                    name: "v"
+                    type {
+                      expression_pattern {
+                        expression {
+                          identifier {
+                            name: "T"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                init {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "Op"
+                        object {
+                          identifier {
+                            name: "T"
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          identifier {
+                            name: "n"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                is_returned: false
+              }
+            }
+            statements {
+              return_expression_statement {
+                expression {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "v"
+                      }
+                    }
+                    fields {
+                      identifier {
+                        name: "v"
+                      }
+                    }
+                    fields {
+                      identifier {
+                        name: "v"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "CallSplat"
+      }
+      param_pattern {
+        fields {
+          generic_binding {
+            name: "T"
+            type {
+              identifier {
+                name: "Splat"
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "n"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          identifier {
+            name: "T"
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Op"
+                    object {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "n"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "DoSplat"
+      }
+      param_pattern {
+        fields {
+          generic_binding {
+            name: "M"
+            type {
+              where {
+                base {
+                  identifier {
+                    name: "ManyTypes"
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T0"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T1"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T1"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T1"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T1"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T2"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T2"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T2"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T2"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T3"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T3"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T3"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T3"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T4"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T4"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T4"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T4"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T5"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T5"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T5"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T5"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T6"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T6"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T6"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T6"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T7"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T7"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T7"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T7"
+                    replacement {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "n"
+            type {
+              expression_pattern {
+                expression {
+                  simple_member_access {
+                    field: "T7"
+                    object {
+                      identifier {
+                        name: "M"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          simple_member_access {
+            field: "T0"
+            object {
+              identifier {
+                name: "M"
+              }
+            }
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "CallSplat"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      simple_member_access {
+                        field: "T0"
+                        object {
+                          identifier {
+                            name: "M"
+                          }
+                        }
+                      }
+                    }
+                    fields {
+                      identifier {
+                        name: "n"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
+      name {
+        name: "First"
+      }
+      members {
+        function {
+          name {
+            name: "Op"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        identifier {
+          name: "First"
+        }
+      }
+      members {
+        function {
+          name {
+            name: "Op"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  identifier {
+                    name: "self"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        tuple_literal {
+          fields {
+            identifier {
+              name: "T"
+            }
+          }
+          fields {
+            identifier {
+              name: "T"
+            }
+          }
+          fields {
+            identifier {
+              name: "T"
+            }
+          }
+        }
+      }
+      interface {
+        identifier {
+          name: "First"
+        }
+      }
+      members {
+        function {
+          name {
+            name: "Op"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              variable_definition {
+                pattern {
+                  tuple_pattern {
+                    fields {
+                      binding_pattern {
+                        name: "a"
+                        type {
+                          expression_pattern {
+                            expression {
+                              identifier {
+                                name: "T"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    fields {
+                      binding_pattern {
+                        name: "b"
+                        type {
+                          expression_pattern {
+                            expression {
+                              identifier {
+                                name: "T"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    fields {
+                      binding_pattern {
+                        name: "c"
+                        type {
+                          expression_pattern {
+                            expression {
+                              identifier {
+                                name: "T"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                init {
+                  identifier {
+                    name: "self"
+                  }
+                }
+                is_returned: false
+              }
+            }
+            statements {
+              return_expression_statement {
+                expression {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "Op"
+                        object {
+                          identifier {
+                            name: "a"
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "DoFirst"
+      }
+      param_pattern {
+        fields {
+          generic_binding {
+            name: "M"
+            type {
+              where {
+                base {
+                  identifier {
+                    name: "ManyTypes"
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T7"
+                    replacement {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T6"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T7"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T7"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T7"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T5"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T6"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T6"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T6"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T4"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T5"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T5"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T5"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T3"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T4"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T4"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T4"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T2"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T3"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T3"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T3"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T1"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T2"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T2"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T2"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                clauses {
+                  rewrite {
+                    member_name: "T0"
+                    replacement {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "T1"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T1"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "T1"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "v"
+            type {
+              expression_pattern {
+                expression {
+                  simple_member_access {
+                    field: "T0"
+                    object {
+                      identifier {
+                        name: "M"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          simple_member_access {
+            field: "T7"
+            object {
+              identifier {
+                name: "M"
+              }
+            }
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  compound_member_access {
+                    object {
+                      identifier {
+                        name: "v"
+                      }
+                    }
+                    path {
+                      simple_member_access {
+                        field: "Op"
+                        object {
+                          identifier {
+                            name: "First"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "C"
+      }
+      members {
+        impl {
+          kind: InternalImpl
+          impl_type {
+            identifier {
+              name: "Self"
+            }
+          }
+          interface {
+            where {
+              base {
+                identifier {
+                  name: "ManyTypes"
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T3"
+                  replacement {
+                    tuple_literal {
+                      fields {
+                        designator {
+                          name: "T4"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T4"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T4"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T1"
+                  replacement {
+                    tuple_literal {
+                      fields {
+                        designator {
+                          name: "T2"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T2"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T2"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T4"
+                  replacement {
+                    tuple_literal {
+                      fields {
+                        designator {
+                          name: "T5"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T5"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T5"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T6"
+                  replacement {
+                    tuple_literal {
+                      fields {
+                        designator {
+                          name: "T7"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T7"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T7"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T2"
+                  replacement {
+                    tuple_literal {
+                      fields {
+                        designator {
+                          name: "T3"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T3"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T3"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T7"
+                  replacement {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T5"
+                  replacement {
+                    tuple_literal {
+                      fields {
+                        designator {
+                          name: "T6"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T6"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T6"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              clauses {
+                rewrite {
+                  member_name: "T0"
+                  replacement {
+                    tuple_literal {
+                      fields {
+                        designator {
+                          name: "T1"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T1"
+                        }
+                      }
+                      fields {
+                        designator {
+                          name: "T1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "DoFirst"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "C"
+                      }
+                    }
+                    fields {
+                      call {
+                        function {
+                          identifier {
+                            name: "DoSplat"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              identifier {
+                                name: "C"
+                              }
+                            }
+                            fields {
+                              int_literal {
+                                value: 1
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

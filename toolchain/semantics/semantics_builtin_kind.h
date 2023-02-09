@@ -12,13 +12,14 @@
 namespace Carbon {
 
 CARBON_DEFINE_RAW_ENUM_CLASS(SemanticsBuiltinKind, uint8_t) {
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
+#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
+  CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/semantics/semantics_builtin_kind.def"
 };
 
 class SemanticsBuiltinKind : public CARBON_ENUM_BASE(SemanticsBuiltinKind) {
  public:
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name) \
+#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
   CARBON_ENUM_CONSTANT_DECLARATION(Name)
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
@@ -34,7 +35,7 @@ class SemanticsBuiltinKind : public CARBON_ENUM_BASE(SemanticsBuiltinKind) {
   using EnumBase::FromInt;
 };
 
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name) \
+#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
   CARBON_ENUM_CONSTANT_DEFINITION(SemanticsBuiltinKind, Name)
 #include "toolchain/semantics/semantics_builtin_kind.def"
 

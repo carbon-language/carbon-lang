@@ -380,6 +380,8 @@ class NominalClassValue : public Value {
 };
 
 // An alternative constructor value.
+// TODO: The representation here is inappropriate: at least the choice type
+// should be identified symbolically rather than by name.
 class AlternativeConstructorValue : public Value {
  public:
   AlternativeConstructorValue(std::string_view alt_name,
@@ -406,6 +408,8 @@ class AlternativeConstructorValue : public Value {
 };
 
 // An alternative value.
+// TODO: The representation here is inappropriate: at least the choice type
+// should be identified symbolically rather than by name.
 class AlternativeValue : public Value {
  public:
   AlternativeValue(std::string_view alt_name, std::string_view choice_name,
@@ -1250,7 +1254,10 @@ class ChoiceType : public Value {
     return f(declaration_, bindings_);
   }
 
-  auto name() const -> const std::string& { return declaration_->name(); }
+  // TODO: Remove this.
+  auto name() const -> std::string_view {
+    return declaration_->name().inner_name();
+  }
 
   // Returns the parameter types of the alternative with the given name,
   // or nullopt if no such alternative is present.
