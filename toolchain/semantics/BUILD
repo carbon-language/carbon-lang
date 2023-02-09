@@ -80,6 +80,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/diagnostics:diagnostic_kind",
         "//toolchain/lexer:numeric_literal",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",

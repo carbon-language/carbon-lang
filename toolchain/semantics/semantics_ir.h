@@ -75,26 +75,23 @@ class SemanticsIR {
     node_blocks_.resize(1);
   }
 
-  // Returns the requested node.
-  auto GetNode(SemanticsNodeId node_id) const -> const SemanticsNode& {
-    return nodes_[node_id.index];
-  }
-
-  // Returns the type of the requested node.
-  auto GetType(SemanticsNodeId node_id) -> SemanticsNodeId {
-    return GetNode(node_id).type();
-  }
-
+  // Adds a call, returning an ID to reference it.
   auto AddCall(SemanticsCall call) -> SemanticsCallId {
     SemanticsCallId id(calls_.size());
     calls_.push_back(call);
     return id;
   }
 
+  // Adds a callable, returning an ID to reference it.
   auto AddCallable(SemanticsCallable callable) -> SemanticsCallableId {
     SemanticsCallableId id(callables_.size());
     callables_.push_back(callable);
     return id;
+  }
+
+  // Returns the requested callable.
+  auto GetCallable(SemanticsCallableId callable_id) -> SemanticsCallable {
+    return callables_[callable_id.index];
   }
 
   // Adds an integer literal, returning an ID to reference it.
@@ -112,6 +109,16 @@ class SemanticsIR {
     nodes_.push_back(node);
     node_blocks_[block_id.index].push_back(node_id);
     return node_id;
+  }
+
+  // Returns the requested node.
+  auto GetNode(SemanticsNodeId node_id) const -> const SemanticsNode& {
+    return nodes_[node_id.index];
+  }
+
+  // Returns the type of the requested node.
+  auto GetType(SemanticsNodeId node_id) -> SemanticsNodeId {
+    return GetNode(node_id).type();
   }
 
   // Adds an empty new node block, returning an ID to reference it and add

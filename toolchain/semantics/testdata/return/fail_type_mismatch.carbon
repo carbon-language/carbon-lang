@@ -24,7 +24,7 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: callable0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node5},
 // CHECK:STDOUT:   {kind: RealLiteral, type: node3},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node7, type: node3},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node7},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node5, arg1: block2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -42,5 +42,6 @@
 // CHECK:STDOUT: ]
 
 fn Main() -> i32 {
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/return/fail_type_mismatch.carbon:[[@LINE+1]]:13: Cannot convert node3 to node2.
   return 1.0;
 }

@@ -8,7 +8,7 @@
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
+// CHECK:STDOUT:   {param_ir: block0, param_refs: block0, return_type: node2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   12,
@@ -47,6 +47,6 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-fn Main() {
+fn Main() -> i32 {
   return 12 + 34;
 }

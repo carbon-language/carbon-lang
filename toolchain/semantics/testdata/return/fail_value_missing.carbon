@@ -40,5 +40,6 @@
 // CHECK:STDOUT: ]
 
 fn Main() -> i32 {
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/return/fail_value_missing.carbon:[[@LINE+1]]:9: Must return a node2.
   return;
 }

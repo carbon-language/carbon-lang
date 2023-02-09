@@ -9,6 +9,7 @@
 
 #include "common/vlog.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "toolchain/diagnostics/diagnostic_kind.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
@@ -320,7 +321,7 @@ auto SemanticsParseTreeHandler::HandleCallExpression(ParseTree::Node parse_node)
     }
 
     auto callable_id = name_node.GetAsFunctionDeclaration();
-    auto callable = semantics_->callables_[callable_id.index];
+    auto callable = semantics_->GetCallable(callable_id);
 
     if (!TryTypeConversionOnArgs(call_expr_parse_node, ir_id, refs_id,
                                  name_node.parse_node(),
@@ -474,6 +475,7 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
   auto decl_id =
       node_stack_.PopForNodeId(ParseNodeKind::FunctionDefinitionStart);
 
+  return_scope_stack_.pop_back();
   PopScope();
   auto block_id = node_block_stack_.Pop();
   AddNode(SemanticsNode::MakeFunctionDefinition(parse_node, decl_id, block_id));
@@ -501,10 +503,12 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
                                .return_type_id = return_type_id});
   auto decl_id =
       AddNode(SemanticsNode::MakeFunctionDeclaration(fn_node, callable_id));
+  // TODO: Propagate the type of the function.
   BindName(name_node, SemanticsNodeId::Invalid, decl_id);
 
   node_block_stack_.Push();
   PushScope();
+  return_scope_stack_.push_back(decl_id);
   node_stack_.Push(parse_node, decl_id);
 
   return true;
@@ -749,14 +753,57 @@ auto SemanticsParseTreeHandler::HandlePrefixOperator(ParseTree::Node parse_node)
 
 auto SemanticsParseTreeHandler::HandleReturnStatement(
     ParseTree::Node parse_node) -> bool {
+  CARBON_CHECK(!return_scope_stack_.empty());
+  const auto& fn_node = semantics_->GetNode(return_scope_stack_.back());
+  const auto callable =
+      semantics_->GetCallable(fn_node.GetAsFunctionDeclaration());
+
   if (parse_tree_->node_kind(node_stack_.PeekParseNode()) ==
       ParseNodeKind::ReturnStatementStart) {
     node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ReturnStatementStart);
+
+    if (callable.return_type_id.is_valid()) {
+      // TODO: Stringify types, add a note pointing at the return
+      // type's parse node.
+      CARBON_DIAGNOSTIC(ReturnStatementMissingExpression, Error,
+                        "Must return a {0}.", SemanticsNodeId);
+      emitter_
+          ->Build(parse_node, ReturnStatementMissingExpression,
+                  callable.return_type_id)
+          .Emit();
+    }
+
     AddNodeAndPush(parse_node, SemanticsNode::MakeReturn(parse_node));
   } else {
-    auto arg = node_stack_.PopForNodeId();
+    const auto arg = node_stack_.PopForNodeId();
     auto arg_type = semantics_->GetType(arg);
     node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ReturnStatementStart);
+
+    if (!callable.return_type_id.is_valid()) {
+      CARBON_DIAGNOSTIC(
+          ReturnStatementDisallowExpression, Error,
+          "No return expression should be provided in this context.");
+      CARBON_DIAGNOSTIC(ReturnStatementImplicitNote, Note,
+                        "There was no return type provided.");
+      emitter_->Build(parse_node, ReturnStatementDisallowExpression)
+          .Note(fn_node.parse_node(), ReturnStatementImplicitNote)
+          .Emit();
+    } else {
+      const auto new_type = CanTypeConvert(arg_type, callable.return_type_id);
+      if (!new_type.is_valid()) {
+        // TODO: Stringify types, add a note pointing at the return
+        // type's parse node.
+        CARBON_DIAGNOSTIC(ReturnStatementTypeMismatch, Error,
+                          "Cannot convert {0} to {1}.", SemanticsNodeId,
+                          SemanticsNodeId);
+        emitter_
+            ->Build(parse_node, ReturnStatementTypeMismatch, arg_type,
+                    callable.return_type_id)
+            .Emit();
+      }
+      arg_type = new_type;
+    }
+
     AddNodeAndPush(parse_node, SemanticsNode::MakeReturnExpression(
                                    parse_node, arg_type, arg));
   }

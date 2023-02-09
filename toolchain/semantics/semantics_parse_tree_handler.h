@@ -168,8 +168,15 @@ class SemanticsParseTreeHandler {
   // node in blocks here.
   SemanticsNodeBlockStack params_or_args_stack_;
 
+  // Completed parameters that are held temporarily on a side-channel for a
+  // function. This can't use node_stack_ because it has space for only one
+  // value, whereas parameters return two values.
   llvm::SmallVector<std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId>>
       finished_params_stack_;
+
+  // A stack of return scopes; i.e., targets for `return`. Inside a function,
+  // this will be a FunctionDeclaration.
+  llvm::SmallVector<SemanticsNodeId> return_scope_stack_;
 
   // A stack for scope context.
   llvm::SmallVector<ScopeStackEntry> scope_stack_;
