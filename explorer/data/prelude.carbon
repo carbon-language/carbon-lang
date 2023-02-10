@@ -706,7 +706,6 @@ class Optional(T:! type) {
   }
 
   fn Get[self: Self]() -> T {
-    var y: T;
     match(self.element) {
       case OptionalElement(T).Element(x: T) => {
         return x;
@@ -714,6 +713,7 @@ class Optional(T:! type) {
     }
     Assert(false, "Attempted to unwrap empty Optional");
     // TODO: Drop uninitialized variable & return when we can flag unreachable paths.
+    var y: T;
     return y;
   }
 

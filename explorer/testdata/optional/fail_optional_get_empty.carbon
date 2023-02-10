@@ -10,6 +10,6 @@ package ExplorerTest api;
 
 fn Main() -> i32{
   var x: Optional(i32) = Optional(i32).CreateEmpty();
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:678: "Attempted to unwrap empty Optional"
+  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "Attempted to unwrap empty Optional"
   return x.Get();
 }
