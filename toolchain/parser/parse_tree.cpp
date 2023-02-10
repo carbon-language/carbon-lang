@@ -124,7 +124,7 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
   }
 
   while (!node_stack.empty()) {
-    Node n;
+    Node n = Node::Invalid;
     int depth;
     std::tie(n, depth) = node_stack.pop_back_val();
     for (Node sibling_n : children(n)) {
@@ -161,7 +161,7 @@ auto ParseTree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
   }
 
   while (!node_stack.empty()) {
-    Node n;
+    Node n = Node::Invalid;
     int depth;
     std::tie(n, depth) = node_stack.pop_back_val();
 
