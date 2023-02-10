@@ -11,6 +11,11 @@ message LibraryName {
   optional string path = 2;
 }
 
+message DeclaredName {
+  repeated string qualifiers = 1;
+  optional string name = 2;
+}
+
 // Expressions.
 
 message CallExpression {
@@ -358,7 +363,7 @@ message ReturnTerm {
 }
 
 message FunctionDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   repeated GenericBinding deduced_parameters = 2;
   optional Pattern self_pattern = 3;
   optional TuplePattern param_pattern = 4;
@@ -372,7 +377,7 @@ message DestructorDeclaration {
 }
 
 message ClassDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   repeated Declaration members = 2;
   optional TuplePattern type_params = 3;
 }
@@ -383,7 +388,7 @@ message AlternativeSignature {
 }
 
 message ChoiceDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   repeated AlternativeSignature alternatives = 2;
 }
 
@@ -408,12 +413,12 @@ message InterfaceImplDeclaration {
 }
 
 message InterfaceDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   repeated Declaration members = 2;
 }
 
 message ConstraintDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   repeated Declaration members = 2;
 }
 
@@ -435,13 +440,13 @@ message MatchFirstDeclaration {
 }
 
 message AliasDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   optional Expression target = 2;
 }
 
 // EXPERIMENTAL MIXIN FEATURE
 message MixinDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   repeated Declaration members = 2;
   // Type params not implemented yet
   // optional TuplePattern params = 3;
@@ -454,7 +459,7 @@ message MixDeclaration {
 }
 
 message NamespaceDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
 }
 
 message Declaration {

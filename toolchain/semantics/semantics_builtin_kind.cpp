@@ -7,7 +7,8 @@
 namespace Carbon {
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(SemanticsBuiltinKind) = {
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
+#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
+  CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "toolchain/semantics/semantics_builtin_kind.def"
 };
 

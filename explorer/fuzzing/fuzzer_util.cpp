@@ -64,7 +64,7 @@ auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
       compilation_unit.declarations().end(),
       [](const Fuzzing::Declaration& decl) {
         return decl.kind_case() == Fuzzing::Declaration::kFunction &&
-               decl.function().name() == "Main";
+               decl.function().name().name() == "Main";
       });
   return Carbon::ProtoToCarbon(compilation_unit) + (has_main ? "" : EmptyMain);
 }

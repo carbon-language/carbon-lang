@@ -6,30 +6,56 @@
 //
 // It does not use `#include` guards, and instead is designed to be `#include`ed
 // after the x-macro is defined in order for its inclusion to expand to the
-// desired output. The x-macro for this header is `CARBON_PARSE_NODE_KIND`. The
-// definition provided will be removed at the end of this file to clean up.
+// desired output.
+//
+// x-macros come in two forms:
+//   CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name)
+//     Used as a fallback if other macros are missing.
+//   CARBON_SEMANTICS_BUILTIN_KIND(Name, Type)
+//     Defines a builtin kind with the associated type, which must also be
+//     builtin.
+//
+// Note that Invalid is provided with CARBON_SEMANTICS_BUILTIN_KIND_NAME but not
+// CARBON_SEMANTICS_BUILTIN_KIND.
 
+#if !(defined(CARBON_SEMANTICS_BUILTIN_KIND_NAME) || \
+      defined(CARBON_SEMANTICS_BUILTIN_KIND))
+#error \
+    "Must define CARBON_SEMANTICS_BUILTIN_KIND family x-macros to use this file."
+#endif
+
+// If CARBON_SEMANTICS_BUILTIN_KIND_NAME is undefined, ignore calls.
+#ifndef CARBON_SEMANTICS_BUILTIN_KIND_NAME
+#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name)
+#endif
+
+// If CARBON_SEMANTICS_BUILTIN_KIND is undefined, delegate calls to
+// CARBON_SEMANTICS_BUILTIN_KIND_NAME.
 #ifndef CARBON_SEMANTICS_BUILTIN_KIND
-#error "Must define the x-macro to use this file."
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name, ...) \
+  CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name)
 #endif
 
 // Tracks expressions which are valid as types.
-CARBON_SEMANTICS_BUILTIN_KIND(TypeType)
+// This has a deliberately self-referential type.
+CARBON_SEMANTICS_BUILTIN_KIND(TypeType, TypeType)
 
 // Used when a SemanticNode has an invalid type, which should then be ignored
 // for future type checking.
-CARBON_SEMANTICS_BUILTIN_KIND(InvalidType)
+// This has a deliberately self-referential type.
+CARBON_SEMANTICS_BUILTIN_KIND(InvalidType, InvalidType)
 
 // The type of integers and integer literals, currently always i32. Long-term
 // we may not want it this way, but for now this is the approach.
-CARBON_SEMANTICS_BUILTIN_KIND(IntegerType)
+CARBON_SEMANTICS_BUILTIN_KIND(IntegerType, TypeType)
 
 // The type of reals and real literals, currently always f64. Long-term
 // we may not want it this way, but for now this is the approach.
-CARBON_SEMANTICS_BUILTIN_KIND(RealType)
+CARBON_SEMANTICS_BUILTIN_KIND(RealType, TypeType)
 
 // Keep invalid last, so that we can use values as array indices without needing
 // an invalid entry.
-CARBON_SEMANTICS_BUILTIN_KIND(Invalid)
+CARBON_SEMANTICS_BUILTIN_KIND_NAME(Invalid)
 
+#undef CARBON_SEMANTICS_BUILTIN_KIND_NAME
 #undef CARBON_SEMANTICS_BUILTIN_KIND

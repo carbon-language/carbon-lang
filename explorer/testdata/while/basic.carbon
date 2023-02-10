@@ -11,7 +11,7 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: auto = 2;
-  while (not (x == 0)) {
+  while (x != 0) {
     x = x - 1;
   }
   return x;

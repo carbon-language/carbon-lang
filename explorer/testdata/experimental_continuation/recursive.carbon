@@ -31,7 +31,7 @@ fn Main() -> i32 {
   }
   var sum: i32 = 0;
   var count: i32 = 5;
-  while (not (count == 0)) {
+  while (count != 0) {
     __run k;
     sum = sum + current;
     count = count - 1;
