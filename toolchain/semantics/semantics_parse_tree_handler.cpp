@@ -490,10 +490,8 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
   auto fn_node =
       node_stack_.PopForSoloParseNode(ParseNodeKind::FunctionIntroducer);
 
-  SemanticsCallable callable;
-  callable.param_ir_id = param_ir_id;
-  callable.param_refs_id = param_refs_id;
-  auto callable_id = semantics_->AddCallable(callable);
+  auto callable_id = semantics_->AddCallable(
+      {.param_ir_id = param_ir_id, .param_refs_id = param_refs_id});
   auto decl_id =
       AddNode(SemanticsNode::MakeFunctionDeclaration(fn_node, callable_id));
   // TODO: Propagate the type of the function.

@@ -33,7 +33,8 @@ struct SemanticsNodeId : public IndexBase {
   }
 };
 
-constexpr SemanticsNodeId SemanticsNodeId::Invalid = SemanticsNodeId();
+constexpr SemanticsNodeId SemanticsNodeId::Invalid =
+    SemanticsNodeId(SemanticsNodeId::InvalidIndex);
 
 // Uses the cross-reference node ID for a builtin. This relies on SemanticsIR
 // guarantees for builtin cross-reference placement.
@@ -98,7 +99,7 @@ struct SemanticsNodeBlockId : public IndexBase {
 constexpr SemanticsNodeBlockId SemanticsNodeBlockId::Empty =
     SemanticsNodeBlockId(0);
 constexpr SemanticsNodeBlockId SemanticsNodeBlockId::Invalid =
-    SemanticsNodeBlockId();
+    SemanticsNodeBlockId(SemanticsNodeBlockId::InvalidIndex);
 
 // Type-safe storage of strings.
 struct SemanticsStringId : public IndexBase {
@@ -178,7 +179,7 @@ class SemanticsNode {
   static auto MakeCodeBlock(ParseTree::Node parse_node,
                             SemanticsNodeBlockId node_block) -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::CodeBlock,
-                         SemanticsNodeId(), node_block.index);
+                         SemanticsNodeId::Invalid, node_block.index);
   }
   auto GetAsCodeBlock() const -> SemanticsNodeBlockId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::CodeBlock);
@@ -193,9 +194,9 @@ class SemanticsNode {
                          node.index);
   }
   auto GetAsCrossReference() const
-      -> std::pair<SemanticsCrossReferenceIRId, SemanticsNodeBlockId> {
+      -> std::pair<SemanticsCrossReferenceIRId, SemanticsNodeId> {
     CARBON_CHECK(kind_ == SemanticsNodeKind::CrossReference);
-    return {SemanticsCrossReferenceIRId(arg0_), SemanticsNodeBlockId(arg1_)};
+    return {SemanticsCrossReferenceIRId(arg0_), SemanticsNodeId(arg1_)};
   }
 
   // TODO: The signature should be added as a parameter.
@@ -203,7 +204,7 @@ class SemanticsNode {
                                       SemanticsCallableId signature)
       -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDeclaration,
-                         SemanticsNodeId(), signature.index);
+                         SemanticsNodeId::Invalid, signature.index);
   }
   auto GetAsFunctionDeclaration() const -> SemanticsCallableId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDeclaration);
@@ -215,7 +216,8 @@ class SemanticsNode {
                                      SemanticsNodeBlockId node_block)
       -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDefinition,
-                         SemanticsNodeId(), decl.index, node_block.index);
+                         SemanticsNodeId::Invalid, decl.index,
+                         node_block.index);
   }
   auto GetAsFunctionDefinition() const
       -> std::pair<SemanticsNodeId, SemanticsNodeBlockId> {
@@ -248,7 +250,7 @@ class SemanticsNode {
     // understand the type without checking, so it's not necessary but could be
     // specified if needed.
     return SemanticsNode(parse_node, SemanticsNodeKind::Return,
-                         SemanticsNodeId());
+                         SemanticsNodeId::Invalid);
   }
   auto GetAsReturn() const -> NoArgs {
     CARBON_CHECK(kind_ == SemanticsNodeKind::Return);
@@ -276,8 +278,8 @@ class SemanticsNode {
   }
 
   SemanticsNode()
-      : SemanticsNode(ParseTree::Node(), SemanticsNodeKind::Invalid,
-                      SemanticsNodeId()) {}
+      : SemanticsNode(ParseTree::Node::Invalid, SemanticsNodeKind::Invalid,
+                      SemanticsNodeId::Invalid) {}
 
   auto parse_node() const -> ParseTree::Node { return parse_node_; }
   auto kind() const -> SemanticsNodeKind { return kind_; }
