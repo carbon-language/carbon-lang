@@ -486,7 +486,7 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
 
 auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
     ParseTree::Node parse_node) -> bool {
-  SemanticsNodeId return_type_id;
+  SemanticsNodeId return_type_id = SemanticsNodeId::Invalid;
   if (parse_tree_->node_kind(node_stack_.PeekParseNode()) ==
       ParseNodeKind::ReturnType) {
     return_type_id = node_stack_.PopForNodeId(ParseNodeKind::ReturnType);
