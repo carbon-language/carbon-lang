@@ -39,11 +39,6 @@ class ParseTreeTest : public ::testing::Test {
   DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
 };
 
-TEST_F(ParseTreeTest, DefaultInvalid) {
-  ParseTree::Node node;
-  EXPECT_FALSE(node.is_valid());
-}
-
 TEST_F(ParseTreeTest, IsValid) {
   TokenizedBuffer tokens = GetTokenizedBuffer("");
   ParseTree tree = ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);

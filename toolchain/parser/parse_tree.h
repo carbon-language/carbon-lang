@@ -249,7 +249,8 @@ struct ParseTree::Node : public ComparableIndexBase {
   using ComparableIndexBase::ComparableIndexBase;
 };
 
-constexpr ParseTree::Node ParseTree::Node::Invalid;
+constexpr ParseTree::Node ParseTree::Node::Invalid =
+    ParseTree::Node(ParseTree::Node::InvalidIndex);
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes
 // in the parse tree. It produces `ParseTree::Node` objects which are opaque
@@ -259,10 +260,7 @@ class ParseTree::PostorderIterator
                                         std::random_access_iterator_tag, Node,
                                         int, Node*, Node> {
  public:
-  // Default construction is only provided to satisfy iterator requirements. It
-  // produces an unusable iterator, and you must assign a valid iterator to it
-  // before performing any operations.
-  explicit PostorderIterator() = default;
+  PostorderIterator() = delete;
 
   auto operator==(const PostorderIterator& rhs) const -> bool {
     return node_ == rhs.node_;
@@ -312,7 +310,7 @@ class ParseTree::SiblingIterator
     : public llvm::iterator_facade_base<
           SiblingIterator, std::forward_iterator_tag, Node, int, Node*, Node> {
  public:
-  explicit SiblingIterator() = default;
+  explicit SiblingIterator() = delete;
 
   auto operator==(const SiblingIterator& rhs) const -> bool {
     return node_ == rhs.node_;
