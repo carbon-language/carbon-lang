@@ -352,5 +352,23 @@ TEST_F(StringLiteralTest, TabEscapeSequenceExpanded) {
   EXPECT_EQ(value, "\t");
 }
 
+// TODO Regression Testing
+
+//function copied temporarily from string_literal_benchmark.cpp for reference
+//static void BM_ValidString(benchmark::State& state, std::string_view introducer,
+//                           std::string_view terminator) {
+//  std::string x(introducer);
+//  x.append(100000, 'a');
+//  x.append(terminator);
+//  for (auto _ : state) {
+//    LexedStringLiteral::Lex(x);
+//  }
+
+static void RT_ValidString() {
+  //TODO regression test ValidString modeled after BM_ValidString
+}
+
+}
+
 }  // namespace
 }  // namespace Carbon::Testing

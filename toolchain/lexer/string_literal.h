@@ -66,6 +66,10 @@ class LexedStringLiteral {
   bool is_terminated_;
 };
 
+class StringLiteralRegressionTesting {
+  // TODO add regression testing code modeled from LexedStringLiteral
+};
+
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_LEXER_STRING_LITERAL_H_
