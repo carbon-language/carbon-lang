@@ -343,20 +343,7 @@ TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
   EXPECT_EQ(value, text);
 }
 
-// TODO issue 2132: Testing. Test against `\t\n` and other whitespaces
-// ...including unicode whitespaces that `IsSpace()` and `IsHorizontalSpace()` should be catching.
-// Also test against design, and do regression testing.
-// Regression testing permits an advanced implementation of Google Test libraries.
-// Tests written below will be organized in a way that
-// regression testing may be implemented within this string_literal_test.cpp file.
-// Benchmarking is also a toolchain feature to be looked into.
-// Benchmarking and regression testing should be handled by an encompassing
-// Carbon process. Implementing here in `string_literal_test.cpp` is temporary.
-// Implementing here is possibly a prototype implementation for all of Carbon Project.
-// Placeholders may be used here at first for regression testing and benchmarking.
-// Priority is to proceed manually with completed PR's,
-// with manual regression checks and benchmarking.
-//
+// TODO issue 2132: Test against `\t\n`,  and other issue 2132 sub-team tasks
 // Escape Sequences
 // Tabs
 TEST_F(StringLiteralTest, TabEscapeSequenceExpanded) {
