@@ -186,6 +186,7 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
       }
       break;
     }
+    case DeclarationKind::NamespaceDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::VariableDeclaration:
     case DeclarationKind::InterfaceExtendsDeclaration:

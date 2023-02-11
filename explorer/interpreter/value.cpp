@@ -689,6 +689,10 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "member name " << cast<TypeOfMemberName>(*this).member();
       break;
     }
+    case Value::Kind::TypeOfNamespaceName: {
+      cast<TypeOfNamespaceName>(*this).namespace_decl()->PrintID(out);
+      break;
+    }
     case Value::Kind::StaticArrayType: {
       const auto& array_type = cast<StaticArrayType>(*this);
       out << "[" << array_type.element_type() << "; " << array_type.size()
@@ -806,22 +810,22 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::NominalClassType: {
       const auto& class1 = cast<NominalClassType>(*t1);
       const auto& class2 = cast<NominalClassType>(*t2);
-      return class1.declaration().name() == class2.declaration().name() &&
+      return DeclaresSameEntity(class1.declaration(), class2.declaration()) &&
              BindingMapEqual(class1.bindings().args(), class2.bindings().args(),
                              equality_ctx);
     }
     case Value::Kind::InterfaceType: {
       const auto& iface1 = cast<InterfaceType>(*t1);
       const auto& iface2 = cast<InterfaceType>(*t2);
-      return iface1.declaration().name() == iface2.declaration().name() &&
+      return DeclaresSameEntity(iface1.declaration(), iface2.declaration()) &&
              BindingMapEqual(iface1.bindings().args(), iface2.bindings().args(),
                              equality_ctx);
     }
     case Value::Kind::NamedConstraintType: {
       const auto& constraint1 = cast<NamedConstraintType>(*t1);
       const auto& constraint2 = cast<NamedConstraintType>(*t2);
-      return constraint1.declaration().name() ==
-                 constraint2.declaration().name() &&
+      return DeclaresSameEntity(constraint1.declaration(),
+                                constraint2.declaration()) &&
              BindingMapEqual(constraint1.bindings().args(),
                              constraint2.bindings().args(), equality_ctx);
     }
@@ -869,8 +873,13 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
       }
       return true;
     }
-    case Value::Kind::ChoiceType:
-      return cast<ChoiceType>(*t1).name() == cast<ChoiceType>(*t2).name();
+    case Value::Kind::ChoiceType: {
+      const auto& choice1 = cast<ChoiceType>(*t1);
+      const auto& choice2 = cast<ChoiceType>(*t2);
+      return DeclaresSameEntity(choice1.declaration(), choice2.declaration()) &&
+             BindingMapEqual(choice1.type_args(), choice2.type_args(),
+                             equality_ctx);
+    }
     case Value::Kind::TupleType:
     case Value::Kind::TupleValue: {
       const auto& tup1 = cast<TupleValueBase>(*t1);
@@ -923,6 +932,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::TypeOfMemberName:
     case Value::Kind::MixinPseudoType:
     case Value::Kind::TypeOfMixinPseudoType:
+    case Value::Kind::TypeOfNamespaceName:
       CARBON_FATAL() << "TypeEqual used to compare non-type values\n"
                      << *t1 << "\n"
                      << *t2;
@@ -1018,7 +1028,7 @@ auto ValueStructurallyEqual(
       // The witness value is not part of determining value equality.
       const auto& assoc1 = cast<AssociatedConstant>(*v1);
       const auto& assoc2 = cast<AssociatedConstant>(*v2);
-      return &assoc1.constant() == &assoc2.constant() &&
+      return DeclaresSameEntity(assoc1.constant(), assoc2.constant()) &&
              TypeEqual(&assoc1.base(), &assoc2.base(), equality_ctx) &&
              TypeEqual(&assoc1.interface(), &assoc2.interface(), equality_ctx);
     }
@@ -1045,6 +1055,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
+    case Value::Kind::TypeOfNamespaceName:
     case Value::Kind::StaticArrayType:
       return TypeEqual(v1, v2, equality_ctx);
     case Value::Kind::NominalClassValue:
@@ -1167,7 +1178,7 @@ auto FindFunction(std::string_view name,
       }
       case DeclarationKind::FunctionDeclaration: {
         const auto& fun = cast<FunctionDeclaration>(*member);
-        if (fun.name() == name) {
+        if (fun.name().inner_name() == name) {
           return &cast<FunctionValue>(**fun.constant_value());
         }
         break;
@@ -1195,7 +1206,7 @@ auto MixinPseudoType::FindFunction(const std::string_view& name) const
       }
       case DeclarationKind::FunctionDeclaration: {
         const auto& fun = cast<FunctionDeclaration>(*member);
-        if (fun.name() == name) {
+        if (fun.name().inner_name() == name) {
           return &cast<FunctionValue>(**fun.constant_value());
         }
         break;

@@ -5,7 +5,12 @@
 #ifndef CARBON_EXPLORER_INTERPRETER_TYPE_CHECKER_H_
 #define CARBON_EXPLORER_INTERPRETER_TYPE_CHECKER_H_
 
+#include <optional>
 #include <set>
+#include <string_view>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
 
 #include "common/ostream.h"
 #include "explorer/ast/ast.h"

@@ -309,6 +309,7 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
       }
       break;
     }
+    case DeclarationKind::NamespaceDeclaration:
     case DeclarationKind::ClassDeclaration:
     case DeclarationKind::MixDeclaration:
     case DeclarationKind::MixinDeclaration:

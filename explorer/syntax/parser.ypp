@@ -108,6 +108,7 @@
 %type <ClassExtensibility> class_declaration_extensibility
 %type <std::optional<Nonnull<Expression*>>> class_declaration_extends
 %type <Nonnull<Declaration*>> declaration
+%type <BisonWrap<DeclaredName>> declared_name
 %type <Nonnull<FunctionDeclaration*>> function_declaration
 %type <Nonnull<DestructorDeclaration*>> destructor_declaration
 %type <Nonnull<MixDeclaration*>> mix_declaration
@@ -270,6 +271,7 @@
   MINUS_MINUS
   MIX
   MIXIN
+  NAMESPACE
   NOT
   NOT_EQUAL
   OR
@@ -1114,6 +1116,17 @@ impl_deduced_params:
 | FORALL LEFT_SQUARE_BRACKET deduced_param_list RIGHT_SQUARE_BRACKET
     { $$ = $3; }
 ;
+declared_name:
+  identifier
+    { $$ = DeclaredName(context.source_loc(), $1); }
+| declared_name PERIOD identifier
+    {
+      $$ = std::move($1);
+      $$.Unwrap().Append(context.source_loc(), $3);
+    }
+| LEFT_PARENTHESIS declared_name RIGHT_PARENTHESIS
+    { $$ = $2; }
+;
 // This includes the FN keyword to work around a shift-reduce conflict between virtual function's `IMPL FN` and interfaces `IMPL`.
 fn_virtual_override_intro:
   FN
@@ -1126,10 +1139,10 @@ fn_virtual_override_intro:
     { $$ = VirtualOverride::Impl; }
 ;
 function_declaration:
-  fn_virtual_override_intro identifier deduced_params maybe_empty_tuple_pattern return_term block
+  fn_virtual_override_intro declared_name deduced_params maybe_empty_tuple_pattern return_term block
     {
       ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
-          arena, context.source_loc(), $2, $3, $4, $5, $6, $1);
+          arena, context.source_loc(), std::move($2), $3, $4, $5, $6, $1);
       if (fn.ok()) {
         $$ = *fn;
       } else {
@@ -1137,10 +1150,11 @@ function_declaration:
         YYERROR;
       }
     }
-| fn_virtual_override_intro identifier deduced_params maybe_empty_tuple_pattern return_term SEMICOLON
+| fn_virtual_override_intro declared_name deduced_params maybe_empty_tuple_pattern return_term SEMICOLON
     {
       ErrorOr<FunctionDeclaration*> fn = FunctionDeclaration::Create(
-          arena, context.source_loc(), $2, $3, $4, $5, std::nullopt, $1);
+          arena, context.source_loc(), std::move($2), $3, $4, $5, std::nullopt,
+          $1);
       if (fn.ok()) {
         $$ = *fn;
       } else {
@@ -1155,7 +1169,7 @@ variable_declaration: identifier COLON pattern
                                       std::nullopt);
     }
 ;
-alias_declaration: ALIAS identifier EQUAL expression SEMICOLON
+alias_declaration: ALIAS declared_name EQUAL expression SEMICOLON
     { $$ = arena->New<AliasDeclaration>(context.source_loc(), $2, $4); }
 ;
 // EXPERIMENTAL MIXIN FEATURE
@@ -1221,23 +1235,29 @@ class_declaration_extends:
     { $$ = $2; }
 ;
 declaration:
-  function_declaration
+  NAMESPACE declared_name SEMICOLON
+    {
+      $$ =
+          arena->New<NamespaceDeclaration>(context.source_loc(), std::move($2));
+    }
+| function_declaration
     { $$ = $1; }
 | destructor_declaration
     { $$ = $1; }
-| class_declaration_extensibility CLASS identifier type_params class_declaration_extends LEFT_CURLY_BRACE class_body RIGHT_CURLY_BRACE
+| class_declaration_extensibility CLASS declared_name type_params class_declaration_extends LEFT_CURLY_BRACE class_body RIGHT_CURLY_BRACE
     {
       $$ = arena->New<ClassDeclaration>(
-          context.source_loc(), $3,
+          context.source_loc(), std::move($3),
           arena->New<SelfDeclaration>(context.source_loc()), $1, $4, $5, $7);
     }
-| MIXIN identifier type_params mixin_import LEFT_CURLY_BRACE mixin_body RIGHT_CURLY_BRACE
+| MIXIN declared_name type_params mixin_import LEFT_CURLY_BRACE mixin_body RIGHT_CURLY_BRACE
     {
       // EXPERIMENTAL MIXN FEATURE
       auto self = arena->New<GenericBinding>(context.source_loc(), "Self", $4);
-      $$ = arena->New<MixinDeclaration>(context.source_loc(), $2, $3, self, $6);
+      $$ = arena->New<MixinDeclaration>(context.source_loc(), std::move($2), $3,
+                                        self, $6);
     }
-| CHOICE identifier type_params LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
+| CHOICE declared_name type_params LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE
     { $$ = arena->New<ChoiceDeclaration>(context.source_loc(), $2, $3, $5); }
 | VAR variable_declaration SEMICOLON
     {
@@ -1254,15 +1274,15 @@ declaration:
       $$ = arena->New<VariableDeclaration>(context.source_loc(), $2, $4,
                                            ValueCategory::Let);
     }
-| INTERFACE identifier type_params LEFT_CURLY_BRACE interface_body RIGHT_CURLY_BRACE
+| INTERFACE declared_name type_params LEFT_CURLY_BRACE interface_body RIGHT_CURLY_BRACE
     {
-      $$ = arena->New<InterfaceDeclaration>(arena, context.source_loc(), $2, $3,
-                                            $5);
+      $$ = arena->New<InterfaceDeclaration>(arena, context.source_loc(),
+                                            std::move($2), $3, $5);
     }
-| CONSTRAINT identifier type_params LEFT_CURLY_BRACE interface_body RIGHT_CURLY_BRACE
+| CONSTRAINT declared_name type_params LEFT_CURLY_BRACE interface_body RIGHT_CURLY_BRACE
     {
-      $$ = arena->New<ConstraintDeclaration>(arena, context.source_loc(), $2,
-                                             $3, $5);
+      $$ = arena->New<ConstraintDeclaration>(arena, context.source_loc(),
+                                             std::move($2), $3, $5);
     }
 | impl_declaration
     { $$ = $1; }

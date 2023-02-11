@@ -1,0 +1,3955 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    class_declaration {
+      name {
+        name: "Node"
+      }
+      members {
+        function {
+          name {
+            name: "Create"
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "value"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Expression
+            type {
+              call {
+                function {
+                  identifier {
+                    name: "Node"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "value"
+                      expression {
+                        call {
+                          function {
+                            simple_member_access {
+                              field: "Create"
+                              object {
+                                call {
+                                  function {
+                                    identifier {
+                                      name: "Optional"
+                                    }
+                                  }
+                                  argument {
+                                    tuple_literal {
+                                      fields {
+                                        identifier {
+                                          name: "T"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                              fields {
+                                identifier {
+                                  name: "value"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    fields {
+                      name: "next"
+                      expression {
+                        call {
+                          function {
+                            simple_member_access {
+                              field: "CreateEmpty"
+                              object {
+                                call {
+                                  function {
+                                    identifier {
+                                      name: "Optional"
+                                    }
+                                  }
+                                  argument {
+                                    tuple_literal {
+                                      fields {
+                                        operator {
+                                          op: Ptr
+                                          arguments {
+                                            call {
+                                              function {
+                                                identifier {
+                                                  name: "Node"
+                                                }
+                                              }
+                                              argument {
+                                                tuple_literal {
+                                                  fields {
+                                                    identifier {
+                                                      name: "T"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                    fields {
+                      name: "prev"
+                      expression {
+                        call {
+                          function {
+                            simple_member_access {
+                              field: "CreateEmpty"
+                              object {
+                                call {
+                                  function {
+                                    identifier {
+                                      name: "Optional"
+                                    }
+                                  }
+                                  argument {
+                                    tuple_literal {
+                                      fields {
+                                        operator {
+                                          op: Ptr
+                                          arguments {
+                                            call {
+                                              function {
+                                                identifier {
+                                                  name: "Node"
+                                                }
+                                              }
+                                              argument {
+                                                tuple_literal {
+                                                  fields {
+                                                    identifier {
+                                                      name: "T"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name {
+            name: "set_next"
+          }
+          self_pattern {
+            addr_pattern {
+              binding_pattern {
+                name: "self"
+                type {
+                  expression_pattern {
+                    expression {
+                      operator {
+                        op: Ptr
+                        arguments {
+                          identifier {
+                            name: "Self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "n"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "Optional"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              operator {
+                                op: Ptr
+                                arguments {
+                                  call {
+                                    function {
+                                      identifier {
+                                        name: "Node"
+                                      }
+                                    }
+                                    argument {
+                                      tuple_literal {
+                                        fields {
+                                          identifier {
+                                            name: "T"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Omitted
+          }
+          body {
+            statements {
+              assign {
+                lhs {
+                  simple_member_access {
+                    field: "next"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                rhs {
+                  identifier {
+                    name: "n"
+                  }
+                }
+                op: Plain
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name {
+            name: "set_prev"
+          }
+          self_pattern {
+            addr_pattern {
+              binding_pattern {
+                name: "self"
+                type {
+                  expression_pattern {
+                    expression {
+                      operator {
+                        op: Ptr
+                        arguments {
+                          identifier {
+                            name: "Self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "n"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "Optional"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              operator {
+                                op: Ptr
+                                arguments {
+                                  call {
+                                    function {
+                                      identifier {
+                                        name: "Node"
+                                      }
+                                    }
+                                    argument {
+                                      tuple_literal {
+                                        fields {
+                                          identifier {
+                                            name: "T"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Omitted
+          }
+          body {
+            statements {
+              assign {
+                lhs {
+                  simple_member_access {
+                    field: "prev"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                rhs {
+                  identifier {
+                    name: "n"
+                  }
+                }
+                op: Plain
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "value"
+            type {
+              expression_pattern {
+                expression {
+                  call {
+                    function {
+                      identifier {
+                        name: "Optional"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          identifier {
+                            name: "T"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "next"
+            type {
+              expression_pattern {
+                expression {
+                  call {
+                    function {
+                      identifier {
+                        name: "Optional"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          operator {
+                            op: Ptr
+                            arguments {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "Node"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                    fields {
+                                      identifier {
+                                        name: "T"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "prev"
+            type {
+              expression_pattern {
+                expression {
+                  call {
+                    function {
+                      identifier {
+                        name: "Optional"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          operator {
+                            op: Ptr
+                            arguments {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "Node"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                    fields {
+                                      identifier {
+                                        name: "T"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      type_params {
+        fields {
+          generic_binding {
+            name: "T"
+            type {
+              type_type_literal {
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "LinkedList"
+      }
+      members {
+        function {
+          name {
+            name: "Create"
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              call {
+                function {
+                  identifier {
+                    name: "LinkedList"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "head"
+                      expression {
+                        call {
+                          function {
+                            simple_member_access {
+                              field: "CreateEmpty"
+                              object {
+                                call {
+                                  function {
+                                    identifier {
+                                      name: "Optional"
+                                    }
+                                  }
+                                  argument {
+                                    tuple_literal {
+                                      fields {
+                                        operator {
+                                          op: Ptr
+                                          arguments {
+                                            call {
+                                              function {
+                                                identifier {
+                                                  name: "Node"
+                                                }
+                                              }
+                                              argument {
+                                                tuple_literal {
+                                                  fields {
+                                                    identifier {
+                                                      name: "T"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                    fields {
+                      name: "tail"
+                      expression {
+                        call {
+                          function {
+                            simple_member_access {
+                              field: "CreateEmpty"
+                              object {
+                                call {
+                                  function {
+                                    identifier {
+                                      name: "Optional"
+                                    }
+                                  }
+                                  argument {
+                                    tuple_literal {
+                                      fields {
+                                        operator {
+                                          op: Ptr
+                                          arguments {
+                                            call {
+                                              function {
+                                                identifier {
+                                                  name: "Node"
+                                                }
+                                              }
+                                              argument {
+                                                tuple_literal {
+                                                  fields {
+                                                    identifier {
+                                                      name: "T"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                    fields {
+                      name: "len"
+                      expression {
+                        int_literal {
+                          value: 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name {
+            name: "PushBack"
+          }
+          self_pattern {
+            addr_pattern {
+              binding_pattern {
+                name: "self"
+                type {
+                  expression_pattern {
+                    expression {
+                      operator {
+                        op: Ptr
+                        arguments {
+                          identifier {
+                            name: "Self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "value"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Omitted
+          }
+          body {
+            statements {
+              assign {
+                lhs {
+                  simple_member_access {
+                    field: "len"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                rhs {
+                  operator {
+                    op: Add
+                    arguments {
+                      simple_member_access {
+                        field: "len"
+                        object {
+                          operator {
+                            op: Deref
+                            arguments {
+                              identifier {
+                                name: "self"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                  }
+                }
+                op: Plain
+              }
+            }
+            statements {
+              if_statement {
+                condition {
+                  operator {
+                    op: Not
+                    arguments {
+                      call {
+                        function {
+                          simple_member_access {
+                            field: "HasValue"
+                            object {
+                              simple_member_access {
+                                field: "head"
+                                object {
+                                  operator {
+                                    op: Deref
+                                    arguments {
+                                      identifier {
+                                        name: "self"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                then_block {
+                  statements {
+                    assign {
+                      lhs {
+                        simple_member_access {
+                          field: "head"
+                          object {
+                            operator {
+                              op: Deref
+                              arguments {
+                                identifier {
+                                  name: "self"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      rhs {
+                        call {
+                          function {
+                            simple_member_access {
+                              field: "Create"
+                              object {
+                                call {
+                                  function {
+                                    identifier {
+                                      name: "Optional"
+                                    }
+                                  }
+                                  argument {
+                                    tuple_literal {
+                                      fields {
+                                        operator {
+                                          op: Ptr
+                                          arguments {
+                                            call {
+                                              function {
+                                                identifier {
+                                                  name: "Node"
+                                                }
+                                              }
+                                              argument {
+                                                tuple_literal {
+                                                  fields {
+                                                    identifier {
+                                                      name: "T"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                              fields {
+                                call {
+                                  function {
+                                    simple_member_access {
+                                      field: "New"
+                                      object {
+                                        identifier {
+                                          name: "heap"
+                                        }
+                                      }
+                                    }
+                                  }
+                                  argument {
+                                    tuple_literal {
+                                      fields {
+                                        call {
+                                          function {
+                                            simple_member_access {
+                                              field: "Create"
+                                              object {
+                                                call {
+                                                  function {
+                                                    identifier {
+                                                      name: "Node"
+                                                    }
+                                                  }
+                                                  argument {
+                                                    tuple_literal {
+                                                      fields {
+                                                        identifier {
+                                                          name: "T"
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                          argument {
+                                            tuple_literal {
+                                              fields {
+                                                identifier {
+                                                  name: "value"
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      op: Plain
+                    }
+                  }
+                  statements {
+                    assign {
+                      lhs {
+                        simple_member_access {
+                          field: "tail"
+                          object {
+                            operator {
+                              op: Deref
+                              arguments {
+                                identifier {
+                                  name: "self"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      rhs {
+                        simple_member_access {
+                          field: "head"
+                          object {
+                            operator {
+                              op: Deref
+                              arguments {
+                                identifier {
+                                  name: "self"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      op: Plain
+                    }
+                  }
+                  statements {
+                    return_expression_statement {
+                      is_omitted_expression: true
+                    }
+                  }
+                }
+              }
+            }
+            statements {
+              variable_definition {
+                pattern {
+                  binding_pattern {
+                    name: "last"
+                    type {
+                      expression_pattern {
+                        expression {
+                          call {
+                            function {
+                              identifier {
+                                name: "Optional"
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  operator {
+                                    op: Ptr
+                                    arguments {
+                                      call {
+                                        function {
+                                          identifier {
+                                            name: "Node"
+                                          }
+                                        }
+                                        argument {
+                                          tuple_literal {
+                                            fields {
+                                              identifier {
+                                                name: "T"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                init {
+                  simple_member_access {
+                    field: "tail"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                is_returned: false
+              }
+            }
+            statements {
+              variable_definition {
+                pattern {
+                  binding_pattern {
+                    name: "last_value"
+                    type {
+                      expression_pattern {
+                        expression {
+                          operator {
+                            op: Ptr
+                            arguments {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "Node"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                    fields {
+                                      identifier {
+                                        name: "T"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                init {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "Get"
+                        object {
+                          identifier {
+                            name: "last"
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+                is_returned: false
+              }
+            }
+            statements {
+              variable_definition {
+                pattern {
+                  binding_pattern {
+                    name: "v_wrapped"
+                    type {
+                      expression_pattern {
+                        expression {
+                          call {
+                            function {
+                              identifier {
+                                name: "Optional"
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  operator {
+                                    op: Ptr
+                                    arguments {
+                                      call {
+                                        function {
+                                          identifier {
+                                            name: "Node"
+                                          }
+                                        }
+                                        argument {
+                                          tuple_literal {
+                                            fields {
+                                              identifier {
+                                                name: "T"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                init {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "Create"
+                        object {
+                          call {
+                            function {
+                              identifier {
+                                name: "Optional"
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  operator {
+                                    op: Ptr
+                                    arguments {
+                                      call {
+                                        function {
+                                          identifier {
+                                            name: "Node"
+                                          }
+                                        }
+                                        argument {
+                                          tuple_literal {
+                                            fields {
+                                              identifier {
+                                                name: "T"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          call {
+                            function {
+                              simple_member_access {
+                                field: "New"
+                                object {
+                                  identifier {
+                                    name: "heap"
+                                  }
+                                }
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  call {
+                                    function {
+                                      simple_member_access {
+                                        field: "Create"
+                                        object {
+                                          call {
+                                            function {
+                                              identifier {
+                                                name: "Node"
+                                              }
+                                            }
+                                            argument {
+                                              tuple_literal {
+                                                fields {
+                                                  identifier {
+                                                    name: "T"
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                    argument {
+                                      tuple_literal {
+                                        fields {
+                                          identifier {
+                                            name: "value"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                is_returned: false
+              }
+            }
+            statements {
+              expression_statement {
+                expression {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "set_next"
+                        object {
+                          operator {
+                            op: Deref
+                            arguments {
+                              identifier {
+                                name: "last_value"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          identifier {
+                            name: "v_wrapped"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            statements {
+              expression_statement {
+                expression {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "set_prev"
+                        object {
+                          operator {
+                            op: Deref
+                            arguments {
+                              call {
+                                function {
+                                  simple_member_access {
+                                    field: "Get"
+                                    object {
+                                      identifier {
+                                        name: "v_wrapped"
+                                      }
+                                    }
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          identifier {
+                            name: "last"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            statements {
+              assign {
+                lhs {
+                  simple_member_access {
+                    field: "tail"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                rhs {
+                  identifier {
+                    name: "v_wrapped"
+                  }
+                }
+                op: Plain
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name {
+            name: "PushFront"
+          }
+          self_pattern {
+            addr_pattern {
+              binding_pattern {
+                name: "self"
+                type {
+                  expression_pattern {
+                    expression {
+                      operator {
+                        op: Ptr
+                        arguments {
+                          identifier {
+                            name: "Self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+            fields {
+              binding_pattern {
+                name: "value"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "T"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return_term {
+            kind: Omitted
+          }
+          body {
+            statements {
+              assign {
+                lhs {
+                  simple_member_access {
+                    field: "len"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                rhs {
+                  operator {
+                    op: Add
+                    arguments {
+                      simple_member_access {
+                        field: "len"
+                        object {
+                          operator {
+                            op: Deref
+                            arguments {
+                              identifier {
+                                name: "self"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                  }
+                }
+                op: Plain
+              }
+            }
+            statements {
+              if_statement {
+                condition {
+                  operator {
+                    op: Not
+                    arguments {
+                      call {
+                        function {
+                          simple_member_access {
+                            field: "HasValue"
+                            object {
+                              simple_member_access {
+                                field: "head"
+                                object {
+                                  operator {
+                                    op: Deref
+                                    arguments {
+                                      identifier {
+                                        name: "self"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                then_block {
+                  statements {
+                    assign {
+                      lhs {
+                        simple_member_access {
+                          field: "head"
+                          object {
+                            operator {
+                              op: Deref
+                              arguments {
+                                identifier {
+                                  name: "self"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      rhs {
+                        call {
+                          function {
+                            simple_member_access {
+                              field: "Create"
+                              object {
+                                call {
+                                  function {
+                                    identifier {
+                                      name: "Optional"
+                                    }
+                                  }
+                                  argument {
+                                    tuple_literal {
+                                      fields {
+                                        operator {
+                                          op: Ptr
+                                          arguments {
+                                            call {
+                                              function {
+                                                identifier {
+                                                  name: "Node"
+                                                }
+                                              }
+                                              argument {
+                                                tuple_literal {
+                                                  fields {
+                                                    identifier {
+                                                      name: "T"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                              fields {
+                                call {
+                                  function {
+                                    simple_member_access {
+                                      field: "New"
+                                      object {
+                                        identifier {
+                                          name: "heap"
+                                        }
+                                      }
+                                    }
+                                  }
+                                  argument {
+                                    tuple_literal {
+                                      fields {
+                                        call {
+                                          function {
+                                            simple_member_access {
+                                              field: "Create"
+                                              object {
+                                                call {
+                                                  function {
+                                                    identifier {
+                                                      name: "Node"
+                                                    }
+                                                  }
+                                                  argument {
+                                                    tuple_literal {
+                                                      fields {
+                                                        identifier {
+                                                          name: "T"
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                          argument {
+                                            tuple_literal {
+                                              fields {
+                                                identifier {
+                                                  name: "value"
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      op: Plain
+                    }
+                  }
+                  statements {
+                    assign {
+                      lhs {
+                        simple_member_access {
+                          field: "tail"
+                          object {
+                            operator {
+                              op: Deref
+                              arguments {
+                                identifier {
+                                  name: "self"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      rhs {
+                        simple_member_access {
+                          field: "head"
+                          object {
+                            operator {
+                              op: Deref
+                              arguments {
+                                identifier {
+                                  name: "self"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      op: Plain
+                    }
+                  }
+                  statements {
+                    return_expression_statement {
+                      is_omitted_expression: true
+                    }
+                  }
+                }
+              }
+            }
+            statements {
+              variable_definition {
+                pattern {
+                  binding_pattern {
+                    name: "v_wrapped"
+                    type {
+                      expression_pattern {
+                        expression {
+                          call {
+                            function {
+                              identifier {
+                                name: "Optional"
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  operator {
+                                    op: Ptr
+                                    arguments {
+                                      call {
+                                        function {
+                                          identifier {
+                                            name: "Node"
+                                          }
+                                        }
+                                        argument {
+                                          tuple_literal {
+                                            fields {
+                                              identifier {
+                                                name: "T"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                init {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "Create"
+                        object {
+                          call {
+                            function {
+                              identifier {
+                                name: "Optional"
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  operator {
+                                    op: Ptr
+                                    arguments {
+                                      call {
+                                        function {
+                                          identifier {
+                                            name: "Node"
+                                          }
+                                        }
+                                        argument {
+                                          tuple_literal {
+                                            fields {
+                                              identifier {
+                                                name: "T"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          call {
+                            function {
+                              simple_member_access {
+                                field: "New"
+                                object {
+                                  identifier {
+                                    name: "heap"
+                                  }
+                                }
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  call {
+                                    function {
+                                      simple_member_access {
+                                        field: "Create"
+                                        object {
+                                          call {
+                                            function {
+                                              identifier {
+                                                name: "Node"
+                                              }
+                                            }
+                                            argument {
+                                              tuple_literal {
+                                                fields {
+                                                  identifier {
+                                                    name: "T"
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                    argument {
+                                      tuple_literal {
+                                        fields {
+                                          identifier {
+                                            name: "value"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                is_returned: false
+              }
+            }
+            statements {
+              variable_definition {
+                pattern {
+                  binding_pattern {
+                    name: "current_head"
+                    type {
+                      expression_pattern {
+                        expression {
+                          call {
+                            function {
+                              identifier {
+                                name: "Optional"
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  operator {
+                                    op: Ptr
+                                    arguments {
+                                      call {
+                                        function {
+                                          identifier {
+                                            name: "Node"
+                                          }
+                                        }
+                                        argument {
+                                          tuple_literal {
+                                            fields {
+                                              identifier {
+                                                name: "T"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                init {
+                  simple_member_access {
+                    field: "head"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                is_returned: false
+              }
+            }
+            statements {
+              variable_definition {
+                pattern {
+                  binding_pattern {
+                    name: "current_head_value"
+                    type {
+                      expression_pattern {
+                        expression {
+                          operator {
+                            op: Ptr
+                            arguments {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "Node"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                    fields {
+                                      identifier {
+                                        name: "T"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                init {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "Get"
+                        object {
+                          identifier {
+                            name: "current_head"
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+                is_returned: false
+              }
+            }
+            statements {
+              expression_statement {
+                expression {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "set_next"
+                        object {
+                          operator {
+                            op: Deref
+                            arguments {
+                              call {
+                                function {
+                                  simple_member_access {
+                                    field: "Get"
+                                    object {
+                                      identifier {
+                                        name: "v_wrapped"
+                                      }
+                                    }
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          identifier {
+                            name: "current_head"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            statements {
+              expression_statement {
+                expression {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "set_prev"
+                        object {
+                          operator {
+                            op: Deref
+                            arguments {
+                              identifier {
+                                name: "current_head_value"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          identifier {
+                            name: "v_wrapped"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            statements {
+              assign {
+                lhs {
+                  simple_member_access {
+                    field: "head"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                rhs {
+                  identifier {
+                    name: "v_wrapped"
+                  }
+                }
+                op: Plain
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name {
+            name: "Clear"
+          }
+          self_pattern {
+            addr_pattern {
+              binding_pattern {
+                name: "self"
+                type {
+                  expression_pattern {
+                    expression {
+                      operator {
+                        op: Ptr
+                        arguments {
+                          identifier {
+                            name: "Self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Omitted
+          }
+          body {
+            statements {
+              if_statement {
+                condition {
+                  operator {
+                    op: Eq
+                    arguments {
+                      simple_member_access {
+                        field: "len"
+                        object {
+                          operator {
+                            op: Deref
+                            arguments {
+                              identifier {
+                                name: "self"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 0
+                      }
+                    }
+                  }
+                }
+                then_block {
+                  statements {
+                    return_expression_statement {
+                      is_omitted_expression: true
+                    }
+                  }
+                }
+              }
+            }
+            statements {
+              variable_definition {
+                pattern {
+                  binding_pattern {
+                    name: "iter"
+                    type {
+                      auto_pattern {
+                      }
+                    }
+                  }
+                }
+                init {
+                  simple_member_access {
+                    field: "head"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                is_returned: false
+              }
+            }
+            statements {
+              while_statement {
+                condition {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "HasValue"
+                        object {
+                          identifier {
+                            name: "iter"
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+                body {
+                  statements {
+                    variable_definition {
+                      pattern {
+                        binding_pattern {
+                          name: "current"
+                          type {
+                            auto_pattern {
+                            }
+                          }
+                        }
+                      }
+                      init {
+                        identifier {
+                          name: "iter"
+                        }
+                      }
+                      is_returned: false
+                    }
+                  }
+                  statements {
+                    assign {
+                      lhs {
+                        identifier {
+                          name: "iter"
+                        }
+                      }
+                      rhs {
+                        simple_member_access {
+                          field: "next"
+                          object {
+                            operator {
+                              op: Deref
+                              arguments {
+                                call {
+                                  function {
+                                    simple_member_access {
+                                      field: "Get"
+                                      object {
+                                        identifier {
+                                          name: "iter"
+                                        }
+                                      }
+                                    }
+                                  }
+                                  argument {
+                                    tuple_literal {
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      op: Plain
+                    }
+                  }
+                  statements {
+                    expression_statement {
+                      expression {
+                        call {
+                          function {
+                            simple_member_access {
+                              field: "Delete"
+                              object {
+                                identifier {
+                                  name: "heap"
+                                }
+                              }
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                              fields {
+                                call {
+                                  function {
+                                    simple_member_access {
+                                      field: "Get"
+                                      object {
+                                        identifier {
+                                          name: "current"
+                                        }
+                                      }
+                                    }
+                                  }
+                                  argument {
+                                    tuple_literal {
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            statements {
+              assign {
+                lhs {
+                  simple_member_access {
+                    field: "head"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                rhs {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "CreateEmpty"
+                        object {
+                          call {
+                            function {
+                              identifier {
+                                name: "Optional"
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  operator {
+                                    op: Ptr
+                                    arguments {
+                                      call {
+                                        function {
+                                          identifier {
+                                            name: "Node"
+                                          }
+                                        }
+                                        argument {
+                                          tuple_literal {
+                                            fields {
+                                              identifier {
+                                                name: "T"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+                op: Plain
+              }
+            }
+            statements {
+              assign {
+                lhs {
+                  simple_member_access {
+                    field: "tail"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                rhs {
+                  call {
+                    function {
+                      simple_member_access {
+                        field: "CreateEmpty"
+                        object {
+                          call {
+                            function {
+                              identifier {
+                                name: "Optional"
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  operator {
+                                    op: Ptr
+                                    arguments {
+                                      call {
+                                        function {
+                                          identifier {
+                                            name: "Node"
+                                          }
+                                        }
+                                        argument {
+                                          tuple_literal {
+                                            fields {
+                                              identifier {
+                                                name: "T"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+                op: Plain
+              }
+            }
+            statements {
+              assign {
+                lhs {
+                  simple_member_access {
+                    field: "len"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                rhs {
+                  int_literal {
+                    value: 0
+                  }
+                }
+                op: Plain
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name {
+            name: "Length"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  simple_member_access {
+                    field: "len"
+                    object {
+                      identifier {
+                        name: "self"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "head"
+            type {
+              expression_pattern {
+                expression {
+                  call {
+                    function {
+                      identifier {
+                        name: "Optional"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          operator {
+                            op: Ptr
+                            arguments {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "Node"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                    fields {
+                                      identifier {
+                                        name: "T"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "tail"
+            type {
+              expression_pattern {
+                expression {
+                  call {
+                    function {
+                      identifier {
+                        name: "Optional"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          operator {
+                            op: Ptr
+                            arguments {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "Node"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                    fields {
+                                      identifier {
+                                        name: "T"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        variable {
+          binding {
+            name: "len"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      type_params {
+        fields {
+          generic_binding {
+            name: "T"
+            type {
+              type_type_literal {
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "GetListEntryByIndex"
+      }
+      deduced_parameters {
+        name: "T"
+        type {
+          type_type_literal {
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "list"
+            type {
+              expression_pattern {
+                expression {
+                  operator {
+                    op: Ptr
+                    arguments {
+                      call {
+                        function {
+                          identifier {
+                            name: "LinkedList"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              identifier {
+                                name: "T"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "target_index"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          call {
+            function {
+              identifier {
+                name: "Optional"
+              }
+            }
+            argument {
+              tuple_literal {
+                fields {
+                  identifier {
+                    name: "T"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "list_length"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Length"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "list"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              operator {
+                op: Or
+                arguments {
+                  operator {
+                    op: Greater
+                    arguments {
+                      identifier {
+                        name: "target_index"
+                      }
+                    }
+                    arguments {
+                      operator {
+                        op: Sub
+                        arguments {
+                          identifier {
+                            name: "list_length"
+                          }
+                        }
+                        arguments {
+                          int_literal {
+                            value: 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  operator {
+                    op: Less
+                    arguments {
+                      identifier {
+                        name: "target_index"
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                return_expression_statement {
+                  expression {
+                    call {
+                      function {
+                        simple_member_access {
+                          field: "CreateEmpty"
+                          object {
+                            call {
+                              function {
+                                identifier {
+                                  name: "Optional"
+                                }
+                              }
+                              argument {
+                                tuple_literal {
+                                  fields {
+                                    identifier {
+                                      name: "T"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "search_backwards"
+                type {
+                  expression_pattern {
+                    expression {
+                      bool_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              operator {
+                op: Greater
+                arguments {
+                  identifier {
+                    name: "target_index"
+                  }
+                }
+                arguments {
+                  operator {
+                    op: Div
+                    arguments {
+                      identifier {
+                        name: "list_length"
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 2
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "iter"
+                type {
+                  expression_pattern {
+                    expression {
+                      call {
+                        function {
+                          identifier {
+                            name: "Optional"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              operator {
+                                op: Ptr
+                                arguments {
+                                  call {
+                                    function {
+                                      identifier {
+                                        name: "Node"
+                                      }
+                                    }
+                                    argument {
+                                      tuple_literal {
+                                        fields {
+                                          identifier {
+                                            name: "T"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              if_expression {
+                condition {
+                  identifier {
+                    name: "search_backwards"
+                  }
+                }
+                then_expression {
+                  simple_member_access {
+                    field: "tail"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "list"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                else_expression {
+                  simple_member_access {
+                    field: "head"
+                    object {
+                      operator {
+                        op: Deref
+                        arguments {
+                          identifier {
+                            name: "list"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "c"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              if_expression {
+                condition {
+                  identifier {
+                    name: "search_backwards"
+                  }
+                }
+                then_expression {
+                  operator {
+                    op: Sub
+                    arguments {
+                      identifier {
+                        name: "list_length"
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                  }
+                }
+                else_expression {
+                  int_literal {
+                    value: 0
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          while_statement {
+            condition {
+              operator {
+                op: NotEq
+                arguments {
+                  identifier {
+                    name: "c"
+                  }
+                }
+                arguments {
+                  identifier {
+                    name: "target_index"
+                  }
+                }
+              }
+            }
+            body {
+              statements {
+                variable_definition {
+                  pattern {
+                    binding_pattern {
+                      name: "node"
+                      type {
+                        expression_pattern {
+                          expression {
+                            call {
+                              function {
+                                identifier {
+                                  name: "Node"
+                                }
+                              }
+                              argument {
+                                tuple_literal {
+                                  fields {
+                                    identifier {
+                                      name: "T"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                  init {
+                    operator {
+                      op: Deref
+                      arguments {
+                        call {
+                          function {
+                            simple_member_access {
+                              field: "Get"
+                              object {
+                                identifier {
+                                  name: "iter"
+                                }
+                              }
+                            }
+                          }
+                          argument {
+                            tuple_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                  is_returned: false
+                }
+              }
+              statements {
+                if_statement {
+                  condition {
+                    identifier {
+                      name: "search_backwards"
+                    }
+                  }
+                  then_block {
+                    statements {
+                      assign {
+                        lhs {
+                          identifier {
+                            name: "c"
+                          }
+                        }
+                        rhs {
+                          operator {
+                            op: Sub
+                            arguments {
+                              identifier {
+                                name: "c"
+                              }
+                            }
+                            arguments {
+                              int_literal {
+                                value: 1
+                              }
+                            }
+                          }
+                        }
+                        op: Plain
+                      }
+                    }
+                    statements {
+                      assign {
+                        lhs {
+                          identifier {
+                            name: "iter"
+                          }
+                        }
+                        rhs {
+                          simple_member_access {
+                            field: "prev"
+                            object {
+                              identifier {
+                                name: "node"
+                              }
+                            }
+                          }
+                        }
+                        op: Plain
+                      }
+                    }
+                  }
+                  else_block {
+                    statements {
+                      assign {
+                        lhs {
+                          identifier {
+                            name: "iter"
+                          }
+                        }
+                        rhs {
+                          simple_member_access {
+                            field: "next"
+                            object {
+                              identifier {
+                                name: "node"
+                              }
+                            }
+                          }
+                        }
+                        op: Plain
+                      }
+                    }
+                    statements {
+                      assign {
+                        lhs {
+                          identifier {
+                            name: "c"
+                          }
+                        }
+                        rhs {
+                          operator {
+                            op: Add
+                            arguments {
+                              identifier {
+                                name: "c"
+                              }
+                            }
+                            arguments {
+                              int_literal {
+                                value: 1
+                              }
+                            }
+                          }
+                        }
+                        op: Plain
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              simple_member_access {
+                field: "value"
+                object {
+                  operator {
+                    op: Deref
+                    arguments {
+                      call {
+                        function {
+                          simple_member_access {
+                            field: "Get"
+                            object {
+                              identifier {
+                                name: "iter"
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "test_list"
+                type {
+                  auto_pattern {
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Create"
+                    object {
+                      call {
+                        function {
+                          identifier {
+                            name: "LinkedList"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              string_type_literal {
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "PushBack"
+                    object {
+                      identifier {
+                        name: "test_list"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "This is a String Entry 0"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "PushBack"
+                    object {
+                      identifier {
+                        name: "test_list"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "This is a String Entry 1"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "PushBack"
+                    object {
+                      identifier {
+                        name: "test_list"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "This is a String Entry 2"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "PushBack"
+                    object {
+                      identifier {
+                        name: "test_list"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "This is a String Entry 3"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "PushBack"
+                    object {
+                      identifier {
+                        name: "test_list"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "This is a String Entry 4"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "PushBack"
+                    object {
+                      identifier {
+                        name: "test_list"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "This is a String Entry 5"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "PushFront"
+                    object {
+                      identifier {
+                        name: "test_list"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "This is a prepended String -1"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Print"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "String list length is: {0}"
+                      }
+                    }
+                    fields {
+                      call {
+                        function {
+                          simple_member_access {
+                            field: "Length"
+                            object {
+                              identifier {
+                                name: "test_list"
+                              }
+                            }
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "search_index"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 5
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "retrieved_entry"
+                type {
+                  auto_pattern {
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  identifier {
+                    name: "GetListEntryByIndex"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      operator {
+                        op: AddressOf
+                        arguments {
+                          identifier {
+                            name: "test_list"
+                          }
+                        }
+                      }
+                    }
+                    fields {
+                      identifier {
+                        name: "search_index"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          if_statement {
+            condition {
+              call {
+                function {
+                  simple_member_access {
+                    field: "HasValue"
+                    object {
+                      identifier {
+                        name: "retrieved_entry"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+            then_block {
+              statements {
+                variable_definition {
+                  pattern {
+                    binding_pattern {
+                      name: "retrieved_value"
+                      type {
+                        expression_pattern {
+                          expression {
+                            string_type_literal {
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                  init {
+                    call {
+                      function {
+                        simple_member_access {
+                          field: "Get"
+                          object {
+                            identifier {
+                              name: "retrieved_entry"
+                            }
+                          }
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                        }
+                      }
+                    }
+                  }
+                  is_returned: false
+                }
+              }
+              statements {
+                expression_statement {
+                  expression {
+                    call {
+                      function {
+                        identifier {
+                          name: "Print"
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                          fields {
+                            identifier {
+                              name: "retrieved_value"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            else_block {
+              statements {
+                expression_statement {
+                  expression {
+                    call {
+                      function {
+                        identifier {
+                          name: "Print"
+                        }
+                      }
+                      argument {
+                        tuple_literal {
+                          fields {
+                            string_literal {
+                              value: "No entry found in String list for index {0}!"
+                            }
+                          }
+                          fields {
+                            identifier {
+                              name: "search_index"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Clear"
+                    object {
+                      identifier {
+                        name: "test_list"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "second_list"
+                type {
+                  auto_pattern {
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Create"
+                    object {
+                      call {
+                        function {
+                          identifier {
+                            name: "LinkedList"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              operator {
+                                op: Ptr
+                                arguments {
+                                  int_type_literal {
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "number"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 1337
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "number_ptr"
+                type {
+                  expression_pattern {
+                    expression {
+                      operator {
+                        op: Ptr
+                        arguments {
+                          int_type_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              operator {
+                op: AddressOf
+                arguments {
+                  identifier {
+                    name: "number"
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  simple_member_access {
+                    field: "PushBack"
+                    object {
+                      identifier {
+                        name: "second_list"
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      identifier {
+                        name: "number_ptr"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "retrieved_ptr"
+                type {
+                  expression_pattern {
+                    expression {
+                      operator {
+                        op: Ptr
+                        arguments {
+                          int_type_literal {
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              call {
+                function {
+                  simple_member_access {
+                    field: "Get"
+                    object {
+                      call {
+                        function {
+                          identifier {
+                            name: "GetListEntryByIndex"
+                          }
+                        }
+                        argument {
+                          tuple_literal {
+                            fields {
+                              operator {
+                                op: AddressOf
+                                arguments {
+                                  identifier {
+                                    name: "second_list"
+                                  }
+                                }
+                              }
+                            }
+                            fields {
+                              int_literal {
+                                value: 0
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "value"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              operator {
+                op: Deref
+                arguments {
+                  identifier {
+                    name: "retrieved_ptr"
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "Print"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      string_literal {
+                        value: "Value {0}"
+                      }
+                    }
+                    fields {
+                      identifier {
+                        name: "value"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              int_literal {
+                value: 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

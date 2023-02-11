@@ -12,7 +12,7 @@
 
 #include "common/ostream.h"
 #include "explorer/ast/element.h"
-#include "explorer/ast/static_scope.h"
+#include "explorer/ast/value_node.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {

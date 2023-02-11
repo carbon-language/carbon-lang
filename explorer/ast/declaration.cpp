@@ -15,6 +15,10 @@ Declaration::~Declaration() = default;
 
 void Declaration::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
+    case DeclarationKind::NamespaceDeclaration:
+      PrintID(out);
+      out << ";";
+      break;
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       const auto& iface_decl = cast<ConstraintTypeDeclaration>(*this);
@@ -126,6 +130,9 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
 void Declaration::PrintID(llvm::raw_ostream& out) const {
   switch (kind()) {
+    case DeclarationKind::NamespaceDeclaration:
+      out << "namespace " << cast<NamespaceDeclaration>(*this).name();
+      break;
     case DeclarationKind::InterfaceDeclaration: {
       const auto& iface_decl = cast<InterfaceDeclaration>(*this);
       out << "interface " << iface_decl.name();
@@ -218,26 +225,35 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
   }
 }
 
+void DeclaredName::Print(llvm::raw_ostream& out) const {
+  for (const auto& [loc, name] : qualifiers()) {
+    out << name << ".";
+  }
+  out << inner_name();
+}
+
 auto GetName(const Declaration& declaration)
     -> std::optional<std::string_view> {
   switch (declaration.kind()) {
+    case DeclarationKind::NamespaceDeclaration:
+      return cast<NamespaceDeclaration>(declaration).name().inner_name();
     case DeclarationKind::FunctionDeclaration:
-      return cast<FunctionDeclaration>(declaration).name();
+      return cast<FunctionDeclaration>(declaration).name().inner_name();
     case DeclarationKind::DestructorDeclaration:
       return "destructor";
     case DeclarationKind::ClassDeclaration:
-      return cast<ClassDeclaration>(declaration).name();
+      return cast<ClassDeclaration>(declaration).name().inner_name();
     case DeclarationKind::MixinDeclaration: {
-      return cast<MixinDeclaration>(declaration).name();
+      return cast<MixinDeclaration>(declaration).name().inner_name();
     }
     case DeclarationKind::MixDeclaration: {
       return std::nullopt;
     }
     case DeclarationKind::ChoiceDeclaration:
-      return cast<ChoiceDeclaration>(declaration).name();
+      return cast<ChoiceDeclaration>(declaration).name().inner_name();
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration:
-      return cast<ConstraintTypeDeclaration>(declaration).name();
+      return cast<ConstraintTypeDeclaration>(declaration).name().inner_name();
     case DeclarationKind::VariableDeclaration:
       return cast<VariableDeclaration>(declaration).binding().name();
     case DeclarationKind::AssociatedConstantDeclaration:
@@ -250,7 +266,7 @@ auto GetName(const Declaration& declaration)
     case DeclarationKind::SelfDeclaration:
       return SelfDeclaration::name();
     case DeclarationKind::AliasDeclaration: {
-      return cast<AliasDeclaration>(declaration).name();
+      return cast<AliasDeclaration>(declaration).name().inner_name();
     }
   }
 }
@@ -351,7 +367,7 @@ auto DestructorDeclaration::CreateDestructor(
 }
 
 auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
-                                 SourceLocation source_loc, std::string name,
+                                 SourceLocation source_loc, DeclaredName name,
                                  std::vector<Nonnull<AstNode*>> deduced_params,
                                  Nonnull<TuplePattern*> param_pattern,
                                  ReturnTerm return_term,
@@ -362,7 +378,7 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
   CARBON_ASSIGN_OR_RETURN(split_params,
                           SplitDeducedParameters(source_loc, deduced_params));
   return arena->New<FunctionDeclaration>(
-      source_loc, name, std::move(split_params.resolved_params),
+      source_loc, std::move(name), std::move(split_params.resolved_params),
       split_params.self_pattern, param_pattern, return_term, body,
       virt_override);
 }
