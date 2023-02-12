@@ -17,9 +17,9 @@ from typing import Dict, Generator, Optional, Tuple
 import gql  # type: ignore
 import gql.transport.requests  # type: ignore
 
-_ENV_TOKEN = "GITHUB_ACCESS_TOKEN"
+_ENV_TOKEN = "GITHUB_ACCESS_TOKEN" #git acees token
 
-# Query elements for pagination.
+# Query elements for pagination and paging
 PAGINATION = """pageInfo {
   hasNextPage
   endCursor
