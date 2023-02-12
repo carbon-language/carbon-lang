@@ -343,5 +343,32 @@ TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
   EXPECT_EQ(value, text);
 }
 
+// TODO issue 2132: Test against `\t\n`,  and other issue 2132 sub-team tasks
+// Escape Sequences
+// Tabs
+TEST_F(StringLiteralTest, TabEscapeSequenceExpanded) {
+  auto value = Parse("\t");
+  EXPECT_TRUE(error_tracker.seen_error());
+  EXPECT_EQ(value, "\t");
+}
+
+// TODO Regression Testing
+
+//function copied temporarily from string_literal_benchmark.cpp for reference
+//static void BM_ValidString(benchmark::State& state, std::string_view introducer,
+//                           std::string_view terminator) {
+//  std::string x(introducer);
+//  x.append(100000, 'a');
+//  x.append(terminator);
+//  for (auto _ : state) {
+//    LexedStringLiteral::Lex(x);
+//  }
+
+static void RT_ValidString() {
+  //TODO regression test ValidString modeled after BM_ValidString
+}
+
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
