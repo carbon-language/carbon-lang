@@ -1589,17 +1589,22 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         }
         case IntrinsicExpression::Intrinsic::IntLeftShift: {
           CARBON_CHECK(args.size() == 2);
-          // TODO: Runtime error if RHS is too large.
-          return todo_.FinishAction(arena_->New<IntValue>(
-              static_cast<uint32_t>(cast<IntValue>(*args[0]).value())
-              << cast<IntValue>(*args[1]).value()));
+          const auto& lhs = cast<IntValue>(*args[0]).value();
+          const auto& rhs = cast<IntValue>(*args[1]).value();
+          if (rhs >= 0 && rhs < 32) {
+            return todo_.FinishAction(
+                arena_->New<IntValue>(static_cast<uint32_t>(lhs) << rhs));
+          }
+          return ProgramError(exp.source_loc()) << "Integer overflow";
         }
         case IntrinsicExpression::Intrinsic::IntRightShift: {
           CARBON_CHECK(args.size() == 2);
-          // TODO: Runtime error if RHS is too large.
-          return todo_.FinishAction(
-              arena_->New<IntValue>(cast<IntValue>(*args[0]).value() >>
-                                    cast<IntValue>(*args[1]).value()));
+          const auto& lhs = cast<IntValue>(*args[0]).value();
+          const auto& rhs = cast<IntValue>(*args[1]).value();
+          if (rhs >= 0 && rhs < 32) {
+            return todo_.FinishAction(arena_->New<IntValue>(lhs >> rhs));
+          }
+          return ProgramError(exp.source_loc()) << "Integer overflow";
         }
       }
     }

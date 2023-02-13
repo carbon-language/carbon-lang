@@ -15,7 +15,7 @@
 
 namespace Carbon {
 
-// Type-safe storage of Node IDs.
+// The ID of a node.
 struct SemanticsNodeId : public IndexBase {
   // An explicitly invalid node ID.
   // NOLINTNEXTLINE(readability-identifier-naming)
@@ -70,7 +70,7 @@ struct SemanticsCrossReferenceIRId : public IndexBase {
   }
 };
 
-// Type-safe storage of integer literals.
+// The ID of an integer literal.
 struct SemanticsIntegerLiteralId : public IndexBase {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -79,7 +79,7 @@ struct SemanticsIntegerLiteralId : public IndexBase {
   }
 };
 
-// Type-safe storage of node blocks.
+// The ID of a node block.
 struct SemanticsNodeBlockId : public IndexBase {
   // All SemanticsIR instances must provide the 0th node block as empty.
   // NOLINTNEXTLINE(readability-identifier-naming)
@@ -101,7 +101,16 @@ constexpr SemanticsNodeBlockId SemanticsNodeBlockId::Empty =
 constexpr SemanticsNodeBlockId SemanticsNodeBlockId::Invalid =
     SemanticsNodeBlockId(SemanticsNodeBlockId::InvalidIndex);
 
-// Type-safe storage of strings.
+// The ID of a real literal.
+struct SemanticsRealLiteralId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "real";
+    IndexBase::Print(out);
+  }
+};
+
+// The ID of a string.
 struct SemanticsStringId : public IndexBase {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -236,13 +245,14 @@ class SemanticsNode {
     return SemanticsIntegerLiteralId(arg0_);
   }
 
-  static auto MakeRealLiteral(ParseTree::Node parse_node) -> SemanticsNode {
+  static auto MakeRealLiteral(ParseTree::Node parse_node,
+                              SemanticsRealLiteralId real) -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::RealLiteral,
-                         SemanticsNodeId::BuiltinRealType);
+                         SemanticsNodeId::BuiltinFloatingPointType, real.index);
   }
-  auto GetAsRealLiteral() const -> NoArgs {
+  auto GetAsRealLiteral() const -> SemanticsRealLiteralId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::RealLiteral);
-    return {};
+    return SemanticsRealLiteralId(arg0_);
   }
 
   static auto MakeReturn(ParseTree::Node parse_node) -> SemanticsNode {
@@ -266,6 +276,16 @@ class SemanticsNode {
   auto GetAsReturnExpression() const -> SemanticsNodeId {
     CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression);
     return SemanticsNodeId(arg0_);
+  }
+
+  static auto MakeStringLiteral(ParseTree::Node parse_node,
+                                SemanticsStringId string_id) -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::StringLiteral,
+                         SemanticsNodeId::BuiltinStringType, string_id.index);
+  }
+  auto GetAsStringLiteral() const -> SemanticsStringId {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::StringLiteral);
+    return SemanticsStringId(arg0_);
   }
 
   static auto MakeVarStorage(ParseTree::Node parse_node, SemanticsNodeId type)

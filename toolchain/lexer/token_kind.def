@@ -156,6 +156,8 @@ CARBON_KEYWORD_TOKEN(Return,        "return")
 CARBON_KEYWORD_TOKEN(Returned,      "returned")
 CARBON_KEYWORD_TOKEN(SelfParameter, "self")
 CARBON_KEYWORD_TOKEN(SelfType,      "Self")
+// TODO: Although we provide a String type literal, it's not standardized.
+CARBON_KEYWORD_TOKEN(StringTypeLiteral, "String")
 CARBON_KEYWORD_TOKEN(Then,          "then")
 // Underscore is tokenized as a keyword because it's part of identifiers.
 CARBON_KEYWORD_TOKEN(Underscore,    "_")

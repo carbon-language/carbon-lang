@@ -86,7 +86,13 @@ template <>
 struct format_provider<Carbon::TokenKind> {
   static void format(const Carbon::TokenKind& kind, raw_ostream& out,
                      StringRef /*style*/) {
-    out << kind.fixed_spelling();
+    auto spelling = kind.fixed_spelling();
+    if (!spelling.empty()) {
+      out << spelling;
+    } else {
+      // Default to the name if there's no fixed spelling.
+      out << kind;
+    }
   }
 };
 

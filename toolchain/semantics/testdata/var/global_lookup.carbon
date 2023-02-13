@@ -12,6 +12,8 @@
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: real_literals: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   x,
 // CHECK:STDOUT:   y,
@@ -22,25 +24,26 @@
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node2, type: node0},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node3, type: node0},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node4, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node5, type: node0},
 // CHECK:STDOUT:   {kind: VarStorage, type: node2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node5, type: node2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node6, type: node2},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: node2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node5, arg1: node7, type: node2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node6, arg1: node8, type: node2},
 // CHECK:STDOUT:   {kind: VarStorage, type: node2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node9, type: node2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node9, arg1: node5, type: node2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node10, type: node2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node10, arg1: node6, type: node2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node5,
 // CHECK:STDOUT:     node6,
 // CHECK:STDOUT:     node7,
 // CHECK:STDOUT:     node8,
 // CHECK:STDOUT:     node9,
 // CHECK:STDOUT:     node10,
 // CHECK:STDOUT:     node11,
+// CHECK:STDOUT:     node12,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

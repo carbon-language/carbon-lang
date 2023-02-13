@@ -24,7 +24,7 @@
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:       {kind: 'DeclaredName', text: 's'},
-// CHECK:STDOUT:       {kind: 'NameReference', text: 'String'},
+// CHECK:STDOUT:       {kind: 'Literal', text: 'String'},
 // CHECK:STDOUT:     {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:     {kind: 'Literal', text: '"hello"'},
