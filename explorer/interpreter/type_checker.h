@@ -21,6 +21,7 @@
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
+#include "explorer/interpreter/matching_impl_set.h"
 #include "explorer/interpreter/value.h"
 
 namespace Carbon {
@@ -140,27 +141,6 @@ class TypeChecker {
   struct ConstraintLookupResult {
     Nonnull<const InterfaceType*> interface;
     Nonnull<const Declaration*> member;
-  };
-
-  // A set of impls that we're currently matching against. Used to detect and
-  // reject non-termination.
-  class MatchingImplSet {
-   public:
-    class Match;
-
-   private:
-    enum class ValueKey : int {
-      TypeType,
-      BoolType,
-      IntType,
-      StringType,
-      ArrayType,
-      PointerType,
-      FirstDeclarationKey
-    };
-    ValueKey next_value_key_ = ValueKey::FirstDeclarationKey;
-    llvm::DenseMap<const Declaration*, ValueKey> declaration_keys_;
-    std::vector<Match*> matches_;
   };
 
   // Checks a member access that might be accessing a function taking `addr
@@ -548,7 +528,9 @@ class TypeChecker {
   std::vector<ConstraintTypeBuilder*> partial_constraint_types_;
 
   // A set of impls we're currently matching.
-  // TODO: Drop the 'mutable'.
+  // TODO: This is `mutable` because `MatchImpl` is `const`. We need to remove
+  // the `const`s from everywhere that transitively does `impl` matching to get
+  // rid of this `mutable`.
   mutable MatchingImplSet matching_impl_set_;
 };
 
