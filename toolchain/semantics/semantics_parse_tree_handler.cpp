@@ -186,7 +186,7 @@ auto SemanticsParseTreeHandler::TryTypeConversionOnArgs(
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Note,
-                      "Received {0} arguments, but require {1} arguments.",
+                      "Received {0} argument(s), but require {1} argument(s).",
                       int, int);
     emitter_->Build(arg_parse_node, NoMatchingCall)
         .Note(param_parse_node, CallArgCountMismatch, arg_refs.size(),
@@ -701,6 +701,7 @@ auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
     -> bool {
   auto on_start = [&](SemanticsNodeBlockId ir_id,
                       SemanticsNodeBlockId refs_id) -> bool {
+    PopScope();
     node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ParameterListStart);
     finished_params_stack_.push_back({ir_id, refs_id});
     node_stack_.Push(parse_node);
@@ -717,6 +718,7 @@ auto SemanticsParseTreeHandler::HandleParameterListComma(
 
 auto SemanticsParseTreeHandler::HandleParameterListStart(
     ParseTree::Node parse_node) -> bool {
+  PushScope();
   node_stack_.Push(parse_node);
   ParamOrArgStart();
   return true;

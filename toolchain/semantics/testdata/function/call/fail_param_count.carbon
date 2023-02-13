@@ -130,29 +130,27 @@
 
 fn Run0() {}
 fn Run1(a: i32) {}
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:9: Redefining a in the same scope.
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-2]]:9: Previous definition is here.
 fn Run2(a: i32, b: i32) {}
 
 fn Main() {
   // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-8]]:1: Received 1 arguments, but require 0 parameters.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-6]]:1: Received 1 argument(s), but require 0 argument(s).
   Run0(1);
   // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-11]]:1: Received 2 arguments, but require 0 parameters.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-9]]:1: Received 2 argument(s), but require 0 argument(s).
   Run0(0, 1);
 
   // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-14]]:1: Received 0 arguments, but require 1 parameters.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-12]]:1: Received 0 argument(s), but require 1 argument(s).
   Run1();
   // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-17]]:1: Received 2 arguments, but require 1 parameters.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-15]]:1: Received 2 argument(s), but require 1 argument(s).
   Run1(0, 1);
 
   // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-18]]:1: Received 0 arguments, but require 2 parameters.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-18]]:1: Received 0 argument(s), but require 2 argument(s).
   Run2();
   // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-21]]:1: Received 1 arguments, but require 2 parameters.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-21]]:1: Received 1 argument(s), but require 2 argument(s).
   Run2(0);
 }
