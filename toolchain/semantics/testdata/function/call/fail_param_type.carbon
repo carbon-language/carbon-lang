@@ -28,39 +28,40 @@
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node3, type: node0},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node4, type: node0},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node5, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node6, type: node5},
 // CHECK:STDOUT:   {kind: VarStorage, type: node2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node6, type: node2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node7, type: node2},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: callable0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node8},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node8, arg1: block0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node9},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node9, arg1: block0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: callable1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node11},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node12},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: node3},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node11, arg1: block0},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node12, arg1: block0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node6,
 // CHECK:STDOUT:     node7,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node7,
+// CHECK:STDOUT:     node8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node8,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node9,
 // CHECK:STDOUT:     node10,
 // CHECK:STDOUT:     node11,
 // CHECK:STDOUT:     node12,
+// CHECK:STDOUT:     node13,
+// CHECK:STDOUT:     node15,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node13,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node13,
+// CHECK:STDOUT:     node14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
