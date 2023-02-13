@@ -45,13 +45,17 @@ CARBON_SEMANTICS_BUILTIN_KIND(TypeType, TypeType)
 // This has a deliberately self-referential type.
 CARBON_SEMANTICS_BUILTIN_KIND(InvalidType, InvalidType)
 
-// The type of integers and integer literals, currently always i32. Long-term
-// we may not want it this way, but for now this is the approach.
+// The type of integer values and integer literals, currently always i32.
+// Long-term we may not want it this way, but for now this is the approach.
 CARBON_SEMANTICS_BUILTIN_KIND(IntegerType, TypeType)
 
-// The type of reals and real literals, currently always f64. Long-term
-// we may not want it this way, but for now this is the approach.
-CARBON_SEMANTICS_BUILTIN_KIND(RealType, TypeType)
+// The type of floating point values and real literals, currently always f64.
+// Long-term we may not want it this way, but for now this is the approach.
+CARBON_SEMANTICS_BUILTIN_KIND(FloatingPointType, TypeType)
+
+// The type of string values and String literals.
+// Long-term we may not want it this way, but for now this is the approach.
+CARBON_SEMANTICS_BUILTIN_KIND(StringType, TypeType)
 
 // Keep invalid last, so that we can use values as array indices without needing
 // an invalid entry.

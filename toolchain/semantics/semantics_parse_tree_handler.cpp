@@ -422,8 +422,19 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
       break;
     }
     case TokenKind::RealLiteral: {
-      // TODO: Add storage of the Real literal.
-      AddNodeAndPush(parse_node, SemanticsNode::MakeRealLiteral(parse_node));
+      auto token_value = tokens_->GetRealLiteral(token);
+      auto id =
+          semantics_->AddRealLiteral({.mantissa = token_value.Mantissa(),
+                                      .exponent = token_value.Exponent(),
+                                      .is_decimal = token_value.IsDecimal()});
+      AddNodeAndPush(parse_node,
+                     SemanticsNode::MakeRealLiteral(parse_node, id));
+      break;
+    }
+    case TokenKind::StringLiteral: {
+      auto id = semantics_->AddString(tokens_->GetStringLiteral(token));
+      AddNodeAndPush(parse_node,
+                     SemanticsNode::MakeStringLiteral(parse_node, id));
       break;
     }
     case TokenKind::IntegerTypeLiteral: {
@@ -436,9 +447,25 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
       node_stack_.Push(parse_node, SemanticsNodeId::BuiltinIntegerType);
       break;
     }
-    default:
+    case TokenKind::FloatingPointTypeLiteral: {
+      auto text = tokens_->GetTokenText(token);
+      if (text != "f64") {
+        emitter_->Emit(parse_node, SemanticsTodo,
+                       "Currently only f64 is allowed");
+        return false;
+      }
+      node_stack_.Push(parse_node, SemanticsNodeId::BuiltinFloatingPointType);
+      break;
+    }
+    case TokenKind::StringTypeLiteral: {
+      node_stack_.Push(parse_node, SemanticsNodeId::BuiltinStringType);
+      break;
+    }
+    default: {
       emitter_->Emit(parse_node, SemanticsTodo,
                      llvm::formatv("Handle {0}", token_kind));
+      return false;
+    }
   }
 
   return true;
