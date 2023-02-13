@@ -186,7 +186,7 @@ auto SemanticsParseTreeHandler::TryTypeConversionOnArgs(
   // If sizes mismatch, fail early.
   if (arg_refs.size() != param_refs.size()) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Note,
-                      "Received {0} arguments, but require {1} parameters.",
+                      "Received {0} arguments, but require {1} arguments.",
                       int, int);
     emitter_->Build(arg_parse_node, NoMatchingCall)
         .Note(param_parse_node, CallArgCountMismatch, arg_refs.size(),
