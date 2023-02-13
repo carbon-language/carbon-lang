@@ -28,7 +28,7 @@ class MatchingImplSet {
    public:
     explicit Match(Nonnull<MatchingImplSet*> parent,
                    Nonnull<const ImplScope::Impl*> impl,
-                   Nonnull<const Value*> type, Nonnull<const Value*> inteface);
+                   Nonnull<const Value*> type, Nonnull<const Value*> interface);
     ~Match();
 
     // Check that this match does not duplicate any prior one. Diagnose if it

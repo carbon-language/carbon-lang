@@ -2,14 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "explorer/interpreter/type_checker.h"
-
 #include "common/check.h"
 #include "common/error.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
+#include "explorer/interpreter/type_checker.h"
 #include "explorer/interpreter/value.h"
 
 namespace Carbon {

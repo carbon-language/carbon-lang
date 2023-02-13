@@ -950,8 +950,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
   // If param is the name of a variable we're deducing, then deduce it.
   if (auto* var_type = dyn_cast<VariableType>(param)) {
     const auto& binding = var_type->binding();
-    if (auto it = deduced_values_.find(&binding);
-        it != deduced_values_.end()) {
+    if (auto it = deduced_values_.find(&binding); it != deduced_values_.end()) {
       it->second.push_back(arg);
       return Success();
     }
@@ -1308,7 +1307,7 @@ auto TypeChecker::ArgumentDeduction::Finish(
     bool type = IsType(subst_param) && IsType(mismatch.arg);
     if (type && mismatch.allow_implicit_conversion) {
       if (!type_checker.IsImplicitlyConvertible(mismatch.arg, subst_param,
-                                                   impl_scope, true)) {
+                                                impl_scope, true)) {
         if (!diagnose_deduction_failure) {
           return {std::nullopt};
         }
