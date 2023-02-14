@@ -8,7 +8,7 @@
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
+// CHECK:STDOUT:   {param_ir: block0, param_refs: block0, return_type: node2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -46,8 +46,6 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/return/value.carbon:[[@LINE+2]]:11: No return expression should be provided in this context.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/return/value.carbon:[[@LINE-2]]:1: There was no return type provided.
+fn Main() -> i32 {
   return 0;
 }
