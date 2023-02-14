@@ -1029,10 +1029,10 @@ auto ValueStructurallyEqual(
       const auto& alt1 = cast<AlternativeValue>(*v1);
       const auto& alt2 = cast<AlternativeValue>(*v2);
       if (!TypeEqual(&alt1.choice(), &alt2.choice(), equality_ctx) ||
-          alt1.alternative().name() != alt2.alternative().name() ||
-          alt1.argument().has_value() != alt2.argument().has_value()) {
+          &alt1.alternative() != &alt2.alternative()) {
         return false;
       }
+      CARBON_CHECK(alt1.argument().has_value() == alt2.argument().has_value());
       return !alt1.argument().has_value() ||
              ValueEqual(*alt1.argument(), *alt2.argument(), equality_ctx);
     }

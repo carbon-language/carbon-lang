@@ -753,8 +753,6 @@ static auto DeclarationToProto(const Declaration& declaration)
         if (auto sig = alternative->signature()) {
           *alternative_proto->mutable_signature() =
               TupleLiteralExpressionToProto(**sig);
-        } else {
-          CARBON_CHECK(!alternative_proto->has_signature());
         }
       }
       break;
