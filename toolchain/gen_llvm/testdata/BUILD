@@ -20,7 +20,7 @@ glob_sh_run(
     args = [
         "$(location //toolchain/driver:carbon)",
         "dump",
-        "codegen",
+        "llvm-ir",
     ],
     data = ["//toolchain/driver:carbon"],
     file_exts = ["carbon"],
@@ -31,7 +31,7 @@ glob_sh_run(
         "$(location //toolchain/driver:carbon)",
         "-v",
         "dump",
-        "codegen",
+        "llvm-ir",
     ],
     data = ["//toolchain/driver:carbon"],
     file_exts = ["carbon"],

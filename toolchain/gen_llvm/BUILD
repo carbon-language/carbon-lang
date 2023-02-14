@@ -5,9 +5,9 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "codegen",
-    srcs = ["codegen.cpp"],
-    hdrs = ["codegen.h"],
+    name = "gen_llvm",
+    srcs = ["gen_llvm.cpp"],
+    hdrs = ["gen_llvm.h"],
     deps = [
         "//common:check",
         "@llvm-project//llvm:Support",

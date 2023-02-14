@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CODEGEN_CODEGEN_H_
-#define CARBON_TOOLCHAIN_CODEGEN_CODEGEN_H_
+#ifndef CARBON_TOOLCHAIN_GEN_LLVM_GEN_LLVM_H_
+#define CARBON_TOOLCHAIN_GEN_LLVM_GEN_LLVM_H_
 
 namespace Carbon {
 
@@ -11,4 +11,4 @@ namespace Carbon {
 
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_CODEGEN_CODEGEN_H_
+#endif  // CARBON_TOOLCHAIN_GEN_LLVM_GEN_LLVM_H_
