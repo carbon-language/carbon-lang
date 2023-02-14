@@ -47,6 +47,20 @@ struct SemanticsCallable {
   SemanticsNodeId return_type_id;
 };
 
+struct SemanticsRealLiteral {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{mantissa: " << mantissa << ", exponent: " << exponent
+        << ", is_decimal: " << is_decimal << "}";
+  }
+
+  llvm::APInt mantissa;
+  llvm::APInt exponent;
+
+  // If false, the value is mantissa * 2^exponent.
+  // If true, the value is mantissa * 10^exponent.
+  bool is_decimal;
+};
+
 // Provides semantic analysis on a ParseTree.
 class SemanticsIR {
  public:
@@ -134,6 +148,14 @@ class SemanticsIR {
     return node_blocks_[block_id.index];
   }
 
+  // Adds a real literal, returning an ID to reference it.
+  auto AddRealLiteral(SemanticsRealLiteral real_literal)
+      -> SemanticsRealLiteralId {
+    SemanticsRealLiteralId id(real_literals_.size());
+    real_literals_.push_back(real_literal);
+    return id;
+  }
+
   // Adds an string, returning an ID to reference it.
   auto AddString(llvm::StringRef str) -> SemanticsStringId {
     // If the string has already been stored, return the corresponding ID.
@@ -172,6 +194,9 @@ class SemanticsIR {
 
   // Storage for integer literals.
   llvm::SmallVector<llvm::APInt> integer_literals_;
+
+  // Storage for real literals.
+  llvm::SmallVector<SemanticsRealLiteral> real_literals_;
 
   // Storage for strings. strings_ provides a list of allocated strings, while
   // string_to_id_ provides a mapping to identify strings.

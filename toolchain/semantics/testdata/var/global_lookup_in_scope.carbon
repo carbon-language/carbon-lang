@@ -13,6 +13,8 @@
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: real_literals: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   x,
 // CHECK:STDOUT:   Main,

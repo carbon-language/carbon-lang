@@ -12,6 +12,9 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: real_literals: [
+// CHECK:STDOUT:   {mantissa: 10, exponent: -1, is_decimal: 1},
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT:   x,
@@ -27,6 +30,7 @@
 // CHECK:STDOUT:   {kind: VarStorage, type: node2},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node7, type: node2},
 // CHECK:STDOUT:   {kind: RealLiteral, type: node3},
+// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: node3},
 // CHECK:STDOUT:   {kind: Assign, arg0: node7, arg1: node9, type: node1},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node5, arg1: block2},
 // CHECK:STDOUT: ]
