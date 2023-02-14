@@ -30,8 +30,10 @@ class SemanticsParseTreeHandler {
         semantics_(&semantics),
         vlog_stream_(vlog_stream),
         node_stack_(parse_tree, vlog_stream),
-        node_block_stack_(semantics.node_blocks_, vlog_stream),
-        params_stack_(semantics.node_blocks_, vlog_stream) {}
+        node_block_stack_("node_block_stack_", semantics.node_blocks_,
+                          vlog_stream),
+        params_or_args_stack_("params_or_args_stack_", semantics.node_blocks_,
+                              vlog_stream) {}
 
   // Outputs the ParseTree information into SemanticsIR.
   auto Build() -> void;
@@ -94,16 +96,43 @@ class SemanticsParseTreeHandler {
   // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
   auto PopScope() -> void;
 
-  // Attempts a type conversion between arguments of the two arguments with
-  // provided types, returning the result type. The result type will be invalid
-  // for errors; this handles printing diagnostics.
+  // Attempts a type conversion between two types. Returns:
+  // - The result type if valid.
+  // - BuiltinInvalidType if either lhs_id or rhs_id is BuiltinInvalidType.
+  // - Invalid if no conversion is supported.
+  //
+  // The caller might choose to print a diagnostic if Invalid is returned,
+  // whereas BuiltinInvalidType means there was a previous error that may be
+  // related and another diagnostic is undesirable.
+  auto CanTypeConvert(SemanticsNodeId from_type, SemanticsNodeId to_type)
+      -> SemanticsNodeId;
+
+  // Attempts a type conversion between two arguments, returning the result
+  // type. The result type will be BuiltinInvalidType for errors; this handles
+  // printing diagnostics.
   auto TryTypeConversion(ParseTree::Node parse_node, SemanticsNodeId lhs_id,
                          SemanticsNodeId rhs_id, bool can_convert_lhs)
       -> SemanticsNodeId;
 
+  // Attempts a type conversion between arguments and parameters. Returns true
+  // on success. arg_parse_node and param_parse_node are only used for
+  // diagnostic locations.
+  auto TryTypeConversionOnArgs(ParseTree::Node arg_parse_node,
+                               SemanticsNodeBlockId arg_ir_id,
+                               SemanticsNodeBlockId arg_refs_id,
+                               ParseTree::Node param_parse_node,
+                               SemanticsNodeBlockId param_refs_id) -> bool;
+
+  auto ParamOrArgStart() -> void;
+  auto ParamOrArgComma(ParseTree::Node parse_node) -> bool;
+  auto ParamOrArgEnd(
+      ParseNodeKind start_kind, ParseNodeKind comma_kind,
+      std::function<bool(SemanticsNodeBlockId, SemanticsNodeBlockId)> on_start)
+      -> bool;
+
   // Saves a parameter from the top block in node_stack_ to the top block in
-  // params_stack_. Returns false if nothing is copied.
-  auto SaveParam() -> bool;
+  // params_or_args_stack_. Returns false if nothing is copied.
+  auto ParamOrArgSave() -> bool;
 
   // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
@@ -133,8 +162,11 @@ class SemanticsParseTreeHandler {
   // The stack of node blocks being used for general IR generation.
   SemanticsNodeBlockStack node_block_stack_;
 
-  // The stack of node blocks being used for parameters.
-  SemanticsNodeBlockStack params_stack_;
+  // The stack of node blocks being used for per-element tracking of nodes in
+  // parameter and argument node blocks. Versus node_block_stack_, an element
+  // will have 1 or more nodes in blocks in node_block_stack_, but only ever 1
+  // node in blocks here.
+  SemanticsNodeBlockStack params_or_args_stack_;
 
   llvm::SmallVector<std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId>>
       finished_params_stack_;

@@ -99,6 +99,9 @@ CARBON_DIAGNOSTIC_KIND(TypeMismatch)
 CARBON_DIAGNOSTIC_KIND(NameNotFound)
 CARBON_DIAGNOSTIC_KIND(NameRedefined)
 CARBON_DIAGNOSTIC_KIND(PreviousDefinition)
+CARBON_DIAGNOSTIC_KIND(NoMatchingCall)
+CARBON_DIAGNOSTIC_KIND(CallArgCountMismatch)
+CARBON_DIAGNOSTIC_KIND(CallArgTypeMismatch)
 
 // ============================================================================
 // Other diagnostics
