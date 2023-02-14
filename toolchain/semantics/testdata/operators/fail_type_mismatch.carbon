@@ -30,7 +30,6 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: callable0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node7},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: node2},
-// CHECK:STDOUT:   {kind: RealLiteral, type: node3},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: node3},
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node9, arg1: node10, type: node1},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node11, type: node1},

@@ -8,13 +8,7 @@
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-<<<<<<<< HEAD:toolchain/semantics/testdata/function/definition/order.carbon
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
-========
 // CHECK:STDOUT:   {param_ir: block1, param_refs: block2},
->>>>>>>> trunk:toolchain/semantics/testdata/function/definition/params_two.carbon
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -60,5 +54,11 @@
 // CHECK:STDOUT:     node13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/params_two.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
+<<<<<<<< HEAD:toolchain/semantics/testdata/function/definition/order.carbon
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/params_two.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
+========
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/params_two.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
+>>>>>>>> trunk:toolchain/semantics/testdata/function/definition/params_two.carbon
 
 fn Foo(a: i32, b: i32) {}

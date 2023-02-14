@@ -8,11 +8,7 @@
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-<<<<<<<< HEAD:toolchain/semantics/testdata/function/definition/params_one.carbon
-// CHECK:STDOUT:   {param_ir: block1, param_refs: block2},
-========
 // CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
->>>>>>>> trunk:toolchain/semantics/testdata/function/definition/params_zero.carbon
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -42,5 +38,11 @@
 // CHECK:STDOUT:     node9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/params_zero.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
+<<<<<<<< HEAD:toolchain/semantics/testdata/function/definition/params_one.carbon
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/params_zero.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
+========
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/params_zero.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
+>>>>>>>> trunk:toolchain/semantics/testdata/function/definition/params_zero.carbon
 
 fn Foo() {}

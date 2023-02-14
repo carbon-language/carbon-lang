@@ -47,5 +47,7 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/return/value.carbon:[[@LINE+2]]:11: No return expression should be provided in this context.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/return/value.carbon:[[@LINE-2]]:1: There was no return type provided.
   return 0;
 }

@@ -52,5 +52,7 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/binary_op.carbon:[[@LINE+2]]:17: No return expression should be provided in this context.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/binary_op.carbon:[[@LINE-2]]:1: There was no return type provided.
   return 12 + 34;
 }
