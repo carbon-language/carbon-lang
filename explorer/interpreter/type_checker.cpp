@@ -2784,22 +2784,29 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             }
             case Value::Kind::ChoiceType: {
               const auto& choice = cast<ChoiceType>(*type);
-              std::optional<Nonnull<const Value*>> parameter_types =
-                  choice.FindAlternative(access.member_name());
-              if (!parameter_types.has_value()) {
+              std::optional<Nonnull<const AlternativeSignature*>> signature =
+                  choice.declaration().FindAlternative(access.member_name());
+              if (!signature.has_value()) {
                 return ProgramError(e->source_loc())
-                       << "choice " << choice.name()
-                       << " does not have an alternative named "
+                       << choice << " does not have an alternative named "
                        << access.member_name();
               }
-              Nonnull<const Value*> substituted_parameter_type =
-                  *parameter_types;
-              if (choice.IsParameterized()) {
-                substituted_parameter_type =
-                    Substitute(choice.bindings(), *parameter_types);
+
+              // If we find an alternative with no declared signature, we are
+              // constructing an unparameterized alternative value.
+              if (!(*signature)->static_type()) {
+                access.set_member(
+                    arena_->New<NamedElement>(arena_->New<NamedValue>(
+                        NamedValue{access.member_name(), &choice})));
+                access.set_static_type(&choice);
+                access.set_value_category(ValueCategory::Let);
+                return Success();
               }
-              Nonnull<const Value*> type = arena_->New<FunctionType>(
-                  substituted_parameter_type, &choice);
+
+              Nonnull<const Value*> parameter_type =
+                  Substitute(choice.bindings(), *(*signature)->static_type());
+              Nonnull<const Value*> type =
+                  arena_->New<FunctionType>(parameter_type, &choice);
               // TODO: Should there be a Declaration corresponding to each
               // choice type alternative?
               access.set_member(
@@ -3310,6 +3317,24 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           call.set_static_type(arena_->New<TypeType>());
           call.set_value_category(ValueCategory::Let);
           return Success();
+        }
+        case Value::Kind::ChoiceType: {
+          // Give a better diagnostic for an attempt to call a choice constant.
+          auto* member_access =
+              dyn_cast<SimpleMemberAccessExpression>(&call.function());
+          if (member_access &&
+              isa<TypeType>(member_access->object().static_type())) {
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> type,
+                InterpExp(&member_access->object(), arena_, trace_stream_));
+            if (isa<ChoiceType>(type)) {
+              return ProgramError(e->source_loc())
+                     << "alternative `" << *type << "."
+                     << member_access->member_name()
+                     << "` does not expect an argument list";
+            }
+          }
+          [[fallthrough]];
         }
         default: {
           return ProgramError(e->source_loc())
@@ -3995,26 +4020,30 @@ auto TypeChecker::TypeCheckPattern(
                                           "alternative pattern", &choice_type,
                                           *expected, impl_scope));
       }
-      std::optional<Nonnull<const Value*>> parameter_types =
-          choice_type.FindAlternative(alternative.alternative_name());
-      if (parameter_types == std::nullopt) {
+      std::optional<Nonnull<const AlternativeSignature*>> signature =
+          choice_type.declaration().FindAlternative(
+              alternative.alternative_name());
+      if (!signature) {
         return ProgramError(alternative.source_loc())
-               << "'" << alternative.alternative_name()
-               << "' is not an alternative of " << choice_type;
+               << "`" << alternative.alternative_name()
+               << "` is not an alternative of " << choice_type;
+      }
+      if (!(*signature)->static_type()) {
+        return ProgramError(alternative.source_loc())
+               << "alternative `" << choice_type << "."
+               << alternative.alternative_name()
+               << "` does not expect an argument list";
       }
 
-      Nonnull<const Value*> substituted_parameter_type = *parameter_types;
-      if (choice_type.IsParameterized()) {
-        substituted_parameter_type =
-            Substitute(choice_type.bindings(), *parameter_types);
-      }
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckPattern(&alternative.arguments(), substituted_parameter_type,
-                           impl_scope, enclosing_value_category));
+      Nonnull<const Value*> parameter_type =
+          Substitute(choice_type.bindings(), *(*signature)->static_type());
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&alternative.arguments(),
+                                              parameter_type, impl_scope,
+                                              enclosing_value_category));
       alternative.set_static_type(&choice_type);
       alternative.set_value(arena_->New<AlternativeValue>(
-          alternative.alternative_name(), choice_type.name(),
-          &alternative.arguments().value()));
+          &choice_type, *signature,
+          cast<TupleValue>(&alternative.arguments().value())));
       return Success();
     }
     case PatternKind::ExpressionPattern: {
@@ -5468,14 +5497,14 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
     }
   }
 
-  std::vector<NamedValue> alternatives;
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
-    CARBON_ASSIGN_OR_RETURN(auto signature,
-                            TypeCheckTypeExp(&alternative->signature(),
-                                             *scope_info.innermost_scope));
-    alternatives.push_back({alternative->name(), signature});
+    if (auto signature = alternative->signature()) {
+      CARBON_ASSIGN_OR_RETURN(
+          auto type, TypeCheckTypeExp(*signature, *scope_info.innermost_scope));
+      alternative->set_static_type(type);
+    }
   }
-  choice->set_members(alternatives);
+
   if (choice->type_params().has_value()) {
     Nonnull<ParameterizedEntityName*> param_name =
         arena_->New<ParameterizedEntityName>(choice, *choice->type_params());

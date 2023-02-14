@@ -1181,9 +1181,8 @@ alternative:
     { $$ = arena->New<AlternativeSignature>(context.source_loc(), $1, $2); }
 | identifier
     {
-      $$ = arena->New<AlternativeSignature>(
-          context.source_loc(), $1,
-          arena->New<TupleLiteral>(context.source_loc()));
+      $$ = arena->New<AlternativeSignature>(context.source_loc(), $1,
+                                            std::nullopt);
     }
 ;
 alternative_list:

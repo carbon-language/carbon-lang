@@ -853,7 +853,9 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       for (const auto& alternative : choice.alternatives()) {
         out << sep;
         IdentifierToCarbon(alternative.name(), out);
-        TupleLiteralExpressionToCarbon(alternative.signature(), out);
+        if (alternative.has_signature()) {
+          TupleLiteralExpressionToCarbon(alternative.signature(), out);
+        }
       }
       out << "}";
       break;
