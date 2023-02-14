@@ -16,6 +16,18 @@ class SemanticsIRForTest;
 
 namespace Carbon {
 
+// A call.
+struct SemanticsCall {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{arg_ir: " << arg_ir_id << ", arg_refs: " << arg_refs_id << "}";
+  }
+
+  // The full IR for arguments.
+  SemanticsNodeBlockId arg_ir_id;
+  // A block containing a single reference node per argument.
+  SemanticsNodeBlockId arg_refs_id;
+};
+
 // A callable object.
 struct SemanticsCallable {
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -79,6 +91,12 @@ class SemanticsIR {
   // Returns the type of the requested node.
   auto GetType(SemanticsNodeId node_id) -> SemanticsNodeId {
     return GetNode(node_id).type();
+  }
+
+  auto AddCall(SemanticsCall call) -> SemanticsCallId {
+    SemanticsCallId id(calls_.size());
+    calls_.push_back(call);
+    return id;
   }
 
   auto AddCallable(SemanticsCallable callable) -> SemanticsCallableId {
@@ -149,6 +167,9 @@ class SemanticsIR {
   }
 
   bool has_errors_ = false;
+
+  // Storage for call objects.
+  llvm::SmallVector<SemanticsCall> calls_;
 
   // Storage for callable objects.
   llvm::SmallVector<SemanticsCallable> callables_;

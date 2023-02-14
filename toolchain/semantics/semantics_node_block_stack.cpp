@@ -10,19 +10,20 @@
 namespace Carbon {
 
 auto SemanticsNodeBlockStack::Push() -> void {
-  CARBON_VLOG() << "NodeBlock Push " << stack_.size() << "\n";
+  CARBON_VLOG() << name_ << " Push " << stack_.size() << "\n";
   CARBON_CHECK(stack_.size() < (1 << 20))
       << "Excessive stack size: likely infinite loop";
   stack_.push_back(SemanticsNodeBlockId::Invalid);
 }
 
 auto SemanticsNodeBlockStack::PeekForAdd() -> SemanticsNodeBlockId {
+  CARBON_CHECK(!stack_.empty());
   auto& back = stack_.back();
   if (!back.is_valid()) {
     SemanticsNodeBlockId block_id(node_blocks_->size());
     node_blocks_->resize(block_id.index + 1);
     back = block_id;
-    CARBON_VLOG() << "NodeBlock Add " << stack_.size() - 1 << ": " << back
+    CARBON_VLOG() << name_ << " Add " << stack_.size() - 1 << ": " << back
                   << "\n";
   }
   return back;
@@ -30,7 +31,7 @@ auto SemanticsNodeBlockStack::PeekForAdd() -> SemanticsNodeBlockId {
 
 auto SemanticsNodeBlockStack::Pop() -> SemanticsNodeBlockId {
   auto back = stack_.pop_back_val();
-  CARBON_VLOG() << "NodeBlock Pop " << stack_.size() << ": " << back << "\n";
+  CARBON_VLOG() << name_ << " Pop " << stack_.size() << ": " << back << "\n";
   if (!back.is_valid()) {
     return SemanticsNodeBlockId::Empty;
   }
@@ -39,7 +40,7 @@ auto SemanticsNodeBlockStack::Pop() -> SemanticsNodeBlockId {
 
 auto SemanticsNodeBlockStack::PrintForStackDump(llvm::raw_ostream& output) const
     -> void {
-  output << "SemanticsNodeBlockStack:\n";
+  output << name_ << ":\n";
   for (int i = 0; i < static_cast<int>(stack_.size()); ++i) {
     output << "\t" << i << ".\t" << stack_[i] << "\n";
   }

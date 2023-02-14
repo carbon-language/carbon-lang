@@ -58,45 +58,28 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
   return semantics;
 }
 
-auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
-  constexpr int Indent = 2;
+static constexpr int Indent = 2;
 
+template <typename T>
+static auto PrintList(llvm::raw_ostream& out, llvm::StringLiteral name,
+                      const llvm::SmallVector<T>& list) {
+  out << name << ": [\n";
+  for (const auto& element : list) {
+    out.indent(Indent);
+    out << element << ",\n";
+  }
+  out << "]\n";
+}
+
+auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
 
-  out << "callables: [\n";
-  for (auto callable : callables_) {
-    out.indent(Indent);
-    out << callable << "\n";
-  }
-  out << "]\n";
-
-  out << "integer_literals: [\n";
-  for (const auto& integer_literal : integer_literals_) {
-    out.indent(Indent);
-    out << integer_literal << ",\n";
-  }
-  out << "]\n";
-
-  out << "real_literals: [\n";
-  for (const auto& real_literal : real_literals_) {
-    out.indent(Indent);
-    out << real_literal << ",\n";
-  }
-  out << "]\n";
-
-  out << "strings: [\n";
-  for (const auto& string : strings_) {
-    out.indent(Indent);
-    out << string << ",\n";
-  }
-  out << "]\n";
-
-  out << "nodes: [\n";
-  for (const auto& node : nodes_) {
-    out.indent(Indent);
-    out << node << ",\n";
-  }
-  out << "]\n";
+  PrintList(out, "calls", calls_);
+  PrintList(out, "callables", callables_);
+  PrintList(out, "integer_literals", integer_literals_);
+  PrintList(out, "real_literals", real_literals_);
+  PrintList(out, "strings", strings_);
+  PrintList(out, "nodes", nodes_);
 
   out << "node_blocks: [\n";
   for (const auto& node_block : node_blocks_) {

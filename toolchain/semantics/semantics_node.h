@@ -43,11 +43,21 @@ constexpr SemanticsNodeId SemanticsNodeId::Invalid =
       SemanticsNodeId(SemanticsBuiltinKind::Name.AsInt());
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
+// The ID of a call.
+struct SemanticsCallId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "call";
+    IndexBase::Print(out);
+  }
+};
+
 // The ID of a callable, such as a function.
 struct SemanticsCallableId : public IndexBase {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "callable" << index;
+    out << "callable";
+    IndexBase::Print(out);
   }
 };
 
@@ -160,6 +170,17 @@ class SemanticsNode {
   auto GetAsBuiltin() const -> SemanticsBuiltinKind {
     CARBON_CHECK(kind_ == SemanticsNodeKind::Builtin);
     return SemanticsBuiltinKind::FromInt(arg0_);
+  }
+
+  static auto MakeCall(ParseTree::Node parse_node, SemanticsNodeId type,
+                       SemanticsCallId call_id, SemanticsCallableId callable_id)
+      -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::Call, type,
+                         call_id.index, callable_id.index);
+  }
+  auto GetAsCall() const -> std::pair<SemanticsCallId, SemanticsCallableId> {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::Call);
+    return {SemanticsCallId(arg0_), SemanticsCallableId(arg1_)};
   }
 
   static auto MakeCodeBlock(ParseTree::Node parse_node,
