@@ -38,11 +38,5 @@
 // CHECK:STDOUT:     node9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/params_zero.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
-<<<<<<<< HEAD:toolchain/semantics/testdata/function/definition/params_one.carbon
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/params_zero.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
-========
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/params_zero.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
->>>>>>>> trunk:toolchain/semantics/testdata/function/definition/params_zero.carbon
 
 fn Foo() {}

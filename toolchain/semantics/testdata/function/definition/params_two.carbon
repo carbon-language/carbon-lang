@@ -54,11 +54,5 @@
 // CHECK:STDOUT:     node13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/params_two.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
-<<<<<<<< HEAD:toolchain/semantics/testdata/function/definition/order.carbon
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/params_two.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
-========
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/params_two.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
->>>>>>>> trunk:toolchain/semantics/testdata/function/definition/params_two.carbon
 
 fn Foo(a: i32, b: i32) {}
