@@ -77,7 +77,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   PrintList(out, "calls", calls_);
   PrintList(out, "callables", callables_);
   PrintList(out, "integer_literals", integer_literals_);
-  PrintList(out, "real_literals", integer_literals_);
+  PrintList(out, "real_literals", real_literals_);
   PrintList(out, "strings", strings_);
   PrintList(out, "nodes", nodes_);
 

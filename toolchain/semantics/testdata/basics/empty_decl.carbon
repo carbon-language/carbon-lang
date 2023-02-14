@@ -21,6 +21,8 @@
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node2, type: node0},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node3, type: node0},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node4, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node5, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node6, type: node5},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

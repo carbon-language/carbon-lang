@@ -175,8 +175,6 @@ class SemanticsNode {
   static auto MakeCall(ParseTree::Node parse_node, SemanticsNodeId type,
                        SemanticsCallId call_id, SemanticsCallableId callable_id)
       -> SemanticsNode {
-    // Builtins won't have a ParseTree node associated, so we provide the
-    // default invalid one.
     return SemanticsNode(parse_node, SemanticsNodeKind::Call, type,
                          call_id.index, callable_id.index);
   }
