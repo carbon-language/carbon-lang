@@ -381,12 +381,23 @@ class NominalClassValue : public Value {
   Nonnull<const NominalClassValue** const> class_value_ptr_;
 };
 
-// Common implementation of alternative values and alternative constructors.
-class AlternativeValueBase : public Value {
+// An alternative constructor value.
+class AlternativeConstructorValue : public Value {
  public:
-  AlternativeValueBase(Kind kind, Nonnull<const ChoiceType*> choice,
-                       Nonnull<const AlternativeSignature*> alternative)
-      : Value(kind), choice_(choice), alternative_(alternative) {}
+  AlternativeConstructorValue(Nonnull<const ChoiceType*> choice,
+                              Nonnull<const AlternativeSignature*> alternative)
+      : Value(Kind::AlternativeConstructorValue),
+        choice_(choice),
+        alternative_(alternative) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::AlternativeConstructorValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(&choice(), &alternative());
+  }
 
   auto choice() const -> const ChoiceType& { return *choice_; }
   auto alternative() const -> const AlternativeSignature& {
@@ -398,31 +409,15 @@ class AlternativeValueBase : public Value {
   Nonnull<const AlternativeSignature*> alternative_;
 };
 
-// An alternative constructor value.
-class AlternativeConstructorValue : public AlternativeValueBase {
- public:
-  AlternativeConstructorValue(Nonnull<const ChoiceType*> choice,
-                              Nonnull<const AlternativeSignature*> alternative)
-      : AlternativeValueBase(Kind::AlternativeConstructorValue, choice,
-                             alternative) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::AlternativeConstructorValue;
-  }
-
-  template <typename F>
-  auto Decompose(F f) const {
-    return f(&choice(), &alternative());
-  }
-};
-
 // An alternative value.
-class AlternativeValue : public AlternativeValueBase {
+class AlternativeValue : public Value {
  public:
   AlternativeValue(Nonnull<const ChoiceType*> choice,
                    Nonnull<const AlternativeSignature*> alternative,
                    std::optional<Nonnull<const TupleValue*>> argument)
-      : AlternativeValueBase(Kind::AlternativeValue, choice, alternative),
+      : Value(Kind::AlternativeValue),
+        choice_(choice),
+        alternative_(alternative),
         argument_(argument) {}
 
   static auto classof(const Value* value) -> bool {
@@ -434,11 +429,17 @@ class AlternativeValue : public AlternativeValueBase {
     return f(&choice(), &alternative(), argument_);
   }
 
+  auto choice() const -> const ChoiceType& { return *choice_; }
+  auto alternative() const -> const AlternativeSignature& {
+    return *alternative_;
+  }
   auto argument() const -> std::optional<Nonnull<const TupleValue*>> {
     return argument_;
   }
 
  private:
+  Nonnull<const ChoiceType*> choice_;
+  Nonnull<const AlternativeSignature*> alternative_;
   std::optional<Nonnull<const TupleValue*>> argument_;
 };
 

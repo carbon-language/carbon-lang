@@ -489,6 +489,8 @@ class AlternativeSignature : public AstNode {
   }
 
   // The static type signature, if any. Cannot be called before type checking.
+  // This will be nullopt after type checking if this alternative has no
+  // declared signature.
   auto static_type() const -> std::optional<Nonnull<const Value*>> {
     return static_type_;
   }
