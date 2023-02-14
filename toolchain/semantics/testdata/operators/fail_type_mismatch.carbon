@@ -8,7 +8,7 @@
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
+// CHECK:STDOUT:   {param_ir: block0, param_refs: block0, return_type: node2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   12,
@@ -51,9 +51,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch.carbon:[[@LINE+3]]:13: Type mismatch: lhs is node2, rhs is node3
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch.carbon:[[@LINE+2]]:18: No return expression should be provided in this context.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch.carbon:[[@LINE-3]]:1: There was no return type provided.
+fn Main() -> i32 {
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch.carbon:[[@LINE+1]]:13: Type mismatch: lhs is node2, rhs is node3
   return 12 + 3.4;
 }
