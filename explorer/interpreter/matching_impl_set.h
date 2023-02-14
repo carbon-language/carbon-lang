@@ -16,14 +16,28 @@
 
 namespace Carbon {
 
-// A set of impls that we're currently matching against. Used to detect and
-// reject non-termination.
+// A set of impl matches that we're currently performing. Each `Match`
+// represents an attempt to match a `type as interface` query against an `impl`
+// declaration. This is used to detect and reject non-termination when impl
+// matching recursively triggers further impl matching.
+//
+// The approach we use is to count the number of times each "label" appears
+// within the type and interface, where a label is the name of a declared
+// entity such as a class or interface, or a primitive like `type` or `bool`.
+// For example, `Optional(i32*)` contains the labels for `Optional`, `i32`, and
+// `*` (built-in pointer type) once each.
+//
+// If we ever try matching the same `impl` twice, where the inner match
+// contains at least as many appearances of each label as the outer match, we
+// reject. We also reject if a query results in the exact same query being
+// performed again.
 class MatchingImplSet {
  private:
   class LeafCollector;
+  enum class Label : int;
 
  public:
-  // An impl match that we're currently performing.
+  // An RAII type that tracks an impl match that we're currently performing.
   class Match {
    public:
     explicit Match(Nonnull<MatchingImplSet*> parent,
@@ -31,43 +45,77 @@ class MatchingImplSet {
                    Nonnull<const Value*> type, Nonnull<const Value*> interface);
     ~Match();
 
-    // Check that this match does not duplicate any prior one. Diagnose if it
-    // does.
+    // Check that this match does not duplicate any prior one within the same
+    // set, and that there is not a simpler form of this match in the set.
     auto Check(SourceLocation source_loc) -> ErrorOr<Success>;
 
    private:
     friend class LeafCollector;
 
+    // The set that this match is part of.
     Nonnull<MatchingImplSet*> parent_;
+    // The `impl` that is being matched against.
     Nonnull<const ImplScope::Impl*> impl_;
+    // The type that is being matched against the impl.
     Nonnull<const Value*> type_;
+    // The interface that is being matched against the impl.
     Nonnull<const Value*> interface_;
-    llvm::DenseMap<int, int> signature_;
+    // The number of times each label appears in the type or interface.
+    llvm::DenseMap<Label, int> signature_;
   };
 
  private:
-  // An opaque integer used to identify a particular kind of value appearing in
-  // a type, such as a class name.
-  enum class ValueKey : int {
+  friend class llvm::DenseMapInfo<Label>;
+
+  // An opaque integer used to identify a particular label appearing in a type,
+  // such as a class name. The named enumerators represent builtins, and values
+  // >= `FirstDeclarationLabel` represent declarations from the program.
+  enum class Label : int {
+    // Label for `type` type constant.
     TypeType,
+    // Label for `bool` type constant.
     BoolType,
+    // Label for `i32` type constant.
     IntType,
+    // Label for `String` type constant.
     StringType,
+    // Label for `[_;_]` type constructor.
     ArrayType,
+    // Label for `_*` type constructor.
     PointerType,
-    FirstDeclarationKey
+    // First Label value corresponding to a Declaration. Must be kept at the
+    // end of the enum.
+    FirstDeclarationLabel
   };
 
-  // Get the ValueKey to use for a given declaration.
-  auto GetKeyForDeclaration(const Declaration& declaration) -> ValueKey;
+  // Get the Label that represents a given declaration.
+  auto GetLabelForDeclaration(const Declaration& declaration) -> Label;
 
-  // The known declarations and their keys.
-  llvm::DenseMap<const Declaration*, ValueKey> declaration_keys_;
+  // The known declarations and their labels.
+  llvm::DenseMap<const Declaration*, Label> declaration_labels_;
 
-  // The matches that are currently being performed.
+  // The matches that are currently being performed, in order from outermost to
+  // innermost.
   std::vector<Match*> matches_;
 };
 
 }  // namespace Carbon
+
+// Support use of Label as a DenseMap key.
+template <>
+struct llvm::DenseMapInfo<Carbon::MatchingImplSet::Label> {
+  using Base = llvm::DenseMapInfo<int>;
+  using Label = Carbon::MatchingImplSet::Label;
+  static inline auto getEmptyKey() -> Label {
+    return Label(Base::getEmptyKey());
+  }
+  static inline auto getTombstoneKey() -> Label {
+    return Label(Base::getTombstoneKey());
+  }
+  static inline auto getHashValue(Label label) -> unsigned {
+    return Base::getHashValue(int(label));
+  }
+  static auto isEqual(Label a, Label b) -> bool { return a == b; }
+};
 
 #endif  // CARBON_EXPLORER_INTERPRETER_MATCHING_IMPL_SET_H_

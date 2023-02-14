@@ -24,7 +24,7 @@ class MatchingImplSet::LeafCollector {
         [&](const auto* derived_value) { VisitValue(derived_value); });
   }
 
-  void Collect(ValueKey key) { ++match_->signature_[int(key)]; }
+  void Collect(Label label) { ++match_->signature_[label]; }
 
  private:
   // Most kinds of value don't contribute to the signature.
@@ -36,21 +36,21 @@ class MatchingImplSet::LeafCollector {
     }
   }
 
-  void VisitValue(const TypeType*) { Collect(ValueKey::TypeType); }
+  void VisitValue(const TypeType*) { Collect(Label::TypeType); }
 
-  void VisitValue(const BoolType*) { Collect(ValueKey::BoolType); }
+  void VisitValue(const BoolType*) { Collect(Label::BoolType); }
 
-  void VisitValue(const IntType*) { Collect(ValueKey::IntType); }
+  void VisitValue(const IntType*) { Collect(Label::IntType); }
 
-  void VisitValue(const StringType*) { Collect(ValueKey::StringType); }
+  void VisitValue(const StringType*) { Collect(Label::StringType); }
 
   void VisitValue(const StaticArrayType* array) {
-    Collect(ValueKey::ArrayType);
+    Collect(Label::ArrayType);
     Collect(&array->element_type());
   }
 
   void VisitValue(const PointerType* pointer) {
-    Collect(ValueKey::PointerType);
+    Collect(Label::PointerType);
     Collect(&pointer->pointee_type());
   }
 
@@ -84,7 +84,7 @@ class MatchingImplSet::LeafCollector {
 
   void VisitDeclarationAndArgs(const Declaration& declaration,
                                const Bindings& bindings) {
-    Collect(match_->parent_->GetKeyForDeclaration(declaration));
+    Collect(match_->parent_->GetLabelForDeclaration(declaration));
     for (auto [key, value] : bindings.args()) {
       Collect(value);
     }
@@ -94,11 +94,11 @@ class MatchingImplSet::LeafCollector {
   Match* match_;
 };
 
-auto MatchingImplSet::GetKeyForDeclaration(const Declaration& declaration)
-    -> ValueKey {
-  auto [it, added] = declaration_keys_.insert(
-      {&declaration, ValueKey(int(ValueKey::FirstDeclarationKey) +
-                              declaration_keys_.size())});
+auto MatchingImplSet::GetLabelForDeclaration(const Declaration& declaration)
+    -> Label {
+  auto [it, added] = declaration_labels_.insert(
+      {&declaration,
+       Label(int(Label::FirstDeclarationLabel) + declaration_labels_.size())});
   return it->second;
 }
 
@@ -124,8 +124,13 @@ auto MatchingImplSet::Match::Check(SourceLocation source_loc)
     -> ErrorOr<Success> {
   for (auto* match : parent_->matches_) {
     if (match != this && match->impl_ == impl_) {
+      // Whether all labels appear a greater or equal number of times in this
+      // match than in `match`.
       bool all_greater_or_equal = true;
+      // Whether any label appears strictly more times in this match than in
+      // `match`.
       bool any_greater = false;
+
       for (auto [key, value] : signature_) {
         int other_value = match->signature_.lookup(key);
         if (value < other_value) {
