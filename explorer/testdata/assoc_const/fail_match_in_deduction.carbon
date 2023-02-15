@@ -22,7 +22,7 @@ fn F[Scalar:! type, V:! Vector where .Dim == 3](p: Point(Scalar, V.Dim), v: V) {
 fn G[Scalar:! type](p: Point(Scalar, 3)) {}
 fn H[V:! Vector where .Dim == 3](v: V) {
   var p: Point(i32, V.Dim) = {};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_match_in_deduction.carbon:[[@LINE+1]]: mismatch in non-type values, `(V).(Vector.Dim)` != `3`
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_match_in_deduction.carbon:[[@LINE+1]]: mismatch in non-deduced values, `(V).(Vector.Dim)` != `3`
   G(p);
 }
 

@@ -611,6 +611,7 @@ auto TypeChecker::IsImplicitlyConvertible(
   SourceLocation source_loc = SourceLocation::DiagnosticsIgnored();
   ErrorOr<Nonnull<const InterfaceType*>> iface_type = GetBuiltinInterfaceType(
       source_loc, BuiltinInterfaceName{Builtins::ImplicitAs, destination});
+  // TODO: If the Resolve call fails with a hard error, don't swallow it.
   return iface_type.ok() &&
          impl_scope.Resolve(*iface_type, source, source_loc, *this).ok();
 }
@@ -909,8 +910,9 @@ class TypeChecker::ArgumentDeduction {
 
   // Finishes deduction and forms a set of substitutions that transform `param`
   // into `arg`.
-  auto Finish(TypeChecker& type_checker, const ImplScope& impl_scope) const
-      -> ErrorOr<Bindings>;
+  auto Finish(TypeChecker& type_checker, const ImplScope& impl_scope,
+              bool diagnose_deduction_failure) const
+      -> ErrorOr<std::optional<Bindings>>;
 
  private:
   SourceLocation source_loc_;
@@ -945,11 +947,20 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     **trace_stream_ << "deducing " << *param << " from " << *arg << "\n";
   }
 
+  // If param is the name of a variable we're deducing, then deduce it.
+  if (auto* var_type = dyn_cast<VariableType>(param)) {
+    const auto& binding = var_type->binding();
+    if (auto it = deduced_values_.find(&binding); it != deduced_values_.end()) {
+      it->second.push_back(arg);
+      return Success();
+    }
+  }
+
   // Handle the case where we can't perform deduction, either because the
   // parameter is a primitive type or because the parameter and argument have
   // different forms. In this case, we require an implicit conversion to exist,
   // or for an exact type match if implicit conversions are not permitted.
-  auto handle_non_deduced_type = [&]() -> ErrorOr<Success> {
+  auto handle_non_deduced_value = [&]() -> ErrorOr<Success> {
     if (ValueEqual(param, arg, std::nullopt)) {
       return Success();
     }
@@ -963,21 +974,33 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     return Success();
   };
 
-  switch (param->kind()) {
-    case Value::Kind::VariableType: {
-      const auto& binding = cast<VariableType>(*param).binding();
-      if (auto it = deduced_values_.find(&binding);
-          it != deduced_values_.end()) {
-        it->second.push_back(arg);
-      } else {
-        return handle_non_deduced_type();
-      }
-      return Success();
+  // Handle the case where we know we can't have an exact match, but there
+  // might still be an implicit conversion.
+  auto handle_non_matching_value = [&]() -> ErrorOr<Success> {
+    if (!allow_implicit_conversion) {
+      return ProgramError(source_loc_)
+             << "type mismatch in argument deduction\n"
+             << "expected: " << *param << "\n"
+             << "actual: " << *arg;
     }
+    return handle_non_deduced_value();
+  };
+
+  // If either parameter or argument is an unknown kind of value, we can't
+  // perform any deduction. Keep track of them so we can check they're the same
+  // later.
+  if (IsValueKindDependent(param) || IsValueKindDependent(arg)) {
+    return handle_non_deduced_value();
+  }
+
+  // If the values have different non-dependent kinds, they can't possibly
+  // match after substitution.
+  if (param->kind() != arg->kind()) {
+    return handle_non_matching_value();
+  }
+
+  switch (param->kind()) {
     case Value::Kind::TupleType: {
-      if (arg->kind() != Value::Kind::TupleType) {
-        return handle_non_deduced_type();
-      }
       const auto& param_tup = cast<TupleType>(*param);
       const auto& arg_tup = cast<TupleType>(*arg);
       if (param_tup.elements().size() != arg_tup.elements().size()) {
@@ -994,9 +1017,6 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       return Success();
     }
     case Value::Kind::StructType: {
-      if (arg->kind() != Value::Kind::StructType) {
-        return handle_non_deduced_type();
-      }
       const auto& param_struct = cast<StructType>(*param);
       const auto& arg_struct = cast<StructType>(*arg);
       auto diagnose_missing_field = [&](const StructType& struct_type,
@@ -1049,9 +1069,6 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       return Success();
     }
     case Value::Kind::FunctionType: {
-      if (arg->kind() != Value::Kind::FunctionType) {
-        return handle_non_deduced_type();
-      }
       const auto& param_fn = cast<FunctionType>(*param);
       const auto& arg_fn = cast<FunctionType>(*arg);
       // TODO: handle situation when arg has deduced parameters.
@@ -1064,9 +1081,6 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       return Success();
     }
     case Value::Kind::PointerType: {
-      if (arg->kind() != Value::Kind::PointerType) {
-        return handle_non_deduced_type();
-      }
       const auto& param_pointee = cast<PointerType>(param)->pointee_type();
       const auto& arg_pointee = cast<PointerType>(arg)->pointee_type();
       if (allow_implicit_conversion) {
@@ -1087,15 +1101,10 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     }
     case Value::Kind::NominalClassType: {
       const auto& param_class_type = cast<NominalClassType>(*param);
-      if (arg->kind() != Value::Kind::NominalClassType) {
-        // TODO: We could determine the parameters of the class from field
-        // types in a struct argument.
-        return handle_non_deduced_type();
-      }
       const auto& arg_class_type = cast<NominalClassType>(*arg);
       if (!DeclaresSameEntity(param_class_type.declaration(),
                               arg_class_type.declaration())) {
-        return handle_non_deduced_type();
+        return handle_non_matching_value();
       }
       for (const auto& [ty, param_ty] : param_class_type.type_args()) {
         CARBON_RETURN_IF_ERROR(Deduce(param_ty,
@@ -1106,13 +1115,10 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     }
     case Value::Kind::InterfaceType: {
       const auto& param_iface_type = cast<InterfaceType>(*param);
-      if (arg->kind() != Value::Kind::InterfaceType) {
-        return handle_non_deduced_type();
-      }
       const auto& arg_iface_type = cast<InterfaceType>(*arg);
       if (!DeclaresSameEntity(param_iface_type.declaration(),
                               arg_iface_type.declaration())) {
-        return handle_non_deduced_type();
+        return handle_non_matching_value();
       }
       for (const auto& [ty, param_ty] : param_iface_type.args()) {
         CARBON_RETURN_IF_ERROR(Deduce(param_ty, arg_iface_type.args().at(ty),
@@ -1122,13 +1128,10 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     }
     case Value::Kind::NamedConstraintType: {
       const auto& param_constraint_type = cast<NamedConstraintType>(*param);
-      if (arg->kind() != Value::Kind::NamedConstraintType) {
-        return handle_non_deduced_type();
-      }
       const auto& arg_constraint_type = cast<NamedConstraintType>(*arg);
       if (!DeclaresSameEntity(param_constraint_type.declaration(),
                               arg_constraint_type.declaration())) {
-        return handle_non_deduced_type();
+        return handle_non_matching_value();
       }
       for (const auto& [ty, param_ty] :
            param_constraint_type.bindings().args()) {
@@ -1139,10 +1142,14 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       return Success();
     }
     // For the following cases, we check the type matches.
+    case Value::Kind::VariableType:
+      // We handled deduced variables above; this case covers variables that
+      // are not deduced as part of this deduction step.
     case Value::Kind::StaticArrayType:
       // TODO: We could deduce the array type from an array or tuple argument.
     case Value::Kind::ContinuationType:
     case Value::Kind::ChoiceType:
+      // TODO: Choice types should be handled like other named declarations.
     case Value::Kind::ConstraintType:
     case Value::Kind::AssociatedConstant:
     case Value::Kind::IntType:
@@ -1152,7 +1159,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::TypeOfParameterizedEntityName:
     case Value::Kind::TypeOfMemberName:
     case Value::Kind::TypeOfNamespaceName: {
-      return handle_non_deduced_type();
+      return handle_non_deduced_value();
     }
     case Value::Kind::ImplWitness:
     case Value::Kind::BindingWitness:
@@ -1180,12 +1187,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       // Argument deduction within the parameters of a parameterized class type
       // or interface type can compare values, rather than types.
       // TODO: Deduce within the values where possible.
-      // TODO: Consider in-scope value equalities here.
-      if (!ValueEqual(param, arg, std::nullopt)) {
-        return ProgramError(source_loc_) << "mismatch in non-type values, `"
-                                         << *arg << "` != `" << *param << "`";
-      }
-      return Success();
+      return handle_non_deduced_value();
     }
     case Value::Kind::MixinPseudoType:
     case Value::Kind::TypeOfMixinPseudoType:
@@ -1193,9 +1195,9 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
   }
 }
 
-auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
-                                            const ImplScope& impl_scope) const
-    -> ErrorOr<Bindings> {
+auto TypeChecker::ArgumentDeduction::Finish(
+    TypeChecker& type_checker, const ImplScope& impl_scope,
+    bool diagnose_deduction_failure) const -> ErrorOr<std::optional<Bindings>> {
   // Check deduced values and build our resulting `Bindings` set. We do this in
   // declaration order so that any bindings used in the type of a later binding
   // have known values before we check that binding.
@@ -1204,6 +1206,9 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
     llvm::ArrayRef<Nonnull<const Value*>> values =
         deduced_values_.find(binding)->second;
     if (values.empty()) {
+      if (!diagnose_deduction_failure) {
+        return {std::nullopt};
+      }
       return ProgramError(source_loc_)
              << "could not deduce type argument for type parameter "
              << binding->name() << " in " << context_;
@@ -1232,6 +1237,9 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
       // should be used, and we'd need to check all pairs of types for equality
       // because our notion of equality is non-transitive.
       if (!ValueEqual(first_value, value, std::nullopt)) {
+        if (!diagnose_deduction_failure) {
+          return {std::nullopt};
+        }
         return ProgramError(source_loc_)
                << "deduced multiple different values for " << *binding
                << ":\n  " << *first_value << "\n  " << *value;
@@ -1242,8 +1250,12 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
     std::optional<Nonnull<const Witness*>> witness;
     if (binding->impl_binding()) {
       CARBON_ASSIGN_OR_RETURN(
-          witness, impl_scope.Resolve(binding_type, first_value, source_loc_,
-                                      type_checker, bindings));
+          witness, impl_scope.TryResolve(binding_type, first_value, source_loc_,
+                                         type_checker, bindings,
+                                         diagnose_deduction_failure));
+      if (!witness) {
+        return {std::nullopt};
+      }
     }
 
     bindings.Add(binding, first_value, witness);
@@ -1276,8 +1288,12 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
     std::optional<Nonnull<const Witness*>> witness;
     if (binding->impl_binding()) {
       CARBON_ASSIGN_OR_RETURN(
-          witness, impl_scope.Resolve(binding_type, value, source_loc_,
-                                      type_checker, bindings));
+          witness,
+          impl_scope.TryResolve(binding_type, value, source_loc_, type_checker,
+                                bindings, diagnose_deduction_failure));
+      if (!witness) {
+        return {std::nullopt};
+      }
     }
 
     bindings.Add(binding, value, witness);
@@ -1285,15 +1301,30 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
 
   // Check non-deduced potential mismatches now we can substitute into them.
   for (const auto& mismatch : non_deduced_mismatches_) {
-    const Value* subst_param_type =
+    const Value* subst_param =
         type_checker.Substitute(bindings, mismatch.param);
-    CARBON_RETURN_IF_ERROR(
-        mismatch.allow_implicit_conversion
-            ? type_checker.ExpectType(source_loc_, context_, subst_param_type,
-                                      mismatch.arg, impl_scope)
-            : type_checker.ExpectExactType(source_loc_, context_,
-                                           subst_param_type, mismatch.arg,
-                                           impl_scope));
+
+    bool type = IsType(subst_param) && IsType(mismatch.arg);
+    if (type && mismatch.allow_implicit_conversion) {
+      if (!type_checker.IsImplicitlyConvertible(mismatch.arg, subst_param,
+                                                impl_scope, true)) {
+        if (!diagnose_deduction_failure) {
+          return {std::nullopt};
+        }
+        return ProgramError(source_loc_)
+               << "mismatch in non-deduced types, `" << *mismatch.arg
+               << "` is not implicitly convertible to `" << *subst_param << "`";
+      }
+    } else {
+      if (!ValueEqual(subst_param, mismatch.arg, std::nullopt)) {
+        if (!diagnose_deduction_failure) {
+          return {std::nullopt};
+        }
+        return ProgramError(source_loc_)
+               << "mismatch in non-deduced " << (type ? "types" : "values")
+               << ", `" << *mismatch.arg << "` != `" << *subst_param << "`";
+      }
+    }
   }
 
   if (trace_stream_) {
@@ -1308,7 +1339,7 @@ auto TypeChecker::ArgumentDeduction::Finish(TypeChecker& type_checker,
     **trace_stream_ << "}\n";
   }
 
-  return std::move(bindings);
+  return {std::move(bindings)};
 }
 
 // Look for a rewrite to use when naming the given interface member in a type
@@ -2073,6 +2104,8 @@ auto TypeChecker::RefineWitness(Nonnull<const Witness*> witness,
   }
 
   // Attempt to look for an impl witness in the top-level impl scope.
+  // TODO: This can fail due to non-terminating impl matching. That should
+  // result in a hard error.
   if (auto refined_witness =
           (*top_level_impl_scope_)
               ->Resolve(constraint, type, SourceLocation::DiagnosticsIgnored(),
@@ -2093,14 +2126,17 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
                             const ImplScope::Impl& impl,
                             const ImplScope& impl_scope,
                             SourceLocation source_loc) const
-    -> std::optional<Nonnull<const Witness*>> {
+    -> ErrorOr<std::optional<Nonnull<const Witness*>>> {
   // Avoid cluttering the trace output with matches that could obviously never
   // have worked.
   // TODO: Eventually, ImplScope should filter by type structure before calling
   // into here.
   if (!DeclaresSameEntity(impl.interface->declaration(), iface.declaration())) {
-    return std::nullopt;
+    return {std::nullopt};
   }
+
+  // Track that we're matching this impl.
+  MatchingImplSet::Match match(&matching_impl_set_, &impl, impl_type, &iface);
 
   if (trace_stream_) {
     **trace_stream_ << "MatchImpl: looking for " << *impl_type << " as "
@@ -2117,7 +2153,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     if (trace_stream_) {
       **trace_stream_ << "type does not match: " << e.error() << "\n";
     }
-    return std::nullopt;
+    return {std::nullopt};
   }
 
   if (ErrorOr<Success> e = deduction.Deduce(
@@ -2126,23 +2162,29 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     if (trace_stream_) {
       **trace_stream_ << "interface does not match: " << e.error() << "\n";
     }
-    return std::nullopt;
+    return {std::nullopt};
   }
 
-  if (ErrorOr<Bindings> bindings_or_error =
-          deduction.Finish(const_cast<TypeChecker&>(*this), impl_scope);
-      !bindings_or_error.ok()) {
+  // This impl seems to match. Reject if we're already matching this or a
+  // simpler version of it, before we recursively try to satisfy its
+  // constraints.
+  CARBON_RETURN_IF_ERROR(match.DiagnosePotentialCycle(source_loc));
+
+  CARBON_ASSIGN_OR_RETURN(
+      std::optional<Bindings> bindings_or_error,
+      deduction.Finish(const_cast<TypeChecker&>(*this), impl_scope,
+                       /*diagnose_deduction_failure=*/false));
+  if (!bindings_or_error) {
     if (trace_stream_) {
-      **trace_stream_ << "impl does not match: " << bindings_or_error.error()
-                      << "\n";
+      **trace_stream_ << "impl does not match\n";
     }
-    return std::nullopt;
+    return {std::nullopt};
   } else {
     if (trace_stream_) {
       **trace_stream_ << "matched with " << *impl.type << " as "
                       << *impl.interface << "\n\n";
     }
-    return cast<Witness>(Substitute(*bindings_or_error, impl.witness));
+    return {cast<Witness>(Substitute(*bindings_or_error, impl.witness))};
   }
 }
 
@@ -2240,9 +2282,11 @@ auto TypeChecker::DeduceCallBindings(
   CARBON_CHECK(generic_params.empty())
       << "did not find all generic parameters in parameter list";
 
-  CARBON_ASSIGN_OR_RETURN(Bindings bindings,
-                          deduction.Finish(*this, impl_scope));
-  call.set_bindings(std::move(bindings));
+  CARBON_ASSIGN_OR_RETURN(
+      std::optional<Bindings> bindings,
+      deduction.Finish(*this, impl_scope, /*diagnose_deduction_failure=*/true));
+  CARBON_CHECK(bindings) << "should have diagnosed deduction failure";
+  call.set_bindings(std::move(*bindings));
 
   // Convert the arguments to the deduced and substituted parameter type.
   Nonnull<const Value*> param_type = Substitute(call.bindings(), params_type);

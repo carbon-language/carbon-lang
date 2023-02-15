@@ -208,11 +208,13 @@ cc_library(
     srcs = [
         "builtins.cpp",
         "impl_scope.cpp",
+        "matching_impl_set.cpp",
         "type_checker.cpp",
     ],
     hdrs = [
         "builtins.h",
         "impl_scope.h",
+        "matching_impl_set.h",
         "type_checker.h",
     ],
     deps = [

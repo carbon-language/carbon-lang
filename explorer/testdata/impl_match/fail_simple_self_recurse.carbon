@@ -8,13 +8,14 @@
 
 package ExplorerTest api;
 
-class HasI32Param(V:! i32) {}
+interface Foo {}
 
-fn F(x: HasI32Param(1)) {}
+impl forall [T:! Foo] T as Foo {}
+
+fn F[T:! Foo](x: T) {}
 
 fn Main() -> i32 {
-  var n: HasI32Param(0) = {};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_value_param_mismatch.carbon:[[@LINE+1]]: mismatch in non-deduced values, `0` != `1`
-  F(n);
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/impl_match/fail_simple_self_recurse.carbon:[[@LINE+1]]: impl matching for i32 as interface Foo recursively performed a match for the same type and interface
+  F(0);
   return 0;
 }
