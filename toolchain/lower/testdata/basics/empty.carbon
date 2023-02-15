@@ -1,11 +1,7 @@
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-
-#include "toolchain/gen_llvm/gen_llvm.h"
-
-namespace Carbon {
-
-// TODO
-
-}  // namespace Carbon
+//
+// AUTOUPDATE
+// RUN: %{carbon-run-lower}
+// CHECK:STDOUT: TODO: Print IR

@@ -19,9 +19,11 @@ cc_library(
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:sorting_diagnostic_consumer",
         "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/lower",
         "//toolchain/parser:parse_tree",
         "//toolchain/semantics:semantics_ir",
         "//toolchain/source:source_buffer",
+        "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -5,11 +5,14 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "gen_llvm",
-    srcs = ["gen_llvm.cpp"],
-    hdrs = ["gen_llvm.h"],
+    name = "lower",
+    srcs = ["lower.cpp"],
+    hdrs = ["lower.h"],
     deps = [
         "//common:check",
+        "//common:ostream",
+        "//toolchain/semantics:semantics_ir",
+        "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
     ],
 )
