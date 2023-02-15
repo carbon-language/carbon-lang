@@ -3682,10 +3682,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
         switch (clause->kind()) {
           case WhereClauseKind::IsWhereClause: {
-            const auto& is_clause = cast<IsWhereClause>(*clause);
+            auto& is_clause = cast<IsWhereClause>(*clause);
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> type,
-                InterpExp(&is_clause.type(), arena_, trace_stream_));
+                TypeCheckTypeExp(&is_clause.type(), inner_impl_scope));
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> constraint,
                 InterpExp(&is_clause.constraint(), arena_, trace_stream_));
@@ -3889,7 +3889,8 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
   switch (clause->kind()) {
     case WhereClauseKind::IsWhereClause: {
       auto& is_clause = cast<IsWhereClause>(*clause);
-      CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(&is_clause.type(), impl_scope));
+      // TODO: `type` is checked in the caller, because its converted value is
+      // needed. Find a way to move that checking back here.
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&is_clause.constraint(), impl_scope));
       if (!isa<TypeType>(is_clause.constraint().static_type())) {
         return ProgramError(is_clause.constraint().source_loc())

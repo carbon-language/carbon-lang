@@ -91,6 +91,12 @@ class MatchingImplSet {
     ArrayType,
     // Label for `_*` type constructor.
     PointerType,
+    // Label for `{.a: _, .b: _, ...}` struct type constructor. We use the same
+    // label regardless of the arity of the struct type and any field names.
+    StructType,
+    // Label for `(_, _, ..., _)` tuple type constructor. We use the same label
+    // regardless of the arity of the tuple type.
+    TupleType,
     // First Label value corresponding to a Declaration. Must be kept at the
     // end of the enum.
     FirstDeclarationLabel

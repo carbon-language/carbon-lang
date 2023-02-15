@@ -30,12 +30,6 @@ class MatchingImplSet::LeafCollector {
   // Most kinds of value don't contribute to the signature.
   void VisitValue(const Value*) {}
 
-  void VisitValue(const TupleType* tuple) {
-    for (auto* elem : tuple->elements()) {
-      Collect(elem);
-    }
-  }
-
   void VisitValue(const TypeType*) { Collect(Label::TypeType); }
 
   void VisitValue(const BoolType*) { Collect(Label::BoolType); }
@@ -55,8 +49,16 @@ class MatchingImplSet::LeafCollector {
   }
 
   void VisitValue(const StructType* struct_type) {
+    Collect(Label::StructType);
     for (auto [name, type] : struct_type->fields()) {
       Collect(type);
+    }
+  }
+
+  void VisitValue(const TupleType* tuple_type) {
+    Collect(Label::TupleType);
+    for (auto* elem_type : tuple_type->elements()) {
+      Collect(elem_type);
     }
   }
 
