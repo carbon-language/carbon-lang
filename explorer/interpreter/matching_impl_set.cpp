@@ -120,7 +120,7 @@ MatchingImplSet::Match::~Match() {
   parent_->matches_.pop_back();
 }
 
-auto MatchingImplSet::Match::Check(SourceLocation source_loc)
+auto MatchingImplSet::Match::DiagnosePotentialCycle(SourceLocation source_loc)
     -> ErrorOr<Success> {
   for (auto* match : parent_->matches_) {
     if (match != this && match->impl_ == impl_) {

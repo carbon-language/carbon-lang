@@ -2168,7 +2168,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
   // This impl seems to match. Reject if we're already matching this or a
   // simpler version of it, before we recursively try to satisfy its
   // constraints.
-  CARBON_RETURN_IF_ERROR(match.Check(source_loc));
+  CARBON_RETURN_IF_ERROR(match.DiagnosePotentialCycle(source_loc));
 
   CARBON_ASSIGN_OR_RETURN(
       std::optional<Bindings> bindings_or_error,

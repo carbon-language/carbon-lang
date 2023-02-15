@@ -21,16 +21,17 @@ namespace Carbon {
 // declaration. This is used to detect and reject non-termination when impl
 // matching recursively triggers further impl matching.
 //
-// The approach we use is to count the number of times each "label" appears
-// within the type and interface, where a label is the name of a declared
-// entity such as a class or interface, or a primitive like `type` or `bool`.
-// For example, `Optional(i32*)` contains the labels for `Optional`, `i32`, and
-// `*` (built-in pointer type) once each.
+// The language rule we use to detect potential non-termination is to count the
+// number of times each "label" appears within the type and interface, where a
+// label is the name of a declared entity such as a class or interface, or a
+// primitive like `type` or `bool`. For example, `Optional(i32*)` contains the
+// labels for `Optional`, `i32`, and `*` (built-in pointer type) once each. If
+// we ever try matching the same `impl` twice, where the inner match contains
+// at least as many appearances of each label as the outer match, we reject the
+// program as invalid. We also reject if a query results in the exact same
+// query being performed again.
 //
-// If we ever try matching the same `impl` twice, where the inner match
-// contains at least as many appearances of each label as the outer match, we
-// reject. We also reject if a query results in the exact same query being
-// performed again.
+// This class is an implementation detail of `TypeChecker::MatchImpl`.
 class MatchingImplSet {
  private:
   class LeafCollector;
@@ -38,6 +39,8 @@ class MatchingImplSet {
 
  public:
   // An RAII type that tracks an impl match that we're currently performing.
+  // One instance of this class will exist for each in-progress call to
+  // `MatchImpl`.
   class Match {
    public:
     explicit Match(Nonnull<MatchingImplSet*> parent,
@@ -45,9 +48,14 @@ class MatchingImplSet {
                    Nonnull<const Value*> type, Nonnull<const Value*> interface);
     ~Match();
 
-    // Check that this match does not duplicate any prior one within the same
-    // set, and that there is not a simpler form of this match in the set.
-    auto Check(SourceLocation source_loc) -> ErrorOr<Success>;
+    Match(const Match&) = delete;
+    Match& operator=(const Match&) = delete;
+
+    // Check to see if this match duplicates any prior one within the same set,
+    // or if there's a simpler form of this match in the set. If so, returns a
+    // suitable error. This should be delayed until we know that the impl
+    // structurally matches the type and interface.
+    auto DiagnosePotentialCycle(SourceLocation source_loc) -> ErrorOr<Success>;
 
    private:
     friend class LeafCollector;
