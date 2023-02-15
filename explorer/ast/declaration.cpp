@@ -430,8 +430,8 @@ auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
 
 void AlternativeSignature::Print(llvm::raw_ostream& out) const {
   out << "alt " << name();
-  if (auto sig = signature()) {
-    out << **signature();
+  if (auto params = parameters()) {
+    out << **params;
   }
 }
 

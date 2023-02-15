@@ -792,8 +792,8 @@ auto NameResolver::ResolveNames(Declaration& declaration,
       // need to check for duplicates.
       std::set<std::string_view> alternative_names;
       for (Nonnull<AlternativeSignature*> alternative : choice.alternatives()) {
-        if (auto sig = alternative->signature()) {
-          CARBON_RETURN_IF_ERROR(ResolveNames(**sig, choice_scope));
+        if (auto params = alternative->parameters()) {
+          CARBON_RETURN_IF_ERROR(ResolveNames(**params, choice_scope));
         }
         if (!alternative_names.insert(alternative->name()).second) {
           return ProgramError(alternative->source_loc())

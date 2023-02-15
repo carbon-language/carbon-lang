@@ -468,10 +468,10 @@ class MixDeclaration : public Declaration {
 class AlternativeSignature : public AstNode {
  public:
   AlternativeSignature(SourceLocation source_loc, std::string name,
-                       std::optional<Nonnull<TupleLiteral*>> signature)
+                       std::optional<Nonnull<TupleLiteral*>> parameters)
       : AstNode(AstNodeKind::AlternativeSignature, source_loc),
         name_(std::move(name)),
-        signature_(signature) {}
+        parameters_(parameters) {}
 
   void Print(llvm::raw_ostream& out) const override;
   void PrintID(llvm::raw_ostream& out) const override;
@@ -481,31 +481,31 @@ class AlternativeSignature : public AstNode {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto signature() const -> std::optional<Nonnull<const TupleLiteral*>> {
-    return signature_;
+  auto parameters() const -> std::optional<Nonnull<const TupleLiteral*>> {
+    return parameters_;
   }
-  auto signature() -> std::optional<Nonnull<TupleLiteral*>> {
-    return signature_;
+  auto parameters() -> std::optional<Nonnull<TupleLiteral*>> {
+    return parameters_;
   }
 
-  // The static type signature, if any. Cannot be called before type checking.
-  // This will be nullopt after type checking if this alternative has no
-  // declared signature.
-  auto static_type() const -> std::optional<Nonnull<const Value*>> {
-    return static_type_;
+  // The static type described by the parameters expression, if any. Cannot be
+  // called before type checking. This will be nullopt after type checking if
+  // this alternative does not have a parameter list.
+  auto parameters_static_type() const -> std::optional<Nonnull<const Value*>> {
+    return parameters_static_type_;
   }
 
   // Sets the static type of the declared entity. Can only be called once,
   // during typechecking.
-  void set_static_type(Nonnull<const Value*> type) {
-    CARBON_CHECK(!static_type_.has_value());
-    static_type_ = type;
+  void set_parameters_static_type(Nonnull<const Value*> type) {
+    CARBON_CHECK(!parameters_static_type_.has_value());
+    parameters_static_type_ = type;
   }
 
  private:
   std::string name_;
-  std::optional<Nonnull<TupleLiteral*>> signature_;
-  std::optional<Nonnull<const Value*>> static_type_;
+  std::optional<Nonnull<TupleLiteral*>> parameters_;
+  std::optional<Nonnull<const Value*>> parameters_static_type_;
 };
 
 class ChoiceDeclaration : public Declaration {
