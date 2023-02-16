@@ -309,6 +309,21 @@ Past Carbon focused talks from the community:
 -   [Carbon Language: Syntax and trade-offs](https://www.youtube.com/watch?v=9Y2ivB8VaIs),
     Core C++ 2022
 
+## Contributing
+
+There are multiple ways to contribute to Carbon:
+
+-   Contributing to the language design: feedback on design, new design proposal
+-   Contributing to the [Carbon Explorer](/explorer/): bug report, bug fix,
+    language feature implementation
+-   Contributing to the [Carbon Compiler](/toolchain/), project infrastructure,
+    and tools
+
+You can refer to [`CONTRIBUTING`](CONTRIBUTING.md) for more information, check
+["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue),
+or join the `#contributing-help` channel on
+[Discord](https://discord.gg/ZjVdShJDAs).
+
 ## Join us
 
 Carbon is committed to a welcoming and inclusive environment where everyone can
