@@ -6,10 +6,10 @@
 // so that it doesn't need to be updated on every prelude change.
 //
 // This can't be autoupdated because the error line comes form a different file.
-// NOAUTOUPDATE
+// AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: Integer overflow
+// CHECK:STDERR: RUNTIME ERROR: {{.*}}/carbon/explorer/data/prelude.carbon:{{.*}}: Integer overflow
 
 package ExplorerTest api;
 

@@ -20,12 +20,16 @@ def main() -> None:
     actual_py = this_py.parent.parent.joinpath(
         "bazel", "testing", "lit_autoupdate_base.py"
     )
+    line_number_pattern = (
+        r"(?P<prefix>/(?P<filename>\w+\.carbon):)"
+        r"(?P<line>\d+)(?P<suffix>(?:\D|$))"
+    )
     args = [
         sys.argv[0],
         # Flags to configure for explorer testing.
         "--tool=explorer",
         "--testdata=explorer/testdata",
-        r"--line_number_pattern=(?<=\.carbon:)(\d+)(?=(?:\D|$))",
+        f"--line_number_pattern={line_number_pattern}"
         "--lit_run=%{explorer-run}",
         "--lit_run=%{explorer-run-trace}",
     ] + sys.argv[1:]
