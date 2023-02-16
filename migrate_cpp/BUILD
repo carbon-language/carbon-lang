@@ -25,6 +25,10 @@ cc_library(
     name = "rewriter",
     srcs = ["rewriter.cpp"],
     hdrs = ["rewriter.h"],
+    visibility = [
+        # For dependency checking. Remove once it has a binary using it.
+        "//bazel/check_deps:__pkg__",
+    ],
     deps = [
         ":output_segment",
         "//common:check",

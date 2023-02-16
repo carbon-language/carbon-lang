@@ -2,21 +2,21 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:result: 1
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 1
 
 package ExplorerTest api;
 
-interface A(T:! Type) {}
+interface A(T:! type) {}
 interface B {
   fn F() -> i32;
 }
 
-class C(T:! Type) {}
+class C(T:! type) {}
 
-external impl forall [T:! Type] C(T) as A(T) & B {
+external impl forall [T:! type] C(T) as A(T) & B {
   fn F() -> i32 { return 1; }
 }
 

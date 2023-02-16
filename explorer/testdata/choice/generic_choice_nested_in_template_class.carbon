@@ -2,21 +2,21 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:H 22
-// CHECK:result: 0
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: H 22
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 
-choice MyOptionalElement(T:! Type) {
+choice MyOptionalElement(T:! type) {
   None(),
   Element(T)
 }
 
-class MyOptional(T:! Type){
+class MyOptional(T:! type){
    fn CreateEmpty() -> MyOptional(T){
        return { .element = MyOptionalElement(T).None() };
    }
@@ -24,17 +24,17 @@ class MyOptional(T:! Type){
        return { .element = MyOptionalElement(T).Element(value) };
    }
 
-    fn has_value[me: Self] () -> bool{
-        var x: MyOptionalElement(T) = me.element;
+    fn has_value[self: Self] () -> bool{
+        var x: MyOptionalElement(T) = self.element;
         match(x){
             case MyOptionalElement(T).None() => { return false; }
         }
         return false;
     }
 
-    fn get[me: Self] () -> T {
+    fn get[self: Self] () -> T {
         var y: T;
-        var x: MyOptionalElement(T) = me.element;
+        var x: MyOptionalElement(T) = self.element;
         match(x){
             case MyOptionalElement(T).Element( var x: T ) =>{
                 return x;

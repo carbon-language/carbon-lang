@@ -10,10 +10,10 @@ cc_library(
     name = "token_kind",
     srcs = ["token_kind.cpp"],
     hdrs = ["token_kind.h"],
-    textual_hdrs = ["token_registry.def"],
+    textual_hdrs = ["token_kind.def"],
     deps = [
         "//common:check",
-        "//common:ostream",
+        "//toolchain/common:enum_base",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -180,6 +180,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:string_helpers",
+        "//toolchain/common:index_base",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",

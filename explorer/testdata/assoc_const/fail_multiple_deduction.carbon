@@ -2,23 +2,23 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 interface HasThreeTypes {
-  let A:! Type;
-  let B:! Type;
-  let C:! Type;
-  fn Make[me: Self]() -> (A, B, C);
+  let A:! type;
+  let B:! type;
+  let C:! type;
+  fn Make[self: Self]() -> (A, B, C);
 }
-fn F[T:! Type](x: (T, T, T));
+fn F[T:! type](x: (T, T, T));
 fn G[X:! HasThreeTypes where .A == .B and .B == .C and .C == .A](x: X) {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_multiple_deduction.carbon:[[@LINE+3]]: deduced multiple different values for T:! Type:
-  // CHECK:  (X:! HasThreeTypes where .Self.A == .Self.B and .Self.B == .Self.C and .Self.C == .Self.A).A
-  // CHECK:  (X:! HasThreeTypes where .Self.A == .Self.B and .Self.B == .Self.C and .Self.C == .Self.A).B
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_multiple_deduction.carbon:[[@LINE+3]]: deduced multiple different values for T:! type:
+  // CHECK:STDERR:   (X).(HasThreeTypes.A)
+  // CHECK:STDERR:   (X).(HasThreeTypes.B)
   F(x.Make());
 }
 

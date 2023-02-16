@@ -2,23 +2,23 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
+class Point(T:! type) {
 
   // Error: wrote `Self(T)` instead of `Self`.
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_self_with_arg.carbon:[[@LINE+1]]: in call `Self(T)`, expected callee to be a function, found `typeof(class Point(T = T:! Type))`
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_self_with_arg.carbon:[[@LINE+1]]: in call `Self(T)`, expected callee to be a function, found `type`
   fn Origin(zero: T) -> Self(T) {
     return {.x = zero, .y = zero};
   }
 
   // Error: wrote `Self(T)` instead of `Self`.
-  fn GetX[me: Self(T)]() -> T {
-    return me.x;
+  fn GetX[self: Self(T)]() -> T {
+    return self.x;
   }
 
   var x: T;

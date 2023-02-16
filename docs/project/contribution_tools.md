@@ -148,10 +148,10 @@ These tools are essential for work on Carbon.
 `pre-commit install`. When set up in this mode, it will check for issues when
 `git commit` is run. A typical commit workflow looks like:
 
-1. `git commit` to try committing files. This automatically executes
-   `pre-commit run`, which may fail and leave files modified for cleanup.
-2. `git add .` to add the automatically modifications done by `pre-commit`.
-3. `git commit` again.
+1.  `git commit` to try committing files. This automatically executes
+    `pre-commit run`, which may fail and leave files modified for cleanup.
+2.  `git add .` to add the automatically modifications done by `pre-commit`.
+3.  `git commit` again.
 
 You can also use `pre-commit run` to check pending changes without `git commit`,
 or `pre-commit run -a` to run on all files in the repository.
@@ -191,7 +191,7 @@ considering if they fit your workflow.
         -   After following the
             [installation instructions](https://code.visualstudio.com/docs/remote/containers#_installation),
             you should be prompted to use Carbon's
-            [devcontainer](/.devcontainer/Dockerfile) with "Reopen in
+            [devcontainer](/.devcontainer/devcontainer.json) with "Reopen in
             container".
 
 ### Manually building Clang and LLVM (not recommended)
@@ -216,8 +216,9 @@ been built with, particularly when it comes to system-installed versions. If you
 run `clang --version`, you should see at least version 14. If you see an older
 version, please update.
 
-macOS only: After installing from Homebrew, you may need to open a new shell to
-get `$PATH` changes.
+System installs of macOS typically won't work, for example being an old LLVM
+version or missing llvm-ar; [setup commands](#setup-commands) includes LLVM from
+Homebrew for this reason.
 
 It may be necessary to run `bazel clean` after updating versions in order to
 clean up cached state.

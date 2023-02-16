@@ -2,18 +2,18 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:result: 3
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 3
 
 package Foo api;
 interface A {
-  fn F[me: Self](o: Self) -> Self;
+  fn F[self: Self](o: Self) -> Self;
 }
 class X {
   impl as A {
-    fn F[me: Self](o: Self) -> Self { return {.n = me.n + o.n}; }
+    fn F[self: Self](o: Self) -> Self { return {.n = self.n + o.n}; }
   }
   var n: i32;
 }

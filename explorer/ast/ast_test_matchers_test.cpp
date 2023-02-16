@@ -102,7 +102,8 @@ TEST(MatchesFunctionDeclarationTest, BasicUsage) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
   FunctionDeclaration decl(DummyLoc, "Foo", false, {}, std::nullopt, &params,
-                           ReturnTerm::Omitted(DummyLoc), &body);
+                           ReturnTerm::Omitted(DummyLoc), &body,
+                           VirtualOverride::None);
 
   EXPECT_THAT(decl, MatchesFunctionDeclaration());
   EXPECT_THAT(&decl, MatchesFunctionDeclaration());
@@ -116,7 +117,7 @@ TEST(MatchesFunctionDeclarationTest, BasicUsage) {
 
   FunctionDeclaration forward_decl(DummyLoc, "Foo", false, {}, std::nullopt,
                                    &params, ReturnTerm::Omitted(DummyLoc),
-                                   std::nullopt);
+                                   std::nullopt, VirtualOverride::None);
   EXPECT_THAT(forward_decl, MatchesFunctionDeclaration().WithName("Foo"));
   EXPECT_THAT(forward_decl, Not(MatchesFunctionDeclaration().WithBody(_)));
 
@@ -149,7 +150,8 @@ TEST(ASTDeclarationsTest, BasicUsage) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
   FunctionDeclaration decl(DummyLoc, "Foo", false, {}, std::nullopt, &params,
-                           ReturnTerm::Omitted(DummyLoc), &body);
+                           ReturnTerm::Omitted(DummyLoc), &body,
+                           VirtualOverride::None);
   AST ast = {.declarations = {&decl}};
 
   EXPECT_THAT(ast, ASTDeclarations(ElementsAre(MatchesFunctionDeclaration())));

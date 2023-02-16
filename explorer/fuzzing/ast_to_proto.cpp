@@ -91,6 +91,34 @@ static auto OperatorToProtoEnum(const Operator op)
   }
 }
 
+static auto AssignOperatorToProtoEnum(const AssignOperator op)
+    -> Fuzzing::AssignStatement::Operator {
+  switch (op) {
+    case AssignOperator::Plain:
+      return Fuzzing::AssignStatement::Plain;
+    case AssignOperator::Add:
+      return Fuzzing::AssignStatement::Add;
+    case AssignOperator::And:
+      return Fuzzing::AssignStatement::And;
+    case AssignOperator::Mul:
+      return Fuzzing::AssignStatement::Mul;
+    case AssignOperator::Div:
+      return Fuzzing::AssignStatement::Div;
+    case AssignOperator::Mod:
+      return Fuzzing::AssignStatement::Mod;
+    case AssignOperator::Or:
+      return Fuzzing::AssignStatement::Or;
+    case AssignOperator::ShiftLeft:
+      return Fuzzing::AssignStatement::ShiftLeft;
+    case AssignOperator::ShiftRight:
+      return Fuzzing::AssignStatement::ShiftRight;
+    case AssignOperator::Sub:
+      return Fuzzing::AssignStatement::Sub;
+    case AssignOperator::Xor:
+      return Fuzzing::AssignStatement::Xor;
+  }
+}
+
 static auto FieldInitializerToProto(const FieldInitializer& field)
     -> Fuzzing::FieldInitializer {
   Fuzzing::FieldInitializer field_proto;
@@ -112,8 +140,15 @@ static auto ExpressionToProto(const Expression& expression)
     -> Fuzzing::Expression {
   Fuzzing::Expression expression_proto;
   switch (expression.kind()) {
+    case ExpressionKind::BaseAccessExpression:
     case ExpressionKind::ValueLiteral: {
       // This does not correspond to source syntax.
+      break;
+    }
+
+    case ExpressionKind::BuiltinConvertExpression: {
+      expression_proto = ExpressionToProto(
+          *cast<BuiltinConvertExpression>(expression).source_expression());
       break;
     }
 
@@ -237,6 +272,14 @@ static auto ExpressionToProto(const Expression& expression)
                 ExpressionToProto(cast<EqualsWhereClause>(where)->lhs());
             *equals_proto->mutable_rhs() =
                 ExpressionToProto(cast<EqualsWhereClause>(where)->rhs());
+            break;
+          }
+          case WhereClauseKind::RewriteWhereClause: {
+            auto* rewrite = clause_proto.mutable_rewrite();
+            rewrite->set_member_name(
+                std::string(cast<RewriteWhereClause>(where)->member_name()));
+            *rewrite->mutable_replacement() = ExpressionToProto(
+                cast<RewriteWhereClause>(where)->replacement());
             break;
           }
         }
@@ -436,6 +479,15 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       auto* assign_proto = statement_proto.mutable_assign();
       *assign_proto->mutable_lhs() = ExpressionToProto(assign.lhs());
       *assign_proto->mutable_rhs() = ExpressionToProto(assign.rhs());
+      assign_proto->set_op(AssignOperatorToProtoEnum(assign.op()));
+      break;
+    }
+
+    case StatementKind::IncrementDecrement: {
+      const auto& inc_dec = cast<IncrementDecrement>(statement);
+      auto* inc_dec_proto = statement_proto.mutable_inc_dec();
+      *inc_dec_proto->mutable_operand() = ExpressionToProto(inc_dec.argument());
+      inc_dec_proto->set_is_increment(inc_dec.is_increment());
       break;
     }
 
@@ -503,7 +555,7 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
         // TODO: Working out whether we have a default clause after the fact
         // like this is fragile.
         bool is_default_clause = false;
-        if (auto* binding = dyn_cast<BindingPattern>(&clause.pattern())) {
+        if (const auto* binding = dyn_cast<BindingPattern>(&clause.pattern())) {
           if (binding->name() == AnonymousName &&
               isa<AutoPattern>(binding->type()) &&
               binding->source_loc() == binding->type().source_loc()) {
@@ -582,25 +634,32 @@ static auto DeclarationToProto(const Declaration& declaration)
     -> Fuzzing::Declaration {
   Fuzzing::Declaration declaration_proto;
   switch (declaration.kind()) {
+    case DeclarationKind::NamespaceDeclaration: {
+      const auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
+      auto* namespace_proto = declaration_proto.mutable_namespace_();
+      namespace_proto->set_name(std::string(namespace_decl.name()));
+      break;
+    }
     case DeclarationKind::DestructorDeclaration: {
       const auto& function = cast<DestructorDeclaration>(declaration);
       auto* function_proto = declaration_proto.mutable_destructor();
       if (function.is_method()) {
-        switch (function.me_pattern().kind()) {
+        switch (function.self_pattern().kind()) {
           case PatternKind::AddrPattern:
-            *function_proto->mutable_me_pattern() =
-                PatternToProto(cast<AddrPattern>(function.me_pattern()));
+            *function_proto->mutable_self_pattern() =
+                PatternToProto(cast<AddrPattern>(function.self_pattern()));
             break;
           case PatternKind::BindingPattern:
-            *function_proto->mutable_me_pattern() =
-                PatternToProto(cast<BindingPattern>(function.me_pattern()));
+            *function_proto->mutable_self_pattern() =
+                PatternToProto(cast<BindingPattern>(function.self_pattern()));
             break;
           default:
-            // Parser shouldn't allow me_pattern to be anything other than
+            // Parser shouldn't allow self_pattern to be anything other than
             // AddrPattern or BindingPattern
-            CARBON_FATAL() << "me_pattern in method declaration can be either "
-                              "AddrPattern or BindingPattern. Actual pattern: "
-                           << function.me_pattern();
+            CARBON_FATAL()
+                << "self_pattern in method declaration can be either "
+                   "AddrPattern or BindingPattern. Actual pattern: "
+                << function.self_pattern();
             break;
         }
       }
@@ -621,21 +680,22 @@ static auto DeclarationToProto(const Declaration& declaration)
             GenericBindingToProto(*binding);
       }
       if (function.is_method()) {
-        switch (function.me_pattern().kind()) {
+        switch (function.self_pattern().kind()) {
           case PatternKind::AddrPattern:
-            *function_proto->mutable_me_pattern() =
-                PatternToProto(cast<AddrPattern>(function.me_pattern()));
+            *function_proto->mutable_self_pattern() =
+                PatternToProto(cast<AddrPattern>(function.self_pattern()));
             break;
           case PatternKind::BindingPattern:
-            *function_proto->mutable_me_pattern() =
-                PatternToProto(cast<BindingPattern>(function.me_pattern()));
+            *function_proto->mutable_self_pattern() =
+                PatternToProto(cast<BindingPattern>(function.self_pattern()));
             break;
           default:
-            // Parser shouldn't allow me_pattern to be anything other than
+            // Parser shouldn't allow self_pattern to be anything other than
             // AddrPattern or BindingPattern
-            CARBON_FATAL() << "me_pattern in method declaration can be either "
-                              "AddrPattern or BindingPattern. Actual pattern: "
-                           << function.me_pattern();
+            CARBON_FATAL()
+                << "self_pattern in method declaration can be either "
+                   "AddrPattern or BindingPattern. Actual pattern: "
+                << function.self_pattern();
             break;
         }
       }
@@ -712,6 +772,21 @@ static auto DeclarationToProto(const Declaration& declaration)
       break;
     }
 
+    case DeclarationKind::InterfaceExtendsDeclaration: {
+      const auto& extends = cast<InterfaceExtendsDeclaration>(declaration);
+      auto* extends_proto = declaration_proto.mutable_interface_extends();
+      *extends_proto->mutable_base() = ExpressionToProto(*extends.base());
+      break;
+    }
+
+    case DeclarationKind::InterfaceImplDeclaration: {
+      const auto& impl = cast<InterfaceImplDeclaration>(declaration);
+      auto* impl_proto = declaration_proto.mutable_interface_impl();
+      *impl_proto->mutable_impl_type() = ExpressionToProto(*impl.impl_type());
+      *impl_proto->mutable_constraint() = ExpressionToProto(*impl.constraint());
+      break;
+    }
+
     case DeclarationKind::AssociatedConstantDeclaration: {
       const auto& assoc = cast<AssociatedConstantDeclaration>(declaration);
       auto* let_proto = declaration_proto.mutable_let();
@@ -726,8 +801,16 @@ static auto DeclarationToProto(const Declaration& declaration)
       for (const auto& member : interface.members()) {
         *interface_proto->add_members() = DeclarationToProto(*member);
       }
-      *interface_proto->mutable_self() =
-          GenericBindingToProto(*interface.self());
+      break;
+    }
+
+    case DeclarationKind::ConstraintDeclaration: {
+      const auto& constraint = cast<ConstraintDeclaration>(declaration);
+      auto* constraint_proto = declaration_proto.mutable_constraint();
+      constraint_proto->set_name(constraint.name());
+      for (const auto& member : constraint.members()) {
+        *constraint_proto->add_members() = DeclarationToProto(*member);
+      }
       break;
     }
 
@@ -750,6 +833,15 @@ static auto DeclarationToProto(const Declaration& declaration)
       break;
     }
 
+    case DeclarationKind::MatchFirstDeclaration: {
+      const auto& match_first = cast<MatchFirstDeclaration>(declaration);
+      auto* match_first_proto = declaration_proto.mutable_match_first();
+      for (const auto* impl : match_first.impls()) {
+        *match_first_proto->add_impls() = DeclarationToProto(*impl);
+      }
+      break;
+    }
+
     case DeclarationKind::SelfDeclaration: {
       CARBON_FATAL() << "Unreachable SelfDeclaration in DeclarationToProto().";
     }
@@ -765,7 +857,7 @@ static auto DeclarationToProto(const Declaration& declaration)
   return declaration_proto;
 }
 
-Fuzzing::CompilationUnit AstToProto(const AST& ast) {
+auto AstToProto(const AST& ast) -> Fuzzing::CompilationUnit {
   Fuzzing::CompilationUnit compilation_unit;
   *compilation_unit.mutable_package_statement() =
       LibraryNameToProto(ast.package);

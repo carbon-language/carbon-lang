@@ -7,16 +7,17 @@
 
 #include <cstdint>
 #include <iterator>
+#include <optional>
 
 #include "common/ostream.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/common/index_base.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/source/source_buffer.h"
@@ -24,59 +25,6 @@
 namespace Carbon {
 
 class TokenizedBuffer;
-
-namespace Internal {
-
-// A lightweight handle to a lexed token in a `TokenizedBuffer`.
-//
-// This type's preferred name is `TokenizedBuffer::Token` and is only defined
-// outside the class to break a dependency cycle.
-//
-// `Token` objects are designed to be passed by value, not reference or
-// pointer. They are also designed to be small and efficient to store in data
-// structures.
-//
-// `Token` objects from the same `TokenizedBuffer` can be compared with each
-// other, both for being the same token within the buffer, and to establish
-// relative position within the token stream that has been lexed out of the
-// buffer. `Token` objects from different `TokenizedBuffer`s cannot be
-// meaningfully compared.
-//
-// All other APIs to query a `Token` are on the `TokenizedBuffer`.
-class TokenizedBufferToken {
- public:
-  using Token = TokenizedBufferToken;
-
-  TokenizedBufferToken() = default;
-
-  friend auto operator==(Token lhs, Token rhs) -> bool {
-    return lhs.index_ == rhs.index_;
-  }
-  friend auto operator!=(Token lhs, Token rhs) -> bool {
-    return lhs.index_ != rhs.index_;
-  }
-  friend auto operator<(Token lhs, Token rhs) -> bool {
-    return lhs.index_ < rhs.index_;
-  }
-  friend auto operator<=(Token lhs, Token rhs) -> bool {
-    return lhs.index_ <= rhs.index_;
-  }
-  friend auto operator>(Token lhs, Token rhs) -> bool {
-    return lhs.index_ > rhs.index_;
-  }
-  friend auto operator>=(Token lhs, Token rhs) -> bool {
-    return lhs.index_ >= rhs.index_;
-  }
-
- private:
-  friend TokenizedBuffer;
-
-  explicit TokenizedBufferToken(int index) : index_(index) {}
-
-  int32_t index_;
-};
-
-}  // namespace Internal
 
 // A buffer of tokenized Carbon source code.
 //
@@ -89,7 +37,21 @@ class TokenizedBufferToken {
 class TokenizedBuffer {
  public:
   // A lightweight handle to a lexed token in a `TokenizedBuffer`.
-  using Token = Internal::TokenizedBufferToken;
+  //
+  // `Token` objects are designed to be passed by value, not reference or
+  // pointer. They are also designed to be small and efficient to store in data
+  // structures.
+  //
+  // `Token` objects from the same `TokenizedBuffer` can be compared with each
+  // other, both for being the same token within the buffer, and to establish
+  // relative position within the token stream that has been lexed out of the
+  // buffer. `Token` objects from different `TokenizedBuffer`s cannot be
+  // meaningfully compared.
+  //
+  // All other APIs to query a `Token` are on the `TokenizedBuffer`.
+  struct Token : public ComparableIndexBase {
+    using ComparableIndexBase::ComparableIndexBase;
+  };
 
   // A lightweight handle to a lexed line in a `TokenizedBuffer`.
   //
@@ -102,35 +64,8 @@ class TokenizedBuffer {
   // same line or the relative position of different lines within the source.
   //
   // All other APIs to query a `Line` are on the `TokenizedBuffer`.
-  class Line {
-   public:
-    Line() = default;
-
-    friend auto operator==(Line lhs, Line rhs) -> bool {
-      return lhs.index_ == rhs.index_;
-    }
-    friend auto operator!=(Line lhs, Line rhs) -> bool {
-      return lhs.index_ != rhs.index_;
-    }
-    friend auto operator<(Line lhs, Line rhs) -> bool {
-      return lhs.index_ < rhs.index_;
-    }
-    friend auto operator<=(Line lhs, Line rhs) -> bool {
-      return lhs.index_ <= rhs.index_;
-    }
-    friend auto operator>(Line lhs, Line rhs) -> bool {
-      return lhs.index_ > rhs.index_;
-    }
-    friend auto operator>=(Line lhs, Line rhs) -> bool {
-      return lhs.index_ >= rhs.index_;
-    }
-
-   private:
-    friend class TokenizedBuffer;
-
-    explicit Line(int index) : index_(index) {}
-
-    int32_t index_;
+  struct Line : public ComparableIndexBase {
+    using ComparableIndexBase::ComparableIndexBase;
   };
 
   // A lightweight handle to a lexed identifier in a `TokenizedBuffer`.
@@ -144,25 +79,8 @@ class TokenizedBuffer {
   // identifier spelling. Where the identifier was written is not preserved.
   //
   // All other APIs to query a `Identifier` are on the `TokenizedBuffer`.
-  class Identifier {
-   public:
-    Identifier() = default;
-
-    // Most normal APIs are provided by the `TokenizedBuffer`, we just support
-    // basic comparison operations.
-    friend auto operator==(Identifier lhs, Identifier rhs) -> bool {
-      return lhs.index_ == rhs.index_;
-    }
-    friend auto operator!=(Identifier lhs, Identifier rhs) -> bool {
-      return lhs.index_ != rhs.index_;
-    }
-
-   private:
-    friend class TokenizedBuffer;
-
-    explicit Identifier(int index) : index_(index) {}
-
-    int32_t index_;
+  struct Identifier : public IndexBase {
+    using IndexBase::IndexBase;
   };
 
   // Random-access iterator over tokens within the buffer.
@@ -185,15 +103,15 @@ class TokenizedBuffer {
 
     using iterator_facade_base::operator-;
     auto operator-(const TokenIterator& rhs) const -> int {
-      return token_.index_ - rhs.token_.index_;
+      return token_.index - rhs.token_.index;
     }
 
     auto operator+=(int n) -> TokenIterator& {
-      token_.index_ += n;
+      token_.index += n;
       return *this;
     }
     auto operator-=(int n) -> TokenIterator& {
-      token_.index_ -= n;
+      token_.index -= n;
       return *this;
     }
 
@@ -248,19 +166,18 @@ class TokenizedBuffer {
 
   // A diagnostic location translator that maps token locations into source
   // buffer locations.
-  class TokenLocationTranslator
-      : public DiagnosticLocationTranslator<Internal::TokenizedBufferToken> {
+  class TokenLocationTranslator : public DiagnosticLocationTranslator<Token> {
    public:
-    explicit TokenLocationTranslator(TokenizedBuffer& buffer,
+    explicit TokenLocationTranslator(const TokenizedBuffer* buffer,
                                      int* last_line_lexed_to_column)
-        : buffer_(&buffer),
+        : buffer_(buffer),
           last_line_lexed_to_column_(last_line_lexed_to_column) {}
 
     // Map the given token into a diagnostic location.
     auto GetLocation(Token token) -> DiagnosticLocation override;
 
    private:
-    TokenizedBuffer* buffer_;
+    const TokenizedBuffer* buffer_;
     // Passed to SourceBufferLocationTranslator.
     int* last_line_lexed_to_column_;
   };
@@ -375,9 +292,9 @@ class TokenizedBuffer {
   class SourceBufferLocationTranslator
       : public DiagnosticLocationTranslator<const char*> {
    public:
-    explicit SourceBufferLocationTranslator(TokenizedBuffer& buffer,
+    explicit SourceBufferLocationTranslator(const TokenizedBuffer* buffer,
                                             int* last_line_lexed_to_column)
-        : buffer_(&buffer),
+        : buffer_(buffer),
           last_line_lexed_to_column_(last_line_lexed_to_column) {}
 
     // Map the given position within the source buffer into a diagnostic
@@ -385,7 +302,7 @@ class TokenizedBuffer {
     auto GetLocation(const char* loc) -> DiagnosticLocation override;
 
    private:
-    TokenizedBuffer* buffer_;
+    const TokenizedBuffer* buffer_;
     // The last lexed column, for determining whether the last line should be
     // checked for unlexed newlines. May be null after lexing is complete.
     int* last_line_lexed_to_column_;

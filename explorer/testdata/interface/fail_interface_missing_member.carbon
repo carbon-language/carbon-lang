@@ -2,18 +2,18 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 interface Vector {
-  fn Add[me: Self](b: Self) -> Self;
+  fn Add[self: Self](b: Self) -> Self;
 }
 
 fn ScaleGeneric[T:! Vector](a: T, s: i32) -> T {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_interface_missing_member.carbon:[[@LINE+1]]: member access, Scale not in interface Vector
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_interface_missing_member.carbon:[[@LINE+1]]: member access, Scale not in interface Vector where T is interface Vector
   return a.Scale(s);
 }
 
@@ -21,8 +21,8 @@ class Point {
   var x: i32;
   var y: i32;
   impl Point as Vector {
-    fn Add[me: Point](b: Point) -> Point {
-      return {.x = me.x + b.x, .y = me.y + b.y};
+    fn Add[self: Point](b: Point) -> Point {
+      return {.x = self.x + b.x, .y = self.y + b.y};
     }
   }
 }

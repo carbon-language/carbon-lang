@@ -50,56 +50,41 @@ class LexerTest : public ::testing::Test {
 TEST_F(LexerTest, HandlesEmptyBuffer) {
   auto buffer = Lex("");
   EXPECT_FALSE(buffer.has_errors());
-  EXPECT_THAT(
-      buffer,
-      HasTokens(llvm::ArrayRef<ExpectedToken>{{TokenKind::EndOfFile()}}));
+  EXPECT_THAT(buffer,
+              HasTokens(llvm::ArrayRef<ExpectedToken>{{TokenKind::EndOfFile}}));
 }
 
 TEST_F(LexerTest, TracksLinesAndColumns) {
   auto buffer = Lex("\n  ;;\n   ;;;\n   x\"foo\" '''baz\n  a\n ''' y");
   EXPECT_FALSE(buffer.has_errors());
-  EXPECT_THAT(buffer,
-              HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {.kind = TokenKind::Semi(),
-                   .line = 2,
-                   .column = 3,
-                   .indent_column = 3},
-                  {.kind = TokenKind::Semi(),
-                   .line = 2,
-                   .column = 4,
-                   .indent_column = 3},
-                  {.kind = TokenKind::Semi(),
-                   .line = 3,
-                   .column = 4,
-                   .indent_column = 4},
-                  {.kind = TokenKind::Semi(),
-                   .line = 3,
-                   .column = 5,
-                   .indent_column = 4},
-                  {.kind = TokenKind::Semi(),
-                   .line = 3,
-                   .column = 6,
-                   .indent_column = 4},
-                  {.kind = TokenKind::Identifier(),
-                   .line = 4,
-                   .column = 4,
-                   .indent_column = 4,
-                   .text = "x"},
-                  {.kind = TokenKind::StringLiteral(),
-                   .line = 4,
-                   .column = 5,
-                   .indent_column = 4},
-                  {.kind = TokenKind::StringLiteral(),
-                   .line = 4,
-                   .column = 11,
-                   .indent_column = 4},
-                  {.kind = TokenKind::Identifier(),
-                   .line = 6,
-                   .column = 6,
-                   .indent_column = 11,
-                   .text = "y"},
-                  {.kind = TokenKind::EndOfFile(), .line = 6, .column = 7},
-              }));
+  EXPECT_THAT(
+      buffer,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::Semi, .line = 2, .column = 3, .indent_column = 3},
+          {.kind = TokenKind::Semi, .line = 2, .column = 4, .indent_column = 3},
+          {.kind = TokenKind::Semi, .line = 3, .column = 4, .indent_column = 4},
+          {.kind = TokenKind::Semi, .line = 3, .column = 5, .indent_column = 4},
+          {.kind = TokenKind::Semi, .line = 3, .column = 6, .indent_column = 4},
+          {.kind = TokenKind::Identifier,
+           .line = 4,
+           .column = 4,
+           .indent_column = 4,
+           .text = "x"},
+          {.kind = TokenKind::StringLiteral,
+           .line = 4,
+           .column = 5,
+           .indent_column = 4},
+          {.kind = TokenKind::StringLiteral,
+           .line = 4,
+           .column = 11,
+           .indent_column = 4},
+          {.kind = TokenKind::Identifier,
+           .line = 6,
+           .column = 6,
+           .indent_column = 11,
+           .text = "y"},
+          {.kind = TokenKind::EndOfFile, .line = 6, .column = 7},
+      }));
 }
 
 TEST_F(LexerTest, HandlesNumericLiteral) {
@@ -107,51 +92,51 @@ TEST_F(LexerTest, HandlesNumericLiteral) {
   EXPECT_FALSE(buffer.has_errors());
   ASSERT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {.kind = TokenKind::IntegerLiteral(),
+                  {.kind = TokenKind::IntegerLiteral,
                    .line = 1,
                    .column = 1,
                    .indent_column = 1,
                    .text = "12"},
-                  {.kind = TokenKind::Minus(),
+                  {.kind = TokenKind::Minus,
                    .line = 1,
                    .column = 3,
                    .indent_column = 1},
-                  {.kind = TokenKind::IntegerLiteral(),
+                  {.kind = TokenKind::IntegerLiteral,
                    .line = 1,
                    .column = 4,
                    .indent_column = 1,
                    .text = "578"},
-                  {.kind = TokenKind::IntegerLiteral(),
+                  {.kind = TokenKind::IntegerLiteral,
                    .line = 2,
                    .column = 3,
                    .indent_column = 3,
                    .text = "1"},
-                  {.kind = TokenKind::IntegerLiteral(),
+                  {.kind = TokenKind::IntegerLiteral,
                    .line = 2,
                    .column = 6,
                    .indent_column = 3,
                    .text = "2"},
-                  {.kind = TokenKind::IntegerLiteral(),
+                  {.kind = TokenKind::IntegerLiteral,
                    .line = 3,
                    .column = 1,
                    .indent_column = 1,
                    .text = "0x12_3ABC"},
-                  {.kind = TokenKind::IntegerLiteral(),
+                  {.kind = TokenKind::IntegerLiteral,
                    .line = 4,
                    .column = 1,
                    .indent_column = 1,
                    .text = "0b10_10_11"},
-                  {.kind = TokenKind::IntegerLiteral(),
+                  {.kind = TokenKind::IntegerLiteral,
                    .line = 5,
                    .column = 1,
                    .indent_column = 1,
                    .text = "1_234_567"},
-                  {.kind = TokenKind::RealLiteral(),
+                  {.kind = TokenKind::RealLiteral,
                    .line = 6,
                    .column = 1,
                    .indent_column = 1,
                    .text = "1.5e9"},
-                  {.kind = TokenKind::EndOfFile(), .line = 6, .column = 6},
+                  {.kind = TokenKind::EndOfFile, .line = 6, .column = 6},
               }));
   auto token_12 = buffer.tokens().begin();
   EXPECT_EQ(buffer.GetIntegerLiteral(*token_12), 12);
@@ -179,32 +164,32 @@ TEST_F(LexerTest, HandlesInvalidNumericLiterals) {
   EXPECT_TRUE(buffer.has_errors());
   ASSERT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {.kind = TokenKind::Error(),
+                  {.kind = TokenKind::Error,
                    .line = 1,
                    .column = 1,
                    .indent_column = 1,
                    .text = "14x"},
-                  {.kind = TokenKind::IntegerLiteral(),
+                  {.kind = TokenKind::IntegerLiteral,
                    .line = 1,
                    .column = 5,
                    .indent_column = 1,
                    .text = "15_49"},
-                  {.kind = TokenKind::Error(),
+                  {.kind = TokenKind::Error,
                    .line = 1,
                    .column = 11,
                    .indent_column = 1,
                    .text = "0x3.5q"},
-                  {.kind = TokenKind::RealLiteral(),
+                  {.kind = TokenKind::RealLiteral,
                    .line = 1,
                    .column = 18,
                    .indent_column = 1,
                    .text = "0x3_4.5_6"},
-                  {.kind = TokenKind::Error(),
+                  {.kind = TokenKind::Error,
                    .line = 1,
                    .column = 28,
                    .indent_column = 1,
                    .text = "0ops"},
-                  {.kind = TokenKind::EndOfFile(), .line = 1, .column = 32},
+                  {.kind = TokenKind::EndOfFile, .line = 1, .column = 32},
               }));
 }
 
@@ -226,58 +211,57 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
   )";
   auto buffer = Lex(source_text);
   EXPECT_TRUE(buffer.has_errors());
-  EXPECT_THAT(buffer,
-              HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {.kind = TokenKind::IntegerLiteral(), .text = "1"},
-                  {.kind = TokenKind::Period()},
-                  // newline
-                  {.kind = TokenKind::Period()},
-                  {.kind = TokenKind::IntegerLiteral(), .text = "2"},
-                  // newline
-                  {.kind = TokenKind::IntegerLiteral(), .text = "3"},
-                  {.kind = TokenKind::Period()},
-                  {.kind = TokenKind::Plus()},
-                  {.kind = TokenKind::Identifier(), .text = "foo"},
-                  // newline
-                  {.kind = TokenKind::RealLiteral(), .text = "4.0"},
-                  {.kind = TokenKind::Minus()},
-                  {.kind = TokenKind::Identifier(), .text = "bar"},
-                  // newline
-                  {.kind = TokenKind::RealLiteral(), .text = "5.0e+123"},
-                  {.kind = TokenKind::Plus()},
-                  {.kind = TokenKind::IntegerLiteral(), .text = "456"},
-                  // newline
-                  {.kind = TokenKind::Error(), .text = "6.0e+1e"},
-                  {.kind = TokenKind::Plus()},
-                  {.kind = TokenKind::IntegerLiteral(), .text = "2"},
-                  // newline
-                  {.kind = TokenKind::Error(), .text = "1e7"},
-                  // newline
-                  {.kind = TokenKind::IntegerLiteral(), .text = "8"},
-                  {.kind = TokenKind::Period()},
-                  {.kind = TokenKind::Period()},
-                  {.kind = TokenKind::IntegerLiteral(), .text = "10"},
-                  // newline
-                  {.kind = TokenKind::RealLiteral(), .text = "9.0"},
-                  {.kind = TokenKind::Period()},
-                  {.kind = TokenKind::RealLiteral(), .text = "9.5"},
-                  // newline
-                  {.kind = TokenKind::Error(), .text = "10.foo"},
-                  // newline
-                  {.kind = TokenKind::RealLiteral(), .text = "11.0"},
-                  {.kind = TokenKind::Period()},
-                  {.kind = TokenKind::Identifier(), .text = "foo"},
-                  // newline
-                  {.kind = TokenKind::Error(), .text = "12e"},
-                  {.kind = TokenKind::Plus()},
-                  {.kind = TokenKind::IntegerLiteral(), .text = "1"},
-                  // newline
-                  {.kind = TokenKind::IntegerLiteral(), .text = "13"},
-                  {.kind = TokenKind::Period()},
-                  {.kind = TokenKind::Underscore()},
-                  // newline
-                  {.kind = TokenKind::EndOfFile()},
-              }));
+  EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
+                          {.kind = TokenKind::IntegerLiteral, .text = "1"},
+                          {.kind = TokenKind::Period},
+                          // newline
+                          {.kind = TokenKind::Period},
+                          {.kind = TokenKind::IntegerLiteral, .text = "2"},
+                          // newline
+                          {.kind = TokenKind::IntegerLiteral, .text = "3"},
+                          {.kind = TokenKind::Period},
+                          {.kind = TokenKind::Plus},
+                          {.kind = TokenKind::Identifier, .text = "foo"},
+                          // newline
+                          {.kind = TokenKind::RealLiteral, .text = "4.0"},
+                          {.kind = TokenKind::Minus},
+                          {.kind = TokenKind::Identifier, .text = "bar"},
+                          // newline
+                          {.kind = TokenKind::RealLiteral, .text = "5.0e+123"},
+                          {.kind = TokenKind::Plus},
+                          {.kind = TokenKind::IntegerLiteral, .text = "456"},
+                          // newline
+                          {.kind = TokenKind::Error, .text = "6.0e+1e"},
+                          {.kind = TokenKind::Plus},
+                          {.kind = TokenKind::IntegerLiteral, .text = "2"},
+                          // newline
+                          {.kind = TokenKind::Error, .text = "1e7"},
+                          // newline
+                          {.kind = TokenKind::IntegerLiteral, .text = "8"},
+                          {.kind = TokenKind::Period},
+                          {.kind = TokenKind::Period},
+                          {.kind = TokenKind::IntegerLiteral, .text = "10"},
+                          // newline
+                          {.kind = TokenKind::RealLiteral, .text = "9.0"},
+                          {.kind = TokenKind::Period},
+                          {.kind = TokenKind::RealLiteral, .text = "9.5"},
+                          // newline
+                          {.kind = TokenKind::Error, .text = "10.foo"},
+                          // newline
+                          {.kind = TokenKind::RealLiteral, .text = "11.0"},
+                          {.kind = TokenKind::Period},
+                          {.kind = TokenKind::Identifier, .text = "foo"},
+                          // newline
+                          {.kind = TokenKind::Error, .text = "12e"},
+                          {.kind = TokenKind::Plus},
+                          {.kind = TokenKind::IntegerLiteral, .text = "1"},
+                          // newline
+                          {.kind = TokenKind::IntegerLiteral, .text = "13"},
+                          {.kind = TokenKind::Period},
+                          {.kind = TokenKind::Underscore},
+                          // newline
+                          {.kind = TokenKind::EndOfFile},
+                      }));
 }
 
 TEST_F(LexerTest, HandlesGarbageCharacters) {
@@ -287,32 +271,29 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
   EXPECT_THAT(
       buffer,
       HasTokens(llvm::ArrayRef<ExpectedToken>{
-          {.kind = TokenKind::Error(),
+          {.kind = TokenKind::Error,
            .line = 1,
            .column = 1,
            // 💩 takes 4 bytes, and we count column as bytes offset.
            .text = llvm::StringRef("$$💩", 6)},
-          {.kind = TokenKind::Minus(), .line = 1, .column = 7},
-          {.kind = TokenKind::Error(), .line = 1, .column = 8, .text = "$"},
+          {.kind = TokenKind::Minus, .line = 1, .column = 7},
+          {.kind = TokenKind::Error, .line = 1, .column = 8, .text = "$"},
           // newline
-          {.kind = TokenKind::Error(),
+          {.kind = TokenKind::Error,
            .line = 2,
            .column = 1,
            .text = llvm::StringRef("$\0$", 3)},
-          {.kind = TokenKind::IntegerLiteral(),
+          {.kind = TokenKind::IntegerLiteral,
            .line = 2,
            .column = 4,
            .text = "12"},
-          {.kind = TokenKind::Error(), .line = 2, .column = 6, .text = "$"},
+          {.kind = TokenKind::Error, .line = 2, .column = 6, .text = "$"},
           // newline
-          {.kind = TokenKind::Backslash(),
-           .line = 3,
-           .column = 1,
-           .text = "\\"},
-          {.kind = TokenKind::Error(), .line = 3, .column = 2, .text = "\"\\"},
+          {.kind = TokenKind::Backslash, .line = 3, .column = 1, .text = "\\"},
+          {.kind = TokenKind::Error, .line = 3, .column = 2, .text = "\"\\"},
           // newline
-          {.kind = TokenKind::Error(), .line = 4, .column = 1, .text = "\"x"},
-          {.kind = TokenKind::EndOfFile(), .line = 4, .column = 3},
+          {.kind = TokenKind::Error, .line = 4, .column = 1, .text = "\"x"},
+          {.kind = TokenKind::EndOfFile, .line = 4, .column = 3},
       }));
 }
 
@@ -323,39 +304,39 @@ TEST_F(LexerTest, Symbols) {
   auto buffer = Lex("<<<");
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {TokenKind::LessLess()},
-                          {TokenKind::Less()},
-                          {TokenKind::EndOfFile()},
+                          {TokenKind::LessLess},
+                          {TokenKind::Less},
+                          {TokenKind::EndOfFile},
                       }));
 
   buffer = Lex("<<=>>");
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {TokenKind::LessLessEqual()},
-                          {TokenKind::GreaterGreater()},
-                          {TokenKind::EndOfFile()},
+                          {TokenKind::LessLessEqual},
+                          {TokenKind::GreaterGreater},
+                          {TokenKind::EndOfFile},
                       }));
 
   buffer = Lex("< <=> >");
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {TokenKind::Less()},
-                          {TokenKind::LessEqualGreater()},
-                          {TokenKind::Greater()},
-                          {TokenKind::EndOfFile()},
+                          {TokenKind::Less},
+                          {TokenKind::LessEqualGreater},
+                          {TokenKind::Greater},
+                          {TokenKind::EndOfFile},
                       }));
 
   buffer = Lex("\\/?@&^!");
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {TokenKind::Backslash()},
-                          {TokenKind::Slash()},
-                          {TokenKind::Question()},
-                          {TokenKind::At()},
-                          {TokenKind::Amp()},
-                          {TokenKind::Caret()},
-                          {TokenKind::Exclaim()},
-                          {TokenKind::EndOfFile()},
+                          {TokenKind::Backslash},
+                          {TokenKind::Slash},
+                          {TokenKind::Question},
+                          {TokenKind::At},
+                          {TokenKind::Amp},
+                          {TokenKind::Caret},
+                          {TokenKind::Exclaim},
+                          {TokenKind::EndOfFile},
                       }));
 }
 
@@ -363,23 +344,23 @@ TEST_F(LexerTest, Parens) {
   auto buffer = Lex("()");
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {TokenKind::OpenParen()},
-                          {TokenKind::CloseParen()},
-                          {TokenKind::EndOfFile()},
+                          {TokenKind::OpenParen},
+                          {TokenKind::CloseParen},
+                          {TokenKind::EndOfFile},
                       }));
 
   buffer = Lex("((()()))");
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {TokenKind::OpenParen()},
-                          {TokenKind::OpenParen()},
-                          {TokenKind::OpenParen()},
-                          {TokenKind::CloseParen()},
-                          {TokenKind::OpenParen()},
-                          {TokenKind::CloseParen()},
-                          {TokenKind::CloseParen()},
-                          {TokenKind::CloseParen()},
-                          {TokenKind::EndOfFile()},
+                          {TokenKind::OpenParen},
+                          {TokenKind::OpenParen},
+                          {TokenKind::OpenParen},
+                          {TokenKind::CloseParen},
+                          {TokenKind::OpenParen},
+                          {TokenKind::CloseParen},
+                          {TokenKind::CloseParen},
+                          {TokenKind::CloseParen},
+                          {TokenKind::EndOfFile},
                       }));
 }
 
@@ -387,23 +368,23 @@ TEST_F(LexerTest, CurlyBraces) {
   auto buffer = Lex("{}");
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {TokenKind::OpenCurlyBrace()},
-                          {TokenKind::CloseCurlyBrace()},
-                          {TokenKind::EndOfFile()},
+                          {TokenKind::OpenCurlyBrace},
+                          {TokenKind::CloseCurlyBrace},
+                          {TokenKind::EndOfFile},
                       }));
 
   buffer = Lex("{{{}{}}}");
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {TokenKind::OpenCurlyBrace()},
-                          {TokenKind::OpenCurlyBrace()},
-                          {TokenKind::OpenCurlyBrace()},
-                          {TokenKind::CloseCurlyBrace()},
-                          {TokenKind::OpenCurlyBrace()},
-                          {TokenKind::CloseCurlyBrace()},
-                          {TokenKind::CloseCurlyBrace()},
-                          {TokenKind::CloseCurlyBrace()},
-                          {TokenKind::EndOfFile()},
+                          {TokenKind::OpenCurlyBrace},
+                          {TokenKind::OpenCurlyBrace},
+                          {TokenKind::OpenCurlyBrace},
+                          {TokenKind::CloseCurlyBrace},
+                          {TokenKind::OpenCurlyBrace},
+                          {TokenKind::CloseCurlyBrace},
+                          {TokenKind::CloseCurlyBrace},
+                          {TokenKind::CloseCurlyBrace},
+                          {TokenKind::EndOfFile},
                       }));
 }
 
@@ -425,7 +406,7 @@ TEST_F(LexerTest, MatchingGroups) {
     EXPECT_EQ(open_curly_token,
               buffer.GetMatchedOpeningToken(close_curly_token));
     auto eof_token = *it++;
-    EXPECT_EQ(buffer.GetKind(eof_token), TokenKind::EndOfFile());
+    EXPECT_EQ(buffer.GetKind(eof_token), TokenKind::EndOfFile);
     EXPECT_EQ(buffer.tokens().end(), it);
   }
 
@@ -488,7 +469,7 @@ TEST_F(LexerTest, MatchingGroups) {
               buffer.GetMatchedOpeningToken(inner_close_paren_token));
 
     auto eof_token = *it++;
-    EXPECT_EQ(buffer.GetKind(eof_token), TokenKind::EndOfFile());
+    EXPECT_EQ(buffer.GetKind(eof_token), TokenKind::EndOfFile);
     EXPECT_EQ(buffer.tokens().end(), it);
   }
 }
@@ -498,16 +479,16 @@ TEST_F(LexerTest, MismatchedGroups) {
   EXPECT_TRUE(buffer.has_errors());
   EXPECT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {TokenKind::OpenCurlyBrace()},
-                  {.kind = TokenKind::CloseCurlyBrace(), .recovery = true},
-                  {TokenKind::EndOfFile()},
+                  {TokenKind::OpenCurlyBrace},
+                  {.kind = TokenKind::CloseCurlyBrace, .recovery = true},
+                  {TokenKind::EndOfFile},
               }));
 
   buffer = Lex("}");
   EXPECT_TRUE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {.kind = TokenKind::Error(), .text = "}"},
-                          {TokenKind::EndOfFile()},
+                          {.kind = TokenKind::Error, .text = "}"},
+                          {TokenKind::EndOfFile},
                       }));
 
   buffer = Lex("{(}");
@@ -515,11 +496,11 @@ TEST_F(LexerTest, MismatchedGroups) {
   EXPECT_THAT(
       buffer,
       HasTokens(llvm::ArrayRef<ExpectedToken>{
-          {.kind = TokenKind::OpenCurlyBrace(), .column = 1},
-          {.kind = TokenKind::OpenParen(), .column = 2},
-          {.kind = TokenKind::CloseParen(), .column = 3, .recovery = true},
-          {.kind = TokenKind::CloseCurlyBrace(), .column = 3},
-          {TokenKind::EndOfFile()},
+          {.kind = TokenKind::OpenCurlyBrace, .column = 1},
+          {.kind = TokenKind::OpenParen, .column = 2},
+          {.kind = TokenKind::CloseParen, .column = 3, .recovery = true},
+          {.kind = TokenKind::CloseCurlyBrace, .column = 3},
+          {TokenKind::EndOfFile},
       }));
 
   buffer = Lex(")({)");
@@ -527,12 +508,12 @@ TEST_F(LexerTest, MismatchedGroups) {
   EXPECT_THAT(
       buffer,
       HasTokens(llvm::ArrayRef<ExpectedToken>{
-          {.kind = TokenKind::Error(), .column = 1, .text = ")"},
-          {.kind = TokenKind::OpenParen(), .column = 2},
-          {.kind = TokenKind::OpenCurlyBrace(), .column = 3},
-          {.kind = TokenKind::CloseCurlyBrace(), .column = 4, .recovery = true},
-          {.kind = TokenKind::CloseParen(), .column = 4},
-          {TokenKind::EndOfFile()},
+          {.kind = TokenKind::Error, .column = 1, .text = ")"},
+          {.kind = TokenKind::OpenParen, .column = 2},
+          {.kind = TokenKind::OpenCurlyBrace, .column = 3},
+          {.kind = TokenKind::CloseCurlyBrace, .column = 4, .recovery = true},
+          {.kind = TokenKind::CloseParen, .column = 4},
+          {TokenKind::EndOfFile},
       }));
 }
 
@@ -575,63 +556,55 @@ TEST_F(LexerTest, Keywords) {
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {.kind = TokenKind::Fn(), .column = 4, .indent_column = 4},
-                  {TokenKind::EndOfFile()},
+                  {.kind = TokenKind::Fn, .column = 4, .indent_column = 4},
+                  {TokenKind::EndOfFile},
               }));
 
   buffer = Lex("and or not if else for return var break continue _");
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {TokenKind::And()},
-                          {TokenKind::Or()},
-                          {TokenKind::Not()},
-                          {TokenKind::If()},
-                          {TokenKind::Else()},
-                          {TokenKind::For()},
-                          {TokenKind::Return()},
-                          {TokenKind::Var()},
-                          {TokenKind::Break()},
-                          {TokenKind::Continue()},
-                          {TokenKind::Underscore()},
-                          {TokenKind::EndOfFile()},
+                          {TokenKind::And},
+                          {TokenKind::Or},
+                          {TokenKind::Not},
+                          {TokenKind::If},
+                          {TokenKind::Else},
+                          {TokenKind::For},
+                          {TokenKind::Return},
+                          {TokenKind::Var},
+                          {TokenKind::Break},
+                          {TokenKind::Continue},
+                          {TokenKind::Underscore},
+                          {TokenKind::EndOfFile},
                       }));
 }
 
 TEST_F(LexerTest, Comments) {
   auto buffer = Lex(" ;\n  // foo\n  ;\n");
   EXPECT_FALSE(buffer.has_errors());
-  EXPECT_THAT(buffer,
-              HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {.kind = TokenKind::Semi(),
-                   .line = 1,
-                   .column = 2,
-                   .indent_column = 2},
-                  {.kind = TokenKind::Semi(),
-                   .line = 3,
-                   .column = 3,
-                   .indent_column = 3},
-                  {.kind = TokenKind::EndOfFile(), .line = 3, .column = 4},
-              }));
+  EXPECT_THAT(
+      buffer,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::Semi, .line = 1, .column = 2, .indent_column = 2},
+          {.kind = TokenKind::Semi, .line = 3, .column = 3, .indent_column = 3},
+          {.kind = TokenKind::EndOfFile, .line = 3, .column = 4},
+      }));
 
   buffer = Lex("// foo\n//\n// bar");
   EXPECT_FALSE(buffer.has_errors());
-  EXPECT_THAT(
-      buffer,
-      HasTokens(llvm::ArrayRef<ExpectedToken>{{TokenKind::EndOfFile()}}));
+  EXPECT_THAT(buffer,
+              HasTokens(llvm::ArrayRef<ExpectedToken>{{TokenKind::EndOfFile}}));
 
   // Make sure weird characters aren't a problem.
   buffer = Lex("  // foo#$!^?@-_💩🍫⃠ [̲̅$̲̅(̲̅ ͡° ͜ʖ ͡°̲̅)̲̅$̲̅]");
   EXPECT_FALSE(buffer.has_errors());
-  EXPECT_THAT(
-      buffer,
-      HasTokens(llvm::ArrayRef<ExpectedToken>{{TokenKind::EndOfFile()}}));
+  EXPECT_THAT(buffer,
+              HasTokens(llvm::ArrayRef<ExpectedToken>{{TokenKind::EndOfFile}}));
 
   // Make sure we can lex a comment at the end of the input.
   buffer = Lex("//");
   EXPECT_FALSE(buffer.has_errors());
-  EXPECT_THAT(
-      buffer,
-      HasTokens(llvm::ArrayRef<ExpectedToken>{{TokenKind::EndOfFile()}}));
+  EXPECT_THAT(buffer,
+              HasTokens(llvm::ArrayRef<ExpectedToken>{{TokenKind::EndOfFile}}));
 }
 
 TEST_F(LexerTest, InvalidComments) {
@@ -651,35 +624,34 @@ TEST_F(LexerTest, Identifiers) {
   auto buffer = Lex("   foobar");
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {.kind = TokenKind::Identifier(),
+                          {.kind = TokenKind::Identifier,
                            .column = 4,
                            .indent_column = 4,
                            .text = "foobar"},
-                          {TokenKind::EndOfFile()},
+                          {TokenKind::EndOfFile},
                       }));
 
   // Check different kinds of identifier character sequences.
   buffer = Lex("_foo_bar");
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {.kind = TokenKind::Identifier(), .text = "_foo_bar"},
-                          {TokenKind::EndOfFile()},
+                          {.kind = TokenKind::Identifier, .text = "_foo_bar"},
+                          {TokenKind::EndOfFile},
                       }));
 
   buffer = Lex("foo2bar00");
   EXPECT_FALSE(buffer.has_errors());
-  EXPECT_THAT(buffer,
-              HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {.kind = TokenKind::Identifier(), .text = "foo2bar00"},
-                  {TokenKind::EndOfFile()},
-              }));
+  EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
+                          {.kind = TokenKind::Identifier, .text = "foo2bar00"},
+                          {TokenKind::EndOfFile},
+                      }));
 
   // Check that we can parse identifiers that start with a keyword.
   buffer = Lex("fnord");
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {.kind = TokenKind::Identifier(), .text = "fnord"},
-                          {TokenKind::EndOfFile()},
+                          {.kind = TokenKind::Identifier, .text = "fnord"},
+                          {TokenKind::EndOfFile},
                       }));
 
   // Check multiple identifiers with indent and interning.
@@ -687,33 +659,33 @@ TEST_F(LexerTest, Identifiers) {
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {.kind = TokenKind::Identifier(),
+                  {.kind = TokenKind::Identifier,
                    .line = 1,
                    .column = 4,
                    .indent_column = 4,
                    .text = "foo"},
-                  {.kind = TokenKind::Semi()},
-                  {.kind = TokenKind::Identifier(),
+                  {.kind = TokenKind::Semi},
+                  {.kind = TokenKind::Identifier,
                    .line = 1,
                    .column = 8,
                    .indent_column = 4,
                    .text = "bar"},
-                  {.kind = TokenKind::Identifier(),
+                  {.kind = TokenKind::Identifier,
                    .line = 2,
                    .column = 1,
                    .indent_column = 1,
                    .text = "bar"},
-                  {.kind = TokenKind::Identifier(),
+                  {.kind = TokenKind::Identifier,
                    .line = 3,
                    .column = 3,
                    .indent_column = 3,
                    .text = "foo"},
-                  {.kind = TokenKind::Identifier(),
+                  {.kind = TokenKind::Identifier,
                    .line = 3,
                    .column = 7,
                    .indent_column = 3,
                    .text = "foo"},
-                  {.kind = TokenKind::EndOfFile(), .line = 3, .column = 10},
+                  {.kind = TokenKind::EndOfFile, .line = 3, .column = 10},
               }));
 }
 
@@ -739,32 +711,32 @@ TEST_F(LexerTest, StringLiterals) {
   EXPECT_FALSE(buffer.has_errors());
   EXPECT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {.kind = TokenKind::StringLiteral(),
+                  {.kind = TokenKind::StringLiteral,
                    .line = 2,
                    .column = 5,
                    .indent_column = 5,
                    .string_contents = {"hello world\n"}},
-                  {.kind = TokenKind::StringLiteral(),
+                  {.kind = TokenKind::StringLiteral,
                    .line = 4,
                    .column = 5,
                    .indent_column = 5,
                    .string_contents = {" test  \xAB\n"}},
-                  {.kind = TokenKind::Identifier(),
+                  {.kind = TokenKind::Identifier,
                    .line = 7,
                    .column = 10,
                    .indent_column = 5,
                    .text = "trailing"},
-                  {.kind = TokenKind::StringLiteral(),
+                  {.kind = TokenKind::StringLiteral,
                    .line = 9,
                    .column = 7,
                    .indent_column = 7,
                    .string_contents = {"\""}},
-                  {.kind = TokenKind::StringLiteral(),
+                  {.kind = TokenKind::StringLiteral,
                    .line = 11,
                    .column = 5,
                    .indent_column = 5,
                    .string_contents = llvm::StringLiteral::withInnerNUL("\0")},
-                  {.kind = TokenKind::StringLiteral(),
+                  {.kind = TokenKind::StringLiteral,
                    .line = 13,
                    .column = 5,
                    .indent_column = 5,
@@ -772,22 +744,22 @@ TEST_F(LexerTest, StringLiterals) {
 
                   // """x""" is three string literals, not one invalid
                   // attempt at a block string literal.
-                  {.kind = TokenKind::StringLiteral(),
+                  {.kind = TokenKind::StringLiteral,
                    .line = 15,
                    .column = 5,
                    .indent_column = 5,
                    .string_contents = {""}},
-                  {.kind = TokenKind::StringLiteral(),
+                  {.kind = TokenKind::StringLiteral,
                    .line = 15,
                    .column = 7,
                    .indent_column = 5,
                    .string_contents = {"x"}},
-                  {.kind = TokenKind::StringLiteral(),
+                  {.kind = TokenKind::StringLiteral,
                    .line = 15,
                    .column = 10,
                    .indent_column = 5,
                    .string_contents = {""}},
-                  {.kind = TokenKind::EndOfFile(), .line = 16, .column = 3},
+                  {.kind = TokenKind::EndOfFile, .line = 16, .column = 3},
               }));
 }
 
@@ -818,7 +790,7 @@ TEST_F(LexerTest, InvalidStringLiterals) {
     // We should have formed at least one error token.
     bool found_error = false;
     for (TokenizedBuffer::Token token : buffer.tokens()) {
-      if (buffer.GetKind(token) == TokenKind::Error()) {
+      if (buffer.GetKind(token) == TokenKind::Error) {
         found_error = true;
         break;
       }
@@ -839,81 +811,81 @@ TEST_F(LexerTest, TypeLiterals) {
   EXPECT_FALSE(buffer.has_errors());
   ASSERT_THAT(buffer,
               HasTokens(llvm::ArrayRef<ExpectedToken>{
-                  {.kind = TokenKind::Identifier(),
+                  {.kind = TokenKind::Identifier,
                    .line = 2,
                    .column = 5,
                    .indent_column = 5,
                    .text = {"i0"}},
-                  {.kind = TokenKind::IntegerTypeLiteral(),
+                  {.kind = TokenKind::IntegerTypeLiteral,
                    .line = 2,
                    .column = 8,
                    .indent_column = 5,
                    .text = {"i1"}},
-                  {.kind = TokenKind::IntegerTypeLiteral(),
+                  {.kind = TokenKind::IntegerTypeLiteral,
                    .line = 2,
                    .column = 11,
                    .indent_column = 5,
                    .text = {"i20"}},
-                  {.kind = TokenKind::IntegerTypeLiteral(),
+                  {.kind = TokenKind::IntegerTypeLiteral,
                    .line = 2,
                    .column = 15,
                    .indent_column = 5,
                    .text = {"i999999999999"}},
-                  {.kind = TokenKind::Identifier(),
+                  {.kind = TokenKind::Identifier,
                    .line = 2,
                    .column = 29,
                    .indent_column = 5,
                    .text = {"i0x1"}},
 
-                  {.kind = TokenKind::Identifier(),
+                  {.kind = TokenKind::Identifier,
                    .line = 3,
                    .column = 5,
                    .indent_column = 5,
                    .text = {"u0"}},
-                  {.kind = TokenKind::UnsignedIntegerTypeLiteral(),
+                  {.kind = TokenKind::UnsignedIntegerTypeLiteral,
                    .line = 3,
                    .column = 8,
                    .indent_column = 5,
                    .text = {"u1"}},
-                  {.kind = TokenKind::UnsignedIntegerTypeLiteral(),
+                  {.kind = TokenKind::UnsignedIntegerTypeLiteral,
                    .line = 3,
                    .column = 11,
                    .indent_column = 5,
                    .text = {"u64"}},
-                  {.kind = TokenKind::Identifier(),
+                  {.kind = TokenKind::Identifier,
                    .line = 3,
                    .column = 15,
                    .indent_column = 5,
                    .text = {"u64b"}},
 
-                  {.kind = TokenKind::FloatingPointTypeLiteral(),
+                  {.kind = TokenKind::FloatingPointTypeLiteral,
                    .line = 4,
                    .column = 5,
                    .indent_column = 5,
                    .text = {"f32"}},
-                  {.kind = TokenKind::FloatingPointTypeLiteral(),
+                  {.kind = TokenKind::FloatingPointTypeLiteral,
                    .line = 4,
                    .column = 9,
                    .indent_column = 5,
                    .text = {"f80"}},
-                  {.kind = TokenKind::FloatingPointTypeLiteral(),
+                  {.kind = TokenKind::FloatingPointTypeLiteral,
                    .line = 4,
                    .column = 13,
                    .indent_column = 5,
                    .text = {"f1"}},
-                  {.kind = TokenKind::Identifier(),
+                  {.kind = TokenKind::Identifier,
                    .line = 4,
                    .column = 16,
                    .indent_column = 5,
                    .text = {"fi"}},
 
-                  {.kind = TokenKind::Identifier(),
+                  {.kind = TokenKind::Identifier,
                    .line = 5,
                    .column = 5,
                    .indent_column = 5,
                    .text = {"s1"}},
 
-                  {.kind = TokenKind::EndOfFile(), .line = 6, .column = 3},
+                  {.kind = TokenKind::EndOfFile, .line = 6, .column = 3},
               }));
 
   auto token_i1 = buffer.tokens().begin() + 1;
@@ -949,12 +921,12 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   ASSERT_THAT(
       buffer,
       HasTokens(llvm::ArrayRef<ExpectedToken>{
-          {.kind = TokenKind::Error(),
+          {.kind = TokenKind::Error,
            .line = 1,
            .column = 1,
            .indent_column = 1,
            .text = {code}},
-          {.kind = TokenKind::EndOfFile(), .line = 1, .column = Count + 2},
+          {.kind = TokenKind::EndOfFile, .line = 1, .column = Count + 2},
       }));
 }
 
@@ -1032,22 +1004,6 @@ auto GetAndDropLine(llvm::StringRef& text) -> std::string {
   return line.str();
 }
 
-TEST_F(LexerTest, PrintingBasic) {
-  auto buffer = Lex(";");
-  ASSERT_FALSE(buffer.has_errors());
-  std::string print_storage;
-  llvm::raw_string_ostream print_stream(print_storage);
-  buffer.Print(print_stream);
-  llvm::StringRef print = print_stream.str();
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 0, kind:      'Semi', line: 1, column: 1, "
-                    "indent: 1, spelling: ';', has_trailing_space: true }"));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 1, kind: 'EndOfFile', line: 1, column: 2, "
-                    "indent: 1, spelling: '' }"));
-  EXPECT_TRUE(print.empty()) << print;
-}
-
 TEST_F(LexerTest, PrintingInteger) {
   auto buffer = Lex("123");
   ASSERT_FALSE(buffer.has_errors());
@@ -1055,11 +1011,13 @@ TEST_F(LexerTest, PrintingInteger) {
   llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
   llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 0, kind: 'IntegerLiteral', line: 1, "
+              StrEq("{ index: 0, kind: 'IntegerLiteral', line: 1, "
                     "column: 1, indent: 1, spelling: '123', value: `123`, "
-                    "has_trailing_space: true }"));
+                    "has_trailing_space: true },"));
   EXPECT_THAT(GetAndDropLine(print), HasSubstr("'EndOfFile'"));
+  EXPECT_THAT(GetAndDropLine(print), StrEq("]"));
   EXPECT_TRUE(print.empty()) << print;
 }
 
@@ -1070,12 +1028,14 @@ TEST_F(LexerTest, PrintingReal) {
   llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
   llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
   EXPECT_THAT(
       GetAndDropLine(print),
-      StrEq(
-          "token: { index: 0, kind: 'RealLiteral', line: 1, column: 1, indent: "
-          "1, spelling: '2.5', value: `25*10^-1`, has_trailing_space: true }"));
+      StrEq("{ index: 0, kind: 'RealLiteral', line: 1, column: 1, indent: "
+            "1, spelling: '2.5', value: `25*10^-1`, has_trailing_space: true "
+            "},"));
   EXPECT_THAT(GetAndDropLine(print), HasSubstr("'EndOfFile'"));
+  EXPECT_THAT(GetAndDropLine(print), StrEq("]"));
   EXPECT_TRUE(print.empty()) << print;
 }
 
@@ -1087,25 +1047,27 @@ TEST_F(LexerTest, PrintingPadding) {
   llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
   llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 0, kind:  'OpenParen', line: 1, column: "
-                    "1, indent: 1, spelling: '(', closing_token: 4 }"));
+              StrEq("{ index: 0, kind:  'OpenParen', line: 1, column: "
+                    "1, indent: 1, spelling: '(', closing_token: 4 },"));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 1, kind:       'Semi', line: 1, column: "
-                    "2, indent: 1, spelling: ';' }"));
+              StrEq("{ index: 1, kind:       'Semi', line: 1, column: "
+                    "2, indent: 1, spelling: ';' },"));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 2, kind: 'Identifier', line: 1, column: "
-                    "3, indent: 1, spelling: 'foo', identifier: 0 }"));
+              StrEq("{ index: 2, kind: 'Identifier', line: 1, column: "
+                    "3, indent: 1, spelling: 'foo', identifier: 0 },"));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 3, kind:       'Semi', line: 1, column: "
-                    "6, indent: 1, spelling: ';' }"));
+              StrEq("{ index: 3, kind:       'Semi', line: 1, column: "
+                    "6, indent: 1, spelling: ';' },"));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 4, kind: 'CloseParen', line: 1, column: "
+              StrEq("{ index: 4, kind: 'CloseParen', line: 1, column: "
                     "7, indent: 1, spelling: ')', opening_token: 0, "
-                    "has_trailing_space: true }"));
+                    "has_trailing_space: true },"));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 5, kind:  'EndOfFile', line: 1, column: "
-                    "8, indent: 1, spelling: '' }"));
+              StrEq("{ index: 5, kind:  'EndOfFile', line: 1, column: "
+                    "8, indent: 1, spelling: '' },"));
+  EXPECT_THAT(GetAndDropLine(print), StrEq("]"));
   EXPECT_TRUE(print.empty()) << print;
 }
 
@@ -1117,22 +1079,20 @@ TEST_F(LexerTest, PrintingPaddingDigits) {
   llvm::raw_string_ostream print_stream(print_storage);
   buffer.Print(print_stream);
   llvm::StringRef print = print_stream.str();
-  EXPECT_THAT(
-      GetAndDropLine(print),
-      StrEq("token: { index: 0, kind:      'Semi', line:  1, column:  1, "
-            "indent: 1, spelling: ';', has_trailing_space: true }"));
-  EXPECT_THAT(
-      GetAndDropLine(print),
-      StrEq("token: { index: 1, kind:      'Semi', line: 11, column:  9, "
-            "indent: 9, spelling: ';' }"));
-  EXPECT_THAT(
-      GetAndDropLine(print),
-      StrEq("token: { index: 2, kind:      'Semi', line: 11, column: 10, "
-            "indent: 9, spelling: ';', has_trailing_space: true }"));
-  EXPECT_THAT(
-      GetAndDropLine(print),
-      StrEq("token: { index: 3, kind: 'EndOfFile', line: 11, column: 11, "
-            "indent: 9, spelling: '' }"));
+  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
+  EXPECT_THAT(GetAndDropLine(print),
+              StrEq("{ index: 0, kind:      'Semi', line:  1, column:  1, "
+                    "indent: 1, spelling: ';', has_trailing_space: true },"));
+  EXPECT_THAT(GetAndDropLine(print),
+              StrEq("{ index: 1, kind:      'Semi', line: 11, column:  9, "
+                    "indent: 9, spelling: ';' },"));
+  EXPECT_THAT(GetAndDropLine(print),
+              StrEq("{ index: 2, kind:      'Semi', line: 11, column: 10, "
+                    "indent: 9, spelling: ';', has_trailing_space: true },"));
+  EXPECT_THAT(GetAndDropLine(print),
+              StrEq("{ index: 3, kind: 'EndOfFile', line: 11, column: 11, "
+                    "indent: 9, spelling: '' },"));
+  EXPECT_THAT(GetAndDropLine(print), StrEq("]"));
   EXPECT_TRUE(print.empty()) << print;
 }
 
@@ -1146,34 +1106,34 @@ TEST_F(LexerTest, PrintingAsYaml) {
   print_stream.flush();
 
   EXPECT_THAT(Yaml::Value::FromText(print_output),
-              ElementsAre(Yaml::MappingValue{
-                  {"token", Yaml::MappingValue{{"index", "0"},
-                                               {"kind", "Semi"},
-                                               {"line", "2"},
-                                               {"column", "2"},
-                                               {"indent", "2"},
-                                               {"spelling", ";"},
-                                               {"has_trailing_space", "true"}}},
-                  {"token", Yaml::MappingValue{{"index", "1"},
-                                               {"kind", "Semi"},
-                                               {"line", "5"},
-                                               {"column", "1"},
-                                               {"indent", "1"},
-                                               {"spelling", ";"},
-                                               {"has_trailing_space", "true"}}},
-                  {"token", Yaml::MappingValue{{"index", "2"},
-                                               {"kind", "Semi"},
-                                               {"line", "5"},
-                                               {"column", "3"},
-                                               {"indent", "1"},
-                                               {"spelling", ";"},
-                                               {"has_trailing_space", "true"}}},
-                  {"token", Yaml::MappingValue{{"index", "3"},
-                                               {"kind", "EndOfFile"},
-                                               {"line", "15"},
-                                               {"column", "1"},
-                                               {"indent", "1"},
-                                               {"spelling", ""}}}}));
+              ElementsAre(Yaml::SequenceValue{
+                  Yaml::MappingValue{{"index", "0"},
+                                     {"kind", "Semi"},
+                                     {"line", "2"},
+                                     {"column", "2"},
+                                     {"indent", "2"},
+                                     {"spelling", ";"},
+                                     {"has_trailing_space", "true"}},
+                  Yaml::MappingValue{{"index", "1"},
+                                     {"kind", "Semi"},
+                                     {"line", "5"},
+                                     {"column", "1"},
+                                     {"indent", "1"},
+                                     {"spelling", ";"},
+                                     {"has_trailing_space", "true"}},
+                  Yaml::MappingValue{{"index", "2"},
+                                     {"kind", "Semi"},
+                                     {"line", "5"},
+                                     {"column", "3"},
+                                     {"indent", "1"},
+                                     {"spelling", ";"},
+                                     {"has_trailing_space", "true"}},
+                  Yaml::MappingValue{{"index", "3"},
+                                     {"kind", "EndOfFile"},
+                                     {"line", "15"},
+                                     {"column", "1"},
+                                     {"indent", "1"},
+                                     {"spelling", ""}}}));
 }
 
 TEST_F(LexerTest, PrintToken) {
@@ -1183,10 +1143,11 @@ TEST_F(LexerTest, PrintToken) {
   llvm::raw_string_ostream print_stream(print_output);
   buffer.Print(print_stream);
   llvm::StringRef print = print_stream.str();
+  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
   EXPECT_THAT(GetAndDropLine(print),
-              StrEq("token: { index: 0, kind: 'IntegerLiteral', line: 1, "
+              StrEq("{ index: 0, kind: 'IntegerLiteral', line: 1, "
                     "column: 1, indent: 1, spelling: '0x9', value: `9`, "
-                    "has_trailing_space: true }"));
+                    "has_trailing_space: true },"));
 }
 
 }  // namespace

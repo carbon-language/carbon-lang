@@ -2,29 +2,29 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 interface Vector {
-  fn Add[me: Self](b: Self) -> Self;
-  fn Scale[me: Self](v: i32) -> Self;
+  fn Add[self: Self](b: Self) -> Self;
+  fn Scale[self: Self](v: i32) -> Self;
 }
 
 class Point {
   var x: i32;
   var y: i32;
   impl Point as Vector {
-    fn Add[me: Point](b: Point) -> Point {
-      return {.x = me.x + b.x, .y = me.y + b.y};
+    fn Add[self: Point](b: Point) -> Point {
+      return {.x = self.x + b.x, .y = self.y + b.y};
     }
-    fn Scale[me: Point](v: i32) -> i32 {
+    fn Scale[self: Point](v: i32) -> i32 {
       return 0;
-    // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_bad_member.carbon:[[@LINE+3]]: type error in member of implementation
-    // CHECK:expected: fn (i32) -> class Point
-    // CHECK:actual: fn (i32) -> i32
+    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_bad_member.carbon:[[@LINE+3]]: type error in member of implementation
+    // CHECK:STDERR: expected: fn (i32) -> class Point
+    // CHECK:STDERR: actual: fn (i32) -> i32
     }
   }
 }

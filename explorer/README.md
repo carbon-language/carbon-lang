@@ -57,6 +57,32 @@ builders in [`error_builders.h`](common/error_builders.h). Errors caused by bugs
 in `explorer` itself should be reported with
 [`CHECK` or `FATAL`](../common/check.h).
 
+### `Decompose` functions
+
+Many of explorer's data structures provide a `Decompose` method, which allows
+simple data types to be generically decomposed into their fields. The
+`Decompose` function for a type takes a function and calls it with the fields of
+that type. For example:
+
+```
+class MyType {
+ public:
+  MyType(Type1 arg1, Type2 arg2) : arg1_(arg1), arg2_(arg2) {}
+
+  template <typename F>
+  auto Decompose(F f) const { return f(arg1_, arg2_); }
+
+ private:
+  Type1 arg1_;
+  Type2 arg2_;
+};
+```
+
+Where possible, a value equivalent to the original value should be created by
+passing the given arguments to the constructor of the type. For example,
+`my_value.Decompose([](auto ...args) { return MyType(args...); })` should
+recreate the original value.
+
 ## Example Programs (Regression Tests)
 
 The [`testdata/`](testdata/) subdirectory includes some example programs with
@@ -72,9 +98,9 @@ boilerplate at the top:
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
 // CHECK:result: 0
 
 package ExplorerTest api;
@@ -83,23 +109,16 @@ package ExplorerTest api;
 To explain this boilerplate:
 
 -   The standard copyright is expected.
+-   The `AUTOUPDATE` line indicates that `RUN` and `CHECK` lines will be
+    automatically inserted immediately below by the `./lit_autoupdate.py`
+    script.
 -   The `RUN` lines indicate two commands for `lit` to execute using the file:
     one without trace and debug output, one with.
-    -   Output is piped to `FileCheck` for verification.
-    -   Setting `-allow-unused-prefixes` to false when processing the ordinary
-        output, and true when handling the trace output, allows us to omit the
-        tracing output from the `CHECK` lines, while ensuring they cover all
-        non-tracing output.
-    -   Setting `-match-full-lines` in both cases indicates that each `CHECK`
-        line must match a complete output line, with no extra characters before
-        or after the `CHECK` pattern.
     -   `RUN:` will be followed by the `not` command when failure is expected.
         In particular, `RUN: not explorer ...`.
-    -   `%s` is a
-        [`lit` substitution](https://llvm.org/docs/CommandGuide/lit.html#substitutions)
-        for the path to the given test file.
--   The `AUTOUPDATE` line indicates that `CHECK` lines will be automatically
-    inserted immediately below by the `./update_checks.py` script.
+    -   The full command is in `lit.cfg.py`; it will run explorer and pass
+        results to
+        [`FileCheck`](https://llvm.org/docs/CommandGuide/FileCheck.html).
 -   The `CHECK` lines indicate expected output, verified by `FileCheck`.
     -   Where a `CHECK` line contains text like `{{.*}}`, the double curly
         braces indicate a contained regular expression.
@@ -107,8 +126,10 @@ To explain this boilerplate:
 
 ### Useful commands
 
--   `./update_checks.py` -- Updates expected output.
+-   `./lit_autodupate.py` -- Updates expected output.
+    -   This can be combined with `git diff` to see changes in output.
 -   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
+-   `bazel run testdata/DIR/FILE.carbon.run` -- Runs explorer on the file.
 
 ### Updating fuzzer logic after making AST changes
 

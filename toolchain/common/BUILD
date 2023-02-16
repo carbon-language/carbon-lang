@@ -5,6 +5,40 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "enum_base",
+    hdrs = ["enum_base.h"],
+    deps = [
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "enum_base_test_def",
+    textual_hdrs = ["enum_base_test.def"],
+)
+
+cc_test(
+    name = "enum_base_test",
+    srcs = ["enum_base_test.cpp"],
+    deps = [
+        ":enum_base",
+        ":enum_base_test_def",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "index_base",
+    hdrs = ["index_base.h"],
+    deps = [
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "yaml_test_helpers",
     testonly = 1,
     srcs = ["yaml_test_helpers.cpp"],

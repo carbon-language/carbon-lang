@@ -50,14 +50,14 @@ constraint WidgetC {
 }
 
 abstract class Abstract {
-  abstract fn DoSomething[me: Self]();
+  abstract fn DoSomething[self: Self]();
 }
 
 base class Widget {
-  virtual fn Print[addr me: Self*](var i: i64, x: f32 = 4.2, _: bool);
+  virtual fn Print[addr self: Self*](var i: i64, x: f32 = 4.2, _: bool);
 }
 
-fn Widget.Print[addr me: Self*](var i: i64, x: f32, _: bool, 47) {
+fn Widget.Print[addr self: Self*](var i: i64, x: f32, _: bool, 47) {
   Carbon.Print("test" + "t\u{FFFF}his");
   Carbon.Print(
       """
@@ -71,19 +71,19 @@ fn Widget.Print[addr me: Self*](var i: i64, x: f32, _: bool, 47) {
       """);
 }
 
-class FancyWidget(T:! Type) extends Widget {
-  impl fn Print[me: Self]();
+class FancyWidget(T:! type) extends Widget {
+  impl fn Print[self: Self]();
 
   impl as Add(T) {
-    fn Op[me: Self]();
+    fn Op[self: Self]();
   }
 }
 
-fn FancyWidget(T:! Type).Print[me: Self]() {
+fn FancyWidget(T:! type).Print[self: Self]() {
   Carbon.Print("more test");
 }
 
-impl forall [T:! Type] FancyWidget(T) as Printable {
+impl forall [T:! type] FancyWidget(T) as Printable {
   alias Print = FancyWidget(T).Print;
 }
 </code></pre>

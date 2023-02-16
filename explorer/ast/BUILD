@@ -37,30 +37,32 @@ cc_library(
 cc_library(
     name = "ast",
     srcs = [
+        "bindings.cpp",
         "declaration.cpp",
+        "element.cpp",
         "expression.cpp",
-        "member.cpp",
         "pattern.cpp",
         "statement.cpp",
     ],
     hdrs = [
         "ast.h",
+        "bindings.h",
         "declaration.h",
+        "element.h",
         "expression.h",
         "impl_binding.h",
-        "member.h",
         "pattern.h",
         "return_term.h",
         "statement.h",
+        "value_node.h",
     ],
     deps = [
         ":ast_node",
-        ":bindings",
         ":library_name",
         ":paren_contents",
-        ":static_scope",
         ":value_category",
         "//common:check",
+        "//common:error",
         "//common:indirect_value",
         "//common:ostream",
         "//explorer/common:arena",
@@ -99,15 +101,6 @@ cc_test(
     ],
 )
 
-cc_library(
-    name = "bindings",
-    srcs = ["bindings.cpp"],
-    hdrs = ["bindings.h"],
-    deps = [
-        "//explorer/common:nonnull",
-    ],
-)
-
 cc_test(
     name = "expression_test",
     srcs = ["expression_test.cpp"],
@@ -136,6 +129,20 @@ cc_library(
 )
 
 cc_test(
+    name = "element_test",
+    srcs = ["element_test.cpp"],
+    deps = [
+        ":ast",
+        ":paren_contents",
+        "//common:gtest_main",
+        "//explorer/common:arena",
+        "//explorer/interpreter:action_and_value",
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
     name = "pattern_test",
     srcs = ["pattern_test.cpp"],
     deps = [
@@ -153,8 +160,7 @@ cc_library(
     srcs = ["static_scope.cpp"],
     hdrs = ["static_scope.h"],
     deps = [
-        ":ast_node",
-        ":value_category",
+        ":ast",
         "//common:check",
         "//common:error",
         "//explorer/common:error_builders",

@@ -79,7 +79,7 @@ auto ActionStack::ValueOfNode(ValueNodeView value_node,
   // We don't know the value of this node, but at compile time we may still be
   // able to form a symbolic value for it. For example, in
   //
-  //   fn F[T:! Type](x: T) {}
+  //   fn F[T:! type](x: T) {}
   //
   // ... we don't know the value of `T` but can still symbolically evaluate it
   // to a `VariableType`. At runtime we need actual values.
@@ -144,7 +144,6 @@ static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
     case Action::Kind::ExpressionAction:
     case Action::Kind::WitnessAction:
     case Action::Kind::LValAction:
-    case Action::Kind::PatternAction:
       return FinishActionKind::Value;
     case Action::Kind::StatementAction:
     case Action::Kind::DeclarationAction:
@@ -152,6 +151,7 @@ static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
       return FinishActionKind::NoValue;
     case Action::Kind::ScopeAction:
     case Action::Kind::CleanUpAction:
+    case Action::Kind::DestroyAction:
       return FinishActionKind::NeverCalled;
   }
 }
@@ -238,7 +238,7 @@ auto ActionStack::UnwindToWithCaptureScopesToDestroy(
     auto& scope = item->scope();
     if (scope && item->kind() != Action::Kind::CleanUpAction) {
       std::unique_ptr<Action> cleanup_action =
-          std::make_unique<CleanupAction>(std::move(*scope));
+          std::make_unique<CleanUpAction>(std::move(*scope));
       scopes_to_destroy.push(std::move(cleanup_action));
     }
   }
@@ -313,11 +313,7 @@ void ActionStack::PopScopes(
   while (!todo_.IsEmpty() && llvm::isa<ScopeAction>(*todo_.Top())) {
     auto act = todo_.Pop();
     if (act->scope()) {
-      if ((*act->scope()).DestructionState() <
-          RuntimeScope::State::CleanUpped) {
-        (*act->scope()).TransitState();
-        cleanup_stack.push(std::move(act));
-      }
+      cleanup_stack.push(std::move(act));
     }
   }
 }
@@ -336,7 +332,7 @@ void ActionStack::PushCleanUpActions(
     auto& act = actions.top();
     if (act->scope()) {
       std::unique_ptr<Action> cleanup_action =
-          std::make_unique<CleanupAction>(std::move(*act->scope()));
+          std::make_unique<CleanUpAction>(std::move(*act->scope()));
       todo_.Push(std::move(cleanup_action));
     }
     actions.pop();
@@ -347,7 +343,7 @@ void ActionStack::PushCleanUpAction(std::unique_ptr<Action> act) {
   auto& scope = act->scope();
   if (scope && act->kind() != Action::Kind::CleanUpAction) {
     std::unique_ptr<Action> cleanup_action =
-        std::make_unique<CleanupAction>(std::move(*scope));
+        std::make_unique<CleanUpAction>(std::move(*scope));
     todo_.Push(std::move(cleanup_action));
   }
 }

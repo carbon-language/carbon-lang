@@ -2,19 +2,19 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 __mixin Operations {
-  export fn Square[me: Self](x:i32) -> i32{
+  export fn Square[self: Self](x:i32) -> i32{
     return x * x;
   }
 }
 
-// CHECK:SYNTAX ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_in_global.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting END_OF_FILE
+// CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_in_global.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting END_OF_FILE
 __mix Operations;
 
 class Point {

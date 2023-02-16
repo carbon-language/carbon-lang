@@ -151,9 +151,9 @@ and the language:
     Carbon. We call this the [Carbon Explorer](/explorer/).
 
 If you're interested in contributing, we would love help
-[completing the 0.1 language designs](/docs/project/roadmap.md#completing-the-language-design),
+[completing the 0.1 language designs](/docs/project/roadmap.md#complete-design-coverage-of-the-01-languages-necessary-features),
 and
-[completing the Carbon Explorer implementation of this design](/docs/project/roadmap.md#demo-implementation-of-core-features-with-working-examples).
+[completing the Carbon Explorer implementation of this design](/docs/project/roadmap.md#complete-01-language-implementation-coverage-in-the-carbon-explorer).
 We are also currently working to get more broad feedback and participation from
 the C++ community. Beyond that, we plan to prioritize C++ interoperability and a
 realistic toolchain that implements the 0.1 language and can be used to evaluate
@@ -299,6 +299,15 @@ Learn more about the Carbon project:
 -   [Language design overview](/docs/design)
 -   [Carbon Explorer](/explorer)
 -   [FAQ](/docs/project/faq.md)
+
+## Conference talks
+
+Past Carbon focused talks from the community:
+
+-   [Carbon Language: An experimental successor to C++](https://www.youtube.com/watch?v=omrY53kbVoA),
+    CppNorth 2022
+-   [Carbon Language: Syntax and trade-offs](https://www.youtube.com/watch?v=9Y2ivB8VaIs),
+    Core C++ 2022
 
 ## Join us
 

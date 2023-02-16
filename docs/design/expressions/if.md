@@ -87,8 +87,8 @@ The interface `CommonTypeWith` is used to customize the behavior of
 `CommonType`:
 
 ```
-interface CommonTypeWith(U:! Type) {
-  let Result:! Type
+interface CommonTypeWith(U:! type) {
+  let Result:! type
     where Self is ImplicitAs(.Self) and
           U is ImplicitAs(.Self);
 }
@@ -120,18 +120,16 @@ The interface `SymmetricCommonTypeWith` is an implementation detail of the
 `CommonType` constraint. It is defined and implemented as follows:
 
 ```
-interface SymmetricCommonTypeWith(U:! Type) {
-  let Result:! Type
+interface SymmetricCommonTypeWith(U:! type) {
+  let Result:! type
     where Self is ImplicitAs(.Self) and
           U is ImplicitAs(.Self);
 }
 match_first {
-  impl [T:! Type, U:! CommonTypeWith(T)] T as SymmetricCommonTypeWith(U) {
-    let Result:! Type = U.Result;
-  }
-  impl [U:! Type, T:! CommonTypeWith(U)] T as SymmetricCommonTypeWith(U) {
-    let Result:! Type = T.Result;
-  }
+  impl forall [T:! type, U:! CommonTypeWith(T)]
+      T as SymmetricCommonTypeWith(U) where .Result = U.Result {}
+  impl forall [U:! type, T:! CommonTypeWith(U)]
+      T as SymmetricCommonTypeWith(U) where .Result = T.Result {}
 }
 ```
 
@@ -154,14 +152,10 @@ the `CommonType` constraint is not met. For example, given:
 
 ```
 // Implementation #1
-impl [T:! Type] MyX as CommonTypeWith(T) {
-  let Result:! Type = MyX;
-}
+impl forall [T:! type] MyX as CommonTypeWith(T) where .Result = MyX {}
 
 // Implementation #2
-impl [T:! Type] MyY as CommonTypeWith(T) {
-  let Result:! Type = MyY;
-}
+impl forall [T:! type] MyY as CommonTypeWith(T) where .Result = MyY {}
 ```
 
 `MyX as CommonTypeWith(MyY)` will select #1, and `MyY as CommonTypeWith(MyX)`
@@ -173,9 +167,7 @@ because result types differ.
 If `T` is the same type as `U`, the result is that type:
 
 ```
-final impl [T:! Type] T as CommonTypeWith(T) {
-  let Result:! Type = T;
-}
+final impl forall [T:! type] T as CommonTypeWith(T) where .Result = T {}
 ```
 
 _Note:_ This rule is intended to be considered more specialized than the other
@@ -183,7 +175,7 @@ rules in this document.
 
 Because this `impl` is declared `final`, `T.(CommonType(T)).Result` is always
 assumed to be `T`, even in contexts where `T` involves a generic parameter and
-so the result would normally be an unknown type whose type-of-type is `Type`.
+so the result would normally be an unknown type whose type-of-type is `type`.
 
 ```
 fn F[T:! Hashable](c: bool, x: T, y: T) -> HashCode {
@@ -197,9 +189,8 @@ fn F[T:! Hashable](c: bool, x: T, y: T) -> HashCode {
 If `T` implicitly converts to `U`, the common type is `U`:
 
 ```
-impl [T:! Type, U:! ImplicitAs(T)] T as CommonTypeWith(U) {
-  let Result:! Type = T;
-}
+impl forall [T:! type, U:! ImplicitAs(T)]
+    T as CommonTypeWith(U) where .Result = T {}
 ```
 
 _Note:_ If an implicit conversion is possible in both directions, and no more
@@ -210,12 +201,8 @@ for such a case, `CommonTypeWith` implementations in both directions must be
 provided to override the blanket `impl`s in both directions:
 
 ```
-impl MyString as CommonTypeWith(YourString) {
-  let Result:! Type = MyString;
-}
-impl YourString as CommonTypeWith(MyString) {
-  let Result:! Type = MyString;
-}
+impl MyString as CommonTypeWith(YourString) where .Result = MyString {}
+impl YourString as CommonTypeWith(MyString) where .Result = MyString {}
 var my_string: MyString;
 var your_string: YourString;
 // The type of `also_my_string` is `MyString`.

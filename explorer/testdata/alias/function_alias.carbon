@@ -2,17 +2,17 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:result: 7
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 7
 
 package ExplorerTest api;
 
 alias TypeAlias = i32;
 
 fn Function(a: i32, b: TypeAlias) -> i32 { return a + b; }
-fn GenericFunction[T:! Type](x: T) -> T { return x; }
+fn GenericFunction[T:! type](x: T) -> T { return x; }
 
 alias FunctionAlias = Function;
 alias GenericFunctionAlias = GenericFunction;

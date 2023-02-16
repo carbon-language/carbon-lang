@@ -12,7 +12,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 3298ddab3c13dd77d6ce1fc0baf97691430d84b0 # frozen: v4.3.0
+    rev: f71fa2c1f9cf5cb705f73dffe4b21f7c61470ba9 # frozen: v4.4.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -45,11 +45,11 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: 2018e667a6a36ee3fbfa8041cd36512f92f60d49 # frozen: 22.8.0
+    rev: 2ddea293a88919650266472186620a98a4a8bb37 # frozen: 22.12.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: d0a4882e1c96eca274f90b273f0f809ab3d98aff # frozen: v3.0.0-alpha.0
+    rev: cafd5506f18eea191804850dacc0a4264772d59d # frozen: v3.0.0-alpha.4
     hooks:
       - id: prettier
   - repo: local
@@ -60,11 +60,11 @@ repos:
         args: ['-r', '.']
         language: python
         files: |
-          '(?x)^(
+          (?x)^(
             .*BUILD.*|
             .*WORKSPACE.*|
             .*\.bzl
-          )$'
+          )$
       - id: clang-format
         name: clang-format
         entry: clang-format
@@ -87,7 +87,7 @@ repos:
         name: Check header guards
         entry: scripts/check_header_guards.py
         language: python
-        files: '^.*\.h$'
+        files: ^.*\.h$
       - id: check-sha-filenames
         # This may rename files, so it's deliberately between formatters and
         # linters.
@@ -95,6 +95,16 @@ repos:
         entry: scripts/check_sha_filenames.py
         language: python
         files: ^.*/fuzzer_corpus/.*$
+      - id: check-toolchain-diagnostics
+        name: Check toolchain diagnostics
+        entry: toolchain/diagnostics/check_diagnostics.py
+        language: python
+        files: |
+          (?x)^(
+              toolchain/.*\.cpp|
+              toolchain/.*\.h|
+              toolchain/diagnostics/diagnostic_registry\.def
+          )$
 
   # Run linters last, as formatters and other checks may fix issues.
   - repo: local
@@ -106,11 +116,11 @@ repos:
         files: ^.*/BUILD$
         pass_filenames: false
   - repo: https://github.com/PyCQA/flake8
-    rev: f8e1b317742036ff11ff86356fd2b68147e169f7 # frozen: 5.0.4
+    rev: c838a5e98878f17889cfce311e1406d252f87ec5 # frozen: 6.0.0
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'fde4bb992b03943ecb94207a52739ba07957bd06' # frozen: v0.971
+    rev: '0b037c2b59aa62dc3be3287d175295f1a5547eb9' # frozen: v0.991
     hooks:
       - id: mypy
         # Use setup.cfg to match the command line.
@@ -132,7 +142,7 @@ repos:
               .*_test\.py
           )$
   - repo: https://github.com/codespell-project/codespell
-    rev: c6ecb9fc51571a77bc92e6c265c358aef7cb6c38 # frozen: v2.2.1
+    rev: 055cb2a9bc1e98a9800a352c53c38a50faf62dc3 # frozen: v2.2.2
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
@@ -180,7 +190,6 @@ repos:
               .github/pull_request_template.md|
               compile_flags.txt|
               third_party/.*|
-              bazel/llvm_patches/.*\.patch|
               .*\.def|
               .*\.svg|
               .*/fuzzer_corpus/.*|
@@ -188,10 +197,10 @@ repos:
           )$
       - id: check-links
 
-# Most third-party code is in submodules; local commits are excluded here.
-# We fully exclude fuzzer corpus directories as they are generated binary data.
+# This excludes third-party code, and patches to third-party code.
 exclude: |
   (?x)^(
+      bazel/patches/.*\.patch|
       third_party/examples/.*/carbon/.*|
       third_party/llvm-project/.*|
   )$

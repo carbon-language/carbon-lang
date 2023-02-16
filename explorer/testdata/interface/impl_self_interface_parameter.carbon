@@ -2,15 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:result: 0
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-interface MyAddWith(T:! Type) {
-  fn Op[me: Self](b: T) -> Self;
+interface MyAddWith(T:! type) {
+  fn Op[self: Self](b: T) -> Self;
 }
 
 class Point {
@@ -20,12 +20,12 @@ class Point {
 
 // Allowed: `Self` means `Point` after `as`
 impl Point as MyAddWith(Self) {
-  fn Op[me: Point](b: Point) -> Point {
-    return {.x = me.x + b.x, .y = me.y + b.y};
+  fn Op[self: Point](b: Point) -> Point {
+    return {.x = self.x + b.x, .y = self.y + b.y};
   }
 }
 
-fn DoAddGeneric[T:! Type, U:! MyAddWith(T)](a: U, b: T) -> U {
+fn DoAddGeneric[T:! type, U:! MyAddWith(T)](a: U, b: T) -> U {
   return a.Op(b);
 }
 

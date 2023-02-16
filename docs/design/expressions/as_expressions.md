@@ -78,7 +78,7 @@ var m: auto = b as T as U;
 ```
 
 **Note:** `b as (bool as Hashable)` is valid but not useful, because
-[the second operand of `as` is implicitly converted to type `Type`](#extensibility).
+[the second operand of `as` is implicitly converted to type `type`](#extensibility).
 This expression therefore has the same interpretation as `b as bool`.
 
 **TODO:** We should consider making `as` expressions left-associative now that
@@ -164,15 +164,15 @@ Explicit casts can be defined for user-defined types such as
 [classes](../classes.md) by implementing the `As` interface:
 
 ```
-interface As(Dest:! Type) {
-  fn Convert[me: Self]() -> Dest;
+interface As(Dest:! type) {
+  fn Convert[self: Self]() -> Dest;
 }
 ```
 
 The expression `x as U` is rewritten to `x.(As(U).Convert)()`.
 
 **Note:** This rewrite causes the expression `U` to be implicitly converted to
-type `Type`. The program is invalid if this conversion is not possible.
+type `type`. The program is invalid if this conversion is not possible.
 
 ## Alternatives considered
 

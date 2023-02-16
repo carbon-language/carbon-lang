@@ -2,23 +2,23 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:result: 12
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 12
 
 package ExplorerTest api;
 
-interface SwizzleWith(T:! Type) {
-  fn Op[me: Self](x: T) -> i32;
+interface SwizzleWith(T:! type) {
+  fn Op[self: Self](x: T) -> i32;
 }
 
 // TODO: There should be some way to write this that includes
 // `SwizzleWith(.Self)` in the list of lookup contexts.
-alias Swizzle = Type where .Self is SwizzleWith(.Self);
+alias Swizzle = type where .Self is SwizzleWith(.Self);
 
 impl i32 as SwizzleWith(i32) {
-  fn Op[me: Self](x: Self) -> Self { return me * 10 + x; }
+  fn Op[self: Self](x: Self) -> Self { return self * 10 + x; }
 }
 
 fn F[T:! Swizzle](v: T, w: T) -> i32 {

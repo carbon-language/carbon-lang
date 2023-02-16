@@ -253,10 +253,10 @@ The `EqWith` interface is used to define the semantics of the `==` and `!=`
 operators for a given pair of types:
 
 ```
-interface EqWith(U:! Type) {
-  fn Equal[me: Self](u: U) -> bool;
-  default fn NotEqual[me: Self](u: U) -> bool {
-    return not (me == u);
+interface EqWith(U:! type) {
+  fn Equal[self: Self](u: U) -> bool;
+  default fn NotEqual[self: Self](u: U) -> bool {
+    return not (self == u);
   }
 }
 constraint Eq {
@@ -273,11 +273,11 @@ Given `x: T` and `y: U`:
 class Path {
   private var drive: String;
   private var path: String;
-  private fn CanonicalPath[me: Self]() -> String;
+  private fn CanonicalPath[self: Self]() -> String;
 
   external impl as Eq {
-    fn Equal[me: Self](other: Self) -> bool {
-      return (me.drive, me.CanonicalPath()) ==
+    fn Equal[self: Self](other: Self) -> bool {
+      return (self.drive, self.CanonicalPath()) ==
              (other.drive, other.CanonicalPath());
     }
   }
@@ -293,12 +293,12 @@ can be used:
 ```
 class MyInt {
   var value: i32;
-  fn Value[me: Self]() -> i32 { return me.value; }
+  fn Value[self: Self]() -> i32 { return self.value; }
 }
 external impl i32 as ImplicitAs(MyInt);
 external impl like MyInt as EqWith(like MyInt) {
-  fn Equal[me: Self](other: Self) -> bool {
-    return me.Value() == other.Value();
+  fn Equal[self: Self](other: Self) -> bool {
+    return self.Value() == other.Value();
   }
 }
 fn CompareBothWays(a: MyInt, b: i32, c: MyInt) -> bool {
@@ -316,17 +316,17 @@ operations should have no observable side-effects.
 
 ```
 external impl like MyFloat as EqWith(like MyFloat) {
-  fn Equal[me: MyFloat](other: MyFloat) -> bool {
-    if (me.IsNaN() or other.IsNaN()) {
+  fn Equal[self: MyFloat](other: MyFloat) -> bool {
+    if (self.IsNaN() or other.IsNaN()) {
       return false;
     }
-    return me.Representation() == other.Representation();
+    return self.Representation() == other.Representation();
   }
-  fn NotEqual[me: MyFloat](other: MyFloat) -> bool {
-    if (me.IsNaN() or other.IsNaN()) {
+  fn NotEqual[self: MyFloat](other: MyFloat) -> bool {
+    if (self.IsNaN() or other.IsNaN()) {
       return false;
     }
-    return me.Representation() != other.Representation();
+    return self.Representation() != other.Representation();
   }
 }
 ```
@@ -353,20 +353,20 @@ choice Ordering {
   Greater,
   Incomparable
 }
-interface OrderedWith(U:! Type) {
-  fn Compare[me: Self](u: U) -> Ordering;
-  default fn Less[me: Self](u: U) -> bool {
-    return me.Compare(u) == Ordering.Less;
+interface OrderedWith(U:! type) {
+  fn Compare[self: Self](u: U) -> Ordering;
+  default fn Less[self: Self](u: U) -> bool {
+    return self.Compare(u) == Ordering.Less;
   }
-  default fn LessOrEquivalent[me: Self](u: U) -> bool {
-    let c: Ordering = me.Compare(u);
+  default fn LessOrEquivalent[self: Self](u: U) -> bool {
+    let c: Ordering = self.Compare(u);
     return c == Ordering.Less or c == Ordering.Equivalent;
   }
-  default fn Greater[me: Self](u: U) -> bool {
-    return me.Compare(u) == Ordering.Greater;
+  default fn Greater[self: Self](u: U) -> bool {
+    return self.Compare(u) == Ordering.Greater;
   }
-  default fn GreaterOrEquivalent[me: Self](u: U) -> bool {
-    let c: Ordering = me.Compare(u);
+  default fn GreaterOrEquivalent[self: Self](u: U) -> bool {
+    let c: Ordering = self.Compare(u);
     return c == Ordering.Greater or c == Ordering.Equivalent;
   }
 }
@@ -395,12 +395,12 @@ class MyWidget {
   var width: i32;
   var height: i32;
 
-  fn Size[me: Self]() -> i32 { return me.width * me.height; }
+  fn Size[self: Self]() -> i32 { return self.width * self.height; }
 
   // Widgets are normally ordered by size.
   external impl as Ordered {
-    fn Compare[me: Self](other: Self) -> Ordering {
-      return me.Size().(Ordered.Compare)(other.Size());
+    fn Compare[self: Self](other: Self) -> Ordering {
+      return self.Size().(Ordered.Compare)(other.Size());
     }
   }
 }
@@ -420,8 +420,8 @@ fn ReverseOrdering(o: Ordering) -> Ordering {
 }
 external impl like MyInt as OrderedWith(like MyFloat);
 external impl like MyFloat as OrderedWith(like MyInt) {
-  fn Compare[me: Self](other: Self) -> Ordering {
-    return Reverse(other.(OrderedWith(Self).Compare)(me));
+  fn Compare[self: Self](other: Self) -> Ordering {
+    return Reverse(other.(OrderedWith(Self).Compare)(self));
   }
 }
 ```
@@ -432,7 +432,7 @@ implemented. The behaviors of such overrides should follow those of the above
 default implementations, and the members of an `OrderedWith` implementation
 should have no observable side-effects.
 
-`OrderedWith` implementations should be _transitive_. That is, given `V:! Type`,
+`OrderedWith` implementations should be _transitive_. That is, given `V:! type`,
 `U:! OrderedWith(V)`, `T:! OrderedWith(U) & OrderedWith(V)`, `a: T`, `b: U`,
 `c: V`, then:
 

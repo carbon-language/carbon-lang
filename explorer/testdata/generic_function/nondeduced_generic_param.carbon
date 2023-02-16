@@ -2,16 +2,16 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:result: 1
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 1
 
 package ExplorerTest api;
-class A(T:! Type) {
+class A(T:! type) {
   var v: T;
 }
-fn F(T:! Type, x: T) -> T {
+fn F(T:! type, x: T) -> T {
   var v: A(T) = {.v = x};
   return v.v;
 }

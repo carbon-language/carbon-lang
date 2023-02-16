@@ -139,10 +139,16 @@ message EqualsWhereClause {
   optional Expression rhs = 2;
 }
 
+message RewriteWhereClause {
+  optional string member_name = 1;
+  optional Expression replacement = 2;
+}
+
 message WhereClause {
   oneof kind {
     IsWhereClause is = 1;
     EqualsWhereClause equals = 2;
+    RewriteWhereClause rewrite = 3;
   }
 }
 
@@ -241,8 +247,27 @@ message ExpressionStatement {
 }
 
 message AssignStatement {
+  enum Operator {
+    Plain = 0;
+    Add = 1;
+    And = 2;
+    Div = 3;
+    Mul = 4;
+    Or = 5;
+    Sub = 6;
+    Mod = 7;
+    Xor = 8;
+    ShiftLeft = 9;
+    ShiftRight = 10;
+  }
   optional Expression lhs = 1;
   optional Expression rhs = 2;
+  optional Operator op = 3;
+}
+
+message IncrementDecrementStatement {
+  optional Expression operand = 1;
+  optional bool is_increment = 2;
 }
 
 message VariableDefinitionStatement {
@@ -321,6 +346,7 @@ message Statement {
     BreakStatement break_statement = 13;
     ContinueStatement continue_statement = 14;
     ForStatement for_statement = 15;
+    IncrementDecrementStatement inc_dec = 16;
   }
 }
 
@@ -340,14 +366,14 @@ message ReturnTerm {
 message FunctionDeclaration {
   optional string name = 1;
   repeated GenericBinding deduced_parameters = 2;
-  optional Pattern me_pattern = 3;
+  optional Pattern self_pattern = 3;
   optional TuplePattern param_pattern = 4;
   optional ReturnTerm return_term = 5;
   optional BlockStatement body = 6;
 }
 
 message DestructorDeclaration {
-  optional Pattern me_pattern = 1;
+  optional Pattern self_pattern = 1;
   optional BlockStatement body = 2;
 }
 
@@ -378,10 +404,23 @@ message LetDeclaration {
   // `let` declarations in general.
 }
 
+message InterfaceExtendsDeclaration {
+  optional Expression base = 1;
+}
+
+message InterfaceImplDeclaration {
+  optional Expression impl_type = 1;
+  optional Expression constraint = 2;
+}
+
 message InterfaceDeclaration {
   optional string name = 1;
   repeated Declaration members = 2;
-  optional GenericBinding self = 3;
+}
+
+message ConstraintDeclaration {
+  optional string name = 1;
+  repeated Declaration members = 2;
 }
 
 message ImplDeclaration {
@@ -395,6 +434,10 @@ message ImplDeclaration {
   optional Expression impl_type = 2;
   optional Expression interface = 3;
   repeated Declaration members = 4;
+}
+
+message MatchFirstDeclaration {
+  repeated Declaration impls = 1;
 }
 
 message AliasDeclaration {
@@ -416,6 +459,10 @@ message MixDeclaration {
   optional Expression mixin = 1;
 }
 
+message NamespaceDeclaration {
+  optional string name = 1;
+}
+
 message Declaration {
   oneof kind {
     FunctionDeclaration function = 1;
@@ -429,6 +476,11 @@ message Declaration {
     MixinDeclaration mixin = 9;
     MixDeclaration mix = 10;
     DestructorDeclaration destructor = 11;
+    InterfaceExtendsDeclaration interface_extends = 12;
+    InterfaceImplDeclaration interface_impl = 13;
+    ConstraintDeclaration constraint = 14;
+    MatchFirstDeclaration match_first = 15;
+    NamespaceDeclaration namespace = 16;
   }
 }
 

@@ -290,52 +290,52 @@ class RE2 {
 
   // TODO: Should a Carbonic RE2 support these?
   impl StringView as ImplicitAs(RE2) {
-    fn Convert[me: Self]() -> RE2 { return Make(me); }
+    fn Convert[self: Self]() -> RE2 { return Make(self); }
   }
   impl String as ImplicitAs(RE2) {
-    fn Convert[me: Self]() -> RE2 { return Make(me); }
+    fn Convert[self: Self]() -> RE2 { return Make(self); }
   }
   impl StringPiece as ImplicitAs(RE2) {
-    fn Convert[me: Self]() -> RE2 { return Make(me); }
+    fn Convert[self: Self]() -> RE2 { return Make(self); }
   }
 
   impl as Destroyable;
 
   // Returns whether RE2 was created properly.
-  fn ok[me: Self]() -> bool { return me.error_code() == ErrorCode.NoError; }
+  fn ok[self: Self]() -> bool { return self.error_code() == ErrorCode.NoError; }
 
   // The string specification for this RE2.  E.g.
   //   RE2 re("ab*c?d+");
   //   re.pattern();    // "ab*c?d+"
-  fn pattern[me: Self]() -> String { return me.pattern_; }
+  fn pattern[self: Self]() -> String { return self.pattern_; }
 
   // If RE2 could not be created properly, returns an error string.
   // Else returns the empty string.
-  fn error[me: Self]() -> String { return *me.error_; }
+  fn error[self: Self]() -> String { return *self.error_; }
 
   // If RE2 could not be created properly, returns an error code.
   // Else returns RE2::NoError (== 0).
-  fn error_code[me: Self]() -> ErrorCode { return me.error_code_; }
+  fn error_code[self: Self]() -> ErrorCode { return self.error_code_; }
 
   // If RE2 could not be created properly, returns the offending
   // portion of the regexp.
-  fn error_arg[me: Self]() -> String { return me.error_arg_; }
+  fn error_arg[self: Self]() -> String { return self.error_arg_; }
 
   // Returns the program size, a very approximate measure of a regexp's "cost".
   // Larger numbers are more expensive than smaller numbers.
-  fn ProgramSize[me: Self]() -> i32;
-  fn ReverseProgramSize[me: Self]() -> i32;
+  fn ProgramSize[self: Self]() -> i32;
+  fn ReverseProgramSize[self: Self]() -> i32;
 
   // If histogram is not null, outputs the program fanout
   // as a histogram bucketed by powers of 2.
   // Returns the number of the largest non-empty bucket.
-  fn ProgramFanout[me: Self](histogram: Cpp.std.vector(i32)*) -> i32;
-  fn ReverseProgramFanout[me: Self](histogram: Cpp.std.vector(i32)*) -> i32;
+  fn ProgramFanout[self: Self](histogram: Cpp.std.vector(i32)*) -> i32;
+  fn ReverseProgramFanout[self: Self](histogram: Cpp.std.vector(i32)*) -> i32;
 
   // Returns the underlying Regexp; not for general use.
   // Returns entire_regexp_ so that callers don't need
   // to know about prefix_ and prefix_foldcase_.
-  fn Regexp[me: Self]() -> package.Regexp* { return me.entire_regexp_; }
+  fn Regexp[self: Self]() -> package.Regexp* { return self.entire_regexp_; }
 
   /***** The array-based matching interface ******/
 
@@ -353,7 +353,7 @@ class RE2 {
   fn FindAndConsumeN(input: StringPiece*, re: RE2,
                      args: Array(const Arg*), n: i32) -> bool;
 
-  private fn Apply[template F:! Type, SP:! Type](f: F, sp: SP, re: Self) {
+  private fn Apply[template F:! type, SP:! type](f: F, sp: SP, re: Self) {
     return f(sp, re, nullptr, 0);
   }
 
@@ -535,7 +535,7 @@ class RE2 {
   // do not compile down to infinite repetitions.
   //
   // Returns true on success, false on error.
-  fn PossibleMatchRange[me: Self](min: String*, max: String*, maxlen: i32);
+  fn PossibleMatchRange[self: Self](min: String*, max: String*, maxlen: i32);
 
   // Generic matching interface
 
@@ -552,18 +552,18 @@ class RE2 {
   // Return the number of capturing subpatterns, or -1 if the
   // regexp wasn't valid on construction.  The overall match ($0)
   // does not count: if the regexp is "(a)(b)", returns 2.
-  fn NumberOfCapturingGroups[me: Self]() -> i32 { return me.num_captures_; }
+  fn NumberOfCapturingGroups[self: Self]() -> i32 { return self.num_captures_; }
 
   // Return a map from names to capturing indices.
   // The map records the index of the leftmost group
   // with the given name.
   // NOTE: Originally returned by reference with comment "valid until re is deleted".
-  fn NamedCapturingGroups[me: Self]() -> Map(String, i32);
+  fn NamedCapturingGroups[self: Self]() -> Map(String, i32);
 
   // Return a map from capturing indices to names.
   // The map has no entries for unnamed groups.
   // NOTE: Originally returned by reference with comment "valid until re is deleted".
-  fn CapturingGroupNames[me: Self]() -> Map(i32, String);
+  fn CapturingGroupNames[self: Self]() -> Map(i32, String);
 
   // General matching routine.
   // Match against text starting at offset startpos
@@ -586,7 +586,7 @@ class RE2 {
   // empty string, but note that on return, it will not be possible to tell
   // whether submatch i matched the empty string or did not match:
   // either way, submatch[i].data() == NULL.
-  fn Match[me: Self](text: StringPiece,
+  fn Match[self: Self](text: StringPiece,
                      startpos: i64,
                      endpos: i64,
                      re_anchor: Anchor,
@@ -602,7 +602,7 @@ class RE2 {
   //     '\' followed by anything other than a digit or '\'.
   // A true return value guarantees that Replace() and Extract() won't
   // fail because of a bad rewrite string.
-  fn CheckRewriteString[me: Self](rewrite: StringPiece, error: String*) -> bool;
+  fn CheckRewriteString[self: Self](rewrite: StringPiece, error: String*) -> bool;
 
   // Returns the maximum submatch needed for the rewrite to be done by
   // Replace(). E.g. if rewrite == "foo \\2,\\1", returns 2.
@@ -613,7 +613,7 @@ class RE2 {
   // Returns true on success.  This method can fail because of a malformed
   // rewrite string.  CheckRewriteString guarantees that the rewrite will
   // be successful.
-  fn Rewrite[me: Self](out: String*, rewrite: StringPiece,
+  fn Rewrite[self: Self](out: String*, rewrite: StringPiece,
                        vec: ArrayIterator(StringPiece), veclen: i32)
     -> bool;
 
@@ -696,50 +696,50 @@ class RE2 {
 
     impl CannedOptions as ImplicitAs(Self);
 
-    fn encoding[me: Self]() -> Encoding { return me.encoding_; }
-    fn set_encoding[addr me: Self*](encoding: Encoding) { me->encoding_ = encoding; }
+    fn encoding[self: Self]() -> Encoding { return self.encoding_; }
+    fn set_encoding[addr self: Self*](encoding: Encoding) { self->encoding_ = encoding; }
 
-    fn posix_syntax[me: Self]() -> bool { return me.posix_syntax_; }
-    fn set_posix_syntax[addr me: Self*](b: bool) { me->posix_syntax_ = b; }
+    fn posix_syntax[self: Self]() -> bool { return self.posix_syntax_; }
+    fn set_posix_syntax[addr self: Self*](b: bool) { self->posix_syntax_ = b; }
 
-    fn longest_match[me: Self]() -> bool { return me.longest_match_; }
-    fn set_longest_match[addr me: Self*](b: bool) { me->longest_match_ = b; }
+    fn longest_match[self: Self]() -> bool { return self.longest_match_; }
+    fn set_longest_match[addr self: Self*](b: bool) { self->longest_match_ = b; }
 
-    fn log_errors[me: Self]() -> bool { return me.log_errors_; }
-    fn set_log_errors[addr me: Self*](b: bool) { me->log_errors_ = b; }
+    fn log_errors[self: Self]() -> bool { return self.log_errors_; }
+    fn set_log_errors[addr self: Self*](b: bool) { self->log_errors_ = b; }
 
-    fn max_mem[me: Self]() -> i64 { return me.max_mem_; }
-    fn set_max_mem[addr me: Self*](m: i64) { me->max_mem_ = m; }
+    fn max_mem[self: Self]() -> i64 { return self.max_mem_; }
+    fn set_max_mem[addr self: Self*](m: i64) { self->max_mem_ = m; }
 
-    fn literal[me: Self]() -> bool { return me.literal_; }
-    fn set_literal[addr me: Self*](b: bool) { me->literal_ = b; }
+    fn literal[self: Self]() -> bool { return self.literal_; }
+    fn set_literal[addr self: Self*](b: bool) { self->literal_ = b; }
 
-    fn never_nl[me: Self]() -> bool { return me.never_nl_; }
-    fn set_never_nl[addr me: Self*](b: bool) { me->never_nl_ = b; }
+    fn never_nl[self: Self]() -> bool { return self.never_nl_; }
+    fn set_never_nl[addr self: Self*](b: bool) { self->never_nl_ = b; }
 
-    fn dot_nl[me: Self]() -> bool { return me.dot_nl_; }
-    fn set_dot_nl[addr me: Self*](b: bool) { me->dot_nl_ = b; }
+    fn dot_nl[self: Self]() -> bool { return self.dot_nl_; }
+    fn set_dot_nl[addr self: Self*](b: bool) { self->dot_nl_ = b; }
 
-    fn never_capture[me: Self]() -> bool { return me.never_capture_; }
-    fn set_never_capture[addr me: Self*](b: bool) { me->never_capture_ = b; }
+    fn never_capture[self: Self]() -> bool { return self.never_capture_; }
+    fn set_never_capture[addr self: Self*](b: bool) { self->never_capture_ = b; }
 
-    fn case_sensitive[me: Self]() -> bool { return me.case_sensitive_; }
-    fn set_case_sensitive[addr me: Self*](b: bool) { me->case_sensitive_ = b; }
+    fn case_sensitive[self: Self]() -> bool { return self.case_sensitive_; }
+    fn set_case_sensitive[addr self: Self*](b: bool) { self->case_sensitive_ = b; }
 
-    fn perl_classes[me: Self]() -> bool { return me.perl_classes_; }
-    fn set_perl_classes[addr me: Self*](b: bool) { me->perl_classes_ = b; }
+    fn perl_classes[self: Self]() -> bool { return self.perl_classes_; }
+    fn set_perl_classes[addr self: Self*](b: bool) { self->perl_classes_ = b; }
 
-    fn word_boundary[me: Self]() -> bool { return me.word_boundary_; }
-    fn set_word_boundary[addr me: Self*](b: bool) { me->word_boundary_ = b; }
+    fn word_boundary[self: Self]() -> bool { return self.word_boundary_; }
+    fn set_word_boundary[addr self: Self*](b: bool) { self->word_boundary_ = b; }
 
-    fn one_line[me: Self]() -> bool { return me.one_line_; }
-    fn set_one_line[addr me: Self*](b: bool) { me->one_line_ = b; }
+    fn one_line[self: Self]() -> bool { return self.one_line_; }
+    fn set_one_line[addr self: Self*](b: bool) { self->one_line_ = b; }
 
-    fn Copy[addr me: Self*](src: Options) {
-      *me = src;
+    fn Copy[addr self: Self*](src: Options) {
+      *self = src;
     }
 
-    fn ParseFlags[me: Self]() -> i32;
+    fn ParseFlags[self: Self]() -> i32;
 
     private var encoding_: Encoding;
     private var posix_syntax_: bool;
@@ -757,7 +757,7 @@ class RE2 {
   };
 
   // Returns the options set in the constructor.
-  fn options[me: Self]() -> Options { return me.options_; }
+  fn options[self: Self]() -> Options { return self.options_; }
 
   // Argument converters; see below.
   // TODO: Should these be package members not class members in Carbon
@@ -766,9 +766,9 @@ class RE2 {
   fn Hex[T:! Parse4ary](ptr: T*) -> Self.Arg;
   fn Octal[T:! Parse4ary](ptr: T*) -> Self.Arg;
 
-  private fn Init[addr me: Self](pattern: StringPiece, options: Options);
+  private fn Init[addr self: Self](pattern: StringPiece, options: Options);
 
-  private fn DoMatch[me: Self](text: StringPiece,
+  private fn DoMatch[self: Self](text: StringPiece,
                                re_anchor: Anchor,
                                consumed: i64*,
                                // TODO: Pointer to `const Arg`.
@@ -776,7 +776,7 @@ class RE2 {
                                n: i32)
     -> bool;
 
-  fn ReverseProg[me: Self]() -> package.Prog*;
+  fn ReverseProg[self: Self]() -> package.Prog*;
 
   // string regular expression
   private var pattern_: String;
@@ -853,30 +853,30 @@ class RE2.Arg {
   fn Make(nullptr) -> Self { return Make(nullptr as NullArg*); }
 
   interface Parseable {
-    fn Parse[addr me: Self*](str: StringView, n: i64) -> bool;
+    fn Parse[addr self: Self*](str: StringView, n: i64) -> bool;
   }
   match_first {
     impl [T:! Parse3ary] T as Parseable {
-      fn Parse[addr me: Self*](str: StringView, n: i64) -> bool {
-        return T.Parse(str, n, me);
+      fn Parse[addr self: Self*](str: StringView, n: i64) -> bool {
+        return T.Parse(str, n, self);
       }
     }
     impl [T:! Parse4ary] T as Parseable {
-      fn Parse[addr me: Self*](str: StringView, n: i64) -> bool {
-        return T.Parse(str, n, me, 10);
+      fn Parse[addr self: Self*](str: StringView, n: i64) -> bool {
+        return T.Parse(str, n, self, 10);
       }
     }
     impl [T:! ParseFrom] T as Parseable {
-      fn Parse[addr me: Self*](str: StringView, n: i64) -> bool {
-        if (me == nullptr) { return true; }
-        return T.Parse(str, n, me);
+      fn Parse[addr self: Self*](str: StringView, n: i64) -> bool {
+        if (self == nullptr) { return true; }
+        return T.Parse(str, n, self);
       }
     }
   }
 
   private class NullArg {}
   impl NullArg as Parseable {
-    fn Parse[addr me: Self*](str: StringView, n: i64) -> bool {
+    fn Parse[addr self: Self*](str: StringView, n: i64) -> bool {
       return true;
     }
   }
@@ -885,8 +885,8 @@ class RE2.Arg {
     return {.type_ = T, .arg_ = ptr};
   }
 
-  fn Parse[me: Self](str: StringView, n: i64) -> bool {
-    return me.arg_->Parse(str, n);
+  fn Parse[self: Self](str: StringView, n: i64) -> bool {
+    return self.arg_->Parse(str, n);
   }
 
   // TODO: Existential types or `DynPtr(Parseable)`.
@@ -896,8 +896,8 @@ class RE2.Arg {
 
 private adapter ParseAsBase(T:! Parse4ary, base: i32) for T {
   impl as Self.Arg.Parseable {
-    fn Parse[addr me: Self*](str: StringView, n: i64) -> bool {
-      return T.Parse(str, n, me, base);
+    fn Parse[addr self: Self*](str: StringView, n: i64) -> bool {
+      return T.Parse(str, n, self, base);
     }
   }
 }
@@ -938,12 +938,12 @@ class LazyRE2 {
 
   // Pretend to be a pointer to Type (never NULL due to on-demand creation):
   impl as Pointer where .Pointee = RE2 {
-    fn Resolve[me: Self]() -> Pointee* { return me.get(); }
+    fn Resolve[self: Self]() -> Pointee* { return self.get(); }
   }
 
   // Named accessor/initializer:
-  fn get[addr me: Self*]() -> RE* {
-    Cpp.std.call_once(once_, Self.Init, me);
+  fn get[addr self: Self*]() -> RE* {
+    Cpp.std.call_once(once_, Self.Init, self);
     return ptr_;
   }
 

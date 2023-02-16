@@ -5,17 +5,28 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "nodes",
-    hdrs = [
-        "node_kind.h",
-        "node_ref.h",
-        "nodes/binary_operator.h",
-        "nodes/function.h",
-        "nodes/integer_literal.h",
-        "nodes/return.h",
-        "nodes/set_name.h",
-    ],
+    name = "semantics_builtin_kind",
+    srcs = ["semantics_builtin_kind.cpp"],
+    hdrs = ["semantics_builtin_kind.h"],
+    textual_hdrs = ["semantics_builtin_kind.def"],
+    deps = ["//toolchain/common:enum_base"],
+)
+
+cc_library(
+    name = "semantics_node_kind",
+    srcs = ["semantics_node_kind.cpp"],
+    hdrs = ["semantics_node_kind.h"],
+    textual_hdrs = ["semantics_node_kind.def"],
+    deps = ["//toolchain/common:enum_base"],
+)
+
+cc_library(
+    name = "semantics_node",
+    srcs = ["semantics_node.cpp"],
+    hdrs = ["semantics_node.h"],
     deps = [
+        ":semantics_builtin_kind",
+        ":semantics_node_kind",
         "//common:check",
         "//common:ostream",
         "//toolchain/parser:parse_tree",
@@ -24,11 +35,27 @@ cc_library(
 )
 
 cc_library(
-    name = "parse_subtree_consumer",
-    srcs = ["parse_subtree_consumer.cpp"],
-    hdrs = ["parse_subtree_consumer.h"],
+    name = "semantics_node_block_stack",
+    srcs = ["semantics_node_block_stack.cpp"],
+    hdrs = ["semantics_node_block_stack.h"],
     deps = [
+        ":semantics_node",
         "//common:check",
+        "//common:ostream",
+        "//common:vlog",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "semantics_node_stack",
+    srcs = ["semantics_node_stack.cpp"],
+    hdrs = ["semantics_node_stack.h"],
+    deps = [
+        ":semantics_node",
+        "//common:check",
+        "//common:ostream",
+        "//common:vlog",
         "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
         "@llvm-project//llvm:Support",
@@ -37,33 +64,43 @@ cc_library(
 
 cc_library(
     name = "semantics_ir",
-    srcs = ["semantics_ir.cpp"],
+    srcs = [
+        "semantics_ir.cpp",
+        "semantics_parse_tree_handler.cpp",
+    ],
     hdrs = [
-        "node_store.h",
         "semantics_ir.h",
+        "semantics_parse_tree_handler.h",
     ],
     deps = [
-        ":nodes",
+        ":semantics_builtin_kind",
+        ":semantics_node",
+        ":semantics_node_block_stack",
+        ":semantics_node_stack",
         "//common:check",
-        "//toolchain/lexer:tokenized_buffer",
-        "//toolchain/parser:parse_tree",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "semantics_ir_factory",
-    srcs = ["semantics_ir_factory.cpp"],
-    hdrs = ["semantics_ir_factory.h"],
-    deps = [
-        ":nodes",
-        ":parse_subtree_consumer",
-        ":semantics_ir",
-        "//common:check",
+        "//common:ostream",
+        "//common:vlog",
+        "//toolchain/lexer:numeric_literal",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
+        "//toolchain/parser:parse_tree_node_location_translator",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "semantics_ir_test",
+    size = "small",
+    srcs = ["semantics_ir_test.cpp"],
+    deps = [
+        ":semantics_ir",
+        "//common:gtest_main",
+        "//toolchain/common:yaml_test_helpers",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/lexer:tokenized_buffer",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

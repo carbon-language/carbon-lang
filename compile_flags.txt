@@ -98,6 +98,14 @@ bazel-bin/external/com_google_googletest/googletest
 bazel-execroot/external/com_google_googletest/googletest/include
 -isystem
 bazel-bin/external/com_google_googletest/googletest/include
+-isystem
+bazel-execroot/external/com_google_libprotobuf_mutator/src
+-isystem
+bazel-bin/external/com_google_libprotobuf_mutator/src
+-isystem
+bazel-execroot/external/com_github_protocolbuffers_protobuf/src
+-isystem
+bazel-bin/external/com_github_protocolbuffers_protobuf/src
 -std=c++17
 -stdlib=libc++
 -no-canonical-prefixes

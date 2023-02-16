@@ -4,6 +4,7 @@
 
 #include "toolchain/driver/driver.h"
 
+#include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
@@ -14,7 +15,7 @@
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/semantics/semantics_ir_factory.h"
+#include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
@@ -40,7 +41,11 @@ auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   DiagnosticConsumer* consumer = &ConsoleDiagnosticConsumer();
   std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
   // TODO: Figure out a command-line support library, this is temporary.
-  if (!args.empty() && args[0] == "--print-errors=streamed") {
+  if (!args.empty() && args[0] == "-v") {
+    args = args.drop_front();
+    // Note this implies streamed output in order to interleave.
+    vlog_stream_ = &error_stream_;
+  } else if (!args.empty() && args[0] == "--print-errors=streamed") {
     args = args.drop_front();
   } else {
     sorting_consumer = std::make_unique<SortingDiagnosticConsumer>(*consumer);
@@ -85,12 +90,12 @@ auto Driver::RunHelpSubcommand(DiagnosticConsumer& /*consumer*/,
   };
 
   int max_subcommand_width = 0;
-  for (auto subcommand_and_help : SubcommandsAndHelp) {
+  for (const auto* subcommand_and_help : SubcommandsAndHelp) {
     max_subcommand_width = std::max(
         max_subcommand_width, static_cast<int>(subcommand_and_help[0].size()));
   }
 
-  for (auto subcommand_and_help : SubcommandsAndHelp) {
+  for (const auto* subcommand_and_help : SubcommandsAndHelp) {
     llvm::StringRef subcommand_text = subcommand_and_help[0];
     // TODO: We should wrap this to the number of columns left after the
     // subcommand on the terminal, and using a hanging indent.
@@ -125,6 +130,13 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
   args = args.drop_front();
 
+  auto parse_tree_preorder = false;
+  if (dump_mode == DumpMode::ParseTree && !args.empty() &&
+      args.front() == "--preorder") {
+    args = args.drop_front();
+    parse_tree_preorder = true;
+  }
+
   if (args.empty()) {
     error_stream_ << "ERROR: No input file specified.\n";
     return false;
@@ -137,7 +149,9 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     return false;
   }
 
+  CARBON_VLOG() << "*** SourceBuffer::CreateFromFile ***\n";
   auto source = SourceBuffer::CreateFromFile(input_file_name);
+  CARBON_VLOG() << "*** SourceBuffer::CreateFromFile done ***\n";
   if (!source) {
     error_stream_ << "ERROR: Unable to open input source file: ";
     llvm::handleAllErrors(source.takeError(),
@@ -148,27 +162,43 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     return false;
   }
 
+  bool has_errors = false;
+
+  CARBON_VLOG() << "*** TokenizedBuffer::Lex ***\n";
   auto tokenized_source = TokenizedBuffer::Lex(*source, consumer);
+  has_errors |= tokenized_source.has_errors();
+  CARBON_VLOG() << "*** TokenizedBuffer::Lex done ***\n";
   if (dump_mode == DumpMode::TokenizedBuffer) {
+    CARBON_VLOG() << "Finishing output.";
     consumer.Flush();
     tokenized_source.Print(output_stream_);
-    return !tokenized_source.has_errors();
+    return !has_errors;
   }
+  CARBON_VLOG() << "tokenized_buffer: " << tokenized_source;
 
-  auto parse_tree = ParseTree::Parse(tokenized_source, consumer);
+  CARBON_VLOG() << "*** ParseTree::Parse ***\n";
+  auto parse_tree = ParseTree::Parse(tokenized_source, consumer, vlog_stream_);
+  has_errors |= parse_tree.has_errors();
+  CARBON_VLOG() << "*** ParseTree::Parse done ***\n";
   if (dump_mode == DumpMode::ParseTree) {
     consumer.Flush();
-    parse_tree.Print(output_stream_);
-    return !tokenized_source.has_errors() && !parse_tree.has_errors();
+    parse_tree.Print(output_stream_, parse_tree_preorder);
+    return !has_errors;
   }
+  CARBON_VLOG() << "parse_tree: " << parse_tree;
 
-  auto semantics_ir = SemanticsIRFactory::Build(tokenized_source, parse_tree);
+  const SemanticsIR builtin_ir = SemanticsIR::MakeBuiltinIR();
+  CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree ***\n";
+  const SemanticsIR semantics_ir = SemanticsIR::MakeFromParseTree(
+      builtin_ir, tokenized_source, parse_tree, consumer, vlog_stream_);
+  has_errors |= semantics_ir.has_errors();
+  CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree done ***\n";
   if (dump_mode == DumpMode::SemanticsIR) {
     consumer.Flush();
     semantics_ir.Print(output_stream_);
-    // TODO: Return false when SemanticsIR has errors (not supported right now).
-    return !tokenized_source.has_errors() && !parse_tree.has_errors();
+    return !has_errors;
   }
+  CARBON_VLOG() << "semantics_ir: " << semantics_ir;
 
   llvm_unreachable("should handle all dump modes");
 }

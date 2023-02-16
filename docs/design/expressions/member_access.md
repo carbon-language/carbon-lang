@@ -55,7 +55,7 @@ For example:
 ```carbon
 package Widgets api;
 interface Widget {
-  fn Grow[addr me: Self*](factor: f64);
+  fn Grow[addr self: Self*](factor: f64);
 }
 class Cog {
   var size: i32;
@@ -163,7 +163,7 @@ For example:
 
 ```
 interface Printable {
-  fn Print[me: Self]();
+  fn Print[self: Self]();
 }
 external impl i32 as Printable;
 class Point {
@@ -204,18 +204,18 @@ parameter is unknown. Evaluation of an expression involving the parameter may
 still succeed, but will result in a symbolic value involving that parameter.
 
 ```
-class GenericWrapper(T:! Type) {
+class GenericWrapper(T:! type) {
   var field: T;
 }
-fn F[T:! Type](x: GenericWrapper(T)) -> T {
+fn F[T:! type](x: GenericWrapper(T)) -> T {
   // ✅ OK, finds `GenericWrapper(T).field`.
   return x.field;
 }
 
-class TemplateWrapper(template T:! Type) {
+class TemplateWrapper(template T:! type) {
   var field: T;
 }
-fn G[template T:! Type](x: TemplateWrapper(T)) -> T {
+fn G[template T:! type](x: TemplateWrapper(T)) -> T {
   // 🤷 Not yet decided.
   return x.field;
 }
@@ -238,11 +238,11 @@ actual value of a generic parameter never affects the result of member
 resolution.
 
 ```carbon
-class Cowboy { fn Draw[me: Self](); }
+class Cowboy { fn Draw[self: Self](); }
 interface Renderable {
-  fn Draw[me: Self]();
+  fn Draw[self: Self]();
 }
-external impl Cowboy as Renderable { fn Draw[me: Self](); }
+external impl Cowboy as Renderable { fn Draw[self: Self](); }
 fn DrawDirect(c: Cowboy) { c.Draw(); }
 fn DrawGeneric[T:! Renderable](c: T) { c.Draw(); }
 fn DrawTemplate[template T:! Renderable](c: T) { c.Draw(); }
@@ -258,13 +258,13 @@ fn Draw(c: Cowboy) {
 
 class RoundWidget {
   external impl as Renderable {
-    fn Draw[me: Self]();
+    fn Draw[self: Self]();
   }
   alias Draw = Renderable.Draw;
 }
 
 class SquareWidget {
-  fn Draw[me: Self]() {}
+  fn Draw[self: Self]() {}
   external impl as Renderable {
     alias Draw = Self.Draw;
   }
@@ -303,7 +303,7 @@ expression.
 ```carbon
 interface Addable {
   // #1
-  fn Add[me: Self](other: Self) -> Self;
+  fn Add[self: Self](other: Self) -> Self;
   // #2
   default fn Sum[Seq:! Iterable where .ValueType = Self](seq: Seq) -> Self {
     // ...
@@ -313,7 +313,7 @@ interface Addable {
 class Integer {
   impl as Addable {
     // #3
-    fn Add[me: Self](other: Self) -> Self;
+    fn Add[self: Self](other: Self) -> Self;
     // #4, generated from default implementation for #2.
     // fn Sum[...](...);
   }
@@ -368,13 +368,13 @@ the argument for the template parameter is known.
 ```carbon
 interface I {
   // #1
-  default fn F[me: Self]() {}
+  default fn F[self: Self]() {}
   let N:! i32;
 }
 class C {
   impl as I where .N = 5 {
     // #2
-    fn F[me: C]() {}
+    fn F[self: C]() {}
   }
 }
 
@@ -413,13 +413,13 @@ naming the interface member as a member of the class.
 ```carbon
 interface Renderable {
   // #1
-  fn Draw[me: Self]();
+  fn Draw[self: Self]();
 }
 
 class RoundWidget {
   external impl as Renderable {
     // #2
-    fn Draw[me: Self]();
+    fn Draw[self: Self]();
   }
   // `Draw` names the member of the `Renderable` interface.
   alias Draw = Renderable.Draw;
@@ -427,7 +427,7 @@ class RoundWidget {
 
 class SquareWidget {
   // #3
-  fn Draw[me: Self]() {}
+  fn Draw[self: Self]() {}
   external impl as Renderable {
     alias Draw = Self.Draw;
   }
@@ -450,14 +450,14 @@ fn DrawWidget(r: RoundWidget, s: SquareWidget) {
   // ❌ Error: In the inner member access, the name `Draw` resolves to the
   // member `Draw` of `SquareWidget`, #3.
   // The outer member access fails because we can't call
-  // #3, `Draw[me: SquareWidget]()`, on a `RoundWidget` object `r`.
+  // #3, `Draw[self: SquareWidget]()`, on a `RoundWidget` object `r`.
   r.(SquareWidget.Draw)();
 
   // ❌ Error: In the inner member access, the name `Draw` resolves to the
   // member `Draw` of `Renderable`, #1, which `impl` lookup replaces with
   // the member `Draw` of `impl RoundWidget as Renderable`, #2.
   // The outer member access fails because we can't call
-  // #2, `Draw[me: RoundWidget]()`, on a `SquareWidget` object `s`.
+  // #2, `Draw[self: RoundWidget]()`, on a `SquareWidget` object `s`.
   s.(RoundWidget.Draw)();
 }
 
@@ -511,19 +511,19 @@ value other than a type, then _instance binding_ is performed, as follows:
 
 -   For a method, the result is a _bound method_, which is a value `F` such that
     a function call `F(args)` behaves the same as a call to `M(args)` with the
-    `me` parameter initialized by a corresponding recipient argument:
+    `self` parameter initialized by a corresponding recipient argument:
 
-    -   If the method declares its `me` parameter with `addr`, the recipient
+    -   If the method declares its `self` parameter with `addr`, the recipient
         argument is `&V`.
     -   Otherwise, the recipient argument is `V`.
 
     ```carbon
     class Blob {
-      fn Mutate[addr me: Self*](n: i32);
+      fn Mutate[addr self: Self*](n: i32);
     }
     fn F(p: Blob*) {
       // ✅ OK, forms bound method `((*p).M)` and calls it.
-      // This calls `Blob.Mutate` with `me` initialized by `&(*p)`
+      // This calls `Blob.Mutate` with `self` initialized by `&(*p)`
       // and `n` initialized by `5`.
       (*p).Mutate(5);
 
@@ -564,10 +564,10 @@ fn CallStaticMethod(c: C) {
   c.(C.field) = 1;
 
   // ✅ OK
-  let T:! Type = C.Nested;
+  let T:! type = C.Nested;
   // ❌ Error: value of `:!` binding is not constant because it
   // refers to local variable `c`.
-  let U:! Type = c.Nested;
+  let U:! type = c.Nested;
 }
 ```
 
@@ -580,10 +580,10 @@ always used for lookup.
 
 ```
 interface Printable {
-  fn Print[me: Self]();
+  fn Print[self: Self]();
 }
 external impl i32 as Printable {
-  fn Print[me: Self]();
+  fn Print[self: Self]();
 }
 fn MemberAccess(n: i32) {
   // ✅ OK: `Printable.Print` is the interface member.

@@ -2,13 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:COMPILATION ERROR: {{.*}}/explorer/testdata/struct/fail_field_access_mismatch.carbon:[[@LINE+1]]: struct {.x: i32, .y: i32} does not have a field named z
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/struct/fail_field_access_mismatch.carbon:[[@LINE+1]]: struct {.x: i32, .y: i32} does not have a field named z
   return {.x = 1, .y = 2}.z - 1;
 }

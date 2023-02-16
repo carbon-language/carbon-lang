@@ -11,9 +11,8 @@
 
 namespace Carbon {
 
-auto StaticScope::Add(const std::string& name, ValueNodeView entity,
-                      NameStatus status /* = NameStatus::Usable*/)
-    -> ErrorOr<Success> {
+auto StaticScope::Add(std::string_view name, ValueNodeView entity,
+                      NameStatus status) -> ErrorOr<Success> {
   auto [it, inserted] = declared_names_.insert({name, {entity, status}});
   if (!inserted) {
     if (it->second.entity != entity) {
@@ -28,7 +27,7 @@ auto StaticScope::Add(const std::string& name, ValueNodeView entity,
   return Success();
 }
 
-void StaticScope::MarkDeclared(const std::string& name) {
+void StaticScope::MarkDeclared(std::string_view name) {
   auto it = declared_names_.find(name);
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
   if (it->second.status == NameStatus::KnownButNotDeclared) {
@@ -36,13 +35,13 @@ void StaticScope::MarkDeclared(const std::string& name) {
   }
 }
 
-void StaticScope::MarkUsable(const std::string& name) {
+void StaticScope::MarkUsable(std::string_view name) {
   auto it = declared_names_.find(name);
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
   it->second.status = NameStatus::Usable;
 }
 
-auto StaticScope::Resolve(const std::string& name,
+auto StaticScope::Resolve(std::string_view name,
                           SourceLocation source_loc) const
     -> ErrorOr<ValueNodeView> {
   CARBON_ASSIGN_OR_RETURN(std::optional<ValueNodeView> result,
@@ -53,37 +52,27 @@ auto StaticScope::Resolve(const std::string& name,
   return *result;
 }
 
-auto StaticScope::TryResolve(const std::string& name,
+auto StaticScope::TryResolve(std::string_view name,
                              SourceLocation source_loc) const
     -> ErrorOr<std::optional<ValueNodeView>> {
-  auto it = declared_names_.find(name);
-  if (it != declared_names_.end()) {
-    switch (it->second.status) {
-      case NameStatus::KnownButNotDeclared:
-        return ProgramError(source_loc)
-               << "'" << name << "' has not been declared yet";
-      case NameStatus::DeclaredButNotUsable:
-        return ProgramError(source_loc)
-               << "'" << name
-               << "' is not usable until after it has been completely declared";
-      case NameStatus::Usable:
-        return std::make_optional(it->second.entity);
+  for (const StaticScope* scope = this; scope;
+       scope = scope->parent_scope_.value_or(nullptr)) {
+    auto it = scope->declared_names_.find(name);
+    if (it != scope->declared_names_.end()) {
+      switch (it->second.status) {
+        case NameStatus::KnownButNotDeclared:
+          return ProgramError(source_loc)
+                 << "'" << name << "' has not been declared yet";
+        case NameStatus::DeclaredButNotUsable:
+          return ProgramError(source_loc) << "'" << name
+                                          << "' is not usable until after it "
+                                             "has been completely declared";
+        case NameStatus::Usable:
+          return std::make_optional(it->second.entity);
+      }
     }
   }
-  std::optional<ValueNodeView> result;
-  for (Nonnull<const StaticScope*> parent : parent_scopes_) {
-    CARBON_ASSIGN_OR_RETURN(std::optional<ValueNodeView> parent_result,
-                            parent->TryResolve(name, source_loc));
-    if (parent_result.has_value() && result.has_value() &&
-        *parent_result != *result) {
-      return ProgramError(source_loc)
-             << "'" << name << "' is ambiguous between "
-             << result->base().source_loc() << " and "
-             << parent_result->base().source_loc();
-    }
-    result = parent_result;
-  }
-  return result;
+  return {std::nullopt};
 }
 
 auto StaticScope::AddReturnedVar(ValueNodeView returned_var_def_view)
@@ -99,14 +88,10 @@ auto StaticScope::AddReturnedVar(ValueNodeView returned_var_def_view)
 }
 
 auto StaticScope::ResolveReturned() const -> std::optional<ValueNodeView> {
-  if (returned_var_def_view_.has_value()) {
-    return returned_var_def_view_;
-  }
-  for (Nonnull<const StaticScope*> parent : parent_scopes_) {
-    std::optional<ValueNodeView> parent_returned_var =
-        parent->ResolveReturned();
-    if (parent_returned_var.has_value()) {
-      return parent_returned_var;
+  for (const StaticScope* scope = this; scope;
+       scope = scope->parent_scope_.value_or(nullptr)) {
+    if (scope->returned_var_def_view_.has_value()) {
+      return scope->returned_var_def_view_;
     }
   }
   return std::nullopt;

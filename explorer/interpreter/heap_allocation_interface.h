@@ -30,6 +30,11 @@ class HeapAllocationInterface {
   // Returns the arena used to allocate the values in this heap.
   virtual auto arena() const -> Arena& = 0;
 
+  // Returns the ID of the first allocation that holds `v`, if one exists.
+  // TODO: Find a way to remove this.
+  virtual auto GetAllocationId(Nonnull<const Value*> v) const
+      -> std::optional<AllocationId> = 0;
+
  protected:
   HeapAllocationInterface() = default;
   virtual ~HeapAllocationInterface() = default;

@@ -2,26 +2,26 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:result: 1133
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 1133
 
 package ExplorerTest api;
 
-interface I(T:! Type) {
-  fn F[me: Self](t: T, o: Self) -> Self;
+interface I(T:! type) {
+  fn F[self: Self](t: T, o: Self) -> Self;
 }
 
-class X(U:! Type) {
+class X(U:! type) {
   impl as I(U) {
-    fn F[me: Self](u: U, o: Self) -> Self { return {.m = u, .n = me.n + o.n}; }
+    fn F[self: Self](u: U, o: Self) -> Self { return {.m = u, .n = self.n + o.n}; }
   }
   var m: U;
   var n: i32;
 }
 
-fn Run[V:! Type](x: V) -> (V, V, i32, i32) {
+fn Run[V:! type](x: V) -> (V, V, i32, i32) {
   var v: X(V) = {.m = x, .n = 1};
   var w: X(V) = {.m = x, .n = 2};
   // OK, know that `X(V)` implements `I(V)` from the `impl` in the class.

@@ -2,10 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:result: 3
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 3
 
 package ExplorerTest api;
 
@@ -14,7 +14,7 @@ choice A {
 }
 
 impl i32 as ImplicitAs(A) {
-  fn Convert[me: Self]() -> A { return A.Value(me + 1); }
+  fn Convert[self: Self]() -> A { return A.Value(self + 1); }
 }
 
 fn Main() -> i32 {

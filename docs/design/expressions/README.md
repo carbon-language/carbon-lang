@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Operators](#operators)
 -   [Conversions and casts](#conversions-and-casts)
 -   [`if` expressions](#if-expressions)
+-   [Numeric type literal expressions](#numeric-type-literal-expressions)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -232,9 +233,9 @@ with parentheses around the member name:
 -   _expression_ `.` `(` _expression_ `)`
 
 ```
-interface I { fn F[me: Self](); }
+interface I { fn F[self: Self](); }
 class X {}
-external impl X as I { fn F[me: Self]() {} }
+external impl X as I { fn F[self: Self]() {} }
 
 // `x.I.F()` would mean `(x.I).F()`.
 fn Q(x: X) { x.(I.F)(); }
@@ -269,6 +270,10 @@ Most expressions are modeled as operators:
 | Logical    | [`or`](logical_operators.md)    | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.    |
 | Logical    | [`not`](logical_operators.md)   | `not x`   | Logical NOT: `true` if the operand is `false`.                        |
 
+The binary arithmetic and bitwise operators also have
+[compound assignment](/docs/design/assignment.md) forms. These are statements
+rather than expressions, and do not produce a value.
+
 ## Conversions and casts
 
 When an expression appears in a context in which an expression of a specific
@@ -297,6 +302,16 @@ fn Run(args: Span(StringView)) {
 ```
 
 `if` expressions are analogous to `?:` ternary expressions in C and C++.
+
+## Numeric type literal expressions
+
+Carbon's syntax provides a simple way to represent different types of integers
+and floating-point numbers. Each type is identified with a keyword-like syntax,
+prefixed with either `i`, `u`, or `f` followed by a multiple of 8, representing
+the size in bits of the data type.
+
+These are referred to as
+[numeric type literals](literals.md#numeric-type-literals).
 
 ## Alternatives considered
 

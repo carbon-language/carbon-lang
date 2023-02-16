@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{not} %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -15,7 +15,7 @@ package ExplorerTest api;
 fn capture() -> __Continuation {
   var x: i32 = 1;
   __continuation k {
-    // CHECK:RUNTIME ERROR: {{.*}}/explorer/testdata/experimental_continuation/fail_lifetime.carbon:[[@LINE+1]]: undefined behavior: access to dead value 1
+    // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/experimental_continuation/fail_lifetime.carbon:[[@LINE+1]]: undefined behavior: access to dead value 1
     var y: i32 = x;
   }
   return k;

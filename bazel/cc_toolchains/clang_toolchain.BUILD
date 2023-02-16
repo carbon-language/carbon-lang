@@ -22,6 +22,7 @@ cc_toolchain_suite(
     toolchains = {
         "darwin": ":cc-compiler-darwin",
         "darwin_arm64": ":cc-compiler-darwin-arm64",
+        "freebsd": "cc-compiler-freebsd",
         "k8": ":cc-compiler-k8",
         "x64_windows": ":cc-compiler-x64-windows",
     },
@@ -85,6 +86,26 @@ cc_toolchain(
 cc_toolchain_config(
     name = "local-darwin-arm64",
     target_cpu = "darwin_arm64",
+)
+
+cc_toolchain(
+    name = "cc-compiler-freebsd",
+    all_files = ":empty",
+    ar_files = ":empty",
+    as_files = ":empty",
+    compiler_files = ":empty",
+    dwp_files = ":empty",
+    linker_files = ":empty",
+    objcopy_files = ":empty",
+    strip_files = ":empty",
+    supports_param_files = 1,
+    toolchain_config = ":local-freebsd",
+    toolchain_identifier = "local-freebsd",
+)
+
+cc_toolchain_config(
+    name = "local-freebsd",
+    target_cpu = "freebsd",
 )
 
 cc_toolchain(

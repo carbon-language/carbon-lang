@@ -191,7 +191,7 @@ For example, let's say we have some overloaded function called `F` that has two
 overloads:
 
 ```
-fn F[template T:! Type](x: T*) -> T;
+fn F[template T:! type](x: T*) -> T;
 fn F(x: Int) -> bool;
 ```
 
@@ -279,9 +279,9 @@ Note that function signatures can typically be rewritten to avoid using deduced
 parameters:
 
 ```
-fn F[template T:! Type](value: T);
+fn F[template T:! type](value: T);
 // is equivalent to:
-fn F(value: (template T:! Type));
+fn F(value: (template T:! type));
 ```
 
 See more [here](overview.md#deduced-parameters).
@@ -660,9 +660,9 @@ associated types. An associated type is a kind of
 ```
 // Stack using associated types
 interface Stack {
-  let ElementType:! Type;
-  fn Push[addr me: Self*](value: ElementType);
-  fn Pop[addr me: Self*]() -> ElementType;
+  let ElementType:! type;
+  fn Push[addr self: Self*](value: ElementType);
+  fn Pop[addr self: Self*]() -> ElementType;
 }
 
 // Works on any type implementing `Stack`. Return type
@@ -696,9 +696,9 @@ For example, we might have an interface that says how to perform addition with
 another type:
 
 ```
-interface AddWith(T:! Type) {
-  let ResultType:! Type;
-  fn Add[me: Self](rhs: T) -> ResultType;
+interface AddWith(T:! type) {
+  let ResultType:! type;
+  fn Add[self: Self](rhs: T) -> ResultType;
 }
 ```
 
@@ -716,12 +716,12 @@ to be some way to determine the type to add to:
 ```
 // ✅ This is allowed, since the value of `T` is determined by the
 // `y` parameter.
-fn DoAdd[T:! Type, U:! AddWith(T)](x: U, y: T) -> U.ResultType {
+fn DoAdd[T:! type, U:! AddWith(T)](x: U, y: T) -> U.ResultType {
   return x.Add(y);
 }
 
 // ❌ This is forbidden, can't uniquely determine `T`.
-fn CompileError[T:! Type, U:! AddWith(T)](x: U) -> T;
+fn CompileError[T:! type, U:! AddWith(T)](x: U) -> T;
 ```
 
 Once the interface parameter can be determined, that determines the values for

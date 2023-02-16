@@ -2,18 +2,18 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:HALLO WELT 0
-// CHECK:HALLO WELT 1
-// CHECK:HALLO WELT 2
-// CHECK:HALLO WELT 3
-// CHECK:HALLO WELT 0
-// CHECK:HALLO WELT 1
-// CHECK:HALLO WELT 2
-// CHECK:HALLO WELT 3
-// CHECK:result: 8
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: HALLO WELT 0
+// CHECK:STDOUT: HALLO WELT 1
+// CHECK:STDOUT: HALLO WELT 2
+// CHECK:STDOUT: HALLO WELT 3
+// CHECK:STDOUT: HALLO WELT 0
+// CHECK:STDOUT: HALLO WELT 1
+// CHECK:STDOUT: HALLO WELT 2
+// CHECK:STDOUT: HALLO WELT 3
+// CHECK:STDOUT: result: 8
 
 package ExplorerTest api;
 

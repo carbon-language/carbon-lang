@@ -12,53 +12,38 @@ cc_library(
     hdrs = ["parse_node_kind.h"],
     textual_hdrs = ["parse_node_kind.def"],
     deps = [
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
+        "//common:check",
+        "//toolchain/common:enum_base",
     ],
 )
 
-cc_test(
-    name = "parse_node_kind_test",
-    size = "small",
-    srcs = ["parse_node_kind_test.cpp"],
-    deps = [
-        ":parse_node_kind",
-        "//common:gtest_main",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
-    ],
+cc_library(
+    name = "parser_state",
+    srcs = ["parser_state.cpp"],
+    hdrs = ["parser_state.h"],
+    textual_hdrs = ["parser_state.def"],
+    deps = ["//toolchain/common:enum_base"],
 )
 
 cc_library(
     name = "parse_tree",
     srcs = [
         "parse_tree.cpp",
-        "parser_impl.cpp",
-        "parser_impl.h",
+        "parser.cpp",
+        "parser.h",
     ],
     hdrs = ["parse_tree.h"],
     deps = [
         ":parse_node_kind",
+        ":parser_state",
         ":precedence",
         "//common:check",
+        "//common:error",
         "//common:ostream",
+        "//common:vlog",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "parse_test_helpers",
-    testonly = 1,
-    hdrs = ["parse_test_helpers.h"],
-    deps = [
-        ":parse_node_kind",
-        ":parse_tree",
-        "//common:check",
-        "//toolchain/lexer:tokenized_buffer",
-        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -69,7 +54,6 @@ cc_test(
     srcs = ["parse_tree_test.cpp"],
     deps = [
         ":parse_node_kind",
-        ":parse_test_helpers",
         ":parse_tree",
         "//common:gtest_main",
         "//common:ostream",
@@ -95,6 +79,12 @@ cc_fuzz_test(
         "//toolchain/lexer:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_library(
+    name = "parse_tree_node_location_translator",
+    hdrs = ["parse_tree_node_location_translator.h"],
+    deps = [":parse_tree"],
 )
 
 cc_library(

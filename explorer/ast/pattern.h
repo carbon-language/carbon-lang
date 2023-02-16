@@ -13,8 +13,8 @@
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/ast_rtti.h"
 #include "explorer/ast/expression.h"
-#include "explorer/ast/static_scope.h"
 #include "explorer/ast/value_category.h"
+#include "explorer/ast/value_node.h"
 #include "explorer/common/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
@@ -73,7 +73,10 @@ class Pattern : public AstNode {
 
   // Sets the value of this pattern. Can only be called once, during
   // typechecking.
-  void set_value(Nonnull<const Value*> value) { value_ = value; }
+  void set_value(Nonnull<const Value*> value) {
+    CARBON_CHECK(!value_) << "set_value called more than once";
+    value_ = value;
+  }
 
   // Returns whether the value has been set. Should only be called
   // during typechecking: before typechecking it's guaranteed to be false,
@@ -276,10 +279,11 @@ class TypeVariableBinding : public Pattern {
 
   // Return the original generic binding.
   auto original() const -> Nonnull<const TypeVariableBinding*> {
-    if (original_.has_value())
+    if (original_.has_value()) {
       return *original_;
-    else
+    } else {
       return this;
+    }
   }
   // Set the original generic binding.
   void set_original(Nonnull<const TypeVariableBinding*> orig) {

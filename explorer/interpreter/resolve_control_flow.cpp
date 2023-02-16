@@ -130,6 +130,7 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       return Success();
     case StatementKind::ExpressionStatement:
     case StatementKind::Assign:
+    case StatementKind::IncrementDecrement:
     case StatementKind::VariableDefinition:
     case StatementKind::Run:
     case StatementKind::Await:
@@ -163,8 +164,9 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
       }
       break;
     }
-    case DeclarationKind::InterfaceDeclaration: {
-      auto& iface_decl = cast<InterfaceDeclaration>(*declaration);
+    case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ConstraintDeclaration: {
+      auto& iface_decl = cast<ConstraintTypeDeclaration>(*declaration);
       for (Nonnull<Declaration*> member : iface_decl.members()) {
         CARBON_RETURN_IF_ERROR(ResolveControlFlow(member));
       }
@@ -177,8 +179,18 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
       }
       break;
     }
+    case DeclarationKind::MatchFirstDeclaration: {
+      auto& match_first_decl = cast<MatchFirstDeclaration>(*declaration);
+      for (Nonnull<Declaration*> impl : match_first_decl.impls()) {
+        CARBON_RETURN_IF_ERROR(ResolveControlFlow(impl));
+      }
+      break;
+    }
+    case DeclarationKind::NamespaceDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::VariableDeclaration:
+    case DeclarationKind::InterfaceExtendsDeclaration:
+    case DeclarationKind::InterfaceImplDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:
@@ -190,7 +202,7 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
 }
 
 auto ResolveControlFlow(AST& ast) -> ErrorOr<Success> {
-  for (auto declaration : ast.declarations) {
+  for (auto* declaration : ast.declarations) {
     CARBON_RETURN_IF_ERROR(ResolveControlFlow(declaration));
   }
   return Success();

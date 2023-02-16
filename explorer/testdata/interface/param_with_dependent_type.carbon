@@ -2,19 +2,19 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:result: 42
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 42
 
 package ExplorerTest api;
 
-interface HasValueParam(T:! Type, V:! T) {
-  fn Go[me: Self]() -> T;
+interface HasValueParam(T:! type, V:! T) {
+  fn Go[self: Self]() -> T;
 }
 
 impl () as HasValueParam(i32, 5) {
-  fn Go[me: Self]() -> i32 { return 42; }
+  fn Go[self: Self]() -> i32 { return 42; }
 }
 
 fn Main() -> i32 {

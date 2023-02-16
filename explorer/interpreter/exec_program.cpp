@@ -23,7 +23,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
     -> ErrorOr<AST> {
   if (trace_stream) {
     **trace_stream << "********** source program **********\n";
-    for (const auto decl : ast.declarations) {
+    for (auto* const decl : ast.declarations) {
       **trace_stream << *decl;
     }
   }
@@ -51,7 +51,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
   CARBON_RETURN_IF_ERROR(ResolveUnformed(ast));
   if (trace_stream) {
     **trace_stream << "********** printing declarations **********\n";
-    for (const auto decl : ast.declarations) {
+    for (auto* const decl : ast.declarations) {
       **trace_stream << *decl;
     }
   }

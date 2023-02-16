@@ -2,21 +2,21 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:result: 3
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 3
 
 package ExplorerTest api;
 
-class Wrap(T:! Type) {
+class Wrap(T:! type) {
   var v: T;
 }
-fn MakeWrap[T:! Type](x: T) -> Wrap(T) { return {.v = x}; }
+fn MakeWrap[T:! type](x: T) -> Wrap(T) { return {.v = x}; }
 
-impl forall [T:! Type] Wrap(T) as ImplicitAs(T) {
-  fn Convert[me: Self]() -> T {
-    return me.v;
+impl forall [T:! type] Wrap(T) as ImplicitAs(T) {
+  fn Convert[self: Self]() -> T {
+    return self.v;
   }
 }
 

@@ -2,22 +2,22 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | %{FileCheck-strict} %s
-// RUN: %{explorer-trace} %s 2>&1 | %{FileCheck-allow-unmatched} %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK:result: 0
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 __mixin M1 {
-  export fn Scale10[me:Self](x:i32) -> i32{
+  export fn Scale10[self:Self](x:i32) -> i32{
      return x * 10;
   }
 }
 
 __mixin M2 {
   export __mix M1;
-  export fn Square[me: Self](x:i32) -> i32{
+  export fn Square[self: Self](x:i32) -> i32{
     return x * x;
   }
 }

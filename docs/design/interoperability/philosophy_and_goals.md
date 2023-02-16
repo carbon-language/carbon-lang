@@ -358,9 +358,12 @@ Corner cases of C++ will not receive equal support to common cases: the
 complexity of supporting any given construct must be balanced by the real world
 need for that support. For example:
 
--   Interoperability will target C++17. Any interoperability support for future
-    versions of C++, including features such as C++20 modules, will be based on
-    a cost-benefit analysis. Exhaustive support should not be assumed.
+-   Long-term, we expect interoperability will target all of C++, including new
+    features as they are added, standardized, implemented, and adopted across
+    the industry. The priority of _individual_ features will reflect how widely
+    they are used in practice and how any gap impacts users trying to adopt
+    Carbon. Exhaustive, high-quality support of the long-tail or corner cases of
+    C++ features should not be assumed.
 
 -   Support will be focused on idiomatic code, interfaces, and patterns used in
     widespread open source libraries or by other key constituencies. C++ code

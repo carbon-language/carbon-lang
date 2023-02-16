@@ -159,7 +159,7 @@ Example:
 ```
 interface Comparable {
   // `Less` is an associated method.
-  fn Less[me: Self](rhs: Self) -> bool;
+  fn Less[self: Self](rhs: Self) -> bool;
 }
 ```
 
@@ -192,7 +192,7 @@ Consider this interface:
 
 ```
 interface Printable {
-  fn Print[me: Self]();
+  fn Print[self: Self]();
 }
 ```
 
@@ -209,7 +209,7 @@ class Song {
   // as `F`, are included as a part of the `Song` API.
   impl as Printable {
     // Could use `Self` in place of `Song` here.
-    fn Print[me: Song]() { ... }
+    fn Print[self: Song]() { ... }
   }
 }
 
@@ -218,7 +218,7 @@ class Song {
 // the library defining `Song` or `Comparable`.
 external impl Song as Comparable {
   // Could use either `Self` or `Song` here.
-  fn Less[me: Self](rhs: Self) -> bool { ... }
+  fn Less[self: Self](rhs: Self) -> bool { ... }
 }
 ```
 
@@ -311,7 +311,7 @@ call site.
 
 ```
 // ERROR: can't determine `U` from explicit parameters
-fn Illegal[T:! Type, U:! Type](x: T) -> U { ... }
+fn Illegal[T:! type, U:! type](x: T) -> U { ... }
 ```
 
 #### Generic type parameters
@@ -350,13 +350,13 @@ Interfaces can require other interfaces be implemented:
 
 ```
 interface Equatable {
-  fn IsEqual[me: Self](rhs: Self) -> bool;
+  fn IsEqual[self: Self](rhs: Self) -> bool;
 }
 
 // `Iterable` requires that `Equatable` is implemented.
 interface Iterable {
   impl as Equatable;
-  fn Advance[addr me: Self*]();
+  fn Advance[addr self: Self*]();
 }
 ```
 
@@ -369,13 +369,13 @@ interface.
 // `Hashable` extends `Equatable`.
 interface Hashable {
   extends Equatable;
-  fn Hash[me: Self]() -> u64;
+  fn Hash[self: Self]() -> u64;
 }
 // `Hashable` is equivalent to:
 interface Hashable {
   impl as Equatable;
   alias IsEqual = Equatable.IsEqual;
-  fn Hash[me: Self]() -> u64;
+  fn Hash[self: Self]() -> u64;
 }
 ```
 
@@ -386,8 +386,8 @@ methods in the implementation of the derived interface.
 class Key {
   // ...
   impl as Hashable {
-    fn IsEqual[me: Key](rhs: Key) -> bool { ... }
-    fn Hash[me: Key]() -> u64 { ... }
+    fn IsEqual[self: Key](rhs: Key) -> bool { ... }
+    fn Hash[self: Key]() -> u64 { ... }
   }
   // No need to separately implement `Equatable`.
 }
@@ -403,14 +403,14 @@ It gives you all the names that don't conflict.
 
 ```
 interface Renderable {
-  fn GetCenter[me: Self]() -> (i32, i32);
+  fn GetCenter[self: Self]() -> (i32, i32);
   // Draw the object to the screen
-  fn Draw[me: Self]();
+  fn Draw[self: Self]();
 }
 interface EndOfGame {
-  fn SetWinner[addr me: Self*](player: i32);
+  fn SetWinner[addr self: Self*](player: i32);
   // Indicate the game was a draw
-  fn Draw[addr me: Self*]();
+  fn Draw[addr self: Self*]();
 }
 
 fn F[T:! Renderable & EndOfGame](game_state: T*) -> (i32, i32) {
@@ -533,9 +533,9 @@ element types:
 ```
 interface Stack {
   let ElementType:! Movable;
-  fn Push[addr me: Self*](value: ElementType);
-  fn Pop[addr me: Self*]() -> ElementType;
-  fn IsEmpty[addr me: Self*]() -> bool;
+  fn Push[addr self: Self*](value: ElementType);
+  fn Pop[addr self: Self*]() -> ElementType;
+  fn IsEmpty[addr self: Self*]() -> bool;
 }
 ```
 
@@ -560,8 +560,8 @@ those types to be different. An element in a hash map might have type
 `Equatable(Pair(String, i64))`.
 
 ```
-interface Equatable(T:! Type) {
-  fn IsEqual[me: Self](compare_to: T) -> bool;
+interface Equatable(T:! type) {
+  fn IsEqual[self: Self](compare_to: T) -> bool;
 }
 ```
 
@@ -574,13 +574,13 @@ general, unless some other parameter determines `T`.
 ```
 // ✅ This is allowed, since the value of `T` is determined by the
 // `v` parameter.
-fn FindInVector[T:! Type, U:! Equatable(T)](v: Vector(T), needle: U)
+fn FindInVector[T:! type, U:! Equatable(T)](v: Vector(T), needle: U)
     -> Optional(i32);
 
 // ❌ This is forbidden. Since `U` could implement `Equatable`
 // multiple times, there is no way to determine the value for `T`.
 // Contrast with `PeekAtTopOfStack` in the associated type example.
-fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
+fn CompileError[T:! type, U:! Equatable(T)](x: U) -> T;
 ```
 
 ### Constraints
