@@ -101,10 +101,12 @@ def parse_args() -> ParsedArgs:
     parser.add_argument(
         "--line_number_pattern",
         metavar="PATTERN",
-        required=True,
+        default=r"(?P<prefix>/(?P<filename>\w+\.carbon):)"
+        r"(?P<line>\d+)(?P<suffix>(?:\D|$))",
         help="A regular expression which matches line numbers to update as its "
-        "only group. A capture group named `filename` should be provided to "
-        "help this determine file associations.",
+        "only group. Capture groups 'prefix', 'line', and 'suffix' are "
+        "required for structure. The 'filename' capture group is optional and "
+        "should be provided when lines may belong to different files.",
     )
     parser.add_argument(
         "--lit_run",
@@ -252,7 +254,7 @@ class CheckLine(Line):
 
     def matches_filename(self, match: Match) -> bool:
         return (
-            "filename" not in match.groups()
+            "filename" not in match.groupdict()
             or match.group("filename") == self.filename
         )
 

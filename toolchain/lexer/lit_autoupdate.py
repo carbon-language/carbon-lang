@@ -20,7 +20,6 @@ def main() -> None:
     actual_py = this_py.parent.parent.parent.joinpath(
         "bazel", "testing", "lit_autoupdate_base.py"
     )
-    line_number_pattern = r"(?P<prefix> line: )(?P<line> *\d+)(?P<suffix>,)"
     args = [
         sys.argv[0],
         # Flags to configure for lexer testing.
@@ -35,7 +34,8 @@ def main() -> None:
         "column: {{[0-9]+}}",
         # Ignore spaces that are used to columnize lines.
         "--line_number_delta_prefix={{ *}}",
-        f"--line_number_pattern={line_number_pattern}",
+        "--line_number_pattern="
+        r"(?P<prefix> line: )(?P<line> *\d+)(?P<suffix>,)",
         "--lit_run=%{carbon-run-tokens}",
         "--testdata=toolchain/lexer/testdata",
     ] + sys.argv[1:]
