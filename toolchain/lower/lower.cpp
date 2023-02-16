@@ -6,13 +6,10 @@
 
 namespace Carbon {
 
-auto LowerResult::Print(llvm::raw_ostream& output) const -> void {
-  output << "TODO: Print IR";
-}
-
-auto Lower::Make(llvm::LLVMContext& llvm_context,
-                 const SemanticsIR& /*semantics_ir*/) -> LowerResult {
-  LowerResult result(llvm_context, "todo: module_id");
+auto Lower::Make(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
+                 const SemanticsIR& /*semantics_ir*/)
+    -> std::unique_ptr<llvm::Module> {
+  auto result = std::make_unique<llvm::Module>(module_name, llvm_context);
   return result;
 }
 

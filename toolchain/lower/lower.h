@@ -12,25 +12,12 @@
 
 namespace Carbon {
 
-// The output of lowering.
-struct LowerResult {
-  LowerResult(llvm::LLVMContext& llvm_context, llvm::StringRef module_id)
-      : module(std::make_unique<llvm::Module>(module_id, llvm_context)) {}
-
-  // Prints the module's IR.
-  auto Print(llvm::raw_ostream& output) const -> void;
-
-  // llvm::Module isn't copyable or moveable; unique_ptr allows easier handling.
-  std::unique_ptr<llvm::Module> module;
-
-  bool has_errors = false;
-};
-
 // Lowers Semantics IR to LLVM IR.
 class Lower {
  public:
-  static auto Make(llvm::LLVMContext& llvm_context,
-                   const SemanticsIR& semantics_ir) -> LowerResult;
+  static auto Make(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
+                   const SemanticsIR& semantics_ir)
+      -> std::unique_ptr<llvm::Module>;
 };
 
 }  // namespace Carbon

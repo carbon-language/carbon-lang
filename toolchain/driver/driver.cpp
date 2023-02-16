@@ -211,15 +211,21 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
 
   CARBON_VLOG() << "*** Lower::Make ***\n";
   llvm::LLVMContext llvm_context;
-  const LowerResult lower_result = Lower::Make(llvm_context, semantics_ir);
-  has_errors |= lower_result.has_errors;
+  const std::unique_ptr<llvm::Module> module =
+      Lower::Make(llvm_context, input_file_name, semantics_ir);
   CARBON_VLOG() << "*** Lower::Make done ***\n";
   if (dump_mode == DumpMode::LLVMIR) {
     consumer.Flush();
-    output_stream_ << lower_result;
+    module->print(output_stream_, /*AAW=*/nullptr,
+                  /*ShouldPreserveUseListOrder=*/true);
     return !has_errors;
   }
-  CARBON_VLOG() << "lower: " << lower_result;
+  if (vlog_stream_) {
+    CARBON_VLOG() << "module: ";
+    module->print(*vlog_stream_, /*AAW=*/nullptr,
+                  /*ShouldPreserveUseListOrder=*/false,
+                  /*IsForDebug=*/true);
+  }
 
   llvm_unreachable("should handle all dump modes");
 }
