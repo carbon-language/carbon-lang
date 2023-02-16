@@ -9,7 +9,7 @@
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/carbon/explorer/data/prelude.carbon:{{.*}}: Integer overflow
+// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: Integer overflow
 
 package ExplorerTest api;
 

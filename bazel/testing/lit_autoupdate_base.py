@@ -518,7 +518,7 @@ def main() -> None:
         encoding="utf-8",
     ).strip()
     bazel_runfiles = re.compile(
-        r"{0}/.*\.runfiles/".format(re.escape(bazel_bin_dir))
+        r"{0}/.*\.runfiles/carbon/".format(re.escape(bazel_bin_dir))
     )
 
     # Grab the symbolizer.

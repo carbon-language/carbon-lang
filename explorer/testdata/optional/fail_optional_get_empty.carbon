@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/carbon/explorer/data/prelude.carbon:{{.*}}: "Attempted to unwrap empty Optional"
+// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "Attempted to unwrap empty Optional"
 
 package ExplorerTest api;
 
