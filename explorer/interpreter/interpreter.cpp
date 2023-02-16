@@ -350,11 +350,15 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         case Value::Kind::AlternativeValue: {
           const auto& p_alt = cast<AlternativeValue>(*p);
           const auto& v_alt = cast<AlternativeValue>(*v);
-          if (p_alt.choice_name() != v_alt.choice_name() ||
-              p_alt.alt_name() != v_alt.alt_name()) {
+          if (&p_alt.alternative() != &v_alt.alternative()) {
             return false;
           }
-          return PatternMatch(&p_alt.argument(), &v_alt.argument(), source_loc,
+          CARBON_CHECK(p_alt.argument().has_value() ==
+                       v_alt.argument().has_value());
+          if (!p_alt.argument().has_value()) {
+            return true;
+          }
+          return PatternMatch(*p_alt.argument(), *v_alt.argument(), source_loc,
                               bindings, generic_args, trace_stream, arena);
         }
         default:
@@ -960,7 +964,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
     case Value::Kind::AlternativeConstructorValue: {
       const auto& alt = cast<AlternativeConstructorValue>(*fun);
       return todo_.FinishAction(arena_->New<AlternativeValue>(
-          alt.alt_name(), alt.choice_name(), arg));
+          &alt.choice(), &alt.alternative(), cast<TupleValue>(arg)));
     }
     case Value::Kind::FunctionValue: {
       const auto& fun_val = cast<FunctionValue>(*fun);

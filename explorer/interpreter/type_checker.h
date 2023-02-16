@@ -21,6 +21,7 @@
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
+#include "explorer/interpreter/matching_impl_set.h"
 #include "explorer/interpreter/value.h"
 
 namespace Carbon {
@@ -63,7 +64,7 @@ class TypeChecker {
   auto MatchImpl(const InterfaceType& iface, Nonnull<const Value*> type,
                  const ImplScope::Impl& impl, const ImplScope& impl_scope,
                  SourceLocation source_loc) const
-      -> std::optional<Nonnull<const Witness*>>;
+      -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 
   // Return the declaration of the member with the given name and the class type
   // that owns it, from the class and its parents
@@ -525,6 +526,12 @@ class TypeChecker {
   // Constraint types that are currently being resolved. These may have
   // rewrites that are not yet visible in any type.
   std::vector<ConstraintTypeBuilder*> partial_constraint_types_;
+
+  // A set of impls we're currently matching.
+  // TODO: This is `mutable` because `MatchImpl` is `const`. We need to remove
+  // the `const`s from everywhere that transitively does `impl` matching to get
+  // rid of this `mutable`.
+  mutable MatchingImplSet matching_impl_set_;
 };
 
 }  // namespace Carbon

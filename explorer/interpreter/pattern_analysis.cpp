@@ -34,7 +34,7 @@ auto AbstractPattern::discriminator() const -> std::string_view {
     }
   } else if (const auto* value = value_.dyn_cast<const Value*>()) {
     if (const auto* alt = dyn_cast<AlternativeValue>(value)) {
-      return alt->alt_name();
+      return alt->alternative().name();
     } else if (const auto* bool_val = dyn_cast<BoolValue>(value)) {
       return bool_val->value() ? "true" : "false";
     }
@@ -47,13 +47,16 @@ auto AbstractPattern::elements_size() const -> int {
     if (const auto* tuple_pattern = dyn_cast<TuplePattern>(pattern)) {
       return tuple_pattern->fields().size();
     } else if (isa<AlternativePattern>(pattern)) {
+      // Note, AlternativePattern is only used for a pattern with arguments. An
+      // alternative pattern without arguments is represented as an
+      // AlternativeValue.
       return 1;
     }
   } else if (const auto* value = value_.dyn_cast<const Value*>()) {
     if (const auto* tuple = dyn_cast<TupleValue>(value)) {
       return tuple->elements().size();
     } else if (const auto* alt = dyn_cast<AlternativeValue>(value)) {
-      return 1;
+      return alt->argument() ? 1 : 0;
     }
   }
   return 0;
@@ -78,9 +81,10 @@ void AbstractPattern::AppendElementsTo(
             AbstractPattern(tuple->elements()[i], tuple_type->elements()[i]));
       }
     } else if (const auto* alt = dyn_cast<AlternativeValue>(value)) {
-      out.push_back(AbstractPattern(
-          &alt->argument(),
-          *cast<ChoiceType>(type_)->FindAlternative(alt->alt_name())));
+      if (auto arg = alt->argument()) {
+        out.push_back(AbstractPattern(
+            *arg, *alt->alternative().parameters_static_type()));
+      }
     }
   }
 }
