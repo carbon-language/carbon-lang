@@ -219,7 +219,7 @@ class CheckLine(Line):
         # the location of the CHECK comment.
         self.line_in_file = None
         for match in line_number_pattern.finditer(self.out_line):
-            if self.matches_filename(match):
+            if self._matches_filename(match):
                 self.line_in_file = int(match.group("line")) - 1
                 break
 
@@ -233,7 +233,7 @@ class CheckLine(Line):
             match = self.line_number_pattern.search(result)
             if not match:
                 break
-            if self.matches_filename(match):
+            if self._matches_filename(match):
                 line_number = int(match.group("line")) - 1
                 delta = line_number_remap[line_number] - output_line_number
                 # We use `:+d` here to produce `LINE-n` or `LINE+n` as
@@ -252,7 +252,7 @@ class CheckLine(Line):
                 )
         return f"{self.indent}// CHECK:{result}\n"
 
-    def matches_filename(self, match: Match) -> bool:
+    def _matches_filename(self, match: Match) -> bool:
         return (
             "filename" not in match.groupdict()
             or match.group("filename") == self.filename
@@ -288,7 +288,7 @@ def find_autoupdate(test: str, orig_lines: List[str]) -> Optional[int]:
 def replace_all(s: str, replacements: List[Tuple[str, str]]) -> str:
     """Runs multiple replacements on a string."""
     for before, after in replacements:
-        s = s.replace(str(before), str(after))
+        s = s.replace(before, after)
     return s
 
 
