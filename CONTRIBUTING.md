@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Ways to contribute](#ways-to-contribute)
-    -   [Contributing to the Language design](#contributing-to-the-language-design)
+    -   [Contributing to the language design](#contributing-to-the-language-design)
         -   [Comment on proposals](#comment-on-proposals)
         -   [Contribute design ideas to Carbon](#contribute-design-ideas-to-carbon)
     -   [Contributing to the language implementation](#contributing-to-the-language-implementation)
@@ -61,7 +61,7 @@ information here in our contributing guide, especially the
 
 ## Ways to contribute
 
-### Contributing to the Language design
+### Contributing to the language design
 
 #### Comment on proposals
 
