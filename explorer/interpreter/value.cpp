@@ -200,7 +200,7 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
         return ProgramError(source_loc)
                << "alternative " << f << " not in " << *v;
       }
-      if ((*alt)->signature()) {
+      if ((*alt)->parameters()) {
         return arena->New<AlternativeConstructorValue>(&choice, *alt);
       }
       return arena->New<AlternativeValue>(&choice, *alt, std::nullopt);

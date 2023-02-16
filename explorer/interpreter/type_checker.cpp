@@ -2838,7 +2838,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
               // If we find an alternative with no declared signature, we are
               // constructing an unparameterized alternative value.
-              if (!(*signature)->static_type()) {
+              if (!(*signature)->parameters_static_type()) {
                 access.set_member(
                     arena_->New<NamedElement>(arena_->New<NamedValue>(
                         NamedValue{access.member_name(), &choice})));
@@ -2847,8 +2847,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 return Success();
               }
 
-              Nonnull<const Value*> parameter_type =
-                  Substitute(choice.bindings(), *(*signature)->static_type());
+              Nonnull<const Value*> parameter_type = Substitute(
+                  choice.bindings(), *(*signature)->parameters_static_type());
               Nonnull<const Value*> type =
                   arena_->New<FunctionType>(parameter_type, &choice);
               // TODO: Should there be a Declaration corresponding to each
@@ -4073,15 +4073,15 @@ auto TypeChecker::TypeCheckPattern(
                << "`" << alternative.alternative_name()
                << "` is not an alternative of " << choice_type;
       }
-      if (!(*signature)->static_type()) {
+      if (!(*signature)->parameters_static_type()) {
         return ProgramError(alternative.source_loc())
                << "alternative `" << choice_type << "."
                << alternative.alternative_name()
                << "` does not expect an argument list";
       }
 
-      Nonnull<const Value*> parameter_type =
-          Substitute(choice_type.bindings(), *(*signature)->static_type());
+      Nonnull<const Value*> parameter_type = Substitute(
+          choice_type.bindings(), *(*signature)->parameters_static_type());
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(&alternative.arguments(),
                                               parameter_type, impl_scope,
                                               enclosing_value_category));
@@ -5543,10 +5543,10 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   }
 
   for (Nonnull<AlternativeSignature*> alternative : choice->alternatives()) {
-    if (auto signature = alternative->signature()) {
+    if (auto params = alternative->parameters()) {
       CARBON_ASSIGN_OR_RETURN(
-          auto type, TypeCheckTypeExp(*signature, *scope_info.innermost_scope));
-      alternative->set_static_type(type);
+          auto type, TypeCheckTypeExp(*params, *scope_info.innermost_scope));
+      alternative->set_parameters_static_type(type);
     }
   }
 

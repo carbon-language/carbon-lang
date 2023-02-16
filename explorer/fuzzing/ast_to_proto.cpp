@@ -750,9 +750,9 @@ static auto DeclarationToProto(const Declaration& declaration)
            choice.alternatives()) {
         auto* alternative_proto = choice_proto->add_alternatives();
         alternative_proto->set_name(alternative->name());
-        if (auto sig = alternative->signature()) {
+        if (auto params = alternative->parameters()) {
           *alternative_proto->mutable_signature() =
-              TupleLiteralExpressionToProto(**sig);
+              TupleLiteralExpressionToProto(**params);
         }
       }
       break;

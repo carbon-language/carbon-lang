@@ -82,7 +82,8 @@ void AbstractPattern::AppendElementsTo(
       }
     } else if (const auto* alt = dyn_cast<AlternativeValue>(value)) {
       if (auto arg = alt->argument()) {
-        out.push_back(AbstractPattern(*arg, *alt->alternative().static_type()));
+        out.push_back(AbstractPattern(
+            *arg, *alt->alternative().parameters_static_type()));
       }
     }
   }
