@@ -5,7 +5,6 @@
 // This won't auto-update because it uses a regex for the prelude line number,
 // so that it doesn't need to be updated on every prelude change.
 //
-// This can't be autoupdated because the error line comes form a different file.
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
