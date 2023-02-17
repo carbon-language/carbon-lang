@@ -22,11 +22,10 @@ def main() -> None:
     )
     args = [
         sys.argv[0],
-        # Flags to configure for parser testing.
+        # Flags to configure for lower testing.
         "--tool=carbon",
         "--autoupdate_arg=dump",
         "--autoupdate_arg=llvm-ir",
-        r"--line_number_pattern=(?<=\.carbon:)(\d+)(?=(?:\D|$))",
         "--lit_run=%{carbon-run-lower}",
         "--testdata=toolchain/lower/testdata",
     ] + sys.argv[1:]
