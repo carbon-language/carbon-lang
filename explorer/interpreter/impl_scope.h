@@ -87,6 +87,16 @@ class ImplScope {
                const Bindings& bindings = {}) const
       -> ErrorOr<Nonnull<const Witness*>>;
 
+  // Same as Resolve, except that failure due to a missing implementation of a
+  // constraint produces `nullopt` instead of an error if
+  // `diagnose_missing_impl` is `false`. This is intended for cases where we're
+  // selecting between options based on whether constraints are satisfied, such
+  // as during `impl` selection.
+  auto TryResolve(Nonnull<const Value*> constraint, Nonnull<const Value*> type,
+                  SourceLocation source_loc, const TypeChecker& type_checker,
+                  const Bindings& bindings, bool diagnose_missing_impl) const
+      -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
+
   // Visits the values that are a single step away from `value` according to an
   // equality constraint that is in scope. That is, the values `v` such that we
   // have a `value == v` equality constraint in scope.
@@ -117,12 +127,15 @@ class ImplScope {
 
  private:
   // Returns the associated impl for the given `iface` and `type` in
-  // the ancestor graph of this scope, or reports a compilation error
-  // at `source_loc` there isn't exactly one matching impl.
-  auto ResolveInterface(Nonnull<const InterfaceType*> iface,
-                        Nonnull<const Value*> type, SourceLocation source_loc,
-                        const TypeChecker& type_checker) const
-      -> ErrorOr<Nonnull<const Witness*>>;
+  // the ancestor graph of this scope. Reports a compilation error
+  // at `source_loc` if there's an ambiguity, or if `diagnose_missing_impl` is
+  // set and there's no matching impl.
+  auto TryResolveInterface(Nonnull<const InterfaceType*> iface,
+                           Nonnull<const Value*> type,
+                           SourceLocation source_loc,
+                           const TypeChecker& type_checker,
+                           bool diagnose_missing_impl) const
+      -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 
   // Returns the associated impl for the given `iface` and `type` in
   // the ancestor graph of this scope, returns std::nullopt if there
@@ -130,10 +143,11 @@ class ImplScope {
   // specific impl for the given `iface` and `type`.
   // Use `original_scope` to satisfy requirements of any generic impl
   // that matches `iface` and `type`.
-  auto TryResolve(Nonnull<const InterfaceType*> iface_type,
-                  Nonnull<const Value*> type, SourceLocation source_loc,
-                  const ImplScope& original_scope,
-                  const TypeChecker& type_checker) const
+  auto TryResolveInterfaceRecursively(Nonnull<const InterfaceType*> iface_type,
+                                      Nonnull<const Value*> type,
+                                      SourceLocation source_loc,
+                                      const ImplScope& original_scope,
+                                      const TypeChecker& type_checker) const
       -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 
   // Returns the associated impl for the given `iface` and `type` in
@@ -142,10 +156,11 @@ class ImplScope {
   // given `iface` and `type`.
   // Use `original_scope` to satisfy requirements of any generic impl
   // that matches `iface` and `type`.
-  auto ResolveHere(Nonnull<const InterfaceType*> iface_type,
-                   Nonnull<const Value*> impl_type, SourceLocation source_loc,
-                   const ImplScope& original_scope,
-                   const TypeChecker& type_checker) const
+  auto TryResolveInterfaceHere(Nonnull<const InterfaceType*> iface_type,
+                               Nonnull<const Value*> impl_type,
+                               SourceLocation source_loc,
+                               const ImplScope& original_scope,
+                               const TypeChecker& type_checker) const
       -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 
   std::vector<Impl> impls_;

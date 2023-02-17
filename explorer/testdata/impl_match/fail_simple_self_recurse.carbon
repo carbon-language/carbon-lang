@@ -2,18 +2,20 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// This won't auto-update because it uses a regex for the prelude line number,
-// so that it doesn't need to be updated on every prelude change.
-//
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "HALLO WELT"
 
 package ExplorerTest api;
 
+interface Foo {}
+
+impl forall [T:! Foo] T as Foo {}
+
+fn F[T:! Foo](x: T) {}
+
 fn Main() -> i32 {
-  Assert(true, "HALLO WELT");
-  Assert(false, "HALLO WELT");
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/impl_match/fail_simple_self_recurse.carbon:[[@LINE+1]]: impl matching for i32 as interface Foo recursively performed a match for the same type and interface
+  F(0);
   return 0;
 }

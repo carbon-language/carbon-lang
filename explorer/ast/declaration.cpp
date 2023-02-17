@@ -429,11 +429,24 @@ auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
 }
 
 void AlternativeSignature::Print(llvm::raw_ostream& out) const {
-  out << "alt " << name() << " " << signature();
+  out << "alt " << name();
+  if (auto params = parameters()) {
+    out << **params;
+  }
 }
 
 void AlternativeSignature::PrintID(llvm::raw_ostream& out) const {
   out << name();
+}
+
+auto ChoiceDeclaration::FindAlternative(std::string_view name) const
+    -> std::optional<const AlternativeSignature*> {
+  for (auto* alt : alternatives()) {
+    if (alt->name() == name) {
+      return alt;
+    }
+  }
+  return std::nullopt;
 }
 
 }  // namespace Carbon

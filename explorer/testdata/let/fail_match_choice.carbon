@@ -15,13 +15,13 @@ choice Ints {
 }
 
 fn Main() -> i32 {
-  var x: auto = Ints.None();
+  var x: auto = Ints.None;
   var n: auto = 0;
   match (x) {
     case Ints.One(var x: auto) => {
       x = 2;
     }
-    case Ints.None() => {
+    case Ints.None => {
       n = n - 1;
     }
     case Ints.Two(x: auto, y: auto) => {

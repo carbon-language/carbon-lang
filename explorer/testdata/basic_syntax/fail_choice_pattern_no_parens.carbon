@@ -15,11 +15,11 @@ choice Ints {
 }
 
 fn Main() -> i32 {
-  match (Ints.None) {
-    case Ints.None() => { return 0; }
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_choice_no_parens.carbon:[[@LINE+3]]: type error in `match` pattern type
-    // CHECK:STDERR: expected: choice Ints
-    // CHECK:STDERR: actual: fn () -> choice Ints
+  match (Ints.None()) {
+    case Ints.None => { return 0; }
+    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_choice_pattern_no_parens.carbon:[[@LINE+3]]: type error in `match` pattern type
+    // CHECK:STDERR: expected: fn () -> choice Ints
+    // CHECK:STDERR: actual: choice Ints
     default => { return 1; }
   }
 }

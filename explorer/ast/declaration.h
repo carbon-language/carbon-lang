@@ -468,10 +468,10 @@ class MixDeclaration : public Declaration {
 class AlternativeSignature : public AstNode {
  public:
   AlternativeSignature(SourceLocation source_loc, std::string name,
-                       Nonnull<TupleLiteral*> signature)
+                       std::optional<Nonnull<TupleLiteral*>> parameters)
       : AstNode(AstNodeKind::AlternativeSignature, source_loc),
         name_(std::move(name)),
-        signature_(signature) {}
+        parameters_(parameters) {}
 
   void Print(llvm::raw_ostream& out) const override;
   void PrintID(llvm::raw_ostream& out) const override;
@@ -481,12 +481,31 @@ class AlternativeSignature : public AstNode {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto signature() const -> const TupleLiteral& { return *signature_; }
-  auto signature() -> TupleLiteral& { return *signature_; }
+  auto parameters() const -> std::optional<Nonnull<const TupleLiteral*>> {
+    return parameters_;
+  }
+  auto parameters() -> std::optional<Nonnull<TupleLiteral*>> {
+    return parameters_;
+  }
+
+  // The static type described by the parameters expression, if any. Cannot be
+  // called before type checking. This will be nullopt after type checking if
+  // this alternative does not have a parameter list.
+  auto parameters_static_type() const -> std::optional<Nonnull<const Value*>> {
+    return parameters_static_type_;
+  }
+
+  // Sets the static type of the declared entity. Can only be called once,
+  // during typechecking.
+  void set_parameters_static_type(Nonnull<const Value*> type) {
+    CARBON_CHECK(!parameters_static_type_.has_value());
+    parameters_static_type_ = type;
+  }
 
  private:
   std::string name_;
-  Nonnull<TupleLiteral*> signature_;
+  std::optional<Nonnull<TupleLiteral*>> parameters_;
+  std::optional<Nonnull<const Value*>> parameters_static_type_;
 };
 
 class ChoiceDeclaration : public Declaration {
@@ -522,18 +541,15 @@ class ChoiceDeclaration : public Declaration {
     return alternatives_;
   }
 
-  void set_members(const std::vector<NamedValue>& members) {
-    members_ = members;
-  }
-  auto members() const -> std::vector<NamedValue> { return members_; }
-
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+  auto FindAlternative(std::string_view name) const
+      -> std::optional<const AlternativeSignature*>;
 
  private:
   DeclaredName name_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
   std::vector<Nonnull<AlternativeSignature*>> alternatives_;
-  std::vector<NamedValue> members_;
 };
 
 // Global variable definition implements the Declaration concept.

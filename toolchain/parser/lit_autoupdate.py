@@ -26,7 +26,6 @@ def main() -> None:
         "--tool=carbon",
         "--autoupdate_arg=dump",
         "--autoupdate_arg=parse-tree",
-        r"--line_number_pattern=(?<=\.carbon:)(\d+)(?=(?:\D|$))",
         "--lit_run=%{carbon-run-parser}",
         "--testdata=toolchain/parser/testdata",
     ] + sys.argv[1:]
