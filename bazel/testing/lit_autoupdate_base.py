@@ -323,9 +323,9 @@ def get_matchable_test_output(
             (test, f"{{{{.*}}}}/{test}"),
         ],
     )
-    out = bazel_runfiles.sub("{{.*}}/", out)
     # Replacing runfiles is a more complex replacement.
     # We have some things show up under runfiles; this removes them.
+    out = bazel_runfiles.sub("{{.*}}/", out)
     out_lines = out.splitlines()
 
     for i, line in enumerate(out_lines):
