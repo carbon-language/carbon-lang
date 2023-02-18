@@ -215,7 +215,7 @@ class CheckLine(Line):
         self.line_number_delta_prefix = line_number_delta_prefix
         self.line_number_pattern = line_number_pattern
 
-        # If any match is specific to this file, use the first line for
+        # If any match is specific to this file, use the first matched line for
         # the location of the CHECK comment.
         self.line_in_file = None
         for match in line_number_pattern.finditer(self.out_line):

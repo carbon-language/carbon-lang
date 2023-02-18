@@ -2,9 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// This won't auto-update because it uses a regex for the prelude line number,
-// so that it doesn't need to be updated on every prelude change.
-//
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
