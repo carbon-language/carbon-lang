@@ -4820,18 +4820,15 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   for (Nonnull<Declaration*> m : class_decl->members()) {
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, class_scope_info));
 
-    const auto* fun = dyn_cast<FunctionDeclaration>(m);
-    if (!fun) {
-      continue;
-    }
+    if (const auto* fun = dyn_cast<FunctionDeclaration>(m)) {
+      if (fun->virt_override() == VirtualOverride::Impl) {
+        const VTable& vtable = (*base_class)->vtable();
+        const auto* vtable_fun = vtable.find(fun->name())->second.first;
 
-    if (fun->virt_override() == VirtualOverride::Impl) {
-      auto vtable = (*base_class)->vtable();
-      const auto* vtable_fun = vtable[fun->name()].first;
-
-      CARBON_RETURN_IF_ERROR(ExpectExactType(fun->source_loc(), "impl method",
-                                             &vtable_fun->static_type(),
-                                             &fun->static_type(), class_scope));
+        CARBON_RETURN_IF_ERROR(ExpectExactType(
+            fun->source_loc(), "impl method", &vtable_fun->static_type(),
+            &fun->static_type(), class_scope));
+      }
     }
   }
 
