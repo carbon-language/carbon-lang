@@ -1,0 +1,230 @@
+# error handling and control flow
+
+<!--
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-->
+
+[Pull request](https://github.com/carbon-language/carbon-lang/pull/####)
+
+<!-- toc -->
+
+## Table of contents
+
+- [Abstract](#abstract)
+- [Problem](#problem)
+- [Background](#background)
+- [Proposal](#proposal)
+- [Details](#details)
+    - [part 1](#part-1)
+        - [example before proposal](#example-before-proposal)
+        - [example after proposal](#example-after-proposal)
+        - [explanation](#explanation)
+    - [part 2](#part-2)
+        - [example before proposal](#example-before-proposal-1)
+        - [example after proposal](#example-after-proposal-1)
+        - [explanation](#explanation-1)
+- [Rationale](#rationale)
+- [Alternatives considered](#alternatives-considered)
+
+<!-- tocstop -->
+
+## Abstract
+
+The Details of error handling: return types, error propagation, and control flow.
+
+## Problem
+
+What problem:
+-   How to handel multiple error types.
+-   How to differentiate control flow between succes and failue.
+How important, Who is impacted:
+All not trivial programs need to handle errors, getting it wrong is a common pain point for many programmers.
+
+## Background
+
+Since proposal #0301 we decided that "errors are values", meanig Carbon's error handling will be based on return values, and specifically return values of sum types such as `Result(T, E)` and `Optional(T)`, however we need an ergonomic strategy of handling multiple error types.
+
+## Proposal
+
+This proposal has 2 parts:
+-   namespaces can define their erorr type, `Result` is variadic `Result(T, ns1, ns2, ...)`, and a `?` operator.
+-   statements can have scope guards.
+
+## Details
+
+### part 1
+
+#### example before proposal
+
+```Carbon
+// functions called.
+fn OpenFile(path: string) -> Result(File, IoError);
+fn parse(json: string) -> Result(JsonObject, ParseError);
+
+// boiler plate of composing types.
+Choice ConfigErorr {
+    io(IoError)
+    parse(ParseError)
+}
+
+// the function defintion.
+fn getConfig() -> Result(JsonObject, CofigError){
+    var file: auto = match(OpenFile("config.json")){
+        case (Ok(f)) => f;
+        case (Err(e)) => return Err(io(e)); \\ these Err's are from different sum types
+    }
+    match(parse(file.ReadAll())) {
+        case (Ok(obj)) => return Ok(obj); \\ these ok's are from differen sum types
+        case (Err(e)) => return Err(parse(e)); \\ and again...
+    }
+}
+
+// call site
+match(getConfig()){
+    case (Ok(obj)) => \\...
+    case (Err(io(e))) => \\...
+    case (Err(parse(e))) => \\...
+}
+```
+
+Note: [rust](https://doc.rust-lang.org/rust-by-example/error/multiple_error_types.html) offers macros to handle this more easily.
+
+#### example after proposal
+
+```Carbon
+namespace io;
+Choice Error {
+    //...
+};
+fn OpenFile(path: string) -> Result(File, Error);
+```
+
+```Carbon
+namespace json;
+class Error {
+    //...
+};
+fn parse(json: string) -> Result(JsonObject, ParseError);
+```
+
+```Carbon
+fn getConfig() -> Result(JsonObject, io, json) {
+    var file: auto = OpenFile("config.json"))?
+    return parse(file.ReadAll())?
+}
+```
+
+```Carbon
+atch(getConfig()){
+    case Ok(obj) => \\...
+    case io(e) => \\...
+    case json(e) => \\...
+}
+```
+
+#### explanation
+
+Every namespace can define its own error type.
+`Result(T, Error ,ns1, ns2, ...)` is a sum type that expands to something like this:
+
+```Carbon
+Choice Result {
+    Ok(T),
+    <CurrntNamespace>(CurrntNamespace.Error),
+    ns1(ns1.Error),
+    ns2(ns2.Error),
+    ...
+}
+```
+
+the syntax `x = result?` is shorthand for
+```Carbon
+match(result){
+    case (Ok(y)) => x = y;
+    case (e) => return e;
+}
+```
+
+the same syntax works also for `Optional`.
+
+### part 2
+
+this part is inspired by:
+- d language [scope guard](https://dlang.org/spec/statement.html#scope-guard-statement).
+- ziglang [errdefer](https://ziglang.org/documentation/master/#errdefer).
+- [a talk](https://youtu.be/WjTrfoiB0MQ)  by Andrei Alexandrescu.
+
+#### example before proposal
+
+```Carbon
+class MyClass {
+    fn make() -> Result(Self, mem) {
+        var x: Self;
+        x.a = alloc(...)?
+        match(alloc(...)){
+            Ok(b) => x.b = b;
+            mem(m) => {
+                free(x.a);
+                retrun m;
+            }
+        }
+        match(alloc(...)){
+            Ok(c) => x.c = c;
+            mem(m) => {
+                free(x.b);
+                free(x.a);
+                retrun m;
+            }
+        }
+        return Ok(x);
+    }
+}
+```
+
+#### example after proposal
+
+```Carbon
+class MyClass {
+    fn make() -> Result(Self, mem) {
+        var x: Self;
+        x.a = alloc(...)?
+        on_error free(x.a);
+        x.b = alloc(...)?
+        on_error free(x.b);
+        x.c = alloc(...)?
+        return Ok(x);
+    }
+}
+```
+
+#### explanation
+
+`on_error` statemts are executed at the end of the scope.  
+they are executed only if the scope is exited in failure.  
+they are executed only if the scope is exited after the statement.  
+they are executed in the revers order in which they appear.  
+they can not contain any return statement.
+
+This can by extended to `on_succes` and `on_exit`.
+
+## Rationale
+
+TODO: How does this proposal effectively advance Carbon's goals? Rather than
+re-stating the full motivation, this should connect that motivation back to
+Carbon's stated goals and principles. This may evolve during review. Use links
+to appropriate sections of [`/docs/project/goals.md`](/docs/project/goals.md),
+and/or to documents in [`/docs/project/principles`](/docs/project/principles).
+For example:
+
+-   [Code that is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write)
+    -   part 1 makes it easy to read code, by enumerating all the ways in which a function can fail, rather than `Result(T, E)` that just tells you that it can fail in some way and then sends you to look up what is `E`.
+    -   the `?` operator makes it easy to write code, by giving you a quick way to propagate an error.
+    -   part 2 makes it easy to write code, by giving you an ergonomic way to handel common cases of comlicated control flow.
+-   [Practical safety and testing mechanisms](/docs/project/goals.md#practical-safety-and-testing-mechanisms)
+    -   easy error handling means correct error handling.
+
+## Alternatives considered
+
+we have considerd a modified version of this proposal in which `Result` would be matched against its type and its value, however this is less convenient.
