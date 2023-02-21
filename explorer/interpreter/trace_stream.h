@@ -19,9 +19,11 @@ namespace Carbon {
 // the prelude is being processed. The prelude is expected to take a
 // disproprotionate amount of time to log, so we try to avoid it.
 //
-// TODO: When the prelude is fully treated as a separate file, we may be able to
-// take a different approach where the caller explicitly toggles tracing when
-// switching file contexts.
+// TODO: While the prelude is combined with the provided program as a single
+// AST, we detect the boundary where declarations stop being prelude
+// declarations. When the prelude is fully treated as a separate file, we may be
+// able to take a different approach where the caller explicitly toggles tracing
+// when switching file contexts.
 class TraceStream {
  public:
   explicit TraceStream(std::string_view prelude_filename)
@@ -32,24 +34,15 @@ class TraceStream {
     return stream_.has_value() && !skipping_prelude_;
   }
 
-  // Returns true if tracing is currently enabled. If the prelude is currently
-  // being skipped and source_loc is a non-prelude file location, this will
-  // mark the skip as done.
-  auto is_enabled_at(SourceLocation source_loc) -> bool {
-    if (!stream_.has_value()) {
-      return false;
-    }
-    if (!skipping_prelude_) {
-      return true;
-    }
-    if (!source_loc.filename().empty() &&
+  // If the prelude is currently being skipped and source_loc is a non-prelude
+  // file location, this will mark the skip as done.
+  auto update_skipping_prelude(SourceLocation source_loc) -> void {
+    if (skipping_prelude_ && !source_loc.filename().empty() &&
         source_loc.filename() != prelude_filename_) {
       **stream_ << "Finished prelude, resuming tracing at "
                 << source_loc.filename() << "\n";
       skipping_prelude_ = false;
-      return true;
     }
-    return false;
   }
 
   // Sets whether the prelude is being skipped.

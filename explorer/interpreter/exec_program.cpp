@@ -58,7 +58,8 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
     *trace_stream << "********** printing declarations **********\n";
     trace_stream->set_skipping_prelude(true);
     for (auto* const decl : ast.declarations) {
-      if (trace_stream->is_enabled_at(decl->source_loc())) {
+      trace_stream->update_skipping_prelude(decl->source_loc());
+      if (trace_stream->is_enabled()) {
         *trace_stream << *decl;
       }
     }
