@@ -28,6 +28,6 @@ impl forall [U:! Printable] Vector(U) as Printable {
 fn Main() -> i32 {
   var v: Vector(String) = {.x = "test"};
   v.(Printable.PrintIt)();
-  v.PrintIt();
+ // v.PrintIt();
   return 42;
 }

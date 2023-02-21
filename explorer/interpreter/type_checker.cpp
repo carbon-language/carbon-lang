@@ -815,7 +815,7 @@ auto TypeChecker::BuildBuiltinMethodCall(const ImplScope& impl_scope,
 auto TypeChecker::ExpectNonPlaceholderType(SourceLocation source_loc,
                                            Nonnull<const Value*> type)
     -> ErrorOr<Success> {
-  if (!IsPlaceholderType(type)) {
+  if (!IsPlaceholderType(type)  ) {
     return Success();
   }
   if (const auto* member_name = dyn_cast<TypeOfMemberName>(type)) {
