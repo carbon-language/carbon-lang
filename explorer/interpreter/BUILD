@@ -208,6 +208,10 @@ cc_library(
 cc_library(
     name = "trace_stream",
     hdrs = ["trace_stream.h"],
+    visibility = [
+        "//explorer:__pkg__",
+        "//explorer/fuzzing:__pkg__",
+    ],
     deps = [
         "//common:check",
         "//common:ostream",
