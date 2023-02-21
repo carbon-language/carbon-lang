@@ -26,7 +26,7 @@ class SourceLocation {
   constexpr SourceLocation(const char* filename, int line_num)
       : filename_(filename), line_num_(line_num) {}
   SourceLocation(Nonnull<const std::string*> filename, int line_num)
-      : filename_(filename->c_str()), line_num_(line_num) {}
+      : filename_(*filename), line_num_(line_num) {}
 
   SourceLocation(const SourceLocation&) = default;
   SourceLocation(SourceLocation&&) = default;
@@ -36,6 +36,8 @@ class SourceLocation {
   auto operator==(SourceLocation other) const -> bool {
     return filename_ == other.filename_ && line_num_ == other.line_num_;
   }
+
+  auto filename() -> std::string_view { return filename_; }
 
   void Print(llvm::raw_ostream& out) const {
     out << filename_ << ":" << line_num_;

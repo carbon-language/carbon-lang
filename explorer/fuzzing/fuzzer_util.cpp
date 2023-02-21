@@ -10,6 +10,7 @@
 #include "common/error.h"
 #include "common/fuzzing/proto_to_carbon.h"
 #include "explorer/interpreter/exec_program.h"
+#include "explorer/interpreter/trace_stream.h"
 #include "explorer/syntax/parse.h"
 #include "explorer/syntax/prelude.h"
 #include "llvm/Support/FileSystem.h"
@@ -83,9 +84,9 @@ auto ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit)
   CARBON_CHECK(prelude_path.ok()) << prelude_path.error();
 
   AddPrelude(*prelude_path, &arena, &ast.declarations);
-  CARBON_ASSIGN_OR_RETURN(
-      ast, AnalyzeProgram(&arena, ast, /*trace_stream=*/std::nullopt));
-  return ExecProgram(&arena, ast, /*trace_stream=*/std::nullopt);
+  TraceStream trace_stream(*prelude_path);
+  CARBON_ASSIGN_OR_RETURN(ast, AnalyzeProgram(&arena, ast, &trace_stream));
+  return ExecProgram(&arena, ast, &trace_stream);
 }
 
 }  // namespace Carbon

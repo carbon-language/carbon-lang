@@ -19,12 +19,11 @@
 namespace Carbon {
 
 auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
-                    std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
-    -> ErrorOr<AST> {
-  if (trace_stream) {
-    **trace_stream << "********** source program **********\n";
+                    Nonnull<TraceStream*> trace_stream) -> ErrorOr<AST> {
+  if (trace_stream->is_enabled()) {
+    *trace_stream << "********** source program **********\n";
     for (auto* const decl : ast.declarations) {
-      **trace_stream << *decl;
+      *trace_stream << *decl;
     }
   }
   SourceLocation source_loc("<Main()>", 0);
@@ -33,36 +32,45 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
       arena->New<TupleLiteral>(source_loc));
   // Although name resolution is currently done once, generic programming
   // (particularly templates) may require more passes.
-  if (trace_stream) {
-    **trace_stream << "********** resolving names **********\n";
+  if (trace_stream->is_enabled()) {
+    *trace_stream << "********** resolving names **********\n";
   }
   CARBON_RETURN_IF_ERROR(ResolveNames(ast));
-  if (trace_stream) {
-    **trace_stream << "********** resolving control flow **********\n";
+
+  if (trace_stream->is_enabled()) {
+    *trace_stream << "********** resolving control flow **********\n";
   }
   CARBON_RETURN_IF_ERROR(ResolveControlFlow(ast));
-  if (trace_stream) {
-    **trace_stream << "********** type checking **********\n";
+
+  if (trace_stream->is_enabled()) {
+    *trace_stream << "********** type checking **********\n";
+    trace_stream->set_skipping_prelude(true);
   }
   CARBON_RETURN_IF_ERROR(TypeChecker(arena, trace_stream).TypeCheck(ast));
-  if (trace_stream) {
-    **trace_stream << "********** resolving unformed variables **********\n";
+  trace_stream->set_skipping_prelude(false);
+
+  if (trace_stream->is_enabled()) {
+    *trace_stream << "********** resolving unformed variables **********\n";
   }
   CARBON_RETURN_IF_ERROR(ResolveUnformed(ast));
-  if (trace_stream) {
-    **trace_stream << "********** printing declarations **********\n";
+
+  if (trace_stream->is_enabled()) {
+    *trace_stream << "********** printing declarations **********\n";
+    trace_stream->set_skipping_prelude(true);
     for (auto* const decl : ast.declarations) {
-      **trace_stream << *decl;
+      if (trace_stream->is_enabled_at(decl->source_loc())) {
+        *trace_stream << *decl;
+      }
     }
+    trace_stream->set_skipping_prelude(false);
   }
   return ast;
 }
 
 auto ExecProgram(Nonnull<Arena*> arena, AST ast,
-                 std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
-    -> ErrorOr<int> {
-  if (trace_stream) {
-    **trace_stream << "********** starting execution **********\n";
+                 Nonnull<TraceStream*> trace_stream) -> ErrorOr<int> {
+  if (trace_stream->is_enabled()) {
+    *trace_stream << "********** starting execution **********\n";
   }
   return InterpProgram(ast, arena, trace_stream);
 }

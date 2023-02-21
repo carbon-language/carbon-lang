@@ -27,6 +27,7 @@ cc_library(
         "//common/fuzzing:carbon_cc_proto",
         "//common/fuzzing:proto_to_carbon_lib",
         "//explorer/interpreter:exec_program",
+        "//explorer/interpreter:trace_stream",
         "//explorer/syntax",
         "//explorer/syntax:prelude",
         "@bazel_tools//tools/cpp/runfiles",

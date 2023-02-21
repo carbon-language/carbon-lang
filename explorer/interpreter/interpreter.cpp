@@ -59,7 +59,7 @@ class Interpreter {
   // traces if `trace` is true. `phase` indicates whether it executes at
   // compile time or run time.
   Interpreter(Phase phase, Nonnull<Arena*> arena,
-              std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
+              Nonnull<TraceStream*> trace_stream)
       : arena_(arena),
         heap_(arena),
         todo_(MakeTodo(phase, &heap_)),
@@ -168,7 +168,7 @@ class Interpreter {
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
                       Nonnull<const Value*> receiver) -> ErrorOr<Success>;
 
-  void PrintState(llvm::raw_ostream& out);
+  void TraceState();
 
   auto phase() const -> Phase { return phase_; }
 
@@ -182,7 +182,7 @@ class Interpreter {
   // contents of any non-completed continuations at the end of execution.
   std::vector<Nonnull<ContinuationValue::StackFragment*>> stack_fragments_;
 
-  std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
+  Nonnull<TraceStream*> trace_stream_;
   Phase phase_;
 };
 
@@ -197,11 +197,10 @@ Interpreter::~Interpreter() {
 // State Operations
 //
 
-void Interpreter::PrintState(llvm::raw_ostream& out) {
-  out << "{\nstack: " << todo_;
-  out << "\nmemory: " << heap_;
-  out << "\n}\n";
+void Interpreter::TraceState() {
+  *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
 }
+
 auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
                            const std::vector<Nonnull<const Value*>>& args,
                            SourceLocation source_loc)
@@ -271,11 +270,10 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
 auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                   SourceLocation source_loc,
                   std::optional<Nonnull<RuntimeScope*>> bindings,
-                  BindingMap& generic_args,
-                  std::optional<Nonnull<llvm::raw_ostream*>> trace_stream,
+                  BindingMap& generic_args, Nonnull<TraceStream*> trace_stream,
                   Nonnull<Arena*> arena) -> bool {
-  if (trace_stream) {
-    **trace_stream << "match pattern " << *p << "\nwith value " << *v << "\n";
+  if (trace_stream->is_enabled()) {
+    *trace_stream << "match pattern " << *p << "\nwith value " << *v << "\n";
   }
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
@@ -398,9 +396,9 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
 auto Interpreter::StepLvalue() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<LValAction>(act).expression();
-  if (trace_stream_) {
-    **trace_stream_ << "--- step lvalue " << exp << " ." << act.pos() << "."
-                    << " (" << exp.source_loc() << ") --->\n";
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- step lvalue " << exp << " ." << act.pos() << "."
+                   << " (" << exp.source_loc() << ") --->\n";
   }
   switch (exp.kind()) {
     case ExpressionKind::IdentifierExpression: {
@@ -536,9 +534,9 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
 
 auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     -> ErrorOr<Nonnull<const Value*>> {
-  if (trace_stream_) {
-    **trace_stream_ << "--- recursive eval\n";
-    PrintState(**trace_stream_);
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- recursive eval\n";
+    TraceState();
   }
   todo_.BeginRecursiveAction();
   CARBON_RETURN_IF_ERROR(todo_.Spawn(std::move(action)));
@@ -547,12 +545,12 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
   // action is finished and popped off the queue before returning to us.
   while (!isa<RecursiveAction>(todo_.CurrentAction())) {
     CARBON_RETURN_IF_ERROR(Step());
-    if (trace_stream_) {
-      PrintState(**trace_stream_);
+    if (trace_stream_->is_enabled()) {
+      TraceState();
     }
   }
-  if (trace_stream_) {
-    **trace_stream_ << "--- recursive eval done\n";
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- recursive eval done\n";
   }
   Nonnull<const Value*> result =
       cast<RecursiveAction>(todo_.CurrentAction()).results()[0];
@@ -957,8 +955,8 @@ auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
                                ImplWitnessMap&& witnesses) -> ErrorOr<Success> {
-  if (trace_stream_) {
-    **trace_stream_ << "calling function: " << *fun << "\n";
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "calling function: " << *fun << "\n";
   }
   switch (fun->kind()) {
     case Value::Kind::AlternativeConstructorValue: {
@@ -1096,9 +1094,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
-  if (trace_stream_) {
-    **trace_stream_ << "--- step exp " << exp << " ." << act.pos() << "."
-                    << " (" << exp.source_loc() << ") --->\n";
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- step exp " << exp << " ." << act.pos() << "."
+                   << " (" << exp.source_loc() << ") --->\n";
   }
   switch (exp.kind()) {
     case ExpressionKind::IndexExpression: {
@@ -1698,9 +1696,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
 auto Interpreter::StepWitness() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Witness* witness = cast<WitnessAction>(act).witness();
-  if (trace_stream_) {
-    **trace_stream_ << "--- step witness " << *witness << " ." << act.pos()
-                    << ". --->\n";
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- step witness " << *witness << " ." << act.pos()
+                   << ". --->\n";
   }
   switch (witness->kind()) {
     case Value::Kind::BindingWitness: {
@@ -1764,11 +1762,11 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
 auto Interpreter::StepStmt() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Statement& stmt = cast<StatementAction>(act).statement();
-  if (trace_stream_) {
-    **trace_stream_ << "--- step stmt ";
-    stmt.PrintDepth(1, **trace_stream_);
-    **trace_stream_ << " ." << act.pos() << ". "
-                    << "(" << stmt.source_loc() << ") --->\n";
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- step stmt ";
+    stmt.PrintDepth(1, trace_stream_->stream());
+    *trace_stream_ << " ." << act.pos() << ". "
+                   << "(" << stmt.source_loc() << ") --->\n";
   }
   switch (stmt.kind()) {
     case StatementKind::Match: {
@@ -2030,11 +2028,11 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     case StatementKind::ReturnVar: {
       const auto& ret_var = cast<ReturnVar>(stmt);
       const ValueNodeView& value_node = ret_var.value_node();
-      if (trace_stream_) {
-        **trace_stream_ << "--- step returned var "
-                        << cast<BindingPattern>(value_node.base()).name()
-                        << " ." << act.pos() << "."
-                        << " (" << stmt.source_loc() << ") --->\n";
+      if (trace_stream_->is_enabled()) {
+        *trace_stream_ << "--- step returned var "
+                       << cast<BindingPattern>(value_node.base()).name() << " ."
+                       << act.pos() << "."
+                       << " (" << stmt.source_loc() << ") --->\n";
       }
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
                               todo_.ValueOfNode(value_node, stmt.source_loc()));
@@ -2099,11 +2097,11 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
 auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Declaration& decl = cast<DeclarationAction>(act).declaration();
-  if (trace_stream_) {
-    **trace_stream_ << "--- step decl ";
-    decl.PrintID(**trace_stream_);
-    **trace_stream_ << " ." << act.pos() << ". "
-                    << "(" << decl.source_loc() << ") --->\n";
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- step decl ";
+    decl.PrintID(trace_stream_->stream());
+    *trace_stream_ << " ." << act.pos() << ". "
+                   << "(" << decl.source_loc() << ") --->\n";
   }
   switch (decl.kind()) {
     case DeclarationKind::VariableDeclaration: {
@@ -2288,25 +2286,24 @@ auto Interpreter::Step() -> ErrorOr<Success> {
 
 auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     -> ErrorOr<Success> {
-  if (trace_stream_) {
-    PrintState(**trace_stream_);
+  if (trace_stream_->is_enabled()) {
+    TraceState();
   }
   todo_.Start(std::move(action));
   while (!todo_.IsEmpty()) {
     CARBON_RETURN_IF_ERROR(Step());
-    if (trace_stream_) {
-      PrintState(**trace_stream_);
+    if (trace_stream_->is_enabled()) {
+      TraceState();
     }
   }
   return Success();
 }
 
 auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
-                   std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
-    -> ErrorOr<int> {
+                   Nonnull<TraceStream*> trace_stream) -> ErrorOr<int> {
   Interpreter interpreter(Phase::RunTime, arena, trace_stream);
-  if (trace_stream) {
-    **trace_stream << "********** initializing globals **********\n";
+  if (trace_stream->is_enabled()) {
+    *trace_stream << "********** initializing globals **********\n";
   }
 
   for (Nonnull<Declaration*> declaration : ast.declarations) {
@@ -2314,8 +2311,8 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
         std::make_unique<DeclarationAction>(declaration)));
   }
 
-  if (trace_stream) {
-    **trace_stream << "********** calling main function **********\n";
+  if (trace_stream->is_enabled()) {
+    *trace_stream << "********** calling main function **********\n";
   }
 
   CARBON_RETURN_IF_ERROR(interpreter.RunAllSteps(
@@ -2325,7 +2322,7 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
 }
 
 auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
-               std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
+               Nonnull<TraceStream*> trace_stream)
     -> ErrorOr<Nonnull<const Value*>> {
   Interpreter interpreter(Phase::CompileTime, arena, trace_stream);
   CARBON_RETURN_IF_ERROR(

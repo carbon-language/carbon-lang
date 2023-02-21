@@ -22,6 +22,7 @@
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/matching_impl_set.h"
+#include "explorer/interpreter/trace_stream.h"
 #include "explorer/interpreter/value.h"
 
 namespace Carbon {
@@ -35,7 +36,7 @@ using GlobalMembersMap =
 class TypeChecker {
  public:
   explicit TypeChecker(Nonnull<Arena*> arena,
-                       std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
+                       Nonnull<TraceStream*> trace_stream)
       : arena_(arena), trace_stream_(trace_stream) {}
 
   // Type-checks `ast` and sets properties such as `static_type`, as documented
@@ -516,7 +517,7 @@ class TypeChecker {
   // Maps a mixin/class declaration to all of its direct and indirect members.
   GlobalMembersMap collected_members_;
 
-  std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
+  Nonnull<TraceStream*> trace_stream_;
 
   // The top-level ImplScope, containing `impl` declarations that should be
   // usable from any context. This is used when we want to try to refine a
