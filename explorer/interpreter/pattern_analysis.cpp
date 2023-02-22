@@ -47,16 +47,13 @@ auto AbstractPattern::elements_size() const -> int {
     if (const auto* tuple_pattern = dyn_cast<TuplePattern>(pattern)) {
       return tuple_pattern->fields().size();
     } else if (isa<AlternativePattern>(pattern)) {
-      // Note, AlternativePattern is only used for a pattern with arguments. An
-      // alternative pattern without arguments is represented as an
-      // AlternativeValue.
       return 1;
     }
   } else if (const auto* value = value_.dyn_cast<const Value*>()) {
     if (const auto* tuple = dyn_cast<TupleValue>(value)) {
       return tuple->elements().size();
     } else if (const auto* alt = dyn_cast<AlternativeValue>(value)) {
-      return alt->argument() ? 1 : 0;
+      return 1;
     }
   }
   return 0;
@@ -84,6 +81,10 @@ void AbstractPattern::AppendElementsTo(
       if (auto arg = alt->argument()) {
         out.push_back(AbstractPattern(
             *arg, *alt->alternative().parameters_static_type()));
+      } else {
+        // There's no value to match for this alternative, so just insert a
+        // wildcard.
+        out.push_back(AbstractPattern::MakeWildcard());
       }
     }
   }

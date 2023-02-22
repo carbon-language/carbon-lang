@@ -4052,11 +4052,9 @@ auto TypeChecker::TypeCheckPattern(
     }
     case PatternKind::AlternativePattern: {
       auto& alternative = cast<AlternativePattern>(*p);
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckExp(&alternative.choice_type(), impl_scope));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type,
-          InterpExp(&alternative.choice_type(), arena_, trace_stream_));
+          TypeCheckTypeExp(&alternative.choice_type(), impl_scope));
       if (!isa<ChoiceType>(type)) {
         return ProgramError(alternative.source_loc())
                << "alternative pattern does not name a choice type.";
