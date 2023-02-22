@@ -9,7 +9,6 @@
 
 #include <forward_list>
 
-#include "llvm/Support/FormatVariadic.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
