@@ -15,7 +15,8 @@ namespace Carbon {
 
 // Adds the Carbon prelude to `declarations`.
 void AddPrelude(std::string_view prelude_file_name, Nonnull<Arena*> arena,
-                std::vector<Nonnull<Declaration*>>* declarations);
+                std::vector<Nonnull<Declaration*>>* declarations,
+                int* num_prelude_declarations);
 
 }  // namespace Carbon
 

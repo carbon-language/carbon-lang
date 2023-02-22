@@ -24,6 +24,7 @@ cc_library(
         "//explorer/common:arena",
         "//explorer/common:nonnull",
         "//explorer/interpreter:exec_program",
+        "//explorer/interpreter:trace_stream",
         "//explorer/syntax",
         "//explorer/syntax:prelude",
         "@llvm-project//llvm:Support",

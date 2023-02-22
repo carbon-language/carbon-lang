@@ -8,12 +8,13 @@
 // NOAUTOUPDATE
 // RUN: %{explorer-run-trace}
 // CHECK:STDOUT: ********** source program **********
-// CHECK:STDOUT: interface ImplicitAs {
+// CHECK-NOT:STDOUT: interface ImplicitAs {
+// CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: ********** type checking **********
-// CHECK:STDOUT: ** declaring interface ImplicitAs
+// CHECK:STDOUT: ** declaring interface TestInterface
 // CHECK:STDOUT: ********** resolving unformed variables **********
 // CHECK:STDOUT: ********** printing declarations **********
-// CHECK:STDOUT: interface ImplicitAs {
+// CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: ********** starting execution **********
 // CHECK:STDOUT: ********** initializing globals **********
 // CHECK:STDOUT: ********** calling main function **********
@@ -21,6 +22,8 @@
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
+
+interface TestInterface {}
 
 fn Main() -> i32 {
   return 0;
