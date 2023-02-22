@@ -370,7 +370,7 @@ class NominalClassValue : public Value {
     return base_;
   }
   // Returns a pointer of pointer to the child-most class value.
-  auto class_value_ptr() const -> Nonnull<const NominalClassValue** const> {
+  auto class_value_ptr() const -> Nonnull<const NominalClassValue**> {
     return class_value_ptr_;
   }
 

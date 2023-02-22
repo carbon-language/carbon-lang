@@ -57,7 +57,8 @@ TEST(ProtoToCarbonTest, Roundtrip) {
 
 auto main(int argc, char** argv) -> int {
   ::testing::InitGoogleTest(&argc, argv);
-  Carbon::Testing::carbon_files =
-      new std::vector<llvm::StringRef>(&argv[1], &argv[argc]);
+  auto carbon_files =
+      std::make_unique<std::vector<llvm::StringRef>>(&argv[1], &argv[argc]);
+  Carbon::Testing::carbon_files = carbon_files.get();
   return RUN_ALL_TESTS();
 }

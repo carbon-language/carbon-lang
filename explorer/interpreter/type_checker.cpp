@@ -948,7 +948,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
   }
 
   // If param is the name of a variable we're deducing, then deduce it.
-  if (auto* var_type = dyn_cast<VariableType>(param)) {
+  if (const auto* var_type = dyn_cast<VariableType>(param)) {
     const auto& binding = var_type->binding();
     if (auto it = deduced_values_.find(&binding); it != deduced_values_.end()) {
       it->second.push_back(arg);
@@ -2512,6 +2512,7 @@ auto TypeChecker::CheckAddrMeAccess(
   return Success();
 }
 
+// NOLINTNEXTLINE(readability-function-size)
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
