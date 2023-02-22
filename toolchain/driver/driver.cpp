@@ -15,7 +15,7 @@
 #include "llvm/Support/Format.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lexer/tokenized_buffer.h"
-#include "toolchain/lower/lower.h"
+#include "toolchain/lowering/lower_to_llvm.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/source/source_buffer.h"
@@ -209,11 +209,11 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
   CARBON_VLOG() << "semantics_ir: " << semantics_ir;
 
-  CARBON_VLOG() << "*** Lower::Make ***\n";
+  CARBON_VLOG() << "*** LowerToLLVM ***\n";
   llvm::LLVMContext llvm_context;
   const std::unique_ptr<llvm::Module> module =
-      Lower::Make(llvm_context, input_file_name, semantics_ir);
-  CARBON_VLOG() << "*** Lower::Make done ***\n";
+      LowerToLLVM(llvm_context, input_file_name, semantics_ir);
+  CARBON_VLOG() << "*** LowerToLLVM done ***\n";
   if (dump_mode == DumpMode::LLVMIR) {
     consumer.Flush();
     module->print(output_stream_, /*AAW=*/nullptr,

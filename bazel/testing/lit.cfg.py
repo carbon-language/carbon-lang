@@ -47,7 +47,7 @@ def add_substitutions():
 
     add_substitution("carbon", f"{run_carbon}")
     add_substitution(
-        "carbon-run-lower",
+        "carbon-run-lowering",
         f"{run_carbon} dump llvm-ir %s | {filecheck_strict}",
     )
     add_substitution(
