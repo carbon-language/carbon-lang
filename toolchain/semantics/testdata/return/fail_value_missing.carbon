@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-semantics}
+// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
@@ -11,8 +11,6 @@
 // CHECK:STDOUT:   {param_ir: block0, param_refs: block0, return_type: node2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT:   12,
-// CHECK:STDOUT:   34,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT: ]
@@ -29,10 +27,7 @@
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node6, type: node5},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: callable0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node7},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: node2},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: node2},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node9, arg1: node10, type: node2},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node11, type: node2},
+// CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node7, arg1: block2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -41,16 +36,14 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node7,
 // CHECK:STDOUT:     node8,
-// CHECK:STDOUT:     node13,
+// CHECK:STDOUT:     node10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node9,
-// CHECK:STDOUT:     node10,
-// CHECK:STDOUT:     node11,
-// CHECK:STDOUT:     node12,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
 fn Main() -> i32 {
-  return 12 + 34;
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/return/fail_value_missing.carbon:[[@LINE+1]]:9: Must return a node2.
+  return;
 }

@@ -31,14 +31,20 @@ struct SemanticsCall {
 // A callable object.
 struct SemanticsCallable {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{param_ir: " << param_ir_id << ", param_refs: " << param_refs_id
-        << "}";
+    out << "{param_ir: " << param_ir_id << ", param_refs: " << param_refs_id;
+    if (return_type_id.is_valid()) {
+      out << ", return_type: " << return_type_id;
+    }
+    out << "}";
   }
 
   // The full IR for parameters.
   SemanticsNodeBlockId param_ir_id;
   // A block containing a single reference node per parameter.
   SemanticsNodeBlockId param_refs_id;
+  // The return type. This will be invalid if the return type wasn't specified.
+  // The IR corresponding to the return type will be in a node block.
+  SemanticsNodeId return_type_id;
 };
 
 struct SemanticsRealLiteral {
@@ -83,26 +89,23 @@ class SemanticsIR {
     node_blocks_.resize(1);
   }
 
-  // Returns the requested node.
-  auto GetNode(SemanticsNodeId node_id) const -> const SemanticsNode& {
-    return nodes_[node_id.index];
-  }
-
-  // Returns the type of the requested node.
-  auto GetType(SemanticsNodeId node_id) -> SemanticsNodeId {
-    return GetNode(node_id).type();
-  }
-
+  // Adds a call, returning an ID to reference it.
   auto AddCall(SemanticsCall call) -> SemanticsCallId {
     SemanticsCallId id(calls_.size());
     calls_.push_back(call);
     return id;
   }
 
+  // Adds a callable, returning an ID to reference it.
   auto AddCallable(SemanticsCallable callable) -> SemanticsCallableId {
     SemanticsCallableId id(callables_.size());
     callables_.push_back(callable);
     return id;
+  }
+
+  // Returns the requested callable.
+  auto GetCallable(SemanticsCallableId callable_id) -> SemanticsCallable {
+    return callables_[callable_id.index];
   }
 
   // Adds an integer literal, returning an ID to reference it.
@@ -120,6 +123,16 @@ class SemanticsIR {
     nodes_.push_back(node);
     node_blocks_[block_id.index].push_back(node_id);
     return node_id;
+  }
+
+  // Returns the requested node.
+  auto GetNode(SemanticsNodeId node_id) const -> const SemanticsNode& {
+    return nodes_[node_id.index];
+  }
+
+  // Returns the type of the requested node.
+  auto GetType(SemanticsNodeId node_id) -> SemanticsNodeId {
+    return GetNode(node_id).type();
   }
 
   // Adds an empty new node block, returning an ID to reference it and add

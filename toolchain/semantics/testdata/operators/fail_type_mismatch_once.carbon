@@ -8,7 +8,7 @@
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
+// CHECK:STDOUT:   {param_ir: block0, param_refs: block0, return_type: node2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   12,
@@ -56,7 +56,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-fn Main() {
+fn Main() -> i32 {
   // The following line has two mismatches, but after the first, it shouldn't
   // keep erroring.
   // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch_once.carbon:[[@LINE+1]]:13: Type mismatch: lhs is node2, rhs is node3
