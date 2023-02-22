@@ -966,9 +966,13 @@ auto Interpreter::CallFunction(const CallExpression& call,
       return todo_.FinishAction(arena_->New<AlternativeValue>(
           &alt.choice(), &alt.alternative(), cast<TupleValue>(arg)));
     }
-    case Value::Kind::FunctionValue: {
-      const auto& fun_val = cast<FunctionValue>(*fun);
-      const FunctionDeclaration& function = fun_val.declaration();
+    case Value::Kind::FunctionValue:
+    case Value::Kind::BoundMethodValue: {
+      const auto* func_val = dyn_cast<FunctionValue>(fun);
+      const auto* method_val = dyn_cast<BoundMethodValue>(fun);
+
+      const FunctionDeclaration& function =
+          func_val ? func_val->declaration() : method_val->declaration();
       if (!function.body().has_value()) {
         return ProgramError(call.source_loc())
                << "attempt to call function `" << function.name()
@@ -979,25 +983,35 @@ auto Interpreter::CallFunction(const CallExpression& call,
                << "attempt to call function `" << function.name()
                << "` that has not been fully type-checked";
       }
+
       RuntimeScope binding_scope(&heap_);
-      // Bring the class type arguments into scope.
-      for (const auto& [bind, val] : fun_val.type_args()) {
-        binding_scope.Initialize(bind, val);
-      }
-      // Bring the deduced type arguments into scope.
+
+      // Bring the deduced arguments and their witnesses into scope.
       for (const auto& [bind, val] : call.deduced_args()) {
-        binding_scope.Initialize(bind, val);
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_val,
+                                InstantiateType(val, call.source_loc()));
+        binding_scope.Initialize(bind->original(), inst_val);
       }
-      // Bring the impl witness tables into scope.
       for (const auto& [impl_bind, witness] : witnesses) {
-        binding_scope.Initialize(impl_bind, witness);
+        binding_scope.Initialize(impl_bind->original(), witness);
       }
-      for (const auto& [impl_bind, witness] : fun_val.witnesses()) {
-        binding_scope.Initialize(impl_bind, witness);
+
+      // Bring the arguments that are determined by the function value into
+      // scope. This includes the arguments for the class of which the function
+      // is a member.
+      for (const auto& [bind, val] :
+           func_val ? func_val->type_args() : method_val->type_args()) {
+        binding_scope.Initialize(bind->original(), val);
       }
+      for (const auto& [impl_bind, witness] :
+           func_val ? func_val->witnesses() : method_val->witnesses()) {
+        binding_scope.Initialize(impl_bind->original(), witness);
+      }
+
       // Enter the binding scope to make any deduced arguments visible before
-      // we resolve the parameter type.
+      // we resolve the self type and parameter type.
       todo_.CurrentAction().StartScope(std::move(binding_scope));
+
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> converted_args,
           Convert(arg, &function.param_pattern().static_type(),
@@ -1005,58 +1019,31 @@ auto Interpreter::CallFunction(const CallExpression& call,
 
       RuntimeScope function_scope(&heap_);
       BindingMap generic_args;
+
+      // Bind the receiver to the `self` parameter, if there is one.
+      if (method_val) {
+        CARBON_CHECK(function.is_method());
+        const auto* self_pattern = &function.self_pattern().value();
+        if (const auto* placeholder =
+                dyn_cast<BindingPlaceholderValue>(self_pattern)) {
+          // TODO: move this logic into PatternMatch
+          if (placeholder->value_node().has_value()) {
+            function_scope.Bind(*placeholder->value_node(),
+                                method_val->receiver());
+          }
+        } else {
+          CARBON_CHECK(PatternMatch(self_pattern, method_val->receiver(),
+                                    call.source_loc(), &function_scope,
+                                    generic_args, trace_stream_, this->arena_));
+        }
+      }
+
+      // Bind the arguments to the parameters.
       CARBON_CHECK(PatternMatch(
           &function.param_pattern().value(), converted_args, call.source_loc(),
           &function_scope, generic_args, trace_stream_, this->arena_));
       return todo_.Spawn(std::make_unique<StatementAction>(*function.body()),
                          std::move(function_scope));
-    }
-    case Value::Kind::BoundMethodValue: {
-      const auto& m = cast<BoundMethodValue>(*fun);
-      const FunctionDeclaration& method = m.declaration();
-      CARBON_CHECK(method.is_method());
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> converted_args,
-          Convert(arg, &method.param_pattern().static_type(),
-                  call.source_loc()));
-      RuntimeScope method_scope(&heap_);
-      BindingMap generic_args;
-      // Bind the receiver to the `self` parameter.
-      const auto* p = &method.self_pattern().value();
-      if (p->kind() == Value::Kind::BindingPlaceholderValue) {
-        // TODO: move this logic into PatternMatch
-        const auto& placeholder = cast<BindingPlaceholderValue>(*p);
-        if (placeholder.value_node().has_value()) {
-          method_scope.Bind(*placeholder.value_node(), m.receiver());
-        }
-      } else {
-        CARBON_CHECK(PatternMatch(&method.self_pattern().value(), m.receiver(),
-                                  call.source_loc(), &method_scope,
-                                  generic_args, trace_stream_, this->arena_));
-      }
-      // Bind the arguments to the parameters.
-      CARBON_CHECK(PatternMatch(&method.param_pattern().value(), converted_args,
-                                call.source_loc(), &method_scope, generic_args,
-                                trace_stream_, this->arena_));
-      // Bring the class type arguments into scope.
-      for (const auto& [bind, val] : m.type_args()) {
-        method_scope.Initialize(bind->original(), val);
-      }
-      // Bring the deduced type arguments into scope.
-      for (const auto& [bind, val] : call.deduced_args()) {
-        method_scope.Initialize(bind->original(), val);
-      }
-      // Bring the impl witness tables into scope.
-      for (const auto& [impl_bind, witness] : witnesses) {
-        method_scope.Initialize(impl_bind->original(), witness);
-      }
-      for (const auto& [impl_bind, witness] : m.witnesses()) {
-        method_scope.Initialize(impl_bind->original(), witness);
-      }
-      CARBON_CHECK(method.body().has_value())
-          << "Calling a method that's missing a body";
-      return todo_.Spawn(std::make_unique<StatementAction>(*method.body()),
-                         std::move(method_scope));
     }
     case Value::Kind::ParameterizedEntityName: {
       const auto& name = cast<ParameterizedEntityName>(*fun);
