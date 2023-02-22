@@ -82,7 +82,7 @@ class TokenizedBuffer {
   struct Identifier : public IndexBase {
     using IndexBase::IndexBase;
 
-    static const Identifier Invalid;
+    static const Identifier invalid;
   };
 
   // Random-access iterator over tokens within the buffer.
@@ -345,7 +345,7 @@ class TokenizedBuffer {
           sizeof(Token) <= sizeof(int32_t),
           "Unable to pack token and identifier index into the same space!");
 
-      Identifier id = Identifier::Invalid;
+      Identifier id = Identifier::invalid;
       int32_t literal_index;
       Token closing_token;
       Token opening_token;
@@ -406,7 +406,7 @@ class TokenizedBuffer {
   bool has_errors_ = false;
 };
 
-constexpr TokenizedBuffer::Identifier TokenizedBuffer::Identifier::Invalid =
+constexpr TokenizedBuffer::Identifier TokenizedBuffer::Identifier::invalid =
     TokenizedBuffer::Identifier(TokenizedBuffer::Identifier::InvalidIndex);
 
 // A diagnostic emitter that uses positions within a source buffer's text as
