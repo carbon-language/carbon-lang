@@ -144,25 +144,17 @@ class IntValue : public Value {
   int value_;
 };
 
-// A function value.
-class FunctionValue : public Value {
+// A function or bound method value.
+class FunctionOrMethodValue : public Value {
  public:
-  explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration)
-      : Value(Kind::FunctionValue), declaration_(declaration) {}
-
-  explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration,
-                         Nonnull<const Bindings*> bindings)
-      : Value(Kind::FunctionValue),
-        declaration_(declaration),
-        bindings_(bindings) {}
+  explicit FunctionOrMethodValue(
+      Kind kind, Nonnull<const FunctionDeclaration*> declaration,
+      Nonnull<const Bindings*> bindings)
+      : Value(kind), declaration_(declaration), bindings_(bindings) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::FunctionValue;
-  }
-
-  template <typename F>
-  auto Decompose(F f) const {
-    return f(declaration_, bindings_);
+    return value->kind() == Kind::FunctionValue ||
+           value->kind() == Kind::BoundMethodValue;
   }
 
   auto declaration() const -> const FunctionDeclaration& {
@@ -179,7 +171,48 @@ class FunctionValue : public Value {
 
  private:
   Nonnull<const FunctionDeclaration*> declaration_;
-  Nonnull<const Bindings*> bindings_ = Bindings::None();
+  Nonnull<const Bindings*> bindings_;
+};
+
+// A function value.
+class FunctionValue : public FunctionOrMethodValue {
+ public:
+  explicit FunctionValue(Nonnull<const FunctionDeclaration*> declaration,
+                         Nonnull<const Bindings*> bindings)
+      : FunctionOrMethodValue(Kind::FunctionValue, declaration, bindings) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::FunctionValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(&declaration(), &bindings());
+  }
+};
+
+// A bound method value. It includes the receiver object.
+class BoundMethodValue : public FunctionOrMethodValue {
+ public:
+  explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
+                            Nonnull<const Value*> receiver,
+                            Nonnull<const Bindings*> bindings)
+      : FunctionOrMethodValue(Kind::BoundMethodValue, declaration, bindings),
+        receiver_(receiver) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::BoundMethodValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(&declaration(), receiver_, &bindings());
+  }
+
+  auto receiver() const -> Nonnull<const Value*> { return receiver_; }
+
+ private:
+  Nonnull<const Value*> receiver_;
 };
 
 // A destructor value.
@@ -203,52 +236,6 @@ class DestructorValue : public Value {
 
  private:
   Nonnull<const DestructorDeclaration*> declaration_;
-};
-
-// A bound method value. It includes the receiver object.
-class BoundMethodValue : public Value {
- public:
-  explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
-                            Nonnull<const Value*> receiver)
-      : Value(Kind::BoundMethodValue),
-        declaration_(declaration),
-        receiver_(receiver) {}
-
-  explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
-                            Nonnull<const Value*> receiver,
-                            Nonnull<const Bindings*> bindings)
-      : Value(Kind::BoundMethodValue),
-        declaration_(declaration),
-        receiver_(receiver),
-        bindings_(bindings) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::BoundMethodValue;
-  }
-
-  template <typename F>
-  auto Decompose(F f) const {
-    return f(declaration_, receiver_, bindings_);
-  }
-
-  auto declaration() const -> const FunctionDeclaration& {
-    return *declaration_;
-  }
-
-  auto receiver() const -> Nonnull<const Value*> { return receiver_; }
-
-  auto bindings() const -> const Bindings& { return *bindings_; }
-
-  auto type_args() const -> const BindingMap& { return bindings_->args(); }
-
-  auto witnesses() const -> const ImplWitnessMap& {
-    return bindings_->witnesses();
-  }
-
- private:
-  Nonnull<const FunctionDeclaration*> declaration_;
-  Nonnull<const Value*> receiver_;
-  Nonnull<const Bindings*> bindings_ = Bindings::None();
 };
 
 // The value of a location in memory.

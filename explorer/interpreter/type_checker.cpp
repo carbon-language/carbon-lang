@@ -4629,8 +4629,9 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
       std::move(impl_bindings)));
   switch (f->kind()) {
     case DeclarationKind::FunctionDeclaration:
-      f->set_constant_value(
-          arena_->New<FunctionValue>(cast<FunctionDeclaration>(f)));
+      // TODO: Should we pass in the bindings from the enclosing scope?
+      f->set_constant_value(arena_->New<FunctionValue>(
+          cast<FunctionDeclaration>(f), Bindings::None()));
       break;
     case DeclarationKind::DestructorDeclaration:
       f->set_constant_value(

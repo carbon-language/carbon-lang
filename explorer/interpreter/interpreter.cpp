@@ -966,11 +966,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
     }
     case Value::Kind::FunctionValue:
     case Value::Kind::BoundMethodValue: {
-      const auto* func_val = dyn_cast<FunctionValue>(fun);
-      const auto* method_val = dyn_cast<BoundMethodValue>(fun);
+      const auto* func_val = dyn_cast<FunctionOrMethodValue>(fun);
 
-      const FunctionDeclaration& function =
-          func_val ? func_val->declaration() : method_val->declaration();
+      const FunctionDeclaration& function = func_val->declaration();
       if (!function.body().has_value()) {
         return ProgramError(call.source_loc())
                << "attempt to call function `" << function.name()
@@ -997,12 +995,10 @@ auto Interpreter::CallFunction(const CallExpression& call,
       // Bring the arguments that are determined by the function value into
       // scope. This includes the arguments for the class of which the function
       // is a member.
-      for (const auto& [bind, val] :
-           func_val ? func_val->type_args() : method_val->type_args()) {
+      for (const auto& [bind, val] : func_val->type_args()) {
         binding_scope.Initialize(bind->original(), val);
       }
-      for (const auto& [impl_bind, witness] :
-           func_val ? func_val->witnesses() : method_val->witnesses()) {
+      for (const auto& [impl_bind, witness] : func_val->witnesses()) {
         binding_scope.Initialize(impl_bind->original(), witness);
       }
 
@@ -1019,7 +1015,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
       BindingMap generic_args;
 
       // Bind the receiver to the `self` parameter, if there is one.
-      if (method_val) {
+      if (const auto* method_val = dyn_cast<BoundMethodValue>(func_val)) {
         CARBON_CHECK(function.is_method());
         const auto* self_pattern = &function.self_pattern().value();
         if (const auto* placeholder =
