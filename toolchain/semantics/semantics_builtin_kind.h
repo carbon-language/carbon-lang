@@ -27,7 +27,6 @@ class SemanticsBuiltinKind : public CARBON_ENUM_BASE(SemanticsBuiltinKind) {
   //
   // Note that we *define* this as `constexpr` making it a true compile-time
   // constant, and so we name it accordingly and disable the lint error here.
-  // NOLINTNEXTLINE(readability-identifier-naming)
   static const uint8_t ValidCount;
 
   // Support conversion to and from an int32_t for SemanticNode storage.
