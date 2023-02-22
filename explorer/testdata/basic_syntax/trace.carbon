@@ -8,6 +8,7 @@
 // NOAUTOUPDATE
 // RUN: %{explorer-run-trace}
 // CHECK:STDOUT: ********** source program **********
+// CHECK-NOT:STDOUT: interface ImplicitAs {
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: ********** type checking **********
 // CHECK:STDOUT: ** declaring interface TestInterface
