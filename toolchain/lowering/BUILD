@@ -5,9 +5,9 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "lower",
-    srcs = ["lower.cpp"],
-    hdrs = ["lower.h"],
+    name = "lower_to_llvm",
+    srcs = ["lower_to_llvm.cpp"],
+    hdrs = ["lower_to_llvm.h"],
     deps = [
         "//common:check",
         "//common:ostream",

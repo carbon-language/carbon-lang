@@ -22,12 +22,12 @@ def main() -> None:
     )
     args = [
         sys.argv[0],
-        # Flags to configure for lower testing.
+        # Flags to configure for lowering testing.
         "--tool=carbon",
         "--autoupdate_arg=dump",
         "--autoupdate_arg=llvm-ir",
-        "--lit_run=%{carbon-run-lower}",
-        "--testdata=toolchain/lower/testdata",
+        "--lit_run=%{carbon-run-lowering}",
+        "--testdata=toolchain/lowering/testdata",
     ] + sys.argv[1:]
     os.execv(actual_py, args)
 
