@@ -18,6 +18,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 [CppNorth](https://cppnorth.ca/).** Note that Carbon is
 [not ready for use](#project-status).
 
+**Carbon is a
+[Google Summer of Code 2023 organization](https://summerofcode.withgoogle.com/programs/2023/organizations/carbon-language).**
+[Applications to become a GSoC contribor](https://summerofcode.withgoogle.com/)
+open March 20 to April 4.
+
 <a href="docs/images/snippets.md#quicksort">
 <!--
 Edit snippet in docs/images/snippets.md and:
