@@ -1743,7 +1743,7 @@ by one of these three keywords:
 
 A pointer to a derived class may be cast to a pointer to one of its base
 classes. Calling a virtual method through a pointer to a base class will use the
-overridden definition provided in the derived class. Base classes with `virtual`
+overriding definition provided in the derived class. Base classes with `virtual`
 methods may use
 [run-time type information](https://en.wikipedia.org/wiki/Run-time_type_information)
 in a match statement to dynamically test whether the dynamic type of a value is
