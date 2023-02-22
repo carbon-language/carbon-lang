@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_LOWERING_LOWER_TO_LLVM_H_
 #define CARBON_TOOLCHAIN_LOWERING_LOWER_TO_LLVM_H_
 
-#include "common/ostream.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "toolchain/semantics/semantics_ir.h"

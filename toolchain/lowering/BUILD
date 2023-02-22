@@ -9,8 +9,19 @@ cc_library(
     srcs = ["lower_to_llvm.cpp"],
     hdrs = ["lower_to_llvm.h"],
     deps = [
+        ":lowering",
+        "//toolchain/semantics:semantics_ir",
+        "@llvm-project//llvm:Core",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "lowering",
+    srcs = ["lowering.cpp"],
+    hdrs = ["lowering.h"],
+    deps = [
         "//common:check",
-        "//common:ostream",
         "//toolchain/semantics:semantics_ir",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
