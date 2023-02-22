@@ -5661,8 +5661,18 @@ auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   llvm::SaveAndRestore<decltype(top_level_impl_scope_)>
       set_top_level_impl_scope(top_level_impl_scope_, &impl_scope);
 
-  for (Nonnull<Declaration*> declaration : ast.declarations) {
-    trace_stream_->update_skipping_prelude(declaration->source_loc());
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "Omitting prelude type checking traces...\n";
+    trace_stream_->set_in_prelude(true);
+  }
+  for (int i = 0; i < static_cast<int>(ast.declarations.size()); ++i) {
+    if (i == ast.num_prelude_declarations) {
+      trace_stream_->set_in_prelude(false);
+      if (trace_stream_->is_enabled()) {
+        *trace_stream_ << "Finished prelude, resuming traces...\n";
+      }
+    }
+    auto* declaration = ast.declarations[i];
     CARBON_RETURN_IF_ERROR(
         DeclareDeclaration(declaration, top_level_scope_info));
     CARBON_RETURN_IF_ERROR(

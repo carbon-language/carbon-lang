@@ -22,8 +22,9 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
                     Nonnull<TraceStream*> trace_stream) -> ErrorOr<AST> {
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** source program **********\n";
-    for (auto* const decl : ast.declarations) {
-      *trace_stream << *decl;
+    for (int i = ast.num_prelude_declarations;
+         i < static_cast<int>(ast.declarations.size()); ++i) {
+      *trace_stream << *ast.declarations[i];
     }
   }
   SourceLocation source_loc("<Main()>", 0);
@@ -44,10 +45,8 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
 
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** type checking **********\n";
-    trace_stream->set_skipping_prelude(true);
   }
   CARBON_RETURN_IF_ERROR(TypeChecker(arena, trace_stream).TypeCheck(ast));
-  trace_stream->set_skipping_prelude(false);
 
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** resolving unformed variables **********\n";
@@ -56,14 +55,10 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
 
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** printing declarations **********\n";
-    trace_stream->set_skipping_prelude(true);
-    for (auto* const decl : ast.declarations) {
-      trace_stream->update_skipping_prelude(decl->source_loc());
-      if (trace_stream->is_enabled()) {
-        *trace_stream << *decl;
-      }
+    for (int i = ast.num_prelude_declarations;
+         i < static_cast<int>(ast.declarations.size()); ++i) {
+      *trace_stream << *ast.declarations[i];
     }
-    trace_stream->set_skipping_prelude(false);
   }
   return ast;
 }

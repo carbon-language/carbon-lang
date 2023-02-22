@@ -11,7 +11,6 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/common/nonnull.h"
-#include "explorer/common/source_location.h"
 
 namespace Carbon {
 
@@ -20,38 +19,19 @@ namespace Carbon {
 // disproprotionate amount of time to log, so we try to avoid it.
 //
 // TODO: While the prelude is combined with the provided program as a single
-// AST, we detect the boundary where declarations stop being prelude
-// declarations. When the prelude is fully treated as a separate file, we may be
-// able to take a different approach where the caller explicitly toggles tracing
-// when switching file contexts.
+// AST, the AST knows which declarations came from the prelude. When the prelude
+// is fully treated as a separate file, we should be able to take a different
+// approach where the caller explicitly toggles tracing when switching file
+// contexts.
 class TraceStream {
  public:
-  explicit TraceStream(std::string_view prelude_filename)
-      : prelude_filename_(prelude_filename) {}
-
   // Returns true if tracing is currently enabled.
   auto is_enabled() const -> bool {
-    return stream_.has_value() && !skipping_prelude_;
-  }
-
-  // If the prelude is currently being skipped and source_loc is a non-prelude
-  // file location, this will mark the skip as done.
-  auto update_skipping_prelude(SourceLocation source_loc) -> void {
-    if (skipping_prelude_ && !source_loc.filename().empty() &&
-        source_loc.filename() != prelude_filename_) {
-      **stream_ << "Finished prelude, resuming tracing at "
-                << source_loc.filename() << "\n";
-      skipping_prelude_ = false;
-    }
+    return stream_.has_value() && !in_prelude_;
   }
 
   // Sets whether the prelude is being skipped.
-  auto set_skipping_prelude(bool skipping_prelude) -> void {
-    if (skipping_prelude && is_enabled()) {
-      **stream_ << "Skipping prelude traces...\n";
-    }
-    skipping_prelude_ = skipping_prelude;
-  }
+  auto set_in_prelude(bool in_prelude) -> void { in_prelude_ = in_prelude; }
 
   // Sets the trace stream. This should only be called from the main.
   auto set_stream(Nonnull<llvm::raw_ostream*> stream) -> void {
@@ -73,9 +53,8 @@ class TraceStream {
   }
 
  private:
-  std::string_view prelude_filename_;
   std::optional<Nonnull<llvm::raw_ostream*>> stream_;
-  bool skipping_prelude_ = false;
+  bool in_prelude_ = false;
 };
 
 }  // namespace Carbon

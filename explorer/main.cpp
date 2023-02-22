@@ -69,7 +69,7 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
 
   // Set up a stream for trace output.
   std::unique_ptr<llvm::raw_ostream> scoped_trace_stream;
-  TraceStream trace_stream(prelude_file_name);
+  TraceStream trace_stream;
   if (!trace_file_name.empty()) {
     if (trace_file_name == "-") {
       trace_stream.set_stream(&llvm::outs());
@@ -99,7 +99,8 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
 
   auto time_after_parse = std::chrono::system_clock::now();
 
-  AddPrelude(prelude_file_name, &arena, &ast.declarations);
+  AddPrelude(prelude_file_name, &arena, &ast.declarations,
+             &ast.num_prelude_declarations);
 
   auto time_after_prelude = std::chrono::system_clock::now();
 

@@ -216,7 +216,6 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//explorer/common:nonnull",
-        "//explorer/common:source_location",
     ],
 )
 
