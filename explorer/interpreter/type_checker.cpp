@@ -2672,7 +2672,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return Success();
           } else {
             auto ifaces = impl_scope.GetInterfacesOfType(&object_type);
-            if (ifaces.size() > 0) {
+            if (!ifaces.empty()) {
               CARBON_ASSIGN_OR_RETURN(
                   ConstraintLookupResult result,
                   LookupInConstraint(e->source_loc(), "member access",
