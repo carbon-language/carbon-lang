@@ -9,7 +9,8 @@
 
 #include "common/metaprogramming.h"
 #include "llvm/Support/raw_os_ostream.h"
-#include "llvm/Support/raw_ostream.h"
+// Libraries should include this header instead of raw_ostream.
+#include "llvm/Support/raw_ostream.h"  // IWYU pragma: export
 
 namespace Carbon {
 
