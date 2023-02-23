@@ -63,7 +63,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
   }
 
   // Pop information for the file-level scope.
-  node_block_stack_.Pop();
+  semantics_->top_node_block_id_ = node_block_stack_.Pop();
   PopScope();
 
   // Information in all the various context objects should be cleaned up as

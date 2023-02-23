@@ -80,6 +80,10 @@ class SemanticsIR {
   // Returns true if there were errors creating the semantics IR.
   auto has_errors() const -> bool { return has_errors_; }
 
+  auto top_node_block_id() const -> SemanticsNodeBlockId {
+    return top_node_block_id_;
+  }
+
  private:
   friend class SemanticsParseTreeHandler;
 
@@ -209,6 +213,9 @@ class SemanticsIR {
 
   // Storage for blocks within the IR. These reference entries in nodes_.
   llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>> node_blocks_;
+
+  // The top node block ID for the context.
+  SemanticsNodeBlockId top_node_block_id_ = SemanticsNodeBlockId::Invalid;
 };
 
 }  // namespace Carbon

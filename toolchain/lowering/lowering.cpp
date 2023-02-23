@@ -14,6 +14,8 @@ Lowering::Lowering(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
 auto Lowering::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_) << "Run can only be called once.";
 
+  auto top_node_block_id = semantics_ir_->top_node_block_id();
+
   return std::move(llvm_module_);
 }
 
