@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Entry points
 
-TODO: Entry points (Carbon and foreign). `fn Run()`.
+TODO: Entry points (Carbon and foreign). `fn Main()`.
 
 ## Object model
 
