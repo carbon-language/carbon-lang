@@ -109,7 +109,8 @@ class ImplScope {
 
   void Print(llvm::raw_ostream& out) const;
 
-  auto GetInterfacesOfType(Nonnull<const Value*> type) const -> std::vector<Nonnull<const InterfaceType*>>;
+  auto GetInterfacesOfType(Nonnull<const Value*> type) const
+      -> std::vector<Nonnull<const InterfaceType*>>;
 
   // The `Impl` struct is a key-value pair where the key is the
   // combination of a type and an interface, e.g., `List` and `Container`,

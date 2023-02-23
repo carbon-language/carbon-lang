@@ -2664,12 +2664,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 access.set_value_category(ValueCategory::Let);
                 break;
               }
-              case DeclarationKind::AliasDeclaration:{
-                //auto* alias_decl = cast<AliasDeclaration>(member);
-                //auto& target = alias_decl->target();
-                access.set_value_category(ValueCategory::Let);
-                break;
-              }
               default:
                 CARBON_FATAL() << "member " << access.member_name()
                                << " is not a field or method";
@@ -2678,32 +2672,34 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return Success();
           } else {
             auto ifaces = impl_scope.GetInterfacesOfType(&object_type);
-            if(ifaces.size() > 0){
+            if (ifaces.size() > 0) {
               CARBON_ASSIGN_OR_RETURN(
                   ConstraintLookupResult result,
-                  LookupInConstraint(e->source_loc(), "member access", ifaces[0],
-                                     access.member_name()));
+                  LookupInConstraint(e->source_loc(), "member access",
+                                     ifaces[0], access.member_name()));
 
-              CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
-                                      impl_scope.Resolve(ifaces[0], &object_type,
-                                                         e->source_loc(), *this));
+              CARBON_ASSIGN_OR_RETURN(
+                  Nonnull<const Witness*> witness,
+                  impl_scope.Resolve(ifaces[0], &object_type, e->source_loc(),
+                                     *this));
 
-              CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> impl,
-                                      impl_scope.Resolve(ifaces[0], &object_type,
-                                                         e->source_loc(), *this));
+              CARBON_ASSIGN_OR_RETURN(
+                  Nonnull<const Witness*> impl,
+                  impl_scope.Resolve(ifaces[0], &object_type, e->source_loc(),
+                                     *this));
               access.set_member(arena_->New<NamedElement>(result.member));
               access.set_impl(impl);
               access.set_found_in_interface(ifaces[0]);
               const Value& member_type = result.member->static_type();
               Bindings bindings = result.interface->bindings();
-              bindings.Add(result.interface->declaration().self(),
-                           &object_type, witness);
+              bindings.Add(result.interface->declaration().self(), &object_type,
+                           witness);
               Nonnull<const Value*> inst_member_type =
                   Substitute(bindings, &member_type);
               access.set_static_type(inst_member_type);
               access.set_value_category(ValueCategory::Let);
               return Success();
-            }else {
+            } else {
               return ProgramError(e->source_loc())
                      << "class " << t_class.declaration().name()
                      << " does not have a field named " << access.member_name();
@@ -3394,32 +3390,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               << "unknown type of ParameterizedEntityName for " << param_name;
           call.set_static_type(arena_->New<TypeType>());
           call.set_value_category(ValueCategory::Let);
-          return Success();
-        }
-        case Value::Kind::TypeOfMemberName:{
-          const auto& typeOfMember = cast<TypeOfMemberName>(call.function().static_type());
-          switch(typeOfMember.member().type().kind()){
-            case Value::Kind::FunctionType:{
-              const auto& fun_t = cast<FunctionType>(typeOfMember.member().type());
-              CARBON_RETURN_IF_ERROR(DeduceCallBindings(
-                  call, &fun_t.parameters(), fun_t.generic_parameters(),
-                  fun_t.deduced_bindings(), impl_scope));
-
-              // Substitute into the return type to determine the type of the call
-              // expression.
-              Nonnull<const Value*> return_type =
-                  Substitute(call.bindings(), &fun_t.return_type());
-              call.set_static_type(return_type);
-              call.set_value_category(ValueCategory::Let);
-            }
-
-              break;
-            default:
-              return ProgramError(e->source_loc())
-                     << "in call `" << *e
-                     << "`, expected callee to be a function, found `"
-                     << call.function().static_type() << "`";
-          }
           return Success();
         }
         case Value::Kind::ChoiceType: {

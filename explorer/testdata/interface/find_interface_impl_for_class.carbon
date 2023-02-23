@@ -1,11 +1,16 @@
-package sample api;
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: (
+// CHECK:STDOUT: test
+// CHECK:STDOUT: )
+// CHECK:STDOUT: result: 42
 
-class Foo{
-    fn Create() -> Foo{
-        return {.x = 12};
-    }
-    var x: i32;
-}
+package ExplorerTest api;
 
 interface Printable {
   fn PrintIt[self: Self]();
@@ -15,12 +20,6 @@ impl String as Printable {
   fn PrintIt[self: String]() {
     Print(self);
   }
-}
-
-impl Foo as Printable{
-   fn PrintIt[self: Foo]() {
-       Print("foo");
-     }
 }
 
 class Vector(T:! type) {

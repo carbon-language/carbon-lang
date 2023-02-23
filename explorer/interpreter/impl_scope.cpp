@@ -362,24 +362,24 @@ void ImplScope::Print(llvm::raw_ostream& out) const {
   }
 }
 
-auto ImplScope::GetInterfacesOfType(Nonnull<const Value*> type) const -> std::vector<Nonnull<const InterfaceType*>>{
-
+auto ImplScope::GetInterfacesOfType(Nonnull<const Value*> type) const
+    -> std::vector<Nonnull<const InterfaceType*>> {
   std::vector<Nonnull<const InterfaceType*>> result;
-  if(type->kind() == Value::Kind::NominalClassType ){
+  if (type->kind() == Value::Kind::NominalClassType) {
     for (const Impl& impl : impls_) {
-      if(impl.type->kind() == Value::Kind::NominalClassType){
-        const auto & p1 = cast<NominalClassType>(*type);
-        const auto & p2 = cast<NominalClassType>(*impl.type);
-        if(&p1.declaration() == &p2.declaration()){
-         result.push_back(impl.interface);
+      if (impl.type->kind() == Value::Kind::NominalClassType) {
+        const auto& p1 = cast<NominalClassType>(*type);
+        const auto& p2 = cast<NominalClassType>(*impl.type);
+        if (&p1.declaration() == &p2.declaration()) {
+          result.push_back(impl.interface);
         }
       }
     }
     for (const Nonnull<const ImplScope*>& parent : parent_scopes_) {
-       auto part = parent->GetInterfacesOfType(type);
-       for(const auto & x: part){
-          result.push_back(x);
-       }
+      auto part = parent->GetInterfacesOfType(type);
+      for (const auto& x : part) {
+        result.push_back(x);
+      }
     }
   }
   return result;
