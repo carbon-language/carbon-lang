@@ -13,7 +13,6 @@
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
-#include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_node_block_stack.h"
