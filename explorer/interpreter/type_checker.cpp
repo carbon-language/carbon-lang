@@ -2672,38 +2672,40 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return Success();
           } else {
             auto ifaces = impl_scope.GetInterfacesOfType(&object_type);
-            if (!ifaces.empty()) {
-              CARBON_ASSIGN_OR_RETURN(
-                  ConstraintLookupResult result,
-                  LookupInConstraint(e->source_loc(), "member access",
-                                     ifaces[0], access.member_name()));
+            for(const auto & iface : ifaces){
+              ErrorOr<ConstraintLookupResult> result =
+              LookupInConstraint(e->source_loc(), "member access",
+                                 iface, access.member_name());
 
-              CARBON_ASSIGN_OR_RETURN(
-                  Nonnull<const Witness*> witness,
-                  impl_scope.Resolve(ifaces[0], &object_type, e->source_loc(),
-                                     *this));
 
-              CARBON_ASSIGN_OR_RETURN(
-                  Nonnull<const Witness*> impl,
-                  impl_scope.Resolve(ifaces[0], &object_type, e->source_loc(),
-                                     *this));
-              access.set_member(arena_->New<NamedElement>(result.member));
-              access.set_impl(impl);
-              access.set_found_in_interface(ifaces[0]);
-              const Value& member_type = result.member->static_type();
-              Bindings bindings = result.interface->bindings();
-              bindings.Add(result.interface->declaration().self(), &object_type,
-                           witness);
-              Nonnull<const Value*> inst_member_type =
-                  Substitute(bindings, &member_type);
-              access.set_static_type(inst_member_type);
-              access.set_value_category(ValueCategory::Let);
-              return Success();
-            } else {
-              return ProgramError(e->source_loc())
-                     << "class " << t_class.declaration().name()
-                     << " does not have a field named " << access.member_name();
+              ErrorOr<Nonnull<const Witness*>> witness =
+              impl_scope.Resolve(iface, &object_type, e->source_loc(),
+                                 *this);
+
+              ErrorOr<Nonnull<const Witness*>> impl =
+              impl_scope.Resolve(iface, &object_type, e->source_loc(),
+                                 *this);
+
+              if(result.ok() && witness.ok() && impl.ok()) {
+                access.set_member(arena_->New<NamedElement>(result->member));
+                access.set_impl(*impl);
+                access.set_found_in_interface(iface);
+                const Value& member_type = result->member->static_type();
+                Bindings bindings = (*result).interface->bindings();
+                bindings.Add(result->interface->declaration().self(),
+                             &object_type, *witness);
+                Nonnull<const Value*> inst_member_type =
+                    Substitute(bindings, &member_type);
+                access.set_static_type(inst_member_type);
+                access.set_value_category(ValueCategory::Let);
+                return Success();
+              }
+
             }
+            return ProgramError(e->source_loc())
+                   << "class " << t_class.declaration().name()
+                   << " does not have a field named " << access.member_name();
+
           }
         }
         case Value::Kind::VariableType:

@@ -8,6 +8,7 @@
 // CHECK:STDOUT: (
 // CHECK:STDOUT: test
 // CHECK:STDOUT: )
+// CHECK:STDOUT: Hello World
 // CHECK:STDOUT: result: 42
 
 package ExplorerTest api;
@@ -15,6 +16,11 @@ package ExplorerTest api;
 interface Printable {
   fn PrintIt[self: Self]();
 }
+
+interface Printable2{
+    fn PrintIt2[self: Self]();
+}
+
 
 impl String as Printable {
   fn PrintIt[self: String]() {
@@ -35,8 +41,15 @@ impl forall [U:! Printable] Vector(U) as Printable {
   }
 }
 
+impl forall [U:! Printable] Vector(U) as Printable2 {
+  fn PrintIt2[self: Self]() {
+    Print("Hello World");
+  }
+}
+
 fn Main() -> i32 {
   var v: Vector(String) = {.x = "test"};
   v.PrintIt();
+  v.PrintIt2();
   return 42;
 }
