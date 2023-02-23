@@ -386,9 +386,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         // to the string literal value. However, escaped whitespace (like `\t`)
         // and any whitespace just before that does contribute.
         while (!result.empty() && result.back() != '\n' &&
-               IsSpace(result.back()) &&
-               (last_escape_length == 0 ||
-                result.length() > last_escape_length + 1)) {
+               IsSpace(result.back()) && result.length() > last_escape_length) {
           result.pop_back();
         }
         result += '\n';

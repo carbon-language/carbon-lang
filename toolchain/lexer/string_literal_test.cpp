@@ -203,6 +203,7 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
       {"'''\n  Hello \\\n  World \t \n  Bye!  \\\n  '''",
        "Hello World\nBye!  "},
       {"'''\n\\t\n'''", "\t\n"},
+      {"'''\n\\t \n'''", "\t\n"},
   };
 
   for (auto [test, expected] : testcases) {
