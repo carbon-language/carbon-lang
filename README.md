@@ -316,6 +316,10 @@ contribute.
 
 -   Most of Carbon's design discussions occur on
     [Discord](https://discord.gg/ZjVdShJDAs).
+-   Carbon is a
+    [Google Summer of Code 2023 organization](https://summerofcode.withgoogle.com/programs/2023/organizations/carbon-language).
+    [Applications to become a GSoC contributor](https://summerofcode.withgoogle.com/)
+    open March 20th to April 4th.
 -   To watch for major release announcements, subscribe to our
     [Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
     and [star carbon-lang](https://github.com/carbon-language/carbon-lang).
