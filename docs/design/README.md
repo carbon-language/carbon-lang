@@ -2114,7 +2114,7 @@ Parts of this declaration may be omitted:
     the default package.
 
 -   If the library keyword is not specified, as in `package Geometry api;`, this
-    file contributes to the default library.
+    file contributes to the default library of the package.
 
 -   If a file has no package declaration at all, it is the `api` file belonging
     to the default package and default library. This is particularly for tests
@@ -2123,8 +2123,8 @@ Parts of this declaration may be omitted:
     using a `package impl;` package declaration.
 
 A program need not use the default package, but if it does, it should contain
-the entry-point function. By default, the entry-point function is `Run` from the
-default package.
+the entry-point function. By default, the entry-point function is `Main` from
+the default package.
 
 > References:
 >
