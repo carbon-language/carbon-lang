@@ -1,5 +1,12 @@
 package sample api;
 
+class Foo{
+    fn Create() -> Foo{
+        return {.x = 12};
+    }
+    var x: i32;
+}
+
 interface Printable {
   fn PrintIt[self: Self]();
 }
@@ -10,24 +17,27 @@ impl String as Printable {
   }
 }
 
+impl Foo as Printable{
+   fn PrintIt[self: Foo]() {
+       Print("foo");
+     }
+}
+
 class Vector(T:! type) {
   var x: T;
-
-  alias PrintIt = Printable.PrintIt;
 }
 
 // Conditionally implement the API for certain `T`s.
 impl forall [U:! Printable] Vector(U) as Printable {
   fn PrintIt[self: Self]() {
-    Print("{");
+    Print("(");
     self.x.PrintIt();
-    Print("}");
+    Print(")");
   }
 }
 
 fn Main() -> i32 {
   var v: Vector(String) = {.x = "test"};
-  v.(Printable.PrintIt)();
- // v.PrintIt();
+  v.PrintIt();
   return 42;
 }
