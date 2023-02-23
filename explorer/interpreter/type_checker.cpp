@@ -2672,21 +2672,18 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return Success();
           } else {
             auto ifaces = impl_scope.GetInterfacesOfType(&object_type);
-            for(const auto & iface : ifaces){
+            for (const auto& iface : ifaces) {
               ErrorOr<ConstraintLookupResult> result =
-              LookupInConstraint(e->source_loc(), "member access",
-                                 iface, access.member_name());
+                  LookupInConstraint(e->source_loc(), "member access", iface,
+                                     access.member_name());
 
+              ErrorOr<Nonnull<const Witness*>> witness = impl_scope.Resolve(
+                  iface, &object_type, e->source_loc(), *this);
 
-              ErrorOr<Nonnull<const Witness*>> witness =
-              impl_scope.Resolve(iface, &object_type, e->source_loc(),
-                                 *this);
+              ErrorOr<Nonnull<const Witness*>> impl = impl_scope.Resolve(
+                  iface, &object_type, e->source_loc(), *this);
 
-              ErrorOr<Nonnull<const Witness*>> impl =
-              impl_scope.Resolve(iface, &object_type, e->source_loc(),
-                                 *this);
-
-              if(result.ok() && witness.ok() && impl.ok()) {
+              if (result.ok() && witness.ok() && impl.ok()) {
                 access.set_member(arena_->New<NamedElement>(result->member));
                 access.set_impl(*impl);
                 access.set_found_in_interface(iface);
@@ -2700,12 +2697,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 access.set_value_category(ValueCategory::Let);
                 return Success();
               }
-
             }
             return ProgramError(e->source_loc())
                    << "class " << t_class.declaration().name()
                    << " does not have a field named " << access.member_name();
-
           }
         }
         case Value::Kind::VariableType:
