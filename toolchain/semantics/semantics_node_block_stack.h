@@ -7,7 +7,6 @@
 
 #include <type_traits>
 
-#include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/semantics/semantics_node.h"
 
