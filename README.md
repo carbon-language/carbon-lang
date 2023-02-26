@@ -289,8 +289,12 @@ $ cd carbon-lang
 $ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
-These instructions assume [Homebrew](https://brew.sh/) is installed; see our
-[contribution tools documentation](/docs/project/contribution_tools.md) for more
+These instructions assume [Homebrew](https://brew.sh/) is installed;
+Notice that: 
+- Homebrew is available only on Linux and macOS
+- If you are a Windows user, you can install Linux as a subsystem (https://youtu.be/AaZUJUbXrQ8)
+
+see our [contribution tools documentation](/docs/project/contribution_tools.md) for more
 extensive tooling instructions.
 
 Learn more about the Carbon project:
