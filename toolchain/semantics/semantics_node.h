@@ -18,7 +18,6 @@ namespace Carbon {
 // The ID of a node.
 struct SemanticsNodeId : public IndexBase {
   // An explicitly invalid node ID.
-  // NOLINTNEXTLINE(readability-identifier-naming)
   static const SemanticsNodeId Invalid;
 
 // Builtin node IDs.
@@ -82,11 +81,9 @@ struct SemanticsIntegerLiteralId : public IndexBase {
 // The ID of a node block.
 struct SemanticsNodeBlockId : public IndexBase {
   // All SemanticsIR instances must provide the 0th node block as empty.
-  // NOLINTNEXTLINE(readability-identifier-naming)
   static const SemanticsNodeBlockId Empty;
 
   // An explicitly invalid ID.
-  // NOLINTNEXTLINE(readability-identifier-naming)
   static const SemanticsNodeBlockId Invalid;
 
   using IndexBase::IndexBase;
