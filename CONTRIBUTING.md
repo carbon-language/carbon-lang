@@ -128,8 +128,8 @@ These are intended to be a good place to start contributing.
 #### Triage, analyze or address bugs
 
 As Carbon's design and implementation begin to take shape, we'll inevitably
-encounter plenty of bugs. Helping us triage, analyze, and address them is
-always a great way to get involved. See
+encounter plenty of bugs. Helping us triage, analyze, and address them is always
+a great way to get involved. See
 [open issues on GitHub](https://github.com/carbon-language/carbon-lang/issues).
 
 ## How to become a contributor to Carbon
