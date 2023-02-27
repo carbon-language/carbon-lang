@@ -77,6 +77,17 @@ class SemanticsIR {
   // Prints the full IR.
   auto Print(llvm::raw_ostream& out) const -> void;
 
+  // Returns the requested callable.
+  auto GetCallable(SemanticsCallableId callable_id) const -> SemanticsCallable {
+    return callables_[callable_id.index];
+  }
+
+  // Returns the requested node.
+  auto GetNode(SemanticsNodeId node_id) const -> SemanticsNode {
+    return nodes_[node_id.index];
+  }
+
+  // Returns the requested node block.
   auto GetNodeBlock(SemanticsNodeBlockId block_id) const
       -> const llvm::SmallVector<SemanticsNodeId>& {
     return node_blocks_[block_id.index];
@@ -112,11 +123,6 @@ class SemanticsIR {
     return id;
   }
 
-  // Returns the requested callable.
-  auto GetCallable(SemanticsCallableId callable_id) -> SemanticsCallable {
-    return callables_[callable_id.index];
-  }
-
   // Adds an integer literal, returning an ID to reference it.
   auto AddIntegerLiteral(llvm::APInt integer_literal)
       -> SemanticsIntegerLiteralId {
@@ -132,11 +138,6 @@ class SemanticsIR {
     nodes_.push_back(node);
     node_blocks_[block_id.index].push_back(node_id);
     return node_id;
-  }
-
-  // Returns the requested node.
-  auto GetNode(SemanticsNodeId node_id) const -> const SemanticsNode& {
-    return nodes_[node_id.index];
   }
 
   // Returns the type of the requested node.
@@ -219,7 +220,7 @@ class SemanticsIR {
   // Storage for blocks within the IR. These reference entries in nodes_.
   llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>> node_blocks_;
 
-  // The top node block ID for the context.
+  // The top node block ID.
   SemanticsNodeBlockId top_node_block_id_ = SemanticsNodeBlockId::Invalid;
 };
 

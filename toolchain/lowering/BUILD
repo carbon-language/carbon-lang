@@ -23,6 +23,7 @@ cc_library(
     deps = [
         "//common:check",
         "//toolchain/semantics:semantics_ir",
+        "//toolchain/semantics:semantics_node_kind",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
     ],
