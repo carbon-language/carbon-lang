@@ -77,12 +77,17 @@ class SemanticsIR {
   // Prints the full IR.
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  // Returns true if there were errors creating the semantics IR.
-  auto has_errors() const -> bool { return has_errors_; }
+  auto GetNodeBlock(SemanticsNodeBlockId block_id) const
+      -> const llvm::SmallVector<SemanticsNodeId>& {
+    return node_blocks_[block_id.index];
+  }
 
   auto top_node_block_id() const -> SemanticsNodeBlockId {
     return top_node_block_id_;
   }
+
+  // Returns true if there were errors creating the semantics IR.
+  auto has_errors() const -> bool { return has_errors_; }
 
  private:
   friend class SemanticsParseTreeHandler;
