@@ -161,7 +161,7 @@ class DeclaredName {
   // Returns a range containing the components of the name other than the final
   // component.
   auto qualifiers() const -> llvm::ArrayRef<NameComponent> {
-    return llvm::makeArrayRef(components_).drop_back();
+    return llvm::ArrayRef(components_).drop_back();
   }
 
   // Returns the innermost name, which is the unqualified name of the entity
