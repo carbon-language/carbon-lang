@@ -583,9 +583,6 @@ class VariableDeclaration : public Declaration {
   }
 
  private:
-  // TODO: split this into a non-optional name and a type, initialized by
-  // a constructor that takes a BindingPattern and handles errors like a
-  // missing name.
   Nonnull<BindingPattern*> binding_;
   std::optional<Nonnull<Expression*>> initializer_;
   ValueCategory value_category_;
