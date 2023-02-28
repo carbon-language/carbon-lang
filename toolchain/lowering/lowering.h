@@ -23,6 +23,7 @@ class Lowering {
                     llvm::StringRef module_name,
                     const SemanticsIR& semantics_ir);
 
+  // Lowers the SemanticsIR to LLVM IR.
   auto Run() -> std::unique_ptr<llvm::Module>;
 
  private:
