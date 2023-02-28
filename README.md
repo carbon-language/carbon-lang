@@ -270,7 +270,8 @@ As there is no compiler yet, to try out Carbon, you can use the Carbon explorer
 to interpret Carbon code and print its output. You can try it out immediately at
 [compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
-To build the Carbon explorer yourself, you'll need to get some dependencies setup (Bazel, Clang, libc++), and then you can follow these instructions:
+To build the Carbon explorer yourself, you'll need to install dependencies
+(Bazel, Clang, libc++), and then you can follow these instructions:
 
 ```shell
 # Download Carbon's code.
@@ -281,9 +282,8 @@ $ cd carbon-lang
 $ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
-For complete instructions, including getting the dependencies setup, see our
-[contribution tools documentation](/docs/project/contribution_tools.md) for more
-extensive tooling instructions.
+For complete instructions, including installing dependencies, see our
+[contribution tools documentation](/docs/project/contribution_tools.md).
 
 Learn more about the Carbon project:
 
