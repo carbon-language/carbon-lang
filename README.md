@@ -270,7 +270,7 @@ As there is no compiler yet, to try out Carbon, you can use the Carbon explorer
 to interpret Carbon code and print its output. You can try it out immediately at
 [compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
-To build the Carbon explorer yourself, follow these instructions:
+To build the Carbon explorer yourself, you'll need to get some dependencies setup (Bazel, Clang, libc++), and then you can follow these instructions:
 
 ```shell
 # Download Carbon's code.
