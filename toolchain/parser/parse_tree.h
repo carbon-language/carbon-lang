@@ -243,7 +243,6 @@ class ParseTree {
 // sequence across all nodes in the parse tree.
 struct ParseTree::Node : public ComparableIndexBase {
   // An explicitly invalid instance.
-  // NOLINTNEXTLINE(readability-identifier-naming)
   static const Node Invalid;
 
   using ComparableIndexBase::ComparableIndexBase;

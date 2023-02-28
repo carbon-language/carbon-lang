@@ -135,7 +135,7 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
 
   output << "[\n";
   for (Node n : postorder()) {
-    PrintNode(output, n, indents[n.index], /*adding_children=*/false);
+    PrintNode(output, n, indents[n.index], /*preorder=*/false);
     output << ",\n";
   }
   output << "]\n";
@@ -165,7 +165,7 @@ auto ParseTree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
     int depth;
     std::tie(n, depth) = node_stack.pop_back_val();
 
-    if (PrintNode(output, n, depth, /*adding_children=*/true)) {
+    if (PrintNode(output, n, depth, /*preorder=*/true)) {
       // Has children, so we descend. We append the children in order here as
       // well because they will get reversed when popped off the stack.
       for (Node sibling_n : children(n)) {
