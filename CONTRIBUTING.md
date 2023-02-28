@@ -12,11 +12,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Ways to contribute](#ways-to-contribute)
-    -   [Help comment on proposals](#help-comment-on-proposals)
-    -   [Help contribute ideas to Carbon](#help-contribute-ideas-to-carbon)
-    -   [Help implement Carbon's design](#help-implement-carbons-design)
-    -   [Help address bugs](#help-address-bugs)
-    -   [Good first issues](#good-first-issues)
+    -   [Contributing to the language design](#contributing-to-the-language-design)
+        -   [Comment on proposals](#comment-on-proposals)
+        -   [Contribute design ideas to Carbon](#contribute-design-ideas-to-carbon)
+    -   [Contributing to the language implementation](#contributing-to-the-language-implementation)
+        -   [Experiment with Carbon and report issues (no code)](#experiment-with-carbon-and-report-issues-no-code)
+        -   [Review and comment on Pull Requests (no code)](#review-and-comment-on-pull-requests-no-code)
+        -   [Implement Carbon's design](#implement-carbons-design)
+        -   [Triage, analyze or address bugs](#triage-analyze-or-address-bugs)
 -   [How to become a contributor to Carbon](#how-to-become-a-contributor-to-carbon)
     -   [Contributor License Agreements (CLAs)](#contributor-license-agreements-clas)
         -   [Future CLA plans](#future-cla-plans)
@@ -41,8 +44,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Thank you for your interest in contributing to Carbon! There are many ways to
 contribute, and we appreciate all of them. If you have questions, please feel
-free to ask on Discord or
-[GitHub](https://github.com/carbon-language/carbon-lang/discussions).
+free to ask on [Discord](https://discord.gg/ZjVdShJDAs) `#contributing-help`
+channel or [GitHub](https://github.com/carbon-language/carbon-lang/discussions).
 
 Everyone who contributes to Carbon is expected to:
 
@@ -58,7 +61,9 @@ information here in our contributing guide, especially the
 
 ## Ways to contribute
 
-### Help comment on proposals
+### Contributing to the language design
+
+#### Comment on proposals
 
 If you're looking for a quick way to contribute, commenting on proposals is a
 way to provide proposal authors with a breadth of feedback. The
@@ -71,7 +76,7 @@ difference, see the [evolution process](docs/project/evolution.md).
 When giving feedback, please keep comments positive and constructive. Our goal
 is to use community discussion to improve proposals and assist authors.
 
-### Help contribute ideas to Carbon
+#### Contribute design ideas to Carbon
 
 If you have ideas for Carbon, we encourage you to discuss it with the community,
 and potentially prepare a proposal for it. Ultimately, any changes or
@@ -84,23 +89,48 @@ eventually implemented. A good starting point is to read through the
 [evolution process](docs/project/evolution.md). We encourage discussing the idea
 early, before even writing a proposal, and the process explains how to do that.
 
-### Help implement Carbon's design
+### Contributing to the language implementation
 
-Eventually, we will also be working toward a reference implementation of Carbon,
-and are very interested in folks joining in to help us with it.
+#### Experiment with Carbon and report issues (no code)
 
-### Help address bugs
+You can experiment with the current implementation of the Carbon language using
+the [online version](https://carbon.compiler-explorer.com/) of Carbon Explorer.
+The state of the design implementation for Explorer is documented on the
+["Are we explorer yet"](https://github.com/carbon-language/carbon-lang/wiki/Are-we-explorer-yet%3F)
+wiki page.
 
-As Carbon's design and eventually implementation begin to take shape, we'll
-inevitably end up with plenty of bugs. Helping us triage, analyze, and address
-them is always a great way to get involved. See
-[open issues on GitHub](https://github.com/carbon-language/carbon-lang/issues).
+If you uncover a bug or implementation problem, you can
+[report an issue on GitHub](https://github.com/carbon-language/carbon-lang/issues/new/choose).
 
-### Good first issues
+#### Review and comment on Pull Requests (no code)
 
-Some issues have been marked as
-["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue).
+Helping with
+[pull requests](https://github.com/carbon-language/carbon-lang/pulls) review is
+a good way to provide feedback, while getting a acquainted with the code base.
+
+#### Implement Carbon's design
+
+The implementation of the Carbon language design takes place in two distinct
+locations:
+
+-   the [Carbon Explorer](/explorer/) (see Carbon
+    [Explorer issues](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3Aexplorer)),
+    and
+-   the [Carbon toolchain](/toolchain/) (see Carbon
+    [toolchain issues](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3Atoolchain))
+
+The Carbon Explorer is generally simpler to contribute to, while the toolchain
+implements the compiler and tools needed for the language. **Some issues are
+also marked as
+["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue)**.
 These are intended to be a good place to start contributing.
+
+#### Triage, analyze or address bugs
+
+As Carbon's design and implementation begin to take shape, we'll inevitably
+encounter plenty of bugs. Helping us triage, analyze, and address them is always
+a great way to get involved. See
+[open issues on GitHub](https://github.com/carbon-language/carbon-lang/issues).
 
 ## How to become a contributor to Carbon
 

@@ -311,7 +311,8 @@ Past Carbon focused talks from the community:
 
 ## Join us
 
-Carbon is committed to a welcoming and inclusive environment where everyone can
+We'd love to have folks join us and contribute to the project. Carbon is
+committed to a welcoming and inclusive environment where everyone can
 contribute.
 
 -   Most of Carbon's design discussions occur on
@@ -326,3 +327,20 @@ contribute.
 -   See our [code of conduct](CODE_OF_CONDUCT.md) and
     [contributing guidelines](CONTRIBUTING.md) for information about the Carbon
     development community.
+
+### Contributing
+
+You can also directly:
+
+-   [Contribute the language design](CONTRIBUTING.md#contributing-to-the-language-design):
+    feedback on design, new design proposal
+-   [Contribute to the language implementation](CONTRIBUTING.md#contributing-to-the-language-implementation)
+    -   [Carbon Explorer](/explorer/): bug report, bug fix, language feature
+        implementation
+    -   [Carbon Toolchain](/toolchain/), and project infrastructure
+
+You can **check out some
+["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue)**,
+or join the `#contributing-help` channel on
+[Discord](https://discord.gg/ZjVdShJDAs). See our full
+[`CONTRIBUTING`](CONTRIBUTING.md) documentation for more details.
