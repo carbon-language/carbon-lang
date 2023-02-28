@@ -281,8 +281,7 @@ $ cd carbon-lang
 $ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
-These instructions assume dependencies like bazel, llvm, and libc++ are
-installed; see our
+For complete instructions, including getting the dependencies setup, see our
 [contribution tools documentation](/docs/project/contribution_tools.md) for more
 extensive tooling instructions.
 
