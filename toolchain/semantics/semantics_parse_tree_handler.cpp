@@ -62,7 +62,7 @@ auto SemanticsParseTreeHandler::Build() -> void {
   }
 
   // Pop information for the file-level scope.
-  node_block_stack_.Pop();
+  semantics_->top_node_block_id_ = node_block_stack_.Pop();
   PopScope();
 
   // Information in all the various context objects should be cleaned up as
@@ -87,16 +87,10 @@ auto SemanticsParseTreeHandler::AddNodeAndPush(ParseTree::Node parse_node,
   node_stack_.Push(parse_node, node_id);
 }
 
-auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
-                                         SemanticsNodeId type_id,
-                                         SemanticsNodeId target_id)
-    -> SemanticsStringId {
-  CARBON_CHECK(parse_tree_->node_kind(name_node) == ParseNodeKind::DeclaredName)
-      << parse_tree_->node_kind(name_node);
-  auto name_str = parse_tree_->GetNodeText(name_node);
-  auto name_id = semantics_->AddString(name_str);
-
-  AddNode(SemanticsNode::MakeBindName(name_node, type_id, name_id, target_id));
+auto SemanticsParseTreeHandler::AddNameToLookup(ParseTree::Node name_node,
+                                                SemanticsStringId name_id,
+                                                SemanticsNodeId target_id)
+    -> void {
   auto [it, inserted] = current_scope().names.insert(name_id);
   if (inserted) {
     name_lookup_[name_id].push_back(target_id);
@@ -107,10 +101,23 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
     auto prev_def_id = name_lookup_[name_id].back();
     auto prev_def = semantics_->GetNode(prev_def_id);
 
-    emitter_->Build(name_node, NameRedefined, name_str)
+    emitter_->Build(name_node, NameRedefined, semantics_->GetString(name_id))
         .Note(prev_def.parse_node(), PreviousDefinition)
         .Emit();
   }
+}
+
+auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
+                                         SemanticsNodeId type_id,
+                                         SemanticsNodeId target_id)
+    -> SemanticsStringId {
+  CARBON_CHECK(parse_tree_->node_kind(name_node) == ParseNodeKind::DeclaredName)
+      << parse_tree_->node_kind(name_node);
+  auto name_str = parse_tree_->GetNodeText(name_node);
+  auto name_id = semantics_->AddString(name_str);
+
+  AddNode(SemanticsNode::MakeBindName(name_node, type_id, name_id, target_id));
+  AddNameToLookup(name_node, name_id, target_id);
   return name_id;
 }
 
@@ -319,7 +326,7 @@ auto SemanticsParseTreeHandler::HandleCallExpression(ParseTree::Node parse_node)
       return true;
     }
 
-    auto callable_id = name_node.GetAsFunctionDeclaration();
+    auto [_, callable_id] = name_node.GetAsFunctionDeclaration();
     auto callable = semantics_->GetCallable(callable_id);
 
     if (!TryTypeConversionOnArgs(call_expr_parse_node, ir_id, refs_id,
@@ -496,14 +503,16 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
   auto fn_node =
       node_stack_.PopForSoloParseNode(ParseNodeKind::FunctionIntroducer);
 
+  auto name_str = parse_tree_->GetNodeText(name_node);
+  auto name_id = semantics_->AddString(name_str);
+
   auto callable_id =
       semantics_->AddCallable({.param_ir_id = param_ir_id,
                                .param_refs_id = param_refs_id,
                                .return_type_id = return_type_id});
-  auto decl_id =
-      AddNode(SemanticsNode::MakeFunctionDeclaration(fn_node, callable_id));
-  // TODO: Propagate the type of the function.
-  BindName(name_node, SemanticsNodeId::Invalid, decl_id);
+  auto decl_id = AddNode(
+      SemanticsNode::MakeFunctionDeclaration(fn_node, name_id, callable_id));
+  AddNameToLookup(name_node, name_id, decl_id);
 
   node_block_stack_.Push();
   PushScope();
@@ -657,7 +666,7 @@ auto SemanticsParseTreeHandler::HandleNameReference(ParseTree::Node parse_node)
     node_stack_.Push(parse_node, SemanticsNodeId::BuiltinInvalidType);
   };
 
-  auto name_id = semantics_->GetString(name_str);
+  auto name_id = semantics_->GetStringID(name_str);
   if (!name_id) {
     name_not_found();
     return true;
@@ -784,7 +793,7 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
   CARBON_CHECK(!return_scope_stack_.empty());
   const auto& fn_node = semantics_->GetNode(return_scope_stack_.back());
   const auto callable =
-      semantics_->GetCallable(fn_node.GetAsFunctionDeclaration());
+      semantics_->GetCallable(fn_node.GetAsFunctionDeclaration().second);
 
   if (parse_tree_->node_kind(node_stack_.PeekParseNode()) ==
       ParseNodeKind::ReturnStatementStart) {
@@ -937,7 +946,7 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
     auto binding = node_stack_.PopForParseNodeAndNameId();
 
     // Restore the name now that the initializer is complete.
-    AddNameToLookup(binding.second, storage_id);
+    ReaddNameToLookup(binding.second, storage_id);
 
     auto storage_type =
         TryTypeConversion(parse_node, storage_id, last_child.second,

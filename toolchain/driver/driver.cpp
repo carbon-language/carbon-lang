@@ -209,6 +209,12 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
   CARBON_VLOG() << "semantics_ir: " << semantics_ir;
 
+  // Unlike previous steps, errors block further progress.
+  if (has_errors) {
+    CARBON_VLOG() << "Unable to dump llvm-ir due to prior errors.";
+    return false;
+  }
+
   CARBON_VLOG() << "*** LowerToLLVM ***\n";
   llvm::LLVMContext llvm_context;
   const std::unique_ptr<llvm::Module> module =

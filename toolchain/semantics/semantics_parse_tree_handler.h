@@ -79,9 +79,13 @@ class SemanticsParseTreeHandler {
   // result.
   auto AddNodeAndPush(ParseTree::Node parse_node, SemanticsNode node) -> void;
 
-  // Adds a name to name lookup. This is typically done through BindName, but
+  // Adds a name to name lookup.
+  auto AddNameToLookup(ParseTree::Node name_node, SemanticsStringId name_id,
+                       SemanticsNodeId target_id) -> void;
+
+  // Re-adds a name to name lookup. This is typically done through BindName, but
   // can also be used to restore removed names.
-  auto AddNameToLookup(SemanticsStringId name_id, SemanticsNodeId storage_id)
+  auto ReaddNameToLookup(SemanticsStringId name_id, SemanticsNodeId storage_id)
       -> void {
     name_lookup_[name_id].push_back(storage_id);
   }

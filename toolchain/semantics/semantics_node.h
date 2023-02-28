@@ -203,16 +203,18 @@ class SemanticsNode {
     return {SemanticsCrossReferenceIRId(arg0_), SemanticsNodeId(arg1_)};
   }
 
-  // TODO: The signature should be added as a parameter.
   static auto MakeFunctionDeclaration(ParseTree::Node parse_node,
-                                      SemanticsCallableId signature)
+                                      SemanticsStringId name_id,
+                                      SemanticsCallableId signature_id)
       -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDeclaration,
-                         SemanticsNodeId::Invalid, signature.index);
+                         SemanticsNodeId::Invalid, name_id.index,
+                         signature_id.index);
   }
-  auto GetAsFunctionDeclaration() const -> SemanticsCallableId {
+  auto GetAsFunctionDeclaration() const
+      -> std::pair<SemanticsStringId, SemanticsCallableId> {
     CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDeclaration);
-    return {SemanticsCallableId(arg0_)};
+    return {SemanticsStringId(arg0_), SemanticsCallableId(arg1_)};
   }
 
   static auto MakeFunctionDefinition(ParseTree::Node parse_node,
