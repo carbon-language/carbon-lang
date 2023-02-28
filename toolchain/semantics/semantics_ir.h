@@ -82,6 +82,12 @@ class SemanticsIR {
     return callables_[callable_id.index];
   }
 
+  // Returns the requested integer literal.
+  auto GetIntegerLiteral(SemanticsIntegerLiteralId int_id) const
+      -> const llvm::APInt& {
+    return integer_literals_[int_id.index];
+  }
+
   // Returns the requested node.
   auto GetNode(SemanticsNodeId node_id) const -> SemanticsNode {
     return nodes_[node_id.index];
@@ -91,6 +97,11 @@ class SemanticsIR {
   auto GetNodeBlock(SemanticsNodeBlockId block_id) const
       -> const llvm::SmallVector<SemanticsNodeId>& {
     return node_blocks_[block_id.index];
+  }
+
+  // Returns the requested string.
+  auto GetString(SemanticsStringId string_id) const -> llvm::StringRef {
+    return strings_[string_id.index];
   }
 
   auto top_node_block_id() const -> SemanticsNodeBlockId {
@@ -169,7 +180,7 @@ class SemanticsIR {
   // Adds an string, returning an ID to reference it.
   auto AddString(llvm::StringRef str) -> SemanticsStringId {
     // If the string has already been stored, return the corresponding ID.
-    if (auto existing_id = GetString(str)) {
+    if (auto existing_id = GetStringID(str)) {
       return *existing_id;
     }
 
@@ -181,7 +192,7 @@ class SemanticsIR {
   }
 
   // Returns an ID for the string if it's previously been stored.
-  auto GetString(llvm::StringRef str) -> std::optional<SemanticsStringId> {
+  auto GetStringID(llvm::StringRef str) -> std::optional<SemanticsStringId> {
     auto str_find = string_to_id_.find(str);
     if (str_find != string_to_id_.end()) {
       return str_find->second;

@@ -6,50 +6,6 @@
 
 #include "toolchain/semantics/semantics_ir.h"
 
-/*
-semantics_ir: cross_reference_irs_size: 1
-calls: [
-]
-callables: [
-  {param_ir: block0, param_refs: block0, return_type: node2},
-]
-integer_literals: [
-  0,
-]
-real_literals: [
-]
-strings: [
-  Main,
-]
-nodes: [
- 0 {kind: CrossReference, arg0: ir0, arg1: node0, type: node0},
- 1 {kind: CrossReference, arg0: ir0, arg1: node1, type: node1},
- 2 {kind: CrossReference, arg0: ir0, arg1: node2, type: node0},
- 3 {kind: CrossReference, arg0: ir0, arg1: node3, type: node0},
- 4 {kind: CrossReference, arg0: ir0, arg1: node4, type: node0},
- 5 {kind: CrossReference, arg0: ir0, arg1: node5, type: node0},
- 6 {kind: CrossReference, arg0: ir0, arg1: node6, type: node5},
- 7 {kind: FunctionDeclaration, arg0: callable0},
- 8 {kind: BindName, arg0: str0, arg1: node7},
- 9 {kind: IntegerLiteral, arg0: int0, type: node2},
- 10 {kind: ReturnExpression, arg0: node9, type: node2},
- 11 {kind: FunctionDefinition, arg0: node7, arg1: block2},
-]
-node_blocks: [
-  [
-  ],
-  [
-    node7,
-    node8,
-    node11,
-  ],
-  [
-    node9,
-    node10,
-  ],
-]
-*/
-
 namespace Carbon {
 
 Lowering::Lowering(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
@@ -65,54 +21,78 @@ Lowering::Lowering(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
 auto Lowering::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_) << "Run can only be called once.";
 
-  for (const auto& node_id :
+  for (SemanticsNodeId node_id :
        semantics_ir_->GetNodeBlock(semantics_ir_->top_node_block_id())) {
     auto node = semantics_ir_->GetNode(node_id);
     switch (node.kind()) {
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
   case SemanticsNodeKind::Name:          \
-    Handle##Name##Node(node);            \
+    Handle##Name##Node(node_id, node);   \
     break;
 #include "toolchain/semantics/semantics_node_kind.def"
+    }
+  }
+
+  while (!todo_blocks_.empty()) {
+    auto [llvm_block, block_id] = todo_blocks_.pop_back_val();
+    builder_.SetInsertPoint(llvm_block);
+    for (const auto& node_id : semantics_ir_->GetNodeBlock(block_id)) {
+      auto node = semantics_ir_->GetNode(node_id);
+      switch (node.kind()) {
+#define CARBON_SEMANTICS_NODE_KIND(Name) \
+  case SemanticsNodeKind::Name:          \
+    Handle##Name##Node(node_id, node);   \
+    break;
+#include "toolchain/semantics/semantics_node_kind.def"
+      }
     }
   }
 
   return std::move(llvm_module_);
 }
 
-auto Lowering::HandleInvalidNode(SemanticsNode /*node*/) -> void {
+auto Lowering::HandleInvalidNode(SemanticsNodeId /*node_id*/,
+                                 SemanticsNode /*node*/) -> void {
   llvm_unreachable("never in actual IR");
 }
 
-auto Lowering::HandleCrossReferenceNode(SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node.kind();
+auto Lowering::HandleCrossReferenceNode(SemanticsNodeId /*node_id*/,
+                                        SemanticsNode node) -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto Lowering::HandleAssignNode(SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node.kind();
+auto Lowering::HandleAssignNode(SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto Lowering::HandleBinaryOperatorAddNode(SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node.kind();
+auto Lowering::HandleBinaryOperatorAddNode(SemanticsNodeId /*node_id*/,
+                                           SemanticsNode node) -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto Lowering::HandleBindNameNode(SemanticsNode /*node*/) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node.kind();
+auto Lowering::HandleBindNameNode(SemanticsNodeId /*node_id*/,
+                                  SemanticsNode node) -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto Lowering::HandleBuiltinNode(SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node.kind();
+auto Lowering::HandleBuiltinNode(SemanticsNodeId /*node_id*/,
+                                 SemanticsNode node) -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto Lowering::HandleCallNode(SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node.kind();
+auto Lowering::HandleCallNode(SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto Lowering::HandleCodeBlockNode(SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node.kind();
+auto Lowering::HandleCodeBlockNode(SemanticsNodeId /*node_id*/,
+                                   SemanticsNode node) -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto Lowering::HandleFunctionDeclarationNode(SemanticsNode node) -> void {
+auto Lowering::HandleFunctionDeclarationNode(SemanticsNodeId /*node_id*/,
+                                             SemanticsNode node) -> void {
   auto [name_id, callable_id] = node.GetAsFunctionDeclaration();
   auto callable = semantics_ir_->GetCallable(callable_id);
   llvm::SmallVector<llvm::Type*> args;
@@ -121,43 +101,62 @@ auto Lowering::HandleFunctionDeclarationNode(SemanticsNode node) -> void {
       << "TODO: Handle non-empty parameters.";
   CARBON_CHECK(callable.return_type_id == SemanticsNodeId::BuiltinIntegerType)
       << "TODO: Handle non-i32 return types.";
-  llvm::Type* return_type = llvm::Type::getInt32Ty(*llvm_context_);
+  llvm::Type* return_type = builder_.getInt32Ty();
   llvm::FunctionType* function_type =
       llvm::FunctionType::get(return_type, args, /*isVarArg=*/false);
   llvm::Function::Create(function_type, llvm::Function::ExternalLinkage,
-                         "TODO_NAME", llvm_module_.get());
+                         semantics_ir_->GetString(name_id), llvm_module_.get());
+  // TODO: Name arguments.
 }
 
-auto Lowering::HandleFunctionDefinitionNode(SemanticsNode node) -> void {
+auto Lowering::HandleFunctionDefinitionNode(SemanticsNodeId /*node_id*/,
+                                            SemanticsNode node) -> void {
   auto [declaration_id, body_block_id] = node.GetAsFunctionDefinition();
-  auto declaration = semantics_ir_->GetNode(declaration_id);
+  auto [name_id, callable_id] =
+      semantics_ir_->GetNode(declaration_id).GetAsFunctionDeclaration();
 
-  // TODO: Currently used.
-  // CARBON_FATAL() << "TODO: Add support: " << node.kind();
+  llvm::Function* function =
+      llvm_module_->getFunction(semantics_ir_->GetString(name_id));
+
+  // Create a new basic block to start insertion into.
+  llvm::BasicBlock* body =
+      llvm::BasicBlock::Create(*llvm_context_, "entry", function);
+  todo_blocks_.push_back({body, body_block_id});
 }
 
-auto Lowering::HandleIntegerLiteralNode(SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node.kind();
+auto Lowering::HandleIntegerLiteralNode(SemanticsNodeId node_id,
+                                        SemanticsNode node) -> void {
+  SemanticsIntegerLiteralId int_id = node.GetAsIntegerLiteral();
+  llvm::APInt i = semantics_ir_->GetIntegerLiteral(int_id);
+  llvm::Value* v =
+      llvm::ConstantInt::get(builder_.getInt32Ty(), i.getLimitedValue());
+  node_values_[node_id] = v;
 }
 
-auto Lowering::HandleRealLiteralNode(SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node.kind();
+auto Lowering::HandleRealLiteralNode(SemanticsNodeId /*node_id*/,
+                                     SemanticsNode node) -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto Lowering::HandleReturnNode(SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node.kind();
+auto Lowering::HandleReturnNode(SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto Lowering::HandleReturnExpressionNode(SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node.kind();
+auto Lowering::HandleReturnExpressionNode(SemanticsNodeId /*node_id*/,
+                                          SemanticsNode node) -> void {
+  SemanticsNodeId expr_id = node.GetAsReturnExpression();
+  builder_.CreateRet(node_values_[expr_id]);
 }
 
-auto Lowering::HandleStringLiteralNode(SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node.kind();
+auto Lowering::HandleStringLiteralNode(SemanticsNodeId /*node_id*/,
+                                       SemanticsNode node) -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto Lowering::HandleVarStorageNode(SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node.kind();
+auto Lowering::HandleVarStorageNode(SemanticsNodeId /*node_id*/,
+                                    SemanticsNode node) -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
 }  // namespace Carbon
