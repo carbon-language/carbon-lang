@@ -21,8 +21,19 @@ Lowering::Lowering(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
 auto Lowering::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_) << "Run can only be called once.";
 
-  for (SemanticsNodeId node_id :
-       semantics_ir_->GetNodeBlock(semantics_ir_->top_node_block_id())) {
+  LowerBlock(semantics_ir_->top_node_block_id());
+
+  while (!todo_blocks_.empty()) {
+    auto [llvm_block, block_id] = todo_blocks_.pop_back_val();
+    builder_.SetInsertPoint(llvm_block);
+    LowerBlock(block_id);
+  }
+
+  return std::move(llvm_module_);
+}
+
+auto Lowering::LowerBlock(SemanticsNodeBlockId block_id) -> void {
+  for (const auto& node_id : semantics_ir_->GetNodeBlock(block_id)) {
     auto node = semantics_ir_->GetNode(node_id);
     switch (node.kind()) {
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
@@ -32,23 +43,6 @@ auto Lowering::Run() -> std::unique_ptr<llvm::Module> {
 #include "toolchain/semantics/semantics_node_kind.def"
     }
   }
-
-  while (!todo_blocks_.empty()) {
-    auto [llvm_block, block_id] = todo_blocks_.pop_back_val();
-    builder_.SetInsertPoint(llvm_block);
-    for (const auto& node_id : semantics_ir_->GetNodeBlock(block_id)) {
-      auto node = semantics_ir_->GetNode(node_id);
-      switch (node.kind()) {
-#define CARBON_SEMANTICS_NODE_KIND(Name) \
-  case SemanticsNodeKind::Name:          \
-    Handle##Name##Node(node_id, node);   \
-    break;
-#include "toolchain/semantics/semantics_node_kind.def"
-      }
-    }
-  }
-
-  return std::move(llvm_module_);
 }
 
 auto Lowering::HandleInvalidNode(SemanticsNodeId /*node_id*/,
