@@ -72,15 +72,15 @@ def cc_fuzz_test(
             **kwargs
         )
     else:
-        # Create separate targets for each shard.
-        shards = []
-
-        # This is equivalent to ceiling division, so that the corpus subsetting
-        # doesn't miss odd files.
+        # Calculate the number of inputs per shard. This is equivalent to
+        # ceiling division, so that the corpus subsetting doesn't miss odd
+        # files.
         shard_size = len(corpus) // shard_count
         if shard_count * shard_size < len(corpus):
             shard_size += 1
 
+        # Create separate targets for each shard.
+        shards = []
         for shard in range(shard_count):
             shard_name = "{0}.shard{1}".format(name, shard)
             shards.append(shard_name)
