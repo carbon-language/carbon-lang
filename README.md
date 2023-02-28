@@ -335,7 +335,8 @@ You can also directly:
         implementation
     -   [Carbon Toolchain](/toolchain/), and project infrastructure
 
-You can refer to [`CONTRIBUTING`](CONTRIBUTING.md) for more information, check
-["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue),
+You can **check out some
+["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue)**,
 or join the `#contributing-help` channel on
-[Discord](https://discord.gg/ZjVdShJDAs).
+[Discord](https://discord.gg/ZjVdShJDAs). See our full
+[`CONTRIBUTING`](CONTRIBUTING.md) documentation for more details.
