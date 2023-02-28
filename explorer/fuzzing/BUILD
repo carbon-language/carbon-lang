@@ -121,6 +121,7 @@ cc_fuzz_test(
     testonly = 1,
     srcs = ["explorer_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
+    shard_count = 8,
     deps = [
         ":fuzzer_util",
         "//common:error",
