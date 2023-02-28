@@ -120,8 +120,8 @@ locations:
     [toolchain issues](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3Atoolchain))
 
 The Carbon Explorer is generally simpler to contribute to, while the toolchain
-implements the compiler and tools needed for the language. **Some issues are also
-marked as
+implements the compiler and tools needed for the language. **Some issues are
+also marked as
 ["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue)**.
 These are intended to be a good place to start contributing.
 
