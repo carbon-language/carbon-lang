@@ -271,7 +271,7 @@ to interpret Carbon code and print its output. You can try it out immediately at
 [compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
 To build the Carbon explorer yourself, you'll need to install dependencies
-(Bazel, Clang, libc++), and then you can follow these instructions:
+(Bazel, Clang, libc++), and then you can run:
 
 ```shell
 # Download Carbon's code.
