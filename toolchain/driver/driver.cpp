@@ -211,6 +211,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
 
   // Unlike previous steps, errors block further progress.
   if (has_errors) {
+    CARBON_VLOG() << "Unable to dump llvm-ir due to prior errors.";
     return false;
   }
 
