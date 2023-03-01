@@ -179,7 +179,7 @@ class ValueTransform : public TransformBase<Derived> {
   }
 
   // Preserve vtable during transformation.
-  auto operator()(Nonnull<const VTable* const> vtable)
+  auto operator()(Nonnull<const VTable*> vtable)
       -> Nonnull<const VTable*> {
     return vtable;
   }
