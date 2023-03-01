@@ -630,6 +630,12 @@ class OperatorExpression : public RewritableMixin<Expression> {
     return arguments_;
   }
 
+  // Can only be called by type-checking, if a conversion was required.
+  void set_argument(int index, Nonnull<Expression*> arg) {
+    CARBON_CHECK(0 <= index && index < static_cast<int>(arguments_.size()));
+    arguments_[index] = arg;
+  }
+
  private:
   Operator op_;
   std::vector<Nonnull<Expression*>> arguments_;
