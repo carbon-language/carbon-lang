@@ -57,6 +57,7 @@ TEST(ProtoToCarbonTest, Roundtrip) {
 
 auto main(int argc, char** argv) -> int {
   ::testing::InitGoogleTest(&argc, argv);
+  // gtest should remove flags, leaving just input files.
   std::vector<llvm::StringRef> carbon_files(&argv[1], &argv[argc]);
   Carbon::Testing::carbon_files = &carbon_files;
   return RUN_ALL_TESTS();
