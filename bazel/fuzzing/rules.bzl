@@ -45,7 +45,7 @@ def cc_fuzz_test(
         tags: Will have "fuzz_test" added and passed down to the fuzz test.
         deps: Will have "@llvm-project//compiler-rt:FuzzerMain" added and passed
             down to the fuzz test.
-        shard_count: Provides sharding of
+        shard_count: Provides sharding of the fuzz test.
         **kwargs: Remaining arguments passed down to the fuzz test.
     """
 
