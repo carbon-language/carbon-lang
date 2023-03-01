@@ -257,6 +257,9 @@ class Parser {
   }
 
   // Returns the current declaration context according to state_stack_.
+  // This is expected to be called in cases which are close to a context.
+  // Although it looks like it could be O(n) for state_stack_'s depth, valid
+  // parses should only need to look down a couple steps.
   auto GetDeclarationContext() -> DeclarationContext;
 
   // Propagates an error up the state stack, to the parent state.
