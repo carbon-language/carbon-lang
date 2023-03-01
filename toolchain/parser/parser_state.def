@@ -285,15 +285,9 @@ CARBON_PARSER_STATE(FunctionSignatureFinish)
 //   (state done)
 CARBON_PARSER_STATE(FunctionDefinitionFinish)
 
-// Finishes an interface definition.
-//
-// Always:
-//   (state done)
-CARBON_PARSER_STATE(InterfaceDefinitionFinish)
-
 // Handles parsing the body of an interface.
 //
-// If `}`:
+// If `CloseCurlyBrace`:
 //   (state done)
 // Else:
 //   1. InterfaceDefinitionLoop
@@ -301,13 +295,12 @@ CARBON_PARSER_STATE(InterfaceDefinitionLoop)
 
 // Handles processing of a intefaces's `interface <name> {`.
 //
-// If invalid:
-//   1. InterfaceDefinitionFinish
-// If `{` is missing:
-//   1. InterfaceDefinitionFinish
-// Else:
+// If `Semi`:
+//   (state done)
+// If `OpenCurlyBrace`:
 //   1. InterfaceDefinitionLoop
-//   2. InterfaceDefinitionFinish
+// Else:
+//   (state done)
 CARBON_PARSER_STATE(InterfaceIntroducer)
 
 // Handles `package`.
