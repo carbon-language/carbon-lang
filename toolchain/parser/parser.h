@@ -46,10 +46,8 @@ class Parser {
   // Supported kinds for HandlePattern.
   enum class PatternKind { Parameter, Variable };
 
-  // Gives information about the language construct/context being parsed. For
-  // now, a simple enum but can be extended later to provide more information as
-  // necessary.
-  enum class ParseContext {
+  // Supported return values for GetDeclarationContext.
+  enum class DeclarationContext {
     File,  // Top-level context.
     Interface,
   };
@@ -258,6 +256,9 @@ class Parser {
         << "Excessive stack size: likely infinite loop";
   }
 
+  // Returns the current declaration context according to state_stack_.
+  auto GetDeclarationContext() -> DeclarationContext;
+
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
@@ -328,8 +329,6 @@ class Parser {
   TokenizedBuffer::TokenIterator end_;
 
   llvm::SmallVector<StateStackEntry> state_stack_;
-  // TODO: This can be a mini-stack of contexts rather than a simple variable.
-  ParseContext stack_context_;
 };
 
 }  // namespace Carbon

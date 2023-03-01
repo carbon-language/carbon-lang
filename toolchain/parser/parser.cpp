@@ -91,8 +91,7 @@ Parser::Parser(ParseTree& tree, TokenizedBuffer& tokens,
       emitter_(&emitter),
       vlog_stream_(vlog_stream),
       position_(tokens_->tokens().begin()),
-      end_(tokens_->tokens().end()),
-      stack_context_(ParseContext::File) {
+      end_(tokens_->tokens().end()) {
   CARBON_CHECK(position_ != end_) << "Empty TokenizedBuffer";
   --end_;
   CARBON_CHECK(tokens_->GetKind(*end_) == TokenKind::EndOfFile)
@@ -449,6 +448,21 @@ auto Parser::Parse() -> void {
   }
 
   AddLeafNode(ParseNodeKind::FileEnd, *position_);
+}
+
+auto Parser::GetDeclarationContext() -> DeclarationContext {
+  for (auto entry : llvm::reverse(state_stack_)) {
+    switch (entry.state) {
+      case ParserState::InterfaceDefinitionLoop:
+        return DeclarationContext::Interface;
+      case ParserState::DeclarationLoop:
+        return DeclarationContext::File;
+      default:
+        // Continue checking.
+        break;
+    }
+  }
+  llvm_unreachable("Should always be able to find DeclarationLoop");
 }
 
 auto Parser::HandleBraceExpressionState() -> void {
@@ -1135,7 +1149,7 @@ auto Parser::HandleFunctionSignatureFinishState() -> void {
       break;
     }
     case TokenKind::OpenCurlyBrace: {
-      if (stack_context_ == ParseContext::Interface) {
+      if (GetDeclarationContext() == DeclarationContext::Interface) {
         CARBON_DIAGNOSTIC(
             MethodImplNotAllowed, Error,
             "Method implementations are not allowed in interfaces.");
@@ -1175,9 +1189,6 @@ auto Parser::HandleFunctionDefinitionFinishState() -> void {
 
 auto Parser::HandleInterfaceIntroducerState() -> void {
   auto state = PopState();
-  CARBON_CHECK(stack_context_ == ParseContext::File)
-      << "TODO: Support nesting.";
-  stack_context_ = ParseContext::Interface;
 
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
                                ParseNodeKind::DeclaredName)) {
@@ -1249,7 +1260,6 @@ auto Parser::HandleInterfaceDefinitionFinishState() -> void {
   auto state = PopState();
   AddNode(ParseNodeKind::InterfaceDefinition, state.token, state.subtree_start,
           state.has_error);
-  stack_context_ = ParseContext::File;
 }
 
 auto Parser::HandlePackageState() -> void {
