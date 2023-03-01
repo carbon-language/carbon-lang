@@ -441,7 +441,7 @@ void AlternativeSignature::PrintID(llvm::raw_ostream& out) const {
 
 auto ChoiceDeclaration::FindAlternative(std::string_view name) const
     -> std::optional<const AlternativeSignature*> {
-  for (auto* alt : alternatives()) {
+  for (const auto* alt : alternatives()) {
     if (alt->name() == name) {
       return alt;
     }

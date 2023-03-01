@@ -17,7 +17,7 @@ namespace Carbon {
 // and adds them to the signature of a `Match` object.
 class MatchingImplSet::LeafCollector {
  public:
-  LeafCollector(Match* match) : match_(match) {}
+  explicit LeafCollector(Match* match) : match_(match) {}
 
   void Collect(const Value* value) {
     value->Visit<void>(
@@ -28,15 +28,15 @@ class MatchingImplSet::LeafCollector {
 
  private:
   // Most kinds of value don't contribute to the signature.
-  void VisitValue(const Value*) {}
+  void VisitValue(const Value* /*unused*/) {}
 
-  void VisitValue(const TypeType*) { Collect(Label::TypeType); }
+  void VisitValue(const TypeType* /*unused*/) { Collect(Label::TypeType); }
 
-  void VisitValue(const BoolType*) { Collect(Label::BoolType); }
+  void VisitValue(const BoolType* /*unused*/) { Collect(Label::BoolType); }
 
-  void VisitValue(const IntType*) { Collect(Label::IntType); }
+  void VisitValue(const IntType* /*unused*/) { Collect(Label::IntType); }
 
-  void VisitValue(const StringType*) { Collect(Label::StringType); }
+  void VisitValue(const StringType* /*unused*/) { Collect(Label::StringType); }
 
   void VisitValue(const StaticArrayType* array) {
     Collect(Label::ArrayType);
@@ -57,7 +57,7 @@ class MatchingImplSet::LeafCollector {
 
   void VisitValue(const TupleType* tuple_type) {
     Collect(Label::TupleType);
-    for (auto* elem_type : tuple_type->elements()) {
+    for (const auto* elem_type : tuple_type->elements()) {
       Collect(elem_type);
     }
   }
@@ -92,7 +92,6 @@ class MatchingImplSet::LeafCollector {
     }
   }
 
- private:
   Match* match_;
 };
 
@@ -100,7 +99,8 @@ auto MatchingImplSet::GetLabelForDeclaration(const Declaration& declaration)
     -> Label {
   auto [it, added] = declaration_labels_.insert(
       {&declaration,
-       Label(int(Label::FirstDeclarationLabel) + declaration_labels_.size())});
+       static_cast<Label>(static_cast<int>(Label::FirstDeclarationLabel) +
+                          declaration_labels_.size())});
   return it->second;
 }
 
