@@ -185,7 +185,7 @@ class ValueTransform : public TransformBase<Derived> {
   }
 
   // Preserve class value ptr during transformation.
-  auto operator()(Nonnull<const NominalClassValue** const> value_ptr)
+  auto operator()(Nonnull<const NominalClassValue**> value_ptr)
       -> Nonnull<const NominalClassValue**> {
     return value_ptr;
   }
