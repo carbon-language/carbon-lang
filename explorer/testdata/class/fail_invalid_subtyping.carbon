@@ -16,7 +16,7 @@ class D {
 
 fn Main() -> i32 {
   var d: D = {};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_invalid_subtyping.carbon:[[@LINE+1]]: type error in name binding: 'class D*' is not implicitly convertible to 'class C*'
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_invalid_subtyping.carbon:[[@LINE+1]]: type error in initializer of variable: 'class D*' is not implicitly convertible to 'class C*'
   var c: C* = &d;
   return 0;
 }
