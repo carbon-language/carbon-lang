@@ -130,10 +130,23 @@ CARBON_PARSER_STATE(CodeBlockFinish)
 //   1. DeclarationLoop
 CARBON_PARSER_STATE(DeclarationLoop)
 
+// Starts deduced parameter processing.
+//
+// Always:
+//   1. PatternAsDeducedParameter
+//   2. DeducedParameterFinish
 CARBON_PARSER_STATE(DeducedParameter)
+
+// Finishes deduced parameter processing, including `,`. If there are more
+// parameters, enqueues another parameter processing state.
+//
+// If `Comma` without `CloseSquareBracket`:
+//   1. DeducedParameter
+// Else:
+//   (state done)
 CARBON_PARSER_STATE(DeducedParameterFinish)
 
-// To handle parsing deduced parameter list at the end.
+// Handles processing of a deduced parameter list `]`.
 //
 // Always:
 //   (state done)
