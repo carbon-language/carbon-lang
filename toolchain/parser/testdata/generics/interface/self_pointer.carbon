@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
+// RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'Foo'},
@@ -11,8 +11,12 @@
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'Sub'},
 // CHECK:STDOUT:       {kind: 'DeducedParameterListStart', text: '['},
-// CHECK:STDOUT:       {kind: 'DeclaredName', text: 'me'},
-// CHECK:STDOUT:     {kind: 'DeducedParameterList', text: ']', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'SelfDeducedParameter', text: 'self'},
+// CHECK:STDOUT:             {kind: 'SelfType', text: 'Self'},
+// CHECK:STDOUT:           {kind: 'PostfixOperator', text: '*', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'Address', text: 'addr', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'DeducedParameterList', text: ']', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'DeclaredName', text: 'b'},
 // CHECK:STDOUT:         {kind: 'SelfType', text: 'Self'},
@@ -20,11 +24,16 @@
 // CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'SelfType', text: 'Self'},
 // CHECK:STDOUT:     {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'FunctionDeclaration', text: ';', subtree_size: 13},
+// CHECK:STDOUT:   {kind: 'FunctionDeclaration', text: ';', subtree_size: 17},
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'Mul'},
+// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'Sub'},
 // CHECK:STDOUT:       {kind: 'DeducedParameterListStart', text: '['},
-// CHECK:STDOUT:     {kind: 'DeducedParameterList', text: ']', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'SelfDeducedParameter', text: 'self'},
+// CHECK:STDOUT:             {kind: 'NameReference', text: 'foo'},
+// CHECK:STDOUT:           {kind: 'PostfixOperator', text: '*', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'Address', text: 'addr', subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'DeducedParameterList', text: ']', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'DeclaredName', text: 'b'},
 // CHECK:STDOUT:         {kind: 'SelfType', text: 'Self'},
@@ -32,15 +41,12 @@
 // CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'SelfType', text: 'Self'},
 // CHECK:STDOUT:     {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'FunctionDeclaration', text: ';', subtree_size: 12},
-// CHECK:STDOUT: {kind: 'InterfaceDefinition', text: '}', subtree_size: 29},
+// CHECK:STDOUT:   {kind: 'FunctionDeclaration', text: ';', subtree_size: 17},
+// CHECK:STDOUT: {kind: 'InterfaceDefinition', text: '}', subtree_size: 38},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
 interface Foo {
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_self_param_syntax.carbon:[[@LINE+1]]:13: Expected parameter declaration.
-  fn Sub[me Self](b: Self) -> Self;
-
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_self_param_syntax.carbon:[[@LINE+1]]:10: Expected parameter declaration.
-  fn Mul[Self](b: Self) -> Self;
+  fn Sub[addr self: Self*](b: Self) -> Self;
+  fn Sub[addr self: foo*](b: Self) -> Self;
 }
