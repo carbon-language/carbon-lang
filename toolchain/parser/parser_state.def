@@ -234,6 +234,19 @@ CARBON_PARSER_STATE(ExpressionStatementFinish)
 //
 // If invalid:
 //   (state done)
+// If deduced parameters:
+//   1. DeducedParameter
+//   2. DeducedParameterListFinish
+//   3. FunctionAfterDeducedParameterList
+// Else:
+//   1. FunctionAfterDeducedParameterList
+CARBON_PARSER_STATE(FunctionIntroducer)
+
+// Handles processing of a functions' syntax after the deduced parameter lists's
+// `]`. This applies only to interfaces and classes.
+//
+// If invalid:
+//   (state done)
 // If parenthesized parameters:
 //   1. FunctionParameter
 //   2. FunctionParameterListFinish
@@ -241,7 +254,7 @@ CARBON_PARSER_STATE(ExpressionStatementFinish)
 // Else:
 //   1. FunctionParameterListFinish
 //   2. FunctionAfterParameterList
-CARBON_PARSER_STATE(FunctionIntroducer)
+CARBON_PARSER_STATE(FunctionAfterDeducedParameterList)
 
 // Starts function parameter processing.
 //
@@ -571,19 +584,5 @@ CARBON_PARSER_STATE(VarAfterPattern)
 //   (state done)
 CARBON_PARSER_STATE(VarFinishAsSemicolon)
 CARBON_PARSER_STATE(VarFinishAsFor)
-
-// Handles processing of a functions' syntax after the deduced parameter lists's
-// `]`. This applies only to interfaces and classes.
-//
-// If invalid:
-//   (state done)
-// If parenthesized parameters:
-//   1. FunctionParameter
-//   2. FunctionParameterListFinish
-//   3. FunctionAfterParameterList
-// Else:
-//   1. FunctionParameterListFinish
-//   2. FunctionAfterParameterList
-CARBON_PARSER_STATE(FunctionAfterDeducedParameterList)
 
 #undef CARBON_PARSER_STATE
