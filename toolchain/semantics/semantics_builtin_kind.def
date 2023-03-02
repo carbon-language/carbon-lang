@@ -2,21 +2,21 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Note that this is an X-macro header.
+// This is an X-macro header. It does not use `#include` guards, and instead is
+// designed to be `#include`ed after the x-macro is defined in order for its
+// inclusion to expand to the desired output. Macro definitions are cleaned up
+// at the end of this file.
 //
-// It does not use `#include` guards, and instead is designed to be `#include`ed
-// after the x-macro is defined in order for its inclusion to expand to the
-// desired output.
-//
-// x-macros come in two forms:
-//   CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name)
-//     Used as a fallback if other macros are missing.
-//   CARBON_SEMANTICS_BUILTIN_KIND(Name, Type)
+// Supported x-macros are:
+// - CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name)
+//   Used as a fallback if other macros are missing. Used directly by Invalid
+//   only, which is defined last.
+//   - CARBON_SEMANTICS_BUILTIN_KIND(Name, Type)
 //     Defines a builtin kind with the associated type, which must also be
 //     builtin.
 //
-// Note that Invalid is provided with CARBON_SEMANTICS_BUILTIN_KIND_NAME but not
-// CARBON_SEMANTICS_BUILTIN_KIND.
+// This tree represents the subset relationship between these macros, where if a
+// specific x-macro isn't defined, it'll fall back to the parent macro.
 
 #if !(defined(CARBON_SEMANTICS_BUILTIN_KIND_NAME) || \
       defined(CARBON_SEMANTICS_BUILTIN_KIND))
