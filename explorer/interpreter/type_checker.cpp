@@ -3276,7 +3276,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               Nonnull<Expression*> converted,
               ImplicitlyConvert("pointee type", impl_scope, op.arguments()[0],
                                 type_type));
-          op.set_argument(0, converted);
+          op.arguments()[0] = converted;
           op.set_static_type(arena_->New<TypeType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
@@ -3981,8 +3981,8 @@ auto TypeChecker::TypeCheckPattern(
           << "conversion to type succeeded but didn't produce a type, got "
           << *type;
       if (expected) {
-        // TODO: Per #2188, we should be performing conversions at this level
-        // rather than on the overall initializer.
+        // TODO: Per proposal #2188, we should be performing conversions at
+        // this level rather than on the overall initializer.
         if (!IsConcreteType(type)) {
           BindingMap generic_args;
           if (!PatternMatch(type, *expected, binding.type().source_loc(),
@@ -4065,8 +4065,8 @@ auto TypeChecker::TypeCheckPattern(
                << "alternative pattern does not name a choice type.";
       }
       const auto& choice_type = cast<ChoiceType>(*type);
-      // TODO: Per #2188, we should perform an implicit conversion on the
-      // scrutinee if a choice type is provided.
+      // TODO: Per proposal #2188, we should perform an implicit conversion on
+      // the scrutinee if a choice type is provided.
       std::optional<Nonnull<const AlternativeSignature*>> signature =
           choice_type.declaration().FindAlternative(
               alternative.alternative_name());
@@ -4097,7 +4097,7 @@ auto TypeChecker::TypeCheckPattern(
       auto& expression = cast<ExpressionPattern>(*p).expression();
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&expression, impl_scope));
       p->set_static_type(&expression.static_type());
-      // TODO: We should be forming an `==` comparison here, per #2188.
+      // TODO: Per proposal #2188, we should form an `==` comparison here.
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> expr_value,
                               InterpExp(&expression, arena_, trace_stream_));
       p->set_value(expr_value);
