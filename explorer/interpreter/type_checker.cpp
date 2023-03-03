@@ -549,6 +549,38 @@ auto TypeChecker::IsImplicitlyConvertible(
     return true;
   }
 
+  // Check for a builtin conversion from source to destination.
+  // TODO: Remove this once we can find all builtin conversions by impl lookup.
+  CARBON_ASSIGN_OR_RETURN(bool is_builtin_conversion,
+                          IsBuiltinConversion(source, destination, impl_scope,
+                                              allow_user_defined_conversions));
+  if (is_builtin_conversion) {
+    return true;
+  }
+
+  // If we're not supposed to look for a user-defined conversion, we're done.
+  if (!allow_user_defined_conversions) {
+    return false;
+  }
+
+  // We didn't find a builtin implicit conversion. Check if a user-defined one
+  // exists.
+  SourceLocation source_loc = SourceLocation::DiagnosticsIgnored();
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<const InterfaceType*> iface_type,
+      GetBuiltinInterfaceType(
+          source_loc, BuiltinInterfaceName{Builtin::ImplicitAs, destination}));
+  CARBON_ASSIGN_OR_RETURN(
+      std::optional<Nonnull<const Witness*>> conversion_witness,
+      impl_scope.TryResolve(iface_type, source, source_loc, *this,
+                            /*bindings=*/{}, /*diagnose_missing_impl=*/false));
+  return conversion_witness.has_value();
+}
+
+auto TypeChecker::IsBuiltinConversion(
+    Nonnull<const Value*> source, Nonnull<const Value*> destination,
+    const ImplScope& impl_scope, bool allow_user_defined_conversions) const
+    -> ErrorOr<bool> {
   switch (source->kind()) {
     case Value::Kind::StructType:
       switch (destination->kind()) {
@@ -693,24 +725,13 @@ auto TypeChecker::IsImplicitlyConvertible(
       break;
   }
 
-  // If we're not supposed to look for a user-defined conversion, we're done.
-  if (!allow_user_defined_conversions) {
-    return false;
-  }
-
-  // We didn't find a builtin implicit conversion. Try a user-defined one.
-  SourceLocation source_loc = SourceLocation::DiagnosticsIgnored();
-  ErrorOr<Nonnull<const InterfaceType*>> iface_type = GetBuiltinInterfaceType(
-      source_loc, BuiltinInterfaceName{Builtin::ImplicitAs, destination});
-  // TODO: If the Resolve call fails with a hard error, don't swallow it.
-  return iface_type.ok() &&
-         impl_scope.Resolve(*iface_type, source, source_loc, *this).ok();
+  return false;
 }
 
 auto TypeChecker::BuildSubtypeConversion(Nonnull<Expression*> source,
                                          Nonnull<const PointerType*> src_ptr,
                                          Nonnull<const PointerType*> dest_ptr)
-    -> ErrorOr<Nonnull<const Expression*>> {
+    -> ErrorOr<Nonnull<Expression*>> {
   const auto* src_class = dyn_cast<NominalClassType>(&src_ptr->pointee_type());
   const auto* dest_class =
       dyn_cast<NominalClassType>(&dest_ptr->pointee_type());
@@ -731,6 +752,174 @@ auto TypeChecker::BuildSubtypeConversion(Nonnull<Expression*> source,
   }
   CARBON_CHECK(last_expr) << "Error, no conversion was needed";
   return last_expr;
+}
+
+auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
+                                         Nonnull<const Value*> destination,
+                                         const ImplScope& impl_scope)
+    -> ErrorOr<Nonnull<Expression*>> {
+  // Build a simple conversion that the interpreter can perform directly.
+  auto simple_conversion = [&] {
+    auto* result = arena_->New<BuiltinConvertExpression>(source);
+    result->set_static_type(destination);
+    result->set_value_category(ValueCategory::Value);
+    return result;
+  };
+  // TODO: Remove this once we no longer need it.
+  const bool allow_user_defined_conversions = false;
+  Nonnull<const Value*> source_type = &source->static_type();
+  switch (source_type->kind()) {
+    case Value::Kind::StructType:
+      switch (destination->kind()) {
+        case Value::Kind::StructType: {
+          CARBON_ASSIGN_OR_RETURN(
+              bool fields_convertible,
+              FieldTypesImplicitlyConvertible(
+                  cast<StructType>(*source_type).fields(),
+                  cast<StructType>(*destination).fields(), impl_scope));
+          if (fields_convertible) {
+            return simple_conversion();
+          }
+          break;
+        }
+        case Value::Kind::NominalClassType: {
+          CARBON_ASSIGN_OR_RETURN(
+              auto field_types,
+              FieldTypesWithBase(cast<NominalClassType>(*destination)));
+          CARBON_ASSIGN_OR_RETURN(
+              bool convertible,
+              IsImplicitlyConvertible(
+                  source_type, arena_->New<StructType>(field_types), impl_scope,
+                  allow_user_defined_conversions));
+          if (convertible) {
+            return simple_conversion();
+          }
+          break;
+        }
+        case Value::Kind::TypeType:
+        case Value::Kind::InterfaceType:
+        case Value::Kind::NamedConstraintType:
+        case Value::Kind::ConstraintType:
+          // A value of empty struct type implicitly converts to a type.
+          if (cast<StructType>(*source_type).fields().empty()) {
+            return simple_conversion();
+          }
+          break;
+        default:
+          break;
+      }
+      break;
+    case Value::Kind::TupleType: {
+      const auto& source_tuple = cast<TupleType>(*source_type);
+      switch (destination->kind()) {
+        case Value::Kind::TupleType: {
+          const auto& destination_tuple = cast<TupleType>(*destination);
+          if (source_tuple.elements().size() !=
+              destination_tuple.elements().size()) {
+            break;
+          }
+          bool all_ok = true;
+          for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
+            CARBON_ASSIGN_OR_RETURN(
+                bool convertible,
+                IsImplicitlyConvertible(
+                    source_tuple.elements()[i], destination_tuple.elements()[i],
+                    impl_scope, /*allow_user_defined_conversions=*/false));
+            if (!convertible) {
+              all_ok = false;
+              break;
+            }
+          }
+          if (all_ok) {
+            return simple_conversion();
+          }
+          break;
+        }
+        case Value::Kind::StaticArrayType: {
+          const auto& destination_array = cast<StaticArrayType>(*destination);
+          if (destination_array.size() != source_tuple.elements().size()) {
+            break;
+          }
+          bool all_ok = true;
+          for (Nonnull<const Value*> source_element : source_tuple.elements()) {
+            CARBON_ASSIGN_OR_RETURN(
+                bool convertible,
+                IsImplicitlyConvertible(
+                    source_element, &destination_array.element_type(),
+                    impl_scope, /*allow_user_defined_conversions=*/false));
+            if (!convertible) {
+              all_ok = false;
+              break;
+            }
+          }
+          if (all_ok) {
+            return simple_conversion();
+          }
+          break;
+        }
+        case Value::Kind::TypeType:
+        case Value::Kind::InterfaceType:
+        case Value::Kind::NamedConstraintType:
+        case Value::Kind::ConstraintType: {
+          // A tuple value converts to a type if all of its fields do.
+          bool all_types = true;
+          for (Nonnull<const Value*> source_element : source_tuple.elements()) {
+            CARBON_ASSIGN_OR_RETURN(
+                bool convertible,
+                IsImplicitlyConvertible(
+                    source_element, destination, impl_scope,
+                    /*allow_user_defined_conversions=*/false));
+            if (!convertible) {
+              all_types = false;
+              break;
+            }
+          }
+          if (all_types) {
+            return simple_conversion();
+          }
+          break;
+        }
+        default:
+          break;
+      }
+      break;
+    }
+    case Value::Kind::TypeType:
+    case Value::Kind::InterfaceType:
+    case Value::Kind::NamedConstraintType:
+    case Value::Kind::ConstraintType:
+      // TODO: We can't tell whether the conversion to this type-of-type would
+      // work, because that depends on the source value, and we only have its
+      // type.
+      if (!IsTypeOfType(destination)) {
+        break;
+      }
+      return simple_conversion();
+    case Value::Kind::PointerType: {
+      if (destination->kind() != Value::Kind::PointerType) {
+        break;
+      }
+      const auto* src_ptr = cast<PointerType>(source_type);
+      const auto* dest_ptr = cast<PointerType>(destination);
+      if (src_ptr->pointee_type().kind() != Value::Kind::NominalClassType ||
+          dest_ptr->pointee_type().kind() != Value::Kind::NominalClassType) {
+        break;
+      }
+      const auto& src_class = cast<NominalClassType>(src_ptr->pointee_type());
+      if (src_class.InheritsClass(&dest_ptr->pointee_type())) {
+        return simple_conversion();
+      }
+      break;
+    }
+    default:
+      break;
+  }
+
+  // This should only be visible if people directly call
+  // __builtin_implicit_as_convert.
+  return ProgramError(source->source_loc())
+         << "no builtin conversion from " << *source_type
+         << " to " << *destination << " is known";
 }
 
 auto TypeChecker::ImplicitlyConvert(std::string_view context,
@@ -797,18 +986,20 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
     }
 
     // Perform the builtin conversion.
-    auto* convert_expr =
-        arena_->New<BuiltinConvertExpression>(source, destination);
+    auto* convert_expr = arena_->New<BuiltinConvertExpression>(source);
 
     // For subtyping, rewrite into successive `.base` accesses.
     if (isa<PointerType>(source_type) && isa<PointerType>(destination) &&
         cast<PointerType>(destination)->pointee_type().kind() ==
             Value::Kind::NominalClassType) {
       CARBON_ASSIGN_OR_RETURN(
-          const auto* rewrite,
+          auto* rewrite,
           BuildSubtypeConversion(source, cast<PointerType>(source_type),
                                  cast<PointerType>(destination)))
       convert_expr->set_rewritten_form(rewrite);
+    } else {
+      convert_expr->set_static_type(destination);
+      convert_expr->set_value_category(ValueCategory::Value);
     }
 
     return convert_expr;
@@ -836,9 +1027,9 @@ auto TypeChecker::IsIntrinsicConstraintSatisfied(
     case IntrinsicConstraint::ImplicitAs:
       CARBON_CHECK(constraint.arguments.size() == 1)
           << "wrong number of arguments for `__intrinsic_implicit_as`";
-      return IsImplicitlyConvertible(constraint.type, constraint.arguments[0],
-                                     impl_scope,
-                                     /*allow_user_defined_conversions=*/false);
+      return IsBuiltinConversion(constraint.type, constraint.arguments[0],
+                                 impl_scope,
+                                 /*allow_user_defined_conversions=*/false);
   }
 }
 
@@ -3705,10 +3896,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> result,
                                   TypeCheckTypeExp(args[1], impl_scope));
-          // TODO: Check that the type of args[0] implicitly converts to
-          // args[1].
-          e->set_static_type(result);
-          e->set_expression_category(ExpressionCategory::Value);
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<Expression*> converted,
+              BuildBuiltinConversion(args[0], result, impl_scope));
+          cast<IntrinsicExpression>(e)->set_rewritten_form(converted);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::IntEq: {

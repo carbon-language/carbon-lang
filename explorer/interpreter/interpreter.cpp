@@ -1502,6 +1502,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::IntrinsicExpression: {
       const auto& intrinsic = cast<IntrinsicExpression>(exp);
+      if (auto rewrite = intrinsic.rewritten_form()) {
+        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+      }
       if (act.pos() == 0) {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&intrinsic.args()));
@@ -1633,10 +1636,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.FinishAction(result);
         }
         case IntrinsicExpression::Intrinsic::ImplicitAsConvert: {
-          CARBON_CHECK(args.size() == 2);
-          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> result,
-                                  Convert(args[0], args[1], exp.source_loc()));
-          return todo_.FinishAction(result);
+          CARBON_FATAL()
+              << "__intrinsic_implicit_as_convert should have been rewritten";
         }
         case IntrinsicExpression::Intrinsic::IntEq: {
           CARBON_CHECK(args.size() == 2);
