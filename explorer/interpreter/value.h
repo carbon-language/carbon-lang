@@ -1292,7 +1292,7 @@ class ContinuationType : public Value {
 // A variable type.
 class VariableType : public Value {
  public:
-  explicit VariableType(Nonnull<const TypeVariableBinding*> binding)
+  explicit VariableType(Nonnull<const GenericBinding*> binding)
       : Value(Kind::VariableType), binding_(binding) {}
 
   static auto classof(const Value* value) -> bool {
@@ -1304,10 +1304,34 @@ class VariableType : public Value {
     return f(binding_);
   }
 
-  auto binding() const -> const TypeVariableBinding& { return *binding_; }
+  auto binding() const -> const GenericBinding& { return *binding_; }
 
  private:
-  Nonnull<const TypeVariableBinding*> binding_;
+  Nonnull<const GenericBinding*> binding_;
+};
+
+// A mixin self type.
+class MixinSelf : public Value {
+ public:
+  explicit MixinSelf(Nonnull<const GenericBinding*> binding,
+                     Nonnull<const MixinDeclaration*> mixin)
+      : Value(Kind::VariableType), binding_(binding), mixin_(mixin) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::MixinSelf;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(binding_);
+  }
+
+  auto binding() const -> const GenericBinding& { return *binding_; }
+  auto mixin() const -> const MixinDeclaration& { return *mixin_; }
+
+ private:
+  Nonnull<const GenericBinding*> binding_;
+  Nonnull<const MixinDeclaration*> mixin_;
 };
 
 // A name of an entity that has explicit parameters, such as a parameterized

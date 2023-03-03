@@ -3980,17 +3980,6 @@ auto TypeChecker::TypeCheckPattern(
       return TypeCheckTypeVariableBinding(binding, "generic binding",
                                           impl_scope);
     }
-    case PatternKind::MixinSelf: {
-      auto& binding = cast<MixinSelf>(*p);
-      if (expected) {
-        return ProgramError(binding.type().source_loc())
-               << "mixin self may not occur in pattern with expected "
-                  "type "
-               << binding;
-      }
-
-      return TypeCheckTypeVariableBinding(binding, "mixin self", impl_scope);
-    }
     case PatternKind::TuplePattern: {
       auto& tuple = cast<TuplePattern>(*p);
       std::vector<Nonnull<const Value*>> field_types;
