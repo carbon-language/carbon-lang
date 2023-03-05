@@ -23,9 +23,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 Symbolic tokens are a set of tokens used to represent operators. Operators are
-one use of symbolic tokens, but they are also used in patterns (:), declarations
-(-> to indicate return type, to separate parameters), statements (;, =, and so
-on), and other places (, to separate function call arguments).
+one use of symbolic tokens, but they are also used in patterns `:`, declarations
+(`->` to indicate return type, `,` to separate parameters), statements (`;`, `=`, and so
+on), and other places (`,` to separate function call arguments).
 
 Some languages have a fixed set of symbolic tokens, For example:
 [C++ operators](https://eel.is/c++draft/lex.operators) and
