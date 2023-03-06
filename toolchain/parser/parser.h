@@ -262,7 +262,7 @@ class Parser {
   // parses should only need to look down a couple steps.
   auto GetDeclarationContext() -> DeclarationContext;
 
-  // Handles of recovery in a declaration, particularly before any possible
+  // Handles error recovery in a declaration, particularly before any possible
   // definition has started (although one could be present). Recover to a
   // semicolon when it makes sense as a possible end, otherwise use the
   // introducer token for the error.
