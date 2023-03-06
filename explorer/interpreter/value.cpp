@@ -674,7 +674,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     }
     case Value::Kind::ContinuationValue: {
-      out << cast<ContinuationValue>(*this).stack();
+      out << cast<ContinuationValue>(*this).representation();
       break;
     }
     case Value::Kind::StringType:
@@ -729,43 +729,6 @@ void IntrinsicConstraint::Print(llvm::raw_ostream& out) const {
     }
     out << ")";
   }
-}
-
-ContinuationValue::StackFragment::~StackFragment() {
-  CARBON_CHECK(reversed_todo_.empty())
-      << "All StackFragments must be empty before the Carbon program ends.";
-}
-
-void ContinuationValue::StackFragment::StoreReversed(
-    std::vector<std::unique_ptr<Action>> reversed_todo) {
-  CARBON_CHECK(reversed_todo_.empty());
-  reversed_todo_ = std::move(reversed_todo);
-}
-
-void ContinuationValue::StackFragment::RestoreTo(
-    Stack<std::unique_ptr<Action>>& todo) {
-  while (!reversed_todo_.empty()) {
-    todo.Push(std::move(reversed_todo_.back()));
-    reversed_todo_.pop_back();
-  }
-}
-
-void ContinuationValue::StackFragment::Clear() {
-  // We destroy the underlying Actions explicitly to ensure they're
-  // destroyed in the correct order.
-  for (auto& action : reversed_todo_) {
-    action.reset();
-  }
-  reversed_todo_.clear();
-}
-
-void ContinuationValue::StackFragment::Print(llvm::raw_ostream& out) const {
-  out << "{";
-  llvm::ListSeparator sep(" :: ");
-  for (const std::unique_ptr<Action>& action : reversed_todo_) {
-    out << sep << *action;
-  }
-  out << "}";
 }
 
 // Check whether two binding maps, which are assumed to have the same keys, are

@@ -141,9 +141,9 @@ class ValueTransform : public TransformBase<Derived> {
     return node;
   }
 
-  auto operator()(Nonnull<ContinuationValue::StackFragment*> stack_fragment)
-      -> Nonnull<ContinuationValue::StackFragment*> {
-    return stack_fragment;
+  auto operator()(Nonnull<ContinuationValue::Representation*> continuation)
+      -> Nonnull<ContinuationValue::Representation*> {
+    return continuation;
   }
 
   auto operator()(Address addr) -> Address { return addr; }
