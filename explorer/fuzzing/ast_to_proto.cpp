@@ -618,7 +618,7 @@ static auto DeclaredNameToProto(const DeclaredName& name)
     -> Fuzzing::DeclaredName {
   Fuzzing::DeclaredName name_proto;
   name_proto.set_name(std::string(name.inner_name()));
-  for (auto& [loc, qual] : name.qualifiers()) {
+  for (const auto& [loc, qual] : name.qualifiers()) {
     name_proto.add_qualifiers(qual);
   }
   return name_proto;

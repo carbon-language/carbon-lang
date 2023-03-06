@@ -2,23 +2,27 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Note that this is an X-macro header.
+// This is an X-macro header. It does not use `#include` guards, and instead is
+// designed to be `#include`ed after the x-macro is defined in order for its
+// inclusion to expand to the desired output. Macro definitions are cleaned up
+// at the end of this file.
 //
-// It does not use `#include` guards, and instead is designed to be `#include`ed
-// after the x-macro is defined in order for its inclusion to expand to the
-// desired output.
-//
-// x-macros come in three forms:
-//   CARBON_PARSE_NODE_KIND(Name)
-//     Used as a fallback if other macros are missing.
-//   CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName)
-//     Defines a bracketed node kind. BracketName should refer to the node kind
-//     that is the _start_ of the bracketed range.
-//   CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ChildCount)
+// Supported x-macros are:
+// - CARBON_PARSE_NODE_KIND(Name)
+//   Used as a fallback if other macros are missing. No kinds should use this
+//   directly.
+//   - CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName)
+//     Defines a bracketed node kind. BracketName should refer to the node
+//     kind that is the _start_ of the bracketed range.
+//   - CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ChildCount)
 //     Defines a parse node with a set number of children, often 0. This count
 //     must be correct even when the node contains errors.
 //
-// Macro definitions  will be removed at the end of this file to clean up.
+// This tree represents the subset relationship between these macros, where if a
+// specific x-macro isn't defined, it'll fall back to the parent macro.
+//
+// Parse nodes are clustered based on language feature. Comments will show their
+// relationship in postorder, using indentation for child node relationships.
 
 #if !(defined(CARBON_PARSE_NODE_KIND) ||          \
       (defined(CARBON_PARSE_NODE_KIND_BRACKET) && \
@@ -251,7 +255,6 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PostfixOperator, 1)
 //   StructFieldValue
 //   StructComma
 // StructLiteral
-//
 //
 // Struct type literals, such as `{.a: i32}`:
 //       _external_: DesignatedName

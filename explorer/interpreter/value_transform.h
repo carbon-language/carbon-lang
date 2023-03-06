@@ -29,6 +29,7 @@ struct IsRecursivelyTransformableVisitor {
 template <typename T, typename = std::true_type>
 constexpr bool IsRecursivelyTransformable = false;
 template <typename T>
+// NOLINTNEXTLINE(misc-definitions-in-headers)
 constexpr bool IsRecursivelyTransformable<
     T, decltype(std::declval<const T>().Decompose(
            IsRecursivelyTransformableVisitor<T>{}))> = true;
@@ -178,14 +179,13 @@ class ValueTransform : public TransformBase<Derived> {
   }
 
   // Preserve vtable during transformation.
-  auto operator()(Nonnull<const VTable* const> vtable)
-      -> Nonnull<const VTable* const> {
+  auto operator()(Nonnull<const VTable*> vtable) -> Nonnull<const VTable*> {
     return vtable;
   }
 
   // Preserve class value ptr during transformation.
-  auto operator()(Nonnull<const NominalClassValue** const> value_ptr)
-      -> Nonnull<const NominalClassValue** const> {
+  auto operator()(Nonnull<const NominalClassValue**> value_ptr)
+      -> Nonnull<const NominalClassValue**> {
     return value_ptr;
   }
 };
