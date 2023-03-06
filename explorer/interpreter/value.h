@@ -24,7 +24,6 @@
 
 namespace Carbon {
 
-class Action;
 class AssociatedConstant;
 class ChoiceType;
 class TupleValue;
@@ -1421,45 +1420,27 @@ class AssociatedConstant : public Value {
 };
 
 // A first-class continuation representation of a fragment of the stack.
-// A continuation value behaves like a pointer to the underlying stack
-// fragment, which is exposed by `Stack()`.
+// The representation of a continuation is opaque and determined by the
+// interpreter.
 class ContinuationValue : public Value {
  public:
-  class StackFragment {
+  // The representation of a continuation is derived from this.
+  class Representation {
    public:
-    // Constructs an empty StackFragment.
-    StackFragment() = default;
+    virtual ~Representation() {}
 
-    // Requires *this to be empty, because by the time we're tearing down the
-    // Arena, it's no longer safe to invoke ~Action.
-    ~StackFragment();
+    Representation(Representation&&) = delete;
+    auto operator=(Representation&&) -> Representation& = delete;
 
-    StackFragment(StackFragment&&) = delete;
-    auto operator=(StackFragment&&) -> StackFragment& = delete;
-
-    // Store the given partial todo stack in *this, which must currently be
-    // empty. The stack is represented with the top of the stack at the
-    // beginning of the vector, the reverse of the usual order.
-    void StoreReversed(std::vector<std::unique_ptr<Action>> reversed_todo);
-
-    // Restore the currently stored stack fragment to the top of `todo`,
-    // leaving *this empty.
-    void RestoreTo(Stack<std::unique_ptr<Action>>& todo);
-
-    // Destroy the currently stored stack fragment.
-    void Clear();
-
-    void Print(llvm::raw_ostream& out) const;
+    virtual void Print(llvm::raw_ostream& out) const = 0;
     LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-   private:
-    // The todo stack of a suspended continuation, starting with the top
-    // Action.
-    std::vector<std::unique_ptr<Action>> reversed_todo_;
+   protected:
+    Representation() = default;
   };
 
-  explicit ContinuationValue(Nonnull<StackFragment*> stack)
-      : Value(Kind::ContinuationValue), stack_(stack) {}
+  explicit ContinuationValue(Nonnull<Representation*> representation)
+      : Value(Kind::ContinuationValue), representation_(representation) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ContinuationValue;
@@ -1467,16 +1448,14 @@ class ContinuationValue : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(stack_);
+    return f(representation_);
   }
 
-  // The todo stack of the suspended continuation. Note that this provides
-  // mutable access, even when *this is const, because of the reference-like
-  // semantics of ContinuationValue.
-  auto stack() const -> StackFragment& { return *stack_; }
+  // The representation of the continuation.
+  auto representation() const -> Representation& { return *representation_; }
 
  private:
-  Nonnull<StackFragment*> stack_;
+  Nonnull<Representation*> representation_;
 };
 
 // The String type.

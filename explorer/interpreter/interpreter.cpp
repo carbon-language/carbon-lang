@@ -26,6 +26,7 @@
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/action_stack.h"
 #include "explorer/interpreter/stack.h"
+#include "explorer/interpreter/stack_fragment.h"
 #include "explorer/interpreter/value.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -180,7 +181,7 @@ class Interpreter {
   // The underlying states of continuation values. All StackFragments created
   // during execution are tracked here, in order to safely deallocate the
   // contents of any non-completed continuations at the end of execution.
-  std::vector<Nonnull<ContinuationValue::StackFragment*>> stack_fragments_;
+  std::vector<Nonnull<StackFragment*>> stack_fragments_;
 
   Nonnull<TraceStream*> trace_stream_;
   Phase phase_;
@@ -188,7 +189,7 @@ class Interpreter {
 
 Interpreter::~Interpreter() {
   // Clean up any remaining suspended continuations.
-  for (Nonnull<ContinuationValue::StackFragment*> fragment : stack_fragments_) {
+  for (Nonnull<StackFragment*> fragment : stack_fragments_) {
     fragment->Clear();
   }
 }
@@ -2051,7 +2052,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       const auto& continuation = cast<Continuation>(stmt);
       // Create a continuation object by creating a frame similar the
       // way one is created in a function call.
-      auto* fragment = arena_->New<ContinuationValue::StackFragment>();
+      auto* fragment = arena_->New<StackFragment>();
       stack_fragments_.push_back(fragment);
       todo_.InitializeFragment(*fragment, &continuation.body());
       // Bind the continuation object to the continuation variable

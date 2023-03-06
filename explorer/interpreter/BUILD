@@ -41,11 +41,18 @@ cc_library(
 
 cc_library(
     name = "action_stack",
-    srcs = ["action_stack.cpp"],
-    hdrs = ["action_stack.h"],
+    srcs = [
+        "action_stack.cpp",
+        "stack_fragment.cpp",
+    ],
+    hdrs = [
+        "action_stack.h",
+        "stack_fragment.h",
+    ],
     deps = [
         ":action_and_value",
         ":stack",
+        "//common:check",
         "//common:error",
         "//common:ostream",
         "//explorer/ast",
