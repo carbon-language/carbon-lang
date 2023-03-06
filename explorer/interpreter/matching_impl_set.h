@@ -49,7 +49,7 @@ class MatchingImplSet {
     ~Match();
 
     Match(const Match&) = delete;
-    Match& operator=(const Match&) = delete;
+    auto operator=(const Match&) -> Match& = delete;
 
     // Check to see if this match duplicates any prior one within the same set,
     // or if there's a simpler form of this match in the set. If so, returns a
@@ -121,13 +121,13 @@ struct llvm::DenseMapInfo<Carbon::MatchingImplSet::Label> {
   using Base = llvm::DenseMapInfo<int>;
   using Label = Carbon::MatchingImplSet::Label;
   static inline auto getEmptyKey() -> Label {
-    return Label(Base::getEmptyKey());
+    return static_cast<Label>(Base::getEmptyKey());
   }
   static inline auto getTombstoneKey() -> Label {
-    return Label(Base::getTombstoneKey());
+    return static_cast<Label>(Base::getTombstoneKey());
   }
   static inline auto getHashValue(Label label) -> unsigned {
-    return Base::getHashValue(int(label));
+    return Base::getHashValue(static_cast<int>(label));
   }
   static auto isEqual(Label a, Label b) -> bool { return a == b; }
 };

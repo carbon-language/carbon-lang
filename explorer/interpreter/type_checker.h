@@ -410,15 +410,6 @@ class TypeChecker {
   auto IsSameType(Nonnull<const Value*> type1, Nonnull<const Value*> type2,
                   const ImplScope& impl_scope) const -> bool;
 
-  // Check whether `actual` is implicitly convertible to `expected`
-  // and halt with a fatal compilation error if it is not.
-  //
-  // TODO: Does not actually perform the conversion if a user-defined
-  // conversion is needed. Should be used very rarely for that reason.
-  auto ExpectType(SourceLocation source_loc, std::string_view context,
-                  Nonnull<const Value*> expected, Nonnull<const Value*> actual,
-                  const ImplScope& impl_scope) const -> ErrorOr<Success>;
-
   // Check whether `actual` is the same type as `expected` and halt with a
   // fatal compilation error if it is not.
   auto ExpectExactType(SourceLocation source_loc, std::string_view context,
