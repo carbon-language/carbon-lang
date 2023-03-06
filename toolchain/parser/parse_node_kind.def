@@ -79,8 +79,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart)
 //   _external_: statements
 // FunctionDefinition
 //
-// The above is a definition; for a declaration, FunctionDeclaration will end it
-// where FunctionDefinitionStart is for a definition.
+// The above is the structure for a definition; for a declaration,
+// FunctionDefinitionStart and later nodes are removed and replaced by
+// FunctionDeclaration.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(FunctionIntroducer, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnType, 1)
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinitionStart, FunctionIntroducer)
@@ -288,8 +289,9 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
 //   _external_: declarations
 // InterfaceDefinition
 //
-// The above is a definition; for a declaration, InterfaceDeclaration will end
-// it InterfaceDefinitionStart is for a definition.
+// The above is the structure for a definition; for a declaration,
+// InterfaceDefinitionStart and later nodes are removed and replaced by
+// InterfaceDeclaration.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(InterfaceIntroducer, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinitionStart, InterfaceIntroducer)
 CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinition, InterfaceDefinitionStart)
