@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_INTERPRETER_VALUE_H_
-#define CARBON_EXPLORER_INTERPRETER_VALUE_H_
+#ifndef CARBON_EXPLORER_AST_VALUE_H_
+#define CARBON_EXPLORER_AST_VALUE_H_
 
 #include <optional>
 #include <string>
@@ -11,14 +11,13 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "explorer/ast/address.h"
 #include "explorer/ast/bindings.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
+#include "explorer/ast/element_path.h"
 #include "explorer/ast/statement.h"
 #include "explorer/common/nonnull.h"
-#include "explorer/interpreter/address.h"
-#include "explorer/interpreter/element_path.h"
-#include "explorer/interpreter/stack.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
 
@@ -53,7 +52,7 @@ class Value {
  public:
   enum class Kind {
 #define CARBON_VALUE_KIND(kind) kind,
-#include "explorer/interpreter/value_kinds.def"
+#include "explorer/ast/value_kinds.def"
   };
 
   Value(const Value&) = delete;
@@ -1633,10 +1632,10 @@ auto Value::Visit(F f) const -> R {
 #define CARBON_VALUE_KIND(kind) \
   case Kind::kind:              \
     return f(static_cast<const kind*>(this));
-#include "explorer/interpreter/value_kinds.def"
+#include "explorer/ast/value_kinds.def"
   }
 }
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_INTERPRETER_VALUE_H_
+#endif  // CARBON_EXPLORER_AST_VALUE_H_

@@ -5,9 +5,9 @@
 #ifndef CARBON_EXPLORER_INTERPRETER_HEAP_ALLOCATION_INTERFACE_H_
 #define CARBON_EXPLORER_INTERPRETER_HEAP_ALLOCATION_INTERFACE_H_
 
+#include "explorer/ast/address.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/nonnull.h"
-#include "explorer/interpreter/address.h"
 
 namespace Carbon {
 

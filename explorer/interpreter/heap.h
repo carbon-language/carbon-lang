@@ -8,11 +8,11 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "explorer/ast/address.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
-#include "explorer/interpreter/address.h"
 #include "explorer/interpreter/heap_allocation_interface.h"
-#include "explorer/interpreter/value.h"
 
 namespace Carbon {
 

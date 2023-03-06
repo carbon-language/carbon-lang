@@ -11,9 +11,9 @@
 
 #include "common/ostream.h"
 #include "explorer/ast/statement.h"
+#include "explorer/ast/value.h"
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/stack_fragment.h"
-#include "explorer/interpreter/value.h"
 
 namespace Carbon {
 
