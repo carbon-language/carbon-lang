@@ -1424,7 +1424,10 @@ class AssociatedConstant : public Value {
 // interpreter.
 class ContinuationValue : public Value {
  public:
-  // The representation of a continuation is derived from this.
+  // Base class for the representation of a continuation, which is not defined
+  // here for layering reasons. The interpreter provides the derived class
+  // `StackFragment` that defines the concrete representation, which is
+  // expected to be the only derived class outside of tests.
   class Representation {
    public:
     virtual ~Representation() {}
