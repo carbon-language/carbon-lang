@@ -95,7 +95,7 @@ void ActionStack::MergeScope(RuntimeScope scope) {
   CARBON_FATAL() << "No current scope";
 }
 
-void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
+void ActionStack::InitializeFragment(StackFragment& fragment,
                                      Nonnull<const Statement*> body) {
   std::vector<Nonnull<const RuntimeScope*>> scopes;
   for (const std::unique_ptr<Action>& action : todo_) {
@@ -271,7 +271,7 @@ auto ActionStack::Resume(Nonnull<const ContinuationValue*> continuation)
     -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
-  continuation->stack().RestoreTo(todo_);
+  static_cast<StackFragment&>(continuation->representation()).RestoreTo(todo_);
   return Success();
 }
 
@@ -290,7 +290,8 @@ auto ActionStack::Suspend() -> ErrorOr<Success> {
   const auto& continuation =
       llvm::cast<const ContinuationValue>(*todo_.Top()->results()[0]);
   // Update the continuation with the paused stack.
-  continuation.stack().StoreReversed(std::move(paused));
+  static_cast<StackFragment&>(continuation.representation())
+      .StoreReversed(std::move(paused));
   return Success();
 }
 
