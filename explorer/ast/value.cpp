@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "explorer/interpreter/value.h"
+#include "explorer/ast/value.h"
 
 #include <algorithm>
 #include <optional>
@@ -12,10 +12,9 @@
 #include "common/error.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
+#include "explorer/ast/element_path.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
-#include "explorer/interpreter/action.h"
-#include "explorer/interpreter/element_path.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
