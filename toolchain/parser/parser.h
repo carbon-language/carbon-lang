@@ -262,6 +262,17 @@ class Parser {
   // parses should only need to look down a couple steps.
   auto GetDeclarationContext() -> DeclarationContext;
 
+  // Handles error recovery in a declaration, particularly before any possible
+  // definition has started (although one could be present). Recover to a
+  // semicolon when it makes sense as a possible end, otherwise use the
+  // introducer token for the error.
+  auto HandleDeclarationError(StateStackEntry state,
+                              ParseNodeKind parse_node_kind,
+                              bool skip_past_likely_end) -> void;
+
+  // Handles an unrecognized declaration, adding an error node.
+  auto HandleUnrecognizedDeclaration() -> void;
+
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
@@ -291,12 +302,6 @@ class Parser {
 
   // Handles DesignatorAs.
   auto HandleDesignator(bool as_struct) -> void;
-
-  // When handling errors before the start of the definition, treat it as a
-  // declaration. Recover to a semicolon when it makes sense as a possible
-  // function end, otherwise use the fn token for the error.
-  auto HandleFunctionError(StateStackEntry state, bool skip_past_likely_end)
-      -> void;
 
   // Handles ParenConditionAs(If|While)
   auto HandleParenCondition(ParseNodeKind start_kind, ParserState finish_state)
