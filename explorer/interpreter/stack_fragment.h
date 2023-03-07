@@ -8,9 +8,9 @@
 #include <memory>
 #include <vector>
 
+#include "explorer/ast/value.h"
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/stack.h"
-#include "explorer/interpreter/value.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {

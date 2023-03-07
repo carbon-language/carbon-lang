@@ -4,8 +4,8 @@
 
 #include "explorer/interpreter/impl_scope.h"
 
+#include "explorer/ast/value.h"
 #include "explorer/interpreter/type_checker.h"
-#include "explorer/interpreter/value.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 

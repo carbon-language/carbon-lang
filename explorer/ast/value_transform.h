@@ -2,10 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_INTERPRETER_VALUE_TRANSFORM_H_
-#define CARBON_EXPLORER_INTERPRETER_VALUE_TRANSFORM_H_
+#ifndef CARBON_EXPLORER_AST_VALUE_TRANSFORM_H_
+#define CARBON_EXPLORER_AST_VALUE_TRANSFORM_H_
 
-#include "explorer/interpreter/value.h"
+#include "explorer/ast/value.h"
 
 namespace Carbon {
 
@@ -192,4 +192,4 @@ class ValueTransform : public TransformBase<Derived> {
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_INTERPRETER_VALUE_TRANSFORM_H_
+#endif  // CARBON_EXPLORER_AST_VALUE_TRANSFORM_H_

@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_INTERPRETER_ELEMENT_PATH_H_
-#define CARBON_EXPLORER_INTERPRETER_ELEMENT_PATH_H_
+#ifndef CARBON_EXPLORER_AST_ELEMENT_PATH_H_
+#define CARBON_EXPLORER_AST_ELEMENT_PATH_H_
 
 #include <optional>
 #include <string>
@@ -106,4 +106,4 @@ class ElementPath {
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_INTERPRETER_ELEMENT_PATH_H_
+#endif  // CARBON_EXPLORER_AST_ELEMENT_PATH_H_

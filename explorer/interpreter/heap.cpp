@@ -4,8 +4,8 @@
 
 #include "explorer/interpreter/heap.h"
 
+#include "explorer/ast/value.h"
 #include "explorer/common/error_builders.h"
-#include "explorer/interpreter/value.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Error.h"
 

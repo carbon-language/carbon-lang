@@ -4,28 +4,16 @@
 
 package(default_visibility = ["//explorer:__pkg__"])
 
-# These currently have to be a single build rule because of a dependency cycle
-# in printing.
 cc_library(
-    name = "action_and_value",
+    name = "action",
     srcs = [
         "action.cpp",
-        "value.cpp",
     ],
     hdrs = [
         "action.h",
-        "value.h",
-        "value_transform.h",
     ],
-    textual_hdrs = [
-        "value_kinds.def",
-    ],
-    # Exposed to resolve `member_test` dependencies.
-    visibility = ["//explorer/ast:__pkg__"],
     deps = [
-        ":address",
         ":dictionary",
-        ":element_path",
         ":heap_allocation_interface",
         ":stack",
         "//common:check",
@@ -50,22 +38,12 @@ cc_library(
         "stack_fragment.h",
     ],
     deps = [
-        ":action_and_value",
+        ":action",
         ":stack",
         "//common:check",
         "//common:error",
         "//common:ostream",
         "//explorer/ast",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "address",
-    hdrs = ["address.h"],
-    deps = [
-        ":element_path",
-        "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -100,25 +78,14 @@ cc_library(
 )
 
 cc_library(
-    name = "element_path",
-    hdrs = ["element_path.h"],
-    deps = [
-        "//common:ostream",
-        "//explorer/ast",
-        "//explorer/ast:static_scope",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "heap",
     srcs = ["heap.cpp"],
     hdrs = ["heap.h"],
     deps = [
-        ":action_and_value",
-        ":address",
+        ":action",
         ":heap_allocation_interface",
         "//common:ostream",
+        "//explorer/ast",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
         "//explorer/common:source_location",
@@ -130,7 +97,7 @@ cc_library(
     name = "heap_allocation_interface",
     hdrs = ["heap_allocation_interface.h"],
     deps = [
-        ":address",
+        "//explorer/ast",
         "//explorer/common:arena",
         "//explorer/common:nonnull",
     ],
@@ -145,9 +112,8 @@ cc_library(
         "interpreter.h",
     ],
     deps = [
-        ":action_and_value",
+        ":action",
         ":action_stack",
-        ":address",
         ":heap",
         ":stack",
         ":trace_stream",
@@ -180,7 +146,6 @@ cc_library(
     srcs = ["resolve_names.cpp"],
     hdrs = ["resolve_names.h"],
     deps = [
-        ":action_and_value",
         "//common:check",
         "//explorer/ast",
         "//explorer/ast:static_scope",
@@ -204,7 +169,7 @@ cc_library(
         "pattern_analysis.h",
     ],
     deps = [
-        ":action_and_value",
+        ":action",
         "//common:error",
         "//explorer/ast",
         "//explorer/common:nonnull",
@@ -241,7 +206,7 @@ cc_library(
         "type_checker.h",
     ],
     deps = [
-        ":action_and_value",
+        ":action",
         ":dictionary",
         ":interpreter",
         ":pattern_analysis",

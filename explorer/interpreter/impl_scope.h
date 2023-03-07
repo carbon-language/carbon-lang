@@ -6,7 +6,7 @@
 #define CARBON_EXPLORER_INTERPRETER_IMPL_SCOPE_H_
 
 #include "explorer/ast/declaration.h"
-#include "explorer/interpreter/value.h"
+#include "explorer/ast/value.h"
 
 namespace Carbon {
 

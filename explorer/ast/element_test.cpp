@@ -12,8 +12,8 @@
 #include "explorer/ast/bindings.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/arena.h"
-#include "explorer/interpreter/value.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon::Testing {
