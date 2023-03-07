@@ -95,6 +95,8 @@ class Interpreter {
   auto StepCleanUp() -> ErrorOr<Success>;
   auto StepDestroy() -> ErrorOr<Success>;
 
+  auto StepInstantiateType() -> ErrorOr<Success>;
+
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
       -> Nonnull<const Value*>;
@@ -1075,6 +1077,75 @@ auto Interpreter::CallFunction(const CallExpression& call,
   }
 }
 
+// -
+auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+  Nonnull<const Value*> type = cast<TypeInstantiationAction>(act).type();
+  SourceLocation source_loc = cast<TypeInstantiationAction>(act).source_loc();
+  switch (type->kind()) {
+    case Value::Kind::VariableType: {
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> value,
+          todo_.ValueOfNode(&cast<VariableType>(*type).binding(), source_loc));
+      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+        CARBON_ASSIGN_OR_RETURN(value,
+                                heap_.Read(lvalue->address(), source_loc));
+      }
+      return todo_.FinishAction(value);
+    }
+    case Value::Kind::InterfaceType: {
+      const auto& interface_type = cast<InterfaceType>(*type);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> bindings,
+          InstantiateBindings(&interface_type.bindings(), source_loc));
+      return todo_.FinishAction(
+          arena_->New<InterfaceType>(&interface_type.declaration(), bindings));
+    }
+    case Value::Kind::NamedConstraintType: {
+      const auto& constraint_type = cast<NamedConstraintType>(*type);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> bindings,
+          InstantiateBindings(&constraint_type.bindings(), source_loc));
+      return todo_.FinishAction(arena_->New<NamedConstraintType>(
+          &constraint_type.declaration(), bindings));
+    }
+    case Value::Kind::NominalClassType: {
+      const auto& class_type = cast<NominalClassType>(*type);
+      std::optional<Nonnull<const NominalClassType*>> base = class_type.base();
+      if (base.has_value()) {
+        return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+            base.value(), source_loc));
+      }
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> bindings,
+          InstantiateBindings(&class_type.bindings(), source_loc));
+      return todo_.FinishAction(arena_->New<NominalClassType>(
+          &class_type.declaration(), bindings, base, class_type.vtable()));
+    }
+    case Value::Kind::ChoiceType: {
+      const auto& choice_type = cast<ChoiceType>(*type);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Bindings*> bindings,
+          InstantiateBindings(&choice_type.bindings(), source_loc));
+      return todo_.FinishAction(
+          arena_->New<ChoiceType>(&choice_type.declaration(), bindings));
+    }
+    case Value::Kind::AssociatedConstant: {
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> type_value,
+          EvalAssociatedConstant(cast<AssociatedConstant>(type), source_loc));
+      return todo_.FinishAction(type_value);
+    }
+    case Value::Kind::PointerType: {
+      const auto* ptr = cast<PointerType>(type);
+      return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+          &ptr->pointee_type(), source_loc));
+    }
+    default:
+      return todo_.FinishAction(type);
+  }
+}
+
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
@@ -1150,10 +1221,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       } else {
         // Finally, produce the result.
         if (auto constant_value = access.constant_value()) {
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> instantiated,
-              InstantiateType(*constant_value, access.source_loc()));
-          return todo_.FinishAction(instantiated);
+          return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+              *constant_value, access.source_loc()));
         }
         std::optional<Nonnull<const InterfaceType*>> found_in_interface =
             access.found_in_interface();
@@ -2259,6 +2328,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
       break;
     case Action::Kind::DestroyAction:
       CARBON_RETURN_IF_ERROR(StepDestroy());
+      break;
+    case Action::Kind::TypeInstantiationAction:
+      CARBON_RETURN_IF_ERROR(StepInstantiateType());
       break;
     case Action::Kind::ScopeAction:
       CARBON_FATAL() << "ScopeAction escaped ActionStack";
