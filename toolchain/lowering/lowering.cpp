@@ -113,7 +113,6 @@ auto Lowering::HandleFunctionDeclarationNode(SemanticsNodeId /*node_id*/,
     args[i] = LowerNodeToType(semantics_ir_->GetNode(param_refs[i]).type());
   }
 
-  // Note, when handling non-empty parameters, we'll also want to set names.
   llvm::Type* return_type = LowerNodeToType(
       callable.return_type_id.is_valid() ? callable.return_type_id
                                          : SemanticsNodeId::BuiltinEmptyTuple);
