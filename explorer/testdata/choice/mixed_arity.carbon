@@ -16,12 +16,14 @@ class List {
   }
   var node: Node;
 
+  // Creates a list of `Cons(n, Cons(n - 1, ... Cons(1, Nil) ... ))`.
   fn Make(n: i32) -> Self {
     return {
       .node = if n == 0 then Node.Nil else Node.Cons(n, heap.New(Make(n - 1)))
     };
   }
 
+  // Returns the sum of values in the list plus the value of `a`.
   fn Sum[self: Self](a: i32) -> i32 {
     match (self.node) {
       case Node.Nil => { return a; }
