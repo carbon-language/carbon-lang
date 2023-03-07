@@ -104,6 +104,8 @@ class SemanticsIR {
     return strings_[string_id.index];
   }
 
+  auto nodes_size() const -> int { return nodes_.size(); }
+
   auto top_node_block_id() const -> SemanticsNodeBlockId {
     return top_node_block_id_;
   }
