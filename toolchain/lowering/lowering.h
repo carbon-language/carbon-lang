@@ -54,6 +54,9 @@ class Lowering {
   // Runs lowering for a block.
   auto LowerBlock(SemanticsNodeBlockId block_id) -> void;
 
+  // Returns a type for the given node.
+  auto LowerNodeToType(SemanticsNodeId node_id) -> llvm::Type*;
+
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
   std::unique_ptr<llvm::Module> llvm_module_;

@@ -45,6 +45,21 @@ auto Lowering::LowerBlock(SemanticsNodeBlockId block_id) -> void {
   }
 }
 
+auto Lowering::LowerNodeToType(SemanticsNodeId node_id) -> llvm::Type* {
+  CARBON_CHECK(node_id.is_valid());
+  switch (node_id.index) {
+    case SemanticsBuiltinKind::EmptyTuple.AsInt():
+      // TODO: Should probably switch this to an actual empty tuple in the
+      // future, but it's implemented as void for now.
+      return builder_.getVoidTy();
+    case SemanticsBuiltinKind::IntegerType.AsInt():
+      // TODO: Handle different sizes.
+      return builder_.getInt32Ty();
+    default:
+      CARBON_FATAL() << "Cannot use node as type: " << node_id;
+  }
+}
+
 auto Lowering::HandleInvalidNode(SemanticsNodeId /*node_id*/,
                                  SemanticsNode /*node*/) -> void {
   llvm_unreachable("never in actual IR");
@@ -89,18 +104,30 @@ auto Lowering::HandleFunctionDeclarationNode(SemanticsNodeId /*node_id*/,
                                              SemanticsNode node) -> void {
   auto [name_id, callable_id] = node.GetAsFunctionDeclaration();
   auto callable = semantics_ir_->GetCallable(callable_id);
+
+  // TODO: Lower type information for the arguments prior to building args.
+  auto param_refs = semantics_ir_->GetNodeBlock(callable.param_refs_id);
   llvm::SmallVector<llvm::Type*> args;
-  // Note, when handling non-empty parameters, we'll also want to set names.
-  CARBON_CHECK(callable.param_refs_id == SemanticsNodeBlockId::Empty)
-      << "TODO: Handle non-empty parameters.";
-  CARBON_CHECK(callable.return_type_id == SemanticsNodeId::BuiltinIntegerType)
-      << "TODO: Handle non-i32 return types.";
-  llvm::Type* return_type = builder_.getInt32Ty();
+  args.resize_for_overwrite(param_refs.size());
+  for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
+    args[i] = LowerNodeToType(semantics_ir_->GetNode(param_refs[i]).type());
+  }
+
+  llvm::Type* return_type = LowerNodeToType(
+      callable.return_type_id.is_valid() ? callable.return_type_id
+                                         : SemanticsNodeId::BuiltinEmptyTuple);
   llvm::FunctionType* function_type =
       llvm::FunctionType::get(return_type, args, /*isVarArg=*/false);
-  llvm::Function::Create(function_type, llvm::Function::ExternalLinkage,
-                         semantics_ir_->GetString(name_id), llvm_module_.get());
-  // TODO: Name arguments.
+  auto* function = llvm::Function::Create(
+      function_type, llvm::Function::ExternalLinkage,
+      semantics_ir_->GetString(name_id), llvm_module_.get());
+
+  // Set parameter names.
+  for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
+    auto [param_name_id, _] =
+        semantics_ir_->GetNode(param_refs[i]).GetAsBindName();
+    function->getArg(i)->setName(semantics_ir_->GetString(param_name_id));
+  }
 }
 
 auto Lowering::HandleFunctionDefinitionNode(SemanticsNodeId /*node_id*/,
@@ -132,9 +159,9 @@ auto Lowering::HandleRealLiteralNode(SemanticsNodeId /*node_id*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto Lowering::HandleReturnNode(SemanticsNodeId /*node_id*/, SemanticsNode node)
-    -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+auto Lowering::HandleReturnNode(SemanticsNodeId /*node_id*/,
+                                SemanticsNode /*node*/) -> void {
+  builder_.CreateRetVoid();
 }
 
 auto Lowering::HandleReturnExpressionNode(SemanticsNodeId /*node_id*/,
