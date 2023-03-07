@@ -14,7 +14,7 @@ Lowering::Lowering(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
       builder_(llvm_context),
       semantics_ir_(&semantics_ir),
-      lowered_nodes_(semantics_ir_->nodes_size()) {
+      lowered_nodes_(semantics_ir_->nodes_size(), nullptr) {
   CARBON_CHECK(!semantics_ir.has_errors())
       << "Generating LLVM IR from invalid SemanticsIR is unsupported.";
 }

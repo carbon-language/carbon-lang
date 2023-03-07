@@ -50,7 +50,13 @@ class Lowering {
   llvm::SmallVector<std::pair<llvm::BasicBlock*, SemanticsNodeBlockId>>
       todo_blocks_;
 
-  // Maps nodes in SemanticsIR to a lowered value.
+  // Maps nodes in SemanticsIR to a lowered value. This will have one entry per
+  // node, and will be non-null when lowered. It's expected to be sparse during
+  // execution because while expressions will have entries, statements won't.
+  // TODO: This will probably become a PointerUnion of Value and Type.
+  // TODO: Long-term, we may want to examine the trade-offs of making this a
+  // map, but for now a vector is easy to manage, gets cache efficiency, and may
+  // ultimately be the best choice.
   llvm::SmallVector<llvm::Value*> lowered_nodes_;
 };
 
