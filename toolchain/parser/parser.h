@@ -44,7 +44,7 @@ class Parser {
   enum class BraceExpressionKind { Unknown, Value, Type };
 
   // Supported kinds for HandlePattern.
-  enum class PatternKind { Parameter, Variable };
+  enum class PatternKind { DeducedParameter, Parameter, Variable };
 
   // Supported return values for GetDeclarationContext.
   enum class DeclarationContext {
@@ -310,7 +310,7 @@ class Parser {
   // Handles ParenExpressionParameterFinishAs(Unknown|Tuple).
   auto HandleParenExpressionParameterFinish(bool as_tuple) -> void;
 
-  // Handles PatternAs(FunctionParameter|Variable).
+  // Handles PatternAs(DeducedParameter|FunctionParameter|Variable).
   auto HandlePattern(PatternKind pattern_kind) -> void;
 
   // Handles the `;` after a keyword statement.
