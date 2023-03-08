@@ -13,7 +13,8 @@ Lowering::Lowering(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
       builder_(llvm_context),
-      semantics_ir_(&semantics_ir) {
+      semantics_ir_(&semantics_ir),
+      lowered_nodes_(semantics_ir_->nodes_size(), nullptr) {
   CARBON_CHECK(!semantics_ir.has_errors())
       << "Generating LLVM IR from invalid SemanticsIR is unsupported.";
 }
@@ -151,7 +152,7 @@ auto Lowering::HandleIntegerLiteralNode(SemanticsNodeId node_id,
   llvm::APInt i = semantics_ir_->GetIntegerLiteral(int_id);
   llvm::Value* v =
       llvm::ConstantInt::get(builder_.getInt32Ty(), i.getLimitedValue());
-  node_values_[node_id] = v;
+  lowered_nodes_[node_id.index] = v;
 }
 
 auto Lowering::HandleRealLiteralNode(SemanticsNodeId /*node_id*/,
@@ -167,7 +168,7 @@ auto Lowering::HandleReturnNode(SemanticsNodeId /*node_id*/,
 auto Lowering::HandleReturnExpressionNode(SemanticsNodeId /*node_id*/,
                                           SemanticsNode node) -> void {
   SemanticsNodeId expr_id = node.GetAsReturnExpression();
-  builder_.CreateRet(node_values_[expr_id]);
+  builder_.CreateRet(lowered_nodes_[expr_id.index]);
 }
 
 auto Lowering::HandleStringLiteralNode(SemanticsNodeId /*node_id*/,
