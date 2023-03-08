@@ -686,13 +686,13 @@ fn Rand(low: i32, high: i32) -> i32{
 // Optional.
 //-------------------------
 choice OptionalElement(T:! type) {
-  None(),
+  None,
   Element(T)
 }
 
 class Optional(T:! type) {
   fn CreateEmpty() -> Optional(T) {
-    return {.element = OptionalElement(T).None()};
+    return {.element = OptionalElement(T).None};
   }
   fn Create(value: T) -> Optional(T) {
     return {.element = OptionalElement(T).Element(value)};
@@ -700,7 +700,7 @@ class Optional(T:! type) {
 
   fn HasValue[self: Self]() -> bool {
     match(self.element) {
-      case OptionalElement(T).None() => { return false; }
+      case OptionalElement(T).None => { return false; }
     }
     return true;
   }
