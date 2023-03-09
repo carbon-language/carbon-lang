@@ -1223,6 +1223,8 @@ fn Foo() {
 > -   [Blocks and statements](blocks_and_statements.md)
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
+> -   Proposal
+>     [#2665: Semicolons terminate statements](https://github.com/carbon-language/carbon-lang/pull/2665)
 
 ### Control flow
 
