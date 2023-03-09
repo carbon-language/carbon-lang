@@ -129,21 +129,18 @@ CARBON_PARSER_STATE(CodeBlockFinish)
 //   (state done)
 // If `Fn`:
 //   1. FunctionIntroducer
-//   2. DeclarationLoop
-// If `Package`:
-//   1. Package
-//   2. DeclarationLoop
+//   2. DeclarationScopeLoop
 // If `Semi`:
-//   1. DeclarationLoop
+//   1. DeclarationScopeLoop
 // If `Var`:
 //   1. Var
-//   2. DeclarationLoop
+//   2. DeclarationScopeLoop
 // If `interface`:
 //   1. InterfaceIntroducer
-//   2. DeclarationLoop
+//   2. DeclarationScopeLoop
 // Else:
-//   1. DeclarationLoop
-CARBON_PARSER_STATE(DeclarationLoop)
+//   1. DeclarationScopeLoop
+CARBON_PARSER_STATE(DeclarationScopeLoop)
 
 // Starts deduced parameter processing.
 //
@@ -328,24 +325,6 @@ CARBON_PARSER_STATE(FunctionSignatureFinish)
 // Always:
 //   (state done)
 CARBON_PARSER_STATE(FunctionDefinitionFinish)
-
-// Handles parsing the body of an interface.
-//
-// If `CloseCurlyBrace`:
-//   (state done)
-// Else:
-//   1. InterfaceDefinitionLoop
-CARBON_PARSER_STATE(InterfaceDefinitionLoop)
-
-// Handles processing of a intefaces's `interface <name> {`.
-//
-// If `Semi`:
-//   (state done)
-// If `OpenCurlyBrace`:
-//   1. InterfaceDefinitionLoop
-// Else:
-//   (state done)
-CARBON_PARSER_STATE(InterfaceIntroducer)
 
 // Handles `package`.
 //
@@ -574,6 +553,29 @@ CARBON_PARSER_STATE(StatementWhileConditionFinish)
 // Always:
 //   (state done)
 CARBON_PARSER_STATE(StatementWhileBlockFinish)
+
+// Handles parsing after the declaration scope of a type.
+//
+// If `CloseCurlyBrace`:
+//   (state done)
+// Else:
+//   1. InterfaceDefinitionLoop
+CARBON_PARSER_STATE(TypeDefinitionFinishAsClass)
+CARBON_PARSER_STATE(TypeDefinitionFinishAsInterface)
+CARBON_PARSER_STATE(TypeDefinitionFinishAsNamedConstraint)
+
+// Handles processing of a type's `<introducer> <name> {`.
+//
+// If `Semi`:
+//   (state done)
+// If `OpenCurlyBrace`:
+//   1. DeclarationScopeLoop
+//   2. TypeDefinitionFinishAs(Class|Interface|NamedConstraint)
+// Else:
+//   (state done)
+CARBON_PARSER_STATE(TypeIntroducerAsClass)
+CARBON_PARSER_STATE(TypeIntroducerAsInterface)
+CARBON_PARSER_STATE(TypeIntroducerAsNamedConstraint)
 
 // Handles the start of a `var`.
 //

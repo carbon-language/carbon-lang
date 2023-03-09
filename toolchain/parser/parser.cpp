@@ -433,7 +433,14 @@ auto Parser::Parse() -> void {
   // Traces state_stack_. This runs even in opt because it's low overhead.
   PrettyStackTraceParseState pretty_stack(this);
 
-  PushState(ParserState::DeclarationLoop);
+  PushState(ParserState::DeclarationScopeLoop);
+
+  // The package should always be the first token, if it's present. Any other
+  // use is invalid.
+  if (PositionIs(TokenKind::Package)) {
+    PushState(ParserState::Package);
+  }
+
   while (!state_stack_.empty()) {
     switch (state_stack_.back().state) {
 #define CARBON_PARSER_STATE(Name) \
@@ -448,18 +455,23 @@ auto Parser::Parse() -> void {
 }
 
 auto Parser::GetDeclarationContext() -> DeclarationContext {
-  for (auto entry : llvm::reverse(state_stack_)) {
-    switch (entry.state) {
-      case ParserState::InterfaceDefinitionLoop:
-        return DeclarationContext::Interface;
-      case ParserState::DeclarationLoop:
-        return DeclarationContext::File;
-      default:
-        // Continue checking.
-        break;
+  // i == 0 is the file-level DeclarationScopeLoop. Additionally, i == 1 can be
+  // skipped because it will never be a DeclarationScopeLoop.
+  for (int i = state_stack_.size() - 1; i > 1; --i) {
+    // The declaration context is always the state _above_ a
+    // DeclarationScopeLoop.
+    if (state_stack_[i].state == ParserState::DeclarationScopeLoop) {
+      switch (state_stack_[i - 1].state) {
+        case ParserState::InterfaceDefinitionFinish:
+          return DeclarationContext::Interface;
+        default:
+          llvm_unreachable("Missing handling for a declaration scope");
+      }
     }
   }
-  llvm_unreachable("Should always be able to find DeclarationLoop");
+  CARBON_CHECK(!state_stack_.empty() &&
+               state_stack_[0].state == ParserState::DeclarationScopeLoop);
+  return DeclarationContext::File;
 }
 
 auto Parser::HandleDeclarationError(StateStackEntry state,
@@ -743,20 +755,26 @@ auto Parser::HandleCodeBlockFinishState() -> void {
   }
 }
 
-auto Parser::HandleDeclarationLoopState() -> void {
-  // This maintains the current state unless we're at the end of the file.
+auto Parser::HandleDeclarationScopeLoopState() -> void {
+  // This maintains the current state unless we're at the end of the scope.
 
   switch (PositionKind()) {
+    case TokenKind::CloseCurlyBrace:
     case TokenKind::EndOfFile: {
+      // This is the end of the scope, so the loop state ends.
       PopAndDiscardState();
+      break;
+    }
+    case TokenKind::Constraint: {
+      PushState(ParserState::NamedConstraintIntroducer);
       break;
     }
     case TokenKind::Fn: {
       PushState(ParserState::FunctionIntroducer);
       break;
     }
-    case TokenKind::Package: {
-      PushState(ParserState::Package);
+    case TokenKind::Interface: {
+      PushState(ParserState::InterfaceIntroducer);
       break;
     }
     case TokenKind::Semi: {
@@ -765,10 +783,6 @@ auto Parser::HandleDeclarationLoopState() -> void {
     }
     case TokenKind::Var: {
       PushState(ParserState::VarAsSemicolon);
-      break;
-    }
-    case TokenKind::Interface: {
-      PushState(ParserState::InterfaceIntroducer);
       break;
     }
     default: {
@@ -1208,64 +1222,6 @@ auto Parser::HandleFunctionDefinitionFinishState() -> void {
   auto state = PopState();
   AddNode(ParseNodeKind::FunctionDefinition, Consume(), state.subtree_start,
           state.has_error);
-}
-
-auto Parser::HandleInterfaceIntroducerState() -> void {
-  auto state = PopState();
-
-  AddLeafNode(ParseNodeKind::InterfaceIntroducer, Consume());
-
-  if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
-                               ParseNodeKind::DeclaredName)) {
-    CARBON_DIAGNOSTIC(ExpectedInterfaceName, Error,
-                      "Expected interface name after `interface` keyword.");
-    emitter_->Emit(*position_, ExpectedInterfaceName);
-    HandleDeclarationError(state, ParseNodeKind::InterfaceDeclaration,
-                           /*skip_past_likely_end=*/true);
-    return;
-  }
-
-  if (auto semi = ConsumeIf(TokenKind::Semi)) {
-    AddNode(ParseNodeKind::InterfaceDeclaration, *semi, state.subtree_start,
-            state.has_error);
-    return;
-  }
-
-  if (!PositionIs(TokenKind::OpenCurlyBrace)) {
-    CARBON_DIAGNOSTIC(ExpectedInterfaceOpenCurlyBrace, Error,
-                      "Expected `{{` to start interface definition.");
-    emitter_->Emit(*position_, ExpectedInterfaceOpenCurlyBrace);
-    HandleDeclarationError(state, ParseNodeKind::InterfaceDeclaration,
-                           /*skip_past_likely_end=*/true);
-    return;
-  }
-
-  state.state = ParserState::InterfaceDefinitionLoop;
-  PushState(state);
-  AddNode(ParseNodeKind::InterfaceDefinitionStart, Consume(),
-          state.subtree_start, state.has_error);
-}
-
-auto Parser::HandleInterfaceDefinitionLoopState() -> void {
-  // This maintains the current state unless we're at the end of the interface
-  // definition.
-
-  switch (PositionKind()) {
-    case TokenKind::CloseCurlyBrace: {
-      auto state = PopState();
-      AddNode(ParseNodeKind::InterfaceDefinition, Consume(),
-              state.subtree_start, state.has_error);
-      break;
-    }
-    case TokenKind::Fn: {
-      PushState(ParserState::FunctionIntroducer);
-      break;
-    }
-    default: {
-      HandleUnrecognizedDeclaration();
-      break;
-    }
-  }
 }
 
 auto Parser::HandlePackageState() -> void {
@@ -1759,6 +1715,72 @@ auto Parser::HandleStatementWhileBlockFinishState() -> void {
   auto state = PopState();
 
   AddNode(ParseNodeKind::WhileStatement, state.token, state.subtree_start,
+          state.has_error);
+}
+
+auto Parser::HandleTypeIntroducer(TypeKind type_kind) -> void {
+  auto state = PopState();
+
+  AddLeafNode(ParseNodeKind::InterfaceIntroducer, Consume());
+
+  if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
+                               ParseNodeKind::DeclaredName)) {
+    CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
+                      "Expected name after `{0}` introducer.");
+    emitter_->Emit(*position_, ExpectedDeclarationName);
+    HandleDeclarationError(state, ParseNodeKind::InterfaceDeclaration,
+                           /*skip_past_likely_end=*/true);
+    return;
+  }
+
+  if (auto semi = ConsumeIf(TokenKind::Semi)) {
+    AddNode(ParseNodeKind::InterfaceDeclaration, *semi, state.subtree_start,
+            state.has_error);
+    return;
+  }
+
+  if (!PositionIs(TokenKind::OpenCurlyBrace)) {
+    CARBON_DIAGNOSTIC(ExpectedInterfaceOpenCurlyBrace, Error,
+                      "Expected `{{` to start interface definition.");
+    emitter_->Emit(*position_, ExpectedInterfaceOpenCurlyBrace);
+    HandleDeclarationError(state, ParseNodeKind::InterfaceDeclaration,
+                           /*skip_past_likely_end=*/true);
+    return;
+  }
+
+  switch (type_kind) {
+    case TypeKind::Class:
+      state.state = ParserState::TypeDefinitionFinishAsClass;
+      break;
+    case TypeKind::Interface:
+      state.state = ParserState::TypeDefinitionFinishAsInterface;
+      break;
+    case TypeKind::NamedConstraint:
+      state.state = ParserState::TypeDefinitionFinishAsNamedConstraint;
+      break;
+  }
+  PushState(state);
+  PushState(ParserState::DeclarationScopeLoop);
+  AddNode(ParseNodeKind::InterfaceDefinitionStart, Consume(),
+          state.subtree_start, state.has_error);
+}
+
+auto Parser::HandleTypeIntroducerAsClassState() -> void {
+  HandleTypeIntroducer(TypeKind::Class);
+}
+
+auto Parser::HandleTypeIntroducerAsInterfaceState() -> void {
+  HandleTypeIntroducer(TypeKind::Interface);
+}
+
+auto Parser::HandleTypeIntroducerAsNamedConstraintState() -> void {
+  HandleTypeIntroducer(TypeKind::NamedConstraint);
+}
+
+auto Parser::HandleTypeDefinitionFinish(TypeKind type_kind) -> void {
+  auto state = PopState();
+
+  AddNode(ParseNodeKind::InterfaceDefinition, Consume(), state.subtree_start,
           state.has_error);
 }
 

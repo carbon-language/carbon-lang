@@ -81,8 +81,8 @@ CARBON_DIAGNOSTIC_KIND(ExpectedSemiToEndPackageDirective)
 CARBON_DIAGNOSTIC_KIND(ExpectedIn)
 CARBON_DIAGNOSTIC_KIND(ExpectedInNotColon)
 
-// Interface-specific diagnostics.
-CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceName)
+// Type declaration diagnostics.
+CARBON_DIAGNOSTIC_KIND(ExpectedDeclarationName)
 CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceOpenCurlyBrace)
 CARBON_DIAGNOSTIC_KIND(MethodImplNotAllowed)
 
