@@ -125,12 +125,26 @@ also marked as
 ["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue)**.
 These are intended to be a good place to start contributing.
 
+To pick up a "good first issue", check to make sure there's no in-flight pull
+request on the issue, and then just start working on it. We don't assign issues
+to new contributors because some people have different time constraints, and we
+want new contributors to feel welcome to pick the issue up when it may not be
+making progress. Even if someone else merges a fix before you, these issues
+should be a quick and helpful way to start learning how Carbon is built,
+building towards larger contributions.
+
 #### Triage, analyze or address bugs
 
-As Carbon's design and implementation begin to take shape, we'll inevitably
-encounter plenty of bugs. Helping us triage, analyze, and address them is always
-a great way to get involved. See
+As Carbon's design and implementation take shape, we'll inevitably encounter
+plenty of bugs. Helping us triage, analyze, and address them is always a great
+way to get involved. See
 [open issues on GitHub](https://github.com/carbon-language/carbon-lang/issues).
+
+When triaging issues, we typically won't assign issues because we want to be
+confident that contributors who have an issue assigned to them are planning for
+the amount of time it will take, which requires familiarity. Contributors with
+write access are expected to have that familiarity and may assign issues to
+themselves.
 
 ## How to become a contributor to Carbon
 
