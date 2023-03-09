@@ -126,8 +126,8 @@ also marked as
 These are intended to be a good place to start contributing.
 
 To pick up a "good first issue", check to make sure there's no in-flight pull
-request on the issue, and then just start working on it. We don't assign issues
-to new contributors because some people have different time constraints, and we
+request on the issue, and then start working on it. We don't assign issues to
+new contributors because some people have different time constraints, and we
 want new contributors to feel welcome to pick the issue up when it may not be
 making progress. Even if someone else merges a fix before you, these issues
 should be a quick and helpful way to start learning how Carbon is built,
