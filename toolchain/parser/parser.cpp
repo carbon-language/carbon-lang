@@ -1728,6 +1728,7 @@ auto Parser::HandleStatementWhileBlockFinishState() -> void {
           state.has_error);
 }
 
+// Converts a TypeKind to a value in another enum.
 #define CARBON_TYPE_KIND_TO_ENUM(Enum, Prefix, Suffix) \
   [&type_kind]() -> Enum {                             \
     switch (type_kind) {                               \
@@ -1740,24 +1741,32 @@ auto Parser::HandleStatementWhileBlockFinishState() -> void {
     }                                                  \
   }()
 
+// Converts a TypeKind to a ParseNodeKind.
+#define CARBON_TYPE_KIND_TO_PARSE_NODE_KIND(Suffix) \
+  CARBON_TYPE_KIND_TO_ENUM(ParseNodeKind, , Suffix)
+
+// Converts a TypeKind to a ParserState.
+#define CARBON_TYPE_KIND_TO_PARSER_STATE(Prefix) \
+  CARBON_TYPE_KIND_TO_ENUM(ParserState, Prefix, )
+
 auto Parser::HandleTypeIntroducer(TypeKind type_kind) -> void {
   auto state = PopState();
 
-  AddLeafNode(CARBON_TYPE_KIND_TO_ENUM(ParseNodeKind, , Introducer), Consume());
+  AddLeafNode(CARBON_TYPE_KIND_TO_PARSE_NODE_KIND(Introducer), Consume());
 
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
                                ParseNodeKind::DeclaredName)) {
     CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
                       "Expected name after `{0}` introducer.");
     emitter_->Emit(*position_, ExpectedDeclarationName);
-    HandleDeclarationError(
-        state, CARBON_TYPE_KIND_TO_ENUM(ParseNodeKind, , Declaration),
-        /*skip_past_likely_end=*/true);
+    HandleDeclarationError(state,
+                           CARBON_TYPE_KIND_TO_PARSE_NODE_KIND(Declaration),
+                           /*skip_past_likely_end=*/true);
     return;
   }
 
   if (auto semi = ConsumeIf(TokenKind::Semi)) {
-    AddNode(CARBON_TYPE_KIND_TO_ENUM(ParseNodeKind, , Declaration), *semi,
+    AddNode(CARBON_TYPE_KIND_TO_PARSE_NODE_KIND(Declaration), *semi,
             state.subtree_start, state.has_error);
     return;
   }
@@ -1766,16 +1775,16 @@ auto Parser::HandleTypeIntroducer(TypeKind type_kind) -> void {
     CARBON_DIAGNOSTIC(ExpectedInterfaceOpenCurlyBrace, Error,
                       "Expected `{{` to start interface definition.");
     emitter_->Emit(*position_, ExpectedInterfaceOpenCurlyBrace);
-    HandleDeclarationError(
-        state, CARBON_TYPE_KIND_TO_ENUM(ParseNodeKind, , Declaration),
-        /*skip_past_likely_end=*/true);
+    HandleDeclarationError(state,
+                           CARBON_TYPE_KIND_TO_PARSE_NODE_KIND(Declaration),
+                           /*skip_past_likely_end=*/true);
     return;
   }
 
-  state.state = CARBON_TYPE_KIND_TO_ENUM(ParserState, TypeDefinitionFinishAs, );
+  state.state = CARBON_TYPE_KIND_TO_PARSER_STATE(TypeDefinitionFinishAs);
   PushState(state);
   PushState(ParserState::DeclarationScopeLoop);
-  AddNode(CARBON_TYPE_KIND_TO_ENUM(ParseNodeKind, , DefinitionStart), Consume(),
+  AddNode(CARBON_TYPE_KIND_TO_PARSE_NODE_KIND(DefinitionStart), Consume(),
           state.subtree_start, state.has_error);
 }
 
@@ -1794,7 +1803,7 @@ auto Parser::HandleTypeIntroducerAsNamedConstraintState() -> void {
 auto Parser::HandleTypeDefinitionFinish(TypeKind type_kind) -> void {
   auto state = PopState();
 
-  AddNode(CARBON_TYPE_KIND_TO_ENUM(ParseNodeKind, , Definition), Consume(),
+  AddNode(CARBON_TYPE_KIND_TO_PARSE_NODE_KIND(Definition), Consume(),
           state.subtree_start, state.has_error);
 }
 

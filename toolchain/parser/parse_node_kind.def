@@ -282,6 +282,21 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructLiteral,
 CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
                                StructLiteralOrStructTypeLiteralStart)
 
+// `class`:
+//     ClassIntroducer
+//     DeclaredName
+//   ClassDefinitionStart
+//   _external_: declarations
+// ClassDefinition
+//
+// The above is the structure for a definition; for a declaration,
+// ClassDefinitionStart and later nodes are removed and replaced by
+// ClassDeclaration.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ClassIntroducer, 0)
+CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinitionStart, ClassIntroducer)
+CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, ClassDefinitionStart)
+CARBON_PARSE_NODE_KIND_BRACKET(ClassDeclaration, ClassIntroducer)
+
 // `interface`:
 //     InterfaceIntroducer
 //     DeclaredName
@@ -297,11 +312,16 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinitionStart, InterfaceIntroducer)
 CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinition, InterfaceDefinitionStart)
 CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDeclaration, InterfaceIntroducer)
 
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(ClassIntroducer, 0)
-CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinitionStart, ClassIntroducer)
-CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, ClassDefinitionStart)
-CARBON_PARSE_NODE_KIND_BRACKET(ClassDeclaration, ClassIntroducer)
-
+// `constraint`:
+//     NamedConstraintIntroducer
+//     DeclaredName
+//   NamedConstraintDefinitionStart
+//   _external_: declarations
+// NamedConstraintDefinition
+//
+// The above is the structure for a definition; for a declaration,
+// NamedConstraintDefinitionStart and later nodes are removed and replaced by
+// NamedConstraintDeclaration.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamedConstraintIntroducer, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinitionStart,
                                NamedConstraintIntroducer)
