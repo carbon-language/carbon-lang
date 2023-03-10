@@ -127,16 +127,22 @@ CARBON_PARSER_STATE(CodeBlockFinish)
 //
 // If `EndOfFile`:
 //   (state done)
+// If `Class`:
+//   1. TypeIntroducerAsClass
+//   2. DeclarationScopeLoop
+// If `Constraint`:
+//   1. TypeIntroducerAsNamedConstraint
+//   2. DeclarationScopeLoop
 // If `Fn`:
 //   1. FunctionIntroducer
+//   2. DeclarationScopeLoop
+// If `Interface`:
+//   1. TypeIntroducerAsInterface
 //   2. DeclarationScopeLoop
 // If `Semi`:
 //   1. DeclarationScopeLoop
 // If `Var`:
 //   1. Var
-//   2. DeclarationScopeLoop
-// If `interface`:
-//   1. InterfaceIntroducer
 //   2. DeclarationScopeLoop
 // Else:
 //   1. DeclarationScopeLoop
@@ -556,15 +562,13 @@ CARBON_PARSER_STATE(StatementWhileBlockFinish)
 
 // Handles parsing after the declaration scope of a type.
 //
-// If `CloseCurlyBrace`:
+// Always:
 //   (state done)
-// Else:
-//   1. InterfaceDefinitionLoop
 CARBON_PARSER_STATE(TypeDefinitionFinishAsClass)
 CARBON_PARSER_STATE(TypeDefinitionFinishAsInterface)
 CARBON_PARSER_STATE(TypeDefinitionFinishAsNamedConstraint)
 
-// Handles processing of a type's `<introducer> <name> {`.
+// Handles processing of a type's `<introducer> <name> [;{]`.
 //
 // If `Semi`:
 //   (state done)
