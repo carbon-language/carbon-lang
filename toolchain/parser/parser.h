@@ -46,9 +46,6 @@ class Parser {
   // Supported kinds for HandlePattern.
   enum class PatternKind { DeducedParameter, Parameter, Variable };
 
-  // Supported kinds for HandleType.
-  enum class TypeKind { Class, Interface, NamedConstraint };
-
   // Supported return values for GetDeclarationContext.
   enum class DeclarationContext {
     File,  // Top-level context.
