@@ -325,10 +325,13 @@ class Parser {
   auto HandleStatementKeywordFinish(ParseNodeKind node_kind) -> void;
 
   // Handles processing of a type's `<introducer> <name> {`.
-  auto HandleTypeIntroducer(TypeKind type_kind) -> void;
+  auto HandleTypeIntroducer(ParseNodeKind introducer_kind,
+                            ParseNodeKind declaration_kind,
+                            ParseNodeKind definition_start_kind,
+                            ParserState definition_finish_state) -> void;
 
   // Handles parsing after the declaration scope of a type.
-  auto HandleTypeDefinitionFinish(TypeKind type_kind) -> void;
+  auto HandleTypeDefinitionFinish(ParseNodeKind definition_kind) -> void;
 
   // Handles VarAs(Semicolon|For).
   auto HandleVar(ParserState finish_state) -> void;
