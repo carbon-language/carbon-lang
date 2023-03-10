@@ -10,6 +10,6 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_missing_name.carbon:[[@LINE+1]]:11: Expected name after `0` introducer.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_missing_name.carbon:[[@LINE+1]]:11: `interface` introducer should be followed by a name.
 interface {
 }

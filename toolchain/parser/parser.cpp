@@ -28,6 +28,13 @@ CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
 CARBON_DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
                   "Expected `;` after expression.");
 
+CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
+                  "`{0}` introducer should be followed by a name.", TokenKind);
+CARBON_DIAGNOSTIC(ExpectedDeclarationSemiOrDefinition, Error,
+                  "`{0}` should either end with a `;` for a declaration or "
+                  "have a `{{ ... }}` block for a definition.",
+                  TokenKind);
+
 // A relative location for characters in errors.
 enum class RelativeLocation : int8_t {
   Around,
@@ -1079,9 +1086,7 @@ auto Parser::HandleFunctionIntroducerState() -> void {
 
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
                                ParseNodeKind::DeclaredName)) {
-    CARBON_DIAGNOSTIC(ExpectedFunctionName, Error,
-                      "Expected function name after `fn` keyword.");
-    emitter_->Emit(*position_, ExpectedFunctionName);
+    emitter_->Emit(*position_, ExpectedDeclarationName, TokenKind::Fn);
     // TODO: We could change the lexer to allow us to synthesize certain
     // kinds of tokens and try to "recover" here, but unclear that this is
     // really useful.
@@ -1214,10 +1219,8 @@ auto Parser::HandleFunctionSignatureFinishState() -> void {
       break;
     }
     default: {
-      CARBON_DIAGNOSTIC(
-          ExpectedFunctionBodyOrSemi, Error,
-          "Expected function definition or `;` after function declaration.");
-      emitter_->Emit(*position_, ExpectedFunctionBodyOrSemi);
+      emitter_->Emit(*position_, ExpectedDeclarationSemiOrDefinition,
+                     TokenKind::Fn);
       // Only need to skip if we've not already found a new line.
       bool skip_past_likely_end =
           tokens_->GetLine(*position_) == tokens_->GetLine(state.token);
@@ -1756,9 +1759,8 @@ auto Parser::HandleTypeIntroducer(TypeKind type_kind) -> void {
 
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
                                ParseNodeKind::DeclaredName)) {
-    CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
-                      "Expected name after `{0}` introducer.");
-    emitter_->Emit(*position_, ExpectedDeclarationName);
+    emitter_->Emit(*position_, ExpectedDeclarationName,
+                   tokens_->GetKind(state.token));
     HandleDeclarationError(state,
                            CARBON_TYPE_KIND_TO_PARSE_NODE_KIND(Declaration),
                            /*skip_past_likely_end=*/true);
@@ -1772,9 +1774,8 @@ auto Parser::HandleTypeIntroducer(TypeKind type_kind) -> void {
   }
 
   if (!PositionIs(TokenKind::OpenCurlyBrace)) {
-    CARBON_DIAGNOSTIC(ExpectedInterfaceOpenCurlyBrace, Error,
-                      "Expected `{{` to start interface definition.");
-    emitter_->Emit(*position_, ExpectedInterfaceOpenCurlyBrace);
+    emitter_->Emit(*position_, ExpectedDeclarationSemiOrDefinition,
+                   tokens_->GetKind(state.token));
     HandleDeclarationError(state,
                            CARBON_TYPE_KIND_TO_PARSE_NODE_KIND(Declaration),
                            /*skip_past_likely_end=*/true);
