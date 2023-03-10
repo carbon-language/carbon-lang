@@ -79,7 +79,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedSemiToEndPackageDirective)
 CARBON_DIAGNOSTIC_KIND(ExpectedIn)
 CARBON_DIAGNOSTIC_KIND(ExpectedInNotColon)
 
-// Type declaration diagnostics.
+// Declaration diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclarationName)
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclarationSemiOrDefinition)
 CARBON_DIAGNOSTIC_KIND(MethodImplNotAllowed)
