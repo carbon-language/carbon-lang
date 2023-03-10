@@ -5,9 +5,9 @@
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT:     {kind: 'InterfaceIntroducer', text: 'interface'},
+// CHECK:STDOUT:     {kind: 'NamedConstraintIntroducer', text: 'constraint'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'Foo'},
-// CHECK:STDOUT:   {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
+// CHECK:STDOUT:   {kind: 'NamedConstraintDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'Add'},
 // CHECK:STDOUT:       {kind: 'DeducedParameterListStart', text: '['},
@@ -23,11 +23,11 @@
 // CHECK:STDOUT:       {kind: 'SelfType', text: 'Self'},
 // CHECK:STDOUT:     {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 15},
-// CHECK:STDOUT: {kind: 'InterfaceDefinition', text: '}', subtree_size: 19},
+// CHECK:STDOUT: {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 19},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-cosntraint Foo {
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_no_impl_allowed.carbon:[[@LINE+1]]:39: Method implementations are not allowed in constraints.
+constraint Foo {
+  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/named_constraint/fail_no_impl_allowed.carbon:[[@LINE+1]]:39: Method implementations are not allowed in interfaces.
   fn Add[self: Self](b: Self) -> Self {}
 }

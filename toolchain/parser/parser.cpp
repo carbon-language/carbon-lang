@@ -462,8 +462,12 @@ auto Parser::GetDeclarationContext() -> DeclarationContext {
     // DeclarationScopeLoop.
     if (state_stack_[i].state == ParserState::DeclarationScopeLoop) {
       switch (state_stack_[i - 1].state) {
-        case ParserState::InterfaceDefinitionFinish:
+        case ParserState::TypeDefinitionFinishAsClass:
+          return DeclarationContext::Class;
+        case ParserState::TypeDefinitionFinishAsInterface:
           return DeclarationContext::Interface;
+        case ParserState::TypeDefinitionFinishAsNamedConstraint:
+          return DeclarationContext::NamedConstraint;
         default:
           llvm_unreachable("Missing handling for a declaration scope");
       }
@@ -765,8 +769,12 @@ auto Parser::HandleDeclarationScopeLoopState() -> void {
       PopAndDiscardState();
       break;
     }
+    case TokenKind::Class: {
+      PushState(ParserState::TypeIntroducerAsClass);
+      break;
+    }
     case TokenKind::Constraint: {
-      PushState(ParserState::NamedConstraintIntroducer);
+      PushState(ParserState::TypeIntroducerAsNamedConstraint);
       break;
     }
     case TokenKind::Fn: {
@@ -774,7 +782,7 @@ auto Parser::HandleDeclarationScopeLoopState() -> void {
       break;
     }
     case TokenKind::Interface: {
-      PushState(ParserState::InterfaceIntroducer);
+      PushState(ParserState::TypeIntroducerAsInterface);
       break;
     }
     case TokenKind::Semi: {
@@ -1184,7 +1192,9 @@ auto Parser::HandleFunctionSignatureFinishState() -> void {
       break;
     }
     case TokenKind::OpenCurlyBrace: {
-      if (GetDeclarationContext() == DeclarationContext::Interface) {
+      if (auto context = GetDeclarationContext();
+          context == DeclarationContext::Interface ||
+          context == DeclarationContext::NamedConstraint) {
         CARBON_DIAGNOSTIC(
             MethodImplNotAllowed, Error,
             "Method implementations are not allowed in interfaces.");
@@ -1718,24 +1728,37 @@ auto Parser::HandleStatementWhileBlockFinishState() -> void {
           state.has_error);
 }
 
+#define CARBON_TYPE_KIND_TO_ENUM(Enum, Prefix, Suffix) \
+  [&type_kind]() -> Enum {                             \
+    switch (type_kind) {                               \
+      case TypeKind::Class:                            \
+        return Enum::Prefix##Class##Suffix;            \
+      case TypeKind::Interface:                        \
+        return Enum::Prefix##Interface##Suffix;        \
+      case TypeKind::NamedConstraint:                  \
+        return Enum::Prefix##NamedConstraint##Suffix;  \
+    }                                                  \
+  }()
+
 auto Parser::HandleTypeIntroducer(TypeKind type_kind) -> void {
   auto state = PopState();
 
-  AddLeafNode(ParseNodeKind::InterfaceIntroducer, Consume());
+  AddLeafNode(CARBON_TYPE_KIND_TO_ENUM(ParseNodeKind, , Introducer), Consume());
 
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
                                ParseNodeKind::DeclaredName)) {
     CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
                       "Expected name after `{0}` introducer.");
     emitter_->Emit(*position_, ExpectedDeclarationName);
-    HandleDeclarationError(state, ParseNodeKind::InterfaceDeclaration,
-                           /*skip_past_likely_end=*/true);
+    HandleDeclarationError(
+        state, CARBON_TYPE_KIND_TO_ENUM(ParseNodeKind, , Declaration),
+        /*skip_past_likely_end=*/true);
     return;
   }
 
   if (auto semi = ConsumeIf(TokenKind::Semi)) {
-    AddNode(ParseNodeKind::InterfaceDeclaration, *semi, state.subtree_start,
-            state.has_error);
+    AddNode(CARBON_TYPE_KIND_TO_ENUM(ParseNodeKind, , Declaration), *semi,
+            state.subtree_start, state.has_error);
     return;
   }
 
@@ -1743,25 +1766,16 @@ auto Parser::HandleTypeIntroducer(TypeKind type_kind) -> void {
     CARBON_DIAGNOSTIC(ExpectedInterfaceOpenCurlyBrace, Error,
                       "Expected `{{` to start interface definition.");
     emitter_->Emit(*position_, ExpectedInterfaceOpenCurlyBrace);
-    HandleDeclarationError(state, ParseNodeKind::InterfaceDeclaration,
-                           /*skip_past_likely_end=*/true);
+    HandleDeclarationError(
+        state, CARBON_TYPE_KIND_TO_ENUM(ParseNodeKind, , Declaration),
+        /*skip_past_likely_end=*/true);
     return;
   }
 
-  switch (type_kind) {
-    case TypeKind::Class:
-      state.state = ParserState::TypeDefinitionFinishAsClass;
-      break;
-    case TypeKind::Interface:
-      state.state = ParserState::TypeDefinitionFinishAsInterface;
-      break;
-    case TypeKind::NamedConstraint:
-      state.state = ParserState::TypeDefinitionFinishAsNamedConstraint;
-      break;
-  }
+  state.state = CARBON_TYPE_KIND_TO_ENUM(ParserState, TypeDefinitionFinishAs, );
   PushState(state);
   PushState(ParserState::DeclarationScopeLoop);
-  AddNode(ParseNodeKind::InterfaceDefinitionStart, Consume(),
+  AddNode(CARBON_TYPE_KIND_TO_ENUM(ParseNodeKind, , DefinitionStart), Consume(),
           state.subtree_start, state.has_error);
 }
 
@@ -1780,8 +1794,20 @@ auto Parser::HandleTypeIntroducerAsNamedConstraintState() -> void {
 auto Parser::HandleTypeDefinitionFinish(TypeKind type_kind) -> void {
   auto state = PopState();
 
-  AddNode(ParseNodeKind::InterfaceDefinition, Consume(), state.subtree_start,
-          state.has_error);
+  AddNode(CARBON_TYPE_KIND_TO_ENUM(ParseNodeKind, , Definition), Consume(),
+          state.subtree_start, state.has_error);
+}
+
+auto Parser::HandleTypeDefinitionFinishAsClassState() -> void {
+  HandleTypeDefinitionFinish(TypeKind::Class);
+}
+
+auto Parser::HandleTypeDefinitionFinishAsInterfaceState() -> void {
+  HandleTypeDefinitionFinish(TypeKind::Interface);
+}
+
+auto Parser::HandleTypeDefinitionFinishAsNamedConstraintState() -> void {
+  HandleTypeDefinitionFinish(TypeKind::NamedConstraint);
 }
 
 auto Parser::HandleVar(ParserState finish_state) -> void {
