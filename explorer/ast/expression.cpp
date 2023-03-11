@@ -297,6 +297,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::IntTypeLiteral:
+    case ExpressionKind::RealTypeLiteral:
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
@@ -326,6 +327,9 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       break;
     case ExpressionKind::IntTypeLiteral:
       out << "i32";
+      break;
+    case ExpressionKind::RealTypeLiteral:
+      out << "f64";
       break;
     case ExpressionKind::StringLiteral:
       out << "\"";

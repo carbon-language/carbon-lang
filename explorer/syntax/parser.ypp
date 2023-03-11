@@ -386,6 +386,9 @@ primary_expression:
         context.RecordSyntaxError(
             llvm::formatv("Invalid type literal: {0}", $1));
         YYERROR;
+      } else if ($1[0] == 'f' || val == 64) {
+        $$ = arena->New<RealTypeLiteral>(context.source_loc());
+        //TODO: Fix the following check, once the types have been implemented
       } else if ($1[0] != 'i' || val != 32) {
         context.RecordSyntaxError(
             llvm::formatv("Only i32 is supported for now: {0}", $1));

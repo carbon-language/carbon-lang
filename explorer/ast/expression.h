@@ -721,6 +721,16 @@ class IntTypeLiteral : public Expression {
   }
 };
 
+class RealTypeLiteral : public Expression {
+ public:
+  explicit RealTypeLiteral(SourceLocation source_loc)
+      : Expression(AstNodeKind::RealTypeLiteral, source_loc) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromRealTypeLiteral(node->kind());
+  }
+};
+
 class ContinuationTypeLiteral : public Expression {
  public:
   explicit ContinuationTypeLiteral(SourceLocation source_loc)

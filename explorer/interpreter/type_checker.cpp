@@ -3613,6 +3613,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       }
     }
     case ExpressionKind::IntTypeLiteral:
+    case ExpressionKind::RealTypeLiteral:
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:

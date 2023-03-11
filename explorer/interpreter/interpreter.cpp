@@ -514,6 +514,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::CallExpression:
     case ExpressionKind::IntTypeLiteral:
+    case ExpressionKind::RealTypeLiteral:
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::FunctionTypeLiteral:
@@ -1599,6 +1600,10 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::IntTypeLiteral: {
       CARBON_CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<IntType>());
+    }
+    case ExpressionKind::RealTypeLiteral: {
+      CARBON_CHECK(act.pos() == 0);
+      return todo_.FinishAction(arena_->New<RealType>());
     }
     case ExpressionKind::BoolTypeLiteral: {
       CARBON_CHECK(act.pos() == 0);
