@@ -109,6 +109,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
       // These are values, not types.
       return false;
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
@@ -171,6 +172,7 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::MemberName:
       return false;
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::PointerType:
@@ -245,6 +247,7 @@ static auto ExpectCompleteType(SourceLocation source_loc,
       CARBON_FATAL() << "should not see non-type values";
 
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::StringType:
     case Value::Kind::PointerType:
@@ -344,6 +347,7 @@ static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
     case Value::Kind::MixinPseudoType:
       CARBON_FATAL() << "non-type value";
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::VariableType:
@@ -1152,6 +1156,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::ConstraintType:
     case Value::Kind::AssociatedConstant:
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
@@ -5619,6 +5624,7 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
       CARBON_FATAL() << "pattern type in alias target";
 
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::PointerType:
     case Value::Kind::StaticArrayType:

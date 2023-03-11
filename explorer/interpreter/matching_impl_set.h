@@ -85,6 +85,8 @@ class MatchingImplSet {
     BoolType,
     // Label for `i32` type constant.
     IntType,
+    // Label for `f64` type constant.
+    RealType,
     // Label for `String` type constant.
     StringType,
     // Label for `[_;_]` type constructor.

@@ -747,6 +747,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::AlternativeValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::FunctionType:

@@ -36,6 +36,8 @@ class MatchingImplSet::LeafCollector {
 
   void VisitValue(const IntType* /*unused*/) { Collect(Label::IntType); }
 
+  void VisitValue(const RealType* /*unused*/) { Collect(Label::RealType); }
+
   void VisitValue(const StringType* /*unused*/) { Collect(Label::StringType); }
 
   void VisitValue(const StaticArrayType* array) {

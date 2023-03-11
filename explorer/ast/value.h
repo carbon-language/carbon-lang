@@ -597,6 +597,21 @@ class IntType : public Value {
   }
 };
 
+// The real type.
+class RealType : public Value {
+ public:
+  RealType() : Value(Kind::RealType) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::RealType;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f();
+  }
+};
+
 // The bool type.
 class BoolType : public Value {
  public:

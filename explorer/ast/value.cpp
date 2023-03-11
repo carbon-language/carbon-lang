@@ -491,6 +491,9 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::IntType:
       out << "i32";
       break;
+    case Value::Kind::RealType:
+      out << "f64";
+      break;
     case Value::Kind::TypeType:
       out << "type";
       break;
@@ -872,6 +875,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
       return true;
     }
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::ContinuationType:
     case Value::Kind::TypeType:
@@ -1024,6 +1028,7 @@ auto ValueStructurallyEqual(
              TypeEqual(&assoc1.interface(), &assoc2.interface(), equality_ctx);
     }
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::FunctionType:
