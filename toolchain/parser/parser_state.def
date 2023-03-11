@@ -2,12 +2,27 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Note that this is an X-macro header.
+// This is an X-macro header. It does not use `#include` guards, and instead is
+// designed to be `#include`ed after the x-macro is defined in order for its
+// inclusion to expand to the desired output. Macro definitions are cleaned up
+// at the end of this file.
 //
-// It does not use `#include` guards, and instead is designed to be `#include`ed
-// after the x-macro is defined in order for its inclusion to expand to the
-// desired output. The x-macro for this header is `CARBON_PARSE_NODE_KIND`. The
-// definition provided will be removed at the end of this file to clean up.
+// Supported x-macros are:
+// - CARBON_PARSER_STATE(Name)
+//   Defines a parser state.
+//
+// Parser states may be clustered when there are multiple related variants,
+// named `StateAsVariant`. When there are variants, they share a common helper
+// function for most logic.
+//
+// Comments will describe a series of possible output states. States are listed
+// in the order they'll be executed; in other words, `1` is the top of the state
+// stack. The comment `(state done)` indicates that no new states are added to
+// the stack.
+//
+// Where state output is conditional on a lexed token, the name of
+// the TokenKind should be used rather than the string name in order to make it
+// easier to compare with code.
 
 #ifndef CARBON_PARSER_STATE
 #error "Must define the x-macro to use this file."
@@ -130,7 +145,23 @@ CARBON_PARSER_STATE(CodeBlockFinish)
 //   1. DeclarationLoop
 CARBON_PARSER_STATE(DeclarationLoop)
 
-// To handle parsing deduced parameter list at the end.
+// Starts deduced parameter processing.
+//
+// Always:
+//   1. PatternAsDeducedParameter
+//   2. DeducedParameterFinish
+CARBON_PARSER_STATE(DeducedParameter)
+
+// Finishes deduced parameter processing, including `,`. If there are more
+// parameters, enqueues another parameter processing state.
+//
+// If `Comma` without `CloseSquareBracket`:
+//   1. DeducedParameter
+// Else:
+//   (state done)
+CARBON_PARSER_STATE(DeducedParameterFinish)
+
+// Handles processing of a deduced parameter list `]`.
 //
 // Always:
 //   (state done)
@@ -218,6 +249,19 @@ CARBON_PARSER_STATE(ExpressionStatementFinish)
 //
 // If invalid:
 //   (state done)
+// If deduced parameters:
+//   1. DeducedParameter
+//   2. DeducedParameterListFinish
+//   3. FunctionAfterDeducedParameterList
+// Else:
+//   1. FunctionAfterDeducedParameterList
+CARBON_PARSER_STATE(FunctionIntroducer)
+
+// Handles processing of a functions' syntax after the deduced parameter lists's
+// `]`. This applies only to interfaces and classes.
+//
+// If invalid:
+//   (state done)
 // If parenthesized parameters:
 //   1. FunctionParameter
 //   2. FunctionParameterListFinish
@@ -225,7 +269,7 @@ CARBON_PARSER_STATE(ExpressionStatementFinish)
 // Else:
 //   1. FunctionParameterListFinish
 //   2. FunctionAfterParameterList
-CARBON_PARSER_STATE(FunctionIntroducer)
+CARBON_PARSER_STATE(FunctionAfterDeducedParameterList)
 
 // Starts function parameter processing.
 //
@@ -285,15 +329,9 @@ CARBON_PARSER_STATE(FunctionSignatureFinish)
 //   (state done)
 CARBON_PARSER_STATE(FunctionDefinitionFinish)
 
-// Finishes an interface definition.
-//
-// Always:
-//   (state done)
-CARBON_PARSER_STATE(InterfaceDefinitionFinish)
-
 // Handles parsing the body of an interface.
 //
-// If `}`:
+// If `CloseCurlyBrace`:
 //   (state done)
 // Else:
 //   1. InterfaceDefinitionLoop
@@ -301,13 +339,12 @@ CARBON_PARSER_STATE(InterfaceDefinitionLoop)
 
 // Handles processing of a intefaces's `interface <name> {`.
 //
-// If invalid:
-//   1. InterfaceDefinitionFinish
-// If `{` is missing:
-//   1. InterfaceDefinitionFinish
-// Else:
+// If `Semi`:
+//   (state done)
+// If `OpenCurlyBrace`:
 //   1. InterfaceDefinitionLoop
-//   2. InterfaceDefinitionFinish
+// Else:
+//   (state done)
 CARBON_PARSER_STATE(InterfaceIntroducer)
 
 // Handles `package`.
@@ -365,13 +402,14 @@ CARBON_PARSER_STATE(ParenExpressionFinish)
 CARBON_PARSER_STATE(ParenExpressionFinishAsTuple)
 
 // Handles pattern parsing for a pattern, enqueuing type expression processing.
-// This covers function parameter and `var` support.
+// This covers parameter and `var` support.
 //
 // If valid:
 //   1. Expression
 //   2. PatternFinish
 // Else:
 //   1. PatternFinish
+CARBON_PARSER_STATE(PatternAsDeducedParameter)
 CARBON_PARSER_STATE(PatternAsFunctionParameter)
 CARBON_PARSER_STATE(PatternAsVariable)
 
@@ -386,15 +424,6 @@ CARBON_PARSER_STATE(PatternAddress)
 // Always:
 //   (state done)
 CARBON_PARSER_STATE(PatternFinish)
-
-// To start parsing `self` deduced parameter.
-//
-// If valid:
-//   1. Expression
-//   2. PatternFinish
-// Else:
-//   1. PatternFinish
-CARBON_PARSER_STATE(SelfPattern)
 
 // Handles a single statement. While typically within a statement block, this
 // can also be used for error recovery where we expect a statement block and
@@ -570,19 +599,5 @@ CARBON_PARSER_STATE(VarAfterPattern)
 //   (state done)
 CARBON_PARSER_STATE(VarFinishAsSemicolon)
 CARBON_PARSER_STATE(VarFinishAsFor)
-
-// Handles processing of a functions' syntax after the deduced parameter lists's
-// `]`. This applies only to interfaces and classes.
-//
-// If invalid:
-//   (state done)
-// If parenthesized parameters:
-//   1. FunctionParameter
-//   2. FunctionParameterListFinish
-//   3. FunctionAfterParameterList
-// Else:
-//   1. FunctionParameterListFinish
-//   2. FunctionAfterParameterList
-CARBON_PARSER_STATE(FunctionAfterDeducedParameterList)
 
 #undef CARBON_PARSER_STATE

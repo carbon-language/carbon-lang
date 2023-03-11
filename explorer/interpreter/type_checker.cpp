@@ -21,6 +21,8 @@
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/value.h"
+#include "explorer/ast/value_transform.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/common/nonnull.h"
@@ -28,8 +30,6 @@
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
-#include "explorer/interpreter/value.h"
-#include "explorer/interpreter/value_transform.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
@@ -795,6 +795,18 @@ auto TypeChecker::BuildBuiltinMethodCall(const ImplScope& impl_scope,
   CARBON_ASSIGN_OR_RETURN(Nonnull<const InterfaceType*> iface_type,
                           GetBuiltinInterfaceType(source_loc, interface));
 
+  if (interface.builtin == Builtins::ImplicitAs) {
+    // Type-checking the below expression resolves the member name to
+    // `As(Destination).Convert`, which allows both implicit and explicit
+    // conversions. So manually check that `ImplicitAs(Destination)` is
+    // actually implemented.
+    // TODO: This check should be performed as part of type-checking the
+    // compound member access expression below. This is a short-term
+    // workaround.
+    CARBON_RETURN_IF_ERROR(impl_scope.Resolve(
+        iface_type, &source->static_type(), source->source_loc(), *this));
+  }
+
   // Build an expression to perform the call `source.(interface.method)(args)`.
   Nonnull<Expression*> iface_expr = arena_->New<ValueLiteral>(
       source_loc, iface_type, arena_->New<TypeType>(), ValueCategory::Let);
@@ -837,23 +849,6 @@ auto TypeChecker::ExpectNonPlaceholderType(SourceLocation source_loc,
            << "expected `.member_name` after name of " << *namespace_type;
   }
   CARBON_FATAL() << "unknown kind of placeholder type " << *type;
-}
-
-auto TypeChecker::ExpectType(SourceLocation source_loc,
-                             std::string_view context,
-                             Nonnull<const Value*> expected,
-                             Nonnull<const Value*> actual,
-                             const ImplScope& impl_scope) const
-    -> ErrorOr<Success> {
-  if (!IsImplicitlyConvertible(actual, expected, impl_scope,
-                               /*allow_user_defined_conversions=*/true)) {
-    return ProgramError(source_loc)
-           << "type error in " << context << ": "
-           << "'" << *actual << "' is not implicitly convertible to '"
-           << *expected << "'";
-  } else {
-    return Success();
-  }
 }
 
 // Argument deduction matches two values and attempts to find a set of
@@ -948,7 +943,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
   }
 
   // If param is the name of a variable we're deducing, then deduce it.
-  if (auto* var_type = dyn_cast<VariableType>(param)) {
+  if (const auto* var_type = dyn_cast<VariableType>(param)) {
     const auto& binding = var_type->binding();
     if (auto it = deduced_values_.find(&binding); it != deduced_values_.end()) {
       it->second.push_back(arg);
@@ -2512,6 +2507,7 @@ auto TypeChecker::CheckAddrMeAccess(
   return Success();
 }
 
+// NOLINTNEXTLINE(readability-function-size)
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -2985,6 +2981,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             Nonnull<const ConstraintType*> iface_constraint,
             ConvertToConstraintType(access.source_loc(),
                                     "compound member access", *iface));
+        // TODO: We should check that the base type implements the specified
+        // interface, not only the interface containing the member.
+        // `x.(ImplicitAs(T).Convert)()` should require that the type of `x`
+        // implements `ImplicitAs(T)`, not only `As(T)`.
         CARBON_ASSIGN_OR_RETURN(witness,
                                 impl_scope.Resolve(iface_constraint, *base_type,
                                                    e->source_loc(), *this));
@@ -3270,13 +3270,17 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_static_type(&cast<PointerType>(*ts[0]).pointee_type());
           op.set_value_category(ValueCategory::Var);
           return Success();
-        case Operator::Ptr:
-          CARBON_RETURN_IF_ERROR(ExpectType(e->source_loc(), "*",
-                                            arena_->New<TypeType>(), ts[0],
-                                            impl_scope));
+        case Operator::Ptr: {
+          auto* type_type = arena_->New<TypeType>();
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<Expression*> converted,
+              ImplicitlyConvert("pointee type", impl_scope, op.arguments()[0],
+                                type_type));
+          op.arguments()[0] = converted;
           op.set_static_type(arena_->New<TypeType>());
           op.set_value_category(ValueCategory::Let);
           return Success();
+        }
         case Operator::AddressOf:
           if (op.arguments()[0]->value_category() != ValueCategory::Var) {
             return ProgramError(op.arguments()[0]->source_loc())
@@ -3435,10 +3439,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return ProgramError(e->source_loc())
                    << "__intrinsic_assert takes 2 arguments";
           }
-          CARBON_RETURN_IF_ERROR(ExpectType(
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
               e->source_loc(), "__intrinsic_assert argument 0",
               arena_->New<BoolType>(), &args[0]->static_type(), impl_scope));
-          CARBON_RETURN_IF_ERROR(ExpectType(
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
               e->source_loc(), "__intrinsic_assert argument 1",
               arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(TupleType::Empty());
@@ -3977,10 +3981,9 @@ auto TypeChecker::TypeCheckPattern(
           << "conversion to type succeeded but didn't produce a type, got "
           << *type;
       if (expected) {
-        if (IsConcreteType(type)) {
-          CARBON_RETURN_IF_ERROR(ExpectType(p->source_loc(), "name binding",
-                                            type, *expected, impl_scope));
-        } else {
+        // TODO: Per proposal #2188, we should be performing conversions at
+        // this level rather than on the overall initializer.
+        if (!IsConcreteType(type)) {
           BindingMap generic_args;
           if (!PatternMatch(type, *expected, binding.type().source_loc(),
                             std::nullopt, generic_args, trace_stream_,
@@ -4052,21 +4055,16 @@ auto TypeChecker::TypeCheckPattern(
     }
     case PatternKind::AlternativePattern: {
       auto& alternative = cast<AlternativePattern>(*p);
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckExp(&alternative.choice_type(), impl_scope));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type,
-          InterpExp(&alternative.choice_type(), arena_, trace_stream_));
+          TypeCheckTypeExp(&alternative.choice_type(), impl_scope));
       if (!isa<ChoiceType>(type)) {
         return ProgramError(alternative.source_loc())
                << "alternative pattern does not name a choice type.";
       }
       const auto& choice_type = cast<ChoiceType>(*type);
-      if (expected) {
-        CARBON_RETURN_IF_ERROR(ExpectType(alternative.source_loc(),
-                                          "alternative pattern", &choice_type,
-                                          *expected, impl_scope));
-      }
+      // TODO: Per proposal #2188, we should perform an implicit conversion on
+      // the scrutinee if a choice type is provided.
       std::optional<Nonnull<const AlternativeSignature*>> signature =
           choice_type.declaration().FindAlternative(
               alternative.alternative_name());
@@ -4097,6 +4095,7 @@ auto TypeChecker::TypeCheckPattern(
       auto& expression = cast<ExpressionPattern>(*p).expression();
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&expression, impl_scope));
       p->set_static_type(&expression.static_type());
+      // TODO: Per proposal #2188, we should form an `==` comparison here.
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> expr_value,
                               InterpExp(&expression, arena_, trace_stream_));
       p->set_value(expr_value);
@@ -4298,7 +4297,10 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
             TypeCheckPattern(&for_stmt.variable_declaration(),
                              &cast<StaticArrayType>(rhs).element_type(),
                              inner_impl_scope, ValueCategory::Var));
-
+        CARBON_RETURN_IF_ERROR(ExpectExactType(
+            for_stmt.source_loc(), "`for` pattern",
+            &cast<StaticArrayType>(rhs).element_type(),
+            &for_stmt.variable_declaration().static_type(), impl_scope));
       } else {
         return ProgramError(for_stmt.source_loc())
                << "expected array type after in, found value of type " << rhs;

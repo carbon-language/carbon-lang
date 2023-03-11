@@ -2,10 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_INTERPRETER_VALUE_TRANSFORM_H_
-#define CARBON_EXPLORER_INTERPRETER_VALUE_TRANSFORM_H_
+#ifndef CARBON_EXPLORER_AST_VALUE_TRANSFORM_H_
+#define CARBON_EXPLORER_AST_VALUE_TRANSFORM_H_
 
-#include "explorer/interpreter/value.h"
+#include "explorer/ast/value.h"
 
 namespace Carbon {
 
@@ -29,6 +29,7 @@ struct IsRecursivelyTransformableVisitor {
 template <typename T, typename = std::true_type>
 constexpr bool IsRecursivelyTransformable = false;
 template <typename T>
+// NOLINTNEXTLINE(misc-definitions-in-headers)
 constexpr bool IsRecursivelyTransformable<
     T, decltype(std::declval<const T>().Decompose(
            IsRecursivelyTransformableVisitor<T>{}))> = true;
@@ -140,9 +141,9 @@ class ValueTransform : public TransformBase<Derived> {
     return node;
   }
 
-  auto operator()(Nonnull<ContinuationValue::StackFragment*> stack_fragment)
-      -> Nonnull<ContinuationValue::StackFragment*> {
-    return stack_fragment;
+  auto operator()(Nonnull<ContinuationValue::Representation*> continuation)
+      -> Nonnull<ContinuationValue::Representation*> {
+    return continuation;
   }
 
   auto operator()(Address addr) -> Address { return addr; }
@@ -178,18 +179,17 @@ class ValueTransform : public TransformBase<Derived> {
   }
 
   // Preserve vtable during transformation.
-  auto operator()(Nonnull<const VTable* const> vtable)
-      -> Nonnull<const VTable* const> {
+  auto operator()(Nonnull<const VTable*> vtable) -> Nonnull<const VTable*> {
     return vtable;
   }
 
   // Preserve class value ptr during transformation.
-  auto operator()(Nonnull<const NominalClassValue** const> value_ptr)
-      -> Nonnull<const NominalClassValue** const> {
+  auto operator()(Nonnull<const NominalClassValue**> value_ptr)
+      -> Nonnull<const NominalClassValue**> {
     return value_ptr;
   }
 };
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_INTERPRETER_VALUE_TRANSFORM_H_
+#endif  // CARBON_EXPLORER_AST_VALUE_TRANSFORM_H_

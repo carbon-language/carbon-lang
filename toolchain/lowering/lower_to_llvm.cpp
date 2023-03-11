@@ -4,13 +4,15 @@
 
 #include "toolchain/lowering/lower_to_llvm.h"
 
+#include "toolchain/lowering/lowering.h"
+
 namespace Carbon {
 
 auto LowerToLLVM(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
-                 const SemanticsIR& /*semantics_ir*/)
+                 const SemanticsIR& semantics_ir)
     -> std::unique_ptr<llvm::Module> {
-  auto result = std::make_unique<llvm::Module>(module_name, llvm_context);
-  return result;
+  Lowering lowering(llvm_context, module_name, semantics_ir);
+  return lowering.Run();
 }
 
 }  // namespace Carbon

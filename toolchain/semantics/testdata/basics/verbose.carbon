@@ -7,7 +7,7 @@
 //
 // Only checks a couple statements in order to minimize manual update churn.
 // CHECK:STDERR: Node Push 0: FunctionIntroducer -> <none>
-// CHECK:STDERR: AddNode block{{[0-9]+}}: {kind: BindName, arg0: str{{[0-9]+}}, arg1: node{{[0-9]+}}}
+// CHECK:STDERR: AddNode block{{[0-9]+}}: {kind: FunctionDeclaration, arg0: str{{[0-9]+}}, arg1: callable{{[0-9]+}}}
 
 fn Foo() {
   return;

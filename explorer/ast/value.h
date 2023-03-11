@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_INTERPRETER_VALUE_H_
-#define CARBON_EXPLORER_INTERPRETER_VALUE_H_
+#ifndef CARBON_EXPLORER_AST_VALUE_H_
+#define CARBON_EXPLORER_AST_VALUE_H_
 
 #include <optional>
 #include <string>
@@ -11,20 +11,18 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "explorer/ast/address.h"
 #include "explorer/ast/bindings.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
+#include "explorer/ast/element_path.h"
 #include "explorer/ast/statement.h"
 #include "explorer/common/nonnull.h"
-#include "explorer/interpreter/address.h"
-#include "explorer/interpreter/element_path.h"
-#include "explorer/interpreter/stack.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
 
 namespace Carbon {
 
-class Action;
 class AssociatedConstant;
 class ChoiceType;
 class TupleValue;
@@ -54,7 +52,7 @@ class Value {
  public:
   enum class Kind {
 #define CARBON_VALUE_KIND(kind) kind,
-#include "explorer/interpreter/value_kinds.def"
+#include "explorer/ast/value_kinds.def"
   };
 
   Value(const Value&) = delete;
@@ -357,7 +355,7 @@ class NominalClassValue : public Value {
     return base_;
   }
   // Returns a pointer of pointer to the child-most class value.
-  auto class_value_ptr() const -> Nonnull<const NominalClassValue** const> {
+  auto class_value_ptr() const -> Nonnull<const NominalClassValue**> {
     return class_value_ptr_;
   }
 
@@ -1421,45 +1419,30 @@ class AssociatedConstant : public Value {
 };
 
 // A first-class continuation representation of a fragment of the stack.
-// A continuation value behaves like a pointer to the underlying stack
-// fragment, which is exposed by `Stack()`.
+// The representation of a continuation is opaque and determined by the
+// interpreter.
 class ContinuationValue : public Value {
  public:
-  class StackFragment {
+  // Base class for the representation of a continuation, which is not defined
+  // here for layering reasons. The interpreter provides the derived class
+  // `StackFragment` that defines the concrete representation, which is
+  // expected to be the only derived class outside of tests.
+  class Representation {
    public:
-    // Constructs an empty StackFragment.
-    StackFragment() = default;
+    virtual ~Representation() {}
 
-    // Requires *this to be empty, because by the time we're tearing down the
-    // Arena, it's no longer safe to invoke ~Action.
-    ~StackFragment();
+    Representation(Representation&&) = delete;
+    auto operator=(Representation&&) -> Representation& = delete;
 
-    StackFragment(StackFragment&&) = delete;
-    auto operator=(StackFragment&&) -> StackFragment& = delete;
-
-    // Store the given partial todo stack in *this, which must currently be
-    // empty. The stack is represented with the top of the stack at the
-    // beginning of the vector, the reverse of the usual order.
-    void StoreReversed(std::vector<std::unique_ptr<Action>> reversed_todo);
-
-    // Restore the currently stored stack fragment to the top of `todo`,
-    // leaving *this empty.
-    void RestoreTo(Stack<std::unique_ptr<Action>>& todo);
-
-    // Destroy the currently stored stack fragment.
-    void Clear();
-
-    void Print(llvm::raw_ostream& out) const;
+    virtual void Print(llvm::raw_ostream& out) const = 0;
     LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-   private:
-    // The todo stack of a suspended continuation, starting with the top
-    // Action.
-    std::vector<std::unique_ptr<Action>> reversed_todo_;
+   protected:
+    Representation() = default;
   };
 
-  explicit ContinuationValue(Nonnull<StackFragment*> stack)
-      : Value(Kind::ContinuationValue), stack_(stack) {}
+  explicit ContinuationValue(Nonnull<Representation*> representation)
+      : Value(Kind::ContinuationValue), representation_(representation) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ContinuationValue;
@@ -1467,16 +1450,14 @@ class ContinuationValue : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(stack_);
+    return f(representation_);
   }
 
-  // The todo stack of the suspended continuation. Note that this provides
-  // mutable access, even when *this is const, because of the reference-like
-  // semantics of ContinuationValue.
-  auto stack() const -> StackFragment& { return *stack_; }
+  // The representation of the continuation.
+  auto representation() const -> Representation& { return *representation_; }
 
  private:
-  Nonnull<StackFragment*> stack_;
+  Nonnull<Representation*> representation_;
 };
 
 // The String type.
@@ -1651,10 +1632,10 @@ auto Value::Visit(F f) const -> R {
 #define CARBON_VALUE_KIND(kind) \
   case Kind::kind:              \
     return f(static_cast<const kind*>(this));
-#include "explorer/interpreter/value_kinds.def"
+#include "explorer/ast/value_kinds.def"
   }
 }
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_INTERPRETER_VALUE_H_
+#endif  // CARBON_EXPLORER_AST_VALUE_H_
