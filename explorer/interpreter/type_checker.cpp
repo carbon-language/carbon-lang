@@ -3101,6 +3101,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       e->set_value_category(ValueCategory::Let);
       e->set_static_type(arena_->New<IntType>());
       return Success();
+    case ExpressionKind::RealLiteral:
+      e->set_value_category(ValueCategory::Let);
+      e->set_static_type(arena_->New<RealType>());
+      return Success();
     case ExpressionKind::BoolLiteral:
       e->set_value_category(ValueCategory::Let);
       e->set_static_type(arena_->New<BoolType>());

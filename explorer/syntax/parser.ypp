@@ -92,6 +92,7 @@
 }  // %code
 
 %token <int> integer_literal
+%token <double> real_literal
 %token <std::string> identifier
 %token <IntrinsicExpression::Intrinsic> intrinsic_identifier
 %token <std::string> sized_type_literal
@@ -373,6 +374,8 @@ primary_expression:
     { $$ = arena->New<DotSelfExpression>(context.source_loc()); }
 | integer_literal
     { $$ = arena->New<IntLiteral>(context.source_loc(), $1); }
+| real_literal
+    { $$ = arena->New<RealLiteral>(context.source_loc(), $1); }
 | string_literal
     { $$ = arena->New<StringLiteral>(context.source_loc(), $1); }
 | TRUE

@@ -396,6 +396,7 @@ auto NameResolver::ResolveNames(Expression& expression,
     case ExpressionKind::RealTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::IntLiteral:
+    case ExpressionKind::RealLiteral:
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:

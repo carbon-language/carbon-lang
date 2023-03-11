@@ -294,6 +294,7 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case ExpressionKind::IdentifierExpression:
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::IntLiteral:
+    case ExpressionKind::RealLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::IntTypeLiteral:
@@ -318,6 +319,9 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       break;
     case ExpressionKind::IntLiteral:
       out << cast<IntLiteral>(*this).value();
+      break;
+    case ExpressionKind::RealLiteral:
+      out << cast<RealLiteral>(*this).value();
       break;
     case ExpressionKind::BoolLiteral:
       out << (cast<BoolLiteral>(*this).value() ? "true" : "false");

@@ -70,6 +70,7 @@ abstract class Expression : AstNode;
   class RealTypeLiteral : Expression;
   class ContinuationTypeLiteral : Expression;
   class IntLiteral : Expression;
+  class RealLiteral : Expression;
   class OperatorExpression : Expression;
   class StringLiteral : Expression;
   class StringTypeLiteral : Expression;

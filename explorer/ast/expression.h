@@ -471,6 +471,21 @@ class IntLiteral : public Expression {
   int value_;
 };
 
+class RealLiteral : public Expression {
+ public:
+  explicit RealLiteral(SourceLocation source_loc, double value)
+      : Expression(AstNodeKind::RealLiteral, source_loc), value_(value) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromRealLiteral(node->kind());
+  }
+
+  auto value() const -> double { return value_; }
+
+ private:
+  double value_;
+};
+
 class BoolLiteral : public Expression {
  public:
   explicit BoolLiteral(SourceLocation source_loc, bool value)

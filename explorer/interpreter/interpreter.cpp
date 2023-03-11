@@ -511,6 +511,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
     case ExpressionKind::IntLiteral:
+    case ExpressionKind::RealLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::CallExpression:
     case ExpressionKind::IntTypeLiteral:
@@ -1319,6 +1320,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       return todo_.FinishAction(
           arena_->New<IntValue>(cast<IntLiteral>(exp).value()));
+    case ExpressionKind::RealLiteral:
+      CARBON_CHECK(act.pos() == 0);
+      // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
+      return todo_.FinishAction(
+          arena_->New<RealValue>(cast<RealLiteral>(exp).value()));
     case ExpressionKind::BoolLiteral:
       CARBON_CHECK(act.pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}

@@ -128,6 +128,7 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
       break;
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::IntLiteral:
+    case ExpressionKind::RealLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::IntTypeLiteral:
