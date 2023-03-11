@@ -1,5 +1,3 @@
-<!-- omit in toc -->
-
 # Lexical conventions
 
 <!--
@@ -9,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
 <!-- toc -->
-<!-- omit in toc -->
 
 ## Table of contents
 
