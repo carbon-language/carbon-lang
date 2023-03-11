@@ -142,6 +142,26 @@ class IntValue : public Value {
   int value_;
 };
 
+// An real value.
+class RealValue : public Value {
+ public:
+  explicit RealValue(double value) : Value(Kind::RealValue), value_(value) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::RealValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(value_);
+  }
+
+  auto value() const -> double { return value_; }
+
+ private:
+  double value_;
+};
+
 // A function or bound method value.
 class FunctionOrMethodValue : public Value {
  public:

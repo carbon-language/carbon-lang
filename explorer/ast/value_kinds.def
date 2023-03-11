@@ -11,6 +11,7 @@
 #endif
 
 CARBON_VALUE_KIND(IntValue)
+CARBON_VALUE_KIND(RealValue)
 CARBON_VALUE_KIND(FunctionValue)
 CARBON_VALUE_KIND(DestructorValue)
 CARBON_VALUE_KIND(BoundMethodValue)

@@ -424,6 +424,9 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::IntValue:
       out << cast<IntValue>(*this).value();
       break;
+    case Value::Kind::RealValue:
+      out << cast<RealValue>(*this).value();
+      break;
     case Value::Kind::BoolValue:
       out << (cast<BoolValue>(*this).value() ? "true" : "false");
       break;
@@ -885,6 +888,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
              array1.size() == array2.size();
     }
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::BoolValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::FunctionValue:
@@ -936,6 +940,8 @@ auto ValueStructurallyEqual(
   switch (v1->kind()) {
     case Value::Kind::IntValue:
       return cast<IntValue>(*v1).value() == cast<IntValue>(*v2).value();
+    case Value::Kind::RealValue:
+      return cast<RealValue>(*v1).value() == cast<RealValue>(*v2).value();
     case Value::Kind::BoolValue:
       return cast<BoolValue>(*v1).value() == cast<BoolValue>(*v2).value();
     case Value::Kind::FunctionValue: {

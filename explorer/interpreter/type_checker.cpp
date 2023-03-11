@@ -83,6 +83,7 @@ static auto ExpectPointerType(SourceLocation source_loc,
 static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::BoundMethodValue:
@@ -145,6 +146,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
 static auto IsType(Nonnull<const Value*> value) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
@@ -216,6 +218,7 @@ static auto ExpectCompleteType(SourceLocation source_loc,
 
   switch (type->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
@@ -315,6 +318,7 @@ static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
 
   switch (type->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
@@ -1163,6 +1167,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
@@ -5582,6 +5587,7 @@ auto TypeChecker::TypeCheckChoiceDeclaration(
 static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
   switch (type->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:

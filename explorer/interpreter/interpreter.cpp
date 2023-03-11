@@ -737,6 +737,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     -> ErrorOr<Nonnull<const Value*>> {
   switch (value->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
