@@ -121,6 +121,7 @@ http_archive(
     patches = [
         "@carbon//bazel/patches/llvm:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
         "@carbon//bazel/patches/llvm:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
+        "@carbon//bazel/patches/llvm:0003_Modernize_py_binary_rule_for_lit.patch",
     ],
     sha256 = "8b2fa8ae3e434577b4fdd1e91b8990b0651776bd78cf4fbf9b709dcdcdbfbd21",
     strip_prefix = "llvm-project-{0}".format(llvm_version),
