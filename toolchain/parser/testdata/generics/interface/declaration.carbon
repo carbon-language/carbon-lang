@@ -5,9 +5,12 @@
 // AUTOUPDATE
 // RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Foo'},
-// CHECK:STDOUT: {kind: 'InterfaceDeclaration', text: ';', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'InterfaceIntroducer', text: 'interface'},
+// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'Foo'},
+// CHECK:STDOUT:   {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
+// CHECK:STDOUT: {kind: 'InterfaceDefinition', text: '}', subtree_size: 4},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-interface Foo;
+
+interface Foo {
+}

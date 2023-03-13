@@ -27,25 +27,6 @@ class Lowering {
   auto Run() -> std::unique_ptr<llvm::Module>;
 
  private:
-  // Provides DenseMapInfo for SemanticsNodeId.
-  struct SemanticsNodeIdMapInfo {
-    static inline auto getEmptyKey() -> SemanticsNodeId {
-      return SemanticsNodeId(llvm::DenseMapInfo<int32_t>::getEmptyKey());
-    }
-    static inline auto getTombstoneKey() -> SemanticsNodeId {
-      return SemanticsNodeId(llvm::DenseMapInfo<int32_t>::getTombstoneKey());
-    }
-
-    static auto getHashValue(const SemanticsNodeId& val) -> unsigned {
-      return llvm::DenseMapInfo<int32_t>::getHashValue(val.index);
-    }
-
-    static auto isEqual(const SemanticsNodeId& lhs, const SemanticsNodeId& rhs)
-        -> bool {
-      return lhs == rhs;
-    }
-  };
-
   // Declare handlers for each SemanticsIR node.
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
   auto Handle##Name##Node(SemanticsNodeId node_id, SemanticsNode node)->void;
@@ -53,6 +34,9 @@ class Lowering {
 
   // Runs lowering for a block.
   auto LowerBlock(SemanticsNodeBlockId block_id) -> void;
+
+  // Returns a type for the given node.
+  auto LowerNodeToType(SemanticsNodeId node_id) -> llvm::Type*;
 
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
@@ -66,12 +50,15 @@ class Lowering {
   llvm::SmallVector<std::pair<llvm::BasicBlock*, SemanticsNodeBlockId>>
       todo_blocks_;
 
-  // A mapping of nodes to designated values.
-  // TODO: It might be worth considering other approaches, or at least if we
-  // stick with this we'll probably want to clean up nodes as they leave scope.
-  // However, for now, it's handy to make things work.
-  llvm::DenseMap<SemanticsNodeId, llvm::Value*, SemanticsNodeIdMapInfo>
-      node_values_;
+  // Maps nodes in SemanticsIR to a lowered value. This will have one entry per
+  // node, and will be non-null when lowered. It's expected to be sparse during
+  // execution because while expressions will have entries, statements won't.
+  // TODO: This will probably become a PointerUnion of Value and Type.
+  // TODO: Long-term, we should examine the practical trade-offs of making this
+  // a map; a map may end up lower memory consumption, but a vector offers cache
+  // efficiency and better performance. As a consequence, the right choice is
+  // unclear.
+  llvm::SmallVector<llvm::Value*> lowered_nodes_;
 };
 
 }  // namespace Carbon
