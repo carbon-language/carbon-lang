@@ -28,13 +28,17 @@
 #error "Must define the x-macro to use this file."
 #endif
 
+// Helper for CARBON_PARSER_STATE_CASES# to do the actual StateAsCase.
+#define CARBON_PARSER_STATE_CASE(State, Case) \
+  CARBON_PARSER_STATE(State##As##Case)
+
 // Invokes CARBON_PARSER_STATE to generate StateAsCase1, StateAsCase2, ...
 // states.
 #define CARBON_PARSER_STATE_CASES2(State, Case1, Case2) \
-  CARBON_PARSER_STATE(State##As##Case1)                 \
-  CARBON_PARSER_STATE(State##As##Case2)
+  CARBON_PARSER_STATE_CASE(State, Case1)                \
+  CARBON_PARSER_STATE_CASE(State, Case2)
 #define CARBON_PARSER_STATE_CASES3(State, Case1, ...) \
-  CARBON_PARSER_STATE(State##As##Case1)               \
+  CARBON_PARSER_STATE_CASE(State, Case1)              \
   CARBON_PARSER_STATE_CASES2(State, __VA_ARGS__)
 
 // Handles the `{` of a brace expression.
