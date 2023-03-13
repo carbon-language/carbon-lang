@@ -660,8 +660,9 @@ analogous to equality comparisons:
 Implicit conversion from a struct type to a data class type is allowed when the
 set of field names is the same and implicit conversion is defined between the
 pairs of member types with the same field names. So calling a function
-effectively performs an assignment from each of the caller's arguments to the
-function's parameters, and will be valid when those assignments are all valid.
+effectively performs an initialization of each of the function's parameters from
+the caller's arguments, and will be valid when those initializations are all
+valid.
 
 A data class has an unformed state if all its members do. Treatment of unformed
 state follows proposal
@@ -1967,7 +1968,7 @@ There are some opportunities to improve on and simplify the C++ story:
     aren't friends of the base class.
 
 **References:** This was discussed in
-[the open discussion on 2021-07-12](https://docs.google.com/document/d/14vAcURDKeH6LZ_TQCMRGpNJrXSZCACQqDy29YH19XGo/edit#heading=h.40jlsrcgp8mr).
+[the open discussion on 2021-07-12](https://docs.google.com/document/d/1TvHK6HWAcCtnseMpcNsLYrgdtNy9qNrv6EaY9n063ok/edit#heading=h.40jlsrcgp8mr).
 
 #### Interop with C++ inheritance
 

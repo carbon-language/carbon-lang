@@ -27,6 +27,7 @@ cc_library(
         "//common/fuzzing:carbon_cc_proto",
         "//common/fuzzing:proto_to_carbon_lib",
         "//explorer/interpreter:exec_program",
+        "//explorer/interpreter:trace_stream",
         "//explorer/syntax",
         "//explorer/syntax:prelude",
         "@bazel_tools//tools/cpp/runfiles",
@@ -120,6 +121,7 @@ cc_fuzz_test(
     testonly = 1,
     srcs = ["explorer_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
+    shard_count = 8,
     deps = [
         ":fuzzer_util",
         "//common:error",

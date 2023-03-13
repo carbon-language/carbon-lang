@@ -22,7 +22,7 @@ class B extends A {
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/destructor/fail_no_virtual_destructor.carbon:[[@LINE+1]]: type error in name binding: 'type*' is not implicitly convertible to 'class B*'
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/destructor/fail_no_virtual_destructor.carbon:[[@LINE+1]]: type error in initializer of variable: 'type*' is not implicitly convertible to 'class B*'
   var pb: B* = heap.New(B);
   var pa: A* = pb;
   heap.Delete(pa);

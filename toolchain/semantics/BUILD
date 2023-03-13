@@ -35,6 +35,19 @@ cc_library(
 )
 
 cc_library(
+    name = "semantics_node_block_stack",
+    srcs = ["semantics_node_block_stack.cpp"],
+    hdrs = ["semantics_node_block_stack.h"],
+    deps = [
+        ":semantics_node",
+        "//common:check",
+        "//common:ostream",
+        "//common:vlog",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "semantics_node_stack",
     srcs = ["semantics_node_stack.cpp"],
     hdrs = ["semantics_node_stack.h"],
@@ -62,10 +75,12 @@ cc_library(
     deps = [
         ":semantics_builtin_kind",
         ":semantics_node",
+        ":semantics_node_block_stack",
         ":semantics_node_stack",
         "//common:check",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/diagnostics:diagnostic_kind",
         "//toolchain/lexer:numeric_literal",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",

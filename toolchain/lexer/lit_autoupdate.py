@@ -33,8 +33,9 @@ def main() -> None:
         r"column: (?:\d+)",
         "column: {{[0-9]+}}",
         # Ignore spaces that are used to columnize lines.
-        "--line_number_format={{ *}}[[@LINE%(delta)s]]",
-        r"--line_number_pattern=(?<= line: )( *\d+)(?=,)",
+        "--line_number_delta_prefix={{ *}}",
+        "--line_number_pattern="
+        r"(?P<prefix> line: )(?P<line> *\d+)(?P<suffix>,)",
         "--lit_run=%{carbon-run-tokens}",
         "--testdata=toolchain/lexer/testdata",
     ] + sys.argv[1:]

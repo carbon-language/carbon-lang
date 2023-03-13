@@ -614,10 +614,27 @@ static auto ReturnTermToProto(const ReturnTerm& return_term)
   return return_term_proto;
 }
 
+static auto DeclaredNameToProto(const DeclaredName& name)
+    -> Fuzzing::DeclaredName {
+  Fuzzing::DeclaredName name_proto;
+  name_proto.set_name(std::string(name.inner_name()));
+  for (const auto& [loc, qual] : name.qualifiers()) {
+    name_proto.add_qualifiers(qual);
+  }
+  return name_proto;
+}
+
 static auto DeclarationToProto(const Declaration& declaration)
     -> Fuzzing::Declaration {
   Fuzzing::Declaration declaration_proto;
   switch (declaration.kind()) {
+    case DeclarationKind::NamespaceDeclaration: {
+      const auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
+      auto* namespace_proto = declaration_proto.mutable_namespace_();
+      *namespace_proto->mutable_name() =
+          DeclaredNameToProto(namespace_decl.name());
+      break;
+    }
     case DeclarationKind::DestructorDeclaration: {
       const auto& function = cast<DestructorDeclaration>(declaration);
       auto* function_proto = declaration_proto.mutable_destructor();
@@ -651,7 +668,7 @@ static auto DeclarationToProto(const Declaration& declaration)
     case DeclarationKind::FunctionDeclaration: {
       const auto& function = cast<FunctionDeclaration>(declaration);
       auto* function_proto = declaration_proto.mutable_function();
-      function_proto->set_name(function.name());
+      *function_proto->mutable_name() = DeclaredNameToProto(function.name());
       for (Nonnull<const GenericBinding*> binding :
            function.deduced_parameters()) {
         *function_proto->add_deduced_parameters() =
@@ -691,7 +708,7 @@ static auto DeclarationToProto(const Declaration& declaration)
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(declaration);
       auto* class_proto = declaration_proto.mutable_class_declaration();
-      class_proto->set_name(class_decl.name());
+      *class_proto->mutable_name() = DeclaredNameToProto(class_decl.name());
       if (class_decl.type_params().has_value()) {
         *class_proto->mutable_type_params() =
             TuplePatternToProto(**class_decl.type_params());
@@ -705,7 +722,7 @@ static auto DeclarationToProto(const Declaration& declaration)
     case DeclarationKind::MixinDeclaration: {
       const auto& mixin = cast<MixinDeclaration>(declaration);
       auto* mixin_proto = declaration_proto.mutable_mixin();
-      mixin_proto->set_name(mixin.name());
+      *mixin_proto->mutable_name() = DeclaredNameToProto(mixin.name());
       for (const auto& member : mixin.members()) {
         *mixin_proto->add_members() = DeclarationToProto(*member);
       }
@@ -728,13 +745,15 @@ static auto DeclarationToProto(const Declaration& declaration)
     case DeclarationKind::ChoiceDeclaration: {
       const auto& choice = cast<ChoiceDeclaration>(declaration);
       auto* choice_proto = declaration_proto.mutable_choice();
-      choice_proto->set_name(choice.name());
+      *choice_proto->mutable_name() = DeclaredNameToProto(choice.name());
       for (Nonnull<const AlternativeSignature*> alternative :
            choice.alternatives()) {
         auto* alternative_proto = choice_proto->add_alternatives();
         alternative_proto->set_name(alternative->name());
-        *alternative_proto->mutable_signature() =
-            TupleLiteralExpressionToProto(alternative->signature());
+        if (auto params = alternative->parameters()) {
+          *alternative_proto->mutable_signature() =
+              TupleLiteralExpressionToProto(**params);
+        }
       }
       break;
     }
@@ -775,7 +794,7 @@ static auto DeclarationToProto(const Declaration& declaration)
     case DeclarationKind::InterfaceDeclaration: {
       const auto& interface = cast<InterfaceDeclaration>(declaration);
       auto* interface_proto = declaration_proto.mutable_interface();
-      interface_proto->set_name(interface.name());
+      *interface_proto->mutable_name() = DeclaredNameToProto(interface.name());
       for (const auto& member : interface.members()) {
         *interface_proto->add_members() = DeclarationToProto(*member);
       }
@@ -785,7 +804,8 @@ static auto DeclarationToProto(const Declaration& declaration)
     case DeclarationKind::ConstraintDeclaration: {
       const auto& constraint = cast<ConstraintDeclaration>(declaration);
       auto* constraint_proto = declaration_proto.mutable_constraint();
-      constraint_proto->set_name(constraint.name());
+      *constraint_proto->mutable_name() =
+          DeclaredNameToProto(constraint.name());
       for (const auto& member : constraint.members()) {
         *constraint_proto->add_members() = DeclarationToProto(*member);
       }
@@ -827,7 +847,7 @@ static auto DeclarationToProto(const Declaration& declaration)
     case DeclarationKind::AliasDeclaration: {
       const auto& alias = cast<AliasDeclaration>(declaration);
       auto* alias_proto = declaration_proto.mutable_alias();
-      alias_proto->set_name(alias.name());
+      *alias_proto->mutable_name() = DeclaredNameToProto(alias.name());
       *alias_proto->mutable_target() = ExpressionToProto(alias.target());
       break;
     }

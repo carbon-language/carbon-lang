@@ -14,33 +14,19 @@ namespace Carbon {
 
 auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
   SemanticsIR semantics(/*builtin_ir=*/nullptr);
-  auto block_id = semantics.AddNodeBlock();
   semantics.nodes_.reserve(SemanticsBuiltinKind::ValidCount);
 
-  constexpr int32_t TypeOfTypeType = 0;
-  auto type_type = semantics.AddNode(
-      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::TypeType,
-                                           SemanticsNodeId(TypeOfTypeType)));
-  CARBON_CHECK(type_type.index == TypeOfTypeType)
-      << "TypeType's type must be self-referential.";
-
-  constexpr int32_t TypeOfInvalidType = 1;
-  auto invalid_type = semantics.AddNode(
-      block_id, SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::InvalidType,
-                                           SemanticsNodeId(TypeOfInvalidType)));
-  CARBON_CHECK(invalid_type.index == TypeOfInvalidType)
-      << "InvalidType's type must be self-referential.";
-
-  semantics.AddNode(
-      block_id,
-      SemanticsNode::MakeBuiltin(SemanticsBuiltinKind::IntegerType, type_type));
-
-  semantics.AddNode(block_id, SemanticsNode::MakeBuiltin(
-                                  SemanticsBuiltinKind::RealType, type_type));
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type)        \
+  semantics.nodes_.push_back(SemanticsNode::MakeBuiltin( \
+      SemanticsBuiltinKind::Name, SemanticsNodeId::Builtin##Type));
+#include "toolchain/semantics/semantics_builtin_kind.def"
 
   CARBON_CHECK(semantics.node_blocks_.size() == 1)
-      << "BuildBuiltins should only produce 1 block, actual: "
+      << "BuildBuiltins should only have the empty block, actual: "
       << semantics.node_blocks_.size();
+  CARBON_CHECK(semantics.nodes_.size() == SemanticsBuiltinKind::ValidCount)
+      << "BuildBuiltins should produce " << SemanticsBuiltinKind::ValidCount
+      << " nodes, actual: " << semantics.nodes_.size();
   return semantics;
 }
 
@@ -72,41 +58,37 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
   return semantics;
 }
 
-auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
-  constexpr int Indent = 2;
+static constexpr int Indent = 2;
 
+template <typename T>
+static auto PrintList(llvm::raw_ostream& out, llvm::StringLiteral name,
+                      const llvm::SmallVector<T>& list) {
+  out << name << ": [\n";
+  for (const auto& element : list) {
+    out.indent(Indent);
+    out << element << ",\n";
+  }
+  out << "]\n";
+}
+
+auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
 
-  out << "integer_literals: [\n";
-  for (int32_t i = 0; i < static_cast<int32_t>(integer_literals_.size()); ++i) {
-    out.indent(Indent);
-    out << integer_literals_[i] << ",\n";
-  }
-  out << "]\n";
-
-  out << "strings: [\n";
-  for (int32_t i = 0; i < static_cast<int32_t>(strings_.size()); ++i) {
-    out.indent(Indent);
-    out << strings_[i] << ",\n";
-  }
-  out << "]\n";
-
-  out << "nodes: [\n";
-  for (int32_t i = 0; i < static_cast<int32_t>(nodes_.size()); ++i) {
-    out.indent(Indent);
-    out << nodes_[i] << ",\n";
-  }
-  out << "]\n";
+  PrintList(out, "calls", calls_);
+  PrintList(out, "callables", callables_);
+  PrintList(out, "integer_literals", integer_literals_);
+  PrintList(out, "real_literals", real_literals_);
+  PrintList(out, "strings", strings_);
+  PrintList(out, "nodes", nodes_);
 
   out << "node_blocks: [\n";
-  for (int32_t i = 0; i < static_cast<int32_t>(node_blocks_.size()); ++i) {
+  for (const auto& node_block : node_blocks_) {
     out.indent(Indent);
     out << "[\n";
 
-    const auto& node_block = node_blocks_[i];
-    for (int32_t i = 0; i < static_cast<int32_t>(node_block.size()); ++i) {
+    for (const auto& node : node_block) {
       out.indent(2 * Indent);
-      out << node_block[i] << ",\n";
+      out << node << ",\n";
     }
     out.indent(Indent);
     out << "],\n";

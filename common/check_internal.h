@@ -7,8 +7,6 @@
 
 #include <cstdlib>
 
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon::Internal {

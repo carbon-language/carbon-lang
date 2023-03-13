@@ -9,8 +9,6 @@
 
 #include <forward_list>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -23,6 +21,7 @@ using ::testing::AllOf;
 using ::testing::Contains;
 using ::testing::Each;
 using ::testing::ElementsAre;
+using ::testing::IsEmpty;
 using ::testing::MatchesRegex;
 using ::testing::Pair;
 
@@ -50,7 +49,10 @@ TEST(SemanticsIRTest, YAML) {
       Yaml::Value::FromText(print_output),
       ElementsAre(Yaml::Mapping(ElementsAre(
           Pair("cross_reference_irs_size", "1"),
+          Pair("calls", Yaml::Sequence(IsEmpty())),
+          Pair("callables", Yaml::Sequence(IsEmpty())),
           Pair("integer_literals", Yaml::Sequence(ElementsAre("0"))),
+          Pair("real_literals", Yaml::Sequence(IsEmpty())),
           Pair("strings", Yaml::Sequence(ElementsAre("x"))),
           Pair("nodes",
                Yaml::Sequence(AllOf(
@@ -69,7 +71,8 @@ TEST(SemanticsIRTest, YAML) {
                        Pair("arg1", node_id), Pair("type", node_id))))))),
           // This production has only one node block.
           Pair("node_blocks",
-               Yaml::Sequence(ElementsAre(Yaml::Sequence(Each(node_id)))))))));
+               Yaml::Sequence(ElementsAre(Yaml::Sequence(IsEmpty()),
+                                          Yaml::Sequence(Each(node_id)))))))));
 }
 
 }  // namespace

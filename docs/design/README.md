@@ -47,7 +47,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Parameters](#parameters)
     -   [`auto` return type](#auto-return-type)
     -   [Blocks and statements](#blocks-and-statements)
-    -   [Assignment statements](#assignment-statements)
     -   [Control flow](#control-flow)
         -   [`if` and `else`](#if-and-else)
         -   [Loops](#loops)
@@ -252,10 +251,12 @@ A [variable declaration](#variable-var-declarations) has three parts:
 ```
 
 You can modify the value of a variable with an
-[assignment statement](#assignment-statements):
+[assignment statement](assignment.md):
 
 ```carbon
       i = 3;
+      ...
+      ++i;
       ...
       i += 2;
 ```
@@ -605,18 +606,18 @@ String literals may be written on a single line using a double quotation mark
 (`"`) at the beginning and end of the string, as in `"example"`.
 
 Multi-line string literals, called _block string literals_, begin and end with
-three double quotation marks (`"""`), and may have a file type indicator after
-the first `"""`.
+three single quotation marks (`'''`), and may have a file type indicator after
+the first `'''`.
 
 ```carbon
 // Block string literal:
-var block: String = """
+var block: String = '''
     The winds grow high; so do your stomachs, lords.
     How irksome is this music to my heart!
     When such strings jar, what hope of harmony?
     I pray, my lords, let me compound this strife.
         -- History of Henry VI, Part II, Act II, Scene 1, W. Shakespeare
-    """;
+    ''';
 ```
 
 The indentation of a block string literal's terminating line is removed from all
@@ -1195,9 +1196,9 @@ fn Positive(a: i64) -> auto {
 A _block_ is a sequence of _statements_. A block defines a
 [scope](#declarations-definitions-and-scopes) and, like other scopes, is
 enclosed in curly braces (`{`...`}`). Each statement is terminated by a
-semicolon or block. [Expressions](#expressions) and
-[`var`](#variable-var-declarations) and [`let`](#constant-let-declarations) are
-valid statements.
+semicolon or block. [Expressions](#expressions), [assignments](assignment.md)
+and [`var`](#variable-var-declarations) and [`let`](#constant-let-declarations)
+are valid statements.
 
 Statements within a block are normally executed in the order they appear in the
 source code, except when modified by control-flow statements.
@@ -1222,25 +1223,6 @@ fn Foo() {
 > -   [Blocks and statements](blocks_and_statements.md)
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
-
-### Assignment statements
-
-Assignment statements mutate the value of the
-[l-value](#value-categories-and-value-phases) described on the left-hand side of
-the assignment.
-
--   Assignment: `x = y;`. `x` is assigned the value of `y`.
--   Increment and decrement: `++i;`, `--j;`. `i` is set to `i + 1`, `j` is set
-    to `j - 1`.
--   Compound assignment: `x += y;`, `x -= y;`, `x *= y;`, `x /= y;`, `x &= y;`,
-    `x |= y;`, `x ^= y;`, `x <<= y;`, `x >>= y;`. `x @= y;` is equivalent to
-    `x = x @ y;` for each operator `@`.
-
-Unlike C++, these assignments are statements, not expressions, and don't return
-a value.
-
-> **Note:** The semantics of assignment are provisional. See pending proposal
-> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
 
 ### Control flow
 
@@ -1761,7 +1743,7 @@ by one of these three keywords:
 
 A pointer to a derived class may be cast to a pointer to one of its base
 classes. Calling a virtual method through a pointer to a base class will use the
-overridden definition provided in the derived class. Base classes with `virtual`
+overriding definition provided in the derived class. Base classes with `virtual`
 methods may use
 [run-time type information](https://en.wikipedia.org/wiki/Run-time_type_information)
 in a match statement to dynamically test whether the dynamic type of a value is
@@ -3074,8 +3056,6 @@ The interfaces that correspond to each operator are given by:
 -   Indexing:
     -   `x[y]` is rewritten to use the
         [`IndexWith` or `IndirectIndexWith`](expressions/indexing.md) interface.
--   **TODO:** [Assignment](#assignment-statements): `x = y`, `++x`, `x += y`,
-    and so on
 -   **TODO:** Dereference: `*p`
 -   **TODO:** [Move](#move): `~x`
 -   **TODO:** Function call: `f(4)`

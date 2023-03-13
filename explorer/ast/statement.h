@@ -13,8 +13,8 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/return_term.h"
-#include "explorer/ast/static_scope.h"
 #include "explorer/ast/value_category.h"
+#include "explorer/ast/value_node.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -163,7 +163,7 @@ class IncrementDecrement : public Statement {
   auto argument() const -> const Expression& { return *argument_; }
   auto argument() -> Expression& { return *argument_; }
 
-  bool is_increment() const { return is_increment_; }
+  auto is_increment() const -> bool { return is_increment_; }
 
   // Set the rewritten form of this statement. Can only be called during type
   // checking.

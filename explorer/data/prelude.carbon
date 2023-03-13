@@ -181,15 +181,15 @@ impl i32 as CompareWith(Self) {
   fn Compare[self: Self](other: Self) -> Ordering {
     var comp: i32 = __intrinsic_int_compare(self, other);
     if (comp == -1) {
-      return Ordering.Less();
+      return Ordering.Less;
     }
     if (comp == 0) {
-      return Ordering.Equivalent();
+      return Ordering.Equivalent;
     }
     if (comp == 1) {
-      return Ordering.Greater();
+      return Ordering.Greater;
     }
-    return Ordering.Incomparable();
+    return Ordering.Incomparable;
 
   }
 }
@@ -198,15 +198,15 @@ impl String as CompareWith(Self) {
   fn Compare[self: Self](other: Self) -> Ordering {
     var comp: i32 = __intrinsic_str_compare(self, other);
     if (comp == -1) {
-      return Ordering.Less();
+      return Ordering.Less;
     }
     if (comp == 0) {
-      return Ordering.Equivalent();
+      return Ordering.Equivalent;
     }
     if (comp == 1) {
-      return Ordering.Greater();
+      return Ordering.Greater;
     }
-    return Ordering.Incomparable();
+    return Ordering.Incomparable;
   }
 }
 
@@ -230,7 +230,7 @@ impl i32 as LessWith(Self) {
   fn Less[self: Self](other: Self) -> bool {
     var comp: Ordering = self.(CompareWith(i32).Compare)(other);
     match (comp) {
-      case Ordering.Less() => {
+      case Ordering.Less => {
         return true;
       }
     }
@@ -242,7 +242,7 @@ impl String as LessWith(Self) {
   fn Less[self: Self](other: Self) -> bool {
     var comp: Ordering =  self.(CompareWith(String).Compare)(other);
     match(comp){
-      case Ordering.Less() => {
+      case Ordering.Less => {
         return true;
       }
     }
@@ -254,10 +254,10 @@ impl i32 as LessEqWith(Self) {
   fn LessEq[self: Self](other: Self) -> bool {
     var comp: Ordering =  self.(CompareWith(i32).Compare)(other);
     match(comp){
-      case Ordering.Less() => {
+      case Ordering.Less => {
         return true;
       }
-      case Ordering.Equivalent() => {
+      case Ordering.Equivalent => {
         return true;
       }
     }
@@ -269,10 +269,10 @@ impl String as LessEqWith(Self) {
   fn LessEq[self: Self](other: Self) -> bool {
     var comp: Ordering =  self.(CompareWith(String).Compare)(other);
     match(comp){
-      case Ordering.Less() => {
+      case Ordering.Less => {
         return true;
       }
-      case Ordering.Equivalent() => {
+      case Ordering.Equivalent => {
         return true;
       }
     }
@@ -284,7 +284,7 @@ impl i32 as GreaterWith(Self) {
   fn Greater[self: Self](other: Self) -> bool {
     var comp: Ordering =  self.(CompareWith(i32).Compare)(other);
     match(comp){
-      case Ordering.Greater() => {
+      case Ordering.Greater => {
         return true;
       }
     }
@@ -296,7 +296,7 @@ impl String as GreaterWith(Self) {
   fn Greater[self: Self](other: Self) -> bool {
     var comp: Ordering =  self.(CompareWith(String).Compare)(other);
     match(comp){
-      case Ordering.Greater() => {
+      case Ordering.Greater => {
         return true;
       }
     }
@@ -308,10 +308,10 @@ impl i32 as GreaterEqWith(Self) {
   fn GreaterEq[self: Self](other: Self) -> bool {
     var comp: Ordering =  self.(CompareWith(i32).Compare)(other);
     match(comp){
-      case Ordering.Greater() => {
+      case Ordering.Greater => {
         return true;
       }
-      case Ordering.Equivalent() => {
+      case Ordering.Equivalent => {
         return true;
       }
     }
@@ -323,10 +323,10 @@ impl String as GreaterEqWith(Self) {
   fn GreaterEq[self: Self](other: Self) -> bool {
     var comp: Ordering =  self.(CompareWith(String).Compare)(other);
     match(comp){
-      case Ordering.Greater() => {
+      case Ordering.Greater => {
         return true;
       }
-      case Ordering.Equivalent() => {
+      case Ordering.Equivalent => {
         return true;
       }
     }
@@ -663,43 +663,6 @@ impl i32 as Dec {
   }
 }
 
-//-------------------------
-// Optional
-//-------------------------
-choice OptionalElement(T:! type) {
-  None(),
-  Element(T)
-}
-
-class Optional(T:! type) {
-  fn CreateEmpty() -> Optional(T) {
-    return {.element = OptionalElement(T).None()};
-  }
-  fn Create(value: T) -> Optional(T) {
-    return {.element = OptionalElement(T).Element(value)};
-  }
-
-  fn HasValue[self: Self]() -> bool {
-    match(self.element) {
-      case OptionalElement(T).None() => { return false; }
-    }
-    return true;
-  }
-
-  fn Get[self: Self]() -> T {
-    var y: T;
-    match(self.element) {
-      case OptionalElement(T).Element(x: T) => {
-        return x;
-      }
-    }
-    // TODO: Use assert as soon as available
-    return y;
-  }
-
-  var element: OptionalElement(T);
-}
-
 // ------------------------
 // Miscellaneous utilities.
 // ------------------------
@@ -718,6 +681,48 @@ fn Assert(condition: bool, message: String){
 fn Rand(low: i32, high: i32) -> i32{
     return __intrinsic_rand(low,high);
 }
+
+//-------------------------
+// Optional.
+//-------------------------
+choice OptionalElement(T:! type) {
+  None,
+  Element(T)
+}
+
+class Optional(T:! type) {
+  fn CreateEmpty() -> Optional(T) {
+    return {.element = OptionalElement(T).None};
+  }
+  fn Create(value: T) -> Optional(T) {
+    return {.element = OptionalElement(T).Element(value)};
+  }
+
+  fn HasValue[self: Self]() -> bool {
+    match(self.element) {
+      case OptionalElement(T).None => { return false; }
+    }
+    return true;
+  }
+
+  fn Get[self: Self]() -> T {
+    match(self.element) {
+      case OptionalElement(T).Element(x: T) => {
+        return x;
+      }
+    }
+    Assert(false, "Attempted to unwrap empty Optional");
+    // TODO: Drop uninitialized variable & return when we can flag unreachable paths.
+    var y: T;
+    return y;
+  }
+
+  var element: OptionalElement(T);
+}
+
+//-------------------------
+// Heap.
+//-------------------------
 
 class Heap {
   fn New[T:! type, self: Self](x : T) -> T* {

@@ -15,7 +15,17 @@ import os
 from pathlib import Path
 import re
 import subprocess
-from typing import Any, Dict, List, NamedTuple, Optional, Pattern, Set, Tuple
+from typing import (
+    Any,
+    Dict,
+    List,
+    Match,
+    NamedTuple,
+    Optional,
+    Pattern,
+    Set,
+    Tuple,
+)
 
 # A prefix followed by a command to run for autoupdating checked output.
 AUTOUPDATE_MARKER = "// AUTOUPDATE"
@@ -48,7 +58,7 @@ class ParsedArgs(NamedTuple):
     autoupdate_args: List[str]
     build_mode: str
     extra_check_replacements: List[Tuple[Pattern, Pattern, str]]
-    line_number_format: str
+    line_number_delta_prefix: str
     line_number_pattern: Pattern
     lit_run: List[str]
     testdata: str
@@ -83,17 +93,20 @@ def parse_args() -> ParsedArgs:
         "BEFORE with AFTER.",
     )
     parser.add_argument(
-        "--line_number_format",
-        metavar="FORMAT",
-        default="[[@LINE%(delta)s]]",
-        help="An optional format string for line number delta replacements.",
+        "--line_number_delta_prefix",
+        metavar="PREFIX",
+        default="",
+        help="An optional prefix to add before the [[@LINE+delta]] marker.",
     )
     parser.add_argument(
         "--line_number_pattern",
         metavar="PATTERN",
-        required=True,
+        default=r"(?P<prefix>/(?P<filename>\w+\.carbon):)"
+        r"(?P<line>\d+)(?P<suffix>(?:\D|$))",
         help="A regular expression which matches line numbers to update as its "
-        "only group.",
+        "only group. Capture groups 'prefix', 'line', and 'suffix' are "
+        "required for structure. The 'filename' capture group is optional and "
+        "should be provided when lines may belong to different files.",
     )
     parser.add_argument(
         "--lit_run",
@@ -125,7 +138,7 @@ def parse_args() -> ParsedArgs:
         autoupdate_args=parsed_args.autoupdate_arg,
         build_mode=parsed_args.build_mode,
         extra_check_replacements=extra_check_replacements,
-        line_number_format=parsed_args.line_number_format,
+        line_number_delta_prefix=parsed_args.line_number_delta_prefix,
         line_number_pattern=re.compile(parsed_args.line_number_pattern),
         lit_run=parsed_args.lit_run,
         testdata=parsed_args.testdata,
@@ -190,18 +203,25 @@ class CheckLine(Line):
 
     def __init__(
         self,
+        test: str,
         out_line: str,
-        line_number_format: str,
+        line_number_delta_prefix: str,
         line_number_pattern: Pattern,
     ) -> None:
         super().__init__()
+        self.filename = Path(test).name
         self.indent = ""
         self.out_line = out_line.rstrip()
-        self.line_number_format = line_number_format
+        self.line_number_delta_prefix = line_number_delta_prefix
         self.line_number_pattern = line_number_pattern
-        self.line_numbers = [
-            int(n) - 1 for n in line_number_pattern.findall(self.out_line)
-        ]
+
+        # If any match is specific to this file, use the first matched line for
+        # the location of the CHECK comment.
+        self.line_in_file = None
+        for match in line_number_pattern.finditer(self.out_line):
+            if self._matches_filename(match):
+                self.line_in_file = int(match.group("line")) - 1
+                break
 
     def format(
         self, *, output_line_number: int, line_number_remap: Dict[int, int]
@@ -209,15 +229,34 @@ class CheckLine(Line):
         if not self.out_line:
             return f"{self.indent}// CHECK-EMPTY:\n"
         result = self.out_line
-        for line_number in self.line_numbers:
-            delta = line_number_remap[line_number] - output_line_number
-            # We use `:+d` here to produce `LINE-n` or `LINE+n` as appropriate.
-            result = self.line_number_pattern.sub(
-                self.line_number_format % {"delta": f"{delta:+d}"},
-                result,
-                count=1,
-            )
+        while True:
+            match = self.line_number_pattern.search(result)
+            if not match:
+                break
+            if self._matches_filename(match):
+                line_number = int(match.group("line")) - 1
+                delta = line_number_remap[line_number] - output_line_number
+                # We use `:+d` here to produce `LINE-n` or `LINE+n` as
+                # appropriate.
+                result = self.line_number_pattern.sub(
+                    rf"\g<prefix>{self.line_number_delta_prefix}"
+                    rf"[[@LINE{delta:+d}]]\g<suffix>",
+                    result,
+                    count=1,
+                )
+            else:
+                result = self.line_number_pattern.sub(
+                    r"\g<prefix>{{.*}}\g<suffix>",
+                    result,
+                    count=1,
+                )
         return f"{self.indent}// CHECK:{result}\n"
+
+    def _matches_filename(self, match: Match) -> bool:
+        return (
+            "filename" not in match.groupdict()
+            or match.group("filename") == self.filename
+        )
 
 
 def find_autoupdate(test: str, orig_lines: List[str]) -> Optional[int]:
@@ -257,19 +296,20 @@ def get_matchable_test_output(
     autoupdate_args: List[str],
     extra_check_replacements: List[Tuple[Pattern, Pattern, str]],
     tool: str,
+    bazel_runfiles: Pattern,
     llvm_symbolizer: str,
     test: str,
 ) -> List[str]:
     """Runs the autoupdate command and returns the output lines."""
     # Run the autoupdate command to generate output.
     # (`bazel run` would serialize)
-    p = subprocess.run(
+    out = subprocess.run(
         tools[tool].autoupdate_cmd + autoupdate_args + [test],
         env={"LLVM_SYMBOLIZER_PATH": llvm_symbolizer},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-    )
-    out = p.stdout.decode("utf-8")
+        encoding="utf-8",
+    ).stdout
 
     # `lit` uses full paths to the test file, so use a regex to ignore paths
     # when used.
@@ -283,6 +323,9 @@ def get_matchable_test_output(
             (test, f"{{{{.*}}}}/{test}"),
         ],
     )
+    # Replacing runfiles is a more complex replacement.
+    # We have some things show up under runfiles; this removes them.
+    out = bazel_runfiles.sub("{{.*}}/", out)
     out_lines = out.splitlines()
 
     for i, line in enumerate(out_lines):
@@ -300,7 +343,7 @@ def is_replaced(line: str) -> bool:
 
 
 def merge_lines(
-    line_number_format: str,
+    line_number_delta_prefix: str,
     line_number_pattern: Pattern,
     lit_run: List[str],
     test: str,
@@ -315,7 +358,7 @@ def merge_lines(
         if not is_replaced(line)
     ]
     check_lines = [
-        CheckLine(out_line, line_number_format, line_number_pattern)
+        CheckLine(test, out_line, line_number_delta_prefix, line_number_pattern)
         for out_line in out_lines
     ]
 
@@ -332,8 +375,8 @@ def merge_lines(
     while orig_lines and check_lines:
         # Original lines go first when the CHECK line is known and later.
         if (
-            check_lines[0].line_numbers
-            and check_lines[0].line_numbers[0] > orig_lines[0].line_number
+            check_lines[0].line_in_file is not None
+            and check_lines[0].line_in_file > orig_lines[0].line_number
         ):
             result_lines.append(orig_lines.pop(0))
         else:
@@ -349,7 +392,10 @@ def merge_lines(
 
 
 def update_check(
-    parsed_args: ParsedArgs, llvm_symbolizer: str, test: Path
+    parsed_args: ParsedArgs,
+    bazel_runfiles: Pattern,
+    llvm_symbolizer: str,
+    test: Path,
 ) -> bool:
     """Updates the CHECK: lines for `test` by running the tool.
 
@@ -368,11 +414,12 @@ def update_check(
         parsed_args.autoupdate_args,
         parsed_args.extra_check_replacements,
         parsed_args.tool,
+        bazel_runfiles,
         llvm_symbolizer,
         str(test),
     )
     result_lines = merge_lines(
-        parsed_args.line_number_format,
+        parsed_args.line_number_delta_prefix,
         parsed_args.line_number_pattern,
         parsed_args.lit_run,
         str(test),
@@ -411,13 +458,18 @@ def update_check(
 
 
 def update_checks(
-    parsed_args: ParsedArgs, llvm_symbolizer: str, tests: Set[Path]
+    parsed_args: ParsedArgs,
+    bazel_runfiles: Pattern,
+    llvm_symbolizer: str,
+    tests: Set[Path],
 ) -> None:
     """Updates CHECK: lines in lit tests."""
 
     def map_helper(test: Path) -> bool:
         try:
-            updated = update_check(parsed_args, llvm_symbolizer, test)
+            updated = update_check(
+                parsed_args, bazel_runfiles, llvm_symbolizer, test
+            )
         except Exception as e:
             raise ValueError(f"Failed to update {test}") from e
         print(".", end="", flush=True)
@@ -444,7 +496,9 @@ def main() -> None:
     if parsed_args.tests:
         tests = {test.relative_to(root) for test in parsed_args.tests}
     else:
-        print("HINT: run `update_checks.py f1 f2 ...` to update specific tests")
+        print(
+            "HINT: run `lit_autoupdate.py f1 f2 ...` to update specific tests"
+        )
         tests = get_tests(parsed_args.testdata)
 
     # Build inputs.
@@ -459,6 +513,13 @@ def main() -> None:
             tools[parsed_args.tool].build_target,
         ]
     )
+    bazel_bin_dir = subprocess.check_output(
+        ["bazel", "info", "-c", parsed_args.build_mode, "bazel-bin"],
+        encoding="utf-8",
+    ).strip()
+    bazel_runfiles = re.compile(
+        r"{0}/.*\.runfiles/carbon/".format(re.escape(bazel_bin_dir))
+    )
 
     # Grab the symbolizer.
     clang_var_content = Path(
@@ -471,7 +532,7 @@ def main() -> None:
     assert llvm_symbolizer is not None
 
     # Run updates.
-    update_checks(parsed_args, llvm_symbolizer[1], tests)
+    update_checks(parsed_args, bazel_runfiles, llvm_symbolizer[1], tests)
 
 
 if __name__ == "__main__":

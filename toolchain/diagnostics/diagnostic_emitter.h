@@ -60,7 +60,7 @@ struct DiagnosticLocation {
 // A message composing a diagnostic. This may be the main message, but can also
 // be notes providing more information.
 struct DiagnosticMessage {
-  DiagnosticMessage(
+  explicit DiagnosticMessage(
       DiagnosticKind kind, DiagnosticLocation location,
       llvm::StringLiteral format, llvm::SmallVector<llvm::Any, 0> format_args,
       std::function<std::string(const DiagnosticMessage&)> format_fn)
@@ -150,8 +150,8 @@ namespace Internal {
 // This stores static information about a diagnostic category.
 template <typename... Args>
 struct DiagnosticBase {
-  constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
-                           llvm::StringLiteral format)
+  explicit constexpr DiagnosticBase(DiagnosticKind kind, DiagnosticLevel level,
+                                    llvm::StringLiteral format)
       : Kind(kind), Level(level), Format(format) {}
 
   // Calls formatv with the diagnostic's arguments.

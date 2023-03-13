@@ -9,16 +9,17 @@
 // CHECK:STDOUT: DESTRUCTOR A
 // CHECK:STDOUT: Delete A
 // CHECK:STDOUT: DESTRUCTOR A
+// CHECK:STDOUT: Return
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 
-base class A{
+class A{
     fn Create() -> A {
         return {};
     }
-    virtual destructor[self: Self] {
+    destructor[self: Self] {
         Print("DESTRUCTOR A");
     }
 }
@@ -30,5 +31,6 @@ fn Main() -> i32 {
   Print("Delete A");
   heap.Delete(pa);
 
+  Print("Return");
   return 0;
 }

@@ -25,7 +25,6 @@ def main() -> None:
         # Flags to configure for explorer testing.
         "--tool=explorer",
         "--testdata=explorer/testdata",
-        r"--line_number_pattern=(?<=\.carbon:)(\d+)(?=(?:\D|$))",
         "--lit_run=%{explorer-run}",
         "--lit_run=%{explorer-run-trace}",
     ] + sys.argv[1:]

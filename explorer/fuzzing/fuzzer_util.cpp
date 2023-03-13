@@ -10,6 +10,7 @@
 #include "common/error.h"
 #include "common/fuzzing/proto_to_carbon.h"
 #include "explorer/interpreter/exec_program.h"
+#include "explorer/interpreter/trace_stream.h"
 #include "explorer/syntax/parse.h"
 #include "explorer/syntax/prelude.h"
 #include "llvm/Support/FileSystem.h"
@@ -64,7 +65,7 @@ auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
       compilation_unit.declarations().end(),
       [](const Fuzzing::Declaration& decl) {
         return decl.kind_case() == Fuzzing::Declaration::kFunction &&
-               decl.function().name() == "Main";
+               decl.function().name().name() == "Main";
       });
   return Carbon::ProtoToCarbon(compilation_unit) + (has_main ? "" : EmptyMain);
 }
@@ -82,10 +83,11 @@ auto ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit)
   // Can't do anything without a prelude, so it's a fatal error.
   CARBON_CHECK(prelude_path.ok()) << prelude_path.error();
 
-  AddPrelude(*prelude_path, &arena, &ast.declarations);
-  CARBON_ASSIGN_OR_RETURN(
-      ast, AnalyzeProgram(&arena, ast, /*trace_stream=*/std::nullopt));
-  return ExecProgram(&arena, ast, /*trace_stream=*/std::nullopt);
+  AddPrelude(*prelude_path, &arena, &ast.declarations,
+             &ast.num_prelude_declarations);
+  TraceStream trace_stream;
+  CARBON_ASSIGN_OR_RETURN(ast, AnalyzeProgram(&arena, ast, &trace_stream));
+  return ExecProgram(&arena, ast, &trace_stream);
 }
 
 }  // namespace Carbon

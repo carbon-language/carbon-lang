@@ -96,6 +96,7 @@ MINUS_EQUAL           "-="
 MINUS_MINUS           "--"
 MIX                   "__mix"
 MIXIN                 "__mixin"
+NAMESPACE             "namespace"
 NOT                   "not"
 NOT_EQUAL             "!="
 OR                    "or"
@@ -217,6 +218,7 @@ operand_start         [(A-Za-z0-9_\"]
 {MINUS}                 { return CARBON_SIMPLE_TOKEN(MINUS);                 }
 {MIXIN}                 { return CARBON_SIMPLE_TOKEN(MIXIN);                 }
 {MIX}                   { return CARBON_SIMPLE_TOKEN(MIX);                   }
+{NAMESPACE}             { return CARBON_SIMPLE_TOKEN(NAMESPACE);             }
 {NOT_EQUAL}             { return CARBON_SIMPLE_TOKEN(NOT_EQUAL);             }
 {NOT}                   { return CARBON_SIMPLE_TOKEN(NOT);                   }
 {OR}                    { return CARBON_SIMPLE_TOKEN(OR);                    }

@@ -40,5 +40,5 @@ inheritance, we handle these cases using a form of type erasure: we specify a
 notional interface that those types conform to, and then define a "view" class
 that behaves like a pointer to an instance of that interface. Types declare that
 they model an interface `Foo` by defining a public static member named
-`ImplementsCarbonFoo`. See [ValueNodeView](static_scope.h) for an example of
-this pattern.
+`ImplementsCarbonFoo`. See [ValueNodeView](value_node.h) for an example of this
+pattern.

@@ -14,10 +14,10 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/statement.h"
+#include "explorer/ast/value.h"
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/heap_allocation_interface.h"
 #include "explorer/interpreter/stack.h"
-#include "explorer/interpreter/value.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Support/Compiler.h"
 
@@ -41,8 +41,6 @@ class RuntimeScope {
   // Moving a RuntimeScope transfers ownership of its allocations.
   RuntimeScope(RuntimeScope&&) noexcept;
   auto operator=(RuntimeScope&&) noexcept -> RuntimeScope&;
-
-  ~RuntimeScope() = default;
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }

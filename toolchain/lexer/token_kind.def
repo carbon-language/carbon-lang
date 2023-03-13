@@ -2,25 +2,28 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Note that this is an X-macro header.
+// This is an X-macro header. It does not use `#include` guards, and instead is
+// designed to be `#include`ed after the x-macro is defined in order for its
+// inclusion to expand to the desired output. Macro definitions are cleaned up
+// at the end of this file.
 //
-// It does not use `#include` guards, and instead is designed to be `#include`ed
-// after some set of x-macros are defined in order for its inclusion to expand
-// to the desired output.
+// Supported x-macros are:
+// - CARBON_TOKEN(Name)
+//   Defines a token. Used directly when a token needs custom parsing, such as
+//   integer literals.
+//   - CARBON_SYMBOL_TOKEN(Name, Spelling)
+//     Defines a symbol which has the provided spelling, such as `*`. Spellings
+//     must be unique.
+//     - CARBON_OPENING_GROUP_SYMBOL_TOKEN(Name, Spelling, ClosingName)
+//     - CARBON_CLOSING_GROUP_SYMBOL_TOKEN(Name, Spelling, OpeningName)
+//       These two macros together define matches opening and closing symbols,
+//       such as `(` and `)`, and create an association between the two.
+//   - CARBON_KEYWORD_TOKEN(Name, Spelling)
+//     Defines a keyword which has the provided spelling, such as `if`.
+//     Spellings must be unique.
 //
-// The viable X-macros to define prior to including the header are:
-//
-// - `CARBON_TOKEN`
-//   - `CARBON_SYMBOL_TOKEN`
-//     - `CARBON_OPENING_GROUP_SYMBOL_TOKEN`
-//     - `CARBON_CLOSING_GROUP_SYMBOL_TOKEN`
-//   - `CARBON_KEYWORD_TOKEN`
-//
-// This tree represents the subset relationship between these macros.
-//
-// Regardless of which of these macros is defined prior to inclusion, all of the
-// definitions will be removed at the end of including this file to clean up the
-// set of defined macros.
+// This tree represents the subset relationship between these macros, where if a
+// specific x-macro isn't defined, it'll fall back to the parent macro.
 
 #ifndef CARBON_TOKEN
 #define CARBON_TOKEN(Name)
@@ -156,6 +159,8 @@ CARBON_KEYWORD_TOKEN(Return,        "return")
 CARBON_KEYWORD_TOKEN(Returned,      "returned")
 CARBON_KEYWORD_TOKEN(SelfParameter, "self")
 CARBON_KEYWORD_TOKEN(SelfType,      "Self")
+// TODO: Although we provide a String type literal, it's not standardized.
+CARBON_KEYWORD_TOKEN(StringTypeLiteral, "String")
 CARBON_KEYWORD_TOKEN(Then,          "then")
 // Underscore is tokenized as a keyword because it's part of identifiers.
 CARBON_KEYWORD_TOKEN(Underscore,    "_")

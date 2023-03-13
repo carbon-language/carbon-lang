@@ -22,7 +22,9 @@ TEST(FuzzerUtilTest, ParseAndExecute) {
       is_api: true
       declarations {
         function {
-          name: "Main"
+          name {
+            name: "Main"
+          }
           param_pattern {}
           return_term {
             kind: Expression
@@ -58,15 +60,18 @@ TEST(FuzzerUtilTest, ParseCarbonTextProtoWithUnknownField) {
       garbage: "value"
       declarations {
         choice {
-          name: "Ch"
+          name {
+            name: "Ch"
+          }
         }
       }
     })",
                            /*allow_unknown=*/true);
   ASSERT_TRUE(carbon_proto.ok());
   // No EqualsProto in gmock - https://github.com/google/googletest/issues/1761.
-  EXPECT_EQ(carbon_proto->compilation_unit().declarations(0).choice().name(),
-            "Ch");
+  EXPECT_EQ(
+      carbon_proto->compilation_unit().declarations(0).choice().name().name(),
+      "Ch");
 }
 
 }  // namespace
