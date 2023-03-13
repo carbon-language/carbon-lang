@@ -8,6 +8,7 @@
 #include <optional>
 
 #include "explorer/ast/pattern.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
@@ -340,9 +341,11 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::ContinuationTypeLiteral:
       out << "Continuation";
       break;
+    case ExpressionKind::FunctionTypeLiteral:
+    case ExpressionKind::StructLiteral:
+    case ExpressionKind::ArrayTypeLiteral:
     case ExpressionKind::ValueLiteral:
-      // TODO: For layering reasons, we can't print out the value from here.
-      out << "ValueLiteral";
+      out << cast<ConstantValueLiteral>(*this).constant_value();
       break;
     case ExpressionKind::IndexExpression:
     case ExpressionKind::SimpleMemberAccessExpression:
@@ -352,14 +355,11 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
     case ExpressionKind::WhereExpression:
     case ExpressionKind::BuiltinConvertExpression:
     case ExpressionKind::TupleLiteral:
-    case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
     case ExpressionKind::CallExpression:
     case ExpressionKind::OperatorExpression:
     case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::UnimplementedExpression:
-    case ExpressionKind::FunctionTypeLiteral:
-    case ExpressionKind::ArrayTypeLiteral:
       out << "...";
       break;
   }

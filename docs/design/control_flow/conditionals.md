@@ -65,7 +65,7 @@ This code will:
     -   When `False`, evaluate `fruit.IsOrange()`:
         -   When `True`, print `Orange!` and resume execution at `fruit.Eat()`.
         -   When `False`, evaluate `fruit.IsGreen()`:
-            -   When `True`, print `Orange!` and resume execution at
+            -   When `True`, print `Apple!` and resume execution at
                 `fruit.Eat()`.
             -   When `False`, print `Vegetable!` and resume execution at
                 `fruit.Eat()`.

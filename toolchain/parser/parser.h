@@ -44,12 +44,10 @@ class Parser {
   enum class BraceExpressionKind { Unknown, Value, Type };
 
   // Supported kinds for HandlePattern.
-  enum class PatternKind { Parameter, Variable };
+  enum class PatternKind { DeducedParameter, Parameter, Variable };
 
-  // Gives information about the language construct/context being parsed. For
-  // now, a simple enum but can be extended later to provide more information as
-  // necessary.
-  enum class ParseContext {
+  // Supported return values for GetDeclarationContext.
+  enum class DeclarationContext {
     File,  // Top-level context.
     Interface,
   };
@@ -258,6 +256,23 @@ class Parser {
         << "Excessive stack size: likely infinite loop";
   }
 
+  // Returns the current declaration context according to state_stack_.
+  // This is expected to be called in cases which are close to a context.
+  // Although it looks like it could be O(n) for state_stack_'s depth, valid
+  // parses should only need to look down a couple steps.
+  auto GetDeclarationContext() -> DeclarationContext;
+
+  // Handles error recovery in a declaration, particularly before any possible
+  // definition has started (although one could be present). Recover to a
+  // semicolon when it makes sense as a possible end, otherwise use the
+  // introducer token for the error.
+  auto HandleDeclarationError(StateStackEntry state,
+                              ParseNodeKind parse_node_kind,
+                              bool skip_past_likely_end) -> void;
+
+  // Handles an unrecognized declaration, adding an error node.
+  auto HandleUnrecognizedDeclaration() -> void;
+
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
@@ -288,12 +303,6 @@ class Parser {
   // Handles DesignatorAs.
   auto HandleDesignator(bool as_struct) -> void;
 
-  // When handling errors before the start of the definition, treat it as a
-  // declaration. Recover to a semicolon when it makes sense as a possible
-  // function end, otherwise use the fn token for the error.
-  auto HandleFunctionError(StateStackEntry state, bool skip_past_likely_end)
-      -> void;
-
   // Handles ParenConditionAs(If|While)
   auto HandleParenCondition(ParseNodeKind start_kind, ParserState finish_state)
       -> void;
@@ -301,7 +310,7 @@ class Parser {
   // Handles ParenExpressionParameterFinishAs(Unknown|Tuple).
   auto HandleParenExpressionParameterFinish(bool as_tuple) -> void;
 
-  // Handles PatternAs(FunctionParameter|Variable).
+  // Handles PatternAs(DeducedParameter|FunctionParameter|Variable).
   auto HandlePattern(PatternKind pattern_kind) -> void;
 
   // Handles the `;` after a keyword statement.
@@ -328,8 +337,6 @@ class Parser {
   TokenizedBuffer::TokenIterator end_;
 
   llvm::SmallVector<StateStackEntry> state_stack_;
-  // TODO: This can be a mini-stack of contexts rather than a simple variable.
-  ParseContext stack_context_;
 };
 
 }  // namespace Carbon

@@ -21,6 +21,8 @@
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/value.h"
+#include "explorer/ast/value_transform.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/common/nonnull.h"
@@ -28,8 +30,6 @@
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
-#include "explorer/interpreter/value.h"
-#include "explorer/interpreter/value_transform.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
@@ -4055,11 +4055,9 @@ auto TypeChecker::TypeCheckPattern(
     }
     case PatternKind::AlternativePattern: {
       auto& alternative = cast<AlternativePattern>(*p);
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckExp(&alternative.choice_type(), impl_scope));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type,
-          InterpExp(&alternative.choice_type(), arena_, trace_stream_));
+          TypeCheckTypeExp(&alternative.choice_type(), impl_scope));
       if (!isa<ChoiceType>(type)) {
         return ProgramError(alternative.source_loc())
                << "alternative pattern does not name a choice type.";

@@ -9,9 +9,9 @@
 
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/interpreter/impl_scope.h"
-#include "explorer/interpreter/value.h"
 #include "llvm/ADT/DenseMap.h"
 
 namespace Carbon {

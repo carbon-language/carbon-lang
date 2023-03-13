@@ -576,21 +576,27 @@ auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
   return true;
 }
 
-auto SemanticsParseTreeHandler::HandleInterfaceBody(ParseTree::Node parse_node)
-    -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleInterfaceBody");
-  return false;
-}
-
-auto SemanticsParseTreeHandler::HandleInterfaceBodyStart(
+auto SemanticsParseTreeHandler::HandleInterfaceDeclaration(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleInterfaceBodyStart");
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleInterfaceDeclaration");
   return false;
 }
 
 auto SemanticsParseTreeHandler::HandleInterfaceDefinition(
     ParseTree::Node parse_node) -> bool {
   emitter_->Emit(parse_node, SemanticsTodo, "HandleInterfaceDefinition");
+  return false;
+}
+
+auto SemanticsParseTreeHandler::HandleInterfaceDefinitionStart(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleInterfaceDefinitionStart");
+  return false;
+}
+
+auto SemanticsParseTreeHandler::HandleInterfaceIntroducer(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleInterfaceIntroducer");
   return false;
 }
 

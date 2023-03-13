@@ -5,11 +5,11 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "explorer/ast/declaration.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
 #include "explorer/interpreter/type_checker.h"
-#include "explorer/interpreter/value.h"
 
 namespace Carbon {
 

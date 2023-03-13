@@ -28,9 +28,6 @@ CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "Expected `(` after `{0}`.",
 CARBON_DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
                   "Expected `;` after expression.");
 
-CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
-                  "Unrecognized declaration introducer.");
-
 // A relative location for characters in errors.
 enum class RelativeLocation : int8_t {
   Around,
@@ -91,8 +88,7 @@ Parser::Parser(ParseTree& tree, TokenizedBuffer& tokens,
       emitter_(&emitter),
       vlog_stream_(vlog_stream),
       position_(tokens_->tokens().begin()),
-      end_(tokens_->tokens().end()),
-      stack_context_(ParseContext::File) {
+      end_(tokens_->tokens().end()) {
   CARBON_CHECK(position_ != end_) << "Empty TokenizedBuffer";
   --end_;
   CARBON_CHECK(tokens_->GetKind(*end_) == TokenKind::EndOfFile)
@@ -451,6 +447,46 @@ auto Parser::Parse() -> void {
   AddLeafNode(ParseNodeKind::FileEnd, *position_);
 }
 
+auto Parser::GetDeclarationContext() -> DeclarationContext {
+  for (auto entry : llvm::reverse(state_stack_)) {
+    switch (entry.state) {
+      case ParserState::InterfaceDefinitionLoop:
+        return DeclarationContext::Interface;
+      case ParserState::DeclarationLoop:
+        return DeclarationContext::File;
+      default:
+        // Continue checking.
+        break;
+    }
+  }
+  llvm_unreachable("Should always be able to find DeclarationLoop");
+}
+
+auto Parser::HandleDeclarationError(StateStackEntry state,
+                                    ParseNodeKind parse_node_kind,
+                                    bool skip_past_likely_end) -> void {
+  auto token = state.token;
+  if (skip_past_likely_end) {
+    if (auto semi = SkipPastLikelyEnd(token)) {
+      token = *semi;
+    }
+  }
+  AddNode(parse_node_kind, token, state.subtree_start,
+          /*has_error=*/true);
+}
+
+auto Parser::HandleUnrecognizedDeclaration() -> void {
+  CARBON_DIAGNOSTIC(UnrecognizedDeclaration, Error,
+                    "Unrecognized declaration introducer.");
+  emitter_->Emit(*position_, UnrecognizedDeclaration);
+  auto cursor = *position_;
+  auto semi = SkipPastLikelyEnd(cursor);
+  // Locate the EmptyDeclaration at the semi when found, but use the
+  // original cursor location for an error when not.
+  AddLeafNode(ParseNodeKind::EmptyDeclaration, semi ? *semi : cursor,
+              /*has_error=*/true);
+}
+
 auto Parser::HandleBraceExpressionState() -> void {
   auto state = PopState();
 
@@ -717,7 +753,6 @@ auto Parser::HandleDeclarationLoopState() -> void {
     }
     case TokenKind::Fn: {
       PushState(ParserState::FunctionIntroducer);
-      AddLeafNode(ParseNodeKind::FunctionIntroducer, Consume());
       break;
     }
     case TokenKind::Package: {
@@ -734,29 +769,41 @@ auto Parser::HandleDeclarationLoopState() -> void {
     }
     case TokenKind::Interface: {
       PushState(ParserState::InterfaceIntroducer);
-      ++position_;
       break;
     }
     default: {
-      emitter_->Emit(*position_, UnrecognizedDeclaration);
-      auto cursor = *position_;
-      auto semi = SkipPastLikelyEnd(cursor);
-      // Locate the EmptyDeclaration at the semi when found, but use the
-      // original cursor location for an error when not.
-      AddLeafNode(ParseNodeKind::EmptyDeclaration, semi ? *semi : cursor,
-                  /*has_error=*/true);
+      HandleUnrecognizedDeclaration();
       break;
     }
+  }
+}
+
+auto Parser::HandleDeducedParameterState() -> void {
+  PopAndDiscardState();
+
+  PushState(ParserState::DeducedParameterFinish);
+  PushState(ParserState::PatternAsDeducedParameter);
+}
+
+auto Parser::HandleDeducedParameterFinishState() -> void {
+  auto state = PopState();
+
+  if (state.has_error) {
+    ReturnErrorOnState();
+  }
+
+  if (ConsumeListToken(ParseNodeKind::ParameterListComma,
+                       TokenKind::CloseSquareBracket,
+                       state.has_error) == ListTokenKind::Comma) {
+    PushState(ParserState::DeducedParameter);
   }
 }
 
 auto Parser::HandleDeducedParameterListFinishState() -> void {
   auto state = PopState();
 
-  CARBON_CHECK(tokens_->GetKind(*position_) == TokenKind::CloseSquareBracket)
-      << "Expected current token to be: `]`, found: "
-      << tokens_->GetKind(state.token);
-  AddNode(ParseNodeKind::DeducedParameterList, Consume(), state.subtree_start,
+  AddNode(ParseNodeKind::DeducedParameterList,
+          ConsumeChecked(TokenKind::CloseSquareBracket), state.subtree_start,
           state.has_error);
 }
 
@@ -1003,20 +1050,10 @@ auto Parser::HandleExpressionStatementFinishState() -> void {
   ReturnErrorOnState();
 }
 
-auto Parser::HandleFunctionError(StateStackEntry state,
-                                 bool skip_past_likely_end) -> void {
-  auto token = state.token;
-  if (skip_past_likely_end) {
-    if (auto semi = SkipPastLikelyEnd(token)) {
-      token = *semi;
-    }
-  }
-  AddNode(ParseNodeKind::FunctionDeclaration, token, state.subtree_start,
-          /*has_error=*/true);
-}
-
 auto Parser::HandleFunctionIntroducerState() -> void {
   auto state = PopState();
+
+  AddLeafNode(ParseNodeKind::FunctionIntroducer, Consume());
 
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
                                ParseNodeKind::DeclaredName)) {
@@ -1026,29 +1063,26 @@ auto Parser::HandleFunctionIntroducerState() -> void {
     // TODO: We could change the lexer to allow us to synthesize certain
     // kinds of tokens and try to "recover" here, but unclear that this is
     // really useful.
-    HandleFunctionError(state, true);
+    HandleDeclarationError(state, ParseNodeKind::FunctionDeclaration,
+                           /*skip_past_likely_end=*/true);
     return;
   }
 
+  // Proceed to the same state regardless of whether there's a deduced
+  // parameter list.
   state.state = ParserState::FunctionAfterDeducedParameterList;
   PushState(state);
 
-  // If there are deduced params handle them next.
-  if (PositionIs(TokenKind::OpenSquareBracket)) {
-    PushState(ParserState::DeducedParameterListFinish);
-    // This is for sure a `[`, we can safely create the corresponding node.
-    AddLeafNode(ParseNodeKind::DeducedParameterListStart, Consume());
-
-    if (PositionIs(TokenKind::CloseSquareBracket)) {
-      return;
-    }
-
-    // TODO: For now only `self` is supported. When other types of deduced
-    // parameters need to be added, we will probably need to push a more
-    // general state.
-    // Push state to handle `self`'s pattern binding.
-    PushState(ParserState::SelfPattern);
+  if (!PositionIs(TokenKind::OpenSquareBracket)) {
     return;
+  }
+
+  // Parse the deduced parameter list as its own subtree.
+  PushState(ParserState::DeducedParameterListFinish);
+  AddLeafNode(ParseNodeKind::DeducedParameterListStart, Consume());
+
+  if (!PositionIs(TokenKind::CloseSquareBracket)) {
+    PushState(ParserState::DeducedParameter);
   }
 }
 
@@ -1059,7 +1093,8 @@ auto Parser::HandleFunctionAfterDeducedParameterListState() -> void {
     CARBON_DIAGNOSTIC(ExpectedFunctionParams, Error,
                       "Expected `(` after function name.");
     emitter_->Emit(*position_, ExpectedFunctionParams);
-    HandleFunctionError(state, true);
+    HandleDeclarationError(state, ParseNodeKind::FunctionDeclaration,
+                           /*skip_past_likely_end=*/true);
     return;
   }
 
@@ -1135,12 +1170,13 @@ auto Parser::HandleFunctionSignatureFinishState() -> void {
       break;
     }
     case TokenKind::OpenCurlyBrace: {
-      if (stack_context_ == ParseContext::Interface) {
+      if (GetDeclarationContext() == DeclarationContext::Interface) {
         CARBON_DIAGNOSTIC(
             MethodImplNotAllowed, Error,
             "Method implementations are not allowed in interfaces.");
         emitter_->Emit(*position_, MethodImplNotAllowed);
-        HandleFunctionError(state, /*skip_past_likely_end=*/true);
+        HandleDeclarationError(state, ParseNodeKind::FunctionDeclaration,
+                               /*skip_past_likely_end=*/true);
         break;
       }
 
@@ -1161,7 +1197,8 @@ auto Parser::HandleFunctionSignatureFinishState() -> void {
       // Only need to skip if we've not already found a new line.
       bool skip_past_likely_end =
           tokens_->GetLine(*position_) == tokens_->GetLine(state.token);
-      HandleFunctionError(state, skip_past_likely_end);
+      HandleDeclarationError(state, ParseNodeKind::FunctionDeclaration,
+                             skip_past_likely_end);
       break;
     }
   }
@@ -1175,43 +1212,38 @@ auto Parser::HandleFunctionDefinitionFinishState() -> void {
 
 auto Parser::HandleInterfaceIntroducerState() -> void {
   auto state = PopState();
-  CARBON_CHECK(stack_context_ == ParseContext::File)
-      << "TODO: Support nesting.";
-  stack_context_ = ParseContext::Interface;
+
+  AddLeafNode(ParseNodeKind::InterfaceIntroducer, Consume());
 
   if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
                                ParseNodeKind::DeclaredName)) {
     CARBON_DIAGNOSTIC(ExpectedInterfaceName, Error,
                       "Expected interface name after `interface` keyword.");
     emitter_->Emit(*position_, ExpectedInterfaceName);
-    state.has_error = true;
-
-    // Add a name node even when it's not present because it's used for subtree
-    // bracketing on interfaces.
-    // TODO: Either fix this or normalize it, still deciding on the right
-    // approach.
-    AddLeafNode(ParseNodeKind::DeclaredName, state.token, /*has_error=*/true);
+    HandleDeclarationError(state, ParseNodeKind::InterfaceDeclaration,
+                           /*skip_past_likely_end=*/true);
+    return;
   }
 
-  bool parse_body = true;
+  if (auto semi = ConsumeIf(TokenKind::Semi)) {
+    AddNode(ParseNodeKind::InterfaceDeclaration, *semi, state.subtree_start,
+            state.has_error);
+    return;
+  }
 
   if (!PositionIs(TokenKind::OpenCurlyBrace)) {
     CARBON_DIAGNOSTIC(ExpectedInterfaceOpenCurlyBrace, Error,
                       "Expected `{{` to start interface definition.");
     emitter_->Emit(*position_, ExpectedInterfaceOpenCurlyBrace);
-    state.has_error = true;
-
-    SkipPastLikelyEnd(state.token);
-    parse_body = false;
+    HandleDeclarationError(state, ParseNodeKind::InterfaceDeclaration,
+                           /*skip_past_likely_end=*/true);
+    return;
   }
 
-  state.state = ParserState::InterfaceDefinitionFinish;
+  state.state = ParserState::InterfaceDefinitionLoop;
   PushState(state);
-
-  if (parse_body) {
-    PushState(ParserState::InterfaceDefinitionLoop);
-    AddLeafNode(ParseNodeKind::InterfaceBodyStart, Consume());
-  }
+  AddNode(ParseNodeKind::InterfaceDefinitionStart, Consume(),
+          state.subtree_start, state.has_error);
 }
 
 auto Parser::HandleInterfaceDefinitionLoopState() -> void {
@@ -1221,35 +1253,19 @@ auto Parser::HandleInterfaceDefinitionLoopState() -> void {
   switch (PositionKind()) {
     case TokenKind::CloseCurlyBrace: {
       auto state = PopState();
-
-      AddNode(ParseNodeKind::InterfaceBody, Consume(), state.subtree_start,
-              state.has_error);
-
+      AddNode(ParseNodeKind::InterfaceDefinition, Consume(),
+              state.subtree_start, state.has_error);
       break;
     }
     case TokenKind::Fn: {
       PushState(ParserState::FunctionIntroducer);
-      AddLeafNode(ParseNodeKind::FunctionIntroducer, Consume());
       break;
     }
     default: {
-      emitter_->Emit(*position_, UnrecognizedDeclaration);
-      if (auto semi = SkipPastLikelyEnd(*position_)) {
-        AddLeafNode(ParseNodeKind::EmptyDeclaration, *semi,
-                    /*has_error=*/true);
-      } else {
-        ReturnErrorOnState();
-      }
+      HandleUnrecognizedDeclaration();
       break;
     }
   }
-}
-
-auto Parser::HandleInterfaceDefinitionFinishState() -> void {
-  auto state = PopState();
-  AddNode(ParseNodeKind::InterfaceDefinition, state.token, state.subtree_start,
-          state.has_error);
-  stack_context_ = ParseContext::File;
 }
 
 auto Parser::HandlePackageState() -> void {
@@ -1436,13 +1452,26 @@ auto Parser::HandleParenExpressionFinishAsTupleState() -> void {
 auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
   auto state = PopState();
 
-  // Ensure the finish state always follows.
+  // Ensure the finish state always follows, including for errors.
   state.state = ParserState::PatternFinish;
 
+  // Parameters may have an `addr` keyword prefixing the pattern. This becomes
+  // the parent for the full PatternBinding.
+  if (pattern_kind != PatternKind::Variable) {
+    if (auto addr = ConsumeIf(TokenKind::Addr)) {
+      // Mirror information including subtree_size, but we need to change a copy
+      // to avoid affecting the token.
+      auto addr_state = state;
+      addr_state.state = ParserState::PatternAddress;
+      addr_state.token = *addr;
+      PushState(addr_state);
+    }
+  }
+
   // Handle an invalid pattern introducer for parameters and variables.
-  if (!PositionIs(TokenKind::Identifier) ||
-      tokens_->GetKind(*(position_ + 1)) != TokenKind::Colon) {
+  auto on_error = [&]() {
     switch (pattern_kind) {
+      case PatternKind::DeducedParameter:
       case PatternKind::Parameter: {
         CARBON_DIAGNOSTIC(ExpectedParameterName, Error,
                           "Expected parameter declaration.");
@@ -1458,16 +1487,36 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
     }
     state.has_error = true;
     PushState(state);
+  };
+
+  // The first item should be an identifier or, for deduced parameters, `self`.
+  if (auto identifier = ConsumeIf(TokenKind::Identifier)) {
+    AddLeafNode(ParseNodeKind::DeclaredName, *identifier);
+  } else if (pattern_kind == PatternKind::DeducedParameter) {
+    if (auto self = ConsumeIf(TokenKind::SelfParameter)) {
+      AddLeafNode(ParseNodeKind::SelfDeducedParameter, *self);
+    } else {
+      on_error();
+      return;
+    }
+  } else {
+    on_error();
     return;
   }
 
-  // Switch the context token to the colon, so that it'll be used for the root
-  // node.
-  state.token = *(position_ + 1);
-  PushState(state);
-  PushStateForExpression(PrecedenceGroup::ForType());
-  AddLeafNode(ParseNodeKind::DeclaredName, *position_);
-  position_ += 2;
+  if (auto colon = ConsumeIf(TokenKind::Colon)) {
+    // Use the colon for the root node.
+    state.token = *colon;
+    PushState(state);
+    PushStateForExpression(PrecedenceGroup::ForType());
+  } else {
+    on_error();
+    return;
+  }
+}
+
+auto Parser::HandlePatternAsDeducedParameterState() -> void {
+  HandlePattern(PatternKind::DeducedParameter);
 }
 
 auto Parser::HandlePatternAsFunctionParameterState() -> void {
@@ -1495,75 +1544,13 @@ auto Parser::HandlePatternFinishState() -> void {
 auto Parser::HandlePatternAddressState() -> void {
   auto state = PopState();
 
-  // If an error was encountered, propagate it without adding a node.
+  AddNode(ParseNodeKind::Address, state.token, state.subtree_start,
+          state.has_error);
+
+  // If an error was encountered, propagate it while adding a node.
   if (state.has_error) {
     ReturnErrorOnState();
-    return;
   }
-
-  AddNode(ParseNodeKind::Address, state.token, state.subtree_start,
-          /*has_error=*/false);
-}
-
-// TODO: This can possibly be merged with `HandlePattern`. Regular function
-// parameters support `addr` as well but it is not implemented yet.
-auto Parser::HandleSelfPatternState() -> void {
-  auto state = PopState();
-
-  // self `:` type
-  auto possible_self_param =
-      (PositionIs(TokenKind::SelfParameter) &&
-       tokens_->GetKind(*(position_ + 1)) == TokenKind::Colon);
-
-  if (possible_self_param) {
-    // Ensure the finish state always follows.
-    state.state = ParserState::PatternFinish;
-
-    // Switch the context token to the colon, so that it'll be used for the root
-    // node.
-    state.token = *(position_ + 1);
-    PushState(state);
-    PushStateForExpression(PrecedenceGroup::ForType());
-    AddLeafNode(ParseNodeKind::SelfDeducedParameter, *position_);
-    position_ += 2;
-    return;
-  }
-
-  // addr self `:` type
-  auto possible_addr_self_param =
-      (PositionIs(TokenKind::Addr) &&
-       tokens_->GetKind(*(position_ + 1)) == TokenKind::SelfParameter &&
-       tokens_->GetKind(*(position_ + 2)) == TokenKind::Colon);
-
-  if (possible_addr_self_param) {
-    // Ensure the finish state always follows.
-    state.state = ParserState::PatternAddress;
-    state.token = Consume();
-    PushState(state);
-
-    PushState(ParserState::PatternFinish);
-
-    PushStateForExpression(PrecedenceGroup::ForType());
-    AddLeafNode(ParseNodeKind::SelfDeducedParameter, *(position_ + 1));
-    position_ += 2;
-    return;
-  }
-
-  CARBON_DIAGNOSTIC(ExpectedDeducedParam, Error,
-                    "Deduced parameters must be of the form: `<name>: <Type>` "
-                    "or `addr <name>: <Type>`.");
-  emitter_->Emit(*position_, ExpectedDeducedParam);
-  state.state = ParserState::PatternFinish;
-  state.has_error = true;
-
-  // Try to recover by skipping to the next `]`.
-  if (auto next_close_square_bracket =
-          FindNextOf({TokenKind::CloseSquareBracket});
-      next_close_square_bracket) {
-    SkipTo(*next_close_square_bracket);
-  }
-
-  PushState(state);
 }
 
 auto Parser::HandleStatementState() -> void {
