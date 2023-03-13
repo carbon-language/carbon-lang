@@ -1477,6 +1477,19 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           if (const auto* class_value = dyn_cast<NominalClassValue>(pointee); class_value /*&& class_value != *class_value->class_value_ptr()*/) {
             const auto* child_class_value = *class_value->class_value_ptr();
 
+            if (child_class_value != class_value) {
+              // Error if destructor is not virtual.
+              const auto& class_type =
+                  cast<NominalClassType>(class_value->type());
+              const auto& class_decl = class_type.declaration();
+              if ((*class_decl.destructor())->virt_override() ==
+                  VirtualOverride::None) {
+                return ProgramError(exp.source_loc())
+                       << "Deallocating a derived class from base class "
+                          "pointer requires a virtual destructor";
+              }
+            }
+
             // Value delete at different allocation, FAILS
             const auto alloc_id = heap_.GetAllocationId(child_class_value);
             CARBON_CHECK(alloc_id)

@@ -5,25 +5,24 @@
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
+// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: Deallocating a derived class from base class pointer requires a virtual destructor
 
 package ExplorerTest api;
 
 
 base class A{
-    destructor[self: Self]{
-        Print("DESTRUCTOR A");
-    }
+    destructor[self: Self]{}
 }
 
 class B extends A {
-    destructor[self: Self]{
-        Print("DESTRUCTOR B");
+    fn Create() -> Self {
+        return {.base={}};
     }
+    destructor[self: Self]{}
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/destructor/fail_no_virtual_destructor.carbon:[[@LINE+1]]: type error in initializer of variable: 'type*' is not implicitly convertible to 'class B*'
-  var pb: B* = heap.New(B);
+  var pb: B* = heap.New(B.Create());
   var pa: A* = pb;
   heap.Delete(pa);
   return 0;
