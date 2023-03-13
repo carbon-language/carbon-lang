@@ -1391,7 +1391,7 @@ auto Parser::HandleParenExpressionState() -> void {
     state.state = ParserState::ParenExpressionFinishAsTuple;
     PushState(state);
   } else {
-    state.state = ParserState::ParenExpressionFinish;
+    state.state = ParserState::ParenExpressionFinishAsNormal;
     PushState(state);
     PushState(ParserState::ParenExpressionParameterFinishAsUnknown);
     PushState(ParserState::Expression);
@@ -1414,7 +1414,8 @@ auto Parser::HandleParenExpressionParameterFinish(bool as_tuple) -> void {
     state.state = ParserState::ParenExpressionParameterFinishAsTuple;
 
     auto finish_state = PopState();
-    CARBON_CHECK(finish_state.state == ParserState::ParenExpressionFinish)
+    CARBON_CHECK(finish_state.state ==
+                 ParserState::ParenExpressionFinishAsNormal)
         << "Unexpected parent state, found: " << finish_state.state;
     finish_state.state = ParserState::ParenExpressionFinishAsTuple;
     PushState(finish_state);
@@ -1435,7 +1436,7 @@ auto Parser::HandleParenExpressionParameterFinishAsTupleState() -> void {
   HandleParenExpressionParameterFinish(/*as_tuple=*/true);
 }
 
-auto Parser::HandleParenExpressionFinishState() -> void {
+auto Parser::HandleParenExpressionFinishAsNormalState() -> void {
   auto state = PopState();
 
   AddNode(ParseNodeKind::ParenExpression, Consume(), state.subtree_start,
