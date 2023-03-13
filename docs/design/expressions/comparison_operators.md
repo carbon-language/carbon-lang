@@ -40,8 +40,8 @@ standard mathematical meaning:
 | Equality   | `!=`     | `x != y` | ≠                    | Inequality or not equal to |
 | Relational | `<`      | `x < y`  | <                    | Less than                  |
 | Relational | `<=`     | `x <= y` | ≤                    | Less than or equal to      |
-| Relational | `>`      | `x > y`  | >                    | Less than                  |
-| Relational | `>=`     | `x >= y` | ≥                    | Less than or equal to      |
+| Relational | `>`      | `x > y`  | >                    | Greater than               |
+| Relational | `>=`     | `x >= y` | ≥                    | Greater than or equal to   |
 
 Comparison operators all return a `bool`; they evaluate to `true` when the
 indicated comparison is true. All comparison operators are infix binary
