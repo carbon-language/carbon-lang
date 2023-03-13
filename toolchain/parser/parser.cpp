@@ -32,7 +32,7 @@ CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
                   "`{0}` introducer should be followed by a name.", TokenKind);
 CARBON_DIAGNOSTIC(ExpectedDeclarationSemiOrDefinition, Error,
                   "`{0}` should either end with a `;` for a declaration or "
-                  "have a `{{ ... }}` block for a definition.",
+                  "have a `{{ ... }` block for a definition.",
                   TokenKind);
 
 // A relative location for characters in errors.
