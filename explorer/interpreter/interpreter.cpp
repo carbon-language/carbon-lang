@@ -2266,9 +2266,6 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
       return todo_.RunAgain();
     }
   }
-  // for (const auto alloc : act.scope()->allocations()) {
-  //   heap_.Deallocate(alloc);
-  // }
   todo_.Pop();
   return Success();
 }
