@@ -10,9 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Lexical conventions](#lexical-conventions)
-    -   [Table of contents](#table-of-contents)
-    -   [Lexical elements](#lexical-elements)
+-   [Lexical elements](#lexical-elements)
 
 <!-- tocstop -->
 
