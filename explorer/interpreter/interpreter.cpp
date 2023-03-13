@@ -1474,9 +1474,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_ASSIGN_OR_RETURN(
               const auto* pointee,
               this->heap_.Read(ptr->address(), exp.source_loc()));
-          if (const auto* class_value = dyn_cast<NominalClassValue>(pointee); class_value /*&& class_value != *class_value->class_value_ptr()*/) {
+          if (const auto* class_value = dyn_cast<NominalClassValue>(pointee)) {
             const auto* child_class_value = *class_value->class_value_ptr();
-
             if (child_class_value != class_value) {
               // Error if destructor is not virtual.
               const auto& class_type =
