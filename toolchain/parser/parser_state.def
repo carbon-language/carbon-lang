@@ -35,9 +35,9 @@
 #define CARBON_PARSER_STATE_VARIANTS2(State, Variant1, Variant2) \
   CARBON_PARSER_STATE_VARIANT(State, Variant1)                   \
   CARBON_PARSER_STATE_VARIANT(State, Variant2)
-#define CARBON_PARSER_STATE_VARIANTS3(State, Variant1, ...) \
-  CARBON_PARSER_STATE_VARIANT(State, Variant1)              \
-  CARBON_PARSER_STATE_VARIANTS2(State, __VA_ARGS__)
+#define CARBON_PARSER_STATE_VARIANTS3(State, Variant1, Variant2, Variant3) \
+  CARBON_PARSER_STATE_VARIANT(State, Variant1)                             \
+  CARBON_PARSER_STATE_VARIANTS2(State, Variant2, Variant3)
 
 // Handles the `{` of a brace expression.
 //
