@@ -28,7 +28,7 @@
 #error "Must define the x-macro to use this file."
 #endif
 
-// Use CARBON_PARSER_STATE_VARIANTS#(State, Variant1, Variant2, ...) to generate
+// Use CARBON_PARSER_STATE_VARIANTSN(State, Variant1, Variant2, ...) to generate
 // StateAsVariant1, StateAsVariant2, ... states.
 #define CARBON_PARSER_STATE_VARIANT(State, Variant) \
   CARBON_PARSER_STATE(State##As##Variant)
