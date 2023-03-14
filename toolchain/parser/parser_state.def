@@ -28,6 +28,17 @@
 #error "Must define the x-macro to use this file."
 #endif
 
+// Use CARBON_PARSER_STATE_VARIANTSN(State, Variant1, Variant2, ...) to generate
+// StateAsVariant1, StateAsVariant2, ... states.
+#define CARBON_PARSER_STATE_VARIANT(State, Variant) \
+  CARBON_PARSER_STATE(State##As##Variant)
+#define CARBON_PARSER_STATE_VARIANTS2(State, Variant1, Variant2) \
+  CARBON_PARSER_STATE_VARIANT(State, Variant1)                   \
+  CARBON_PARSER_STATE_VARIANT(State, Variant2)
+#define CARBON_PARSER_STATE_VARIANTS3(State, Variant1, Variant2, Variant3) \
+  CARBON_PARSER_STATE_VARIANT(State, Variant1)                             \
+  CARBON_PARSER_STATE_VARIANTS2(State, Variant2, Variant3)
+
 // Handles the `{` of a brace expression.
 //
 // If `CloseCurlyBrace`:
@@ -46,9 +57,7 @@ CARBON_PARSER_STATE(BraceExpression)
 //   2. BraceExpressionParameterAfterDesignatorAs(Type|Value|Unknown)
 // Else:
 //   1. BraceExpressionParameterFinishAs(Type|Value|Unknown)
-CARBON_PARSER_STATE(BraceExpressionParameterAsType)
-CARBON_PARSER_STATE(BraceExpressionParameterAsValue)
-CARBON_PARSER_STATE(BraceExpressionParameterAsUnknown)
+CARBON_PARSER_STATE_VARIANTS3(BraceExpressionParameter, Type, Value, Unknown)
 
 // Handles a brace expression parameter after the initial designator. This
 // should be at a `:` or `=`, depending on whether it's a type or value literal.
@@ -58,9 +67,8 @@ CARBON_PARSER_STATE(BraceExpressionParameterAsUnknown)
 //   2. BraceExpressionParameterFinishAs(Type|Value|Unknown)
 // Else:
 //   1. BraceExpressionParameterFinishAs(Type|Value|Unknown)
-CARBON_PARSER_STATE(BraceExpressionParameterAfterDesignatorAsType)
-CARBON_PARSER_STATE(BraceExpressionParameterAfterDesignatorAsValue)
-CARBON_PARSER_STATE(BraceExpressionParameterAfterDesignatorAsUnknown)
+CARBON_PARSER_STATE_VARIANTS3(BraceExpressionParameterAfterDesignator, Type,
+                              Value, Unknown)
 
 // Handles the end of a brace expression parameter.
 //
@@ -68,17 +76,14 @@ CARBON_PARSER_STATE(BraceExpressionParameterAfterDesignatorAsUnknown)
 //   1. BraceExpressionParameterAsUnknown
 // Else:
 //   (state done)
-CARBON_PARSER_STATE(BraceExpressionParameterFinishAsType)
-CARBON_PARSER_STATE(BraceExpressionParameterFinishAsValue)
-CARBON_PARSER_STATE(BraceExpressionParameterFinishAsUnknown)
+CARBON_PARSER_STATE_VARIANTS3(BraceExpressionParameterFinish, Type, Value,
+                              Unknown)
 
 // Handles the `}` of a brace expression.
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(BraceExpressionFinishAsType)
-CARBON_PARSER_STATE(BraceExpressionFinishAsValue)
-CARBON_PARSER_STATE(BraceExpressionFinishAsUnknown)
+CARBON_PARSER_STATE_VARIANTS3(BraceExpressionFinish, Type, Value, Unknown)
 
 // Handles a call expression `(...)`.
 //
@@ -174,8 +179,7 @@ CARBON_PARSER_STATE(DeducedParameterListFinish)
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(DesignatorAsExpression)
-CARBON_PARSER_STATE(DesignatorAsStruct)
+CARBON_PARSER_STATE_VARIANTS2(Designator, Expression, Struct)
 
 // Handles processing of an expression.
 //
@@ -343,15 +347,13 @@ CARBON_PARSER_STATE(Package)
 // Always:
 //   1. Expression
 //   2. ParenConditionAs(If|While)Finish
-CARBON_PARSER_STATE(ParenConditionAsIf)
-CARBON_PARSER_STATE(ParenConditionAsWhile)
+CARBON_PARSER_STATE_VARIANTS2(ParenCondition, If, While)
 
 // Finishes the processing of a `(condition)` after the expression.
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(ParenConditionFinishAsIf)
-CARBON_PARSER_STATE(ParenConditionFinishAsWhile)
+CARBON_PARSER_STATE_VARIANTS2(ParenConditionFinish, If, While)
 
 // Handles the `(` of a parenthesized expression.
 //
@@ -376,15 +378,13 @@ CARBON_PARSER_STATE(ParenExpression)
 //   SPECIAL: Parent becomes ParenExpressionFinishAsTuple
 // Else `CloseParen`:
 //   (state done)
-CARBON_PARSER_STATE(ParenExpressionParameterFinishAsUnknown)
-CARBON_PARSER_STATE(ParenExpressionParameterFinishAsTuple)
+CARBON_PARSER_STATE_VARIANTS2(ParenExpressionParameterFinish, Unknown, Tuple)
 
 // Handles the `)` of a parenthesized expression.
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(ParenExpressionFinish)
-CARBON_PARSER_STATE(ParenExpressionFinishAsTuple)
+CARBON_PARSER_STATE_VARIANTS2(ParenExpressionFinish, Normal, Tuple)
 
 // Handles pattern parsing for a pattern, enqueuing type expression processing.
 // This covers parameter and `var` support.
@@ -394,9 +394,8 @@ CARBON_PARSER_STATE(ParenExpressionFinishAsTuple)
 //   2. PatternFinish
 // Else:
 //   1. PatternFinish
-CARBON_PARSER_STATE(PatternAsDeducedParameter)
-CARBON_PARSER_STATE(PatternAsFunctionParameter)
-CARBON_PARSER_STATE(PatternAsVariable)
+CARBON_PARSER_STATE_VARIANTS3(Pattern, DeducedParameter, FunctionParameter,
+                              Variable)
 
 // Handles `addr` in a pattern.
 //
@@ -587,8 +586,7 @@ CARBON_PARSER_STATE(TypeIntroducerAsNamedConstraint)
 //   1. PatternAsVariable
 //   2. VarAfterPattern
 //   3. VarFinishAs(Semicolon|For)
-CARBON_PARSER_STATE(VarAsSemicolon)
-CARBON_PARSER_STATE(VarAsFor)
+CARBON_PARSER_STATE_VARIANTS2(Var, Semicolon, For)
 
 // Handles `var` after the pattern, either followed by an initializer or the
 // semicolon.
@@ -603,7 +601,6 @@ CARBON_PARSER_STATE(VarAfterPattern)
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(VarFinishAsSemicolon)
-CARBON_PARSER_STATE(VarFinishAsFor)
+CARBON_PARSER_STATE_VARIANTS2(VarFinish, Semicolon, For)
 
 #undef CARBON_PARSER_STATE
