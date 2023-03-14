@@ -53,8 +53,6 @@ CARBON_DIAGNOSTIC_KIND(BinaryOperatorRequiresWhitespace)
 CARBON_DIAGNOSTIC_KIND(ExpectedCloseParen)
 CARBON_DIAGNOSTIC_KIND(ExpectedCodeBlock)
 CARBON_DIAGNOSTIC_KIND(ExpectedExpression)
-CARBON_DIAGNOSTIC_KIND(ExpectedFunctionBodyOrSemi)
-CARBON_DIAGNOSTIC_KIND(ExpectedFunctionName)
 CARBON_DIAGNOSTIC_KIND(ExpectedFunctionParams)
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterDot)
 CARBON_DIAGNOSTIC_KIND(ExpectedParameterName)
@@ -81,9 +79,9 @@ CARBON_DIAGNOSTIC_KIND(ExpectedSemiToEndPackageDirective)
 CARBON_DIAGNOSTIC_KIND(ExpectedIn)
 CARBON_DIAGNOSTIC_KIND(ExpectedInNotColon)
 
-// Interface-specific diagnostics.
-CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceName)
-CARBON_DIAGNOSTIC_KIND(ExpectedInterfaceOpenCurlyBrace)
+// Declaration diagnostics.
+CARBON_DIAGNOSTIC_KIND(ExpectedDeclarationName)
+CARBON_DIAGNOSTIC_KIND(ExpectedDeclarationSemiOrDefinition)
 CARBON_DIAGNOSTIC_KIND(MethodImplNotAllowed)
 
 // Class and interface diagnostics
