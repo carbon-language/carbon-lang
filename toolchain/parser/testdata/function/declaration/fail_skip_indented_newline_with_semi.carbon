@@ -15,7 +15,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_skip_indented_newline_with_semi.carbon:[[@LINE+1]]:4: Expected function name after `fn` keyword.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_skip_indented_newline_with_semi.carbon:[[@LINE+1]]:4: `fn` introducer should be followed by a name.
 fn (x,
     y,
     z);

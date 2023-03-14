@@ -49,7 +49,9 @@ class Parser {
   // Supported return values for GetDeclarationContext.
   enum class DeclarationContext {
     File,  // Top-level context.
+    Class,
     Interface,
+    NamedConstraint,
   };
 
   // Helper class for tracing state_stack_ on crashes.
@@ -260,6 +262,9 @@ class Parser {
   // This is expected to be called in cases which are close to a context.
   // Although it looks like it could be O(n) for state_stack_'s depth, valid
   // parses should only need to look down a couple steps.
+  //
+  // This currently assumes it's being called from within the declaration's
+  // DeclarationScopeLoop.
   auto GetDeclarationContext() -> DeclarationContext;
 
   // Handles error recovery in a declaration, particularly before any possible
@@ -315,6 +320,15 @@ class Parser {
 
   // Handles the `;` after a keyword statement.
   auto HandleStatementKeywordFinish(ParseNodeKind node_kind) -> void;
+
+  // Handles processing of a type's `<introducer> <name> {`.
+  auto HandleTypeIntroducer(ParseNodeKind introducer_kind,
+                            ParseNodeKind declaration_kind,
+                            ParseNodeKind definition_start_kind,
+                            ParserState definition_finish_state) -> void;
+
+  // Handles parsing after the declaration scope of a type.
+  auto HandleTypeDefinitionFinish(ParseNodeKind definition_kind) -> void;
 
   // Handles VarAs(Semicolon|For).
   auto HandleVar(ParserState finish_state) -> void;
