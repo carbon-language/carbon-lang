@@ -96,7 +96,7 @@ auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
   errno = 0;
   closer.release();
   if (close(file_descriptor) == -1) {
-    // Try to unmap the text. No errer handling as this is just best-effort
+    // Try to unmap the text. No error handling as this is just best-effort
     // cleanup.
     munmap(mapped_text, size);
     return ErrnoToError(errno);
