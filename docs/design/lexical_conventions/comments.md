@@ -55,4 +55,4 @@ line in the region.
 ## References
 
 -   Proposal
-    [#198 Comments](https://github.com/carbon-language/carbon-lang/pull/198)
+    [#198: Comments](https://github.com/carbon-language/carbon-lang/pull/198)
