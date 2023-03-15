@@ -17,4 +17,4 @@
 // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_missing_deduced_close.carbon:[[@LINE+2]]:7: Closing symbol does not match most recent opening symbol.
 // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_missing_deduced_close.carbon:[[@LINE+1]]:8: Expected parameter declaration.
 fn Div[();
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_missing_deduced_close.carbon:[[@LINE+0]]:193: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_missing_deduced_close.carbon:[[@LINE+0]]:181: A `(` for parameters is required after deduced parameters.
