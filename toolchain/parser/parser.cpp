@@ -1432,9 +1432,6 @@ auto Parser::ConsumeIfPatternKeyword(TokenKind keyword_token,
 auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
   auto state = PopState();
 
-  // Ensure the finish state always follows, including for errors.
-  state.state = ParserState::PatternFinish;
-
   // Parameters may have keywords prefixing the pattern. They become the parent
   // for the full PatternBinding.
   if (pattern_kind != PatternKind::Variable) {
@@ -1461,6 +1458,8 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
         break;
       }
     }
+    // Still use the finish state for errors.
+    state.state = ParserState::PatternFinishAsRegular;
     state.has_error = true;
     PushState(state);
   };
@@ -1482,6 +1481,9 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
 
   if (auto kind = PositionKind();
       kind == TokenKind::Colon || kind == TokenKind::ColonExclaim) {
+    state.state = kind == TokenKind::Colon
+                      ? ParserState::PatternFinishAsRegular
+                      : ParserState::PatternFinishAsGeneric;
     // Use the `:` or `:!` for the root node.
     state.token = Consume();
     PushState(state);
@@ -1504,7 +1506,7 @@ auto Parser::HandlePatternAsVariableState() -> void {
   HandlePattern(PatternKind::Variable);
 }
 
-auto Parser::HandlePatternFinishState() -> void {
+auto Parser::HandlePatternFinish(ParseNodeKind node_kind) -> void {
   auto state = PopState();
 
   // If an error was encountered, propagate it without adding a node.
@@ -1513,11 +1515,16 @@ auto Parser::HandlePatternFinishState() -> void {
     return;
   }
 
-  auto kind = tokens_->GetKind(state.token) == TokenKind::ColonExclaim
-                  ? ParseNodeKind::GenericPatternBinding
-                  : ParseNodeKind::PatternBinding;
   // TODO: may need to mark has_error if !type.
-  AddNode(kind, state.token, state.subtree_start, /*has_error=*/false);
+  AddNode(node_kind, state.token, state.subtree_start, /*has_error=*/false);
+}
+
+auto Parser::HandlePatternFinishAsGenericState() -> void {
+  HandlePatternFinish(ParseNodeKind::GenericPatternBinding);
+}
+
+auto Parser::HandlePatternFinishAsRegularState() -> void {
+  HandlePatternFinish(ParseNodeKind::PatternBinding);
 }
 
 auto Parser::HandlePatternAddressState() -> void {

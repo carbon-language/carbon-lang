@@ -391,9 +391,9 @@ CARBON_PARSER_STATE_VARIANTS2(ParenExpressionFinish, Normal, Tuple)
 //
 // If valid:
 //   1. Expression
-//   2. PatternFinish
+//   2. PatternFinishAs(Generic|Regular)
 // Else:
-//   1. PatternFinish
+//   1. PatternFinishAsRegular
 CARBON_PARSER_STATE_VARIANTS3(Pattern, DeducedParameter, FunctionParameter,
                               Variable)
 
@@ -413,7 +413,7 @@ CARBON_PARSER_STATE(PatternTemplate)
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(PatternFinish)
+CARBON_PARSER_STATE_VARIANTS2(PatternFinish, Generic, Regular)
 
 // Handles a single statement. While typically within a statement block, this
 // can also be used for error recovery where we expect a statement block and
