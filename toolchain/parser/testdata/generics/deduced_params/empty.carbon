@@ -7,15 +7,22 @@
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Foo'},
-// CHECK:STDOUT: {kind: 'ClassDeclaration', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:   {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Bar'},
-// CHECK:STDOUT: {kind: 'InterfaceDeclaration', text: 'interface', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'DeducedParameterListStart', text: '['},
+// CHECK:STDOUT:   {kind: 'DeducedParameterList', text: ']', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'ParameterListStart', text: '('},
+// CHECK:STDOUT:   {kind: 'ParameterList', text: ')', subtree_size: 2},
+// CHECK:STDOUT: {kind: 'ClassDeclaration', text: ';', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'InterfaceIntroducer', text: 'interface'},
+// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'Bar'},
+// CHECK:STDOUT:       {kind: 'DeducedParameterListStart', text: '['},
+// CHECK:STDOUT:     {kind: 'DeducedParameterList', text: ']', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
+// CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:   {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 7},
+// CHECK:STDOUT: {kind: 'InterfaceDefinition', text: '}', subtree_size: 8},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/deduced_params/empty.carbon:[[@LINE+1]]:10: `class` should either end with a `;` for a declaration or have a `{ ... }` block for a definition.
 class Foo[]();
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/deduced_params/empty.carbon:[[@LINE+1]]:14: `interface` should either end with a `;` for a declaration or have a `{ ... }` block for a definition.
 interface Bar[]() {}

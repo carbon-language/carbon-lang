@@ -532,9 +532,8 @@ CARBON_PARSER_STATE(StatementWhileBlockFinish)
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(TypeDefinitionFinishAsClass)
-CARBON_PARSER_STATE(TypeDefinitionFinishAsInterface)
-CARBON_PARSER_STATE(TypeDefinitionFinishAsNamedConstraint)
+CARBON_PARSER_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
+                              NamedConstraint)
 
 // Handles processing of a type's `<introducer> <name> [;{]`.
 //
@@ -545,9 +544,10 @@ CARBON_PARSER_STATE(TypeDefinitionFinishAsNamedConstraint)
 //   2. TypeDefinitionFinishAs(Class|Interface|NamedConstraint)
 // Else:
 //   (state done)
-CARBON_PARSER_STATE(TypeIntroducerAsClass)
-CARBON_PARSER_STATE(TypeIntroducerAsInterface)
-CARBON_PARSER_STATE(TypeIntroducerAsNamedConstraint)
+CARBON_PARSER_STATE_VARIANTS3(TypeIntroducer, Class, Interface, NamedConstraint)
+
+CARBON_PARSER_STATE_VARIANTS3(TypeAfterParams, Class, Interface,
+                              NamedConstraint)
 
 // Handles the start of a `var`.
 //

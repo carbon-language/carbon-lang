@@ -7,15 +7,34 @@
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Foo'},
-// CHECK:STDOUT: {kind: 'ClassDeclaration', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:   {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Bar'},
-// CHECK:STDOUT: {kind: 'InterfaceDeclaration', text: 'interface', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'ParameterListStart', text: '('},
+// CHECK:STDOUT:       {kind: 'DeclaredName', text: 'a'},
+// CHECK:STDOUT:       {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:     {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'ParameterListComma', text: ','},
+// CHECK:STDOUT:       {kind: 'DeclaredName', text: 'b'},
+// CHECK:STDOUT:       {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:     {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'ParameterListComma', text: ','},
+// CHECK:STDOUT:   {kind: 'ParameterList', text: ')', subtree_size: 10},
+// CHECK:STDOUT: {kind: 'ClassDeclaration', text: ';', subtree_size: 13},
+// CHECK:STDOUT:     {kind: 'InterfaceIntroducer', text: 'interface'},
+// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'Bar'},
+// CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'DeclaredName', text: 'a'},
+// CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ParameterListComma', text: ','},
+// CHECK:STDOUT:         {kind: 'DeclaredName', text: 'b'},
+// CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ParameterListComma', text: ','},
+// CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 10},
+// CHECK:STDOUT:   {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 13},
+// CHECK:STDOUT: {kind: 'InterfaceDefinition', text: '}', subtree_size: 14},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/params/two_suffix_comma.carbon:[[@LINE+1]]:10: `class` should either end with a `;` for a declaration or have a `{ ... }` block for a definition.
 class Foo(a: i32, b: i32,);
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/params/two_suffix_comma.carbon:[[@LINE+1]]:14: `interface` should either end with a `;` for a declaration or have a `{ ... }` block for a definition.
 interface Bar(a: i32, b: i32,) {}

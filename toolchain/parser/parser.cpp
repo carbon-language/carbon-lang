@@ -1766,17 +1766,39 @@ auto Parser::HandleStatementWhileBlockFinishState() -> void {
 }
 
 auto Parser::HandleTypeIntroducer(ParseNodeKind introducer_kind,
-                                  ParseNodeKind declaration_kind,
-                                  ParseNodeKind definition_start_kind,
-                                  ParserState definition_finish_state) -> void {
+                                  ParserState after_params_state) -> void {
   auto state = PopState();
 
   AddLeafNode(introducer_kind, Consume());
 
-  if (!ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
-                               ParseNodeKind::DeclaredName)) {
-    emitter_->Emit(*position_, ExpectedDeclarationName,
-                   tokens_->GetKind(state.token));
+  state.state = after_params_state;
+  PushState(state);
+  state.state = ParserState::DeclarationNameAndParamsAsOptional;
+  PushState(state);
+}
+
+auto Parser::HandleTypeIntroducerAsClassState() -> void {
+  HandleTypeIntroducer(ParseNodeKind::ClassIntroducer,
+                       ParserState::TypeAfterParamsAsClass);
+}
+
+auto Parser::HandleTypeIntroducerAsInterfaceState() -> void {
+  HandleTypeIntroducer(ParseNodeKind::InterfaceIntroducer,
+                       ParserState::TypeAfterParamsAsInterface);
+}
+
+auto Parser::HandleTypeIntroducerAsNamedConstraintState() -> void {
+  HandleTypeIntroducer(ParseNodeKind::NamedConstraintIntroducer,
+                       ParserState::TypeAfterParamsAsNamedConstraint);
+}
+
+auto Parser::HandleTypeAfterParams(ParseNodeKind declaration_kind,
+                                   ParseNodeKind definition_start_kind,
+                                   ParserState definition_finish_state)
+    -> void {
+  auto state = PopState();
+
+  if (state.has_error) {
     HandleDeclarationError(state, declaration_kind,
                            /*skip_past_likely_end=*/true);
     return;
@@ -1802,25 +1824,22 @@ auto Parser::HandleTypeIntroducer(ParseNodeKind introducer_kind,
           state.has_error);
 }
 
-auto Parser::HandleTypeIntroducerAsClassState() -> void {
-  HandleTypeIntroducer(ParseNodeKind::ClassIntroducer,
-                       ParseNodeKind::ClassDeclaration,
-                       ParseNodeKind::ClassDefinitionStart,
-                       ParserState::TypeDefinitionFinishAsClass);
+auto Parser::HandleTypeAfterParamsAsClassState() -> void {
+  HandleTypeAfterParams(ParseNodeKind::ClassDeclaration,
+                        ParseNodeKind::ClassDefinitionStart,
+                        ParserState::TypeDefinitionFinishAsClass);
 }
 
-auto Parser::HandleTypeIntroducerAsInterfaceState() -> void {
-  HandleTypeIntroducer(ParseNodeKind::InterfaceIntroducer,
-                       ParseNodeKind::InterfaceDeclaration,
-                       ParseNodeKind::InterfaceDefinitionStart,
-                       ParserState::TypeDefinitionFinishAsInterface);
+auto Parser::HandleTypeAfterParamsAsInterfaceState() -> void {
+  HandleTypeAfterParams(ParseNodeKind::InterfaceDeclaration,
+                        ParseNodeKind::InterfaceDefinitionStart,
+                        ParserState::TypeDefinitionFinishAsInterface);
 }
 
-auto Parser::HandleTypeIntroducerAsNamedConstraintState() -> void {
-  HandleTypeIntroducer(ParseNodeKind::NamedConstraintIntroducer,
-                       ParseNodeKind::NamedConstraintDeclaration,
-                       ParseNodeKind::NamedConstraintDefinitionStart,
-                       ParserState::TypeDefinitionFinishAsNamedConstraint);
+auto Parser::HandleTypeAfterParamsAsNamedConstraintState() -> void {
+  HandleTypeAfterParams(ParseNodeKind::NamedConstraintDeclaration,
+                        ParseNodeKind::NamedConstraintDefinitionStart,
+                        ParserState::TypeDefinitionFinishAsNamedConstraint);
 }
 
 auto Parser::HandleTypeDefinitionFinish(ParseNodeKind definition_kind) -> void {
