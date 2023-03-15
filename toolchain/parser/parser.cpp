@@ -804,9 +804,9 @@ auto Parser::HandleDeclarationNameAndParamsAfterDeducedState() -> void {
   if (PositionIs(TokenKind::OpenParen)) {
     PushState(ParserState::ParameterListAsRegular);
   } else {
-    CARBON_DIAGNOSTIC(ParametersRequiredByDeduced, Error,
-                      "A `(` for parameters is required is required after "
-                      "deduced parameters.");
+    CARBON_DIAGNOSTIC(
+        ParametersRequiredByDeduced, Error,
+        "A `(` for parameters is required after deduced parameters.");
     emitter_->Emit(*position_, ParametersRequiredByDeduced);
     ReturnErrorOnState();
   }
