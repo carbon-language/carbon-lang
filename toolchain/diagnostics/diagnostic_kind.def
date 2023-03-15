@@ -82,7 +82,6 @@ CARBON_DIAGNOSTIC_KIND(ExpectedInNotColon)
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclarationName)
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclarationSemiOrDefinition)
 CARBON_DIAGNOSTIC_KIND(MethodImplNotAllowed)
-
 CARBON_DIAGNOSTIC_KIND(ParametersRequiredByIntroducer)
 CARBON_DIAGNOSTIC_KIND(ParametersRequiredByDeduced)
 
