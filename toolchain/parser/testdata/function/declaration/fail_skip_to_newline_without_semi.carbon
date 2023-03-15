@@ -15,7 +15,6 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_skip_to_newline_without_semi.carbon:[[@LINE+2]]:4: `fn` introducer should be followed by a name.
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_skip_to_newline_without_semi.carbon:[[@LINE+1]]:4: `fn` should either end with a `;` for a declaration or have a `{ ... }` block for a definition.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_skip_to_newline_without_semi.carbon:[[@LINE+1]]:4: `fn` introducer should be followed by a name.
 fn ()
 fn F();

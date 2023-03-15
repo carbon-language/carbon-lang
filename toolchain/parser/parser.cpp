@@ -776,9 +776,6 @@ auto Parser::HandleDeclarationNameAndParams(bool params_required) -> void {
     return;
   }
 
-  // Regardless of whether there are deduced parameters, always proceed to the
-  // AfterDeduced state.
-
   if (PositionIs(TokenKind::OpenSquareBracket)) {
     PushState(ParserState::DeclarationNameAndParamsAfterDeduced);
     PushState(ParserState::ParameterListAsDeduced);
@@ -1165,8 +1162,10 @@ auto Parser::HandleFunctionSignatureFinishState() -> void {
       break;
     }
     default: {
-      emitter_->Emit(*position_, ExpectedDeclarationSemiOrDefinition,
-                     TokenKind::Fn);
+      if (!state.has_error) {
+        emitter_->Emit(*position_, ExpectedDeclarationSemiOrDefinition,
+                       TokenKind::Fn);
+      }
       // Only need to skip if we've not already found a new line.
       bool skip_past_likely_end =
           tokens_->GetLine(*position_) == tokens_->GetLine(state.token);
