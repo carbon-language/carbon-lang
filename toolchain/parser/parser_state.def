@@ -127,6 +127,9 @@ CARBON_PARSER_STATE(CodeBlock)
 //   (state done)
 CARBON_PARSER_STATE(CodeBlockFinish)
 
+CARBON_PARSER_STATE_VARIANTS2(DeclarationNameAndParams, Optional, Required)
+CARBON_PARSER_STATE(DeclarationNameAndParamsAfterDeduced)
+
 // Handles processing of a declaration scope. Things like fn, class, interface,
 // and so on.
 //
@@ -152,28 +155,6 @@ CARBON_PARSER_STATE(CodeBlockFinish)
 // Else:
 //   1. DeclarationScopeLoop
 CARBON_PARSER_STATE(DeclarationScopeLoop)
-
-// Starts deduced parameter processing.
-//
-// Always:
-//   1. PatternAsDeducedParameter
-//   2. DeducedParameterFinish
-CARBON_PARSER_STATE(DeducedParameter)
-
-// Finishes deduced parameter processing, including `,`. If there are more
-// parameters, enqueues another parameter processing state.
-//
-// If `Comma` without `CloseSquareBracket`:
-//   1. DeducedParameter
-// Else:
-//   (state done)
-CARBON_PARSER_STATE(DeducedParameterFinish)
-
-// Handles processing of a deduced parameter list `]`.
-//
-// Always:
-//   (state done)
-CARBON_PARSER_STATE(DeducedParameterListFinish)
 
 // Handles a designator expression, such as `.z` in `x.(y.z)`.
 //
@@ -251,54 +232,14 @@ CARBON_PARSER_STATE(ExpressionLoopForPrefix)
 //   (state done)
 CARBON_PARSER_STATE(ExpressionStatementFinish)
 
-// Handles processing of a function's `fn <name>(`, and enqueues parameter list
-// handling.
+// Handles a function's introducer.
 //
 // If invalid:
 //   (state done)
-// If deduced parameters:
-//   1. DeducedParameter
-//   2. DeducedParameterListFinish
-//   3. FunctionAfterDeducedParameterList
 // Else:
-//   1. FunctionAfterDeducedParameterList
+//   1. DeclarationNameAndParamsAsRequired
+//   2. FunctionAfterParameters
 CARBON_PARSER_STATE(FunctionIntroducer)
-
-// Handles processing of a functions' syntax after the deduced parameter lists's
-// `]`. This applies only to interfaces and classes.
-//
-// If invalid:
-//   (state done)
-// If parenthesized parameters:
-//   1. FunctionParameter
-//   2. FunctionParameterListFinish
-//   3. FunctionAfterParameterList
-// Else:
-//   1. FunctionParameterListFinish
-//   2. FunctionAfterParameterList
-CARBON_PARSER_STATE(FunctionAfterDeducedParameterList)
-
-// Starts function parameter processing.
-//
-// Always:
-//   1. PatternAsFunctionParameter
-//   2. FunctionParameterFinish
-CARBON_PARSER_STATE(FunctionParameter)
-
-// Finishes function parameter processing, including `,`. If there are more
-// parameters, enqueues another parameter processing state.
-//
-// If `Comma` without `CloseParen`:
-//   1. FunctionParameter
-// Else:
-//   (state done)
-CARBON_PARSER_STATE(FunctionParameterFinish)
-
-// Handles processing of a function's parameter list `)`.
-//
-// Always:
-//   (state done)
-CARBON_PARSER_STATE(FunctionParameterListFinish)
 
 // Handles processing of a function's syntax after `)`, primarily the
 // possibility a `->` return type is there. Always enqueues signature finish
@@ -310,7 +251,7 @@ CARBON_PARSER_STATE(FunctionParameterListFinish)
 //   3. FunctionSignatureFinish
 // Else:
 //   1. FunctionSignatureFinish
-CARBON_PARSER_STATE(FunctionAfterParameterList)
+CARBON_PARSER_STATE(FunctionAfterParameters)
 
 // Finishes a function return type.
 //
@@ -341,6 +282,34 @@ CARBON_PARSER_STATE(FunctionDefinitionFinish)
 // Always:
 //   (state done)
 CARBON_PARSER_STATE(Package)
+
+// Starts deduced parameter processing.
+//
+// Always:
+//   1. PatternAsDeducedParameter
+//   2. DeducedParameterFinish
+CARBON_PARSER_STATE_VARIANTS2(Parameter, Deduced, Regular)
+
+// Finishes deduced parameter processing, including `,`. If there are more
+// parameters, enqueues another parameter processing state.
+//
+// If `Comma` without `CloseSquareBracket`:
+//   1. DeducedParameter
+// Else:
+//   (state done)
+CARBON_PARSER_STATE_VARIANTS2(ParameterFinish, Deduced, Regular)
+
+// Handles processing of a parameter list `[` or `(`.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE_VARIANTS2(ParameterList, Deduced, Regular)
+
+// Handles processing of a parameter list `]` or `)`.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE_VARIANTS2(ParameterListFinish, Deduced, Regular)
 
 // Handles the processing of a `(condition)` up through the expression.
 //

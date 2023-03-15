@@ -305,8 +305,29 @@ class Parser {
   // Handles BraceExpressionFinishAs(Type|Value|Unknown).
   auto HandleBraceExpressionFinish(BraceExpressionKind kind) -> void;
 
+  // Handles DeclarationNameAndParamsAs(Optional|Required).
+  auto HandleDeclarationNameAndParams(bool params_required) -> void;
+
   // Handles DesignatorAs.
   auto HandleDesignator(bool as_struct) -> void;
+
+  // Handles ParameterAs(Deduced|Regular).
+  auto HandleParameter(ParserState pattern_state, ParserState finish_state)
+      -> void;
+
+  // Handles ParameterFinishAs(Deduced|Regular).
+  auto HandleParameterFinish(TokenKind close_token, ParserState param_state)
+      -> void;
+
+  // Handles ParameterListAs(Deduced|Regular).
+  auto HandleParameterList(ParseNodeKind parse_node_kind,
+                           TokenKind open_token_kind,
+                           TokenKind close_token_kind, ParserState param_state,
+                           ParserState finish_state) -> void;
+
+  // Handles ParameterListFinishAs(Deduced|Regular).
+  auto HandleParameterListFinish(ParseNodeKind parse_node_kind,
+                                 TokenKind token_kind) -> void;
 
   // Handles ParenConditionAs(If|While)
   auto HandleParenCondition(ParseNodeKind start_kind, ParserState finish_state)

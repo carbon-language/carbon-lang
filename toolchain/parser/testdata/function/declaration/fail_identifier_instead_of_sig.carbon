@@ -11,5 +11,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_identifier_instead_of_sig.carbon:[[@LINE+1]]:8: Expected `(` after function name.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_identifier_instead_of_sig.carbon:[[@LINE+1]]:8: `fn` should either end with a `;` for a declaration or have a `{ ... }` block for a definition.
 fn foo bar;
