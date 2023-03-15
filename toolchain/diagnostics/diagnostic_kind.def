@@ -84,9 +84,6 @@ CARBON_DIAGNOSTIC_KIND(ExpectedDeclarationName)
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclarationSemiOrDefinition)
 CARBON_DIAGNOSTIC_KIND(MethodImplNotAllowed)
 
-// Class and interface diagnostics
-// TODO
-
 // ============================================================================
 // Semantics diagnostics
 // ============================================================================

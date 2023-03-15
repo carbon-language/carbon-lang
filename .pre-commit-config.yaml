@@ -104,7 +104,7 @@ repos:
               toolchain/.*\.cpp|
               toolchain/.*\.h|
               toolchain/diagnostics/check_diagnostics\.py|
-              toolchain/diagnostics/diagnostic_registry\.def
+              toolchain/diagnostics/diagnostic_kind\.def
           )$
         pass_filenames: false
 
