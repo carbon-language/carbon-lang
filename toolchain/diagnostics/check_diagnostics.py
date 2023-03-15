@@ -4,8 +4,6 @@
 
 Validates that each diagnostic declared with CARBON_DIAGNOSTIC_KIND is
 referenced by one (and only one) CARBON_DIAGNOSTIC.
-
-This expects to be run from the repo root by pre-commit.
 """
 
 __copyright__ = """
