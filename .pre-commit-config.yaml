@@ -103,10 +103,8 @@ repos:
           (?x)^(
               toolchain/.*\.cpp|
               toolchain/.*\.h|
-              toolchain/diagnostics/check_diagnostics\.py|
-              toolchain/diagnostics/diagnostic_kind\.def
+              toolchain/diagnostics/diagnostic_registry\.def
           )$
-        pass_filenames: false
 
   # Run linters last, as formatters and other checks may fix issues.
   - repo: local
