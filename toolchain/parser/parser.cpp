@@ -785,9 +785,9 @@ auto Parser::HandleDeclarationNameAndParams(bool params_required) -> void {
   } else if (PositionIs(TokenKind::OpenParen)) {
     PushState(ParserState::ParameterListAsRegular);
   } else if (params_required) {
-    CARBON_DIAGNOSTIC(ExpectedRegularParameters, Error,
+    CARBON_DIAGNOSTIC(ParametersRequiredByIntroducer, Error,
                       "`{0}` requires a `(` for parameters.", TokenKind);
-    emitter_->Emit(*position_, ExpectedRegularParameters,
+    emitter_->Emit(*position_, ParametersRequiredByIntroducer,
                    tokens_->GetKind(state.token));
     ReturnErrorOnState();
   }
@@ -807,7 +807,10 @@ auto Parser::HandleDeclarationNameAndParamsAfterDeducedState() -> void {
   if (PositionIs(TokenKind::OpenParen)) {
     PushState(ParserState::ParameterListAsRegular);
   } else {
-    // TODO: Error because regular params must always be provided now.
+    CARBON_DIAGNOSTIC(ParametersRequiredByDeduced, Error,
+                      "A `(` for parameters is required is required after "
+                      "deduced parameters.");
+    emitter_->Emit(*position_, ParametersRequiredByDeduced);
     ReturnErrorOnState();
   }
 }

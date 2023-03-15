@@ -11,5 +11,6 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_no_sig_or_semi.carbon:[[@LINE+2]]:7: `fn` requires a `(` for parameters.
 // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_no_sig_or_semi.carbon:[[@LINE+1]]:7: `fn` should either end with a `;` for a declaration or have a `{ ... }` block for a definition.
 fn foo

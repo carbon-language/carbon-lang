@@ -53,7 +53,6 @@ CARBON_DIAGNOSTIC_KIND(BinaryOperatorRequiresWhitespace)
 CARBON_DIAGNOSTIC_KIND(ExpectedCloseParen)
 CARBON_DIAGNOSTIC_KIND(ExpectedCodeBlock)
 CARBON_DIAGNOSTIC_KIND(ExpectedExpression)
-CARBON_DIAGNOSTIC_KIND(ExpectedFunctionParams)
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterDot)
 CARBON_DIAGNOSTIC_KIND(ExpectedParameterName)
 CARBON_DIAGNOSTIC_KIND(ExpectedParenAfter)
@@ -83,6 +82,9 @@ CARBON_DIAGNOSTIC_KIND(ExpectedInNotColon)
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclarationName)
 CARBON_DIAGNOSTIC_KIND(ExpectedDeclarationSemiOrDefinition)
 CARBON_DIAGNOSTIC_KIND(MethodImplNotAllowed)
+
+CARBON_DIAGNOSTIC_KIND(ParametersRequiredByIntroducer)
+CARBON_DIAGNOSTIC_KIND(ParametersRequiredByDeduced)
 
 // ============================================================================
 // Semantics diagnostics
