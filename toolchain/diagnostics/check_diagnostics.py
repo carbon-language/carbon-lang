@@ -106,6 +106,7 @@ def check_unused(decls: Set[str], uses: Dict[str, List[Location]]) -> bool:
 
 
 def main() -> None:
+    # Run from the repo root.
     os.chdir(Path(__file__).parent.parent.parent)
     decls = load_diagnostic_kind()
     uses = load_diagnostic_uses()
