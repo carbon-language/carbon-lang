@@ -318,6 +318,11 @@ class Parser {
   // Handles PatternAs(DeducedParameter|FunctionParameter|Variable).
   auto HandlePattern(PatternKind pattern_kind) -> void;
 
+  // For HandlePattern, tries to consume a wrapping keyword.
+  auto ConsumeIfPatternKeyword(TokenKind keyword_token,
+                               ParserState keyword_state, int subtree_start)
+      -> void;
+
   // Handles the `;` after a keyword statement.
   auto HandleStatementKeywordFinish(ParseNodeKind node_kind) -> void;
 

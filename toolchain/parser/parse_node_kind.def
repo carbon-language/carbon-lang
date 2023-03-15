@@ -88,23 +88,30 @@ CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinitionStart, FunctionIntroducer)
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinition, FunctionDefinitionStart)
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDeclaration, FunctionIntroducer)
 
-// A parameter list:
-//   ParamertListStart
-//   _external_: expression
+// A parameter list, possibly deduced:
+//   [Deduced]ParamertListStart
+//   _external_: [Generic]PatternBinding
 //   ParameterListComma
-// ParameterList
+// [Deduced]ParameterList
 //
 // Expressions and ParameterListComma may repeat with ParameterListComma as a
 // separator.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListStart, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeducedParameterListStart, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListComma, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(ParameterList, ParameterListStart)
+CARBON_PARSE_NODE_KIND_BRACKET(DeducedParameterList, DeducedParameterListStart)
 
 // A pattern binding, such as `name: Type`:
 //   DeclaredName
 //   _external_: type expression
-// PatternBinding
+// [Generic]PatternBinding
+//
+// Address and Template be parents to [Generic]PatternBinding, in that order.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PatternBinding, 2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(GenericPatternBinding, 2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 1)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1)
 
 // `var`:
 //   VariableIntroducer
@@ -330,26 +337,12 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinition,
 CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDeclaration,
                                NamedConstraintIntroducer)
 
-// A pattern binding for `self` deduced parameter:
-//   `self`
-//   _external_: type expression
-// SelfDeducedParameter
+// The `self` name and `Self` type keywords. Typically of the form `self: Self`:
+//   SelfDeducedParameter
+//   SelfType
+// PatternBinding
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfDeducedParameter, 0)
-
-// A pattern binding for `addr self` deduced parameter:
-//   `addr self`
-//   _external_: type expression
-// SelfDeducedParameter
-// CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfDeducedParameterAddress, 1)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 1)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfType, 0)
-
-// Deduced parameters, such as `[self: Self]`:
-//   DeducedParameterListStart
-//   _external_: Address or PatternBinding
-// DeducedParameterList
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeducedParameterListStart, 0)
-CARBON_PARSE_NODE_KIND_BRACKET(DeducedParameterList, DeducedParameterListStart)
 
 #undef CARBON_PARSE_NODE_KIND
 #undef CARBON_PARSE_NODE_KIND_BRACKET

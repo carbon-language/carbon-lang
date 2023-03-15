@@ -1419,23 +1419,29 @@ auto Parser::HandleParenExpressionFinishAsTupleState() -> void {
           state.has_error);
 }
 
+auto Parser::ConsumeIfPatternKeyword(TokenKind keyword_token,
+                                     ParserState keyword_state,
+                                     int subtree_start) -> void {
+  if (auto token = ConsumeIf(keyword_token)) {
+    PushState(StateStackEntry(
+        keyword_state, PrecedenceGroup::ForTopLevelExpression(),
+        PrecedenceGroup::ForTopLevelExpression(), *token, subtree_start));
+  }
+}
+
 auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
   auto state = PopState();
 
   // Ensure the finish state always follows, including for errors.
   state.state = ParserState::PatternFinish;
 
-  // Parameters may have an `addr` keyword prefixing the pattern. This becomes
-  // the parent for the full PatternBinding.
+  // Parameters may have keywords prefixing the pattern. They become the parent
+  // for the full PatternBinding.
   if (pattern_kind != PatternKind::Variable) {
-    if (auto addr = ConsumeIf(TokenKind::Addr)) {
-      // Mirror information including subtree_size, but we need to change a copy
-      // to avoid affecting the token.
-      auto addr_state = state;
-      addr_state.state = ParserState::PatternAddress;
-      addr_state.token = *addr;
-      PushState(addr_state);
-    }
+    ConsumeIfPatternKeyword(TokenKind::Template, ParserState::PatternTemplate,
+                            state.subtree_start);
+    ConsumeIfPatternKeyword(TokenKind::Addr, ParserState::PatternAddress,
+                            state.subtree_start);
   }
 
   // Handle an invalid pattern introducer for parameters and variables.
@@ -1474,9 +1480,10 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
     return;
   }
 
-  if (auto colon = ConsumeIf(TokenKind::Colon)) {
-    // Use the colon for the root node.
-    state.token = *colon;
+  if (auto kind = PositionKind();
+      kind == TokenKind::Colon || kind == TokenKind::ColonExclaim) {
+    // Use the `:` or `:!` for the root node.
+    state.token = Consume();
     PushState(state);
     PushStateForExpression(PrecedenceGroup::ForType());
   } else {
@@ -1506,15 +1513,29 @@ auto Parser::HandlePatternFinishState() -> void {
     return;
   }
 
+  auto kind = tokens_->GetKind(state.token) == TokenKind::ColonExclaim
+                  ? ParseNodeKind::GenericPatternBinding
+                  : ParseNodeKind::PatternBinding;
   // TODO: may need to mark has_error if !type.
-  AddNode(ParseNodeKind::PatternBinding, state.token, state.subtree_start,
-          /*has_error=*/false);
+  AddNode(kind, state.token, state.subtree_start, /*has_error=*/false);
 }
 
 auto Parser::HandlePatternAddressState() -> void {
   auto state = PopState();
 
   AddNode(ParseNodeKind::Address, state.token, state.subtree_start,
+          state.has_error);
+
+  // If an error was encountered, propagate it while adding a node.
+  if (state.has_error) {
+    ReturnErrorOnState();
+  }
+}
+
+auto Parser::HandlePatternTemplateState() -> void {
+  auto state = PopState();
+
+  AddNode(ParseNodeKind::Template, state.token, state.subtree_start,
           state.has_error);
 
   // If an error was encountered, propagate it while adding a node.

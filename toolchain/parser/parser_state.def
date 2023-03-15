@@ -403,6 +403,12 @@ CARBON_PARSER_STATE_VARIANTS3(Pattern, DeducedParameter, FunctionParameter,
 //   (state done)
 CARBON_PARSER_STATE(PatternAddress)
 
+// Handles `template` in a pattern.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE(PatternTemplate)
+
 // Finishes pattern processing.
 //
 // Always:
