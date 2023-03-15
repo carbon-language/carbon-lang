@@ -29,6 +29,10 @@ the precise rules are decided; see the
 [Unicode source files](/proposals/p0142.md#characters-in-identifiers-and-whitespace)
 proposal.
 
+The Carbon source files (including comments and string literals) are required to
+be in Unicode Normalization Form C (NFC). The Carbon source formatting tool will
+convert source files to NFC as necessary in order to satisfy the constraints.
+
 ## Keywords
 
 The following words are interpreted as keywords:
@@ -87,6 +91,7 @@ The following words are interpreted as keywords:
 ## Alternatives considered
 
 -   [Character encoding: We could restrict words to ASCII.](/proposals/p0142.md#character-encoding-1)
+-   [Normalization forms: We could require a different normalization form.](/proposals/p0142.md#normalization-forms)
 
 ## References
 
