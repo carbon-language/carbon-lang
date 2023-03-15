@@ -1275,7 +1275,7 @@ auto Parser::HandleParameterAsDeducedState() -> void {
 }
 
 auto Parser::HandleParameterAsRegularState() -> void {
-  HandleParameter(ParserState::PatternAsFunctionParameter,
+  HandleParameter(ParserState::PatternAsParameter,
                   ParserState::ParameterFinishAsRegular);
 }
 
@@ -1521,7 +1521,7 @@ auto Parser::HandlePatternAsDeducedParameterState() -> void {
   HandlePattern(PatternKind::DeducedParameter);
 }
 
-auto Parser::HandlePatternAsFunctionParameterState() -> void {
+auto Parser::HandlePatternAsParameterState() -> void {
   HandlePattern(PatternKind::Parameter);
 }
 

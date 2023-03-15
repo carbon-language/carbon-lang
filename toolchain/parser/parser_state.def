@@ -127,7 +127,24 @@ CARBON_PARSER_STATE(CodeBlock)
 //   (state done)
 CARBON_PARSER_STATE(CodeBlockFinish)
 
+// Handles a general declaration name and parameters, such as `Foo[...](...)`.
+//
+// If `OpenSquareBracket`:
+//   1. ParameterListAsDeduced
+//   2. DeclarationNameAndParamsAfterDeduced
+// If `OpenParen`:
+//   1. ParameterListAsRegular
+// Else:
+//   (state done)
 CARBON_PARSER_STATE_VARIANTS2(DeclarationNameAndParams, Optional, Required)
+
+// Handles regular parameters such as `(...)` for the general declaration case.
+// Only used after deduced parameters.
+//
+// If `OpenParen`:
+//   1. ParameterListAsRegular
+// Else:
+//   (state done)
 CARBON_PARSER_STATE(DeclarationNameAndParamsAfterDeduced)
 
 // Handles processing of a declaration scope. Things like fn, class, interface,
@@ -286,23 +303,26 @@ CARBON_PARSER_STATE(Package)
 // Starts deduced parameter processing.
 //
 // Always:
-//   1. PatternAsDeducedParameter
-//   2. DeducedParameterFinish
+//   1. PatternAs(DeducedParameter|Parameter)
+//   2. ParameterFinishAs(Deduced|Regular)
 CARBON_PARSER_STATE_VARIANTS2(Parameter, Deduced, Regular)
 
 // Finishes deduced parameter processing, including `,`. If there are more
 // parameters, enqueues another parameter processing state.
 //
-// If `Comma` without `CloseSquareBracket`:
-//   1. DeducedParameter
+// If `Comma` without the list close token:
+//   1. ParameterAs(Deduced|Regular)
 // Else:
 //   (state done)
 CARBON_PARSER_STATE_VARIANTS2(ParameterFinish, Deduced, Regular)
 
 // Handles processing of a parameter list `[` or `(`.
 //
-// Always:
-//   (state done)
+// If the list close token:
+//   1. ParameterListFinishAs(Deduced|Regular)
+// Else:
+//   1. ParameterAs(Deduced|Regular)
+//   2. ParameterListFinishAs(Deduced|Regular)
 CARBON_PARSER_STATE_VARIANTS2(ParameterList, Deduced, Regular)
 
 // Handles processing of a parameter list `]` or `)`.
@@ -363,8 +383,7 @@ CARBON_PARSER_STATE_VARIANTS2(ParenExpressionFinish, Normal, Tuple)
 //   2. PatternFinish
 // Else:
 //   1. PatternFinish
-CARBON_PARSER_STATE_VARIANTS3(Pattern, DeducedParameter, FunctionParameter,
-                              Variable)
+CARBON_PARSER_STATE_VARIANTS3(Pattern, DeducedParameter, Parameter, Variable)
 
 // Handles `addr` in a pattern.
 //
@@ -535,7 +554,14 @@ CARBON_PARSER_STATE(StatementWhileBlockFinish)
 CARBON_PARSER_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
                               NamedConstraint)
 
-// Handles processing of a type's `<introducer> <name> [;{]`.
+// Handles processing of a type's introducer.
+//
+// Always:
+//   1. DeclarationNameAndParamsAsOptional
+//   2. TypeAfterParamsAs(Class|Interface|NamedConstraint)
+CARBON_PARSER_STATE_VARIANTS3(TypeIntroducer, Class, Interface, NamedConstraint)
+
+// Handles processing of a type after its optional parameters.
 //
 // If `Semi`:
 //   (state done)
@@ -544,8 +570,6 @@ CARBON_PARSER_STATE_VARIANTS3(TypeDefinitionFinish, Class, Interface,
 //   2. TypeDefinitionFinishAs(Class|Interface|NamedConstraint)
 // Else:
 //   (state done)
-CARBON_PARSER_STATE_VARIANTS3(TypeIntroducer, Class, Interface, NamedConstraint)
-
 CARBON_PARSER_STATE_VARIANTS3(TypeAfterParams, Class, Interface,
                               NamedConstraint)
 
