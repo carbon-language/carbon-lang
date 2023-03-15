@@ -40,9 +40,6 @@ class Parser {
   // Possible return values for FindListToken.
   enum class ListTokenKind { Comma, Close, CommaClose };
 
-  // Supported kinds for HandleBraceExpression.
-  enum class BraceExpressionKind { Unknown, Value, Type };
-
   // Supported kinds for HandlePattern.
   enum class PatternKind { DeducedParameter, Parameter, Variable };
 
@@ -281,29 +278,25 @@ class Parser {
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
-  // Returns the appropriate ParserState for the input kind.
-  static auto BraceExpressionKindToParserState(BraceExpressionKind kind,
-                                               ParserState type,
-                                               ParserState value,
-                                               ParserState unknown)
-      -> ParserState;
-
   // Prints a diagnostic for brace expression syntax errors.
   auto HandleBraceExpressionParameterError(StateStackEntry state,
-                                           BraceExpressionKind kind) -> void;
-
-  // Handles BraceExpressionParameterAs(Type|Value|Unknown).
-  auto HandleBraceExpressionParameter(BraceExpressionKind kind) -> void;
-
-  // Handles BraceExpressionParameterAfterDesignatorAs(Type|Value|Unknown).
-  auto HandleBraceExpressionParameterAfterDesignator(BraceExpressionKind kind)
+                                           ParserState param_finish_state)
       -> void;
 
+  // Handles BraceExpressionParameterAs(Type|Value|Unknown).
+  auto HandleBraceExpressionParameter(ParserState after_designator_state,
+                                      ParserState param_finish_state) -> void;
+
+  // Handles BraceExpressionParameterAfterDesignatorAs(Type|Value|Unknown).
+  auto HandleBraceExpressionParameterAfterDesignator(
+      ParserState param_finish_state) -> void;
+
   // Handles BraceExpressionParameterFinishAs(Type|Value|Unknown).
-  auto HandleBraceExpressionParameterFinish(BraceExpressionKind kind) -> void;
+  auto HandleBraceExpressionParameterFinish(ParseNodeKind node_kind,
+                                            ParserState param_state) -> void;
 
   // Handles BraceExpressionFinishAs(Type|Value|Unknown).
-  auto HandleBraceExpressionFinish(BraceExpressionKind kind) -> void;
+  auto HandleBraceExpressionFinish(ParseNodeKind node_kind) -> void;
 
   // Handles DesignatorAs.
   auto HandleDesignator(bool as_struct) -> void;
