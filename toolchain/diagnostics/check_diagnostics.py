@@ -4,6 +4,8 @@
 
 Validates that each diagnostic declared with CARBON_DIAGNOSTIC_KIND is
 referenced by one (and only one) CARBON_DIAGNOSTIC.
+
+This expects to be run from the repo root by pre-commit.
 """
 
 __copyright__ = """
@@ -15,8 +17,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import collections
 from concurrent import futures
 import itertools
-from pathlib import Path
 import os
+from pathlib import Path
 import re
 import sys
 from typing import Dict, List, NamedTuple, Set
@@ -100,11 +102,10 @@ def check_unused(decls: Set[str], uses: Dict[str, List[Location]]) -> bool:
     unused = decls.difference(uses.keys())
     for diag in sorted(unused):
         print(f"Unused diagnostic: {diag}")
-    return False
+    return bool(unused)
 
 
 def main() -> None:
-    # Run from the repo root.
     os.chdir(Path(__file__).parent.parent.parent)
     decls = load_diagnostic_kind()
     uses = load_diagnostic_uses()
