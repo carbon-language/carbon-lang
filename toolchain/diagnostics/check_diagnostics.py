@@ -98,9 +98,11 @@ def check_uniqueness(uses: Dict[str, List[Location]]) -> bool:
 def check_unused(decls: Set[str], uses: Dict[str, List[Location]]) -> bool:
     """If any diagnostic is unused, prints an error and returns true."""
     unused = decls.difference(uses.keys())
+    if not unused:
+        return False
     for diag in sorted(unused):
         print(f"Unused diagnostic: {diag}")
-    return bool(unused)
+    return True
 
 
 def main() -> None:
