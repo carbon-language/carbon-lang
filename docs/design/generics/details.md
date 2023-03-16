@@ -3060,7 +3060,7 @@ them, needs them to be `Hashable` and so on. To say "`T` is a type where
 `HashSet(T)` is legal," we can write:
 
 ```
-fn NumDistinct[T:! type where HashSet(.Self) impls Type]
+fn NumDistinct[T:! type where HashSet(.Self) impls type]
     (a: T, b: T, c: T) -> i32 {
   var set: HashSet(T);
   set.Add(a);
