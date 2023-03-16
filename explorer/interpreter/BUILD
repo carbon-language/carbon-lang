@@ -205,6 +205,9 @@ cc_library(
         "matching_impl_set.h",
         "type_checker.h",
     ],
+    textual_hdrs = [
+        "builtins.def",
+    ],
     deps = [
         ":action",
         ":dictionary",
@@ -212,6 +215,7 @@ cc_library(
         ":pattern_analysis",
         ":trace_stream",
         "//common:check",
+        "//common:enum_base",
         "//common:error",
         "//common:ostream",
         "//explorer/ast",

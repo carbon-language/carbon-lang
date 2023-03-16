@@ -13,7 +13,7 @@ cc_library(
     textual_hdrs = ["parse_node_kind.def"],
     deps = [
         "//common:check",
-        "//toolchain/common:enum_base",
+        "//common:enum_base",
     ],
 )
 
@@ -22,7 +22,7 @@ cc_library(
     srcs = ["parser_state.cpp"],
     hdrs = ["parser_state.h"],
     textual_hdrs = ["parser_state.def"],
-    deps = ["//toolchain/common:enum_base"],
+    deps = ["//common:enum_base"],
 )
 
 cc_library(

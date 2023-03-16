@@ -610,7 +610,7 @@ auto TypeChecker::IsImplicitlyConvertible(
   // We didn't find a builtin implicit conversion. Try a user-defined one.
   SourceLocation source_loc = SourceLocation::DiagnosticsIgnored();
   ErrorOr<Nonnull<const InterfaceType*>> iface_type = GetBuiltinInterfaceType(
-      source_loc, BuiltinInterfaceName{Builtins::ImplicitAs, destination});
+      source_loc, BuiltinInterfaceName{Builtin::ImplicitAs, destination});
   // TODO: If the Resolve call fails with a hard error, don't swallow it.
   return iface_type.ok() &&
          impl_scope.Resolve(*iface_type, source, source_loc, *this).ok();
@@ -722,7 +722,7 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
 
   ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
       impl_scope, source,
-      BuiltinInterfaceName{Builtins::ImplicitAs, destination},
+      BuiltinInterfaceName{Builtin::ImplicitAs, destination},
       BuiltinMethodCall{"Convert"});
   if (!converted.ok()) {
     // We couldn't find a matching `impl`.
@@ -752,9 +752,8 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
                                           BuiltinInterfaceName interface) const
     -> ErrorOr<Nonnull<const InterfaceType*>> {
   auto bad_builtin = [&]() -> Error {
-    return ProgramError(source_loc)
-           << "unsupported declaration for builtin `"
-           << Builtins::GetName(interface.builtin) << "`";
+    return ProgramError(source_loc) << "unsupported declaration for builtin `"
+                                    << interface.builtin << "`";
   };
 
   // Find the builtin interface declaration.
@@ -795,7 +794,7 @@ auto TypeChecker::BuildBuiltinMethodCall(const ImplScope& impl_scope,
   CARBON_ASSIGN_OR_RETURN(Nonnull<const InterfaceType*> iface_type,
                           GetBuiltinInterfaceType(source_loc, interface));
 
-  if (interface.builtin == Builtins::ImplicitAs) {
+  if (interface.builtin == Builtin::ImplicitAs) {
     // Type-checking the below expression resolves the member name to
     // `As(Destination).Convert`, which allows both implicit and explicit
     // conversions. So manually check that `ImplicitAs(Destination)` is
@@ -3103,8 +3102,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         ts.push_back(&argument->static_type());
       }
 
-      auto handle_unary_operator =
-          [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
+      auto handle_unary_operator = [&](Builtin builtin) -> ErrorOr<Success> {
         ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
             impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin},
             BuiltinMethodCall{"Op"});
@@ -3118,8 +3116,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         return Success();
       };
 
-      auto handle_binary_operator =
-          [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
+      auto handle_binary_operator = [&](Builtin builtin) -> ErrorOr<Success> {
         ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
             impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin, ts[1]},
             BuiltinMethodCall{"Op", {op.arguments()[1]}});
@@ -3133,8 +3130,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         return Success();
       };
 
-      auto handle_binary_arithmetic =
-          [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
+      auto handle_binary_arithmetic = [&](Builtin builtin) -> ErrorOr<Success> {
         // Handle a built-in operator first.
         // TODO: Replace this with an intrinsic.
         if (isa<IntType>(ts[0]) && isa<IntType>(ts[1]) &&
@@ -3149,7 +3145,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       };
 
       auto handle_compare =
-          [&](Builtins::Builtin builtin, const std::string& method_name,
+          [&](Builtin builtin, const std::string& method_name,
               const std::string_view& operator_desc) -> ErrorOr<Success> {
         ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
             impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin, ts[1]},
@@ -3174,18 +3170,18 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return Success();
           }
           // Now try an overloaded negation.
-          return handle_unary_operator(Builtins::Negate);
+          return handle_unary_operator(Builtin::Negate);
         }
         case Operator::Add:
-          return handle_binary_arithmetic(Builtins::AddWith);
+          return handle_binary_arithmetic(Builtin::AddWith);
         case Operator::Sub:
-          return handle_binary_arithmetic(Builtins::SubWith);
+          return handle_binary_arithmetic(Builtin::SubWith);
         case Operator::Mul:
-          return handle_binary_arithmetic(Builtins::MulWith);
+          return handle_binary_arithmetic(Builtin::MulWith);
         case Operator::Div:
-          return handle_binary_arithmetic(Builtins::DivWith);
+          return handle_binary_arithmetic(Builtin::DivWith);
         case Operator::Mod:
-          return handle_binary_arithmetic(Builtins::ModWith);
+          return handle_binary_arithmetic(Builtin::ModWith);
         case Operator::BitwiseAnd:
           // `&` between type-of-types performs constraint combination.
           // TODO: Should this be done via an intrinsic?
@@ -3213,17 +3209,17 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 ValueCategory::Let));
             return Success();
           }
-          return handle_binary_operator(Builtins::BitAndWith);
+          return handle_binary_operator(Builtin::BitAndWith);
         case Operator::BitwiseOr:
-          return handle_binary_operator(Builtins::BitOrWith);
+          return handle_binary_operator(Builtin::BitOrWith);
         case Operator::BitwiseXor:
-          return handle_binary_operator(Builtins::BitXorWith);
+          return handle_binary_operator(Builtin::BitXorWith);
         case Operator::BitShiftLeft:
-          return handle_binary_operator(Builtins::LeftShiftWith);
+          return handle_binary_operator(Builtin::LeftShiftWith);
         case Operator::BitShiftRight:
-          return handle_binary_operator(Builtins::RightShiftWith);
+          return handle_binary_operator(Builtin::RightShiftWith);
         case Operator::Complement:
-          return handle_unary_operator(Builtins::BitComplement);
+          return handle_unary_operator(Builtin::BitComplement);
         case Operator::And:
           CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(1)",
                                                  arena_->New<BoolType>(), ts[0],
@@ -3252,18 +3248,18 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_value_category(ValueCategory::Let);
           return Success();
         case Operator::Eq:
-          return handle_compare(Builtins::EqWith, "Equal", "equality");
+          return handle_compare(Builtin::EqWith, "Equal", "equality");
         case Operator::NotEq:
-          return handle_compare(Builtins::EqWith, "NotEqual", "equality");
+          return handle_compare(Builtin::EqWith, "NotEqual", "equality");
         case Operator::Less:
-          return handle_compare(Builtins::LessWith, "Less", "less");
+          return handle_compare(Builtin::LessWith, "Less", "less");
         case Operator::LessEq:
-          return handle_compare(Builtins::LessEqWith, "LessEq", "less equal");
+          return handle_compare(Builtin::LessEqWith, "LessEq", "less equal");
         case Operator::GreaterEq:
-          return handle_compare(Builtins::GreaterEqWith, "GreaterEq",
+          return handle_compare(Builtin::GreaterEqWith, "GreaterEq",
                                 "greater equal");
         case Operator::Greater:
-          return handle_compare(Builtins::GreaterWith, "Greater", "greater");
+          return handle_compare(Builtin::GreaterWith, "Greater", "greater");
         case Operator::Deref:
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", ts[0]));
@@ -3296,7 +3292,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               TypeCheckTypeExp(op.arguments()[1], impl_scope));
           ErrorOr<Nonnull<Expression*>> converted =
               BuildBuiltinMethodCall(impl_scope, op.arguments()[0],
-                                     BuiltinInterfaceName{Builtins::As, type},
+                                     BuiltinInterfaceName{Builtin::As, type},
                                      BuiltinMethodCall{"Convert"});
           if (!converted.ok()) {
             // We couldn't find a matching `impl`.
@@ -4190,31 +4186,30 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
 
 // Get the builtin interface that should be used for the given kind of
 // assignment operator.
-static auto GetBuiltinInterfaceForAssignOperator(AssignOperator op)
-    -> Builtins::Builtin {
+static auto GetBuiltinInterfaceForAssignOperator(AssignOperator op) -> Builtin {
   switch (op) {
     case AssignOperator::Plain:
-      return Builtins::AssignWith;
+      return Builtin::AssignWith;
     case AssignOperator::Add:
-      return Builtins::AddAssignWith;
+      return Builtin::AddAssignWith;
     case AssignOperator::Sub:
-      return Builtins::SubAssignWith;
+      return Builtin::SubAssignWith;
     case AssignOperator::Mul:
-      return Builtins::MulAssignWith;
+      return Builtin::MulAssignWith;
     case AssignOperator::Div:
-      return Builtins::DivAssignWith;
+      return Builtin::DivAssignWith;
     case AssignOperator::Mod:
-      return Builtins::ModAssignWith;
+      return Builtin::ModAssignWith;
     case AssignOperator::And:
-      return Builtins::BitAndAssignWith;
+      return Builtin::BitAndAssignWith;
     case AssignOperator::Or:
-      return Builtins::BitOrAssignWith;
+      return Builtin::BitOrAssignWith;
     case AssignOperator::Xor:
-      return Builtins::BitXorAssignWith;
+      return Builtin::BitXorAssignWith;
     case AssignOperator::ShiftLeft:
-      return Builtins::LeftShiftAssignWith;
+      return Builtin::LeftShiftAssignWith;
     case AssignOperator::ShiftRight:
-      return Builtins::RightShiftAssignWith;
+      return Builtin::RightShiftAssignWith;
   }
 }
 
@@ -4392,7 +4387,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
           BuildBuiltinMethodCall(
               impl_scope, &inc_dec.argument(),
               BuiltinInterfaceName{
-                  inc_dec.is_increment() ? Builtins::Inc : Builtins::Dec, {}},
+                  inc_dec.is_increment() ? Builtin::Inc : Builtin::Dec, {}},
               BuiltinMethodCall{"Op"}));
       inc_dec.set_rewritten_form(rewritten);
       return Success();
