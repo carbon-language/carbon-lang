@@ -3634,8 +3634,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::WhereExpression: {
       auto& where = cast<WhereExpression>(*e);
-      ImplScope inner_impl_scope;
-      inner_impl_scope.AddParent(&impl_scope);
+      ImplScope inner_impl_scope(&impl_scope);
 
       auto& self = where.self_binding();
 
@@ -4235,8 +4234,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       std::optional<Nonnull<const Value*>> expected_type;
       PatternMatrix patterns;
       for (auto& clause : match.clauses()) {
-        ImplScope clause_scope;
-        clause_scope.AddParent(&impl_scope);
+        ImplScope clause_scope(&impl_scope);
         // TODO: Should user-defined conversions be permitted in `match`
         // statements? When would we run them? See #1283.
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
@@ -4285,8 +4283,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     }
     case StatementKind::For: {
       auto& for_stmt = cast<For>(*s);
-      ImplScope inner_impl_scope;
-      inner_impl_scope.AddParent(&impl_scope);
+      ImplScope inner_impl_scope(&impl_scope);
 
       CARBON_RETURN_IF_ERROR(
           TypeCheckExp(&for_stmt.loop_target(), inner_impl_scope));
@@ -4329,8 +4326,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       // // Is the `impl T as Widget` in scope here?
       // a.(Widget.F)();
       // ```
-      ImplScope var_scope;
-      var_scope.AddParent(&impl_scope);
+      ImplScope var_scope(&impl_scope);
       std::optional<Nonnull<const Value*>> init_type;
 
       // Type-check the initializer before we inspect the type of the variable
@@ -4563,8 +4559,7 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "** declaring function " << *name << "\n";
   }
-  ImplScope function_scope;
-  function_scope.AddParent(scope_info.innermost_scope);
+  ImplScope function_scope(scope_info.innermost_scope);
   std::vector<Nonnull<const GenericBinding*>> deduced_bindings;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   // Bring the deduced parameters into scope.
@@ -4677,8 +4672,7 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
   // type checked in DeclareFunctionDeclaration.
   if (f->body().has_value() && !f->return_term().is_auto()) {
     // Bring the impls into scope.
-    ImplScope function_scope;
-    function_scope.AddParent(&impl_scope);
+    ImplScope function_scope(&impl_scope);
     BringImplsIntoScope(cast<FunctionType>(f->static_type()).impl_bindings(),
                         function_scope);
     if (trace_stream_->is_enabled()) {
@@ -4704,8 +4698,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   }
   Nonnull<SelfDeclaration*> self = class_decl->self();
 
-  ImplScope class_scope;
-  class_scope.AddParent(scope_info.innermost_scope);
+  ImplScope class_scope(scope_info.innermost_scope);
 
   std::optional<Nonnull<const NominalClassType*>> base_class;
   if (class_decl->base_expr().has_value()) {
@@ -4839,8 +4832,7 @@ auto TypeChecker::TypeCheckClassDeclaration(
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "** checking class " << class_decl->name() << "\n";
   }
-  ImplScope class_scope;
-  class_scope.AddParent(&impl_scope);
+  ImplScope class_scope(&impl_scope);
   if (class_decl->type_params().has_value()) {
     BringPatternImplsIntoScope(*class_decl->type_params(), class_scope);
   }
@@ -4869,8 +4861,7 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "** declaring mixin " << mixin_decl->name() << "\n";
   }
-  ImplScope mixin_scope;
-  mixin_scope.AddParent(scope_info.innermost_scope);
+  ImplScope mixin_scope(scope_info.innermost_scope);
 
   if (mixin_decl->params().has_value()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(*mixin_decl->params(), std::nullopt,
@@ -4929,8 +4920,7 @@ auto TypeChecker::TypeCheckMixinDeclaration(
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "** checking mixin " << mixin_decl->name() << "\n";
   }
-  ImplScope mixin_scope;
-  mixin_scope.AddParent(&impl_scope);
+  ImplScope mixin_scope(&impl_scope);
   if (mixin_decl->params().has_value()) {
     BringPatternImplsIntoScope(*mixin_decl->params(), mixin_scope);
   }
@@ -4997,8 +4987,7 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
     constraint_decl->PrintID(trace_stream_->stream());
     *trace_stream_ << "\n";
   }
-  ImplScope constraint_scope;
-  constraint_scope.AddParent(scope_info.innermost_scope);
+  ImplScope constraint_scope(scope_info.innermost_scope);
 
   // Type-check the parameters and find the set of bindings that are in scope.
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
@@ -5188,8 +5177,7 @@ auto TypeChecker::TypeCheckConstraintTypeDeclaration(
     constraint_decl->PrintID(trace_stream_->stream());
     *trace_stream_ << "\n";
   }
-  ImplScope constraint_scope;
-  constraint_scope.AddParent(&impl_scope);
+  ImplScope constraint_scope(&impl_scope);
   if (constraint_decl->params().has_value()) {
     BringPatternImplsIntoScope(*constraint_decl->params(), constraint_scope);
   }
@@ -5292,8 +5280,7 @@ auto TypeChecker::CheckAndAddImplBindings(
       // Bring the associated constant values for this interface into scope. We
       // know that if the methods of this interface are used, they will use
       // these values.
-      ImplScope iface_scope;
-      iface_scope.AddParent(scope_info.innermost_scope);
+      ImplScope iface_scope(scope_info.innermost_scope);
       BringAssociatedConstantsIntoScope(constraint, impl_type, iface_type,
                                         iface_scope);
 
@@ -5303,8 +5290,7 @@ auto TypeChecker::CheckAndAddImplBindings(
       // scope, though, because it could be partially specialized.
       Nonnull<const Witness*> iface_witness;
       {
-        ImplScope impl_scope;
-        impl_scope.AddParent(&iface_scope);
+        ImplScope impl_scope(&iface_scope);
         impl_scope.Add(impl_decl->constraint_type(), impl_type, impl_witness,
                        *this);
         CARBON_ASSIGN_OR_RETURN(
@@ -5345,8 +5331,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "declaring " << *impl_decl << "\n";
   }
-  ImplScope impl_scope;
-  impl_scope.AddParent(scope_info.innermost_scope);
+  ImplScope impl_scope(scope_info.innermost_scope);
   std::vector<Nonnull<const GenericBinding*>> generic_bindings =
       scope_info.bindings;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
@@ -5422,8 +5407,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   Nonnull<const Witness*> impl_witness;
   {
     std::vector<EqualityConstraint> rewrite_constraints_as_equality_constraints;
-    ImplScope self_impl_scope;
-    self_impl_scope.AddParent(&impl_scope);
+    ImplScope self_impl_scope(&impl_scope);
 
     // For each interface we're going to implement, this impl is the witness
     // that that interface is implemented.
@@ -5507,8 +5491,7 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   Nonnull<const ConstraintType*> constraint = impl_decl->constraint_type();
 
   // Bring the impls from the parameters into scope.
-  ImplScope impl_scope;
-  impl_scope.AddParent(&enclosing_scope);
+  ImplScope impl_scope(&enclosing_scope);
   BringImplsIntoScope(impl_decl->impl_bindings(), impl_scope);
   for (Nonnull<Declaration*> m : impl_decl->members()) {
     CARBON_ASSIGN_OR_RETURN(
@@ -5518,8 +5501,7 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 
     // Bring the associated constant values for the interface that this method
     // implements part of into scope.
-    ImplScope member_scope;
-    member_scope.AddParent(&impl_scope);
+    ImplScope member_scope(&impl_scope);
     BringAssociatedConstantsIntoScope(constraint, self, result.interface,
                                       member_scope);
 
@@ -5534,8 +5516,7 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                            const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
-  ImplScope choice_scope;
-  choice_scope.AddParent(scope_info.innermost_scope);
+  ImplScope choice_scope(scope_info.innermost_scope);
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
   if (choice->type_params().has_value()) {
     Nonnull<TuplePattern*> type_params = *choice->type_params();
