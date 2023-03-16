@@ -105,6 +105,14 @@ class Pattern : public AstNode {
 auto VisitNestedPatterns(const Pattern& pattern,
                          llvm::function_ref<bool(const Pattern&)> visitor)
     -> bool;
+inline auto VisitNestedPatterns(Pattern& pattern,
+                                llvm::function_ref<bool(Pattern&)> visitor)
+    -> bool {
+  const Pattern& const_pattern = pattern;
+  return VisitNestedPatterns(const_pattern, [&](const Pattern& inner) {
+    return visitor(const_cast<Pattern&>(inner));
+  });
+}
 
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {
@@ -252,6 +260,16 @@ class GenericBinding : public Pattern {
   auto type() const -> const Expression& { return *type_; }
   auto type() -> Expression& { return *type_; }
 
+  // The index of this binding, which is the number of bindings that are in
+  // scope at the point where this binding is declared.
+  auto index() const -> int { return *index_; }
+
+  // Set the index of this binding. Should be called only during type-checking.
+  void set_index(int index) {
+    CARBON_CHECK(!index_) << "should only set depth and index once";
+    index_ = index;
+  }
+
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
@@ -299,6 +317,7 @@ class GenericBinding : public Pattern {
  private:
   std::string name_;
   Nonnull<Expression*> type_;
+  std::optional<int> index_;
   std::optional<Nonnull<const Value*>> symbolic_identity_;
   std::optional<Nonnull<const ImplBinding*>> impl_binding_;
   std::optional<Nonnull<const GenericBinding*>> original_;

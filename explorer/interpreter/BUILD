@@ -211,6 +211,7 @@ cc_library(
         ":interpreter",
         ":pattern_analysis",
         ":trace_stream",
+        ":type_structure",
         "//common:check",
         "//common:error",
         "//common:ostream",
@@ -219,6 +220,22 @@ cc_library(
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
         "//explorer/common:source_location",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "type_structure",
+    srcs = [
+        "type_structure.cpp",
+    ],
+    hdrs = [
+        "type_structure.h",
+    ],
+    deps = [
+        "//common:ostream",
+        "//explorer/ast",
+        "//explorer/common:nonnull",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -30,6 +30,7 @@
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
+#include "explorer/interpreter/type_structure.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
@@ -3816,11 +3817,12 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
   }
 }
 
-void TypeChecker::CollectGenericBindingsInPattern(
-    Nonnull<const Pattern*> p,
+void TypeChecker::CollectAndNumberGenericBindingsInPattern(
+    Nonnull<Pattern*> p,
     std::vector<Nonnull<const GenericBinding*>>& generic_bindings) {
-  VisitNestedPatterns(*p, [&](const Pattern& pattern) {
-    if (const auto* binding = dyn_cast<GenericBinding>(&pattern)) {
+  VisitNestedPatterns(*p, [&](Pattern& pattern) {
+    if (auto* binding = dyn_cast<GenericBinding>(&pattern)) {
+      binding->set_index(generic_bindings.size());
       generic_bindings.push_back(binding);
     }
     return true;
@@ -4565,20 +4567,21 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   }
   ImplScope function_scope;
   function_scope.AddParent(scope_info.innermost_scope);
-  std::vector<Nonnull<const GenericBinding*>> deduced_bindings;
+  std::vector<Nonnull<const GenericBinding*>> all_bindings =
+      scope_info.bindings;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   // Bring the deduced parameters into scope.
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
         deduced, std::nullopt, function_scope, ValueCategory::Let));
-    CollectGenericBindingsInPattern(deduced, deduced_bindings);
+    CollectAndNumberGenericBindingsInPattern(deduced, all_bindings);
     CollectImplBindingsInPattern(deduced, impl_bindings);
   }
   // Type check the receiver pattern.
   if (f->is_method()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
         &f->self_pattern(), std::nullopt, function_scope, ValueCategory::Let));
-    CollectGenericBindingsInPattern(&f->self_pattern(), deduced_bindings);
+    CollectAndNumberGenericBindingsInPattern(&f->self_pattern(), all_bindings);
     CollectImplBindingsInPattern(&f->self_pattern(), impl_bindings);
   }
   // Type check the parameter pattern.
@@ -4586,15 +4589,25 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
                                           function_scope, ValueCategory::Let));
   CollectImplBindingsInPattern(&f->param_pattern(), impl_bindings);
 
+  // All bindings we've seen so far in this scope are our deduced bindings.
+  std::vector<Nonnull<const GenericBinding*>> deduced_bindings(
+      all_bindings.begin() + scope_info.bindings.size(), all_bindings.end());
+
   // Keep track of any generic parameters and nested generic bindings in the
   // parameter pattern.
   std::vector<FunctionType::GenericParameter> generic_parameters;
   for (size_t i = 0; i != f->param_pattern().fields().size(); ++i) {
-    const Pattern* param_pattern = f->param_pattern().fields()[i];
+    Pattern* param_pattern = f->param_pattern().fields()[i];
+
+    size_t old_size = all_bindings.size();
+    CollectAndNumberGenericBindingsInPattern(param_pattern, all_bindings);
+
     if (const auto* binding = dyn_cast<GenericBinding>(param_pattern)) {
       generic_parameters.push_back({i, binding});
     } else {
-      CollectGenericBindingsInPattern(param_pattern, deduced_bindings);
+      deduced_bindings.insert(deduced_bindings.end(),
+                              all_bindings.begin() + old_size,
+                              all_bindings.end());
     }
   }
 
@@ -4737,7 +4750,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     Nonnull<TuplePattern*> type_params = *class_decl->type_params();
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(type_params, std::nullopt,
                                             class_scope, ValueCategory::Let));
-    CollectGenericBindingsInPattern(type_params, bindings);
+    CollectAndNumberGenericBindingsInPattern(type_params, bindings);
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << class_scope;
     }
@@ -5009,7 +5022,8 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << constraint_scope;
     }
-    CollectGenericBindingsInPattern(*constraint_decl->params(), bindings);
+    CollectAndNumberGenericBindingsInPattern(*constraint_decl->params(),
+                                             bindings);
   }
 
   // Form the full symbolic type of the interface or named constraint. This is
@@ -5320,12 +5334,22 @@ auto TypeChecker::CheckAndAddImplBindings(
                                                  impl_type, self_witness,
                                                  iface_witness, iface_scope));
 
+      std::optional<TypeStructureSortKey> sort_key;
+      if (deduced_bindings.size()) {
+        sort_key = TypeStructureSortKey::ForImpl(impl_type, iface_type);
+        if (trace_stream_->is_enabled()) {
+          *trace_stream_ << "type structure sort key for `impl " << *impl_type
+                         << " as " << *iface_type << "` is " << sort_key
+                         << "\n";
+        }
+      }
+
       // TODO: We should do this either before checking any interface or after
       // checking all of them, so that the order of lookup contexts doesn't
       // matter.
       scope_info.innermost_non_class_scope->Add(
           iface_type, deduced_bindings, impl_type, impl_decl->impl_bindings(),
-          self_witness, *this);
+          self_witness, *this, sort_key);
     } else if (isa<NamedConstraintType>(lookup.context)) {
       // Nothing to check here, since a named constraint can't introduce any
       // associated entities.
@@ -5541,7 +5565,7 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
     Nonnull<TuplePattern*> type_params = *choice->type_params();
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(type_params, std::nullopt,
                                             choice_scope, ValueCategory::Let));
-    CollectGenericBindingsInPattern(type_params, bindings);
+    CollectAndNumberGenericBindingsInPattern(type_params, bindings);
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << choice_scope;
     }
