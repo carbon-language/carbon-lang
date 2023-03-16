@@ -8,6 +8,7 @@
 #include <optional>
 
 #include "explorer/ast/pattern.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
@@ -31,6 +32,8 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
        {"new", Intrinsic::Alloc},
        {"delete", Intrinsic::Dealloc},
        {"rand", Intrinsic::Rand},
+       {"implicit_as", Intrinsic::ImplicitAs},
+       {"implicit_as_convert", Intrinsic::ImplicitAsConvert},
        {"int_eq", Intrinsic::IntEq},
        {"int_compare", Intrinsic::IntCompare},
        {"int_bit_complement", Intrinsic::IntBitComplement},
@@ -61,6 +64,10 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_delete";
     case IntrinsicExpression::Intrinsic::Rand:
       return "__intrinsic_rand";
+    case IntrinsicExpression::Intrinsic::ImplicitAs:
+      return "__intrinsic_implicit_as";
+    case IntrinsicExpression::Intrinsic::ImplicitAsConvert:
+      return "__intrinsic_implicit_as_convert";
     case IntrinsicExpression::Intrinsic::IntEq:
       return "__intrinsic_int_eq";
     case IntrinsicExpression::Intrinsic::IntCompare:
@@ -105,7 +112,7 @@ auto TupleExpressionFromParenContents(
 
 Expression::~Expression() = default;
 
-auto ToString(Operator op) -> std::string_view {
+auto OperatorToString(Operator op) -> std::string_view {
   switch (op) {
     case Operator::Add:
       return "+";
@@ -181,6 +188,11 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << access.object() << ".(" << access.path() << ")";
       break;
     }
+    case ExpressionKind::BaseAccessExpression: {
+      const auto& access = cast<BaseAccessExpression>(*this);
+      out << access.object() << ".base";
+      break;
+    }
     case ExpressionKind::TupleLiteral: {
       out << "(";
       llvm::ListSeparator sep;
@@ -206,13 +218,13 @@ void Expression::Print(llvm::raw_ostream& out) const {
       const auto& op = cast<OperatorExpression>(*this);
       switch (op.arguments().size()) {
         case 0:
-          out << ToString(op.op());
+          out << OperatorToString(op.op());
           break;
         case 1:
-          out << ToString(op.op()) << " " << *op.arguments()[0];
+          out << OperatorToString(op.op()) << " " << *op.arguments()[0];
           break;
         case 2:
-          out << *op.arguments()[0] << " " << ToString(op.op()) << " "
+          out << *op.arguments()[0] << " " << OperatorToString(op.op()) << " "
               << *op.arguments()[1];
           break;
         default:
@@ -324,30 +336,30 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       out << "String";
       break;
     case ExpressionKind::TypeTypeLiteral:
-      out << "Type";
+      out << "type";
       break;
     case ExpressionKind::ContinuationTypeLiteral:
       out << "Continuation";
       break;
+    case ExpressionKind::FunctionTypeLiteral:
+    case ExpressionKind::StructLiteral:
+    case ExpressionKind::ArrayTypeLiteral:
     case ExpressionKind::ValueLiteral:
-      // TODO: For layering reasons, we can't print out the value from here.
-      out << "ValueLiteral";
+      out << cast<ConstantValueLiteral>(*this).constant_value();
       break;
     case ExpressionKind::IndexExpression:
     case ExpressionKind::SimpleMemberAccessExpression:
     case ExpressionKind::CompoundMemberAccessExpression:
+    case ExpressionKind::BaseAccessExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::WhereExpression:
     case ExpressionKind::BuiltinConvertExpression:
     case ExpressionKind::TupleLiteral:
-    case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
     case ExpressionKind::CallExpression:
     case ExpressionKind::OperatorExpression:
     case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::UnimplementedExpression:
-    case ExpressionKind::FunctionTypeLiteral:
-    case ExpressionKind::ArrayTypeLiteral:
       out << "...";
       break;
   }

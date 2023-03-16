@@ -5,18 +5,25 @@
 #ifndef CARBON_EXPLORER_INTERPRETER_TYPE_CHECKER_H_
 #define CARBON_EXPLORER_INTERPRETER_TYPE_CHECKER_H_
 
+#include <optional>
 #include <set>
+#include <string_view>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
 
 #include "common/ostream.h"
 #include "explorer/ast/ast.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/statement.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/interpreter/builtins.h"
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
-#include "explorer/interpreter/value.h"
+#include "explorer/interpreter/matching_impl_set.h"
+#include "explorer/interpreter/trace_stream.h"
 
 namespace Carbon {
 
@@ -29,7 +36,7 @@ using GlobalMembersMap =
 class TypeChecker {
  public:
   explicit TypeChecker(Nonnull<Arena*> arena,
-                       std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
+                       Nonnull<TraceStream*> trace_stream)
       : arena_(arena), trace_stream_(trace_stream) {}
 
   // Type-checks `ast` and sets properties such as `static_type`, as documented
@@ -58,7 +65,7 @@ class TypeChecker {
   auto MatchImpl(const InterfaceType& iface, Nonnull<const Value*> type,
                  const ImplScope::Impl& impl, const ImplScope& impl_scope,
                  SourceLocation source_loc) const
-      -> std::optional<Nonnull<const Witness*>>;
+      -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 
   // Return the declaration of the member with the given name and the class type
   // that owns it, from the class and its parents
@@ -91,6 +98,12 @@ class TypeChecker {
   auto MakeConstraintWitnessAccess(Nonnull<const Witness*> witness,
                                    int impl_offset) const
       -> Nonnull<const Witness*>;
+
+  // Determine whether the given intrinsic constraint is known to be satisfied
+  // in the given scope.
+  auto IsIntrinsicConstraintSatisfied(const IntrinsicConstraint& constraint,
+                                      const ImplScope& impl_scope) const
+      -> bool;
 
  private:
   class ConstraintTypeBuilder;
@@ -383,21 +396,19 @@ class TypeChecker {
   auto ExpectNonPlaceholderType(SourceLocation source_loc,
                                 Nonnull<const Value*> type) -> ErrorOr<Success>;
 
+  // Build and return class subtyping conversion expression, converting from
+  // `src_ptr` to `dest_ptr`.
+  auto BuildSubtypeConversion(Nonnull<Expression*> source,
+                              Nonnull<const PointerType*> src_ptr,
+                              Nonnull<const PointerType*> dest_ptr)
+      -> ErrorOr<Nonnull<const Expression*>>;
+
   // Determine whether `type1` and `type2` are considered to be the same type
   // in the given scope. This is true if they're structurally identical or if
   // there is an equality relation in scope that specifies that they are the
   // same.
   auto IsSameType(Nonnull<const Value*> type1, Nonnull<const Value*> type2,
                   const ImplScope& impl_scope) const -> bool;
-
-  // Check whether `actual` is implicitly convertible to `expected`
-  // and halt with a fatal compilation error if it is not.
-  //
-  // TODO: Does not actually perform the conversion if a user-defined
-  // conversion is needed. Should be used very rarely for that reason.
-  auto ExpectType(SourceLocation source_loc, std::string_view context,
-                  Nonnull<const Value*> expected, Nonnull<const Value*> actual,
-                  const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
   // Check whether `actual` is the same type as `expected` and halt with a
   // fatal compilation error if it is not.
@@ -497,7 +508,7 @@ class TypeChecker {
   // Maps a mixin/class declaration to all of its direct and indirect members.
   GlobalMembersMap collected_members_;
 
-  std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
+  Nonnull<TraceStream*> trace_stream_;
 
   // The top-level ImplScope, containing `impl` declarations that should be
   // usable from any context. This is used when we want to try to refine a
@@ -507,6 +518,12 @@ class TypeChecker {
   // Constraint types that are currently being resolved. These may have
   // rewrites that are not yet visible in any type.
   std::vector<ConstraintTypeBuilder*> partial_constraint_types_;
+
+  // A set of impls we're currently matching.
+  // TODO: This is `mutable` because `MatchImpl` is `const`. We need to remove
+  // the `const`s from everywhere that transitively does `impl` matching to get
+  // rid of this `mutable`.
+  mutable MatchingImplSet matching_impl_set_;
 };
 
 }  // namespace Carbon

@@ -24,10 +24,16 @@ class DataIterator;
 struct IndexBase {
   static constexpr int32_t InvalidIndex = -1;
 
-  constexpr IndexBase() : index(InvalidIndex) {}
+  IndexBase() = delete;
   constexpr explicit IndexBase(int index) : index(index) {}
 
-  auto Print(llvm::raw_ostream& output) const -> void { output << index; }
+  auto Print(llvm::raw_ostream& output) const -> void {
+    if (is_valid()) {
+      output << index;
+    } else {
+      output << "<invalid>";
+    }
+  }
 
   auto is_valid() const -> bool { return index != InvalidIndex; }
 

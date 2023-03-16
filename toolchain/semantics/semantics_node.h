@@ -15,59 +15,105 @@
 
 namespace Carbon {
 
-// Type-safe storage of Node IDs.
+// The ID of a node.
 struct SemanticsNodeId : public IndexBase {
-  static constexpr int32_t CrossReferenceBit = 0x8000'0000;
+  // An explicitly invalid node ID.
+  static const SemanticsNodeId Invalid;
 
-  // Constructs a cross-reference node ID.
-  static auto MakeCrossReference(int32_t index) -> SemanticsNodeId {
-    return SemanticsNodeId(index | CrossReferenceBit);
-  }
-
-  // Constructs a cross-reference node ID for a builtin. This relies on
-  // SemanticsIR guarantees for builtin cross-reference placement.
-  static auto MakeBuiltinReference(SemanticsBuiltinKind kind)
-      -> SemanticsNodeId {
-    return MakeCrossReference(kind.AsInt());
-  }
-
-  // Constructs an explicitly invalid instance.
-  static auto MakeInvalid() -> SemanticsNodeId { return SemanticsNodeId(); }
+// Builtin node IDs.
+#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
+  static const SemanticsNodeId Builtin##Name;
+#include "toolchain/semantics/semantics_builtin_kind.def"
 
   using IndexBase::IndexBase;
-
-  auto is_cross_reference() const -> bool { return index & CrossReferenceBit; }
-  // Returns the ID for a cross-reference, just handling removal of the marker
-  // bit.
-  auto GetAsCrossReference() const -> int32_t {
-    return index & ~CrossReferenceBit;
-  }
-
   auto Print(llvm::raw_ostream& out) const -> void {
-    if (is_cross_reference()) {
-      out << "node_xref" << GetAsCrossReference();
-    } else {
-      out << "node" << index;
-    }
+    out << "node";
+    IndexBase::Print(out);
   }
 };
 
-// Type-safe storage of integer literals.
+constexpr SemanticsNodeId SemanticsNodeId::Invalid =
+    SemanticsNodeId(SemanticsNodeId::InvalidIndex);
+
+// Uses the cross-reference node ID for a builtin. This relies on SemanticsIR
+// guarantees for builtin cross-reference placement.
+#define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name)             \
+  constexpr SemanticsNodeId SemanticsNodeId::Builtin##Name = \
+      SemanticsNodeId(SemanticsBuiltinKind::Name.AsInt());
+#include "toolchain/semantics/semantics_builtin_kind.def"
+
+// The ID of a call.
+struct SemanticsCallId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "call";
+    IndexBase::Print(out);
+  }
+};
+
+// The ID of a callable, such as a function.
+struct SemanticsCallableId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "callable";
+    IndexBase::Print(out);
+  }
+};
+
+// The ID of a cross-referenced IR.
+struct SemanticsCrossReferenceIRId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "ir";
+    IndexBase::Print(out);
+  }
+};
+
+// The ID of an integer literal.
 struct SemanticsIntegerLiteralId : public IndexBase {
   using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "int" << index; }
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "int";
+    IndexBase::Print(out);
+  }
 };
 
-// Type-safe storage of node blocks.
+// The ID of a node block.
 struct SemanticsNodeBlockId : public IndexBase {
+  // All SemanticsIR instances must provide the 0th node block as empty.
+  static const SemanticsNodeBlockId Empty;
+
+  // An explicitly invalid ID.
+  static const SemanticsNodeBlockId Invalid;
+
   using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "block" << index; }
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "block";
+    IndexBase::Print(out);
+  }
 };
 
-// Type-safe storage of strings.
+constexpr SemanticsNodeBlockId SemanticsNodeBlockId::Empty =
+    SemanticsNodeBlockId(0);
+constexpr SemanticsNodeBlockId SemanticsNodeBlockId::Invalid =
+    SemanticsNodeBlockId(SemanticsNodeBlockId::InvalidIndex);
+
+// The ID of a real literal.
+struct SemanticsRealLiteralId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "real";
+    IndexBase::Print(out);
+  }
+};
+
+// The ID of a string.
 struct SemanticsStringId : public IndexBase {
   using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void { out << "str" << index; }
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "str";
+    IndexBase::Print(out);
+  }
 };
 
 // The standard structure for nodes.
@@ -80,34 +126,34 @@ class SemanticsNode {
   static auto MakeAssign(ParseTree::Node parse_node, SemanticsNodeId type,
                          SemanticsNodeId lhs, SemanticsNodeId rhs)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::Assign(), type,
-                         lhs.index, rhs.index);
+    return SemanticsNode(parse_node, SemanticsNodeKind::Assign, type, lhs.index,
+                         rhs.index);
   }
   auto GetAsAssign() const -> std::pair<SemanticsNodeId, SemanticsNodeId> {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::Assign());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::Assign);
     return {SemanticsNodeId(arg0_), SemanticsNodeId(arg1_)};
   }
 
   static auto MakeBinaryOperatorAdd(ParseTree::Node parse_node,
                                     SemanticsNodeId type, SemanticsNodeId lhs,
                                     SemanticsNodeId rhs) -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::BinaryOperatorAdd(),
-                         type, lhs.index, rhs.index);
+    return SemanticsNode(parse_node, SemanticsNodeKind::BinaryOperatorAdd, type,
+                         lhs.index, rhs.index);
   }
   auto GetAsBinaryOperatorAdd() const
       -> std::pair<SemanticsNodeId, SemanticsNodeId> {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::BinaryOperatorAdd());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::BinaryOperatorAdd);
     return {SemanticsNodeId(arg0_), SemanticsNodeId(arg1_)};
   }
 
   static auto MakeBindName(ParseTree::Node parse_node, SemanticsNodeId type,
                            SemanticsStringId name, SemanticsNodeId node)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::BindName(), type,
+    return SemanticsNode(parse_node, SemanticsNodeKind::BindName, type,
                          name.index, node.index);
   }
   auto GetAsBindName() const -> std::pair<SemanticsStringId, SemanticsNodeId> {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::BindName());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::BindName);
     return {SemanticsStringId(arg0_), SemanticsNodeId(arg1_)};
   }
 
@@ -115,106 +161,142 @@ class SemanticsNode {
                           SemanticsNodeId type) -> SemanticsNode {
     // Builtins won't have a ParseTree node associated, so we provide the
     // default invalid one.
-    return SemanticsNode(ParseTree::Node(), SemanticsNodeKind::Builtin(), type,
-                         builtin_kind.AsInt());
+    return SemanticsNode(ParseTree::Node::Invalid, SemanticsNodeKind::Builtin,
+                         type, builtin_kind.AsInt());
   }
   auto GetAsBuiltin() const -> SemanticsBuiltinKind {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::Builtin());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::Builtin);
     return SemanticsBuiltinKind::FromInt(arg0_);
+  }
+
+  static auto MakeCall(ParseTree::Node parse_node, SemanticsNodeId type,
+                       SemanticsCallId call_id, SemanticsCallableId callable_id)
+      -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::Call, type,
+                         call_id.index, callable_id.index);
+  }
+  auto GetAsCall() const -> std::pair<SemanticsCallId, SemanticsCallableId> {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::Call);
+    return {SemanticsCallId(arg0_), SemanticsCallableId(arg1_)};
   }
 
   static auto MakeCodeBlock(ParseTree::Node parse_node,
                             SemanticsNodeBlockId node_block) -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::CodeBlock(),
-                         SemanticsNodeId(), node_block.index);
+    return SemanticsNode(parse_node, SemanticsNodeKind::CodeBlock,
+                         SemanticsNodeId::Invalid, node_block.index);
   }
   auto GetAsCodeBlock() const -> SemanticsNodeBlockId {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::CodeBlock());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::CodeBlock);
     return SemanticsNodeBlockId(arg0_);
   }
 
-  // TODO: The signature should be added as a parameter.
-  static auto MakeFunctionDeclaration(ParseTree::Node parse_node)
-      -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDeclaration(),
-                         SemanticsNodeId());
+  static auto MakeCrossReference(SemanticsNodeId type,
+                                 SemanticsCrossReferenceIRId ir,
+                                 SemanticsNodeId node) -> SemanticsNode {
+    return SemanticsNode(ParseTree::Node::Invalid,
+                         SemanticsNodeKind::CrossReference, type, ir.index,
+                         node.index);
   }
-  auto GetAsFunctionDeclaration() const -> NoArgs {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDeclaration());
-    return {};
+  auto GetAsCrossReference() const
+      -> std::pair<SemanticsCrossReferenceIRId, SemanticsNodeId> {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::CrossReference);
+    return {SemanticsCrossReferenceIRId(arg0_), SemanticsNodeId(arg1_)};
+  }
+
+  static auto MakeFunctionDeclaration(ParseTree::Node parse_node,
+                                      SemanticsStringId name_id,
+                                      SemanticsCallableId signature_id)
+      -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDeclaration,
+                         SemanticsNodeId::Invalid, name_id.index,
+                         signature_id.index);
+  }
+  auto GetAsFunctionDeclaration() const
+      -> std::pair<SemanticsStringId, SemanticsCallableId> {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDeclaration);
+    return {SemanticsStringId(arg0_), SemanticsCallableId(arg1_)};
   }
 
   static auto MakeFunctionDefinition(ParseTree::Node parse_node,
                                      SemanticsNodeId decl,
                                      SemanticsNodeBlockId node_block)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDefinition(),
-                         SemanticsNodeId(), decl.index, node_block.index);
+    return SemanticsNode(parse_node, SemanticsNodeKind::FunctionDefinition,
+                         SemanticsNodeId::Invalid, decl.index,
+                         node_block.index);
   }
   auto GetAsFunctionDefinition() const
       -> std::pair<SemanticsNodeId, SemanticsNodeBlockId> {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDefinition());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::FunctionDefinition);
     return {SemanticsNodeId(arg0_), SemanticsNodeBlockId(arg1_)};
   }
 
   static auto MakeIntegerLiteral(ParseTree::Node parse_node,
                                  SemanticsIntegerLiteralId integer)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::IntegerLiteral(),
-                         SemanticsNodeId::MakeBuiltinReference(
-                             SemanticsBuiltinKind::IntegerType()),
-                         integer.index);
+    return SemanticsNode(parse_node, SemanticsNodeKind::IntegerLiteral,
+                         SemanticsNodeId::BuiltinIntegerType, integer.index);
   }
   auto GetAsIntegerLiteral() const -> SemanticsIntegerLiteralId {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::IntegerLiteral());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::IntegerLiteral);
     return SemanticsIntegerLiteralId(arg0_);
   }
 
-  static auto MakeRealLiteral(ParseTree::Node parse_node) -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::RealLiteral(),
-                         SemanticsNodeId::MakeBuiltinReference(
-                             SemanticsBuiltinKind::RealType()));
+  static auto MakeRealLiteral(ParseTree::Node parse_node,
+                              SemanticsRealLiteralId real) -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::RealLiteral,
+                         SemanticsNodeId::BuiltinFloatingPointType, real.index);
   }
-  auto GetAsRealLiteral() const -> NoArgs {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::RealLiteral());
-    return {};
+  auto GetAsRealLiteral() const -> SemanticsRealLiteralId {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::RealLiteral);
+    return SemanticsRealLiteralId(arg0_);
   }
 
   static auto MakeReturn(ParseTree::Node parse_node) -> SemanticsNode {
     // The actual type is `()`. However, code dealing with `return;` should
     // understand the type without checking, so it's not necessary but could be
     // specified if needed.
-    return SemanticsNode(parse_node, SemanticsNodeKind::Return(),
-                         SemanticsNodeId());
+    return SemanticsNode(parse_node, SemanticsNodeKind::Return,
+                         SemanticsNodeId::Invalid);
   }
   auto GetAsReturn() const -> NoArgs {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::Return());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::Return);
     return {};
   }
 
   static auto MakeReturnExpression(ParseTree::Node parse_node,
                                    SemanticsNodeId type, SemanticsNodeId expr)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::ReturnExpression(),
-                         type, expr.index);
+    return SemanticsNode(parse_node, SemanticsNodeKind::ReturnExpression, type,
+                         expr.index);
   }
   auto GetAsReturnExpression() const -> SemanticsNodeId {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::ReturnExpression);
     return SemanticsNodeId(arg0_);
+  }
+
+  static auto MakeStringLiteral(ParseTree::Node parse_node,
+                                SemanticsStringId string_id) -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::StringLiteral,
+                         SemanticsNodeId::BuiltinStringType, string_id.index);
+  }
+  auto GetAsStringLiteral() const -> SemanticsStringId {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::StringLiteral);
+    return SemanticsStringId(arg0_);
   }
 
   static auto MakeVarStorage(ParseTree::Node parse_node, SemanticsNodeId type)
       -> SemanticsNode {
-    return SemanticsNode(parse_node, SemanticsNodeKind::VarStorage(), type);
+    return SemanticsNode(parse_node, SemanticsNodeKind::VarStorage, type);
   }
   auto GetAsVarStorage() const -> NoArgs {
-    CARBON_CHECK(kind_ == SemanticsNodeKind::VarStorage());
+    CARBON_CHECK(kind_ == SemanticsNodeKind::VarStorage);
     return NoArgs();
   }
 
   SemanticsNode()
-      : SemanticsNode(ParseTree::Node(), SemanticsNodeKind::Invalid(),
-                      SemanticsNodeId()) {}
+      : SemanticsNode(ParseTree::Node::Invalid, SemanticsNodeKind::Invalid,
+                      SemanticsNodeId::Invalid) {}
 
   auto parse_node() const -> ParseTree::Node { return parse_node_; }
   auto kind() const -> SemanticsNodeKind { return kind_; }

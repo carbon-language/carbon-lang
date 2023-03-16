@@ -47,7 +47,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Parameters](#parameters)
     -   [`auto` return type](#auto-return-type)
     -   [Blocks and statements](#blocks-and-statements)
-    -   [Assignment statements](#assignment-statements)
     -   [Control flow](#control-flow)
         -   [`if` and `else`](#if-and-else)
         -   [Loops](#loops)
@@ -252,10 +251,12 @@ A [variable declaration](#variable-var-declarations) has three parts:
 ```
 
 You can modify the value of a variable with an
-[assignment statement](#assignment-statements):
+[assignment statement](assignment.md):
 
 ```carbon
       i = 3;
+      ...
+      ++i;
       ...
       i += 2;
 ```
@@ -605,18 +606,18 @@ String literals may be written on a single line using a double quotation mark
 (`"`) at the beginning and end of the string, as in `"example"`.
 
 Multi-line string literals, called _block string literals_, begin and end with
-three double quotation marks (`"""`), and may have a file type indicator after
-the first `"""`.
+three single quotation marks (`'''`), and may have a file type indicator after
+the first `'''`.
 
 ```carbon
 // Block string literal:
-var block: String = """
+var block: String = '''
     The winds grow high; so do your stomachs, lords.
     How irksome is this music to my heart!
     When such strings jar, what hope of harmony?
     I pray, my lords, let me compound this strife.
         -- History of Henry VI, Part II, Act II, Scene 1, W. Shakespeare
-    """;
+    ''';
 ```
 
 The indentation of a block string literal's terminating line is removed from all
@@ -1195,9 +1196,9 @@ fn Positive(a: i64) -> auto {
 A _block_ is a sequence of _statements_. A block defines a
 [scope](#declarations-definitions-and-scopes) and, like other scopes, is
 enclosed in curly braces (`{`...`}`). Each statement is terminated by a
-semicolon or block. [Expressions](#expressions) and
-[`var`](#variable-var-declarations) and [`let`](#constant-let-declarations) are
-valid statements.
+semicolon or block. [Expressions](#expressions), [assignments](assignment.md)
+and [`var`](#variable-var-declarations) and [`let`](#constant-let-declarations)
+are valid statements.
 
 Statements within a block are normally executed in the order they appear in the
 source code, except when modified by control-flow statements.
@@ -1222,25 +1223,6 @@ fn Foo() {
 > -   [Blocks and statements](blocks_and_statements.md)
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
-
-### Assignment statements
-
-Assignment statements mutate the value of the
-[l-value](#value-categories-and-value-phases) described on the left-hand side of
-the assignment.
-
--   Assignment: `x = y;`. `x` is assigned the value of `y`.
--   Increment and decrement: `++i;`, `--j;`. `i` is set to `i + 1`, `j` is set
-    to `j - 1`.
--   Compound assignment: `x += y;`, `x -= y;`, `x *= y;`, `x /= y;`, `x &= y;`,
-    `x |= y;`, `x ^= y;`, `x <<= y;`, `x >>= y;`. `x @= y;` is equivalent to
-    `x = x @ y;` for each operator `@`.
-
-Unlike C++, these assignments are statements, not expressions, and don't return
-a value.
-
-> **Note:** The semantics of assignment are provisional. See pending proposal
-> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
 
 ### Control flow
 
@@ -1761,7 +1743,7 @@ by one of these three keywords:
 
 A pointer to a derived class may be cast to a pointer to one of its base
 classes. Calling a virtual method through a pointer to a base class will use the
-overridden definition provided in the derived class. Base classes with `virtual`
+overriding definition provided in the derived class. Base classes with `virtual`
 methods may use
 [run-time type information](https://en.wikipedia.org/wiki/Run-time_type_information)
 in a match statement to dynamically test whether the dynamic type of a value is
@@ -2583,10 +2565,10 @@ given any type `T` that implements the `Ordered` interface. Subsequent calls to
 `Ordered`.
 
 The parameter could alternatively be declared to be a _template_ generic
-parameter by prefixing with the `template` keyword, as in `template T:! Type`.
+parameter by prefixing with the `template` keyword, as in `template T:! type`.
 
 ```carbon
-fn Convert[template T:! Type](source: T, template U:! Type) -> U {
+fn Convert[template T:! type](source: T, template U:! type) -> U {
   var converted: U = source;
   return converted;
 }
@@ -2621,7 +2603,7 @@ declaration, and the condition can only use constant values known at
 type-checking time, including `template` parameters.
 
 ```carbon
-class Array(template T:! Type, template N:! i64)
+class Array(template T:! type, template N:! i64)
     if N >= 0 and N < MaxArraySize / sizeof(T);
 ```
 
@@ -2630,7 +2612,7 @@ provided by the caller, _in addition_ to any constraints. This means member name
 lookup and type checking for anything
 [dependent](generics/terminology.md#dependent-names) on the template parameter
 can't be completed until the template is instantiated with a specific concrete
-type. When the constraint is just `Type`, this gives semantics similar to C++
+type. When the constraint is just `type`, this gives semantics similar to C++
 templates. Constraints can then be added incrementally, with the compiler
 verifying that the semantics stay the same. Once all constraints have been
 added, removing the word `template` to switch to a checked parameter is safe.
@@ -2825,7 +2807,7 @@ to a class must be generic, and so defined with `:!`, either with or without the
 type `T`:
 
 ```carbon
-class Stack(T:! Type) {
+class Stack(T:! type) {
   fn Push[addr self: Self*](value: T);
   fn Pop[addr self: Self*]() -> T;
 
@@ -2847,7 +2829,7 @@ The values of type parameters are part of a type's value, and so may be deduced
 in a function call, as in this example:
 
 ```carbon
-fn PeekTopOfStack[T:! Type](s: Stack(T)*) -> T {
+fn PeekTopOfStack[T:! type](s: Stack(T)*) -> T {
   var top: T = s->Pop();
   s->Push(top);
   return top;
@@ -2868,7 +2850,7 @@ PeekTopOfStack(&int_stack);
 [Choice types](#choice-types) may be parameterized similarly to classes:
 
 ```carbon
-choice Result(T:! Type, Error:! Type) {
+choice Result(T:! type, Error:! type) {
   Success(value: T),
   Failure(error: Error)
 }
@@ -2880,7 +2862,7 @@ Interfaces are always parameterized by a `Self` type, but in some cases they
 will have additional parameters.
 
 ```carbon
-interface AddWith(U:! Type);
+interface AddWith(U:! type);
 ```
 
 Interfaces without parameters may only be implemented once for a given type, but
@@ -2904,11 +2886,11 @@ parameter list_`]` after the `impl` keyword introducer, as in:
 
 ```carbon
 external impl forall [T:! Printable] Vector(T) as Printable;
-external impl forall [Key:! Hashable, Value:! Type]
+external impl forall [Key:! Hashable, Value:! type]
     HashMap(Key, Value) as Has(Key);
 external impl forall [T:! Ordered] T as PartiallyOrdered;
 external impl forall [T:! ImplicitAs(i32)] BigInt as AddWith(T);
-external impl forall [U:! Type, T:! As(U)]
+external impl forall [U:! type, T:! As(U)]
     Optional(T) as As(Optional(U));
 ```
 
@@ -3074,8 +3056,6 @@ The interfaces that correspond to each operator are given by:
 -   Indexing:
     -   `x[y]` is rewritten to use the
         [`IndexWith` or `IndirectIndexWith`](expressions/indexing.md) interface.
--   **TODO:** [Assignment](#assignment-statements): `x = y`, `++x`, `x += y`,
-    and so on
 -   **TODO:** Dereference: `*p`
 -   **TODO:** [Move](#move): `~x`
 -   **TODO:** Function call: `f(4)`
@@ -3123,7 +3103,7 @@ There are some situations where the common type for two types is needed:
     will be set to the common type of the corresponding arguments, as in:
 
     ```carbon
-    fn F[T:! Type](x: T, y: T);
+    fn F[T:! type](x: T, y: T);
 
     // Calls `F` with `T` set to the
     // common type of `G()` and `H()`:

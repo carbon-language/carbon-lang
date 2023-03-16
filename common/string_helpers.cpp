@@ -14,7 +14,7 @@
 
 namespace Carbon {
 
-static constexpr llvm::StringRef TripleQuotes = R"(""")";
+static constexpr llvm::StringRef TripleQuotes = "'''";
 static constexpr llvm::StringRef HorizontalWhitespaceChars = " \t";
 
 // Carbon only takes uppercase hex input.

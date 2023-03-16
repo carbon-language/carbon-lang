@@ -9,7 +9,7 @@
 
 package ExplorerTest api;
 
-interface HasValueParam(T:! Type, V:! T) {
+interface HasValueParam(T:! type, V:! T) {
   fn Go[self: Self]() -> T;
 }
 

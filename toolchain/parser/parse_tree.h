@@ -154,8 +154,8 @@ class ParseTree {
   // The in-memory representation of data used for a particular node in the
   // tree.
   struct NodeImpl {
-    NodeImpl(ParseNodeKind kind, bool has_error, TokenizedBuffer::Token token,
-             int subtree_size)
+    explicit NodeImpl(ParseNodeKind kind, bool has_error,
+                      TokenizedBuffer::Token token, int subtree_size)
         : kind(kind),
           has_error(has_error),
           token(token),
@@ -242,8 +242,14 @@ class ParseTree {
 // That said, nodes can be compared and are part of a depth-first pre-order
 // sequence across all nodes in the parse tree.
 struct ParseTree::Node : public ComparableIndexBase {
+  // An explicitly invalid instance.
+  static const Node Invalid;
+
   using ComparableIndexBase::ComparableIndexBase;
 };
+
+constexpr ParseTree::Node ParseTree::Node::Invalid =
+    ParseTree::Node(ParseTree::Node::InvalidIndex);
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes
 // in the parse tree. It produces `ParseTree::Node` objects which are opaque
@@ -253,10 +259,7 @@ class ParseTree::PostorderIterator
                                         std::random_access_iterator_tag, Node,
                                         int, Node*, Node> {
  public:
-  // Default construction is only provided to satisfy iterator requirements. It
-  // produces an unusable iterator, and you must assign a valid iterator to it
-  // before performing any operations.
-  PostorderIterator() = default;
+  PostorderIterator() = delete;
 
   auto operator==(const PostorderIterator& rhs) const -> bool {
     return node_ == rhs.node_;
@@ -306,7 +309,7 @@ class ParseTree::SiblingIterator
     : public llvm::iterator_facade_base<
           SiblingIterator, std::forward_iterator_tag, Node, int, Node*, Node> {
  public:
-  SiblingIterator() = default;
+  explicit SiblingIterator() = delete;
 
   auto operator==(const SiblingIterator& rhs) const -> bool {
     return node_ == rhs.node_;

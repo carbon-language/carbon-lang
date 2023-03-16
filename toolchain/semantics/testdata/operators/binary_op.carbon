@@ -4,35 +4,51 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
-// CHECK:STDOUT: cross_reference_irs.size == 2,
-// CHECK:STDOUT: cross_references = {
-// CHECK:STDOUT:   node_xref0 = xref(ir0, block0, node0);
-// CHECK:STDOUT:   node_xref1 = xref(ir0, block0, node1);
-// CHECK:STDOUT:   node_xref2 = xref(ir0, block0, node2);
-// CHECK:STDOUT:   node_xref3 = xref(ir0, block0, node3);
-// CHECK:STDOUT:   node_xref4 = xref(ir1, block0, node1);
-// CHECK:STDOUT: },
-// CHECK:STDOUT: integer_literals = {
-// CHECK:STDOUT:   int0 = 12;
-// CHECK:STDOUT:   int1 = 34;
-// CHECK:STDOUT: },
-// CHECK:STDOUT: strings = {
-// CHECK:STDOUT:   str0 = "Main";
-// CHECK:STDOUT: },
-// CHECK:STDOUT: node_blocks = {
-// CHECK:STDOUT:   block0 = {
-// CHECK:STDOUT:     node0 = FunctionDeclaration();
-// CHECK:STDOUT:     node1 = BindName(str0, node0);
-// CHECK:STDOUT:     node2 = FunctionDefinition(node0, block1);
-// CHECK:STDOUT:   },
-// CHECK:STDOUT:   block1 = {
-// CHECK:STDOUT:     node0 = IntegerLiteral(int0): node_xref2;
-// CHECK:STDOUT:     node1 = IntegerLiteral(int1): node_xref2;
-// CHECK:STDOUT:     node2 = BinaryOperatorAdd(node0, node1): node_xref2;
-// CHECK:STDOUT:     node3 = ReturnExpression(node2): node_xref2;
-// CHECK:STDOUT:   },
-// CHECK:STDOUT: }
+// CHECK:STDOUT: cross_reference_irs_size: 1
+// CHECK:STDOUT: calls: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: callables: [
+// CHECK:STDOUT:   {param_ir: block0, param_refs: block0, return_type: node2},
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: integer_literals: [
+// CHECK:STDOUT:   12,
+// CHECK:STDOUT:   34,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: real_literals: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: strings: [
+// CHECK:STDOUT:   Main,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: nodes: [
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node0, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node1, type: node1},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node2, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node3, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node4, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node5, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node6, type: node5},
+// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: node2},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: node2},
+// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node8, arg1: node9, type: node2},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node10, type: node2},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node7, arg1: block2},
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: node_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node7,
+// CHECK:STDOUT:     node12,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node8,
+// CHECK:STDOUT:     node9,
+// CHECK:STDOUT:     node10,
+// CHECK:STDOUT:     node11,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT: ]
 
-fn Main() {
+fn Main() -> i32 {
   return 12 + 34;
 }

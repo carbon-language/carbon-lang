@@ -13,14 +13,13 @@ namespace Carbon::Testing {
 
 class MockDiagnosticConsumer : public DiagnosticConsumer {
  public:
-  MOCK_METHOD(void, HandleDiagnostic, (const Diagnostic& diagnostic),
-              (override));
+  MOCK_METHOD(void, HandleDiagnostic, (Diagnostic diagnostic), (override));
 };
 
 MATCHER_P(IsDiagnosticMessage, matcher, "") {
   const Diagnostic& diag = arg;
-  return testing::ExplainMatchResult(matcher, diag.format_fn(diag),
-                                     result_listener);
+  return testing::ExplainMatchResult(
+      matcher, diag.message.format_fn(diag.message), result_listener);
 }
 
 inline auto IsDiagnostic(testing::Matcher<DiagnosticKind> kind,
@@ -29,16 +28,20 @@ inline auto IsDiagnostic(testing::Matcher<DiagnosticKind> kind,
                          testing::Matcher<int> column_number,
                          testing::Matcher<std::string> message) {
   return testing::AllOf(
-      testing::Field("kind", &Diagnostic::kind, kind),
       testing::Field("level", &Diagnostic::level, level),
       testing::Field(
-          &Diagnostic::location,
+          "message", &Diagnostic::message,
           testing::AllOf(
-              testing::Field("line_number", &DiagnosticLocation::line_number,
-                             line_number),
-              testing::Field("column_number",
-                             &DiagnosticLocation::column_number,
-                             column_number))),
+              testing::Field("kind", &DiagnosticMessage::kind, kind),
+              testing::Field(
+                  &DiagnosticMessage::location,
+                  testing::AllOf(
+                      testing::Field("line_number",
+                                     &DiagnosticLocation::line_number,
+                                     line_number),
+                      testing::Field("column_number",
+                                     &DiagnosticLocation::column_number,
+                                     column_number))))),
       IsDiagnosticMessage(message));
 }
 

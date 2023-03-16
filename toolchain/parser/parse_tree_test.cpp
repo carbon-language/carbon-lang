@@ -9,7 +9,6 @@
 
 #include <forward_list>
 
-#include "llvm/Support/FormatVariadic.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
@@ -18,9 +17,7 @@
 namespace Carbon::Testing {
 namespace {
 
-using ::testing::AtLeast;
 using ::testing::ElementsAre;
-using ::testing::Eq;
 
 class ParseTreeTest : public ::testing::Test {
  protected:
@@ -40,11 +37,6 @@ class ParseTreeTest : public ::testing::Test {
   std::forward_list<TokenizedBuffer> token_storage;
   DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
 };
-
-TEST_F(ParseTreeTest, DefaultInvalid) {
-  ParseTree::Node node;
-  EXPECT_FALSE(node.is_valid());
-}
 
 TEST_F(ParseTreeTest, IsValid) {
   TokenizedBuffer tokens = GetTokenizedBuffer("");

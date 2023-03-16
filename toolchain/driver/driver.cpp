@@ -9,11 +9,13 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/lowering/lower_to_llvm.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/source/source_buffer.h"
@@ -109,7 +111,13 @@ auto Driver::RunHelpSubcommand(DiagnosticConsumer& /*consumer*/,
   return true;
 }
 
-enum class DumpMode { TokenizedBuffer, ParseTree, SemanticsIR, Unknown };
+enum class DumpMode {
+  TokenizedBuffer,
+  ParseTree,
+  SemanticsIR,
+  LLVMIR,
+  Unknown
+};
 
 auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                                llvm::ArrayRef<llvm::StringRef> args) -> bool {
@@ -122,6 +130,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                        .Case("tokens", DumpMode::TokenizedBuffer)
                        .Case("parse-tree", DumpMode::ParseTree)
                        .Case("semantics-ir", DumpMode::SemanticsIR)
+                       .Case("llvm-ir", DumpMode::LLVMIR)
                        .Default(DumpMode::Unknown);
   if (dump_mode == DumpMode::Unknown) {
     error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, or "
@@ -171,7 +180,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   if (dump_mode == DumpMode::TokenizedBuffer) {
     CARBON_VLOG() << "Finishing output.";
     consumer.Flush();
-    tokenized_source.Print(output_stream_);
+    output_stream_ << tokenized_source;
     return !has_errors;
   }
   CARBON_VLOG() << "tokenized_buffer: " << tokenized_source;
@@ -195,10 +204,34 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree done ***\n";
   if (dump_mode == DumpMode::SemanticsIR) {
     consumer.Flush();
-    semantics_ir.Print(output_stream_);
+    output_stream_ << semantics_ir;
     return !has_errors;
   }
   CARBON_VLOG() << "semantics_ir: " << semantics_ir;
+
+  // Unlike previous steps, errors block further progress.
+  if (has_errors) {
+    CARBON_VLOG() << "Unable to dump llvm-ir due to prior errors.";
+    return false;
+  }
+
+  CARBON_VLOG() << "*** LowerToLLVM ***\n";
+  llvm::LLVMContext llvm_context;
+  const std::unique_ptr<llvm::Module> module =
+      LowerToLLVM(llvm_context, input_file_name, semantics_ir);
+  CARBON_VLOG() << "*** LowerToLLVM done ***\n";
+  if (dump_mode == DumpMode::LLVMIR) {
+    consumer.Flush();
+    module->print(output_stream_, /*AAW=*/nullptr,
+                  /*ShouldPreserveUseListOrder=*/true);
+    return !has_errors;
+  }
+  if (vlog_stream_) {
+    CARBON_VLOG() << "module: ";
+    module->print(*vlog_stream_, /*AAW=*/nullptr,
+                  /*ShouldPreserveUseListOrder=*/false,
+                  /*IsForDebug=*/true);
+  }
 
   llvm_unreachable("should handle all dump modes");
 }

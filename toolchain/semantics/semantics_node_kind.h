@@ -7,49 +7,24 @@
 
 #include <cstdint>
 
-#include "common/ostream.h"
+#include "toolchain/common/enum_base.h"
 
 namespace Carbon {
 
-class SemanticsNodeKind {
- private:
-  // Note that this must be declared earlier in the class so that its type can
-  // be used, for example in the conversion operator.
-  enum class KindEnum : uint8_t {
-#define CARBON_SEMANTICS_NODE_KIND(Name, ...) Name,
+CARBON_DEFINE_RAW_ENUM_CLASS(SemanticsNodeKind, uint8_t) {
+#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/semantics/semantics_node_kind.def"
-  };
-
- public:
-  // `clang-format` has a bug with spacing around `->` returns in macros. See
-  // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
-#define CARBON_SEMANTICS_NODE_KIND(Name, ...)       \
-  static constexpr auto Name()->SemanticsNodeKind { \
-    return SemanticsNodeKind(KindEnum::Name);       \
-  }
-#include "toolchain/semantics/semantics_node_kind.def"
-
-  // The default constructor is deleted because objects of this type should
-  // always be constructed using the above factory functions for each unique
-  // kind.
-  SemanticsNodeKind() = delete;
-
-  // Gets a friendly name for the token for logging or debugging.
-  [[nodiscard]] auto name() const -> llvm::StringRef;
-
-  // Enable conversion to our private enum, including in a `constexpr` context,
-  // to enable usage in `switch` and `case`. The enum remains private and
-  // nothing else should be using this function.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr operator KindEnum() const { return kind_; }
-
-  void Print(llvm::raw_ostream& out) const { out << name(); }
-
- private:
-  constexpr explicit SemanticsNodeKind(KindEnum k) : kind_(k) {}
-
-  KindEnum kind_;
 };
+
+class SemanticsNodeKind : public CARBON_ENUM_BASE(SemanticsNodeKind) {
+ public:
+#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#include "toolchain/semantics/semantics_node_kind.def"
+};
+
+#define CARBON_SEMANTICS_NODE_KIND(Name) \
+  CARBON_ENUM_CONSTANT_DEFINITION(SemanticsNodeKind, Name)
+#include "toolchain/semantics/semantics_node_kind.def"
 
 // We expect the node kind to fit compactly into 8 bits.
 static_assert(sizeof(SemanticsNodeKind) == 1, "Kind objects include padding!");

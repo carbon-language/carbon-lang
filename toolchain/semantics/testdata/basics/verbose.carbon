@@ -6,8 +6,8 @@
 // RUN: %{carbon} -v dump semantics-ir %s | %{FileCheck-allow-unmatched}
 //
 // Only checks a couple statements in order to minimize manual update churn.
-// CHECK:STDERR: Push 0: FunctionIntroducer
-// CHECK:STDERR: AddNode block0: BindName(str0, node0)
+// CHECK:STDERR: Node Push 0: FunctionIntroducer -> <none>
+// CHECK:STDERR: AddNode block{{[0-9]+}}: {kind: FunctionDeclaration, arg0: str{{[0-9]+}}, arg1: callable{{[0-9]+}}}
 
 fn Foo() {
   return;

@@ -49,7 +49,7 @@ than documentation), and `None`, which is empty. Choice types can also be
 parameterized, [like class types](generics/details.md#parameterized-types):
 
 ```carbon
-choice Optional(T:! Type) {
+choice Optional(T:! type) {
   Some(value: T),
   None
 }
@@ -107,11 +107,11 @@ It does so by implementing the `Match` interface, which is defined as follows:
 ```carbon
 interface Match {
   interface BaseContinuation {
-    let ReturnType:! Type;
+    let ReturnType:! type;
   }
 
-  let template Continuation:! Type;
-  fn Op[me: Self, C:! Continuation](continuation: C*)
+  let template Continuation:! type;
+  fn Op[self: Self, C:! Continuation](continuation: C*)
     -> C.(MatchContinuation.ReturnType);
 }
 ```
@@ -135,7 +135,7 @@ require that `Match.Op` invoke the continuation as a tail call.
 For example, here's how `Optional` can be defined as a class:
 
 ```carbon
-class Optional(T:! Type) {
+class Optional(T:! type) {
   // Factory functions
   fn Some(value: T) -> Self;
   let None:! Self;
@@ -146,13 +146,13 @@ class Optional(T:! Type) {
   external impl as Match {
     interface Continuation {
       extends Match.BaseContinuation;
-      fn Some[addr me: Self*](value: T) -> ReturnType;
-      fn None[addr me: Self*]() -> ReturnType;
+      fn Some[addr self: Self*](value: T) -> ReturnType;
+      fn None[addr self: Self*]() -> ReturnType;
     }
 
-    fn Op[me: Self, C:! Continuation](continuation: C*) -> C.ReturnType {
-      if (me.has_value) {
-        return continuation->Some(me.value);
+    fn Op[self: Self, C:! Continuation](continuation: C*) -> C.ReturnType {
+      if (self.has_value) {
+        return continuation->Some(self.value);
       } else {
         return continuation->None();
       }

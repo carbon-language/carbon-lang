@@ -8,7 +8,7 @@
 
 package ExplorerTest api;
 
-fn id[T:! Type](x: i32) -> i32 {
+fn id[T:! type](x: i32) -> i32 {
   return x;
 }
 

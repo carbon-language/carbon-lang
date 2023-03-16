@@ -19,7 +19,7 @@ interface A {
 }
 
 external impl i32 as A {
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_in_impl.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting ALIAS or FN or RIGHT_CURLY_BRACE
+  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_in_impl.carbon:[[@LINE+1]]: syntax error, unexpected MIX
   __mix Operations;
   fn F() {}
 }

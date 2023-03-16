@@ -8,10 +8,10 @@
 // CHECK:STDOUT: result: 1
 
 package ExplorerTest api;
-class A(T:! Type) {
+class A(T:! type) {
   var v: T;
 }
-fn F(T:! Type, x: T) -> T {
+fn F(T:! type, x: T) -> T {
   var v: A(T) = {.v = x};
   return v.v;
 }

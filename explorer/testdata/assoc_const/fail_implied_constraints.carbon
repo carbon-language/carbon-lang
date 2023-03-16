@@ -8,9 +8,9 @@
 
 package ExplorerTest api;
 
-interface X(T:! Type) {}
+interface X(T:! type) {}
 
-interface Y(T:! Type) {
+interface Y(T:! type) {
     let M:! X(T);
 }
 

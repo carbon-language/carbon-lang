@@ -9,7 +9,7 @@
 
 package ExplorerTest api;
 
-fn F[T:! Type & Type](x: T) {}
+fn F[T:! type & type](x: T) {}
 
 fn Main() -> i32 {
   F(0);

@@ -4,33 +4,49 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
-// CHECK:STDOUT: cross_reference_irs.size == 2,
-// CHECK:STDOUT: cross_references = {
-// CHECK:STDOUT:   node_xref0 = xref(ir0, block0, node0);
-// CHECK:STDOUT:   node_xref1 = xref(ir0, block0, node1);
-// CHECK:STDOUT:   node_xref2 = xref(ir0, block0, node2);
-// CHECK:STDOUT:   node_xref3 = xref(ir0, block0, node3);
-// CHECK:STDOUT:   node_xref4 = xref(ir1, block0, node1);
-// CHECK:STDOUT:   node_xref5 = xref(ir1, block0, node5);
-// CHECK:STDOUT: },
-// CHECK:STDOUT: integer_literals = {
-// CHECK:STDOUT:   int0 = 0;
-// CHECK:STDOUT: },
-// CHECK:STDOUT: strings = {
-// CHECK:STDOUT:   str0 = "x";
-// CHECK:STDOUT:   str1 = "y";
-// CHECK:STDOUT: },
-// CHECK:STDOUT: node_blocks = {
-// CHECK:STDOUT:   block0 = {
-// CHECK:STDOUT:     node0 = VarStorage(): node_xref2;
-// CHECK:STDOUT:     node1 = BindName(str0, node0): node_xref2;
-// CHECK:STDOUT:     node2 = IntegerLiteral(int0): node_xref2;
-// CHECK:STDOUT:     node3 = Assign(node0, node2): node_xref2;
-// CHECK:STDOUT:     node4 = VarStorage(): node_xref2;
-// CHECK:STDOUT:     node5 = BindName(str1, node4): node_xref2;
-// CHECK:STDOUT:     node6 = Assign(node4, node_xref4): node_xref2;
-// CHECK:STDOUT:   },
-// CHECK:STDOUT: }
+// CHECK:STDOUT: cross_reference_irs_size: 1
+// CHECK:STDOUT: calls: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: callables: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: integer_literals: [
+// CHECK:STDOUT:   0,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: real_literals: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: strings: [
+// CHECK:STDOUT:   x,
+// CHECK:STDOUT:   y,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: nodes: [
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node0, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node1, type: node1},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node2, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node3, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node4, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node5, type: node0},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node6, type: node5},
+// CHECK:STDOUT:   {kind: VarStorage, type: node2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node7, type: node2},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: node2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node7, arg1: node9, type: node2},
+// CHECK:STDOUT:   {kind: VarStorage, type: node2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node11, type: node2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node11, arg1: node7, type: node2},
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: node_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node7,
+// CHECK:STDOUT:     node8,
+// CHECK:STDOUT:     node9,
+// CHECK:STDOUT:     node10,
+// CHECK:STDOUT:     node11,
+// CHECK:STDOUT:     node12,
+// CHECK:STDOUT:     node13,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT: ]
 
 var x: i32 = 0;
 var y: i32 = x;

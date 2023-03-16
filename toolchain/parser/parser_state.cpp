@@ -4,16 +4,11 @@
 
 #include "toolchain/parser/parser_state.h"
 
-#include "llvm/ADT/StringRef.h"
-
 namespace Carbon {
 
-auto ParserState::name() const -> llvm::StringRef {
-  static constexpr llvm::StringLiteral Names[] = {
-#define CARBON_PARSER_STATE(Name) #Name,
+CARBON_DEFINE_ENUM_CLASS_NAMES(ParserState) = {
+#define CARBON_PARSER_STATE(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "toolchain/parser/parser_state.def"
-  };
-  return Names[static_cast<int>(state_)];
-}
+};
 
 }  // namespace Carbon

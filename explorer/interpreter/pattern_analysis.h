@@ -8,8 +8,8 @@
 #include <vector>
 
 #include "explorer/ast/pattern.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/nonnull.h"
-#include "explorer/interpreter/value.h"
 #include "llvm/ADT/PointerUnion.h"
 
 namespace Carbon {

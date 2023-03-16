@@ -15,6 +15,10 @@ Declaration::~Declaration() = default;
 
 void Declaration::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
+    case DeclarationKind::NamespaceDeclaration:
+      PrintID(out);
+      out << ";";
+      break;
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration: {
       const auto& iface_decl = cast<ConstraintTypeDeclaration>(*this);
@@ -31,6 +35,16 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       PrintID(out);
       out << " {\n";
       for (Nonnull<Declaration*> m : impl_decl.members()) {
+        out << *m;
+      }
+      out << "}\n";
+      break;
+    }
+    case DeclarationKind::MatchFirstDeclaration: {
+      const auto& match_first_decl = cast<MatchFirstDeclaration>(*this);
+      PrintID(out);
+      out << " {\n";
+      for (Nonnull<const ImplDeclaration*> m : match_first_decl.impls()) {
         out << *m;
       }
       out << "}\n";
@@ -116,6 +130,9 @@ void Declaration::Print(llvm::raw_ostream& out) const {
 
 void Declaration::PrintID(llvm::raw_ostream& out) const {
   switch (kind()) {
+    case DeclarationKind::NamespaceDeclaration:
+      out << "namespace " << cast<NamespaceDeclaration>(*this).name();
+      break;
     case DeclarationKind::InterfaceDeclaration: {
       const auto& iface_decl = cast<InterfaceDeclaration>(*this);
       out << "interface " << iface_decl.name();
@@ -139,11 +156,14 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
           << impl_decl.interface();
       break;
     }
+    case DeclarationKind::MatchFirstDeclaration:
+      out << "match_first";
+      break;
     case DeclarationKind::FunctionDeclaration:
       out << "fn " << cast<FunctionDeclaration>(*this).name();
       break;
     case DeclarationKind::DestructorDeclaration:
-      out << cast<DestructorDeclaration>(*this).name();
+      out << *GetName(*this);
       break;
     case DeclarationKind::ClassDeclaration: {
       const auto& class_decl = cast<ClassDeclaration>(*this);
@@ -205,26 +225,35 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
   }
 }
 
+void DeclaredName::Print(llvm::raw_ostream& out) const {
+  for (const auto& [loc, name] : qualifiers()) {
+    out << name << ".";
+  }
+  out << inner_name();
+}
+
 auto GetName(const Declaration& declaration)
     -> std::optional<std::string_view> {
   switch (declaration.kind()) {
+    case DeclarationKind::NamespaceDeclaration:
+      return cast<NamespaceDeclaration>(declaration).name().inner_name();
     case DeclarationKind::FunctionDeclaration:
-      return cast<FunctionDeclaration>(declaration).name();
+      return cast<FunctionDeclaration>(declaration).name().inner_name();
     case DeclarationKind::DestructorDeclaration:
-      return cast<DestructorDeclaration>(declaration).name();
+      return "destructor";
     case DeclarationKind::ClassDeclaration:
-      return cast<ClassDeclaration>(declaration).name();
+      return cast<ClassDeclaration>(declaration).name().inner_name();
     case DeclarationKind::MixinDeclaration: {
-      return cast<MixinDeclaration>(declaration).name();
+      return cast<MixinDeclaration>(declaration).name().inner_name();
     }
     case DeclarationKind::MixDeclaration: {
       return std::nullopt;
     }
     case DeclarationKind::ChoiceDeclaration:
-      return cast<ChoiceDeclaration>(declaration).name();
+      return cast<ChoiceDeclaration>(declaration).name().inner_name();
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration:
-      return cast<ConstraintTypeDeclaration>(declaration).name();
+      return cast<ConstraintTypeDeclaration>(declaration).name().inner_name();
     case DeclarationKind::VariableDeclaration:
       return cast<VariableDeclaration>(declaration).binding().name();
     case DeclarationKind::AssociatedConstantDeclaration:
@@ -232,11 +261,12 @@ auto GetName(const Declaration& declaration)
     case DeclarationKind::InterfaceExtendsDeclaration:
     case DeclarationKind::InterfaceImplDeclaration:
     case DeclarationKind::ImplDeclaration:
+    case DeclarationKind::MatchFirstDeclaration:
       return std::nullopt;
     case DeclarationKind::SelfDeclaration:
       return SelfDeclaration::name();
     case DeclarationKind::AliasDeclaration: {
-      return cast<AliasDeclaration>(declaration).name();
+      return cast<AliasDeclaration>(declaration).name().inner_name();
     }
   }
 }
@@ -337,22 +367,26 @@ auto DestructorDeclaration::CreateDestructor(
 }
 
 auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
-                                 SourceLocation source_loc, std::string name,
+                                 SourceLocation source_loc, DeclaredName name,
                                  std::vector<Nonnull<AstNode*>> deduced_params,
                                  Nonnull<TuplePattern*> param_pattern,
                                  ReturnTerm return_term,
-                                 std::optional<Nonnull<Block*>> body)
+                                 std::optional<Nonnull<Block*>> body,
+                                 VirtualOverride virt_override)
     -> ErrorOr<Nonnull<FunctionDeclaration*>> {
   DeducedParameters split_params;
   CARBON_ASSIGN_OR_RETURN(split_params,
                           SplitDeducedParameters(source_loc, deduced_params));
   return arena->New<FunctionDeclaration>(
-      source_loc, name, std::move(split_params.resolved_params),
-      split_params.self_pattern, param_pattern, return_term, body);
+      source_loc, std::move(name), std::move(split_params.resolved_params),
+      split_params.self_pattern, param_pattern, return_term, body,
+      virt_override);
 }
 
 void CallableDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
-  out << "fn " << name_ << " ";
+  auto name = GetName(*this);
+  CARBON_CHECK(name) << "Unexpected missing name for `" << *this << "`.";
+  out << "fn " << *name << " ";
   if (!deduced_parameters_.empty()) {
     out << "[";
     llvm::ListSeparator sep;
@@ -395,11 +429,24 @@ auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
 }
 
 void AlternativeSignature::Print(llvm::raw_ostream& out) const {
-  out << "alt " << name() << " " << signature();
+  out << "alt " << name();
+  if (auto params = parameters()) {
+    out << **params;
+  }
 }
 
 void AlternativeSignature::PrintID(llvm::raw_ostream& out) const {
   out << name();
+}
+
+auto ChoiceDeclaration::FindAlternative(std::string_view name) const
+    -> std::optional<const AlternativeSignature*> {
+  for (const auto* alt : alternatives()) {
+    if (alt->name() == name) {
+      return alt;
+    }
+  }
+  return std::nullopt;
 }
 
 }  // namespace Carbon

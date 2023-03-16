@@ -151,9 +151,9 @@ and the language:
     Carbon. We call this the [Carbon Explorer](/explorer/).
 
 If you're interested in contributing, we would love help
-[completing the 0.1 language designs](/docs/project/roadmap.md#completing-the-language-design),
+[completing the 0.1 language designs](/docs/project/roadmap.md#complete-design-coverage-of-the-01-languages-necessary-features),
 and
-[completing the Carbon Explorer implementation of this design](/docs/project/roadmap.md#demo-implementation-of-core-features-with-working-examples).
+[completing the Carbon Explorer implementation of this design](/docs/project/roadmap.md#complete-01-language-implementation-coverage-in-the-carbon-explorer).
 We are also currently working to get more broad feedback and participation from
 the C++ community. Beyond that, we plan to prioritize C++ interoperability and a
 realistic toolchain that implements the 0.1 language and can be used to evaluate
@@ -270,17 +270,10 @@ As there is no compiler yet, to try out Carbon, you can use the Carbon explorer
 to interpret Carbon code and print its output. You can try it out immediately at
 [compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
-To build the Carbon explorer yourself, follow these instructions:
+To build the Carbon explorer yourself, you'll need to install dependencies
+(Bazel, Clang, libc++), and then you can run:
 
 ```shell
-# Install bazelisk using Homebrew.
-$ brew install bazelisk
-
-# Install Clang/LLVM using Homebrew.
-# Many Clang/LLVM releases aren't built with options we rely on.
-$ brew install llvm
-$ export PATH="$(brew --prefix llvm)/bin:${PATH}"
-
 # Download Carbon's code.
 $ git clone https://github.com/carbon-language/carbon-lang
 $ cd carbon-lang
@@ -289,9 +282,8 @@ $ cd carbon-lang
 $ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
-These instructions assume [Homebrew](https://brew.sh/) is installed; see our
-[contribution tools documentation](/docs/project/contribution_tools.md) for more
-extensive tooling instructions.
+For complete instructions, including installing dependencies, see our
+[contribution tools documentation](/docs/project/contribution_tools.md).
 
 Learn more about the Carbon project:
 
@@ -311,14 +303,36 @@ Past Carbon focused talks from the community:
 
 ## Join us
 
-Carbon is committed to a welcoming and inclusive environment where everyone can
+We'd love to have folks join us and contribute to the project. Carbon is
+committed to a welcoming and inclusive environment where everyone can
 contribute.
 
 -   Most of Carbon's design discussions occur on
     [Discord](https://discord.gg/ZjVdShJDAs).
+-   Carbon is a
+    [Google Summer of Code 2023 organization](https://summerofcode.withgoogle.com/programs/2023/organizations/carbon-language).
+    [Applications to become a GSoC contributor](https://summerofcode.withgoogle.com/)
+    open March 20th to April 4th.
 -   To watch for major release announcements, subscribe to our
     [Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
     and [star carbon-lang](https://github.com/carbon-language/carbon-lang).
 -   See our [code of conduct](CODE_OF_CONDUCT.md) and
     [contributing guidelines](CONTRIBUTING.md) for information about the Carbon
     development community.
+
+### Contributing
+
+You can also directly:
+
+-   [Contribute the language design](CONTRIBUTING.md#contributing-to-the-language-design):
+    feedback on design, new design proposal
+-   [Contribute to the language implementation](CONTRIBUTING.md#contributing-to-the-language-implementation)
+    -   [Carbon Explorer](/explorer/): bug report, bug fix, language feature
+        implementation
+    -   [Carbon Toolchain](/toolchain/), and project infrastructure
+
+You can **check out some
+["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue)**,
+or join the `#contributing-help` channel on
+[Discord](https://discord.gg/ZjVdShJDAs). See our full
+[`CONTRIBUTING`](CONTRIBUTING.md) documentation for more details.

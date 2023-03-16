@@ -10,15 +10,15 @@
 package ExplorerTest api;
 
 interface HasTypes {
-  let A:! Type;
-  let B:! Type;
-  let C:! Type;
-  let D:! Type;
-  let E:! Type;
-  let F:! Type;
+  let A:! type;
+  let B:! type;
+  let C:! type;
+  let D:! type;
+  let E:! type;
+  let F:! type;
 }
 
-interface HasParams(A:! Type, B:! Type, C:! Type, D:! Type) {
+interface HasParams(A:! type, B:! type, C:! type, D:! type) {
   let V:! HasTypes;
 }
 

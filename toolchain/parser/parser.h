@@ -40,18 +40,15 @@ class Parser {
   // Possible return values for FindListToken.
   enum class ListTokenKind { Comma, Close, CommaClose };
 
-  // Supported kinds for HandleBraceExpression.
-  enum class BraceExpressionKind { Unknown, Value, Type };
-
   // Supported kinds for HandlePattern.
-  enum class PatternKind { Parameter, Variable };
+  enum class PatternKind { DeducedParameter, Parameter, Variable };
 
-  // Gives information about the language construct/context being parsed. For
-  // now, a simple enum but can be extended later to provide more information as
-  // necessary.
-  enum class ParseContext {
+  // Supported return values for GetDeclarationContext.
+  enum class DeclarationContext {
     File,  // Top-level context.
+    Class,
     Interface,
+    NamedConstraint,
   };
 
   // Helper class for tracing state_stack_ on crashes.
@@ -59,9 +56,11 @@ class Parser {
 
   // Used to track state on state_stack_.
   struct StateStackEntry {
-    StateStackEntry(ParserState state, PrecedenceGroup ambient_precedence,
-                    PrecedenceGroup lhs_precedence,
-                    TokenizedBuffer::Token token, int32_t subtree_start)
+    explicit StateStackEntry(ParserState state,
+                             PrecedenceGroup ambient_precedence,
+                             PrecedenceGroup lhs_precedence,
+                             TokenizedBuffer::Token token,
+                             int32_t subtree_start)
         : state(state),
           ambient_precedence(ambient_precedence),
           lhs_precedence(lhs_precedence),
@@ -107,8 +106,9 @@ class Parser {
   static_assert(sizeof(StateStackEntry) == 12,
                 "StateStackEntry has unexpected size!");
 
-  Parser(ParseTree& tree, TokenizedBuffer& tokens,
-         TokenDiagnosticEmitter& emitter, llvm::raw_ostream* vlog_stream);
+  explicit Parser(ParseTree& tree, TokenizedBuffer& tokens,
+                  TokenDiagnosticEmitter& emitter,
+                  llvm::raw_ostream* vlog_stream);
 
   auto Parse() -> void;
 
@@ -234,7 +234,7 @@ class Parser {
 
   // Pushes a new expression state with specific precedence.
   auto PushStateForExpression(PrecedenceGroup ambient_precedence) -> void {
-    PushState(StateStackEntry(ParserState::Expression(), ambient_precedence,
+    PushState(StateStackEntry(ParserState::Expression, ambient_precedence,
                               PrecedenceGroup::ForTopLevelExpression(),
                               *position_, tree_->size()));
   }
@@ -255,41 +255,72 @@ class Parser {
         << "Excessive stack size: likely infinite loop";
   }
 
+  // Returns the current declaration context according to state_stack_.
+  // This is expected to be called in cases which are close to a context.
+  // Although it looks like it could be O(n) for state_stack_'s depth, valid
+  // parses should only need to look down a couple steps.
+  //
+  // This currently assumes it's being called from within the declaration's
+  // DeclarationScopeLoop.
+  auto GetDeclarationContext() -> DeclarationContext;
+
+  // Handles error recovery in a declaration, particularly before any possible
+  // definition has started (although one could be present). Recover to a
+  // semicolon when it makes sense as a possible end, otherwise use the
+  // introducer token for the error.
+  auto HandleDeclarationError(StateStackEntry state,
+                              ParseNodeKind parse_node_kind,
+                              bool skip_past_likely_end) -> void;
+
+  // Handles an unrecognized declaration, adding an error node.
+  auto HandleUnrecognizedDeclaration() -> void;
+
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
-  // Returns the appropriate ParserState for the input kind.
-  static auto BraceExpressionKindToParserState(BraceExpressionKind kind,
-                                               ParserState type,
-                                               ParserState value,
-                                               ParserState unknown)
-      -> ParserState;
-
   // Prints a diagnostic for brace expression syntax errors.
   auto HandleBraceExpressionParameterError(StateStackEntry state,
-                                           BraceExpressionKind kind) -> void;
-
-  // Handles BraceExpressionParameterAs(Type|Value|Unknown).
-  auto HandleBraceExpressionParameter(BraceExpressionKind kind) -> void;
-
-  // Handles BraceExpressionParameterAfterDesignatorAs(Type|Value|Unknown).
-  auto HandleBraceExpressionParameterAfterDesignator(BraceExpressionKind kind)
+                                           ParserState param_finish_state)
       -> void;
 
+  // Handles BraceExpressionParameterAs(Type|Value|Unknown).
+  auto HandleBraceExpressionParameter(ParserState after_designator_state,
+                                      ParserState param_finish_state) -> void;
+
+  // Handles BraceExpressionParameterAfterDesignatorAs(Type|Value|Unknown).
+  auto HandleBraceExpressionParameterAfterDesignator(
+      ParserState param_finish_state) -> void;
+
   // Handles BraceExpressionParameterFinishAs(Type|Value|Unknown).
-  auto HandleBraceExpressionParameterFinish(BraceExpressionKind kind) -> void;
+  auto HandleBraceExpressionParameterFinish(ParseNodeKind node_kind,
+                                            ParserState param_state) -> void;
 
   // Handles BraceExpressionFinishAs(Type|Value|Unknown).
-  auto HandleBraceExpressionFinish(BraceExpressionKind kind) -> void;
+  auto HandleBraceExpressionFinish(ParseNodeKind node_kind) -> void;
+
+  // Handles DeclarationNameAndParamsAs(Optional|Required).
+  auto HandleDeclarationNameAndParams(bool params_required) -> void;
 
   // Handles DesignatorAs.
   auto HandleDesignator(bool as_struct) -> void;
 
-  // When handling errors before the start of the definition, treat it as a
-  // declaration. Recover to a semicolon when it makes sense as a possible
-  // function end, otherwise use the fn token for the error.
-  auto HandleFunctionError(StateStackEntry state, bool skip_past_likely_end)
+  // Handles ParameterAs(Deduced|Regular).
+  auto HandleParameter(ParserState pattern_state, ParserState finish_state)
       -> void;
+
+  // Handles ParameterFinishAs(Deduced|Regular).
+  auto HandleParameterFinish(TokenKind close_token, ParserState param_state)
+      -> void;
+
+  // Handles ParameterListAs(Deduced|Regular).
+  auto HandleParameterList(ParseNodeKind parse_node_kind,
+                           TokenKind open_token_kind,
+                           TokenKind close_token_kind, ParserState param_state,
+                           ParserState finish_state) -> void;
+
+  // Handles ParameterListFinishAs(Deduced|Regular).
+  auto HandleParameterListFinish(ParseNodeKind parse_node_kind,
+                                 TokenKind token_kind) -> void;
 
   // Handles ParenConditionAs(If|While)
   auto HandleParenCondition(ParseNodeKind start_kind, ParserState finish_state)
@@ -298,11 +329,32 @@ class Parser {
   // Handles ParenExpressionParameterFinishAs(Unknown|Tuple).
   auto HandleParenExpressionParameterFinish(bool as_tuple) -> void;
 
-  // Handles PatternAs(FunctionParameter|Variable).
+  // Handles PatternAs(DeducedParameter|FunctionParameter|Variable).
   auto HandlePattern(PatternKind pattern_kind) -> void;
+
+  // Handles PatternFinishAs(Generic|Regular).
+  auto HandlePatternFinish(ParseNodeKind node_kind) -> void;
+
+  // For HandlePattern, tries to consume a wrapping keyword.
+  auto ConsumeIfPatternKeyword(TokenKind keyword_token,
+                               ParserState keyword_state, int subtree_start)
+      -> void;
 
   // Handles the `;` after a keyword statement.
   auto HandleStatementKeywordFinish(ParseNodeKind node_kind) -> void;
+
+  // Handles processing of a type's introducer.
+  auto HandleTypeIntroducer(ParseNodeKind introducer_kind,
+                            ParserState after_params_state) -> void;
+
+  // Handles processing after params, deciding whether it's a declaration or
+  // definition.
+  auto HandleTypeAfterParams(ParseNodeKind declaration_kind,
+                             ParseNodeKind definition_start_kind,
+                             ParserState definition_finish_state) -> void;
+
+  // Handles parsing after the declaration scope of a type.
+  auto HandleTypeDefinitionFinish(ParseNodeKind definition_kind) -> void;
 
   // Handles VarAs(Semicolon|For).
   auto HandleVar(ParserState finish_state) -> void;
@@ -325,8 +377,6 @@ class Parser {
   TokenizedBuffer::TokenIterator end_;
 
   llvm::SmallVector<StateStackEntry> state_stack_;
-  // TODO: This can be a mini-stack of contexts rather than a simple variable.
-  ParseContext stack_context_;
 };
 
 }  // namespace Carbon

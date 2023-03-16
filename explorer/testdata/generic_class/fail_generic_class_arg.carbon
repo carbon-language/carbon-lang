@@ -8,7 +8,7 @@
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
+class Point(T:! type) {
   fn Create(x: T, y: T) -> Point(T) {
     return {.x = x, .y = y};
   }

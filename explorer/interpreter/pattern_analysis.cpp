@@ -34,7 +34,7 @@ auto AbstractPattern::discriminator() const -> std::string_view {
     }
   } else if (const auto* value = value_.dyn_cast<const Value*>()) {
     if (const auto* alt = dyn_cast<AlternativeValue>(value)) {
-      return alt->alt_name();
+      return alt->alternative().name();
     } else if (const auto* bool_val = dyn_cast<BoolValue>(value)) {
       return bool_val->value() ? "true" : "false";
     }
@@ -78,9 +78,14 @@ void AbstractPattern::AppendElementsTo(
             AbstractPattern(tuple->elements()[i], tuple_type->elements()[i]));
       }
     } else if (const auto* alt = dyn_cast<AlternativeValue>(value)) {
-      out.push_back(AbstractPattern(
-          &alt->argument(),
-          *cast<ChoiceType>(type_)->FindAlternative(alt->alt_name())));
+      if (auto arg = alt->argument()) {
+        out.push_back(AbstractPattern(
+            *arg, *alt->alternative().parameters_static_type()));
+      } else {
+        // There's no value to match for this alternative, so just insert a
+        // wildcard.
+        out.push_back(AbstractPattern::MakeWildcard());
+      }
     }
   }
 }

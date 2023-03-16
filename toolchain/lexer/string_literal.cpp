@@ -363,8 +363,13 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       }
     }
 
+    // Tracks the length of the result at the last time we expanded an escape
+    // to ensure we don't misinterpret it as unescaped when backtracking.
+    size_t last_escape_length = 0;
+
     // Process the contents of the line.
     while (true) {
+      // Append the next segment of plain text.
       auto end_of_regular_text = contents.find_if([](char c) {
         return c == '\n' || c == '\\' ||
                (IsHorizontalWhitespace(c) && c != ' ');
@@ -377,10 +382,11 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       }
 
       if (contents.consume_front("\n")) {
-        // Trailing whitespace before a newline doesn't contribute to the string
-        // literal value.
+        // Trailing whitespace in the source before a newline doesn't contribute
+        // to the string literal value. However, escaped whitespace (like `\t`)
+        // and any whitespace just before that does contribute.
         while (!result.empty() && result.back() != '\n' &&
-               IsSpace(result.back())) {
+               IsSpace(result.back()) && result.length() > last_escape_length) {
           result.pop_back();
         }
         result += '\n';
@@ -425,6 +431,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 
       // Handle this escape sequence.
       ExpandAndConsumeEscapeSequence(emitter, contents, result);
+      last_escape_length = result.length();
     }
   }
 }

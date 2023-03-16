@@ -202,13 +202,15 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
       // Trailing whitespace handling.
       {"'''\n  Hello \\\n  World \t \n  Bye!  \\\n  '''",
        "Hello World\nBye!  "},
+      {"'''\n\\t\n'''", "\t\n"},
+      {"'''\n\\t \n'''", "\t\n"},
   };
 
-  for (auto [test, contents] : testcases) {
+  for (auto [test, expected] : testcases) {
     error_tracker.Reset();
     auto value = Parse(test.trim());
     EXPECT_FALSE(error_tracker.seen_error()) << "`" << test << "`";
-    EXPECT_EQ(value, contents);
+    EXPECT_EQ(value, expected);
   }
 }
 

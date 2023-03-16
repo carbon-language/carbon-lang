@@ -18,12 +18,12 @@
 // CHECK:STDOUT:       {kind: 'StructFieldUnknown', text: '.', has_error: yes},
 // CHECK:STDOUT:     {kind: 'StructTypeLiteral', text: '}', subtree_size: 10},
 // CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 12},
-// CHECK:STDOUT:       {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:     {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'VariableInitializer', text: '=', subtree_size: 3},
+// CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:     {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
+// CHECK:STDOUT:   {kind: 'StructLiteral', text: '}', subtree_size: 2},
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 17},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/struct/fail_mix_type_and_value.carbon:[[@LINE+1]]:21: Expected `.field: type`.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/struct/fail_mix_type_and_value.carbon:[[@LINE+1]]:21: Expected `.field: field_type`.
 var x: {.a: i32, .b = 0} = {};

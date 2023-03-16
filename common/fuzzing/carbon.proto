@@ -11,6 +11,11 @@ message LibraryName {
   optional string path = 2;
 }
 
+message DeclaredName {
+  repeated string qualifiers = 1;
+  optional string name = 2;
+}
+
 // Expressions.
 
 message CallExpression {
@@ -241,8 +246,27 @@ message ExpressionStatement {
 }
 
 message AssignStatement {
+  enum Operator {
+    Plain = 0;
+    Add = 1;
+    And = 2;
+    Div = 3;
+    Mul = 4;
+    Or = 5;
+    Sub = 6;
+    Mod = 7;
+    Xor = 8;
+    ShiftLeft = 9;
+    ShiftRight = 10;
+  }
   optional Expression lhs = 1;
   optional Expression rhs = 2;
+  optional Operator op = 3;
+}
+
+message IncrementDecrementStatement {
+  optional Expression operand = 1;
+  optional bool is_increment = 2;
 }
 
 message VariableDefinitionStatement {
@@ -321,6 +345,7 @@ message Statement {
     BreakStatement break_statement = 13;
     ContinueStatement continue_statement = 14;
     ForStatement for_statement = 15;
+    IncrementDecrementStatement inc_dec = 16;
   }
 }
 
@@ -338,7 +363,7 @@ message ReturnTerm {
 }
 
 message FunctionDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   repeated GenericBinding deduced_parameters = 2;
   optional Pattern self_pattern = 3;
   optional TuplePattern param_pattern = 4;
@@ -352,7 +377,7 @@ message DestructorDeclaration {
 }
 
 message ClassDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   repeated Declaration members = 2;
   optional TuplePattern type_params = 3;
 }
@@ -363,7 +388,7 @@ message AlternativeSignature {
 }
 
 message ChoiceDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   repeated AlternativeSignature alternatives = 2;
 }
 
@@ -388,12 +413,12 @@ message InterfaceImplDeclaration {
 }
 
 message InterfaceDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   repeated Declaration members = 2;
 }
 
 message ConstraintDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   repeated Declaration members = 2;
 }
 
@@ -410,14 +435,18 @@ message ImplDeclaration {
   repeated Declaration members = 4;
 }
 
+message MatchFirstDeclaration {
+  repeated Declaration impls = 1;
+}
+
 message AliasDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   optional Expression target = 2;
 }
 
 // EXPERIMENTAL MIXIN FEATURE
 message MixinDeclaration {
-  optional string name = 1;
+  optional DeclaredName name = 1;
   repeated Declaration members = 2;
   // Type params not implemented yet
   // optional TuplePattern params = 3;
@@ -427,6 +456,10 @@ message MixinDeclaration {
 // EXPERIMENTAL MIXIN FEATURE
 message MixDeclaration {
   optional Expression mixin = 1;
+}
+
+message NamespaceDeclaration {
+  optional DeclaredName name = 1;
 }
 
 message Declaration {
@@ -445,6 +478,8 @@ message Declaration {
     InterfaceExtendsDeclaration interface_extends = 12;
     InterfaceImplDeclaration interface_impl = 13;
     ConstraintDeclaration constraint = 14;
+    MatchFirstDeclaration match_first = 15;
+    NamespaceDeclaration namespace = 16;
   }
 }
 
