@@ -42,6 +42,10 @@ class TypeChecker;
 // scope.
 class ImplScope {
  public:
+  explicit ImplScope() {}
+  explicit ImplScope(Nonnull<const ImplScope*> parent)
+      : parent_scope_(parent) {}
+
   // Associates `iface` and `type` with the `impl` in this scope. If `iface` is
   // a constraint type, it will be split into its constituent components, and
   // any references to `.Self` are expected to have been substituted for the
@@ -68,10 +72,6 @@ class ImplScope {
   void AddEqualityConstraint(Nonnull<const EqualityConstraint*> equal) {
     equalities_.push_back(equal);
   }
-
-  // Makes `parent` a parent of this scope.
-  // REQUIRES: `parent` is not already a parent of this scope.
-  void AddParent(Nonnull<const ImplScope*> parent);
 
   // Returns the associated impl for the given `constraint` and `type` in
   // the ancestor graph of this scope, or reports a compilation error
@@ -165,7 +165,7 @@ class ImplScope {
 
   std::vector<Impl> impls_;
   std::vector<Nonnull<const EqualityConstraint*>> equalities_;
-  std::vector<Nonnull<const ImplScope*>> parent_scopes_;
+  std::optional<Nonnull<const ImplScope*>> parent_scope_;
 };
 
 // An equality context that considers two values to be equal if they are a
