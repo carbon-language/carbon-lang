@@ -107,7 +107,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(DeducedParameterList, DeducedParameterListStart)
 //   _external_: type expression
 // [Generic]PatternBinding
 //
-// Address and Template be parents to [Generic]PatternBinding, in that order.
+// Address and Template may be parents to [Generic]PatternBinding, in that order.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PatternBinding, 2)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(GenericPatternBinding, 2)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 1)
