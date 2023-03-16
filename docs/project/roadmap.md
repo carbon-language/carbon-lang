@@ -60,9 +60,10 @@ We expect this to include a reasonably precise set of requirements across:
 We expect this to also include at least enough of Carbon's features and C++
 interop to support [our basic example](/docs/images/snippets.md#mixed).
 
-Note that we don't expect to finish the 0.1 language work in 2023. Our goal is
-to make sufficient progress that we can complete it in 2024, but there are still
-many things that can go wrong and cause significant delays.
+Note that we don't expect to finish implementing the 0.1 design in 2023. Our
+goal is to make sufficient progress that we can complete the implementation in
+2024, but there are still many things that can go wrong and cause significant
+delays.
 
 ### Complete design coverage of the 0.1 language's necessary features
 
