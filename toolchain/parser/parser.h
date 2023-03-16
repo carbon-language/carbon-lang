@@ -305,8 +305,29 @@ class Parser {
   // Handles BraceExpressionFinishAs(Type|Value|Unknown).
   auto HandleBraceExpressionFinish(BraceExpressionKind kind) -> void;
 
+  // Handles DeclarationNameAndParamsAs(Optional|Required).
+  auto HandleDeclarationNameAndParams(bool params_required) -> void;
+
   // Handles DesignatorAs.
   auto HandleDesignator(bool as_struct) -> void;
+
+  // Handles ParameterAs(Deduced|Regular).
+  auto HandleParameter(ParserState pattern_state, ParserState finish_state)
+      -> void;
+
+  // Handles ParameterFinishAs(Deduced|Regular).
+  auto HandleParameterFinish(TokenKind close_token, ParserState param_state)
+      -> void;
+
+  // Handles ParameterListAs(Deduced|Regular).
+  auto HandleParameterList(ParseNodeKind parse_node_kind,
+                           TokenKind open_token_kind,
+                           TokenKind close_token_kind, ParserState param_state,
+                           ParserState finish_state) -> void;
+
+  // Handles ParameterListFinishAs(Deduced|Regular).
+  auto HandleParameterListFinish(ParseNodeKind parse_node_kind,
+                                 TokenKind token_kind) -> void;
 
   // Handles ParenConditionAs(If|While)
   auto HandleParenCondition(ParseNodeKind start_kind, ParserState finish_state)
@@ -321,11 +342,15 @@ class Parser {
   // Handles the `;` after a keyword statement.
   auto HandleStatementKeywordFinish(ParseNodeKind node_kind) -> void;
 
-  // Handles processing of a type's `<introducer> <name> {`.
+  // Handles processing of a type's introducer.
   auto HandleTypeIntroducer(ParseNodeKind introducer_kind,
-                            ParseNodeKind declaration_kind,
-                            ParseNodeKind definition_start_kind,
-                            ParserState definition_finish_state) -> void;
+                            ParserState after_params_state) -> void;
+
+  // Handles processing after params, deciding whether it's a declaration or
+  // definition.
+  auto HandleTypeAfterParams(ParseNodeKind declaration_kind,
+                             ParseNodeKind definition_start_kind,
+                             ParserState definition_finish_state) -> void;
 
   // Handles parsing after the declaration scope of a type.
   auto HandleTypeDefinitionFinish(ParseNodeKind definition_kind) -> void;
