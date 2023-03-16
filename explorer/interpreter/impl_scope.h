@@ -42,7 +42,7 @@ class TypeChecker;
 // scope.
 class ImplScope {
  public:
-  ImplScope() {}
+  explicit ImplScope() {}
   explicit ImplScope(Nonnull<const ImplScope*> parent)
       : parent_scope_(parent) {}
 
