@@ -571,70 +571,70 @@ impl forall [T:! type, U:! ImplicitAs(T)]
 }
 
 // TODO: Should `AddWith(U) & AssignWith(.Self.(AddWith(U).Result))` work?
-impl forall [U:! type, T:! AddWith(U) where .Self is AssignWith(.Self.Result)]
+impl forall [U:! type, T:! AddWith(U) where .Self impls AssignWith(.Self.Result)]
      T as AddAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self + other;
   }
 }
 
-impl forall [U:! type, T:! SubWith(U) where .Self is AssignWith(.Self.Result)]
+impl forall [U:! type, T:! SubWith(U) where .Self impls AssignWith(.Self.Result)]
      T as SubAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self - other;
   }
 }
 
-impl forall [U:! type, T:! MulWith(U) where .Self is AssignWith(.Self.Result)]
+impl forall [U:! type, T:! MulWith(U) where .Self impls AssignWith(.Self.Result)]
      T as MulAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self * other;
   }
 }
 
-impl forall [U:! type, T:! DivWith(U) where .Self is AssignWith(.Self.Result)]
+impl forall [U:! type, T:! DivWith(U) where .Self impls AssignWith(.Self.Result)]
      T as DivAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self / other;
   }
 }
 
-impl forall [U:! type, T:! ModWith(U) where .Self is AssignWith(.Self.Result)]
+impl forall [U:! type, T:! ModWith(U) where .Self impls AssignWith(.Self.Result)]
      T as ModAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self % other;
   }
 }
 
-impl forall [U:! type, T:! BitAndWith(U) where .Self is AssignWith(.Self.Result)]
+impl forall [U:! type, T:! BitAndWith(U) where .Self impls AssignWith(.Self.Result)]
      T as BitAndAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self & other;
   }
 }
 
-impl forall [U:! type, T:! BitOrWith(U) where .Self is AssignWith(.Self.Result)]
+impl forall [U:! type, T:! BitOrWith(U) where .Self impls AssignWith(.Self.Result)]
      T as BitOrAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self | other;
   }
 }
 
-impl forall [U:! type, T:! BitXorWith(U) where .Self is AssignWith(.Self.Result)]
+impl forall [U:! type, T:! BitXorWith(U) where .Self impls AssignWith(.Self.Result)]
      T as BitXorAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self ^ other;
   }
 }
 
-impl forall [U:! type, T:! LeftShiftWith(U) where .Self is AssignWith(.Self.Result)]
+impl forall [U:! type, T:! LeftShiftWith(U) where .Self impls AssignWith(.Self.Result)]
      T as LeftShiftAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self << other;
   }
 }
 
-impl forall [U:! type, T:! RightShiftWith(U) where .Self is AssignWith(.Self.Result)]
+impl forall [U:! type, T:! RightShiftWith(U) where .Self impls AssignWith(.Self.Result)]
      T as RightShiftAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     *self = *self >> other;

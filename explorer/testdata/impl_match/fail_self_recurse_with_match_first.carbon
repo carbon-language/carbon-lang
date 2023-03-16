@@ -12,7 +12,7 @@ interface Foo {}
 
 __match_first {
   impl i32* as Foo {}
-  impl forall [T:! type where .Self* is Foo] T as Foo {}
+  impl forall [T:! type where .Self* impls Foo] T as Foo {}
 }
 
 fn F[T:! Foo](x: T) {}

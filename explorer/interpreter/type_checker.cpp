@@ -5140,8 +5140,8 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
 
         // The type specified for the associated constant becomes a
         // constraint for the constraint type: `let X:! Interface` adds a
-        // `Self.X is Interface` constraint that `impl`s must satisfy and users
-        // of the constraint type can rely on.
+        // `Self.X impls Interface` constraint that `impl`s must satisfy and
+        // users of the constraint type can rely on.
         if (const auto* constraint_type =
                 dyn_cast<ConstraintType>(constraint)) {
           builder.AddAndSubstitute(*this, constraint_type, assoc_value,
