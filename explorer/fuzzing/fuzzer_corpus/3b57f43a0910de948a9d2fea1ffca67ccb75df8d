@@ -11,11 +11,20 @@ compilation_unit {
     }
   }
   declarations {
-    alias {
+    interface {
       name {
         name: "B"
       }
-      target {
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
         where {
           base {
             identifier {
@@ -23,13 +32,14 @@ compilation_unit {
             }
           }
           clauses {
-            is {
+            impls {
               type {
                 int_type_literal {
                 }
               }
               constraint {
-                int_type_literal {
+                identifier {
+                  name: "B"
                 }
               }
             }

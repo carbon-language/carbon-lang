@@ -134,105 +134,31 @@ compilation_unit {
   declarations {
     function {
       name {
-        name: "GetA"
-      }
-      deduced_parameters {
-        name: "T"
-        type {
-          identifier {
-            name: "A"
-          }
-        }
-      }
-      param_pattern {
-        fields {
-          binding_pattern {
-            name: "x"
-            type {
-              expression_pattern {
-                expression {
-                  identifier {
-                    name: "T"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      return_term {
-        kind: Expression
-        type {
-          int_type_literal {
-          }
-        }
-      }
-      body {
-        statements {
-          return_expression_statement {
-            expression {
-              call {
-                function {
-                  simple_member_access {
-                    field: "F"
-                    object {
-                      identifier {
-                        name: "x"
-                      }
-                    }
-                  }
-                }
-                argument {
-                  tuple_literal {
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  declarations {
-    function {
-      name {
         name: "GetAB"
       }
-      deduced_parameters {
-        name: "T"
-        type {
-          where {
-            base {
-              identifier {
-                name: "B"
-              }
-            }
-            clauses {
-              is {
-                type {
-                  designator {
-                    name: "Self"
-                  }
-                }
-                constraint {
-                  identifier {
-                    name: "A"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
       param_pattern {
         fields {
-          binding_pattern {
-            name: "x"
+          generic_binding {
+            name: "T"
             type {
-              expression_pattern {
-                expression {
+              where {
+                base {
                   identifier {
-                    name: "T"
+                    name: "B"
+                  }
+                }
+                clauses {
+                  impls {
+                    type {
+                      designator {
+                        name: "Self"
+                      }
+                    }
+                    constraint {
+                      identifier {
+                        name: "A"
+                      }
+                    }
                   }
                 }
               }
@@ -255,24 +181,75 @@ compilation_unit {
                 op: Add
                 arguments {
                   operator {
-                    op: Mul
+                    op: Add
                     arguments {
-                      int_literal {
-                        value: 10
+                      operator {
+                        op: Mul
+                        arguments {
+                          int_literal {
+                            value: 100
+                          }
+                        }
+                        arguments {
+                          call {
+                            function {
+                              compound_member_access {
+                                object {
+                                  identifier {
+                                    name: "T"
+                                  }
+                                }
+                                path {
+                                  simple_member_access {
+                                    field: "F"
+                                    object {
+                                      identifier {
+                                        name: "A"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                              }
+                            }
+                          }
+                        }
                       }
                     }
                     arguments {
-                      call {
-                        function {
-                          identifier {
-                            name: "GetA"
+                      operator {
+                        op: Mul
+                        arguments {
+                          int_literal {
+                            value: 10
                           }
                         }
-                        argument {
-                          tuple_literal {
-                            fields {
-                              identifier {
-                                name: "x"
+                        arguments {
+                          call {
+                            function {
+                              compound_member_access {
+                                object {
+                                  identifier {
+                                    name: "T"
+                                  }
+                                }
+                                path {
+                                  simple_member_access {
+                                    field: "F"
+                                    object {
+                                      identifier {
+                                        name: "B"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                            argument {
+                              tuple_literal {
                               }
                             }
                           }
@@ -288,7 +265,7 @@ compilation_unit {
                         field: "F"
                         object {
                           identifier {
-                            name: "x"
+                            name: "T"
                           }
                         }
                       }
@@ -322,29 +299,6 @@ compilation_unit {
       }
       body {
         statements {
-          variable_definition {
-            pattern {
-              binding_pattern {
-                name: "v"
-                type {
-                  expression_pattern {
-                    expression {
-                      int_type_literal {
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            init {
-              int_literal {
-                value: 0
-              }
-            }
-            is_returned: false
-          }
-        }
-        statements {
           return_expression_statement {
             expression {
               call {
@@ -356,8 +310,7 @@ compilation_unit {
                 argument {
                   tuple_literal {
                     fields {
-                      identifier {
-                        name: "v"
+                      int_type_literal {
                       }
                     }
                   }
