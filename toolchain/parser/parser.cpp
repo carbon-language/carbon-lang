@@ -527,16 +527,19 @@ auto Parser::HandleBraceExpressionState() -> void {
 auto Parser::HandleBraceExpressionParameterError(StateStackEntry state,
                                                  ParserState param_finish_state)
     -> void {
+  bool is_type =
+      param_finish_state == ParserState::BraceExpressionParameterFinishAsType;
+  bool is_value =
+      param_finish_state == ParserState::BraceExpressionParameterFinishAsValue;
+  bool is_unknown = param_finish_state ==
+                    ParserState::BraceExpressionParameterFinishAsUnknown;
+  CARBON_CHECK(is_type || is_value || is_unknown);
   CARBON_DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
                     llvm::StringRef, llvm::StringRef, llvm::StringRef);
-  bool can_be_type =
-      param_finish_state != ParserState::BraceExpressionParameterFinishAsValue;
-  bool can_be_value =
-      param_finish_state != ParserState::BraceExpressionParameterFinishAsType;
   emitter_->Emit(*position_, ExpectedStructLiteralField,
-                 can_be_type ? "`.field: field_type`" : "",
-                 (can_be_type && can_be_value) ? " or " : "",
-                 can_be_value ? "`.field = value`" : "");
+                 (is_type || is_unknown) ? "`.field: field_type`" : "",
+                 is_unknown ? " or " : "",
+                 (is_value || is_unknown) ? "`.field = value`" : "");
 
   state.state = param_finish_state;
   state.has_error = true;
