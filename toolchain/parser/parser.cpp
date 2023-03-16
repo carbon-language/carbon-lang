@@ -523,84 +523,70 @@ auto Parser::HandleBraceExpressionState() -> void {
   }
 }
 
-auto Parser::BraceExpressionKindToParserState(BraceExpressionKind kind,
-                                              ParserState type,
-                                              ParserState value,
-                                              ParserState unknown)
-    -> ParserState {
-  switch (kind) {
-    case BraceExpressionKind::Type: {
-      return type;
-    }
-    case BraceExpressionKind::Value: {
-      return value;
-    }
-    case BraceExpressionKind::Unknown: {
-      return unknown;
-    }
-  }
-}
-
 auto Parser::HandleBraceExpressionParameterError(StateStackEntry state,
-                                                 BraceExpressionKind kind)
+                                                 ParserState param_finish_state)
     -> void {
+  bool is_type =
+      param_finish_state == ParserState::BraceExpressionParameterFinishAsType;
+  bool is_value =
+      param_finish_state == ParserState::BraceExpressionParameterFinishAsValue;
+  bool is_unknown = param_finish_state ==
+                    ParserState::BraceExpressionParameterFinishAsUnknown;
+  CARBON_CHECK(is_type || is_value || is_unknown);
   CARBON_DIAGNOSTIC(ExpectedStructLiteralField, Error, "Expected {0}{1}{2}.",
                     llvm::StringRef, llvm::StringRef, llvm::StringRef);
-  bool can_be_type = kind != BraceExpressionKind::Value;
-  bool can_be_value = kind != BraceExpressionKind::Type;
   emitter_->Emit(*position_, ExpectedStructLiteralField,
-                 can_be_type ? "`.field: field_type`" : "",
-                 (can_be_type && can_be_value) ? " or " : "",
-                 can_be_value ? "`.field = value`" : "");
+                 (is_type || is_unknown) ? "`.field: field_type`" : "",
+                 is_unknown ? " or " : "",
+                 (is_value || is_unknown) ? "`.field = value`" : "");
 
-  state.state = BraceExpressionKindToParserState(
-      kind, ParserState::BraceExpressionParameterFinishAsType,
-      ParserState::BraceExpressionParameterFinishAsValue,
-      ParserState::BraceExpressionParameterFinishAsUnknown);
+  state.state = param_finish_state;
   state.has_error = true;
   PushState(state);
 }
 
-auto Parser::HandleBraceExpressionParameter(BraceExpressionKind kind) -> void {
+auto Parser::HandleBraceExpressionParameter(ParserState after_designator_state,
+                                            ParserState param_finish_state)
+    -> void {
   auto state = PopState();
 
   if (!PositionIs(TokenKind::Period)) {
-    HandleBraceExpressionParameterError(state, kind);
+    HandleBraceExpressionParameterError(state, param_finish_state);
     return;
   }
 
-  state.state = BraceExpressionKindToParserState(
-      kind, ParserState::BraceExpressionParameterAfterDesignatorAsType,
-      ParserState::BraceExpressionParameterAfterDesignatorAsValue,
-      ParserState::BraceExpressionParameterAfterDesignatorAsUnknown);
+  state.state = after_designator_state;
   PushState(state);
   PushState(ParserState::DesignatorAsStruct);
 }
 
 auto Parser::HandleBraceExpressionParameterAsTypeState() -> void {
-  HandleBraceExpressionParameter(BraceExpressionKind::Type);
+  HandleBraceExpressionParameter(
+      ParserState::BraceExpressionParameterAfterDesignatorAsType,
+      ParserState::BraceExpressionParameterFinishAsType);
 }
 
 auto Parser::HandleBraceExpressionParameterAsValueState() -> void {
-  HandleBraceExpressionParameter(BraceExpressionKind::Value);
+  HandleBraceExpressionParameter(
+      ParserState::BraceExpressionParameterAfterDesignatorAsValue,
+      ParserState::BraceExpressionParameterFinishAsValue);
 }
 
 auto Parser::HandleBraceExpressionParameterAsUnknownState() -> void {
-  HandleBraceExpressionParameter(BraceExpressionKind::Unknown);
+  HandleBraceExpressionParameter(
+      ParserState::BraceExpressionParameterAfterDesignatorAsUnknown,
+      ParserState::BraceExpressionParameterFinishAsUnknown);
 }
 
 auto Parser::HandleBraceExpressionParameterAfterDesignator(
-    BraceExpressionKind kind) -> void {
+    ParserState param_finish_state) -> void {
   auto state = PopState();
 
   if (state.has_error) {
     auto recovery_pos =
         FindNextOf({TokenKind::Equal, TokenKind::Colon, TokenKind::Comma});
     if (!recovery_pos || tokens_->GetKind(*recovery_pos) == TokenKind::Comma) {
-      state.state = BraceExpressionKindToParserState(
-          kind, ParserState::BraceExpressionParameterFinishAsType,
-          ParserState::BraceExpressionParameterFinishAsValue,
-          ParserState::BraceExpressionParameterFinishAsUnknown);
+      state.state = param_finish_state;
       PushState(state);
       return;
     }
@@ -608,61 +594,69 @@ auto Parser::HandleBraceExpressionParameterAfterDesignator(
   }
 
   // Work out the kind of this element.
-  auto elem_kind = BraceExpressionKind::Unknown;
+  bool is_type;
   if (PositionIs(TokenKind::Colon)) {
-    elem_kind = BraceExpressionKind::Type;
+    is_type = true;
   } else if (PositionIs(TokenKind::Equal)) {
-    elem_kind = BraceExpressionKind::Value;
-  }
-  // Unknown kinds and changes between type and value are errors.
-  if (elem_kind == BraceExpressionKind::Unknown ||
-      (kind != BraceExpressionKind::Unknown && elem_kind != kind)) {
-    HandleBraceExpressionParameterError(state, kind);
+    is_type = false;
+  } else {
+    HandleBraceExpressionParameterError(
+        state, ParserState::BraceExpressionParameterFinishAsUnknown);
     return;
   }
 
-  // If we're setting the kind, update the BraceExpressionFinish state.
-  if (kind == BraceExpressionKind::Unknown) {
-    kind = elem_kind;
+  // If we're changing from unknown, update the related finish states.
+  if (param_finish_state ==
+      ParserState::BraceExpressionParameterFinishAsUnknown) {
     auto finish_state = PopState();
     CARBON_CHECK(finish_state.state ==
                  ParserState::BraceExpressionFinishAsUnknown);
-    finish_state.state = BraceExpressionKindToParserState(
-        kind, ParserState::BraceExpressionFinishAsType,
-        ParserState::BraceExpressionFinishAsValue,
-        ParserState::BraceExpressionFinishAsUnknown);
+    if (is_type) {
+      finish_state.state = ParserState::BraceExpressionFinishAsType;
+      param_finish_state = ParserState::BraceExpressionParameterFinishAsType;
+    } else {
+      finish_state.state = ParserState::BraceExpressionFinishAsValue;
+      param_finish_state = ParserState::BraceExpressionParameterFinishAsValue;
+    }
     PushState(finish_state);
   }
 
-  state.state = BraceExpressionKindToParserState(
-      kind, ParserState::BraceExpressionParameterFinishAsType,
-      ParserState::BraceExpressionParameterFinishAsValue,
-      ParserState::BraceExpressionParameterFinishAsUnknown);
-
-  state.token = Consume();
+  auto want_param_finish_state =
+      is_type ? ParserState::BraceExpressionParameterFinishAsType
+              : ParserState::BraceExpressionParameterFinishAsValue;
+  if (param_finish_state != want_param_finish_state) {
+    HandleBraceExpressionParameterError(state, param_finish_state);
+    return;
+  }
 
   // Struct type fields and value fields use the same grammar except
   // that one has a `:` separator and the other has an `=` separator.
+  state.state = param_finish_state;
+  state.token = Consume();
   PushState(state);
   PushState(ParserState::Expression);
 }
 
 auto Parser::HandleBraceExpressionParameterAfterDesignatorAsTypeState()
     -> void {
-  HandleBraceExpressionParameterAfterDesignator(BraceExpressionKind::Type);
+  HandleBraceExpressionParameterAfterDesignator(
+      ParserState::BraceExpressionParameterFinishAsType);
 }
 
 auto Parser::HandleBraceExpressionParameterAfterDesignatorAsValueState()
     -> void {
-  HandleBraceExpressionParameterAfterDesignator(BraceExpressionKind::Value);
+  HandleBraceExpressionParameterAfterDesignator(
+      ParserState::BraceExpressionParameterFinishAsValue);
 }
 
 auto Parser::HandleBraceExpressionParameterAfterDesignatorAsUnknownState()
     -> void {
-  HandleBraceExpressionParameterAfterDesignator(BraceExpressionKind::Unknown);
+  HandleBraceExpressionParameterAfterDesignator(
+      ParserState::BraceExpressionParameterFinishAsUnknown);
 }
 
-auto Parser::HandleBraceExpressionParameterFinish(BraceExpressionKind kind)
+auto Parser::HandleBraceExpressionParameterFinish(ParseNodeKind node_kind,
+                                                  ParserState param_state)
     -> void {
   auto state = PopState();
 
@@ -670,50 +664,49 @@ auto Parser::HandleBraceExpressionParameterFinish(BraceExpressionKind kind)
     AddLeafNode(ParseNodeKind::StructFieldUnknown, state.token,
                 /*has_error=*/true);
   } else {
-    AddNode(kind == BraceExpressionKind::Type ? ParseNodeKind::StructFieldType
-                                              : ParseNodeKind::StructFieldValue,
-            state.token, state.subtree_start, /*has_error=*/false);
+    AddNode(node_kind, state.token, state.subtree_start, /*has_error=*/false);
   }
 
   if (ConsumeListToken(ParseNodeKind::StructComma, TokenKind::CloseCurlyBrace,
                        state.has_error) == ListTokenKind::Comma) {
-    PushState(BraceExpressionKindToParserState(
-        kind, ParserState::BraceExpressionParameterAsType,
-        ParserState::BraceExpressionParameterAsValue,
-        ParserState::BraceExpressionParameterAsUnknown));
+    PushState(param_state);
   }
 }
 
 auto Parser::HandleBraceExpressionParameterFinishAsTypeState() -> void {
-  HandleBraceExpressionParameterFinish(BraceExpressionKind::Type);
+  HandleBraceExpressionParameterFinish(
+      ParseNodeKind::StructFieldType,
+      ParserState::BraceExpressionParameterAsType);
 }
 
 auto Parser::HandleBraceExpressionParameterFinishAsValueState() -> void {
-  HandleBraceExpressionParameterFinish(BraceExpressionKind::Value);
+  HandleBraceExpressionParameterFinish(
+      ParseNodeKind::StructFieldValue,
+      ParserState::BraceExpressionParameterAsValue);
 }
 
 auto Parser::HandleBraceExpressionParameterFinishAsUnknownState() -> void {
-  HandleBraceExpressionParameterFinish(BraceExpressionKind::Unknown);
+  HandleBraceExpressionParameterFinish(
+      ParseNodeKind::StructFieldUnknown,
+      ParserState::BraceExpressionParameterAsUnknown);
 }
 
-auto Parser::HandleBraceExpressionFinish(BraceExpressionKind kind) -> void {
+auto Parser::HandleBraceExpressionFinish(ParseNodeKind node_kind) -> void {
   auto state = PopState();
 
-  AddNode(kind == BraceExpressionKind::Type ? ParseNodeKind::StructTypeLiteral
-                                            : ParseNodeKind::StructLiteral,
-          Consume(), state.subtree_start, state.has_error);
+  AddNode(node_kind, Consume(), state.subtree_start, state.has_error);
 }
 
 auto Parser::HandleBraceExpressionFinishAsTypeState() -> void {
-  HandleBraceExpressionFinish(BraceExpressionKind::Type);
+  HandleBraceExpressionFinish(ParseNodeKind::StructTypeLiteral);
 }
 
 auto Parser::HandleBraceExpressionFinishAsValueState() -> void {
-  HandleBraceExpressionFinish(BraceExpressionKind::Value);
+  HandleBraceExpressionFinish(ParseNodeKind::StructLiteral);
 }
 
 auto Parser::HandleBraceExpressionFinishAsUnknownState() -> void {
-  HandleBraceExpressionFinish(BraceExpressionKind::Unknown);
+  HandleBraceExpressionFinish(ParseNodeKind::StructLiteral);
 }
 
 auto Parser::HandleCallExpressionState() -> void {
