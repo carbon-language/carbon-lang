@@ -75,10 +75,6 @@ void ImplScope::Add(llvm::ArrayRef<ImplConstraint> impls,
   }
 }
 
-void ImplScope::AddParent(Nonnull<const ImplScope*> parent) {
-  parent_scopes_.push_back(parent);
-}
-
 // Diagnose that `a_evaluated != b_evaluated` for the purpose of an equality
 // constraint.
 static auto DiagnoseUnequalValues(SourceLocation source_loc,
@@ -239,10 +235,8 @@ auto ImplScope::VisitEqualValues(
       return false;
     }
   }
-  for (Nonnull<const ImplScope*> parent : parent_scopes_) {
-    if (!parent->VisitEqualValues(value, visitor)) {
-      return false;
-    }
+  if (parent_scope_ && !(*parent_scope_)->VisitEqualValues(value, visitor)) {
+    return false;
   }
   return true;
 }
@@ -356,15 +350,12 @@ auto ImplScope::TryResolveInterfaceRecursively(
       std::optional<ResolveResult> result,
       TryResolveInterfaceHere(iface_type, type, source_loc, original_scope,
                               type_checker));
-  for (Nonnull<const ImplScope*> parent : parent_scopes_) {
-    // TODO: If we support having `impl` declarations in multiple different
-    // impl scopes, we'll need to merge the sorted lists before we walk them.
-    // For now, all non-top-level Impls correspond to ImplBindings, which are
-    // always exact matches.
+  if (parent_scope_) {
     CARBON_ASSIGN_OR_RETURN(
         std::optional<ResolveResult> parent_result,
-        parent->TryResolveInterfaceRecursively(iface_type, type, source_loc,
-                                               original_scope, type_checker));
+        (*parent_scope_)
+            ->TryResolveInterfaceRecursively(iface_type, type, source_loc,
+                                             original_scope, type_checker));
     CARBON_ASSIGN_OR_RETURN(result, CombineResults(iface_type, type, source_loc,
                                                    result, parent_result));
   }
@@ -428,8 +419,8 @@ void ImplScope::Print(llvm::raw_ostream& out) const {
     }
   }
   out << "\n";
-  for (const Nonnull<const ImplScope*>& parent : parent_scopes_) {
-    out << *parent;
+  if (parent_scope_) {
+    out << **parent_scope_;
   }
 }
 

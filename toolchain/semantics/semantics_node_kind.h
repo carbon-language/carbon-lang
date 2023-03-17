@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-#include "toolchain/common/enum_base.h"
+#include "common/enum_base.h"
 
 namespace Carbon {
 

@@ -611,7 +611,7 @@ auto TypeChecker::IsImplicitlyConvertible(
   // We didn't find a builtin implicit conversion. Try a user-defined one.
   SourceLocation source_loc = SourceLocation::DiagnosticsIgnored();
   ErrorOr<Nonnull<const InterfaceType*>> iface_type = GetBuiltinInterfaceType(
-      source_loc, BuiltinInterfaceName{Builtins::ImplicitAs, destination});
+      source_loc, BuiltinInterfaceName{Builtin::ImplicitAs, destination});
   // TODO: If the Resolve call fails with a hard error, don't swallow it.
   return iface_type.ok() &&
          impl_scope.Resolve(*iface_type, source, source_loc, *this).ok();
@@ -723,7 +723,7 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
 
   ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
       impl_scope, source,
-      BuiltinInterfaceName{Builtins::ImplicitAs, destination},
+      BuiltinInterfaceName{Builtin::ImplicitAs, destination},
       BuiltinMethodCall{"Convert"});
   if (!converted.ok()) {
     // We couldn't find a matching `impl`.
@@ -753,9 +753,8 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
                                           BuiltinInterfaceName interface) const
     -> ErrorOr<Nonnull<const InterfaceType*>> {
   auto bad_builtin = [&]() -> Error {
-    return ProgramError(source_loc)
-           << "unsupported declaration for builtin `"
-           << Builtins::GetName(interface.builtin) << "`";
+    return ProgramError(source_loc) << "unsupported declaration for builtin `"
+                                    << interface.builtin << "`";
   };
 
   // Find the builtin interface declaration.
@@ -796,7 +795,7 @@ auto TypeChecker::BuildBuiltinMethodCall(const ImplScope& impl_scope,
   CARBON_ASSIGN_OR_RETURN(Nonnull<const InterfaceType*> iface_type,
                           GetBuiltinInterfaceType(source_loc, interface));
 
-  if (interface.builtin == Builtins::ImplicitAs) {
+  if (interface.builtin == Builtin::ImplicitAs) {
     // Type-checking the below expression resolves the member name to
     // `As(Destination).Convert`, which allows both implicit and explicit
     // conversions. So manually check that `ImplicitAs(Destination)` is
@@ -3104,8 +3103,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         ts.push_back(&argument->static_type());
       }
 
-      auto handle_unary_operator =
-          [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
+      auto handle_unary_operator = [&](Builtin builtin) -> ErrorOr<Success> {
         ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
             impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin},
             BuiltinMethodCall{"Op"});
@@ -3119,8 +3117,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         return Success();
       };
 
-      auto handle_binary_operator =
-          [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
+      auto handle_binary_operator = [&](Builtin builtin) -> ErrorOr<Success> {
         ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
             impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin, ts[1]},
             BuiltinMethodCall{"Op", {op.arguments()[1]}});
@@ -3134,8 +3131,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         return Success();
       };
 
-      auto handle_binary_arithmetic =
-          [&](Builtins::Builtin builtin) -> ErrorOr<Success> {
+      auto handle_binary_arithmetic = [&](Builtin builtin) -> ErrorOr<Success> {
         // Handle a built-in operator first.
         // TODO: Replace this with an intrinsic.
         if (isa<IntType>(ts[0]) && isa<IntType>(ts[1]) &&
@@ -3150,7 +3146,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       };
 
       auto handle_compare =
-          [&](Builtins::Builtin builtin, const std::string& method_name,
+          [&](Builtin builtin, const std::string& method_name,
               const std::string_view& operator_desc) -> ErrorOr<Success> {
         ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
             impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin, ts[1]},
@@ -3175,18 +3171,18 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             return Success();
           }
           // Now try an overloaded negation.
-          return handle_unary_operator(Builtins::Negate);
+          return handle_unary_operator(Builtin::Negate);
         }
         case Operator::Add:
-          return handle_binary_arithmetic(Builtins::AddWith);
+          return handle_binary_arithmetic(Builtin::AddWith);
         case Operator::Sub:
-          return handle_binary_arithmetic(Builtins::SubWith);
+          return handle_binary_arithmetic(Builtin::SubWith);
         case Operator::Mul:
-          return handle_binary_arithmetic(Builtins::MulWith);
+          return handle_binary_arithmetic(Builtin::MulWith);
         case Operator::Div:
-          return handle_binary_arithmetic(Builtins::DivWith);
+          return handle_binary_arithmetic(Builtin::DivWith);
         case Operator::Mod:
-          return handle_binary_arithmetic(Builtins::ModWith);
+          return handle_binary_arithmetic(Builtin::ModWith);
         case Operator::BitwiseAnd:
           // `&` between type-of-types performs constraint combination.
           // TODO: Should this be done via an intrinsic?
@@ -3214,17 +3210,17 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 ValueCategory::Let));
             return Success();
           }
-          return handle_binary_operator(Builtins::BitAndWith);
+          return handle_binary_operator(Builtin::BitAndWith);
         case Operator::BitwiseOr:
-          return handle_binary_operator(Builtins::BitOrWith);
+          return handle_binary_operator(Builtin::BitOrWith);
         case Operator::BitwiseXor:
-          return handle_binary_operator(Builtins::BitXorWith);
+          return handle_binary_operator(Builtin::BitXorWith);
         case Operator::BitShiftLeft:
-          return handle_binary_operator(Builtins::LeftShiftWith);
+          return handle_binary_operator(Builtin::LeftShiftWith);
         case Operator::BitShiftRight:
-          return handle_binary_operator(Builtins::RightShiftWith);
+          return handle_binary_operator(Builtin::RightShiftWith);
         case Operator::Complement:
-          return handle_unary_operator(Builtins::BitComplement);
+          return handle_unary_operator(Builtin::BitComplement);
         case Operator::And:
           CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(1)",
                                                  arena_->New<BoolType>(), ts[0],
@@ -3253,18 +3249,18 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           op.set_value_category(ValueCategory::Let);
           return Success();
         case Operator::Eq:
-          return handle_compare(Builtins::EqWith, "Equal", "equality");
+          return handle_compare(Builtin::EqWith, "Equal", "equality");
         case Operator::NotEq:
-          return handle_compare(Builtins::EqWith, "NotEqual", "equality");
+          return handle_compare(Builtin::EqWith, "NotEqual", "equality");
         case Operator::Less:
-          return handle_compare(Builtins::LessWith, "Less", "less");
+          return handle_compare(Builtin::LessWith, "Less", "less");
         case Operator::LessEq:
-          return handle_compare(Builtins::LessEqWith, "LessEq", "less equal");
+          return handle_compare(Builtin::LessEqWith, "LessEq", "less equal");
         case Operator::GreaterEq:
-          return handle_compare(Builtins::GreaterEqWith, "GreaterEq",
+          return handle_compare(Builtin::GreaterEqWith, "GreaterEq",
                                 "greater equal");
         case Operator::Greater:
-          return handle_compare(Builtins::GreaterWith, "Greater", "greater");
+          return handle_compare(Builtin::GreaterWith, "Greater", "greater");
         case Operator::Deref:
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", ts[0]));
@@ -3297,7 +3293,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               TypeCheckTypeExp(op.arguments()[1], impl_scope));
           ErrorOr<Nonnull<Expression*>> converted =
               BuildBuiltinMethodCall(impl_scope, op.arguments()[0],
-                                     BuiltinInterfaceName{Builtins::As, type},
+                                     BuiltinInterfaceName{Builtin::As, type},
                                      BuiltinMethodCall{"Convert"});
           if (!converted.ok()) {
             // We couldn't find a matching `impl`.
@@ -3635,8 +3631,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     }
     case ExpressionKind::WhereExpression: {
       auto& where = cast<WhereExpression>(*e);
-      ImplScope inner_impl_scope;
-      inner_impl_scope.AddParent(&impl_scope);
+      ImplScope inner_impl_scope(&impl_scope);
 
       auto& self = where.self_binding();
 
@@ -4192,31 +4187,30 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
 
 // Get the builtin interface that should be used for the given kind of
 // assignment operator.
-static auto GetBuiltinInterfaceForAssignOperator(AssignOperator op)
-    -> Builtins::Builtin {
+static auto GetBuiltinInterfaceForAssignOperator(AssignOperator op) -> Builtin {
   switch (op) {
     case AssignOperator::Plain:
-      return Builtins::AssignWith;
+      return Builtin::AssignWith;
     case AssignOperator::Add:
-      return Builtins::AddAssignWith;
+      return Builtin::AddAssignWith;
     case AssignOperator::Sub:
-      return Builtins::SubAssignWith;
+      return Builtin::SubAssignWith;
     case AssignOperator::Mul:
-      return Builtins::MulAssignWith;
+      return Builtin::MulAssignWith;
     case AssignOperator::Div:
-      return Builtins::DivAssignWith;
+      return Builtin::DivAssignWith;
     case AssignOperator::Mod:
-      return Builtins::ModAssignWith;
+      return Builtin::ModAssignWith;
     case AssignOperator::And:
-      return Builtins::BitAndAssignWith;
+      return Builtin::BitAndAssignWith;
     case AssignOperator::Or:
-      return Builtins::BitOrAssignWith;
+      return Builtin::BitOrAssignWith;
     case AssignOperator::Xor:
-      return Builtins::BitXorAssignWith;
+      return Builtin::BitXorAssignWith;
     case AssignOperator::ShiftLeft:
-      return Builtins::LeftShiftAssignWith;
+      return Builtin::LeftShiftAssignWith;
     case AssignOperator::ShiftRight:
-      return Builtins::RightShiftAssignWith;
+      return Builtin::RightShiftAssignWith;
   }
 }
 
@@ -4237,8 +4231,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       std::optional<Nonnull<const Value*>> expected_type;
       PatternMatrix patterns;
       for (auto& clause : match.clauses()) {
-        ImplScope clause_scope;
-        clause_scope.AddParent(&impl_scope);
+        ImplScope clause_scope(&impl_scope);
         // TODO: Should user-defined conversions be permitted in `match`
         // statements? When would we run them? See #1283.
         CARBON_RETURN_IF_ERROR(TypeCheckPattern(
@@ -4287,8 +4280,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
     }
     case StatementKind::For: {
       auto& for_stmt = cast<For>(*s);
-      ImplScope inner_impl_scope;
-      inner_impl_scope.AddParent(&impl_scope);
+      ImplScope inner_impl_scope(&impl_scope);
 
       CARBON_RETURN_IF_ERROR(
           TypeCheckExp(&for_stmt.loop_target(), inner_impl_scope));
@@ -4331,8 +4323,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       // // Is the `impl T as Widget` in scope here?
       // a.(Widget.F)();
       // ```
-      ImplScope var_scope;
-      var_scope.AddParent(&impl_scope);
+      ImplScope var_scope(&impl_scope);
       std::optional<Nonnull<const Value*>> init_type;
 
       // Type-check the initializer before we inspect the type of the variable
@@ -4394,7 +4385,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
           BuildBuiltinMethodCall(
               impl_scope, &inc_dec.argument(),
               BuiltinInterfaceName{
-                  inc_dec.is_increment() ? Builtins::Inc : Builtins::Dec, {}},
+                  inc_dec.is_increment() ? Builtin::Inc : Builtin::Dec, {}},
               BuiltinMethodCall{"Op"}));
       inc_dec.set_rewritten_form(rewritten);
       return Success();
@@ -4565,8 +4556,7 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "** declaring function " << *name << "\n";
   }
-  ImplScope function_scope;
-  function_scope.AddParent(scope_info.innermost_scope);
+  ImplScope function_scope(scope_info.innermost_scope);
   std::vector<Nonnull<const GenericBinding*>> all_bindings =
       scope_info.bindings;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
@@ -4690,8 +4680,7 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
   // type checked in DeclareFunctionDeclaration.
   if (f->body().has_value() && !f->return_term().is_auto()) {
     // Bring the impls into scope.
-    ImplScope function_scope;
-    function_scope.AddParent(&impl_scope);
+    ImplScope function_scope(&impl_scope);
     BringImplsIntoScope(cast<FunctionType>(f->static_type()).impl_bindings(),
                         function_scope);
     if (trace_stream_->is_enabled()) {
@@ -4717,8 +4706,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   }
   Nonnull<SelfDeclaration*> self = class_decl->self();
 
-  ImplScope class_scope;
-  class_scope.AddParent(scope_info.innermost_scope);
+  ImplScope class_scope(scope_info.innermost_scope);
 
   std::optional<Nonnull<const NominalClassType*>> base_class;
   if (class_decl->base_expr().has_value()) {
@@ -4852,8 +4840,7 @@ auto TypeChecker::TypeCheckClassDeclaration(
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "** checking class " << class_decl->name() << "\n";
   }
-  ImplScope class_scope;
-  class_scope.AddParent(&impl_scope);
+  ImplScope class_scope(&impl_scope);
   if (class_decl->type_params().has_value()) {
     BringPatternImplsIntoScope(*class_decl->type_params(), class_scope);
   }
@@ -4882,8 +4869,7 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "** declaring mixin " << mixin_decl->name() << "\n";
   }
-  ImplScope mixin_scope;
-  mixin_scope.AddParent(scope_info.innermost_scope);
+  ImplScope mixin_scope(scope_info.innermost_scope);
 
   if (mixin_decl->params().has_value()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(*mixin_decl->params(), std::nullopt,
@@ -4942,8 +4928,7 @@ auto TypeChecker::TypeCheckMixinDeclaration(
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "** checking mixin " << mixin_decl->name() << "\n";
   }
-  ImplScope mixin_scope;
-  mixin_scope.AddParent(&impl_scope);
+  ImplScope mixin_scope(&impl_scope);
   if (mixin_decl->params().has_value()) {
     BringPatternImplsIntoScope(*mixin_decl->params(), mixin_scope);
   }
@@ -5010,8 +4995,7 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
     constraint_decl->PrintID(trace_stream_->stream());
     *trace_stream_ << "\n";
   }
-  ImplScope constraint_scope;
-  constraint_scope.AddParent(scope_info.innermost_scope);
+  ImplScope constraint_scope(scope_info.innermost_scope);
 
   // Type-check the parameters and find the set of bindings that are in scope.
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
@@ -5202,8 +5186,7 @@ auto TypeChecker::TypeCheckConstraintTypeDeclaration(
     constraint_decl->PrintID(trace_stream_->stream());
     *trace_stream_ << "\n";
   }
-  ImplScope constraint_scope;
-  constraint_scope.AddParent(&impl_scope);
+  ImplScope constraint_scope(&impl_scope);
   if (constraint_decl->params().has_value()) {
     BringPatternImplsIntoScope(*constraint_decl->params(), constraint_scope);
   }
@@ -5306,8 +5289,7 @@ auto TypeChecker::CheckAndAddImplBindings(
       // Bring the associated constant values for this interface into scope. We
       // know that if the methods of this interface are used, they will use
       // these values.
-      ImplScope iface_scope;
-      iface_scope.AddParent(scope_info.innermost_scope);
+      ImplScope iface_scope(scope_info.innermost_scope);
       BringAssociatedConstantsIntoScope(constraint, impl_type, iface_type,
                                         iface_scope);
 
@@ -5317,8 +5299,7 @@ auto TypeChecker::CheckAndAddImplBindings(
       // scope, though, because it could be partially specialized.
       Nonnull<const Witness*> iface_witness;
       {
-        ImplScope impl_scope;
-        impl_scope.AddParent(&iface_scope);
+        ImplScope impl_scope(&iface_scope);
         impl_scope.Add(impl_decl->constraint_type(), impl_type, impl_witness,
                        *this);
         CARBON_ASSIGN_OR_RETURN(
@@ -5369,8 +5350,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "declaring " << *impl_decl << "\n";
   }
-  ImplScope impl_scope;
-  impl_scope.AddParent(scope_info.innermost_scope);
+  ImplScope impl_scope(scope_info.innermost_scope);
   std::vector<Nonnull<const GenericBinding*>> generic_bindings =
       scope_info.bindings;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
@@ -5446,8 +5426,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   Nonnull<const Witness*> impl_witness;
   {
     std::vector<EqualityConstraint> rewrite_constraints_as_equality_constraints;
-    ImplScope self_impl_scope;
-    self_impl_scope.AddParent(&impl_scope);
+    ImplScope self_impl_scope(&impl_scope);
 
     // For each interface we're going to implement, this impl is the witness
     // that that interface is implemented.
@@ -5531,8 +5510,7 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   Nonnull<const ConstraintType*> constraint = impl_decl->constraint_type();
 
   // Bring the impls from the parameters into scope.
-  ImplScope impl_scope;
-  impl_scope.AddParent(&enclosing_scope);
+  ImplScope impl_scope(&enclosing_scope);
   BringImplsIntoScope(impl_decl->impl_bindings(), impl_scope);
   for (Nonnull<Declaration*> m : impl_decl->members()) {
     CARBON_ASSIGN_OR_RETURN(
@@ -5542,8 +5520,7 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 
     // Bring the associated constant values for the interface that this method
     // implements part of into scope.
-    ImplScope member_scope;
-    member_scope.AddParent(&impl_scope);
+    ImplScope member_scope(&impl_scope);
     BringAssociatedConstantsIntoScope(constraint, self, result.interface,
                                       member_scope);
 
@@ -5558,8 +5535,7 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                            const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
-  ImplScope choice_scope;
-  choice_scope.AddParent(scope_info.innermost_scope);
+  ImplScope choice_scope(scope_info.innermost_scope);
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
   if (choice->type_params().has_value()) {
     Nonnull<TuplePattern*> type_params = *choice->type_params();

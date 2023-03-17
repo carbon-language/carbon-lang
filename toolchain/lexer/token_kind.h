@@ -7,8 +7,8 @@
 
 #include <cstdint>
 
+#include "common/enum_base.h"
 #include "llvm/Support/FormatVariadicDetails.h"
-#include "toolchain/common/enum_base.h"
 
 namespace Carbon {
 

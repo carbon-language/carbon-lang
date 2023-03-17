@@ -15,8 +15,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import collections
 from concurrent import futures
 import itertools
-from pathlib import Path
 import os
+from pathlib import Path
 import re
 import sys
 from typing import Dict, List, NamedTuple, Set
@@ -98,9 +98,11 @@ def check_uniqueness(uses: Dict[str, List[Location]]) -> bool:
 def check_unused(decls: Set[str], uses: Dict[str, List[Location]]) -> bool:
     """If any diagnostic is unused, prints an error and returns true."""
     unused = decls.difference(uses.keys())
+    if not unused:
+        return False
     for diag in sorted(unused):
         print(f"Unused diagnostic: {diag}")
-    return False
+    return True
 
 
 def main() -> None:
