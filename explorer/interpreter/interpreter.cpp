@@ -987,20 +987,20 @@ auto Interpreter::CallFunction(const CallExpression& call,
       for (const auto& [bind, val] : call.deduced_args()) {
         CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_val,
                                 InstantiateType(val, call.source_loc()));
-        binding_scope.Initialize(bind->original(), inst_val);
+        binding_scope.Bind(bind->original(), inst_val);
       }
       for (const auto& [impl_bind, witness] : witnesses) {
-        binding_scope.Initialize(impl_bind->original(), witness);
+        binding_scope.Bind(impl_bind->original(), witness);
       }
 
       // Bring the arguments that are determined by the function value into
       // scope. This includes the arguments for the class of which the function
       // is a member.
       for (const auto& [bind, val] : func_val->type_args()) {
-        binding_scope.Initialize(bind->original(), val);
+        binding_scope.Bind(bind->original(), val);
       }
       for (const auto& [impl_bind, witness] : func_val->witnesses()) {
-        binding_scope.Initialize(impl_bind->original(), witness);
+        binding_scope.Bind(impl_bind->original(), witness);
       }
 
       // Enter the binding scope to make any deduced arguments visible before

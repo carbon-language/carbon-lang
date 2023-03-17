@@ -50,7 +50,6 @@ class RuntimeScope {
 
   // Allocates storage for `value_node` in `heap`, and initializes it with
   // `value`.
-  // TODO: Update existing callers to use Bind instead, where appropriate.
   void Initialize(ValueNodeView value_node, Nonnull<const Value*> value);
 
   // Transfers the names and allocations from `other` into *this. The two
