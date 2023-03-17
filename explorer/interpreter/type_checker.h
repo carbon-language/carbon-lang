@@ -430,7 +430,7 @@ class TypeChecker {
 
   // The name of a builtin interface, with any arguments.
   struct BuiltinInterfaceName {
-    Builtins::Builtin builtin;
+    Builtin builtin;
     llvm::ArrayRef<Nonnull<const Value*>> arguments = {};
   };
   // The name of a method on a builtin interface, with any arguments.
