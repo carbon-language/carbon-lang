@@ -7,6 +7,7 @@
 
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/value.h"
+#include "explorer/interpreter/type_structure.h"
 
 namespace Carbon {
 
@@ -42,6 +43,33 @@ class TypeChecker;
 // scope.
 class ImplScope {
  public:
+  // The `Impl` struct is a key-value pair where the key is the
+  // combination of a type and an interface, e.g., `List` and `Container`,
+  // and the value is the result of statically resolving to the `impl`
+  // for `List` as `Container`, which is an `Expression` that produces
+  // the witness for that `impl`.
+  //
+  // When the `impl` is parameterized, `deduced` and `impl_bindings`
+  // are non-empty. The former contains the type parameters and the
+  // later are impl bindings, that is, parameters for witnesses. In this case,
+  // `sort_key` indicates the order in which this impl should be considered
+  // relative to other matching impls.
+  struct Impl {
+    Nonnull<const InterfaceType*> interface;
+    std::vector<Nonnull<const GenericBinding*>> deduced;
+    Nonnull<const Value*> type;
+    std::vector<Nonnull<const ImplBinding*>> impl_bindings;
+    Nonnull<const Witness*> witness;
+    std::optional<TypeStructureSortKey> sort_key;
+  };
+
+  // Internal type used to represent the result of resolving a lookup in a
+  // particular impl scope.
+  struct ResolveResult {
+    Nonnull<const Impl*> impl;
+    Nonnull<const Witness*> witness;
+  };
+
   explicit ImplScope() {}
   explicit ImplScope(Nonnull<const ImplScope*> parent)
       : parent_scope_(parent) {}
@@ -59,7 +87,8 @@ class ImplScope {
            llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
            Nonnull<const Value*> type,
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
-           Nonnull<const Witness*> witness, const TypeChecker& type_checker);
+           Nonnull<const Witness*> witness, const TypeChecker& type_checker,
+           std::optional<TypeStructureSortKey> sort_key = std::nullopt);
   // Adds a list of impl constraints from a constraint type into scope. Any
   // references to `.Self` are expected to have already been substituted for
   // the type implementing the constraint.
@@ -109,22 +138,6 @@ class ImplScope {
 
   void Print(llvm::raw_ostream& out) const;
 
-  // The `Impl` struct is a key-value pair where the key is the
-  // combination of a type and an interface, e.g., `List` and `Container`,
-  // and the value is the result of statically resolving to the `impl`
-  // for `List` as `Container`, which is an `Expression` that produces
-  // the witness for that `impl`.
-  // When the `impl` is parameterized, `deduced` and `impl_bindings`
-  // are non-empty. The former contains the type parameters and the
-  // later are impl bindings, that is, parameters for witnesses.
-  struct Impl {
-    Nonnull<const InterfaceType*> interface;
-    std::vector<Nonnull<const GenericBinding*>> deduced;
-    Nonnull<const Value*> type;
-    std::vector<Nonnull<const ImplBinding*>> impl_bindings;
-    Nonnull<const Witness*> witness;
-  };
-
  private:
   // Returns the associated impl for the given `iface` and `type` in
   // the ancestor graph of this scope. Reports a compilation error
@@ -148,7 +161,7 @@ class ImplScope {
                                       SourceLocation source_loc,
                                       const ImplScope& original_scope,
                                       const TypeChecker& type_checker) const
-      -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
+      -> ErrorOr<std::optional<ResolveResult>>;
 
   // Returns the associated impl for the given `iface` and `type` in
   // this scope, returns std::nullopt if there is none, or reports
@@ -161,7 +174,7 @@ class ImplScope {
                                SourceLocation source_loc,
                                const ImplScope& original_scope,
                                const TypeChecker& type_checker) const
-      -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
+      -> ErrorOr<std::optional<ResolveResult>>;
 
   std::vector<Impl> impls_;
   std::vector<Nonnull<const EqualityConstraint*>> equalities_;

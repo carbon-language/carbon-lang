@@ -11,6 +11,7 @@
 
 using llvm::cast;
 using llvm::dyn_cast;
+using llvm::isa;
 
 namespace Carbon {
 
@@ -25,8 +26,11 @@ void ImplScope::Add(Nonnull<const Value*> iface,
                     Nonnull<const Value*> type,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<const Witness*> witness,
-                    const TypeChecker& type_checker) {
+                    const TypeChecker& type_checker,
+                    std::optional<TypeStructureSortKey> sort_key) {
   if (const auto* constraint = dyn_cast<ConstraintType>(iface)) {
+    CARBON_CHECK(!sort_key)
+        << "should only be given a sort key for an impl of an interface";
     // The caller should have substituted `.Self` for `type` already.
     Add(constraint->impl_constraints(), deduced, impl_bindings, witness,
         type_checker);
@@ -42,11 +46,21 @@ void ImplScope::Add(Nonnull<const Value*> iface,
     return;
   }
 
-  impls_.push_back({.interface = cast<InterfaceType>(iface),
-                    .deduced = deduced,
-                    .type = type,
-                    .impl_bindings = impl_bindings,
-                    .witness = witness});
+  Impl new_impl = {.interface = cast<InterfaceType>(iface),
+                   .deduced = deduced,
+                   .type = type,
+                   .impl_bindings = impl_bindings,
+                   .witness = witness,
+                   .sort_key = std::move(sort_key)};
+
+  // Find the first impl that's more specific than this one, and place this
+  // impl right before it. This keeps the impls with the same type structure
+  // sorted in lexical order, which is important for `match_first` semantics.
+  auto insert_pos = std::upper_bound(
+      impls_.begin(), impls_.end(), new_impl,
+      [](const Impl& a, const Impl& b) { return a.sort_key < b.sort_key; });
+
+  impls_.insert(insert_pos, std::move(new_impl));
 }
 
 void ImplScope::Add(llvm::ArrayRef<ImplConstraint> impls,
@@ -234,14 +248,39 @@ auto ImplScope::TryResolveInterface(Nonnull<const InterfaceType*> iface_type,
                                     bool diagnose_missing_impl) const
     -> ErrorOr<std::optional<Nonnull<const Witness*>>> {
   CARBON_ASSIGN_OR_RETURN(
-      std::optional<Nonnull<const Witness*>> result,
+      std::optional<ResolveResult> result,
       TryResolveInterfaceRecursively(iface_type, type, source_loc, *this,
                                      type_checker));
   if (!result.has_value() && diagnose_missing_impl) {
     return ProgramError(source_loc) << "could not find implementation of "
                                     << *iface_type << " for " << *type;
   }
-  return result;
+  return result ? std::optional(result->witness) : std::nullopt;
+}
+
+// Do these two witnesses refer to `impl` declarations in the same
+// `match_first` block?
+static auto InSameMatchFirst(Nonnull<const Witness*> a,
+                             Nonnull<const Witness*> b) -> bool {
+  const auto* impl_a = dyn_cast<ImplWitness>(a);
+  const auto* impl_b = dyn_cast<ImplWitness>(b);
+  if (!impl_b || !impl_b) {
+    return false;
+  }
+
+  // TODO: Once we support an impl being declared more than once, we will need
+  // to check this more carefully.
+  return impl_a->declaration().match_first() &&
+         impl_a->declaration().match_first() ==
+             impl_b->declaration().match_first();
+}
+
+// Determine whether this result is definitely right -- that there can be no
+// specialization that would give a better match.
+static auto IsEffectivelyFinal(ImplScope::ResolveResult result) -> bool {
+  // TODO: Once we support 'final', check whether this is a final impl
+  // declaration if it's parameterized.
+  return result.impl->deduced.empty();
 }
 
 // Combines the results of two impl lookups. In the event of a tie, arbitrarily
@@ -249,9 +288,9 @@ auto ImplScope::TryResolveInterface(Nonnull<const InterfaceType*> iface_type,
 static auto CombineResults(Nonnull<const InterfaceType*> iface_type,
                            Nonnull<const Value*> type,
                            SourceLocation source_loc,
-                           std::optional<Nonnull<const Witness*>> a,
-                           std::optional<Nonnull<const Witness*>> b)
-    -> ErrorOr<std::optional<Nonnull<const Witness*>>> {
+                           std::optional<ImplScope::ResolveResult> a,
+                           std::optional<ImplScope::ResolveResult> b)
+    -> ErrorOr<std::optional<ImplScope::ResolveResult>> {
   // If only one lookup succeeded, return that.
   if (!b) {
     return a;
@@ -260,17 +299,37 @@ static auto CombineResults(Nonnull<const InterfaceType*> iface_type,
     return b;
   }
 
-  // If either of them was a symbolic result, then they'll end up being
-  // equivalent. In that case, pick `a`.
-  const auto* impl_a = dyn_cast<ImplWitness>(*a);
-  const auto* impl_b = dyn_cast<ImplWitness>(*b);
-  if (!impl_b) {
+  // If exactly one of them is effectively final, prefer that result.
+  bool a_is_final = IsEffectivelyFinal(*a);
+  bool b_is_final = IsEffectivelyFinal(*b);
+  if (a_is_final && !b_is_final) {
     return a;
-  }
-  if (!impl_a) {
+  } else if (b_is_final && !a_is_final) {
     return b;
   }
 
+  const auto* impl_a = dyn_cast<ImplWitness>(a->witness);
+  const auto* impl_b = dyn_cast<ImplWitness>(b->witness);
+
+  // If both are effectively final, prefer an impl declaration over a
+  // symbolic ImplBinding, because we get more information from the impl
+  // declaration. If they're both symbolic, arbitrarily pick a.
+  if (a_is_final && b_is_final) {
+    if (!impl_b) {
+      return a;
+    }
+    if (!impl_a) {
+      return b;
+    }
+  }
+  CARBON_CHECK(impl_a && impl_b) << "non-final impl should not be symbolic";
+
+  // At this point, we're comparing two `impl` declarations, and either they're
+  // both final or neither of them is.
+  // TODO: We should reject the case where both are final when checking their
+  // declarations, but we don't do so yet, so for now we report it as an
+  // ambiguity.
+  //
   // If they refer to the same `impl` declaration, it doesn't matter which one
   // we pick, so we pick `a`.
   // TODO: Compare the identities of the `impl`s, not the declarations.
@@ -278,24 +337,6 @@ static auto CombineResults(Nonnull<const InterfaceType*> iface_type,
     return a;
   }
 
-  // TODO: Order the `impl`s based on type structure.
-
-  // If the declarations appear in the same `match_first` block, whichever
-  // appears first wins.
-  // TODO: Once we support an impl being declared more than once, we will need
-  // to check this more carefully.
-  if (impl_a->declaration().match_first() &&
-      impl_a->declaration().match_first() ==
-          impl_b->declaration().match_first()) {
-    for (const auto* impl : (*impl_a->declaration().match_first())->impls()) {
-      if (impl == &impl_a->declaration()) {
-        return a;
-      }
-      if (impl == &impl_b->declaration()) {
-        return b;
-      }
-    }
-  }
   return ProgramError(source_loc)
          << "ambiguous implementations of " << *iface_type << " for " << *type;
 }
@@ -304,14 +345,14 @@ auto ImplScope::TryResolveInterfaceRecursively(
     Nonnull<const InterfaceType*> iface_type, Nonnull<const Value*> type,
     SourceLocation source_loc, const ImplScope& original_scope,
     const TypeChecker& type_checker) const
-    -> ErrorOr<std::optional<Nonnull<const Witness*>>> {
+    -> ErrorOr<std::optional<ResolveResult>> {
   CARBON_ASSIGN_OR_RETURN(
-      std::optional<Nonnull<const Witness*>> result,
+      std::optional<ResolveResult> result,
       TryResolveInterfaceHere(iface_type, type, source_loc, original_scope,
                               type_checker));
   if (parent_scope_) {
     CARBON_ASSIGN_OR_RETURN(
-        std::optional<Nonnull<const Witness*>> parent_result,
+        std::optional<ResolveResult> parent_result,
         (*parent_scope_)
             ->TryResolveInterfaceRecursively(iface_type, type, source_loc,
                                              original_scope, type_checker));
@@ -325,14 +366,37 @@ auto ImplScope::TryResolveInterfaceHere(
     Nonnull<const InterfaceType*> iface_type, Nonnull<const Value*> impl_type,
     SourceLocation source_loc, const ImplScope& original_scope,
     const TypeChecker& type_checker) const
-    -> ErrorOr<std::optional<Nonnull<const Witness*>>> {
-  std::optional<Nonnull<const Witness*>> result = std::nullopt;
+    -> ErrorOr<std::optional<ResolveResult>> {
+  std::optional<ResolveResult> result = std::nullopt;
   for (const Impl& impl : impls_) {
-    CARBON_ASSIGN_OR_RETURN(std::optional<Nonnull<const Witness*>> m,
+    // If we've passed the final impl with a sort key matching our best impl,
+    // all further impls are worse and don't need to be checked.
+    if (result && result->impl->sort_key < impl.sort_key) {
+      break;
+    }
+
+    // If this impl appears later in the same match_first block as our best
+    // result, we should not consider it.
+    //
+    // TODO: This should apply transitively: if we have
+    //   match_first { impl a; impl b; }
+    //   match_first { impl b; impl c; }
+    // then we should not consider c once we match a. For now, because each
+    // impl is only declared once, this is not a problem.
+    if (result && InSameMatchFirst(result->impl->witness, impl.witness)) {
+      continue;
+    }
+
+    // Try matching this impl against our query.
+    CARBON_ASSIGN_OR_RETURN(std::optional<Nonnull<const Witness*>> witness,
                             type_checker.MatchImpl(*iface_type, impl_type, impl,
                                                    original_scope, source_loc));
-    CARBON_ASSIGN_OR_RETURN(
-        result, CombineResults(iface_type, impl_type, source_loc, result, m));
+    if (witness) {
+      CARBON_ASSIGN_OR_RETURN(
+          result,
+          CombineResults(iface_type, impl_type, source_loc, result,
+                         ResolveResult{.impl = &impl, .witness = *witness}));
+    }
   }
   return result;
 }
@@ -343,6 +407,9 @@ void ImplScope::Print(llvm::raw_ostream& out) const {
   llvm::ListSeparator sep;
   for (const Impl& impl : impls_) {
     out << sep << *(impl.type) << " as " << *(impl.interface);
+    if (impl.sort_key) {
+      out << " " << *impl.sort_key;
+    }
   }
   for (Nonnull<const EqualityConstraint*> eq : equalities_) {
     out << sep;
