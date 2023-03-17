@@ -108,6 +108,9 @@ auto VisitNestedPatterns(const Pattern& pattern,
 inline auto VisitNestedPatterns(Pattern& pattern,
                                 llvm::function_ref<bool(Pattern&)> visitor)
     -> bool {
+  // The non-const version is is implemented in terms of the const version. The
+  // const_cast is safe because every pattern reachable through a non-const
+  // pattern is also non-const.
   const Pattern& const_pattern = pattern;
   return VisitNestedPatterns(const_pattern, [&](const Pattern& inner) {
     return visitor(const_cast<Pattern&>(inner));
