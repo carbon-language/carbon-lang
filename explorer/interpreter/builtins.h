@@ -31,7 +31,7 @@ class Builtin : public CARBON_ENUM_BASE(Builtin) {
 
   static const int NumBuiltins;
 
-  // Support conversion to and from an int for SemanticNode storage.
+  // Support conversion to and from an int for array indexing.
   using EnumBase::AsInt;
   using EnumBase::FromInt;
 };
