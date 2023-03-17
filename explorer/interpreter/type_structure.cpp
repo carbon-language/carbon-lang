@@ -115,15 +115,15 @@ auto TypeStructureSortKey::ForImpl(Nonnull<const Value*> type,
   builder.VisitChild(1, interface);
 
   TypeStructureSortKey result;
-  result.holes = std::move(builder.result);
-  result.holes.push_back(std::numeric_limits<int>::max());
+  result.holes_ = std::move(builder.result);
+  result.holes_.push_back(std::numeric_limits<int>::max());
   return result;
 }
 
 void TypeStructureSortKey::Print(llvm::raw_ostream& out) const {
   out << "[";
   llvm::ListSeparator sep;
-  for (int i : holes) {
+  for (int i : holes_) {
     if (i == -1) {
       out << "; ";
       // Reinitialize `sep` to suppress the next separator.

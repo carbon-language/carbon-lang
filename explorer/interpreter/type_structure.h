@@ -36,19 +36,19 @@ class TypeStructureSortKey {
   // Order by sort key. Smaller keys represent better matches.
   friend bool operator<(const TypeStructureSortKey& a,
                         const TypeStructureSortKey& b) {
-    return a.holes > b.holes;
+    return a.holes_ > b.holes_;
   }
   friend bool operator<=(const TypeStructureSortKey& a,
                          const TypeStructureSortKey& b) {
-    return a.holes >= b.holes;
+    return a.holes_ >= b.holes_;
   }
   friend bool operator>(const TypeStructureSortKey& a,
                         const TypeStructureSortKey& b) {
-    return a.holes < b.holes;
+    return a.holes_ < b.holes_;
   }
   friend bool operator>=(const TypeStructureSortKey& a,
                          const TypeStructureSortKey& b) {
-    return a.holes <= b.holes;
+    return a.holes_ <= b.holes_;
   }
 
   // Determine whether two sort keys are in the same equivalence class. If so,
@@ -58,11 +58,11 @@ class TypeStructureSortKey {
   // sort key for `Vector(?) as Ordered`.
   friend bool operator==(const TypeStructureSortKey& a,
                          const TypeStructureSortKey& b) {
-    return a.holes == b.holes;
+    return a.holes_ == b.holes_;
   }
   friend bool operator!=(const TypeStructureSortKey& a,
                          const TypeStructureSortKey& b) {
-    return a.holes != b.holes;
+    return a.holes_ != b.holes_;
   }
 
   void Print(llvm::raw_ostream& out) const;
@@ -77,7 +77,7 @@ class TypeStructureSortKey {
   //
   // This representation is chosen so that better matches are lexicographically
   // larger than worse matches.
-  std::vector<int> holes;
+  std::vector<int> holes_;
 };
 
 }  // namespace Carbon
