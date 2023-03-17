@@ -122,12 +122,12 @@ auto TypeStructureSortKey::ForImpl(Nonnull<const Value*> type,
 
 void TypeStructureSortKey::Print(llvm::raw_ostream& out) const {
   out << "[";
-  llvm::ListSeparator sep(", ");
+  llvm::ListSeparator sep;
   for (int i : holes) {
     if (i == -1) {
       out << "; ";
       // Reinitialize `sep` to suppress the next separator.
-      sep = llvm::ListSeparator(", ");
+      sep = llvm::ListSeparator();
     } else if (i == std::numeric_limits<int>::max()) {
       out << "]";
     } else {

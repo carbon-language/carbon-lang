@@ -73,7 +73,7 @@ class TypeStructureSortKey {
   // Positions of holes (`?`s) in the structure. Each hole is described as a
   // path of indexes from the root of the type tree to the position of the `?`.
   // Holes are listed in appearance order, separated by -1s, and the vector is
-  // terminated by an INT_MAX.
+  // terminated by std::numeric_limits<int>::max().
   //
   // This representation is chosen so that better matches are lexicographically
   // larger than worse matches.
