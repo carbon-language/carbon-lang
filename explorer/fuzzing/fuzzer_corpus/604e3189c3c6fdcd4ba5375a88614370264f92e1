@@ -25,12 +25,13 @@ compilation_unit {
           clauses {
             impls {
               type {
-                int_type_literal {
+                int_literal {
+                  value: 4
                 }
               }
               constraint {
-                int_literal {
-                  value: 5
+                identifier {
+                  name: "A"
                 }
               }
             }
@@ -67,3 +68,4 @@ compilation_unit {
     }
   }
 }
+
