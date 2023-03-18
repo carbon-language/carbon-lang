@@ -1467,7 +1467,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               }
             }
             const auto base_alloc_addr =
-                Address(heap_.AddressAllocation(ptr->address()));
+                Address(heap_.GetAllocationId(ptr->address()));
             if (act.pos() == 1) {
               return todo_.Spawn(std::make_unique<DestroyAction>(
                   arena_->New<LValue>(base_alloc_addr), child_class_value));

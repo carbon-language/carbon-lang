@@ -31,9 +31,6 @@ class Heap : public HeapAllocationInterface {
   Heap(const Heap&) = delete;
   auto operator=(const Heap&) -> Heap& = delete;
 
-  // Returns the AllocationId of the address on the heap.
-  auto AddressAllocation(const Address& a) const -> AllocationId;
-
   // Returns the value at the given address in the heap after
   // checking that it is alive.
   auto Read(const Address& a, SourceLocation source_loc) const
@@ -43,6 +40,9 @@ class Heap : public HeapAllocationInterface {
   // checking that the address is alive.
   auto Write(const Address& a, Nonnull<const Value*> v,
              SourceLocation source_loc) -> ErrorOr<Success>;
+
+  // Returns the AllocationId for the given the address in the heap.
+  auto GetAllocationId(const Address& a) const -> AllocationId;
 
   auto GetAllocationId(Nonnull<const Value*> v) const
       -> std::optional<AllocationId> override;

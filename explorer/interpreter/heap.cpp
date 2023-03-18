@@ -14,8 +14,7 @@ namespace Carbon {
 auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
   // Putting the following two side effects together in this function
   // ensures that we don't do anything else in between, which would be is really
-  // bad!
-  // Consider whether to include a copy of the input v in this function or
+  // bad! Consider whether to include a copy of the input v in this function or
   // to leave it up to the caller.
   AllocationId a(values_.size());
   values_.push_back(v);
@@ -25,10 +24,6 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
     states_.push_back(ValueState::Alive);
   }
   return a;
-}
-
-auto Heap::AddressAllocation(const Address& a) const -> AllocationId {
-  return a.allocation_;
 }
 
 auto Heap::Read(const Address& a, SourceLocation source_loc) const
@@ -49,6 +44,10 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
                           values_[a.allocation_.index_]->SetField(
                               arena_, a.element_path_, v, source_loc));
   return Success();
+}
+
+auto Heap::GetAllocationId(const Address& a) const -> AllocationId {
+  return a.allocation_;
 }
 
 auto Heap::GetAllocationId(Nonnull<const Value*> v) const
