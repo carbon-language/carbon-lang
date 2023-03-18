@@ -4794,6 +4794,8 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     }
     class_vtable[fun->name().inner_name()] = {fun, class_level};
   }
+
+  // Check destructor's virtual override, add to vtable if necessary.
   if (const auto destructor = class_decl->destructor()) {
     const auto* fun = (*destructor);
     llvm::StringRef destructor_name = "destructor";
