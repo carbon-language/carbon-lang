@@ -199,6 +199,8 @@ class ExpressionAction : public Action {
   Nonnull<const Expression*> expression_;
 };
 
+// An Action which implements the Instantiation of Type. The result is expressed
+// as a Value.
 class TypeInstantiationAction : public Action {
  public:
   explicit TypeInstantiationAction(Nonnull<const Value*> type,
