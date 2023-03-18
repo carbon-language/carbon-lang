@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "common/error.h"
 #include "common/ostream.h"
 #include "explorer/ast/ast.h"
 #include "explorer/ast/expression.h"
@@ -24,6 +25,7 @@
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/matching_impl_set.h"
 #include "explorer/interpreter/trace_stream.h"
+#include "llvm/ADT/identity.h"
 
 namespace Carbon {
 
@@ -45,11 +47,24 @@ class TypeChecker {
   // processed.
   auto TypeCheck(AST& ast) -> ErrorOr<Success>;
 
-  // Construct a type that is the same as `type` except that occurrences
-  // of type variables (aka. `GenericBinding` and references to `ImplBinding`)
-  // are replaced by their corresponding type or witness in `dict`.
-  auto Substitute(const Bindings& bindings, Nonnull<const Value*> type) const
-      -> Nonnull<const Value*>;
+  // Construct a value that is the same as `value` except that occurrences
+  // of generic parameters (aka. `GenericBinding` and references to
+  // `ImplBinding`) are replaced by their corresponding value or witness in
+  // `bindings`.
+  auto Substitute(const Bindings& bindings, Nonnull<const Value*> value) const
+      -> ErrorOr<Nonnull<const Value*>>;
+
+  // Same as `Substitute`, but cast the result to the type given as a template
+  // argument, which must be explicitly specified. The `remove_cv_t` here
+  // blocks template argument deduction.
+  template <typename T>
+  auto SubstituteCast(const Bindings& bindings,
+                      Nonnull<const std::remove_cv_t<T>*> value) const
+      -> ErrorOr<Nonnull<const T*>> {
+    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> subst_value,
+                            Substitute(bindings, value));
+    return llvm::cast<T>(subst_value);
+  }
 
   // Attempts to refine a witness that might be symbolic into an impl witness,
   // using `impl` declarations that have been declared and type-checked so far.
@@ -57,7 +72,7 @@ class TypeChecker {
   auto RefineWitness(Nonnull<const Witness*> witness,
                      Nonnull<const Value*> type,
                      Nonnull<const Value*> constraint) const
-      -> Nonnull<const Witness*>;
+      -> ErrorOr<Nonnull<const Witness*>>;
 
   // If `impl` can be an implementation of interface `iface` for the given
   // `type`, then return the witness for this `impl`. Otherwise return
@@ -103,7 +118,7 @@ class TypeChecker {
   // in the given scope.
   auto IsIntrinsicConstraintSatisfied(const IntrinsicConstraint& constraint,
                                       const ImplScope& impl_scope) const
-      -> bool;
+      -> ErrorOr<bool>;
 
  private:
   class ConstraintTypeBuilder;
@@ -359,11 +374,11 @@ class TypeChecker {
 
   // Returns the field names of the class together with their types.
   auto FieldTypes(const NominalClassType& class_type) const
-      -> std::vector<NamedValue>;
+      -> ErrorOr<std::vector<NamedValue>>;
 
   // Returns the field names and types of the class and its parents.
   auto FieldTypesWithBase(const NominalClassType& class_type) const
-      -> std::vector<NamedValue>;
+      -> ErrorOr<std::vector<NamedValue>>;
 
   // Returns true if source_fields and destination_fields contain the same set
   // of names, and each value in source_fields is implicitly convertible to
@@ -372,7 +387,7 @@ class TypeChecker {
   auto FieldTypesImplicitlyConvertible(
       llvm::ArrayRef<NamedValue> source_fields,
       llvm::ArrayRef<NamedValue> destination_fields,
-      const ImplScope& impl_scope) const -> bool;
+      const ImplScope& impl_scope) const -> ErrorOr<bool>;
 
   // Returns true if *source is implicitly convertible to *destination. *source
   // and *destination must be concrete types.
@@ -384,7 +399,7 @@ class TypeChecker {
                                Nonnull<const Value*> destination,
                                const ImplScope& impl_scope,
                                bool allow_user_defined_conversions) const
-      -> bool;
+      -> ErrorOr<bool>;
 
   // Attempt to implicitly convert type-checked expression `source` to the type
   // `destination`.
@@ -421,13 +436,14 @@ class TypeChecker {
   // Rebuild a value in the current type-checking context. Applies any rewrites
   // that are in scope and attempts to resolve associated constants using impls
   // that have been declared since the value was formed.
-  auto RebuildValue(Nonnull<const Value*> value) const -> Nonnull<const Value*>;
+  auto RebuildValue(Nonnull<const Value*> value) const
+      -> ErrorOr<Nonnull<const Value*>>;
 
   // Implementation of Substitute and RebuildValue. Does not check that
   // bindings are nonempty, nor does it trace its progress.
   auto SubstituteImpl(const Bindings& bindings,
                       Nonnull<const Value*> type) const
-      -> Nonnull<const Value*>;
+      -> ErrorOr<Nonnull<const Value*>>;
 
   // The name of a builtin interface, with any arguments.
   struct BuiltinInterfaceName {
@@ -468,8 +484,8 @@ class TypeChecker {
       -> ErrorOr<Nonnull<const ConstraintType*>>;
 
   // Gets the type for the given associated constant.
-  auto GetTypeForAssociatedConstant(
-      Nonnull<const AssociatedConstant*> assoc) const -> Nonnull<const Value*>;
+  auto GetTypeForAssociatedConstant(Nonnull<const AssociatedConstant*> assoc)
+      const -> ErrorOr<Nonnull<const Value*>>;
 
   // Look up a member name in a constraint, which might be a single interface or
   // a compound constraint.
@@ -484,14 +500,14 @@ class TypeChecker {
   auto LookupRewriteInTypeOf(Nonnull<const Value*> type,
                              Nonnull<const InterfaceType*> interface,
                              Nonnull<const Declaration*> member) const
-      -> std::optional<const RewriteConstraint*>;
+      -> ErrorOr<std::optional<const RewriteConstraint*>>;
 
   // Given a witness value, look for a rewrite for the given associated
   // constant.
   auto LookupRewriteInWitness(Nonnull<const Witness*> witness,
                               Nonnull<const InterfaceType*> interface,
                               Nonnull<const Declaration*> member) const
-      -> std::optional<const RewriteConstraint*>;
+      -> ErrorOr<std::optional<const RewriteConstraint*>>;
 
   // Adds a member of a declaration to collected_members_
   auto CollectMember(Nonnull<const Declaration*> enclosing_decl,

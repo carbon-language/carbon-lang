@@ -5,6 +5,7 @@
 #ifndef CARBON_EXPLORER_AST_VALUE_TRANSFORM_H_
 #define CARBON_EXPLORER_AST_VALUE_TRANSFORM_H_
 
+#include "common/error.h"
 #include "explorer/ast/value.h"
 
 namespace Carbon {
@@ -40,17 +41,61 @@ class TransformBase {
  public:
   explicit TransformBase(Nonnull<Arena*> arena) : arena_(arena) {}
 
+  // Transform the given value, and produce either the transformed value or an
+  // error.
   template <typename T>
-  auto Transform(T&& v) -> decltype(auto) {
-    return static_cast<Derived&>(*this)(std::forward<T>(v));
+  auto Transform(const T& v) -> ErrorOr<T> {
+    auto result = TransformOrOriginal(v);
+    if (error_) {
+      Error error = std::move(*error_);
+      error_ = std::nullopt;
+      return error;
+    }
+    return result;
+  }
+
+ protected:
+  // Given an original value and the result of calling `operator()`, find the
+  // transformed value we should use.
+  //
+  // If `operator()` returns `ErrorOr<T>`, then on failure, collect the error
+  // and return the untransformed value; otherwise, return the transformed
+  // value.
+  template <typename T, typename U>
+  auto CollectError(const T& /*original*/, const U& transformed) -> U {
+    return transformed;
+  }
+  template <typename T, typename U>
+  auto CollectError(const T& original, ErrorOr<U> transformed) -> U {
+    if (!transformed.ok()) {
+      error_ = std::move(transformed).error();
+      return original;
+    }
+    return std::move(*transformed);
+  }
+
+  // Transform the given value, or return the original if transformation fails.
+  template <typename T>
+  auto TransformOrOriginal(const T& v)
+      -> decltype(CollectError(v, std::declval<Derived>()(v))) {
+    // If we've already failed, don't do any more transformations.
+    if (error_) {
+      return v;
+    }
+    return CollectError(v, static_cast<Derived&>(*this)(v));
   }
 
   // Transformable values are recursively transformed by default.
   template <typename T,
             std::enable_if_t<IsRecursivelyTransformable<T>, void*> = nullptr>
   auto operator()(const T& value) -> T {
-    return value.Decompose([&](auto&&... elements) {
-      return T{Transform(decltype(elements)(elements))...};
+    return value.Decompose([&](const auto&... elements) {
+      return [&](auto&&... transformed_elements) {
+        if (!error_) {
+          return T{decltype(transformed_elements)(transformed_elements)...};
+        }
+        return value;
+      }(TransformOrOriginal(elements)...);
     });
   }
 
@@ -59,9 +104,17 @@ class TransformBase {
   template <typename T,
             std::enable_if_t<IsRecursivelyTransformable<T>, void*> = nullptr>
   auto operator()(Nonnull<const T*> value) -> auto{
-    return value->Decompose([&](auto&&... elements) {
-      return AllocateTrait<T>::New(arena_,
-                                   Transform(decltype(elements)(elements))...);
+    return value->Decompose([&](const auto&... elements) {
+      return [&](auto&&... transformed_elements)
+                 -> decltype(AllocateTrait<T>::New(
+                     arena_,
+                     decltype(transformed_elements)(transformed_elements)...)) {
+        if (!error_) {
+          return AllocateTrait<T>::New(
+              arena_, decltype(transformed_elements)(transformed_elements)...);
+        }
+        return value;
+      }(TransformOrOriginal(elements)...);
     });
   }
 
@@ -79,13 +132,14 @@ class TransformBase {
     if (!v) {
       return std::nullopt;
     }
-    return Transform(*v);
+    return TransformOrOriginal(*v);
   }
 
   // Transform `pair<T, U>` by transforming T and U.
   template <typename T, typename U>
   auto operator()(const std::pair<T, U>& pair) -> std::pair<T, U> {
-    return std::pair<T, U>{Transform(pair.first), Transform(pair.second)};
+    return std::pair<T, U>{TransformOrOriginal(pair.first),
+                           TransformOrOriginal(pair.second)};
   }
 
   // Transform `vector<T>` by transforming its elements.
@@ -94,7 +148,7 @@ class TransformBase {
     std::vector<T> result;
     result.reserve(vec.size());
     for (auto& value : vec) {
-      result.push_back(Transform(value));
+      result.push_back(TransformOrOriginal(value));
     }
     return result;
   }
@@ -104,7 +158,7 @@ class TransformBase {
   auto operator()(const std::map<T, U>& map) -> std::map<T, U> {
     std::map<T, U> result;
     for (auto& [key, value] : map) {
-      result.insert({Transform(key), Transform(value)});
+      result.insert({TransformOrOriginal(key), TransformOrOriginal(value)});
     }
     return result;
   }
@@ -114,13 +168,17 @@ class TransformBase {
   auto operator()(const llvm::StringMap<T>& map) -> llvm::StringMap<T> {
     llvm::StringMap<T> result;
     for (const auto& it : map) {
-      result.insert({Transform(it.first()), Transform(it.second)});
+      result.insert(
+          {TransformOrOriginal(it.first()), TransformOrOriginal(it.second)});
     }
     return result;
   }
 
  private:
   Nonnull<Arena*> arena_;
+  // Temporary storage for an error that was produced during transformation
+  // that has not yet been handed back to the caller.
+  std::optional<Error> error_;
 };
 
 // Base class for transforms of `Value`s.
@@ -159,7 +217,7 @@ class ValueTransform : public TransformBase<Derived> {
     return value->template Visit<R>([&](const auto* derived_value) {
       using DerivedType = std::remove_pointer_t<decltype(derived_value)>;
       static_assert(IsRecursivelyTransformable<DerivedType>);
-      return this->Transform(derived_value);
+      return this->TransformOrOriginal(derived_value);
     });
   }
 
@@ -170,7 +228,8 @@ class ValueTransform : public TransformBase<Derived> {
 
   // Provide a more precise type from transforming a `Witness`.
   auto operator()(Nonnull<const Witness*> value) -> Nonnull<const Witness*> {
-    return llvm::cast<Witness>(this->Transform(llvm::cast<Value>(value)));
+    return llvm::cast<Witness>(
+        this->TransformOrOriginal(llvm::cast<Value>(value)));
   }
 
   // For elements, dispatch on the element kind and recursively transform.

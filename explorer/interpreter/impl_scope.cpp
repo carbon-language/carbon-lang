@@ -121,8 +121,9 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
                            bool diagnose_missing_impl) const
     -> ErrorOr<std::optional<Nonnull<const Witness*>>> {
   if (const auto* iface_type = dyn_cast<InterfaceType>(constraint_type)) {
-    iface_type =
-        cast<InterfaceType>(type_checker.Substitute(bindings, iface_type));
+    CARBON_ASSIGN_OR_RETURN(
+        iface_type,
+        type_checker.SubstituteCast<InterfaceType>(bindings, iface_type));
     return TryResolveInterface(iface_type, impl_type, source_loc, type_checker,
                                diagnose_missing_impl);
   }
@@ -144,13 +145,17 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
       }
       Bindings local_bindings = bindings;
       local_bindings.Add(constraint->self_binding(), impl_type, witness);
+
+      CARBON_ASSIGN_OR_RETURN(const auto* subst_interface,
+                              type_checker.SubstituteCast<InterfaceType>(
+                                  local_bindings, impl.interface));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> subst_type,
+          type_checker.Substitute(local_bindings, impl.type));
       CARBON_ASSIGN_OR_RETURN(
           std::optional<Nonnull<const Witness*>> result,
-          TryResolveInterface(
-              cast<InterfaceType>(
-                  type_checker.Substitute(local_bindings, impl.interface)),
-              type_checker.Substitute(local_bindings, impl.type), source_loc,
-              type_checker, diagnose_missing_impl));
+          TryResolveInterface(subst_interface, subst_type, source_loc,
+                              type_checker, diagnose_missing_impl));
       if (!result) {
         return {std::nullopt};
       }
@@ -174,16 +179,22 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
       local_bindings.Add(constraint->self_binding(), impl_type, witness);
       SingleStepEqualityContext equality_ctx(this);
       for (const auto& intrinsic : intrinsics) {
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Value*> type,
+            type_checker.Substitute(local_bindings, intrinsic.type));
         IntrinsicConstraint converted = {
-            .type = type_checker.Substitute(local_bindings, intrinsic.type),
-            .kind = intrinsic.kind,
-            .arguments = {}};
+            .type = type, .kind = intrinsic.kind, .arguments = {}};
         converted.arguments.reserve(intrinsic.arguments.size());
         for (Nonnull<const Value*> argument : intrinsic.arguments) {
-          converted.arguments.push_back(
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> subst_arg,
               type_checker.Substitute(local_bindings, argument));
+          converted.arguments.push_back(subst_arg);
         }
-        if (!type_checker.IsIntrinsicConstraintSatisfied(converted, *this)) {
+        CARBON_ASSIGN_OR_RETURN(
+            bool intrinsic_satisfied,
+            type_checker.IsIntrinsicConstraintSatisfied(converted, *this));
+        if (!intrinsic_satisfied) {
           if (!diagnose_missing_impl) {
             return {std::nullopt};
           }
@@ -193,11 +204,11 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
       }
       for (const auto& equal : equals) {
         auto it = equal.values.begin();
-        Nonnull<const Value*> first =
-            type_checker.Substitute(local_bindings, *it++);
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> first,
+                                type_checker.Substitute(local_bindings, *it++));
         for (; it != equal.values.end(); ++it) {
-          Nonnull<const Value*> current =
-              type_checker.Substitute(local_bindings, *it);
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> current,
+                                  type_checker.Substitute(local_bindings, *it));
           if (!ValueEqual(first, current, &equality_ctx)) {
             if (!diagnose_missing_impl) {
               return {std::nullopt};
@@ -208,10 +219,13 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
         }
       }
       for (const auto& rewrite : rewrites) {
-        Nonnull<const Value*> constant =
-            type_checker.Substitute(local_bindings, rewrite.constant);
-        Nonnull<const Value*> value = type_checker.Substitute(
-            local_bindings, rewrite.converted_replacement);
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Value*> constant,
+            type_checker.Substitute(local_bindings, rewrite.constant));
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Value*> value,
+            type_checker.Substitute(local_bindings,
+                                    rewrite.converted_replacement));
         if (!ValueEqual(constant, value, &equality_ctx)) {
           if (!diagnose_missing_impl) {
             return {std::nullopt};
