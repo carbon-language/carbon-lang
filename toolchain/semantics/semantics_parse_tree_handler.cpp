@@ -362,6 +362,30 @@ auto SemanticsParseTreeHandler::HandleCallExpressionStart(
   return true;
 }
 
+auto SemanticsParseTreeHandler::HandleClassDeclaration(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleClassDeclaration");
+  return false;
+}
+
+auto SemanticsParseTreeHandler::HandleClassDefinition(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleClassDefinition");
+  return false;
+}
+
+auto SemanticsParseTreeHandler::HandleClassDefinitionStart(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleClassDefinitionStart");
+  return false;
+}
+
+auto SemanticsParseTreeHandler::HandleClassIntroducer(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleClassIntroducer");
+  return false;
+}
+
 auto SemanticsParseTreeHandler::HandleCodeBlock(ParseTree::Node parse_node)
     -> bool {
   emitter_->Emit(parse_node, SemanticsTodo, "HandleCodeBlock");
@@ -529,6 +553,12 @@ auto SemanticsParseTreeHandler::HandleFunctionIntroducer(
   return true;
 }
 
+auto SemanticsParseTreeHandler::HandleGenericPatternBinding(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "GenericPatternBinding");
+  return false;
+}
+
 auto SemanticsParseTreeHandler::HandleIfCondition(ParseTree::Node parse_node)
     -> bool {
   emitter_->Emit(parse_node, SemanticsTodo, "HandleIfCondition");
@@ -689,6 +719,31 @@ auto SemanticsParseTreeHandler::HandleNameReference(ParseTree::Node parse_node)
   node_stack_.Push(parse_node, it->second.back());
 
   return true;
+}
+
+auto SemanticsParseTreeHandler::HandleNamedConstraintDeclaration(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleNamedConstraintDeclaration");
+  return false;
+}
+
+auto SemanticsParseTreeHandler::HandleNamedConstraintDefinition(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleNamedConstraintDefinition");
+  return false;
+}
+
+auto SemanticsParseTreeHandler::HandleNamedConstraintDefinitionStart(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo,
+                 "HandleNamedConstraintDefinitionStart");
+  return false;
+}
+
+auto SemanticsParseTreeHandler::HandleNamedConstraintIntroducer(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleNamedConstraintIntroducer");
+  return false;
 }
 
 auto SemanticsParseTreeHandler::HandlePackageApi(ParseTree::Node parse_node)
@@ -925,6 +980,12 @@ auto SemanticsParseTreeHandler::HandleStructLiteralOrStructTypeLiteralStart(
 auto SemanticsParseTreeHandler::HandleStructTypeLiteral(
     ParseTree::Node parse_node) -> bool {
   emitter_->Emit(parse_node, SemanticsTodo, "HandleStructTypeLiteral");
+  return false;
+}
+
+auto SemanticsParseTreeHandler::HandleTemplate(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleTemplate");
   return false;
 }
 

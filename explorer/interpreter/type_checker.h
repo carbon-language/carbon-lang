@@ -273,9 +273,10 @@ class TypeChecker {
   auto DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
                                const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
-  // Find all of the GenericBindings in the given pattern.
-  void CollectGenericBindingsInPattern(
-      Nonnull<const Pattern*> p,
+  // Find all of the GenericBindings in the given pattern, and assign them
+  // index numbers based on their position in the resulting vector of bindings.
+  void CollectAndNumberGenericBindingsInPattern(
+      Nonnull<Pattern*> p,
       std::vector<Nonnull<const GenericBinding*>>& generic_bindings);
 
   // Find all of the ImplBindings in the given pattern. The pattern is required
@@ -430,7 +431,7 @@ class TypeChecker {
 
   // The name of a builtin interface, with any arguments.
   struct BuiltinInterfaceName {
-    Builtins::Builtin builtin;
+    Builtin builtin;
     llvm::ArrayRef<Nonnull<const Value*>> arguments = {};
   };
   // The name of a method on a builtin interface, with any arguments.

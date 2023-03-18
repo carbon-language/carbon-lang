@@ -9,7 +9,7 @@ cc_library(
     srcs = ["semantics_builtin_kind.cpp"],
     hdrs = ["semantics_builtin_kind.h"],
     textual_hdrs = ["semantics_builtin_kind.def"],
-    deps = ["//toolchain/common:enum_base"],
+    deps = ["//common:enum_base"],
 )
 
 cc_library(
@@ -17,7 +17,7 @@ cc_library(
     srcs = ["semantics_node_kind.cpp"],
     hdrs = ["semantics_node_kind.h"],
     textual_hdrs = ["semantics_node_kind.def"],
-    deps = ["//toolchain/common:enum_base"],
+    deps = ["//common:enum_base"],
 )
 
 cc_library(

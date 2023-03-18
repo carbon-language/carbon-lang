@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-#include "toolchain/common/enum_base.h"
+#include "common/enum_base.h"
 
 namespace Carbon {
 
@@ -17,7 +17,7 @@ CARBON_DEFINE_RAW_ENUM_CLASS(DiagnosticKind, uint16_t) {
 };
 
 // An enumeration of all diagnostics provided by the toolchain. Diagnostics must
-// be added to diagnostic_registry.def, and defined locally to where they're
+// be added to diagnostic_kind.def, and defined locally to where they're
 // used using the `DIAGNOSTIC` macro in diagnostic_emitter.h.
 //
 // Diagnostic definitions are decentralized because placing all diagnostic
