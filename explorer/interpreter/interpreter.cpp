@@ -1076,19 +1076,6 @@ auto Interpreter::CallFunction(const CallExpression& call,
   }
 }
 
-class DeepCopyTransform : public ValueTransform<DeepCopyTransform> {
- public:
-  explicit DeepCopyTransform(Nonnull<Arena*> arena) : ValueTransform(arena) {}
-
-  using ValueTransform::operator();
-
-  // Preserve class type.
-  auto operator()(Nonnull<const NominalClassType*> class_type)
-      -> Nonnull<const NominalClassType*> {
-    return class_type;
-  }
-};
-
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
@@ -1456,14 +1443,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         }
         case IntrinsicExpression::Intrinsic::Alloc: {
           const auto* value = args[0];
-          // Perform a deep copy of the class value to allocated the "newed"
-          // value separately from `heap.New`'s function parameter. Avoids
-          // deallocation and destructor from being called on the returned
-          // value.
-          // TODO: Implement copy elision by moving value ownership
-          if (const auto* class_val = dyn_cast<NominalClassValue>(value)) {
-            value = DeepCopyTransform(arena_).Transform(class_val);
-          }
           CARBON_CHECK(args.size() == 1);
           Address addr(heap_.AllocateValue(value));
           return todo_.FinishAction(arena_->New<PointerValue>(addr));
@@ -1498,14 +1477,22 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             if (act.pos() == 1) {
               return todo_.Spawn(std::make_unique<DestroyAction>(
                   arena_->New<LValue>(Address(*alloc_id)), child_class_value));
-            } else {  // act.pos() == 2
+            } else {
               heap_.Deallocate(*alloc_id);
+              return todo_.FinishAction(TupleValue::Empty());
             }
           } else {
-            // Dealloc allocation, even though value already dead
-            heap_.Deallocate(ptr->address());
+            if (act.pos() == 1) {
+              CARBON_ASSIGN_OR_RETURN(
+                  const auto* pointee,
+                  this->heap_.Read(ptr->address(), exp.source_loc()));
+              return todo_.Spawn(std::make_unique<DestroyAction>(
+                  arena_->New<LValue>(ptr->address()), pointee));
+            } else {
+              heap_.Deallocate(ptr->address());
+              return todo_.FinishAction(TupleValue::Empty());
+            }
           }
-          return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Rand: {
           CARBON_CHECK(args.size() == 2);
