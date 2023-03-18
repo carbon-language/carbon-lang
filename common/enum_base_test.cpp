@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/common/enum_base.h"
+#include "common/enum_base.h"
 
 #include <gtest/gtest.h>
 
@@ -10,13 +10,13 @@ namespace Carbon {
 
 CARBON_DEFINE_RAW_ENUM_CLASS(TestKind, uint8_t) {
 #define CARBON_ENUM_BASE_TEST_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
-#include "toolchain/common/enum_base_test.def"
+#include "common/enum_base_test.def"
 };
 
 class TestKind : public CARBON_ENUM_BASE(TestKind) {
  public:
 #define CARBON_ENUM_BASE_TEST_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
-#include "toolchain/common/enum_base_test.def"
+#include "common/enum_base_test.def"
 
   using EnumBase::AsInt;
   using EnumBase::FromInt;
@@ -24,11 +24,11 @@ class TestKind : public CARBON_ENUM_BASE(TestKind) {
 
 #define CARBON_ENUM_BASE_TEST_KIND(Name) \
   CARBON_ENUM_CONSTANT_DEFINITION(TestKind, Name)
-#include "toolchain/common/enum_base_test.def"
+#include "common/enum_base_test.def"
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(TestKind) = {
 #define CARBON_ENUM_BASE_TEST_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
-#include "toolchain/common/enum_base_test.def"
+#include "common/enum_base_test.def"
 };
 
 namespace {

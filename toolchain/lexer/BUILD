@@ -13,7 +13,7 @@ cc_library(
     textual_hdrs = ["token_kind.def"],
     deps = [
         "//common:check",
-        "//toolchain/common:enum_base",
+        "//common:enum_base",
         "@llvm-project//llvm:Support",
     ],
 )
