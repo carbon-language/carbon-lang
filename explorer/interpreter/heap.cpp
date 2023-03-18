@@ -27,6 +27,10 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
   return a;
 }
 
+auto Heap::AddressAllocation(const Address& a) const -> AllocationId {
+  return a.allocation_;
+}
+
 auto Heap::Read(const Address& a, SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
   CARBON_RETURN_IF_ERROR(this->CheckInit(a.allocation_, source_loc));

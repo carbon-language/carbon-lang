@@ -1450,9 +1450,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         case IntrinsicExpression::Intrinsic::Dealloc: {
           CARBON_CHECK(act.pos() > 0 && args.size() == 1);
           const auto* ptr = cast<PointerValue>(args[0]);
-          CARBON_ASSIGN_OR_RETURN(
-              const auto* pointee,
-              this->heap_.Read(ptr->address(), exp.source_loc()));
+          CARBON_ASSIGN_OR_RETURN(const auto* pointee,
+                                  heap_.Read(ptr->address(), exp.source_loc()));
           if (const auto* class_value = dyn_cast<NominalClassValue>(pointee)) {
             const auto* child_class_value = *class_value->class_value_ptr();
             if (child_class_value != class_value) {
@@ -1467,25 +1466,20 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                           "pointer requires a virtual destructor";
               }
             }
-
-            // Value delete at different allocation, FAILS
-            const auto alloc_id = heap_.GetAllocationId(child_class_value);
-            CARBON_CHECK(alloc_id)
-                << "Unable to get allocation ID for `" << *ptr << "`"
-                << "\n"
-                << heap_;
+            const auto base_addr =
+                Address(heap_.AddressAllocation(ptr->address()));
             if (act.pos() == 1) {
               return todo_.Spawn(std::make_unique<DestroyAction>(
-                  arena_->New<LValue>(Address(*alloc_id)), child_class_value));
+                  arena_->New<LValue>(base_addr), child_class_value));
             } else {
-              heap_.Deallocate(*alloc_id);
+              heap_.Deallocate(base_addr);
               return todo_.FinishAction(TupleValue::Empty());
             }
           } else {
             if (act.pos() == 1) {
               CARBON_ASSIGN_OR_RETURN(
                   const auto* pointee,
-                  this->heap_.Read(ptr->address(), exp.source_loc()));
+                  heap_.Read(ptr->address(), exp.source_loc()));
               return todo_.Spawn(std::make_unique<DestroyAction>(
                   arena_->New<LValue>(ptr->address()), pointee));
             } else {
