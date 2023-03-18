@@ -37,7 +37,7 @@ base class A {
 
 base class B extends A {
   fn Make() -> B { return {.base = A.Make(), .b1=Data.Make(5), .b2=Data.Make(4)}; }
-  destructor[self: Self]{
+  impl destructor[self: Self]{
     Print("Destroying 3 (B)");
   }
   var b1: Data;
@@ -46,7 +46,7 @@ base class B extends A {
 
 class C extends B {
   fn Make() -> C { return {.base = B.Make(), .c1=Data.Make(2), .c2=Data.Make(1)}; }
-  destructor[self: Self]{
+  impl destructor[self: Self]{
     Print("Destroying 0 (C)");
   }
   var c1: Data;

@@ -21,7 +21,6 @@
 #include "explorer/ast/element.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/value.h"
-#include "explorer/ast/value_transform.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/common/source_location.h"
@@ -1442,17 +1441,18 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Alloc: {
-          const auto* value = args[0];
           CARBON_CHECK(args.size() == 1);
-          Address addr(heap_.AllocateValue(value));
+          Address addr(heap_.AllocateValue(args[0]));
           return todo_.FinishAction(arena_->New<PointerValue>(addr));
         }
         case IntrinsicExpression::Intrinsic::Dealloc: {
-          CARBON_CHECK(act.pos() > 0 && args.size() == 1);
+          CARBON_CHECK(args.size() == 1);
+          CARBON_CHECK(act.pos() > 0);
           const auto* ptr = cast<PointerValue>(args[0]);
           CARBON_ASSIGN_OR_RETURN(const auto* pointee,
                                   heap_.Read(ptr->address(), exp.source_loc()));
           if (const auto* class_value = dyn_cast<NominalClassValue>(pointee)) {
+            // Handle destruction from base class pointer.
             const auto* child_class_value = *class_value->class_value_ptr();
             if (child_class_value != class_value) {
               // Error if destructor is not virtual.
@@ -1466,20 +1466,17 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                           "pointer requires a virtual destructor";
               }
             }
-            const auto base_addr =
+            const auto base_alloc_addr =
                 Address(heap_.AddressAllocation(ptr->address()));
             if (act.pos() == 1) {
               return todo_.Spawn(std::make_unique<DestroyAction>(
-                  arena_->New<LValue>(base_addr), child_class_value));
+                  arena_->New<LValue>(base_alloc_addr), child_class_value));
             } else {
-              heap_.Deallocate(base_addr);
+              heap_.Deallocate(base_alloc_addr);
               return todo_.FinishAction(TupleValue::Empty());
             }
           } else {
             if (act.pos() == 1) {
-              CARBON_ASSIGN_OR_RETURN(
-                  const auto* pointee,
-                  heap_.Read(ptr->address(), exp.source_loc()));
               return todo_.Spawn(std::make_unique<DestroyAction>(
                   arena_->New<LValue>(ptr->address()), pointee));
             } else {

@@ -5,17 +5,17 @@
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 
-base class A{
-    virtual destructor[self: Self]{}
+base class A {
+    destructor[self: Self]{}
 }
 
 class B extends A {
-    virtual destructor[self: Self]{}
+    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/destructor/fail_override_none.carbon:[[@LINE+1]]: Error declaring destructor for `B`: use `impl` to implement virtual destructor in child class.
+    destructor[self: Self]{}
 }
 
 fn Main() -> i32 {

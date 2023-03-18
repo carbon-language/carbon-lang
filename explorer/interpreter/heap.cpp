@@ -104,7 +104,7 @@ void Heap::Print(llvm::raw_ostream& out) const {
     } else if (states_[i] == ValueState::Dead) {
       out << "!!";
     }
-    out << *values_[i] << "(" << static_cast<const void*>(values_[i]) << ")";
+    out << *values_[i];
   }
 }
 
