@@ -31,7 +31,7 @@ class HeapAllocationInterface {
   virtual auto arena() const -> Arena& = 0;
 
   // Returns the AllocationId for the given the address in the heap.
-  auto GetAllocationId(const Address& a) const -> AllocationId;
+  virtual auto GetAllocationId(const Address& a) const -> AllocationId = 0;
 
   // Returns the ID of the first allocation that holds `v`, if one exists.
   // TODO: Find a way to remove this.
