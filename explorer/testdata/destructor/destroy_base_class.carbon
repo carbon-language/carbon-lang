@@ -23,7 +23,7 @@ base class B extends A {
 }
 
 class C extends B {
-    impl destructor[self: Self]{
+    destructor[self: Self]{
         Print("DESTRUCTOR C {0}", self.c);
     }
     var c: i32;

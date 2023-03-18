@@ -27,7 +27,7 @@ class B extends A {
     fn Create() -> Self{
         return {.base={}};
     }
-    impl destructor[self: Self] {
+    destructor[self: Self] {
         Print("DESTRUCTOR B");
     }
 }

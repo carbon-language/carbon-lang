@@ -4800,10 +4800,11 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     bool has_vtable_entry =
         class_vtable.find(destructor_name) != class_vtable.end();
     switch (fun->virt_override()) {
+      case VirtualOverride::None:
+        break;
       case VirtualOverride::Abstract:
         return ProgramError(fun->source_loc())
                << "Cannot declare abstract destructor.";
-      case VirtualOverride::None:
       case VirtualOverride::Virtual:
         if (has_vtable_entry) {
           return ProgramError(fun->source_loc())
