@@ -41,9 +41,6 @@ class Heap : public HeapAllocationInterface {
   auto Write(const Address& a, Nonnull<const Value*> v,
              SourceLocation source_loc) -> ErrorOr<Success>;
 
-  // Returns the AllocationId for the given the address in the heap.
-  auto GetAllocationId(const Address& a) const -> AllocationId override;
-
   auto GetAllocationId(Nonnull<const Value*> v) const
       -> std::optional<AllocationId> override;
 

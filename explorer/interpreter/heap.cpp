@@ -46,10 +46,6 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
   return Success();
 }
 
-auto Heap::GetAllocationId(const Address& a) const -> AllocationId {
-  return a.allocation_;
-}
-
 auto Heap::GetAllocationId(Nonnull<const Value*> v) const
     -> std::optional<AllocationId> {
   auto iter = std::find(values_.begin(), values_.end(), v);
