@@ -614,6 +614,11 @@ class FunctionType : public Value {
   //
   //     fn MakeEmptyVector(T:! type) -> Vector(T);
   struct GenericParameter {
+    template <typename F>
+    auto Decompose(F f) const {
+      return f(index, binding);
+    }
+
     size_t index;
     Nonnull<const GenericBinding*> binding;
   };
@@ -923,6 +928,11 @@ class NamedConstraintType : public Value {
 
 // A constraint that requires implementation of an interface.
 struct ImplConstraint {
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(type, interface);
+  }
+
   // The type that is required to implement the interface.
   Nonnull<const Value*> type;
   // The interface that is required to be implemented.
@@ -931,6 +941,11 @@ struct ImplConstraint {
 
 // A constraint that requires an intrinsic property of a type.
 struct IntrinsicConstraint {
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(type, kind, arguments);
+  }
+
   // Print the intrinsic constraint.
   void Print(llvm::raw_ostream& out) const;
 
@@ -951,6 +966,11 @@ struct IntrinsicConstraint {
 
 // A constraint that a collection of values are known to be the same.
 struct EqualityConstraint {
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(values);
+  }
+
   // Visit the values in this equality constraint that are a single step away
   // from the given value according to this equality constraint. That is: if
   // `value` is identical to a value in `values`, then call the visitor on all
@@ -969,6 +989,12 @@ struct EqualityConstraint {
 // A constraint indicating that access to an associated constant should be
 // replaced by another value.
 struct RewriteConstraint {
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(constant, unconverted_replacement, unconverted_replacement_type,
+             converted_replacement);
+  }
+
   // The associated constant value that is rewritten.
   Nonnull<const AssociatedConstant*> constant;
   // The replacement in its original type.
@@ -981,6 +1007,11 @@ struct RewriteConstraint {
 
 // A context in which we might look up a name.
 struct LookupContext {
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(context);
+  }
+
   Nonnull<const Value*> context;
 };
 

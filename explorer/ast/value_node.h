@@ -10,6 +10,7 @@
 #include <string_view>
 
 #include "explorer/ast/ast_node.h"
+#include "explorer/ast/clone_context.h"
 #include "explorer/ast/value_category.h"
 #include "explorer/common/nonnull.h"
 
@@ -83,6 +84,15 @@ class ValueNodeView {
         value_category_([](const AstNode& base) -> ValueCategory {
           return llvm::cast<NodeType>(base).value_category();
         }) {}
+
+  explicit ValueNodeView(CloneContext& context, const ValueNodeView& other)
+      : base_(context.Remap(other.base_)),
+        // We assume the clone is the same kind of node as the original.
+        constant_value_(other.constant_value_),
+        symbolic_identity_(other.symbolic_identity_),
+        print_(other.print_),
+        static_type_(other.static_type_),
+        value_category_(other.value_category_) {}
 
   ValueNodeView(const ValueNodeView&) = default;
   ValueNodeView(ValueNodeView&&) = default;

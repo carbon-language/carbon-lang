@@ -823,6 +823,9 @@ static auto DeclarationToProto(const Declaration& declaration)
           impl_proto->set_kind(Fuzzing::ImplDeclaration::ExternalImpl);
           break;
       }
+      for (Nonnull<const GenericBinding*> binding : impl.deduced_parameters()) {
+        *impl_proto->add_deduced_parameters() = GenericBindingToProto(*binding);
+      }
       *impl_proto->mutable_impl_type() = ExpressionToProto(*impl.impl_type());
       *impl_proto->mutable_interface() = ExpressionToProto(impl.interface());
       for (const auto& member : impl.members()) {
