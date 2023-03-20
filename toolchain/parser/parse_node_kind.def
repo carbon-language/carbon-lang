@@ -338,10 +338,10 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDeclaration,
                                NamedConstraintIntroducer)
 
 // The `self` name and `Self` type keywords. Typically of the form `self: Self`:
-//   SelfDeducedParameter
+//   SelfIdentifier
 //   SelfType
 // PatternBinding
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfDeducedParameter, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfIdentifier, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfType, 0)
 
 #undef CARBON_PARSE_NODE_KIND

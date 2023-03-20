@@ -922,9 +922,9 @@ auto SemanticsParseTreeHandler::HandleReturnType(ParseTree::Node parse_node)
   return true;
 }
 
-auto SemanticsParseTreeHandler::HandleSelfDeducedParameter(
-    ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfDeducedParameter");
+auto SemanticsParseTreeHandler::HandleSelfIdentifier(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfIdentifier");
   return false;
 }
 
