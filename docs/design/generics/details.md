@@ -76,7 +76,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [`TypeId`](#typeid)
     -   [Destructor constraints](#destructor-constraints)
 -   [Generic `let`](#generic-let)
--   [Parameterized impls](#parameterized-impls)
+-   [Parameterized impl declarations](#parameterized-impl-declarations)
     -   [Impl for a parameterized type](#impl-for-a-parameterized-type)
     -   [Conditional conformance](#conditional-conformance)
         -   [Conditional methods](#conditional-methods)
@@ -91,8 +91,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Prioritization rule](#prioritization-rule)
         -   [Acyclic rule](#acyclic-rule)
         -   [Termination rule](#termination-rule)
-    -   [`final` impls](#final-impls)
-        -   [Libraries that can contain `final` impls](#libraries-that-can-contain-final-impls)
+    -   [`final` impl declarations](#final-impl-declarations)
+        -   [Libraries that can contain a `final` impl](#libraries-that-can-contain-a-final-impl)
     -   [Comparison to Rust](#comparison-to-rust)
 -   [Forward declarations and cyclic references](#forward-declarations-and-cyclic-references)
     -   [Declaring interfaces and named constraints](#declaring-interfaces-and-named-constraints)
@@ -245,7 +245,7 @@ definitions for all the functions (and other members) declared in the interface.
 
 Carbon interfaces are ["nominal"](terminology.md#nominal-interfaces), which
 means that types explicitly describe how they implement interfaces. An
-["impl"](terminology.md#impls-implementations-of-interfaces) defines how one
+["impl"](terminology.md#impl-implementation-of-an-interface) defines how one
 interface is implemented for a type. Every associated entity is given a
 definition. Different types satisfying `Vector` can have different definitions
 for `Add` and `Scale`, so we say their definitions are _associated_ with what
@@ -3676,7 +3676,7 @@ can be used to switch to the API of `C` when it is external, as an alternative
 to [using an adapter](#use-case-accessing-external-names), or to simplify
 inlining of a generic function while preserving semantics.
 
-## Parameterized impls
+## Parameterized impl declarations
 
 There are cases where an impl definition should apply to more than a single type
 and interface combination. The solution is to parameterize the impl definition,
@@ -4247,7 +4247,7 @@ allow our desired use cases, but allow the compiler to detect non-terminating
 cases? Perhaps there is some sort of complexity measure Carbon can require
 doesn't increase when recursing?
 
-### `final` impls
+### `final` impl declarations
 
 There are cases where knowing that a parameterized impl won't be specialized is
 particularly valuable. This could let the compiler know the return type of a
@@ -4329,10 +4329,11 @@ fn F[T:! type](x: T) {
 }
 ```
 
-#### Libraries that can contain `final` impls
+#### Libraries that can contain a `final` impl
 
-To prevent the possibility of two unrelated libraries defining conflicting
-impls, Carbon restricts which libraries may declare an impl as `final` to only:
+To prevent the possibility of two unrelated libraries defining conflicting impl
+declarations, Carbon restricts which libraries may declare an impl as `final` to
+only:
 
 -   the library declaring the impl's interface and
 -   the library declaring the root of the `Self` type.
@@ -4538,8 +4539,8 @@ these rules:
 -   The definition must be in the same library as the declaration. They must
     either be in the same file, or the declaration can be in the API file and
     the definition in an impl file. **Future work:** Carbon may require the
-    definition of [parameterized impls](#parameterized-impls) to be in the API
-    file, to support separate compilation.
+    definition of [parameterized impls](#parameterized-impl-declarations) to be
+    in the API file, to support separate compilation.
 -   If there is both a forward declaration and a definition, only the first
     declaration must specify the assignment of associated constants with a
     `where` clause. Later declarations may omit the `where` clause by writing
@@ -5111,10 +5112,10 @@ visible implementation of `A` with the same `T` parameter for those types with
 the `.Result` associated type set to `i32`. That is
 [not sufficient](/proposals/p1088.md#less-strict-about-requirements-with-where-clauses),
 though, unless the implementation of `A` can't be specialized, either because it
-is [marked `final`](#final-impls) or is not
-[parameterized](#parameterized-impls). Implementations in other libraries can't
-make `A` be implemented for fewer types, but can cause `.Result` to have a
-different assignment.
+is [marked `final`](#final-impl-declarations) or is not
+[parameterized](#parameterized-impl-declarations). Implementations in other
+libraries can't make `A` be implemented for fewer types, but can cause `.Result`
+to have a different assignment.
 
 ## Observing a type implements an interface
 

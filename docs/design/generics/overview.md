@@ -34,7 +34,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Associated types](#associated-types)
         -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Constraints](#constraints)
-    -   [Parameterized impls](#parameterized-impls)
+    -   [Parameterized impl declarations](#parameterized-impl-declarations)
     -   [Operator overloading](#operator-overloading)
 -   [Future work](#future-work)
 -   [References](#references)
@@ -614,7 +614,7 @@ class Vector(T:! Movable) {
 }
 ```
 
-### Parameterized impls
+### Parameterized impl declarations
 
 Implementations can be parameterized to apply to multiple types. Those
 parameters can have constraints to restrict when the implementation applies.

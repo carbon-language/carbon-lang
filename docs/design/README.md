@@ -2908,13 +2908,14 @@ pick which definition is selected. These rules ensure:
     if it can see an impl that applies, even though another more specific impl
     may be selected.
 
-Implementations may be marked [`final`](generics/details.md#final-impls) to
-indicate that they may not be specialized, subject to
-[some restrictions](generics/details.md#libraries-that-can-contain-final-impls).
+Implementations may be marked
+[`final`](generics/details.md#final-impl-declarations) to indicate that they may
+not be specialized, subject to
+[some restrictions](generics/details.md#libraries-that-can-contain-a-final-impl).
 
 > References:
 >
-> -   [Generic or parameterized impls](generics/details.md#parameterized-impls)
+> -   [Generic or parameterized impl declarationss](generics/details.md#parameterized-impl-declarations)
 > -   Proposal
 >     [#624: Coherence: terminology, rationale, alternatives considered](https://github.com/carbon-language/carbon-lang/pull/624)
 > -   Proposal
