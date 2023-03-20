@@ -46,9 +46,9 @@ class TransformBase {
   template <typename T>
   auto Transform(const T& v) -> ErrorOr<T> {
     auto result = TransformOrOriginal(v);
-    if (error_) {
-      Error error = std::move(*error_);
-      error_ = std::nullopt;
+    if (!status_.ok()) {
+      Error error = std::move(status_).error();
+      status_ = Success();
       return error;
     }
     return result;
@@ -68,7 +68,7 @@ class TransformBase {
   template <typename T, typename U>
   auto CollectError(const T& original, ErrorOr<U> transformed) -> U {
     if (!transformed.ok()) {
-      error_ = std::move(transformed).error();
+      status_ = std::move(transformed).error();
       return original;
     }
     return std::move(*transformed);
@@ -79,7 +79,7 @@ class TransformBase {
   auto TransformOrOriginal(const T& v)
       -> decltype(CollectError(v, std::declval<Derived>()(v))) {
     // If we've already failed, don't do any more transformations.
-    if (error_) {
+    if (!status_.ok()) {
       return v;
     }
     return CollectError(v, static_cast<Derived&>(*this)(v));
@@ -91,7 +91,7 @@ class TransformBase {
   auto operator()(const T& value) -> T {
     return value.Decompose([&](const auto&... elements) {
       return [&](auto&&... transformed_elements) {
-        if (!error_) {
+        if (status_.ok()) {
           return T{decltype(transformed_elements)(transformed_elements)...};
         }
         return value;
@@ -109,7 +109,7 @@ class TransformBase {
                  -> decltype(AllocateTrait<T>::New(
                      arena_,
                      decltype(transformed_elements)(transformed_elements)...)) {
-        if (!error_) {
+        if (status_.ok()) {
           return AllocateTrait<T>::New(
               arena_, decltype(transformed_elements)(transformed_elements)...);
         }
@@ -178,7 +178,7 @@ class TransformBase {
   Nonnull<Arena*> arena_;
   // Temporary storage for an error that was produced during transformation
   // that has not yet been handed back to the caller.
-  std::optional<Error> error_;
+  ErrorOr<Success> status_ = Success();
 };
 
 // Base class for transforms of `Value`s.
