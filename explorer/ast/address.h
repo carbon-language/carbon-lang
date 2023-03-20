@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/element_path.h"
 #include "llvm/Support/Compiler.h"
@@ -70,6 +71,20 @@ class Address {
     Address result = *this;
     result.element_path_.Append(element);
     return result;
+  }
+
+  auto DowncastedAddress() const -> Address {
+    Address address = *this;
+    const auto has_downcast = [](const Address& addr) {
+      return !addr.element_path_.IsEmpty() &&
+             addr.element_path_.LastElement()->kind() ==
+                 ElementKind::BaseElement;
+    };
+    CARBON_CHECK(has_downcast(address)) << "Address cannot be downcasted.";
+    while (has_downcast(address)) {
+      address.element_path_.RemoveLastElement();
+    }
+    return address;
   }
 
  private:

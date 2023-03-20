@@ -1454,7 +1454,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           if (const auto* class_value = dyn_cast<NominalClassValue>(pointee)) {
             // Handle destruction from base class pointer.
             const auto* child_class_value = *class_value->class_value_ptr();
-            if (child_class_value != class_value) {
+            bool is_subtyped = child_class_value != class_value;
+            const Address obj_addr = is_subtyped
+                                         ? ptr->address().DowncastedAddress()
+                                         : ptr->address();
+            if (is_subtyped) {
               // Error if destructor is not virtual.
               const auto& class_type =
                   cast<NominalClassType>(class_value->type());
@@ -1466,13 +1470,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                           "pointer requires a virtual destructor";
               }
             }
-            const auto base_alloc_addr =
-                Address(heap_.GetAllocationId(ptr->address()));
             if (act.pos() == 1) {
               return todo_.Spawn(std::make_unique<DestroyAction>(
-                  arena_->New<LValue>(base_alloc_addr), child_class_value));
+                  arena_->New<LValue>(obj_addr), child_class_value));
             } else {
-              heap_.Deallocate(base_alloc_addr);
+              heap_.Deallocate(obj_addr);
               return todo_.FinishAction(TupleValue::Empty());
             }
           } else {

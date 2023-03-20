@@ -10,6 +10,7 @@
 #include <string_view>
 #include <vector>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/value_node.h"
@@ -86,6 +87,18 @@ class ElementPath {
   // Appends `element` to the end of *this.
   auto Append(Nonnull<const Element*> element) -> void {
     components_.push_back(Component(element));
+  }
+
+  // Returns the last element.
+  auto LastElement() const -> Nonnull<const Element*> {
+    CARBON_CHECK(!components_.empty());
+    return components_.back().element();
+  }
+
+  // Removes the last element.
+  auto RemoveLastElement() -> void {
+    CARBON_CHECK(!components_.empty());
+    components_.pop_back();
   }
 
   void Print(llvm::raw_ostream& out) const {
