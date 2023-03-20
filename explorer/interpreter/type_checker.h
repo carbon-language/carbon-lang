@@ -280,7 +280,9 @@ class TypeChecker {
       const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   auto DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                              const ScopeInfo& scope_info) -> ErrorOr<Success>;
+                              const ScopeInfo& scope_info,
+                              bool is_template_instantiation)
+      -> ErrorOr<Success>;
 
   auto DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                 const ScopeInfo& scope_info)
@@ -519,6 +521,12 @@ class TypeChecker {
   auto FindCollectedMembers(Nonnull<const Declaration*> decl)
       -> CollectedMembersMap&;
 
+  // Instantiate an impl with the given set of bindings, including one or more
+  // template bindings.
+  ErrorOr<std::pair<Nonnull<ImplDeclaration*>, Nonnull<Bindings*>>>
+  InstantiateImplDeclaration(Nonnull<const ImplDeclaration*> pattern,
+                             Nonnull<const Bindings*> bindings) const;
+
   Nonnull<Arena*> arena_;
   Builtins builtins_;
 
@@ -541,6 +549,21 @@ class TypeChecker {
   // the `const`s from everywhere that transitively does `impl` matching to get
   // rid of this `mutable`.
   mutable MatchingImplSet matching_impl_set_;
+
+  // Information about a generic that has one or more template parameters.
+  struct TemplateInfo {
+    // The original pattern, prior to any type-checking.
+    Nonnull<const Declaration*> pattern;
+    // A mapping from the bindings of the type-checked pattern to the bindings
+    // of the original.
+    std::map<const GenericBinding*, const GenericBinding*> param_map;
+    // TODO: Keep track of the instantiations we've already performed and don't
+    // do them again.
+  };
+
+  // Map from template declarations to extra information we use to type-check
+  // and instantiate the template.
+  std::map<const Declaration*, TemplateInfo> templates_;
 };
 
 }  // namespace Carbon
