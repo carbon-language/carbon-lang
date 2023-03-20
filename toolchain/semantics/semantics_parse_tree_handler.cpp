@@ -553,6 +553,12 @@ auto SemanticsParseTreeHandler::HandleFunctionIntroducer(
   return true;
 }
 
+auto SemanticsParseTreeHandler::HandleGenericPatternBinding(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "GenericPatternBinding");
+  return false;
+}
+
 auto SemanticsParseTreeHandler::HandleIfCondition(ParseTree::Node parse_node)
     -> bool {
   emitter_->Emit(parse_node, SemanticsTodo, "HandleIfCondition");
@@ -974,6 +980,12 @@ auto SemanticsParseTreeHandler::HandleStructLiteralOrStructTypeLiteralStart(
 auto SemanticsParseTreeHandler::HandleStructTypeLiteral(
     ParseTree::Node parse_node) -> bool {
   emitter_->Emit(parse_node, SemanticsTodo, "HandleStructTypeLiteral");
+  return false;
+}
+
+auto SemanticsParseTreeHandler::HandleTemplate(ParseTree::Node parse_node)
+    -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleTemplate");
   return false;
 }
 
