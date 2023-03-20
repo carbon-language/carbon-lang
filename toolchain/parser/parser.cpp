@@ -948,6 +948,11 @@ auto Parser::HandleExpressionInPostfixState() -> void {
       PushState(ParserState::ParenExpression);
       break;
     }
+    case TokenKind::SelfParameter: {
+      AddLeafNode(ParseNodeKind::SelfIdentifier, Consume());
+      PushState(state);
+      break;
+    }
     case TokenKind::SelfType: {
       AddLeafNode(ParseNodeKind::SelfType, Consume());
       PushState(state);
@@ -1494,7 +1499,7 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
     AddLeafNode(ParseNodeKind::DeclaredName, *identifier);
   } else if (pattern_kind == PatternKind::DeducedParameter) {
     if (auto self = ConsumeIf(TokenKind::SelfParameter)) {
-      AddLeafNode(ParseNodeKind::SelfDeducedParameter, *self);
+      AddLeafNode(ParseNodeKind::SelfIdentifier, *self);
     } else {
       on_error();
       return;
