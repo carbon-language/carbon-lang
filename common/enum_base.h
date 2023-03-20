@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_COMMON_ENUM_BASE_H_
-#define CARBON_TOOLCHAIN_COMMON_ENUM_BASE_H_
+#ifndef CARBON_COMMON_ENUM_BASE_H_
+#define CARBON_COMMON_ENUM_BASE_H_
 
 #include <type_traits>
 
@@ -31,24 +31,24 @@ namespace Carbon::Internal {
 //   ```
 //   CARBON_DEFINE_RAW_ENUM_CLASS(MyKind, uint8_t) {
 //   #define CARBON_MY_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
-//   #include "toolchain/.../my_kind.def"
+//   #include ".../my_kind.def"
 //   };
 //
 //   class MyKind : public CARBON_ENUM_BASE(MyKind) {
 //    public:
 //   #define CARBON_MY_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
-//   #include "toolchain/.../my_kind.def"
+//   #include ".../my_kind.def"
 //   };
 //
 //   #define CARBON_MY_KIND(Name) CARBON_ENUM_CONSTANT_DEFINITION(MyKind, Name)
-//   #include "toolchain/.../my_kind.def"
+//   #include ".../my_kind.def"
 //   ```
 //
 // In `my_kind.cpp`:
 //   ```
 //   CARBON_DEFINE_ENUM_CLASS_NAMES(MyKind) = {
 //   #define CARBON_MY_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
-//   #include "toolchain/.../my_kind.def"
+//   #include ".../my_kind.def"
 //   };
 //   ```
 template <typename DerivedT, typename EnumT>
@@ -181,4 +181,4 @@ class EnumBase {
 // name.
 #define CARBON_ENUM_CLASS_NAME_STRING(Name) #Name,
 
-#endif  // CARBON_TOOLCHAIN_COMMON_ENUM_BASE_H_
+#endif  // CARBON_COMMON_ENUM_BASE_H_

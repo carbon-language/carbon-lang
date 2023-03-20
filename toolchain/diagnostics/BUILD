@@ -35,7 +35,7 @@ cc_library(
         "diagnostic_kind.def",
     ],
     deps = [
-        "//toolchain/common:enum_base",
+        "//common:enum_base",
     ],
 )
 
