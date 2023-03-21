@@ -48,6 +48,9 @@ numeric value, so you can use `static_cast` to convert between the enum types
 for different classes that have a common root, so long as the enumerator value
 is present in both types. As a result, `InheritsFromFoo` can be used to
 determine whether casting to `FooKind` is safe.
+
+This also generates the dispatch function for the clone constructor, which
+behaves like a virtual function.
 """
 
 __copyright__ = """
@@ -185,7 +188,7 @@ def main() -> None:
     input_filename = sys.argv[1]
     header_filename = sys.argv[2]
     cpp_filename = sys.argv[3]
-    relative_header = sys.argv[4]
+    ast_headers = sys.argv[4:]
 
     with open(input_filename) as file:
         lines = file.readlines()
@@ -282,6 +285,12 @@ def main() -> None:
                 )
             print("}\n")
 
+    print("class Arena;")
+    print("class AstNode;")
+    print("class CloneContext;")
+    print("void CloneImpl(Arena& arena, CloneContext& context,")
+    print("               const AstNode& node, AstNode** result);\n")
+
     print("}  // namespace Carbon\n")
     print(f"#endif  // {guard_macro}")
 
@@ -291,7 +300,8 @@ def main() -> None:
     sys.stdout = cpp_file
 
     print(f"// Generated from {input_filename} by explorer/gen_rtti.py\n")
-    print(f'#include "{relative_header}"')
+    for h in ast_headers:
+        print(f'#include "{h}"')
     print("\nnamespace Carbon {\n")
     for node in classes.values():
         if node.kind != Class.Kind.CONCRETE:
@@ -307,6 +317,20 @@ def main() -> None:
                 print(f'    case {node.name}Kind::{name}: return "{desc}";')
             print("  }")
             print("}\n")
+
+    print("void CloneImpl(Arena& arena, CloneContext& context,")
+    print("               const AstNode& node, AstNode** result) {")
+    print("  switch(node.kind()) {")
+    for node in classes.values():
+        if node.kind == Class.Kind.CONCRETE and node.Root().name == "AstNode":
+            print(f"    case AstNodeKind::{node.name}:")
+            print(
+                f"      return arena.New<{node.name}>("
+                + "Arena::WriteAddressTo{result}, context, "
+                + f"static_cast<const {node.name}&>(node));"
+            )
+    print("  }")
+    print("}\n")
 
     print("}  // namespace Carbon\n")
     cpp_file.close()

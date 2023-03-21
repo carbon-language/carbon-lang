@@ -4,9 +4,28 @@
 
 package(default_visibility = ["//explorer:__subpackages__"])
 
+AST_HDRS = [
+    "address.h",
+    "ast.h",
+    "ast_node.h",
+    "bindings.h",
+    "clone_context.h",
+    "declaration.h",
+    "element.h",
+    "element_path.h",
+    "expression.h",
+    "impl_binding.h",
+    "pattern.h",
+    "return_term.h",
+    "statement.h",
+    "value.h",
+    "value_node.h",
+    "value_transform.h",
+]
+
 genrule(
     name = "ast_rtti",
-    srcs = ["ast_rtti.txt"],
+    srcs = ["ast_rtti.txt"] + AST_HDRS,
     outs = [
         "ast_rtti.h",
         "ast_rtti.cpp",
@@ -14,58 +33,31 @@ genrule(
     cmd = "./$(location //explorer:gen_rtti)" +
           " $(location ast_rtti.txt)" +
           " $(location ast_rtti.h) $(location ast_rtti.cpp)" +
-          " $(rootpath ast_rtti.h)",
+          " $(rootpath ast_rtti.h)" +
+          "".join([" $(rootpath " + f + ")" for f in AST_HDRS]),
     tools = ["//explorer:gen_rtti"],
-)
-
-cc_library(
-    name = "ast_node",
-    srcs = [
-        "ast_node.cpp",
-        "ast_rtti.cpp",
-    ],
-    hdrs = [
-        "ast_node.h",
-        "ast_rtti.h",
-    ],
-    deps = [
-        "//explorer/common:source_location",
-        "@llvm-project//llvm:Support",
-    ],
 )
 
 cc_library(
     name = "ast",
     srcs = [
+        "ast_node.cpp",
+        "ast_rtti.cpp",
         "bindings.cpp",
+        "clone_context.cpp",
         "declaration.cpp",
         "element.cpp",
         "expression.cpp",
+        "impl_binding.cpp",
         "pattern.cpp",
         "statement.cpp",
         "value.cpp",
     ],
-    hdrs = [
-        "address.h",
-        "ast.h",
-        "bindings.h",
-        "declaration.h",
-        "element.h",
-        "element_path.h",
-        "expression.h",
-        "impl_binding.h",
-        "pattern.h",
-        "return_term.h",
-        "statement.h",
-        "value.h",
-        "value_node.h",
-        "value_transform.h",
-    ],
+    hdrs = AST_HDRS + ["ast_rtti.h"],
     textual_hdrs = [
         "value_kinds.def",
     ],
     deps = [
-        ":ast_node",
         ":library_name",
         ":paren_contents",
         ":value_category",
@@ -91,7 +83,6 @@ cc_library(
     hdrs = ["ast_test_matchers.h"],
     deps = [
         ":ast",
-        ":ast_node",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

@@ -2000,7 +2000,7 @@ auto TypeChecker::RebuildValue(Nonnull<const Value*> value) const
 }
 
 class TypeChecker::SubstituteTransform
-    : public ValueTransform<SubstituteTransform> {
+    : public ValueTransform<SubstituteTransform, ErrorUnwrapper> {
  public:
   SubstituteTransform(Nonnull<const TypeChecker*> type_checker,
                       const Bindings& bindings)
