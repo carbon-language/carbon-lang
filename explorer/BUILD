@@ -41,8 +41,3 @@ cc_binary(
         "@llvm-project//llvm:Support",
     ],
 )
-
-py_binary(
-    name = "gen_rtti",
-    srcs = ["gen_rtti.py"],
-)

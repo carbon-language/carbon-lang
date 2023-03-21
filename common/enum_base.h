@@ -83,7 +83,7 @@ class EnumBase {
 
   // Prints this value using its name.
   void Print(llvm::raw_ostream& out) const {
-    out << reinterpret_cast<const EnumType*>(this)->name();
+    out << static_cast<const EnumType*>(this)->name();
   }
 
  protected:
@@ -135,8 +135,12 @@ class EnumBase {
 // Use this to compute the `Internal::EnumBase` specialization for a Carbon enum
 // class. It both computes the name of the raw enum and ensures all the
 // namespaces are correct.
-#define CARBON_ENUM_BASE(EnumClassName)       \
-  ::Carbon::Internal::EnumBase<EnumClassName, \
+#define CARBON_ENUM_BASE(EnumClassName) \
+  CARBON_ENUM_BASE_CRTP(EnumClassName, EnumClassName)
+// This variant handles the case where the external name for the Carbon enum is
+// not the same as the name by which we refer to it from this context.
+#define CARBON_ENUM_BASE_CRTP(EnumClassName, LocalTypeNameForEnumClass) \
+  ::Carbon::Internal::EnumBase<LocalTypeNameForEnumClass,               \
                                ::Carbon::Internal::EnumClassName##RawEnum>
 
 // Use this within the Carbon enum class body to generate named constant
@@ -148,6 +152,16 @@ class EnumBase {
 #define CARBON_ENUM_CONSTANT_DEFINITION(EnumClassName, Name) \
   constexpr EnumClassName EnumClassName::Name =              \
       EnumClassName::Create(RawEnumType::Name);
+
+// Alternatively, use this within the Carbon enum class body to declare and
+// define each named constant. Due to type completeness constraints, this will
+// only work if the enum-like class is templated.
+//
+// This requires the template to have a member named `Base` that names the
+// `EnumBase` base class.
+#define CARBON_INLINE_ENUM_CONSTANT_DEFINITION(Name)     \
+  static constexpr const typename Base::EnumType& Name = \
+      Base::Create(Base::RawEnumType::Name);
 
 // Use this in the `.cpp` file for an enum class to start the definition of the
 // constant names array for each enumerator. It is followed by the desired

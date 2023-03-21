@@ -17,6 +17,7 @@
 
 namespace Carbon {
 
+class AstNode;
 class Element;
 class Value;
 
