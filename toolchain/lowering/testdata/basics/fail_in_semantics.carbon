@@ -6,5 +6,5 @@
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-lowering}
 
-// CHECK:STDERR: {{.*}}/toolchain/lowering/testdata/basics/fail_in_semantics.carbon:[[@LINE+1]]:17: Type mismatch: lhs is node2, rhs is node3
+// CHECK:STDERR: {{.*}}/toolchain/lowering/testdata/basics/fail_in_semantics.carbon:[[@LINE+1]]:17: Type mismatch: lhs is nodeIntegerType, rhs is nodeFloatingPointType
 var x: i32 = 1.0;
