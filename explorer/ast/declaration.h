@@ -849,22 +849,26 @@ class ImplDeclaration : public Declaration {
 
 class MatchFirstDeclaration : public Declaration {
  public:
-  MatchFirstDeclaration(SourceLocation source_loc,
-                        std::vector<Nonnull<ImplDeclaration*>> impls)
+  MatchFirstDeclaration(
+      SourceLocation source_loc,
+      std::vector<Nonnull<ImplDeclaration*>> impl_declarations)
       : Declaration(AstNodeKind::MatchFirstDeclaration, source_loc),
-        impls_(std::move(impls)) {}
+        impl_declarations_(std::move(impl_declarations)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromMatchFirstDeclaration(node->kind());
   }
 
-  auto impls() const -> llvm::ArrayRef<Nonnull<const ImplDeclaration*>> {
-    return impls_;
+  auto impl_declarations() const
+      -> llvm::ArrayRef<Nonnull<const ImplDeclaration*>> {
+    return impl_declarations_;
   }
-  auto impls() -> llvm::ArrayRef<Nonnull<ImplDeclaration*>> { return impls_; }
+  auto impl_declarations() -> llvm::ArrayRef<Nonnull<ImplDeclaration*>> {
+    return impl_declarations_;
+  }
 
  private:
-  std::vector<Nonnull<ImplDeclaration*>> impls_;
+  std::vector<Nonnull<ImplDeclaration*>> impl_declarations_;
 };
 
 class AliasDeclaration : public Declaration {

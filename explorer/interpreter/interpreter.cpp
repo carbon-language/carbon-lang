@@ -1355,7 +1355,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::CallExpression: {
       const auto& call = cast<CallExpression>(exp);
-      unsigned int num_impls = call.impls().size();
+      unsigned int num_witnesses = call.witnesses().size();
       if (act.pos() == 0) {
         //    { {e1(e2) :: C, E, F} :: S, H}
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
@@ -1366,31 +1366,32 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // -> { { e :: v([]) :: C, E, F} :: S, H}
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&call.argument()));
-      } else if (num_impls > 0 && act.pos() < 2 + static_cast<int>(num_impls)) {
-        auto iter = call.impls().begin();
+      } else if (num_witnesses > 0 &&
+                 act.pos() < 2 + static_cast<int>(num_witnesses)) {
+        auto iter = call.witnesses().begin();
         std::advance(iter, act.pos() - 2);
         return todo_.Spawn(
             std::make_unique<WitnessAction>(cast<Witness>(iter->second)));
-      } else if (act.pos() == 2 + static_cast<int>(num_impls)) {
+      } else if (act.pos() == 2 + static_cast<int>(num_witnesses)) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
         ImplWitnessMap witnesses;
-        if (num_impls > 0) {
+        if (num_witnesses > 0) {
           int i = 2;
-          for (const auto& [impl_bind, impl_exp] : call.impls()) {
+          for (const auto& [impl_bind, impl_exp] : call.witnesses()) {
             witnesses[impl_bind] = act.results()[i];
             ++i;
           }
         }
         return CallFunction(call, act.results()[0], act.results()[1],
                             std::move(witnesses));
-      } else if (act.pos() == 3 + static_cast<int>(num_impls)) {
-        if (act.results().size() < 3 + num_impls) {
+      } else if (act.pos() == 3 + static_cast<int>(num_witnesses)) {
+        if (act.results().size() < 3 + num_witnesses) {
           // Control fell through without explicit return.
           return todo_.FinishAction(TupleValue::Empty());
         } else {
           return todo_.FinishAction(
-              act.results()[2 + static_cast<int>(num_impls)]);
+              act.results()[2 + static_cast<int>(num_witnesses)]);
         }
       } else {
         CARBON_FATAL() << "in StepExp with Call pos " << act.pos();

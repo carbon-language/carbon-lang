@@ -42,20 +42,20 @@ void ImplScope::Add(Nonnull<const Value*> iface,
     return;
   }
 
-  impls_.push_back({.interface = cast<InterfaceType>(iface),
-                    .deduced = deduced,
-                    .type = type,
-                    .impl_bindings = impl_bindings,
-                    .witness = witness});
+  impl_declarations_.push_back({.interface = cast<InterfaceType>(iface),
+                                .deduced = deduced,
+                                .type = type,
+                                .impl_bindings = impl_bindings,
+                                .witness = witness});
 }
 
-void ImplScope::Add(llvm::ArrayRef<ImplConstraint> impls,
+void ImplScope::Add(llvm::ArrayRef<ImplConstraint> impl_constraints,
                     llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<const Witness*> witness,
                     const TypeChecker& type_checker) {
-  for (size_t i = 0; i != impls.size(); ++i) {
-    ImplConstraint impl = impls[i];
+  for (size_t i = 0; i != impl_constraints.size(); ++i) {
+    ImplConstraint impl = impl_constraints[i];
     Add(impl.interface, deduced, impl.type, impl_bindings,
         type_checker.MakeConstraintWitnessAccess(witness, i), type_checker);
   }
@@ -293,7 +293,8 @@ static auto CombineResults(Nonnull<const InterfaceType*> iface_type,
   if (impl_a->declaration().match_first() &&
       impl_a->declaration().match_first() ==
           impl_b->declaration().match_first()) {
-    for (const auto* impl : (*impl_a->declaration().match_first())->impls()) {
+    for (const auto* impl :
+         (*impl_a->declaration().match_first())->impl_declarations()) {
       if (impl == &impl_a->declaration()) {
         return a;
       }
@@ -332,7 +333,7 @@ auto ImplScope::TryResolveInterfaceHere(
     const TypeChecker& type_checker) const
     -> ErrorOr<std::optional<Nonnull<const Witness*>>> {
   std::optional<Nonnull<const Witness*>> result = std::nullopt;
-  for (const Impl& impl : impls_) {
+  for (const Impl& impl : impl_declarations_) {
     CARBON_ASSIGN_OR_RETURN(std::optional<Nonnull<const Witness*>> m,
                             type_checker.MatchImpl(*iface_type, impl_type, impl,
                                                    original_scope, source_loc));
@@ -344,9 +345,9 @@ auto ImplScope::TryResolveInterfaceHere(
 
 // TODO: Add indentation when printing the parents.
 void ImplScope::Print(llvm::raw_ostream& out) const {
-  out << "impls: ";
+  out << "impl declarations: ";
   llvm::ListSeparator sep;
-  for (const Impl& impl : impls_) {
+  for (const Impl& impl : impl_declarations_) {
     out << sep << *(impl.type) << " as " << *(impl.interface);
   }
   for (Nonnull<const EqualityConstraint*> eq : equalities_) {

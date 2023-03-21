@@ -698,7 +698,8 @@ auto NameResolver::ResolveNames(Declaration& declaration,
     }
     case DeclarationKind::MatchFirstDeclaration: {
       // A `match_first` declaration does not introduce a scope.
-      for (auto* impl : cast<MatchFirstDeclaration>(declaration).impls()) {
+      for (auto* impl :
+           cast<MatchFirstDeclaration>(declaration).impl_declarations()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*impl, enclosing_scope, bodies));
       }
       break;

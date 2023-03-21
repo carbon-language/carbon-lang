@@ -436,7 +436,7 @@ message ImplDeclaration {
 }
 
 message MatchFirstDeclaration {
-  repeated Declaration impls = 1;
+  repeated Declaration impl_declarations = 1;
 }
 
 message AliasDeclaration {

@@ -128,8 +128,8 @@ class TypeChecker {
               .bindings = std::move(class_bindings)};
     }
 
-    // The innermost enclosing impl scope, within which impls should be looked
-    // up.
+    // The innermost enclosing impl scope, within which impl declarations should
+    // be looked up.
     Nonnull<ImplScope*> innermost_scope;
     // The innermost enclosing non-class impl scope, where impl declarations
     // should introduce new impls.
@@ -293,11 +293,11 @@ class TypeChecker {
       -> Nonnull<const Witness*>;
 
   // Add the given ImplBinding to the given `impl_scope`.
-  void BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
-                          ImplScope& impl_scope);
+  void BringImplBindingIntoScope(Nonnull<const ImplBinding*> impl_binding,
+                                 ImplScope& impl_scope);
 
   // Add all of the `impl_bindings` into the `scope`.
-  void BringImplsIntoScope(
+  void BringImplBindingsIntoScope(
       llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
       ImplScope& scope);
 

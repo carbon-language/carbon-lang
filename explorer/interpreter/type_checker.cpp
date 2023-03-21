@@ -468,7 +468,7 @@ auto TypeChecker::IsImplicitlyConvertible(
     const ImplScope& impl_scope, bool allow_user_defined_conversions) const
     -> bool {
   // Check for an exact match or for an implicit conversion.
-  // TODO: `impl`s of `ImplicitAs` should be provided to cover these
+  // TODO: `impl` definitions of `ImplicitAs` should be provided to cover these
   // conversions.
   CARBON_CHECK(IsConcreteType(source));
   CARBON_CHECK(IsConcreteType(destination));
@@ -1597,8 +1597,8 @@ class TypeChecker::ConstraintTypeBuilder {
     friend class ConstraintTypeBuilder;
 
    private:
-    int num_impls_added = 0;
-    int num_equals_added = 0;
+    int num_impl_constraints_added = 0;
+    int num_equality_constraints_added = 0;
   };
 
   // Brings all the constraints accumulated so far into the given impl scope,
@@ -1609,16 +1609,16 @@ class TypeChecker::ConstraintTypeBuilder {
                                  Nonnull<ImplScope*> impl_scope,
                                  Nonnull<ConstraintsInScopeTracker*> tracker) {
     // Figure out which constraints we're going to add.
-    int first_impl_to_add =
-        std::exchange(tracker->num_impls_added, impl_constraints_.size());
-    int first_equal_to_add =
-        std::exchange(tracker->num_equals_added, equality_constraints_.size());
+    int first_impl_constraint_to_add = std::exchange(
+        tracker->num_impl_constraints_added, impl_constraints_.size());
+    int first_equality_constraint_to_add = std::exchange(
+        tracker->num_equality_constraints_added, equality_constraints_.size());
     auto new_impl_constraints =
         llvm::ArrayRef<ImplConstraint>(impl_constraints_)
-            .drop_front(first_impl_to_add);
+            .drop_front(first_impl_constraint_to_add);
     auto new_equality_constraints =
         llvm::ArrayRef<EqualityConstraint>(equality_constraints_)
-            .drop_front(first_equal_to_add);
+            .drop_front(first_equality_constraint_to_add);
 
     // Add all of the new constraints.
     impl_scope->Add(new_impl_constraints, std::nullopt, std::nullopt,
@@ -3846,19 +3846,19 @@ void TypeChecker::BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
                                              ImplScope& impl_scope) {
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   CollectImplBindingsInPattern(p, impl_bindings);
-  BringImplsIntoScope(impl_bindings, impl_scope);
+  BringImplBindingsIntoScope(impl_bindings, impl_scope);
 }
 
-void TypeChecker::BringImplsIntoScope(
+void TypeChecker::BringImplBindingsIntoScope(
     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
     ImplScope& impl_scope) {
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
-    BringImplIntoScope(impl_binding, impl_scope);
+    BringImplBindingIntoScope(impl_binding, impl_scope);
   }
 }
 
-void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
-                                     ImplScope& impl_scope) {
+void TypeChecker::BringImplBindingIntoScope(
+    Nonnull<const ImplBinding*> impl_binding, ImplScope& impl_scope) {
   CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value() &&
                impl_binding->symbolic_identity().has_value());
   impl_scope.Add(impl_binding->interface(),
@@ -4184,7 +4184,7 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
       *trace_stream_ << "resolved constraint type is " << *type << "\n";
     }
 
-    BringImplIntoScope(impl_binding, impl_scope);
+    BringImplBindingIntoScope(impl_binding, impl_scope);
   }
 
   binding.set_static_type(type);
@@ -4679,11 +4679,11 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
   // If f->return_term().is_auto(), the function body was already
   // type checked in DeclareFunctionDeclaration.
   if (f->body().has_value() && !f->return_term().is_auto()) {
-    // Bring the impls into scope.
+    // Bring the impl bindings into scope.
     ImplScope function_scope;
     function_scope.AddParent(&impl_scope);
-    BringImplsIntoScope(cast<FunctionType>(f->static_type()).impl_bindings(),
-                        function_scope);
+    BringImplBindingsIntoScope(
+        cast<FunctionType>(f->static_type()).impl_bindings(), function_scope);
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << function_scope;
     }
@@ -5140,8 +5140,8 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
 
         // The type specified for the associated constant becomes a
         // constraint for the constraint type: `let X:! Interface` adds a
-        // `Self.X impls Interface` constraint that `impl`s must satisfy and
-        // users of the constraint type can rely on.
+        // `Self.X impls Interface` constraint that `impl` declarations must
+        // satisfy and users of the constraint type can rely on.
         if (const auto* constraint_type =
                 dyn_cast<ConstraintType>(constraint)) {
           builder.AddAndSubstitute(*this, constraint_type, assoc_value,
@@ -5509,10 +5509,10 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   Nonnull<const Value*> self = *impl_decl->self()->constant_value();
   Nonnull<const ConstraintType*> constraint = impl_decl->constraint_type();
 
-  // Bring the impls from the parameters into scope.
+  // Bring the impl bindingss from the parameters into scope.
   ImplScope impl_scope;
   impl_scope.AddParent(&enclosing_scope);
-  BringImplsIntoScope(impl_decl->impl_bindings(), impl_scope);
+  BringImplBindingsIntoScope(impl_decl->impl_bindings(), impl_scope);
   for (Nonnull<Declaration*> m : impl_decl->members()) {
     CARBON_ASSIGN_OR_RETURN(
         ConstraintLookupResult result,
@@ -5714,7 +5714,7 @@ auto TypeChecker::TypeCheckDeclaration(
     }
     case DeclarationKind::MatchFirstDeclaration: {
       auto* match_first = cast<MatchFirstDeclaration>(d);
-      for (auto* impl : match_first->impls()) {
+      for (auto* impl : match_first->impl_declarations()) {
         impl->set_match_first(match_first);
         CARBON_RETURN_IF_ERROR(TypeCheckImplDeclaration(impl, impl_scope));
       }
@@ -5804,7 +5804,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       break;
     }
     case DeclarationKind::MatchFirstDeclaration: {
-      for (auto* impl : cast<MatchFirstDeclaration>(d)->impls()) {
+      for (auto* impl : cast<MatchFirstDeclaration>(d)->impl_declarations()) {
         CARBON_RETURN_IF_ERROR(DeclareImplDeclaration(impl, scope_info));
       }
       break;

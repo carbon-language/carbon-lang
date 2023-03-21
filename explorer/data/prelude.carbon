@@ -70,8 +70,8 @@ __match_first {
   }
 
   // A tuple explicitly converts to another tuple if all its elements do. Note
-  // that this fully overlaps with the previous set of impls for the case where
-  // an implicit conversion is possible.
+  // that this fully overlaps with the previous set of impl declarations for
+  // the case where an implicit conversion is possible.
   impl forall [U1:! type, T1:! As(U1)]
       (T1,) as As((U1,)) {
     fn Convert[self: Self]() -> (U1,) {
@@ -389,7 +389,7 @@ constraint Mod {
   extends ModWith(Self) where .Result = Self;
 }
 
-// Note, these impls use the builtin addition for i32.
+// Note, these impl declarations use the builtin addition for i32.
 external impl i32 as Negate where .Result = i32 {
   fn Op[self: i32]() -> i32 { return -self; }
 }

@@ -658,7 +658,7 @@ class FunctionType : public Value {
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_bindings_;
   }
-  // The bindings for the witness tables (impls) required by the
+  // The bindings for the impl witness tables required by the
   // bounds on the type parameters of the generic function.
   auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
     return impl_bindings_;

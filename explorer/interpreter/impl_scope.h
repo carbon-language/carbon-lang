@@ -59,7 +59,7 @@ class ImplScope {
   // Adds a list of impl constraints from a constraint type into scope. Any
   // references to `.Self` are expected to have already been substituted for
   // the type implementing the constraint.
-  void Add(llvm::ArrayRef<ImplConstraint> impls,
+  void Add(llvm::ArrayRef<ImplConstraint> impl_constraints,
            llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
            Nonnull<const Witness*> witness, const TypeChecker& type_checker);
@@ -163,7 +163,7 @@ class ImplScope {
                                const TypeChecker& type_checker) const
       -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 
-  std::vector<Impl> impls_;
+  std::vector<Impl> impl_declarations_;
   std::vector<Nonnull<const EqualityConstraint*>> equalities_;
   std::vector<Nonnull<const ImplScope*>> parent_scopes_;
 };

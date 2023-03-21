@@ -667,7 +667,9 @@ class CallExpression : public Expression {
   // Maps each of `function`'s impl bindings to a witness.
   // Should not be called before typechecking, or if `function` is not
   // a generic function.
-  auto impls() const -> const ImplWitnessMap& { return bindings_.witnesses(); }
+  auto witnesses() const -> const ImplWitnessMap& {
+    return bindings_.witnesses();
+  }
 
   // Can only be called by type-checking, if a conversion was required.
   void set_argument(Nonnull<Expression*> argument) { argument_ = argument; }
