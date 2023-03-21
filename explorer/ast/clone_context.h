@@ -95,13 +95,11 @@ class CloneContext {
   // inspected.
   template <typename T>
   auto Remap(Nonnull<T*> node) -> Nonnull<T*> {
-    AstNode* base_node = node;
-    T* cloned = static_cast<T*>(nodes_[node]);
-    return cloned ? cloned : node;
     // Note, we can't use `llvm::cast<T>` here because we might not have
     // finished cloning `base_node` yet and its kind might not be set. This
     // happens when there is a pointer cycle in the AST.
-    return static_cast<T*>(Remap(base_node));
+    T* cloned = static_cast<T*>(nodes_[node]);
+    return cloned ? cloned : node;
   }
 
   // It's safe to remap a `const` object by remapping the non-const version and
