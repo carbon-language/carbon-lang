@@ -10,14 +10,13 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
-#include "explorer/ast/pattern.h"
 #include "explorer/ast/value_category.h"
 
 namespace Carbon {
 
 class Value;
 class Expression;
-class ImplBinding;
+class GenericBinding;
 
 // `ImplBinding` plays the role of the parameter for passing witness
 // tables to a generic. However, unlike regular parameters
@@ -36,6 +35,8 @@ class ImplBinding : public AstNode {
       : AstNode(AstNodeKind::ImplBinding, source_loc),
         type_var_(type_var),
         iface_(iface) {}
+
+  explicit ImplBinding(CloneContext& context, const ImplBinding& other);
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromImplBinding(node->kind());

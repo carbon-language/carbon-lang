@@ -12,6 +12,7 @@
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/ast_rtti.h"
+#include "explorer/ast/clone_context.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/value_category.h"
 #include "explorer/ast/value_node.h"
@@ -33,6 +34,11 @@ class Value;
 // details.
 class Pattern : public AstNode {
  public:
+  explicit Pattern(CloneContext& context, const Pattern& other)
+      : AstNode(context, other),
+        static_type_(context.Clone(other.static_type_)),
+        value_(context.Clone(other.value_)) {}
+
   Pattern(const Pattern&) = delete;
   auto operator=(const Pattern&) -> Pattern& = delete;
 
@@ -105,12 +111,26 @@ class Pattern : public AstNode {
 auto VisitNestedPatterns(const Pattern& pattern,
                          llvm::function_ref<bool(const Pattern&)> visitor)
     -> bool;
+inline auto VisitNestedPatterns(Pattern& pattern,
+                                llvm::function_ref<bool(Pattern&)> visitor)
+    -> bool {
+  // The non-const version is is implemented in terms of the const version. The
+  // const_cast is safe because every pattern reachable through a non-const
+  // pattern is also non-const.
+  const Pattern& const_pattern = pattern;
+  return VisitNestedPatterns(const_pattern, [&](const Pattern& inner) {
+    return visitor(const_cast<Pattern&>(inner));
+  });
+}
 
 // A pattern consisting of the `auto` keyword.
 class AutoPattern : public Pattern {
  public:
   explicit AutoPattern(SourceLocation source_loc)
       : Pattern(AstNodeKind::AutoPattern, source_loc) {}
+
+  explicit AutoPattern(CloneContext& context, const AutoPattern& other)
+      : Pattern(context, other) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAutoPattern(node->kind());
@@ -121,6 +141,9 @@ class VarPattern : public Pattern {
  public:
   explicit VarPattern(SourceLocation source_loc, Nonnull<Pattern*> pattern)
       : Pattern(AstNodeKind::VarPattern, source_loc), pattern_(pattern) {}
+
+  explicit VarPattern(CloneContext& context, const VarPattern& other)
+      : Pattern(context, other), pattern_(context.Clone(other.pattern_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromVarPattern(node->kind());
@@ -148,6 +171,12 @@ class BindingPattern : public Pattern {
         name_(std::move(name)),
         type_(type),
         value_category_(value_category) {}
+
+  explicit BindingPattern(CloneContext& context, const BindingPattern& other)
+      : Pattern(context, other),
+        name_(other.name_),
+        type_(context.Clone(other.type_)),
+        value_category_(other.value_category_) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBindingPattern(node->kind());
@@ -200,6 +229,9 @@ class AddrPattern : public Pattern {
                        Nonnull<BindingPattern*> binding)
       : Pattern(AstNodeKind::AddrPattern, source_loc), binding_(binding) {}
 
+  explicit AddrPattern(CloneContext& context, const AddrPattern& other)
+      : Pattern(context, other), binding_(context.Clone(other.binding_)) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAddrPattern(node->kind());
   }
@@ -217,6 +249,9 @@ class TuplePattern : public Pattern {
   TuplePattern(SourceLocation source_loc, std::vector<Nonnull<Pattern*>> fields)
       : Pattern(AstNodeKind::TuplePattern, source_loc),
         fields_(std::move(fields)) {}
+
+  explicit TuplePattern(CloneContext& context, const TuplePattern& other)
+      : Pattern(context, other), fields_(context.Clone(other.fields_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromTuplePattern(node->kind());
@@ -241,8 +276,7 @@ class GenericBinding : public Pattern {
         name_(std::move(name)),
         type_(type) {}
 
-  void Print(llvm::raw_ostream& out) const override;
-  void PrintID(llvm::raw_ostream& out) const override;
+  explicit GenericBinding(CloneContext& context, const GenericBinding& other);
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromGenericBinding(node->kind());
@@ -251,6 +285,16 @@ class GenericBinding : public Pattern {
   auto name() const -> const std::string& { return name_; }
   auto type() const -> const Expression& { return *type_; }
   auto type() -> Expression& { return *type_; }
+
+  // The index of this binding, which is the number of bindings that are in
+  // scope at the point where this binding is declared.
+  auto index() const -> int { return *index_; }
+
+  // Set the index of this binding. Should be called only during type-checking.
+  void set_index(int index) {
+    CARBON_CHECK(!index_) << "should only set depth and index once";
+    index_ = index;
+  }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
@@ -299,6 +343,7 @@ class GenericBinding : public Pattern {
  private:
   std::string name_;
   Nonnull<Expression*> type_;
+  std::optional<int> index_;
   std::optional<Nonnull<const Value*>> symbolic_identity_;
   std::optional<Nonnull<const ImplBinding*>> impl_binding_;
   std::optional<Nonnull<const GenericBinding*>> original_;
@@ -354,6 +399,13 @@ class AlternativePattern : public Pattern {
         alternative_name_(std::move(alternative_name)),
         arguments_(arguments) {}
 
+  explicit AlternativePattern(CloneContext& context,
+                              const AlternativePattern& other)
+      : Pattern(context, other),
+        choice_type_(context.Clone(other.choice_type_)),
+        alternative_name_(other.alternative_name_),
+        arguments_(context.Clone(other.arguments_)) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAlternativePattern(node->kind());
   }
@@ -382,6 +434,11 @@ class ExpressionPattern : public Pattern {
   explicit ExpressionPattern(Nonnull<Expression*> expression)
       : Pattern(AstNodeKind::ExpressionPattern, expression->source_loc()),
         expression_(expression) {}
+
+  explicit ExpressionPattern(CloneContext& context,
+                             const ExpressionPattern& other)
+      : Pattern(context, other),
+        expression_(context.Clone(other.expression_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromExpressionPattern(node->kind());

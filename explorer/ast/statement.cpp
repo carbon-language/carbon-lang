@@ -5,6 +5,7 @@
 #include "explorer/ast/statement.h"
 
 #include "common/check.h"
+#include "explorer/ast/declaration.h"
 #include "explorer/common/arena.h"
 #include "llvm/Support/Casting.h"
 
@@ -169,5 +170,8 @@ auto AssignOperatorToString(AssignOperator op) -> std::string_view {
       return ">>=";
   }
 }
+
+Return::Return(CloneContext& context, const Return& other)
+    : Statement(context, other), function_(context.Remap(other.function_)) {}
 
 }  // namespace Carbon

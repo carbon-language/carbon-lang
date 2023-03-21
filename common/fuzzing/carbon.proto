@@ -430,9 +430,10 @@ message ImplDeclaration {
   }
 
   optional ImplKind kind = 1;
-  optional Expression impl_type = 2;
-  optional Expression interface = 3;
-  repeated Declaration members = 4;
+  repeated GenericBinding deduced_parameters = 2;
+  optional Expression impl_type = 3;
+  optional Expression interface = 4;
+  repeated Declaration members = 5;
 }
 
 message MatchFirstDeclaration {

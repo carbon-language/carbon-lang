@@ -4,6 +4,7 @@
 
 #include "explorer/ast/declaration.h"
 
+#include "explorer/ast/value.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 
@@ -153,8 +154,16 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
           out << "external ";
           break;
       }
-      out << "impl " << *impl_decl.impl_type() << " as "
-          << impl_decl.interface();
+      out << "impl ";
+      if (!impl_decl.deduced_parameters().empty()) {
+        out << "forall [";
+        llvm::ListSeparator sep;
+        for (auto* param : impl_decl.deduced_parameters()) {
+          out << sep << *param;
+        }
+        out << "] ";
+      }
+      out << *impl_decl.impl_type() << " as " << impl_decl.interface();
       break;
     }
     case DeclarationKind::MatchFirstDeclaration:
@@ -271,12 +280,6 @@ auto GetName(const Declaration& declaration)
     }
   }
 }
-
-void GenericBinding::Print(llvm::raw_ostream& out) const {
-  out << name() << ":! " << type();
-}
-
-void GenericBinding::PrintID(llvm::raw_ostream& out) const { out << name(); }
 
 void ReturnTerm::Print(llvm::raw_ostream& out) const {
   switch (kind_) {
@@ -406,6 +409,27 @@ void CallableDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {
   }
 }
 
+ClassDeclaration::ClassDeclaration(CloneContext& context,
+                                   const ClassDeclaration& other)
+    : Declaration(context, other),
+      name_(other.name_),
+      extensibility_(other.extensibility_),
+      self_decl_(context.Clone(other.self_decl_)),
+      type_params_(context.Clone(other.type_params_)),
+      base_expr_(context.Clone(other.base_expr_)),
+      members_(context.Clone(other.members_)),
+      base_type_(context.Clone(other.base_type_)) {}
+
+ConstraintTypeDeclaration::ConstraintTypeDeclaration(
+    CloneContext& context, const ConstraintTypeDeclaration& other)
+    : Declaration(context, other),
+      name_(other.name_),
+      params_(context.Clone(other.params_)),
+      self_type_(context.Clone(other.self_type_)),
+      self_(context.Clone(other.self_)),
+      members_(context.Clone(other.members_)),
+      constraint_type_(context.Clone(other.constraint_type_)) {}
+
 auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                              ImplKind kind, Nonnull<Expression*> impl_type,
                              Nonnull<Expression*> interface,
@@ -429,6 +453,19 @@ auto ImplDeclaration::Create(Nonnull<Arena*> arena, SourceLocation source_loc,
                                      interface, resolved_params, members);
 }
 
+ImplDeclaration::ImplDeclaration(CloneContext& context,
+                                 const ImplDeclaration& other)
+    : Declaration(context, other),
+      kind_(other.kind_),
+      deduced_parameters_(context.Clone(other.deduced_parameters_)),
+      impl_type_(context.Clone(other.impl_type_)),
+      self_decl_(context.Clone(other.self_decl_)),
+      interface_(context.Clone(other.interface_)),
+      constraint_type_(context.Clone(other.constraint_type_)),
+      members_(context.Clone(other.members_)),
+      impl_bindings_(context.Remap(other.impl_bindings_)),
+      match_first_(context.Remap(other.match_first_)) {}
+
 void AlternativeSignature::Print(llvm::raw_ostream& out) const {
   out << "alt " << name();
   if (auto params = parameters()) {
@@ -449,5 +486,11 @@ auto ChoiceDeclaration::FindAlternative(std::string_view name) const
   }
   return std::nullopt;
 }
+
+MixDeclaration::MixDeclaration(CloneContext& context,
+                               const MixDeclaration& other)
+    : Declaration(context, other),
+      mixin_(context.Clone(other.mixin_)),
+      mixin_value_(context.Clone(other.mixin_value_)) {}
 
 }  // namespace Carbon

@@ -36,6 +36,12 @@ class [[nodiscard]] Error {
       : location_(std::move(other.location_)),
         message_(std::move(other.message_)) {}
 
+  Error& operator=(Error&& other) noexcept {
+    location_ = std::move(other.location_);
+    message_ = std::move(other.message_);
+    return *this;
+  }
+
   // Prints the error string.
   void Print(llvm::raw_ostream& out) const {
     if (!location().empty()) {
@@ -72,9 +78,6 @@ class [[nodiscard]] ErrorOr {
   // Implicit for easy construction on returns.
   // NOLINTNEXTLINE(google-explicit-constructor)
   ErrorOr(T val) : val_(std::move(val)) {}
-
-  // Moves held state.
-  ErrorOr(ErrorOr&& other) noexcept : val_(std::move(other.val_)) {}
 
   // Returns true for success.
   auto ok() const -> bool { return std::holds_alternative<T>(val_); }

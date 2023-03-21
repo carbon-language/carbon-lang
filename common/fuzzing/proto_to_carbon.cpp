@@ -939,6 +939,15 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
         out << "external ";
       }
       out << "impl ";
+      if (!impl.deduced_parameters().empty()) {
+        out << "forall [";
+        llvm::ListSeparator sep;
+        for (const Fuzzing::GenericBinding& p : impl.deduced_parameters()) {
+          out << sep;
+          GenericBindingToCarbon(p, out);
+        }
+        out << "]";
+      }
       ExpressionToCarbon(impl.impl_type(), out);
       out << " as ";
       ExpressionToCarbon(impl.interface(), out);

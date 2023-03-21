@@ -365,6 +365,35 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
   }
 }
 
+DotSelfExpression::DotSelfExpression(CloneContext& context,
+                                     const DotSelfExpression& other)
+    : Expression(context, other),
+      name_(other.name_),
+      self_binding_(context.Remap(other.self_binding_)) {}
+
+MemberAccessExpression::MemberAccessExpression(
+    CloneContext& context, const MemberAccessExpression& other)
+    : Expression(context, other),
+      object_(context.Clone(other.object_)),
+      is_type_access_(other.is_type_access_),
+      is_addr_me_method_(other.is_addr_me_method_),
+      impl_(context.Clone(other.impl_)),
+      constant_value_(context.Clone(other.constant_value_)) {}
+
+SimpleMemberAccessExpression::SimpleMemberAccessExpression(
+    CloneContext& context, const SimpleMemberAccessExpression& other)
+    : RewritableMixin(context, other),
+      member_name_(other.member_name_),
+      member_(context.Clone(other.member_)),
+      found_in_interface_(context.Clone(other.found_in_interface_)),
+      value_node_(context.Clone(other.value_node_)) {}
+
+CompoundMemberAccessExpression::CompoundMemberAccessExpression(
+    CloneContext& context, const CompoundMemberAccessExpression& other)
+    : MemberAccessExpression(context, other),
+      path_(context.Clone(other.path_)),
+      member_(context.Clone(other.member_)) {}
+
 WhereClause::~WhereClause() = default;
 
 void WhereClause::Print(llvm::raw_ostream& out) const {
@@ -388,5 +417,12 @@ void WhereClause::Print(llvm::raw_ostream& out) const {
 }
 
 void WhereClause::PrintID(llvm::raw_ostream& out) const { out << "..."; }
+
+WhereExpression::WhereExpression(CloneContext& context,
+                                 const WhereExpression& other)
+    : RewritableMixin(context, other),
+      self_binding_(context.Clone(other.self_binding_)),
+      clauses_(context.Clone(other.clauses_)),
+      enclosing_dot_self_(context.Remap(other.enclosing_dot_self_)) {}
 
 }  // namespace Carbon

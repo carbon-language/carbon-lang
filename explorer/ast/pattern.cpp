@@ -8,6 +8,8 @@
 
 #include "common/ostream.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/impl_binding.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
@@ -169,5 +171,15 @@ auto ParenExpressionToParenPattern(Nonnull<Arena*> arena,
   }
   return result;
 }
+
+GenericBinding::GenericBinding(CloneContext& context,
+                               const GenericBinding& other)
+    : Pattern(context, other),
+      name_(other.name_),
+      type_(context.Clone(other.type_)),
+      symbolic_identity_(context.Clone(other.symbolic_identity_)),
+      impl_binding_(context.Clone(other.impl_binding_)),
+      original_(context.Remap(other.original_)),
+      named_as_type_via_dot_self_(other.named_as_type_via_dot_self_) {}
 
 }  // namespace Carbon

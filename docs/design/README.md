@@ -959,15 +959,14 @@ it a _`var` binding_.
     [l-value](#value-categories-and-value-phases) which can be modified and has
     a stable address.
 
-A `let`-binding may trigger a copy of the original value, or a move if the
-original value is a temporary, or the binding may be a pointer to the original
-value, like a
-[`const` reference in C++](<https://en.wikipedia.org/wiki/Reference_(C%2B%2B)>).
-Which of these options (copy, move, or pointer) is selected must not be
-observable to the programmer. For example, Carbon will not allow modifications
-to the original value when it is through a pointer. This choice may also be
-influenced by the type. For example, types that don't support being copied will
-be passed by pointer instead.
+A `let`-binding may be implemented as an alias for the original value (like a
+[`const` reference in C++](<https://en.wikipedia.org/wiki/Reference_(C%2B%2B)>)),
+or it may be copied from the original value (if it is copyable), or it may be
+moved from the original value (if it was a temporary). The Carbon
+implementation's choice among these options may be indirectly observable, for
+example through side effects of the destructor, copy, and move operations, but
+the program's correctness must not depend on which option the Carbon
+implementation chooses.
 
 A [generic binding](#checked-and-template-parameters) uses `:!` instead of a
 colon (`:`) and can only match
