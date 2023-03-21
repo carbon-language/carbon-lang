@@ -71,7 +71,8 @@ static auto PrintList(llvm::raw_ostream& out, llvm::StringLiteral name,
   out << "]\n";
 }
 
-auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
+auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
+    -> void {
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
 
   PrintList(out, "calls", calls_);
@@ -79,7 +80,15 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   PrintList(out, "integer_literals", integer_literals_);
   PrintList(out, "real_literals", real_literals_);
   PrintList(out, "strings", strings_);
-  PrintList(out, "nodes", nodes_);
+
+  out << "nodes: [\n";
+  for (int i = include_builtins ? 0 : SemanticsBuiltinKind::ValidCount;
+       i < static_cast<int>(nodes_.size()); ++i) {
+    const auto& element = nodes_[i];
+    out.indent(Indent);
+    out << element << ",\n";
+  }
+  out << "]\n";
 
   out << "node_blocks: [\n";
   for (const auto& node_block : node_blocks_) {
