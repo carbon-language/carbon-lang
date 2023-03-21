@@ -936,20 +936,23 @@ auto SemanticsParseTreeHandler::HandleSelfType(ParseTree::Node parse_node)
 
 auto SemanticsParseTreeHandler::HandleStructComma(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructComma");
-  return false;
+  node_stack_.Push(parse_node);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleStructFieldDesignator(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructFieldDesignator");
-  return false;
+  node_stack_.PopAndIgnore();  // DeclaredName
+  node_stack_.Push(parse_node);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleStructFieldType(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructFieldType");
-  return false;
+  node_stack_.PopAndIgnore();  // Literal
+  node_stack_.PopAndIgnore();  // StructFieldDesignator
+  node_stack_.Push(parse_node);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleStructFieldUnknown(
@@ -960,27 +963,46 @@ auto SemanticsParseTreeHandler::HandleStructFieldUnknown(
 
 auto SemanticsParseTreeHandler::HandleStructFieldValue(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructFieldValue");
-  return false;
+  node_stack_.PopAndIgnore();  // Literal
+  node_stack_.PopAndIgnore();  // StructFieldDesignator
+  node_stack_.Push(parse_node);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleStructLiteral(ParseTree::Node parse_node)
     -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructLiteral");
-  return false;
+  while (true) {
+    auto parse_kind = parse_tree_->node_kind(node_stack_.PeekParseNode());
+    if (parse_kind == ParseNodeKind::StructLiteralOrStructTypeLiteralStart) {
+      node_stack_.PopAndIgnore();
+      break;
+    } else {
+      node_stack_.PopAndIgnore();
+    }
+  }
+  node_stack_.Push(parse_node);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleStructLiteralOrStructTypeLiteralStart(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo,
-                 "HandleStructLiteralOrStructTypeLiteralStart");
-  return false;
+  node_stack_.Push(parse_node);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleStructTypeLiteral(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleStructTypeLiteral");
-  return false;
+  while (true) {
+    auto parse_kind = parse_tree_->node_kind(node_stack_.PeekParseNode());
+    if (parse_kind == ParseNodeKind::StructLiteralOrStructTypeLiteralStart) {
+      node_stack_.PopAndIgnore();
+      break;
+    } else {
+      node_stack_.PopAndIgnore();
+    }
+  }
+  node_stack_.Push(parse_node);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleTemplate(ParseTree::Node parse_node)
