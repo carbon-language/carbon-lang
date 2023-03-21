@@ -132,7 +132,7 @@ class TypeChecker {
     // be looked up.
     Nonnull<ImplScope*> innermost_scope;
     // The innermost enclosing non-class impl scope, where impl declarations
-    // should introduce new impls.
+    // should introduce new implementations.
     Nonnull<ImplScope*> innermost_non_class_scope;
     // The enclosing generic bindings, if any.
     std::vector<Nonnull<const GenericBinding*>> bindings;
@@ -177,7 +177,7 @@ class TypeChecker {
   // surrounding context gives us that information. Otherwise, it is nullopt.
   // Implicit conversions from `expected` to the pattern's type are permitted.
   //
-  // `impl_scope` is extended with all impls implied by the pattern.
+  // `impl_scope` is extended with all implementations implied by the pattern.
   auto TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected,
                         ImplScope& impl_scope,
@@ -199,7 +199,7 @@ class TypeChecker {
       -> ErrorOr<Success>;
 
   // Perform deduction for the deduced bindings in a function call, and set its
-  // lists of generic bindings and impls.
+  // lists of generic bindings and implementations.
   //
   // -   `params` is the list of parameters.
   // -   `generic_params` indicates which parameters are generic parameters,
@@ -284,9 +284,9 @@ class TypeChecker {
       Nonnull<const Pattern*> p,
       std::vector<Nonnull<const ImplBinding*>>& impl_bindings);
 
-  // Add the impls from the pattern into the given `impl_scope`.
-  void BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
-                                  ImplScope& impl_scope);
+  // Add the impl bindings from the pattern into the given `impl_scope`.
+  void BringPatternImplBindingsIntoScope(Nonnull<const Pattern*> p,
+                                         ImplScope& impl_scope);
 
   // Create a witness for the given `impl` binding.
   auto CreateImplBindingWitness(Nonnull<const ImplBinding*> impl_binding)
@@ -418,8 +418,8 @@ class TypeChecker {
                        const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
   // Rebuild a value in the current type-checking context. Applies any rewrites
-  // that are in scope and attempts to resolve associated constants using impls
-  // that have been declared since the value was formed.
+  // that are in scope and attempts to resolve associated constants using
+  // implementations that have been declared since the value was formed.
   auto RebuildValue(Nonnull<const Value*> value) const -> Nonnull<const Value*>;
 
   // Implementation of Substitute and RebuildValue. Does not check that
@@ -519,7 +519,7 @@ class TypeChecker {
   // rewrites that are not yet visible in any type.
   std::vector<ConstraintTypeBuilder*> partial_constraint_types_;
 
-  // A set of impls we're currently matching.
+  // A set of implementations we're currently matching.
   // TODO: This is `mutable` because `MatchImpl` is `const`. We need to remove
   // the `const`s from everywhere that transitively does `impl` matching to get
   // rid of this `mutable`.

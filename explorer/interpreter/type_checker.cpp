@@ -1601,10 +1601,10 @@ class TypeChecker::ConstraintTypeBuilder {
     int num_equality_constraints_added = 0;
   };
 
-  // Brings all the constraints accumulated so far into the given impl scope,
-  // as if we built the constraint type and then added it into the scope. If
-  // this will be called more than once, an ImplsInScopeTracker can be provided
-  // to avoid adding the same impls more than once.
+  // Brings all the constraints accumulated so far into the given impl scope, as
+  // if we built the constraint type and then added it into the scope. If this
+  // will be called more than once, an ConstraintssInScopeTracker can be
+  // provided to avoid adding the same implementations more than once.
   void BringConstraintsIntoScope(const TypeChecker& type_checker,
                                  Nonnull<ImplScope*> impl_scope,
                                  Nonnull<ConstraintsInScopeTracker*> tracker) {
@@ -3842,8 +3842,8 @@ void TypeChecker::CollectImplBindingsInPattern(
   });
 }
 
-void TypeChecker::BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
-                                             ImplScope& impl_scope) {
+void TypeChecker::BringPatternImplBindingsIntoScope(Nonnull<const Pattern*> p,
+                                                    ImplScope& impl_scope) {
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   CollectImplBindingsInPattern(p, impl_bindings);
   BringImplBindingsIntoScope(impl_bindings, impl_scope);
@@ -4845,7 +4845,7 @@ auto TypeChecker::TypeCheckClassDeclaration(
   ImplScope class_scope;
   class_scope.AddParent(&impl_scope);
   if (class_decl->type_params().has_value()) {
-    BringPatternImplsIntoScope(*class_decl->type_params(), class_scope);
+    BringPatternImplBindingsIntoScope(*class_decl->type_params(), class_scope);
   }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << class_scope;
@@ -4935,7 +4935,7 @@ auto TypeChecker::TypeCheckMixinDeclaration(
   ImplScope mixin_scope;
   mixin_scope.AddParent(&impl_scope);
   if (mixin_decl->params().has_value()) {
-    BringPatternImplsIntoScope(*mixin_decl->params(), mixin_scope);
+    BringPatternImplBindingsIntoScope(*mixin_decl->params(), mixin_scope);
   }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << mixin_scope;
@@ -5194,7 +5194,8 @@ auto TypeChecker::TypeCheckConstraintTypeDeclaration(
   ImplScope constraint_scope;
   constraint_scope.AddParent(&impl_scope);
   if (constraint_decl->params().has_value()) {
-    BringPatternImplsIntoScope(*constraint_decl->params(), constraint_scope);
+    BringPatternImplBindingsIntoScope(*constraint_decl->params(),
+                                      constraint_scope);
   }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << constraint_scope;
@@ -5282,7 +5283,7 @@ auto TypeChecker::CheckAndAddImplBindings(
     const ScopeInfo& scope_info) -> ErrorOr<Success> {
   // Each interface that is a lookup context is required to be implemented by
   // the impl members. Other constraints are required to be satisfied by
-  // either those impls or impls available elsewhere.
+  // either those implementations or implementations available elsewhere.
   Nonnull<const ConstraintType*> constraint = impl_decl->constraint_type();
   for (auto lookup : constraint->lookup_contexts()) {
     if (const auto* iface_type = dyn_cast<InterfaceType>(lookup.context)) {
