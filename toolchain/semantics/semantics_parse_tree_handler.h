@@ -127,6 +127,13 @@ class SemanticsParseTreeHandler {
                                ParseTree::Node param_parse_node,
                                SemanticsNodeBlockId param_refs_id) -> bool;
 
+  // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
+  // result type. The result will be the node to use to replace `value`. The
+  // result will be BuiltinInvalidType for errors; this handles printing
+  // diagnostics.
+  auto ImplicitAs(ParseTree::Node parse_node, SemanticsNodeId value,
+                  SemanticsNodeId as_type) -> SemanticsNodeId;
+
   auto ParamOrArgStart() -> void;
   auto ParamOrArgComma(ParseTree::Node parse_node) -> bool;
   auto ParamOrArgEnd(

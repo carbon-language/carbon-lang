@@ -229,6 +229,47 @@ auto SemanticsParseTreeHandler::TryTypeConversionOnArgs(
   return true;
 }
 
+auto SemanticsParseTreeHandler::ImplicitAs(ParseTree::Node parse_node,
+                                           SemanticsNodeId value,
+                                           SemanticsNodeId as_type)
+    -> SemanticsNodeId {
+  // Start by making sure both sides are valid. If any part is invalid, the
+  // result is invalid and we shouldn't error.
+  if (value == SemanticsNodeId::BuiltinInvalidType ||
+      as_type == SemanticsNodeId::BuiltinInvalidType) {
+    return SemanticsNodeId::BuiltinInvalidType;
+  }
+  auto value_type = semantics_->GetType(value);
+  if (value_type == SemanticsNodeId::BuiltinInvalidType) {
+    return SemanticsNodeId::BuiltinInvalidType;
+  }
+
+  // If the type doesn't need to change, we can return the value directly.
+  if (value_type == as_type) {
+    return value;
+  }
+
+  // When converting to a Type, there are some automatic conversions that can be
+  // done.
+  if (as_type == SemanticsNodeId::BuiltinTypeType) {
+    if (value == SemanticsNodeId::BuiltinEmptyTuple) {
+      return SemanticsNodeId::BuiltinEmptyTupleType;
+    }
+    if (value == SemanticsNodeId::BuiltinEmptyStruct) {
+      return SemanticsNodeId::BuiltinEmptyStructType;
+    }
+  }
+
+  CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
+                    "Cannot implicitly convert {0} from {1} to {2}.",
+                    SemanticsNodeId, SemanticsNodeId, SemanticsNodeId);
+  emitter_
+      ->Build(parse_node, ImplicitAsConversionFailure, value, value_type,
+              as_type)
+      .Emit();
+  return SemanticsNodeId::Invalid;
+}
+
 auto SemanticsParseTreeHandler::ParamOrArgStart() -> void {
   params_or_args_stack_.Push();
   node_block_stack_.Push();
@@ -819,16 +860,19 @@ auto SemanticsParseTreeHandler::HandleParenExpressionOrTupleLiteralStart(
 
 auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
     -> bool {
-  auto type = node_stack_.PopForNodeId();
+  auto [type_node, parsed_type] = node_stack_.PopForParseNodeAndNodeId();
+  auto storage_type =
+      ImplicitAs(type_node, parsed_type, SemanticsNodeId::BuiltinTypeType);
 
   // Get the name.
   auto name_node = node_stack_.PopForSoloParseNode();
 
   // Allocate storage, linked to the name for error locations.
-  auto storage_id = AddNode(SemanticsNode::MakeVarStorage(name_node, type));
+  auto storage_id =
+      AddNode(SemanticsNode::MakeVarStorage(name_node, storage_type));
 
   // Bind the name to storage.
-  auto name_id = BindName(name_node, type, storage_id);
+  auto name_id = BindName(name_node, storage_type, storage_id);
 
   // If this node's result is used, it'll be for either the name or the storage
   // address. The storage address can be found through the name, so we push the
@@ -1045,10 +1089,9 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
     // Restore the name now that the initializer is complete.
     ReaddNameToLookup(binding.second, storage_id);
 
-    auto storage_type =
-        TryTypeConversion(parse_node, storage_id, last_child.second,
-                          /*can_convert_lhs=*/false);
-    AddNode(SemanticsNode::MakeAssign(parse_node, storage_type, storage_id,
+    auto stored_type = ImplicitAs(parse_node, last_child.second,
+                                  semantics_->GetType(storage_id));
+    AddNode(SemanticsNode::MakeAssign(parse_node, stored_type, storage_id,
                                       last_child.second));
   }
 
