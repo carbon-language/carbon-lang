@@ -31,18 +31,7 @@ class CloneContext {
   CloneContext(const CloneContext&) = delete;
   auto operator=(const CloneContext&) -> const CloneContext& = delete;
 
-  // Clone the given node, and remember the mapping from the original to the
-  // new node for remapping.
-  auto Clone(Nonnull<const AstNode*> node) -> Nonnull<AstNode*>;
-
-  // Clone the given value, replacing references to cloned local declarations
-  // with references to the copies.
-  auto Clone(Nonnull<const Value*> value) -> Nonnull<Value*>;
-
-  // Clone the given element reference.
-  auto Clone(Nonnull<const Element*> elem) -> Nonnull<Element*>;
-
-  // When given a derived class, produce a clone of the same derived class.
+  // Clone an AST element.
   template <typename T>
   auto Clone(Nonnull<const T*> node) -> Nonnull<T*> {
     if constexpr (std::is_convertible_v<const T*, const AstNode*>) {
@@ -50,15 +39,15 @@ class CloneContext {
       // Note, we can't use `llvm::cast<T>` here because we might not have
       // finished cloning `base_node` yet and its kind might not be set. This
       // happens when there is a pointer cycle in the AST.
-      return static_cast<T*>(Clone(base_node));
+      return static_cast<T*>(CloneBase(base_node));
     } else if constexpr (std::is_convertible_v<const T*, const Value*>) {
       const Value* base_value = node;
-      return static_cast<T*>(Clone(base_value));
+      return static_cast<T*>(CloneBase(base_value));
     } else {
       static_assert(std::is_convertible_v<const T*, const Element*>,
                     "unknown pointer type to clone");
       const Element* base_elem = node;
-      return static_cast<T*>(Clone(base_elem));
+      return static_cast<T*>(CloneBase(base_elem));
     }
   }
 
@@ -104,16 +93,11 @@ class CloneContext {
   // that might refer to something being cloned or might refer to the original
   // object. The returned node might not be fully constructed and should not be
   // inspected.
-  auto Remap(Nonnull<AstNode*> node) -> Nonnull<AstNode*> {
-    auto* cloned = nodes_[node];
-    return cloned ? cloned : node;
-  }
-
-  // When given a derived class, produce a remapped node of the same derived
-  // class.
   template <typename T>
   auto Remap(Nonnull<T*> node) -> Nonnull<T*> {
     AstNode* base_node = node;
+    T* cloned = static_cast<T*>(nodes_[node]);
+    return cloned ? cloned : node;
     // Note, we can't use `llvm::cast<T>` here because we might not have
     // finished cloning `base_node` yet and its kind might not be set. This
     // happens when there is a pointer cycle in the AST.
@@ -152,11 +136,26 @@ class CloneContext {
     return llvm::cast<T>(cloned);
   }
 
+ private:
+  // A value transform that remaps or clones AST elements referred to by the
+  // value being transformed.
+  class CloneValueTransform;
+
+  // Clone the given node, and remember the mapping from the original to the
+  // new node for remapping.
+  auto CloneBase(Nonnull<const AstNode*> node) -> Nonnull<AstNode*>;
+
+  // Clone the given value, replacing references to cloned local declarations
+  // with references to the copies.
+  auto CloneBase(Nonnull<const Value*> value) -> Nonnull<Value*>;
+
+  // Clone the given element reference.
+  auto CloneBase(Nonnull<const Element*> elem) -> Nonnull<Element*>;
+
   // Clone the given node if it's not already been cloned. This should be used
   // very sparingly, in cases where ownership is unclear.
-  void MaybeClone(Nonnull<const AstNode*> node);
+  void MaybeCloneBase(Nonnull<const AstNode*> node);
 
- private:
   // Arena to allocate new nodes within.
   Nonnull<Arena*> arena_;
 

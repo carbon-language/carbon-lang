@@ -9,7 +9,8 @@
 
 namespace Carbon {
 
-auto CloneContext::Clone(Nonnull<const AstNode*> node) -> Nonnull<AstNode*> {
+auto CloneContext::CloneBase(Nonnull<const AstNode*> node)
+    -> Nonnull<AstNode*> {
   auto [it, added] = nodes_.insert({node, nullptr});
   CARBON_CHECK(added) << (it->second
                               ? "node was cloned multiple times: "
@@ -25,8 +26,7 @@ auto CloneContext::Clone(Nonnull<const AstNode*> node) -> Nonnull<AstNode*> {
   return result;
 }
 
-namespace {
-class CloneValueTransform
+class CloneContext::CloneValueTransform
     : public ValueTransform<CloneValueTransform, NoOpUnwrapper> {
  public:
   CloneValueTransform(Nonnull<CloneContext*> context, Nonnull<Arena*> arena)
@@ -53,10 +53,10 @@ class CloneValueTransform
   auto operator()(Nonnull<const FunctionType*> fn_type)
       -> Nonnull<const FunctionType*> {
     for (auto* binding : fn_type->deduced_bindings()) {
-      context_->MaybeClone(binding);
+      context_->MaybeCloneBase(binding);
     }
     for (auto [index, binding] : fn_type->generic_parameters()) {
-      context_->MaybeClone(binding);
+      context_->MaybeCloneBase(binding);
     }
     return ValueTransform::operator()(fn_type);
   }
@@ -71,18 +71,18 @@ class CloneValueTransform
  private:
   Nonnull<CloneContext*> context_;
 };
-}  // namespace
 
-auto CloneContext::Clone(Nonnull<const Value*> value) -> Nonnull<Value*> {
+auto CloneContext::CloneBase(Nonnull<const Value*> value) -> Nonnull<Value*> {
   return const_cast<Value*>(CloneValueTransform(this, arena_).Transform(value));
 }
 
-auto CloneContext::Clone(Nonnull<const Element*> elem) -> Nonnull<Element*> {
+auto CloneContext::CloneBase(Nonnull<const Element*> elem)
+    -> Nonnull<Element*> {
   return const_cast<Element*>(
       CloneValueTransform(this, arena_).Transform(elem));
 }
 
-void CloneContext::MaybeClone(Nonnull<const AstNode*> node) {
+void CloneContext::MaybeCloneBase(Nonnull<const AstNode*> node) {
   auto it = nodes_.find(node);
   if (it == nodes_.end()) {
     Clone(node);
