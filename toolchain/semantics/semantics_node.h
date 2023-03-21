@@ -28,7 +28,15 @@ struct SemanticsNodeId : public IndexBase {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "node";
-    IndexBase::Print(out);
+    if (!is_valid()) {
+      IndexBase::Print(out);
+    } else if (index < SemanticsBuiltinKind::ValidCount) {
+      out << SemanticsBuiltinKind::FromInt(index);
+    } else {
+      // Use the `+` as a small reminder that this is a delta, rather than an
+      // absolute index.
+      out << "+" << index - SemanticsBuiltinKind::ValidCount;
+    }
   }
 };
 
