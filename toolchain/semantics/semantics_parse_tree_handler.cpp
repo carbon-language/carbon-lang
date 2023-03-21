@@ -1089,10 +1089,11 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
     // Restore the name now that the initializer is complete.
     ReaddNameToLookup(binding.second, storage_id);
 
-    auto stored_type = ImplicitAs(parse_node, last_child.second,
-                                  semantics_->GetType(storage_id));
-    AddNode(SemanticsNode::MakeAssign(parse_node, stored_type, storage_id,
-                                      last_child.second));
+    auto converted_value = ImplicitAs(parse_node, last_child.second,
+                                      semantics_->GetType(storage_id));
+    AddNode(SemanticsNode::MakeAssign(parse_node,
+                                      semantics_->GetType(converted_value),
+                                      storage_id, last_child.second));
   }
 
   node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::VariableIntroducer);

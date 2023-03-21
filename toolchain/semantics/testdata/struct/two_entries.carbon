@@ -19,11 +19,11 @@
 // CHECK:STDOUT:   x,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeEmptyStruct},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeEmptyStruct},
+// CHECK:STDOUT:   {kind: VarStorage, type: nodeEmptyStructType},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeEmptyStructType},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: nodeEmptyStruct, type: nodeInvalidType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: nodeEmptyStruct, type: nodeEmptyStructType},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -37,5 +37,4 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/two_entries.carbon:[[@LINE+1]]:45: Type mismatch: lhs is nodeEmptyStruct, rhs is nodeEmptyStructType
 var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};

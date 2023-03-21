@@ -17,9 +17,9 @@
 // CHECK:STDOUT:   y,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeEmptyStruct},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeEmptyStruct},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: nodeEmptyStruct, type: nodeInvalidType},
+// CHECK:STDOUT:   {kind: VarStorage, type: nodeEmptyStructType},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeEmptyStructType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: nodeEmptyStruct, type: nodeEmptyStructType},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -31,5 +31,4 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/empty.carbon:[[@LINE+1]]:15: Type mismatch: lhs is nodeEmptyStruct, rhs is nodeEmptyStructType
 var y: {} = {};

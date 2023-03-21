@@ -24,7 +24,7 @@
 // CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+3, type: nodeInvalidType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+3, type: nodeTypeType},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+0, arg1: block2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -43,6 +43,6 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_init_type_mismatch.carbon:[[@LINE+1]]:19: Type mismatch: lhs is nodeIntegerType, rhs is nodeFloatingPointType
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_init_type_mismatch.carbon:[[@LINE+1]]:19: Cannot implicitly convert node+3 from nodeFloatingPointType to nodeIntegerType.
   var x: i32 = 1.0;
 }
