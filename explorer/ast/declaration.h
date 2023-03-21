@@ -950,7 +950,8 @@ class MatchFirstDeclaration : public Declaration {
 
   explicit MatchFirstDeclaration(CloneContext& context,
                                  const MatchFirstDeclaration& other)
-      : Declaration(context, other), impls_(context.Clone(other.impls_)) {}
+      : Declaration(context, other),
+        impl_declarations_(context.Clone(other.impl_declarations_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromMatchFirstDeclaration(node->kind());

@@ -997,7 +997,8 @@ class ImplsWhereClause : public WhereClause {
         type_(type),
         constraint_(constraint) {}
 
-  explicit IsWhereClause(CloneContext& context, const IsWhereClause& other)
+  explicit ImplsWhereClause(CloneContext& context,
+                            const ImplsWhereClause& other)
       : WhereClause(context, other),
         type_(context.Clone(other.type_)),
         constraint_(context.Clone(other.constraint_)) {}
