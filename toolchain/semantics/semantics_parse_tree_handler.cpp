@@ -267,7 +267,7 @@ auto SemanticsParseTreeHandler::ImplicitAs(ParseTree::Node parse_node,
       ->Build(parse_node, ImplicitAsConversionFailure, value, value_type,
               as_type)
       .Emit();
-  return SemanticsNodeId::Invalid;
+  return SemanticsNodeId::BuiltinInvalidType;
 }
 
 auto SemanticsParseTreeHandler::ParamOrArgStart() -> void {

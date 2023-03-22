@@ -23,10 +23,10 @@
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: VarStorage},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2},
+// CHECK:STDOUT:   {kind: VarStorage, type: nodeInvalidType},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: nodeInvalidType},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+4, type: nodeTypeType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+4, type: nodeInvalidType},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+0, arg1: block2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -46,7 +46,6 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_storage_is_literal.carbon:[[@LINE+2]]:10: Cannot implicitly convert node+1 from nodeIntegerType to nodeTypeType.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_storage_is_literal.carbon:[[@LINE+1]]:15: Cannot implicitly convert node+4 from nodeIntegerType to node<invalid>.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_storage_is_literal.carbon:[[@LINE+1]]:10: Cannot implicitly convert node+1 from nodeIntegerType to nodeTypeType.
   var x: 1 = 1;
 }
