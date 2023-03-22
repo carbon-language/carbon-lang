@@ -34,7 +34,7 @@ __match_first {
   // Pick up implicit conversions that are built into the compiler.
   // TODO: Split these into individual categories and implement as many as we can
   // in the prelude.
-  impl forall [U:! type, T:! __intrinsic_implicit_as(U)] T as ImplicitAs(U) {
+  impl forall [U:! type, template T:! __intrinsic_implicit_as(U)] T as ImplicitAs(U) {
     fn Convert[self: Self]() -> U { return __intrinsic_implicit_as_convert(self, U); }
   }
 

@@ -121,6 +121,7 @@ SLASH                 "/"
 SLASH_EQUAL           "/="
 STAR_EQUAL            "*="
 STRING                "String"
+TEMPLATE              "template"
 THEN                  "then"
 TRUE                  "true"
 TYPE                  "type"
@@ -240,6 +241,7 @@ operand_start         [(A-Za-z0-9_\"]
 {SLASH}                 { return CARBON_SIMPLE_TOKEN(SLASH);                 }
 {STAR_EQUAL}            { return CARBON_SIMPLE_TOKEN(STAR_EQUAL);            }
 {STRING}                { return CARBON_SIMPLE_TOKEN(STRING);                }
+{TEMPLATE}              { return CARBON_SIMPLE_TOKEN(TEMPLATE);              }
 {THEN}                  { return CARBON_SIMPLE_TOKEN(THEN);                  }
 {TRUE}                  { return CARBON_SIMPLE_TOKEN(TRUE);                  }
 {TYPE}                  { return CARBON_SIMPLE_TOKEN(TYPE);                  }

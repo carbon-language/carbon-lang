@@ -198,8 +198,13 @@ message BindingPattern {
 }
 
 message GenericBinding {
+  enum Kind {
+    Checked = 0;
+    Template = 1;
+  }
   optional string name = 1;
   optional Expression type = 2;
+  optional Kind kind = 3;
 }
 
 message TuplePattern {

@@ -20,32 +20,25 @@
 // CHECK:STDOUT:   x,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node0, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node1, type: node1},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node2, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node3, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node4, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node5, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node6, type: node5},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
-// CHECK:STDOUT:   {kind: VarStorage, type: node2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node8, type: node2},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: node2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node8, arg1: node10, type: node2},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node7, arg1: block2},
+// CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+3, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+0, arg1: block2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node7,
-// CHECK:STDOUT:     node12,
+// CHECK:STDOUT:     node+0,
+// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node8,
-// CHECK:STDOUT:     node9,
-// CHECK:STDOUT:     node10,
-// CHECK:STDOUT:     node11,
+// CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

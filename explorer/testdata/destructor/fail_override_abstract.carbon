@@ -8,9 +8,12 @@
 
 package ExplorerTest api;
 
-interface Iface {
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/assoc_const/fail_anonymous.carbon:[[@LINE+1]]: syntax error, unexpected UNDERSCORE, expecting identifier or TEMPLATE
-  let _:! type;
+
+base class A {
+    // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/destructor/fail_override_abstract.carbon:[[@LINE+1]]: syntax error, unexpected DESTRUCTOR, expecting CLASS
+    abstract destructor[self: Self]{}
 }
 
-fn Main() -> i32 { return 0; }
+fn Main() -> i32 {
+  return 0;
+}

@@ -168,9 +168,10 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
   }
   // TODO: This should use type names instead of nodes.
   CARBON_DIAGNOSTIC(TypeMismatch, Error,
-                    "Type mismatch: lhs is {0}, rhs is {1}", SemanticsNodeId,
-                    SemanticsNodeId);
-  emitter_->Emit(parse_node, TypeMismatch, lhs_type, rhs_type);
+                    "Type mismatch: lhs is {0}, rhs is {1}", std::string,
+                    std::string);
+  emitter_->Emit(parse_node, TypeMismatch, semantics_->StringifyNode(lhs_type),
+                 semantics_->StringifyNode(rhs_type));
   return SemanticsNodeId::BuiltinInvalidType;
 }
 
@@ -217,10 +218,11 @@ auto SemanticsParseTreeHandler::TryTypeConversionOnArgs(
       CARBON_DIAGNOSTIC(
           CallArgTypeMismatch, Note,
           "Type mismatch: cannot convert argument {0} from {1} to {2}.", size_t,
-          SemanticsNodeId, SemanticsNodeId);
+          std::string, std::string);
       emitter_->Build(arg_parse_node, NoMatchingCall)
-          .Note(param_parse_node, CallArgTypeMismatch, i, arg_ref_type,
-                param_ref_type)
+          .Note(param_parse_node, CallArgTypeMismatch, i,
+                semantics_->StringifyNode(arg_ref_type),
+                semantics_->StringifyNode(param_ref_type))
           .Emit();
       return false;
     }
@@ -892,11 +894,12 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
         // TODO: Stringify types, add a note pointing at the return
         // type's parse node.
         CARBON_DIAGNOSTIC(ReturnStatementTypeMismatch, Error,
-                          "Cannot convert {0} to {1}.", SemanticsNodeId,
-                          SemanticsNodeId);
+                          "Cannot convert {0} to {1}.", std::string,
+                          std::string);
         emitter_
-            ->Build(parse_node, ReturnStatementTypeMismatch, arg_type,
-                    callable.return_type_id)
+            ->Build(parse_node, ReturnStatementTypeMismatch,
+                    semantics_->StringifyNode(arg_type),
+                    semantics_->StringifyNode(callable.return_type_id))
             .Emit();
       }
       arg_type = new_type;
@@ -922,15 +925,15 @@ auto SemanticsParseTreeHandler::HandleReturnType(ParseTree::Node parse_node)
   return true;
 }
 
-auto SemanticsParseTreeHandler::HandleSelfIdentifier(ParseTree::Node parse_node)
-    -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfIdentifier");
+auto SemanticsParseTreeHandler::HandleSelfTypeIdentifier(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfTypeIdentifier");
   return false;
 }
 
-auto SemanticsParseTreeHandler::HandleSelfType(ParseTree::Node parse_node)
-    -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfType");
+auto SemanticsParseTreeHandler::HandleSelfValueIdentifier(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfValueIdentifier");
   return false;
 }
 
