@@ -45,8 +45,7 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       const auto& match_first_decl = cast<MatchFirstDeclaration>(*this);
       PrintID(out);
       out << " {\n";
-      for (Nonnull<const ImplDeclaration*> m :
-           match_first_decl.impl_declarations()) {
+      for (Nonnull<const ImplDeclaration*> m : match_first_decl.impls()) {
         out << *m;
       }
       out << "}\n";

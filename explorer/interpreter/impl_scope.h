@@ -16,15 +16,15 @@ class TypeChecker;
 // The `ImplScope` class is responsible for mapping a type and
 // interface to the location of the witness table for the `impl` for
 // that type and interface.  A scope may have parent scopes, whose
-// implementations will also be visible in the child scope.
+// impls will also be visible in the child scope.
 //
 // There is typically one instance of `ImplScope` class per scope
-// because the implementationss that are visible for a given type and
-// interface can vary from scope to scope. For example, consider the
-// `bar` and `baz` methods in the following class C and nested class D.
+// because the impls that are visible for a given type and interface
+// can vary from scope to scope. For example, consider the `bar` and
+// `baz` methods in the following class C and nested class D.
 //
 //     class C(U:! type, T:! type)  {
-//       class D(V:! type where U impls Fooable(T)) {
+//       class D(V:! type where U is Fooable(T)) {
 //         fn bar[self: Self](x: U, y : T) -> T{
 //           return x.foo(y)
 //         }
@@ -92,7 +92,7 @@ class ImplScope {
   // Adds a list of impl constraints from a constraint type into scope. Any
   // references to `.Self` are expected to have already been substituted for
   // the type implementing the constraint.
-  void Add(llvm::ArrayRef<ImplConstraint> impl_constraints,
+  void Add(llvm::ArrayRef<ImplConstraint> impls,
            llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
            Nonnull<const Witness*> witness, const TypeChecker& type_checker);
@@ -176,7 +176,7 @@ class ImplScope {
                                const TypeChecker& type_checker) const
       -> ErrorOr<std::optional<ResolveResult>>;
 
-  std::vector<Impl> impl_declarations_;
+  std::vector<Impl> impls_;
   std::vector<Nonnull<const EqualityConstraint*>> equalities_;
   std::optional<Nonnull<const ImplScope*>> parent_scope_;
 };

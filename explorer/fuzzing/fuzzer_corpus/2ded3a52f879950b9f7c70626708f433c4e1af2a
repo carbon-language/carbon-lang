@@ -23,7 +23,7 @@ compilation_unit {
             }
           }
           clauses {
-            impls {
+            is {
               type {
                 int_literal {
                   value: 4
@@ -68,4 +68,3 @@ compilation_unit {
     }
   }
 }
-

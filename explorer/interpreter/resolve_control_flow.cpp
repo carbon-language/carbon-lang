@@ -181,7 +181,7 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
     }
     case DeclarationKind::MatchFirstDeclaration: {
       auto& match_first_decl = cast<MatchFirstDeclaration>(*declaration);
-      for (Nonnull<Declaration*> impl : match_first_decl.impl_declarations()) {
+      for (Nonnull<Declaration*> impl : match_first_decl.impls()) {
         CARBON_RETURN_IF_ERROR(ResolveControlFlow(impl));
       }
       break;

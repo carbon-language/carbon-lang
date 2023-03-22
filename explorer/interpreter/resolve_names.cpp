@@ -413,12 +413,11 @@ auto NameResolver::ResolveNames(WhereClause& clause,
                                 const StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
   switch (clause.kind()) {
-    case WhereClauseKind::ImplsWhereClause: {
-      auto& impls_clause = cast<ImplsWhereClause>(clause);
+    case WhereClauseKind::IsWhereClause: {
+      auto& is_clause = cast<IsWhereClause>(clause);
+      CARBON_RETURN_IF_ERROR(ResolveNames(is_clause.type(), enclosing_scope));
       CARBON_RETURN_IF_ERROR(
-          ResolveNames(impls_clause.type(), enclosing_scope));
-      CARBON_RETURN_IF_ERROR(
-          ResolveNames(impls_clause.constraint(), enclosing_scope));
+          ResolveNames(is_clause.constraint(), enclosing_scope));
       break;
     }
     case WhereClauseKind::EqualsWhereClause: {
@@ -698,8 +697,7 @@ auto NameResolver::ResolveNames(Declaration& declaration,
     }
     case DeclarationKind::MatchFirstDeclaration: {
       // A `match_first` declaration does not introduce a scope.
-      for (auto* impl :
-           cast<MatchFirstDeclaration>(declaration).impl_declarations()) {
+      for (auto* impl : cast<MatchFirstDeclaration>(declaration).impls()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*impl, enclosing_scope, bodies));
       }
       break;

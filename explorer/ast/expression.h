@@ -224,8 +224,8 @@ class IdentifierExpression : public Expression {
 // `A`, but with type `type`.
 //
 // In a `where` binding, the type of `.Self` is the constraint preceding the
-// `where` keyword. For example, in `Foo where .Result impls Bar(.Self)`, the
-// type of `.Self` is `Foo`.
+// `where` keyword. For example, in `Foo where .Result is Bar(.Self)`, the type
+// of `.Self` is `Foo`.
 class DotSelfExpression : public Expression {
  public:
   explicit DotSelfExpression(SourceLocation source_loc)
@@ -747,9 +747,7 @@ class CallExpression : public Expression {
   // Maps each of `function`'s impl bindings to a witness.
   // Should not be called before typechecking, or if `function` is not
   // a generic function.
-  auto witnesses() const -> const ImplWitnessMap& {
-    return bindings_.witnesses();
-  }
+  auto impls() const -> const ImplWitnessMap& { return bindings_.witnesses(); }
 
   // Can only be called by type-checking, if a conversion was required.
   void set_argument(Nonnull<Expression*> argument) { argument_ = argument; }
@@ -984,27 +982,25 @@ class WhereClause : public AstNode {
       : AstNode(context, other) {}
 };
 
-// An `impls` where clause.
+// An `is` where clause.
 //
-// For example, `ConstraintA where .Type impls ConstraintB` requires that the
+// For example, `ConstraintA where .Type is ConstraintB` requires that the
 // associated type `.Type` implements the constraint `ConstraintB`.
-class ImplsWhereClause : public WhereClause {
+class IsWhereClause : public WhereClause {
  public:
-  explicit ImplsWhereClause(SourceLocation source_loc,
-                            Nonnull<Expression*> type,
-                            Nonnull<Expression*> constraint)
-      : WhereClause(WhereClauseKind::ImplsWhereClause, source_loc),
+  explicit IsWhereClause(SourceLocation source_loc, Nonnull<Expression*> type,
+                         Nonnull<Expression*> constraint)
+      : WhereClause(WhereClauseKind::IsWhereClause, source_loc),
         type_(type),
         constraint_(constraint) {}
 
-  explicit ImplsWhereClause(CloneContext& context,
-                            const ImplsWhereClause& other)
+  explicit IsWhereClause(CloneContext& context, const IsWhereClause& other)
       : WhereClause(context, other),
         type_(context.Clone(other.type_)),
         constraint_(context.Clone(other.constraint_)) {}
 
   static auto classof(const AstNode* node) {
-    return InheritsFromImplsWhereClause(node->kind());
+    return InheritsFromIsWhereClause(node->kind());
   }
 
   auto type() const -> const Expression& { return *type_; }

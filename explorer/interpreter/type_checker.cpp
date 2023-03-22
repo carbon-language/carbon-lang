@@ -526,7 +526,7 @@ auto TypeChecker::IsImplicitlyConvertible(
     const ImplScope& impl_scope, bool allow_user_defined_conversions) const
     -> ErrorOr<bool> {
   // Check for an exact match or for an implicit conversion.
-  // TODO: `impl` definitions of `ImplicitAs` should be provided to cover these
+  // TODO: `impl`s of `ImplicitAs` should be provided to cover these
   // conversions.
   CARBON_CHECK(IsConcreteType(source));
   CARBON_CHECK(IsConcreteType(destination));
@@ -1700,28 +1700,28 @@ class TypeChecker::ConstraintTypeBuilder {
     friend class ConstraintTypeBuilder;
 
    private:
-    int num_impl_constraints_added = 0;
-    int num_equality_constraints_added = 0;
+    int num_impls_added = 0;
+    int num_equals_added = 0;
   };
 
-  // Brings all the constraints accumulated so far into the given impl scope, as
-  // if we built the constraint type and then added it into the scope. If this
-  // will be called more than once, an ConstraintssInScopeTracker can be
-  // provided to avoid adding the same implementations more than once.
+  // Brings all the constraints accumulated so far into the given impl scope,
+  // as if we built the constraint type and then added it into the scope. If
+  // this will be called more than once, an ImplsInScopeTracker can be provided
+  // to avoid adding the same impls more than once.
   void BringConstraintsIntoScope(const TypeChecker& type_checker,
                                  Nonnull<ImplScope*> impl_scope,
                                  Nonnull<ConstraintsInScopeTracker*> tracker) {
     // Figure out which constraints we're going to add.
-    int first_impl_constraint_to_add = std::exchange(
-        tracker->num_impl_constraints_added, impl_constraints_.size());
-    int first_equality_constraint_to_add = std::exchange(
-        tracker->num_equality_constraints_added, equality_constraints_.size());
+    int first_impl_to_add =
+        std::exchange(tracker->num_impls_added, impl_constraints_.size());
+    int first_equal_to_add =
+        std::exchange(tracker->num_equals_added, equality_constraints_.size());
     auto new_impl_constraints =
         llvm::ArrayRef<ImplConstraint>(impl_constraints_)
-            .drop_front(first_impl_constraint_to_add);
+            .drop_front(first_impl_to_add);
     auto new_equality_constraints =
         llvm::ArrayRef<EqualityConstraint>(equality_constraints_)
-            .drop_front(first_equality_constraint_to_add);
+            .drop_front(first_equal_to_add);
 
     // Add all of the new constraints.
     impl_scope->Add(new_impl_constraints, std::nullopt, std::nullopt,
@@ -3866,22 +3866,20 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         CARBON_RETURN_IF_ERROR(TypeCheckWhereClause(clause, inner_impl_scope));
 
         switch (clause->kind()) {
-          case WhereClauseKind::ImplsWhereClause: {
-            auto& impls_clause = cast<ImplsWhereClause>(*clause);
+          case WhereClauseKind::IsWhereClause: {
+            auto& is_clause = cast<IsWhereClause>(*clause);
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> type,
-                TypeCheckTypeExp(&impls_clause.type(), inner_impl_scope));
+                TypeCheckTypeExp(&is_clause.type(), inner_impl_scope));
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> constraint,
-                InterpExp(&impls_clause.constraint(), arena_, trace_stream_));
+                InterpExp(&is_clause.constraint(), arena_, trace_stream_));
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const ConstraintType*> constraint_type,
-                ConvertToConstraintType(impls_clause.source_loc(),
-                                        "expression after `impls`",
-                                        constraint));
-            // Transform `where .B impls (C where .D impls E)` into
-            // `where .B impls C and .B.D impls E` then add all the resulting
-            // constraints.
+                ConvertToConstraintType(is_clause.source_loc(),
+                                        "expression after `is`", constraint));
+            // Transform `where .B is (C where .D is E)` into `where .B is C
+            // and .B.D is E` then add all the resulting constraints.
             CARBON_RETURN_IF_ERROR(
                 builder.AddAndSubstitute(*this, constraint_type, type,
                                          builder.GetSelfWitness(), Bindings(),
@@ -3917,8 +3915,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                      << "` does not name an associated constant";
             }
 
-            // Find (or add) `.Self impls I`, and form a symbolic value naming
-            // the associated constant.
+            // Find (or add) `.Self is I`, and form a symbolic value naming the
+            // associated constant.
             // TODO: Reject if the impl constraint didn't already exist.
             int index = builder.AddImplConstraint(
                 {.type = builder.GetSelfType(), .interface = result.interface});
@@ -4025,23 +4023,23 @@ void TypeChecker::CollectImplBindingsInPattern(
   });
 }
 
-void TypeChecker::BringPatternImplBindingsIntoScope(Nonnull<const Pattern*> p,
-                                                    ImplScope& impl_scope) {
+void TypeChecker::BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
+                                             ImplScope& impl_scope) {
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   CollectImplBindingsInPattern(p, impl_bindings);
-  BringImplBindingsIntoScope(impl_bindings, impl_scope);
+  BringImplsIntoScope(impl_bindings, impl_scope);
 }
 
-void TypeChecker::BringImplBindingsIntoScope(
+void TypeChecker::BringImplsIntoScope(
     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
     ImplScope& impl_scope) {
   for (Nonnull<const ImplBinding*> impl_binding : impl_bindings) {
-    BringImplBindingIntoScope(impl_binding, impl_scope);
+    BringImplIntoScope(impl_binding, impl_scope);
   }
 }
 
-void TypeChecker::BringImplBindingIntoScope(
-    Nonnull<const ImplBinding*> impl_binding, ImplScope& impl_scope) {
+void TypeChecker::BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
+                                     ImplScope& impl_scope) {
   CARBON_CHECK(impl_binding->type_var()->symbolic_identity().has_value() &&
                impl_binding->symbolic_identity().has_value());
   impl_scope.Add(impl_binding->interface(),
@@ -4078,16 +4076,15 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
                                        const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   switch (clause->kind()) {
-    case WhereClauseKind::ImplsWhereClause: {
-      auto& impls_clause = cast<ImplsWhereClause>(*clause);
+    case WhereClauseKind::IsWhereClause: {
+      auto& is_clause = cast<IsWhereClause>(*clause);
       // TODO: `type` is checked in the caller, because its converted value is
       // needed. Find a way to move that checking back here.
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckExp(&impls_clause.constraint(), impl_scope));
-      if (!isa<TypeType>(impls_clause.constraint().static_type())) {
-        return ProgramError(impls_clause.constraint().source_loc())
-               << "expression after `impls` does not resolve to a constraint, "
-               << "found " << impls_clause.constraint().static_type();
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&is_clause.constraint(), impl_scope));
+      if (!isa<TypeType>(is_clause.constraint().static_type())) {
+        return ProgramError(is_clause.constraint().source_loc())
+               << "expression after `is` does not resolve to a constraint, "
+               << "found " << is_clause.constraint().static_type();
       }
       return Success();
     }
@@ -4358,8 +4355,8 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
     binding.set_impl_binding(impl_binding);
 
     // Substitute the VariableType as `.Self` of the constraint to form the
-    // resolved type of the binding. Eg, `T:! X where .Self impls Y` resolves
-    // to `T:! <constraint T impls X and T impls Y>`.
+    // resolved type of the binding. Eg, `T:! X where .Self is Y` resolves
+    // to `T:! <constraint T is X and T is Y>`.
     ConstraintTypeBuilder builder(arena_, &binding, impl_binding);
     CARBON_RETURN_IF_ERROR(
         builder.AddAndSubstitute(*this, constraint, symbolic_value, witness,
@@ -4375,7 +4372,7 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
       *trace_stream_ << "resolved constraint type is " << *type << "\n";
     }
 
-    BringImplBindingIntoScope(impl_binding, impl_scope);
+    BringImplIntoScope(impl_binding, impl_scope);
   }
 
   binding.set_static_type(type);
@@ -4876,10 +4873,10 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
   // If f->return_term().is_auto(), the function body was already
   // type checked in DeclareFunctionDeclaration.
   if (f->body().has_value() && !f->return_term().is_auto()) {
-    // Bring the impl bindings into scope.
+    // Bring the impls into scope.
     ImplScope function_scope(&impl_scope);
-    BringImplBindingsIntoScope(
-        cast<FunctionType>(f->static_type()).impl_bindings(), function_scope);
+    BringImplsIntoScope(cast<FunctionType>(f->static_type()).impl_bindings(),
+                        function_scope);
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << function_scope;
     }
@@ -5072,7 +5069,7 @@ auto TypeChecker::TypeCheckClassDeclaration(
   }
   ImplScope class_scope(&impl_scope);
   if (class_decl->type_params().has_value()) {
-    BringPatternImplBindingsIntoScope(*class_decl->type_params(), class_scope);
+    BringPatternImplsIntoScope(*class_decl->type_params(), class_scope);
   }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << class_scope;
@@ -5160,7 +5157,7 @@ auto TypeChecker::TypeCheckMixinDeclaration(
   }
   ImplScope mixin_scope(&impl_scope);
   if (mixin_decl->params().has_value()) {
-    BringPatternImplBindingsIntoScope(*mixin_decl->params(), mixin_scope);
+    BringPatternImplsIntoScope(*mixin_decl->params(), mixin_scope);
   }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << mixin_scope;
@@ -5367,8 +5364,8 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
 
         // The type specified for the associated constant becomes a
         // constraint for the constraint type: `let X:! Interface` adds a
-        // `Self.X impls Interface` constraint that `impl` declarations must
-        // satisfy and users of the constraint type can rely on.
+        // `Self.X is Interface` constraint that `impl`s must satisfy and users
+        // of the constraint type can rely on.
         if (const auto* constraint_type =
                 dyn_cast<ConstraintType>(constraint)) {
           CARBON_RETURN_IF_ERROR(
@@ -5421,8 +5418,7 @@ auto TypeChecker::TypeCheckConstraintTypeDeclaration(
   }
   ImplScope constraint_scope(&impl_scope);
   if (constraint_decl->params().has_value()) {
-    BringPatternImplBindingsIntoScope(*constraint_decl->params(),
-                                      constraint_scope);
+    BringPatternImplsIntoScope(*constraint_decl->params(), constraint_scope);
   }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << constraint_scope;
@@ -5510,7 +5506,7 @@ auto TypeChecker::CheckAndAddImplBindings(
     const ScopeInfo& scope_info) -> ErrorOr<Success> {
   // Each interface that is a lookup context is required to be implemented by
   // the impl members. Other constraints are required to be satisfied by
-  // either those implementations or implementations available elsewhere.
+  // either those impls or impls available elsewhere.
   Nonnull<const ConstraintType*> constraint = impl_decl->constraint_type();
   for (auto lookup : constraint->lookup_contexts()) {
     if (const auto* iface_type = dyn_cast<InterfaceType>(lookup.context)) {
@@ -5768,9 +5764,9 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   Nonnull<const Value*> self = *impl_decl->self()->constant_value();
   Nonnull<const ConstraintType*> constraint = impl_decl->constraint_type();
 
-  // Bring the impl bindings from the parameters into scope.
+  // Bring the impls from the parameters into scope.
   ImplScope impl_scope(&enclosing_scope);
-  BringImplBindingsIntoScope(impl_decl->impl_bindings(), impl_scope);
+  BringImplsIntoScope(impl_decl->impl_bindings(), impl_scope);
   for (Nonnull<Declaration*> m : impl_decl->members()) {
     CARBON_ASSIGN_OR_RETURN(
         ConstraintLookupResult result,
@@ -5970,7 +5966,7 @@ auto TypeChecker::TypeCheckDeclaration(
     }
     case DeclarationKind::MatchFirstDeclaration: {
       auto* match_first = cast<MatchFirstDeclaration>(d);
-      for (auto* impl : match_first->impl_declarations()) {
+      for (auto* impl : match_first->impls()) {
         impl->set_match_first(match_first);
         CARBON_RETURN_IF_ERROR(TypeCheckImplDeclaration(impl, impl_scope));
       }
@@ -6061,7 +6057,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       break;
     }
     case DeclarationKind::MatchFirstDeclaration: {
-      for (auto* impl : cast<MatchFirstDeclaration>(d)->impl_declarations()) {
+      for (auto* impl : cast<MatchFirstDeclaration>(d)->impls()) {
         CARBON_RETURN_IF_ERROR(DeclareImplDeclaration(
             impl, scope_info, /*is_template_instantiation=*/false));
       }

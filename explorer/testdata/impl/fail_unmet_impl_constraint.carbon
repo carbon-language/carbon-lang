@@ -12,7 +12,7 @@ interface A {}
 interface B {}
 
 // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_unmet_impl_constraint.carbon:[[@LINE+1]]: could not find implementation of interface B for i32
-external impl i32 as A where i32 impls B {}
+external impl i32 as A where i32 is B {}
 
 fn Main() -> i32 {
   return 0;

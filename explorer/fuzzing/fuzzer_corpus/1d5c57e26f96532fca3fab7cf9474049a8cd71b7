@@ -30,7 +30,7 @@ compilation_unit {
   }
   declarations {
     match_first {
-      impl_declarations {
+      impls {
         impl {
           kind: ExternalImpl
           impl_type {
@@ -69,7 +69,7 @@ compilation_unit {
           }
         }
       }
-      impl_declarations {
+      impls {
         impl {
           kind: ExternalImpl
           impl_type {

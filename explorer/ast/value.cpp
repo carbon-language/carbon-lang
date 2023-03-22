@@ -600,7 +600,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       for (const ImplConstraint& impl : constraint.impl_constraints()) {
         // TODO: Skip cases where `impl.type` is `.Self` and the interface is
         // in `lookup_contexts()`.
-        out << sep << *impl.type << " impls " << *impl.interface;
+        out << sep << *impl.type << " is " << *impl.interface;
       }
       for (const EqualityConstraint& equality :
            constraint.equality_constraints()) {

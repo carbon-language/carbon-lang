@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 interface A {}
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_where_impls_non_constraint.carbon:[[@LINE+1]]: expected a constraint in expression after `impls`, found i32
-alias B = A where i32 impls i32;
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_where_non_type_is.carbon:[[@LINE+1]]: type error in type expression: 'i32' is not implicitly convertible to 'type'
+alias B = A where 4 is A;
 
 fn Main() -> i32 { return 0; }

@@ -83,7 +83,7 @@ abstract class Expression : AstNode;
   class BuiltinConvertExpression : Expression;
   class UnimplementedExpression : Expression;
 abstract class WhereClause : AstNode;
-  class ImplsWhereClause : WhereClause;
+  class IsWhereClause : WhereClause;
   class EqualsWhereClause : WhereClause;
   class RewriteWhereClause : WhereClause;
 root class Element;

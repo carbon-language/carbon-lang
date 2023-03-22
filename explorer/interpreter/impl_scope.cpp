@@ -57,19 +57,19 @@ void ImplScope::Add(Nonnull<const Value*> iface,
   // impl right before it. This keeps the impls with the same type structure
   // sorted in lexical order, which is important for `match_first` semantics.
   auto insert_pos = std::upper_bound(
-      impl_declarations_.begin(), impl_declarations_.end(), new_impl,
+      impls_.begin(), impls_.end(), new_impl,
       [](const Impl& a, const Impl& b) { return a.sort_key < b.sort_key; });
 
-  impl_declarations_.insert(insert_pos, std::move(new_impl));
+  impls_.insert(insert_pos, std::move(new_impl));
 }
 
-void ImplScope::Add(llvm::ArrayRef<ImplConstraint> impl_constraints,
+void ImplScope::Add(llvm::ArrayRef<ImplConstraint> impls,
                     llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<const Witness*> witness,
                     const TypeChecker& type_checker) {
-  for (size_t i = 0; i != impl_constraints.size(); ++i) {
-    ImplConstraint impl = impl_constraints[i];
+  for (size_t i = 0; i != impls.size(); ++i) {
+    ImplConstraint impl = impls[i];
     Add(impl.interface, deduced, impl.type, impl_bindings,
         type_checker.MakeConstraintWitnessAccess(witness, i), type_checker);
   }
@@ -132,10 +132,10 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
     for (auto impl : constraint->impl_constraints()) {
       // Note that later impl constraints can refer to earlier impl constraints
       // via impl bindings. For example, in
-      //   `C where .Self.AssocType impls D`,
-      // ... the `.Self.AssocType impls D` constraint refers to the
-      // `.Self impls C` constraint when naming `AssocType`. So incrementally
-      // build up a partial constraint witness as we go.
+      //   `C where .Self.AssocType is D`,
+      // ... the `.Self.AssocType is D` constraint refers to the `.Self is C`
+      // constraint when naming `AssocType`. So incrementally build up a
+      // partial constraint witness as we go.
       std::optional<Nonnull<const Witness*>> witness;
       if (constraint->self_binding()->impl_binding()) {
         // Note, this is a partial impl binding covering only the impl
@@ -382,9 +382,9 @@ auto ImplScope::TryResolveInterfaceHere(
     const TypeChecker& type_checker) const
     -> ErrorOr<std::optional<ResolveResult>> {
   std::optional<ResolveResult> result = std::nullopt;
-  for (const Impl& impl : impl_declarations_) {
+  for (const Impl& impl : impls_) {
     // If we've passed the final impl with a sort key matching our best impl,
-    // all further are worse and don't need to be checked.
+    // all further impls are worse and don't need to be checked.
     if (result && result->impl->sort_key < impl.sort_key) {
       break;
     }
@@ -417,9 +417,9 @@ auto ImplScope::TryResolveInterfaceHere(
 
 // TODO: Add indentation when printing the parents.
 void ImplScope::Print(llvm::raw_ostream& out) const {
-  out << "impl declarations: ";
+  out << "impls: ";
   llvm::ListSeparator sep;
-  for (const Impl& impl : impl_declarations_) {
+  for (const Impl& impl : impls_) {
     out << sep << *(impl.type) << " as " << *(impl.interface);
     if (impl.sort_key) {
       out << " " << *impl.sort_key;

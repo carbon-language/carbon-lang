@@ -208,7 +208,7 @@ compilation_unit {
               }
             }
             clauses {
-              impls {
+              is {
                 type {
                   designator {
                     name: "Self"
@@ -370,4 +370,3 @@ compilation_unit {
     }
   }
 }
-

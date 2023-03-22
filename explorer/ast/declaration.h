@@ -943,31 +943,26 @@ class ImplDeclaration : public Declaration {
 
 class MatchFirstDeclaration : public Declaration {
  public:
-  MatchFirstDeclaration(
-      SourceLocation source_loc,
-      std::vector<Nonnull<ImplDeclaration*>> impl_declarations)
+  MatchFirstDeclaration(SourceLocation source_loc,
+                        std::vector<Nonnull<ImplDeclaration*>> impls)
       : Declaration(AstNodeKind::MatchFirstDeclaration, source_loc),
-        impl_declarations_(std::move(impl_declarations)) {}
+        impls_(std::move(impls)) {}
 
   explicit MatchFirstDeclaration(CloneContext& context,
                                  const MatchFirstDeclaration& other)
-      : Declaration(context, other),
-        impl_declarations_(context.Clone(other.impl_declarations_)) {}
+      : Declaration(context, other), impls_(context.Clone(other.impls_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromMatchFirstDeclaration(node->kind());
   }
 
-  auto impl_declarations() const
-      -> llvm::ArrayRef<Nonnull<const ImplDeclaration*>> {
-    return impl_declarations_;
+  auto impls() const -> llvm::ArrayRef<Nonnull<const ImplDeclaration*>> {
+    return impls_;
   }
-  auto impl_declarations() -> llvm::ArrayRef<Nonnull<ImplDeclaration*>> {
-    return impl_declarations_;
-  }
+  auto impls() -> llvm::ArrayRef<Nonnull<ImplDeclaration*>> { return impls_; }
 
  private:
-  std::vector<Nonnull<ImplDeclaration*>> impl_declarations_;
+  std::vector<Nonnull<ImplDeclaration*>> impls_;
 };
 
 class AliasDeclaration : public Declaration {
