@@ -43,6 +43,6 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_init_type_mismatch.carbon:[[@LINE+1]]:19: Type mismatch: lhs is nodeIntegerType, rhs is nodeFloatingPointType
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_init_type_mismatch.carbon:[[@LINE+1]]:19: Type mismatch: lhs is i32, rhs is f64
   var x: i32 = 1.0;
 }

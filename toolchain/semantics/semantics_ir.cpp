@@ -16,7 +16,7 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
   SemanticsIR semantics(/*builtin_ir=*/nullptr);
   semantics.nodes_.reserve(SemanticsBuiltinKind::ValidCount);
 
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type)        \
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type, ...)   \
   semantics.nodes_.push_back(SemanticsNode::MakeBuiltin( \
       SemanticsBuiltinKind::Name, SemanticsNodeId::Builtin##Type));
 #include "toolchain/semantics/semantics_builtin_kind.def"
@@ -103,6 +103,28 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
     out << "],\n";
   }
   out << "]\n";
+}
+
+auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
+  std::string str;
+  llvm::raw_string_ostream out(str);
+  StringifyNodeImpl(out, node_id);
+  return str;
+}
+
+auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
+                                    SemanticsNodeId node_id) -> void {
+  if (node_id.index < SemanticsBuiltinKind::ValidCount) {
+    out << SemanticsBuiltinKind::FromInt(node_id.index).label();
+    return;
+  }
+
+  auto node = GetNode(node_id);
+  switch (node.kind()) {
+    default:
+      out << "<cannot stringify " << node_id << ">";
+      return;
+  }
 }
 
 }  // namespace Carbon
