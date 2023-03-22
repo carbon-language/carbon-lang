@@ -316,7 +316,8 @@ class DestructorDeclaration : public CallableDeclaration {
                                std::vector<Nonnull<AstNode*>> deduced_params,
                                Nonnull<TuplePattern*> param_pattern,
                                ReturnTerm return_term,
-                               std::optional<Nonnull<Block*>> body)
+                               std::optional<Nonnull<Block*>> body,
+                               VirtualOverride virt_override)
       -> ErrorOr<Nonnull<DestructorDeclaration*>>;
 
   // Use `Create()` instead. This is public only so Arena::New() can call it.
@@ -325,12 +326,11 @@ class DestructorDeclaration : public CallableDeclaration {
                         std::optional<Nonnull<Pattern*>> self_pattern,
                         Nonnull<TuplePattern*> param_pattern,
                         ReturnTerm return_term,
-                        std::optional<Nonnull<Block*>> body)
+                        std::optional<Nonnull<Block*>> body,
+                        VirtualOverride virt_override)
       : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
                             std::move(deduced_params), self_pattern,
-                            param_pattern, return_term, body,
-                            // TODO: Add virtual destructors
-                            VirtualOverride::None) {}
+                            param_pattern, return_term, body, virt_override) {}
 
   explicit DestructorDeclaration(CloneContext& context,
                                  const DestructorDeclaration& other)

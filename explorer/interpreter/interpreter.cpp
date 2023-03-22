@@ -1449,15 +1449,42 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           CARBON_CHECK(args.size() == 1);
           CARBON_CHECK(act.pos() > 0);
           const auto* ptr = cast<PointerValue>(args[0]);
-          if (act.pos() == 1) {
-            CARBON_ASSIGN_OR_RETURN(
-                const auto* pointee,
-                this->heap_.Read(ptr->address(), exp.source_loc()));
-            return todo_.Spawn(std::make_unique<DestroyAction>(
-                arena_->New<LValue>(ptr->address()), pointee));
+          CARBON_ASSIGN_OR_RETURN(const auto* pointee,
+                                  heap_.Read(ptr->address(), exp.source_loc()));
+          if (const auto* class_value = dyn_cast<NominalClassValue>(pointee)) {
+            // Handle destruction from base class pointer.
+            const auto* child_class_value = *class_value->class_value_ptr();
+            bool is_subtyped = child_class_value != class_value;
+            if (is_subtyped) {
+              // Error if destructor is not virtual.
+              const auto& class_type =
+                  cast<NominalClassType>(class_value->type());
+              const auto& class_decl = class_type.declaration();
+              if ((*class_decl.destructor())->virt_override() ==
+                  VirtualOverride::None) {
+                return ProgramError(exp.source_loc())
+                       << "Deallocating a derived class from base class "
+                          "pointer requires a virtual destructor";
+              }
+            }
+            const Address obj_addr = is_subtyped
+                                         ? ptr->address().DowncastedAddress()
+                                         : ptr->address();
+            if (act.pos() == 1) {
+              return todo_.Spawn(std::make_unique<DestroyAction>(
+                  arena_->New<LValue>(obj_addr), child_class_value));
+            } else {
+              heap_.Deallocate(obj_addr);
+              return todo_.FinishAction(TupleValue::Empty());
+            }
           } else {
-            heap_.Deallocate(ptr->address());
-            return todo_.FinishAction(TupleValue::Empty());
+            if (act.pos() == 1) {
+              return todo_.Spawn(std::make_unique<DestroyAction>(
+                  arena_->New<LValue>(ptr->address()), pointee));
+            } else {
+              heap_.Deallocate(ptr->address());
+              return todo_.FinishAction(TupleValue::Empty());
+            }
           }
         }
         case IntrinsicExpression::Intrinsic::Rand: {

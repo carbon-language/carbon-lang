@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/element_path.h"
 #include "llvm/Support/Compiler.h"
@@ -70,6 +71,14 @@ class Address {
     Address result = *this;
     result.element_path_.Append(element);
     return result;
+  }
+
+  // Drop all trailing BaseElements from the element path, returning the
+  // downcasted address.
+  auto DowncastedAddress() const -> Address {
+    Address address = *this;
+    address.element_path_.RemoveTrailingBaseElements();
+    return address;
   }
 
  private:

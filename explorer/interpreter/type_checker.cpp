@@ -4920,6 +4920,39 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     class_vtable[fun->name().inner_name()] = {fun, class_level};
   }
 
+  // Check destructor's virtual override, add to vtable if necessary.
+  if (const auto destructor = class_decl->destructor()) {
+    const auto* fun = (*destructor);
+    static constexpr llvm::StringRef DestructorName = "destructor";
+    bool has_vtable_entry =
+        class_vtable.find(DestructorName) != class_vtable.end();
+    switch (fun->virt_override()) {
+      case VirtualOverride::None:
+        break;
+      case VirtualOverride::Abstract:
+        return ProgramError(fun->source_loc())
+               << "Cannot declare abstract destructor.";
+      case VirtualOverride::Virtual:
+        if (has_vtable_entry) {
+          return ProgramError(fun->source_loc())
+                 << "Error declaring destructor for `" << class_decl->name()
+                 << "`: use `impl` to implement virtual destructor in child "
+                    "class.";
+        }
+        class_vtable[DestructorName] = {fun, class_level};
+        break;
+      case VirtualOverride::Impl:
+        if (!has_vtable_entry) {
+          return ProgramError(fun->source_loc())
+                 << "Error declaring destructor for `" << class_decl->name()
+                 << "`: cannot override a destructor that is not declared "
+                    "`virtual` in base class.";
+        }
+        class_vtable[DestructorName] = {fun, class_level};
+        break;
+    }
+  }
+
   // For class declaration `class MyType(T:! type, U:! AnInterface)`, `Self`
   // should have the value `MyType(T, U)`.
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
