@@ -128,6 +128,14 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
 
   auto node = GetNode(node_id);
   switch (node.kind()) {
+    case SemanticsNodeKind::IntegerLiteral: {
+      auto literal_id = node.GetAsIntegerLiteral();
+      out << GetIntegerLiteral(literal_id);
+      break;
+    }
+    case SemanticsNodeKind::RealLiteral: {
+      break;
+    }
     case SemanticsNodeKind::Assign:
     case SemanticsNodeKind::BinaryOperatorAdd:
     case SemanticsNodeKind::BindName:
@@ -137,8 +145,6 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
     case SemanticsNodeKind::CrossReference:
     case SemanticsNodeKind::FunctionDeclaration:
     case SemanticsNodeKind::FunctionDefinition:
-    case SemanticsNodeKind::IntegerLiteral:
-    case SemanticsNodeKind::RealLiteral:
     case SemanticsNodeKind::Return:
     case SemanticsNodeKind::ReturnExpression:
     case SemanticsNodeKind::StringLiteral:
