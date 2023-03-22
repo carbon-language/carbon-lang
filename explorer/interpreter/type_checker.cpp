@@ -549,6 +549,14 @@ auto TypeChecker::IsImplicitlyConvertible(
     return true;
   }
 
+  if (IsTypeOfType(source) && IsTypeOfType(destination)) {
+    // TODO: We can't tell whether the conversion to this type-of-type would
+    // work, because that depends on the source value, and we only have its
+    // type. So we say it's OK for now and will fail when we try to actually
+    // convert if not.
+    return true;
+  }
+
   // Check for a builtin conversion from source to destination.
   // TODO: Remove this once we can find all builtin conversions by impl lookup.
   CARBON_ASSIGN_OR_RETURN(bool is_builtin_conversion,
@@ -697,14 +705,6 @@ auto TypeChecker::IsBuiltinConversion(
       }
       break;
     }
-    case Value::Kind::TypeType:
-    case Value::Kind::InterfaceType:
-    case Value::Kind::NamedConstraintType:
-    case Value::Kind::ConstraintType:
-      // TODO: We can't tell whether the conversion to this type-of-type would
-      // work, because that depends on the source value, and we only have its
-      // type.
-      return IsTypeOfType(destination);
     case Value::Kind::PointerType: {
       if (destination->kind() != Value::Kind::PointerType) {
         break;
@@ -884,17 +884,6 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
       }
       break;
     }
-    case Value::Kind::TypeType:
-    case Value::Kind::InterfaceType:
-    case Value::Kind::NamedConstraintType:
-    case Value::Kind::ConstraintType:
-      // TODO: We can't tell whether the conversion to this type-of-type would
-      // work, because that depends on the source value, and we only have its
-      // type.
-      if (!IsTypeOfType(destination)) {
-        break;
-      }
-      return simple_conversion();
     case Value::Kind::PointerType: {
       if (destination->kind() != Value::Kind::PointerType) {
         break;
@@ -937,62 +926,64 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
     return source;
   }
 
-  // TODO: This doesn't work for cases of combined built-in and user-defined
-  // conversion, such as converting a struct element via an `ImplicitAs` impl.
-  CARBON_ASSIGN_OR_RETURN(
-      bool convertible,
-      IsImplicitlyConvertible(source_type, destination, impl_scope,
-                              /*allow_user_defined_conversions=*/false));
-  if (convertible) {
-    // A type only implicitly converts to a constraint if there is an impl of
-    // that constraint for that type in scope.
+  // A type of type can be converted to another type of type if the value of
+  // the former satisfies the constraints of the latter. This conversion
+  // depends on the value, not only the type, so isn't supported by
+  // `ImplicitAs`.
+  if (IsTypeOfType(source_type) && IsTypeOfType(destination)) {
+    // Don't require the source value to be constant if the destination is
+    // `type`.
     // TODO: Instead of excluding the special case where the destination is
     // `type`, we should check if the source type has a subset of the
     // constraints of the destination type. In that case, the source should not
-    // be required to be constant.
-    if (IsTypeOfType(destination) && !isa<TypeType>(destination)) {
-      // First convert the source expression to type `type`.
-      CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> source_as_type,
-                              ImplicitlyConvert(context, impl_scope, source,
-                                                arena_->New<TypeType>()));
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> converted_value,
-                              InterpExp(source_as_type, arena_, trace_stream_));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const ConstraintType*> destination_constraint,
-          ConvertToConstraintType(source->source_loc(), "implicit conversion",
-                                  destination));
-      destination = destination_constraint;
-      if (trace_stream_->is_enabled()) {
-        *trace_stream_ << "converting type " << *converted_value
-                       << " to constraint " << *destination_constraint
-                       << " for " << context << " in scope " << impl_scope
-                       << "\n";
-      }
-      // Note, we discard the witness. We don't actually need it in order to
-      // perform the conversion, but we do want to know it exists.
-      // TODO: A value of constraint type should carry both the type and the
-      // witness.
-      CARBON_RETURN_IF_ERROR(impl_scope.Resolve(destination_constraint,
-                                                converted_value,
-                                                source->source_loc(), *this));
-      return arena_->New<ValueLiteral>(source->source_loc(), converted_value,
-                                       destination_constraint,
-                                       ExpressionCategory::Value);
-    }
-
-    if (IsTypeOfType(source_type) && IsTypeOfType(destination)) {
-      // No conversion is required.
+    // be required to be constant. That case should also be supported by
+    // `ImplicitAs`.
+    if (isa<TypeType>(destination)) {
       return source;
     }
 
-    // Some conversions need to be performed while type-checking the prelude,
-    // before the definition of the `ImplicitAs` interface and its impls are
-    // complete. For those conversions, we provide direct support here rather
-    // than trying to call the method on `ImplicitAs`.
-    //
-    // For now, the only such conversion is for tuples, which show up when
-    // type-checking function calls, such as the call to `ImplicitAs` itself.
-    if (isa<TupleType>(source_type) && isa<TupleType>(destination)) {
+    // First convert the source expression to type `type`.
+    CARBON_ASSIGN_OR_RETURN(Nonnull<Expression*> source_as_type,
+                            ImplicitlyConvert(context, impl_scope, source,
+                                              arena_->New<TypeType>()));
+    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> converted_value,
+                            InterpExp(source_as_type, arena_, trace_stream_));
+    CARBON_ASSIGN_OR_RETURN(
+        Nonnull<const ConstraintType*> destination_constraint,
+        ConvertToConstraintType(source->source_loc(), "implicit conversion",
+                                destination));
+    destination = destination_constraint;
+    if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "converting type " << *converted_value
+                     << " to constraint " << *destination_constraint
+                     << " for " << context << " in scope " << impl_scope
+                     << "\n";
+    }
+    // Note, we discard the witness. We don't actually need it in order to
+    // perform the conversion, but we do want to know it exists.
+    // TODO: A value of constraint type should carry both the type and the
+    // witness.
+    CARBON_RETURN_IF_ERROR(impl_scope.Resolve(destination_constraint,
+                                              converted_value,
+                                              source->source_loc(), *this));
+    return arena_->New<ValueLiteral>(source->source_loc(), converted_value,
+                                     destination_constraint,
+                                     ValueCategory::Value);
+  }
+
+  // Some conversions need to be performed while type-checking the prelude,
+  // before the definition of the `ImplicitAs` interface and its impls are
+  // complete. For those conversions, we provide direct support here rather
+  // than trying to call the method on `ImplicitAs`.
+  //
+  // For now, the only such conversion is for tuples, which show up when
+  // type-checking function calls, such as the call to `ImplicitAs` itself.
+  if (isa<TupleType>(source_type) && isa<TupleType>(destination)) {
+    CARBON_ASSIGN_OR_RETURN(
+        bool convertible,
+        IsBuiltinConversion(source_type, destination, impl_scope,
+                            /*allow_user_defined_conversions=*/false));
+    if (convertible) {
       return BuildBuiltinConversion(source, destination, impl_scope);
     }
   }
