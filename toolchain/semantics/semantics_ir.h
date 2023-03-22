@@ -75,6 +75,8 @@ class SemanticsIR {
                                 llvm::raw_ostream* vlog_stream) -> SemanticsIR;
 
   // Prints the full IR.
+  // TODO: In the future, the things to print may change, for example by adding
+  // preludes. Builtins can be omitted for test stability, and we may want more.
   auto Print(llvm::raw_ostream& out) const -> void {
     Print(out, /*include_builtins=*/false);
   }
