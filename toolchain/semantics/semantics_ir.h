@@ -74,8 +74,15 @@ class SemanticsIR {
                                 DiagnosticConsumer& consumer,
                                 llvm::raw_ostream* vlog_stream) -> SemanticsIR;
 
-  // Prints the full IR.
-  auto Print(llvm::raw_ostream& out) const -> void;
+  // Prints the full IR. Allow omitting builtins so that unrelated changes are
+  // less likely to alternate test golden files.
+  // TODO: In the future, the things to print may change, for example by adding
+  // preludes. We may then want the ability to omit other things similar to
+  // builtins.
+  auto Print(llvm::raw_ostream& out) const -> void {
+    Print(out, /*include_builtins=*/false);
+  }
+  auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
 
   // Returns the requested callable.
   auto GetCallable(SemanticsCallableId callable_id) const -> SemanticsCallable {
