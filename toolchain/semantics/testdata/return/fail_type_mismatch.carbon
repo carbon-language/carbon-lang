@@ -38,6 +38,6 @@
 // CHECK:STDOUT: ]
 
 fn Main() -> i32 {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/return/fail_type_mismatch.carbon:[[@LINE+1]]:13: Cannot convert nodeFloatingPointType to nodeIntegerType.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/return/fail_type_mismatch.carbon:[[@LINE+1]]:13: Cannot convert f64 to i32.
   return 1.0;
 }
