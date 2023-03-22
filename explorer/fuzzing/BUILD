@@ -116,28 +116,6 @@ cc_test(
     ],
 )
 
-cc_test(
-    name = "clone_test",
-    srcs = ["clone_test.cpp"],
-    args = [
-        "$(locations //explorer:standard_libraries)",
-        "$(locations //explorer/testdata:carbon_files)",
-    ],
-    data = [
-        "//explorer:standard_libraries",
-        "//explorer/testdata:carbon_files",
-    ],
-    deps = [
-        ":ast_to_proto_lib",
-        "//common/fuzzing:carbon_cc_proto",
-        "//explorer/ast",
-        "//explorer/syntax",
-        "@com_google_googletest//:gtest",
-        "@com_google_protobuf//:protobuf_headers",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
 cc_fuzz_test(
     name = "explorer_fuzzer",
     testonly = 1,

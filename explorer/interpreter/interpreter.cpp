@@ -1506,7 +1506,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           // it from here.
           auto* self_binding = arena_->New<GenericBinding>(
               exp.source_loc(), ".Self",
-              arena_->New<TypeTypeLiteral>(exp.source_loc()));
+              arena_->New<TypeTypeLiteral>(exp.source_loc()),
+              GenericBinding::BindingKind::Checked);
           auto* self = arena_->New<VariableType>(self_binding);
           auto* impl_binding = arena_->New<ImplBinding>(
               exp.source_loc(), self_binding, std::nullopt);

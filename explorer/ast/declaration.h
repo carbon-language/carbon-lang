@@ -674,7 +674,8 @@ class ConstraintTypeDeclaration : public Declaration {
     auto* self_type_ref = arena->New<IdentifierExpression>(
         source_loc, std::string(name_.inner_name()));
     self_type_ref->set_value_node(self_type_);
-    self_ = arena->New<GenericBinding>(source_loc, "Self", self_type_ref);
+    self_ = arena->New<GenericBinding>(source_loc, "Self", self_type_ref,
+                                       GenericBinding::BindingKind::Checked);
   }
 
   explicit ConstraintTypeDeclaration(CloneContext& context,
