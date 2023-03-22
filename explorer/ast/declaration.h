@@ -13,6 +13,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
+#include "explorer/ast/clone_context.h"
 #include "explorer/ast/impl_binding.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/return_term.h"
@@ -116,8 +117,15 @@ class Declaration : public AstNode {
   // Constructs a Declaration representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Declaration(AstNodeKind kind, SourceLocation source_loc)
+  explicit Declaration(AstNodeKind kind, SourceLocation source_loc)
       : AstNode(kind, source_loc) {}
+
+  explicit Declaration(CloneContext& context, const Declaration& other)
+      : AstNode(context, other),
+        static_type_(context.Clone(other.static_type_)),
+        constant_value_(context.Clone(other.constant_value_)),
+        is_declared_(other.is_declared_),
+        is_type_checked_(other.is_type_checked_) {}
 
  private:
   std::optional<Nonnull<const Value*>> static_type_;
@@ -183,6 +191,10 @@ class NamespaceDeclaration : public Declaration {
       : Declaration(AstNodeKind::NamespaceDeclaration, source_loc),
         name_(std::move(name)) {}
 
+  explicit NamespaceDeclaration(CloneContext& context,
+                                const NamespaceDeclaration& other)
+      : Declaration(context, other), name_(other.name_) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromNamespaceDeclaration(node->kind());
   }
@@ -213,6 +225,16 @@ class CallableDeclaration : public Declaration {
         return_term_(return_term),
         body_(body),
         virt_override_(virt_override) {}
+
+  explicit CallableDeclaration(CloneContext& context,
+                               const CallableDeclaration& other)
+      : Declaration(context, other),
+        deduced_parameters_(context.Clone(other.deduced_parameters_)),
+        self_pattern_(context.Clone(other.self_pattern_)),
+        param_pattern_(context.Clone(other.param_pattern_)),
+        return_term_(context.Clone(other.return_term_)),
+        body_(context.Clone(other.body_)),
+        virt_override_(other.virt_override_) {}
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
@@ -272,6 +294,10 @@ class FunctionDeclaration : public CallableDeclaration {
                             param_pattern, return_term, body, virt_override),
         name_(std::move(name)) {}
 
+  explicit FunctionDeclaration(CloneContext& context,
+                               const FunctionDeclaration& other)
+      : CallableDeclaration(context, other), name_(other.name_) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
   }
@@ -290,7 +316,8 @@ class DestructorDeclaration : public CallableDeclaration {
                                std::vector<Nonnull<AstNode*>> deduced_params,
                                Nonnull<TuplePattern*> param_pattern,
                                ReturnTerm return_term,
-                               std::optional<Nonnull<Block*>> body)
+                               std::optional<Nonnull<Block*>> body,
+                               VirtualOverride virt_override)
       -> ErrorOr<Nonnull<DestructorDeclaration*>>;
 
   // Use `Create()` instead. This is public only so Arena::New() can call it.
@@ -299,12 +326,15 @@ class DestructorDeclaration : public CallableDeclaration {
                         std::optional<Nonnull<Pattern*>> self_pattern,
                         Nonnull<TuplePattern*> param_pattern,
                         ReturnTerm return_term,
-                        std::optional<Nonnull<Block*>> body)
+                        std::optional<Nonnull<Block*>> body,
+                        VirtualOverride virt_override)
       : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
                             std::move(deduced_params), self_pattern,
-                            param_pattern, return_term, body,
-                            // TODO: Add virtual destructors
-                            VirtualOverride::None) {}
+                            param_pattern, return_term, body, virt_override) {}
+
+  explicit DestructorDeclaration(CloneContext& context,
+                                 const DestructorDeclaration& other)
+      : CallableDeclaration(context, other) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDestructorDeclaration(node->kind());
@@ -317,6 +347,9 @@ class SelfDeclaration : public Declaration {
 
   explicit SelfDeclaration(SourceLocation source_loc)
       : Declaration(AstNodeKind::SelfDeclaration, source_loc) {}
+
+  explicit SelfDeclaration(CloneContext& context, const SelfDeclaration& other)
+      : Declaration(context, other) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromSelfDeclaration(node->kind());
@@ -346,6 +379,9 @@ class ClassDeclaration : public Declaration {
         base_expr_(base),
         members_(std::move(members)) {}
 
+  explicit ClassDeclaration(CloneContext& context,
+                            const ClassDeclaration& other);
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromClassDeclaration(node->kind());
   }
@@ -364,7 +400,8 @@ class ClassDeclaration : public Declaration {
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
-  auto destructor() const -> std::optional<Nonnull<DestructorDeclaration*>> {
+  auto destructor() const
+      -> std::optional<Nonnull<const DestructorDeclaration*>> {
     for (const auto& x : members_) {
       if (x->kind() == DeclarationKind::DestructorDeclaration) {
         return llvm::cast<DestructorDeclaration>(x);
@@ -396,8 +433,6 @@ class ClassDeclaration : public Declaration {
   std::optional<Nonnull<TuplePattern*>> type_params_;
   std::optional<Nonnull<Expression*>> base_expr_;
   std::vector<Nonnull<Declaration*>> members_;
-  std::optional<Nonnull<FunctionDeclaration*>> destructor_;
-  std::optional<Nonnull<const ClassDeclaration*>> base_;
   std::optional<Nonnull<const NominalClassType*>> base_type_;
 };
 
@@ -415,6 +450,14 @@ class MixinDeclaration : public Declaration {
         params_(params),
         self_(self),
         members_(std::move(members)) {}
+
+  explicit MixinDeclaration(CloneContext& context,
+                            const MixinDeclaration& other)
+      : Declaration(context, other),
+        name_(other.name_),
+        params_(context.Clone(other.params_)),
+        self_(context.Clone(other.self_)),
+        members_(context.Clone(other.members_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromMixinDeclaration(node->kind());
@@ -448,6 +491,8 @@ class MixDeclaration : public Declaration {
       : Declaration(AstNodeKind::MixDeclaration, source_loc),
         mixin_(mixin_type) {}
 
+  explicit MixDeclaration(CloneContext& context, const MixDeclaration& other);
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromMixDeclaration(node->kind());
   }
@@ -455,14 +500,14 @@ class MixDeclaration : public Declaration {
   auto mixin() const -> const Expression& { return **mixin_; }
   auto mixin() -> Expression& { return **mixin_; }
 
-  auto mixin_value() const -> const MixinPseudoType& { return *mixin_value_; }
+  auto mixin_value() const -> const MixinPseudoType& { return **mixin_value_; }
   void set_mixin_value(Nonnull<const MixinPseudoType*> mixin_value) {
     mixin_value_ = mixin_value;
   }
 
  private:
   std::optional<Nonnull<Expression*>> mixin_;
-  Nonnull<const MixinPseudoType*> mixin_value_;
+  std::optional<Nonnull<const MixinPseudoType*>> mixin_value_;
 };
 
 class AlternativeSignature : public AstNode {
@@ -472,6 +517,13 @@ class AlternativeSignature : public AstNode {
       : AstNode(AstNodeKind::AlternativeSignature, source_loc),
         name_(std::move(name)),
         parameters_(parameters) {}
+
+  explicit AlternativeSignature(CloneContext& context,
+                                const AlternativeSignature& other)
+      : AstNode(context, other),
+        name_(other.name_),
+        parameters_(context.Clone(other.parameters_)),
+        parameters_static_type_(context.Clone(other.parameters_static_type_)) {}
 
   void Print(llvm::raw_ostream& out) const override;
   void PrintID(llvm::raw_ostream& out) const override;
@@ -520,6 +572,13 @@ class ChoiceDeclaration : public Declaration {
         type_params_(type_params),
         alternatives_(std::move(alternatives)) {}
 
+  explicit ChoiceDeclaration(CloneContext& context,
+                             const ChoiceDeclaration& other)
+      : Declaration(context, other),
+        name_(other.name_),
+        type_params_(context.Clone(other.type_params_)),
+        alternatives_(context.Clone(other.alternatives_)) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromChoiceDeclaration(node->kind());
   }
@@ -563,6 +622,13 @@ class VariableDeclaration : public Declaration {
         binding_(binding),
         initializer_(initializer),
         value_category_(value_category) {}
+
+  explicit VariableDeclaration(CloneContext& context,
+                               const VariableDeclaration& other)
+      : Declaration(context, other),
+        binding_(context.Clone(other.binding_)),
+        initializer_(context.Clone(other.initializer_)),
+        value_category_(other.value_category_) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromVariableDeclaration(node->kind());
@@ -610,6 +676,9 @@ class ConstraintTypeDeclaration : public Declaration {
     self_type_ref->set_value_node(self_type_);
     self_ = arena->New<GenericBinding>(source_loc, "Self", self_type_ref);
   }
+
+  explicit ConstraintTypeDeclaration(CloneContext& context,
+                                     const ConstraintTypeDeclaration& other);
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromConstraintTypeDeclaration(node->kind());
@@ -671,6 +740,10 @@ class InterfaceDeclaration : public ConstraintTypeDeclaration {
                                   source_loc, std::move(name), params,
                                   std::move(members)) {}
 
+  explicit InterfaceDeclaration(CloneContext& context,
+                                const InterfaceDeclaration& other)
+      : ConstraintTypeDeclaration(context, other) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromInterfaceDeclaration(node->kind());
   }
@@ -689,6 +762,10 @@ class ConstraintDeclaration : public ConstraintTypeDeclaration {
                                   source_loc, std::move(name), params,
                                   std::move(members)) {}
 
+  explicit ConstraintDeclaration(CloneContext& context,
+                                 const ConstraintDeclaration& other)
+      : ConstraintTypeDeclaration(context, other) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromConstraintDeclaration(node->kind());
   }
@@ -701,6 +778,10 @@ class InterfaceExtendsDeclaration : public Declaration {
                               Nonnull<Expression*> base)
       : Declaration(AstNodeKind::InterfaceExtendsDeclaration, source_loc),
         base_(base) {}
+
+  explicit InterfaceExtendsDeclaration(CloneContext& context,
+                                       const InterfaceExtendsDeclaration& other)
+      : Declaration(context, other), base_(context.Clone(other.base_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromInterfaceExtendsDeclaration(node->kind());
@@ -722,6 +803,12 @@ class InterfaceImplDeclaration : public Declaration {
       : Declaration(AstNodeKind::InterfaceImplDeclaration, source_loc),
         impl_type_(impl_type),
         constraint_(constraint) {}
+
+  explicit InterfaceImplDeclaration(CloneContext& context,
+                                    const InterfaceImplDeclaration& other)
+      : Declaration(context, other),
+        impl_type_(context.Clone(other.impl_type_)),
+        constraint_(context.Clone(other.constraint_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromInterfaceImplDeclaration(node->kind());
@@ -746,6 +833,10 @@ class AssociatedConstantDeclaration : public Declaration {
                                 Nonnull<GenericBinding*> binding)
       : Declaration(AstNodeKind::AssociatedConstantDeclaration, source_loc),
         binding_(binding) {}
+
+  explicit AssociatedConstantDeclaration(
+      CloneContext& context, const AssociatedConstantDeclaration& other)
+      : Declaration(context, other), binding_(context.Clone(other.binding_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAssociatedConstantDeclaration(node->kind());
@@ -780,11 +871,13 @@ class ImplDeclaration : public Declaration {
                   std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ImplDeclaration, source_loc),
         kind_(kind),
+        deduced_parameters_(std::move(deduced_params)),
         impl_type_(impl_type),
         self_decl_(self_decl),
         interface_(interface),
-        deduced_parameters_(std::move(deduced_params)),
         members_(std::move(members)) {}
+
+  explicit ImplDeclaration(CloneContext& context, const ImplDeclaration& other);
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromImplDeclaration(node->kind());
@@ -837,11 +930,11 @@ class ImplDeclaration : public Declaration {
 
  private:
   ImplKind kind_;
+  std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   Nonnull<Expression*> impl_type_;
   Nonnull<SelfDeclaration*> self_decl_;
   Nonnull<Expression*> interface_;
   std::optional<Nonnull<const ConstraintType*>> constraint_type_;
-  std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::vector<Nonnull<Declaration*>> members_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
   std::optional<Nonnull<const MatchFirstDeclaration*>> match_first_;
@@ -853,6 +946,10 @@ class MatchFirstDeclaration : public Declaration {
                         std::vector<Nonnull<ImplDeclaration*>> impls)
       : Declaration(AstNodeKind::MatchFirstDeclaration, source_loc),
         impls_(std::move(impls)) {}
+
+  explicit MatchFirstDeclaration(CloneContext& context,
+                                 const MatchFirstDeclaration& other)
+      : Declaration(context, other), impls_(context.Clone(other.impls_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromMatchFirstDeclaration(node->kind());
@@ -876,6 +973,12 @@ class AliasDeclaration : public Declaration {
       : Declaration(AstNodeKind::AliasDeclaration, source_loc),
         name_(std::move(name)),
         target_(target) {}
+
+  explicit AliasDeclaration(CloneContext& context,
+                            const AliasDeclaration& other)
+      : Declaration(context, other),
+        name_(other.name_),
+        target_(context.Clone(other.target_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAliasDeclaration(node->kind());

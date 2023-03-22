@@ -10,14 +10,22 @@
 
 namespace Carbon {
 
+template <typename T, typename, typename... Args>
+constexpr bool is_list_constructible_impl = false;
+
+template <typename T, typename... Args>
+constexpr bool is_list_constructible_impl<
+    T, decltype(T{std::declval<Args>()...}), Args...> = true;
+
 // A no-op visitor used to implement `IsRecursivelyTransformable`. The
 // `operator()` function returns `true_type` if it's called with arguments that
-// can be used to construct `T`, and `false_type` otherwise.
+// can be used to direct-list-initialize `T`, and `false_type` otherwise.
 template <typename T>
 struct IsRecursivelyTransformableVisitor {
   template <typename... Args>
   auto operator()(Args&&... args)
-      -> std::integral_constant<bool, std::is_constructible_v<T, Args...>>;
+      -> std::integral_constant<bool,
+                                is_list_constructible_impl<T, T, Args...>>;
 };
 
 // A type trait that indicates whether `T` is transformable. A transformable
@@ -35,8 +43,61 @@ constexpr bool IsRecursivelyTransformable<
     T, decltype(std::declval<const T>().Decompose(
            IsRecursivelyTransformableVisitor<T>{}))> = true;
 
+// Unwrapper for the case where there's nothing to unwrap.
+class NoOpUnwrapper {
+ public:
+  template <typename T, typename U>
+  auto UnwrapOr(T&& value, const U&) -> T {
+    return std::forward<T>(value);
+  }
+
+  template <typename T>
+  auto Wrap(T&& value) -> T&& {
+    return std::forward<T>(value);
+  }
+
+  constexpr bool failed() const { return false; }
+};
+
+// Helper to temporarily unwrap the ErrorOr around a value, and then put it
+// back when we're done with the overall computation.
+class ErrorUnwrapper {
+ public:
+  // Unwrap the `ErrorOr` from the given value, or collect the error and return
+  // the given fallback value on failure.
+  template <typename T, typename U>
+  auto UnwrapOr(ErrorOr<T> value, const U& fallback) -> T {
+    if (!value.ok()) {
+      status_ = std::move(value).error();
+      return fallback;
+    }
+    return std::move(*value);
+  }
+  template <typename T, typename U>
+  auto UnwrapOr(T&& value, const U&) -> T {
+    return std::forward<T>(value);
+  }
+
+  // Wrap the given value into `ErrorOr`, returning our collected error if any,
+  // or the given value if we succeeded.
+  template <typename T>
+  auto Wrap(T&& value) -> ErrorOr<T> {
+    if (!status_.ok()) {
+      Error error = std::move(status_).error();
+      status_ = Success();
+      return error;
+    }
+    return std::forward<T>(value);
+  }
+
+  bool failed() const { return !status_.ok(); }
+
+ private:
+  ErrorOr<Success> status_ = Success();
+};
+
 // Base class for transforms of visitable data types.
-template <typename Derived>
+template <typename Derived, typename ResultUnwrapper>
 class TransformBase {
  public:
   explicit TransformBase(Nonnull<Arena*> arena) : arena_(arena) {}
@@ -44,45 +105,21 @@ class TransformBase {
   // Transform the given value, and produce either the transformed value or an
   // error.
   template <typename T>
-  auto Transform(const T& v) -> ErrorOr<T> {
-    auto result = TransformOrOriginal(v);
-    if (!status_.ok()) {
-      Error error = std::move(status_).error();
-      status_ = Success();
-      return error;
-    }
-    return result;
+  auto Transform(const T& v) -> decltype(auto) {
+    return unwrapper_.Wrap(TransformOrOriginal(v));
   }
 
  protected:
-  // Given an original value and the result of calling `operator()`, find the
-  // transformed value we should use.
-  //
-  // If `operator()` returns `ErrorOr<T>`, then on failure, collect the error
-  // and return the untransformed value; otherwise, return the transformed
-  // value.
-  template <typename T, typename U>
-  auto CollectError(const T& /*original*/, const U& transformed) -> U {
-    return transformed;
-  }
-  template <typename T, typename U>
-  auto CollectError(const T& original, ErrorOr<U> transformed) -> U {
-    if (!transformed.ok()) {
-      status_ = std::move(transformed).error();
-      return original;
-    }
-    return std::move(*transformed);
-  }
-
   // Transform the given value, or return the original if transformation fails.
   template <typename T>
   auto TransformOrOriginal(const T& v)
-      -> decltype(CollectError(v, std::declval<Derived>()(v))) {
+      -> decltype(std::declval<ResultUnwrapper>().UnwrapOr(
+          std::declval<Derived>()(v), v)) {
     // If we've already failed, don't do any more transformations.
-    if (!status_.ok()) {
+    if (unwrapper_.failed()) {
       return v;
     }
-    return CollectError(v, static_cast<Derived&>(*this)(v));
+    return unwrapper_.UnwrapOr(static_cast<Derived&>(*this)(v), v);
   }
 
   // Transformable values are recursively transformed by default.
@@ -91,10 +128,10 @@ class TransformBase {
   auto operator()(const T& value) -> T {
     return value.Decompose([&](const auto&... elements) {
       return [&](auto&&... transformed_elements) {
-        if (status_.ok()) {
-          return T{decltype(transformed_elements)(transformed_elements)...};
+        if (unwrapper_.failed()) {
+          return value;
         }
-        return value;
+        return T{decltype(transformed_elements)(transformed_elements)...};
       }(TransformOrOriginal(elements)...);
     });
   }
@@ -109,11 +146,11 @@ class TransformBase {
                  -> decltype(AllocateTrait<T>::New(
                      arena_,
                      decltype(transformed_elements)(transformed_elements)...)) {
-        if (status_.ok()) {
-          return AllocateTrait<T>::New(
-              arena_, decltype(transformed_elements)(transformed_elements)...);
+        if (unwrapper_.failed()) {
+          return value;
         }
-        return value;
+        return AllocateTrait<T>::New(
+            arena_, decltype(transformed_elements)(transformed_elements)...);
       }(TransformOrOriginal(elements)...);
     });
   }
@@ -176,17 +213,17 @@ class TransformBase {
 
  private:
   Nonnull<Arena*> arena_;
-  // Temporary storage for an error that was produced during transformation
-  // that has not yet been handed back to the caller.
-  ErrorOr<Success> status_ = Success();
+  // Unwrapper for results. Used to remove an ErrorOr<...> wrapper temporarily
+  // during recursive transformations and re-apply it when we're done.
+  ResultUnwrapper unwrapper_;
 };
 
 // Base class for transforms of `Value`s.
-template <typename Derived>
-class ValueTransform : public TransformBase<Derived> {
+template <typename Derived, typename ResultUnwrapper>
+class ValueTransform : public TransformBase<Derived, ResultUnwrapper> {
  public:
-  using TransformBase<Derived>::TransformBase;
-  using TransformBase<Derived>::operator();
+  using TransformBase<Derived, ResultUnwrapper>::TransformBase;
+  using TransformBase<Derived, ResultUnwrapper>::operator();
 
   // Leave references to AST nodes alone by default.
   // The 'int = 0' parameter avoids this function hiding the `operator()(const
@@ -246,6 +283,11 @@ class ValueTransform : public TransformBase<Derived> {
   auto operator()(Nonnull<const NominalClassValue**> value_ptr)
       -> Nonnull<const NominalClassValue**> {
     return value_ptr;
+  }
+
+  // Preserve constraint kind for intrinsic constraints.
+  auto operator()(IntrinsicConstraint::Kind kind) -> IntrinsicConstraint::Kind {
+    return kind;
   }
 };
 
