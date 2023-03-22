@@ -74,9 +74,11 @@ class SemanticsIR {
                                 DiagnosticConsumer& consumer,
                                 llvm::raw_ostream* vlog_stream) -> SemanticsIR;
 
-  // Prints the full IR.
+  // Prints the full IR. Allow omitting builtins so that unrelated changes are
+  // less likely to alternate test golden files.
   // TODO: In the future, the things to print may change, for example by adding
-  // preludes. Builtins can be omitted for test stability, and we may want more.
+  // preludes. We may then want the ability to omit other things similar to
+  // builtins.
   auto Print(llvm::raw_ostream& out) const -> void {
     Print(out, /*include_builtins=*/false);
   }
