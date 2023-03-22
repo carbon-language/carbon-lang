@@ -5,6 +5,7 @@
 #ifndef CARBON_EXPLORER_AST_ELEMENT_PATH_H_
 #define CARBON_EXPLORER_AST_ELEMENT_PATH_H_
 
+#include <algorithm>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -89,16 +90,16 @@ class ElementPath {
     components_.push_back(Component(element));
   }
 
-  // Returns the last element.
-  auto LastElement() const -> Nonnull<const Element*> {
-    CARBON_CHECK(!components_.empty());
-    return components_.back().element();
-  }
-
-  // Removes the last element.
-  auto RemoveLastElement() -> void {
-    CARBON_CHECK(!components_.empty());
-    components_.pop_back();
+  // Removes all trailing `BaseElement`s, errors if there are no base elements.
+  auto RemoveTrailingBaseElements() -> void {
+    CARBON_CHECK(!components_.empty() && components_.back().element()->kind() ==
+                                             ElementKind::BaseElement)
+        << "No base elements to remove.";
+    const auto r_it = std::find_if(
+        components_.rbegin(), components_.rend(), [](const Component& c) {
+          return c.element()->kind() != ElementKind::BaseElement;
+        });
+    components_.erase(r_it.base(), components_.end());
   }
 
   void Print(llvm::raw_ostream& out) const {

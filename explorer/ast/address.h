@@ -77,15 +77,7 @@ class Address {
   // downcasted address.
   auto DowncastedAddress() const -> Address {
     Address address = *this;
-    const auto ends_with_upcast = [](const Address& addr) {
-      return !addr.element_path_.IsEmpty() &&
-             addr.element_path_.LastElement()->kind() ==
-                 ElementKind::BaseElement;
-    };
-    CARBON_CHECK(ends_with_upcast(address)) << "Address cannot be downcasted.";
-    while (ends_with_upcast(address)) {
-      address.element_path_.RemoveLastElement();
-    }
+    address.element_path_.RemoveTrailingBaseElements();
     return address;
   }
 

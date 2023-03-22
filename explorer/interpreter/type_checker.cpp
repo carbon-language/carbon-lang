@@ -4799,9 +4799,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   // Check destructor's virtual override, add to vtable if necessary.
   if (const auto destructor = class_decl->destructor()) {
     const auto* fun = (*destructor);
-    llvm::StringRef destructor_name = "destructor";
+    static constexpr llvm::StringRef DestructorName = "destructor";
     bool has_vtable_entry =
-        class_vtable.find(destructor_name) != class_vtable.end();
+        class_vtable.find(DestructorName) != class_vtable.end();
     switch (fun->virt_override()) {
       case VirtualOverride::None:
         break;
@@ -4815,7 +4815,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                  << "`: use `impl` to implement virtual destructor in child "
                     "class.";
         }
-        class_vtable[destructor_name] = {fun, class_level};
+        class_vtable[DestructorName] = {fun, class_level};
         break;
       case VirtualOverride::Impl:
         if (!has_vtable_entry) {
@@ -4824,7 +4824,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                  << "`: cannot override a destructor that is not declared "
                     "`virtual` in base class.";
         }
-        class_vtable[destructor_name] = {fun, class_level};
+        class_vtable[DestructorName] = {fun, class_level};
         break;
     }
   }

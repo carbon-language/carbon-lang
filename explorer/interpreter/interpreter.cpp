@@ -1455,9 +1455,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             // Handle destruction from base class pointer.
             const auto* child_class_value = *class_value->class_value_ptr();
             bool is_subtyped = child_class_value != class_value;
-            const Address obj_addr = is_subtyped
-                                         ? ptr->address().DowncastedAddress()
-                                         : ptr->address();
             if (is_subtyped) {
               // Error if destructor is not virtual.
               const auto& class_type =
@@ -1470,6 +1467,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                           "pointer requires a virtual destructor";
               }
             }
+            const Address obj_addr = is_subtyped
+                                         ? ptr->address().DowncastedAddress()
+                                         : ptr->address();
             if (act.pos() == 1) {
               return todo_.Spawn(std::make_unique<DestroyAction>(
                   arena_->New<LValue>(obj_addr), child_class_value));
