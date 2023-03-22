@@ -907,7 +907,7 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
       }
       const auto& src_class = cast<NominalClassType>(src_ptr->pointee_type());
       if (src_class.InheritsClass(&dest_ptr->pointee_type())) {
-        return simple_conversion();
+        return BuildSubtypeConversion(source, src_ptr, dest_ptr);
       }
       break;
     }
@@ -985,26 +985,19 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
       return source;
     }
 
-    // Perform the builtin conversion.
-    auto* convert_expr = arena_->New<BuiltinConvertExpression>(source);
-
-    // For subtyping, rewrite into successive `.base` accesses.
-    if (isa<PointerType>(source_type) && isa<PointerType>(destination) &&
-        cast<PointerType>(destination)->pointee_type().kind() ==
-            Value::Kind::NominalClassType) {
-      CARBON_ASSIGN_OR_RETURN(
-          auto* rewrite,
-          BuildSubtypeConversion(source, cast<PointerType>(source_type),
-                                 cast<PointerType>(destination)))
-      convert_expr->set_rewritten_form(rewrite);
-    } else {
-      convert_expr->set_static_type(destination);
-      convert_expr->set_value_category(ValueCategory::Value);
+    // Some conversions need to be performed while type-checking the prelude,
+    // before the definition of the `ImplicitAs` interface and its impls are
+    // complete. For those conversions, we provide direct support here rather
+    // than trying to call the method on `ImplicitAs`.
+    //
+    // For now, the only such conversion is for tuples, which show up when
+    // type-checking function calls, such as the call to `ImplicitAs` itself.
+    if (isa<TupleType>(source_type) && isa<TupleType>(destination)) {
+      return BuildBuiltinConversion(source, destination, impl_scope);
     }
-
-    return convert_expr;
   }
 
+  // Build a call to the conversion function.
   ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
       impl_scope, source,
       BuiltinInterfaceName{Builtin::ImplicitAs, destination},
