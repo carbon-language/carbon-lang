@@ -33,7 +33,17 @@ void Pattern::Print(llvm::raw_ostream& out) const {
     }
     case PatternKind::GenericBinding: {
       const auto& binding = cast<GenericBinding>(*this);
+      switch (binding.binding_kind()) {
+        case GenericBinding::BindingKind::Checked:
+          break;
+        case GenericBinding::BindingKind::Template:
+          out << "template ";
+          break;
+      }
       out << binding.name() << ":! " << binding.type();
+      if (auto value = binding.constant_value()) {
+        out << " = " << **value;
+      }
       break;
     }
     case PatternKind::TuplePattern: {
@@ -177,6 +187,8 @@ GenericBinding::GenericBinding(CloneContext& context,
     : Pattern(context, other),
       name_(other.name_),
       type_(context.Clone(other.type_)),
+      binding_kind_(other.binding_kind_),
+      template_value_(context.Clone(other.template_value_)),
       symbolic_identity_(context.Clone(other.symbolic_identity_)),
       impl_binding_(context.Clone(other.impl_binding_)),
       original_(context.Remap(other.original_)),

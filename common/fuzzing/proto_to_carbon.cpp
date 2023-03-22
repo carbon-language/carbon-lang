@@ -433,6 +433,13 @@ static auto BindingPatternToCarbon(const Fuzzing::BindingPattern& pattern,
 
 static auto GenericBindingToCarbon(
     const Fuzzing::GenericBinding& generic_binding, llvm::raw_ostream& out) {
+  switch (generic_binding.kind()) {
+    case Fuzzing::GenericBinding::Checked:
+      break;
+    case Fuzzing::GenericBinding::Template:
+      out << "template ";
+      break;
+  }
   IdentifierToCarbon(generic_binding.name(), out);
   out << ":! ";
   ExpressionToCarbon(generic_binding.type(), out);

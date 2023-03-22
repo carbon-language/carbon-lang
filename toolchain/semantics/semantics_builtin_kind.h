@@ -23,6 +23,8 @@ class SemanticsBuiltinKind : public CARBON_ENUM_BASE(SemanticsBuiltinKind) {
   CARBON_ENUM_CONSTANT_DECLARATION(Name)
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
+  auto label() -> llvm::StringRef;
+
   // The count of enum values excluding Invalid.
   //
   // Note that we *define* this as `constexpr` making it a true compile-time

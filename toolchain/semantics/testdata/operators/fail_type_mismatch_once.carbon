@@ -50,6 +50,6 @@
 fn Main() -> i32 {
   // The following line has two mismatches, but after the first, it shouldn't
   // keep erroring.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch_once.carbon:[[@LINE+1]]:13: Type mismatch: lhs is nodeIntegerType, rhs is nodeFloatingPointType
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch_once.carbon:[[@LINE+1]]:13: Type mismatch: lhs is i32, rhs is f64
   return 12 + 3.4 + 12;
 }

@@ -392,6 +392,56 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
   return IsType(value) && !TypeContainsAuto(value);
 }
 
+// Returns whether the given value is template-dependent, that is, if it
+// depends on any template paramaeter.
+static auto IsTemplateDependent(Nonnull<const Value*> value) -> bool {
+  // A VariableType is template dependent if it names a template binding.
+  if (auto* var_type = dyn_cast<VariableType>(value)) {
+    return var_type->binding().binding_kind() ==
+           GenericBinding::BindingKind::Template;
+  }
+
+  static constexpr auto is_dependent_value = [](auto&& x) -> bool {
+    if constexpr (std::is_convertible_v<decltype(x), const Value*>) {
+      return IsTemplateDependent(x);
+    }
+    return false;
+  };
+
+  // Any other value is template dependent if any part of it is.
+  return value->Visit<bool>([](auto* derived_value) {
+    return derived_value->Decompose([](auto&&... parts) {
+      return (is_dependent_value(decltype(parts)(parts)) || ...);
+    });
+  });
+}
+
+// Returns whether all template parameters in `bindings` are saturated: that
+// is, they have arguments that are not dependent on any template parameter.
+// This indicates that we're ready to perform template instantiation.
+static auto IsTemplateSaturated(const Bindings& bindings) -> bool {
+  for (auto [binding, value] : bindings.args()) {
+    if (binding->binding_kind() == GenericBinding::BindingKind::Template &&
+        IsTemplateDependent(value)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Returns whether all template parameters in `params` are saturated: that they
+// have template argument values specified.
+static auto IsTemplateSaturated(
+    llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings) -> bool {
+  for (auto* binding : bindings) {
+    if (binding->binding_kind() == GenericBinding::BindingKind::Template &&
+        !binding->has_template_value()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // Returns the named field, or None if not found.
 static auto FindField(llvm::ArrayRef<NamedValue> fields,
                       const std::string& field_name)
@@ -1724,7 +1774,8 @@ class TypeChecker::ConstraintTypeBuilder {
     // Note, the type-of-type here is a placeholder and isn't really
     // meaningful.
     auto* result = arena->New<GenericBinding>(
-        source_loc, ".Self", arena->New<TypeTypeLiteral>(source_loc));
+        source_loc, ".Self", arena->New<TypeTypeLiteral>(source_loc),
+        GenericBinding::BindingKind::Checked);
     PrepareSelfBinding(arena, result);
     return result;
   }
@@ -1945,7 +1996,8 @@ class TypeChecker::SubstitutedGenericBindings {
     Nonnull<GenericBinding*> new_binding =
         type_checker_->arena_->New<GenericBinding>(
             old_binding->source_loc(), old_binding->name(),
-            const_cast<Expression*>(&old_binding->type()));
+            const_cast<Expression*>(&old_binding->type()),
+            old_binding->binding_kind());
     new_binding->set_original(old_binding->original());
     new_binding->set_static_type(new_type);
     bindings_.Add(old_binding,
@@ -2040,6 +2092,24 @@ class TypeChecker::SubstituteTransform
     } else {
       return it->second;
     }
+  }
+
+  // When substituting into the bindings of an `ImplWitness`, we may need to
+  // perform template instantiation.
+  auto operator()(Nonnull<const ImplWitness*> witness)
+      -> ErrorOr<Nonnull<const ImplWitness*>> {
+    CARBON_ASSIGN_OR_RETURN(const auto* bindings,
+                            Transform(&witness->bindings()));
+    const auto* declaration = &witness->declaration();
+    if (!IsTemplateSaturated(witness->bindings()) &&
+        IsTemplateSaturated(*bindings)) {
+      CARBON_ASSIGN_OR_RETURN(
+          CARBON_PROTECT_COMMAS(auto [new_decl, new_bindings]),
+          type_checker_->InstantiateImplDeclaration(declaration, bindings));
+      declaration = new_decl;
+      bindings = new_bindings;
+    }
+    return type_checker_->arena_->New<ImplWitness>(declaration, bindings);
   }
 
   // For an associated constant, look for a rewrite.
@@ -5505,11 +5575,23 @@ auto TypeChecker::CheckAndAddImplBindings(
 }
 
 auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                                         const ScopeInfo& scope_info)
+                                         const ScopeInfo& scope_info,
+                                         bool is_template_instantiation)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "declaring " << *impl_decl << "\n";
   }
+
+  if (!IsTemplateSaturated(impl_decl->deduced_parameters())) {
+    CloneContext context(arena_);
+    TemplateInfo template_info = {.pattern = context.Clone(impl_decl)};
+    for (auto deduced : impl_decl->deduced_parameters()) {
+      template_info.param_map.insert(
+          {deduced, context.GetExistingClone(deduced)});
+    }
+    templates_.insert({impl_decl, std::move(template_info)});
+  }
+
   ImplScope impl_scope(scope_info.innermost_scope);
   std::vector<Nonnull<const GenericBinding*>> generic_bindings =
       scope_info.bindings;
@@ -5549,8 +5631,9 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   Nonnull<const ConstraintType*> constraint_type;
   {
     // TODO: Combine this with the SelfDeclaration.
-    auto* self_binding = arena_->New<GenericBinding>(self->source_loc(), "Self",
-                                                     impl_decl->impl_type());
+    auto* self_binding = arena_->New<GenericBinding>(
+        self->source_loc(), "Self", impl_decl->impl_type(),
+        GenericBinding::BindingKind::Checked);
     self_binding->set_symbolic_identity(impl_type_value);
     self_binding->set_value(impl_type_value);
     auto* impl_binding = arena_->New<ImplBinding>(self_binding->source_loc(),
@@ -5578,14 +5661,24 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
     impl_decl->set_constraint_type(constraint_type);
   }
 
+  // Declare the impl members. An `impl` behaves like a class scope.
+  ScopeInfo impl_scope_info =
+      ScopeInfo::ForClassScope(scope_info, &impl_scope, generic_bindings);
+  for (Nonnull<Declaration*> m : impl_decl->members()) {
+    CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, impl_scope_info));
+  }
+
   // Build the self witness. This is the witness used to demonstrate that
   // this impl implements its lookup contexts.
   auto* self_witness = arena_->New<ImplWitness>(
       impl_decl, Bindings::SymbolicIdentity(arena_, generic_bindings));
 
-  // Compute a witness that the impl implements its constraint.
-  Nonnull<const Witness*> impl_witness;
-  {
+  // Check that this impl satisfies its constraints and push it into the
+  // ImplScope. For a templated impl, only the template is pushed into scope.
+  // Instantiations are found by substituting arguments into the parameterized
+  // ImplWitness.
+  if (!is_template_instantiation) {
+    // Compute a witness that the impl implements its constraint.
     std::vector<EqualityConstraint> rewrite_constraints_as_equality_constraints;
     ImplScope self_impl_scope(&impl_scope);
 
@@ -5609,21 +5702,15 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 
     // Ensure that's enough for our interface to be satisfied.
     CARBON_ASSIGN_OR_RETURN(
-        impl_witness, self_impl_scope.Resolve(constraint_type, impl_type_value,
-                                              impl_decl->source_loc(), *this));
-  }
+        Nonnull<const Witness*> impl_witness,
+        self_impl_scope.Resolve(constraint_type, impl_type_value,
+                                impl_decl->source_loc(), *this));
 
-  // Declare the impl members. An `impl` behaves like a class scope.
-  ScopeInfo impl_scope_info =
-      ScopeInfo::ForClassScope(scope_info, &impl_scope, generic_bindings);
-  for (Nonnull<Declaration*> m : impl_decl->members()) {
-    CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, impl_scope_info));
+    // Create the implied impl bindings.
+    CARBON_RETURN_IF_ERROR(CheckAndAddImplBindings(
+        impl_decl, impl_type_value, self_witness, impl_witness,
+        generic_bindings, impl_scope_info));
   }
-
-  // Create the implied impl bindings.
-  CARBON_RETURN_IF_ERROR(
-      CheckAndAddImplBindings(impl_decl, impl_type_value, self_witness,
-                              impl_witness, generic_bindings, impl_scope_info));
 
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "** finished declaring impl " << *impl_decl->impl_type()
@@ -5663,6 +5750,13 @@ void TypeChecker::BringAssociatedConstantsIntoScope(
 auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                            const ImplScope& enclosing_scope)
     -> ErrorOr<Success> {
+  if (!IsTemplateSaturated(impl_decl->deduced_parameters())) {
+    if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "deferring checking templated " << *impl_decl << "\n";
+    }
+    return Success();
+  }
+
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "checking " << *impl_decl << "\n";
   }
@@ -5958,12 +6052,14 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
     }
     case DeclarationKind::ImplDeclaration: {
       auto& impl_decl = cast<ImplDeclaration>(*d);
-      CARBON_RETURN_IF_ERROR(DeclareImplDeclaration(&impl_decl, scope_info));
+      CARBON_RETURN_IF_ERROR(DeclareImplDeclaration(
+          &impl_decl, scope_info, /*is_template_instantiation=*/false));
       break;
     }
     case DeclarationKind::MatchFirstDeclaration: {
       for (auto* impl : cast<MatchFirstDeclaration>(d)->impls()) {
-        CARBON_RETURN_IF_ERROR(DeclareImplDeclaration(impl, scope_info));
+        CARBON_RETURN_IF_ERROR(DeclareImplDeclaration(
+            impl, scope_info, /*is_template_instantiation=*/false));
       }
       break;
     }
@@ -6149,6 +6245,80 @@ auto TypeChecker::FindCollectedMembers(Nonnull<const Declaration*> decl)
     default:
       CARBON_FATAL() << "Can't collect members for " << *decl;
   }
+}
+
+auto TypeChecker::InstantiateImplDeclaration(
+    Nonnull<const ImplDeclaration*> old_impl,
+    Nonnull<const Bindings*> bindings) const
+    -> ErrorOr<std::pair<Nonnull<ImplDeclaration*>, Nonnull<Bindings*>>> {
+  CARBON_CHECK(IsTemplateSaturated(*bindings));
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "instantiating " << *old_impl;
+  }
+
+  auto it = templates_.find(old_impl);
+  CARBON_CHECK(it != templates_.end());
+  const TemplateInfo& info = it->second;
+
+  // TODO: Only instantiate each declaration once for each set of template
+  // arguments.
+  CloneContext context(arena_);
+  Nonnull<ImplDeclaration*> impl =
+      context.Clone(cast<ImplDeclaration>(info.pattern));
+
+  // Update the binding to store its instantiated value or a link back to the
+  // original generic parameter.
+  Bindings new_bindings;
+  for (auto [param, value] : bindings->args()) {
+    auto param_it = info.param_map.find(param);
+    CARBON_CHECK(param_it != info.param_map.end());
+
+    auto* clone = context.GetExistingClone(param_it->second);
+    switch (param->binding_kind()) {
+      case GenericBinding::BindingKind::Template: {
+        clone->set_template_value(value);
+        // TODO: Set a constant value on the impl binding too, if there is one.
+        break;
+      }
+
+      case GenericBinding::BindingKind::Checked: {
+        std::optional<Nonnull<const Value*>> witness;
+        if (auto impl = param->impl_binding()) {
+          auto it = bindings->witnesses().find(*impl);
+          CARBON_CHECK(it != bindings->witnesses().end())
+              << "no witness for generic binding";
+          witness = it->second;
+        }
+        new_bindings.Add(clone, value, witness);
+        break;
+      }
+    }
+  }
+
+  // TODO: It's probably not correct to use the top-level impl scope here. It's
+  // not obvious what we should use, though -- which impls are in scope in
+  // template instantiation?
+  CARBON_CHECK(top_level_impl_scope_)
+      << "can't perform template instantiation with no top-level scope";
+  ImplScope scope(*top_level_impl_scope_);
+
+  // TODO: Remove the const-cast here. The requirement to perform template
+  // instantiation unfortunately means that a lot of type-checking stops being
+  // free of side-effects, so this means removing `const` throughout most of
+  // the type-checker.
+  auto* type_checker = const_cast<TypeChecker*>(this);
+
+  // Type-check the new impl.
+  //
+  // TODO: Augment any error we see here with an "instantiation failed" note
+  // pointing to the location where the instantiation was required.
+  CARBON_RETURN_IF_ERROR(type_checker->DeclareImplDeclaration(
+      impl, ScopeInfo::ForNonClassScope(&scope),
+      /*is_template_instantiation=*/true));
+  CARBON_RETURN_IF_ERROR(type_checker->TypeCheckImplDeclaration(impl, scope));
+
+  return std::pair{impl, arena_->New<Bindings>(std::move(new_bindings))};
 }
 
 }  // namespace Carbon

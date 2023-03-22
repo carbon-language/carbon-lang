@@ -16,7 +16,7 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
   SemanticsIR semantics(/*builtin_ir=*/nullptr);
   semantics.nodes_.reserve(SemanticsBuiltinKind::ValidCount);
 
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type)        \
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type, ...)   \
   semantics.nodes_.push_back(SemanticsNode::MakeBuiltin( \
       SemanticsBuiltinKind::Name, SemanticsNodeId::Builtin##Type));
 #include "toolchain/semantics/semantics_builtin_kind.def"
@@ -103,6 +103,54 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
     out << "],\n";
   }
   out << "]\n";
+}
+
+auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
+  std::string str;
+  llvm::raw_string_ostream out(str);
+  StringifyNodeImpl(out, node_id);
+  return str;
+}
+
+auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
+                                    SemanticsNodeId node_id) -> void {
+  // Invalid node IDs will use the default invalid printing.
+  if (!node_id.is_valid()) {
+    out << node_id;
+    return;
+  }
+
+  // Builtins have designated labels.
+  if (node_id.index < SemanticsBuiltinKind::ValidCount) {
+    out << SemanticsBuiltinKind::FromInt(node_id.index).label();
+    return;
+  }
+
+  auto node = GetNode(node_id);
+  switch (node.kind()) {
+    case SemanticsNodeKind::Assign:
+    case SemanticsNodeKind::BinaryOperatorAdd:
+    case SemanticsNodeKind::BindName:
+    case SemanticsNodeKind::Builtin:
+    case SemanticsNodeKind::Call:
+    case SemanticsNodeKind::CodeBlock:
+    case SemanticsNodeKind::CrossReference:
+    case SemanticsNodeKind::FunctionDeclaration:
+    case SemanticsNodeKind::FunctionDefinition:
+    case SemanticsNodeKind::IntegerLiteral:
+    case SemanticsNodeKind::RealLiteral:
+    case SemanticsNodeKind::Return:
+    case SemanticsNodeKind::ReturnExpression:
+    case SemanticsNodeKind::StringLiteral:
+    case SemanticsNodeKind::VarStorage:
+      // We don't need to handle stringification for nodes that don't show up in
+      // errors, but make it clear what's going on so that it's clearer when
+      // stringification is needed.
+      out << "<cannot stringify " << node_id << ">";
+      return;
+    case SemanticsNodeKind::Invalid:
+      llvm_unreachable("SemanticsNodeKind::Invalid is never used.");
+  }
 }
 
 }  // namespace Carbon

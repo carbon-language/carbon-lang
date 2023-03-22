@@ -270,11 +270,19 @@ class GenericBinding : public Pattern {
  public:
   using ImplementsCarbonValueNode = void;
 
-  GenericBinding(SourceLocation source_loc, std::string name,
-                 Nonnull<Expression*> type)
+  enum class BindingKind {
+    // A checked generic binding, `T:! type`.
+    Checked,
+    // A template generic binding, `template T:! type`.
+    Template,
+  };
+
+  explicit GenericBinding(SourceLocation source_loc, std::string name,
+                          Nonnull<Expression*> type, BindingKind binding_kind)
       : Pattern(AstNodeKind::GenericBinding, source_loc),
         name_(std::move(name)),
-        type_(type) {}
+        type_(type),
+        binding_kind_(binding_kind) {}
 
   explicit GenericBinding(CloneContext& context, const GenericBinding& other);
 
@@ -285,6 +293,7 @@ class GenericBinding : public Pattern {
   auto name() const -> const std::string& { return name_; }
   auto type() const -> const Expression& { return *type_; }
   auto type() -> Expression& { return *type_; }
+  auto binding_kind() const -> BindingKind { return binding_kind_; }
 
   // The index of this binding, which is the number of bindings that are in
   // scope at the point where this binding is declared.
@@ -299,7 +308,7 @@ class GenericBinding : public Pattern {
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
-    return std::nullopt;
+    return template_value_;
   }
 
   auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
@@ -308,6 +317,15 @@ class GenericBinding : public Pattern {
   void set_symbolic_identity(Nonnull<const Value*> value) {
     CARBON_CHECK(!symbolic_identity_.has_value());
     symbolic_identity_ = value;
+  }
+
+  void set_template_value(Nonnull<const Value*> template_value) {
+    CARBON_CHECK(binding_kind_ == BindingKind::Template);
+    template_value_ = template_value;
+  }
+  auto has_template_value() const -> bool {
+    CARBON_CHECK(binding_kind_ == BindingKind::Template);
+    return template_value_.has_value();
   }
 
   // The impl binding associated with this type variable.
@@ -343,7 +361,9 @@ class GenericBinding : public Pattern {
  private:
   std::string name_;
   Nonnull<Expression*> type_;
+  BindingKind binding_kind_;
   std::optional<int> index_;
+  std::optional<Nonnull<const Value*>> template_value_;
   std::optional<Nonnull<const Value*>> symbolic_identity_;
   std::optional<Nonnull<const ImplBinding*>> impl_binding_;
   std::optional<Nonnull<const GenericBinding*>> original_;
