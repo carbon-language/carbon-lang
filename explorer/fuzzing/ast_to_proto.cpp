@@ -379,6 +379,14 @@ static auto GenericBindingToProto(const GenericBinding& binding)
   Fuzzing::GenericBinding binding_proto;
   binding_proto.set_name(binding.name());
   *binding_proto.mutable_type() = ExpressionToProto(binding.type());
+  switch (binding.binding_kind()) {
+    case GenericBinding::BindingKind::Checked:
+      binding_proto.set_kind(Fuzzing::GenericBinding::Checked);
+      break;
+    case GenericBinding::BindingKind::Template:
+      binding_proto.set_kind(Fuzzing::GenericBinding::Template);
+      break;
+  }
   return binding_proto;
 }
 

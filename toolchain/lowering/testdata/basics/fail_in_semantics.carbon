@@ -6,5 +6,5 @@
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-lowering}
 
-// CHECK:STDERR: {{.*}}/toolchain/lowering/testdata/basics/fail_in_semantics.carbon:[[@LINE+1]]:17: Cannot implicitly convert node+2 from nodeFloatingPointType to nodeIntegerType.
+// CHECK:STDERR: {{.*}}/toolchain/lowering/testdata/basics/fail_in_semantics.carbon:[[@LINE+1]]:17: Type mismatch: lhs is i32, rhs is f64
 var x: i32 = 1.0;
