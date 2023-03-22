@@ -540,9 +540,7 @@ auto TypeChecker::IsImplicitlyConvertible(
     Nonnull<const Value*> source, Nonnull<const Value*> destination,
     const ImplScope& impl_scope, bool allow_user_defined_conversions) const
     -> ErrorOr<bool> {
-  // Check for an exact match or for an implicit conversion.
-  // TODO: `impl` definitions of `ImplicitAs` should be provided to cover these
-  // conversions.
+  // Check for an exact match to avoid impl lookup in this common case.
   CARBON_CHECK(IsConcreteType(source));
   CARBON_CHECK(IsConcreteType(destination));
   if (IsSameType(source, destination, impl_scope)) {
@@ -557,18 +555,11 @@ auto TypeChecker::IsImplicitlyConvertible(
     return true;
   }
 
-  // Check for a builtin conversion from source to destination.
-  // TODO: Remove this once we can find all builtin conversions by impl lookup.
-  CARBON_ASSIGN_OR_RETURN(bool is_builtin_conversion,
-                          IsBuiltinConversion(source, destination, impl_scope,
-                                              allow_user_defined_conversions));
-  if (is_builtin_conversion) {
-    return true;
-  }
-
-  // If we're not supposed to look for a user-defined conversion, we're done.
+  // If we're not supposed to look for a user-defined conversion, check for
+  // builtin conversions, which are normally found by impl lookup.
   if (!allow_user_defined_conversions) {
-    return false;
+    return IsBuiltinConversion(source, destination, impl_scope,
+                               allow_user_defined_conversions);
   }
 
   // We didn't find a builtin implicit conversion. Check if a user-defined one
