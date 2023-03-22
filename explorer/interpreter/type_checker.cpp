@@ -401,7 +401,7 @@ static auto IsTemplateDependent(Nonnull<const Value*> value) -> bool {
            GenericBinding::BindingKind::Template;
   }
 
-  static constexpr auto is_dependent_value = [](auto&& x) {
+  static constexpr auto is_dependent_value = [](auto&& x) -> bool {
     if constexpr (std::is_convertible_v<decltype(x), const Value*>) {
       return IsTemplateDependent(x);
     }
