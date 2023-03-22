@@ -922,15 +922,15 @@ auto SemanticsParseTreeHandler::HandleReturnType(ParseTree::Node parse_node)
   return true;
 }
 
-auto SemanticsParseTreeHandler::HandleSelfIdentifier(ParseTree::Node parse_node)
-    -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfIdentifier");
+auto SemanticsParseTreeHandler::HandleSelfTypeIdentifier(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfTypeIdentifier");
   return false;
 }
 
-auto SemanticsParseTreeHandler::HandleSelfType(ParseTree::Node parse_node)
-    -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfType");
+auto SemanticsParseTreeHandler::HandleSelfValueIdentifier(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleSelfValueIdentifier");
   return false;
 }
 
