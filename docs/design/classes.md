@@ -1168,7 +1168,7 @@ methods whose implementation may be overridden in a derived class.
 
 Only methods defined in the scope of the class definition may be virtual, not
 any defined in
-[external interface impls](/docs/design/generics/details.md#external-impl).
+[external interface `impl` declarations](/docs/design/generics/details.md#external-impl).
 Interface methods may be implemented using virtual methods when the
 [impl is internal](/docs/design/generics/details.md#implementing-interfaces),
 and calls to those methods by way of the interface will do virtual dispatch just
