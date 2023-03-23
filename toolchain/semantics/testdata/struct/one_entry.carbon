@@ -29,12 +29,12 @@
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StructType, arg0: block6, arg1: block6, type: nodeTypeType},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block4, arg1: block5, type: node+7},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+8, type: node+1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+8, type: node+7},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StructType, arg0: block7, arg1: block8, type: nodeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: node+11},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+12, type: node+11},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+2, type: node+11},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+2, type: node+1},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

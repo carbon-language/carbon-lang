@@ -265,7 +265,7 @@ auto SemanticsParseTreeHandler::ImplicitAs(ParseTree::Node parse_node,
   auto value_type = semantics_->GetNode(value_type_id);
   auto as_type = semantics_->GetNode(as_type_id);
   if (CanImplicitAsStruct(value_type, as_type)) {
-    return as_type_id;
+    return value_id;
   }
 
   CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
@@ -898,7 +898,7 @@ auto SemanticsParseTreeHandler::HandleParenExpressionOrTupleLiteralStart(
 auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
     -> bool {
   auto [type_node, parsed_type] = node_stack_.PopForParseNodeAndNodeId();
-  auto storage_type_id =
+  auto cast_type_id =
       ImplicitAs(type_node, parsed_type, SemanticsNodeId::BuiltinTypeType);
 
   // Get the name.
@@ -906,10 +906,10 @@ auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
 
   // Allocate storage, linked to the name for error locations.
   auto storage_id =
-      AddNode(SemanticsNode::MakeVarStorage(name_node, storage_type_id));
+      AddNode(SemanticsNode::MakeVarStorage(name_node, cast_type_id));
 
   // Bind the name to storage.
-  auto name_id = BindName(name_node, storage_type_id, storage_id);
+  auto name_id = BindName(name_node, cast_type_id, storage_id);
 
   // If this node's result is used, it'll be for either the name or the storage
   // address. The storage address can be found through the name, so we push the
@@ -1033,7 +1033,7 @@ auto SemanticsParseTreeHandler::HandleStructFieldDesignator(
 auto SemanticsParseTreeHandler::HandleStructFieldType(
     ParseTree::Node parse_node) -> bool {
   auto [type_node, type_id] = node_stack_.PopForParseNodeAndNodeId();
-  auto storage_type_id =
+  auto cast_type_id =
       ImplicitAs(type_node, type_id, SemanticsNodeId::BuiltinTypeType);
 
   auto name_node =
@@ -1041,8 +1041,7 @@ auto SemanticsParseTreeHandler::HandleStructFieldType(
   auto name_str = parse_tree_->GetNodeText(name_node);
   auto name_id = semantics_->AddString(name_str);
 
-  AddNode(
-      SemanticsNode::MakeStructTypeField(name_node, storage_type_id, name_id));
+  AddNode(SemanticsNode::MakeStructTypeField(name_node, cast_type_id, name_id));
   node_stack_.Push(parse_node);
   return true;
 }
@@ -1164,10 +1163,11 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
     // Restore the name now that the initializer is complete.
     ReaddNameToLookup(binding.second, storage_id);
 
-    auto storage_type_id = ImplicitAs(parse_node, last_child.second,
-                                      semantics_->GetType(storage_id));
-    AddNode(SemanticsNode::MakeAssign(parse_node, storage_type_id, storage_id,
-                                      last_child.second));
+    auto cast_value_id = ImplicitAs(parse_node, last_child.second,
+                                    semantics_->GetType(storage_id));
+    AddNode(SemanticsNode::MakeAssign(parse_node,
+                                      semantics_->GetType(cast_value_id),
+                                      storage_id, cast_value_id));
   }
 
   node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::VariableIntroducer);

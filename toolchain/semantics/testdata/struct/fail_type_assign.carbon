@@ -24,7 +24,7 @@
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: node+1},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StructType, arg0: block4, arg1: block5, type: nodeTypeType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+5, type: nodeInvalidType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeInvalidType, type: nodeInvalidType},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
