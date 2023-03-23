@@ -407,28 +407,86 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
   return IsType(value) && !TypeContainsAuto(value);
 }
 
-// Returns whether the given value is template-dependent, that is, if it
-// depends on any template paramaeter.
-static auto IsTemplateDependent(Nonnull<const Value*> value) -> bool {
-  // A VariableType is template dependent if it names a template binding.
-  if (auto* var_type = dyn_cast<VariableType>(value)) {
-    return var_type->binding().binding_kind() ==
-           GenericBinding::BindingKind::Template;
+namespace {
+// This collection of functions is wrapped in a class so that all of the
+// overloads are visible from each other without the need for forward
+// declarations.
+struct DependsOnTemplateParameterVisitor {
+  template <typename T>
+  static auto VisitParts(const T& decomposable) -> bool {
+    return decomposable.Decompose(
+        [](const auto&... parts) { return (Visit(parts) || ...); });
   }
 
-  static constexpr auto is_dependent_value = [](auto&& x) -> bool {
-    if constexpr (std::is_convertible_v<decltype(x), const Value*>) {
-      return IsTemplateDependent(x);
+  static auto Visit(Nonnull<const Value*> value) -> bool {
+    // A VariableType is depends on a template parameter if it names a template
+    // binding.
+    if (auto *var_type = dyn_cast<VariableType>(value)) {
+      return var_type->binding().binding_kind() ==
+             GenericBinding::BindingKind::Template;
+    }
+
+    // Any other value depends on a template parameter if any part of it is.
+    return value->Visit<bool>([](const auto* derived_value) {
+             return VisitParts(*derived_value);
+           });
+  }
+
+  static auto Visit(Nonnull<const Bindings*> bindings) -> bool {
+    for (auto [binding, value] : bindings->args()) {
+      if (Visit(value)) {
+        return true;
+      }
     }
     return false;
-  };
+  }
 
-  // Any other value is template dependent if any part of it is.
-  return value->Visit<bool>([](auto* derived_value) {
-    return derived_value->Decompose([](auto&&... parts) {
-      return (is_dependent_value(decltype(parts)(parts)) || ...);
-    });
-  });
+  template<typename T>
+  static auto Visit(const std::vector<T> &vec) -> bool {
+    for (auto &v : vec) {
+      if (Visit(v)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  template<typename T>
+  static auto Visit(const std::optional<T> &opt) -> bool {
+    return opt && Visit(*opt);
+  }
+
+  template <typename T,
+            typename = std::enable_if_t<IsRecursivelyTransformable<T>>>
+  static auto Visit(Nonnull<const T*> value) -> bool {
+    return VisitParts(*value);
+  }
+  template <typename T,
+            typename = std::enable_if_t<IsRecursivelyTransformable<T>>>
+  static auto Visit(const T& value) -> bool {
+    return VisitParts(value);
+  }
+
+  // Other value components can't refer to a generic binding.
+  static auto Visit(Nonnull<const AstNode*>) -> bool { return false; }
+  static auto Visit(ValueNodeView) -> bool { return false; }
+  static auto Visit(int) -> bool { return false; }
+  static auto Visit(Address) -> bool { return false; }
+  static auto Visit(const std::string&) -> bool { return false; }
+  static auto Visit(Nonnull<const NominalClassValue**>) -> bool {
+    return false;
+  }
+  static auto Visit(const VTable&) -> bool { return false; }
+  static auto Visit(Nonnull<const ContinuationValue::Representation*>) -> bool {
+    return false;
+  }
+};
+}  // namespace
+
+// Returns whether the given value is template-dependent, that is, if it
+// depends on any template parameter.
+static auto DependsOnTemplateParameter(Nonnull<const Value*> value) -> bool {
+  return DependsOnTemplateParameterVisitor::Visit(value);
 }
 
 // Returns whether all template parameters in `bindings` are saturated: that
@@ -437,7 +495,7 @@ static auto IsTemplateDependent(Nonnull<const Value*> value) -> bool {
 static auto IsTemplateSaturated(const Bindings& bindings) -> bool {
   for (auto [binding, value] : bindings.args()) {
     if (binding->binding_kind() == GenericBinding::BindingKind::Template &&
-        IsTemplateDependent(value)) {
+        DependsOnTemplateParameter(value)) {
       return false;
     }
   }
@@ -558,8 +616,7 @@ auto TypeChecker::IsImplicitlyConvertible(
   // If we're not supposed to look for a user-defined conversion, check for
   // builtin conversions, which are normally found by impl lookup.
   if (!allow_user_defined_conversions) {
-    return IsBuiltinConversion(source, destination, impl_scope,
-                               allow_user_defined_conversions);
+    return IsBuiltinConversion(source, destination, impl_scope);
   }
 
   // We didn't find a builtin implicit conversion. Check if a user-defined one
@@ -576,9 +633,9 @@ auto TypeChecker::IsImplicitlyConvertible(
   return conversion_witness.has_value();
 }
 
-auto TypeChecker::IsBuiltinConversion(
-    Nonnull<const Value*> source, Nonnull<const Value*> destination,
-    const ImplScope& impl_scope, bool allow_user_defined_conversions) const
+auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
+                                      Nonnull<const Value*> destination,
+                                      const ImplScope& impl_scope) const
     -> ErrorOr<bool> {
   switch (source->kind()) {
     case Value::Kind::StructType:
@@ -602,7 +659,7 @@ auto TypeChecker::IsBuiltinConversion(
               bool convertible,
               IsImplicitlyConvertible(
                   source, arena_->New<StructType>(field_types), impl_scope,
-                  allow_user_defined_conversions));
+                  /*allow_user_defined_conversions=*/false));
           if (convertible) {
             return true;
           }
@@ -636,7 +693,7 @@ auto TypeChecker::IsBuiltinConversion(
                 bool convertible,
                 IsImplicitlyConvertible(
                     source_tuple.elements()[i], destination_tuple.elements()[i],
-                    impl_scope, /*allow_user_defined_conversions=*/false));
+                    impl_scope, /*allow_user_defined_conversions=*/true));
             if (!convertible) {
               all_ok = false;
               break;
@@ -809,22 +866,25 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
               destination_tuple.elements().size()) {
             break;
           }
-          bool all_ok = true;
+          std::vector<Nonnull<Expression*>> converted_elements;
           for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
+            // Note, it's OK to evaluate `source` more than once here, because
+            // this intrinsic is only intended to be called from within the
+            // prelude's impl of ImplicitAs, where `source` has no side effects.
+            auto* elem = arena_->New<IndexExpression>(
+                source->source_loc(), source,
+                arena_->New<IntLiteral>(source->source_loc(), i));
+            CARBON_RETURN_IF_ERROR(TypeCheckExp(elem, impl_scope));
             CARBON_ASSIGN_OR_RETURN(
-                bool convertible,
-                IsImplicitlyConvertible(
-                    source_tuple.elements()[i], destination_tuple.elements()[i],
-                    impl_scope, /*allow_user_defined_conversions=*/false));
-            if (!convertible) {
-              all_ok = false;
-              break;
-            }
+                Nonnull<Expression*> converted,
+                ImplicitlyConvert("implicit conversion", impl_scope, elem,
+                                  destination_tuple.elements()[i]));
+            converted_elements.push_back(converted);
           }
-          if (all_ok) {
-            return simple_conversion();
-          }
-          break;
+          auto* result = arena_->New<TupleLiteral>(
+              source->source_loc(), std::move(converted_elements));
+          CARBON_RETURN_IF_ERROR(TypeCheckExp(result, impl_scope));
+          return result;
         }
         case Value::Kind::StaticArrayType: {
           const auto& destination_array = cast<StaticArrayType>(*destination);
@@ -837,7 +897,7 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
                 bool convertible,
                 IsImplicitlyConvertible(
                     source_element, &destination_array.element_type(),
-                    impl_scope, /*allow_user_defined_conversions=*/false));
+                    impl_scope, allow_user_defined_conversions));
             if (!convertible) {
               all_ok = false;
               break;
@@ -859,7 +919,7 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
                 bool convertible,
                 IsImplicitlyConvertible(
                     source_element, destination, impl_scope,
-                    /*allow_user_defined_conversions=*/false));
+                    allow_user_defined_conversions));
             if (!convertible) {
               all_types = false;
               break;
@@ -968,13 +1028,40 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
   // than trying to call the method on `ImplicitAs`.
   //
   // For now, the only such conversion is for tuples, which show up when
-  // type-checking function calls, such as the call to `ImplicitAs` itself.
-  if (isa<TupleType>(source_type) && isa<TupleType>(destination)) {
+  // type-checking function calls, such as the call to `ImplicitAs` itself,
+  // and when used as types.
+  if (isa<TupleType>(source_type) && isa<TupleType, TypeType>(destination)) {
     CARBON_ASSIGN_OR_RETURN(
         bool convertible,
-        IsBuiltinConversion(source_type, destination, impl_scope,
-                            /*allow_user_defined_conversions=*/false));
+        IsBuiltinConversion(source_type, destination, impl_scope));
     if (convertible) {
+      // TODO: this can evaluate source more than once!
+#if 0
+          const auto& destination_tuple = cast<TupleType>(*destination);
+          if (source_tuple.elements().size() !=
+              destination_tuple.elements().size()) {
+            break;
+          }
+          std::vector<Nonnull<Expression*>> converted_elements;
+          for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
+            // Note, it's OK to evaluate `source` more than once here, because
+            // this intrinsic is only intended to be called from within the
+            // prelude's impl of ImplicitAs, where `source` has no side effects.
+            auto* elem = arena_->New<IndexExpression>(
+                source->source_loc(), source,
+                arena_->New<IntLiteral>(source->source_loc(), i));
+            CARBON_RETURN_IF_ERROR(TypeCheckExp(elem, impl_scope));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<Expression*> converted,
+                ImplicitlyConvert("implicit conversion", impl_scope, elem,
+                                  destination_tuple.elements()[i]));
+            converted_elements.push_back(converted);
+          }
+          auto* result = arena_->New<TupleLiteral>(
+              source->source_loc(), std::move(converted_elements));
+          CARBON_RETURN_IF_ERROR(TypeCheckExp(result, impl_scope));
+          return result;
+#endif
       return BuildBuiltinConversion(source, destination, impl_scope);
     }
   }
@@ -1002,9 +1089,14 @@ auto TypeChecker::IsIntrinsicConstraintSatisfied(
     case IntrinsicConstraint::ImplicitAs:
       CARBON_CHECK(constraint.arguments.size() == 1)
           << "wrong number of arguments for `__intrinsic_implicit_as`";
-      return IsBuiltinConversion(constraint.type, constraint.arguments[0],
-                                 impl_scope,
-                                 /*allow_user_defined_conversions=*/false);
+      CARBON_ASSIGN_OR_RETURN(
+          bool convertible,
+          IsBuiltinConversion(constraint.type, constraint.arguments[0],
+                              impl_scope));
+      if (trace_stream_->is_enabled()) {
+        *trace_stream_ << constraint << " evaluated to " << convertible << "\n";
+      }
+      return convertible;
   }
 }
 

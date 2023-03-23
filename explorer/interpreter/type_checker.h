@@ -407,9 +407,7 @@ class TypeChecker {
   // conversion that `BuildBuiltinConversion` can perform.
   auto IsBuiltinConversion(Nonnull<const Value*> source,
                            Nonnull<const Value*> destination,
-                           const ImplScope& impl_scope,
-                           bool allow_user_defined_conversions) const
-      -> ErrorOr<bool>;
+                           const ImplScope& impl_scope) const -> ErrorOr<bool>;
 
   // Attempt to implicitly convert type-checked expression `source` to the type
   // `destination`.
