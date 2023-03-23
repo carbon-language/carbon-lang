@@ -1082,7 +1082,8 @@ auto SemanticsParseTreeHandler::HandleStructLiteral(ParseTree::Node parse_node)
       return true;
     }
 
-    // Construct a type for the literal.
+    // Construct a type for the literal. Each field is one node, so ir_id and
+    // refs_id match.
     node_block_stack_.Push();
     for (const auto& ref_id : semantics_->GetNodeBlock(refs_id)) {
       auto ref = semantics_->GetNode(ref_id);
