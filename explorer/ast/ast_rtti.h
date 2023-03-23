@@ -73,7 +73,7 @@ CARBON_AST_RTTI_KINDS(CARBON_IGNORE, CONSTANT_DEFINITION)
   };
 #define DEFINE_ENUMERATOR(E) E = AstRttiNodeKind::E.AsInt(),
 CARBON_AST_RTTI_KINDS(DEFINE_KIND_ENUM, CARBON_IGNORE)
-#undef DEFINE_ENUM
+#undef DEFINE_KIND_ENUM
 #undef DEFINE_ENUMERATOR
 
 // Define InheritsFrom functions for all kinds.
@@ -81,7 +81,7 @@ CARBON_AST_RTTI_KINDS(DEFINE_KIND_ENUM, CARBON_IGNORE)
   inline bool InheritsFrom##C(Carbon::AstRttiNodeKind kind) {                 \
     return CARBON_##C##_KINDS(CARBON_IGNORE, INHERITS_FROM_CLASS_TEST) false; \
   }
-#define INHERITS_FROM_CLASS_TEST(C) kind == Carbon::AstRttiNodeKind::C##Kind ||
+#define INHERITS_FROM_CLASS_TEST(C) kind == Carbon::AstRttiNodeKind::C ||
 #define DEFINE_INHERITS_FROM_FUNCTION_FINAL(C)                \
   inline bool InheritsFrom##C(Carbon::AstRttiNodeKind kind) { \
     return kind == Carbon::AstRttiNodeKind::C;                \
@@ -89,6 +89,7 @@ CARBON_AST_RTTI_KINDS(DEFINE_KIND_ENUM, CARBON_IGNORE)
 CARBON_AST_RTTI_KINDS(DEFINE_INHERITS_FROM_FUNCTION_ABSTRACT,
                       DEFINE_INHERITS_FROM_FUNCTION_FINAL)
 #undef DEFINE_INHERITS_FROM_FUNCTION_ABSTRACT
+#undef INHERITS_FROM_CLASS_TEST
 #undef DEFINE_INHERITS_FROM_FUNCTION_FINAL
 
 #undef CARBON_IGNORE
