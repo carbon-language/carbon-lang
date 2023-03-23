@@ -6,17 +6,15 @@
 
 namespace Carbon {
 
-#define IGNORE(C)
-
 // Define kind names for the base enumeration type.
 CARBON_DEFINE_ENUM_CLASS_NAMES(AstRttiNodeKind) = {
-    CARBON_AST_RTTI_KINDS(IGNORE, CARBON_ENUM_CLASS_NAME_STRING)};
+    CARBON_AST_FOR_EACH_FINAL_CLASS(CARBON_ENUM_CLASS_NAME_STRING)};
 
 // For other kind enumerations, reuse the same table.
 #define DEFINE_NAME_FUNCTION(C)                                        \
   CARBON_ENUM_NAME_FUNCTION(C##Kind) {                                 \
     return AstRttiNodeKind(static_cast<const C##Kind&>(*this)).name(); \
   }
-CARBON_AST_RTTI_KINDS(DEFINE_NAME_FUNCTION, IGNORE)
+CARBON_AST_FOR_EACH_ABSTRACT_CLASS(DEFINE_NAME_FUNCTION)
 
 }  // namespace Carbon

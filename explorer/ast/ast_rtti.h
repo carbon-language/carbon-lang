@@ -10,12 +10,10 @@
 
 namespace Carbon {
 
-#define CARBON_IGNORE(C)
-
 // Assign numbers to all AST types.
 CARBON_DEFINE_RAW_ENUM_CLASS(AstRttiNodeKind, int) {
 #define DEFINE_ENUMERATOR(E) E,
-  CARBON_AST_RTTI_KINDS(CARBON_IGNORE, DEFINE_ENUMERATOR)
+  CARBON_AST_FOR_EACH_FINAL_CLASS(DEFINE_ENUMERATOR)
 #undef DEFINE_ENUMERATOR
 };
 
@@ -37,62 +35,64 @@ class AstRttiNodeKind : public CARBON_ENUM_BASE(AstRttiNodeKind) {
   // other enumerations to match, and to implement range checks.
   using EnumBase::AsInt;
 
-  CARBON_AST_RTTI_KINDS(CARBON_IGNORE, CARBON_ENUM_CONSTANT_DECLARATION)
+  CARBON_AST_FOR_EACH_FINAL_CLASS(CARBON_ENUM_CONSTANT_DECLARATION)
 };
 
 // Define the constant members for AstRttiNodeKind.
 #define CONSTANT_DEFINITION(E) \
   CARBON_ENUM_CONSTANT_DEFINITION(AstRttiNodeKind, E)
-CARBON_AST_RTTI_KINDS(CARBON_IGNORE, CONSTANT_DEFINITION)
+CARBON_AST_FOR_EACH_FINAL_CLASS(CONSTANT_DEFINITION)
 #undef CONSTANT_DEFINITION
 
 // Define Kind enumerations for all base classes.
-#define DEFINE_KIND_ENUM(C)                                                   \
-  CARBON_DEFINE_RAW_ENUM_CLASS(C##Kind, int) {                                \
-    CARBON_##C##_KINDS(CARBON_IGNORE, DEFINE_ENUMERATOR)                      \
-  };                                                                          \
-  template <typename Derived>                                                 \
-  class C##KindTemplate : public CARBON_ENUM_BASE_CRTP(C##Kind, Derived) {    \
-   private:                                                                   \
-    using Base = CARBON_ENUM_BASE_CRTP(C##Kind, Derived);                     \
-    friend class AstRttiNodeKind;                                             \
-                                                                              \
-   public:                                                                    \
-    using IsCarbonAstRttiNodeKind = void;                                     \
-                                                                              \
-    C##KindTemplate() = default;                                              \
-                                                                              \
-    /* This type can be explicitly converted from the generic node kind. */   \
-    explicit C##KindTemplate(AstRttiNodeKind base_kind)                       \
-        : Base(Base::FromInt(base_kind.AsInt())) {}                           \
-                                                                              \
-    CARBON_##C##_KINDS(CARBON_IGNORE, CARBON_INLINE_ENUM_CONSTANT_DEFINITION) \
-  };                                                                          \
-  class C##Kind : public C##KindTemplate<C##Kind> {                           \
-    using C##KindTemplate<C##Kind>::C##KindTemplate;                          \
+#define DEFINE_KIND_ENUM(C)                                                 \
+  CARBON_DEFINE_RAW_ENUM_CLASS(C##Kind, int) {                              \
+    CARBON_AST_FOR_EACH_FINAL_CLASS_BELOW(C, DEFINE_ENUMERATOR)             \
+  };                                                                        \
+  template <typename Derived>                                               \
+  class C##KindTemplate : public CARBON_ENUM_BASE_CRTP(C##Kind, Derived) {  \
+   private:                                                                 \
+    using Base = CARBON_ENUM_BASE_CRTP(C##Kind, Derived);                   \
+    friend class AstRttiNodeKind;                                           \
+                                                                            \
+   public:                                                                  \
+    using IsCarbonAstRttiNodeKind = void;                                   \
+                                                                            \
+    C##KindTemplate() = default;                                            \
+                                                                            \
+    /* This type can be explicitly converted from the generic node kind. */ \
+    explicit C##KindTemplate(AstRttiNodeKind base_kind)                     \
+        : Base(Base::FromInt(base_kind.AsInt())) {}                         \
+                                                                            \
+    CARBON_AST_FOR_EACH_FINAL_CLASS_BELOW(                                  \
+        C, CARBON_INLINE_ENUM_CONSTANT_DEFINITION)                          \
+  };                                                                        \
+  class C##Kind : public C##KindTemplate<C##Kind> {                         \
+    using C##KindTemplate<C##Kind>::C##KindTemplate;                        \
   };
 #define DEFINE_ENUMERATOR(E) E = AstRttiNodeKind::E.AsInt(),
-CARBON_AST_RTTI_KINDS(DEFINE_KIND_ENUM, CARBON_IGNORE)
+CARBON_AST_FOR_EACH_ABSTRACT_CLASS(DEFINE_KIND_ENUM)
 #undef DEFINE_KIND_ENUM
 #undef DEFINE_ENUMERATOR
 
-// Define InheritsFrom functions for all kinds.
-#define DEFINE_INHERITS_FROM_FUNCTION_ABSTRACT(C)                             \
-  inline bool InheritsFrom##C(Carbon::AstRttiNodeKind kind) {                 \
-    return CARBON_##C##_KINDS(CARBON_IGNORE, INHERITS_FROM_CLASS_TEST) false; \
+// Define InheritsFrom functions for each abstract class.
+#define DEFINE_INHERITS_FROM_FUNCTION_ABSTRACT(C)             \
+  inline bool InheritsFrom##C(Carbon::AstRttiNodeKind kind) { \
+    return CARBON_AST_FOR_EACH_FINAL_CLASS_BELOW(             \
+        C, INHERITS_FROM_CLASS_TEST) false;                   \
   }
 #define INHERITS_FROM_CLASS_TEST(C) kind == Carbon::AstRttiNodeKind::C ||
+CARBON_AST_FOR_EACH_ABSTRACT_CLASS(DEFINE_INHERITS_FROM_FUNCTION_ABSTRACT)
+#undef DEFINE_INHERITS_FROM_FUNCTION_ABSTRACT
+#undef INHERITS_FROM_CLASS_TEST
+
+// Define trivial InheritsFrom functions for each final class.
 #define DEFINE_INHERITS_FROM_FUNCTION_FINAL(C)                \
   inline bool InheritsFrom##C(Carbon::AstRttiNodeKind kind) { \
     return kind == Carbon::AstRttiNodeKind::C;                \
   }
-CARBON_AST_RTTI_KINDS(DEFINE_INHERITS_FROM_FUNCTION_ABSTRACT,
-                      DEFINE_INHERITS_FROM_FUNCTION_FINAL)
-#undef DEFINE_INHERITS_FROM_FUNCTION_ABSTRACT
-#undef INHERITS_FROM_CLASS_TEST
+CARBON_AST_FOR_EACH_FINAL_CLASS(DEFINE_INHERITS_FROM_FUNCTION_FINAL)
 #undef DEFINE_INHERITS_FROM_FUNCTION_FINAL
-
-#undef CARBON_IGNORE
 
 }  // namespace Carbon
 

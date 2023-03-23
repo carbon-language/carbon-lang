@@ -2,20 +2,46 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// This file defines a number of `CARBON_Foo_KINDS` X-macros that can be used
-// to walk the AST class hierarchy, starting at class `Foo`. Each macro takes
-// two macro names:
+// This file defines a number of X-macros that can be used to walk the AST
+// class hierarchy. The main entry points are:
 //
-//    CARBON_Foo_KINDS(ABSTRACT, FINAL)
+// -   `CARBON_AST_FOR_EACH_FINAL_CLASS(ACTION)`
+//     Invokes `ACTION` on each leaf class in the AST class hierarchy.
+// -   `CARBON_AST_FOR_EACH_ABSTRACT_CLASS(ACTION)`
+//     Invokes `ACTION` on each non-leaf class in the AST class hierarchy.
+// -   `CARBON_AST_FOR_EACH_FINAL_CLASS_BELOW(BASE, ACTION)`
+//     Invokes `ACTION` on each leaf class in the AST class hierarchy that
+//     derives from `BASE`.
+// -   `CARBON_AST_FOR_EACH_ABSTRACT_CLASS_BELOW(BASE, ACTION)`
+//     Invokes `ACTION` on each non-leaf class in the AST class hierarchy that
+//     derives from `BASE`.
 //
-// -   `ABSTRACT(Class)` is invoked on each abstract class that inherits from
+// These macros are implement in terms of `CARBON_Foo_KINDS` X-macros. Each of
+// these macros takes two macro names as arguments:
+//
+// -   `CARBON_Foo_KINDS(ABSTRACT, FINAL)`
+//     Invokes `ABSTRACT(Class)` for each abstract class that inherits from
 //     `Foo`.
-// -   `FINAL(Class)` is invoked on each final class that inherits from `Foo`.
+//     Invokes `FINAL(Class)` for each final class that inherits from `Foo`.
 //
 // A fake root class, `AST_RTTI`, is also provided, so that
 // `CARBON_AST_RTTI_KINDS` can be used to walk all AST classes.
 #ifndef CARBON_EXPLORER_AST_AST_KINDS_H_
 #define CARBON_EXPLORER_AST_AST_KINDS_H_
+
+#define CARBON_RTTI_NOOP_ACTION(X)
+
+#define CARBON_AST_FOR_EACH_ABSTRACT_CLASS_BELOW(ROOT, ACTION) \
+  CARBON_##ROOT##_KINDS(ACTION, CARBON_RTTI_NOOP_ACTION)
+#define CARBON_AST_FOR_EACH_FINAL_CLASS_BELOW(ROOT, ACTION) \
+  CARBON_##ROOT##_KINDS(CARBON_RTTI_NOOP_ACTION, ACTION)
+#define CARBON_AST_FOR_EACH_ABSTRACT_CLASS(ACTION) \
+  CARBON_AST_FOR_EACH_ABSTRACT_CLASS_BELOW(AST_RTTI, ACTION)
+#define CARBON_AST_FOR_EACH_FINAL_CLASS(ACTION) \
+  CARBON_AST_FOR_EACH_FINAL_CLASS_BELOW(AST_RTTI, ACTION)
+
+// Class hierarchy description follows, with one _KINDS macro for each abstract
+// base class.
 
 #define CARBON_AST_RTTI_KINDS(ABSTRACT, FINAL)            \
   CARBON_AstNode_KINDS(ABSTRACT, FINAL) ABSTRACT(AstNode) \
