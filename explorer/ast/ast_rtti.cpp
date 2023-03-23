@@ -13,11 +13,10 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(AstRttiNodeKind) = {
     CARBON_AST_RTTI_KINDS(IGNORE, CARBON_ENUM_CLASS_NAME_STRING)};
 
 // For other kind enumerations, reuse the same table.
-#define SPECIALIZE_NAME_FUNCTION(C)                                    \
-  template <>                                                          \
-  auto CARBON_ENUM_BASE(C##Kind)::name() const->llvm::StringRef {      \
+#define DEFINE_NAME_FUNCTION(C)                                        \
+  CARBON_ENUM_NAME_FUNCTION(C##Kind) {                                 \
     return AstRttiNodeKind(static_cast<const C##Kind&>(*this)).name(); \
   }
-CARBON_AST_RTTI_KINDS(SPECIALIZE_NAME_FUNCTION, IGNORE)
+CARBON_AST_RTTI_KINDS(DEFINE_NAME_FUNCTION, IGNORE)
 
 }  // namespace Carbon

@@ -163,6 +163,19 @@ class EnumBase {
   static constexpr const typename Base::EnumType& Name = \
       Base::Create(Base::RawEnumType::Name);
 
+// Use this to define a custom `name()` function for an enum-like class. Usage:
+//
+//   CARBON_ENUM_NAME_FUNCTION(MyEnum) {
+//     // Return a StringRef based on the value of *this.
+//   }
+//
+// You should usually use CARBON_DEFINE_ENUM_CLASS_NAMES instead.
+#define CARBON_ENUM_NAME_FUNCTION(EnumClassName)                              \
+  template <>                                                                 \
+  auto                                                                        \
+  Internal::EnumBase<EnumClassName, Internal::EnumClassName##RawEnum>::name() \
+      const->llvm::StringRef
+
 // Use this in the `.cpp` file for an enum class to start the definition of the
 // constant names array for each enumerator. It is followed by the desired
 // constant initializer.
@@ -178,10 +191,7 @@ class EnumBase {
                                                                               \
   /* Now define an explicit function specialization for the `name` method, as \
    * it can now reference our specialized array. */                           \
-  template <>                                                                 \
-  auto                                                                        \
-  Internal::EnumBase<EnumClassName, Internal::EnumClassName##RawEnum>::name() \
-      const->llvm::StringRef {                                                \
+  CARBON_ENUM_NAME_FUNCTION(EnumClassName) {                                  \
     return names[static_cast<int>(value_)];                                   \
   }                                                                           \
                                                                               \
