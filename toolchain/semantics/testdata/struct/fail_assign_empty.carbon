@@ -14,8 +14,8 @@
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
+// CHECK:STDOUT:   a,
 // CHECK:STDOUT:   x,
-// CHECK:STDOUT:   y,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
@@ -41,5 +41,5 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_assign_empty.carbon:[[@LINE+1]]:22: Cannot implicitly convert {} from {} as Type to {.x: i32}.
-var y: {.x: i32} = {};
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_assign_empty.carbon:[[@LINE+1]]:22: Cannot implicitly convert {} from {} as Type to {.a: i32}.
+var x: {.a: i32} = {};

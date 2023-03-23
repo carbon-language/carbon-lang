@@ -15,8 +15,8 @@
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
+// CHECK:STDOUT:   a,
 // CHECK:STDOUT:   x,
-// CHECK:STDOUT:   y,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
@@ -48,5 +48,5 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_value_as_type.carbon:[[@LINE+1]]:15: Cannot implicitly convert {.x = 1} from {.x: i32} to Type.
-var y: {.x = 1};
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_value_as_type.carbon:[[@LINE+1]]:15: Cannot implicitly convert {.a = 1} from {.a: i32} to Type.
+var x: {.a = 1};

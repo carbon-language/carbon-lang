@@ -283,7 +283,6 @@ auto SemanticsParseTreeHandler::ImplicitAs(ParseTree::Node parse_node,
 auto SemanticsParseTreeHandler::CanImplicitAsStruct(SemanticsNode value_type,
                                                     SemanticsNode as_type)
     -> bool {
-  // TODO: This currently only supports struct types that precisely match.
   if (value_type.kind() != as_type.kind() ||
       as_type.kind() != SemanticsNodeKind::StructType) {
     return false;
@@ -292,15 +291,17 @@ auto SemanticsParseTreeHandler::CanImplicitAsStruct(SemanticsNode value_type,
       semantics_->GetNodeBlock(value_type.GetAsStructType().second);
   auto as_type_refs =
       semantics_->GetNodeBlock(as_type.GetAsStructType().second);
-  if (value_type_refs.size() == as_type_refs.size()) {
-    for (int i = 0; i < static_cast<int>(value_type_refs.size()); ++i) {
-      auto value_type_field = semantics_->GetNode(value_type_refs[i]);
-      auto as_type_field = semantics_->GetNode(as_type_refs[i]);
-      if (value_type_field.type() != as_type_field.type() ||
-          value_type_field.GetAsStructTypeField() !=
-              as_type_field.GetAsStructTypeField()) {
-        return false;
-      }
+  if (value_type_refs.size() != as_type_refs.size()) {
+    return false;
+  }
+
+  for (int i = 0; i < static_cast<int>(value_type_refs.size()); ++i) {
+    auto value_type_field = semantics_->GetNode(value_type_refs[i]);
+    auto as_type_field = semantics_->GetNode(as_type_refs[i]);
+    if (value_type_field.type() != as_type_field.type() ||
+        value_type_field.GetAsStructTypeField() !=
+            as_type_field.GetAsStructTypeField()) {
+      return false;
     }
   }
   return true;
@@ -897,7 +898,7 @@ auto SemanticsParseTreeHandler::HandleParenExpressionOrTupleLiteralStart(
 auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
     -> bool {
   auto [type_node, parsed_type] = node_stack_.PopForParseNodeAndNodeId();
-  auto storage_type =
+  auto storage_type_id =
       ImplicitAs(type_node, parsed_type, SemanticsNodeId::BuiltinTypeType);
 
   // Get the name.
@@ -905,10 +906,10 @@ auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
 
   // Allocate storage, linked to the name for error locations.
   auto storage_id =
-      AddNode(SemanticsNode::MakeVarStorage(name_node, storage_type));
+      AddNode(SemanticsNode::MakeVarStorage(name_node, storage_type_id));
 
   // Bind the name to storage.
-  auto name_id = BindName(name_node, storage_type, storage_id);
+  auto name_id = BindName(name_node, storage_type_id, storage_id);
 
   // If this node's result is used, it'll be for either the name or the storage
   // address. The storage address can be found through the name, so we push the
@@ -1032,7 +1033,7 @@ auto SemanticsParseTreeHandler::HandleStructFieldDesignator(
 auto SemanticsParseTreeHandler::HandleStructFieldType(
     ParseTree::Node parse_node) -> bool {
   auto [type_node, type_id] = node_stack_.PopForParseNodeAndNodeId();
-  auto result_type_id =
+  auto storage_type_id =
       ImplicitAs(type_node, type_id, SemanticsNodeId::BuiltinTypeType);
 
   auto name_node =
@@ -1041,7 +1042,7 @@ auto SemanticsParseTreeHandler::HandleStructFieldType(
   auto name_id = semantics_->AddString(name_str);
 
   AddNode(
-      SemanticsNode::MakeStructTypeField(name_node, result_type_id, name_id));
+      SemanticsNode::MakeStructTypeField(name_node, storage_type_id, name_id));
   node_stack_.Push(parse_node);
   return true;
 }
@@ -1162,11 +1163,10 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
     // Restore the name now that the initializer is complete.
     ReaddNameToLookup(binding.second, storage_id);
 
-    auto converted_value = ImplicitAs(parse_node, last_child.second,
+    auto storage_type_id = ImplicitAs(parse_node, last_child.second,
                                       semantics_->GetType(storage_id));
-    AddNode(SemanticsNode::MakeAssign(parse_node,
-                                      semantics_->GetType(converted_value),
-                                      storage_id, last_child.second));
+    AddNode(SemanticsNode::MakeAssign(parse_node, storage_type_id, storage_id,
+                                      last_child.second));
   }
 
   node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::VariableIntroducer);

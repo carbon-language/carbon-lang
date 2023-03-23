@@ -25,15 +25,15 @@
 // CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+2, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+2, type: node+2},
 // CHECK:STDOUT:   {kind: VarStorage, type: nodeFloatingPointType},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+4, type: nodeFloatingPointType},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+6, type: nodeFloatingPointType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+6, type: node+6},
 // CHECK:STDOUT:   {kind: VarStorage, type: nodeStringType},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+8, type: nodeStringType},
 // CHECK:STDOUT:   {kind: StringLiteral, arg0: str3, type: nodeStringType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+8, arg1: node+10, type: nodeStringType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+8, arg1: node+10, type: node+10},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

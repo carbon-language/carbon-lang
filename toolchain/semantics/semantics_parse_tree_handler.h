@@ -135,6 +135,7 @@ class SemanticsParseTreeHandler {
                   SemanticsNodeId as_type) -> SemanticsNodeId;
 
   // Returns true if the ImplicitAs can use struct conversion.
+  // TODO: This currently only supports struct types that precisely match.
   auto CanImplicitAsStruct(SemanticsNode value_type, SemanticsNode as_type)
       -> bool;
 

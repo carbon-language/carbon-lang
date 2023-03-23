@@ -24,11 +24,11 @@
 // CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+2, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+2, type: node+2},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str1, arg1: callable0},
 // CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+5, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+0, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+0, type: node+0},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+4, arg1: block2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
