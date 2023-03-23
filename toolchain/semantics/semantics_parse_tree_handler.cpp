@@ -999,11 +999,18 @@ auto SemanticsParseTreeHandler::HandleStructFieldDesignator(
 
 auto SemanticsParseTreeHandler::HandleStructFieldType(
     ParseTree::Node parse_node) -> bool {
-  auto type_id = node_stack_.PopForNodeId();
+  auto [type_node, type_id] = node_stack_.PopForParseNodeAndNodeId();
+  auto result_type_id =
+      ImplicitAs(type_node, type_id, SemanticsNodeId::BuiltinTypeType);
+
   auto name_node =
       node_stack_.PopForSoloParseNode(ParseNodeKind::DesignatedName);
-  (void)type_id;
-  (void)name_node;
+  auto name_str = parse_tree_->GetNodeText(name_node);
+  auto name_id = semantics_->AddString(name_str);
+
+  AddNode(SemanticsNode::MakeBindName(
+      name_node, SemanticsNodeId::BuiltinTypeType, name_id, result_type_id));
+  ParamOrArgSave();
   node_stack_.Push(parse_node);
   return true;
 }
@@ -1017,10 +1024,14 @@ auto SemanticsParseTreeHandler::HandleStructFieldUnknown(
 auto SemanticsParseTreeHandler::HandleStructFieldValue(
     ParseTree::Node parse_node) -> bool {
   auto value_id = node_stack_.PopForNodeId();
+
   auto name_node =
       node_stack_.PopForSoloParseNode(ParseNodeKind::DesignatedName);
-  (void)value_id;
-  (void)name_node;
+  auto name_str = parse_tree_->GetNodeText(name_node);
+  auto name_id = semantics_->AddString(name_str);
+
+  AddNode(SemanticsNode::MakeBindName(name_node, semantics_->GetType(value_id),
+                                      name_id, value_id));
   ParamOrArgSave();
   node_stack_.Push(parse_node);
   return true;
@@ -1028,31 +1039,34 @@ auto SemanticsParseTreeHandler::HandleStructFieldValue(
 
 auto SemanticsParseTreeHandler::HandleStructLiteral(ParseTree::Node parse_node)
     -> bool {
-  while (true) {
-    auto parse_kind = parse_tree_->node_kind(node_stack_.PeekParseNode());
-    if (parse_kind == ParseNodeKind::StructLiteralOrStructTypeLiteralStart) {
-      node_stack_.PopAndIgnore();
-      break;
-    } else {
-      node_stack_.PopAndIgnore();
-    }
-  }
-  node_stack_.Push(parse_node, SemanticsNodeId::BuiltinEmptyStruct);
-  return true;
+  auto on_start = [&](SemanticsNodeBlockId /*ir_id*/,
+                      SemanticsNodeBlockId /*refs_id*/) -> bool {
+    node_stack_.PopAndDiscardSoloParseNode(
+        ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
+    PopScope();
+    node_stack_.Push(parse_node, SemanticsNodeId::BuiltinEmptyStruct);
+    return true;
+  };
+  return ParamOrArgEnd(ParseNodeKind::StructLiteralOrStructTypeLiteralStart,
+                       ParseNodeKind::StructComma, on_start);
 }
 
 auto SemanticsParseTreeHandler::HandleStructLiteralOrStructTypeLiteralStart(
     ParseTree::Node parse_node) -> bool {
-  ParamOrArgStart();
+  PushScope();
   node_stack_.Push(parse_node);
+  ParamOrArgStart();
   return true;
 }
 
 auto SemanticsParseTreeHandler::HandleStructTypeLiteral(
     ParseTree::Node parse_node) -> bool {
-  auto on_start = [&](SemanticsNodeBlockId ir_id,
-                      SemanticsNodeBlockId refs_id) -> bool {
-    node_stack_.Push(parse_node);
+  auto on_start = [&](SemanticsNodeBlockId /*ir_id*/,
+                      SemanticsNodeBlockId /*refs_id*/) -> bool {
+    node_stack_.PopAndDiscardSoloParseNode(
+        ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
+    PopScope();
+    node_stack_.Push(parse_node, SemanticsNodeId::BuiltinEmptyStructType);
     return true;
   };
   return ParamOrArgEnd(ParseNodeKind::StructLiteralOrStructTypeLiteralStart,
