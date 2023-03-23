@@ -232,34 +232,40 @@ auto SemanticsParseTreeHandler::TryTypeConversionOnArgs(
 }
 
 auto SemanticsParseTreeHandler::ImplicitAs(ParseTree::Node parse_node,
-                                           SemanticsNodeId value,
-                                           SemanticsNodeId as_type)
+                                           SemanticsNodeId value_id,
+                                           SemanticsNodeId as_type_id)
     -> SemanticsNodeId {
   // Start by making sure both sides are valid. If any part is invalid, the
   // result is invalid and we shouldn't error.
-  if (value == SemanticsNodeId::BuiltinInvalidType ||
-      as_type == SemanticsNodeId::BuiltinInvalidType) {
+  if (value_id == SemanticsNodeId::BuiltinInvalidType ||
+      as_type_id == SemanticsNodeId::BuiltinInvalidType) {
     return SemanticsNodeId::BuiltinInvalidType;
   }
-  auto value_type = semantics_->GetType(value);
-  if (value_type == SemanticsNodeId::BuiltinInvalidType) {
+  auto value_type_id = semantics_->GetType(value_id);
+  if (value_type_id == SemanticsNodeId::BuiltinInvalidType) {
     return SemanticsNodeId::BuiltinInvalidType;
   }
 
   // If the type doesn't need to change, we can return the value directly.
-  if (value_type == as_type) {
-    return value;
+  if (value_type_id == as_type_id) {
+    return value_id;
   }
 
   // When converting to a Type, there are some automatic conversions that can be
   // done.
-  if (as_type == SemanticsNodeId::BuiltinTypeType) {
-    if (value == SemanticsNodeId::BuiltinEmptyTuple) {
+  if (as_type_id == SemanticsNodeId::BuiltinTypeType) {
+    if (value_id == SemanticsNodeId::BuiltinEmptyTuple) {
       return SemanticsNodeId::BuiltinEmptyTupleType;
     }
-    if (value == SemanticsNodeId::BuiltinEmptyStruct) {
+    if (value_id == SemanticsNodeId::BuiltinEmptyStruct) {
       return SemanticsNodeId::BuiltinEmptyStructType;
     }
+  }
+
+  auto value_type = semantics_->GetNode(value_type_id);
+  auto as_type = semantics_->GetNode(as_type_id);
+  if (CanImplicitAsStruct(value_type, as_type)) {
+    return as_type_id;
   }
 
   CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
@@ -267,11 +273,37 @@ auto SemanticsParseTreeHandler::ImplicitAs(ParseTree::Node parse_node,
                     std::string, std::string, std::string);
   emitter_
       ->Build(parse_node, ImplicitAsConversionFailure,
-              semantics_->StringifyNode(value),
-              semantics_->StringifyNode(value_type),
-              semantics_->StringifyNode(as_type))
+              semantics_->StringifyNode(value_id),
+              semantics_->StringifyNode(value_type_id),
+              semantics_->StringifyNode(as_type_id))
       .Emit();
   return SemanticsNodeId::BuiltinInvalidType;
+}
+
+auto SemanticsParseTreeHandler::CanImplicitAsStruct(SemanticsNode value_type,
+                                                    SemanticsNode as_type)
+    -> bool {
+  // TODO: This currently only supports struct types that precisely match.
+  if (value_type.kind() != as_type.kind() ||
+      as_type.kind() != SemanticsNodeKind::StructType) {
+    return false;
+  }
+  auto value_type_refs =
+      semantics_->GetNodeBlock(value_type.GetAsStructType().second);
+  auto as_type_refs =
+      semantics_->GetNodeBlock(as_type.GetAsStructType().second);
+  if (value_type_refs.size() == as_type_refs.size()) {
+    for (int i = 0; i < static_cast<int>(value_type_refs.size()); ++i) {
+      auto value_type_field = semantics_->GetNode(value_type_refs[i]);
+      auto as_type_field = semantics_->GetNode(as_type_refs[i]);
+      if (value_type_field.type() != as_type_field.type() ||
+          value_type_field.GetAsStructTypeField() !=
+              as_type_field.GetAsStructTypeField()) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 auto SemanticsParseTreeHandler::ParamOrArgStart() -> void {
@@ -1008,9 +1040,8 @@ auto SemanticsParseTreeHandler::HandleStructFieldType(
   auto name_str = parse_tree_->GetNodeText(name_node);
   auto name_id = semantics_->AddString(name_str);
 
-  AddNode(SemanticsNode::MakeBindName(
-      name_node, SemanticsNodeId::BuiltinTypeType, name_id, result_type_id));
-  ParamOrArgSave();
+  AddNode(
+      SemanticsNode::MakeStructTypeField(name_node, result_type_id, name_id));
   node_stack_.Push(parse_node);
   return true;
 }
@@ -1030,21 +1061,41 @@ auto SemanticsParseTreeHandler::HandleStructFieldValue(
   auto name_str = parse_tree_->GetNodeText(name_node);
   auto name_id = semantics_->AddString(name_str);
 
-  AddNode(SemanticsNode::MakeBindName(name_node, semantics_->GetType(value_id),
-                                      name_id, value_id));
-  ParamOrArgSave();
+  AddNode(SemanticsNode::MakeStructValueField(
+      name_node, semantics_->GetType(value_id), name_id, value_id));
   node_stack_.Push(parse_node);
   return true;
 }
 
 auto SemanticsParseTreeHandler::HandleStructLiteral(ParseTree::Node parse_node)
     -> bool {
-  auto on_start = [&](SemanticsNodeBlockId /*ir_id*/,
-                      SemanticsNodeBlockId /*refs_id*/) -> bool {
+  auto on_start = [&](SemanticsNodeBlockId ir_id,
+                      SemanticsNodeBlockId refs_id) -> bool {
+    PopScope();
     node_stack_.PopAndDiscardSoloParseNode(
         ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
-    PopScope();
-    node_stack_.Push(parse_node, SemanticsNodeId::BuiltinEmptyStruct);
+
+    // Special-case `{}`.
+    if (refs_id == SemanticsNodeBlockId::Empty) {
+      node_stack_.Push(parse_node, SemanticsNodeId::BuiltinEmptyStruct);
+      return true;
+    }
+
+    // Construct a type for the literal.
+    node_block_stack_.Push();
+    for (const auto& ref_id : semantics_->GetNodeBlock(refs_id)) {
+      auto ref = semantics_->GetNode(ref_id);
+      auto name_id = ref.GetAsStructValueField().first;
+      AddNode(SemanticsNode::MakeStructTypeField(ref.parse_node(), ref.type(),
+                                                 name_id));
+    }
+    auto type_block_id = node_block_stack_.Pop();
+    auto type_id = AddNode(SemanticsNode::MakeStructType(
+        parse_node, type_block_id, type_block_id));
+
+    auto value_id = AddNode(
+        SemanticsNode::MakeStructValue(parse_node, type_id, ir_id, refs_id));
+    node_stack_.Push(parse_node, value_id);
     return true;
   };
   return ParamOrArgEnd(ParseNodeKind::StructLiteralOrStructTypeLiteralStart,
@@ -1061,12 +1112,18 @@ auto SemanticsParseTreeHandler::HandleStructLiteralOrStructTypeLiteralStart(
 
 auto SemanticsParseTreeHandler::HandleStructTypeLiteral(
     ParseTree::Node parse_node) -> bool {
-  auto on_start = [&](SemanticsNodeBlockId /*ir_id*/,
-                      SemanticsNodeBlockId /*refs_id*/) -> bool {
+  auto on_start = [&](SemanticsNodeBlockId ir_id,
+                      SemanticsNodeBlockId refs_id) -> bool {
+    PopScope();
     node_stack_.PopAndDiscardSoloParseNode(
         ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
-    PopScope();
-    node_stack_.Push(parse_node, SemanticsNodeId::BuiltinEmptyStructType);
+
+    CARBON_CHECK(refs_id != SemanticsNodeBlockId::Empty)
+        << "{} is handled by StructLiteral.";
+
+    auto type_id =
+        AddNode(SemanticsNode::MakeStructType(parse_node, ir_id, refs_id));
+    node_stack_.Push(parse_node, type_id);
     return true;
   };
   return ParamOrArgEnd(ParseNodeKind::StructLiteralOrStructTypeLiteralStart,

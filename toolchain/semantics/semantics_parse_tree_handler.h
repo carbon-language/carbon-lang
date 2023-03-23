@@ -134,6 +134,10 @@ class SemanticsParseTreeHandler {
   auto ImplicitAs(ParseTree::Node parse_node, SemanticsNodeId value,
                   SemanticsNodeId as_type) -> SemanticsNodeId;
 
+  // Returns true if the ImplicitAs can use struct conversion.
+  auto CanImplicitAsStruct(SemanticsNode value_type, SemanticsNode as_type)
+      -> bool;
+
   auto ParamOrArgStart() -> void;
   auto ParamOrArgComma(ParseTree::Node parse_node) -> bool;
   auto ParamOrArgEnd(

@@ -128,18 +128,52 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
 
   auto node = GetNode(node_id);
   switch (node.kind()) {
-    // TODO: Do we want to store the string representation of literals so that
-    // we can echo back the value as typed, rather than as stored? We probably
-    // shouldn't have this depend on ParseTree because it would hinder cross-IR
-    // diagnostics when doing separate compilation.
     case SemanticsNodeKind::IntegerLiteral: {
+      // TODO: Do we want to store the string representation of literals so that
+      // we can echo back the value as typed, rather than as stored? We probably
+      // shouldn't have this depend on ParseTree because it would hinder
+      // cross-IR diagnostics when doing separate compilation.
       out << GetIntegerLiteral(node.GetAsIntegerLiteral());
       break;
     }
     case SemanticsNodeKind::RealLiteral: {
+      // TODO: See IntegerLiteral.
       auto real_literal = GetRealLiteral(node.GetAsRealLiteral());
       out << real_literal.mantissa << "*" << (real_literal.is_decimal ? 10 : 2)
           << "^" << real_literal.exponent;
+      break;
+    }
+    case SemanticsNodeKind::StructType: {
+      out << "{";
+      auto refs = GetNodeBlock(node.GetAsStructType().second);
+      llvm::ListSeparator sep;
+      for (const auto& ref_id : refs) {
+        out << sep;
+        StringifyNodeImpl(out, ref_id);
+      }
+      out << "}";
+      break;
+    }
+    case SemanticsNodeKind::StructTypeField: {
+      out << "." << GetString(node.GetAsStructTypeField()) << ": ";
+      StringifyNodeImpl(out, node.type());
+      break;
+    }
+    case SemanticsNodeKind::StructValue: {
+      out << "{";
+      auto refs = GetNodeBlock(node.GetAsStructValue().second);
+      llvm::ListSeparator sep;
+      for (const auto& ref_id : refs) {
+        out << sep;
+        StringifyNodeImpl(out, ref_id);
+      }
+      out << "}";
+      break;
+    }
+    case SemanticsNodeKind::StructValueField: {
+      auto [name_id, value_id] = node.GetAsStructValueField();
+      out << "." << GetString(name_id) << " = ";
+      StringifyNodeImpl(out, value_id);
       break;
     }
     case SemanticsNodeKind::Assign:

@@ -3,32 +3,28 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-semantics}
+// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT:   4,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
-// CHECK:STDOUT:   n,
-// CHECK:STDOUT:   z,
+// CHECK:STDOUT:   x,
+// CHECK:STDOUT:   y,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StructType, arg0: block1, arg1: block2, type: nodeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: node+1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: node+1},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: StructValueField, arg0: str0, arg1: node+4, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: StructType, arg0: block6, arg1: block6, type: nodeTypeType},
-// CHECK:STDOUT:   {kind: StructValue, arg0: block4, arg1: block5, type: node+7},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+8, type: nodeTypeType},
+// CHECK:STDOUT:   {kind: StructType, arg0: block4, arg1: block5, type: nodeTypeType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+5, type: nodeInvalidType},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -43,20 +39,16 @@
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+7,
-// CHECK:STDOUT:     node+8,
-// CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-var z: {.n: i32} = {.n = 4};
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_type_assign.carbon:[[@LINE+1]]:29: Cannot implicitly convert {.x: i32} from Type to {.x: i32}.
+var y: {.x: i32} = {.x: i32};

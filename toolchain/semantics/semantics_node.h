@@ -293,6 +293,55 @@ class SemanticsNode {
     return SemanticsStringId(arg0_);
   }
 
+  static auto MakeStructType(ParseTree::Node parse_node,
+                             SemanticsNodeBlockId ir_id,
+                             SemanticsNodeBlockId refs_id) -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::StructType,
+                         SemanticsNodeId::BuiltinTypeType, ir_id.index,
+                         refs_id.index);
+  }
+  auto GetAsStructType() const
+      -> std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId> {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::StructType);
+    return {SemanticsNodeBlockId(arg0_), SemanticsNodeBlockId(arg1_)};
+  }
+
+  static auto MakeStructTypeField(ParseTree::Node parse_node,
+                                  SemanticsNodeId type,
+                                  SemanticsStringId name_id) -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::StructTypeField, type,
+                         name_id.index);
+  }
+  auto GetAsStructTypeField() const -> SemanticsStringId {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::StructTypeField);
+    return {SemanticsStringId(arg0_)};
+  }
+
+  static auto MakeStructValue(ParseTree::Node parse_node, SemanticsNodeId type,
+                              SemanticsNodeBlockId ir_id,
+                              SemanticsNodeBlockId refs_id) -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::StructValue, type,
+                         ir_id.index, refs_id.index);
+  }
+  auto GetAsStructValue() const
+      -> std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId> {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::StructValue);
+    return {SemanticsNodeBlockId(arg0_), SemanticsNodeBlockId(arg1_)};
+  }
+
+  static auto MakeStructValueField(ParseTree::Node parse_node,
+                                   SemanticsNodeId type,
+                                   SemanticsStringId name_id,
+                                   SemanticsNodeId value_id) -> SemanticsNode {
+    return SemanticsNode(parse_node, SemanticsNodeKind::StructValueField, type,
+                         name_id.index, value_id.index);
+  }
+  auto GetAsStructValueField() const
+      -> std::pair<SemanticsStringId, SemanticsNodeId> {
+    CARBON_CHECK(kind_ == SemanticsNodeKind::StructValueField);
+    return {SemanticsStringId(arg0_), SemanticsNodeId(arg1_)};
+  }
+
   static auto MakeVarStorage(ParseTree::Node parse_node, SemanticsNodeId type)
       -> SemanticsNode {
     return SemanticsNode(parse_node, SemanticsNodeKind::VarStorage, type);
