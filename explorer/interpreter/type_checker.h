@@ -105,7 +105,7 @@ class TypeChecker {
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
   auto MakeConstraintWitness(
-      std::vector<Nonnull<const Witness*>> impl_constraint_witnesses) const
+      std::vector<Nonnull<const Witness*>> impls_constraint_witnesses) const
       -> Nonnull<const Witness*>;
 
   // Given the witnesses for the components of a constraint, form a witness for

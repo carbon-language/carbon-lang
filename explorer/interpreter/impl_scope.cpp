@@ -32,7 +32,7 @@ void ImplScope::Add(Nonnull<const Value*> iface,
     CARBON_CHECK(!sort_key)
         << "should only be given a sort key for an impl of an interface";
     // The caller should have substituted `.Self` for `type` already.
-    Add(constraint->impl_constraints(), deduced, impl_bindings, witness,
+    Add(constraint->impls_constraints(), deduced, impl_bindings, witness,
         type_checker);
     // A parameterized impl declaration doesn't contribute any equality
     // constraints to the scope. Instead, we'll resolve the equality
@@ -63,13 +63,13 @@ void ImplScope::Add(Nonnull<const Value*> iface,
   impl_declarations_.insert(insert_pos, std::move(new_impl));
 }
 
-void ImplScope::Add(llvm::ArrayRef<ImplConstraint> impl_constraints,
+void ImplScope::Add(llvm::ArrayRef<ImplsConstraint> impls_constraints,
                     llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<const Witness*> witness,
                     const TypeChecker& type_checker) {
-  for (size_t i = 0; i != impl_constraints.size(); ++i) {
-    ImplConstraint impl = impl_constraints[i];
+  for (size_t i = 0; i != impls_constraints.size(); ++i) {
+    ImplsConstraint impl = impls_constraints[i];
     Add(impl.interface, deduced, impl.type, impl_bindings,
         type_checker.MakeConstraintWitnessAccess(witness, i), type_checker);
   }
@@ -129,9 +129,9 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
   }
   if (const auto* constraint = dyn_cast<ConstraintType>(constraint_type)) {
     std::vector<Nonnull<const Witness*>> witnesses;
-    for (auto impl : constraint->impl_constraints()) {
-      // Note that later impl constraints can refer to earlier impl constraints
-      // via impl bindings. For example, in
+    for (auto impl : constraint->impls_constraints()) {
+      // Note that later impls constraints can refer to earlier impls
+      // constraints via impl bindings. For example, in
       //   `C where .Self.AssocType impls D`,
       // ... the `.Self.AssocType impls D` constraint refers to the
       // `.Self impls C` constraint when naming `AssocType`. So incrementally
@@ -139,8 +139,8 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
       std::optional<Nonnull<const Witness*>> witness;
       if (constraint->self_binding()->impl_binding()) {
         // Note, this is a partial impl binding covering only the impl
-        // constraints that we've already seen. Earlier impl constraints should
-        // not be able to refer to impl bindings for later impl constraints.
+        // constraints that we've already seen. Earlier impls constraints should
+        // not be able to refer to impl bindings for later impls constraints.
         witness = type_checker.MakeConstraintWitness(witnesses);
       }
       Bindings local_bindings = bindings;

@@ -1515,18 +1515,18 @@ class TypeChecker::ConstraintTypeBuilder {
     return cast<Witness>(*impl_binding_->symbolic_identity());
   }
 
-  // Adds an `impl` constraint -- `T is C` if not already present.
-  // Returns the index of the impl constraint within the self witness.
-  auto AddImplConstraint(ImplConstraint impl) -> int {
-    for (int i = 0; i != static_cast<int>(impl_constraints_.size()); ++i) {
-      ImplConstraint& existing = impl_constraints_[i];
-      if (TypeEqual(existing.type, impl.type, std::nullopt) &&
-          TypeEqual(existing.interface, impl.interface, std::nullopt)) {
+  // Adds an `impls` constraint -- `T impls C` if not already present.
+  // Returns the index of the impls constraint within the self witness.
+  auto AddImplsConstraint(ImplsConstraint impls) -> int {
+    for (int i = 0; i != static_cast<int>(impls_constraints_.size()); ++i) {
+      ImplsConstraint& existing = impls_constraints_[i];
+      if (TypeEqual(existing.type, impls.type, std::nullopt) &&
+          TypeEqual(existing.interface, impls.interface, std::nullopt)) {
         return i;
       }
     }
-    impl_constraints_.push_back(impl);
-    return impl_constraints_.size() - 1;
+    impls_constraints_.push_back(impls);
+    return impls_constraints_.size() - 1;
   }
 
   // Adds an intrinsic constraint, if not already present.
@@ -1585,17 +1585,17 @@ class TypeChecker::ConstraintTypeBuilder {
     // First substitute into the impl bindings to form the full witness for
     // the constraint type.
     std::vector<Nonnull<const Witness*>> witnesses;
-    for (const auto& impl_constraint : constraint->impl_constraints()) {
+    for (const auto& impls_constraint : constraint->impls_constraints()) {
       Bindings local_bindings = bindings;
       local_bindings.Add(constraint->self_binding(), self,
                          type_checker.MakeConstraintWitness(witnesses));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type,
-          type_checker.Substitute(local_bindings, impl_constraint.type));
+          type_checker.Substitute(local_bindings, impls_constraint.type));
       CARBON_ASSIGN_OR_RETURN(const auto* interface,
                               type_checker.SubstituteCast<InterfaceType>(
-                                  local_bindings, impl_constraint.interface));
-      int index = AddImplConstraint({.type = type, .interface = interface});
+                                  local_bindings, impls_constraint.interface));
+      int index = AddImplsConstraint({.type = type, .interface = interface});
       witnesses.push_back(
           type_checker.MakeConstraintWitnessAccess(self_witness, index));
     }
@@ -1622,8 +1622,8 @@ class TypeChecker::ConstraintTypeBuilder {
                                   rewrite_constraint.converted_replacement));
 
       // Form a symbolic value naming the non-rewritten associated constant.
-      // The impl constraint will always already exist.
-      int index = AddImplConstraint({.type = self, .interface = interface});
+      // The impls constraint will always already exist.
+      int index = AddImplsConstraint({.type = self, .interface = interface});
       const auto* witness =
           type_checker.MakeConstraintWitnessAccess(self_witness, index);
       const auto* constant_value = arena_->New<AssociatedConstant>(
@@ -1700,7 +1700,7 @@ class TypeChecker::ConstraintTypeBuilder {
     friend class ConstraintTypeBuilder;
 
    private:
-    int num_impl_constraints_added = 0;
+    int num_impls_constraints_added = 0;
     int num_equality_constraints_added = 0;
   };
 
@@ -1712,19 +1712,19 @@ class TypeChecker::ConstraintTypeBuilder {
                                  Nonnull<ImplScope*> impl_scope,
                                  Nonnull<ConstraintsInScopeTracker*> tracker) {
     // Figure out which constraints we're going to add.
-    int first_impl_constraint_to_add = std::exchange(
-        tracker->num_impl_constraints_added, impl_constraints_.size());
+    int first_impls_constraint_to_add = std::exchange(
+        tracker->num_impls_constraints_added, impls_constraints_.size());
     int first_equality_constraint_to_add = std::exchange(
         tracker->num_equality_constraints_added, equality_constraints_.size());
-    auto new_impl_constraints =
-        llvm::ArrayRef<ImplConstraint>(impl_constraints_)
-            .drop_front(first_impl_constraint_to_add);
+    auto new_impls_constraints =
+        llvm::ArrayRef<ImplsConstraint>(impls_constraints_)
+            .drop_front(first_impls_constraint_to_add);
     auto new_equality_constraints =
         llvm::ArrayRef<EqualityConstraint>(equality_constraints_)
             .drop_front(first_equality_constraint_to_add);
 
     // Add all of the new constraints.
-    impl_scope->Add(new_impl_constraints, std::nullopt, std::nullopt,
+    impl_scope->Add(new_impls_constraints, std::nullopt, std::nullopt,
                     GetSelfWitness(), type_checker);
     for (const auto& equal : new_equality_constraints) {
       impl_scope->AddEqualityConstraint(arena_->New<EqualityConstraint>(equal));
@@ -1751,7 +1751,7 @@ class TypeChecker::ConstraintTypeBuilder {
   auto Build() && -> Nonnull<const ConstraintType*> {
     // Create the new type.
     auto* result = arena_->New<ConstraintType>(
-        self_binding_, std::move(impl_constraints_),
+        self_binding_, std::move(impls_constraints_),
         std::move(intrinsic_constraints_), std::move(equality_constraints_),
         std::move(rewrite_constraints_), std::move(lookup_contexts_));
     // Update the impl binding to denote the constraint type itself.
@@ -1912,14 +1912,14 @@ class TypeChecker::ConstraintTypeBuilder {
           type_checker.RebuildValue(rewrite.unconverted_replacement_type));
     }
 
-    // Apply rewrites throughout impl constraints.
-    for (auto& impl_constraint : impl_constraints_) {
-      CARBON_ASSIGN_OR_RETURN(impl_constraint.type,
-                              type_checker.RebuildValue(impl_constraint.type));
+    // Apply rewrites throughout impls constraints.
+    for (auto& impls_constraint : impls_constraints_) {
+      CARBON_ASSIGN_OR_RETURN(impls_constraint.type,
+                              type_checker.RebuildValue(impls_constraint.type));
       CARBON_ASSIGN_OR_RETURN(
           const auto* subst_interface,
-          type_checker.RebuildValue(impl_constraint.interface));
-      impl_constraint.interface = cast<InterfaceType>(subst_interface);
+          type_checker.RebuildValue(impls_constraint.interface));
+      impls_constraint.interface = cast<InterfaceType>(subst_interface);
     }
 
     // Apply rewrites throughout intrinsic constraints.
@@ -1952,7 +1952,7 @@ class TypeChecker::ConstraintTypeBuilder {
   Nonnull<Arena*> arena_;
   Nonnull<GenericBinding*> self_binding_;
   Nonnull<ImplBinding*> impl_binding_;
-  std::vector<ImplConstraint> impl_constraints_;
+  std::vector<ImplsConstraint> impls_constraints_;
   std::vector<IntrinsicConstraint> intrinsic_constraints_;
   std::vector<EqualityConstraint> equality_constraints_;
   std::vector<RewriteConstraint> rewrite_constraints_;
@@ -2343,9 +2343,9 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
 }
 
 auto TypeChecker::MakeConstraintWitness(
-    std::vector<Nonnull<const Witness*>> impl_constraint_witnesses) const
+    std::vector<Nonnull<const Witness*>> impls_constraint_witnesses) const
     -> Nonnull<const Witness*> {
-  return arena_->New<ConstraintWitness>(std::move(impl_constraint_witnesses));
+  return arena_->New<ConstraintWitness>(std::move(impls_constraint_witnesses));
 }
 
 auto TypeChecker::MakeConstraintWitnessAccess(Nonnull<const Witness*> witness,
@@ -3919,8 +3919,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
             // Find (or add) `.Self impls I`, and form a symbolic value naming
             // the associated constant.
-            // TODO: Reject if the impl constraint didn't already exist.
-            int index = builder.AddImplConstraint(
+            // TODO: Reject if the impls constraint didn't already exist.
+            int index = builder.AddImplsConstraint(
                 {.type = builder.GetSelfType(), .interface = result.interface});
             const auto* witness =
                 MakeConstraintWitnessAccess(builder.GetSelfWitness(), index);
@@ -5285,12 +5285,12 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
   // this interface.
   std::optional<Nonnull<const Witness*>> iface_impl_witness;
   if (is_interface) {
-    // The impl constraint says only that the direct members of the interface
+    // The impls constraint says only that the direct members of the interface
     // are available. For any indirect constraints, we need to add separate
     // entries to the constraint type. This ensures that all indirect
     // constraints are lifted to the top level so they can be accessed directly
     // and resolved independently if necessary.
-    int index = builder.AddImplConstraint(
+    int index = builder.AddImplsConstraint(
         {.type = builder.GetSelfType(),
          .interface = cast<InterfaceType>(constraint_type)});
     iface_impl_witness =
@@ -5306,7 +5306,8 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
     // to update state that's not available from there.
     switch (m->kind()) {
       case DeclarationKind::InterfaceExtendsDeclaration: {
-        // For an `extends C;` declaration, add `Self is C` to our constraint.
+        // For an `extends C;` declaration, add `Self impls C` to our
+        // constraint.
         auto* extends = cast<InterfaceExtendsDeclaration>(m);
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> base,
@@ -5323,7 +5324,7 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
       }
 
       case DeclarationKind::InterfaceImplDeclaration: {
-        // For an `impl X as Y;` declaration, add `X is Y` to our constraint.
+        // For an `impl X as Y;` declaration, add `X impls Y` to our constraint.
         auto* impl = cast<InterfaceImplDeclaration>(m);
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> impl_type,
@@ -5396,7 +5397,7 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
       }
     }
 
-    // Add any new impl constraints to the scope.
+    // Add any new impls constraints to the scope.
     builder.BringConstraintsIntoScope(*this, &constraint_scope,
                                       &constraint_tracker);
   }
@@ -5652,15 +5653,15 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                  builder.GetSelfWitness(), Bindings(),
                                  /*add_lookup_contexts=*/true));
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "resolving impl constraint type for " << *impl_decl
+      *trace_stream_ << "resolving impls constraint type for " << *impl_decl
                      << " from " << *implemented_constraint << "\n";
     }
     CARBON_RETURN_IF_ERROR(builder.Resolve(
         *this, impl_decl->interface().source_loc(), impl_scope));
     constraint_type = std::move(builder).Build();
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "resolving impl constraint type as " << *constraint_type
-                     << "\n";
+      *trace_stream_ << "resolving impls constraint type as "
+                     << *constraint_type << "\n";
     }
     impl_decl->set_constraint_type(constraint_type);
   }

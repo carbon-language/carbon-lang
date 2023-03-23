@@ -1522,7 +1522,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               .kind = IntrinsicConstraint::ImplicitAs,
               .arguments = args};
           auto* result = arena_->New<ConstraintType>(
-              self_binding, std::vector<ImplConstraint>{},
+              self_binding, std::vector<ImplsConstraint>{},
               std::vector<IntrinsicConstraint>{std::move(constraint)},
               std::vector<EqualityConstraint>{},
               std::vector<RewriteConstraint>{}, std::vector<LookupContext>{});

@@ -89,10 +89,10 @@ class ImplScope {
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
            Nonnull<const Witness*> witness, const TypeChecker& type_checker,
            std::optional<TypeStructureSortKey> sort_key = std::nullopt);
-  // Adds a list of impl constraints from a constraint type into scope. Any
+  // Adds a list of impls constraints from a constraint type into scope. Any
   // references to `.Self` are expected to have already been substituted for
   // the type implementing the constraint.
-  void Add(llvm::ArrayRef<ImplConstraint> impl_constraints,
+  void Add(llvm::ArrayRef<ImplsConstraint> impls_constraints,
            llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
            Nonnull<const Witness*> witness, const TypeChecker& type_checker);
