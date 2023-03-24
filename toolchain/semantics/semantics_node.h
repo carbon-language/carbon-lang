@@ -165,8 +165,7 @@ class SemanticsNode {
     }
 
    private:
-    // GetImpl handles the different parameterization and return types based on
-    // the size of ArgTypes.
+    // GetImpl handles the different return types based on ArgTypes.
     template <typename Arg0Type, typename Arg1Type, typename>
     static auto GetImpl(SemanticsNode node) -> std::pair<Arg0Type, Arg1Type> {
       CARBON_CHECK(node.kind() == Kind);
@@ -202,8 +201,7 @@ class SemanticsNode {
     using FactoryBase<Kind, ArgTypes...>::Get;
 
    private:
-    // MakeImpl handles the different parameterization and return types based on
-    // the size of ArgTypes.
+    // MakeImpl handles the different parameterization based on ArgTypes.
     template <typename Arg0Type, typename Arg1Type>
     static auto MakeImpl(ParseTree::Node parse_node, Arg0Type arg0_id,
                          Arg1Type arg1_id) -> SemanticsNode {
