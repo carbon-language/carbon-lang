@@ -130,7 +130,7 @@ struct SemanticsStringId : public IndexBase {
 // - parse_node for error placement.
 // - kind for run-time logic when the input Kind is unknown.
 // - type_id for quick type checking.
-// - Up to two Kind-specific arguments.
+// - Up to two Kind-specific members.
 //
 // For each Kind in SemanticsNodeKind, a typical flow looks like:
 //
