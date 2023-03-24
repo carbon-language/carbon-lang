@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "common/check.h"
+#include "common/check_internal.h"
 #include "common/error.h"
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
@@ -2335,10 +2336,28 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
       *trace_stream_ << "matched with " << *impl.type << " as "
                      << *impl.interface << "\n\n";
     }
-    CARBON_ASSIGN_OR_RETURN(
-        const auto* subst_witness,
-        SubstituteCast<Witness>(*bindings_or_error, impl.witness));
-    return {subst_witness};
+
+    auto subst_witness_or_error =
+        SubstituteCast<Witness>(*bindings_or_error, impl.witness);
+
+    if (!subst_witness_or_error.ok()) {
+      std::string error;
+      llvm::raw_string_ostream stream(error);
+
+      stream << subst_witness_or_error.error().message() << "\n"
+             << "NOTE: " << source_loc.ToString()
+             << ": in instantiation of impl ";
+      impl.type->Print(stream);
+      stream << " as " << GetName(impl.interface->declaration()) << " with ";
+      impl.type->Print(stream);
+      stream << " = ";
+      impl_type->Print(stream);
+      stream << " required here";
+
+      return ErrorBuilder(subst_witness_or_error.error().location()) << error;
+    }
+
+    return {*subst_witness_or_error};
   }
 }
 
@@ -6322,25 +6341,7 @@ auto TypeChecker::InstantiateImplDeclaration(
       impl, ScopeInfo::ForNonClassScope(&scope),
       /*is_template_instantiation=*/true));
 
-  auto result = type_checker->TypeCheckImplDeclaration(impl, scope);
-
-  if (!result.ok()) {
-    std::string error;
-    llvm::raw_string_ostream stream(error);
-
-    // TODO: incorrect, we should report the source loc in which instantiation
-    // was required
-    SourceLocation source_loc = impl->source_loc();
-
-    stream << result.error().message() << "\n"
-           << "NOTE: " << source_loc.ToString() << " in instantiation ";
-
-    impl->PrintID(stream);
-
-    stream << " required here";
-
-    return ErrorBuilder(result.error().location()) << error;
-  }
+  CARBON_RETURN_IF_ERROR(type_checker->TypeCheckImplDeclaration(impl, scope));
 
   return std::pair{impl, arena_->New<Bindings>(std::move(new_bindings))};
 }
