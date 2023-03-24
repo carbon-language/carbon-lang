@@ -18,5 +18,6 @@ impl forall [template T:! type] T as GetX {
 }
 
 fn Main() -> i32 {
+  // CHECK:STDERR: NOTE: {{.*}}/explorer/testdata/template/fail_no_member.carbon:[[@LINE+1]]: in instantiation of impl T as GetX with T = i32 required here
   return 0.(GetX.DoIt)();
 }
