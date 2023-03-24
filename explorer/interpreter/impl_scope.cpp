@@ -57,10 +57,10 @@ void ImplScope::Add(Nonnull<const Value*> iface,
   // impl right before it. This keeps the impls with the same type structure
   // sorted in lexical order, which is important for `match_first` semantics.
   auto insert_pos = std::upper_bound(
-      impl_declarations_.begin(), impl_declarations_.end(), new_impl,
+      impl_facts_.begin(), impl_facts_.end(), new_impl,
       [](const Impl& a, const Impl& b) { return a.sort_key < b.sort_key; });
 
-  impl_declarations_.insert(insert_pos, std::move(new_impl));
+  impl_facts_.insert(insert_pos, std::move(new_impl));
 }
 
 void ImplScope::Add(llvm::ArrayRef<ImplsConstraint> impls_constraints,
@@ -382,7 +382,7 @@ auto ImplScope::TryResolveInterfaceHere(
     const TypeChecker& type_checker) const
     -> ErrorOr<std::optional<ResolveResult>> {
   std::optional<ResolveResult> result = std::nullopt;
-  for (const Impl& impl : impl_declarations_) {
+  for (const Impl& impl : impl_facts_) {
     // If we've passed the final impl with a sort key matching our best impl,
     // all further are worse and don't need to be checked.
     if (result && result->impl->sort_key < impl.sort_key) {
@@ -419,7 +419,7 @@ auto ImplScope::TryResolveInterfaceHere(
 void ImplScope::Print(llvm::raw_ostream& out) const {
   out << "impl declarations: ";
   llvm::ListSeparator sep;
-  for (const Impl& impl : impl_declarations_) {
+  for (const Impl& impl : impl_facts_) {
     out << sep << *(impl.type) << " as " << *(impl.interface);
     if (impl.sort_key) {
       out << " " << *impl.sort_key;

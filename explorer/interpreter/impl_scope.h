@@ -176,7 +176,7 @@ class ImplScope {
                                const TypeChecker& type_checker) const
       -> ErrorOr<std::optional<ResolveResult>>;
 
-  std::vector<Impl> impl_declarations_;
+  std::vector<Impl> impl_facts_;
   std::vector<Nonnull<const EqualityConstraint*>> equalities_;
   std::optional<Nonnull<const ImplScope*>> parent_scope_;
 };
