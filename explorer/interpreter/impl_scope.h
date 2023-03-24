@@ -54,7 +54,7 @@ class ImplScope {
   // later are impl bindings, that is, parameters for witnesses. In this case,
   // `sort_key` indicates the order in which this impl should be considered
   // relative to other matching impls.
-  struct Impl {
+  struct ImplFact {
     Nonnull<const InterfaceType*> interface;
     std::vector<Nonnull<const GenericBinding*>> deduced;
     Nonnull<const Value*> type;
@@ -66,7 +66,7 @@ class ImplScope {
   // Internal type used to represent the result of resolving a lookup in a
   // particular impl scope.
   struct ResolveResult {
-    Nonnull<const Impl*> impl;
+    Nonnull<const ImplFact*> impl;
     Nonnull<const Witness*> witness;
   };
 
@@ -176,7 +176,7 @@ class ImplScope {
                                const TypeChecker& type_checker) const
       -> ErrorOr<std::optional<ResolveResult>>;
 
-  std::vector<Impl> impl_facts_;
+  std::vector<ImplFact> impl_facts_;
   std::vector<Nonnull<const EqualityConstraint*>> equalities_;
   std::optional<Nonnull<const ImplScope*>> parent_scope_;
 };

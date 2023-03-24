@@ -78,7 +78,7 @@ class TypeChecker {
   // `type`, then return the witness for this `impl`. Otherwise return
   // std::nullopt.
   auto MatchImpl(const InterfaceType& iface, Nonnull<const Value*> type,
-                 const ImplScope::Impl& impl, const ImplScope& impl_scope,
+                 const ImplScope::ImplFact& impl, const ImplScope& impl_scope,
                  SourceLocation source_loc) const
       -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 

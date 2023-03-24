@@ -2274,7 +2274,7 @@ auto TypeChecker::RefineWitness(Nonnull<const Witness*> witness,
 
 auto TypeChecker::MatchImpl(const InterfaceType& iface,
                             Nonnull<const Value*> impl_type,
-                            const ImplScope::Impl& impl,
+                            const ImplScope::ImplFact& impl,
                             const ImplScope& impl_scope,
                             SourceLocation source_loc) const
     -> ErrorOr<std::optional<Nonnull<const Witness*>>> {

@@ -46,19 +46,21 @@ void ImplScope::Add(Nonnull<const Value*> iface,
     return;
   }
 
-  Impl new_impl = {.interface = cast<InterfaceType>(iface),
-                   .deduced = deduced,
-                   .type = type,
-                   .impl_bindings = impl_bindings,
-                   .witness = witness,
-                   .sort_key = std::move(sort_key)};
+  ImplFact new_impl = {.interface = cast<InterfaceType>(iface),
+                       .deduced = deduced,
+                       .type = type,
+                       .impl_bindings = impl_bindings,
+                       .witness = witness,
+                       .sort_key = std::move(sort_key)};
 
   // Find the first impl that's more specific than this one, and place this
   // impl right before it. This keeps the impls with the same type structure
   // sorted in lexical order, which is important for `match_first` semantics.
-  auto insert_pos = std::upper_bound(
-      impl_facts_.begin(), impl_facts_.end(), new_impl,
-      [](const Impl& a, const Impl& b) { return a.sort_key < b.sort_key; });
+  auto insert_pos =
+      std::upper_bound(impl_facts_.begin(), impl_facts_.end(), new_impl,
+                       [](const ImplFact& a, const ImplFact& b) {
+                         return a.sort_key < b.sort_key;
+                       });
 
   impl_facts_.insert(insert_pos, std::move(new_impl));
 }
@@ -382,7 +384,7 @@ auto ImplScope::TryResolveInterfaceHere(
     const TypeChecker& type_checker) const
     -> ErrorOr<std::optional<ResolveResult>> {
   std::optional<ResolveResult> result = std::nullopt;
-  for (const Impl& impl : impl_facts_) {
+  for (const ImplFact& impl : impl_facts_) {
     // If we've passed the final impl with a sort key matching our best impl,
     // all further are worse and don't need to be checked.
     if (result && result->impl->sort_key < impl.sort_key) {
@@ -419,7 +421,7 @@ auto ImplScope::TryResolveInterfaceHere(
 void ImplScope::Print(llvm::raw_ostream& out) const {
   out << "impl declarations: ";
   llvm::ListSeparator sep;
-  for (const Impl& impl : impl_facts_) {
+  for (const ImplFact& impl : impl_facts_) {
     out << sep << *(impl.type) << " as " << *(impl.interface);
     if (impl.sort_key) {
       out << " " << *impl.sort_key;
