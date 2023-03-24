@@ -196,29 +196,10 @@ class SemanticsNode {
   class FactoryPreTyped : public FactoryBase<Kind, ArgTypes...> {
    public:
     static auto Make(ParseTree::Node parse_node, ArgTypes... args) -> auto{
-      return MakeImpl(parse_node, args...);
+      SemanticsNodeId type_id(TypeIndex);
+      return FactoryBase<Kind, ArgTypes...>::Make(parse_node, type_id, args...);
     }
     using FactoryBase<Kind, ArgTypes...>::Get;
-
-   private:
-    // MakeImpl handles the different parameterization based on ArgTypes.
-    template <typename Arg0Type, typename Arg1Type>
-    static auto MakeImpl(ParseTree::Node parse_node, Arg0Type arg0_id,
-                         Arg1Type arg1_id) -> SemanticsNode {
-      SemanticsNodeId type_id(TypeIndex);
-      return FactoryBase<Kind, Arg0Type, Arg1Type>::Make(parse_node, type_id,
-                                                         arg0_id, arg1_id);
-    }
-    template <typename Arg0Type>
-    static auto MakeImpl(ParseTree::Node parse_node, Arg0Type arg0_id)
-        -> SemanticsNode {
-      SemanticsNodeId type_id(TypeIndex);
-      return FactoryBase<Kind, Arg0Type>::Make(parse_node, type_id, arg0_id);
-    }
-    static auto MakeImpl(ParseTree::Node parse_node) -> SemanticsNode {
-      SemanticsNodeId type_id(TypeIndex);
-      return FactoryBase<Kind>::Make(parse_node, type_id);
-    }
   };
 
  public:
