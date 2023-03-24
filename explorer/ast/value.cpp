@@ -13,6 +13,7 @@
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/element_path.h"
+#include "explorer/ast/value_transform.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "llvm/ADT/STLExtras.h"
@@ -26,6 +27,89 @@ using llvm::cast;
 using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
 using llvm::isa;
+
+namespace {
+// A visitor that walks the Value*s nested within a value.
+struct NestedValueVisitor {
+  template <typename T>
+  auto VisitParts(const T& decomposable) -> bool {
+    return decomposable.Decompose(
+        [&](const auto&... parts) { return (Visit(parts) && ...); });
+  }
+
+  auto Visit(Nonnull<const Value*> value) -> bool {
+    if (!callback(value)) {
+      return false;
+    }
+
+    return value->Visit<bool>(
+        [&](const auto* derived_value) { return VisitParts(*derived_value); });
+  }
+
+  auto Visit(Nonnull<const Bindings*> bindings) -> bool {
+    for (auto [binding, value] : bindings->args()) {
+      if (!Visit(value)) {
+        return false;
+      }
+    }
+    for (auto [binding, value] : bindings->witnesses()) {
+      if (!Visit(value)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template <typename T>
+  auto Visit(const std::vector<T>& vec) -> bool {
+    for (auto& v : vec) {
+      if (!Visit(v)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template <typename T>
+  auto Visit(const std::optional<T>& opt) -> bool {
+    return !opt || Visit(*opt);
+  }
+
+  template <typename T,
+            typename = std::enable_if_t<IsRecursivelyTransformable<T>>>
+  auto Visit(Nonnull<const T*> value) -> bool {
+    return VisitParts(*value);
+  }
+  template <typename T,
+            typename = std::enable_if_t<IsRecursivelyTransformable<T>>>
+  auto Visit(const T& value) -> bool {
+    return VisitParts(value);
+  }
+
+  // Other value components can't refer to a value.
+  auto Visit(Nonnull<const AstNode*>) -> bool { return true; }
+  auto Visit(ValueNodeView) -> bool { return true; }
+  auto Visit(int) -> bool { return true; }
+  auto Visit(Address) -> bool { return true; }
+  auto Visit(const std::string&) -> bool { return true; }
+  auto Visit(Nonnull<const NominalClassValue**>) -> bool {
+    // This is the pointer to the most-derived value within a class value,
+    // which is not "within" this value, so we shouldn't visit it.
+    return true;
+  }
+  auto Visit(const VTable&) -> bool { return true; }
+  auto Visit(Nonnull<const ContinuationValue::Representation*>) -> bool {
+    return true;
+  }
+
+  llvm::function_ref<bool(const Value*)> callback;
+};
+}  // namespace
+
+auto VisitNestedValues(Nonnull<const Value*> value,
+                       llvm::function_ref<bool(const Value*)> visitor) -> bool {
+  return NestedValueVisitor{.callback = visitor}.Visit(value);
+}
 
 auto StructValue::FindField(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {

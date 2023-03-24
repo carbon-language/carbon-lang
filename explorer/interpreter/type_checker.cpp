@@ -407,86 +407,18 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
   return IsType(value) && !TypeContainsAuto(value);
 }
 
-namespace {
-// This collection of functions is wrapped in a class so that all of the
-// overloads are visible from each other without the need for forward
-// declarations.
-struct DependsOnTemplateParameterVisitor {
-  template <typename T>
-  static auto VisitParts(const T& decomposable) -> bool {
-    return decomposable.Decompose(
-        [](const auto&... parts) { return (Visit(parts) || ...); });
-  }
-
-  static auto Visit(Nonnull<const Value*> value) -> bool {
-    // A VariableType is depends on a template parameter if it names a template
-    // binding.
-    if (auto *var_type = dyn_cast<VariableType>(value)) {
-      return var_type->binding().binding_kind() ==
-             GenericBinding::BindingKind::Template;
-    }
-
-    // Any other value depends on a template parameter if any part of it is.
-    return value->Visit<bool>([](const auto* derived_value) {
-             return VisitParts(*derived_value);
-           });
-  }
-
-  static auto Visit(Nonnull<const Bindings*> bindings) -> bool {
-    for (auto [binding, value] : bindings->args()) {
-      if (Visit(value)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  template<typename T>
-  static auto Visit(const std::vector<T> &vec) -> bool {
-    for (auto &v : vec) {
-      if (Visit(v)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  template<typename T>
-  static auto Visit(const std::optional<T> &opt) -> bool {
-    return opt && Visit(*opt);
-  }
-
-  template <typename T,
-            typename = std::enable_if_t<IsRecursivelyTransformable<T>>>
-  static auto Visit(Nonnull<const T*> value) -> bool {
-    return VisitParts(*value);
-  }
-  template <typename T,
-            typename = std::enable_if_t<IsRecursivelyTransformable<T>>>
-  static auto Visit(const T& value) -> bool {
-    return VisitParts(value);
-  }
-
-  // Other value components can't refer to a generic binding.
-  static auto Visit(Nonnull<const AstNode*>) -> bool { return false; }
-  static auto Visit(ValueNodeView) -> bool { return false; }
-  static auto Visit(int) -> bool { return false; }
-  static auto Visit(Address) -> bool { return false; }
-  static auto Visit(const std::string&) -> bool { return false; }
-  static auto Visit(Nonnull<const NominalClassValue**>) -> bool {
-    return false;
-  }
-  static auto Visit(const VTable&) -> bool { return false; }
-  static auto Visit(Nonnull<const ContinuationValue::Representation*>) -> bool {
-    return false;
-  }
-};
-}  // namespace
-
 // Returns whether the given value is template-dependent, that is, if it
 // depends on any template parameter.
 static auto DependsOnTemplateParameter(Nonnull<const Value*> value) -> bool {
-  return DependsOnTemplateParameterVisitor::Visit(value);
+  bool mentions_no_template_parameters =
+      VisitNestedValues(value, [](Nonnull<const Value*> nested) -> bool {
+        if (auto* var_type = dyn_cast<VariableType>(nested)) {
+          return var_type->binding().binding_kind() !=
+                 GenericBinding::BindingKind::Template;
+        }
+        return true;
+      });
+  return !mentions_no_template_parameters;
 }
 
 // Returns whether all template parameters in `bindings` are saturated: that
@@ -6589,6 +6521,12 @@ auto TypeChecker::InstantiateImplDeclaration(
     }
   }
 
+  // TODO: Make this method non-const and remove the const-cast here. The
+  // requirement to perform template instantiation unfortunately means that a
+  // lot of type-checking stops being free of side-effects, so this means
+  // removing `const` throughout most of the type-checker.
+  auto* type_checker = const_cast<TypeChecker*>(this);
+
   // TODO: It's probably not correct to use the top-level impl scope here. It's
   // not obvious what we should use, though -- which impls are in scope in
   // template instantiation?
@@ -6596,11 +6534,34 @@ auto TypeChecker::InstantiateImplDeclaration(
       << "can't perform template instantiation with no top-level scope";
   ImplScope scope(*top_level_impl_scope_);
 
-  // TODO: Remove the const-cast here. The requirement to perform template
-  // instantiation unfortunately means that a lot of type-checking stops being
-  // free of side-effects, so this means removing `const` throughout most of
-  // the type-checker.
-  auto* type_checker = const_cast<TypeChecker*>(this);
+  // Bring all impls from any checked generic bindings in the template
+  // arguments into scope.
+  //
+  // TODO: There shouldn't be any checked generic bindings in the template
+  // arguments by the time we come to perform an instantiation, but in order
+  // for that to work, we need to defer instantiating templates until we know
+  // the values of checked generic parameters, such as by performing
+  // monomorphization for checked generics, which explorer doesn't yet do. See
+  // #2153 for the plan here.
+  //
+  // As a workaround for the lack of support for #2153, we can instantiate
+  // templates with the argument equal to a generic parameter. When we do so,
+  // the constraints on that generic parameter need to be in scope in the
+  // instantiation. This is imperfect: it misses constraints on the binding
+  // that come from anywhere other than its type.
+  for (auto [param, value] : bindings->args()) {
+    if (param->binding_kind() != GenericBinding::BindingKind::Template) {
+      continue;
+    }
+    VisitNestedValues(value, [&](Nonnull<const Value*> nested) -> bool {
+      if (auto* var_type = dyn_cast<VariableType>(nested)) {
+        if (auto impl_binding = var_type->binding().impl_binding()) {
+          type_checker->BringImplIntoScope(*impl_binding, scope);
+        }
+      }
+      return true;
+    });
+  }
 
   // Type-check the new impl.
   //
