@@ -41,7 +41,7 @@ fn Main() -> i32 {
   var a: ClassWithInternalF = {};
   var b: ClassWithExternalF = {};
   a.(CallF.DoIt)();
-  // CHECK:STDERR: NOTE: {{.*}}/explorer/testdata/template/fail_name_lookup.carbon:[[@LINE+1]]: in instantiation of impl T as CallF with T = class ClassWithExternalF required here
+  // CHECK:STDERR: NOTE: {{.*}}/explorer/testdata/template/fail_name_lookup.carbon:[[@LINE+1]]: in instantiation of `impl T as CallF` with `T = class ClassWithExternalF` required here
   b.(CallF.DoIt)();
   return 0;
 }

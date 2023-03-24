@@ -17,7 +17,6 @@
 #include <vector>
 
 #include "common/check.h"
-#include "common/check_internal.h"
 #include "common/error.h"
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
@@ -2341,20 +2340,12 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
         SubstituteCast<Witness>(*bindings_or_error, impl.witness);
 
     if (!subst_witness_or_error.ok()) {
-      std::string error;
-      llvm::raw_string_ostream stream(error);
-
-      stream << subst_witness_or_error.error().message() << "\n"
+      return ErrorBuilder(subst_witness_or_error.error().location())
+             << subst_witness_or_error.error().message() << "\n"
              << "NOTE: " << source_loc.ToString()
-             << ": in instantiation of impl ";
-      impl.type->Print(stream);
-      stream << " as " << GetName(impl.interface->declaration()) << " with ";
-      impl.type->Print(stream);
-      stream << " = ";
-      impl_type->Print(stream);
-      stream << " required here";
-
-      return ErrorBuilder(subst_witness_or_error.error().location()) << error;
+             << ": in instantiation of `impl " << *impl.type << " as "
+             << GetName(impl.interface->declaration()) << "` with `"
+             << *impl.type << " = " << *impl_type << "` required here";
     }
 
     return {*subst_witness_or_error};
@@ -3108,7 +3099,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         default:
           return ProgramError(e->source_loc())
-                 << "member access, unexpected " << object_type << " in " << *e;
+                 << "member access into unexpected type `" << object_type
+                 << "` in `" << *e << "`";
       }
     }
     case ExpressionKind::CompoundMemberAccessExpression: {

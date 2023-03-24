@@ -13,11 +13,11 @@ interface GetX {
 }
 
 impl forall [template T:! type] T as GetX {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/template/fail_no_member.carbon:[[@LINE+1]]: member access, unexpected i32 in self.x
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/template/fail_no_member.carbon:[[@LINE+1]]: member access into unexpected type `i32` in `self.x`
   fn DoIt[self: Self]() -> i32 { return self.x; }
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: NOTE: {{.*}}/explorer/testdata/template/fail_no_member.carbon:[[@LINE+1]]: in instantiation of impl T as GetX with T = i32 required here
+  // CHECK:STDERR: NOTE: {{.*}}/explorer/testdata/template/fail_no_member.carbon:[[@LINE+1]]: in instantiation of `impl T as GetX` with `T = i32` required here
   return 0.(GetX.DoIt)();
 }
