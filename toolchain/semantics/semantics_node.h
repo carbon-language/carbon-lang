@@ -159,7 +159,7 @@ class SemanticsNode {
                            arg_ids.index...);
     }
 
-    static auto Get(SemanticsNode node) -> auto{
+    static auto Get(SemanticsNode node) {
       struct Unused {};
       return GetImpl<ArgTypes..., Unused>(node);
     }
@@ -195,7 +195,7 @@ class SemanticsNode {
   template <KindTemplateEnum Kind, int32_t TypeIndex, typename... ArgTypes>
   class FactoryPreTyped : public FactoryBase<Kind, ArgTypes...> {
    public:
-    static auto Make(ParseTree::Node parse_node, ArgTypes... args) -> auto{
+    static auto Make(ParseTree::Node parse_node, ArgTypes... args) {
       SemanticsNodeId type_id(TypeIndex);
       return FactoryBase<Kind, ArgTypes...>::Make(parse_node, type_id, args...);
     }
@@ -308,7 +308,7 @@ class SemanticsNode {
   // Provide `node.GetAsKind()` as an instance method for all kinds, essentially
   // an alias for`SemanticsNode::Kind::Get(node)`.
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
-  auto GetAs##Name() const->auto{ return Name::Get(*this); }
+  auto GetAs##Name() const { return Name::Get(*this); }
 #include "toolchain/semantics/semantics_node_kind.def"
 
   auto parse_node() const -> ParseTree::Node { return parse_node_; }
