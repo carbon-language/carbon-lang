@@ -147,11 +147,11 @@ class SemanticsNode {
   // Factory templates need to use the raw enum instead of the class wrapper.
   using KindTemplateEnum = Internal::SemanticsNodeKindRawEnum;
 
-  // The FactoryBase and FactoryNBase structs provide Make and Get to support 0,
-  // 1, or 2 arguments for a SemanticsNode. These are protected so that child
-  // factories can opt in to what pieces they want to use.
+  // Provides Make and Get to support 0, 1, or 2 arguments for a SemanticsNode.
+  // These are protected so that child factories can opt in to what pieces they
+  // want to use.
   template <KindTemplateEnum Kind, typename... ArgTypes>
-  struct FactoryBase {
+  class FactoryBase {
    protected:
     static auto Make(ParseTree::Node parse_node, SemanticsNodeId type_id,
                      ArgTypes... arg_ids) -> SemanticsNode {
@@ -159,8 +159,14 @@ class SemanticsNode {
                            arg_ids.index...);
     }
 
-    // These GetHelper functions handle the different parameterization and
-    // return types based on the size of ArgTypes.
+    static auto Get(SemanticsNode node) -> auto{
+      struct Unused {};
+      return GetImpl<ArgTypes..., Unused>(node);
+    }
+
+   private:
+    // GetImpl handles the different parameterization and return types based on
+    // the size of ArgTypes.
     template <typename Arg0Type, typename Arg1Type, typename>
     static auto GetImpl(SemanticsNode node) -> std::pair<Arg0Type, Arg1Type> {
       CARBON_CHECK(node.kind() == Kind);
@@ -176,73 +182,72 @@ class SemanticsNode {
       CARBON_CHECK(node.kind() == Kind);
       return NoArgs();
     }
-
-    static auto Get(SemanticsNode node) -> auto{
-      struct Unused {};
-      return GetImpl<ArgTypes..., Unused>(node);
-    }
   };
 
   // Provide Get along with a Make that requires a type.
   template <KindTemplateEnum Kind, typename... ArgTypes>
-  struct Factory : public FactoryBase<Kind, ArgTypes...> {
+  class Factory : public FactoryBase<Kind, ArgTypes...> {
+   public:
     using FactoryBase<Kind, ArgTypes...>::Make;
     using FactoryBase<Kind, ArgTypes...>::Get;
   };
 
   // Provides Get along with a Make that assumes a non-changing type.
-  template <KindTemplateEnum Kind, int32_t TypeIndex, typename... Args>
-  struct Factory0PreTyped : public FactoryBase<Kind> {
-    static auto Make(ParseTree::Node parse_node) -> SemanticsNode {
-      SemanticsNodeId type_id(TypeIndex);
-      return FactoryBase<Kind>::Make(parse_node, type_id);
+  template <KindTemplateEnum Kind, int32_t TypeIndex, typename... ArgTypes>
+  class FactoryPreTyped : public FactoryBase<Kind, ArgTypes...> {
+   public:
+    static auto Make(ParseTree::Node parse_node, ArgTypes... args) -> auto{
+      return MakeImpl(parse_node, args...);
     }
-    using FactoryBase<Kind>::Get;
-  };
-  template <KindTemplateEnum Kind, int32_t TypeIndex, typename Arg0Type>
-  struct Factory1PreTyped : public FactoryBase<Kind, Arg0Type> {
-    static auto Make(ParseTree::Node parse_node, Arg0Type arg0_id)
-        -> SemanticsNode {
-      SemanticsNodeId type_id(TypeIndex);
-      return FactoryBase<Kind, Arg0Type>::Make(parse_node, type_id, arg0_id);
-    }
-    using FactoryBase<Kind, Arg0Type>::Get;
-  };
-  template <KindTemplateEnum Kind, int32_t TypeIndex, typename Arg0Type,
-            typename Arg1Type>
-  struct Factory2PreTyped : public FactoryBase<Kind, Arg0Type, Arg1Type> {
-    static auto Make(ParseTree::Node parse_node, Arg0Type arg0_id,
-                     Arg1Type arg1_id) -> SemanticsNode {
+    using FactoryBase<Kind, ArgTypes...>::Get;
+
+   private:
+    // MakeImpl handles the different parameterization and return types based on
+    // the size of ArgTypes.
+    template <typename Arg0Type, typename Arg1Type>
+    static auto MakeImpl(ParseTree::Node parse_node, Arg0Type arg0_id,
+                         Arg1Type arg1_id) -> SemanticsNode {
       SemanticsNodeId type_id(TypeIndex);
       return FactoryBase<Kind, Arg0Type, Arg1Type>::Make(parse_node, type_id,
                                                          arg0_id, arg1_id);
     }
-    using FactoryBase<Kind, Arg0Type, Arg1Type>::Get;
+    template <typename Arg0Type>
+    static auto MakeImpl(ParseTree::Node parse_node, Arg0Type arg0_id)
+        -> SemanticsNode {
+      SemanticsNodeId type_id(TypeIndex);
+      return FactoryBase<Kind, Arg0Type>::Make(parse_node, type_id, arg0_id);
+    }
+    static auto MakeImpl(ParseTree::Node parse_node) -> SemanticsNode {
+      SemanticsNodeId type_id(TypeIndex);
+      return FactoryBase<Kind>::Make(parse_node, type_id);
+    }
   };
 
  public:
   // Invalid is in the SemanticsNodeKind enum, but should never be used.
-  struct Invalid {
+  class Invalid {
+   public:
     static auto Get(SemanticsNode /*node*/) -> SemanticsNode::NoArgs {
       CARBON_FATAL() << "Invalid access";
     }
   };
 
-  struct Assign : public SemanticsNode::Factory<SemanticsNodeKind::Assign,
-                                                SemanticsNodeId /*lhs_id*/,
-                                                SemanticsNodeId /*rhs_id*/> {};
+  class Assign : public SemanticsNode::Factory<SemanticsNodeKind::Assign,
+                                               SemanticsNodeId /*lhs_id*/,
+                                               SemanticsNodeId /*rhs_id*/> {};
 
-  struct BinaryOperatorAdd
+  class BinaryOperatorAdd
       : public SemanticsNode::Factory<SemanticsNodeKind::BinaryOperatorAdd,
                                       SemanticsNodeId /*lhs_id*/,
                                       SemanticsNodeId /*rhs_id*/> {};
 
-  struct BindName : public SemanticsNode::Factory<SemanticsNodeKind::BindName,
-                                                  SemanticsStringId /*name_id*/,
-                                                  SemanticsNodeId /*node_id*/> {
+  class BindName : public SemanticsNode::Factory<SemanticsNodeKind::BindName,
+                                                 SemanticsStringId /*name_id*/,
+                                                 SemanticsNodeId /*node_id*/> {
   };
 
-  struct Builtin {
+  class Builtin {
+   public:
     static auto Make(SemanticsBuiltinKind builtin_kind, SemanticsNodeId type_id)
         -> SemanticsNode {
       // Builtins won't have a ParseTree node associated, so we provide the
@@ -257,19 +262,20 @@ class SemanticsNode {
     }
   };
 
-  struct Call
+  class Call
       : public Factory<SemanticsNodeKind::Call, SemanticsCallId /*call_id*/,
                        SemanticsCallableId /*callable_id*/> {};
 
-  struct CodeBlock
-      : public Factory1PreTyped<SemanticsNodeKind::CodeBlock,
-                                SemanticsNodeId::InvalidIndex,
-                                SemanticsNodeBlockId /*node_block_id*/> {};
+  class CodeBlock
+      : public FactoryPreTyped<SemanticsNodeKind::CodeBlock,
+                               SemanticsNodeId::InvalidIndex,
+                               SemanticsNodeBlockId /*node_block_id*/> {};
 
-  struct CrossReference
+  class CrossReference
       : public FactoryBase<SemanticsNodeKind::CrossReference,
                            SemanticsCrossReferenceIRId /*ir_id*/,
                            SemanticsNodeId /*node_id*/> {
+   public:
     static auto Make(SemanticsNodeId type_id, SemanticsCrossReferenceIRId ir_id,
                      SemanticsNodeId node_id) -> SemanticsNode {
       // A node's parse tree node must refer to a node in the current parse
@@ -281,40 +287,40 @@ class SemanticsNode {
     using FactoryBase::Get;
   };
 
-  struct FunctionDeclaration
-      : public Factory2PreTyped<SemanticsNodeKind::FunctionDeclaration,
-                                SemanticsNodeId::InvalidIndex,
-                                SemanticsStringId /*name_id*/,
-                                SemanticsCallableId /*signature_id*/> {};
+  class FunctionDeclaration
+      : public FactoryPreTyped<SemanticsNodeKind::FunctionDeclaration,
+                               SemanticsNodeId::InvalidIndex,
+                               SemanticsStringId /*name_id*/,
+                               SemanticsCallableId /*signature_id*/> {};
 
-  struct FunctionDefinition
-      : public Factory2PreTyped<SemanticsNodeKind::FunctionDefinition,
-                                SemanticsNodeId::InvalidIndex,
-                                SemanticsNodeId /*decl_id*/,
-                                SemanticsNodeBlockId /*node_block_id*/> {};
+  class FunctionDefinition
+      : public FactoryPreTyped<SemanticsNodeKind::FunctionDefinition,
+                               SemanticsNodeId::InvalidIndex,
+                               SemanticsNodeId /*decl_id*/,
+                               SemanticsNodeBlockId /*node_block_id*/> {};
 
-  struct IntegerLiteral
-      : public Factory1PreTyped<SemanticsNodeKind::IntegerLiteral,
-                                SemanticsBuiltinKind::IntegerType.AsInt(),
-                                SemanticsIntegerLiteralId /*integer_id*/> {};
+  class IntegerLiteral
+      : public FactoryPreTyped<SemanticsNodeKind::IntegerLiteral,
+                               SemanticsBuiltinKind::IntegerType.AsInt(),
+                               SemanticsIntegerLiteralId /*integer_id*/> {};
 
-  struct RealLiteral
-      : public Factory1PreTyped<SemanticsNodeKind::RealLiteral,
-                                SemanticsBuiltinKind::FloatingPointType.AsInt(),
-                                SemanticsRealLiteralId /*real_id*/> {};
+  class RealLiteral
+      : public FactoryPreTyped<SemanticsNodeKind::RealLiteral,
+                               SemanticsBuiltinKind::FloatingPointType.AsInt(),
+                               SemanticsRealLiteralId /*real_id*/> {};
 
-  struct Return : public Factory0PreTyped<SemanticsNodeKind::Return,
-                                          SemanticsNodeId::InvalidIndex> {};
+  class Return : public FactoryPreTyped<SemanticsNodeKind::Return,
+                                        SemanticsNodeId::InvalidIndex> {};
 
-  struct ReturnExpression : public Factory<SemanticsNodeKind::ReturnExpression,
-                                           SemanticsNodeId /*expr_id*/> {};
+  class ReturnExpression : public Factory<SemanticsNodeKind::ReturnExpression,
+                                          SemanticsNodeId /*expr_id*/> {};
 
-  struct StringLiteral
-      : public Factory1PreTyped<SemanticsNodeKind::StringLiteral,
-                                SemanticsBuiltinKind::StringType.AsInt(),
-                                SemanticsStringId /*string_id*/> {};
+  class StringLiteral
+      : public FactoryPreTyped<SemanticsNodeKind::StringLiteral,
+                               SemanticsBuiltinKind::StringType.AsInt(),
+                               SemanticsStringId /*string_id*/> {};
 
-  struct VarStorage : public Factory<SemanticsNodeKind::VarStorage> {};
+  class VarStorage : public Factory<SemanticsNodeKind::VarStorage> {};
 
   SemanticsNode()
       : SemanticsNode(ParseTree::Node::Invalid, SemanticsNodeKind::Invalid,
