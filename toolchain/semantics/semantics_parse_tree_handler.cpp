@@ -116,7 +116,8 @@ auto SemanticsParseTreeHandler::BindName(ParseTree::Node name_node,
   auto name_str = parse_tree_->GetNodeText(name_node);
   auto name_id = semantics_->AddString(name_str);
 
-  AddNode(SemanticsNode::MakeBindName(name_node, type_id, name_id, target_id));
+  AddNode(
+      SemanticsNode::BindName::Make(name_node, type_id, name_id, target_id));
   AddNameToLookup(name_node, name_id, target_id);
   return name_id;
 }
@@ -340,7 +341,7 @@ auto SemanticsParseTreeHandler::HandleCallExpression(ParseTree::Node parse_node)
 
     auto call_id = semantics_->AddCall({ir_id, refs_id});
     // TODO: Propagate return types from callable.
-    auto call_node_id = AddNode(SemanticsNode::MakeCall(
+    auto call_node_id = AddNode(SemanticsNode::Call::Make(
         call_expr_parse_node, SemanticsNodeId::BuiltinEmptyTuple, call_id,
         callable_id));
 
@@ -510,7 +511,8 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinition(
   return_scope_stack_.pop_back();
   PopScope();
   auto block_id = node_block_stack_.Pop();
-  AddNode(SemanticsNode::MakeFunctionDefinition(parse_node, decl_id, block_id));
+  AddNode(
+      SemanticsNode::FunctionDefinition::Make(parse_node, decl_id, block_id));
   node_stack_.Push(parse_node);
 
   return true;
@@ -537,7 +539,7 @@ auto SemanticsParseTreeHandler::HandleFunctionDefinitionStart(
                                .param_refs_id = param_refs_id,
                                .return_type_id = return_type_id});
   auto decl_id = AddNode(
-      SemanticsNode::MakeFunctionDeclaration(fn_node, name_id, callable_id));
+      SemanticsNode::FunctionDeclaration::Make(fn_node, name_id, callable_id));
   AddNameToLookup(name_node, name_id, decl_id);
 
   node_block_stack_.Push();
@@ -596,7 +598,7 @@ auto SemanticsParseTreeHandler::HandleInfixOperator(ParseTree::Node parse_node)
   auto token = parse_tree_->node_token(parse_node);
   switch (auto token_kind = tokens_->GetKind(token)) {
     case TokenKind::Plus:
-      AddNodeAndPush(parse_node, SemanticsNode::MakeBinaryOperatorAdd(
+      AddNodeAndPush(parse_node, SemanticsNode::BinaryOperatorAdd::Make(
                                      parse_node, result_type, lhs_id, rhs_id));
       break;
     default:
@@ -640,7 +642,7 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
       auto id =
           semantics_->AddIntegerLiteral(tokens_->GetIntegerLiteral(token));
       AddNodeAndPush(parse_node,
-                     SemanticsNode::MakeIntegerLiteral(parse_node, id));
+                     SemanticsNode::IntegerLiteral::Make(parse_node, id));
       break;
     }
     case TokenKind::RealLiteral: {
@@ -650,13 +652,13 @@ auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
                                       .exponent = token_value.Exponent(),
                                       .is_decimal = token_value.IsDecimal()});
       AddNodeAndPush(parse_node,
-                     SemanticsNode::MakeRealLiteral(parse_node, id));
+                     SemanticsNode::RealLiteral::Make(parse_node, id));
       break;
     }
     case TokenKind::StringLiteral: {
       auto id = semantics_->AddString(tokens_->GetStringLiteral(token));
       AddNodeAndPush(parse_node,
-                     SemanticsNode::MakeStringLiteral(parse_node, id));
+                     SemanticsNode::StringLiteral::Make(parse_node, id));
       break;
     }
     case TokenKind::IntegerTypeLiteral: {
@@ -826,7 +828,7 @@ auto SemanticsParseTreeHandler::HandlePatternBinding(ParseTree::Node parse_node)
   auto name_node = node_stack_.PopForSoloParseNode();
 
   // Allocate storage, linked to the name for error locations.
-  auto storage_id = AddNode(SemanticsNode::MakeVarStorage(name_node, type));
+  auto storage_id = AddNode(SemanticsNode::VarStorage::Make(name_node, type));
 
   // Bind the name to storage.
   auto name_id = BindName(name_node, type, storage_id);
@@ -873,7 +875,7 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
           .Emit();
     }
 
-    AddNodeAndPush(parse_node, SemanticsNode::MakeReturn(parse_node));
+    AddNodeAndPush(parse_node, SemanticsNode::Return::Make(parse_node));
   } else {
     const auto arg = node_stack_.PopForNodeId();
     auto arg_type = semantics_->GetType(arg);
@@ -905,7 +907,7 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
       arg_type = new_type;
     }
 
-    AddNodeAndPush(parse_node, SemanticsNode::MakeReturnExpression(
+    AddNodeAndPush(parse_node, SemanticsNode::ReturnExpression::Make(
                                    parse_node, arg_type, arg));
   }
   return true;
@@ -1021,8 +1023,8 @@ auto SemanticsParseTreeHandler::HandleVariableDeclaration(
     auto storage_type =
         TryTypeConversion(parse_node, storage_id, last_child.second,
                           /*can_convert_lhs=*/false);
-    AddNode(SemanticsNode::MakeAssign(parse_node, storage_type, storage_id,
-                                      last_child.second));
+    AddNode(SemanticsNode::Assign::Make(parse_node, storage_type, storage_id,
+                                        last_child.second));
   }
 
   node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::VariableIntroducer);
