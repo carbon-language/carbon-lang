@@ -124,15 +124,22 @@ struct SemanticsStringId : public IndexBase {
   }
 };
 
-// The standard structure for SemanticsNode. For each Kind in SemanticsNodeKind:
+// The standard structure for SemanticsNode. This is trying to provide a minimal
+// amount of information for a node:
+//
+// - parse_node for error placement.
+// - kind for run-time logic when the input Kind is unknown.
+// - type_id for quick type checking.
+// - Up to two Kind-specific arguments.
+//
+// For each Kind in SemanticsNodeKind, a typical flow looks like:
 //
 // - Create a `SemanticsNode` using `SemanticsNode::Kind::Make()`
 // - Access cross-Kind members using `node.type_id()` and similar.
 // - Access Kind-specific members using `node.GetAsKind()`, which depending on
 //   the number of members will return one of NoArgs, a single value, or a
 //   `std::pair` of values.
-//   - `node.kind()` can be used to ensure the correct Kind is accessed. Using
-//     the wrong `node.GetAsKind()` is a programming error, and should
+//   - Using the wrong `node.GetAsKind()` is a programming error, and should
 //     CHECK-fail in debug modes (opt may too, but it's not an API guarantee).
 //
 // Internally, each Kind uses the `Factory*` types to provide a boilerplate
@@ -329,7 +336,7 @@ class SemanticsNode {
   SemanticsNodeKind kind_;
   SemanticsNodeId type_id_;
 
-  // Use SemanticsKindNode::Get to access arg0 and arg1.
+  // Use GetAsKind to access arg0 and arg1.
   int32_t arg0_;
   int32_t arg1_;
 };
