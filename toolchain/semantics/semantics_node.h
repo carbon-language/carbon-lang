@@ -211,19 +211,18 @@ class SemanticsNode {
     }
   };
 
-  class Assign : public SemanticsNode::Factory<SemanticsNodeKind::Assign,
-                                               SemanticsNodeId /*lhs_id*/,
-                                               SemanticsNodeId /*rhs_id*/> {};
+  using Assign = SemanticsNode::Factory<SemanticsNodeKind::Assign,
+                                        SemanticsNodeId /*lhs_id*/,
+                                        SemanticsNodeId /*rhs_id*/>;
 
-  class BinaryOperatorAdd
-      : public SemanticsNode::Factory<SemanticsNodeKind::BinaryOperatorAdd,
-                                      SemanticsNodeId /*lhs_id*/,
-                                      SemanticsNodeId /*rhs_id*/> {};
+  using BinaryOperatorAdd =
+      SemanticsNode::Factory<SemanticsNodeKind::BinaryOperatorAdd,
+                             SemanticsNodeId /*lhs_id*/,
+                             SemanticsNodeId /*rhs_id*/>;
 
-  class BindName : public SemanticsNode::Factory<SemanticsNodeKind::BindName,
-                                                 SemanticsStringId /*name_id*/,
-                                                 SemanticsNodeId /*node_id*/> {
-  };
+  using BindName = SemanticsNode::Factory<SemanticsNodeKind::BindName,
+                                          SemanticsStringId /*name_id*/,
+                                          SemanticsNodeId /*node_id*/>;
 
   class Builtin {
    public:
@@ -241,14 +240,12 @@ class SemanticsNode {
     }
   };
 
-  class Call
-      : public Factory<SemanticsNodeKind::Call, SemanticsCallId /*call_id*/,
-                       SemanticsCallableId /*callable_id*/> {};
+  using Call = Factory<SemanticsNodeKind::Call, SemanticsCallId /*call_id*/,
+                       SemanticsCallableId /*callable_id*/>;
 
-  class CodeBlock
-      : public FactoryPreTyped<SemanticsNodeKind::CodeBlock,
-                               SemanticsNodeId::InvalidIndex,
-                               SemanticsNodeBlockId /*node_block_id*/> {};
+  using CodeBlock = FactoryPreTyped<SemanticsNodeKind::CodeBlock,
+                                    SemanticsNodeId::InvalidIndex,
+                                    SemanticsNodeBlockId /*node_block_id*/>;
 
   class CrossReference
       : public FactoryBase<SemanticsNodeKind::CrossReference,
@@ -266,40 +263,36 @@ class SemanticsNode {
     using FactoryBase::Get;
   };
 
-  class FunctionDeclaration
-      : public FactoryPreTyped<SemanticsNodeKind::FunctionDeclaration,
-                               SemanticsNodeId::InvalidIndex,
-                               SemanticsStringId /*name_id*/,
-                               SemanticsCallableId /*signature_id*/> {};
+  using FunctionDeclaration = FactoryPreTyped<
+      SemanticsNodeKind::FunctionDeclaration, SemanticsNodeId::InvalidIndex,
+      SemanticsStringId /*name_id*/, SemanticsCallableId /*signature_id*/>;
 
-  class FunctionDefinition
-      : public FactoryPreTyped<SemanticsNodeKind::FunctionDefinition,
-                               SemanticsNodeId::InvalidIndex,
-                               SemanticsNodeId /*decl_id*/,
-                               SemanticsNodeBlockId /*node_block_id*/> {};
+  using FunctionDefinition = FactoryPreTyped<
+      SemanticsNodeKind::FunctionDefinition, SemanticsNodeId::InvalidIndex,
+      SemanticsNodeId /*decl_id*/, SemanticsNodeBlockId /*node_block_id*/>;
 
-  class IntegerLiteral
-      : public FactoryPreTyped<SemanticsNodeKind::IntegerLiteral,
-                               SemanticsBuiltinKind::IntegerType.AsInt(),
-                               SemanticsIntegerLiteralId /*integer_id*/> {};
+  using IntegerLiteral =
+      FactoryPreTyped<SemanticsNodeKind::IntegerLiteral,
+                      SemanticsBuiltinKind::IntegerType.AsInt(),
+                      SemanticsIntegerLiteralId /*integer_id*/>;
 
-  class RealLiteral
-      : public FactoryPreTyped<SemanticsNodeKind::RealLiteral,
-                               SemanticsBuiltinKind::FloatingPointType.AsInt(),
-                               SemanticsRealLiteralId /*real_id*/> {};
+  using RealLiteral =
+      FactoryPreTyped<SemanticsNodeKind::RealLiteral,
+                      SemanticsBuiltinKind::FloatingPointType.AsInt(),
+                      SemanticsRealLiteralId /*real_id*/>;
 
-  class Return : public FactoryPreTyped<SemanticsNodeKind::Return,
-                                        SemanticsNodeId::InvalidIndex> {};
+  using Return =
+      FactoryPreTyped<SemanticsNodeKind::Return, SemanticsNodeId::InvalidIndex>;
 
-  class ReturnExpression : public Factory<SemanticsNodeKind::ReturnExpression,
-                                          SemanticsNodeId /*expr_id*/> {};
+  using ReturnExpression =
+      Factory<SemanticsNodeKind::ReturnExpression, SemanticsNodeId /*expr_id*/>;
 
-  class StringLiteral
-      : public FactoryPreTyped<SemanticsNodeKind::StringLiteral,
-                               SemanticsBuiltinKind::StringType.AsInt(),
-                               SemanticsStringId /*string_id*/> {};
+  using StringLiteral =
+      FactoryPreTyped<SemanticsNodeKind::StringLiteral,
+                      SemanticsBuiltinKind::StringType.AsInt(),
+                      SemanticsStringId /*string_id*/>;
 
-  class VarStorage : public Factory<SemanticsNodeKind::VarStorage> {};
+  using VarStorage = Factory<SemanticsNodeKind::VarStorage>;
 
   SemanticsNode()
       : SemanticsNode(ParseTree::Node::Invalid, SemanticsNodeKind::Invalid,
