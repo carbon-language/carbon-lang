@@ -6321,7 +6321,26 @@ auto TypeChecker::InstantiateImplDeclaration(
   CARBON_RETURN_IF_ERROR(type_checker->DeclareImplDeclaration(
       impl, ScopeInfo::ForNonClassScope(&scope),
       /*is_template_instantiation=*/true));
-  CARBON_RETURN_IF_ERROR(type_checker->TypeCheckImplDeclaration(impl, scope));
+
+  auto result = type_checker->TypeCheckImplDeclaration(impl, scope);
+
+  if (!result.ok()) {
+    std::string error;
+    llvm::raw_string_ostream stream(error);
+
+    // TODO: incorrect, we should report the source loc in which instantiation
+    // was required
+    SourceLocation source_loc = impl->source_loc();
+
+    stream << result.error().message() << "\n"
+           << "NOTE: " << source_loc.ToString() << " in instantiation ";
+
+    impl->PrintID(stream);
+
+    stream << " required here";
+
+    return ErrorBuilder(result.error().location()) << error;
+  }
 
   return std::pair{impl, arena_->New<Bindings>(std::move(new_bindings))};
 }
