@@ -6340,7 +6340,6 @@ auto TypeChecker::InstantiateImplDeclaration(
   CARBON_RETURN_IF_ERROR(type_checker->DeclareImplDeclaration(
       impl, ScopeInfo::ForNonClassScope(&scope),
       /*is_template_instantiation=*/true));
-
   CARBON_RETURN_IF_ERROR(type_checker->TypeCheckImplDeclaration(impl, scope));
 
   return std::pair{impl, arena_->New<Bindings>(std::move(new_bindings))};
