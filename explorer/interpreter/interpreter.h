@@ -44,7 +44,8 @@ auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
 // `generic_args`.
 // TODO: consider moving this to a separate header.
 [[nodiscard]] auto PatternMatch(
-    Nonnull<const Value*> p, Nonnull<const Value*> v, SourceLocation source_loc,
+    Nonnull<const Value*> p, Nonnull<const Value*> v,
+    std::optional<Address> v_addr, SourceLocation source_loc,
     std::optional<Nonnull<RuntimeScope*>> bindings, BindingMap& generic_args,
     Nonnull<TraceStream*> trace_stream, Nonnull<Arena*> arena) -> bool;
 

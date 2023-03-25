@@ -92,9 +92,10 @@ class ElementPath {
 
   // Removes all trailing `BaseElement`s, errors if there are no base elements.
   auto RemoveTrailingBaseElements() -> void {
-    CARBON_CHECK(!components_.empty() && components_.back().element()->kind() ==
-                                             ElementKind::BaseElement)
-        << "No base elements to remove.";
+    if (components_.empty() ||
+        components_.back().element()->kind() != ElementKind::BaseElement) {
+      return;
+    }
     const auto r_it = std::find_if(
         components_.rbegin(), components_.rend(), [](const Component& c) {
           return c.element()->kind() != ElementKind::BaseElement;

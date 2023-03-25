@@ -269,7 +269,7 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
 }
 
 auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
-                  SourceLocation source_loc,
+                  std::optional<Address> v_addr, SourceLocation source_loc,
                   std::optional<Nonnull<RuntimeScope*>> bindings,
                   BindingMap& generic_args, Nonnull<TraceStream*> trace_stream,
                   Nonnull<Arena*> arena) -> bool {
@@ -281,11 +281,15 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       CARBON_CHECK(bindings.has_value());
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       if (const auto value_node = placeholder.value_node()) {
-        // Copy even for `let` value category, because we cannot determine here
-        // if not destroying would be acceptable.
-        // TODO: Provide a way to know if 'v' is a temporary or not, to use
-        // `BindValue` instead when appropriate.
-        (*bindings)->Initialize(*value_node, v);
+        if (value_node->value_category() == ValueCategory::Let && v_addr) {
+          (*bindings)->Bind(*value_node, *v_addr);
+        } else {
+          // Copy even for `let` value category, because we cannot determine
+          // here if not destroying would be acceptable.
+          // TODO: Provide a way to know if 'v' is a temporary or not, to use
+          // `BindValue` instead when appropriate.
+          (*bindings)->Initialize(*value_node, v);
+        }
       }
       return true;
     }
@@ -293,9 +297,10 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       const auto& addr = cast<AddrValue>(*p);
       CARBON_CHECK(v->kind() == Value::Kind::LValue);
       const auto& lvalue = cast<LValue>(*v);
-      return PatternMatch(
-          &addr.pattern(), arena->New<PointerValue>(lvalue.address()),
-          source_loc, bindings, generic_args, trace_stream, arena);
+      return PatternMatch(&addr.pattern(),
+                          arena->New<PointerValue>(lvalue.address()),
+                          std::nullopt, source_loc, bindings, generic_args,
+                          trace_stream, arena);
     }
     case Value::Kind::VariableType: {
       const auto& var_type = cast<VariableType>(*p);
@@ -312,8 +317,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           CARBON_CHECK(p_tup.elements().size() == v_tup.elements().size());
           for (size_t i = 0; i < p_tup.elements().size(); ++i) {
             if (!PatternMatch(p_tup.elements()[i], v_tup.elements()[i],
-                              source_loc, bindings, generic_args, trace_stream,
-                              arena)) {
+                              std::nullopt, source_loc, bindings, generic_args,
+                              trace_stream, arena)) {
               return false;
             }
           }  // for
@@ -323,8 +328,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           const auto& p_tup = cast<TupleValueBase>(*p);
           for (const auto& ele : p_tup.elements()) {
             if (!PatternMatch(ele, arena->New<UninitializedValue>(ele),
-                              source_loc, bindings, generic_args, trace_stream,
-                              arena)) {
+                              std::nullopt, source_loc, bindings, generic_args,
+                              trace_stream, arena)) {
               return false;
             }
           }
@@ -341,8 +346,9 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         CARBON_CHECK(p_struct.elements()[i].name ==
                      v_struct.elements()[i].name);
         if (!PatternMatch(p_struct.elements()[i].value,
-                          v_struct.elements()[i].value, source_loc, bindings,
-                          generic_args, trace_stream, arena)) {
+                          v_struct.elements()[i].value, std::nullopt,
+                          source_loc, bindings, generic_args, trace_stream,
+                          arena)) {
           return false;
         }
       }
@@ -361,8 +367,9 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
           if (!p_alt.argument().has_value()) {
             return true;
           }
-          return PatternMatch(*p_alt.argument(), *v_alt.argument(), source_loc,
-                              bindings, generic_args, trace_stream, arena);
+          return PatternMatch(*p_alt.argument(), *v_alt.argument(),
+                              std::nullopt, source_loc, bindings, generic_args,
+                              trace_stream, arena);
         }
         default:
           CARBON_FATAL() << "expected a choice alternative in pattern, not "
@@ -375,13 +382,14 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
         case Value::Kind::FunctionType: {
           const auto& p_fn = cast<FunctionType>(*p);
           const auto& v_fn = cast<FunctionType>(*v);
-          if (!PatternMatch(&p_fn.parameters(), &v_fn.parameters(), source_loc,
-                            bindings, generic_args, trace_stream, arena)) {
+          if (!PatternMatch(&p_fn.parameters(), &v_fn.parameters(),
+                            std::nullopt, source_loc, bindings, generic_args,
+                            trace_stream, arena)) {
             return false;
           }
           if (!PatternMatch(&p_fn.return_type(), &v_fn.return_type(),
-                            source_loc, bindings, generic_args, trace_stream,
-                            arena)) {
+                            std::nullopt, source_loc, bindings, generic_args,
+                            trace_stream, arena)) {
             return false;
           }
           return true;
@@ -399,8 +407,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
 }
 
 auto Interpreter::StepLvalue() -> ErrorOr<Success> {
-  Action& act = todo_.CurrentAction();
-  const Expression& exp = cast<LValAction>(act).expression();
+  auto& act = cast<LValAction>(todo_.CurrentAction());
+  const Expression& exp = act.expression();
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- step lvalue " << exp << " ." << act.pos() << "."
                    << " (" << exp.source_loc() << ") --->\n";
@@ -413,24 +421,32 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
           Nonnull<const Value*> value,
           todo_.ValueOfNode(cast<IdentifierExpression>(exp).value_node(),
                             exp.source_loc()));
-      CARBON_CHECK(isa<LValue>(value)) << *value;
+      if (!isa<LValue>(value)) {
+        return Error("Identifier is not an lvalue");
+      }
       return todo_.FinishAction(value);
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
       if (auto rewrite = access.rewritten_form()) {
-        return todo_.ReplaceWith(std::make_unique<LValAction>(*rewrite));
+        return todo_.ReplaceWith(
+            std::make_unique<LValAction>(*rewrite, act.is_optional()));
       }
       if (act.pos() == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+        return todo_.Spawn(
+            std::make_unique<LValAction>(&access.object(), act.is_optional()));
       } else {
         if (auto constant_value = access.constant_value()) {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> instantiated,
               InstantiateType(*constant_value, access.source_loc()));
           return todo_.FinishAction(instantiated);
+        }
+        if (act.is_optional() &&
+            act.results()[0]->kind() == Value::Kind::BoolValue) {
+          return Error("Failed to get LValue from member access");
         }
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
@@ -442,7 +458,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::CompoundMemberAccessExpression: {
       const auto& access = cast<CompoundMemberAccessExpression>(exp);
       if (act.pos() == 0) {
-        return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+        return todo_.Spawn(
+            std::make_unique<LValAction>(&access.object(), act.is_optional()));
       } else {
         if (auto constant_value = access.constant_value()) {
           CARBON_ASSIGN_OR_RETURN(
@@ -450,8 +467,9 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
               InstantiateType(*constant_value, access.source_loc()));
           return todo_.FinishAction(instantiated);
         }
-        CARBON_CHECK(!access.member().interface().has_value())
-            << "unexpected lvalue interface member";
+        if (access.member().interface().has_value()) {
+          return Error("Unexpected lvalue interface member");
+        }
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> val,
             Convert(act.results()[0], *access.member().base_type(),
@@ -465,7 +483,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       const auto& access = cast<BaseAccessExpression>(exp);
       if (act.pos() == 0) {
         // Get LValue for expression.
-        return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+        return todo_.Spawn(
+            std::make_unique<LValAction>(&access.object(), act.is_optional()));
       } else {
         // Append `.base` element to the address, and return the new LValue.
         Address object = cast<LValue>(*act.results()[0]).address();
@@ -477,8 +496,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
-        return todo_.Spawn(
-            std::make_unique<LValAction>(&cast<IndexExpression>(exp).object()));
+        return todo_.Spawn(std::make_unique<LValAction>(
+            &cast<IndexExpression>(exp).object(), act.is_optional()));
 
       } else if (act.pos() == 1) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
@@ -496,11 +515,11 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::OperatorExpression: {
       const auto& op = cast<OperatorExpression>(exp);
       if (auto rewrite = op.rewritten_form()) {
-        return todo_.ReplaceWith(std::make_unique<LValAction>(*rewrite));
+        return todo_.ReplaceWith(
+            std::make_unique<LValAction>(*rewrite, act.is_optional()));
       }
       if (op.op() != Operator::Deref) {
-        CARBON_FATAL()
-            << "Can't treat primitive operator expression as lvalue: " << exp;
+        return Error("Can't treat primitive operator expression as lvalue");
       }
       if (act.pos() == 0) {
         return todo_.Spawn(
@@ -531,9 +550,9 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::ArrayTypeLiteral:
     case ExpressionKind::BuiltinConvertExpression:
-      CARBON_FATAL() << "Can't treat expression as lvalue: " << exp;
+      return Error("Can't treat expression as lvalue");
     case ExpressionKind::UnimplementedExpression:
-      CARBON_FATAL() << "Unimplemented: " << exp;
+      return Error("Expression unimplemented");
   }
 }
 
@@ -1029,7 +1048,8 @@ auto Interpreter::CallFunction(const CallExpression& call,
           // TODO: move this logic into PatternMatch
           if (placeholder->value_node().has_value()) {
             if (const auto addr = method_val->receiver_address()) {
-              function_scope.Bind(*placeholder->value_node(), *addr);
+              function_scope.Bind(*placeholder->value_node(),
+                                  (*addr).DowncastedAddress());
             } else {
               // TODO: We should bind to the address of the receiver to allow
               // external effects to be visible within the method's scope.
@@ -1041,15 +1061,17 @@ auto Interpreter::CallFunction(const CallExpression& call,
           // Mutable self with `[addr self: Self*]`
           CARBON_CHECK(isa<AddrValue>(self_pattern));
           CARBON_CHECK(PatternMatch(self_pattern, method_val->receiver(),
-                                    call.source_loc(), &function_scope,
-                                    generic_args, trace_stream_, this->arena_));
+                                    std::nullopt, call.source_loc(),
+                                    &function_scope, generic_args,
+                                    trace_stream_, this->arena_));
         }
       }
 
       // Bind the arguments to the parameters.
-      CARBON_CHECK(PatternMatch(
-          &function.param_pattern().value(), converted_args, call.source_loc(),
-          &function_scope, generic_args, trace_stream_, this->arena_));
+      CARBON_CHECK(PatternMatch(&function.param_pattern().value(),
+                                converted_args, std::nullopt, call.source_loc(),
+                                &function_scope, generic_args, trace_stream_,
+                                this->arena_));
       return todo_.Spawn(std::make_unique<StatementAction>(*function.body()),
                          std::move(function_scope));
     }
@@ -1058,9 +1080,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
       const Declaration& decl = name.declaration();
       RuntimeScope params_scope(&heap_);
       BindingMap generic_args;
-      CARBON_CHECK(PatternMatch(&name.params().value(), arg, call.source_loc(),
-                                &params_scope, generic_args, trace_stream_,
-                                this->arena_));
+      CARBON_CHECK(PatternMatch(&name.params().value(), arg, std::nullopt,
+                                call.source_loc(), &params_scope, generic_args,
+                                trace_stream_, this->arena_));
       Nonnull<const Bindings*> bindings =
           arena_->New<Bindings>(std::move(generic_args), std::move(witnesses));
       switch (decl.kind()) {
@@ -1146,15 +1168,26 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
       }
       bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
+      // First, evaluate the first operand.
       if (act.pos() == 0) {
-        // First, evaluate the first operand.
+        const bool optional = !access.is_addr_me_method();
+        const bool REVERT = false;
+        if (optional && REVERT) {
+          act.AddResult(arena_->New<BoolValue>(false));
+          return todo_.RunAgain();
+        } else {
+          return todo_.Spawn(
+              std::make_unique<LValAction>(&access.object(), optional));
+        }
+      } else if (act.pos() == 1) {
         if (access.is_addr_me_method()) {
-          return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+          act.AddResult(arena_->New<BoolValue>(false));
+          return todo_.RunAgain();
         } else {
           return todo_.Spawn(
               std::make_unique<ExpressionAction>(&access.object()));
         }
-      } else if (act.pos() == 1 && access.impl().has_value() &&
+      } else if (act.pos() == 2 && access.impl().has_value() &&
                  !forming_member_name) {
         // Next, if we're accessing an interface member, evaluate the `impl`
         // expression to find the corresponding witness.
@@ -1162,19 +1195,24 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             std::make_unique<WitnessAction>(access.impl().value()));
       } else {
         // Finally, produce the result.
+        const auto* first_op =
+            access.is_addr_me_method() ? act.results()[0] : act.results()[1];
+        if (access.is_addr_me_method()) {
+          CARBON_CHECK(first_op->kind() == Value::Kind::LValue);
+        }
         if (auto constant_value = access.constant_value()) {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> instantiated,
               InstantiateType(*constant_value, access.source_loc()));
           return todo_.FinishAction(instantiated);
         }
-        std::optional<Nonnull<const InterfaceType*>> found_in_interface =
+        std::optional<Nonnull<const InterfaceType*>> member_interface =
             access.found_in_interface();
-        if (found_in_interface) {
+        if (member_interface) {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> instantiated,
-              InstantiateType(*found_in_interface, exp.source_loc()));
-          found_in_interface = cast<InterfaceType>(instantiated);
+              InstantiateType(*member_interface, exp.source_loc()));
+          member_interface = cast<InterfaceType>(instantiated);
         }
         if (const auto* member_name_type =
                 dyn_cast<TypeOfMemberName>(&access.static_type())) {
@@ -1184,41 +1222,43 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               << "should not form MemberNames at runtime";
           std::optional<const Value*> type_result;
           if (!isa<InterfaceType, NamedConstraintType, ConstraintType>(
-                  act.results()[0])) {
-            type_result = act.results()[0];
+                  first_op)) {
+            type_result = first_op;
           }
           MemberName* member_name = arena_->New<MemberName>(
-              type_result, found_in_interface, member_name_type->member());
+              type_result, member_interface, member_name_type->member());
           return todo_.FinishAction(member_name);
         } else {
           // The result is the value of the named field, such as in
           // `value.field_name`. Extract the value within the given object.
           std::optional<Nonnull<const Witness*>> witness;
           if (access.impl().has_value()) {
-            witness = cast<Witness>(act.results()[1]);
+            witness = cast<Witness>(act.results()[2]);
           }
-          ElementPath::Component member(&access.member(), found_in_interface,
+          ElementPath::Component member(&access.member(), member_interface,
                                         witness);
           const Value* aggregate;
           if (access.is_type_access()) {
             CARBON_ASSIGN_OR_RETURN(
                 aggregate, InstantiateType(&access.object().static_type(),
                                            access.source_loc()));
-          } else if (const auto* lvalue = dyn_cast<LValue>(act.results()[0])) {
+          } else if (const auto* lvalue = dyn_cast<LValue>(first_op)) {
             CARBON_ASSIGN_OR_RETURN(
                 aggregate,
                 this->heap_.Read(lvalue->address(), exp.source_loc()));
           } else {
-            aggregate = act.results()[0];
+            aggregate = first_op;
           }
-          const std::optional<Address> addr =
+          std::optional<Nonnull<const LValue*>> lvalue =
               act.results()[0]->kind() == Value::Kind::LValue
-                  ? std::optional{cast<LValue>(act.results()[0])->address()}
+                  ? std::optional{cast<LValue>(act.results()[0])}
                   : std::nullopt;
+          std::optional<Address> addr =
+              lvalue ? std::optional{(*lvalue)->address()} : std::nullopt;
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> member_value,
               aggregate->GetElement(arena_, ElementPath(member),
-                                    exp.source_loc(), act.results()[0], addr));
+                                    exp.source_loc(), first_op, addr));
           return todo_.FinishAction(member_value);
         }
       }
@@ -1229,7 +1269,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         // First, evaluate the first operand.
         if (access.is_addr_me_method()) {
-          return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+          return todo_.Spawn(
+              std::make_unique<LValAction>(&access.object(), false));
         } else {
           return todo_.Spawn(
               std::make_unique<ExpressionAction>(&access.object()));
@@ -1354,7 +1395,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
         Nonnull<const Expression*> arg = op.arguments()[act.pos()];
         if (op.op() == Operator::AddressOf) {
-          return todo_.Spawn(std::make_unique<LValAction>(arg));
+          return todo_.Spawn(std::make_unique<LValAction>(arg, false));
         } else if ((op.op() == Operator::And || op.op() == Operator::Or) &&
                    act.pos() == 1) {
           // Short-circuit evaluation for 'and' & 'or'
@@ -1823,8 +1864,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             Nonnull<const Value*> val,
             Convert(act.results()[0], &c.pattern().static_type(),
                     stmt.source_loc()));
-        if (PatternMatch(&c.pattern().value(), val, stmt.source_loc(), &matches,
-                         generic_args, trace_stream_, this->arena_)) {
+        if (PatternMatch(&c.pattern().value(), val, std::nullopt,
+                         stmt.source_loc(), &matches, generic_args,
+                         trace_stream_, this->arena_)) {
           // Ensure we don't process any more clauses.
           act.set_pos(match_stmt.clauses().size() + 1);
           todo_.MergeScope(std::move(matches));
@@ -1960,6 +2002,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&definition.init()));
+      } else if (act.pos() == 1 && definition.has_init()) {
+        return todo_.Spawn(
+            std::make_unique<LValAction>(&definition.init(), true));
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
@@ -1973,9 +2018,16 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           v = arena_->New<UninitializedValue>(p);
         }
 
+        std::optional<Address> addr;
+        if (definition.has_init()) {
+          addr = (act.results()[1]->kind() == Value::Kind::LValue /*&&
+                    v == act.results()[0]*/)
+                       ? std::make_optional(cast<LValue>(act.results()[1])->address())
+                       : std::nullopt;
+        }
         RuntimeScope matches(&heap_);
         BindingMap generic_args;
-        CARBON_CHECK(PatternMatch(p, v, stmt.source_loc(), &matches,
+        CARBON_CHECK(PatternMatch(p, v, addr, stmt.source_loc(), &matches,
                                   generic_args, trace_stream_, this->arena_))
             << stmt.source_loc()
             << ": internal error in variable definition, match failed";
@@ -2004,7 +2056,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         //    { {(lv = e) :: C, E, F} :: S, H}
         // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<LValAction>(&assign.lhs()));
+        return todo_.Spawn(std::make_unique<LValAction>(&assign.lhs(), false));
       } else if (act.pos() == 1) {
         //    { { a :: ([] = e) :: C, E, F} :: S, H}
         // -> { { e :: (a = []) :: C, E, F} :: S, H}
@@ -2290,9 +2342,18 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
 auto Interpreter::Step() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   switch (act.kind()) {
-    case Action::Kind::LValAction:
-      CARBON_RETURN_IF_ERROR(StepLvalue());
-      break;
+    case Action::Kind::LValAction: {
+      const bool optional = cast<LValAction>(act).is_optional();
+      const auto res = StepLvalue();
+      if (!res.ok()) {
+        if (optional) {
+          CARBON_RETURN_IF_ERROR(
+              todo_.FinishAction(arena_->New<BoolValue>(false)));
+        } else {
+          return Error(res.error().location(), res.error().message());
+        }
+      }
+    } break;
     case Action::Kind::ExpressionAction:
       CARBON_RETURN_IF_ERROR(StepExp());
       break;

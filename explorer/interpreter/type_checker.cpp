@@ -803,9 +803,9 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
   BindingMap binding_args;
   if (has_arguments) {
     TupleValue args(interface.arguments);
-    if (!PatternMatch(&iface_decl->params().value()->value(), &args, source_loc,
-                      std::nullopt, binding_args, trace_stream_,
-                      this->arena_)) {
+    if (!PatternMatch(&iface_decl->params().value()->value(), &args,
+                      std::nullopt, source_loc, std::nullopt, binding_args,
+                      trace_stream_, this->arena_)) {
       return bad_builtin();
     }
   }
@@ -4103,9 +4103,9 @@ auto TypeChecker::TypeCheckPattern(
         // this level rather than on the overall initializer.
         if (!IsConcreteType(type)) {
           BindingMap generic_args;
-          if (!PatternMatch(type, *expected, binding.type().source_loc(),
-                            std::nullopt, generic_args, trace_stream_,
-                            this->arena_)) {
+          if (!PatternMatch(type, *expected, std::nullopt,
+                            binding.type().source_loc(), std::nullopt,
+                            generic_args, trace_stream_, this->arena_)) {
             return ProgramError(binding.type().source_loc())
                    << "type pattern '" << *type
                    << "' does not match actual type '" << **expected << "'";

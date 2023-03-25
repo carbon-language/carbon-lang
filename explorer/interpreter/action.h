@@ -172,8 +172,10 @@ class Action {
 // LValue.
 class LValAction : public Action {
  public:
-  explicit LValAction(Nonnull<const Expression*> expression)
-      : Action(Kind::LValAction), expression_(expression) {}
+  explicit LValAction(Nonnull<const Expression*> expression, bool optional)
+      : Action(Kind::LValAction),
+        expression_(expression),
+        optional_(optional) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::LValAction;
@@ -182,8 +184,11 @@ class LValAction : public Action {
   // The Expression this Action evaluates.
   auto expression() const -> const Expression& { return *expression_; }
 
+  auto is_optional() const -> bool { return optional_; }
+
  private:
   Nonnull<const Expression*> expression_;
+  bool optional_;
 };
 
 // An Action which implements evaluation of an Expression to produce an
