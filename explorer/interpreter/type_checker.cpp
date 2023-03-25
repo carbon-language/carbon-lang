@@ -6331,15 +6331,15 @@ auto TypeChecker::InstantiateImplDeclaration(
     note_stream << "NOTE: " << source_loc.ToString()
                 << ": in instantiation of `impl " << *impl->impl_type()
                 << " as " << impl->interface() << "` with ";
+    llvm::ListSeparator sep;
     for (auto* param : impl->deduced_parameters()) {
-      llvm::ListSeparator sep;
       note_stream << sep << "`" << param->name();
       if (auto value = param->constant_value()) {
         note_stream << " = " << **value;
       }
-      note_stream << "` ";
+      note_stream << "`";
     }
-    note_stream << "required here";
+    note_stream << " required here";
 
     return ErrorBuilder(result.error().location())
            << result.error().message() << "\n"
