@@ -31,7 +31,7 @@ auto Heap::Read(const Address& a, SourceLocation source_loc) const
   CARBON_RETURN_IF_ERROR(this->CheckInit(a.allocation_, source_loc));
   CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
   Nonnull<const Value*> value = values_[a.allocation_.index_];
-  return value->GetElement(arena_, a.element_path_, source_loc, value);
+  return value->GetElement(arena_, a.element_path_, source_loc, value, a);
 }
 
 auto Heap::Write(const Address& a, Nonnull<const Value*> v,
@@ -44,18 +44,6 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
                           values_[a.allocation_.index_]->SetField(
                               arena_, a.element_path_, v, source_loc));
   return Success();
-}
-
-auto Heap::GetAllocationId(Nonnull<const Value*> v) const
-    -> std::optional<AllocationId> {
-  auto iter = std::find(values_.begin(), values_.end(), v);
-  if (iter != values_.end()) {
-    auto index = iter - values_.begin();
-    if (states_[index] == ValueState::Alive) {
-      return AllocationId(index);
-    }
-  }
-  return std::nullopt;
 }
 
 auto Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) const

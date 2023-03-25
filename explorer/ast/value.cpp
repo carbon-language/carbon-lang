@@ -26,6 +26,7 @@ using llvm::cast;
 using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
 using llvm::isa;
+using std::optional;
 
 auto StructValue::FindField(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {
@@ -91,7 +92,8 @@ static auto GetPositionalElement(Nonnull<const TupleValue*> tuple,
 static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                             const ElementPath::Component& field,
                             SourceLocation source_loc,
-                            Nonnull<const Value*> me_value)
+                            Nonnull<const Value*> me_value,
+                            std::optional<Address> me_addr)
     -> ErrorOr<Nonnull<const Value*>> {
   CARBON_CHECK(field.element()->kind() == ElementKind::NamedElement)
       << "Invalid element, expecting NamedElement";
@@ -117,7 +119,7 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
           mem_decl.has_value()) {
         const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
         if (fun_decl.is_method()) {
-          return arena->New<BoundMethodValue>(&fun_decl, me_value,
+          return arena->New<BoundMethodValue>(&fun_decl, me_value, me_addr,
                                               &impl_witness->bindings());
         } else {
           // Class function.
@@ -161,8 +163,8 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
           // Found a method. Turn it into a bound method.
           const auto& m = cast<FunctionValue>(**func);
           if (m.declaration().virt_override() == VirtualOverride::None) {
-            return arena->New<BoundMethodValue>(&m.declaration(), me_value,
-                                                &class_type.bindings());
+            return arena->New<BoundMethodValue>(
+                &m.declaration(), me_value, me_addr, &class_type.bindings());
           }
           // Method is virtual, get child-most class value and perform vtable
           // lookup.
@@ -182,7 +184,7 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
             m_class_value = *m_class_value->base();
           }
           return arena->New<BoundMethodValue>(
-              cast<FunctionDeclaration>(virtual_method), m_class_value,
+              cast<FunctionDeclaration>(virtual_method), m_class_value, me_addr,
               &class_type.bindings());
         } else {
           // Found a class function
@@ -224,11 +226,13 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 static auto GetElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                        const ElementPath::Component& path_comp,
                        SourceLocation source_loc,
-                       Nonnull<const Value*> me_value)
+                       Nonnull<const Value*> me_value,
+                       std::optional<Address> me_addr)
     -> ErrorOr<Nonnull<const Value*>> {
   switch (path_comp.element()->kind()) {
     case ElementKind::NamedElement:
-      return GetNamedElement(arena, v, path_comp, source_loc, me_value);
+      return GetNamedElement(arena, v, path_comp, source_loc, me_value,
+                             me_addr);
     case ElementKind::PositionalElement: {
       if (const auto* tuple = dyn_cast<TupleValue>(v)) {
         return GetPositionalElement(tuple, path_comp, source_loc);
@@ -253,12 +257,14 @@ static auto GetElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 
 auto Value::GetElement(Nonnull<Arena*> arena, const ElementPath& path,
                        SourceLocation source_loc,
-                       Nonnull<const Value*> me_value) const
+                       Nonnull<const Value*> me_value,
+                       optional<Address> me_addr) const
     -> ErrorOr<Nonnull<const Value*>> {
   Nonnull<const Value*> value(this);
   for (const ElementPath::Component& field : path.components_) {
     CARBON_ASSIGN_OR_RETURN(
-        value, Carbon::GetElement(arena, value, field, source_loc, me_value));
+        value,
+        Carbon::GetElement(arena, value, field, source_loc, me_value, me_addr));
   }
   return value;
 }

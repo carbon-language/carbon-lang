@@ -71,8 +71,8 @@ class Value {
   // AddrPattern, then pass the LValue representing the receiver as `me_value`,
   // otherwise pass `*this`.
   auto GetElement(Nonnull<Arena*> arena, const ElementPath& path,
-                  SourceLocation source_loc,
-                  Nonnull<const Value*> me_value) const
+                  SourceLocation source_loc, Nonnull<const Value*> me_value,
+                  std::optional<Address> me_addr) const
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
@@ -189,14 +189,17 @@ class FunctionValue : public FunctionOrMethodValue {
   }
 };
 
-// A bound method value. It includes the receiver object.
+// A bound method value. It includes the receiver object, and optional receiver
+// address, if available.
 class BoundMethodValue : public FunctionOrMethodValue {
  public:
   explicit BoundMethodValue(Nonnull<const FunctionDeclaration*> declaration,
                             Nonnull<const Value*> receiver,
+                            std::optional<Address> receiver_address,
                             Nonnull<const Bindings*> bindings)
       : FunctionOrMethodValue(Kind::BoundMethodValue, declaration, bindings),
-        receiver_(receiver) {}
+        receiver_(receiver),
+        receiver_address_(receiver_address) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::BoundMethodValue;
@@ -204,13 +207,17 @@ class BoundMethodValue : public FunctionOrMethodValue {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(&declaration(), receiver_, &bindings());
+    return f(&declaration(), receiver_, receiver_address_, &bindings());
   }
 
   auto receiver() const -> Nonnull<const Value*> { return receiver_; }
+  auto receiver_address() const -> std::optional<const Address> {
+    return receiver_address_;
+  }
 
  private:
   Nonnull<const Value*> receiver_;
+  std::optional<const Address> receiver_address_;
 };
 
 // A destructor value.
