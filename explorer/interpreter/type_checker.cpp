@@ -2105,7 +2105,8 @@ class TypeChecker::SubstituteTransform
         IsTemplateSaturated(*bindings)) {
       CARBON_ASSIGN_OR_RETURN(
           CARBON_PROTECT_COMMAS(auto [new_decl, new_bindings]),
-          type_checker_->InstantiateImplDeclaration(declaration, bindings));
+          type_checker_->InstantiateImplDeclaration(
+              declaration, bindings, SourceLocation::DiagnosticsIgnored()));
       declaration = new_decl;
       bindings = new_bindings;
     }
@@ -2335,20 +2336,10 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
       *trace_stream_ << "matched with " << *impl.type << " as "
                      << *impl.interface << "\n\n";
     }
-
-    auto subst_witness_or_error =
-        SubstituteCast<Witness>(*bindings_or_error, impl.witness);
-
-    if (!subst_witness_or_error.ok()) {
-      return ErrorBuilder(subst_witness_or_error.error().location())
-             << subst_witness_or_error.error().message() << "\n"
-             << "NOTE: " << source_loc.ToString()
-             << ": in instantiation of `impl " << *impl.type << " as "
-             << GetName(impl.interface->declaration()) << "` with `"
-             << *impl.type << " = " << *impl_type << "` required here";
-    }
-
-    return {*subst_witness_or_error};
+    CARBON_ASSIGN_OR_RETURN(
+        const auto* subst_witness,
+        SubstituteCast<Witness>(*bindings_or_error, impl.witness));
+    return {subst_witness};
   }
 }
 
@@ -6264,8 +6255,8 @@ auto TypeChecker::FindCollectedMembers(Nonnull<const Declaration*> decl)
 }
 
 auto TypeChecker::InstantiateImplDeclaration(
-    Nonnull<const ImplDeclaration*> old_impl,
-    Nonnull<const Bindings*> bindings) const
+    Nonnull<const ImplDeclaration*> old_impl, Nonnull<const Bindings*> bindings,
+    SourceLocation source_loc) const
     -> ErrorOr<std::pair<Nonnull<ImplDeclaration*>, Nonnull<Bindings*>>> {
   CARBON_CHECK(IsTemplateSaturated(*bindings));
 
@@ -6332,7 +6323,28 @@ auto TypeChecker::InstantiateImplDeclaration(
   CARBON_RETURN_IF_ERROR(type_checker->DeclareImplDeclaration(
       impl, ScopeInfo::ForNonClassScope(&scope),
       /*is_template_instantiation=*/true));
-  CARBON_RETURN_IF_ERROR(type_checker->TypeCheckImplDeclaration(impl, scope));
+  auto result = type_checker->TypeCheckImplDeclaration(impl, scope);
+
+  if (!result.ok()) {
+    std::string note;
+    llvm::raw_string_ostream note_stream(note);
+    note_stream << "NOTE: " << source_loc.ToString()
+                << ": in instantiation of `impl " << *impl->impl_type()
+                << " as " << impl->interface() << "` with ";
+    for (auto* param : impl->deduced_parameters()) {
+      llvm::ListSeparator sep;
+      note_stream << sep << "`" << param->name();
+      if (auto value = param->constant_value()) {
+        note_stream << " = " << **value;
+      }
+      note_stream << "` ";
+    }
+    note_stream << "required here";
+
+    return ErrorBuilder(result.error().location())
+           << result.error().message() << "\n"
+           << note;
+  }
 
   return std::pair{impl, arena_->New<Bindings>(std::move(new_bindings))};
 }

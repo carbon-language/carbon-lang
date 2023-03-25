@@ -19,6 +19,7 @@
 #include "explorer/ast/statement.h"
 #include "explorer/ast/value.h"
 #include "explorer/common/nonnull.h"
+#include "explorer/common/source_location.h"
 #include "explorer/interpreter/builtins.h"
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/impl_scope.h"
@@ -525,7 +526,8 @@ class TypeChecker {
   // template bindings.
   ErrorOr<std::pair<Nonnull<ImplDeclaration*>, Nonnull<Bindings*>>>
   InstantiateImplDeclaration(Nonnull<const ImplDeclaration*> pattern,
-                             Nonnull<const Bindings*> bindings) const;
+                             Nonnull<const Bindings*> bindings,
+                             SourceLocation source_loc) const;
 
   Nonnull<Arena*> arena_;
   Builtins builtins_;
