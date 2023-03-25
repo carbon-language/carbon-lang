@@ -2022,7 +2022,8 @@ class TypeChecker::SubstitutedGenericBindings {
 };
 
 auto TypeChecker::Substitute(const Bindings& bindings,
-                             Nonnull<const Value*> type) const
+                             Nonnull<const Value*> type,
+                             SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
   // Don't waste time recursively rebuilding a type if we have nothing to
   // substitute.
@@ -2030,7 +2031,8 @@ auto TypeChecker::Substitute(const Bindings& bindings,
     return type;
   }
 
-  CARBON_ASSIGN_OR_RETURN(const auto* result, SubstituteImpl(bindings, type));
+  CARBON_ASSIGN_OR_RETURN(const auto* result,
+                          SubstituteImpl(bindings, type, source_loc));
 
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "substitution of {";
@@ -2055,10 +2057,11 @@ class TypeChecker::SubstituteTransform
     : public ValueTransform<SubstituteTransform, ErrorUnwrapper> {
  public:
   SubstituteTransform(Nonnull<const TypeChecker*> type_checker,
-                      const Bindings& bindings)
+                      const Bindings& bindings, SourceLocation source_loc)
       : ValueTransform(type_checker->arena_),
         type_checker_(type_checker),
-        bindings_(bindings) {}
+        bindings_(bindings),
+        source_loc_(source_loc) {}
 
   using ValueTransform::operator();
 
@@ -2105,8 +2108,8 @@ class TypeChecker::SubstituteTransform
         IsTemplateSaturated(*bindings)) {
       CARBON_ASSIGN_OR_RETURN(
           CARBON_PROTECT_COMMAS(auto [new_decl, new_bindings]),
-          type_checker_->InstantiateImplDeclaration(
-              declaration, bindings, SourceLocation::DiagnosticsIgnored()));
+          type_checker_->InstantiateImplDeclaration(declaration, bindings,
+                                                    source_loc_));
       declaration = new_decl;
       bindings = new_bindings;
     }
@@ -2228,12 +2231,14 @@ class TypeChecker::SubstituteTransform
  private:
   Nonnull<const TypeChecker*> type_checker_;
   const Bindings& bindings_;
+  const SourceLocation source_loc_;
 };
 
 auto TypeChecker::SubstituteImpl(const Bindings& bindings,
-                                 Nonnull<const Value*> type) const
+                                 Nonnull<const Value*> type,
+                                 SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
-  return SubstituteTransform(this, bindings).Transform(type);
+  return SubstituteTransform(this, bindings, source_loc).Transform(type);
 }
 
 auto TypeChecker::RefineWitness(Nonnull<const Witness*> witness,
@@ -2338,7 +2343,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
     }
     CARBON_ASSIGN_OR_RETURN(
         const auto* subst_witness,
-        SubstituteCast<Witness>(*bindings_or_error, impl.witness));
+        SubstituteCast<Witness>(*bindings_or_error, impl.witness, source_loc));
     return {subst_witness};
   }
 }
