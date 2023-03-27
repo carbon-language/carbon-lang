@@ -103,6 +103,8 @@ CARBON_DIAGNOSTIC_KIND(ReturnStatementImplicitNote)
 CARBON_DIAGNOSTIC_KIND(ReturnStatementMissingExpression)
 CARBON_DIAGNOSTIC_KIND(ReturnStatementTypeMismatch)
 CARBON_DIAGNOSTIC_KIND(ImplicitAsConversionFailure)
+CARBON_DIAGNOSTIC_KIND(DesignatorExpressionUnsupported)
+CARBON_DIAGNOSTIC_KIND(DesignatorExpressionNameNotFound)
 
 // ============================================================================
 // Other diagnostics

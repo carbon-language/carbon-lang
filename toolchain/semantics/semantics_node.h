@@ -124,6 +124,15 @@ struct SemanticsStringId : public IndexBase {
   }
 };
 
+// An index for member access.
+struct SemanticsMemberIndex : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "member";
+    IndexBase::Print(out);
+  }
+};
+
 // The standard structure for SemanticsNode. This is trying to provide a minimal
 // amount of information for a node:
 //
@@ -298,6 +307,10 @@ class SemanticsNode {
       FactoryPreTyped<SemanticsNodeKind::StringLiteral,
                       SemanticsBuiltinKind::StringType.AsInt(),
                       SemanticsStringId /*string_id*/>;
+
+  using StructMemberAccess = Factory<SemanticsNodeKind::StructMemberAccess,
+                                     SemanticsNodeId /*struct_id*/,
+                                     SemanticsMemberIndex /*ref_index*/>;
 
   using StructType = FactoryPreTyped<
       SemanticsNodeKind::StructType, SemanticsBuiltinKind::TypeType.AsInt(),

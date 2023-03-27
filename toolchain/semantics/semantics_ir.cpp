@@ -186,6 +186,7 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
     case SemanticsNodeKind::Return:
     case SemanticsNodeKind::ReturnExpression:
     case SemanticsNodeKind::StringLiteral:
+    case SemanticsNodeKind::StructMemberAccess:
     case SemanticsNodeKind::VarStorage:
       // We don't need to handle stringification for nodes that don't show up in
       // errors, but make it clear what's going on so that it's clearer when

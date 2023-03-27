@@ -176,6 +176,11 @@ auto Lowering::HandleStringLiteralNode(SemanticsNodeId /*node_id*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
+auto Lowering::HandleStructMemberAccessNode(SemanticsNodeId /*node_id*/,
+                                            SemanticsNode node) -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
 auto Lowering::HandleStructTypeNode(SemanticsNodeId /*node_id*/,
                                     SemanticsNode node) -> void {
   CARBON_FATAL() << "TODO: Add support: " << node;

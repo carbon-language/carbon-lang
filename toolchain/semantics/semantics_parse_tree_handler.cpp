@@ -522,8 +522,47 @@ auto SemanticsParseTreeHandler::HandleDesignatedName(ParseTree::Node parse_node)
 
 auto SemanticsParseTreeHandler::HandleDesignatorExpression(
     ParseTree::Node parse_node) -> bool {
-  emitter_->Emit(parse_node, SemanticsTodo, "HandleDesignatorExpression");
-  return false;
+  auto [_, name_id] =
+      node_stack_.PopForParseNodeAndNameId(ParseNodeKind::DesignatedName);
+
+  auto base_id = node_stack_.PopForNodeId();
+  auto base = semantics_->GetNode(base_id);
+  auto base_type = semantics_->GetNode(base.type_id());
+
+  switch (base_type.kind()) {
+    case SemanticsNodeKind::StructType: {
+      auto refs = semantics_->GetNodeBlock(base_type.GetAsStructType().second);
+      // TODO: Do we need to optimize this with a lookup table for O(1)?
+      for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
+        auto ref = semantics_->GetNode(refs[i]);
+        if (name_id == ref.GetAsStructTypeField()) {
+          AddNodeAndPush(parse_node, SemanticsNode::StructMemberAccess::Make(
+                                         parse_node, ref.type_id(), base_id,
+                                         SemanticsMemberIndex(i)));
+          return true;
+        }
+      }
+      CARBON_DIAGNOSTIC(DesignatorExpressionNameNotFound, Error,
+                        "Type `{0}` does not have a member `{1}`.", std::string,
+                        llvm::StringRef);
+      emitter_->Emit(parse_node, DesignatorExpressionNameNotFound,
+                     semantics_->StringifyNode(base.type_id()),
+                     semantics_->GetString(name_id));
+      break;
+    }
+    default: {
+      CARBON_DIAGNOSTIC(DesignatorExpressionUnsupported, Error,
+                        "Type `{0}` does not support designator expressions.",
+                        std::string);
+      emitter_->Emit(parse_node, DesignatorExpressionUnsupported,
+                     semantics_->StringifyNode(base.type_id()));
+      break;
+    }
+  }
+
+  // Should only be reached on error.
+  node_stack_.Push(parse_node, SemanticsNodeId::BuiltinInvalidType);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleEmptyDeclaration(
