@@ -537,11 +537,24 @@ auto TypeChecker::IsImplicitlyConvertible(
     return true;
   }
 
+  // If the source is a type, or a type-like tuple, then it might convert to
+  // another type-of-type. This can't be done by `ImplicitAs` because it
+  // depends on the value, not only on the type.
+  //
+  // TODO: We can't tell whether the conversion to this type-of-type would
+  // work, because we don't have the source value, only its type. So we allow
+  // this conversion if the source converts to `type`, even if it won't convert
+  // to the actual destination type. We'll catch any problems when we actually
+  // come to perform the conversion.
+  if (isa<TupleType>(source) && IsTypeOfType(destination)) {
+    if (allow_user_defined_conversions) {
+      return IsBuiltinConversion(source, arena_->New<TypeType>(), impl_scope);
+    } else {
+      const auto& source_elts = cast<TupleType>(source)->elements();
+      return std::all_of(source_elts.begin(), source_elts.end(), IsTypeOfType);
+    }
+  }
   if (IsTypeOfType(source) && IsTypeOfType(destination)) {
-    // TODO: We can't tell whether the conversion to this type-of-type would
-    // work, because that depends on the source value, and we only have its
-    // type. So we say it's OK for now and will fail when we try to actually
-    // convert if not.
     return true;
   }
 
@@ -658,11 +671,8 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
           }
           break;
         }
-        case Value::Kind::TypeType:
-        case Value::Kind::InterfaceType:
-        case Value::Kind::NamedConstraintType:
-        case Value::Kind::ConstraintType: {
-          // A tuple value converts to a type if all of its fields do.
+        case Value::Kind::TypeType: {
+          // A tuple value converts to `type` if all of its fields do.
           bool all_types = true;
           for (Nonnull<const Value*> source_element : source_tuple.elements()) {
             CARBON_ASSIGN_OR_RETURN(
@@ -742,7 +752,8 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
   auto simple_conversion = [&] {
     auto* result = arena_->New<BuiltinConvertExpression>(source);
     result->set_static_type(destination);
-    result->set_value_category(ValueCategory::Value);
+    // TODO: Initializing.
+    result->set_expression_category(ExpressionCategory::Value);
     return result;
   };
   // TODO: Remove this once we no longer need it.
@@ -777,10 +788,7 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
           break;
         }
         case Value::Kind::TypeType:
-        case Value::Kind::InterfaceType:
-        case Value::Kind::NamedConstraintType:
-        case Value::Kind::ConstraintType:
-          // A value of empty struct type implicitly converts to a type.
+          // A value of empty struct type implicitly converts to type `type`.
           if (cast<StructType>(*source_type).fields().empty()) {
             return simple_conversion();
           }
@@ -840,11 +848,8 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
           }
           break;
         }
-        case Value::Kind::TypeType:
-        case Value::Kind::InterfaceType:
-        case Value::Kind::NamedConstraintType:
-        case Value::Kind::ConstraintType: {
-          // A tuple value converts to a type if all of its fields do.
+        case Value::Kind::TypeType: {
+          // A tuple value converts to type `type` if all of its fields do.
           bool all_types = true;
           for (Nonnull<const Value*> source_element : source_tuple.elements()) {
             CARBON_ASSIGN_OR_RETURN(
@@ -902,11 +907,27 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
   Nonnull<const Value*> source_type = &source->static_type();
 
   CARBON_RETURN_IF_ERROR(
-      ExpectNonPlaceholderType(source->source_loc(), &source->static_type()));
+      ExpectNonPlaceholderType(source->source_loc(), source_type));
 
-  if (TypeEqual(&source->static_type(), destination, std::nullopt)) {
+  if (TypeEqual(source_type, destination, std::nullopt)) {
     // No conversions are required.
     return source;
+  }
+
+  // Conversion from a tuple of types to the type `type` is used in the prelude
+  // before the intrinsic impl of `ImplicitAs` is declared. We also need to do
+  // this as a prerequisite to the conversion of tuples to constrained types
+  // below.
+  if (isa<TupleType>(source_type) && IsTypeOfType(destination)) {
+    auto* type_type = arena_->New<TypeType>();
+    CARBON_ASSIGN_OR_RETURN(
+        bool convertible,
+        IsBuiltinConversion(source_type, type_type, impl_scope));
+    if (convertible) {
+      CARBON_ASSIGN_OR_RETURN(
+          source, BuildBuiltinConversion(source, type_type, impl_scope));
+      source_type = &source->static_type();
+    }
   }
 
   // A type of type can be converted to another type of type if the value of
@@ -951,50 +972,38 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
                                               source->source_loc(), *this));
     return arena_->New<ValueLiteral>(source->source_loc(), converted_value,
                                      destination_constraint,
-                                     ValueCategory::Value);
+                                     ExpressionCategory::Value);
   }
 
-  // Some conversions need to be performed while type-checking the prelude,
-  // before the definition of the `ImplicitAs` interface and its impls are
-  // complete. For those conversions, we provide direct support here rather
-  // than trying to call the method on `ImplicitAs`.
-  //
-  // For now, the only such conversion is for tuples, which show up when
-  // type-checking function calls, such as the call to `ImplicitAs` itself,
-  // and when used as types.
-  if (isa<TupleType>(source_type) && isa<TupleType, TypeType>(destination)) {
-    CARBON_ASSIGN_OR_RETURN(
-        bool convertible,
-        IsBuiltinConversion(source_type, destination, impl_scope));
-    if (convertible) {
-      // TODO: this can evaluate source more than once!
-#if 0
-          const auto& destination_tuple = cast<TupleType>(*destination);
-          if (source_tuple.elements().size() !=
-              destination_tuple.elements().size()) {
-            break;
-          }
-          std::vector<Nonnull<Expression*>> converted_elements;
-          for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
-            // Note, it's OK to evaluate `source` more than once here, because
-            // this intrinsic is only intended to be called from within the
-            // prelude's impl of ImplicitAs, where `source` has no side effects.
-            auto* elem = arena_->New<IndexExpression>(
-                source->source_loc(), source,
-                arena_->New<IntLiteral>(source->source_loc(), i));
-            CARBON_RETURN_IF_ERROR(TypeCheckExp(elem, impl_scope));
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<Expression*> converted,
-                ImplicitlyConvert("implicit conversion", impl_scope, elem,
-                                  destination_tuple.elements()[i]));
-            converted_elements.push_back(converted);
-          }
-          auto* result = arena_->New<TupleLiteral>(
-              source->source_loc(), std::move(converted_elements));
-          CARBON_RETURN_IF_ERROR(TypeCheckExp(result, impl_scope));
-          return result;
-#endif
-      return BuildBuiltinConversion(source, destination, impl_scope);
+  // Conversion from a tuple literal to a tuple type converts each element in
+  // turn, rather than converting the tuple as a whole. This is important in
+  // order to evaluate arguments to a function call in a reasonable order, and
+  // this conversion needs to be built-in because we use it while type-checking
+  // the prelude.
+  if (auto* source_tuple = dyn_cast<TupleLiteral>(source)) {
+    if (auto* destination_tuple = dyn_cast<TupleType>(destination)) {
+      if (source_tuple->fields().size() !=
+          destination_tuple->elements().size()) {
+        return ProgramError(source->source_loc())
+               << "type error in " << context << ": `" << *source_type << "`"
+               << " is not implicitly convertible to tuple type "
+               << "`" << *destination << "` of different length";
+      }
+      std::vector<Nonnull<Expression*>> converted_elements;
+      for (size_t i = 0; i < source_tuple->fields().size(); ++i) {
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> converted,
+            ImplicitlyConvert("implicit conversion", impl_scope,
+                              source_tuple->fields()[i],
+                              destination_tuple->elements()[i]));
+        converted_elements.push_back(converted);
+      }
+      auto* result = arena_->New<TupleLiteral>(source->source_loc(),
+                                               std::move(converted_elements));
+      // TODO: Initializing.
+      result->set_expression_category(ExpressionCategory::Value);
+      result->set_static_type(destination);
+      return result;
     }
   }
 
@@ -6556,7 +6565,7 @@ auto TypeChecker::InstantiateImplDeclaration(
     VisitNestedValues(value, [&](Nonnull<const Value*> nested) -> bool {
       if (auto* var_type = dyn_cast<VariableType>(nested)) {
         if (auto impl_binding = var_type->binding().impl_binding()) {
-          type_checker->BringImplIntoScope(*impl_binding, scope);
+          type_checker->BringImplBindingIntoScope(*impl_binding, scope);
         }
       }
       return true;
