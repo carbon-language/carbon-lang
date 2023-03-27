@@ -111,7 +111,7 @@ auto Lowering::HandleFunctionDeclarationNode(SemanticsNodeId /*node_id*/,
   llvm::SmallVector<llvm::Type*> args;
   args.resize_for_overwrite(param_refs.size());
   for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
-    args[i] = LowerNodeToType(semantics_ir_->GetNode(param_refs[i]).type());
+    args[i] = LowerNodeToType(semantics_ir_->GetNode(param_refs[i]).type_id());
   }
 
   llvm::Type* return_type = LowerNodeToType(
