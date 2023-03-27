@@ -28,6 +28,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Contribution tools](#contribution-tools)
     -   [Contribution guidelines and standards](#contribution-guidelines-and-standards)
         -   [Guidelines and philosophy for contributions](#guidelines-and-philosophy-for-contributions)
+        -   [How to say things](#how-to-say-things)
+            -   [Make your point concisely](#make-your-point-concisely)
 -   [Style](#style)
     -   [Google Docs and Markdown](#google-docs-and-markdown)
     -   [Other files](#other-files)
@@ -73,8 +75,9 @@ has questions the community is looking for a decision on. The
 will have more mature proposals that are nearing a decision. For more about the
 difference, see the [evolution process](docs/project/evolution.md).
 
-When giving feedback, please keep comments positive and constructive. Our goal
-is to use community discussion to improve proposals and assist authors.
+When giving feedback, please keep comments positive, constructive, and
+[concise](#make-your-point-concisely). Our goal is to use community discussion
+to improve proposals and assist authors.
 
 #### Contribute design ideas to Carbon
 
@@ -295,6 +298,76 @@ follow the Carbon documentation and coding styles.
         mind.
     -   Keep in mind that code contribution guidelines are incomplete while we
         start work on Carbon, and may change later.
+
+#### How to say things
+
+-   Treat others with respect
+-   Recognize that other points of view are valid, and most decisions are about
+    choosing the best set of trade-offs or closest alignment with Carbon's goals
+    since there usually isn't a single best answer. It is important to frame
+    feedback and discussion about someone else's proposal under the assumption
+    that they too have deep experience in the area but may have come to a
+    different conclusion.
+-   Be clear when something is an opinion by using "I" or "me":
+    -   Not as helpful: `foo` is objectively better word to use
+    -   More helpful: I find `bar` confusing since it has this alternate
+        meaning, I think `foo` is clearer.
+-   It can be helpful to define your terms.
+
+When trying to make a point, please employ these strategies to make your
+argument _effective_ and _helpful_:
+
+-   Focus should be on explaining the basis by which others can come to a
+    conclusion. Generally this means connecting a potential solution to the use
+    cases it helps with.
+-   Be specific and concrete, using examples to demonstrate the benefits and
+    disadvantages of the different options
+    -   Minimally helpful: "I like &lt;X>", "Carbon should have feature &lt;Y>"
+    -   More helpful: "I think Carbon should have feature &lt;Z>, it would mean
+        &lt;this example> would be written &lt;like this> instead of &lt;like
+        that>." (Assuming the reader will think the example is representative of
+        an important class of use cases.)
+    -   Very helpful: "If we go with approach &lt;X>, you can see it helps with
+        problem &lt;P> in &lt;this example> of use case &lt;A>. It doesn't help
+        with use case &lt;B>, but that can be better solved by &lt;Y>, as can be
+        seen in &lt;other example>."
+    -   Very helpful: "Yes &lt;X> gives a nice answer in that case, but it has a
+        problem / I don't see how it applies in &lt;this other situation>."
+-   Explain the reasoning by which you can come to your conclusion
+    -   Avoid [fallacies](https://en.wikipedia.org/wiki/List_of_fallacies) like
+        [arguing from authority](https://en.wikipedia.org/wiki/Argument_from_authority)
+    -   Don't expect people to read long works to understand your point
+
+If someone questions or argues with your point, try to directly address the
+points being made. Avoid evading by stepping backwards or switching to a more
+general or more meta level.
+
+##### Make your point concisely
+
+Asking questions about a particular discussion is almost always OK. If you're
+worried the questions might be more about _background_ and might be long enough
+to get distracting, you can always ask them in some of our dedicated spaces like
+`#language-questions` on Discord.
+
+When sharing ideas and opinions in community discussions, it is important to do
+so in a way that both _adds new information_ in some way/shape/form, makes sure
+that information is _relevant_ to the discussion, and avoids _repetition_. This
+means reviewing what you write before posting a larger response, and editing it
+down to just the points you want to make that have not already been made, and
+any new arguments supporting those points.
+
+We need to be mindful that writing many paragraphs of extra text is going to
+exclude people. Some people can be excluded from consuming the conversation,
+either because a wall of text is too intimidating to read, or they don't have
+the time or bandwidth to wade through the extra text to find the new information
+being conveyed. It can also drown out other contributors
+
+One person saying "I don't like this feature" is useful, and that same message
+with 100 upvotes is extremely useful, but 100 people writing separate messages
+saying "I don't like this feature" is not. It is also okay to do things like ask
+a question to get clarification about what someone has said or to solicit
+opinions about various options. Just be respectful, and don't drown out other
+discussion.
 
 ## Style
 
