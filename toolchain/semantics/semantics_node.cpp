@@ -31,8 +31,8 @@ void SemanticsNode::Print(llvm::raw_ostream& out) const {
     break;
 #include "toolchain/semantics/semantics_node_kind.def"
   }
-  if (type_.is_valid()) {
-    out << ", type: " << type_;
+  if (type_id_.is_valid()) {
+    out << ", type: " << type_id_;
   }
   out << "}";
 }

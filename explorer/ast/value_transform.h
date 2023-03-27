@@ -140,7 +140,7 @@ class TransformBase {
   // default.
   template <typename T,
             std::enable_if_t<IsRecursivelyTransformable<T>, void*> = nullptr>
-  auto operator()(Nonnull<const T*> value) -> auto{
+  auto operator()(Nonnull<const T*> value) -> auto {
     return value->Decompose([&](const auto&... elements) {
       return [&](auto&&... transformed_elements)
                  -> decltype(AllocateTrait<T>::New(

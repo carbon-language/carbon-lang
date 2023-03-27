@@ -16,8 +16,8 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
   SemanticsIR semantics(/*builtin_ir=*/nullptr);
   semantics.nodes_.reserve(SemanticsBuiltinKind::ValidCount);
 
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type, ...)   \
-  semantics.nodes_.push_back(SemanticsNode::MakeBuiltin( \
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type, ...)     \
+  semantics.nodes_.push_back(SemanticsNode::Builtin::Make( \
       SemanticsBuiltinKind::Name, SemanticsNodeId::Builtin##Type));
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
@@ -44,9 +44,9 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
   for (int i = 0; i < SemanticsBuiltinKind::ValidCount; ++i) {
     // We can reuse the type node ID because the offsets of cross-references
     // will be the same in this IR.
-    auto type = builtin_ir.nodes_[i].type();
-    semantics.nodes_[i] =
-        SemanticsNode::MakeCrossReference(type, BuiltinIR, SemanticsNodeId(i));
+    auto type = builtin_ir.nodes_[i].type_id();
+    semantics.nodes_[i] = SemanticsNode::CrossReference::Make(
+        type, BuiltinIR, SemanticsNodeId(i));
   }
 
   ParseTreeNodeLocationTranslator translator(&tokens, &parse_tree);
@@ -156,7 +156,7 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
     }
     case SemanticsNodeKind::StructTypeField: {
       out << "." << GetString(node.GetAsStructTypeField()) << ": ";
-      StringifyNodeImpl(out, node.type());
+      StringifyNodeImpl(out, node.type_id());
       break;
     }
     case SemanticsNodeKind::StructValue: {
