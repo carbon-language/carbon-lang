@@ -139,15 +139,24 @@ class SemanticsParseTreeHandler {
   auto CanImplicitAsStruct(SemanticsNode value_type, SemanticsNode as_type)
       -> bool;
 
+  // Starts handling parameters or arguments.
   auto ParamOrArgStart() -> void;
+
+  // Handles updates on a parameter or argument comma, pushing an entry when
+  // possible.
   auto ParamOrArgComma(ParseTree::Node parse_node) -> bool;
+
+  // Handles the end of parameters or arguments. Once assembled, on_start is
+  // called. If on_param_or_arg is provided, it will be called per-entry in the
+  // node stack instead of popping and discarding.
   auto ParamOrArgEnd(
       ParseNodeKind start_kind, ParseNodeKind comma_kind,
-      std::function<bool(SemanticsNodeBlockId, SemanticsNodeBlockId)> on_start)
-      -> bool;
+      std::function<bool(SemanticsNodeBlockId, SemanticsNodeBlockId)> on_start,
+      std::optional<std::function<void()>> on_param_or_arg) -> bool;
 
   // Saves a parameter from the top block in node_stack_ to the top block in
   // params_or_args_stack_. Returns false if nothing is copied.
+  // This should only be called by other ParamOrArg functions, not directly.
   auto ParamOrArgSave() -> bool;
 
   // Parse node handlers. Returns false for unrecoverable errors.

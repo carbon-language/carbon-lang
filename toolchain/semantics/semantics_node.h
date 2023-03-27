@@ -310,10 +310,6 @@ class SemanticsNode {
       Factory<SemanticsNodeKind::StructValue, SemanticsNodeBlockId /*ir_id*/,
               SemanticsNodeBlockId /*refs_id*/>;
 
-  using StructValueField =
-      Factory<SemanticsNodeKind::StructValueField,
-              SemanticsStringId /*name_id*/, SemanticsNodeId /*value_id*/>;
-
   using VarStorage = Factory<SemanticsNodeKind::VarStorage>;
 
   SemanticsNode()

@@ -26,10 +26,9 @@
 // CHECK:STDOUT:   {kind: VarStorage, type: node+2},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+3, type: node+2},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: StructValueField, arg0: str0, arg1: node+5, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StructType, arg0: block6, arg1: block6, type: nodeTypeType},
-// CHECK:STDOUT:   {kind: StructValue, arg0: block4, arg1: block5, type: node+8},
+// CHECK:STDOUT:   {kind: StructValue, arg0: block4, arg1: block5, type: node+7},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+3, arg1: nodeInvalidType, type: nodeInvalidType},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -47,19 +46,18 @@
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
-// CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

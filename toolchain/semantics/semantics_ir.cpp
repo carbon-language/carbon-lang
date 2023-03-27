@@ -162,18 +162,16 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
     case SemanticsNodeKind::StructValue: {
       out << "{";
       auto refs = GetNodeBlock(node.GetAsStructValue().second);
+      auto type_refs =
+          GetNodeBlock(GetNode(node.type_id()).GetAsStructType().second);
+      CARBON_CHECK(refs.size() == type_refs.size());
       llvm::ListSeparator sep;
-      for (const auto& ref_id : refs) {
-        out << sep;
-        StringifyNodeImpl(out, ref_id);
+      for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
+        out << sep << "."
+            << GetString(GetNode(type_refs[i]).GetAsStructTypeField()) << " = ";
+        StringifyNodeImpl(out, refs[i]);
       }
       out << "}";
-      break;
-    }
-    case SemanticsNodeKind::StructValueField: {
-      auto [name_id, value_id] = node.GetAsStructValueField();
-      out << "." << GetString(name_id) << " = ";
-      StringifyNodeImpl(out, value_id);
       break;
     }
     case SemanticsNodeKind::Assign:
