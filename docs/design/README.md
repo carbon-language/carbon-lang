@@ -796,7 +796,7 @@ the array may be deduced, it may be omitted, as in:
 ```carbon
 var i: i32 = 1;
 // `[i32;]` equivalent to `[i32; 3]` here.
-var a: [i32;] = (i, i, i);
+var a: [i32;3] = (i, i, i);
 ```
 
 Elements of an array may be accessed using square brackets (`[`...`]`), as in
