@@ -50,5 +50,5 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_type_assign.carbon:[[@LINE+1]]:29: Cannot implicitly convert {.a: i32} from Type to {.a: i32}.
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_type_assign.carbon:[[@LINE+1]]:29: Cannot implicitly convert `{.a: i32}` from `Type` to `{.a: i32}`.
 var x: {.a: i32} = {.a: i32};

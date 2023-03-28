@@ -58,6 +58,6 @@ fn Run(a: i32) {}
 
 fn Main() {
   // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE+2]]:6: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE-4]]:1: Type mismatch: cannot convert argument 0 from f64 to i32.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE-4]]:1: Callable cannot be used: Cannot implicityly convert argument 0 `0` from `10*10^-1` to `f64`.
   Run(1.0);
 }

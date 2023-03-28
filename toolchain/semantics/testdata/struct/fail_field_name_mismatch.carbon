@@ -58,5 +58,5 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_field_name_mismatch.carbon:[[@LINE+1]]:28: Cannot implicitly convert {.b = 1} from {.b: i32} to {.a: i32}.
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_field_name_mismatch.carbon:[[@LINE+1]]:28: Cannot implicitly convert `{.b = 1}` from `{.b: i32}` to `{.a: i32}`.
 var x: {.a: i32} = {.b = 1};
