@@ -6331,14 +6331,14 @@ auto TypeChecker::InstantiateImplDeclaration(
   auto result = type_checker->TypeCheckImplDeclaration(impl, scope);
 
   if (!result.ok()) {
-    std::string note;
-    llvm::raw_string_ostream note_stream(note);
+    auto note_stream = ErrorBuilder(result.error().location());
+    note_stream << result.error().message() << "\n";
     note_stream << "NOTE: " << source_loc.ToString()
                 << ": in instantiation of `impl " << *impl->impl_type()
                 << " as " << impl->interface() << "` with ";
     llvm::ListSeparator sep;
     for (auto* param : impl->deduced_parameters()) {
-      note_stream << sep << "`" << param->name();
+      note_stream << (llvm::StringRef(sep)) << "`" << param->name();
       if (auto value = param->constant_value()) {
         note_stream << " = " << **value;
       }
@@ -6346,9 +6346,7 @@ auto TypeChecker::InstantiateImplDeclaration(
     }
     note_stream << " required here";
 
-    return ErrorBuilder(result.error().location())
-           << result.error().message() << "\n"
-           << note;
+    return note_stream;
   }
 
   return std::pair{impl, arena_->New<Bindings>(std::move(new_bindings))};
