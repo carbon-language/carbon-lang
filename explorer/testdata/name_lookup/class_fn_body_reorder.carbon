@@ -10,7 +10,7 @@
 package ExplorerTest api;
 
 // The bodies of member functions are processed after all immediately enclosing
-// classes, impls, and interfaces.
+// classes, impl declarations, and interfaces.
 class A {
   fn F[self: Self]() -> i32 {
     return G() + self.H();

@@ -15,7 +15,7 @@ interface SwizzleWith(T:! type) {
 
 // TODO: There should be some way to write this that includes
 // `SwizzleWith(.Self)` in the list of lookup contexts.
-alias Swizzle = type where .Self is SwizzleWith(.Self);
+alias Swizzle = type where .Self impls SwizzleWith(.Self);
 
 impl i32 as SwizzleWith(i32) {
   fn Op[self: Self](x: Self) -> Self { return self * 10 + x; }

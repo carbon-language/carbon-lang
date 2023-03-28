@@ -256,12 +256,12 @@ static auto ExpressionToProto(const Expression& expression)
       for (const WhereClause* where : where.clauses()) {
         Fuzzing::WhereClause clause_proto;
         switch (where->kind()) {
-          case WhereClauseKind::IsWhereClause: {
-            auto* is_proto = clause_proto.mutable_is();
-            *is_proto->mutable_type() =
-                ExpressionToProto(cast<IsWhereClause>(where)->type());
-            *is_proto->mutable_constraint() =
-                ExpressionToProto(cast<IsWhereClause>(where)->constraint());
+          case WhereClauseKind::ImplsWhereClause: {
+            auto* impls_proto = clause_proto.mutable_impls();
+            *impls_proto->mutable_type() =
+                ExpressionToProto(cast<ImplsWhereClause>(where)->type());
+            *impls_proto->mutable_constraint() =
+                ExpressionToProto(cast<ImplsWhereClause>(where)->constraint());
             break;
           }
           case WhereClauseKind::EqualsWhereClause: {
@@ -845,8 +845,8 @@ static auto DeclarationToProto(const Declaration& declaration)
     case DeclarationKind::MatchFirstDeclaration: {
       const auto& match_first = cast<MatchFirstDeclaration>(declaration);
       auto* match_first_proto = declaration_proto.mutable_match_first();
-      for (const auto* impl : match_first.impls()) {
-        *match_first_proto->add_impls() = DeclarationToProto(*impl);
+      for (const auto* impl : match_first.impl_declarations()) {
+        *match_first_proto->add_impl_declarations() = DeclarationToProto(*impl);
       }
       break;
     }

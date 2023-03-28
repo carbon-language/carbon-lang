@@ -75,7 +75,7 @@ compilation_unit {
                     }
                   }
                   clauses {
-                    is {
+                    impls {
                       type {
                         int_type_literal {
                         }
@@ -300,3 +300,4 @@ compilation_unit {
     }
   }
 }
+

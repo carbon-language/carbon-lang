@@ -25,11 +25,11 @@ interface HasParams(A:! type, B:! type, C:! type, D:! type) {
 // Here we discover that there is a rewrite for `HasParams(...).V` only after
 // substitution converts each one to `HasParam(X, X, X, X).V`.
 fn F[X:! (HasTypes & HasParams(.Self, .Self, .Self, .Self)) where
-       .Self is HasParams(.A, .A, .A, .A) and
-       .Self is HasParams(.B, .B, .B, .B) and
-       .Self is HasParams(.C, .C, .C, .C) and
-       .Self is HasParams(.D, .D, .D, .D) and
-       .Self is HasParams(.E, .E, .E, .E) and
+       .Self impls HasParams(.A, .A, .A, .A) and
+       .Self impls HasParams(.B, .B, .B, .B) and
+       .Self impls HasParams(.C, .C, .C, .C) and
+       .Self impls HasParams(.D, .D, .D, .D) and
+       .Self impls HasParams(.E, .E, .E, .E) and
        .F = .Self.(HasParams(.E, .E, .E, .E).V).A and
        .E = .Self.(HasParams(.D, .D, .D, .D).V).A and
        .D = .Self.(HasParams(.C, .C, .C, .C).V).A and

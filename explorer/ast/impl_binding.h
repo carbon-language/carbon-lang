@@ -23,7 +23,7 @@ class GenericBinding;
 // (`BindingPattern`) there is no explicit syntax that corresponds to
 // an `ImplBinding`, so they are not created during parsing. Instances
 // of `ImplBinding` are created during type checking, when processing
-// a type parameter (a `GenericBinding`), or an `is` requirement in
+// a type parameter (a `GenericBinding`), or an `impls` requirement in
 // a `where` clause.
 class ImplBinding : public AstNode {
  public:

@@ -86,7 +86,7 @@ struct TypeStructureBuilder {
 
   // Constraint types can contain mentions of VariableTypes, but they aren't
   // deducible so it's not important to look for them.
-  void Visit(const ImplConstraint&) {}
+  void Visit(const ImplsConstraint&) {}
   void Visit(const IntrinsicConstraint&) {}
   void Visit(const EqualityConstraint&) {}
   void Visit(const RewriteConstraint&) {}

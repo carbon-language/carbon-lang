@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 interface A {}
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_where_is_non_constraint.carbon:[[@LINE+1]]: expected a constraint in expression after `is`, found i32
-alias B = A where i32 is i32;
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/constraint/fail_where_impls_non_type.carbon:[[@LINE+1]]: expression after `impls` does not resolve to a constraint, found i32
+alias B = A where i32 impls 5;
 
 fn Main() -> i32 { return 0; }
