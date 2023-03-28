@@ -43,7 +43,7 @@ class TypeChecker;
 // scope.
 class ImplScope {
  public:
-  // The `Impl` struct is a key-value pair where the key is the
+  // The `ImplFact` struct is a key-value pair where the key is the
   // combination of a type and an interface, e.g., `List` and `Container`,
   // and the value is the result of statically resolving to the `impl`
   // for `List` as `Container`, which is an `Expression` that produces
