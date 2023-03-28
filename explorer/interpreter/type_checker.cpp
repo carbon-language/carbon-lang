@@ -498,7 +498,8 @@ auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
         const auto& var = cast<VariableDeclaration>(*m);
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> field_type,
-            Substitute(class_type.bindings(), &var.binding().static_type()));
+            Substitute(class_type.bindings(), &var.binding().static_type(),
+                       var.source_loc()));
         field_types.push_back({var.binding().name(), field_type});
         break;
       }
@@ -1289,7 +1290,8 @@ auto TypeChecker::ArgumentDeduction::Finish(
 
     CARBON_ASSIGN_OR_RETURN(
         const Value* binding_type,
-        type_checker.Substitute(bindings, &binding->static_type()));
+        type_checker.Substitute(bindings, &binding->static_type(),
+                                binding->source_loc()));
     const auto* first_value = values[0];
     for (const auto* value : values) {
       // TODO: It's not clear that conversions are or should be possible here.
@@ -1345,8 +1347,9 @@ auto TypeChecker::ArgumentDeduction::Finish(
     // Form the binding's resolved type and convert the argument expression to
     // it.
     const Value* binding_type = &binding->static_type();
-    CARBON_ASSIGN_OR_RETURN(const Value* substituted_type,
-                            type_checker.Substitute(bindings, binding_type));
+    CARBON_ASSIGN_OR_RETURN(
+        const Value* substituted_type,
+        type_checker.Substitute(bindings, binding_type, binding->source_loc()));
     CARBON_ASSIGN_OR_RETURN(
         arg, type_checker.ImplicitlyConvert(context_, impl_scope, arg,
                                             substituted_type));
@@ -1376,8 +1379,9 @@ auto TypeChecker::ArgumentDeduction::Finish(
 
   // Check non-deduced potential mismatches now we can substitute into them.
   for (const auto& mismatch : non_deduced_mismatches_) {
-    CARBON_ASSIGN_OR_RETURN(const Value* subst_param,
-                            type_checker.Substitute(bindings, mismatch.param));
+    CARBON_ASSIGN_OR_RETURN(
+        const Value* subst_param,
+        type_checker.Substitute(bindings, mismatch.param, source_loc_));
 
     bool type = IsType(subst_param) && IsType(mismatch.arg);
     if (type && mismatch.allow_implicit_conversion) {
@@ -1591,10 +1595,12 @@ class TypeChecker::ConstraintTypeBuilder {
                          type_checker.MakeConstraintWitness(witnesses));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type,
-          type_checker.Substitute(local_bindings, impls_constraint.type));
+          type_checker.Substitute(local_bindings, impls_constraint.type,
+                                  constraint->self_binding()->source_loc()));
       CARBON_ASSIGN_OR_RETURN(const auto* interface,
                               type_checker.SubstituteCast<InterfaceType>(
-                                  local_bindings, impls_constraint.interface));
+                                  local_bindings, impls_constraint.interface,
+                                  constraint->self_binding()->source_loc()));
       int index = AddImplsConstraint({.type = type, .interface = interface});
       witnesses.push_back(
           type_checker.MakeConstraintWitnessAccess(self_witness, index));
@@ -1615,11 +1621,13 @@ class TypeChecker::ConstraintTypeBuilder {
       CARBON_ASSIGN_OR_RETURN(
           const auto* interface,
           type_checker.SubstituteCast<InterfaceType>(
-              local_bindings, &rewrite_constraint.constant->interface()));
+              local_bindings, &rewrite_constraint.constant->interface(),
+              rewrite_constraint.constant->constant().source_loc()));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> converted_value,
-          type_checker.Substitute(local_bindings,
-                                  rewrite_constraint.converted_replacement));
+          type_checker.Substitute(
+              local_bindings, rewrite_constraint.converted_replacement,
+              rewrite_constraint.constant->constant().source_loc()));
 
       // Form a symbolic value naming the non-rewritten associated constant.
       // The impls constraint will always already exist.
@@ -1635,12 +1643,13 @@ class TypeChecker::ConstraintTypeBuilder {
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> value,
             type_checker.Substitute(
-                local_bindings, rewrite_constraint.unconverted_replacement));
+                local_bindings, rewrite_constraint.unconverted_replacement,
+                rewrite_constraint.constant->constant().source_loc()));
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> type,
             type_checker.Substitute(
-                local_bindings,
-                rewrite_constraint.unconverted_replacement_type));
+                local_bindings, rewrite_constraint.unconverted_replacement_type,
+                rewrite_constraint.constant->constant().source_loc()));
         AddRewriteConstraint({.constant = constant_value,
                               .unconverted_replacement = value,
                               .unconverted_replacement_type = type,
@@ -1660,7 +1669,9 @@ class TypeChecker::ConstraintTypeBuilder {
             }) == values.end()) {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> subst_value,
-              type_checker.Substitute(local_bindings, value));
+              type_checker.Substitute(
+                  local_bindings, value,
+                  constraint->self_binding()->source_loc()));
           values.push_back(subst_value);
         }
       }
@@ -1671,14 +1682,16 @@ class TypeChecker::ConstraintTypeBuilder {
          constraint->intrinsic_constraints()) {
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type,
-          type_checker.Substitute(local_bindings, intrinsic_constraint.type));
+          type_checker.Substitute(local_bindings, intrinsic_constraint.type,
+                                  constraint->self_binding()->source_loc()));
       IntrinsicConstraint converted = {
           .type = type, .kind = intrinsic_constraint.kind, .arguments = {}};
       converted.arguments.reserve(intrinsic_constraint.arguments.size());
       for (Nonnull<const Value*> argument : intrinsic_constraint.arguments) {
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> subst_arg,
-            type_checker.Substitute(local_bindings, argument));
+            type_checker.Substitute(local_bindings, argument,
+                                    constraint->self_binding()->source_loc()));
         converted.arguments.push_back(subst_arg);
       }
       AddIntrinsicConstraint(std::move(converted));
@@ -1688,7 +1701,8 @@ class TypeChecker::ConstraintTypeBuilder {
       for (const auto& lookup_context : constraint->lookup_contexts()) {
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> subst_context,
-            type_checker.Substitute(local_bindings, lookup_context.context));
+            type_checker.Substitute(local_bindings, lookup_context.context,
+                                    constraint->self_binding()->source_loc()));
         AddLookupContext({.context = subst_context});
       }
     }
@@ -1992,7 +2006,8 @@ class TypeChecker::SubstitutedGenericBindings {
       -> ErrorOr<Nonnull<GenericBinding*>> {
     CARBON_ASSIGN_OR_RETURN(
         Nonnull<const Value*> new_type,
-        type_checker_->Substitute(bindings_, &old_binding->static_type()));
+        type_checker_->Substitute(bindings_, &old_binding->static_type(),
+                                  old_binding->source_loc()));
     Nonnull<GenericBinding*> new_binding =
         type_checker_->arena_->New<GenericBinding>(
             old_binding->source_loc(), old_binding->name(),
@@ -2050,7 +2065,8 @@ auto TypeChecker::Substitute(const Bindings& bindings,
 
 auto TypeChecker::RebuildValue(Nonnull<const Value*> value) const
     -> ErrorOr<Nonnull<const Value*>> {
-  return SubstituteImpl(Bindings(), value);
+  return SubstituteImpl(Bindings(), value,
+                        SourceLocation::DiagnosticsIgnored());
 }
 
 class TypeChecker::SubstituteTransform
@@ -2172,12 +2188,14 @@ class TypeChecker::SubstituteTransform
 
     // Apply substitution to parameter and return types and create the new
     // function type.
-    CARBON_ASSIGN_OR_RETURN(const auto* param, type_checker_->SubstituteImpl(
-                                                   subst_bindings.bindings(),
-                                                   &fn_type->parameters()));
-    CARBON_ASSIGN_OR_RETURN(const auto* ret, type_checker_->SubstituteImpl(
-                                                 subst_bindings.bindings(),
-                                                 &fn_type->return_type()));
+    CARBON_ASSIGN_OR_RETURN(
+        const auto* param,
+        type_checker_->SubstituteImpl(subst_bindings.bindings(),
+                                      &fn_type->parameters(), source_loc_));
+    CARBON_ASSIGN_OR_RETURN(
+        const auto* ret,
+        type_checker_->SubstituteImpl(subst_bindings.bindings(),
+                                      &fn_type->return_type(), source_loc_));
     return type_checker_->arena_->New<FunctionType>(
         param, std::move(generic_parameters), ret, std::move(deduced_bindings),
         std::move(subst_bindings).TakeImplBindings());
@@ -2371,14 +2389,15 @@ auto TypeChecker::ConvertToConstraintType(
     CARBON_RETURN_IF_ERROR(
         ExpectCompleteType(source_loc, "constraint", iface_type));
     return SubstituteCast<ConstraintType>(
-        iface_type->bindings(), *iface_type->declaration().constraint_type());
+        iface_type->bindings(), *iface_type->declaration().constraint_type(),
+        source_loc);
   }
   if (const auto* constraint_type = dyn_cast<NamedConstraintType>(constraint)) {
     CARBON_RETURN_IF_ERROR(
         ExpectCompleteType(source_loc, "constraint", constraint_type));
     return SubstituteCast<ConstraintType>(
         constraint_type->bindings(),
-        *constraint_type->declaration().constraint_type());
+        *constraint_type->declaration().constraint_type(), source_loc);
   }
   if (isa<TypeType>(constraint)) {
     // TODO: Should we build this once and cache it?
@@ -2450,8 +2469,9 @@ auto TypeChecker::DeduceCallBindings(
   call.set_bindings(std::move(*bindings));
 
   // Convert the arguments to the deduced and substituted parameter type.
-  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> param_type,
-                          Substitute(call.bindings(), params_type));
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<const Value*> param_type,
+      Substitute(call.bindings(), params_type, call.source_loc()));
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<Expression*> converted_argument,
       ImplicitlyConvert("call", impl_scope, &call.argument(), param_type));
@@ -2516,7 +2536,7 @@ auto TypeChecker::GetTypeForAssociatedConstant(
   Bindings bindings = assoc->interface().bindings();
   bindings.Add(assoc->interface().declaration().self(), &assoc->base(),
                &assoc->witness());
-  return Substitute(bindings, assoc_type);
+  return Substitute(bindings, assoc_type, assoc->constant().source_loc());
 }
 
 auto TypeChecker::LookupRewriteInTypeOf(
@@ -2586,17 +2606,21 @@ auto TypeChecker::LookupRewriteInTypeOf(
         // TODO: These substitutions can lead to infinite recursion.
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> rewrite_interface,
-            Substitute(bindings, &rewrite.constant->interface()));
+            Substitute(bindings, &rewrite.constant->interface(),
+                       rewrite.constant->constant().source_loc()));
         if (ValueEqual(interface, rewrite_interface, std::nullopt)) {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> unconverted_replacement,
-              Substitute(bindings, rewrite.unconverted_replacement));
+              Substitute(bindings, rewrite.unconverted_replacement,
+                         rewrite.constant->constant().source_loc()));
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> unconverted_replacement_type,
-              Substitute(bindings, rewrite.unconverted_replacement_type));
+              Substitute(bindings, rewrite.unconverted_replacement_type,
+                         rewrite.constant->constant().source_loc()));
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> converted_replacement,
-              Substitute(bindings, rewrite.converted_replacement));
+              Substitute(bindings, rewrite.converted_replacement,
+                         rewrite.constant->constant().source_loc()));
           RewriteConstraint substituted = {
               // Not substituted, but our callers don't need it.
               .constant = rewrite.constant,
@@ -2620,7 +2644,8 @@ auto TypeChecker::LookupRewriteInWitness(
     CARBON_ASSIGN_OR_RETURN(
         Nonnull<const Value*> constraint,
         Substitute(impl_witness->bindings(),
-                   impl_witness->declaration().constraint_type()));
+                   impl_witness->declaration().constraint_type(),
+                   impl_witness->declaration().source_loc()));
     return LookupRewrite(constraint, interface, member);
   }
   return {std::nullopt};
@@ -2667,7 +2692,8 @@ auto TypeChecker::CheckAddrMeAccess(
     access->set_is_addr_me_method();
     CARBON_ASSIGN_OR_RETURN(
         Nonnull<const Value*> me_type,
-        Substitute(bindings, &func_decl->self_pattern().static_type()));
+        Substitute(bindings, &func_decl->self_pattern().static_type(),
+                   func_decl->source_loc()));
     CARBON_RETURN_IF_ERROR(
         ExpectExactType(access->source_loc(), "method access, receiver type",
                         me_type, &access->object().static_type(), impl_scope));
@@ -2822,7 +2848,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             auto [member_type, member, member_t_class] = res.value();
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> field_type,
-                Substitute(member_t_class->bindings(), member_type));
+                Substitute(member_t_class->bindings(), member_type,
+                           member->source_loc()));
             access.set_member(arena_->New<NamedElement>(member));
             access.set_static_type(field_type);
             access.set_is_type_access(!IsInstanceMember(&access.member()));
@@ -2895,8 +2922,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                        witness);
 
           const Value& member_type = result.member->static_type();
-          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_member_type,
-                                  Substitute(bindings, &member_type))
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> inst_member_type,
+              Substitute(bindings, &member_type, result.member->source_loc()))
           access.set_member(arena_->New<NamedElement>(result.member));
           access.set_found_in_interface(result.interface);
           access.set_is_type_access(!IsInstanceMember(&access.member()));
@@ -2971,7 +2999,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             Bindings bindings = result.interface->bindings();
             bindings.Add(result.interface->declaration().self(), type, witness);
             CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_member_type,
-                                    Substitute(bindings, &member_type));
+                                    Substitute(bindings, &member_type,
+                                               result.member->source_loc()));
             access.set_static_type(inst_member_type);
             access.set_value_category(ValueCategory::Let);
           }
@@ -3024,7 +3053,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               CARBON_ASSIGN_OR_RETURN(
                   Nonnull<const Value*> parameter_type,
                   Substitute(choice.bindings(),
-                             *(*signature)->parameters_static_type()));
+                             *(*signature)->parameters_static_type(),
+                             (*signature)->source_loc()));
               Nonnull<const Value*> type =
                   arena_->New<FunctionType>(parameter_type, &choice);
               // TODO: Should there be a Declaration corresponding to each
@@ -3054,7 +3084,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                     }
                     CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> field_type,
                                             Substitute(class_type.bindings(),
-                                                       &member->static_type()));
+                                                       &member->static_type(),
+                                                       member->source_loc()));
                     access.set_static_type(field_type);
                     access.set_value_category(ValueCategory::Let);
                     return Success();
@@ -3200,8 +3231,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
       auto set_static_type_as_member_type = [&]() -> ErrorOr<Success> {
         Nonnull<const Value*> member_type = &member_name.member().type();
-        CARBON_ASSIGN_OR_RETURN(member_type,
-                                Substitute(bindings_for_member(), member_type));
+        CARBON_ASSIGN_OR_RETURN(
+            member_type,
+            Substitute(bindings_for_member(), member_type, e->source_loc()));
         access.set_static_type(member_type);
         return Success();
       };
@@ -3516,7 +3548,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // expression.
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> return_type,
-              Substitute(call.bindings(), &fun_t.return_type()));
+              Substitute(call.bindings(), &fun_t.return_type(),
+                         e->source_loc()));
           call.set_static_type(return_type);
           call.set_value_category(ValueCategory::Let);
           return Success();
@@ -4281,7 +4314,8 @@ auto TypeChecker::TypeCheckPattern(
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> parameter_type,
           Substitute(choice_type.bindings(),
-                     *(*signature)->parameters_static_type()));
+                     *(*signature)->parameters_static_type(),
+                     (*signature)->source_loc()));
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(&alternative.arguments(),
                                               parameter_type, impl_scope,
                                               enclosing_value_category));
@@ -5499,8 +5533,9 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
 
       Bindings bindings = iface_type->bindings();
       bindings.Add(iface_decl.self(), self_type, iface_witness);
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> iface_mem_type,
-                              Substitute(bindings, &m->static_type()));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> iface_mem_type,
+          Substitute(bindings, &m->static_type(), m->source_loc()));
       // TODO: How should the signature in the implementation be permitted
       // to differ from the signature in the interface?
       CARBON_RETURN_IF_ERROR(
@@ -6190,8 +6225,9 @@ auto TypeChecker::FindMixedMemberAndType(
           // TODO: What is the type of Self? Do we ever need a witness?
           temp_map.Add(mixin->declaration().self(), enclosing_type,
                        std::nullopt);
-          CARBON_ASSIGN_OR_RETURN(const auto* const mix_member_type,
-                                  Substitute(temp_map, res.value().first));
+          CARBON_ASSIGN_OR_RETURN(
+              const auto* const mix_member_type,
+              Substitute(temp_map, res.value().first, member->source_loc()));
           return {std::make_pair(mix_member_type, res.value().second)};
         } else {
           return res;

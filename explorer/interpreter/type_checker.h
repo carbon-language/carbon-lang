@@ -52,18 +52,17 @@ class TypeChecker {
   // of generic parameters (aka. `GenericBinding` and references to
   // `ImplBinding`) are replaced by their corresponding value or witness in
   // `bindings`.
-  auto Substitute(
-      const Bindings& bindings, Nonnull<const Value*> value,
-      SourceLocation source_loc = SourceLocation::DiagnosticsIgnored()) const
+  auto Substitute(const Bindings& bindings, Nonnull<const Value*> value,
+                  SourceLocation source_loc) const
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Same as `Substitute`, but cast the result to the type given as a template
   // argument, which must be explicitly specified. The `remove_cv_t` here
   // blocks template argument deduction.
   template <typename T>
-  auto SubstituteCast(
-      const Bindings& bindings, Nonnull<const std::remove_cv_t<T>*> value,
-      SourceLocation source_loc = SourceLocation::DiagnosticsIgnored()) const
+  auto SubstituteCast(const Bindings& bindings,
+                      Nonnull<const std::remove_cv_t<T>*> value,
+                      SourceLocation source_loc) const
       -> ErrorOr<Nonnull<const T*>> {
     CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> subst_value,
                             Substitute(bindings, value, source_loc));
@@ -447,9 +446,8 @@ class TypeChecker {
 
   // Implementation of Substitute and RebuildValue. Does not check that
   // bindings are nonempty, nor does it trace its progress.
-  auto SubstituteImpl(
-      const Bindings& bindings, Nonnull<const Value*> type,
-      SourceLocation source_loc = SourceLocation::DiagnosticsIgnored()) const
+  auto SubstituteImpl(const Bindings& bindings, Nonnull<const Value*> type,
+                      SourceLocation source_loc) const
       -> ErrorOr<Nonnull<const Value*>>;
 
   // The name of a builtin interface, with any arguments.
