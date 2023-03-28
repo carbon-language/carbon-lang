@@ -344,25 +344,22 @@ general or more meta level.
 
 ##### Make your point concisely
 
-Asking questions about a particular discussion is almost always OK. If you're
+- **Asking questions is OK**: Asking questions about a particular discussion is almost always OK. If you're
 worried the questions might be more about _background_ and might be long enough
 to get distracting, you can always ask them in some of our dedicated spaces like
 `#language-questions` on Discord.
-
-When sharing ideas and opinions in community discussions, it is important to do
+- **Favor new and relevant information**: When sharing ideas and opinions in community discussions, it is important to do
 so in a way that both _adds new information_ in some way/shape/form, makes sure
 that information is _relevant_ to the discussion, and avoids _repetition_. This
 means reviewing what you write before posting a larger response, and editing it
 down to just the points you want to make that have not already been made, and
 any new arguments supporting those points.
-
-We need to be mindful that writing many paragraphs of extra text is going to
+- **Be inclusive by staying concise**: We need to be mindful that writing many paragraphs of extra text is going to
 exclude people. Some people can be excluded from consuming the conversation,
 either because a wall of text is too intimidating to read, or they don't have
 the time or bandwidth to wade through the extra text to find the new information
 being conveyed. It can also drown out other contributors
-
-One person saying "I don't like this feature" is useful, and that same message
+- **Prefer upvote to repetition**: One person saying "I don't like this feature" is useful, and that same message
 with 100 upvotes is extremely useful, but 100 people writing separate messages
 saying "I don't like this feature" is not. It is also okay to do things like ask
 a question to get clarification about what someone has said or to solicit
