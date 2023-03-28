@@ -863,6 +863,7 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
     node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ReturnStatementStart);
 
     if (callable.return_type_id.is_valid()) {
+      // TODO: Add a note pointing at the return type's parse node.
       CARBON_DIAGNOSTIC(ReturnStatementMissingExpression, Error,
                         "Must return a {0}.", std::string);
       emitter_
@@ -889,6 +890,7 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
     } else {
       const auto new_type = CanTypeConvert(arg_type, callable.return_type_id);
       if (!new_type.is_valid()) {
+        // TODO: Add a note pointing at the return type's parse node.
         CARBON_DIAGNOSTIC(ReturnStatementTypeMismatch, Error,
                           "Cannot convert {0} to {1}.", std::string,
                           std::string);
