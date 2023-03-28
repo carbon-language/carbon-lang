@@ -58,12 +58,14 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_empty_struct.carbon:[[@LINE+1]]:31: Name a not found
-fn Echo(a: {}) -> {} { return a; }
+fn Echo(a: {}) -> {} {
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_empty_struct.carbon:[[@LINE+1]]:10: Name a not found
+  return a;
+}
 
 fn Run() {
   // TODO: Should succeed.
   // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_empty_struct.carbon:[[@LINE+2]]:19: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_empty_struct.carbon:[[@LINE-5]]:1: Callable cannot be used: Received 0 argument(s), but require 1 argument(s).
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_empty_struct.carbon:[[@LINE-8]]:1: Callable cannot be used: Received 0 argument(s), but require 1 argument(s).
   var a: {} = Echo({});
 }
