@@ -5935,11 +5935,15 @@ auto TypeChecker::DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
            << "invalid target for alias declaration";
   }
 
-  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> target,
-                          InterpExp(&alias->target(), arena_, trace_stream_));
-
   alias->set_static_type(&alias->target().static_type());
-  alias->set_constant_value(target);
+  // constant_value not needed for namespace alias because these are resolved by
+  // NameResolver
+  if (alias->target().static_type().kind() !=
+      Value::Kind::TypeOfNamespaceName) {
+    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> target,
+                            InterpExp(&alias->target(), arena_, trace_stream_));
+    alias->set_constant_value(target);
+  }
   return Success();
 }
 

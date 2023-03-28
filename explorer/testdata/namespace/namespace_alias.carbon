@@ -3,18 +3,26 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 namespace N;
+namespace N.M;
 fn N.F() {}
-// TODO: This should work.
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/namespace/fail_namespace_alias.carbon:[[@LINE+1]]: could not find `namespace N;`
-alias M = N;
+fn N.M.FM() {}
+
+alias A = N;
+alias AM = N.M;
+alias N.A = N.M;
+alias N.A2 = N;
 
 fn Main() -> i32 {
-  M.F();
+  A.F();
+  AM.FM();
+  N.A.FM();
+  A.A2.A2.A2.A2.A2.A2.A2.F();
   return 0;
 }

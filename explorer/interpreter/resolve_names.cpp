@@ -273,15 +273,28 @@ auto NameResolver::ResolveNames(Expression& expression,
       break;
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
+      // If the left-hand side of the `.` is a namespace or alias to namespace,
+      // resolve the name.
       auto& access = cast<SimpleMemberAccessExpression>(expression);
       CARBON_ASSIGN_OR_RETURN(std::optional<ValueNodeView> scope,
                               ResolveNames(access.object(), enclosing_scope));
+      if (!scope) {
+        break;
+      }
 
-      // If the left-hand side of the `.` is a namespace, resolve the name.
-      // TODO: Look through aliases.
-      if (scope && isa<NamespaceDeclaration>(scope->base())) {
-        auto ns_it =
-            namespace_scopes_.find(&cast<NamespaceDeclaration>(scope->base()));
+      std::optional<Nonnull<const NamespaceDeclaration*>> namespace_decl;
+      if (isa<AliasDeclaration>(scope->base())) {
+        const AliasDeclaration& alias = cast<AliasDeclaration>(scope->base());
+        auto resolved_decl = alias.resolved_declaration();
+        if (resolved_decl && isa<NamespaceDeclaration>(resolved_decl.value())) {
+          namespace_decl = cast<NamespaceDeclaration>(resolved_decl.value());
+        }
+      } else if (isa<NamespaceDeclaration>(scope->base())) {
+        namespace_decl = &cast<NamespaceDeclaration>(scope->base());
+      }
+
+      if (namespace_decl) {
+        auto ns_it = namespace_scopes_.find(namespace_decl.value());
         CARBON_CHECK(ns_it != namespace_scopes_.end())
             << "name resolved to undeclared namespace";
         CARBON_ASSIGN_OR_RETURN(
@@ -842,7 +855,11 @@ auto NameResolver::ResolveNames(Declaration& declaration,
       CARBON_ASSIGN_OR_RETURN(Nonnull<StaticScope*> scope,
                               ResolveQualifier(alias.name(), enclosing_scope));
       scope->MarkDeclared(alias.name().inner_name());
-      CARBON_RETURN_IF_ERROR(ResolveNames(alias.target(), *scope));
+      CARBON_ASSIGN_OR_RETURN(auto target,
+                              ResolveNames(alias.target(), *scope));
+      if (target && isa<Declaration>(target->base())) {
+        alias.set_resolved_declaration(&cast<Declaration>(target->base()));
+      }
       scope->MarkUsable(alias.name().inner_name());
       break;
     }
