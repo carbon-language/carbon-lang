@@ -24,7 +24,7 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+0, arg1: block0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str1, arg1: callable1},
-// CHECK:STDOUT:   {kind: Call, arg0: call0, arg1: callable0, type: nodeEmptyTuple},
+// CHECK:STDOUT:   {kind: Call, arg0: call0, arg1: callable0},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+2, arg1: block2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [

@@ -177,11 +177,10 @@ auto SemanticsParseTreeHandler::ImplicitAsForArgs(
       CARBON_CHECK(diagnostic != nullptr) << "Should have validated first";
       CARBON_DIAGNOSTIC(CallArgTypeMismatch, Note,
                         "Callable cannot be used: Cannot implicityly convert "
-                        "argument {0} `{0}` from `{1}` to `{2}`.",
-                        size_t, std::string, std::string, std::string);
+                        "argument {0} from `{1}` to `{2}`.",
+                        size_t, std::string, std::string);
       diagnostic->Note(
           param_parse_node, CallArgTypeMismatch, i,
-          semantics_->StringifyNode(value_id),
           semantics_->StringifyNode(semantics_->GetNode(value_id).type_id()),
           semantics_->StringifyNode(as_type_id));
       return false;
@@ -200,12 +199,11 @@ auto SemanticsParseTreeHandler::ImplicitAsRequired(ParseTree::Node parse_node,
       ImplicitAsKind::Incompatible) {
     // Only error when the system is trying to use the result.
     CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
-                      "Cannot implicitly convert `{0}` from `{1}` to `{2}`.",
-                      std::string, std::string, std::string);
+                      "Cannot implicitly convert from `{0}` to `{1}`.",
+                      std::string, std::string);
     emitter_
         ->Build(
             parse_node, ImplicitAsConversionFailure,
-            semantics_->StringifyNode(value_id),
             semantics_->StringifyNode(semantics_->GetNode(value_id).type_id()),
             semantics_->StringifyNode(as_type_id))
         .Emit();
@@ -398,8 +396,7 @@ auto SemanticsParseTreeHandler::HandleCallExpression(ParseTree::Node parse_node)
   auto call_id = semantics_->AddCall({ir_id, refs_id});
   // TODO: Propagate return types from callable.
   auto call_node_id = AddNode(SemanticsNode::Call::Make(
-      call_expr_parse_node, SemanticsNodeId::BuiltinEmptyTuple, call_id,
-      callable_id));
+      call_expr_parse_node, callable.return_type_id, call_id, callable_id));
 
   node_stack_.Push(parse_node, call_node_id);
   return true;
@@ -1013,7 +1010,10 @@ auto SemanticsParseTreeHandler::HandleReturnStatementStart(
 auto SemanticsParseTreeHandler::HandleReturnType(ParseTree::Node parse_node)
     -> bool {
   // Propagate the type expression.
-  node_stack_.Push(parse_node, node_stack_.PopForNodeId());
+  auto [type_parse_node, type_node_id] = node_stack_.PopForParseNodeAndNodeId();
+  auto cast_node_id = ImplicitAsRequired(type_parse_node, type_node_id,
+                                         SemanticsNodeId::BuiltinTypeType);
+  node_stack_.Push(parse_node, cast_node_id);
   return true;
 }
 

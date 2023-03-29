@@ -60,5 +60,5 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_field_type_mismatch.carbon:[[@LINE+1]]:30: Cannot implicitly convert `{.b = 10*10^-1}` from `{.b: f64}` to `{.a: i32}`.
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_field_type_mismatch.carbon:[[@LINE+1]]:30: Cannot implicitly convert from `{.b: f64}` to `{.a: i32}`.
 var x: {.a: i32} = {.b = 1.0};

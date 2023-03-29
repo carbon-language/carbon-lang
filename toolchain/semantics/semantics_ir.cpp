@@ -127,7 +127,7 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
   }
 
   auto node = GetNode(node_id);
-  switch (node.kind()) {
+  switch (auto node_kind = node.kind()) {
     case SemanticsNodeKind::IntegerLiteral: {
       // TODO: Do we want to store the string representation of literals so that
       // we can echo back the value as typed, rather than as stored? We probably
@@ -195,7 +195,7 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
       // We don't need to handle stringification for nodes that don't show up in
       // errors, but make it clear what's going on so that it's clearer when
       // stringification is needed.
-      out << "<cannot stringify " << node_id << ">";
+      out << "<cannot stringify " << node_id << " of " << node_kind << ">";
       return;
     case SemanticsNodeKind::Invalid:
       llvm_unreachable("SemanticsNodeKind::Invalid is never used.");
