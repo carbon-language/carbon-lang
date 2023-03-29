@@ -270,11 +270,10 @@ auto SemanticsParseTreeHandler::ImplicitAs(ParseTree::Node parse_node,
   }
 
   CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
-                    "Cannot implicitly convert {0} from {1} to {2}.",
-                    std::string, std::string, std::string);
+                    "Cannot implicitly convert from {0} to {1}.", std::string,
+                    std::string);
   emitter_
       ->Build(parse_node, ImplicitAsConversionFailure,
-              semantics_->StringifyNode(value_id),
               semantics_->StringifyNode(value_type_id),
               semantics_->StringifyNode(as_type_id))
       .Emit();
