@@ -174,6 +174,10 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
       out << "}";
       break;
     }
+    case SemanticsNodeKind::StubReference: {
+      StringifyNodeImpl(out, node.GetAsStubReference());
+      break;
+    }
     case SemanticsNodeKind::Assign:
     case SemanticsNodeKind::BinaryOperatorAdd:
     case SemanticsNodeKind::BindName:
