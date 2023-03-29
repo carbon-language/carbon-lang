@@ -144,11 +144,11 @@ class SemanticsParseTreeHandler {
   // Starts handling parameters or arguments.
   auto ParamOrArgStart() -> void;
 
-  // Handles updates on a parameter or argument comma, pushing an entry when
-  // possible.
+  // On a comma, pushes the entry. On return, the top of node_stack_ will be
+  // start_kind.
   auto ParamOrArgComma(bool for_args) -> void;
 
-  // Handles the end of parameters or arguments. On return, the top of
+  // Detects whether there's an entry to push. On return, the top of
   // node_stack_ will be start_kind, and the caller should do type-specific
   // processing. Returns a pair of {ir_id, refs_id}.
   auto ParamOrArgEnd(bool for_args, ParseNodeKind start_kind)
