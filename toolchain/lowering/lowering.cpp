@@ -196,6 +196,11 @@ auto Lowering::HandleStructValueNode(SemanticsNodeId /*node_id*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
+auto Lowering::HandleStubReferenceNode(SemanticsNodeId /*node_id*/,
+                                       SemanticsNode node) -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
 auto Lowering::HandleVarStorageNode(SemanticsNodeId /*node_id*/,
                                     SemanticsNode node) -> void {
   CARBON_FATAL() << "TODO: Add support: " << node;

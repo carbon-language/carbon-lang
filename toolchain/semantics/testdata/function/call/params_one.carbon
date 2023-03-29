@@ -29,6 +29,7 @@
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+2, arg1: block0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str2, arg1: callable1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+5, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: Call, arg0: call0, arg1: callable0, type: nodeEmptyTuple},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+4, arg1: block6},
 // CHECK:STDOUT: ]
@@ -46,16 +47,17 @@
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

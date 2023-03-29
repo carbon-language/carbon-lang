@@ -25,9 +25,10 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str1, arg1: callable0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: StructType, arg0: block6, arg1: block6, type: nodeTypeType},
-// CHECK:STDOUT:   {kind: StructValue, arg0: block4, arg1: block5, type: node+5},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+6, type: node+5},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+3, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: StructType, arg0: block5, arg1: block5, type: nodeTypeType},
+// CHECK:STDOUT:   {kind: StructValue, arg0: block4, arg1: block6, type: node+6},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+7, type: node+6},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+2, arg1: block7},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -42,21 +43,22 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
