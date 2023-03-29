@@ -43,6 +43,6 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_init_type_mismatch.carbon:[[@LINE+1]]:19: Cannot implicitly convert 10*10^-1 from f64 to i32.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_init_type_mismatch.carbon:[[@LINE+1]]:19: Cannot implicitly convert from f64 to i32.
   var x: i32 = 1.0;
 }
