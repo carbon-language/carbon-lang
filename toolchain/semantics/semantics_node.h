@@ -323,6 +323,9 @@ class SemanticsNode {
       Factory<SemanticsNodeKind::StructValue, SemanticsNodeBlockId /*ir_id*/,
               SemanticsNodeBlockId /*refs_id*/>;
 
+  using StubReference =
+      Factory<SemanticsNodeKind::StubReference, SemanticsNodeId /*node_id*/>;
+
   using VarStorage = Factory<SemanticsNodeKind::VarStorage>;
 
   SemanticsNode()

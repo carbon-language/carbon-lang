@@ -313,65 +313,43 @@ auto SemanticsParseTreeHandler::ParamOrArgStart() -> void {
   node_block_stack_.Push();
 }
 
-auto SemanticsParseTreeHandler::ParamOrArgComma(ParseTree::Node parse_node)
-    -> bool {
-  node_stack_.Push(parse_node);
-
-  // Copy the last node added to the IR block into the params block.
-  if (!ParamOrArgSave()) {
-    emitter_->Emit(
-        parse_node, SemanticsTodo,
-        "Should have a param before comma, will need error recovery");
-    return false;
-  }
-
-  return true;
+auto SemanticsParseTreeHandler::ParamOrArgComma(bool for_args) -> void {
+  ParamOrArgSave(for_args);
 }
 
-auto SemanticsParseTreeHandler::ParamOrArgEnd(
-    ParseNodeKind start_kind, ParseNodeKind comma_kind,
-    std::function<bool(SemanticsNodeBlockId, SemanticsNodeBlockId)> on_start,
-    std::optional<std::function<void()>> on_param_or_arg) -> bool {
-  // If there's a node in the IR block that has yet to be added to the params
-  // block, add it now.
-  ParamOrArgSave();
-
-  while (true) {
-    auto parse_kind = parse_tree_->node_kind(node_stack_.PeekParseNode());
-    if (parse_kind == start_kind) {
-      return on_start(node_block_stack_.Pop(), params_or_args_stack_.Pop());
-    } else if (parse_kind == comma_kind) {
-      node_stack_.PopAndDiscardSoloParseNode(comma_kind);
-    } else if (on_param_or_arg) {
-      (*on_param_or_arg)();
-    } else {
-      node_stack_.PopAndIgnore();
-    }
+auto SemanticsParseTreeHandler::ParamOrArgEnd(bool for_args,
+                                              ParseNodeKind start_kind)
+    -> std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId> {
+  if (parse_tree_->node_kind(node_stack_.PeekParseNode()) != start_kind) {
+    ParamOrArgSave(for_args);
   }
+  return {node_block_stack_.Pop(), params_or_args_stack_.Pop()};
 }
 
-auto SemanticsParseTreeHandler::ParamOrArgSave() -> bool {
-  // Copy the last node added to the IR block into the params block.
-  auto ir_id = node_block_stack_.Peek();
-  if (!ir_id.is_valid()) {
-    return false;
+auto SemanticsParseTreeHandler::ParamOrArgSave(bool for_args) -> void {
+  SemanticsNodeId param_or_arg_id = SemanticsNodeId::Invalid;
+  if (for_args) {
+    // For an argument, we add a stub reference to the expression on the top of
+    // the stack. There may not be anything on the IR prior to this.
+    auto [entry_parse_node, entry_node_id] =
+        node_stack_.PopForParseNodeAndNodeId();
+    param_or_arg_id = AddNode(SemanticsNode::StubReference::Make(
+        entry_parse_node, semantics_->GetNode(entry_node_id).type_id(),
+        entry_node_id));
+  } else {
+    // For a parameter, there should always be something in the IR.
+    node_stack_.PopAndIgnore();
+    auto ir_id = node_block_stack_.Peek();
+    CARBON_CHECK(ir_id.is_valid());
+    auto& ir = semantics_->GetNodeBlock(ir_id);
+    CARBON_CHECK(!ir.empty()) << "Should have had a param";
+    param_or_arg_id = ir.back();
   }
 
-  // We get params before ir because it may add a node block, which can
-  // invalidate the ir reference.
-  auto& params = semantics_->GetNodeBlock(params_or_args_stack_.PeekForAdd());
-
-  auto& ir = semantics_->GetNodeBlock(ir_id);
-  CARBON_CHECK(!ir.empty())
-      << "Should only have a valid ID if a node was added";
-  auto& param = ir.back();
-
-  if (!params.empty() && param == params.back()) {
-    // The param was already added after a comma.
-    return false;
-  }
-  params.push_back(ir.back());
-  return true;
+  // Save the param or arg ID.
+  auto& params_or_args =
+      semantics_->GetNodeBlock(params_or_args_stack_.PeekForAdd());
+  params_or_args.push_back(param_or_arg_id);
 }
 
 auto SemanticsParseTreeHandler::HandleAddress(ParseTree::Node parse_node)
@@ -394,46 +372,44 @@ auto SemanticsParseTreeHandler::HandleBreakStatementStart(
 
 auto SemanticsParseTreeHandler::HandleCallExpression(ParseTree::Node parse_node)
     -> bool {
-  auto on_start = [&](SemanticsNodeBlockId ir_id,
-                      SemanticsNodeBlockId refs_id) -> bool {
-    // TODO: Convert to call expression.
-    auto [call_expr_parse_node, name_id] = node_stack_.PopForParseNodeAndNodeId(
-        ParseNodeKind::CallExpressionStart);
-    auto name_node = semantics_->GetNode(name_id);
-    if (name_node.kind() != SemanticsNodeKind::FunctionDeclaration) {
-      // TODO: Work on error.
-      emitter_->Emit(parse_node, SemanticsTodo, "Not a callable name");
-      node_stack_.Push(parse_node, name_id);
-      return true;
-    }
+  auto [ir_id, refs_id] =
+      ParamOrArgEnd(/*for_args=*/true, ParseNodeKind::CallExpressionStart);
 
-    auto [_, callable_id] = name_node.GetAsFunctionDeclaration();
-    auto callable = semantics_->GetCallable(callable_id);
-
-    if (!TryTypeConversionOnArgs(call_expr_parse_node, ir_id, refs_id,
-                                 name_node.parse_node(),
-                                 callable.param_refs_id)) {
-      node_stack_.Push(parse_node, SemanticsNodeId::BuiltinInvalidType);
-      return true;
-    }
-
-    auto call_id = semantics_->AddCall({ir_id, refs_id});
-    // TODO: Propagate return types from callable.
-    auto call_node_id = AddNode(SemanticsNode::Call::Make(
-        call_expr_parse_node, SemanticsNodeId::BuiltinEmptyTuple, call_id,
-        callable_id));
-
-    node_stack_.Push(parse_node, call_node_id);
+  // TODO: Convert to call expression.
+  auto [call_expr_parse_node, name_id] =
+      node_stack_.PopForParseNodeAndNodeId(ParseNodeKind::CallExpressionStart);
+  auto name_node = semantics_->GetNode(name_id);
+  if (name_node.kind() != SemanticsNodeKind::FunctionDeclaration) {
+    // TODO: Work on error.
+    emitter_->Emit(parse_node, SemanticsTodo, "Not a callable name");
+    node_stack_.Push(parse_node, name_id);
     return true;
-  };
-  return ParamOrArgEnd(ParseNodeKind::CallExpressionStart,
-                       ParseNodeKind::CallExpressionComma, on_start,
-                       /*on_param_or_arg=*/std::nullopt);
+  }
+
+  auto [_, callable_id] = name_node.GetAsFunctionDeclaration();
+  auto callable = semantics_->GetCallable(callable_id);
+
+  if (!TryTypeConversionOnArgs(call_expr_parse_node, ir_id, refs_id,
+                               name_node.parse_node(),
+                               callable.param_refs_id)) {
+    node_stack_.Push(parse_node, SemanticsNodeId::BuiltinInvalidType);
+    return true;
+  }
+
+  auto call_id = semantics_->AddCall({ir_id, refs_id});
+  // TODO: Propagate return types from callable.
+  auto call_node_id = AddNode(SemanticsNode::Call::Make(
+      call_expr_parse_node, SemanticsNodeId::BuiltinEmptyTuple, call_id,
+      callable_id));
+
+  node_stack_.Push(parse_node, call_node_id);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleCallExpressionComma(
-    ParseTree::Node parse_node) -> bool {
-  return ParamOrArgComma(parse_node);
+    ParseTree::Node /*parse_node*/) -> bool {
+  ParamOrArgComma(/*for_args=*/true);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleCallExpressionStart(
@@ -903,22 +879,20 @@ auto SemanticsParseTreeHandler::HandlePackageLibrary(ParseTree::Node parse_node)
 
 auto SemanticsParseTreeHandler::HandleParameterList(ParseTree::Node parse_node)
     -> bool {
-  auto on_start = [&](SemanticsNodeBlockId ir_id,
-                      SemanticsNodeBlockId refs_id) -> bool {
-    PopScope();
-    node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ParameterListStart);
-    finished_params_stack_.push_back({ir_id, refs_id});
-    node_stack_.Push(parse_node);
-    return true;
-  };
-  return ParamOrArgEnd(ParseNodeKind::ParameterListStart,
-                       ParseNodeKind::ParameterListComma, on_start,
-                       /*on_param_or_arg=*/std::nullopt);
+  auto [ir_id, refs_id] =
+      ParamOrArgEnd(/*for_args=*/false, ParseNodeKind::ParameterListStart);
+
+  PopScope();
+  node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ParameterListStart);
+  finished_params_stack_.push_back({ir_id, refs_id});
+  node_stack_.Push(parse_node);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleParameterListComma(
-    ParseTree::Node parse_node) -> bool {
-  return ParamOrArgComma(parse_node);
+    ParseTree::Node /*parse_node*/) -> bool {
+  ParamOrArgComma(/*for_args=*/false);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleParameterListStart(
@@ -1064,9 +1038,12 @@ auto SemanticsParseTreeHandler::HandleSelfValueIdentifier(
   return false;
 }
 
-auto SemanticsParseTreeHandler::HandleStructComma(ParseTree::Node parse_node)
-    -> bool {
-  return ParamOrArgComma(parse_node);
+auto SemanticsParseTreeHandler::HandleStructComma(
+    ParseTree::Node /*parse_node*/) -> bool {
+  ParamOrArgComma(
+      /*for_args=*/parse_tree_->node_kind(node_stack_.PeekParseNode()) !=
+      ParseNodeKind::StructFieldType);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleStructFieldDesignator(
@@ -1099,90 +1076,82 @@ auto SemanticsParseTreeHandler::HandleStructFieldUnknown(
 }
 
 auto SemanticsParseTreeHandler::HandleStructFieldValue(
-    ParseTree::Node /*parse_node*/) -> bool {
-  // Discard the value, which should already be in the IR.
-  node_stack_.PopAndDiscardId();
+    ParseTree::Node parse_node) -> bool {
+  auto [value_parse_node, value_node_id] =
+      node_stack_.PopForParseNodeAndNodeId();
+  auto [_, name_id] =
+      node_stack_.PopForParseNodeAndNameId(ParseNodeKind::DesignatedName);
 
-  // Rather than popping the DesignatedName from the stack and pushing it back,
-  // this just doesn't change the stack. StructLiteral will handle it.
-  CARBON_CHECK(parse_tree_->node_kind(node_stack_.PeekParseNode()) ==
-               ParseNodeKind::DesignatedName);
+  // Store the name for the type.
+  auto type_block_id = args_type_info_stack_.PeekForAdd();
+  semantics_->AddNode(
+      type_block_id,
+      SemanticsNode::StructTypeField::Make(
+          parse_node, semantics_->GetNode(value_node_id).type_id(), name_id));
+
+  // Push the value back on the stack as an argument.
+  node_stack_.Push(parse_node, value_node_id);
   return true;
 }
 
 auto SemanticsParseTreeHandler::HandleStructLiteral(ParseTree::Node parse_node)
     -> bool {
-  // Accumulate names, although they will come backwards.
-  std::vector<SemanticsStringId> names_backwards;
-  auto on_param_or_arg = [&]() -> void {
-    auto [_, name_id] =
-        node_stack_.PopForParseNodeAndNameId(ParseNodeKind::DesignatedName);
-    names_backwards.push_back(name_id);
-  };
+  auto [ir_id, refs_id] = ParamOrArgEnd(
+      /*for_args=*/true, ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
 
-  auto on_start = [&](SemanticsNodeBlockId ir_id,
-                      SemanticsNodeBlockId refs_id) -> bool {
-    PopScope();
-    node_stack_.PopAndDiscardSoloParseNode(
-        ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
+  PopScope();
+  node_stack_.PopAndDiscardSoloParseNode(
+      ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
+  auto type_block_id = args_type_info_stack_.Pop();
 
-    // Special-case `{}`.
-    if (refs_id == SemanticsNodeBlockId::Empty) {
-      node_stack_.Push(parse_node, SemanticsNodeId::BuiltinEmptyStruct);
-      return true;
-    }
-
-    // Construct a type for the literal. Each field is one node, so ir_id and
-    // refs_id match.
-    node_block_stack_.Push();
-    auto refs = semantics_->GetNodeBlock(refs_id);
-    CARBON_CHECK(refs.size() == names_backwards.size());
-    for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
-      auto ref = semantics_->GetNode(refs[i]);
-      AddNode(SemanticsNode::StructTypeField::Make(
-          ref.parse_node(), ref.type_id(),
-          names_backwards[refs.size() - 1 - i]));
-    }
-    auto type_block_id = node_block_stack_.Pop();
-    auto type_id = AddNode(SemanticsNode::StructType::Make(
-        parse_node, type_block_id, type_block_id));
-
-    auto value_id = AddNode(
-        SemanticsNode::StructValue::Make(parse_node, type_id, ir_id, refs_id));
-    node_stack_.Push(parse_node, value_id);
+  // Special-case `{}`.
+  if (refs_id == SemanticsNodeBlockId::Empty) {
+    node_stack_.Push(parse_node, SemanticsNodeId::BuiltinEmptyStruct);
     return true;
-  };
-  return ParamOrArgEnd(ParseNodeKind::StructLiteralOrStructTypeLiteralStart,
-                       ParseNodeKind::StructComma, on_start, on_param_or_arg);
+  }
+
+  // Construct a type for the literal. Each field is one node, so ir_id and
+  // refs_id match.
+  auto refs = semantics_->GetNodeBlock(refs_id);
+  auto type_id = AddNode(SemanticsNode::StructType::Make(
+      parse_node, type_block_id, type_block_id));
+
+  auto value_id = AddNode(
+      SemanticsNode::StructValue::Make(parse_node, type_id, ir_id, refs_id));
+  node_stack_.Push(parse_node, value_id);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleStructLiteralOrStructTypeLiteralStart(
     ParseTree::Node parse_node) -> bool {
   PushScope();
   node_stack_.Push(parse_node);
+  // At this point we aren't sure whether this will be a value or type literal,
+  // so we push onto args irrespective. It just won't be used for a type
+  // literal.
+  args_type_info_stack_.Push();
   ParamOrArgStart();
   return true;
 }
 
 auto SemanticsParseTreeHandler::HandleStructTypeLiteral(
     ParseTree::Node parse_node) -> bool {
-  auto on_start = [&](SemanticsNodeBlockId ir_id,
-                      SemanticsNodeBlockId refs_id) -> bool {
-    PopScope();
-    node_stack_.PopAndDiscardSoloParseNode(
-        ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
+  auto [ir_id, refs_id] = ParamOrArgEnd(
+      /*for_args=*/false, ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
 
-    CARBON_CHECK(refs_id != SemanticsNodeBlockId::Empty)
-        << "{} is handled by StructLiteral.";
+  PopScope();
+  node_stack_.PopAndDiscardSoloParseNode(
+      ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
+  // This is only used for value literals.
+  args_type_info_stack_.Pop();
 
-    auto type_id =
-        AddNode(SemanticsNode::StructType::Make(parse_node, ir_id, refs_id));
-    node_stack_.Push(parse_node, type_id);
-    return true;
-  };
-  return ParamOrArgEnd(ParseNodeKind::StructLiteralOrStructTypeLiteralStart,
-                       ParseNodeKind::StructComma, on_start,
-                       /*on_param_or_arg=*/std::nullopt);
+  CARBON_CHECK(refs_id != SemanticsNodeBlockId::Empty)
+      << "{} is handled by StructLiteral.";
+
+  auto type_id =
+      AddNode(SemanticsNode::StructType::Make(parse_node, ir_id, refs_id));
+  node_stack_.Push(parse_node, type_id);
+  return true;
 }
 
 auto SemanticsParseTreeHandler::HandleTemplate(ParseTree::Node parse_node)
