@@ -401,7 +401,7 @@ consistency, but is a significant restriction on Carbon's design.
 
 ## Primitive types
 
-Primitive types fall into the following categories:
+Primitive types go into the following categories:
 
 -   the boolean type `bool`,
 -   signed and unsigned integer types,
