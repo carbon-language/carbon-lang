@@ -1060,6 +1060,10 @@ class ConstraintType : public Value {
              equality_constraints_, rewrite_constraints_, lookup_contexts_);
   }
 
+  auto souce_loc() const -> SourceLocation {
+    return self_binding_->source_loc();
+  }
+
   auto self_binding() const -> Nonnull<const GenericBinding*> {
     return self_binding_;
   }

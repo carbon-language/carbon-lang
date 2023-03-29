@@ -441,7 +441,8 @@ class TypeChecker {
   // Rebuild a value in the current type-checking context. Applies any rewrites
   // that are in scope and attempts to resolve associated constants using
   // implementations that have been declared since the value was formed.
-  auto RebuildValue(Nonnull<const Value*> value) const
+  auto RebuildValue(Nonnull<const Value*> value,
+                    SourceLocation source_loc) const
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Implementation of Substitute and RebuildValue. Does not check that

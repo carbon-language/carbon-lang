@@ -1596,11 +1596,11 @@ class TypeChecker::ConstraintTypeBuilder {
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type,
           type_checker.Substitute(local_bindings, impls_constraint.type,
-                                  constraint->self_binding()->source_loc()));
+                                  constraint->souce_loc()));
       CARBON_ASSIGN_OR_RETURN(const auto* interface,
                               type_checker.SubstituteCast<InterfaceType>(
                                   local_bindings, impls_constraint.interface,
-                                  constraint->self_binding()->source_loc()));
+                                  constraint->souce_loc()));
       int index = AddImplsConstraint({.type = type, .interface = interface});
       witnesses.push_back(
           type_checker.MakeConstraintWitnessAccess(self_witness, index));
@@ -1622,12 +1622,12 @@ class TypeChecker::ConstraintTypeBuilder {
           const auto* interface,
           type_checker.SubstituteCast<InterfaceType>(
               local_bindings, &rewrite_constraint.constant->interface(),
-              rewrite_constraint.constant->constant().source_loc()));
+              constraint->souce_loc()));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> converted_value,
-          type_checker.Substitute(
-              local_bindings, rewrite_constraint.converted_replacement,
-              rewrite_constraint.constant->constant().source_loc()));
+          type_checker.Substitute(local_bindings,
+                                  rewrite_constraint.converted_replacement,
+                                  constraint->souce_loc()));
 
       // Form a symbolic value naming the non-rewritten associated constant.
       // The impls constraint will always already exist.
@@ -1642,14 +1642,14 @@ class TypeChecker::ConstraintTypeBuilder {
         // to conversion for use in rewrites.
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> value,
-            type_checker.Substitute(
-                local_bindings, rewrite_constraint.unconverted_replacement,
-                rewrite_constraint.constant->constant().source_loc()));
+            type_checker.Substitute(local_bindings,
+                                    rewrite_constraint.unconverted_replacement,
+                                    constraint->souce_loc()));
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> type,
             type_checker.Substitute(
                 local_bindings, rewrite_constraint.unconverted_replacement_type,
-                rewrite_constraint.constant->constant().source_loc()));
+                constraint->souce_loc()));
         AddRewriteConstraint({.constant = constant_value,
                               .unconverted_replacement = value,
                               .unconverted_replacement_type = type,
@@ -1669,9 +1669,8 @@ class TypeChecker::ConstraintTypeBuilder {
             }) == values.end()) {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> subst_value,
-              type_checker.Substitute(
-                  local_bindings, value,
-                  constraint->self_binding()->source_loc()));
+              type_checker.Substitute(local_bindings, value,
+                                      constraint->souce_loc()));
           values.push_back(subst_value);
         }
       }
@@ -1683,7 +1682,7 @@ class TypeChecker::ConstraintTypeBuilder {
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> type,
           type_checker.Substitute(local_bindings, intrinsic_constraint.type,
-                                  constraint->self_binding()->source_loc()));
+                                  constraint->souce_loc()));
       IntrinsicConstraint converted = {
           .type = type, .kind = intrinsic_constraint.kind, .arguments = {}};
       converted.arguments.reserve(intrinsic_constraint.arguments.size());
@@ -1691,7 +1690,7 @@ class TypeChecker::ConstraintTypeBuilder {
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> subst_arg,
             type_checker.Substitute(local_bindings, argument,
-                                    constraint->self_binding()->source_loc()));
+                                    constraint->souce_loc()));
         converted.arguments.push_back(subst_arg);
       }
       AddIntrinsicConstraint(std::move(converted));
@@ -1702,7 +1701,7 @@ class TypeChecker::ConstraintTypeBuilder {
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> subst_context,
             type_checker.Substitute(local_bindings, lookup_context.context,
-                                    constraint->self_binding()->source_loc()));
+                                    constraint->souce_loc()));
         AddLookupContext({.context = subst_context});
       }
     }
@@ -1875,7 +1874,8 @@ class TypeChecker::ConstraintTypeBuilder {
       current_rewrite_info_ = &info;
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> rebuilt,
-          type_checker.RebuildValue(rewrite->converted_replacement));
+          type_checker.RebuildValue(rewrite->converted_replacement,
+                                    self_binding_->source_loc()));
       current_rewrite_info_ = std::nullopt;
 
       if (info.rewrite_references_itself) {
@@ -1920,19 +1920,24 @@ class TypeChecker::ConstraintTypeBuilder {
     for (auto& rewrite : rewrite_constraints_) {
       CARBON_ASSIGN_OR_RETURN(
           rewrite.unconverted_replacement,
-          type_checker.RebuildValue(rewrite.unconverted_replacement));
+          type_checker.RebuildValue(rewrite.unconverted_replacement,
+                                    self_binding_->source_loc()));
       CARBON_ASSIGN_OR_RETURN(
           rewrite.unconverted_replacement_type,
-          type_checker.RebuildValue(rewrite.unconverted_replacement_type));
+          type_checker.RebuildValue(rewrite.unconverted_replacement_type,
+                                    self_binding_->source_loc()));
     }
 
     // Apply rewrites throughout impls constraints.
     for (auto& impls_constraint : impls_constraints_) {
-      CARBON_ASSIGN_OR_RETURN(impls_constraint.type,
-                              type_checker.RebuildValue(impls_constraint.type));
+      CARBON_ASSIGN_OR_RETURN(
+          impls_constraint.type,
+          type_checker.RebuildValue(impls_constraint.type,
+                                    self_binding_->source_loc()));
       CARBON_ASSIGN_OR_RETURN(
           const auto* subst_interface,
-          type_checker.RebuildValue(impls_constraint.interface));
+          type_checker.RebuildValue(impls_constraint.interface,
+                                    self_binding_->source_loc()));
       impls_constraint.interface = cast<InterfaceType>(subst_interface);
     }
 
@@ -1940,16 +1945,20 @@ class TypeChecker::ConstraintTypeBuilder {
     for (auto& intrinsic_constraint : intrinsic_constraints_) {
       CARBON_ASSIGN_OR_RETURN(
           intrinsic_constraint.type,
-          type_checker.RebuildValue(intrinsic_constraint.type));
+          type_checker.RebuildValue(intrinsic_constraint.type,
+                                    self_binding_->source_loc()));
       for (auto& argument : intrinsic_constraint.arguments) {
-        CARBON_ASSIGN_OR_RETURN(argument, type_checker.RebuildValue(argument));
+        CARBON_ASSIGN_OR_RETURN(
+            argument,
+            type_checker.RebuildValue(argument, self_binding_->source_loc()));
       }
     }
 
     // Apply rewrites throughout equality constraints.
     for (auto& equality_constraint : equality_constraints_) {
       for (auto*& value : equality_constraint.values) {
-        CARBON_ASSIGN_OR_RETURN(value, type_checker.RebuildValue(value));
+        CARBON_ASSIGN_OR_RETURN(value, type_checker.RebuildValue(
+                                           value, self_binding_->source_loc()));
       }
     }
 
@@ -1957,7 +1966,8 @@ class TypeChecker::ConstraintTypeBuilder {
     for (auto& lookup_context : lookup_contexts_) {
       CARBON_ASSIGN_OR_RETURN(
           lookup_context.context,
-          type_checker.RebuildValue(lookup_context.context));
+          type_checker.RebuildValue(lookup_context.context,
+                                    self_binding_->source_loc()));
     }
 
     return Success();
@@ -2063,10 +2073,10 @@ auto TypeChecker::Substitute(const Bindings& bindings,
   return result;
 }
 
-auto TypeChecker::RebuildValue(Nonnull<const Value*> value) const
+auto TypeChecker::RebuildValue(Nonnull<const Value*> value,
+                               SourceLocation source_loc) const
     -> ErrorOr<Nonnull<const Value*>> {
-  return SubstituteImpl(Bindings(), value,
-                        SourceLocation::DiagnosticsIgnored());
+  return SubstituteImpl(Bindings(), value, source_loc);
 }
 
 class TypeChecker::SubstituteTransform
@@ -2232,7 +2242,7 @@ class TypeChecker::SubstituteTransform
       return type_of_type;
     }
     ConstraintTypeBuilder builder(type_checker_->arena_,
-                                  constraint->self_binding()->source_loc());
+                                  constraint->souce_loc());
     CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
         *type_checker_, constraint, builder.GetSelfType(),
         builder.GetSelfWitness(), bindings_,
