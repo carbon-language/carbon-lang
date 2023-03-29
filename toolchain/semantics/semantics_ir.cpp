@@ -127,22 +127,7 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
   }
 
   auto node = GetNode(node_id);
-  switch (auto node_kind = node.kind()) {
-    case SemanticsNodeKind::IntegerLiteral: {
-      // TODO: Do we want to store the string representation of literals so that
-      // we can echo back the value as typed, rather than as stored? We probably
-      // shouldn't have this depend on ParseTree because it would hinder
-      // cross-IR diagnostics when doing separate compilation.
-      out << GetIntegerLiteral(node.GetAsIntegerLiteral());
-      break;
-    }
-    case SemanticsNodeKind::RealLiteral: {
-      // TODO: See IntegerLiteral.
-      auto real_literal = GetRealLiteral(node.GetAsRealLiteral());
-      out << real_literal.mantissa << "*" << (real_literal.is_decimal ? 10 : 2)
-          << "^" << real_literal.exponent;
-      break;
-    }
+  switch (node.kind()) {
     case SemanticsNodeKind::StructType: {
       out << "{";
       auto refs = GetNodeBlock(node.GetAsStructType().second);
@@ -159,25 +144,6 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
       StringifyNodeImpl(out, node.type_id());
       break;
     }
-    case SemanticsNodeKind::StructValue: {
-      out << "{";
-      auto refs = GetNodeBlock(node.GetAsStructValue().second);
-      auto type_refs =
-          GetNodeBlock(GetNode(node.type_id()).GetAsStructType().second);
-      CARBON_CHECK(refs.size() == type_refs.size());
-      llvm::ListSeparator sep;
-      for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
-        out << sep << "."
-            << GetString(GetNode(type_refs[i]).GetAsStructTypeField()) << " = ";
-        StringifyNodeImpl(out, refs[i]);
-      }
-      out << "}";
-      break;
-    }
-    case SemanticsNodeKind::StubReference: {
-      StringifyNodeImpl(out, node.GetAsStubReference());
-      break;
-    }
     case SemanticsNodeKind::Assign:
     case SemanticsNodeKind::BinaryOperatorAdd:
     case SemanticsNodeKind::BindName:
@@ -187,15 +153,19 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
     case SemanticsNodeKind::CrossReference:
     case SemanticsNodeKind::FunctionDeclaration:
     case SemanticsNodeKind::FunctionDefinition:
+    case SemanticsNodeKind::IntegerLiteral:
+    case SemanticsNodeKind::RealLiteral:
     case SemanticsNodeKind::Return:
     case SemanticsNodeKind::ReturnExpression:
     case SemanticsNodeKind::StringLiteral:
     case SemanticsNodeKind::StructMemberAccess:
+    case SemanticsNodeKind::StructValue:
+    case SemanticsNodeKind::StubReference:
     case SemanticsNodeKind::VarStorage:
       // We don't need to handle stringification for nodes that don't show up in
       // errors, but make it clear what's going on so that it's clearer when
       // stringification is needed.
-      out << "<cannot stringify " << node_id << " of " << node_kind << ">";
+      out << "<cannot stringify " << node_id << ">";
       return;
     case SemanticsNodeKind::Invalid:
       llvm_unreachable("SemanticsNodeKind::Invalid is never used.");
