@@ -275,7 +275,7 @@ auto SemanticsParseTreeHandler::ImplicitAsImpl(SemanticsNodeId value_id,
 auto SemanticsParseTreeHandler::CanImplicitAsStruct(SemanticsNode value_type,
                                                     SemanticsNode as_type)
     -> bool {
-  if (value_type.kind() != as_type.kind() ||
+  if (value_type.kind() != SemanticsNodeKind::StructType ||
       as_type.kind() != SemanticsNodeKind::StructType) {
     return false;
   }

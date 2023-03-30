@@ -252,10 +252,10 @@
   GREATER_GREATER_EQUAL
   IF
   IMPL
+  IMPLS
   IMPORT
   IN
   INTERFACE
-  IS
   LEFT_CURLY_BRACE
   LEFT_PARENTHESIS
   LEFT_SQUARE_BRACKET
@@ -721,8 +721,8 @@ or_expression:
     }
 ;
 where_clause:
-  comparison_operand IS comparison_operand
-    { $$ = arena->New<IsWhereClause>(context.source_loc(), $1, $3); }
+  comparison_operand IMPLS comparison_operand
+    { $$ = arena->New<ImplsWhereClause>(context.source_loc(), $1, $3); }
 | comparison_operand EQUAL_EQUAL comparison_operand
     { $$ = arena->New<EqualsWhereClause>(context.source_loc(), $1, $3); }
 // TODO: .(expression) = expression

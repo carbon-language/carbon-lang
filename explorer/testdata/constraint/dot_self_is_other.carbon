@@ -16,7 +16,7 @@ impl i32 as A { fn F() -> i32 { return 1; } }
 impl i32 as B { fn F() -> i32 { return 2; } }
 
 fn GetA[T:! A](x: T) -> i32 { return x.F(); }
-fn GetAB[T:! B where .Self is A](x: T) -> i32 {
+fn GetAB[T:! B where .Self impls A](x: T) -> i32 {
   // Note that there's no ambiguity in the use of the name F here.
   // `x.F` is `x.(B.F)` because the constraint only treats `B`, not
   // `A`, as a lookup context.
