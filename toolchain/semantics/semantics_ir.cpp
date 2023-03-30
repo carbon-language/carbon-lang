@@ -134,6 +134,7 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
       llvm::ListSeparator sep;
       for (const auto& ref_id : refs) {
         out << sep;
+        // TODO: Bound recursion depth or remove recursive step.
         StringifyNodeImpl(out, ref_id);
       }
       out << "}";
