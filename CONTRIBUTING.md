@@ -327,10 +327,10 @@ argument _effective_ and _helpful_:
         &lt;this example> would be written &lt;like this> instead of &lt;like
         that>." (Assuming the reader will think the example is representative of
         an important class of use cases.)
-    -   Very helpful: "If we go with approach &lt;X>, you can see it helps with
-        problem &lt;P> in &lt;this example> of use case &lt;A>. It doesn't help
-        with use case &lt;B>, but that can be better solved by &lt;Y>, as can be
-        seen in &lt;other example>."
+    -   Very helpful: "If we go with approach &lt;X>, it helps with problem
+        &lt;P> in &lt;this example> of use case &lt;A>. It doesn't help with use
+        case &lt;B>, but that can be better solved by &lt;Y>, as can be seen in
+        &lt;other example>."
     -   Very helpful: "Yes &lt;X> gives a nice answer in that case, but it has a
         problem / I don't see how it applies in &lt;this other situation>."
 -   Explain the reasoning by which you can come to your conclusion
@@ -364,9 +364,12 @@ general or more meta level.
 -   **Prefer upvote to repetition**: One person saying "I don't like this
     feature" is useful, and that same message with 100 upvotes is extremely
     useful, but 100 people writing separate messages saying "I don't like this
-    feature" is not. It is also okay to do things like ask a question to get
-    clarification about what someone has said or to solicit opinions about
-    various options. Just be respectful, and don't drown out other discussion.
+    feature" is not. Emoji reactions are available in both Discord and GitHub
+    and should be used for this purpose in both.
+
+It is also okay to do things like ask a question to get clarification about what
+someone has said or to solicit opinions about various options. Just be
+respectful, and don't drown out other discussion.
 
 ## Style
 
