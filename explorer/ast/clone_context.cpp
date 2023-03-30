@@ -4,6 +4,7 @@
 
 #include "explorer/ast/clone_context.h"
 
+#include "explorer/ast/ast_kinds.h"
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/value_transform.h"
 
@@ -17,8 +18,19 @@ auto CloneContext::CloneBase(Nonnull<const AstNode*> node)
                               : "node was remapped before it was cloned: ")
                       << *node;
 
-  // The implementation is generated in ast_rtti.cpp.
-  CloneImpl(*arena_, *this, *node, &it->second);
+  // TODO: Generate a Visit member on AstNode and use it here to avoid these
+  // macros.
+  switch (node->kind()) {
+#define IGNORE(C)
+#define CLONE_CASE(C)                                         \
+  case AstNodeKind::C:                                        \
+    arena_->New<C>(Arena::WriteAddressTo{&it->second}, *this, \
+                   static_cast<const C&>(*node));             \
+    break;
+    CARBON_AstNode_KINDS(IGNORE, CLONE_CASE)
+#undef CLONE_CASE
+#undef IGNORE
+  }
 
   // Cloning may have invalidated our iterator; redo lookup.
   auto* result = nodes_[node];
