@@ -339,8 +339,8 @@ argument _effective_ and _helpful_:
     -   Don't expect people to read long works to understand your point
 
 If someone questions or argues with your point, try to directly address the
-points being made. Avoid evading by stepping backwards or switching to a more
-general or more meta level.
+points being made. Try not to step backwards or switch to a more general
+or more meta level as that can seem like you're evading the question.
 
 ##### Make your point concisely
 
