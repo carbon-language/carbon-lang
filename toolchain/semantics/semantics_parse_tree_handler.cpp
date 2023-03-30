@@ -965,13 +965,12 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
     node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ReturnStatementStart);
 
     if (callable.return_type_id.is_valid()) {
-      // TODO: Stringify types, add a note pointing at the return
-      // type's parse node.
+      // TODO: Add a note pointing at the return type's parse node.
       CARBON_DIAGNOSTIC(ReturnStatementMissingExpression, Error,
-                        "Must return a {0}.", SemanticsNodeId);
+                        "Must return a {0}.", std::string);
       emitter_
           ->Build(parse_node, ReturnStatementMissingExpression,
-                  callable.return_type_id)
+                  semantics_->StringifyNode(callable.return_type_id))
           .Emit();
     }
 
