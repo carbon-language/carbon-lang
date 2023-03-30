@@ -9,7 +9,7 @@
 
 package ExplorerTest api;
 
-fn id[T:! Type](x: T) -> T {
+fn id[T:! type](x: T) -> T {
   return x;
 }
 

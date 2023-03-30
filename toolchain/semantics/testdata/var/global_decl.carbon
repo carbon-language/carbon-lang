@@ -4,25 +4,29 @@
 //
 // AUTOUPDATE
 // RUN: %{carbon-run-semantics}
-// CHECK:STDOUT: cross_reference_irs.size == 1,
-// CHECK:STDOUT: integer_literals = {
-// CHECK:STDOUT: },
-// CHECK:STDOUT: strings = {
-// CHECK:STDOUT:   str0 = "x";
-// CHECK:STDOUT: },
-// CHECK:STDOUT: nodes = {
-// CHECK:STDOUT:   node0 = CrossReference(ir0, block0): node0;
-// CHECK:STDOUT:   node1 = CrossReference(ir0, block1): node1;
-// CHECK:STDOUT:   node2 = CrossReference(ir0, block2): node0;
-// CHECK:STDOUT:   node3 = CrossReference(ir0, block3): node0;
-// CHECK:STDOUT:   node4 = VarStorage(): node2;
-// CHECK:STDOUT:   node5 = BindName(str0, node4): node2;
-// CHECK:STDOUT: },
-// CHECK:STDOUT: node_blocks = {
-// CHECK:STDOUT:   block0 = {
-// CHECK:STDOUT:     node4;
-// CHECK:STDOUT:     node5;
-// CHECK:STDOUT:   },
-// CHECK:STDOUT: }
+// CHECK:STDOUT: cross_reference_irs_size: 1
+// CHECK:STDOUT: calls: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: callables: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: integer_literals: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: real_literals: [
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: strings: [
+// CHECK:STDOUT:   x,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: nodes: [
+// CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeIntegerType},
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: node_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+0,
+// CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT: ]
 
 var x: i32;

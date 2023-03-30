@@ -4,6 +4,9 @@
 
 #include "common/check_internal.h"
 
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Signals.h"
+
 namespace Carbon::Internal {
 
 // Prints the buffered message.

@@ -25,10 +25,10 @@ concrete type of the object, and a `FooKind` value can be safely `static_cast`ed
 to `BarKind` if that value represents a type that's derived from both `Foo` and
 `Bar`.
 
-We rely on code generation to help enforce those invariants, so every node type
-must be described in [`ast_rtti.txt`](ast_rtti.txt). See the documentation in
-[`gen_rtti.py`](../gen_rtti.py), the code generation script, for details about
-the file format and generated code.
+These `FooKind` enums are generated from a description of the class hierarchy
+that is provided by [X macros](https://en.wikipedia.org/wiki/X_Macro) defined in
+[`ast_kinds.h`](ast_kinds.h) that specify the classes derived from each AST base
+class. Those macros must be kept up to date as the class hierarchy changes.
 
 The AST class hierarchy is structured in a fairly unsurprising way, with
 abstract classes such as `Statement` and `Expression`, and concrete classes
@@ -40,5 +40,5 @@ inheritance, we handle these cases using a form of type erasure: we specify a
 notional interface that those types conform to, and then define a "view" class
 that behaves like a pointer to an instance of that interface. Types declare that
 they model an interface `Foo` by defining a public static member named
-`ImplementsCarbonFoo`. See [ValueNodeView](static_scope.h) for an example of
-this pattern.
+`ImplementsCarbonFoo`. See [ValueNodeView](value_node.h) for an example of this
+pattern.

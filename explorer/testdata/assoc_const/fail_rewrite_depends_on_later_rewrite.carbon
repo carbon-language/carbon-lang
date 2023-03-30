@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 interface HasTypeAndValue {
-  let T:! Type;
+  let T:! type;
   let V:! T;
 }
 

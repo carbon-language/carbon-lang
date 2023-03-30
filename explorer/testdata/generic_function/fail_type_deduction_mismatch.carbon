@@ -8,12 +8,12 @@
 
 package ExplorerTest api;
 
-fn fst[T:! Type](x: T, y: T) -> T {
+fn fst[T:! type](x: T, y: T) -> T {
   return x;
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_type_deduction_mismatch.carbon:[[@LINE+3]]: deduced multiple different values for T:! Type:
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_type_deduction_mismatch.carbon:[[@LINE+3]]: deduced multiple different values for T:! type:
   // CHECK:STDERR:   i32
   // CHECK:STDERR:   bool
   return fst(0, true);

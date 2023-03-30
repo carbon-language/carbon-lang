@@ -10,6 +10,7 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "explorer/ast/clone_context.h"
 #include "explorer/ast/expression.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
@@ -26,6 +27,12 @@ class Value;
 // Each of these forms has a corresponding factory function.
 class ReturnTerm {
  public:
+  explicit ReturnTerm(CloneContext& context, const ReturnTerm& other)
+      : kind_(other.kind_),
+        type_expression_(context.Clone(other.type_expression_)),
+        static_type_(context.Clone(other.static_type_)),
+        source_loc_(other.source_loc_) {}
+
   ReturnTerm(const ReturnTerm&) = default;
   auto operator=(const ReturnTerm&) -> ReturnTerm& = default;
 

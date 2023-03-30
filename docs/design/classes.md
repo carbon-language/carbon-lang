@@ -660,8 +660,9 @@ analogous to equality comparisons:
 Implicit conversion from a struct type to a data class type is allowed when the
 set of field names is the same and implicit conversion is defined between the
 pairs of member types with the same field names. So calling a function
-effectively performs an assignment from each of the caller's arguments to the
-function's parameters, and will be valid when those assignments are all valid.
+effectively performs an initialization of each of the function's parameters from
+the caller's arguments, and will be valid when those initializations are all
+valid.
 
 A data class has an unformed state if all its members do. Treatment of unformed
 state follows proposal
@@ -1084,7 +1085,7 @@ Other type constants can be defined using a `let` declaration:
 ```
 class MyClass {
   let Pi:! f32 = 3.141592653589793;
-  let IndexType:! Type = i32;
+  let IndexType:! type = i32;
 }
 ```
 
@@ -1167,7 +1168,7 @@ methods whose implementation may be overridden in a derived class.
 
 Only methods defined in the scope of the class definition may be virtual, not
 any defined in
-[external interface impls](/docs/design/generics/details.md#external-impl).
+[external interface `impl` declarations](/docs/design/generics/details.md#external-impl).
 Interface methods may be implemented using virtual methods when the
 [impl is internal](/docs/design/generics/details.md#implementing-interfaces),
 and calls to those methods by way of the interface will do virtual dispatch just
@@ -1967,7 +1968,7 @@ There are some opportunities to improve on and simplify the C++ story:
     aren't friends of the base class.
 
 **References:** This was discussed in
-[the open discussion on 2021-07-12](https://docs.google.com/document/d/14vAcURDKeH6LZ_TQCMRGpNJrXSZCACQqDy29YH19XGo/edit#heading=h.40jlsrcgp8mr).
+[the open discussion on 2021-07-12](https://docs.google.com/document/d/1TvHK6HWAcCtnseMpcNsLYrgdtNy9qNrv6EaY9n063ok/edit#heading=h.40jlsrcgp8mr).
 
 #### Interop with C++ inheritance
 

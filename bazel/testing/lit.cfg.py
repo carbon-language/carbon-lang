@@ -47,6 +47,10 @@ def add_substitutions():
 
     add_substitution("carbon", f"{run_carbon}")
     add_substitution(
+        "carbon-run-lowering",
+        f"{run_carbon} dump llvm-ir %s | {filecheck_strict}",
+    )
+    add_substitution(
         "carbon-run-parser",
         f"{run_carbon} dump parse-tree %s | {filecheck_strict}",
     )

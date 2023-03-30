@@ -5,6 +5,9 @@
 #ifndef CARBON_EXPLORER_INTERPRETER_RESOLVE_UNFORMED_H_
 #define CARBON_EXPLORER_INTERPRETER_RESOLVE_UNFORMED_H_
 
+#include <string>
+#include <unordered_map>
+
 #include "explorer/ast/ast.h"
 #include "explorer/common/nonnull.h"
 

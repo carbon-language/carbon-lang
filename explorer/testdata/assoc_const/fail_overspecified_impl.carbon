@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 interface HasType {
-  let T:! Type;
+  let T:! type;
 }
 
 // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_overspecified_impl.carbon:[[@LINE+3]]: multiple different rewrites for `(i32).(HasType.T)`:

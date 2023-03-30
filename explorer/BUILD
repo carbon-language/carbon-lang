@@ -24,6 +24,7 @@ cc_library(
         "//explorer/common:arena",
         "//explorer/common:nonnull",
         "//explorer/interpreter:exec_program",
+        "//explorer/interpreter:trace_stream",
         "//explorer/syntax",
         "//explorer/syntax:prelude",
         "@llvm-project//llvm:Support",
@@ -39,9 +40,4 @@ cc_binary(
         "//common:bazel_working_dir",
         "@llvm-project//llvm:Support",
     ],
-)
-
-py_binary(
-    name = "gen_rtti",
-    srcs = ["gen_rtti.py"],
 )

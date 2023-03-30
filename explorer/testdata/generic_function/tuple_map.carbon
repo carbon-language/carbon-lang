@@ -9,7 +9,7 @@
 
 package ExplorerTest api;
 
-fn map[T:! Type](f: __Fn (T) -> T, tuple: (T, T)) -> (T, T) {
+fn map[T:! type](f: __Fn (T) -> T, tuple: (T, T)) -> (T, T) {
   return (f(tuple[0]), f(tuple[1]));
 }
 

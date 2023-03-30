@@ -6,6 +6,19 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_test")
 
+def _cc_fuzz_test(corpus, args, data, **kwargs):
+    """Generates a single test target.
+
+    Append the corpus files to the test arguments. When run on a list of
+    files rather than a directory, libFuzzer-based fuzzers will perform a
+    regression test against the corpus.
+    """
+    cc_test(
+        data = data + corpus,
+        args = args + ["$(location %s)" % file for file in corpus],
+        **kwargs
+    )
+
 def cc_fuzz_test(
         name,
         corpus,
@@ -14,6 +27,7 @@ def cc_fuzz_test(
         features = [],
         tags = [],
         deps = [],
+        shard_count = 1,
         **kwargs):
     """Macro for C++ fuzzing test.
 
@@ -31,6 +45,7 @@ def cc_fuzz_test(
         tags: Will have "fuzz_test" added and passed down to the fuzz test.
         deps: Will have "@llvm-project//compiler-rt:FuzzerMain" added and passed
             down to the fuzz test.
+        shard_count: Provides sharding of the fuzz test.
         **kwargs: Remaining arguments passed down to the fuzz test.
     """
 
@@ -42,18 +57,59 @@ def cc_fuzz_test(
     if "@llvm-project//compiler-rt:FuzzerMain" not in deps:
         deps = deps + ["@llvm-project//compiler-rt:FuzzerMain"]
 
-    # Append the corpus files to the test arguments. When run on a list of
-    # files rather than a directory, libFuzzer-based fuzzers will perform a
-    # regression test against the corpus.
-    data = data + corpus
-    args = args + ["$(location %s)" % file for file in corpus]
+    # The FuzzerMain library doesn't support sharding based on inputs, so we
+    # general separate test targets in order to shard execution.
+    if shard_count == 1:
+        # When there's one shard, only one target is needed.
+        _cc_fuzz_test(
+            corpus,
+            args,
+            data,
+            name = name,
+            features = features,
+            tags = tags,
+            deps = deps,
+            **kwargs
+        )
+    else:
+        # Calculate the number of inputs per shard. This is equivalent to
+        # ceiling division, so that the corpus subsetting doesn't miss odd
+        # files.
+        shard_size = len(corpus) // shard_count
+        if shard_count * shard_size < len(corpus):
+            shard_size += 1
 
-    cc_test(
-        name = name,
-        args = args,
-        data = data,
-        features = features,
-        tags = tags,
-        deps = deps,
-        **kwargs
-    )
+        # Create separate targets for each shard.
+        shards = []
+        for shard in range(shard_count):
+            shard_name = "{0}.shard{1}".format(name, shard)
+            shards.append(shard_name)
+
+            _cc_fuzz_test(
+                corpus[shard * shard_size:(shard + 1) * shard_size],
+                args,
+                data,
+                name = shard_name,
+                features = features,
+                tags = tags,
+                deps = deps,
+                **kwargs
+            )
+
+        # Create a suite containing all shards.
+        native.test_suite(
+            name = name,
+            tests = shards,
+        )
+
+        # Create one target that includes the full corpus.
+        _cc_fuzz_test(
+            corpus,
+            args,
+            data,
+            name = "{0}.full_corpus".format(name),
+            features = features,
+            tags = tags + ["manual"],
+            deps = deps,
+            **kwargs
+        )

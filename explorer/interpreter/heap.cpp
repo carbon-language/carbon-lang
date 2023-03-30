@@ -4,8 +4,8 @@
 
 #include "explorer/interpreter/heap.h"
 
+#include "explorer/ast/value.h"
 #include "explorer/common/error_builders.h"
-#include "explorer/interpreter/value.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Error.h"
 
@@ -13,9 +13,9 @@ namespace Carbon {
 
 auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
   // Putting the following two side effects together in this function
-  // ensures that we don't do anything else in between, which is really bad!
-  // Consider whether to include a copy of the input v in this function
-  // or to leave it up to the caller.
+  // ensures that we don't do anything else in between, which would be really
+  // bad! Consider whether to include a copy of the input v in this function or
+  // to leave it up to the caller.
   AllocationId a(values_.size());
   values_.push_back(v);
   if (v->kind() == Carbon::Value::Kind::UninitializedValue) {

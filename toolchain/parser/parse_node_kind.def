@@ -2,23 +2,27 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Note that this is an X-macro header.
+// This is an X-macro header. It does not use `#include` guards, and instead is
+// designed to be `#include`ed after the x-macro is defined in order for its
+// inclusion to expand to the desired output. Macro definitions are cleaned up
+// at the end of this file.
 //
-// It does not use `#include` guards, and instead is designed to be `#include`ed
-// after the x-macro is defined in order for its inclusion to expand to the
-// desired output.
-//
-// x-macros come in three forms:
-//   CARBON_PARSE_NODE_KIND(Name)
-//     Used as a fallback if other macros are missing.
-//   CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName)
-//     Defines a bracketed node kind. BracketName should refer to the node kind
-//     that is the _start_ of the bracketed range.
-//   CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ChildCount)
+// Supported x-macros are:
+// - CARBON_PARSE_NODE_KIND(Name)
+//   Used as a fallback if other macros are missing. No kinds should use this
+//   directly.
+//   - CARBON_PARSE_NODE_KIND_BRACKET(Name, BracketName)
+//     Defines a bracketed node kind. BracketName should refer to the node
+//     kind that is the _start_ of the bracketed range.
+//   - CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, ChildCount)
 //     Defines a parse node with a set number of children, often 0. This count
 //     must be correct even when the node contains errors.
 //
-// Macro definitions  will be removed at the end of this file to clean up.
+// This tree represents the subset relationship between these macros, where if a
+// specific x-macro isn't defined, it'll fall back to the parent macro.
+//
+// Parse nodes are clustered based on language feature. Comments will show their
+// relationship in postorder, using indentation for child node relationships.
 
 #if !(defined(CARBON_PARSE_NODE_KIND) ||          \
       (defined(CARBON_PARSE_NODE_KIND_BRACKET) && \
@@ -75,40 +79,52 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart)
 //   _external_: statements
 // FunctionDefinition
 //
-// The above is a definition; for a declaration, FunctionDeclaration will end it
-// where FunctionDefinitionStart is for a definition.
+// The above is the structure for a definition; for a declaration,
+// FunctionDefinitionStart and later nodes are removed and replaced by
+// FunctionDeclaration.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(FunctionIntroducer, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ReturnType, 1)
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinitionStart, FunctionIntroducer)
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDefinition, FunctionDefinitionStart)
 CARBON_PARSE_NODE_KIND_BRACKET(FunctionDeclaration, FunctionIntroducer)
 
-// A parameter list:
-//   ParamertListStart
-//   _external_: expression
+// A parameter list, possibly deduced:
+//   [Deduced]ParamertListStart
+//   _external_: [Generic]PatternBinding
 //   ParameterListComma
-// ParameterList
+// [Deduced]ParameterList
 //
 // Expressions and ParameterListComma may repeat with ParameterListComma as a
 // separator.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListStart, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeducedParameterListStart, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListComma, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(ParameterList, ParameterListStart)
+CARBON_PARSE_NODE_KIND_BRACKET(DeducedParameterList, DeducedParameterListStart)
 
 // A pattern binding, such as `name: Type`:
 //   DeclaredName
 //   _external_: type expression
-// PatternBinding
+// [Generic]PatternBinding
+//
+// Address and Template may be parents to [Generic]PatternBinding, in that
+// order.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PatternBinding, 2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(GenericPatternBinding, 2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 1)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Template, 1)
 
 // `var`:
 //   VariableIntroducer
 //   _external_: PatternBinding
-//     _external_: expression
 //   optional VariableInitializer
+//   optional _external_: expression
 // VariableDeclaration
+//
+// The VariableInitializer and following expression are paired: either both will
+// be present, or neither will.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableIntroducer, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 1)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(VariableInitializer, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(VariableDeclaration, VariableIntroducer)
 
 // An expression statement:
@@ -249,7 +265,6 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PostfixOperator, 1)
 //   StructComma
 // StructLiteral
 //
-//
 // Struct type literals, such as `{.a: i32}`:
 //       _external_: DesignatedName
 //     StructFieldDesignator
@@ -275,36 +290,61 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructLiteral,
 CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
                                StructLiteralOrStructTypeLiteralStart)
 
+// `class`:
+//     ClassIntroducer
+//     DeclaredName
+//   ClassDefinitionStart
+//   _external_: declarations
+// ClassDefinition
+//
+// The above is the structure for a definition; for a declaration,
+// ClassDefinitionStart and later nodes are removed and replaced by
+// ClassDeclaration.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ClassIntroducer, 0)
+CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinitionStart, ClassIntroducer)
+CARBON_PARSE_NODE_KIND_BRACKET(ClassDefinition, ClassDefinitionStart)
+CARBON_PARSE_NODE_KIND_BRACKET(ClassDeclaration, ClassIntroducer)
+
 // `interface`:
-//   _external_: DeclaredName
-//     InterfaceBodyStart
-//     _external_: statements
-//   InterfaceBodyEnd
+//     InterfaceIntroducer
+//     DeclaredName
+//   InterfaceDefinitionStart
+//   _external_: declarations
 // InterfaceDefinition
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(InterfaceBodyStart, 0)
-CARBON_PARSE_NODE_KIND_BRACKET(InterfaceBody, InterfaceBodyStart)
-CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinition, DeclaredName)
+//
+// The above is the structure for a definition; for a declaration,
+// InterfaceDefinitionStart and later nodes are removed and replaced by
+// InterfaceDeclaration.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(InterfaceIntroducer, 0)
+CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinitionStart, InterfaceIntroducer)
+CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDefinition, InterfaceDefinitionStart)
+CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDeclaration, InterfaceIntroducer)
 
-// A pattern binding for `self` deduced parameter:
-//   `self`
-//   _external_: type expression
-// SelfDeducedParameter
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfDeducedParameter, 0)
+// `constraint`:
+//     NamedConstraintIntroducer
+//     DeclaredName
+//   NamedConstraintDefinitionStart
+//   _external_: declarations
+// NamedConstraintDefinition
+//
+// The above is the structure for a definition; for a declaration,
+// NamedConstraintDefinitionStart and later nodes are removed and replaced by
+// NamedConstraintDeclaration.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamedConstraintIntroducer, 0)
+CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinitionStart,
+                               NamedConstraintIntroducer)
+CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinition,
+                               NamedConstraintDefinitionStart)
+CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDeclaration,
+                               NamedConstraintIntroducer)
 
-// A pattern binding for `addr self` deduced parameter:
-//   `addr self`
-//   _external_: type expression
-// SelfDeducedParameter
-// CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfDeducedParameterAddress, 1)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 1)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfType, 0)
-
-// Deduced parameters, such as `[self: Self]`:
-//   DeducedParameterListStart
-//   _external_: Address or PatternBinding
-// DeducedParameterList
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeducedParameterListStart, 0)
-CARBON_PARSE_NODE_KIND_BRACKET(DeducedParameterList, DeducedParameterListStart)
+// The `self` value and `Self` type identifier keywords. Typically of the form
+// `self: Self`:
+//   SelfValueIdentifier
+//   SelfTypeIdentifier
+// PatternBinding
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueIdentifier, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeIdentifier, 0)
 
 #undef CARBON_PARSE_NODE_KIND
 #undef CARBON_PARSE_NODE_KIND_BRACKET

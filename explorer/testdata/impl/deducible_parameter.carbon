@@ -9,14 +9,14 @@
 
 package ExplorerTest api;
 
-interface A(T:! Type) {}
+interface A(T:! type) {}
 interface B {
   fn F() -> i32;
 }
 
-class C(T:! Type) {}
+class C(T:! type) {}
 
-external impl forall [T:! Type] C(T) as A(T) & B {
+external impl forall [T:! type] C(T) as A(T) & B {
   fn F() -> i32 { return 1; }
 }
 

@@ -9,6 +9,7 @@ cc_library(
     hdrs = ["diagnostic_emitter.h"],
     deps = [
         ":diagnostic_kind",
+        "//common:check",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -31,23 +32,10 @@ cc_library(
     srcs = ["diagnostic_kind.cpp"],
     hdrs = ["diagnostic_kind.h"],
     textual_hdrs = [
-        "diagnostic_registry.def",
+        "diagnostic_kind.def",
     ],
     deps = [
-        "//common:ostream",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_test(
-    name = "diagnostic_kind_test",
-    size = "small",
-    srcs = ["diagnostic_kind_test.cpp"],
-    deps = [
-        ":diagnostic_kind",
-        "//common:gtest_main",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
+        "//common:enum_base",
     ],
 )
 

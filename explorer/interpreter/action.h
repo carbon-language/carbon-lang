@@ -14,10 +14,10 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/statement.h"
+#include "explorer/ast/value.h"
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/heap_allocation_interface.h"
 #include "explorer/interpreter/stack.h"
-#include "explorer/interpreter/value.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Support/Compiler.h"
 
@@ -41,9 +41,6 @@ class RuntimeScope {
   // Moving a RuntimeScope transfers ownership of its allocations.
   RuntimeScope(RuntimeScope&&) noexcept;
   auto operator=(RuntimeScope&&) noexcept -> RuntimeScope&;
-
-  // Deallocates any allocations in this scope from `heap`.
-  ~RuntimeScope();
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -256,9 +253,9 @@ class DeclarationAction : public Action {
 };
 
 // An Action which implements destroying all local allocations in a scope.
-class CleanupAction : public Action {
+class CleanUpAction : public Action {
  public:
-  explicit CleanupAction(RuntimeScope scope)
+  explicit CleanUpAction(RuntimeScope scope)
       : Action(Kind::CleanUpAction),
         allocations_count_(scope.allocations().size()) {
     StartScope(std::move(scope));

@@ -9,9 +9,9 @@
 package ExplorerTest api;
 
 interface HasThreeTypes {
-  let A:! Type;
-  let B:! Type;
-  let C:! Type;
+  let A:! type;
+  let B:! type;
+  let C:! type;
 }
 
 // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_incomplete_impl_1.carbon:[[@LINE+1]]: implementation doesn't provide a concrete value for interface HasThreeTypes.B

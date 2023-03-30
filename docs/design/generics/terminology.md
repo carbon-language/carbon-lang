@@ -27,7 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Nominal interfaces](#nominal-interfaces)
     -   [Named constraints](#named-constraints)
 -   [Associated entity](#associated-entity)
--   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
+-   [Impl: Implementation of an interface](#impl-implementation-of-an-interface)
     -   [Internal impl](#internal-impl)
     -   [External impl](#external-impl)
 -   [Member access](#member-access)
@@ -191,7 +191,7 @@ For example, let's say we have some overloaded function called `F` that has two
 overloads:
 
 ```
-fn F[template T:! Type](x: T*) -> T;
+fn F[template T:! type](x: T*) -> T;
 fn F(x: Int) -> bool;
 ```
 
@@ -279,9 +279,9 @@ Note that function signatures can typically be rewritten to avoid using deduced
 parameters:
 
 ```
-fn F[template T:! Type](value: T);
+fn F[template T:! type](value: T);
 // is equivalent to:
-fn F(value: (template T:! Type));
+fn F(value: (template T:! type));
 ```
 
 See more [here](overview.md#deduced-parameters).
@@ -308,7 +308,7 @@ form.
 
 A "nominal" interface is one where we say a type can only satisfy an interface
 if there is some explicit statement saying so, for example by defining an
-[impl](#impls-implementations-of-interfaces). This allows "satisfies the
+[impl](#impl-implementation-of-an-interface). This allows "satisfies the
 interface" to have additional semantic meaning beyond what is directly checkable
 by the compiler. For example, knowing whether the `Draw` function means "render
 an image to the screen" or "take a card from the top of a deck of cards"; or
@@ -338,18 +338,19 @@ type_.
 
 Different types can satisfy an interface with different definitions for a given
 member. These definitions are _associated_ with what type is implementing the
-interface. An [impl](#impls-implementations-of-interfaces) defines what is
+interface. An [impl](#impl-implementation-of-an-interface) defines what is
 associated with the type for that interface.
 
 Rust uses the term
 ["associated item"](https://doc.rust-lang.org/reference/items/associated-items.html)
 instead of associated entity.
 
-## Impls: Implementations of interfaces
+## Impl: Implementation of an interface
 
 An _impl_ is an implementation of an interface for a specific type. It is the
 place where the function bodies are defined, values for associated types, etc.
-are given. Impls are needed for [nominal interfaces](#nominal-interfaces);
+are given. Implementations are needed for
+[nominal interfaces](#nominal-interfaces);
 [structural interfaces](#structural-interfaces) and
 [named constraints](#named-constraints) define conformance implicitly instead of
 by requiring an impl to be defined. In can still make sense to implement a named
@@ -660,7 +661,7 @@ associated types. An associated type is a kind of
 ```
 // Stack using associated types
 interface Stack {
-  let ElementType:! Type;
+  let ElementType:! type;
   fn Push[addr self: Self*](value: ElementType);
   fn Pop[addr self: Self*]() -> ElementType;
 }
@@ -686,18 +687,19 @@ interface determines the type, not the caller. For example, the iterator type
 for a container is specific to the container and not something you would expect
 a user of the interface to specify.
 
-If you have an interface with type parameters, a type can have multiple impls
-for different combinations of type parameters. As a result, type parameters may
-not be deduced in a function call. However, if the interface parameters are
-specified, a type can only have a single implementation of the given interface.
-This unique implementation choice determines the values of associated types.
+If you have an interface with type parameters, a type can have multiple matching
+impl declarations for different combinations of type parameters. As a result,
+type parameters may not be deduced in a function call. However, if the interface
+parameters are specified, a type can only have a single implementation of the
+given interface. This unique implementation choice determines the values of
+associated types.
 
 For example, we might have an interface that says how to perform addition with
 another type:
 
 ```
-interface AddWith(T:! Type) {
-  let ResultType:! Type;
+interface AddWith(T:! type) {
+  let ResultType:! type;
   fn Add[self: Self](rhs: T) -> ResultType;
 }
 ```
@@ -716,12 +718,12 @@ to be some way to determine the type to add to:
 ```
 // ✅ This is allowed, since the value of `T` is determined by the
 // `y` parameter.
-fn DoAdd[T:! Type, U:! AddWith(T)](x: U, y: T) -> U.ResultType {
+fn DoAdd[T:! type, U:! AddWith(T)](x: U, y: T) -> U.ResultType {
   return x.Add(y);
 }
 
 // ❌ This is forbidden, can't uniquely determine `T`.
-fn CompileError[T:! Type, U:! AddWith(T)](x: U) -> T;
+fn CompileError[T:! type, U:! AddWith(T)](x: U) -> T;
 ```
 
 Once the interface parameter can be determined, that determines the values for

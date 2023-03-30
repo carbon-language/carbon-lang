@@ -34,7 +34,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Associated types](#associated-types)
         -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Constraints](#constraints)
-    -   [Parameterized impls](#parameterized-impls)
+    -   [Parameterized impl declarations](#parameterized-impl-declarations)
     -   [Operator overloading](#operator-overloading)
 -   [Future work](#future-work)
 -   [References](#references)
@@ -311,7 +311,7 @@ call site.
 
 ```
 // ERROR: can't determine `U` from explicit parameters
-fn Illegal[T:! Type, U:! Type](x: T) -> U { ... }
+fn Illegal[T:! type, U:! type](x: T) -> U { ... }
 ```
 
 #### Generic type parameters
@@ -560,7 +560,7 @@ those types to be different. An element in a hash map might have type
 `Equatable(Pair(String, i64))`.
 
 ```
-interface Equatable(T:! Type) {
+interface Equatable(T:! type) {
   fn IsEqual[self: Self](compare_to: T) -> bool;
 }
 ```
@@ -574,13 +574,13 @@ general, unless some other parameter determines `T`.
 ```
 // ✅ This is allowed, since the value of `T` is determined by the
 // `v` parameter.
-fn FindInVector[T:! Type, U:! Equatable(T)](v: Vector(T), needle: U)
+fn FindInVector[T:! type, U:! Equatable(T)](v: Vector(T), needle: U)
     -> Optional(i32);
 
 // ❌ This is forbidden. Since `U` could implement `Equatable`
 // multiple times, there is no way to determine the value for `T`.
 // Contrast with `PeekAtTopOfStack` in the associated type example.
-fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
+fn CompileError[T:! type, U:! Equatable(T)](x: U) -> T;
 ```
 
 ### Constraints
@@ -594,7 +594,7 @@ fn FindFirstPrime[T:! Container where .Element == i32]
   ...
 }
 
-fn PrintContainer[T:! Container where .Element is Printable](c: T) {
+fn PrintContainer[T:! Container where .Element impls Printable](c: T) {
   // The type of the elements of `c` is not known, but we do know
   // that type satisfies the `Printable` interface.
   ...
@@ -614,7 +614,7 @@ class Vector(T:! Movable) {
 }
 ```
 
-### Parameterized impls
+### Parameterized impl declarations
 
 Implementations can be parameterized to apply to multiple types. Those
 parameters can have constraints to restrict when the implementation applies.
