@@ -16,7 +16,7 @@
 //     Invokes `ACTION` on each non-leaf class in the AST class hierarchy that
 //     derives from `BASE`.
 //
-// These macros are implement in terms of `CARBON_Foo_KINDS` X-macros. Each of
+// These macros are implemented in terms of `CARBON_Foo_KINDS` X-macros. Each of
 // these macros takes two macro names as arguments:
 //
 // -   `CARBON_Foo_KINDS(ABSTRACT, FINAL)`
