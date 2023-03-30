@@ -299,6 +299,20 @@ class SemanticsNode {
                       SemanticsBuiltinKind::StringType.AsInt(),
                       SemanticsStringId /*string_id*/>;
 
+  using StructType = FactoryPreTyped<
+      SemanticsNodeKind::StructType, SemanticsBuiltinKind::TypeType.AsInt(),
+      SemanticsNodeBlockId /*ir_id*/, SemanticsNodeBlockId /*refs_id*/>;
+
+  using StructTypeField = Factory<SemanticsNodeKind::StructTypeField,
+                                  SemanticsStringId /*name_id*/>;
+
+  using StructValue =
+      Factory<SemanticsNodeKind::StructValue, SemanticsNodeBlockId /*ir_id*/,
+              SemanticsNodeBlockId /*refs_id*/>;
+
+  using StubReference =
+      Factory<SemanticsNodeKind::StubReference, SemanticsNodeId /*node_id*/>;
+
   using VarStorage = Factory<SemanticsNodeKind::VarStorage>;
 
   SemanticsNode()

@@ -128,6 +128,23 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
 
   auto node = GetNode(node_id);
   switch (node.kind()) {
+    case SemanticsNodeKind::StructType: {
+      out << "{";
+      auto refs = GetNodeBlock(node.GetAsStructType().second);
+      llvm::ListSeparator sep;
+      for (const auto& ref_id : refs) {
+        out << sep;
+        // TODO: Bound recursion depth or remove recursive step.
+        StringifyNodeImpl(out, ref_id);
+      }
+      out << "}";
+      break;
+    }
+    case SemanticsNodeKind::StructTypeField: {
+      out << "." << GetString(node.GetAsStructTypeField()) << ": ";
+      StringifyNodeImpl(out, node.type_id());
+      break;
+    }
     case SemanticsNodeKind::Assign:
     case SemanticsNodeKind::BinaryOperatorAdd:
     case SemanticsNodeKind::BindName:
@@ -142,6 +159,8 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
     case SemanticsNodeKind::Return:
     case SemanticsNodeKind::ReturnExpression:
     case SemanticsNodeKind::StringLiteral:
+    case SemanticsNodeKind::StructValue:
+    case SemanticsNodeKind::StubReference:
     case SemanticsNodeKind::VarStorage:
       // We don't need to handle stringification for nodes that don't show up in
       // errors, but make it clear what's going on so that it's clearer when

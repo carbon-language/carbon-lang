@@ -36,10 +36,14 @@
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+4, arg1: block0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str3, arg1: callable1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+7, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+9, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: Call, arg0: call0, arg1: callable0, type: nodeEmptyTuple},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+12, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int3, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+14, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: Call, arg0: call1, arg1: callable0, type: nodeEmptyTuple},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+6, arg1: block6},
 // CHECK:STDOUT: ]
@@ -60,27 +64,31 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:     node+13,
+// CHECK:STDOUT:     node+17,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+7,
-// CHECK:STDOUT:     node+8,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:     node+13,
+// CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:     node+13,
+// CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

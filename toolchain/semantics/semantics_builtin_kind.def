@@ -60,6 +60,12 @@ CARBON_SEMANTICS_BUILTIN_KIND(FloatingPointType, TypeType, "f64")
 // The type of string values and String literals.
 CARBON_SEMANTICS_BUILTIN_KIND(StringType, TypeType, "String")
 
+// The canonical empty struct type.
+CARBON_SEMANTICS_BUILTIN_KIND(EmptyStructType, TypeType, "{} as Type")
+
+// The canonical empty struct.
+CARBON_SEMANTICS_BUILTIN_KIND(EmptyStruct, EmptyStructType, "{}")
+
 // The canonical empty tuple type.
 CARBON_SEMANTICS_BUILTIN_KIND(EmptyTupleType, TypeType, "() as Type")
 

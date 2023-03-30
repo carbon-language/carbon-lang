@@ -106,6 +106,12 @@ class SemanticsIR {
     return node_blocks_[block_id.index];
   }
 
+  // Returns the requested real literal.
+  auto GetRealLiteral(SemanticsRealLiteralId int_id) const
+      -> const SemanticsRealLiteral& {
+    return real_literals_[int_id.index];
+  }
+
   // Returns the requested string.
   auto GetString(SemanticsStringId string_id) const -> llvm::StringRef {
     return strings_[string_id.index];

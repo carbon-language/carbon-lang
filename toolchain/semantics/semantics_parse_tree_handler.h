@@ -33,6 +33,8 @@ class SemanticsParseTreeHandler {
         node_block_stack_("node_block_stack_", semantics.node_blocks_,
                           vlog_stream),
         params_or_args_stack_("params_or_args_stack_", semantics.node_blocks_,
+                              vlog_stream),
+        args_type_info_stack_("args_type_info_stack_", semantics.node_blocks_,
                               vlog_stream) {}
 
   // Outputs the ParseTree information into SemanticsIR.
@@ -127,16 +129,37 @@ class SemanticsParseTreeHandler {
                                ParseTree::Node param_parse_node,
                                SemanticsNodeBlockId param_refs_id) -> bool;
 
-  auto ParamOrArgStart() -> void;
-  auto ParamOrArgComma(ParseTree::Node parse_node) -> bool;
-  auto ParamOrArgEnd(
-      ParseNodeKind start_kind, ParseNodeKind comma_kind,
-      std::function<bool(SemanticsNodeBlockId, SemanticsNodeBlockId)> on_start)
+  // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
+  // result type. The result will be the node to use to replace `value`. The
+  // result will be BuiltinInvalidType for errors; this handles printing
+  // diagnostics.
+  auto ImplicitAs(ParseTree::Node parse_node, SemanticsNodeId value,
+                  SemanticsNodeId as_type) -> SemanticsNodeId;
+
+  // Returns true if the ImplicitAs can use struct conversion.
+  // TODO: This currently only supports struct types that precisely match.
+  auto CanImplicitAsStruct(SemanticsNode value_type, SemanticsNode as_type)
       -> bool;
 
+  // Starts handling parameters or arguments.
+  auto ParamOrArgStart() -> void;
+
+  // On a comma, pushes the entry. On return, the top of node_stack_ will be
+  // start_kind.
+  auto ParamOrArgComma(bool for_args) -> void;
+
+  // Detects whether there's an entry to push. On return, the top of
+  // node_stack_ will be start_kind, and the caller should do type-specific
+  // processing. Returns a pair of {ir_id, refs_id}.
+  auto ParamOrArgEnd(bool for_args, ParseNodeKind start_kind)
+      -> std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId>;
+
   // Saves a parameter from the top block in node_stack_ to the top block in
-  // params_or_args_stack_. Returns false if nothing is copied.
-  auto ParamOrArgSave() -> bool;
+  // params_or_args_stack_. If for_args, adds a StubReference of the previous
+  // node's result to the IR.
+  //
+  // This should only be called by other ParamOrArg functions, not directly.
+  auto ParamOrArgSave(bool for_args) -> void;
 
   // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
@@ -171,6 +194,12 @@ class SemanticsParseTreeHandler {
   // will have 1 or more nodes in blocks in node_block_stack_, but only ever 1
   // node in blocks here.
   SemanticsNodeBlockStack params_or_args_stack_;
+
+  // The stack of node blocks being used for type information while processing
+  // arguments. This is used in parallel with params_or_args_stack_. It's
+  // currently only used for struct literals, where we need to track names
+  // for a type separate from the literal arguments.
+  SemanticsNodeBlockStack args_type_info_stack_;
 
   // Completed parameters that are held temporarily on a side-channel for a
   // function. This can't use node_stack_ because it has space for only one

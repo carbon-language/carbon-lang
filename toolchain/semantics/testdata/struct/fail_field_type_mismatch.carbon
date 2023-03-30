@@ -8,8 +8,6 @@
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block1, param_refs: block2},
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -18,48 +16,49 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   a,
-// CHECK:STDOUT:   Run,
-// CHECK:STDOUT:   Main,
+// CHECK:STDOUT:   x,
+// CHECK:STDOUT:   b,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str1, arg1: callable0},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+2, arg1: block0},
-// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str2, arg1: callable1},
+// CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: StructType, arg0: block1, arg1: block2, type: nodeTypeType},
+// CHECK:STDOUT:   {kind: VarStorage, type: node+1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: node+1},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+5, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+4, arg1: block0},
+// CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, type: nodeFloatingPointType},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+4, type: nodeFloatingPointType},
+// CHECK:STDOUT:   {kind: StructType, arg0: block5, arg1: block5, type: nodeTypeType},
+// CHECK:STDOUT:   {kind: StructValue, arg0: block4, arg1: block6, type: node+7},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeInvalidType, type: nodeInvalidType},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-fn Run(a: i32) {}
-
-fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE+2]]:6: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE-4]]:1: Type mismatch: cannot convert argument 0 from f64 to i32.
-  Run(1.0);
-}
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_field_type_mismatch.carbon:[[@LINE+1]]:30: Cannot implicitly convert from {.b: f64} to {.a: i32}.
+var x: {.a: i32} = {.b = 1.0};
