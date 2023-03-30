@@ -12,9 +12,9 @@ interface A {}
 interface B {}
 interface C {}
 
-impl forall [T:! type where .Self* is A] T as B {}
-impl forall [T:! type where .Self* is B] T as C {}
-impl forall [T:! type where .Self* is C] T as A {}
+impl forall [T:! type where .Self* impls A] T as B {}
+impl forall [T:! type where .Self* impls B] T as C {}
+impl forall [T:! type where .Self* impls C] T as A {}
 
 fn F[T:! A](x: T) {}
 

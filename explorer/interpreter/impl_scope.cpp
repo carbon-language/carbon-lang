@@ -32,7 +32,7 @@ void ImplScope::Add(Nonnull<const Value*> iface,
     CARBON_CHECK(!sort_key)
         << "should only be given a sort key for an impl of an interface";
     // The caller should have substituted `.Self` for `type` already.
-    Add(constraint->impl_constraints(), deduced, impl_bindings, witness,
+    Add(constraint->impls_constraints(), deduced, impl_bindings, witness,
         type_checker);
     // A parameterized impl declaration doesn't contribute any equality
     // constraints to the scope. Instead, we'll resolve the equality
@@ -46,30 +46,32 @@ void ImplScope::Add(Nonnull<const Value*> iface,
     return;
   }
 
-  Impl new_impl = {.interface = cast<InterfaceType>(iface),
-                   .deduced = deduced,
-                   .type = type,
-                   .impl_bindings = impl_bindings,
-                   .witness = witness,
-                   .sort_key = std::move(sort_key)};
+  ImplFact new_impl = {.interface = cast<InterfaceType>(iface),
+                       .deduced = deduced,
+                       .type = type,
+                       .impl_bindings = impl_bindings,
+                       .witness = witness,
+                       .sort_key = std::move(sort_key)};
 
   // Find the first impl that's more specific than this one, and place this
   // impl right before it. This keeps the impls with the same type structure
   // sorted in lexical order, which is important for `match_first` semantics.
-  auto insert_pos = std::upper_bound(
-      impls_.begin(), impls_.end(), new_impl,
-      [](const Impl& a, const Impl& b) { return a.sort_key < b.sort_key; });
+  auto insert_pos =
+      std::upper_bound(impl_facts_.begin(), impl_facts_.end(), new_impl,
+                       [](const ImplFact& a, const ImplFact& b) {
+                         return a.sort_key < b.sort_key;
+                       });
 
-  impls_.insert(insert_pos, std::move(new_impl));
+  impl_facts_.insert(insert_pos, std::move(new_impl));
 }
 
-void ImplScope::Add(llvm::ArrayRef<ImplConstraint> impls,
+void ImplScope::Add(llvm::ArrayRef<ImplsConstraint> impls_constraints,
                     llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<const Witness*> witness,
                     const TypeChecker& type_checker) {
-  for (size_t i = 0; i != impls.size(); ++i) {
-    ImplConstraint impl = impls[i];
+  for (size_t i = 0; i != impls_constraints.size(); ++i) {
+    ImplsConstraint impl = impls_constraints[i];
     Add(impl.interface, deduced, impl.type, impl_bindings,
         type_checker.MakeConstraintWitnessAccess(witness, i), type_checker);
   }
@@ -129,18 +131,18 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
   }
   if (const auto* constraint = dyn_cast<ConstraintType>(constraint_type)) {
     std::vector<Nonnull<const Witness*>> witnesses;
-    for (auto impl : constraint->impl_constraints()) {
-      // Note that later impl constraints can refer to earlier impl constraints
-      // via impl bindings. For example, in
-      //   `C where .Self.AssocType is D`,
-      // ... the `.Self.AssocType is D` constraint refers to the `.Self is C`
-      // constraint when naming `AssocType`. So incrementally build up a
-      // partial constraint witness as we go.
+    for (auto impl : constraint->impls_constraints()) {
+      // Note that later impls constraints can refer to earlier impls
+      // constraints via impl bindings. For example, in
+      //   `C where .Self.AssocType impls D`,
+      // ... the `.Self.AssocType impls D` constraint refers to the
+      // `.Self impls C` constraint when naming `AssocType`. So incrementally
+      // build up a partial constraint witness as we go.
       std::optional<Nonnull<const Witness*>> witness;
       if (constraint->self_binding()->impl_binding()) {
         // Note, this is a partial impl binding covering only the impl
-        // constraints that we've already seen. Earlier impl constraints should
-        // not be able to refer to impl bindings for later impl constraints.
+        // constraints that we've already seen. Earlier impls constraints should
+        // not be able to refer to impl bindings for later impls constraints.
         witness = type_checker.MakeConstraintWitness(witnesses);
       }
       Bindings local_bindings = bindings;
@@ -382,9 +384,9 @@ auto ImplScope::TryResolveInterfaceHere(
     const TypeChecker& type_checker) const
     -> ErrorOr<std::optional<ResolveResult>> {
   std::optional<ResolveResult> result = std::nullopt;
-  for (const Impl& impl : impls_) {
+  for (const ImplFact& impl : impl_facts_) {
     // If we've passed the final impl with a sort key matching our best impl,
-    // all further impls are worse and don't need to be checked.
+    // all further are worse and don't need to be checked.
     if (result && result->impl->sort_key < impl.sort_key) {
       break;
     }
@@ -417,9 +419,9 @@ auto ImplScope::TryResolveInterfaceHere(
 
 // TODO: Add indentation when printing the parents.
 void ImplScope::Print(llvm::raw_ostream& out) const {
-  out << "impls: ";
+  out << "impl declarations: ";
   llvm::ListSeparator sep;
-  for (const Impl& impl : impls_) {
+  for (const ImplFact& impl : impl_facts_) {
     out << sep << *(impl.type) << " as " << *(impl.interface);
     if (impl.sort_key) {
       out << " " << *impl.sort_key;

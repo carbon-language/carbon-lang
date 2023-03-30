@@ -16,9 +16,9 @@ interface Y(T:! type) {
 }
 
 interface Z {
-  // The `i32 is X(.Self)` constraint is indirectly required by
+  // The `i32 impls X(.Self)` constraint is indirectly required by
   // specifying that `.M = i32`.
-  let N:! Y(.Self) where i32 is X(.Self) and .M = i32;
+  let N:! Y(.Self) where i32 impls X(.Self) and .M = i32;
 }
 
 impl i32 as X(i32) {}
