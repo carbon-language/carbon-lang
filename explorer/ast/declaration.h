@@ -316,7 +316,8 @@ class DestructorDeclaration : public CallableDeclaration {
                                std::vector<Nonnull<AstNode*>> deduced_params,
                                Nonnull<TuplePattern*> param_pattern,
                                ReturnTerm return_term,
-                               std::optional<Nonnull<Block*>> body)
+                               std::optional<Nonnull<Block*>> body,
+                               VirtualOverride virt_override)
       -> ErrorOr<Nonnull<DestructorDeclaration*>>;
 
   // Use `Create()` instead. This is public only so Arena::New() can call it.
@@ -325,12 +326,11 @@ class DestructorDeclaration : public CallableDeclaration {
                         std::optional<Nonnull<Pattern*>> self_pattern,
                         Nonnull<TuplePattern*> param_pattern,
                         ReturnTerm return_term,
-                        std::optional<Nonnull<Block*>> body)
+                        std::optional<Nonnull<Block*>> body,
+                        VirtualOverride virt_override)
       : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
                             std::move(deduced_params), self_pattern,
-                            param_pattern, return_term, body,
-                            // TODO: Add virtual destructors
-                            VirtualOverride::None) {}
+                            param_pattern, return_term, body, virt_override) {}
 
   explicit DestructorDeclaration(CloneContext& context,
                                  const DestructorDeclaration& other)
@@ -674,7 +674,8 @@ class ConstraintTypeDeclaration : public Declaration {
     auto* self_type_ref = arena->New<IdentifierExpression>(
         source_loc, std::string(name_.inner_name()));
     self_type_ref->set_value_node(self_type_);
-    self_ = arena->New<GenericBinding>(source_loc, "Self", self_type_ref);
+    self_ = arena->New<GenericBinding>(source_loc, "Self", self_type_ref,
+                                       GenericBinding::BindingKind::Checked);
   }
 
   explicit ConstraintTypeDeclaration(CloneContext& context,
@@ -942,26 +943,31 @@ class ImplDeclaration : public Declaration {
 
 class MatchFirstDeclaration : public Declaration {
  public:
-  MatchFirstDeclaration(SourceLocation source_loc,
-                        std::vector<Nonnull<ImplDeclaration*>> impls)
+  MatchFirstDeclaration(
+      SourceLocation source_loc,
+      std::vector<Nonnull<ImplDeclaration*>> impl_declarations)
       : Declaration(AstNodeKind::MatchFirstDeclaration, source_loc),
-        impls_(std::move(impls)) {}
+        impl_declarations_(std::move(impl_declarations)) {}
 
   explicit MatchFirstDeclaration(CloneContext& context,
                                  const MatchFirstDeclaration& other)
-      : Declaration(context, other), impls_(context.Clone(other.impls_)) {}
+      : Declaration(context, other),
+        impl_declarations_(context.Clone(other.impl_declarations_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromMatchFirstDeclaration(node->kind());
   }
 
-  auto impls() const -> llvm::ArrayRef<Nonnull<const ImplDeclaration*>> {
-    return impls_;
+  auto impl_declarations() const
+      -> llvm::ArrayRef<Nonnull<const ImplDeclaration*>> {
+    return impl_declarations_;
   }
-  auto impls() -> llvm::ArrayRef<Nonnull<ImplDeclaration*>> { return impls_; }
+  auto impl_declarations() -> llvm::ArrayRef<Nonnull<ImplDeclaration*>> {
+    return impl_declarations_;
+  }
 
  private:
-  std::vector<Nonnull<ImplDeclaration*>> impls_;
+  std::vector<Nonnull<ImplDeclaration*>> impl_declarations_;
 };
 
 class AliasDeclaration : public Declaration {

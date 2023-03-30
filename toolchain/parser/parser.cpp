@@ -948,13 +948,13 @@ auto Parser::HandleExpressionInPostfixState() -> void {
       PushState(ParserState::ParenExpression);
       break;
     }
-    case TokenKind::SelfParameter: {
-      AddLeafNode(ParseNodeKind::SelfIdentifier, Consume());
+    case TokenKind::SelfValueIdentifier: {
+      AddLeafNode(ParseNodeKind::SelfValueIdentifier, Consume());
       PushState(state);
       break;
     }
-    case TokenKind::SelfType: {
-      AddLeafNode(ParseNodeKind::SelfType, Consume());
+    case TokenKind::SelfTypeIdentifier: {
+      AddLeafNode(ParseNodeKind::SelfTypeIdentifier, Consume());
       PushState(state);
       break;
     }
@@ -1498,8 +1498,8 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
   if (auto identifier = ConsumeIf(TokenKind::Identifier)) {
     AddLeafNode(ParseNodeKind::DeclaredName, *identifier);
   } else if (pattern_kind == PatternKind::DeducedParameter) {
-    if (auto self = ConsumeIf(TokenKind::SelfParameter)) {
-      AddLeafNode(ParseNodeKind::SelfIdentifier, *self);
+    if (auto self = ConsumeIf(TokenKind::SelfValueIdentifier)) {
+      AddLeafNode(ParseNodeKind::SelfValueIdentifier, *self);
     } else {
       on_error();
       return;

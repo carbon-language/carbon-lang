@@ -74,8 +74,15 @@ class SemanticsIR {
                                 DiagnosticConsumer& consumer,
                                 llvm::raw_ostream* vlog_stream) -> SemanticsIR;
 
-  // Prints the full IR.
-  auto Print(llvm::raw_ostream& out) const -> void;
+  // Prints the full IR. Allow omitting builtins so that unrelated changes are
+  // less likely to alternate test golden files.
+  // TODO: In the future, the things to print may change, for example by adding
+  // preludes. We may then want the ability to omit other things similar to
+  // builtins.
+  auto Print(llvm::raw_ostream& out) const -> void {
+    Print(out, /*include_builtins=*/false);
+  }
+  auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
 
   // Returns the requested callable.
   auto GetCallable(SemanticsCallableId callable_id) const -> SemanticsCallable {
@@ -97,6 +104,12 @@ class SemanticsIR {
   auto GetNodeBlock(SemanticsNodeBlockId block_id) const
       -> const llvm::SmallVector<SemanticsNodeId>& {
     return node_blocks_[block_id.index];
+  }
+
+  // Returns the requested real literal.
+  auto GetRealLiteral(SemanticsRealLiteralId int_id) const
+      -> const SemanticsRealLiteral& {
+    return real_literals_[int_id.index];
   }
 
   // Returns the requested string.
@@ -155,7 +168,7 @@ class SemanticsIR {
 
   // Returns the type of the requested node.
   auto GetType(SemanticsNodeId node_id) -> SemanticsNodeId {
-    return GetNode(node_id).type();
+    return GetNode(node_id).type_id();
   }
 
   // Adds an empty new node block, returning an ID to reference it and add
@@ -201,6 +214,13 @@ class SemanticsIR {
     }
     return std::nullopt;
   }
+
+  // Produces a string version of a node.
+  auto StringifyNode(SemanticsNodeId node_id) -> std::string;
+
+  // Implements StringifyNode using streaming.
+  auto StringifyNodeImpl(llvm::raw_ostream& out, SemanticsNodeId node_id)
+      -> void;
 
   bool has_errors_ = false;
 

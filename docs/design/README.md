@@ -682,7 +682,7 @@ values if constant evaluation of the runtime expression succeeds.
 
 > **Note:** Conversion of runtime values to other phases is provisional, as are
 > the semantics of r-values. See pending proposal
-> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+> [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006).
 
 ## Composite types
 
@@ -776,7 +776,7 @@ or restrictions on casts between pointers and integers.
 
 > **Note:** While the syntax for pointers has been decided, the semantics of
 > pointers are provisional, as is the syntax for optionals. See pending proposal
-> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+> [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006).
 
 > References:
 >
@@ -1048,7 +1048,7 @@ value to match, `42`. The names from [binding patterns](#binding-patterns) are
 introduced into the enclosing [scope](#declarations-definitions-and-scopes).
 
 > **Note:** `let` declarations are provisional. See pending proposal
-> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+> [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006).
 
 ### Variable `var` declarations
 
@@ -1167,7 +1167,7 @@ returned using a [tuple](#tuples) or [struct](#struct-types) type.
 
 > **Note:** The semantics of parameter passing are provisional. See pending
 > proposal
-> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+> [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006).
 
 ### `auto` return type
 
@@ -1957,7 +1957,7 @@ value.
 > proposed in accepted proposal
 > [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257).
 > See pending proposal
-> [#821: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/821).
+> [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006).
 
 #### Mixins
 
@@ -2907,13 +2907,14 @@ pick which definition is selected. These rules ensure:
     if it can see an impl that applies, even though another more specific impl
     may be selected.
 
-Implementations may be marked [`final`](generics/details.md#final-impls) to
-indicate that they may not be specialized, subject to
-[some restrictions](generics/details.md#libraries-that-can-contain-final-impls).
+Implementations may be marked
+[`final`](generics/details.md#final-impl-declarations) to indicate that they may
+not be specialized, subject to
+[some restrictions](generics/details.md#libraries-that-can-contain-a-final-impl).
 
 > References:
 >
-> -   [Generic or parameterized impls](generics/details.md#parameterized-impls)
+> -   [Generic or parameterized impl declarationss](generics/details.md#parameterized-impl-declarations)
 > -   Proposal
 >     [#624: Coherence: terminology, rationale, alternatives considered](https://github.com/carbon-language/carbon-lang/pull/624)
 > -   Proposal
@@ -2988,7 +2989,7 @@ interfaces the compiler knows that a type implements. It is also possible that
 knowing a type implements one interface implies that it implements another, from
 an
 [interface requirement](generics/details.md#interface-requiring-other-interfaces)
-or [generic implementation](#generic-implementations). An `observe`...`is`
+or [generic implementation](#generic-implementations). An `observe`...`impls`
 declaration may be used to
 [observe that a type implements an interface](generics/details.md#observing-a-type-implements-an-interface).
 

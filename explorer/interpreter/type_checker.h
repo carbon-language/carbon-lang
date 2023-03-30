@@ -78,7 +78,7 @@ class TypeChecker {
   // `type`, then return the witness for this `impl`. Otherwise return
   // std::nullopt.
   auto MatchImpl(const InterfaceType& iface, Nonnull<const Value*> type,
-                 const ImplScope::Impl& impl, const ImplScope& impl_scope,
+                 const ImplScope::ImplFact& impl, const ImplScope& impl_scope,
                  SourceLocation source_loc) const
       -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 
@@ -105,7 +105,7 @@ class TypeChecker {
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
   auto MakeConstraintWitness(
-      std::vector<Nonnull<const Witness*>> impl_constraint_witnesses) const
+      std::vector<Nonnull<const Witness*>> impls_constraint_witnesses) const
       -> Nonnull<const Witness*>;
 
   // Given the witnesses for the components of a constraint, form a witness for
@@ -143,11 +143,11 @@ class TypeChecker {
               .bindings = std::move(class_bindings)};
     }
 
-    // The innermost enclosing impl scope, within which impls should be looked
-    // up.
+    // The innermost enclosing impl scope, within which impl declarations should
+    // be looked up.
     Nonnull<ImplScope*> innermost_scope;
     // The innermost enclosing non-class impl scope, where impl declarations
-    // should introduce new impls.
+    // should introduce new implementations.
     Nonnull<ImplScope*> innermost_non_class_scope;
     // The enclosing generic bindings, if any.
     std::vector<Nonnull<const GenericBinding*>> bindings;
@@ -192,7 +192,7 @@ class TypeChecker {
   // surrounding context gives us that information. Otherwise, it is nullopt.
   // Implicit conversions from `expected` to the pattern's type are permitted.
   //
-  // `impl_scope` is extended with all impls implied by the pattern.
+  // `impl_scope` is extended with all implementations implied by the pattern.
   auto TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected,
                         ImplScope& impl_scope,
@@ -214,7 +214,7 @@ class TypeChecker {
       -> ErrorOr<Success>;
 
   // Perform deduction for the deduced bindings in a function call, and set its
-  // lists of generic bindings and impls.
+  // lists of generic bindings and implementations.
   //
   // -   `params` is the list of parameters.
   // -   `generic_params` indicates which parameters are generic parameters,
@@ -280,7 +280,9 @@ class TypeChecker {
       const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   auto DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                              const ScopeInfo& scope_info) -> ErrorOr<Success>;
+                              const ScopeInfo& scope_info,
+                              bool is_template_instantiation)
+      -> ErrorOr<Success>;
 
   auto DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                 const ScopeInfo& scope_info)
@@ -300,20 +302,20 @@ class TypeChecker {
       Nonnull<const Pattern*> p,
       std::vector<Nonnull<const ImplBinding*>>& impl_bindings);
 
-  // Add the impls from the pattern into the given `impl_scope`.
-  void BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
-                                  ImplScope& impl_scope);
+  // Add the impl bindings from the pattern into the given `impl_scope`.
+  void BringPatternImplBindingsIntoScope(Nonnull<const Pattern*> p,
+                                         ImplScope& impl_scope);
 
   // Create a witness for the given `impl` binding.
   auto CreateImplBindingWitness(Nonnull<const ImplBinding*> impl_binding)
       -> Nonnull<const Witness*>;
 
   // Add the given ImplBinding to the given `impl_scope`.
-  void BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
-                          ImplScope& impl_scope);
+  void BringImplBindingIntoScope(Nonnull<const ImplBinding*> impl_binding,
+                                 ImplScope& impl_scope);
 
   // Add all of the `impl_bindings` into the `scope`.
-  void BringImplsIntoScope(
+  void BringImplBindingsIntoScope(
       llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
       ImplScope& scope);
 
@@ -434,8 +436,8 @@ class TypeChecker {
                        const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
   // Rebuild a value in the current type-checking context. Applies any rewrites
-  // that are in scope and attempts to resolve associated constants using impls
-  // that have been declared since the value was formed.
+  // that are in scope and attempts to resolve associated constants using
+  // implementations that have been declared since the value was formed.
   auto RebuildValue(Nonnull<const Value*> value) const
       -> ErrorOr<Nonnull<const Value*>>;
 
@@ -519,6 +521,12 @@ class TypeChecker {
   auto FindCollectedMembers(Nonnull<const Declaration*> decl)
       -> CollectedMembersMap&;
 
+  // Instantiate an impl with the given set of bindings, including one or more
+  // template bindings.
+  ErrorOr<std::pair<Nonnull<ImplDeclaration*>, Nonnull<Bindings*>>>
+  InstantiateImplDeclaration(Nonnull<const ImplDeclaration*> pattern,
+                             Nonnull<const Bindings*> bindings) const;
+
   Nonnull<Arena*> arena_;
   Builtins builtins_;
 
@@ -536,11 +544,26 @@ class TypeChecker {
   // rewrites that are not yet visible in any type.
   std::vector<ConstraintTypeBuilder*> partial_constraint_types_;
 
-  // A set of impls we're currently matching.
+  // A set of implementations we're currently matching.
   // TODO: This is `mutable` because `MatchImpl` is `const`. We need to remove
   // the `const`s from everywhere that transitively does `impl` matching to get
   // rid of this `mutable`.
   mutable MatchingImplSet matching_impl_set_;
+
+  // Information about a generic that has one or more template parameters.
+  struct TemplateInfo {
+    // The original pattern, prior to any type-checking.
+    Nonnull<const Declaration*> pattern;
+    // A mapping from the bindings of the type-checked pattern to the bindings
+    // of the original.
+    std::map<const GenericBinding*, const GenericBinding*> param_map;
+    // TODO: Keep track of the instantiations we've already performed and don't
+    // do them again.
+  };
+
+  // Map from template declarations to extra information we use to type-check
+  // and instantiate the template.
+  std::map<const Declaration*, TemplateInfo> templates_;
 };
 
 }  // namespace Carbon

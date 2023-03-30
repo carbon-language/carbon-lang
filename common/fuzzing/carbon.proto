@@ -134,7 +134,7 @@ message ArrayTypeLiteral {
   optional Expression size = 2;
 }
 
-message IsWhereClause {
+message ImplsWhereClause {
   optional Expression type = 1;
   optional Expression constraint = 2;
 }
@@ -151,7 +151,7 @@ message RewriteWhereClause {
 
 message WhereClause {
   oneof kind {
-    IsWhereClause is = 1;
+    ImplsWhereClause impls = 1;
     EqualsWhereClause equals = 2;
     RewriteWhereClause rewrite = 3;
   }
@@ -198,8 +198,13 @@ message BindingPattern {
 }
 
 message GenericBinding {
+  enum Kind {
+    Checked = 0;
+    Template = 1;
+  }
   optional string name = 1;
   optional Expression type = 2;
+  optional Kind kind = 3;
 }
 
 message TuplePattern {
@@ -437,7 +442,7 @@ message ImplDeclaration {
 }
 
 message MatchFirstDeclaration {
-  repeated Declaration impls = 1;
+  repeated Declaration impl_declarations = 1;
 }
 
 message AliasDeclaration {

@@ -20,6 +20,8 @@ class SemanticsNodeKind : public CARBON_ENUM_BASE(SemanticsNodeKind) {
  public:
 #define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
 #include "toolchain/semantics/semantics_node_kind.def"
+
+  using EnumBase::Create;
 };
 
 #define CARBON_SEMANTICS_NODE_KIND(Name) \

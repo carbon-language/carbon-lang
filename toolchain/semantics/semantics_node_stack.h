@@ -45,10 +45,8 @@ class SemanticsNodeStack {
     PushEntry({.parse_node = parse_node, .node_id = node_id}, DebugLog::NodeId);
   }
 
-  // Pushes a PatternBinding parse tree node onto the stack with its name.
+  // Pushes a parse tree node onto the stack with its name.
   auto Push(ParseTree::Node parse_node, SemanticsStringId name_id) -> void {
-    CARBON_CHECK(parse_tree_->node_kind(parse_node) ==
-                 ParseNodeKind::PatternBinding);
     PushEntry({.parse_node = parse_node, .name_id = name_id}, DebugLog::NameId);
   }
 
@@ -85,16 +83,14 @@ class SemanticsNodeStack {
   auto PopForNodeId() -> SemanticsNodeId;
 
   // Pops the top of the stack and returns the parse_node and name_id.
-  // Verifies that the parse_node is a PatternBinding.
-  auto PopForParseNodeAndNameId()
+  auto PopForParseNodeAndNameId(ParseNodeKind pop_parse_kind)
       -> std::pair<ParseTree::Node, SemanticsStringId>;
 
   // Peeks at the parse_node of the top of the stack.
   auto PeekParseNode() -> ParseTree::Node { return stack_.back().parse_node; }
 
   // Peeks at the name_id of the top of the stack.
-  // Verifies that the parse_node is a PatternBinding.
-  auto PeekForNameId() -> SemanticsStringId;
+  auto PeekForNameId(ParseNodeKind parse_kind) -> SemanticsStringId;
 
   // Prints the stack for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
@@ -115,8 +111,6 @@ class SemanticsNodeStack {
     // is used based on the ParseNodeKind.
     union {
       SemanticsNodeId node_id;
-
-      // Right now name_id is exclusively for PatternBinding, which is enforced.
       SemanticsStringId name_id;
     };
   };

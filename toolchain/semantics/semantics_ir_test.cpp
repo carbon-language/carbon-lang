@@ -43,7 +43,8 @@ TEST(SemanticsIRTest, YAML) {
 
   // Matches the ID of a node. The numbers may change because of builtin
   // cross-references, so this code is only doing loose structural checks.
-  auto node_id = Yaml::Scalar(MatchesRegex("node\\d+"));
+  auto node_id = Yaml::Scalar(MatchesRegex(R"(node\+\d+)"));
+  auto node_builtin = Yaml::Scalar(MatchesRegex(R"(node\w+)"));
 
   EXPECT_THAT(
       Yaml::Value::FromText(print_output),
@@ -54,21 +55,22 @@ TEST(SemanticsIRTest, YAML) {
           Pair("integer_literals", Yaml::Sequence(ElementsAre("0"))),
           Pair("real_literals", Yaml::Sequence(IsEmpty())),
           Pair("strings", Yaml::Sequence(ElementsAre("x"))),
-          Pair("nodes",
-               Yaml::Sequence(AllOf(
-                   // kind is required, other parts are optional.
-                   Each(Yaml::Mapping(Contains(Pair("kind", _)))),
-                   // A 0-arg node.
-                   Contains(Yaml::Mapping(ElementsAre(
-                       Pair("kind", "VarStorage"), Pair("type", node_id)))),
-                   // A 1-arg node.
-                   Contains(Yaml::Mapping(ElementsAre(
-                       Pair("kind", "IntegerLiteral"), Pair("arg0", "int0"),
-                       Pair("type", node_id)))),
-                   // A 2-arg node.
-                   Contains(Yaml::Mapping(ElementsAre(
-                       Pair("kind", "BindName"), Pair("arg0", "str0"),
-                       Pair("arg1", node_id), Pair("type", node_id))))))),
+          Pair(
+              "nodes",
+              Yaml::Sequence(AllOf(
+                  // kind is required, other parts are optional.
+                  Each(Yaml::Mapping(Contains(Pair("kind", _)))),
+                  // A 0-arg node.
+                  Contains(Yaml::Mapping(ElementsAre(
+                      Pair("kind", "VarStorage"), Pair("type", node_builtin)))),
+                  // A 1-arg node.
+                  Contains(Yaml::Mapping(ElementsAre(
+                      Pair("kind", "IntegerLiteral"), Pair("arg0", "int0"),
+                      Pair("type", node_builtin)))),
+                  // A 2-arg node.
+                  Contains(Yaml::Mapping(ElementsAre(
+                      Pair("kind", "BindName"), Pair("arg0", "str0"),
+                      Pair("arg1", node_id), Pair("type", node_builtin))))))),
           // This production has only one node block.
           Pair("node_blocks",
                Yaml::Sequence(ElementsAre(Yaml::Sequence(IsEmpty()),

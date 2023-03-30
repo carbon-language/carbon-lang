@@ -105,7 +105,7 @@ auto MatchingImplSet::GetLabelForDeclaration(const Declaration& declaration)
 }
 
 MatchingImplSet::Match::Match(Nonnull<MatchingImplSet*> parent,
-                              Nonnull<const ImplScope::Impl*> impl,
+                              Nonnull<const ImplScope::ImplFact*> impl,
                               Nonnull<const Value*> type,
                               Nonnull<const Value*> interface)
     : parent_(parent), impl_(impl), type_(type), interface_(interface) {

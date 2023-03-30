@@ -27,7 +27,8 @@ A _lexical element_ is one of the following:
 -   a literal:
     -   a [numeric literal](numeric_literals.md)
     -   a [string literal](string_literals.md)
--   TODO: operators, comments, ...
+-   a [comment](comments.md)
+-   TODO: operators ...
 
 The sequence of lexical elements is formed by repeatedly removing the longest
 initial sequence of characters that forms a valid lexical element.

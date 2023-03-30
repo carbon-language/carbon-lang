@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 interface Foo {}
 
-impl forall [T:! type where {.a: .Self} is Foo] T as Foo {}
+impl forall [T:! type where {.a: .Self} impls Foo] T as Foo {}
 
 fn F[T:! Foo](x: T) {}
 

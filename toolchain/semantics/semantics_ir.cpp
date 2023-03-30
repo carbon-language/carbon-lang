@@ -16,8 +16,8 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
   SemanticsIR semantics(/*builtin_ir=*/nullptr);
   semantics.nodes_.reserve(SemanticsBuiltinKind::ValidCount);
 
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type)        \
-  semantics.nodes_.push_back(SemanticsNode::MakeBuiltin( \
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type, ...)     \
+  semantics.nodes_.push_back(SemanticsNode::Builtin::Make( \
       SemanticsBuiltinKind::Name, SemanticsNodeId::Builtin##Type));
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
@@ -44,9 +44,9 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
   for (int i = 0; i < SemanticsBuiltinKind::ValidCount; ++i) {
     // We can reuse the type node ID because the offsets of cross-references
     // will be the same in this IR.
-    auto type = builtin_ir.nodes_[i].type();
-    semantics.nodes_[i] =
-        SemanticsNode::MakeCrossReference(type, BuiltinIR, SemanticsNodeId(i));
+    auto type = builtin_ir.nodes_[i].type_id();
+    semantics.nodes_[i] = SemanticsNode::CrossReference::Make(
+        type, BuiltinIR, SemanticsNodeId(i));
   }
 
   ParseTreeNodeLocationTranslator translator(&tokens, &parse_tree);
@@ -71,7 +71,8 @@ static auto PrintList(llvm::raw_ostream& out, llvm::StringLiteral name,
   out << "]\n";
 }
 
-auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
+auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
+    -> void {
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
 
   PrintList(out, "calls", calls_);
@@ -79,7 +80,15 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
   PrintList(out, "integer_literals", integer_literals_);
   PrintList(out, "real_literals", real_literals_);
   PrintList(out, "strings", strings_);
-  PrintList(out, "nodes", nodes_);
+
+  out << "nodes: [\n";
+  for (int i = include_builtins ? 0 : SemanticsBuiltinKind::ValidCount;
+       i < static_cast<int>(nodes_.size()); ++i) {
+    const auto& element = nodes_[i];
+    out.indent(Indent);
+    out << element << ",\n";
+  }
+  out << "]\n";
 
   out << "node_blocks: [\n";
   for (const auto& node_block : node_blocks_) {
@@ -94,6 +103,73 @@ auto SemanticsIR::Print(llvm::raw_ostream& out) const -> void {
     out << "],\n";
   }
   out << "]\n";
+}
+
+auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
+  std::string str;
+  llvm::raw_string_ostream out(str);
+  StringifyNodeImpl(out, node_id);
+  return str;
+}
+
+auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
+                                    SemanticsNodeId node_id) -> void {
+  // Invalid node IDs will use the default invalid printing.
+  if (!node_id.is_valid()) {
+    out << node_id;
+    return;
+  }
+
+  // Builtins have designated labels.
+  if (node_id.index < SemanticsBuiltinKind::ValidCount) {
+    out << SemanticsBuiltinKind::FromInt(node_id.index).label();
+    return;
+  }
+
+  auto node = GetNode(node_id);
+  switch (node.kind()) {
+    case SemanticsNodeKind::StructType: {
+      out << "{";
+      auto refs = GetNodeBlock(node.GetAsStructType().second);
+      llvm::ListSeparator sep;
+      for (const auto& ref_id : refs) {
+        out << sep;
+        // TODO: Bound recursion depth or remove recursive step.
+        StringifyNodeImpl(out, ref_id);
+      }
+      out << "}";
+      break;
+    }
+    case SemanticsNodeKind::StructTypeField: {
+      out << "." << GetString(node.GetAsStructTypeField()) << ": ";
+      StringifyNodeImpl(out, node.type_id());
+      break;
+    }
+    case SemanticsNodeKind::Assign:
+    case SemanticsNodeKind::BinaryOperatorAdd:
+    case SemanticsNodeKind::BindName:
+    case SemanticsNodeKind::Builtin:
+    case SemanticsNodeKind::Call:
+    case SemanticsNodeKind::CodeBlock:
+    case SemanticsNodeKind::CrossReference:
+    case SemanticsNodeKind::FunctionDeclaration:
+    case SemanticsNodeKind::FunctionDefinition:
+    case SemanticsNodeKind::IntegerLiteral:
+    case SemanticsNodeKind::RealLiteral:
+    case SemanticsNodeKind::Return:
+    case SemanticsNodeKind::ReturnExpression:
+    case SemanticsNodeKind::StringLiteral:
+    case SemanticsNodeKind::StructValue:
+    case SemanticsNodeKind::StubReference:
+    case SemanticsNodeKind::VarStorage:
+      // We don't need to handle stringification for nodes that don't show up in
+      // errors, but make it clear what's going on so that it's clearer when
+      // stringification is needed.
+      out << "<cannot stringify " << node_id << ">";
+      return;
+    case SemanticsNodeKind::Invalid:
+      llvm_unreachable("SemanticsNodeKind::Invalid is never used.");
+  }
 }
 
 }  // namespace Carbon

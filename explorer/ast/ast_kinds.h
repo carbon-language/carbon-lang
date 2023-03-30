@@ -152,7 +152,7 @@
   FINAL(BaseAccessExpression)
 
 #define CARBON_WhereClause_KINDS(ABSTRACT, FINAL) \
-  FINAL(IsWhereClause)                            \
+  FINAL(ImplsWhereClause)                         \
   FINAL(EqualsWhereClause)                        \
   FINAL(RewriteWhereClause)
 
