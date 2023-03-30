@@ -4,40 +4,6 @@
 
 package(default_visibility = ["//explorer:__subpackages__"])
 
-AST_HDRS = [
-    "address.h",
-    "ast.h",
-    "ast_node.h",
-    "bindings.h",
-    "clone_context.h",
-    "declaration.h",
-    "element.h",
-    "element_path.h",
-    "expression.h",
-    "impl_binding.h",
-    "pattern.h",
-    "return_term.h",
-    "statement.h",
-    "value.h",
-    "value_node.h",
-    "value_transform.h",
-]
-
-genrule(
-    name = "ast_rtti",
-    srcs = ["ast_rtti.txt"] + AST_HDRS,
-    outs = [
-        "ast_rtti.h",
-        "ast_rtti.cpp",
-    ],
-    cmd = "./$(location //explorer:gen_rtti)" +
-          " $(location ast_rtti.txt)" +
-          " $(location ast_rtti.h) $(location ast_rtti.cpp)" +
-          " $(rootpath ast_rtti.h)" +
-          "".join([" $(rootpath " + f + ")" for f in AST_HDRS]),
-    tools = ["//explorer:gen_rtti"],
-)
-
 cc_library(
     name = "ast",
     srcs = [
@@ -53,7 +19,26 @@ cc_library(
         "statement.cpp",
         "value.cpp",
     ],
-    hdrs = AST_HDRS + ["ast_rtti.h"],
+    hdrs = [
+        "address.h",
+        "ast.h",
+        "ast_kinds.h",
+        "ast_node.h",
+        "ast_rtti.h",
+        "bindings.h",
+        "clone_context.h",
+        "declaration.h",
+        "element.h",
+        "element_path.h",
+        "expression.h",
+        "impl_binding.h",
+        "pattern.h",
+        "return_term.h",
+        "statement.h",
+        "value.h",
+        "value_node.h",
+        "value_transform.h",
+    ],
     textual_hdrs = [
         "value_kinds.def",
     ],
@@ -62,6 +47,7 @@ cc_library(
         ":paren_contents",
         ":value_category",
         "//common:check",
+        "//common:enum_base",
         "//common:error",
         "//common:indirect_value",
         "//common:ostream",

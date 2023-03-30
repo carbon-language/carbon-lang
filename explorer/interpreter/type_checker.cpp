@@ -2679,7 +2679,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "checking " << ExpressionKindName(e->kind()) << " " << *e;
+    *trace_stream_ << "checking " << e->kind() << " " << *e;
     *trace_stream_ << "\n";
   }
   if (e->is_type_checked()) {
@@ -4131,7 +4131,7 @@ auto TypeChecker::TypeCheckPattern(
     ImplScope& impl_scope, ValueCategory enclosing_value_category)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "checking " << PatternKindName(p->kind()) << " " << *p;
+    *trace_stream_ << "checking " << p->kind() << " " << *p;
     if (expected) {
       *trace_stream_ << ", expecting " << **expected;
     }
@@ -4415,8 +4415,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                 const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "checking " << StatementKindName(s->kind()) << " " << *s
-                   << "\n";
+    *trace_stream_ << "checking " << s->kind() << " " << *s << "\n";
   }
   switch (s->kind()) {
     case StatementKind::Match: {
@@ -5953,7 +5952,7 @@ auto TypeChecker::TypeCheckDeclaration(
     std::optional<Nonnull<const Declaration*>> enclosing_decl)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "checking " << DeclarationKindName(d->kind()) << "\n";
+    *trace_stream_ << "checking " << d->kind() << "\n";
   }
   switch (d->kind()) {
     case DeclarationKind::NamespaceDeclaration:
