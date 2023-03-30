@@ -301,7 +301,7 @@ follow the Carbon documentation and coding styles.
 
 #### How to say things
 
--   Treat others with respect
+-   Treat others with respect.
 -   Recognize that other points of view are valid, and most decisions are about
     choosing the best set of trade-offs or closest alignment with Carbon's goals
     since there usually isn't a single best answer. It is important to frame
@@ -309,9 +309,9 @@ follow the Carbon documentation and coding styles.
     that they too have deep experience in the area but may have come to a
     different conclusion.
 -   Be clear when something is an opinion by using "I" or "me":
-    -   Not as helpful: `foo` is objectively better word to use
-    -   More helpful: I find `bar` confusing since it has this alternate
-        meaning, I think `foo` is clearer.
+    -   Not as helpful: "`foo` is objectively better word to use"
+    -   More helpful: "I find `bar` confusing since it has this alternate
+        meaning, I think `foo` is clearer."
 -   It can be helpful to define your terms.
 
 When trying to make a point, please employ these strategies to make your
