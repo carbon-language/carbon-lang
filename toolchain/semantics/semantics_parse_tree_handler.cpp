@@ -167,7 +167,6 @@ auto SemanticsParseTreeHandler::TryTypeConversion(ParseTree::Node parse_node,
   if (type.is_valid()) {
     return type;
   }
-  // TODO: This should use type names instead of nodes.
   CARBON_DIAGNOSTIC(TypeMismatch, Error,
                     "Type mismatch: lhs is {0}, rhs is {1}", std::string,
                     std::string);
@@ -215,7 +214,6 @@ auto SemanticsParseTreeHandler::TryTypeConversionOnArgs(
 
     auto result_type = CanTypeConvert(arg_ref_type, param_ref_type);
     if (!result_type.is_valid()) {
-      // TODO: This should use type names instead of nodes.
       CARBON_DIAGNOSTIC(
           CallArgTypeMismatch, Note,
           "Type mismatch: cannot convert argument {0} from {1} to {2}.", size_t,
@@ -963,13 +961,12 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
     node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::ReturnStatementStart);
 
     if (callable.return_type_id.is_valid()) {
-      // TODO: Stringify types, add a note pointing at the return
-      // type's parse node.
+      // TODO: Add a note pointing at the return type's parse node.
       CARBON_DIAGNOSTIC(ReturnStatementMissingExpression, Error,
-                        "Must return a {0}.", SemanticsNodeId);
+                        "Must return a {0}.", std::string);
       emitter_
           ->Build(parse_node, ReturnStatementMissingExpression,
-                  callable.return_type_id)
+                  semantics_->StringifyNode(callable.return_type_id))
           .Emit();
     }
 
@@ -991,8 +988,7 @@ auto SemanticsParseTreeHandler::HandleReturnStatement(
     } else {
       const auto new_type = CanTypeConvert(arg_type, callable.return_type_id);
       if (!new_type.is_valid()) {
-        // TODO: Stringify types, add a note pointing at the return
-        // type's parse node.
+        // TODO: Add a note pointing at the return type's parse node.
         CARBON_DIAGNOSTIC(ReturnStatementTypeMismatch, Error,
                           "Cannot convert {0} to {1}.", std::string,
                           std::string);
