@@ -159,6 +159,7 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
     case SemanticsNodeKind::Return:
     case SemanticsNodeKind::ReturnExpression:
     case SemanticsNodeKind::StringLiteral:
+    case SemanticsNodeKind::StructMemberAccess:
     case SemanticsNodeKind::StructValue:
     case SemanticsNodeKind::StubReference:
     case SemanticsNodeKind::VarStorage:
