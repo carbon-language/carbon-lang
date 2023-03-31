@@ -95,14 +95,16 @@ A readonly value cannot be mutated, cannot have its address taken, and may not
 have storage at all or a stable address of storage. They model abstract values
 like function input parameters and constants.
 
-R-values have the core semantic restriction of being "readonly". A core goal is
-to enable the implementation to freely create copies of values when useful for
-representing them as R-values without changing the meaning of a valid Carbon
-program. This allows R-values to be effectively passed in registers and
-otherwise effectively model abstract values efficiently in ways that are
-difficult with C++ and its closest approximation of `const &`. The consequence
-of this goal is that it is required for programs to have equivalent behavior
-with or without a copy being made when forming an R-value.
+R-values have the semantic restrictions of being "readonly" and behavior
+equivalent between a copy and direct access. A core goal is to enable the
+implementation to freely create copies of values when useful for representing
+them as R-values without changing the meaning of a valid Carbon program. This
+allows R-values to be effectively passed in registers and otherwise effectively
+model abstract values efficiently in ways that are difficult with C++ and its
+closest approximation of `const &`. The consequence of this goal is that it is
+required for programs to have equivalent behavior with or without a copy being
+made when forming an R-value. Coming from C++, the best mental model is that of
+a `const &` that can _also_ be passed in registers when profitable.
 
 R-values can be formed in two ways -- a literal expression like `42`, or by
 converting an L-value to an R-value.
@@ -212,14 +214,47 @@ class String {
 }
 ```
 
+When using a customized R-value representation, the `LValueToRValue` interface
+method is called on an L-value in order to construct the representation used to
+bind an R-value. Because this is done on the _L-value_, it has the opportunity
+to capture the address of the underlying object as needed, for example to
+provide semantics similar to a C++ `const &` and the `StringView` above. This
+also allows types with inline buffers or small-size-optimization buffers to
+create effective R-value representations by capturing pointers into the original
+L-value object's inline buffer.
+
+However, it is important to note that the _representation_ type of an R-value is
+just its representation and does not impact the type itself. Name lookup and
+`impl` search occur for the same type regardless of R-value or L-value. But once
+an particular method or function is selected, an implicit conversion can occur
+from the original type to the representation type as part of the parameter or
+receiver type. In fact, this conversion is the _only_ operation that can occur
+for a customized representation type, wherever it is necessary as implemented.
+
+### Interop with C++ `const &`
+
+While R-values cannot have their address taken in Carbon, they should be
+interoperable with C++ `const &`s. This will in-effect "pin" the R-value (or a
+copy) into memory and allow C++ to take its address. Without supporting this,
+R-values would likely create an untenable interop ergonomic barrier. However,
+this does create some additional constraints on R-values and a way that their
+addresses can escape unexpectedly.
+
+Despite enabling interop with `const &` and that requiring an actually address
+to implement, the address isn't guaranteed to be stable or useful or point back
+to some original L-value necessarily. The ability of the implementation to
+introduce copies or a temporary for the purpose of the interop `const &`
+remains.
+
+Open question: when a type customizes its R-value representation, as currently
+specified this will break the use of `const &` C++ APIs with an R-value. We need
+to further extend the R-value customization interface to allow types to define
+how a `const &` is manifested when needed.
+
 ## Pointers
 
-TODO
+### Dereferencing customization
+
+### Indexing
 
 ## `const`-qualified types
-
-TODO
-
-```
-
-```
