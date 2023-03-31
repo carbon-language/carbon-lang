@@ -732,6 +732,12 @@ auto SemanticsParseTreeHandler::HandleInterfaceIntroducer(
   return false;
 }
 
+auto SemanticsParseTreeHandler::HandleInvalidExpression(
+    ParseTree::Node parse_node) -> bool {
+  emitter_->Emit(parse_node, SemanticsTodo, "HandleInvalidExpression");
+  return false;
+}
+
 auto SemanticsParseTreeHandler::HandleLiteral(ParseTree::Node parse_node)
     -> bool {
   auto token = parse_tree_->node_token(parse_node);
