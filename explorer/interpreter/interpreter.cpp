@@ -218,12 +218,22 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
     case Operator::Mul:
       return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() *
                                    cast<IntValue>(*args[1]).value());
-    case Operator::Div:
-      return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() /
-                                   cast<IntValue>(*args[1]).value());
-    case Operator::Mod:
-      return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() %
-                                   cast<IntValue>(*args[1]).value());
+    case Operator::Div: {
+      const auto& lhs = cast<IntValue>(*args[0]).value();
+      const auto& rhs = cast<IntValue>(*args[1]).value();
+      if (rhs == 0) {
+        return ProgramError(source_loc) << "division by zero";
+      }
+      return arena_->New<IntValue>(lhs / rhs);
+    }
+    case Operator::Mod: {
+      const auto& lhs = cast<IntValue>(*args[0]).value();
+      const auto& rhs = cast<IntValue>(*args[1]).value();
+      if (rhs == 0) {
+        return ProgramError(source_loc) << "division by zero";
+      }
+      return arena_->New<IntValue>(lhs % rhs);
+    }
     case Operator::Not:
       return arena_->New<BoolValue>(!cast<BoolValue>(*args[0]).value());
     case Operator::And:
