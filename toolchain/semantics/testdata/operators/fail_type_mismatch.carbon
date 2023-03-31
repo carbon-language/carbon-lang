@@ -23,7 +23,7 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+1, arg1: node+2, type: nodeInvalidType},
+// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: nodeInvalidType, arg1: node+2, type: nodeInvalidType},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3, type: nodeInvalidType},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+0, arg1: block2},
 // CHECK:STDOUT: ]
@@ -43,6 +43,6 @@
 // CHECK:STDOUT: ]
 
 fn Main() -> i32 {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch.carbon:[[@LINE+1]]:13: Type mismatch: lhs is i32, rhs is f64
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch.carbon:[[@LINE+1]]:13: Cannot implicitly convert from `i32` to `f64`.
   return 12 + 3.4;
 }

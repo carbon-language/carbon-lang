@@ -166,11 +166,6 @@ class SemanticsIR {
     return node_id;
   }
 
-  // Returns the type of the requested node.
-  auto GetType(SemanticsNodeId node_id) -> SemanticsNodeId {
-    return GetNode(node_id).type_id();
-  }
-
   // Adds an empty new node block, returning an ID to reference it and add
   // items.
   auto AddNodeBlock() -> SemanticsNodeBlockId {
