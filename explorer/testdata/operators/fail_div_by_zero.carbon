@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/operators/fail_div_by_zero.carbon:[[@LINE+1]]: division by zero  
+  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/operators/fail_div_by_zero.carbon:[[@LINE+1]]: division by zero  \
   var a: auto = 5 / 0;
   return 0;
 }
