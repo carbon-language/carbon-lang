@@ -16,7 +16,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [L-values or _located_ values](#l-values-or-located-values)
 -   [R-values or _readonly_ values](#r-values-or-readonly-values)
     -   [R-value customization](#r-value-customization)
+    -   [Interop with C++ `const &`](#interop-with-c-const-)
 -   [Pointers](#pointers)
+    -   [Dereferencing customization](#dereferencing-customization)
+    -   [Indexing](#indexing)
 -   [`const`-qualified types](#const-qualified-types)
 
 <!-- tocstop -->
