@@ -12,12 +12,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Value categories](#value-categories)
 -   [Binding patterns and local variables with `let` and `var`](#binding-patterns-and-local-variables-with-let-and-var)
-    -   [Pattern match control flow](#pattern-match-control-flow)
-    -   [Pattern matching in local variables](#pattern-matching-in-local-variables)
--   [Open questions](#open-questions)
-    -   [Slice or array nested value pattern matching](#slice-or-array-nested-value-pattern-matching)
-    -   [Generic/template pattern matching](#generictemplate-pattern-matching)
-    -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
+    -   [Local variables](#local-variables)
+-   [L-values or _located_ values](#l-values-or-located-values)
+-   [R-values or _readonly_ values](#r-values-or-readonly-values)
+    -   [R-value customization](#r-value-customization)
+-   [Pointers](#pointers)
+-   [`const`-qualified types](#const-qualified-types)
 
 <!-- tocstop -->
 
