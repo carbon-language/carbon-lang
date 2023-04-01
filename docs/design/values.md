@@ -60,6 +60,18 @@ initializer for a variable pattern is directly used to initialize the storage.
 fn Consume(var x: SomeData) {
   // We can mutate and use the local `x` L-value here.
 }
+
+fn MutateThing(ptr: i64*);
+
+fn Example() {
+  let (x: i64, var y: i64) = (1, 2);
+
+  // Allowed to take the address and mutate `y`.
+  MutateThing(&y);
+
+  // ❌ This would be an error though due to trying to take the address of `x`.
+  MutateThing(&x);
+}
 ```
 
 ### Local variables
@@ -94,29 +106,66 @@ The address of the L-value is passed as a pointer to the `self` parameter.
 
 ## R-values or _readonly_ values
 
-A readonly value cannot be mutated, cannot have its address taken, and may not
-have storage at all or a stable address of storage. They model abstract values
-like function input parameters and constants.
+An R-value cannot be mutated, cannot have its address taken, and may not have
+storage at all or a stable address of storage. They model abstract values like
+function input parameters and constants. They can be formed in two ways -- a
+literal expression like `42`, or by converting an L-value to an R-value.
 
-R-values have the semantic restrictions of being "readonly" and behavior
-equivalent between a copy and direct access. A core goal is to enable the
-implementation to freely create copies of values when useful for representing
-them as R-values without changing the meaning of a valid Carbon program. This
-allows R-values to be effectively passed in registers and otherwise effectively
-model abstract values efficiently in ways that are difficult with C++ and its
-closest approximation of `const &`. The consequence of this goal is that it is
-required for programs to have equivalent behavior with or without a copy being
-made when forming an R-value. Coming from C++, the best mental model is that of
-a `const &` that can _also_ be passed in registers when profitable.
+A core goal of R-values is to provide a single model that can get both the
+efficiency of passing by value when working with small types such as those that
+fit into a machine register, but also the efficiency of minimal copies when
+working with types where a copy would require extra allocations or other costly
+resources. This directly helps programmers by providing a simpler model to
+select the mechanism of passing function inputs. But it is also important to
+enable generic code that needs a single type model that will have generically
+good performance.
 
-R-values can be formed in two ways -- a literal expression like `42`, or by
-converting an L-value to an R-value.
+To achieve this goal, a Carbon program must in general behave equivalently with
+R-values that are implemented as a _reference_ to the original object or as
+either a _copy_ or _move_ if that would be valid for the type. However, using a
+copy or a move is purely optional and an optimization. R-values support
+uncopyable and unmovable types.
+
+**Experimental:** We currently make an additional requirement that helps ensure
+this equivalence will be true and allows us to detect the most risky cases where
+it would not be true: we require that once an R-value is formed, any original
+object must not be mutated prior to the last read from that R-value. We consider
+this restriction experimental as we may want to strengthen or weaken it based on
+our experience with Carbon code using these constructs, and especially
+interoperating with C++.
+
+We expect even with these restrictions to make R-values in Carbon useful in
+roughly the same places as `const &`s in C++, but with added efficiency in the
+case where the values can usefully be kept in machine registers. We also
+specifically encourage a mental model of a `const &` with extra efficiency.
+
+### Comparison to C++ parameters
+
+While these are called _R-values_ in Carbon and sometimes shortened to just
+"values", they are not related to "by-value" parameters as they exist in C++.
+C++ by-value parameters are semantically defined to create a new local copy of
+the argument, although it may move into this copy.
+
+Carbon's values are much closer to a `const &` in C++ with extra restrictions
+such as allowing copies under "as-if" in limited cases and preventing taking the
+address. Combined, these allow implementation strategies such as in-register
+parameters.
+
+### Representation and type-based modeling
 
 The representation of an R-value binding is especially important because it
 forms the calling convention used for the vast majority of function parameters
--- function inputs. As a consequence, both the representation and the actual
-conversion of L-values to R-values is something Carbon both optimizes by default
-and allows types to directly control in order to have a more efficient model.
+-- function inputs. Given this importance, it's important that it is predictable
+and customizable by the value's type. Similarly, while Carbon code must be
+correct with either a copy or a reference-based implementation, we want which
+implementation strategy is used to be a predictable and customizable property of
+the type of a value. To achieve both of these, Carbon models forming R-values as
+a conversion to a representation type that is specified with an [interface]().
+The default implementation of this interface works to choose a good default
+based on the size and complexity of a given type, and it can be further
+customized by types as needed. For example, types with dedicated and optimized
+"view" representations can immediately use this to back any R-value, and it will
+even be used in generic code.
 
 ### R-value customization
 
@@ -221,8 +270,8 @@ When using a customized R-value representation, the `LValueToRValue` interface
 method is called on an L-value in order to construct the representation used to
 bind an R-value. Because this is done on the _L-value_, it has the opportunity
 to capture the address of the underlying object as needed, for example to
-provide semantics similar to a C++ `const &` and the `StringView` above. This
-also allows types with inline buffers or small-size-optimization buffers to
+provide an implementation similar to a C++ `const &` and the `StringView` above.
+This also allows types with inline buffers or small-size-optimization buffers to
 create effective R-value representations by capturing pointers into the original
 L-value object's inline buffer.
 
@@ -234,25 +283,74 @@ from the original type to the representation type as part of the parameter or
 receiver type. In fact, this conversion is the _only_ operation that can occur
 for a customized representation type, wherever it is necessary as implemented.
 
-### Interop with C++ `const &`
+### Polymorphic types
+
+R-values can be used with
+[polymorphic types](/docs/design/classes.md#inheritance), for example:
+
+```
+base class MyBase { ... }
+
+fn UseBase(b: MyBase) { ... }
+
+class Derived extends MyBase { ... }
+
+fn PassDerived() {
+  var d: Derived = ...;
+  // Allowed to pass `d` here:
+  UseBase(d);
+}
+```
+
+This is still allowed to create a copy or to move, but it must not _slice_. Even
+if a copy is created, it must be a `Derived` object, even though this may limit
+the available implementation strategies.
+
+### Interop with C++ `const &` and `const` methods.
 
 While R-values cannot have their address taken in Carbon, they should be
-interoperable with C++ `const &`s. This will in-effect "pin" the R-value (or a
-copy) into memory and allow C++ to take its address. Without supporting this,
-R-values would likely create an untenable interop ergonomic barrier. However,
-this does create some additional constraints on R-values and a way that their
-addresses can escape unexpectedly.
+interoperable with C++ `const &`s and C++ `const`-qualified methods. This will
+in-effect "pin" the R-value (or a copy) into memory and allow C++ to take its
+address. Without supporting this, R-values would likely create an untenable
+interop ergonomic barrier. However, this does create some additional constraints
+on R-values and a way that their addresses can escape unexpectedly.
 
-Despite enabling interop with `const &` and that requiring an actually address
-to implement, the address isn't guaranteed to be stable or useful or point back
-to some original L-value necessarily. The ability of the implementation to
-introduce copies or a temporary for the purpose of the interop `const &`
-remains.
+Despite interop requiring an address to implement, the address isn't guaranteed
+to be stable or useful or point back to some original L-value necessarily. The
+ability of the implementation to introduce copies or a temporary specifically
+for the purpose of the interop remains.
 
-Open question: when a type customizes its R-value representation, as currently
-specified this will break the use of `const &` C++ APIs with an R-value. We need
-to further extend the R-value customization interface to allow types to define
-how a `const &` is manifested when needed.
+**Open question:** when a type customizes its R-value representation, as
+currently specified this will break the use of `const &` C++ APIs with such an
+R-value. We may need to further extend the R-value customization interface to
+allow types to define how a `const &` is manifested when needed.
+
+### Escape hatches for R-values in Carbon
+
+**Open question:** It may be necessary to provide some amount of escape hatch
+for taking the address of R-values. The [C++ interop](#interop-with-c-const)
+above already takes their address. Currently, this is the extent of an escape
+hatch to the restrictions on R-values.
+
+If a further escape hatch is needed, this kind of fundamental weakening of the
+semantic model would be a good case for some syntactic marker like Rust's
+`unsafe`, although rather than a region, it would seem better to tie it directly
+to the operation in question. For example:
+
+```carbon
+class S {
+  fn ImmutableMemberFunction[me: Self]();
+  fn MutableMemberFunction[addr me: Self*]();
+}
+
+fn F(immutable_s: S) {
+  // This is fine.
+  immutable_s.ImmutableMemberFunction();
+
+  // This requires an unsafe marker in the syntax.
+  immutable_s.unsafe MutableMemberFunction();
+}
+```
 
 ## Pointers
 
