@@ -13,14 +13,22 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Value categories](#value-categories)
 -   [Binding patterns and local variables with `let` and `var`](#binding-patterns-and-local-variables-with-let-and-var)
     -   [Local variables](#local-variables)
+    -   [Consuming function parameters](#consuming-function-parameters)
 -   [L-values or _located_ values](#l-values-or-located-values)
 -   [R-values or _readonly_ values](#r-values-or-readonly-values)
+    -   [Comparison to C++ parameters](#comparison-to-c-parameters)
+    -   [Representation and type-based modeling](#representation-and-type-based-modeling)
     -   [R-value customization](#r-value-customization)
-    -   [Interop with C++ `const &`](#interop-with-c-const-)
+    -   [Polymorphic types](#polymorphic-types)
+    -   [Interop with C++ `const &` and `const` methods.](#interop-with-c-const--and-const-methods)
+    -   [Escape hatches for R-values in Carbon](#escape-hatches-for-r-values-in-carbon)
 -   [Pointers](#pointers)
+    -   [References](#references)
+    -   [Syntax](#syntax)
+    -   [Syntax-free dereference and address-of](#syntax-free-dereference-and-address-of)
     -   [Dereferencing customization](#dereferencing-customization)
-    -   [Indexing](#indexing)
 -   [`const`-qualified types](#const-qualified-types)
+-   [Lifetime overloading](#lifetime-overloading)
 
 <!-- tocstop -->
 
@@ -351,9 +359,10 @@ allow types to define how a `const &` is manifested when needed.
 ### Escape hatches for R-values in Carbon
 
 **Open question:** It may be necessary to provide some amount of escape hatch
-for taking the address of R-values. The [C++ interop](#interop-with-c-const)
-above already takes their address. Currently, this is the extent of an escape
-hatch to the restrictions on R-values.
+for taking the address of R-values. The
+[C++ interop](#interop-with-c-const--and-const-methods) above already takes
+their address. Currently, this is the extent of an escape hatch to the
+restrictions on R-values.
 
 If a further escape hatch is needed, this kind of fundamental weakening of the
 semantic model would be a good case for some syntactic marker like Rust's
@@ -547,8 +556,8 @@ get a `const`-qualified type: `const T`. This is exclusively an API-subsetting
 feature in Carbon -- for more fundamentally "immutable" use cases, R-values
 should be used instead. Pointers to `const`-qualified types in Carbon provide
 access to a shared L-value with an API subset that can help model important
-requirements like ensuring usage is exclusively via a _thread-safe_ interface
-subset of an otherwise _thread-compatible_ type.
+requirements like ensuring usage is exclusively by way of a _thread-safe_
+interface subset of an otherwise _thread-compatible_ type.
 
 The `const T` type has the same representation as `T` with the same field names,
 but all of its field types are also `const`-qualified. Other than fields, all
