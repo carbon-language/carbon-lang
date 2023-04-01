@@ -28,6 +28,7 @@
 #include "explorer/interpreter/action_stack.h"
 #include "explorer/interpreter/stack.h"
 #include "explorer/interpreter/stack_fragment.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
@@ -208,23 +209,34 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
     -> ErrorOr<Nonnull<const Value*>> {
   switch (op) {
     case Operator::Neg:
-      return arena_->New<IntValue>(-cast<IntValue>(*args[0]).value());
     case Operator::Add:
-      return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() +
-                                   cast<IntValue>(*args[1]).value());
     case Operator::Sub:
-      return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() -
-                                   cast<IntValue>(*args[1]).value());
-    case Operator::Mul:
-      return arena_->New<IntValue>(cast<IntValue>(*args[0]).value() *
-                                   cast<IntValue>(*args[1]).value());
-    case Operator::Div: {
-      const auto& lhs = cast<IntValue>(*args[0]).value();
-      const auto& rhs = cast<IntValue>(*args[1]).value();
-      if (rhs == 0) {
-        return ProgramError(source_loc) << "division by zero";
+    case Operator::Div:
+    case Operator::Mul: {
+      llvm::APInt op0(64, cast<IntValue>(*args[0]).value());
+      llvm::APInt result;
+      if (op == Operator::Neg) {
+        result = -op0;
+      } else {
+        llvm::APInt op1(64, cast<IntValue>(*args[1]).value());
+        if (op == Operator::Add) {
+          result = op0 + op1;
+        } else if (op == Operator::Sub) {
+          result = op0 - op1;
+        } else if (op == Operator::Mul) {
+          result = op0 * op1;
+        } else if (op == Operator::Div) {
+          if (op1.getSExtValue() == 0) {
+            return ProgramError(source_loc) << "division by zero";
+          }
+          result = op0.sdiv(op1);
+        }
       }
-      return arena_->New<IntValue>(lhs / rhs);
+      if (result.isSignedIntN(32)) {
+        return arena_->New<IntValue>(result.getSExtValue());
+      } else {
+        return ProgramError(source_loc) << "Integer overflow";
+      }
     }
     case Operator::Mod: {
       const auto& lhs = cast<IntValue>(*args[0]).value();
