@@ -959,6 +959,9 @@ auto Parser::HandleExpressionInPostfixState() -> void {
       break;
     }
     default: {
+      // Add a node to keep the parse tree balanced.
+      AddLeafNode(ParseNodeKind::InvalidExpression, *position_,
+                  /*has_error=*/true);
       CARBON_DIAGNOSTIC(ExpectedExpression, Error, "Expected expression.");
       emitter_->Emit(*position_, ExpectedExpression);
       ReturnErrorOnState();
