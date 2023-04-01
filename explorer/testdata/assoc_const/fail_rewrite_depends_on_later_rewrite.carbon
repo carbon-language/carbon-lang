@@ -9,11 +9,11 @@
 package ExplorerTest api;
 
 interface HasTypeAndValue {
-  let T:! Type;
+  let T:! type;
   let V:! T;
 }
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_rewrite_depends_on_later_rewrite.carbon:[[@LINE+1]]: type error in rewrite constraint: 'i32' is not implicitly convertible to '(.Self).(HasTypeAndValue.T)'
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_rewrite_depends_on_later_rewrite.carbon:[[@LINE+1]]: type error in rewrite constraint: 'i32' is not implicitly convertible to '(X).(HasTypeAndValue.T)'
 fn F(X:! HasTypeAndValue where .V = 5 and .T = i32) -> i32 { return X.V; }
 
 impl i32 as HasTypeAndValue where .T = i32 and .V = 5 {}

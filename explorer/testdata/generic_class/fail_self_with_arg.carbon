@@ -8,17 +8,17 @@
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
+class Point(T:! type) {
 
   // Error: wrote `Self(T)` instead of `Self`.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_self_with_arg.carbon:[[@LINE+1]]: in call `Self(T)`, expected callee to be a function, found `Type`
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_self_with_arg.carbon:[[@LINE+1]]: in call `Self(T)`, expected callee to be a function, found `type`
   fn Origin(zero: T) -> Self(T) {
     return {.x = zero, .y = zero};
   }
 
   // Error: wrote `Self(T)` instead of `Self`.
-  fn GetX[me: Self(T)]() -> T {
-    return me.x;
+  fn GetX[self: Self(T)]() -> T {
+    return self.x;
   }
 
   var x: T;

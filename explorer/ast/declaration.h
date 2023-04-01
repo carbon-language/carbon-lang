@@ -13,12 +13,13 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
+#include "explorer/ast/clone_context.h"
 #include "explorer/ast/impl_binding.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/return_term.h"
 #include "explorer/ast/statement.h"
-#include "explorer/ast/static_scope.h"
 #include "explorer/ast/value_category.h"
+#include "explorer/ast/value_node.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -28,6 +29,8 @@ namespace Carbon {
 
 class MixinPseudoType;
 class ConstraintType;
+class NominalClassType;
+class MatchFirstDeclaration;
 
 // Abstract base class of all AST nodes representing patterns.
 //
@@ -80,12 +83,12 @@ class Declaration : public AstNode {
     constant_value_ = value;
   }
 
-  // See static_scope.h for API.
+  // See value_node.h for API.
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
 
-  // See static_scope.h for API.
+  // See value_node.h for API.
   auto symbolic_identity() const -> std::optional<Nonnull<const Value*>> {
     return constant_value_;
   }
@@ -114,8 +117,15 @@ class Declaration : public AstNode {
   // Constructs a Declaration representing syntax at the given line number.
   // `kind` must be the enumerator corresponding to the most-derived type being
   // constructed.
-  Declaration(AstNodeKind kind, SourceLocation source_loc)
+  explicit Declaration(AstNodeKind kind, SourceLocation source_loc)
       : AstNode(kind, source_loc) {}
+
+  explicit Declaration(CloneContext& context, const Declaration& other)
+      : AstNode(context, other),
+        static_type_(context.Clone(other.static_type_)),
+        constant_value_(context.Clone(other.constant_value_)),
+        is_declared_(other.is_declared_),
+        is_type_checked_(other.is_type_checked_) {}
 
  private:
   std::optional<Nonnull<const Value*>> static_type_;
@@ -124,26 +134,110 @@ class Declaration : public AstNode {
   bool is_type_checked_ = false;
 };
 
+// Determine whether two declarations declare the same entity.
+inline auto DeclaresSameEntity(const Declaration& first,
+                               const Declaration& second) -> bool {
+  return &first == &second;
+}
+
+// A name being declared in a named declaration.
+class DeclaredName {
+ public:
+  struct NameComponent {
+    SourceLocation source_loc;
+    std::string name;
+  };
+
+  explicit DeclaredName(SourceLocation loc, std::string name)
+      : components_{{loc, std::move(name)}} {}
+
+  void Print(llvm::raw_ostream& out) const;
+
+  void Append(SourceLocation loc, std::string name) {
+    components_.push_back({loc, std::move(name)});
+  }
+
+  // Returns the location of the first name component.
+  auto source_loc() const -> SourceLocation {
+    return components_.front().source_loc;
+  }
+
+  // Returns whether this is a qualified name, as opposed to a simple
+  // single-identifier name.
+  auto is_qualified() const { return components_.size() > 1; }
+
+  // Returns a range containing the components of the name other than the final
+  // component.
+  auto qualifiers() const -> llvm::ArrayRef<NameComponent> {
+    return llvm::ArrayRef(components_).drop_back();
+  }
+
+  // Returns the innermost name, which is the unqualified name of the entity
+  // being declared. For example in `fn Namespace.Func();`, returns `"Func"`.
+  auto inner_name() const -> std::string_view {
+    return components_.back().name;
+  }
+
+ private:
+  std::vector<NameComponent> components_;
+};
+
+// A declaration of a namespace.
+class NamespaceDeclaration : public Declaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  explicit NamespaceDeclaration(SourceLocation source_loc, DeclaredName name)
+      : Declaration(AstNodeKind::NamespaceDeclaration, source_loc),
+        name_(std::move(name)) {}
+
+  explicit NamespaceDeclaration(CloneContext& context,
+                                const NamespaceDeclaration& other)
+      : Declaration(context, other), name_(other.name_) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromNamespaceDeclaration(node->kind());
+  }
+
+  auto name() const -> const DeclaredName& { return name_; }
+  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+
+ private:
+  DeclaredName name_;
+};
+
+// A function's virtual override keyword.
+enum class VirtualOverride { None, Abstract, Virtual, Impl };
+
 class CallableDeclaration : public Declaration {
  public:
-  CallableDeclaration(AstNodeKind kind, SourceLocation loc, std::string name,
+  CallableDeclaration(AstNodeKind kind, SourceLocation loc,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
-                      std::optional<Nonnull<Pattern*>> me_pattern,
+                      std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
-                      std::optional<Nonnull<Block*>> body)
+                      std::optional<Nonnull<Block*>> body,
+                      VirtualOverride virt_override)
       : Declaration(kind, loc),
-        name_(std::move(name)),
         deduced_parameters_(std::move(deduced_params)),
-        me_pattern_(me_pattern),
+        self_pattern_(self_pattern),
         param_pattern_(param_pattern),
         return_term_(return_term),
-        body_(body) {}
+        body_(body),
+        virt_override_(virt_override) {}
+
+  explicit CallableDeclaration(CloneContext& context,
+                               const CallableDeclaration& other)
+      : Declaration(context, other),
+        deduced_parameters_(context.Clone(other.deduced_parameters_)),
+        self_pattern_(context.Clone(other.self_pattern_)),
+        param_pattern_(context.Clone(other.param_pattern_)),
+        return_term_(context.Clone(other.return_term_)),
+        body_(context.Clone(other.body_)),
+        virt_override_(other.virt_override_) {}
 
   void PrintDepth(int depth, llvm::raw_ostream& out) const;
 
-  // TODO: Move name() and name_ to FunctionDeclaration
-  auto name() const -> const std::string& { return name_; }
   auto deduced_parameters() const
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_parameters_;
@@ -151,26 +245,27 @@ class CallableDeclaration : public Declaration {
   auto deduced_parameters() -> llvm::ArrayRef<Nonnull<GenericBinding*>> {
     return deduced_parameters_;
   }
-  auto me_pattern() const -> const Pattern& { return **me_pattern_; }
-  auto me_pattern() -> Pattern& { return **me_pattern_; }
+  auto self_pattern() const -> const Pattern& { return **self_pattern_; }
+  auto self_pattern() -> Pattern& { return **self_pattern_; }
   auto param_pattern() const -> const TuplePattern& { return *param_pattern_; }
   auto param_pattern() -> TuplePattern& { return *param_pattern_; }
   auto return_term() const -> const ReturnTerm& { return return_term_; }
   auto return_term() -> ReturnTerm& { return return_term_; }
   auto body() const -> std::optional<Nonnull<const Block*>> { return body_; }
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
+  auto virt_override() const -> VirtualOverride { return virt_override_; }
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
-  auto is_method() const -> bool { return me_pattern_.has_value(); }
+  auto is_method() const -> bool { return self_pattern_.has_value(); }
 
  private:
-  std::string name_;
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
-  std::optional<Nonnull<Pattern*>> me_pattern_;
+  std::optional<Nonnull<Pattern*>> self_pattern_;
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
+  VirtualOverride virt_override_;
 };
 
 class FunctionDeclaration : public CallableDeclaration {
@@ -178,27 +273,39 @@ class FunctionDeclaration : public CallableDeclaration {
   using ImplementsCarbonValueNode = void;
 
   static auto Create(Nonnull<Arena*> arena, SourceLocation source_loc,
-                     std::string name,
+                     DeclaredName name,
                      std::vector<Nonnull<AstNode*>> deduced_params,
                      Nonnull<TuplePattern*> param_pattern,
                      ReturnTerm return_term,
-                     std::optional<Nonnull<Block*>> body)
+                     std::optional<Nonnull<Block*>> body,
+                     VirtualOverride virt_override)
       -> ErrorOr<Nonnull<FunctionDeclaration*>>;
 
   // Use `Create()` instead. This is public only so Arena::New() can call it.
-  FunctionDeclaration(SourceLocation source_loc, std::string name,
+  FunctionDeclaration(SourceLocation source_loc, DeclaredName name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
-                      std::optional<Nonnull<Pattern*>> me_pattern,
+                      std::optional<Nonnull<Pattern*>> self_pattern,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
-                      std::optional<Nonnull<Block*>> body)
+                      std::optional<Nonnull<Block*>> body,
+                      VirtualOverride virt_override)
       : CallableDeclaration(AstNodeKind::FunctionDeclaration, source_loc,
-                            std::move(name), std::move(deduced_params),
-                            me_pattern, param_pattern, return_term, body) {}
+                            std::move(deduced_params), self_pattern,
+                            param_pattern, return_term, body, virt_override),
+        name_(std::move(name)) {}
+
+  explicit FunctionDeclaration(CloneContext& context,
+                               const FunctionDeclaration& other)
+      : CallableDeclaration(context, other), name_(other.name_) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromFunctionDeclaration(node->kind());
   }
+
+  auto name() const -> const DeclaredName& { return name_; }
+
+ private:
+  DeclaredName name_;
 };
 
 class DestructorDeclaration : public CallableDeclaration {
@@ -209,19 +316,25 @@ class DestructorDeclaration : public CallableDeclaration {
                                std::vector<Nonnull<AstNode*>> deduced_params,
                                Nonnull<TuplePattern*> param_pattern,
                                ReturnTerm return_term,
-                               std::optional<Nonnull<Block*>> body)
+                               std::optional<Nonnull<Block*>> body,
+                               VirtualOverride virt_override)
       -> ErrorOr<Nonnull<DestructorDeclaration*>>;
 
   // Use `Create()` instead. This is public only so Arena::New() can call it.
   DestructorDeclaration(SourceLocation source_loc,
                         std::vector<Nonnull<GenericBinding*>> deduced_params,
-                        std::optional<Nonnull<Pattern*>> me_pattern,
+                        std::optional<Nonnull<Pattern*>> self_pattern,
                         Nonnull<TuplePattern*> param_pattern,
                         ReturnTerm return_term,
-                        std::optional<Nonnull<Block*>> body)
+                        std::optional<Nonnull<Block*>> body,
+                        VirtualOverride virt_override)
       : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
-                            "destructor", std::move(deduced_params), me_pattern,
-                            param_pattern, return_term, body) {}
+                            std::move(deduced_params), self_pattern,
+                            param_pattern, return_term, body, virt_override) {}
+
+  explicit DestructorDeclaration(CloneContext& context,
+                                 const DestructorDeclaration& other)
+      : CallableDeclaration(context, other) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromDestructorDeclaration(node->kind());
@@ -234,6 +347,9 @@ class SelfDeclaration : public Declaration {
 
   explicit SelfDeclaration(SourceLocation source_loc)
       : Declaration(AstNodeKind::SelfDeclaration, source_loc) {}
+
+  explicit SelfDeclaration(CloneContext& context, const SelfDeclaration& other)
+      : Declaration(context, other) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromSelfDeclaration(node->kind());
@@ -249,7 +365,7 @@ class ClassDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  ClassDeclaration(SourceLocation source_loc, std::string name,
+  ClassDeclaration(SourceLocation source_loc, DeclaredName name,
                    Nonnull<SelfDeclaration*> self_decl,
                    ClassExtensibility extensibility,
                    std::optional<Nonnull<TuplePattern*>> type_params,
@@ -263,11 +379,14 @@ class ClassDeclaration : public Declaration {
         base_expr_(base),
         members_(std::move(members)) {}
 
+  explicit ClassDeclaration(CloneContext& context,
+                            const ClassDeclaration& other);
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromClassDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto name() const -> const DeclaredName& { return name_; }
   auto extensibility() const -> ClassExtensibility { return extensibility_; }
   auto type_params() const -> std::optional<Nonnull<const TuplePattern*>> {
     return type_params_;
@@ -275,16 +394,14 @@ class ClassDeclaration : public Declaration {
   auto type_params() -> std::optional<Nonnull<TuplePattern*>> {
     return type_params_;
   }
-  auto base_expr() const -> std::optional<Nonnull<Expression*>> {
-    return base_expr_;
-  }
   auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
   auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
 
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
-  auto destructor() const -> std::optional<Nonnull<DestructorDeclaration*>> {
+  auto destructor() const
+      -> std::optional<Nonnull<const DestructorDeclaration*>> {
     for (const auto& x : members_) {
       if (x->kind() == DeclarationKind::DestructorDeclaration) {
         return llvm::cast<DestructorDeclaration>(x);
@@ -295,22 +412,28 @@ class ClassDeclaration : public Declaration {
 
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
-  auto base() const -> std::optional<Nonnull<const ClassDeclaration*>> {
-    return base_;
+  auto base_expr() const -> std::optional<Nonnull<Expression*>> {
+    return base_expr_;
   }
-  void set_base(Nonnull<const ClassDeclaration*> base_decl) {
-    base_ = base_decl;
+
+  // Returns the original base type, before instantiation & substitutions
+  // Use `NominalClassType::base()` to get the instantiated type.
+  auto base_type() const -> std::optional<Nonnull<const NominalClassType*>> {
+    return base_type_;
+  }
+  void set_base_type(
+      std::optional<Nonnull<const NominalClassType*>> base_type) {
+    base_type_ = base_type;
   }
 
  private:
-  std::string name_;
+  DeclaredName name_;
   ClassExtensibility extensibility_;
   Nonnull<SelfDeclaration*> self_decl_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
   std::optional<Nonnull<Expression*>> base_expr_;
   std::vector<Nonnull<Declaration*>> members_;
-  std::optional<Nonnull<FunctionDeclaration*>> destructor_;
-  std::optional<Nonnull<const ClassDeclaration*>> base_;
+  std::optional<Nonnull<const NominalClassType*>> base_type_;
 };
 
 // EXPERIMENTAL MIXIN FEATURE
@@ -318,7 +441,7 @@ class MixinDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  MixinDeclaration(SourceLocation source_loc, std::string name,
+  MixinDeclaration(SourceLocation source_loc, DeclaredName name,
                    std::optional<Nonnull<TuplePattern*>> params,
                    Nonnull<GenericBinding*> self,
                    std::vector<Nonnull<Declaration*>> members)
@@ -328,11 +451,19 @@ class MixinDeclaration : public Declaration {
         self_(self),
         members_(std::move(members)) {}
 
+  explicit MixinDeclaration(CloneContext& context,
+                            const MixinDeclaration& other)
+      : Declaration(context, other),
+        name_(other.name_),
+        params_(context.Clone(other.params_)),
+        self_(context.Clone(other.self_)),
+        members_(context.Clone(other.members_)) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromMixinDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto name() const -> const DeclaredName& { return name_; }
   auto params() const -> std::optional<Nonnull<const TuplePattern*>> {
     return params_;
   }
@@ -346,7 +477,7 @@ class MixinDeclaration : public Declaration {
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
-  std::string name_;
+  DeclaredName name_;
   std::optional<Nonnull<TuplePattern*>> params_;
   Nonnull<GenericBinding*> self_;
   std::vector<Nonnull<Declaration*>> members_;
@@ -360,6 +491,8 @@ class MixDeclaration : public Declaration {
       : Declaration(AstNodeKind::MixDeclaration, source_loc),
         mixin_(mixin_type) {}
 
+  explicit MixDeclaration(CloneContext& context, const MixDeclaration& other);
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromMixDeclaration(node->kind());
   }
@@ -367,23 +500,30 @@ class MixDeclaration : public Declaration {
   auto mixin() const -> const Expression& { return **mixin_; }
   auto mixin() -> Expression& { return **mixin_; }
 
-  auto mixin_value() const -> const MixinPseudoType& { return *mixin_value_; }
+  auto mixin_value() const -> const MixinPseudoType& { return **mixin_value_; }
   void set_mixin_value(Nonnull<const MixinPseudoType*> mixin_value) {
     mixin_value_ = mixin_value;
   }
 
  private:
   std::optional<Nonnull<Expression*>> mixin_;
-  Nonnull<const MixinPseudoType*> mixin_value_;
+  std::optional<Nonnull<const MixinPseudoType*>> mixin_value_;
 };
 
 class AlternativeSignature : public AstNode {
  public:
   AlternativeSignature(SourceLocation source_loc, std::string name,
-                       Nonnull<TupleLiteral*> signature)
+                       std::optional<Nonnull<TupleLiteral*>> parameters)
       : AstNode(AstNodeKind::AlternativeSignature, source_loc),
         name_(std::move(name)),
-        signature_(signature) {}
+        parameters_(parameters) {}
+
+  explicit AlternativeSignature(CloneContext& context,
+                                const AlternativeSignature& other)
+      : AstNode(context, other),
+        name_(other.name_),
+        parameters_(context.Clone(other.parameters_)),
+        parameters_static_type_(context.Clone(other.parameters_static_type_)) {}
 
   void Print(llvm::raw_ostream& out) const override;
   void PrintID(llvm::raw_ostream& out) const override;
@@ -393,19 +533,38 @@ class AlternativeSignature : public AstNode {
   }
 
   auto name() const -> const std::string& { return name_; }
-  auto signature() const -> const TupleLiteral& { return *signature_; }
-  auto signature() -> TupleLiteral& { return *signature_; }
+  auto parameters() const -> std::optional<Nonnull<const TupleLiteral*>> {
+    return parameters_;
+  }
+  auto parameters() -> std::optional<Nonnull<TupleLiteral*>> {
+    return parameters_;
+  }
+
+  // The static type described by the parameters expression, if any. Cannot be
+  // called before type checking. This will be nullopt after type checking if
+  // this alternative does not have a parameter list.
+  auto parameters_static_type() const -> std::optional<Nonnull<const Value*>> {
+    return parameters_static_type_;
+  }
+
+  // Sets the static type of the declared entity. Can only be called once,
+  // during typechecking.
+  void set_parameters_static_type(Nonnull<const Value*> type) {
+    CARBON_CHECK(!parameters_static_type_.has_value());
+    parameters_static_type_ = type;
+  }
 
  private:
   std::string name_;
-  Nonnull<TupleLiteral*> signature_;
+  std::optional<Nonnull<TupleLiteral*>> parameters_;
+  std::optional<Nonnull<const Value*>> parameters_static_type_;
 };
 
 class ChoiceDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  ChoiceDeclaration(SourceLocation source_loc, std::string name,
+  ChoiceDeclaration(SourceLocation source_loc, DeclaredName name,
                     std::optional<Nonnull<TuplePattern*>> type_params,
                     std::vector<Nonnull<AlternativeSignature*>> alternatives)
       : Declaration(AstNodeKind::ChoiceDeclaration, source_loc),
@@ -413,11 +572,18 @@ class ChoiceDeclaration : public Declaration {
         type_params_(type_params),
         alternatives_(std::move(alternatives)) {}
 
+  explicit ChoiceDeclaration(CloneContext& context,
+                             const ChoiceDeclaration& other)
+      : Declaration(context, other),
+        name_(other.name_),
+        type_params_(context.Clone(other.type_params_)),
+        alternatives_(context.Clone(other.alternatives_)) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromChoiceDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto name() const -> const DeclaredName& { return name_; }
 
   auto type_params() const -> std::optional<Nonnull<const TuplePattern*>> {
     return type_params_;
@@ -434,18 +600,15 @@ class ChoiceDeclaration : public Declaration {
     return alternatives_;
   }
 
-  void set_members(const std::vector<NamedValue>& members) {
-    members_ = members;
-  }
-  auto members() const -> std::vector<NamedValue> { return members_; }
-
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
+  auto FindAlternative(std::string_view name) const
+      -> std::optional<const AlternativeSignature*>;
+
  private:
-  std::string name_;
+  DeclaredName name_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
   std::vector<Nonnull<AlternativeSignature*>> alternatives_;
-  std::vector<NamedValue> members_;
 };
 
 // Global variable definition implements the Declaration concept.
@@ -459,6 +622,13 @@ class VariableDeclaration : public Declaration {
         binding_(binding),
         initializer_(initializer),
         value_category_(value_category) {}
+
+  explicit VariableDeclaration(CloneContext& context,
+                               const VariableDeclaration& other)
+      : Declaration(context, other),
+        binding_(context.Clone(other.binding_)),
+        initializer_(context.Clone(other.initializer_)),
+        value_category_(other.value_category_) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromVariableDeclaration(node->kind());
@@ -479,45 +649,50 @@ class VariableDeclaration : public Declaration {
   }
 
  private:
-  // TODO: split this into a non-optional name and a type, initialized by
-  // a constructor that takes a BindingPattern and handles errors like a
-  // missing name.
   Nonnull<BindingPattern*> binding_;
   std::optional<Nonnull<Expression*>> initializer_;
   ValueCategory value_category_;
 };
 
-class InterfaceDeclaration : public Declaration {
+// Base class for constraint and interface declarations. Interfaces and named
+// constraints behave the same in most respects, but only interfaces can
+// introduce new associated functions and constants.
+class ConstraintTypeDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  InterfaceDeclaration(Nonnull<Arena*> arena, SourceLocation source_loc,
-                       std::string name,
-                       std::optional<Nonnull<TuplePattern*>> params,
-                       std::vector<Nonnull<Declaration*>> members)
-      : Declaration(AstNodeKind::InterfaceDeclaration, source_loc),
+  ConstraintTypeDeclaration(AstNodeKind kind, Nonnull<Arena*> arena,
+                            SourceLocation source_loc, DeclaredName name,
+                            std::optional<Nonnull<TuplePattern*>> params,
+                            std::vector<Nonnull<Declaration*>> members)
+      : Declaration(kind, source_loc),
         name_(std::move(name)),
         params_(params),
         self_type_(arena->New<SelfDeclaration>(source_loc)),
         members_(std::move(members)) {
     // `interface X` has `Self:! X`.
-    auto* self_type_ref = arena->New<IdentifierExpression>(source_loc, name);
+    auto* self_type_ref = arena->New<IdentifierExpression>(
+        source_loc, std::string(name_.inner_name()));
     self_type_ref->set_value_node(self_type_);
-    self_ = arena->New<GenericBinding>(source_loc, "Self", self_type_ref);
+    self_ = arena->New<GenericBinding>(source_loc, "Self", self_type_ref,
+                                       GenericBinding::BindingKind::Checked);
   }
+
+  explicit ConstraintTypeDeclaration(CloneContext& context,
+                                     const ConstraintTypeDeclaration& other);
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromInterfaceDeclaration(node->kind());
+    return InheritsFromConstraintTypeDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto name() const -> const DeclaredName& { return name_; }
   auto params() const -> std::optional<Nonnull<const TuplePattern*>> {
     return params_;
   }
   auto params() -> std::optional<Nonnull<TuplePattern*>> { return params_; }
   // Get the type of `Self`, which is a reference to the interface itself, with
   // parameters mapped to their values. For example, in `interface X(T:!
-  // Type)`, the self type is `X(T)`.
+  // type)`, the self type is `X(T)`.
   auto self_type() const -> Nonnull<const SelfDeclaration*> {
     return self_type_;
   }
@@ -545,12 +720,56 @@ class InterfaceDeclaration : public Declaration {
   }
 
  private:
-  std::string name_;
+  DeclaredName name_;
   std::optional<Nonnull<TuplePattern*>> params_;
   Nonnull<SelfDeclaration*> self_type_;
   Nonnull<GenericBinding*> self_;
   std::vector<Nonnull<Declaration*>> members_;
   std::optional<Nonnull<const ConstraintType*>> constraint_type_;
+};
+
+// A `interface` declaration.
+class InterfaceDeclaration : public ConstraintTypeDeclaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  InterfaceDeclaration(Nonnull<Arena*> arena, SourceLocation source_loc,
+                       DeclaredName name,
+                       std::optional<Nonnull<TuplePattern*>> params,
+                       std::vector<Nonnull<Declaration*>> members)
+      : ConstraintTypeDeclaration(AstNodeKind::InterfaceDeclaration, arena,
+                                  source_loc, std::move(name), params,
+                                  std::move(members)) {}
+
+  explicit InterfaceDeclaration(CloneContext& context,
+                                const InterfaceDeclaration& other)
+      : ConstraintTypeDeclaration(context, other) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromInterfaceDeclaration(node->kind());
+  }
+};
+
+// A `constraint` declaration, such as `constraint X { impl as Y; }`.
+class ConstraintDeclaration : public ConstraintTypeDeclaration {
+ public:
+  using ImplementsCarbonValueNode = void;
+
+  ConstraintDeclaration(Nonnull<Arena*> arena, SourceLocation source_loc,
+                        DeclaredName name,
+                        std::optional<Nonnull<TuplePattern*>> params,
+                        std::vector<Nonnull<Declaration*>> members)
+      : ConstraintTypeDeclaration(AstNodeKind::ConstraintDeclaration, arena,
+                                  source_loc, std::move(name), params,
+                                  std::move(members)) {}
+
+  explicit ConstraintDeclaration(CloneContext& context,
+                                 const ConstraintDeclaration& other)
+      : ConstraintTypeDeclaration(context, other) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromConstraintDeclaration(node->kind());
+  }
 };
 
 // An `extends` declaration in an interface.
@@ -560,6 +779,10 @@ class InterfaceExtendsDeclaration : public Declaration {
                               Nonnull<Expression*> base)
       : Declaration(AstNodeKind::InterfaceExtendsDeclaration, source_loc),
         base_(base) {}
+
+  explicit InterfaceExtendsDeclaration(CloneContext& context,
+                                       const InterfaceExtendsDeclaration& other)
+      : Declaration(context, other), base_(context.Clone(other.base_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromInterfaceExtendsDeclaration(node->kind());
@@ -582,6 +805,12 @@ class InterfaceImplDeclaration : public Declaration {
         impl_type_(impl_type),
         constraint_(constraint) {}
 
+  explicit InterfaceImplDeclaration(CloneContext& context,
+                                    const InterfaceImplDeclaration& other)
+      : Declaration(context, other),
+        impl_type_(context.Clone(other.impl_type_)),
+        constraint_(context.Clone(other.constraint_)) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromInterfaceImplDeclaration(node->kind());
   }
@@ -599,10 +828,16 @@ class InterfaceImplDeclaration : public Declaration {
 
 class AssociatedConstantDeclaration : public Declaration {
  public:
+  using ImplementsCarbonValueNode = void;
+
   AssociatedConstantDeclaration(SourceLocation source_loc,
                                 Nonnull<GenericBinding*> binding)
       : Declaration(AstNodeKind::AssociatedConstantDeclaration, source_loc),
         binding_(binding) {}
+
+  explicit AssociatedConstantDeclaration(
+      CloneContext& context, const AssociatedConstantDeclaration& other)
+      : Declaration(context, other), binding_(context.Clone(other.binding_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAssociatedConstantDeclaration(node->kind());
@@ -637,11 +872,13 @@ class ImplDeclaration : public Declaration {
                   std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ImplDeclaration, source_loc),
         kind_(kind),
+        deduced_parameters_(std::move(deduced_params)),
         impl_type_(impl_type),
         self_decl_(self_decl),
         interface_(interface),
-        deduced_parameters_(std::move(deduced_params)),
         members_(std::move(members)) {}
+
+  explicit ImplDeclaration(CloneContext& context, const ImplDeclaration& other);
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromImplDeclaration(node->kind());
@@ -681,42 +918,89 @@ class ImplDeclaration : public Declaration {
   auto self() const -> Nonnull<const SelfDeclaration*> { return self_decl_; }
   auto self() -> Nonnull<SelfDeclaration*> { return self_decl_; }
 
+  // Set the enclosing match_first declaration. Should only be called once,
+  // during type-checking.
+  void set_match_first(Nonnull<const MatchFirstDeclaration*> match_first) {
+    match_first_ = match_first;
+  }
+  // Get the enclosing match_first declaration, if any exists.
+  auto match_first() const
+      -> std::optional<Nonnull<const MatchFirstDeclaration*>> {
+    return match_first_;
+  }
+
  private:
   ImplKind kind_;
+  std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   Nonnull<Expression*> impl_type_;
   Nonnull<SelfDeclaration*> self_decl_;
   Nonnull<Expression*> interface_;
   std::optional<Nonnull<const ConstraintType*>> constraint_type_;
-  std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::vector<Nonnull<Declaration*>> members_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
+  std::optional<Nonnull<const MatchFirstDeclaration*>> match_first_;
+};
+
+class MatchFirstDeclaration : public Declaration {
+ public:
+  MatchFirstDeclaration(
+      SourceLocation source_loc,
+      std::vector<Nonnull<ImplDeclaration*>> impl_declarations)
+      : Declaration(AstNodeKind::MatchFirstDeclaration, source_loc),
+        impl_declarations_(std::move(impl_declarations)) {}
+
+  explicit MatchFirstDeclaration(CloneContext& context,
+                                 const MatchFirstDeclaration& other)
+      : Declaration(context, other),
+        impl_declarations_(context.Clone(other.impl_declarations_)) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromMatchFirstDeclaration(node->kind());
+  }
+
+  auto impl_declarations() const
+      -> llvm::ArrayRef<Nonnull<const ImplDeclaration*>> {
+    return impl_declarations_;
+  }
+  auto impl_declarations() -> llvm::ArrayRef<Nonnull<ImplDeclaration*>> {
+    return impl_declarations_;
+  }
+
+ private:
+  std::vector<Nonnull<ImplDeclaration*>> impl_declarations_;
 };
 
 class AliasDeclaration : public Declaration {
  public:
   using ImplementsCarbonValueNode = void;
 
-  explicit AliasDeclaration(SourceLocation source_loc, std::string name,
+  explicit AliasDeclaration(SourceLocation source_loc, DeclaredName name,
                             Nonnull<Expression*> target)
       : Declaration(AstNodeKind::AliasDeclaration, source_loc),
         name_(std::move(name)),
         target_(target) {}
 
+  explicit AliasDeclaration(CloneContext& context,
+                            const AliasDeclaration& other)
+      : Declaration(context, other),
+        name_(other.name_),
+        target_(context.Clone(other.target_)) {}
+
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromAliasDeclaration(node->kind());
   }
 
-  auto name() const -> const std::string& { return name_; }
+  auto name() const -> const DeclaredName& { return name_; }
   auto target() const -> const Expression& { return *target_; }
   auto target() -> Expression& { return *target_; }
   auto value_category() const -> ValueCategory { return ValueCategory::Let; }
 
  private:
-  std::string name_;
+  DeclaredName name_;
   Nonnull<Expression*> target_;
 };
 
-// Return the name of a declaration, if it has one.
+// Return the unqualified name of a declaration, if it has one.
 auto GetName(const Declaration&) -> std::optional<std::string_view>;
 
 }  // namespace Carbon

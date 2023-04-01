@@ -9,12 +9,12 @@
 
 package ExplorerTest api;
 
-interface SwizzleWith(T:! Type) {
-  fn Op[me: Self](x: T) -> i32;
+interface SwizzleWith(T:! type) {
+  fn Op[self: Self](x: T) -> i32;
 }
 
 impl i32 as SwizzleWith(i32) {
-  fn Op[me: Self](x: Self) -> Self { return me * 10 + x; }
+  fn Op[self: Self](x: Self) -> Self { return self * 10 + x; }
 }
 
 fn F[T:! SwizzleWith(.Self)](v: T, w: T) -> i32 {

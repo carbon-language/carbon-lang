@@ -11,19 +11,19 @@ package ExplorerTest api;
 
 class One {
   impl One as ImplicitAs(i32) {
-    fn Convert[me: Self]() -> i32 { return 1; }
+    fn Convert[self: Self]() -> i32 { return 1; }
   }
 }
 
 class Two {
   impl Two as ImplicitAs(i32) {
-    fn Convert[me: Self]() -> i32 { return 2; }
+    fn Convert[self: Self]() -> i32 { return 2; }
   }
 }
 
 class N {
   impl N as ImplicitAs(i32) {
-    fn Convert[me: Self]() -> i32 { return me.n; }
+    fn Convert[self: Self]() -> i32 { return self.n; }
   }
   var n: i32;
 }

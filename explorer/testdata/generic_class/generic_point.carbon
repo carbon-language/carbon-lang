@@ -9,13 +9,13 @@
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
+class Point(T:! type) {
   fn Origin(zero: T) -> Point(T) {
     return {.x = zero, .y = zero};
   }
 
-  fn GetX[me: Point(T)]() -> T {
-    return me.x;
+  fn GetX[self: Point(T)]() -> T {
+    return self.x;
   }
 
   var x: T;

@@ -10,7 +10,7 @@
 package ExplorerTest api;
 
 interface HasAssoc {
-  let Assoc:! Type;
+  let Assoc:! type;
   let AssocVal:! i32;
 }
 class X {

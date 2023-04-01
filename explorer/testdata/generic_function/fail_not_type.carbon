@@ -8,7 +8,7 @@
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_not_type.carbon:[[@LINE+1]]: Expected a type, but got 42
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_function/fail_not_type.carbon:[[@LINE+1]]: type error in type expression: 'i32' is not implicitly convertible to 'type'
 fn F[a:! 42]();
 
 fn Main() -> i32 {

@@ -10,12 +10,12 @@ package ExplorerTest api;
 
 class C {
   fn F() {}
-  fn G[me: Self]() {}
+  fn G[self: Self]() {}
 }
 
 fn Main() -> i32 {
   var f: auto = C.F;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_in_var.carbon:[[@LINE+1]]: Expected a type, but got member name G
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_method_in_var.carbon:[[@LINE+1]]: member name G can only be used in a member access or alias
   var g: auto = C.G;
 
   return 0;

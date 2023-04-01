@@ -8,7 +8,7 @@
 
 package ExplorerTest api;
 
-fn BadSimpleMemberAccess[T:! Type](a: T) -> T {
+fn BadSimpleMemberAccess[T:! type](a: T) -> T {
   // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_field_access_on_generic.carbon:[[@LINE+1]]: member access in unconstrained type
   return a.x;
 }

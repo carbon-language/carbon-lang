@@ -32,11 +32,11 @@ static auto operator<<(llvm::raw_ostream& out, LexedNumericLiteral::Radix radix)
 }
 
 auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
-    -> llvm::Optional<LexedNumericLiteral> {
+    -> std::optional<LexedNumericLiteral> {
   LexedNumericLiteral result;
 
   if (source_text.empty() || !IsDecimalDigit(source_text.front())) {
-    return llvm::None;
+    return std::nullopt;
   }
 
   bool seen_plus_minus = false;

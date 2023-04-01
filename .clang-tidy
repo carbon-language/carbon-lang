@@ -3,13 +3,17 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ---
+# - bugprone-exception-escape finds issues like out-of-memory in main(). We
+#   don't use exceptions, so it's unlikely to find real issues.
+# - google-readability-function-size overlaps with readability-function-size.
 # - modernize-use-nodiscard is disabled because it only fixes const methods,
 #   not non-const, which yields distracting results on accessors.
 # - performance-unnecessary-value-param is disabled because it duplicate
 #   modernize-pass-by-value.
 Checks:
   -*, bugprone-*, -bugprone-branch-clone, -bugprone-easily-swappable-parameters,
-  -bugprone-narrowing-conversions, google-*, -google-readability-todo,
+  -bugprone-exception-escape, -bugprone-narrowing-conversions, google-*,
+  -google-readability-function-size, -google-readability-todo,
   misc-definitions-in-headers, misc-misplaced-const, misc-redundant-expression,
   misc-static-assert, misc-unconventional-assign-operator,
   misc-uniqueptr-reset-release, misc-unused-*, modernize-*,
@@ -25,6 +29,7 @@ Checks:
 WarningsAsErrors: true
 CheckOptions:
   - { key: readability-identifier-naming.ClassCase, value: CamelCase }
+  - { key: readability-identifier-naming.ClassConstantCase, value: CamelCase }
   - {
       key: readability-identifier-naming.ConstexprVariableCase,
       value: CamelCase,

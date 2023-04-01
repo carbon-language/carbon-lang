@@ -5,18 +5,27 @@
 #ifndef CARBON_EXPLORER_INTERPRETER_TYPE_CHECKER_H_
 #define CARBON_EXPLORER_INTERPRETER_TYPE_CHECKER_H_
 
+#include <optional>
 #include <set>
+#include <string_view>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
 
+#include "common/error.h"
 #include "common/ostream.h"
 #include "explorer/ast/ast.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/statement.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/interpreter/builtins.h"
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
-#include "explorer/interpreter/value.h"
+#include "explorer/interpreter/matching_impl_set.h"
+#include "explorer/interpreter/trace_stream.h"
+#include "llvm/ADT/identity.h"
 
 namespace Carbon {
 
@@ -29,7 +38,7 @@ using GlobalMembersMap =
 class TypeChecker {
  public:
   explicit TypeChecker(Nonnull<Arena*> arena,
-                       std::optional<Nonnull<llvm::raw_ostream*>> trace_stream)
+                       Nonnull<TraceStream*> trace_stream)
       : arena_(arena), trace_stream_(trace_stream) {}
 
   // Type-checks `ast` and sets properties such as `static_type`, as documented
@@ -38,11 +47,24 @@ class TypeChecker {
   // processed.
   auto TypeCheck(AST& ast) -> ErrorOr<Success>;
 
-  // Construct a type that is the same as `type` except that occurrences
-  // of type variables (aka. `GenericBinding` and references to `ImplBinding`)
-  // are replaced by their corresponding type or witness in `dict`.
-  auto Substitute(const Bindings& bindings, Nonnull<const Value*> type) const
-      -> Nonnull<const Value*>;
+  // Construct a value that is the same as `value` except that occurrences
+  // of generic parameters (aka. `GenericBinding` and references to
+  // `ImplBinding`) are replaced by their corresponding value or witness in
+  // `bindings`.
+  auto Substitute(const Bindings& bindings, Nonnull<const Value*> value) const
+      -> ErrorOr<Nonnull<const Value*>>;
+
+  // Same as `Substitute`, but cast the result to the type given as a template
+  // argument, which must be explicitly specified. The `remove_cv_t` here
+  // blocks template argument deduction.
+  template <typename T>
+  auto SubstituteCast(const Bindings& bindings,
+                      Nonnull<const std::remove_cv_t<T>*> value) const
+      -> ErrorOr<Nonnull<const T*>> {
+    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> subst_value,
+                            Substitute(bindings, value));
+    return llvm::cast<T>(subst_value);
+  }
 
   // Attempts to refine a witness that might be symbolic into an impl witness,
   // using `impl` declarations that have been declared and type-checked so far.
@@ -50,22 +72,23 @@ class TypeChecker {
   auto RefineWitness(Nonnull<const Witness*> witness,
                      Nonnull<const Value*> type,
                      Nonnull<const Value*> constraint) const
-      -> Nonnull<const Witness*>;
+      -> ErrorOr<Nonnull<const Witness*>>;
 
   // If `impl` can be an implementation of interface `iface` for the given
   // `type`, then return the witness for this `impl`. Otherwise return
   // std::nullopt.
   auto MatchImpl(const InterfaceType& iface, Nonnull<const Value*> type,
-                 const ImplScope::Impl& impl, const ImplScope& impl_scope,
+                 const ImplScope::ImplFact& impl, const ImplScope& impl_scope,
                  SourceLocation source_loc) const
-      -> std::optional<Nonnull<const Witness*>>;
+      -> ErrorOr<std::optional<Nonnull<const Witness*>>>;
 
-  // Return the declaration of the member with the given name, from the class
-  // and its parents
+  // Return the declaration of the member with the given name and the class type
+  // that owns it, from the class and its parents
   auto FindMemberWithParents(std::string_view name,
-                             Nonnull<const NominalClassType*> enclosing_type)
+                             Nonnull<const NominalClassType*> enclosing_class)
       -> ErrorOr<std::optional<
-          std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>>;
+          std::tuple<Nonnull<const Value*>, Nonnull<const Declaration*>,
+                     Nonnull<const NominalClassType*>>>>;
 
   // Finds the direct or indirect member of a class or mixin by its name and
   // returns the member's declaration and type. Indirect members are members of
@@ -82,7 +105,7 @@ class TypeChecker {
   // Given the witnesses for the components of a constraint, form a witness for
   // the constraint.
   auto MakeConstraintWitness(
-      std::vector<Nonnull<const Witness*>> impl_constraint_witnesses) const
+      std::vector<Nonnull<const Witness*>> impls_constraint_witnesses) const
       -> Nonnull<const Witness*>;
 
   // Given the witnesses for the components of a constraint, form a witness for
@@ -91,9 +114,16 @@ class TypeChecker {
                                    int impl_offset) const
       -> Nonnull<const Witness*>;
 
+  // Determine whether the given intrinsic constraint is known to be satisfied
+  // in the given scope.
+  auto IsIntrinsicConstraintSatisfied(const IntrinsicConstraint& constraint,
+                                      const ImplScope& impl_scope) const
+      -> ErrorOr<bool>;
+
  private:
   class ConstraintTypeBuilder;
   class SubstitutedGenericBindings;
+  class SubstituteTransform;
   class ArgumentDeduction;
 
   // Information about the currently enclosing scopes.
@@ -113,11 +143,11 @@ class TypeChecker {
               .bindings = std::move(class_bindings)};
     }
 
-    // The innermost enclosing impl scope, within which impls should be looked
-    // up.
+    // The innermost enclosing impl scope, within which impl declarations should
+    // be looked up.
     Nonnull<ImplScope*> innermost_scope;
     // The innermost enclosing non-class impl scope, where impl declarations
-    // should introduce new impls.
+    // should introduce new implementations.
     Nonnull<ImplScope*> innermost_non_class_scope;
     // The enclosing generic bindings, if any.
     std::vector<Nonnull<const GenericBinding*>> bindings;
@@ -128,6 +158,14 @@ class TypeChecker {
     Nonnull<const InterfaceType*> interface;
     Nonnull<const Declaration*> member;
   };
+
+  // Checks a member access that might be accessing a function taking `addr
+  // self: Self*`. If it does, this function marks the member access accordingly
+  // and ensures the object argument is an lvalue.
+  auto CheckAddrMeAccess(Nonnull<MemberAccessExpression*> access,
+                         Nonnull<const FunctionDeclaration*> func_decl,
+                         const Bindings& bindings, const ImplScope& impl_scope)
+      -> ErrorOr<Success>;
 
   // Traverses the AST rooted at `e`, populating the static_type() of all nodes
   // and ensuring they follow Carbon's typing rules.
@@ -154,11 +192,18 @@ class TypeChecker {
   // surrounding context gives us that information. Otherwise, it is nullopt.
   // Implicit conversions from `expected` to the pattern's type are permitted.
   //
-  // `impl_scope` is extended with all impls implied by the pattern.
+  // `impl_scope` is extended with all implementations implied by the pattern.
   auto TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected,
                         ImplScope& impl_scope,
                         ValueCategory enclosing_value_category)
+      -> ErrorOr<Success>;
+
+  // Type checks a generic binding. `symbolic_value` is the symbolic name by
+  // which this generic binding is known in its scope. `impl_scope` is updated
+  // with the impl implied by the binding, if any.
+  auto TypeCheckGenericBinding(GenericBinding& binding,
+                               std::string_view context, ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
@@ -169,7 +214,7 @@ class TypeChecker {
       -> ErrorOr<Success>;
 
   // Perform deduction for the deduced bindings in a function call, and set its
-  // lists of generic bindings and impls.
+  // lists of generic bindings and implementations.
   //
   // -   `params` is the list of parameters.
   // -   `generic_params` indicates which parameters are generic parameters,
@@ -203,9 +248,9 @@ class TypeChecker {
   auto DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
                                const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
-  auto DeclareInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
-                                   const ScopeInfo& scope_info)
-      -> ErrorOr<Success>;
+  auto DeclareConstraintTypeDeclaration(
+      Nonnull<ConstraintTypeDeclaration*> constraint_decl,
+      const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   // Check that the deduced parameters of an impl are actually deducible from
   // the form of the interface, for a declaration of the form
@@ -235,7 +280,9 @@ class TypeChecker {
       const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
   auto DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
-                              const ScopeInfo& scope_info) -> ErrorOr<Success>;
+                              const ScopeInfo& scope_info,
+                              bool is_template_instantiation)
+      -> ErrorOr<Success>;
 
   auto DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                                 const ScopeInfo& scope_info)
@@ -243,9 +290,10 @@ class TypeChecker {
   auto DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
                                const ScopeInfo& scope_info) -> ErrorOr<Success>;
 
-  // Find all of the GenericBindings in the given pattern.
-  void CollectGenericBindingsInPattern(
-      Nonnull<const Pattern*> p,
+  // Find all of the GenericBindings in the given pattern, and assign them
+  // index numbers based on their position in the resulting vector of bindings.
+  void CollectAndNumberGenericBindingsInPattern(
+      Nonnull<Pattern*> p,
       std::vector<Nonnull<const GenericBinding*>>& generic_bindings);
 
   // Find all of the ImplBindings in the given pattern. The pattern is required
@@ -254,20 +302,20 @@ class TypeChecker {
       Nonnull<const Pattern*> p,
       std::vector<Nonnull<const ImplBinding*>>& impl_bindings);
 
-  // Add the impls from the pattern into the given `impl_scope`.
-  void BringPatternImplsIntoScope(Nonnull<const Pattern*> p,
-                                  ImplScope& impl_scope);
+  // Add the impl bindings from the pattern into the given `impl_scope`.
+  void BringPatternImplBindingsIntoScope(Nonnull<const Pattern*> p,
+                                         ImplScope& impl_scope);
 
   // Create a witness for the given `impl` binding.
   auto CreateImplBindingWitness(Nonnull<const ImplBinding*> impl_binding)
       -> Nonnull<const Witness*>;
 
   // Add the given ImplBinding to the given `impl_scope`.
-  void BringImplIntoScope(Nonnull<const ImplBinding*> impl_binding,
-                          ImplScope& impl_scope);
+  void BringImplBindingIntoScope(Nonnull<const ImplBinding*> impl_binding,
+                                 ImplScope& impl_scope);
 
   // Add all of the `impl_bindings` into the `scope`.
-  void BringImplsIntoScope(
+  void BringImplBindingsIntoScope(
       llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
       ImplScope& scope);
 
@@ -300,10 +348,10 @@ class TypeChecker {
       std::optional<Nonnull<const Declaration*>> enclosing_decl)
       -> ErrorOr<Success>;
 
-  // Type check all the members of the interface.
-  auto TypeCheckInterfaceDeclaration(Nonnull<InterfaceDeclaration*> iface_decl,
-                                     const ImplScope& impl_scope)
-      -> ErrorOr<Success>;
+  // Type check all the members of the interface or named constraint.
+  auto TypeCheckConstraintTypeDeclaration(
+      Nonnull<ConstraintTypeDeclaration*> constraint_decl,
+      const ImplScope& impl_scope) -> ErrorOr<Success>;
 
   // Bring the associated constants in `constraint` that constrain the
   // implementation of `interface` for `self` into `scope`.
@@ -326,14 +374,13 @@ class TypeChecker {
   auto ExpectReturnOnAllPaths(std::optional<Nonnull<Statement*>> opt_stmt,
                               SourceLocation source_loc) -> ErrorOr<Success>;
 
-  // Verifies that *value represents a concrete type, as opposed to a
-  // type pattern or a non-type value.
-  auto ExpectIsConcreteType(SourceLocation source_loc,
-                            Nonnull<const Value*> value) -> ErrorOr<Success>;
-
   // Returns the field names of the class together with their types.
   auto FieldTypes(const NominalClassType& class_type) const
-      -> std::vector<NamedValue>;
+      -> ErrorOr<std::vector<NamedValue>>;
+
+  // Returns the field names and types of the class and its parents.
+  auto FieldTypesWithBase(const NominalClassType& class_type) const
+      -> ErrorOr<std::vector<NamedValue>>;
 
   // Returns true if source_fields and destination_fields contain the same set
   // of names, and each value in source_fields is implicitly convertible to
@@ -342,7 +389,7 @@ class TypeChecker {
   auto FieldTypesImplicitlyConvertible(
       llvm::ArrayRef<NamedValue> source_fields,
       llvm::ArrayRef<NamedValue> destination_fields,
-      const ImplScope& impl_scope) const -> bool;
+      const ImplScope& impl_scope) const -> ErrorOr<bool>;
 
   // Returns true if *source is implicitly convertible to *destination. *source
   // and *destination must be concrete types.
@@ -354,7 +401,7 @@ class TypeChecker {
                                Nonnull<const Value*> destination,
                                const ImplScope& impl_scope,
                                bool allow_user_defined_conversions) const
-      -> bool;
+      -> ErrorOr<bool>;
 
   // Attempt to implicitly convert type-checked expression `source` to the type
   // `destination`.
@@ -363,21 +410,23 @@ class TypeChecker {
                          Nonnull<const Value*> destination)
       -> ErrorOr<Nonnull<Expression*>>;
 
+  // Checks that the given type is not a placeholder type. Diagnoses otherwise.
+  auto ExpectNonPlaceholderType(SourceLocation source_loc,
+                                Nonnull<const Value*> type) -> ErrorOr<Success>;
+
+  // Build and return class subtyping conversion expression, converting from
+  // `src_ptr` to `dest_ptr`.
+  auto BuildSubtypeConversion(Nonnull<Expression*> source,
+                              Nonnull<const PointerType*> src_ptr,
+                              Nonnull<const PointerType*> dest_ptr)
+      -> ErrorOr<Nonnull<const Expression*>>;
+
   // Determine whether `type1` and `type2` are considered to be the same type
   // in the given scope. This is true if they're structurally identical or if
   // there is an equality relation in scope that specifies that they are the
   // same.
   auto IsSameType(Nonnull<const Value*> type1, Nonnull<const Value*> type2,
                   const ImplScope& impl_scope) const -> bool;
-
-  // Check whether `actual` is implicitly convertible to `expected`
-  // and halt with a fatal compilation error if it is not.
-  //
-  // TODO: Does not actually perform the conversion if a user-defined
-  // conversion is needed. Should be used very rarely for that reason.
-  auto ExpectType(SourceLocation source_loc, std::string_view context,
-                  Nonnull<const Value*> expected, Nonnull<const Value*> actual,
-                  const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
   // Check whether `actual` is the same type as `expected` and halt with a
   // fatal compilation error if it is not.
@@ -386,9 +435,21 @@ class TypeChecker {
                        Nonnull<const Value*> actual,
                        const ImplScope& impl_scope) const -> ErrorOr<Success>;
 
+  // Rebuild a value in the current type-checking context. Applies any rewrites
+  // that are in scope and attempts to resolve associated constants using
+  // implementations that have been declared since the value was formed.
+  auto RebuildValue(Nonnull<const Value*> value) const
+      -> ErrorOr<Nonnull<const Value*>>;
+
+  // Implementation of Substitute and RebuildValue. Does not check that
+  // bindings are nonempty, nor does it trace its progress.
+  auto SubstituteImpl(const Bindings& bindings,
+                      Nonnull<const Value*> type) const
+      -> ErrorOr<Nonnull<const Value*>>;
+
   // The name of a builtin interface, with any arguments.
   struct BuiltinInterfaceName {
-    Builtins::Builtin builtin;
+    Builtin builtin;
     llvm::ArrayRef<Nonnull<const Value*>> arguments = {};
   };
   // The name of a method on a builtin interface, with any arguments.
@@ -411,12 +472,6 @@ class TypeChecker {
                                BuiltinInterfaceName interface) const
       -> ErrorOr<Nonnull<const InterfaceType*>>;
 
-  // Given an interface type, form a corresponding constraint type. The
-  // interface must be a complete type.
-  auto MakeConstraintForInterface(
-      SourceLocation source_loc, Nonnull<const InterfaceType*> iface_type) const
-      -> ErrorOr<Nonnull<const ConstraintType*>>;
-
   // Convert a value that is expected to represent a constraint into a
   // `ConstraintType`.
   auto ConvertToConstraintType(SourceLocation source_loc,
@@ -431,8 +486,8 @@ class TypeChecker {
       -> ErrorOr<Nonnull<const ConstraintType*>>;
 
   // Gets the type for the given associated constant.
-  auto GetTypeForAssociatedConstant(
-      Nonnull<const AssociatedConstant*> assoc) const -> Nonnull<const Value*>;
+  auto GetTypeForAssociatedConstant(Nonnull<const AssociatedConstant*> assoc)
+      const -> ErrorOr<Nonnull<const Value*>>;
 
   // Look up a member name in a constraint, which might be a single interface or
   // a compound constraint.
@@ -447,14 +502,14 @@ class TypeChecker {
   auto LookupRewriteInTypeOf(Nonnull<const Value*> type,
                              Nonnull<const InterfaceType*> interface,
                              Nonnull<const Declaration*> member) const
-      -> std::optional<const RewriteConstraint*>;
+      -> ErrorOr<std::optional<const RewriteConstraint*>>;
 
   // Given a witness value, look for a rewrite for the given associated
   // constant.
   auto LookupRewriteInWitness(Nonnull<const Witness*> witness,
                               Nonnull<const InterfaceType*> interface,
                               Nonnull<const Declaration*> member) const
-      -> std::optional<const RewriteConstraint*>;
+      -> ErrorOr<std::optional<const RewriteConstraint*>>;
 
   // Adds a member of a declaration to collected_members_
   auto CollectMember(Nonnull<const Declaration*> enclosing_decl,
@@ -466,22 +521,49 @@ class TypeChecker {
   auto FindCollectedMembers(Nonnull<const Declaration*> decl)
       -> CollectedMembersMap&;
 
+  // Instantiate an impl with the given set of bindings, including one or more
+  // template bindings.
+  ErrorOr<std::pair<Nonnull<ImplDeclaration*>, Nonnull<Bindings*>>>
+  InstantiateImplDeclaration(Nonnull<const ImplDeclaration*> pattern,
+                             Nonnull<const Bindings*> bindings) const;
+
   Nonnull<Arena*> arena_;
   Builtins builtins_;
 
   // Maps a mixin/class declaration to all of its direct and indirect members.
   GlobalMembersMap collected_members_;
 
-  std::optional<Nonnull<llvm::raw_ostream*>> trace_stream_;
+  Nonnull<TraceStream*> trace_stream_;
 
   // The top-level ImplScope, containing `impl` declarations that should be
   // usable from any context. This is used when we want to try to refine a
   // symbolic witness into an impl witness during substitution.
   std::optional<const ImplScope*> top_level_impl_scope_;
 
-  // `where` expressions that are currently being built. These may have
+  // Constraint types that are currently being resolved. These may have
   // rewrites that are not yet visible in any type.
-  std::vector<ConstraintTypeBuilder*> partial_where_expressions_;
+  std::vector<ConstraintTypeBuilder*> partial_constraint_types_;
+
+  // A set of implementations we're currently matching.
+  // TODO: This is `mutable` because `MatchImpl` is `const`. We need to remove
+  // the `const`s from everywhere that transitively does `impl` matching to get
+  // rid of this `mutable`.
+  mutable MatchingImplSet matching_impl_set_;
+
+  // Information about a generic that has one or more template parameters.
+  struct TemplateInfo {
+    // The original pattern, prior to any type-checking.
+    Nonnull<const Declaration*> pattern;
+    // A mapping from the bindings of the type-checked pattern to the bindings
+    // of the original.
+    std::map<const GenericBinding*, const GenericBinding*> param_map;
+    // TODO: Keep track of the instantiations we've already performed and don't
+    // do them again.
+  };
+
+  // Map from template declarations to extra information we use to type-check
+  // and instantiate the template.
+  std::map<const Declaration*, TemplateInfo> templates_;
 };
 
 }  // namespace Carbon

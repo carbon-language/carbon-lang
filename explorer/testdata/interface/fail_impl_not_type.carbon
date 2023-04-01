@@ -11,7 +11,7 @@ package ExplorerTest api;
 interface Vector {
   fn Zero() -> i32;
 }
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_not_type.carbon:[[@LINE+1]]: Expected a type, but got "hello"
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_not_type.carbon:[[@LINE+1]]: type error in type expression: 'String' is not implicitly convertible to 'type'
 impl "hello" as Vector {
   fn Zero() -> i32 { return 0; }
 }

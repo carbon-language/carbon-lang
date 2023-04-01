@@ -57,6 +57,32 @@ builders in [`error_builders.h`](common/error_builders.h). Errors caused by bugs
 in `explorer` itself should be reported with
 [`CHECK` or `FATAL`](../common/check.h).
 
+### `Decompose` functions
+
+Many of explorer's data structures provide a `Decompose` method, which allows
+simple data types to be generically decomposed into their fields. The
+`Decompose` function for a type takes a function and calls it with the fields of
+that type. For example:
+
+```
+class MyType {
+ public:
+  MyType(Type1 arg1, Type2 arg2) : arg1_(arg1), arg2_(arg2) {}
+
+  template <typename F>
+  auto Decompose(F f) const { return f(arg1_, arg2_); }
+
+ private:
+  Type1 arg1_;
+  Type2 arg2_;
+};
+```
+
+Where possible, a value equivalent to the original value should be created by
+passing the given arguments to the constructor of the type. For example,
+`my_value.Decompose([](auto ...args) { return MyType(args...); })` should
+recreate the original value.
+
 ## Example Programs (Regression Tests)
 
 The [`testdata/`](testdata/) subdirectory includes some example programs with
@@ -101,7 +127,9 @@ To explain this boilerplate:
 ### Useful commands
 
 -   `./lit_autodupate.py` -- Updates expected output.
+    -   This can be combined with `git diff` to see changes in output.
 -   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
+-   `bazel run testdata/DIR/FILE.carbon.run` -- Runs explorer on the file.
 
 ### Updating fuzzer logic after making AST changes
 

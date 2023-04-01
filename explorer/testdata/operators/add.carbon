@@ -5,18 +5,26 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: result: 6
+// CHECK:STDOUT: 12
+// CHECK:STDOUT: 19
+// CHECK:STDOUT: 26
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 class A { var n: i32; }
 
-external impl A as AddWith(i32) where .Result = A {
-  fn Op[me: Self](rhs: i32) -> A { return {.n = me.n + rhs}; }
+external impl A as Add {
+  fn Op[self: Self](rhs: A) -> A { return {.n = self.n + rhs.n}; }
 }
 
 fn Main() -> i32 {
   var a: A = {.n = 5};
-  a = a + 1;
-  return a.n;
+  var b: A = {.n = 7};
+  a = a + b;
+  Print("{0}", a.n);
+  a += b;
+  Print("{0}", a.n);
+  Print("{0}", (a + b).n);
+  return 0;
 }

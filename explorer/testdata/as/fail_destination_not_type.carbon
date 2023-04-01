@@ -9,6 +9,6 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/as/fail_destination_not_type.carbon:[[@LINE+1]]: Expected a type, but got 7
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/as/fail_destination_not_type.carbon:[[@LINE+1]]: type error in type expression: 'i32' is not implicitly convertible to 'type'
   return 4 as 7;
 }

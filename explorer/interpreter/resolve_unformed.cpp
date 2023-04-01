@@ -121,6 +121,11 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
           &cast<SimpleMemberAccessExpression>(*expression).object(), flow_facts,
           FlowFacts::ActionType::Check));
       break;
+    case ExpressionKind::BuiltinConvertExpression:
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          cast<BuiltinConvertExpression>(*expression).source_expression(),
+          flow_facts, FlowFacts::ActionType::Check));
+      break;
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::BoolLiteral:
@@ -133,6 +138,7 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::ValueLiteral:
     case ExpressionKind::IndexExpression:
     case ExpressionKind::CompoundMemberAccessExpression:
+    case ExpressionKind::BaseAccessExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::WhereExpression:
     case ExpressionKind::StructTypeLiteral:
@@ -216,7 +222,10 @@ static auto ResolveUnformed(Nonnull<const Statement*> statement,
     }
     case StatementKind::Assign: {
       const auto& assign = cast<Assign>(*statement);
-      if (assign.lhs().kind() == ExpressionKind::IdentifierExpression) {
+      if (assign.op() != AssignOperator::Plain) {
+        CARBON_RETURN_IF_ERROR(ResolveUnformed(&assign.lhs(), flow_facts,
+                                               FlowFacts::ActionType::Check));
+      } else if (assign.lhs().kind() == ExpressionKind::IdentifierExpression) {
         CARBON_RETURN_IF_ERROR(ResolveUnformed(&assign.lhs(), flow_facts,
                                                FlowFacts::ActionType::Form));
       } else {
@@ -226,6 +235,12 @@ static auto ResolveUnformed(Nonnull<const Statement*> statement,
       }
       CARBON_RETURN_IF_ERROR(ResolveUnformed(&assign.rhs(), flow_facts,
                                              FlowFacts::ActionType::Check));
+      break;
+    }
+    case StatementKind::IncrementDecrement: {
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&cast<IncrementDecrement>(statement)->argument(),
+                          flow_facts, FlowFacts::ActionType::Check));
       break;
     }
     case StatementKind::ExpressionStatement: {
@@ -294,11 +309,14 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
       }
       break;
     }
+    case DeclarationKind::NamespaceDeclaration:
     case DeclarationKind::ClassDeclaration:
     case DeclarationKind::MixDeclaration:
     case DeclarationKind::MixinDeclaration:
     case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ConstraintDeclaration:
     case DeclarationKind::ImplDeclaration:
+    case DeclarationKind::MatchFirstDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::VariableDeclaration:
     case DeclarationKind::InterfaceExtendsDeclaration:

@@ -9,7 +9,7 @@
 
 package ExplorerTest api;
 
-class A { fn F[me: Self]() -> i32 { return 0; } }
+class A { fn F[self: Self]() -> i32 { return 0; } }
 
 fn Main() -> i32 {
   // {} is a bit strange: its type is {}. Make sure we can properly convert a

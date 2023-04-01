@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 interface Iface { let N:! i32; }
 
-fn PickType(N: i32) -> Type { return i32; }
+fn PickType(N: i32) -> type { return i32; }
 
 fn F[T:! Iface](x: T) -> i32 {
   // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_unknown_value.carbon:[[@LINE+1]]: value of associated constant (T).(Iface.N) is not known

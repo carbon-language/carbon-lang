@@ -15,7 +15,7 @@ interface B { fn F() -> i32; }
 impl i32 as A { fn F() -> i32 { return 1; } }
 impl i32 as B { fn F() -> i32 { return 2; } }
 
-fn GetAB(T:! B where .Self is A) -> i32 {
+fn GetAB(T:! B where .Self impls A) -> i32 {
   return 100 * T.(A.F)() + 10 * T.(B.F)() + T.F();
 }
 

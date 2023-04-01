@@ -9,14 +9,14 @@
 
 package ExplorerTest api;
 
-class Wrap(T:! Type) {
+class Wrap(T:! type) {
   var v: T;
 }
-fn MakeWrap[T:! Type](x: T) -> Wrap(T) { return {.v = x}; }
+fn MakeWrap[T:! type](x: T) -> Wrap(T) { return {.v = x}; }
 
-impl forall [T:! Type] Wrap(T) as ImplicitAs(T) {
-  fn Convert[me: Self]() -> T {
-    return me.v;
+impl forall [T:! type] Wrap(T) as ImplicitAs(T) {
+  fn Convert[self: Self]() -> T {
+    return self.v;
   }
 }
 

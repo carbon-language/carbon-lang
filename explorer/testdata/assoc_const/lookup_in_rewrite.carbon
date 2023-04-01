@@ -19,18 +19,18 @@
 package ExplorerTest api;
 
 interface Hashable {
-  fn Hash[me: Self]() -> i32;
+  fn Hash[self: Self]() -> i32;
 }
 
 class Potato {
   external impl as Hashable {
-    fn Hash[me: Self]() -> i32 {
+    fn Hash[self: Self]() -> i32 {
       Print("Potato.(Hashable.Hash)");
       return 1;
     }
   }
 
-  fn Hash[me: Self]() -> i32 {
+  fn Hash[self: Self]() -> i32 {
     Print("Potato.Hash");
     return 2;
   }
@@ -42,9 +42,9 @@ interface Maker {
 }
 
 external impl i32 as Hashable {
-  fn Hash[me: Self]() -> i32 {
+  fn Hash[self: Self]() -> i32 {
     Print("i32.Hash");
-    return me;
+    return self;
   }
 }
 

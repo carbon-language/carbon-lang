@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_nested_binding.carbon:[[@LINE+1]]: The type of a binding pattern cannot contain bindings.
-  var x: (T: Type) = 1;
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_nested_binding.carbon:[[@LINE+1]]: the type of a binding pattern cannot contain bindings
+  var x: (T: type) = 1;
   return 1;
 }

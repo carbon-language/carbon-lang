@@ -124,7 +124,7 @@ TEST(AstToProtoTest, SetsAllProtoFields) {
 auto main(int argc, char** argv) -> int {
   ::testing::InitGoogleTest(&argc, argv);
   // gtest should remove flags, leaving just input files.
-  Carbon::Testing::carbon_files =
-      new std::vector<llvm::StringRef>(&argv[1], &argv[argc]);
+  std::vector<llvm::StringRef> carbon_files(&argv[1], &argv[argc]);
+  Carbon::Testing::carbon_files = &carbon_files;
   return RUN_ALL_TESTS();
 }

@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <cstring>
 
-#include "common/check.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
@@ -35,7 +34,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
 
   // Now parse it into a tree. Note that parsing will (when asserts are enabled)
   // walk the entire tree to verify it so we don't have to do that here.
-  ParseTree::Parse(tokens, NullDiagnosticConsumer());
+  ParseTree::Parse(tokens, NullDiagnosticConsumer(), /*vlog_stream=*/nullptr);
   return 0;
 }
 

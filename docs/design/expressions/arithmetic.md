@@ -128,7 +128,7 @@ Signed integer arithmetic produces the usual mathematical result. Unsigned
 integer arithmetic in `uN` wraps around modulo 2<sup>`N`</sup>.
 
 Division truncates towards zero. The result of the `%` operator is defined by
-the equation `a % b == a - a / b * b`.
+the equation `a % b == a - (a / b) * b`.
 
 #### Overflow and other error conditions
 
@@ -193,16 +193,16 @@ following family of interfaces:
 ```
 // Unary `-`.
 interface Negate {
-  let Result:! Type = Self;
-  fn Op[me: Self]() -> Result;
+  let Result:! type = Self;
+  fn Op[self: Self]() -> Result;
 }
 ```
 
 ```
 // Binary `+`.
-interface AddWith(U:! Type) {
-  let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+interface AddWith(U:! type) {
+  let Result:! type = Self;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint Add {
   extends AddWith(Self) where .Result = Self;
@@ -211,9 +211,9 @@ constraint Add {
 
 ```
 // Binary `-`.
-interface SubWith(U:! Type) {
-  let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+interface SubWith(U:! type) {
+  let Result:! type = Self;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint Sub {
   extends SubWith(Self) where .Result = Self;
@@ -222,9 +222,9 @@ constraint Sub {
 
 ```
 // Binary `*`.
-interface MulWith(U:! Type) {
-  let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+interface MulWith(U:! type) {
+  let Result:! type = Self;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint Mul {
   extends MulWith(Self) where .Result = Self;
@@ -233,9 +233,9 @@ constraint Mul {
 
 ```
 // Binary `/`.
-interface DivWith(U:! Type) {
-  let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+interface DivWith(U:! type) {
+  let Result:! type = Self;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint Div {
   extends DivWith(Self) where .Result = Self;
@@ -244,9 +244,9 @@ constraint Div {
 
 ```
 // Binary `%`.
-interface ModWith(U:! Type) {
-  let Result:! Type = Self;
-  fn Op[me: Self](other: U) -> Result;
+interface ModWith(U:! type) {
+  let Result:! type = Self;
+  fn Op[self: Self](other: U) -> Result;
 }
 constraint Mod {
   extends ModWith(Self) where .Result = Self;

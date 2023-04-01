@@ -57,10 +57,10 @@ The following words are interpreted as keywords:
 -   `friend`
 -   `if`
 -   `impl`
+-   `impls`
 -   `import`
 -   `in`
 -   `interface`
--   `is`
 -   `let`
 -   `library`
 -   `like`
@@ -78,6 +78,7 @@ The following words are interpreted as keywords:
 -   `returned`
 -   `Self`
 -   `then`
+-   `type`
 -   `var`
 -   `virtual`
 -   `where`

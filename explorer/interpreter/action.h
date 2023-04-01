@@ -14,10 +14,10 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/statement.h"
+#include "explorer/ast/value.h"
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/heap_allocation_interface.h"
 #include "explorer/interpreter/stack.h"
-#include "explorer/interpreter/value.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Support/Compiler.h"
 
@@ -27,12 +27,6 @@ namespace Carbon {
 // not compile-time constants.
 class RuntimeScope {
  public:
-  enum class State {
-    Normal = 0,
-    Destructor = 1,
-    CleanUpped = 2,
-  };
-
   // Returns a RuntimeScope whose Get() operation for a given name returns the
   // storage owned by the first entry in `scopes` that defines that name. This
   // behavior is closely analogous to a `[&]` capture in C++, hence the name.
@@ -42,21 +36,21 @@ class RuntimeScope {
       -> RuntimeScope;
 
   // Constructs a RuntimeScope that allocates storage in `heap`.
-  explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap)
-      : heap_(heap), destructor_scope_(State::Normal) {}
+  explicit RuntimeScope(Nonnull<HeapAllocationInterface*> heap) : heap_(heap) {}
 
   // Moving a RuntimeScope transfers ownership of its allocations.
   RuntimeScope(RuntimeScope&&) noexcept;
   auto operator=(RuntimeScope&&) noexcept -> RuntimeScope&;
 
-  // Deallocates any allocations in this scope from `heap`.
-  ~RuntimeScope();
-
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
+  // Binds `value` as the value of `value_node`.
+  void Bind(ValueNodeView value_node, Nonnull<const Value*> value);
+
   // Allocates storage for `value_node` in `heap`, and initializes it with
   // `value`.
+  // TODO: Update existing callers to use Bind instead, where appropriate.
   void Initialize(ValueNodeView value_node, Nonnull<const Value*> value);
 
   // Transfers the names and allocations from `other` into *this. The two
@@ -69,23 +63,9 @@ class RuntimeScope {
       -> std::optional<Nonnull<const LValue*>>;
 
   // Returns the local values in created order
-  auto locals() const -> std::vector<Nonnull<const LValue*>> {
-    std::vector<Nonnull<const LValue*>> res;
-    for (const auto& entry : locals_) {
-      res.push_back(entry.second);
-    }
-    return res;
+  auto allocations() const -> const std::vector<AllocationId>& {
+    return allocations_;
   }
-
-  // Return scope state
-  // Normal     = Scope is not bind at the top of a destructor call
-  // Destructor = Scope is bind to a destructor call and was not cleaned up,
-  // CleanedUp  = Scope is bind to a destructor call and is cleaned up
-  auto DestructionState() const -> State { return destructor_scope_; }
-
-  // Transit the state from Normal to Destructor
-  // Transit the state from Destructor to CleanUpped
-  void TransitState();
 
  private:
   llvm::MapVector<ValueNodeView, Nonnull<const LValue*>,
@@ -93,7 +73,6 @@ class RuntimeScope {
       locals_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
-  State destructor_scope_;
 };
 
 // An Action represents the current state of a self-contained computation,
@@ -114,12 +93,12 @@ class Action {
     LValAction,
     ExpressionAction,
     WitnessAction,
-    PatternAction,
     StatementAction,
     DeclarationAction,
     ScopeAction,
     RecursiveAction,
     CleanUpAction,
+    DestroyAction
   };
 
   Action(const Value&) = delete;
@@ -237,24 +216,6 @@ class WitnessAction : public Action {
   Nonnull<const Witness*> witness_;
 };
 
-// An Action which implements evaluation of a Pattern. The result is expressed
-// as a Value.
-class PatternAction : public Action {
- public:
-  explicit PatternAction(Nonnull<const Pattern*> pattern)
-      : Action(Kind::PatternAction), pattern_(pattern) {}
-
-  static auto classof(const Action* action) -> bool {
-    return action->kind() == Kind::PatternAction;
-  }
-
-  // The Pattern this Action evaluates.
-  auto pattern() const -> const Pattern& { return *pattern_; }
-
- private:
-  Nonnull<const Pattern*> pattern_;
-};
-
 // An Action which implements execution of a Statement. Does not produce a
 // result.
 class StatementAction : public Action {
@@ -291,21 +252,50 @@ class DeclarationAction : public Action {
   Nonnull<const Declaration*> declaration_;
 };
 
-class CleanupAction : public Action {
+// An Action which implements destroying all local allocations in a scope.
+class CleanUpAction : public Action {
  public:
-  explicit CleanupAction(RuntimeScope scope) : Action(Kind::CleanUpAction) {
-    locals_count_ = scope.locals().size();
+  explicit CleanUpAction(RuntimeScope scope)
+      : Action(Kind::CleanUpAction),
+        allocations_count_(scope.allocations().size()) {
     StartScope(std::move(scope));
   }
 
-  auto locals_count() const -> int { return locals_count_; }
+  auto allocations_count() const -> int { return allocations_count_; }
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::CleanUpAction;
   }
 
  private:
-  int locals_count_;
+  int allocations_count_;
+};
+
+// An Action which implements destroying a single value, including all nested
+// values.
+class DestroyAction : public Action {
+ public:
+  // lvalue: Address of the object to be destroyed
+  // value:  The value to be destroyed
+  //         In most cases the lvalue address points to value
+  //         In the case that the member of a class is to be destroyed,
+  //         the lvalue points to the address of the class object
+  //         and the value is the member of the class
+  explicit DestroyAction(Nonnull<const LValue*> lvalue,
+                         Nonnull<const Value*> value)
+      : Action(Kind::DestroyAction), lvalue_(lvalue), value_(value) {}
+
+  static auto classof(const Action* action) -> bool {
+    return action->kind() == Kind::DestroyAction;
+  }
+
+  auto lvalue() const -> Nonnull<const LValue*> { return lvalue_; }
+
+  auto value() const -> Nonnull<const Value*> { return value_; }
+
+ private:
+  Nonnull<const LValue*> lvalue_;
+  Nonnull<const Value*> value_;
 };
 
 // Action which does nothing except introduce a new scope into the action

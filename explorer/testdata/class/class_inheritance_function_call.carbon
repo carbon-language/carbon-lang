@@ -33,7 +33,7 @@ fn Main() -> i32 {
   // Note: D.FunctionC(0); is not accessible
 
   // Calling function from class object
-  var d: D = {};
+  var d: D = {.base={}};
   d.FunctionC(1);
   d.FunctionD(2);
   return 0;

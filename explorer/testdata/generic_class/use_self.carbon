@@ -9,14 +9,14 @@
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
+class Point(T:! type) {
   // Allowed: `Self` means `Point(T)` here.
   fn Origin(zero: T) -> Self {
     return {.x = zero, .y = zero};
   }
 
-  fn GetX[me: Self]() -> T {
-    return me.x;
+  fn GetX[self: Self]() -> T {
+    return self.x;
   }
 
   var x: T;

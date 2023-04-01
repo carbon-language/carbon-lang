@@ -8,10 +8,10 @@
 
 package ExplorerTest api;
 
-interface Vector(Scalar:! Type) {
+interface Vector(Scalar:! type) {
 }
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as_parameterized.carbon:[[@LINE+1]]: Expected a type, but got Vector
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as_parameterized.carbon:[[@LINE+1]]: 'Vector' must be given an argument list
 external impl i32 as Vector {}
 
 fn Main() -> i32 {

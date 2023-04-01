@@ -9,7 +9,7 @@
 
 namespace Carbon {
 
-// Updates variable declarations for `var name: Type`.
+// Updates variable declarations for `var name: type`.
 class ForRange : public Matcher {
  public:
   using Matcher::Matcher;

@@ -20,7 +20,7 @@ class StringLiteralTest : public ::testing::Test {
   StringLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
 
   auto Lex(llvm::StringRef text) -> LexedStringLiteral {
-    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
+    std::optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
     CARBON_CHECK(result);
     EXPECT_EQ(result->text(), text);
     return *result;
@@ -92,8 +92,8 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
 
   for (llvm::StringLiteral test : valid) {
     SCOPED_TRACE(test);
-    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
-    EXPECT_TRUE(result.hasValue());
+    std::optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
+    EXPECT_TRUE(result.has_value());
     if (result) {
       EXPECT_EQ(result->text(), test);
     }
@@ -117,8 +117,8 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
 
   for (llvm::StringLiteral test : invalid) {
     SCOPED_TRACE(test);
-    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
-    EXPECT_TRUE(result.hasValue());
+    std::optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
+    EXPECT_TRUE(result.has_value());
     if (result) {
       EXPECT_FALSE(result->is_terminated());
     }
@@ -202,13 +202,15 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
       // Trailing whitespace handling.
       {"'''\n  Hello \\\n  World \t \n  Bye!  \\\n  '''",
        "Hello World\nBye!  "},
+      {"'''\n\\t\n'''", "\t\n"},
+      {"'''\n\\t \n'''", "\t\n"},
   };
 
-  for (auto [test, contents] : testcases) {
+  for (auto [test, expected] : testcases) {
     error_tracker.Reset();
     auto value = Parse(test.trim());
     EXPECT_FALSE(error_tracker.seen_error()) << "`" << test << "`";
-    EXPECT_EQ(value, contents);
+    EXPECT_EQ(value, expected);
   }
 }
 

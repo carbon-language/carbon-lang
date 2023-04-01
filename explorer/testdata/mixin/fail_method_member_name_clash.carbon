@@ -9,13 +9,13 @@
 package ExplorerTest api;
 
 __mixin M {
-  fn F[me: Self](x: Self) -> Self{
+  fn F[self: Self](x: Self) -> Self{
      return x;
   }
 }
 
 class C {
-  fn F[me: Self](x: Self) -> Self {
+  fn F[self: Self](x: Self) -> Self {
      return x;
   }
   __mix M;

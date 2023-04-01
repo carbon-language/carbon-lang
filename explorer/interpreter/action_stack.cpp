@@ -19,20 +19,6 @@ void ActionStack::Print(llvm::raw_ostream& out) const {
   }
 }
 
-// OBSOLETE
-void ActionStack::PrintScopes(llvm::raw_ostream& out) const {
-  llvm::ListSeparator sep(" ## ");
-  for (const std::unique_ptr<Action>& action : todo_) {
-    if (action->scope().has_value()) {
-      out << sep << *action->scope();
-    }
-  }
-  if (globals_.has_value()) {
-    out << sep << *globals_;
-  }
-  // TODO: should we print constants as well?
-}
-
 void ActionStack::Start(std::unique_ptr<Action> action) {
   result_ = std::nullopt;
   CARBON_CHECK(todo_.IsEmpty());
@@ -79,7 +65,7 @@ auto ActionStack::ValueOfNode(ValueNodeView value_node,
   // We don't know the value of this node, but at compile time we may still be
   // able to form a symbolic value for it. For example, in
   //
-  //   fn F[T:! Type](x: T) {}
+  //   fn F[T:! type](x: T) {}
   //
   // ... we don't know the value of `T` but can still symbolically evaluate it
   // to a `VariableType`. At runtime we need actual values.
@@ -109,7 +95,7 @@ void ActionStack::MergeScope(RuntimeScope scope) {
   CARBON_FATAL() << "No current scope";
 }
 
-void ActionStack::InitializeFragment(ContinuationValue::StackFragment& fragment,
+void ActionStack::InitializeFragment(StackFragment& fragment,
                                      Nonnull<const Statement*> body) {
   std::vector<Nonnull<const RuntimeScope*>> scopes;
   for (const std::unique_ptr<Action>& action : todo_) {
@@ -144,7 +130,6 @@ static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
     case Action::Kind::ExpressionAction:
     case Action::Kind::WitnessAction:
     case Action::Kind::LValAction:
-    case Action::Kind::PatternAction:
       return FinishActionKind::Value;
     case Action::Kind::StatementAction:
     case Action::Kind::DeclarationAction:
@@ -152,6 +137,7 @@ static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
       return FinishActionKind::NoValue;
     case Action::Kind::ScopeAction:
     case Action::Kind::CleanUpAction:
+    case Action::Kind::DestroyAction:
       return FinishActionKind::NeverCalled;
   }
 }
@@ -238,7 +224,7 @@ auto ActionStack::UnwindToWithCaptureScopesToDestroy(
     auto& scope = item->scope();
     if (scope && item->kind() != Action::Kind::CleanUpAction) {
       std::unique_ptr<Action> cleanup_action =
-          std::make_unique<CleanupAction>(std::move(*scope));
+          std::make_unique<CleanUpAction>(std::move(*scope));
       scopes_to_destroy.push(std::move(cleanup_action));
     }
   }
@@ -285,7 +271,7 @@ auto ActionStack::Resume(Nonnull<const ContinuationValue*> continuation)
     -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
-  continuation->stack().RestoreTo(todo_);
+  static_cast<StackFragment&>(continuation->representation()).RestoreTo(todo_);
   return Success();
 }
 
@@ -304,7 +290,8 @@ auto ActionStack::Suspend() -> ErrorOr<Success> {
   const auto& continuation =
       llvm::cast<const ContinuationValue>(*todo_.Top()->results()[0]);
   // Update the continuation with the paused stack.
-  continuation.stack().StoreReversed(std::move(paused));
+  static_cast<StackFragment&>(continuation.representation())
+      .StoreReversed(std::move(paused));
   return Success();
 }
 
@@ -313,11 +300,7 @@ void ActionStack::PopScopes(
   while (!todo_.IsEmpty() && llvm::isa<ScopeAction>(*todo_.Top())) {
     auto act = todo_.Pop();
     if (act->scope()) {
-      if ((*act->scope()).DestructionState() <
-          RuntimeScope::State::CleanUpped) {
-        (*act->scope()).TransitState();
-        cleanup_stack.push(std::move(act));
-      }
+      cleanup_stack.push(std::move(act));
     }
   }
 }
@@ -336,7 +319,7 @@ void ActionStack::PushCleanUpActions(
     auto& act = actions.top();
     if (act->scope()) {
       std::unique_ptr<Action> cleanup_action =
-          std::make_unique<CleanupAction>(std::move(*act->scope()));
+          std::make_unique<CleanUpAction>(std::move(*act->scope()));
       todo_.Push(std::move(cleanup_action));
     }
     actions.pop();
@@ -347,7 +330,7 @@ void ActionStack::PushCleanUpAction(std::unique_ptr<Action> act) {
   auto& scope = act->scope();
   if (scope && act->kind() != Action::Kind::CleanUpAction) {
     std::unique_ptr<Action> cleanup_action =
-        std::make_unique<CleanupAction>(std::move(*scope));
+        std::make_unique<CleanUpAction>(std::move(*scope));
     todo_.Push(std::move(cleanup_action));
   }
 }

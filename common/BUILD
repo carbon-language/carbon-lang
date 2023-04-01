@@ -14,7 +14,10 @@ cc_library(
 
 cc_library(
     name = "check",
-    srcs = ["check_internal.h"],
+    srcs = [
+        "check_internal.cpp",
+        "check_internal.h",
+    ],
     hdrs = ["check.h"],
     deps = [
         "@llvm-project//llvm:Support",
@@ -26,6 +29,31 @@ cc_test(
     srcs = ["check_test.cpp"],
     deps = [
         ":check",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "enum_base",
+    hdrs = ["enum_base.h"],
+    deps = [
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "enum_base_test_def",
+    textual_hdrs = ["enum_base_test.def"],
+)
+
+cc_test(
+    name = "enum_base_test",
+    srcs = ["enum_base_test.cpp"],
+    deps = [
+        ":enum_base",
+        ":enum_base_test_def",
         "//common:gtest_main",
         "@com_google_googletest//:gtest",
     ],
@@ -115,5 +143,24 @@ cc_test(
         "//common:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "vlog",
+    srcs = ["vlog_internal.h"],
+    hdrs = ["vlog.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "vlog_test",
+    srcs = ["vlog_test.cpp"],
+    deps = [
+        ":vlog",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )

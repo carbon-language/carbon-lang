@@ -14,9 +14,9 @@ class Point {
     return {.x = 0, .y = 0};
   }
 
-  fn GetSetX[addr me: Point*](x: i32) -> i32 {
-    var old: auto = (*me).x;
-    (*me).x = x;
+  fn GetSetX[addr self: Point*](x: i32) -> i32 {
+    var old: auto = (*self).x;
+    (*self).x = x;
     return old;
   }
 
@@ -26,7 +26,7 @@ class Point {
 
 fn Main() -> i32 {
   let p: Point = Point.Origin();
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_let.carbon:[[@LINE+1]]: method GetSetX requires its receiver to be an lvalue
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_let.carbon:[[@LINE+1]]: method p.GetSetX requires its receiver to be an lvalue
   var x: auto = p.GetSetX(42);
   if (p.x == 42) {
     return x;

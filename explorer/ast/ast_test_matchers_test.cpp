@@ -101,8 +101,9 @@ TEST(MatchesReturnTest, BasicUsage) {
 TEST(MatchesFunctionDeclarationTest, BasicUsage) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
-  FunctionDeclaration decl(DummyLoc, "Foo", {}, std::nullopt, &params,
-                           ReturnTerm::Omitted(DummyLoc), &body);
+  FunctionDeclaration decl(DummyLoc, DeclaredName(DummyLoc, "Foo"), {},
+                           std::nullopt, &params, ReturnTerm::Omitted(DummyLoc),
+                           &body, VirtualOverride::None);
 
   EXPECT_THAT(decl, MatchesFunctionDeclaration());
   EXPECT_THAT(&decl, MatchesFunctionDeclaration());
@@ -114,8 +115,9 @@ TEST(MatchesFunctionDeclarationTest, BasicUsage) {
   EXPECT_THAT(decl,
               Not(MatchesFunctionDeclaration().WithBody(MatchesLiteral(0))));
 
-  FunctionDeclaration forward_decl(DummyLoc, "Foo", {}, std::nullopt, &params,
-                                   ReturnTerm::Omitted(DummyLoc), std::nullopt);
+  FunctionDeclaration forward_decl(
+      DummyLoc, DeclaredName(DummyLoc, "Foo"), {}, std::nullopt, &params,
+      ReturnTerm::Omitted(DummyLoc), std::nullopt, VirtualOverride::None);
   EXPECT_THAT(forward_decl, MatchesFunctionDeclaration().WithName("Foo"));
   EXPECT_THAT(forward_decl, Not(MatchesFunctionDeclaration().WithBody(_)));
 
@@ -147,8 +149,9 @@ TEST(MatchesUnimplementedExpressionTest, BasicUsage) {
 TEST(ASTDeclarationsTest, BasicUsage) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
-  FunctionDeclaration decl(DummyLoc, "Foo", {}, std::nullopt, &params,
-                           ReturnTerm::Omitted(DummyLoc), &body);
+  FunctionDeclaration decl(DummyLoc, DeclaredName(DummyLoc, "Foo"), {},
+                           std::nullopt, &params, ReturnTerm::Omitted(DummyLoc),
+                           &body, VirtualOverride::None);
   AST ast = {.declarations = {&decl}};
 
   EXPECT_THAT(ast, ASTDeclarations(ElementsAre(MatchesFunctionDeclaration())));

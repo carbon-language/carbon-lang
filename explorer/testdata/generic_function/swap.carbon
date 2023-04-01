@@ -9,7 +9,7 @@
 
 package ExplorerTest api;
 
-fn swap[T:! Type, U:! Type](tuple: (T, U)) -> (U, T) {
+fn swap[T:! type, U:! type](tuple: (T, U)) -> (U, T) {
   return (tuple[1], tuple[0]);
 }
 

@@ -11,7 +11,7 @@ package ExplorerTest api;
 fn Main () -> i32
 {
   // 42 cannot be used as the type of a variable.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_var_type.carbon:[[@LINE+1]]: Expected a type, but got 42
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_var_type.carbon:[[@LINE+1]]: type error in type of name binding: 'i32' is not implicitly convertible to 'type'
   var x: 42 = 0;
   return x;
 }

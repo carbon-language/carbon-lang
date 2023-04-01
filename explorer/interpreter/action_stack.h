@@ -11,8 +11,9 @@
 
 #include "common/ostream.h"
 #include "explorer/ast/statement.h"
+#include "explorer/ast/value.h"
 #include "explorer/interpreter/action.h"
-#include "explorer/interpreter/value.h"
+#include "explorer/interpreter/stack_fragment.h"
 
 namespace Carbon {
 
@@ -32,9 +33,6 @@ class ActionStack {
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
-
-  // TODO: consider unifying with Print.
-  void PrintScopes(llvm::raw_ostream& out) const;
 
   // Starts execution with `action` at the top of the stack. Cannot be called
   // when IsEmpty() is false.
@@ -60,7 +58,7 @@ class ActionStack {
 
   // Initializes `fragment` so that, when resumed, it begins execution of
   // `body`.
-  void InitializeFragment(ContinuationValue::StackFragment& fragment,
+  void InitializeFragment(StackFragment& fragment,
                           Nonnull<const Statement*> body);
 
   // The result produced by the `action` argument of the most recent

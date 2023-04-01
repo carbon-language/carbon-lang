@@ -44,11 +44,11 @@ are subject to full instantiation -- other parameters will be type checked and
 bound early to the extent possible. For example:
 
 ```
-class Stack(template T:! Type) {
+class Stack(template T:! type) {
   var storage: Array(T);
 
-  fn Push[addr me: Self*](value: T);
-  fn Pop[addr me: Self*]() -> T;
+  fn Push[addr self: Self*](value: T);
+  fn Pop[addr self: Self*]() -> T;
 }
 ```
 
@@ -67,7 +67,7 @@ arguments. The runtime call then passes the remaining arguments to the resulting
 complete definition.
 
 ```
-fn Convert[template T:! Type](source: T, template U:! Type) -> U {
+fn Convert[template T:! type](source: T, template U:! type) -> U {
   var converted: U = source;
   return converted;
 }

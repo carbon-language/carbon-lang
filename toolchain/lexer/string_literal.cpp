@@ -30,7 +30,7 @@ struct LexedStringLiteral::Introducer {
   int prefix_size;
 
   // Lex the introducer for a string literal, after any '#'s.
-  static auto Lex(llvm::StringRef source_text) -> llvm::Optional<Introducer>;
+  static auto Lex(llvm::StringRef source_text) -> std::optional<Introducer>;
 };
 
 // Lex the introducer for a string literal, after any '#'s.
@@ -38,7 +38,7 @@ struct LexedStringLiteral::Introducer {
 // We lex multi-line literals when spelled with either ''' or """ for error
 // recovery purposes, and reject """ literals after lexing.
 auto LexedStringLiteral::Introducer::Lex(llvm::StringRef source_text)
-    -> llvm::Optional<Introducer> {
+    -> std::optional<Introducer> {
   MultiLineKind kind = NotMultiLine;
   llvm::StringRef indicator;
   if (source_text.startswith(MultiLineIndicator)) {
@@ -67,7 +67,7 @@ auto LexedStringLiteral::Introducer::Lex(llvm::StringRef source_text)
         .kind = NotMultiLine, .terminator = "\"", .prefix_size = 1};
   }
 
-  return llvm::None;
+  return std::nullopt;
 }
 
 namespace {
@@ -88,7 +88,7 @@ struct alignas(8) CharSet {
 }  // namespace
 
 auto LexedStringLiteral::Lex(llvm::StringRef source_text)
-    -> llvm::Optional<LexedStringLiteral> {
+    -> std::optional<LexedStringLiteral> {
   int64_t cursor = 0;
   const int64_t source_text_size = source_text.size();
 
@@ -98,10 +98,10 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   }
   const int hash_level = cursor;
 
-  const llvm::Optional<Introducer> introducer =
+  const std::optional<Introducer> introducer =
       Introducer::Lex(source_text.substr(hash_level));
   if (!introducer) {
-    return llvm::None;
+    return std::nullopt;
   }
 
   cursor += introducer->prefix_size;
@@ -363,8 +363,13 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       }
     }
 
+    // Tracks the length of the result at the last time we expanded an escape
+    // to ensure we don't misinterpret it as unescaped when backtracking.
+    size_t last_escape_length = 0;
+
     // Process the contents of the line.
     while (true) {
+      // Append the next segment of plain text.
       auto end_of_regular_text = contents.find_if([](char c) {
         return c == '\n' || c == '\\' ||
                (IsHorizontalWhitespace(c) && c != ' ');
@@ -377,10 +382,11 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       }
 
       if (contents.consume_front("\n")) {
-        // Trailing whitespace before a newline doesn't contribute to the string
-        // literal value.
+        // Trailing whitespace in the source before a newline doesn't contribute
+        // to the string literal value. However, escaped whitespace (like `\t`)
+        // and any whitespace just before that does contribute.
         while (!result.empty() && result.back() != '\n' &&
-               IsSpace(result.back())) {
+               IsSpace(result.back()) && result.length() > last_escape_length) {
           result.pop_back();
         }
         result += '\n';
@@ -425,6 +431,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
 
       // Handle this escape sequence.
       ExpandAndConsumeEscapeSequence(emitter, contents, result);
+      last_escape_length = result.length();
     }
   }
 }

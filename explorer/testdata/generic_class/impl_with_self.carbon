@@ -11,11 +11,11 @@ package ExplorerTest api;
 
 interface Vector {
   fn Zero() -> Self;
-  fn Add[me: Self](b: Self) -> Self;
-  fn Scale[me: Self](v: i32) -> Self;
+  fn Add[self: Self](b: Self) -> Self;
+  fn Scale[self: Self](v: i32) -> Self;
 }
 
-class Point(T:! Type) {
+class Point(T:! type) {
   var x: T;
   var y: T;
 }
@@ -26,12 +26,12 @@ external impl Point(i32) as Vector {
     return {.x = 0, .y = 0};
   }
 
-  fn Add[me: Self](b: Self) -> Self {
-    return {.x = me.x + b.x, .y = me.y + b.y};
+  fn Add[self: Self](b: Self) -> Self {
+    return {.x = self.x + b.x, .y = self.y + b.y};
   }
 
-  fn Scale[me: Self](v: i32) -> Self {
-    return {.x = me.x * v, .y = me.y * v};
+  fn Scale[self: Self](v: i32) -> Self {
+    return {.x = self.x * v, .y = self.y * v};
   }
 }
 

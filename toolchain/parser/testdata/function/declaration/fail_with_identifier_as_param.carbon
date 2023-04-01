@@ -5,13 +5,14 @@
 // AUTOUPDATE
 // RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
-// CHECK:STDOUT: {node_index: 4, kind: 'FunctionDeclaration', text: ';', subtree_size: 5, children: [
-// CHECK:STDOUT:   {node_index: 0, kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:   {node_index: 1, kind: 'DeclaredName', text: 'foo'},
-// CHECK:STDOUT:   {node_index: 3, kind: 'ParameterList', text: '(', has_error: yes, subtree_size: 2, children: [
-// CHECK:STDOUT:     {node_index: 2, kind: 'ParameterListEnd', text: ')'}]}]},
-// CHECK:STDOUT: {node_index: 5, kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:   {kind: 'DeclaredName', text: 'foo'},
+// CHECK:STDOUT:     {kind: 'ParameterListStart', text: '('},
+// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'bar'},
+// CHECK:STDOUT:   {kind: 'ParameterList', text: ')', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT: {kind: 'FunctionDeclaration', text: ';', subtree_size: 6},
+// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_with_identifier_as_param.carbon:[[@LINE+1]]:8: Expected parameter declaration.
+// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_with_identifier_as_param.carbon:[[@LINE+1]]:11: Expected parameter declaration.
 fn foo(bar);

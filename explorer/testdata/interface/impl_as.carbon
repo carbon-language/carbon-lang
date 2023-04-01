@@ -10,13 +10,13 @@
 
 package ExplorerTest api;
 
-interface Apple(T:! Type) {
-  fn F[me: Self]() -> T;
+interface Apple(T:! type) {
+  fn F[self: Self]() -> T;
 }
 
 interface Banana {
   impl as Apple(i32);
-  fn G[me: Self]();
+  fn G[self: Self]();
 }
 
 class Carrot {
@@ -24,11 +24,11 @@ class Carrot {
 }
 
 external impl Carrot as Apple(i32) {
-  fn F[me: Self]() -> i32 { return me.n; }
+  fn F[self: Self]() -> i32 { return self.n; }
 }
 
 external impl Carrot as Banana {
-  fn G[me: Self]() { Print("Carrot.G"); }
+  fn G[self: Self]() { Print("Carrot.G"); }
 }
 
 fn H[T:! Banana](x: T) -> i32 {

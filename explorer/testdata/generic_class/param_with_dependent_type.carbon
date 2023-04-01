@@ -9,8 +9,8 @@
 
 package ExplorerTest api;
 
-class Point(T:! Type, V:! T) {
-  fn Get[me: Self]() -> T {
+class Point(T:! type, V:! T) {
+  fn Get[self: Self]() -> T {
     return V;
   }
 }

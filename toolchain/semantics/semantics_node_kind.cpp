@@ -4,16 +4,11 @@
 
 #include "toolchain/semantics/semantics_node_kind.h"
 
-#include "llvm/ADT/StringRef.h"
-
 namespace Carbon {
 
-auto SemanticsNodeKind::name() const -> llvm::StringRef {
-  static constexpr llvm::StringLiteral Names[] = {
-#define CARBON_SEMANTICS_NODE_KIND(Name, ...) #Name,
+CARBON_DEFINE_ENUM_CLASS_NAMES(SemanticsNodeKind) = {
+#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "toolchain/semantics/semantics_node_kind.def"
-  };
-  return Names[static_cast<int>(kind_)];
-}
+};
 
 }  // namespace Carbon

@@ -4,64 +4,50 @@
 
 package(default_visibility = ["//explorer:__subpackages__"])
 
-genrule(
-    name = "ast_rtti",
-    srcs = ["ast_rtti.txt"],
-    outs = [
-        "ast_rtti.h",
-        "ast_rtti.cpp",
-    ],
-    cmd = "./$(location //explorer:gen_rtti)" +
-          " $(location ast_rtti.txt)" +
-          " $(location ast_rtti.h) $(location ast_rtti.cpp)" +
-          " $(rootpath ast_rtti.h)",
-    tools = ["//explorer:gen_rtti"],
-)
-
-cc_library(
-    name = "ast_node",
-    srcs = [
-        "ast_node.cpp",
-        "ast_rtti.cpp",
-    ],
-    hdrs = [
-        "ast_node.h",
-        "ast_rtti.h",
-    ],
-    deps = [
-        "//explorer/common:source_location",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
 cc_library(
     name = "ast",
     srcs = [
+        "ast_node.cpp",
+        "ast_rtti.cpp",
         "bindings.cpp",
+        "clone_context.cpp",
         "declaration.cpp",
+        "element.cpp",
         "expression.cpp",
-        "member.cpp",
+        "impl_binding.cpp",
         "pattern.cpp",
         "statement.cpp",
+        "value.cpp",
     ],
     hdrs = [
+        "address.h",
         "ast.h",
+        "ast_kinds.h",
+        "ast_node.h",
+        "ast_rtti.h",
         "bindings.h",
+        "clone_context.h",
         "declaration.h",
+        "element.h",
+        "element_path.h",
         "expression.h",
         "impl_binding.h",
-        "member.h",
         "pattern.h",
         "return_term.h",
         "statement.h",
+        "value.h",
+        "value_node.h",
+        "value_transform.h",
+    ],
+    textual_hdrs = [
+        "value_kinds.def",
     ],
     deps = [
-        ":ast_node",
         ":library_name",
         ":paren_contents",
-        ":static_scope",
         ":value_category",
         "//common:check",
+        "//common:enum_base",
         "//common:error",
         "//common:indirect_value",
         "//common:ostream",
@@ -83,7 +69,6 @@ cc_library(
     hdrs = ["ast_test_matchers.h"],
     deps = [
         ":ast",
-        ":ast_node",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -129,6 +114,19 @@ cc_library(
 )
 
 cc_test(
+    name = "element_test",
+    srcs = ["element_test.cpp"],
+    deps = [
+        ":ast",
+        ":paren_contents",
+        "//common:gtest_main",
+        "//explorer/common:arena",
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
     name = "pattern_test",
     srcs = ["pattern_test.cpp"],
     deps = [
@@ -146,8 +144,7 @@ cc_library(
     srcs = ["static_scope.cpp"],
     hdrs = ["static_scope.h"],
     deps = [
-        ":ast_node",
-        ":value_category",
+        ":ast",
         "//common:check",
         "//common:error",
         "//explorer/common:error_builders",

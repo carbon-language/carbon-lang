@@ -9,7 +9,8 @@
 
 #include "common/metaprogramming.h"
 #include "llvm/Support/raw_os_ostream.h"
-#include "llvm/Support/raw_ostream.h"
+// Libraries should include this header instead of raw_ostream.
+#include "llvm/Support/raw_ostream.h"  // IWYU pragma: export
 
 namespace Carbon {
 
@@ -60,6 +61,28 @@ void PrintTo(T* p, std::ostream* out) {
     *out << " pointing to " << *p;
   }
 }
+
+// Helper to support printing the ID for a type that has a method
+// `void PrintID(llvm::raw_ostream& out) const`. Usage:
+//
+//     out << PrintAsID(obj);
+template <typename T>
+class PrintAsID {
+ public:
+  explicit PrintAsID(const T& object) : object_(&object) {}
+
+  friend auto operator<<(llvm::raw_ostream& out, const PrintAsID& self)
+      -> llvm::raw_ostream& {
+    self.object_->PrintID(out);
+    return out;
+  }
+
+ private:
+  const T* object_;
+};
+
+template <typename T>
+PrintAsID(const T&) -> PrintAsID<T>;
 
 }  // namespace Carbon
 

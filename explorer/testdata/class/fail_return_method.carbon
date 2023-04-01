@@ -10,11 +10,11 @@ package ExplorerTest api;
 
 class C {
   fn F() {}
-  fn G[me: Self]() {}
+  fn G[self: Self]() {}
 }
 
 fn ReturnF() -> auto { return C.F; }
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_return_method.carbon:[[@LINE+1]]: Expected a type, but got member name G
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_return_method.carbon:[[@LINE+1]]: member name G can only be used in a member access or alias
 fn ReturnG() -> auto { return C.G; }
 
 fn Main() -> i32 {
