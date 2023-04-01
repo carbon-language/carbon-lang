@@ -57,10 +57,6 @@ pattern name introduced within a variable pattern is also an L-value. The
 initializer for a variable pattern is directly used to initialize the storage.
 
 ```carbon
-fn Consume(var x: SomeData) {
-  // We can mutate and use the local `x` L-value here.
-}
-
 fn MutateThing(ptr: i64*);
 
 fn Example() {
@@ -91,6 +87,29 @@ declarations. Local `let` and `var` declarations build on Carbon's general
 declarations implicitly starting off within a `var` pattern while `let`
 declarations introduce patterns that work the same as function parameters and
 others with bindings that are R-values by default.
+
+### Consuming function parameters
+
+Just as part of a `let` binding can use a `var` prefix to become a variable
+pattern and bind a name to an L-value, so can function parameters:
+
+```carbon
+fn Consume(var x: SomeData) {
+  // We can mutate and use the local `x` L-value here.
+}
+```
+
+This allows us to model an important special case of function inputs -- those
+that are _consumed_ by the function, either through local processing or being
+moved into some persistent storage. Marking these in the pattern and thus
+signature of the function allows callers to optimize for the fact that they
+_must_ initialize a separate L-value owned by the function being called rather
+than binding an R-value to something owned by the caller.
+
+This pattern serves the same purpose as C++'s pass-by-value when used with types
+that have non-trivial resources attached to pass ownership into the function and
+consume the resource. But rather than that being the seeming _default_, Carbon
+makes this a use case that requires a special marking.
 
 ## L-values or _located_ values
 
@@ -234,10 +253,11 @@ interface RValueRep {
 
   // Called to for the representation object when binding an L-value as an
   // R-value.
-  fn LValueTRValue[addr self: Self*]() -> RepType;
+  fn LValueTRValue[addr self: const Self*]() -> RepType;
 
   // Extend the implicit conversions.
   extends ImplicitAs(RepType);
+
   // Provide the language-provided conversion given the above. Custom
   // conversions can still be provided here.
   default fn Convert[self: Self]() -> RepType { return self; }
@@ -252,12 +272,15 @@ class String {
   var data_ptr: Char*;
   var size: i64;
 
-  // Define the R-value method API by delegating to `StringView`.
+  // Define the R-value method API by delegating to `StringView`. Note that
+  // using `self: StringView` here instead of `self: Self` isn't necessary,
+  // it merely allows immediately accessing that API rather than requiring
+  // a conversion first.
   fn ExampleMethod[self: StringView]() { self.ExampleMethod(); }
 
   // Extends `ImplicitAs(StringView)` with a default implementation.
   impl as RValueRep where .RepType = StringView {
-    fn LValueToRValue[addr self: Self*]() -> StringView {
+    fn LValueToRValue[addr self: const Self*]() -> StringView {
       // Because this is called on the L-value being bound to an R-value, we
       // can get at an SSO buffer or other interior pointers of `self`.
       return StringView::Create(self->data_ptr, self->size);
@@ -354,8 +377,222 @@ fn F(immutable_s: S) {
 
 ## Pointers
 
+Pointers in Carbon are the primary mechanism for _indirect access_ to a value,
+which is always an [_L-value_](#l-values-or-located-values).
+
+Carbon pointers are heavily restricted compared to C++ pointers -- they cannot
+be null and they cannot be indexed or have pointer arithmetic performed on them.
+In some ways, this makes them more similar to references in C++, but they retain
+the essential aspect of a pointer that they syntactically distinguish between
+the point*er* and the point*ee*.
+
+Carbon will still have mechanisms to achieve the equivalent behaviors as C++
+pointers. Optional pointers are expected to serve nullable use cases. Slice or
+view style types are expected to provide access to indexable regions. And even
+raw pointer arithmetic is expected to be provided at some point, but through
+specialized constructs given the specialized nature of these operations.
+
+> TODO: Add explicit designs for these use cases and link to them here.
+
+### References
+
+Unlike C++, Carbon does not currently have references. The only form of indirect
+access are pointers. There are a few aspects to this decision that need to be
+separated carefully from each other as the motivations and considerations are
+different.
+
+First, Carbon has only a single fundamental construct for indirection because
+this gives it a single point that needs extension and configuration if and when
+we want to add more powerful controls to the indirect type system such as
+lifetime annotations or other safety or optimization mechanisms. The designs
+attempts to identify a single, core indirection tool and then layer other
+related use cases on top. This is motivated by keeping the language scalable as
+it evolves and reducing the huge explosion of complexity that C++ sees due to
+having a large space here. For example, when there are N > 1 ways to express
+indirection equivalently and APIs want to accept any one of them across M
+different parameters they can end up with N \* M combinations.
+
+Second, with pointers, Carbon's indirection mechanism retains the ability to
+refer distinctly to the point*er* and the point*ee* when needed. This ends up
+critical for supporting rebinding and so without this property more permutations
+of indirection would likely emerge.
+
+Third, and most controversially, Carbon doesn't provide a straightforward way to
+avoid the syntactic distinction between indirect access and direct access. This
+aspect is covered by our design decision around
+[syntax-free dereference](#syntax-free-dereference-and-address-of).
+
+### Syntax
+
+The type of a pointer to a type `T` is written with a postfix `*` as in `T*`.
+Dereferencing a pointer is an expression that produces an _L-value_ and is
+written with a prefix `*` as in `*pointer`:
+
+```carbon
+var i: i32 = 42;
+var p: i32* = &i;
+
+// Form an L-value and assign it to `13`.
+*p = 13;
+```
+
+This syntax is chosen specifically to remain as similar as possible to C++
+pointer types as they are commonly written in code and are expected to be
+extremely common and a key anchor of syntactic similarity between the languages.
+The different alternatives and tradeoffs for this syntax issue were discussed
+extensively in
+[#523](https://github.com/carbon-language/carbon-lang/issues/523).
+
+Carbon also supports an infix `->` operation, much like C++. However, Carbon
+directly defines this as an exact rewrite to `*` and `.` so that `p->member`
+becomes `(*p).member` for example.
+
+As also covered extensively in
+[#523](https://github.com/carbon-language/carbon-lang/issues/523), one of the
+primary challenges of the C++ syntax is the composition of a prefix dereference
+operation and other postfix or infix operations, especially when chained
+together such as a classic C++ frustrations of mixes of dereference and
+indexing: `(*(*p)[42])[13]`. Where these compositions are sufficiently common to
+create ergonomic problems, the current plan is to introduce custom syntax
+analogous to `->` that rewrites down to the grouped dereference. However,
+nothing beyond `->` itself is currently provided.
+
+### Syntax-free dereference and address-of
+
+Carbon does not provide a way to dereference with zero syntax, even on function
+interface boundaries. The presence of a clear level of indirection can be an
+important distinction for readability. It helps surface that an object that may
+appear local to the caller is in fact escaped and referenced externally to some
+degree. However, it can also harm readability by forcing code that doesn't
+_need_ to look different to do so anyway. In the worst case, this can
+potentially interfere with being generic. Currently, Carbon prioritizes making
+the distinction here visible.
+
+It may prove desirable to provide an ergonomic aid to reduce dereferencing
+syntax within function bodies, but this proposal suggests deferring that at
+least initially in order to better understand the extent and importance of that
+use case. If and when it is considered, a direction based around a way to bind a
+name to an L-value produced by dereferencing in a pattern appears to be a
+promising technique. Alternatively, there are various languages with
+implicit-dereference designs that might be considered.
+
+A closely related concern to syntax-free dereference is syntax-free address-of.
+Here, Carbon supports one very narrow form of this: implicitly taking the
+address of the implicit object parameter of member functions. Currently that is
+the only place with such an implicit affordance. It is designed to be
+syntactically sound to extend to other parameters, but currently that is not
+planned to avoid surprise.
+
 ### Dereferencing customization
 
-### Indexing
+Carbon should support user-defined pointer-like types such as _smart pointers_
+using a similar pattern as operator overloading or other expression syntax. That
+is, it should rewrite the expression into a member function call on an
+interface. Types can then implement this interface to expose pointer-like
+_user-defined dereference_ syntax.
+
+The interface might look like:
+
+```
+interface Pointer {
+  let ValueT:! Type;
+  fn Dereference[me: Self]() -> ValueT*;
+}
+```
+
+Here is an example using a hypothetical `TaggedPtr` that carries some extra
+integer tag next to the pointer it emulates:
+
+```
+class TaggedPtr(T:! Type) {
+  var tag: Int32;
+  var ptr: T*;
+}
+external impl [T:! Type] TaggedPtr(T) as Pointer {
+  let ValueT:$ T;
+  fn Dereference[me: Self]() -> T* { return me.ptr; }
+}
+
+fn Test(arg: TaggedPtr(T), dest: TaggedPtr(TaggedPtr(T))) {
+  **dest = *arg;
+  *dest = arg;
+}
+```
+
+There is one tricky aspect of this. The function in the interface which
+implements a pointer-like dereference must return a raw pointer which the
+language then actually dereferences to form an L-value similar to that formed by
+`var` declarations. This interface is implemented for normal pointers as a
+no-op:
+
+```
+impl [T:! Type] T* as Pointer {
+  let ValueT:$ Type = T;
+  fn Dereference[me: Self]() -> T* { return me; }
+}
+```
+
+Dereference expressions such as `*x` are syntactically rewritten to use this
+interface to get a raw pointer and then that raw pointer is dereferenced. If we
+imagine this language level dereference to form an L-value as a unary `deref`
+operator, then `(*x)` becomes `(deref (x.(Pointer.Dereference)()))`.
+
+Carbon should also use a simple syntactic rewrite for implementing `x->Method()`
+as `(*x).Method()` without separate or different customization.
 
 ## `const`-qualified types
+
+Carbon provides the ability to qualify a type `T` with the keyword `const` to
+get a `const`-qualified type: `const T`. This is exclusively an API-subsetting
+feature in Carbon -- for more fundamentally "immutable" use cases, R-values
+should be used instead. Pointers to `const`-qualified types in Carbon provide
+access to a shared L-value with an API subset that can help model important
+requirements like ensuring usage is exclusively via a _thread-safe_ interface
+subset of an otherwise _thread-compatible_ type.
+
+The `const T` type has the same representation as `T` with the same field names,
+but all of its field types are also `const`-qualified. Other than fields, all
+other members `T` are also members of `const T`, and impl lookup ignores the
+`const` qualification. There is an implicit conversion from `T` to `const T`,
+but not the reverse. L-value-to-R-value conversion can be performed on
+`const T`.
+
+It is expected that `const T` will overwhelmingly occur as part of a
+[pointer](#pointers), as the express purpose is to reference an L-value. Carbon
+will support conversions between pointers to `const`-qualified types that follow
+the same rules as used in C++ to avoid inadvertent loss of
+`const`-qualification.
+
+## Lifetime overloading
+
+One use case not obviously or fully addressed by these designs in Carbon is
+overloading function calls by observing the lifetime of arguments. The use case
+here would be selecting different implementation strategies for the same
+function or operation based on whether an argument lifetime happens to be ending
+and viable to move-from.
+
+Carbon currently intentionally leaves this use case unaddressed. There is a
+fundamental scaling problem in this style of overloading: it creates a
+combinatorial explosion of possible overloads similar to other permutations of
+indirection models. Consider a function with N parameters that would benefit
+from lifetime overloading. If each one benefits _independently_ from the others,
+we would need 2<sup>N</sup> overloads to express all the possibilities.
+
+Carbon should initially see if code can be designed without this facility. Some
+of the tools needed to avoid it are suggested above such as the
+[consuming](#consuming-function-parameters) input pattern. But it is possible
+that more will be needed in practice. It would be good to identify the specific
+and realistic Carbon code patterns that cannot be expressed with the tools in
+this proposal in order to motivate a minimal extension. Some candidates based on
+functionality already proposed here or for [classes](/docs/design/classes.md):
+
+-   Allow overloading between `addr me` and `me` in methods. This is among the
+    most appealing as it _doesn't_ have the combinatorial explosion. But it is
+    also very limited as it only applies to the implicit object parameter.
+-   Allow overloading between `var` and non-`var` parameters.
+-   Expand the `addr` technique from object parameters to all parameters, and
+    allow overloading based on it.
+
+Perhaps more options will emerge as well. Again, the goal isn't to completely
+preclude pursuing this direction, but instead to try to ensure it is only
+pursued based on a real and concrete need, and the minimal extension is adopted.
