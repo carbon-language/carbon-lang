@@ -614,6 +614,11 @@ class FunctionType : public Value {
   //
   //     fn MakeEmptyVector(T:! type) -> Vector(T);
   struct GenericParameter {
+    template <typename F>
+    auto Decompose(F f) const {
+      return f(index, binding);
+    }
+
     size_t index;
     Nonnull<const GenericBinding*> binding;
   };
@@ -658,7 +663,7 @@ class FunctionType : public Value {
       -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
     return deduced_bindings_;
   }
-  // The bindings for the witness tables (impls) required by the
+  // The bindings for the impl witness tables required by the
   // bounds on the type parameters of the generic function.
   auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
     return impl_bindings_;
@@ -922,7 +927,12 @@ class NamedConstraintType : public Value {
 };
 
 // A constraint that requires implementation of an interface.
-struct ImplConstraint {
+struct ImplsConstraint {
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(type, interface);
+  }
+
   // The type that is required to implement the interface.
   Nonnull<const Value*> type;
   // The interface that is required to be implemented.
@@ -931,6 +941,11 @@ struct ImplConstraint {
 
 // A constraint that requires an intrinsic property of a type.
 struct IntrinsicConstraint {
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(type, kind, arguments);
+  }
+
   // Print the intrinsic constraint.
   void Print(llvm::raw_ostream& out) const;
 
@@ -951,6 +966,11 @@ struct IntrinsicConstraint {
 
 // A constraint that a collection of values are known to be the same.
 struct EqualityConstraint {
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(values);
+  }
+
   // Visit the values in this equality constraint that are a single step away
   // from the given value according to this equality constraint. That is: if
   // `value` is identical to a value in `values`, then call the visitor on all
@@ -969,6 +989,12 @@ struct EqualityConstraint {
 // A constraint indicating that access to an associated constant should be
 // replaced by another value.
 struct RewriteConstraint {
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(constant, unconverted_replacement, unconverted_replacement_type,
+             converted_replacement);
+  }
+
   // The associated constant value that is rewritten.
   Nonnull<const AssociatedConstant*> constant;
   // The replacement in its original type.
@@ -981,6 +1007,11 @@ struct RewriteConstraint {
 
 // A context in which we might look up a name.
 struct LookupContext {
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(context);
+  }
+
   Nonnull<const Value*> context;
 };
 
@@ -1006,14 +1037,14 @@ class ConstraintType : public Value {
  public:
   explicit ConstraintType(
       Nonnull<const GenericBinding*> self_binding,
-      std::vector<ImplConstraint> impl_constraints,
+      std::vector<ImplsConstraint> impls_constraints,
       std::vector<IntrinsicConstraint> intrinsic_constraints,
       std::vector<EqualityConstraint> equality_constraints,
       std::vector<RewriteConstraint> rewrite_constraints,
       std::vector<LookupContext> lookup_contexts)
       : Value(Kind::ConstraintType),
         self_binding_(self_binding),
-        impl_constraints_(std::move(impl_constraints)),
+        impls_constraints_(std::move(impls_constraints)),
         intrinsic_constraints_(std::move(intrinsic_constraints)),
         equality_constraints_(std::move(equality_constraints)),
         rewrite_constraints_(std::move(rewrite_constraints)),
@@ -1025,7 +1056,7 @@ class ConstraintType : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(self_binding_, impl_constraints_, intrinsic_constraints_,
+    return f(self_binding_, impls_constraints_, intrinsic_constraints_,
              equality_constraints_, rewrite_constraints_, lookup_contexts_);
   }
 
@@ -1033,8 +1064,8 @@ class ConstraintType : public Value {
     return self_binding_;
   }
 
-  auto impl_constraints() const -> llvm::ArrayRef<ImplConstraint> {
-    return impl_constraints_;
+  auto impls_constraints() const -> llvm::ArrayRef<ImplsConstraint> {
+    return impls_constraints_;
   }
 
   auto intrinsic_constraints() const -> llvm::ArrayRef<IntrinsicConstraint> {
@@ -1066,7 +1097,7 @@ class ConstraintType : public Value {
 
  private:
   Nonnull<const GenericBinding*> self_binding_;
-  std::vector<ImplConstraint> impl_constraints_;
+  std::vector<ImplsConstraint> impls_constraints_;
   std::vector<IntrinsicConstraint> intrinsic_constraints_;
   std::vector<EqualityConstraint> equality_constraints_;
   std::vector<RewriteConstraint> rewrite_constraints_;
@@ -1144,7 +1175,7 @@ class BindingWitness : public Witness {
 };
 
 // A witness for a constraint type, expressed as a tuple of witnesses for the
-// individual impl constraints in the constraint type.
+// individual impls constraints in the constraint type.
 class ConstraintWitness : public Witness {
  public:
   explicit ConstraintWitness(std::vector<Nonnull<const Witness*>> witnesses)
@@ -1167,11 +1198,11 @@ class ConstraintWitness : public Witness {
   std::vector<Nonnull<const Witness*>> witnesses_;
 };
 
-// A witness for an impl constraint in a constraint type, expressed in terms of
+// A witness for an impls constraint in a constraint type, expressed in terms of
 // a symbolic witness for the constraint type.
 class ConstraintImplWitness : public Witness {
  public:
-  // Make a witness for the given impl_constraint of the given `ConstraintType`
+  // Make a witness for the given impls_constraint of the given `ConstraintType`
   // witness. If we're indexing into a known tuple of witnesses, pull out the
   // element.
   static auto Make(Nonnull<Arena*> arena, Nonnull<const Witness*> witness,
@@ -1208,7 +1239,7 @@ class ConstraintImplWitness : public Witness {
     return constraint_witness_;
   }
 
-  // Get the index of the impl constraint within the constraint type.
+  // Get the index of the impls constraint within the constraint type.
   auto index() const -> int { return index_; }
 
  private:

@@ -11,6 +11,8 @@
 
 namespace Carbon {
 
+class CloneContext;
+
 // Base class for all nodes in the AST.
 //
 // Every class derived from this class must be listed in ast_rtti.txt. See
@@ -34,6 +36,14 @@ namespace Carbon {
 //
 // The definitions of `InheritsFromFoo` and `FooKind` are generated from
 // ast_rtti.txt, and are implicitly provided by this header.
+//
+// Every AST node is expected to provide a cloning constructor:
+//
+// explicit MyAstNode(CloneContext& context, const MyAstNode& other);
+//
+// The cloning constructor should behave like a copy constructor, but pointers
+// to other AST nodes should be passed through context.Clone to clone the
+// referenced object.
 //
 // TODO: To support generic traversal, add children() method, and ensure that
 //   all AstNodes are reachable from a root AstNode.
@@ -64,6 +74,10 @@ class AstNode {
   // constructed.
   explicit AstNode(AstNodeKind kind, SourceLocation source_loc)
       : kind_(kind), source_loc_(source_loc) {}
+
+  // Clone this AstNode.
+  explicit AstNode(CloneContext& /*context*/, const AstNode& other)
+      : kind_(other.kind_), source_loc_(other.source_loc_) {}
 
   // Equivalent to kind(), but will not be hidden by `kind()` methods of
   // derived classes.

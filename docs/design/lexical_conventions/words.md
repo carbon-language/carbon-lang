@@ -61,10 +61,10 @@ The following words are interpreted as keywords:
 -   `friend`
 -   `if`
 -   `impl`
+-   `impls`
 -   `import`
 -   `in`
 -   `interface`
--   `is`
 -   `let`
 -   `library`
 -   `like`

@@ -16,13 +16,6 @@
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node0, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node1, type: node1},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node2, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node3, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node4, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node5, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node6, type: node5},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

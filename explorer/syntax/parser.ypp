@@ -105,6 +105,7 @@
 %type <std::string> optional_library_path
 %type <bool> api_or_impl
 %type <VirtualOverride> fn_virtual_override_intro
+%type <VirtualOverride> destructor_virtual_override_intro
 %type <ClassExtensibility> class_declaration_extensibility
 %type <std::optional<Nonnull<Expression*>>> class_declaration_extends
 %type <Nonnull<Declaration*>> declaration
@@ -251,10 +252,10 @@
   GREATER_GREATER_EQUAL
   IF
   IMPL
+  IMPLS
   IMPORT
   IN
   INTERFACE
-  IS
   LEFT_CURLY_BRACE
   LEFT_PARENTHESIS
   LEFT_SQUARE_BRACKET
@@ -297,6 +298,7 @@
   SLASH_EQUAL
   STAR_EQUAL
   STRING
+  TEMPLATE
   THEN
   TRUE
   TYPE
@@ -719,8 +721,8 @@ or_expression:
     }
 ;
 where_clause:
-  comparison_operand IS comparison_operand
-    { $$ = arena->New<IsWhereClause>(context.source_loc(), $1, $3); }
+  comparison_operand IMPLS comparison_operand
+    { $$ = arena->New<ImplsWhereClause>(context.source_loc(), $1, $3); }
 | comparison_operand EQUAL_EQUAL comparison_operand
     { $$ = arena->New<EqualsWhereClause>(context.source_loc(), $1, $3); }
 // TODO: .(expression) = expression
@@ -740,7 +742,8 @@ where_expression:
   type_expression WHERE where_clause_list
     {
       auto* self =
-          arena->New<GenericBinding>(context.source_loc(), ".Self", $1);
+          arena->New<GenericBinding>(context.source_loc(), ".Self", $1,
+                                     GenericBinding::BindingKind::Checked);
       $$ = arena->New<WhereExpression>(context.source_loc(), self, $3);
     }
 ;
@@ -849,7 +852,15 @@ non_expression_pattern:
                                       std::nullopt);
     }
 | binding_lhs COLON_BANG expression
-    { $$ = arena->New<GenericBinding>(context.source_loc(), $1, $3); }
+    {
+      $$ = arena->New<GenericBinding>(context.source_loc(), $1, $3,
+                                      GenericBinding::BindingKind::Checked);
+    }
+| TEMPLATE binding_lhs COLON_BANG expression
+    {
+      $$ = arena->New<GenericBinding>(context.source_loc(), $2, $4,
+                                      GenericBinding::BindingKind::Template);
+    }
 | paren_pattern
     { $$ = $1; }
 | postfix_expression tuple_pattern
@@ -1082,7 +1093,13 @@ return_term:
 generic_binding:
   identifier COLON_BANG expression
     {
-      $$ = arena->New<GenericBinding>(context.source_loc(), std::move($1), $3);
+      $$ = arena->New<GenericBinding>(context.source_loc(), std::move($1), $3,
+                                      GenericBinding::BindingKind::Checked);
+    }
+| TEMPLATE identifier COLON_BANG expression
+    {
+      $$ = arena->New<GenericBinding>(context.source_loc(), std::move($2), $4,
+                                      GenericBinding::BindingKind::Template);
     }
 ;
 deduced_param:
@@ -1252,7 +1269,9 @@ declaration:
 | MIXIN declared_name type_params mixin_import LEFT_CURLY_BRACE mixin_body RIGHT_CURLY_BRACE
     {
       // EXPERIMENTAL MIXN FEATURE
-      auto self = arena->New<GenericBinding>(context.source_loc(), "Self", $4);
+      auto self =
+          arena->New<GenericBinding>(context.source_loc(), "Self", $4,
+                                     GenericBinding::BindingKind::Checked);
       $$ = arena->New<MixinDeclaration>(context.source_loc(), std::move($2), $3,
                                         self, $6);
     }
@@ -1328,16 +1347,23 @@ match_first_declaration_list:
       $$ = std::move($1);
       $$.push_back($2);
     }
+destructor_virtual_override_intro:
+  DESTRUCTOR
+  { $$ = VirtualOverride::None; }
+| VIRTUAL DESTRUCTOR
+  { $$ = VirtualOverride::Virtual; }
+| IMPL DESTRUCTOR
+  { $$ = VirtualOverride::Impl; }
 ;
 destructor_declaration:
-  DESTRUCTOR deduced_params block
+  destructor_virtual_override_intro deduced_params block
   {
     ErrorOr<DestructorDeclaration*> fn =
         DestructorDeclaration::CreateDestructor(
             arena, context.source_loc(), $2,
             arena->New<TuplePattern>(context.source_loc(),
                                      std::vector<Nonnull<Pattern*>>()),
-            ReturnTerm::Omitted(context.source_loc()), $3);
+            ReturnTerm::Omitted(context.source_loc()), $3, $1);
     if (fn.ok()) {
       $$ = *fn;
     } else {

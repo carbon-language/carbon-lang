@@ -597,10 +597,10 @@ void Value::Print(llvm::raw_ostream& out) const {
         out << "." << *GetName(rewrite.constant->constant())
             << ") = " << *rewrite.unconverted_replacement;
       }
-      for (const ImplConstraint& impl : constraint.impl_constraints()) {
+      for (const ImplsConstraint& impl : constraint.impls_constraints()) {
         // TODO: Skip cases where `impl.type` is `.Self` and the interface is
         // in `lookup_contexts()`.
-        out << sep << *impl.type << " is " << *impl.interface;
+        out << sep << *impl.type << " impls " << *impl.interface;
       }
       for (const EqualityConstraint& equality :
            constraint.equality_constraints()) {
@@ -809,17 +809,17 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::ConstraintType: {
       const auto& constraint1 = cast<ConstraintType>(*t1);
       const auto& constraint2 = cast<ConstraintType>(*t2);
-      if (constraint1.impl_constraints().size() !=
-              constraint2.impl_constraints().size() ||
+      if (constraint1.impls_constraints().size() !=
+              constraint2.impls_constraints().size() ||
           constraint1.equality_constraints().size() !=
               constraint2.equality_constraints().size() ||
           constraint1.lookup_contexts().size() !=
               constraint2.lookup_contexts().size()) {
         return false;
       }
-      for (size_t i = 0; i < constraint1.impl_constraints().size(); ++i) {
-        const auto& impl1 = constraint1.impl_constraints()[i];
-        const auto& impl2 = constraint2.impl_constraints()[i];
+      for (size_t i = 0; i < constraint1.impls_constraints().size(); ++i) {
+        const auto& impl1 = constraint1.impls_constraints()[i];
+        const auto& impl2 = constraint2.impls_constraints()[i];
         if (!TypeEqual(impl1.type, impl2.type, equality_ctx) ||
             !TypeEqual(impl1.interface, impl2.interface, equality_ctx)) {
           return false;

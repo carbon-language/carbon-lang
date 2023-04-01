@@ -8,6 +8,7 @@
 #include <map>
 #include <utility>
 
+#include "explorer/ast/clone_context.h"
 #include "explorer/common/nonnull.h"
 #include "llvm/ADT/ArrayRef.h"
 
@@ -45,15 +46,17 @@ class Bindings {
 
   // Create an instantiated set of bindings for use during evaluation,
   // containing both arguments and witnesses.
-  Bindings(BindingMap args, ImplWitnessMap witnesses)
+  explicit Bindings(BindingMap args, ImplWitnessMap witnesses)
       : args_(std::move(args)), witnesses_(std::move(witnesses)) {}
 
   enum NoWitnessesTag { NoWitnesses };
 
   // Create a set of bindings for use during type-checking, containing only the
   // arguments but not the corresponding witnesses.
-  Bindings(BindingMap args, NoWitnessesTag /*unused*/)
+  explicit Bindings(BindingMap args, NoWitnessesTag /*unused*/)
       : args_(std::move(args)) {}
+
+  explicit Bindings(CloneContext& context, const Bindings& other);
 
   template <typename F>
   auto Decompose(F f) const {

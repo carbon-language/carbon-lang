@@ -256,12 +256,12 @@ static auto ExpressionToProto(const Expression& expression)
       for (const WhereClause* where : where.clauses()) {
         Fuzzing::WhereClause clause_proto;
         switch (where->kind()) {
-          case WhereClauseKind::IsWhereClause: {
-            auto* is_proto = clause_proto.mutable_is();
-            *is_proto->mutable_type() =
-                ExpressionToProto(cast<IsWhereClause>(where)->type());
-            *is_proto->mutable_constraint() =
-                ExpressionToProto(cast<IsWhereClause>(where)->constraint());
+          case WhereClauseKind::ImplsWhereClause: {
+            auto* impls_proto = clause_proto.mutable_impls();
+            *impls_proto->mutable_type() =
+                ExpressionToProto(cast<ImplsWhereClause>(where)->type());
+            *impls_proto->mutable_constraint() =
+                ExpressionToProto(cast<ImplsWhereClause>(where)->constraint());
             break;
           }
           case WhereClauseKind::EqualsWhereClause: {
@@ -379,6 +379,14 @@ static auto GenericBindingToProto(const GenericBinding& binding)
   Fuzzing::GenericBinding binding_proto;
   binding_proto.set_name(binding.name());
   *binding_proto.mutable_type() = ExpressionToProto(binding.type());
+  switch (binding.binding_kind()) {
+    case GenericBinding::BindingKind::Checked:
+      binding_proto.set_kind(Fuzzing::GenericBinding::Checked);
+      break;
+    case GenericBinding::BindingKind::Template:
+      binding_proto.set_kind(Fuzzing::GenericBinding::Template);
+      break;
+  }
   return binding_proto;
 }
 
@@ -823,6 +831,9 @@ static auto DeclarationToProto(const Declaration& declaration)
           impl_proto->set_kind(Fuzzing::ImplDeclaration::ExternalImpl);
           break;
       }
+      for (Nonnull<const GenericBinding*> binding : impl.deduced_parameters()) {
+        *impl_proto->add_deduced_parameters() = GenericBindingToProto(*binding);
+      }
       *impl_proto->mutable_impl_type() = ExpressionToProto(*impl.impl_type());
       *impl_proto->mutable_interface() = ExpressionToProto(impl.interface());
       for (const auto& member : impl.members()) {
@@ -834,8 +845,8 @@ static auto DeclarationToProto(const Declaration& declaration)
     case DeclarationKind::MatchFirstDeclaration: {
       const auto& match_first = cast<MatchFirstDeclaration>(declaration);
       auto* match_first_proto = declaration_proto.mutable_match_first();
-      for (const auto* impl : match_first.impls()) {
-        *match_first_proto->add_impls() = DeclarationToProto(*impl);
+      for (const auto* impl : match_first.impl_declarations()) {
+        *match_first_proto->add_impl_declarations() = DeclarationToProto(*impl);
       }
       break;
     }

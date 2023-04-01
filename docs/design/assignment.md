@@ -308,7 +308,7 @@ This defaulting is accomplished by a parameterized implementation of
 `OpAssignWith(U)` defined in terms of `AssignWith` and `OpWith`:
 
 ```
-impl forall [U:! type, T:! OpWith(U) where .Self is AssignWith(.Self.Result)]
+impl forall [U:! type, T:! OpWith(U) where .Self impls AssignWith(.Self.Result)]
     T as OpAssignWith(U) {
   fn Op[addr self: Self*](other: U) {
     // Here, `$` is the operator described by `OpWith`.

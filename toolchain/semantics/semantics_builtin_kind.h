@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-#include "toolchain/common/enum_base.h"
+#include "common/enum_base.h"
 
 namespace Carbon {
 
@@ -22,6 +22,8 @@ class SemanticsBuiltinKind : public CARBON_ENUM_BASE(SemanticsBuiltinKind) {
 #define CARBON_SEMANTICS_BUILTIN_KIND_NAME(Name) \
   CARBON_ENUM_CONSTANT_DECLARATION(Name)
 #include "toolchain/semantics/semantics_builtin_kind.def"
+
+  auto label() -> llvm::StringRef;
 
   // The count of enum values excluding Invalid.
   //

@@ -36,6 +36,12 @@ class [[nodiscard]] Error {
       : location_(std::move(other.location_)),
         message_(std::move(other.message_)) {}
 
+  auto operator=(Error&& other) noexcept -> Error& {
+    location_ = std::move(other.location_);
+    message_ = std::move(other.message_);
+    return *this;
+  }
+
   // Prints the error string.
   void Print(llvm::raw_ostream& out) const {
     if (!location().empty()) {
@@ -72,9 +78,6 @@ class [[nodiscard]] ErrorOr {
   // Implicit for easy construction on returns.
   // NOLINTNEXTLINE(google-explicit-constructor)
   ErrorOr(T val) : val_(std::move(val)) {}
-
-  // Moves held state.
-  ErrorOr(ErrorOr&& other) noexcept : val_(std::move(other.val_)) {}
 
   // Returns true for success.
   auto ok() const -> bool { return std::holds_alternative<T>(val_); }
@@ -119,7 +122,7 @@ class [[nodiscard]] ErrorOr {
   }
 
  private:
-  // Either an error message or
+  // Either an error message or a value.
   std::variant<Error, T> val_;
 };
 
@@ -168,15 +171,20 @@ class ErrorBuilder {
 #define CARBON_MAKE_UNIQUE_NAME_IMPL(a, b, c) a##b##c
 #define CARBON_MAKE_UNIQUE_NAME(a, b, c) CARBON_MAKE_UNIQUE_NAME_IMPL(a, b, c)
 
+// Macro to prevent a top-level comma from being interpreted as a macro
+// argument separator.
+#define CARBON_PROTECT_COMMAS(...) __VA_ARGS__
+
 #define CARBON_RETURN_IF_ERROR_IMPL(unique_name, expr)                    \
   if (auto unique_name = (expr); /* NOLINT(bugprone-macro-parentheses) */ \
       !(unique_name).ok()) {                                              \
     return std::move(unique_name).error();                                \
   }
 
-#define CARBON_RETURN_IF_ERROR(expr) \
-  CARBON_RETURN_IF_ERROR_IMPL(       \
-      CARBON_MAKE_UNIQUE_NAME(_llvm_error_line, __LINE__, __COUNTER__), expr)
+#define CARBON_RETURN_IF_ERROR(expr)                                    \
+  CARBON_RETURN_IF_ERROR_IMPL(                                          \
+      CARBON_MAKE_UNIQUE_NAME(_llvm_error_line, __LINE__, __COUNTER__), \
+      CARBON_PROTECT_COMMAS(expr))
 
 #define CARBON_ASSIGN_OR_RETURN_IMPL(unique_name, var, expr)          \
   auto unique_name = (expr); /* NOLINT(bugprone-macro-parentheses) */ \
@@ -188,6 +196,6 @@ class ErrorBuilder {
 #define CARBON_ASSIGN_OR_RETURN(var, expr)                                 \
   CARBON_ASSIGN_OR_RETURN_IMPL(                                            \
       CARBON_MAKE_UNIQUE_NAME(_llvm_expected_line, __LINE__, __COUNTER__), \
-      var, expr)
+      CARBON_PROTECT_COMMAS(var), CARBON_PROTECT_COMMAS(expr))
 
 #endif  // CARBON_COMMON_ERROR_H_

@@ -22,42 +22,37 @@
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node0, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node1, type: node1},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node2, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node3, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node4, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node5, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node6, type: node5},
-// CHECK:STDOUT:   {kind: VarStorage, type: node2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node7, type: node2},
+// CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str1, arg1: callable0},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node9, arg1: block0},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+2, arg1: block0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str2, arg1: callable1},
-// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: node3},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node11, arg1: block0},
+// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: nodeFloatingPointType},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+5, type: nodeFloatingPointType},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+4, arg1: block0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node7,
-// CHECK:STDOUT:     node8,
+// CHECK:STDOUT:     node+0,
+// CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node8,
+// CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node9,
-// CHECK:STDOUT:     node10,
-// CHECK:STDOUT:     node11,
-// CHECK:STDOUT:     node13,
+// CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node12,
+// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node12,
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
@@ -65,6 +60,6 @@ fn Run(a: i32) {}
 
 fn Main() {
   // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE+2]]:6: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE-4]]:1: Type mismatch: cannot convert argument 0 from node3 to node2.
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE-4]]:1: Callable cannot be used: Cannot implicityly convert argument 0 from `f64` to `i32`.
   Run(1.0);
 }

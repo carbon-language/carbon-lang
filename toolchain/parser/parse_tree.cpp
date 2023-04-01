@@ -25,8 +25,12 @@ auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
 
   // Delegate to the parser.
   auto tree = Parser::Parse(tokens, emitter, vlog_stream);
-  auto verify_error = tree.Verify();
-  CARBON_CHECK(!verify_error) << tree << *verify_error;
+  if (auto verify = tree.Verify(); !verify.ok()) {
+    if (vlog_stream) {
+      tree.Print(*vlog_stream);
+    }
+    CARBON_FATAL() << "Invalid tree returned by Parse(): " << verify.error();
+  }
   return tree;
 }
 
@@ -188,7 +192,7 @@ auto ParseTree::Print(llvm::raw_ostream& output, bool preorder) const -> void {
   output << "]\n";
 }
 
-auto ParseTree::Verify() const -> std::optional<Error> {
+auto ParseTree::Verify() const -> ErrorOr<Success> {
   llvm::SmallVector<ParseTree::Node> nodes;
   // Traverse the tree in postorder.
   for (Node n : postorder()) {
@@ -259,7 +263,7 @@ auto ParseTree::Verify() const -> std::optional<Error> {
                       "TokenizedBuffer has {1} tokens.",
                       node_impls_.size(), tokens_->size()));
   }
-  return std::nullopt;
+  return Success();
 }
 
 auto ParseTree::PostorderIterator::Print(llvm::raw_ostream& output) const

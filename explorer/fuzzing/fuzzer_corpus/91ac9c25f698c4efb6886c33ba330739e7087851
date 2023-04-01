@@ -1,0 +1,893 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name {
+        name: "HasTypes"
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "A"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "B"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "C"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "D"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "E"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "F"
+              type {
+                type_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
+      name {
+        name: "HasParams"
+      }
+      members {
+        let {
+          pattern {
+            generic_binding {
+              name: "V"
+              type {
+                identifier {
+                  name: "HasTypes"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "F"
+      }
+      deduced_parameters {
+        name: "X"
+        type {
+          where {
+            base {
+              operator {
+                op: BitwiseAnd
+                arguments {
+                  identifier {
+                    name: "HasTypes"
+                  }
+                }
+                arguments {
+                  call {
+                    function {
+                      identifier {
+                        name: "HasParams"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "Self"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "Self"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "Self"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "Self"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              impls {
+                type {
+                  designator {
+                    name: "Self"
+                  }
+                }
+                constraint {
+                  call {
+                    function {
+                      identifier {
+                        name: "HasParams"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "A"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "A"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "A"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "A"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              impls {
+                type {
+                  designator {
+                    name: "Self"
+                  }
+                }
+                constraint {
+                  call {
+                    function {
+                      identifier {
+                        name: "HasParams"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "B"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "B"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "B"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "B"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              impls {
+                type {
+                  designator {
+                    name: "Self"
+                  }
+                }
+                constraint {
+                  call {
+                    function {
+                      identifier {
+                        name: "HasParams"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "C"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "C"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "C"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "C"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              impls {
+                type {
+                  designator {
+                    name: "Self"
+                  }
+                }
+                constraint {
+                  call {
+                    function {
+                      identifier {
+                        name: "HasParams"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "D"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "D"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "D"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "D"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              impls {
+                type {
+                  designator {
+                    name: "Self"
+                  }
+                }
+                constraint {
+                  call {
+                    function {
+                      identifier {
+                        name: "HasParams"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          designator {
+                            name: "E"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "E"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "E"
+                          }
+                        }
+                        fields {
+                          designator {
+                            name: "E"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "F"
+                replacement {
+                  simple_member_access {
+                    field: "A"
+                    object {
+                      compound_member_access {
+                        object {
+                          designator {
+                            name: "Self"
+                          }
+                        }
+                        path {
+                          simple_member_access {
+                            field: "V"
+                            object {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "HasParams"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                    fields {
+                                      designator {
+                                        name: "E"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "E"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "E"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "E"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "E"
+                replacement {
+                  simple_member_access {
+                    field: "A"
+                    object {
+                      compound_member_access {
+                        object {
+                          designator {
+                            name: "Self"
+                          }
+                        }
+                        path {
+                          simple_member_access {
+                            field: "V"
+                            object {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "HasParams"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                    fields {
+                                      designator {
+                                        name: "D"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "D"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "D"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "D"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "D"
+                replacement {
+                  simple_member_access {
+                    field: "A"
+                    object {
+                      compound_member_access {
+                        object {
+                          designator {
+                            name: "Self"
+                          }
+                        }
+                        path {
+                          simple_member_access {
+                            field: "V"
+                            object {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "HasParams"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                    fields {
+                                      designator {
+                                        name: "C"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "C"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "C"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "C"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "C"
+                replacement {
+                  simple_member_access {
+                    field: "A"
+                    object {
+                      compound_member_access {
+                        object {
+                          designator {
+                            name: "Self"
+                          }
+                        }
+                        path {
+                          simple_member_access {
+                            field: "V"
+                            object {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "HasParams"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                    fields {
+                                      designator {
+                                        name: "B"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "B"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "B"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "B"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "B"
+                replacement {
+                  simple_member_access {
+                    field: "A"
+                    object {
+                      compound_member_access {
+                        object {
+                          designator {
+                            name: "Self"
+                          }
+                        }
+                        path {
+                          simple_member_access {
+                            field: "V"
+                            object {
+                              call {
+                                function {
+                                  identifier {
+                                    name: "HasParams"
+                                  }
+                                }
+                                argument {
+                                  tuple_literal {
+                                    fields {
+                                      designator {
+                                        name: "A"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "A"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "A"
+                                      }
+                                    }
+                                    fields {
+                                      designator {
+                                        name: "A"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "A"
+                replacement {
+                  designator {
+                    name: "Self"
+                  }
+                }
+              }
+            }
+            clauses {
+              rewrite {
+                member_name: "V"
+                replacement {
+                  designator {
+                    name: "Self"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      param_pattern {
+        fields {
+          binding_pattern {
+            name: "x"
+            type {
+              expression_pattern {
+                expression {
+                  identifier {
+                    name: "X"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          simple_member_access {
+            field: "F"
+            object {
+              identifier {
+                name: "X"
+              }
+            }
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "x"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        where {
+          base {
+            identifier {
+              name: "HasTypes"
+            }
+          }
+          clauses {
+            rewrite {
+              member_name: "A"
+              replacement {
+                designator {
+                  name: "B"
+                }
+              }
+            }
+          }
+          clauses {
+            rewrite {
+              member_name: "B"
+              replacement {
+                designator {
+                  name: "C"
+                }
+              }
+            }
+          }
+          clauses {
+            rewrite {
+              member_name: "C"
+              replacement {
+                designator {
+                  name: "D"
+                }
+              }
+            }
+          }
+          clauses {
+            rewrite {
+              member_name: "D"
+              replacement {
+                designator {
+                  name: "E"
+                }
+              }
+            }
+          }
+          clauses {
+            rewrite {
+              member_name: "E"
+              replacement {
+                designator {
+                  name: "F"
+                }
+              }
+            }
+          }
+          clauses {
+            rewrite {
+              member_name: "F"
+              replacement {
+                int_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: InternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        where {
+          base {
+            call {
+              function {
+                identifier {
+                  name: "HasParams"
+                }
+              }
+              argument {
+                tuple_literal {
+                  fields {
+                    int_type_literal {
+                    }
+                  }
+                  fields {
+                    int_type_literal {
+                    }
+                  }
+                  fields {
+                    int_type_literal {
+                    }
+                  }
+                  fields {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+            }
+          }
+          clauses {
+            rewrite {
+              member_name: "V"
+              replacement {
+                int_type_literal {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  identifier {
+                    name: "F"
+                  }
+                }
+                argument {
+                  tuple_literal {
+                    fields {
+                      int_literal {
+                        value: 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
