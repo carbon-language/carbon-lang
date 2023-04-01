@@ -16,15 +16,15 @@ class TypeChecker;
 // The `ImplScope` class is responsible for mapping a type and
 // interface to the location of the witness table for the `impl` for
 // that type and interface.  A scope may have parent scopes, whose
-// impls will also be visible in the child scope.
+// implementations will also be visible in the child scope.
 //
 // There is typically one instance of `ImplScope` class per scope
-// because the impls that are visible for a given type and interface
-// can vary from scope to scope. For example, consider the `bar` and
-// `baz` methods in the following class C and nested class D.
+// because the implementationss that are visible for a given type and
+// interface can vary from scope to scope. For example, consider the
+// `bar` and `baz` methods in the following class C and nested class D.
 //
 //     class C(U:! type, T:! type)  {
-//       class D(V:! type where U is Fooable(T)) {
+//       class D(V:! type where U impls Fooable(T)) {
 //         fn bar[self: Self](x: U, y : T) -> T{
 //           return x.foo(y)
 //         }
@@ -43,7 +43,7 @@ class TypeChecker;
 // scope.
 class ImplScope {
  public:
-  // The `Impl` struct is a key-value pair where the key is the
+  // The `ImplFact` struct is a key-value pair where the key is the
   // combination of a type and an interface, e.g., `List` and `Container`,
   // and the value is the result of statically resolving to the `impl`
   // for `List` as `Container`, which is an `Expression` that produces
@@ -54,7 +54,7 @@ class ImplScope {
   // later are impl bindings, that is, parameters for witnesses. In this case,
   // `sort_key` indicates the order in which this impl should be considered
   // relative to other matching impls.
-  struct Impl {
+  struct ImplFact {
     Nonnull<const InterfaceType*> interface;
     std::vector<Nonnull<const GenericBinding*>> deduced;
     Nonnull<const Value*> type;
@@ -66,7 +66,7 @@ class ImplScope {
   // Internal type used to represent the result of resolving a lookup in a
   // particular impl scope.
   struct ResolveResult {
-    Nonnull<const Impl*> impl;
+    Nonnull<const ImplFact*> impl;
     Nonnull<const Witness*> witness;
   };
 
@@ -89,10 +89,10 @@ class ImplScope {
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
            Nonnull<const Witness*> witness, const TypeChecker& type_checker,
            std::optional<TypeStructureSortKey> sort_key = std::nullopt);
-  // Adds a list of impl constraints from a constraint type into scope. Any
+  // Adds a list of impls constraints from a constraint type into scope. Any
   // references to `.Self` are expected to have already been substituted for
   // the type implementing the constraint.
-  void Add(llvm::ArrayRef<ImplConstraint> impls,
+  void Add(llvm::ArrayRef<ImplsConstraint> impls_constraints,
            llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
            llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
            Nonnull<const Witness*> witness, const TypeChecker& type_checker);
@@ -176,7 +176,7 @@ class ImplScope {
                                const TypeChecker& type_checker) const
       -> ErrorOr<std::optional<ResolveResult>>;
 
-  std::vector<Impl> impls_;
+  std::vector<ImplFact> impl_facts_;
   std::vector<Nonnull<const EqualityConstraint*>> equalities_;
   std::optional<Nonnull<const ImplScope*>> parent_scope_;
 };

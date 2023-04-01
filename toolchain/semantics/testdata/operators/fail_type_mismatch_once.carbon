@@ -8,7 +8,7 @@
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0, return_type: node2},
+// CHECK:STDOUT:   {param_ir: block0, param_refs: block0, return_type: nodeIntegerType},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   12,
@@ -21,42 +21,35 @@
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node0, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node1, type: node1},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node2, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node3, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node4, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node5, type: node0},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: node6, type: node5},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: node2},
-// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: node3},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node8, arg1: node9, type: node1},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: node2},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node10, arg1: node11, type: node1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node12, type: node1},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node7, arg1: block2},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: nodeFloatingPointType},
+// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: nodeInvalidType, arg1: node+2, type: nodeInvalidType},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+3, arg1: node+4, type: nodeInvalidType},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5, type: nodeInvalidType},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+0, arg1: block2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node7,
-// CHECK:STDOUT:     node14,
+// CHECK:STDOUT:     node+0,
+// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node8,
-// CHECK:STDOUT:     node9,
-// CHECK:STDOUT:     node10,
-// CHECK:STDOUT:     node11,
-// CHECK:STDOUT:     node12,
-// CHECK:STDOUT:     node13,
+// CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
 fn Main() -> i32 {
   // The following line has two mismatches, but after the first, it shouldn't
   // keep erroring.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch_once.carbon:[[@LINE+1]]:13: Type mismatch: lhs is node2, rhs is node3
+  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch_once.carbon:[[@LINE+1]]:13: Cannot implicitly convert from `i32` to `f64`.
   return 12 + 3.4 + 12;
 }

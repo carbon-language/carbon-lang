@@ -5,11 +5,13 @@
 #ifndef CARBON_EXPLORER_AST_ELEMENT_PATH_H_
 #define CARBON_EXPLORER_AST_ELEMENT_PATH_H_
 
+#include <algorithm>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/value_node.h"
@@ -86,6 +88,18 @@ class ElementPath {
   // Appends `element` to the end of *this.
   auto Append(Nonnull<const Element*> element) -> void {
     components_.push_back(Component(element));
+  }
+
+  // Removes all trailing `BaseElement`s, errors if there are no base elements.
+  auto RemoveTrailingBaseElements() -> void {
+    CARBON_CHECK(!components_.empty() && components_.back().element()->kind() ==
+                                             ElementKind::BaseElement)
+        << "No base elements to remove.";
+    const auto r_it = std::find_if(
+        components_.rbegin(), components_.rend(), [](const Component& c) {
+          return c.element()->kind() != ElementKind::BaseElement;
+        });
+    components_.erase(r_it.base(), components_.end());
   }
 
   void Print(llvm::raw_ostream& out) const {

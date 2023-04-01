@@ -43,6 +43,9 @@
 // The end of the file.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(FileEnd, 0)
 
+// An invalid expression. Used to balance the parse tree. Always has an error.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidExpression, 0)
+
 // An empty declaration, such as `;`.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDeclaration, 0)
 
@@ -107,7 +110,8 @@ CARBON_PARSE_NODE_KIND_BRACKET(DeducedParameterList, DeducedParameterListStart)
 //   _external_: type expression
 // [Generic]PatternBinding
 //
-// Address and Template may be parents to [Generic]PatternBinding, in that order.
+// Address and Template may be parents to [Generic]PatternBinding, in that
+// order.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PatternBinding, 2)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(GenericPatternBinding, 2)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Address, 1)
@@ -337,12 +341,13 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDefinition,
 CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDeclaration,
                                NamedConstraintIntroducer)
 
-// The `self` name and `Self` type keywords. Typically of the form `self: Self`:
-//   SelfDeducedParameter
-//   SelfType
+// The `self` value and `Self` type identifier keywords. Typically of the form
+// `self: Self`:
+//   SelfValueIdentifier
+//   SelfTypeIdentifier
 // PatternBinding
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfDeducedParameter, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfType, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueIdentifier, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeIdentifier, 0)
 
 #undef CARBON_PARSE_NODE_KIND
 #undef CARBON_PARSE_NODE_KIND_BRACKET

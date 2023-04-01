@@ -33,6 +33,8 @@ class SemanticsParseTreeHandler {
         node_block_stack_("node_block_stack_", semantics.node_blocks_,
                           vlog_stream),
         params_or_args_stack_("params_or_args_stack_", semantics.node_blocks_,
+                              vlog_stream),
+        args_type_info_stack_("args_type_info_stack_", semantics.node_blocks_,
                               vlog_stream) {}
 
   // Outputs the ParseTree information into SemanticsIR.
@@ -43,6 +45,16 @@ class SemanticsParseTreeHandler {
   class PrettyStackTraceNodeStack;
   // Prints the node_block_stack_ on stack dumps.
   class PrettyStackTraceNodeBlockStack;
+
+  // For CanImplicitAs, the detected conversion to apply.
+  enum ImplicitAsKind {
+    // Incompatible types.
+    Incompatible,
+    // No conversion required.
+    Identical,
+    // ImplicitAs is required.
+    Compatible,
+  };
 
   // Provides DenseMapInfo for SemanticsStringId.
   struct SemanticsStringIdMapInfo {
@@ -100,43 +112,60 @@ class SemanticsParseTreeHandler {
   // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
   auto PopScope() -> void;
 
-  // Attempts a type conversion between two types. Returns:
-  // - The result type if valid.
-  // - BuiltinInvalidType if either lhs_id or rhs_id is BuiltinInvalidType.
-  // - Invalid if no conversion is supported.
+  // Runs ImplicitAsImpl for a set of arguments and parameters.
   //
-  // The caller might choose to print a diagnostic if Invalid is returned,
-  // whereas BuiltinInvalidType means there was a previous error that may be
-  // related and another diagnostic is undesirable.
-  auto CanTypeConvert(SemanticsNodeId from_type, SemanticsNodeId to_type)
-      -> SemanticsNodeId;
-
-  // Attempts a type conversion between two arguments, returning the result
-  // type. The result type will be BuiltinInvalidType for errors; this handles
-  // printing diagnostics.
-  auto TryTypeConversion(ParseTree::Node parse_node, SemanticsNodeId lhs_id,
-                         SemanticsNodeId rhs_id, bool can_convert_lhs)
-      -> SemanticsNodeId;
-
-  // Attempts a type conversion between arguments and parameters. Returns true
-  // on success. arg_parse_node and param_parse_node are only used for
-  // diagnostic locations.
-  auto TryTypeConversionOnArgs(ParseTree::Node arg_parse_node,
-                               SemanticsNodeBlockId arg_ir_id,
-                               SemanticsNodeBlockId arg_refs_id,
-                               ParseTree::Node param_parse_node,
-                               SemanticsNodeBlockId param_refs_id) -> bool;
-
-  auto ParamOrArgStart() -> void;
-  auto ParamOrArgComma(ParseTree::Node parse_node) -> bool;
-  auto ParamOrArgEnd(
-      ParseNodeKind start_kind, ParseNodeKind comma_kind,
-      std::function<bool(SemanticsNodeBlockId, SemanticsNodeBlockId)> on_start)
+  // This will eventually need to support checking against multiple possible
+  // overloads, multiple of which may be possible but not "best". While this can
+  // currently be done by calling twice, toggling `apply_implicit_as`, in the
+  // future we may want to remember the right implicit conversions to do for
+  // valid cases in order to efficiently handle generics.
+  auto ImplicitAsForArgs(
+      SemanticsNodeBlockId arg_ir_id, SemanticsNodeBlockId arg_refs_id,
+      ParseTree::Node param_parse_node, SemanticsNodeBlockId param_refs_id,
+      DiagnosticEmitter<ParseTree::Node>::DiagnosticBuilder* diagnostic)
       -> bool;
 
+  // Runs ImplicitAsImpl for a situation where a cast is required, returning the
+  // updated `value_id`. Prints a diagnostic and returns an InvalidType if
+  // unsupported.
+  auto ImplicitAsRequired(ParseTree::Node parse_node, SemanticsNodeId value_id,
+                          SemanticsNodeId as_type_id) -> SemanticsNodeId;
+
+  // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
+  // result type. The result will be the node to use to replace `value`.
+  //
+  // If `output_value_id` is null, then this only checks if the conversion is
+  // possible.
+  //
+  // If `output_value_id` is not null, then it will be set if there is a need to
+  // cast.
+  auto ImplicitAsImpl(SemanticsNodeId value_id, SemanticsNodeId as_type_id,
+                      SemanticsNodeId* output_value_id) -> ImplicitAsKind;
+
+  // Returns true if the ImplicitAs can use struct conversion.
+  // TODO: This currently only supports struct types that precisely match.
+  auto CanImplicitAsStruct(SemanticsNode value_type, SemanticsNode as_type)
+      -> bool;
+
+  // Starts handling parameters or arguments.
+  auto ParamOrArgStart() -> void;
+
+  // On a comma, pushes the entry. On return, the top of node_stack_ will be
+  // start_kind.
+  auto ParamOrArgComma(bool for_args) -> void;
+
+  // Detects whether there's an entry to push. On return, the top of
+  // node_stack_ will be start_kind, and the caller should do type-specific
+  // processing. Returns a pair of {ir_id, refs_id}.
+  auto ParamOrArgEnd(bool for_args, ParseNodeKind start_kind)
+      -> std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId>;
+
   // Saves a parameter from the top block in node_stack_ to the top block in
-  // params_or_args_stack_. Returns false if nothing is copied.
-  auto ParamOrArgSave() -> bool;
+  // params_or_args_stack_. If for_args, adds a StubReference of the previous
+  // node's result to the IR.
+  //
+  // This should only be called by other ParamOrArg functions, not directly.
+  auto ParamOrArgSave(bool for_args) -> void;
 
   // Parse node handlers. Returns false for unrecoverable errors.
 #define CARBON_PARSE_NODE_KIND(Name) \
@@ -171,6 +200,12 @@ class SemanticsParseTreeHandler {
   // will have 1 or more nodes in blocks in node_block_stack_, but only ever 1
   // node in blocks here.
   SemanticsNodeBlockStack params_or_args_stack_;
+
+  // The stack of node blocks being used for type information while processing
+  // arguments. This is used in parallel with params_or_args_stack_. It's
+  // currently only used for struct literals, where we need to track names
+  // for a type separate from the literal arguments.
+  SemanticsNodeBlockStack args_type_info_stack_;
 
   // Completed parameters that are held temporarily on a side-channel for a
   // function. This can't use node_stack_ because it has space for only one

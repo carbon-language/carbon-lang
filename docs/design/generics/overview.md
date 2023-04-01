@@ -34,7 +34,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Associated types](#associated-types)
         -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Constraints](#constraints)
-    -   [Parameterized impls](#parameterized-impls)
+    -   [Parameterized impl declarations](#parameterized-impl-declarations)
     -   [Operator overloading](#operator-overloading)
 -   [Future work](#future-work)
 -   [References](#references)
@@ -594,7 +594,7 @@ fn FindFirstPrime[T:! Container where .Element == i32]
   ...
 }
 
-fn PrintContainer[T:! Container where .Element is Printable](c: T) {
+fn PrintContainer[T:! Container where .Element impls Printable](c: T) {
   // The type of the elements of `c` is not known, but we do know
   // that type satisfies the `Printable` interface.
   ...
@@ -614,7 +614,7 @@ class Vector(T:! Movable) {
 }
 ```
 
-### Parameterized impls
+### Parameterized impl declarations
 
 Implementations can be parameterized to apply to multiple types. Those
 parameters can have constraints to restrict when the implementation applies.

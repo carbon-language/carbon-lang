@@ -7,8 +7,18 @@
 #include "common/error.h"
 #include "explorer/ast/impl_binding.h"
 #include "explorer/ast/pattern.h"
+#include "explorer/ast/value.h"
 
 namespace Carbon {
+
+Bindings::Bindings(CloneContext& context, const Bindings& other) {
+  for (auto [binding, value] : other.args_) {
+    args_.insert({context.Remap(binding), context.Clone(value)});
+  }
+  for (auto [binding, value] : other.witnesses_) {
+    witnesses_.insert({context.Remap(binding), context.Clone(value)});
+  }
+}
 
 void Bindings::Add(Nonnull<const GenericBinding*> binding,
                    Nonnull<const Value*> value,

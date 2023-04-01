@@ -32,7 +32,7 @@ void ImplScope::Add(Nonnull<const Value*> iface,
     CARBON_CHECK(!sort_key)
         << "should only be given a sort key for an impl of an interface";
     // The caller should have substituted `.Self` for `type` already.
-    Add(constraint->impl_constraints(), deduced, impl_bindings, witness,
+    Add(constraint->impls_constraints(), deduced, impl_bindings, witness,
         type_checker);
     // A parameterized impl declaration doesn't contribute any equality
     // constraints to the scope. Instead, we'll resolve the equality
@@ -46,30 +46,32 @@ void ImplScope::Add(Nonnull<const Value*> iface,
     return;
   }
 
-  Impl new_impl = {.interface = cast<InterfaceType>(iface),
-                   .deduced = deduced,
-                   .type = type,
-                   .impl_bindings = impl_bindings,
-                   .witness = witness,
-                   .sort_key = std::move(sort_key)};
+  ImplFact new_impl = {.interface = cast<InterfaceType>(iface),
+                       .deduced = deduced,
+                       .type = type,
+                       .impl_bindings = impl_bindings,
+                       .witness = witness,
+                       .sort_key = std::move(sort_key)};
 
   // Find the first impl that's more specific than this one, and place this
   // impl right before it. This keeps the impls with the same type structure
   // sorted in lexical order, which is important for `match_first` semantics.
-  auto insert_pos = std::upper_bound(
-      impls_.begin(), impls_.end(), new_impl,
-      [](const Impl& a, const Impl& b) { return a.sort_key < b.sort_key; });
+  auto insert_pos =
+      std::upper_bound(impl_facts_.begin(), impl_facts_.end(), new_impl,
+                       [](const ImplFact& a, const ImplFact& b) {
+                         return a.sort_key < b.sort_key;
+                       });
 
-  impls_.insert(insert_pos, std::move(new_impl));
+  impl_facts_.insert(insert_pos, std::move(new_impl));
 }
 
-void ImplScope::Add(llvm::ArrayRef<ImplConstraint> impls,
+void ImplScope::Add(llvm::ArrayRef<ImplsConstraint> impls_constraints,
                     llvm::ArrayRef<Nonnull<const GenericBinding*>> deduced,
                     llvm::ArrayRef<Nonnull<const ImplBinding*>> impl_bindings,
                     Nonnull<const Witness*> witness,
                     const TypeChecker& type_checker) {
-  for (size_t i = 0; i != impls.size(); ++i) {
-    ImplConstraint impl = impls[i];
+  for (size_t i = 0; i != impls_constraints.size(); ++i) {
+    ImplsConstraint impl = impls_constraints[i];
     Add(impl.interface, deduced, impl.type, impl_bindings,
         type_checker.MakeConstraintWitnessAccess(witness, i), type_checker);
   }
@@ -121,36 +123,41 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
                            bool diagnose_missing_impl) const
     -> ErrorOr<std::optional<Nonnull<const Witness*>>> {
   if (const auto* iface_type = dyn_cast<InterfaceType>(constraint_type)) {
-    iface_type =
-        cast<InterfaceType>(type_checker.Substitute(bindings, iface_type));
+    CARBON_ASSIGN_OR_RETURN(
+        iface_type,
+        type_checker.SubstituteCast<InterfaceType>(bindings, iface_type));
     return TryResolveInterface(iface_type, impl_type, source_loc, type_checker,
                                diagnose_missing_impl);
   }
   if (const auto* constraint = dyn_cast<ConstraintType>(constraint_type)) {
     std::vector<Nonnull<const Witness*>> witnesses;
-    for (auto impl : constraint->impl_constraints()) {
-      // Note that later impl constraints can refer to earlier impl constraints
-      // via impl bindings. For example, in
-      //   `C where .Self.AssocType is D`,
-      // ... the `.Self.AssocType is D` constraint refers to the `.Self is C`
-      // constraint when naming `AssocType`. So incrementally build up a
-      // partial constraint witness as we go.
+    for (auto impl : constraint->impls_constraints()) {
+      // Note that later impls constraints can refer to earlier impls
+      // constraints via impl bindings. For example, in
+      //   `C where .Self.AssocType impls D`,
+      // ... the `.Self.AssocType impls D` constraint refers to the
+      // `.Self impls C` constraint when naming `AssocType`. So incrementally
+      // build up a partial constraint witness as we go.
       std::optional<Nonnull<const Witness*>> witness;
       if (constraint->self_binding()->impl_binding()) {
         // Note, this is a partial impl binding covering only the impl
-        // constraints that we've already seen. Earlier impl constraints should
-        // not be able to refer to impl bindings for later impl constraints.
+        // constraints that we've already seen. Earlier impls constraints should
+        // not be able to refer to impl bindings for later impls constraints.
         witness = type_checker.MakeConstraintWitness(witnesses);
       }
       Bindings local_bindings = bindings;
       local_bindings.Add(constraint->self_binding(), impl_type, witness);
+
+      CARBON_ASSIGN_OR_RETURN(const auto* subst_interface,
+                              type_checker.SubstituteCast<InterfaceType>(
+                                  local_bindings, impl.interface));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> subst_type,
+          type_checker.Substitute(local_bindings, impl.type));
       CARBON_ASSIGN_OR_RETURN(
           std::optional<Nonnull<const Witness*>> result,
-          TryResolveInterface(
-              cast<InterfaceType>(
-                  type_checker.Substitute(local_bindings, impl.interface)),
-              type_checker.Substitute(local_bindings, impl.type), source_loc,
-              type_checker, diagnose_missing_impl));
+          TryResolveInterface(subst_interface, subst_type, source_loc,
+                              type_checker, diagnose_missing_impl));
       if (!result) {
         return {std::nullopt};
       }
@@ -174,16 +181,22 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
       local_bindings.Add(constraint->self_binding(), impl_type, witness);
       SingleStepEqualityContext equality_ctx(this);
       for (const auto& intrinsic : intrinsics) {
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Value*> type,
+            type_checker.Substitute(local_bindings, intrinsic.type));
         IntrinsicConstraint converted = {
-            .type = type_checker.Substitute(local_bindings, intrinsic.type),
-            .kind = intrinsic.kind,
-            .arguments = {}};
+            .type = type, .kind = intrinsic.kind, .arguments = {}};
         converted.arguments.reserve(intrinsic.arguments.size());
         for (Nonnull<const Value*> argument : intrinsic.arguments) {
-          converted.arguments.push_back(
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> subst_arg,
               type_checker.Substitute(local_bindings, argument));
+          converted.arguments.push_back(subst_arg);
         }
-        if (!type_checker.IsIntrinsicConstraintSatisfied(converted, *this)) {
+        CARBON_ASSIGN_OR_RETURN(
+            bool intrinsic_satisfied,
+            type_checker.IsIntrinsicConstraintSatisfied(converted, *this));
+        if (!intrinsic_satisfied) {
           if (!diagnose_missing_impl) {
             return {std::nullopt};
           }
@@ -193,11 +206,11 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
       }
       for (const auto& equal : equals) {
         auto it = equal.values.begin();
-        Nonnull<const Value*> first =
-            type_checker.Substitute(local_bindings, *it++);
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> first,
+                                type_checker.Substitute(local_bindings, *it++));
         for (; it != equal.values.end(); ++it) {
-          Nonnull<const Value*> current =
-              type_checker.Substitute(local_bindings, *it);
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> current,
+                                  type_checker.Substitute(local_bindings, *it));
           if (!ValueEqual(first, current, &equality_ctx)) {
             if (!diagnose_missing_impl) {
               return {std::nullopt};
@@ -208,10 +221,13 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
         }
       }
       for (const auto& rewrite : rewrites) {
-        Nonnull<const Value*> constant =
-            type_checker.Substitute(local_bindings, rewrite.constant);
-        Nonnull<const Value*> value = type_checker.Substitute(
-            local_bindings, rewrite.converted_replacement);
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Value*> constant,
+            type_checker.Substitute(local_bindings, rewrite.constant));
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Value*> value,
+            type_checker.Substitute(local_bindings,
+                                    rewrite.converted_replacement));
         if (!ValueEqual(constant, value, &equality_ctx)) {
           if (!diagnose_missing_impl) {
             return {std::nullopt};
@@ -368,9 +384,9 @@ auto ImplScope::TryResolveInterfaceHere(
     const TypeChecker& type_checker) const
     -> ErrorOr<std::optional<ResolveResult>> {
   std::optional<ResolveResult> result = std::nullopt;
-  for (const Impl& impl : impls_) {
+  for (const ImplFact& impl : impl_facts_) {
     // If we've passed the final impl with a sort key matching our best impl,
-    // all further impls are worse and don't need to be checked.
+    // all further are worse and don't need to be checked.
     if (result && result->impl->sort_key < impl.sort_key) {
       break;
     }
@@ -403,9 +419,9 @@ auto ImplScope::TryResolveInterfaceHere(
 
 // TODO: Add indentation when printing the parents.
 void ImplScope::Print(llvm::raw_ostream& out) const {
-  out << "impls: ";
+  out << "impl declarations: ";
   llvm::ListSeparator sep;
-  for (const Impl& impl : impls_) {
+  for (const ImplFact& impl : impl_facts_) {
     out << sep << *(impl.type) << " as " << *(impl.interface);
     if (impl.sort_key) {
       out << " " << *impl.sort_key;

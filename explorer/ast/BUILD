@@ -4,43 +4,17 @@
 
 package(default_visibility = ["//explorer:__subpackages__"])
 
-genrule(
-    name = "ast_rtti",
-    srcs = ["ast_rtti.txt"],
-    outs = [
-        "ast_rtti.h",
-        "ast_rtti.cpp",
-    ],
-    cmd = "./$(location //explorer:gen_rtti)" +
-          " $(location ast_rtti.txt)" +
-          " $(location ast_rtti.h) $(location ast_rtti.cpp)" +
-          " $(rootpath ast_rtti.h)",
-    tools = ["//explorer:gen_rtti"],
-)
-
-cc_library(
-    name = "ast_node",
-    srcs = [
-        "ast_node.cpp",
-        "ast_rtti.cpp",
-    ],
-    hdrs = [
-        "ast_node.h",
-        "ast_rtti.h",
-    ],
-    deps = [
-        "//explorer/common:source_location",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
 cc_library(
     name = "ast",
     srcs = [
+        "ast_node.cpp",
+        "ast_rtti.cpp",
         "bindings.cpp",
+        "clone_context.cpp",
         "declaration.cpp",
         "element.cpp",
         "expression.cpp",
+        "impl_binding.cpp",
         "pattern.cpp",
         "statement.cpp",
         "value.cpp",
@@ -48,7 +22,11 @@ cc_library(
     hdrs = [
         "address.h",
         "ast.h",
+        "ast_kinds.h",
+        "ast_node.h",
+        "ast_rtti.h",
         "bindings.h",
+        "clone_context.h",
         "declaration.h",
         "element.h",
         "element_path.h",
@@ -65,11 +43,11 @@ cc_library(
         "value_kinds.def",
     ],
     deps = [
-        ":ast_node",
         ":library_name",
         ":paren_contents",
         ":value_category",
         "//common:check",
+        "//common:enum_base",
         "//common:error",
         "//common:indirect_value",
         "//common:ostream",
@@ -91,7 +69,6 @@ cc_library(
     hdrs = ["ast_test_matchers.h"],
     deps = [
         ":ast",
-        ":ast_node",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

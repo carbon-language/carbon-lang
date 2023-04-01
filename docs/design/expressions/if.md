@@ -89,8 +89,8 @@ The interface `CommonTypeWith` is used to customize the behavior of
 ```
 interface CommonTypeWith(U:! type) {
   let Result:! type
-    where Self is ImplicitAs(.Self) and
-          U is ImplicitAs(.Self);
+    where Self impls ImplicitAs(.Self) and
+          U impls ImplicitAs(.Self);
 }
 ```
 
@@ -98,8 +98,8 @@ The implementation `A as CommonTypeWith(B)` specifies the type that `A` would
 like to result from unifying `A` and `B` as its `Result`.
 
 _Note:_ It is required that both types implicitly convert to the common type.
-Some blanket `impl`s for `CommonTypeWith` are provided as part of the prelude.
-These are described in the following sections.
+Some blanket `impl` declaractions for `CommonTypeWith` are provided as part of
+the prelude. These are described in the following sections.
 
 _Note:_ The same mechanism is expected to eventually be used to compute common
 types in other circumstances.
@@ -122,8 +122,8 @@ The interface `SymmetricCommonTypeWith` is an implementation detail of the
 ```
 interface SymmetricCommonTypeWith(U:! type) {
   let Result:! type
-    where Self is ImplicitAs(.Self) and
-          U is ImplicitAs(.Self);
+    where Self impls ImplicitAs(.Self) and
+          U impls ImplicitAs(.Self);
 }
 match_first {
   impl forall [T:! type, U:! CommonTypeWith(T)]
@@ -133,9 +133,10 @@ match_first {
 }
 ```
 
-The `SymmetricCommonTypeWith` interface is not exported, so user-defined `impl`s
-can't be defined, and only the two blanket `impl`s above are used. The
-`CommonType` constraint is then defined as follows:
+The `SymmetricCommonTypeWith` interface is not exported, so users may not
+declare their own implementations of it, and only the two blanket `impl`
+declarations above are used. The `CommonType` constraint is then defined as
+follows:
 
 ```
 constraint CommonType(U:! SymmetricCommonTypeWith(Self)) {
@@ -198,7 +199,7 @@ specific implementation exists, the constraints on `T as CommonType(U)` will not
 be met because `(T as CommonTypeWith(U)).Result` and
 `(U as CommonTypeWith(T)).Result` will differ. In order to define a common type
 for such a case, `CommonTypeWith` implementations in both directions must be
-provided to override the blanket `impl`s in both directions:
+provided to override the blanket `impl` declarations in both directions:
 
 ```
 impl MyString as CommonTypeWith(YourString) where .Result = MyString {}
