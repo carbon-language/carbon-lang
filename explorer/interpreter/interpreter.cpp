@@ -222,7 +222,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
       const auto& lhs = cast<IntValue>(*args[0]).value();
       const auto& rhs = cast<IntValue>(*args[1]).value();
       if (rhs == 0) {
-        return ProgramError(source_loc) << "division by zero";
+        return ProgramError(source_loc) << "division by zero , undefined";
       }
       return arena_->New<IntValue>(lhs / rhs);
     }
@@ -230,7 +230,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
       const auto& lhs = cast<IntValue>(*args[0]).value();
       const auto& rhs = cast<IntValue>(*args[1]).value();
       if (rhs == 0) {
-        return ProgramError(source_loc) << "division by zero";
+        return ProgramError(source_loc) << "division by zero , undefined";
       }
       return arena_->New<IntValue>(lhs % rhs);
     }
