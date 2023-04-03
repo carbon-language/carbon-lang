@@ -1171,14 +1171,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       // First, evaluate the first operand.
       if (act.pos() == 0) {
         const bool optional = !access.is_addr_me_method();
-        const bool REVERT = false;
-        if (optional && REVERT) {
-          act.AddResult(arena_->New<BoolValue>(false));
-          return todo_.RunAgain();
-        } else {
-          return todo_.Spawn(
-              std::make_unique<LValAction>(&access.object(), optional));
-        }
+        return todo_.Spawn(
+            std::make_unique<LValAction>(&access.object(), optional));
       } else if (act.pos() == 1) {
         if (access.is_addr_me_method()) {
           act.AddResult(arena_->New<BoolValue>(false));
@@ -2020,10 +2014,11 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
 
         std::optional<Address> addr;
         if (definition.has_init()) {
-          addr = (act.results()[1]->kind() == Value::Kind::LValue /*&&
-                    v == act.results()[0]*/)
-                       ? std::make_optional(cast<LValue>(act.results()[1])->address())
-                       : std::nullopt;
+          addr = (act.results()[1]->kind() == Value::Kind::LValue &&
+                  v == act.results()[0])
+                     ? std::make_optional(
+                           cast<LValue>(act.results()[1])->address())
+                     : std::nullopt;
         }
         RuntimeScope matches(&heap_);
         BindingMap generic_args;
