@@ -490,8 +490,9 @@ class TypeChecker {
       -> ErrorOr<Nonnull<const ConstraintType*>>;
 
   // Gets the type for the given associated constant.
-  auto GetTypeForAssociatedConstant(Nonnull<const AssociatedConstant*> assoc)
-      const -> ErrorOr<Nonnull<const Value*>>;
+  auto GetTypeForAssociatedConstant(Nonnull<const AssociatedConstant*> assoc,
+                                    SourceLocation source_loc) const
+      -> ErrorOr<Nonnull<const Value*>>;
 
   // Look up a member name in a constraint, which might be a single interface or
   // a compound constraint.
@@ -505,7 +506,8 @@ class TypeChecker {
   // of `type`.
   auto LookupRewriteInTypeOf(Nonnull<const Value*> type,
                              Nonnull<const InterfaceType*> interface,
-                             Nonnull<const Declaration*> member) const
+                             Nonnull<const Declaration*> member,
+                             SourceLocation source_loc) const
       -> ErrorOr<std::optional<const RewriteConstraint*>>;
 
   // Given a witness value, look for a rewrite for the given associated
