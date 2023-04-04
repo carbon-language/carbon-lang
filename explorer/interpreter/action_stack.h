@@ -119,6 +119,8 @@ class ActionStack {
 
   void Pop() { todo_.Pop(); }
 
+  auto Count() const -> int { return todo_.Count(); }
+
  private:
   // Pop any ScopeActions from the top of the stack, propagating results as
   // needed, to restore the invariant that todo_.Top() is not a ScopeAction.
