@@ -98,7 +98,8 @@ class Action {
     ScopeAction,
     RecursiveAction,
     CleanUpAction,
-    DestroyAction
+    DestroyAction,
+    TypeInstantiationAction
   };
 
   Action(const Value&) = delete;
@@ -196,6 +197,28 @@ class ExpressionAction : public Action {
 
  private:
   Nonnull<const Expression*> expression_;
+};
+
+// An Action which implements the Instantiation of Type. The result is expressed
+// as a Value.
+class TypeInstantiationAction : public Action {
+ public:
+  explicit TypeInstantiationAction(Nonnull<const Value*> type,
+                                   SourceLocation source_loc)
+      : Action(Kind::TypeInstantiationAction),
+        type_(type),
+        source_loc_(source_loc) {}
+
+  static auto classof(const Action* action) -> bool {
+    return action->kind() == Kind::TypeInstantiationAction;
+  }
+
+  auto type() const -> Nonnull<const Value*> { return type_; }
+  auto source_loc() const -> SourceLocation { return source_loc_; }
+
+ private:
+  Nonnull<const Value*> type_;
+  SourceLocation source_loc_;
 };
 
 // An Action which implements evaluation of a Witness to resolve it in the

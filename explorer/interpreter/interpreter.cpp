@@ -94,6 +94,8 @@ class Interpreter {
   // State transition for object destruction.
   auto StepCleanUp() -> ErrorOr<Success>;
   auto StepDestroy() -> ErrorOr<Success>;
+  // State transition for type instantiation.
+  auto StepInstantiateType() -> ErrorOr<Success>;
 
   auto CreateStruct(const std::vector<FieldInitializer>& fields,
                     const std::vector<Nonnull<const Value*>>& values)
@@ -424,6 +426,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
+      const auto constant_value = access.constant_value();
       if (auto rewrite = access.rewritten_form()) {
         return todo_.ReplaceWith(std::make_unique<LValAction>(*rewrite));
       }
@@ -431,30 +434,33 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
         return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+      } else if (act.pos() == 1 && constant_value) {
+        return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+            *constant_value, access.source_loc()));
       } else {
-        if (auto constant_value = access.constant_value()) {
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> instantiated,
-              InstantiateType(*constant_value, access.source_loc()));
-          return todo_.FinishAction(instantiated);
+        if (constant_value) {
+          return todo_.FinishAction(act.results().back());
+        } else {
+          //    { v :: [].f :: C, E, F} :: S, H}
+          // -> { { &v.f :: C, E, F} :: S, H }
+          Address object = cast<LValue>(*act.results()[0]).address();
+          Address member = object.ElementAddress(&access.member());
+          return todo_.FinishAction(arena_->New<LValue>(member));
         }
-        //    { v :: [].f :: C, E, F} :: S, H}
-        // -> { { &v.f :: C, E, F} :: S, H }
-        Address object = cast<LValue>(*act.results()[0]).address();
-        Address member = object.ElementAddress(&access.member());
-        return todo_.FinishAction(arena_->New<LValue>(member));
       }
     }
     case ExpressionKind::CompoundMemberAccessExpression: {
       const auto& access = cast<CompoundMemberAccessExpression>(exp);
+      const auto constant_value = access.constant_value();
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+      }
+      if (act.pos() == 1 && constant_value) {
+        return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+            *constant_value, access.source_loc()));
       } else {
-        if (auto constant_value = access.constant_value()) {
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> instantiated,
-              InstantiateType(*constant_value, access.source_loc()));
-          return todo_.FinishAction(instantiated);
+        if (constant_value) {
+          return todo_.FinishAction(act.results().back());
         }
         CARBON_CHECK(!access.member().interface().has_value())
             << "unexpected lvalue interface member";
@@ -640,20 +646,6 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       return arena_->New<NamedConstraintType>(&constraint_type.declaration(),
                                               bindings);
     }
-    case Value::Kind::NominalClassType: {
-      const auto& class_type = cast<NominalClassType>(*type);
-      std::optional<Nonnull<const NominalClassType*>> base = class_type.base();
-      if (base.has_value()) {
-        CARBON_ASSIGN_OR_RETURN(const auto inst_base,
-                                InstantiateType(base.value(), source_loc));
-        base = cast<NominalClassType>(inst_base);
-      }
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Bindings*> bindings,
-          InstantiateBindings(&class_type.bindings(), source_loc));
-      return arena_->New<NominalClassType>(&class_type.declaration(), bindings,
-                                           base, class_type.vtable());
-    }
     case Value::Kind::ChoiceType: {
       const auto& choice_type = cast<ChoiceType>(*type);
       CARBON_ASSIGN_OR_RETURN(
@@ -666,13 +658,6 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
           Nonnull<const Value*> type_value,
           EvalAssociatedConstant(cast<AssociatedConstant>(type), source_loc));
       return type_value;
-    }
-    case Value::Kind::PointerType: {
-      const auto* ptr = cast<PointerType>(type);
-      CARBON_ASSIGN_OR_RETURN(
-          const auto* actual_type,
-          InstantiateType(&ptr->pointee_type(), source_loc));
-      return arena_->New<PointerType>(actual_type);
     }
     default:
       return type;
@@ -1085,6 +1070,45 @@ auto Interpreter::CallFunction(const CallExpression& call,
   }
 }
 
+auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
+  const Action& act = todo_.CurrentAction();
+  const Nonnull<const Value*> type = cast<TypeInstantiationAction>(act).type();
+  SourceLocation source_loc = cast<TypeInstantiationAction>(act).source_loc();
+
+  switch (type->kind()) {
+    case Value::Kind::NominalClassType: {
+      const auto& class_type = cast<NominalClassType>(*type);
+      std::optional<Nonnull<const NominalClassType*>> base = class_type.base();
+      if (act.pos() == 0 && base.has_value()) {
+        return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+            base.value(), source_loc));
+      } else {
+        if (base.has_value()) {
+          base = cast<NominalClassType>(act.results().back());
+        }
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Bindings*> bindings,
+            InstantiateBindings(&class_type.bindings(), source_loc));
+        return todo_.FinishAction(arena_->New<NominalClassType>(
+            &class_type.declaration(), bindings, base, class_type.vtable()));
+      }
+    }
+    case Value::Kind::PointerType: {
+      const auto* ptr = cast<PointerType>(type);
+      if (act.pos() == 0) {
+        return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+            &ptr->pointee_type(), source_loc));
+      } else {
+        const auto* actual_type = act.results().back();
+        return todo_.FinishAction(arena_->New<PointerType>(actual_type));
+      }
+    }
+    default:
+      CARBON_ASSIGN_OR_RETURN(auto inst_type, InstantiateType(type, source_loc))
+      return todo_.FinishAction(inst_type);
+  }
+}
+
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
@@ -1142,7 +1166,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       if (auto rewrite = access.rewritten_form()) {
         return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
       }
-      bool forming_member_name = isa<TypeOfMemberName>(&access.static_type());
       if (act.pos() == 0) {
         // First, evaluate the first operand.
         if (access.is_addr_me_method()) {
@@ -1151,68 +1174,93 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.Spawn(
               std::make_unique<ExpressionAction>(&access.object()));
         }
-      } else if (act.pos() == 1 && access.impl().has_value() &&
-                 !forming_member_name) {
-        // Next, if we're accessing an interface member, evaluate the `impl`
-        // expression to find the corresponding witness.
-        return todo_.Spawn(
-            std::make_unique<WitnessAction>(access.impl().value()));
       } else {
-        // Finally, produce the result.
         if (auto constant_value = access.constant_value()) {
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> instantiated,
-              InstantiateType(*constant_value, access.source_loc()));
-          return todo_.FinishAction(instantiated);
-        }
-        std::optional<Nonnull<const InterfaceType*>> found_in_interface =
-            access.found_in_interface();
-        if (found_in_interface) {
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> instantiated,
-              InstantiateType(*found_in_interface, exp.source_loc()));
-          found_in_interface = cast<InterfaceType>(instantiated);
-        }
-        if (const auto* member_name_type =
-                dyn_cast<TypeOfMemberName>(&access.static_type())) {
+          if (act.pos() == 1) {
+            return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+                *constant_value, access.source_loc()));
+          } else {
+            return todo_.FinishAction(act.results().back());
+          }
+        } else if (const auto* member_name_type =
+                       dyn_cast<TypeOfMemberName>(&access.static_type())) {
           // The result is a member name, such as in `Type.field_name`. Form a
           // suitable member name value.
           CARBON_CHECK(phase() == Phase::CompileTime)
               << "should not form MemberNames at runtime";
-          std::optional<const Value*> type_result;
-          if (!isa<InterfaceType, NamedConstraintType, ConstraintType>(
-                  act.results()[0])) {
-            type_result = act.results()[0];
+          auto found_in_interface = access.found_in_interface();
+          if (act.pos() == 1 && found_in_interface) {
+            return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+                *found_in_interface, exp.source_loc()));
+          } else {
+            if (found_in_interface) {
+              found_in_interface = cast<InterfaceType>(act.results().back());
+            }
+            std::optional<const Value*> type_result;
+            if (!isa<InterfaceType, NamedConstraintType, ConstraintType>(
+                    act.results()[0])) {
+              type_result = act.results()[0];
+            }
+            MemberName* member_name = arena_->New<MemberName>(
+                type_result, found_in_interface, member_name_type->member());
+            return todo_.FinishAction(member_name);
           }
-          MemberName* member_name = arena_->New<MemberName>(
-              type_result, found_in_interface, member_name_type->member());
-          return todo_.FinishAction(member_name);
         } else {
           // The result is the value of the named field, such as in
           // `value.field_name`. Extract the value within the given object.
-          std::optional<Nonnull<const Witness*>> witness;
-          if (access.impl().has_value()) {
-            witness = cast<Witness>(act.results()[1]);
-          }
-          ElementPath::Component member(&access.member(), found_in_interface,
-                                        witness);
-          const Value* aggregate;
-          if (access.is_type_access()) {
-            CARBON_ASSIGN_OR_RETURN(
-                aggregate, InstantiateType(&access.object().static_type(),
-                                           access.source_loc()));
-          } else if (const auto* lvalue = dyn_cast<LValue>(act.results()[0])) {
-            CARBON_ASSIGN_OR_RETURN(
-                aggregate,
-                this->heap_.Read(lvalue->address(), exp.source_loc()));
+          auto impl_has_value = access.impl().has_value();
+          if (act.pos() == 1) {
+            // Next, if we're accessing an interface member, evaluate the `impl`
+            // expression to find the corresponding witness.
+            if (impl_has_value) {
+              return todo_.Spawn(
+                  std::make_unique<WitnessAction>(access.impl().value()));
+            } else {
+              return todo_.RunAgain();
+            }
+          } else if (act.pos() == 2) {
+            if (auto found_in_interface = access.found_in_interface()) {
+              return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+                  *found_in_interface, exp.source_loc()));
+            } else {
+              return todo_.RunAgain();
+            }
+          } else if (act.pos() == 3) {
+            if (access.is_type_access()) {
+              return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+                  &access.object().static_type(), access.source_loc()));
+            } else {
+              return todo_.RunAgain();
+            }
           } else {
-            aggregate = act.results()[0];
+            auto found_in_interface = access.found_in_interface();
+            if (found_in_interface) {
+              found_in_interface = cast<InterfaceType>(
+                  impl_has_value ? act.results()[2] : act.results()[1]);
+            }
+            std::optional<Nonnull<const Witness*>> witness;
+            if (access.impl().has_value()) {
+              witness = cast<Witness>(act.results()[1]);
+            }
+            ElementPath::Component member(&access.member(), found_in_interface,
+                                          witness);
+            const Value* aggregate;
+            if (access.is_type_access()) {
+              aggregate = act.results().back();
+            } else if (const auto* lvalue =
+                           dyn_cast<LValue>(act.results()[0])) {
+              CARBON_ASSIGN_OR_RETURN(
+                  aggregate,
+                  this->heap_.Read(lvalue->address(), exp.source_loc()));
+            } else {
+              aggregate = act.results()[0];
+            }
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> member_value,
+                aggregate->GetElement(arena_, ElementPath(member),
+                                      exp.source_loc(), act.results()[0]));
+            return todo_.FinishAction(member_value);
           }
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> member_value,
-              aggregate->GetElement(arena_, ElementPath(member),
-                                    exp.source_loc(), act.results()[0]));
-          return todo_.FinishAction(member_value);
         }
       }
     }
@@ -1227,64 +1275,90 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.Spawn(
               std::make_unique<ExpressionAction>(&access.object()));
         }
-      } else if (act.pos() == 1 && access.impl().has_value() &&
-                 !forming_member_name) {
-        // Next, if we're accessing an interface member, evaluate the `impl`
-        // expression to find the corresponding witness.
-        return todo_.Spawn(
-            std::make_unique<WitnessAction>(access.impl().value()));
       } else {
-        // Finally, produce the result.
         if (auto constant_value = access.constant_value()) {
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> instantiated,
-              InstantiateType(*constant_value, access.source_loc()));
-          return todo_.FinishAction(instantiated);
-        }
-        std::optional<Nonnull<const InterfaceType*>> found_in_interface =
-            access.member().interface();
-        if (found_in_interface) {
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> instantiated,
-              InstantiateType(*found_in_interface, exp.source_loc()));
-          found_in_interface = cast<InterfaceType>(instantiated);
-        }
-        if (forming_member_name) {
-          // If we're forming a member name, we must be in the outer evaluation
-          // in `Type.(Interface.method)`. Produce the same method name with
-          // its `type` field set.
+          if (act.pos() == 1) {
+            return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+                *constant_value, access.source_loc()));
+          } else {
+            return todo_.FinishAction(act.results().back());
+          }
+        } else if (forming_member_name) {
           CARBON_CHECK(phase() == Phase::CompileTime)
               << "should not form MemberNames at runtime";
-          CARBON_CHECK(!access.member().base_type().has_value())
-              << "compound member access forming a member name should be "
-                 "performing impl lookup";
-          auto* member_name = arena_->New<MemberName>(
-              act.results()[0], found_in_interface, access.member().member());
-          return todo_.FinishAction(member_name);
-        } else {
-          // Access the object to find the named member.
-          Nonnull<const Value*> object = act.results()[0];
-          if (access.is_type_access()) {
-            CARBON_ASSIGN_OR_RETURN(
-                object, InstantiateType(&access.object().static_type(),
-                                        access.source_loc()));
-          }
-          std::optional<Nonnull<const Witness*>> witness;
-          if (access.impl().has_value()) {
-            witness = cast<Witness>(act.results()[1]);
+          if (auto found_in_interface = access.member().interface();
+              found_in_interface && act.pos() == 1) {
+            return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+                *found_in_interface, exp.source_loc()));
           } else {
-            CARBON_CHECK(access.member().base_type().has_value())
-                << "compound access should have base type or impl";
-            CARBON_ASSIGN_OR_RETURN(
-                object, Convert(object, *access.member().base_type(),
-                                exp.source_loc()));
+            // If we're forming a member name, we must be in the outer
+            // evaluation in `Type.(Interface.method)`. Produce the same method
+            // name with its `type` field set.
+            if (found_in_interface) {
+              found_in_interface = cast<InterfaceType>(act.results().back());
+            }
+            CARBON_CHECK(!access.member().base_type().has_value())
+                << "compound member access forming a member name should be "
+                   "performing impl lookup";
+            auto* member_name = arena_->New<MemberName>(
+                act.results()[0], found_in_interface, access.member().member());
+            return todo_.FinishAction(member_name);
           }
-          ElementPath::Component field(&access.member().member(),
-                                       found_in_interface, witness);
-          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member,
-                                  object->GetElement(arena_, ElementPath(field),
-                                                     exp.source_loc(), object));
-          return todo_.FinishAction(member);
+        } else {
+          auto impl_has_value = access.impl().has_value();
+          if (act.pos() == 1) {
+            if (impl_has_value) {
+              // Next, if we're accessing an interface member, evaluate the
+              // `impl` expression to find the corresponding witness.
+              return todo_.Spawn(
+                  std::make_unique<WitnessAction>(access.impl().value()));
+            } else {
+              return todo_.RunAgain();
+            }
+          } else if (act.pos() == 2) {
+            if (auto found_in_interface = access.member().interface()) {
+              return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+                  *found_in_interface, exp.source_loc()));
+            } else {
+              return todo_.RunAgain();
+            }
+          } else if (act.pos() == 3) {
+            if (access.is_type_access()) {
+              return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+                  &access.object().static_type(), access.source_loc()));
+            } else {
+              return todo_.RunAgain();
+            }
+          } else {
+            // Access the object to find the named member.
+            auto found_in_interface = access.member().interface();
+            if (found_in_interface) {
+              found_in_interface = cast<InterfaceType>(
+                  impl_has_value ? act.results()[2] : act.results()[1]);
+            }
+
+            Nonnull<const Value*> object = act.results()[0];
+            if (access.is_type_access()) {
+              object = act.results().back();
+            }
+            std::optional<Nonnull<const Witness*>> witness;
+            if (access.impl().has_value()) {
+              witness = cast<Witness>(act.results()[1]);
+            } else {
+              CARBON_CHECK(access.member().base_type().has_value())
+                  << "compound access should have base type or impl";
+              CARBON_ASSIGN_OR_RETURN(
+                  object, Convert(object, *access.member().base_type(),
+                                  exp.source_loc()));
+            }
+            ElementPath::Component field(&access.member().member(),
+                                         found_in_interface, witness);
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> member,
+                object->GetElement(arena_, ElementPath(field), exp.source_loc(),
+                                   object));
+            return todo_.FinishAction(member);
+          }
         }
       }
     }
@@ -1513,8 +1587,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           // Build a constraint type that constrains its .Self type to satisfy
           // the "ImplicitAs" intrinsic constraint. This involves creating a
           // number of objects that all point to each other.
-          // TODO: Factor out a simple version of ConstraintTypeBuilder and use
-          // it from here.
+          // TODO: Factor out a simple version of ConstraintTypeBuilder and
+          // use it from here.
           auto* self_binding = arena_->New<GenericBinding>(
               exp.source_loc(), ".Self",
               arena_->New<TypeTypeLiteral>(exp.source_loc()),
@@ -1662,14 +1736,16 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::StructTypeLiteral:
     case ExpressionKind::ArrayTypeLiteral:
     case ExpressionKind::ValueLiteral: {
-      CARBON_CHECK(act.pos() == 0);
-      const auto* value = &cast<ConstantValueLiteral>(exp).constant_value();
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> destination,
-          InstantiateType(&exp.static_type(), exp.source_loc()));
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> result,
-                              Convert(value, destination, exp.source_loc()));
-      return todo_.FinishAction(result);
+      if (act.pos() == 0) {
+        return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+            &exp.static_type(), exp.source_loc()));
+      } else {
+        const auto* value = &cast<ConstantValueLiteral>(exp).constant_value();
+        Nonnull<const Value*> destination = act.results().back();
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> result,
+                                Convert(value, destination, exp.source_loc()));
+        return todo_.FinishAction(result);
+      }
     }
     case ExpressionKind::IfExpression: {
       const auto& if_expr = cast<IfExpression>(exp);
@@ -1699,12 +1775,13 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             convert_expr.source_expression()));
+      } else if (act.pos() == 1) {
+        return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
+            &convert_expr.static_type(), convert_expr.source_loc()));
       } else {
-        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> destination,
-                                InstantiateType(&convert_expr.static_type(),
-                                                convert_expr.source_loc()));
         // TODO: Remove all calls to Convert other than this one. We shouldn't
         // need them any more.
+        Nonnull<const Value*> destination = act.results().back();
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> result,
             Convert(act.results()[0], destination, convert_expr.source_loc()));
@@ -2298,6 +2375,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
       break;
     case Action::Kind::DestroyAction:
       CARBON_RETURN_IF_ERROR(StepDestroy());
+      break;
+    case Action::Kind::TypeInstantiationAction:
+      CARBON_RETURN_IF_ERROR(StepInstantiateType());
       break;
     case Action::Kind::ScopeAction:
       CARBON_FATAL() << "ScopeAction escaped ActionStack";
