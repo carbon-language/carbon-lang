@@ -49,7 +49,7 @@ class ActionStack {
   void Initialize(ValueNodeView value_node, Nonnull<const Value*> value);
 
   // Returns the value bound to `value_node`. If `value_node` is a local
-  // variable, this will be an LValue.
+  // variable, this will be an LocationValue.
   auto ValueOfNode(ValueNodeView value_node, SourceLocation source_loc) const
       -> ErrorOr<Nonnull<const Value*>>;
 

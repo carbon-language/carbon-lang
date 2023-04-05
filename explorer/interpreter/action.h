@@ -60,7 +60,7 @@ class RuntimeScope {
   // Returns the local storage for value_node, if it has storage local to
   // this scope.
   auto Get(ValueNodeView value_node) const
-      -> std::optional<Nonnull<const LValue*>>;
+      -> std::optional<Nonnull<const LocationValue*>>;
 
   // Returns the local values in created order
   auto allocations() const -> const std::vector<AllocationId>& {
@@ -68,7 +68,7 @@ class RuntimeScope {
   }
 
  private:
-  llvm::MapVector<ValueNodeView, Nonnull<const LValue*>,
+  llvm::MapVector<ValueNodeView, Nonnull<const LocationValue*>,
                   std::map<ValueNodeView, unsigned>>
       locals_;
   std::vector<AllocationId> allocations_;
@@ -90,7 +90,7 @@ class RuntimeScope {
 class Action {
  public:
   enum class Kind {
-    LValAction,
+    LocationAction,
     ExpressionAction,
     WitnessAction,
     StatementAction,
@@ -164,14 +164,14 @@ class Action {
 };
 
 // An Action which implements evaluation of an Expression to produce an
-// LValue.
-class LValAction : public Action {
+// LocationValue.
+class LocationAction : public Action {
  public:
-  explicit LValAction(Nonnull<const Expression*> expression)
-      : Action(Kind::LValAction), expression_(expression) {}
+  explicit LocationAction(Nonnull<const Expression*> expression)
+      : Action(Kind::LocationAction), expression_(expression) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->kind() == Kind::LValAction;
+    return action->kind() == Kind::LocationAction;
   }
 
   // The Expression this Action evaluates.
@@ -181,8 +181,7 @@ class LValAction : public Action {
   Nonnull<const Expression*> expression_;
 };
 
-// An Action which implements evaluation of an Expression to produce an
-// rvalue. The result is expressed as a Value.
+// An Action which implements evaluation of an Expression to produce a `Value*`.
 class ExpressionAction : public Action {
  public:
   explicit ExpressionAction(Nonnull<const Expression*> expression)
@@ -298,26 +297,26 @@ class CleanUpAction : public Action {
 // values.
 class DestroyAction : public Action {
  public:
-  // lvalue: Address of the object to be destroyed
-  // value:  The value to be destroyed
-  //         In most cases the lvalue address points to value
-  //         In the case that the member of a class is to be destroyed,
-  //         the lvalue points to the address of the class object
-  //         and the value is the member of the class
-  explicit DestroyAction(Nonnull<const LValue*> lvalue,
+  // location: Location of the object to be destroyed
+  // value:    The value to be destroyed
+  //           In most cases the location address points to value
+  //           In the case that the member of a class is to be destroyed,
+  //           the location points to the address of the class object
+  //           and the value is the member of the class
+  explicit DestroyAction(Nonnull<const LocationValue*> location,
                          Nonnull<const Value*> value)
-      : Action(Kind::DestroyAction), lvalue_(lvalue), value_(value) {}
+      : Action(Kind::DestroyAction), location_(location), value_(value) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::DestroyAction;
   }
 
-  auto lvalue() const -> Nonnull<const LValue*> { return lvalue_; }
+  auto location() const -> Nonnull<const LocationValue*> { return location_; }
 
   auto value() const -> Nonnull<const Value*> { return value_; }
 
  private:
-  Nonnull<const LValue*> lvalue_;
+  Nonnull<const LocationValue*> location_;
   Nonnull<const Value*> value_;
 };
 

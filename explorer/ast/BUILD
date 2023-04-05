@@ -43,9 +43,9 @@ cc_library(
         "value_kinds.def",
     ],
     deps = [
+        ":expression_category",
         ":library_name",
         ":paren_contents",
-        ":value_category",
         "//common:check",
         "//common:enum_base",
         "//common:error",
@@ -155,6 +155,6 @@ cc_library(
 )
 
 cc_library(
-    name = "value_category",
-    hdrs = ["value_category.h"],
+    name = "expression_category",
+    hdrs = ["expression_category.h"],
 )

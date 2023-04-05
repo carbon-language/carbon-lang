@@ -68,8 +68,8 @@ class Value {
 
   // Returns the sub-Value specified by `path`, which must be a valid element
   // path for *this. If the sub-Value is a method and its self_pattern is an
-  // AddrPattern, then pass the LValue representing the receiver as `me_value`,
-  // otherwise pass `*this`.
+  // AddrPattern, then pass the LocationValue representing the receiver as
+  // `me_value`, otherwise pass `*this`.
   auto GetElement(Nonnull<Arena*> arena, const ElementPath& path,
                   SourceLocation source_loc,
                   Nonnull<const Value*> me_value) const
@@ -237,13 +237,13 @@ class DestructorValue : public Value {
 };
 
 // The value of a location in memory.
-class LValue : public Value {
+class LocationValue : public Value {
  public:
-  explicit LValue(Address value)
-      : Value(Kind::LValue), value_(std::move(value)) {}
+  explicit LocationValue(Address value)
+      : Value(Kind::LocationValue), value_(std::move(value)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::LValue;
+    return value->kind() == Kind::LocationValue;
   }
 
   template <typename F>

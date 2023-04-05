@@ -14,11 +14,11 @@
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/clone_context.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/impl_binding.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/return_term.h"
 #include "explorer/ast/statement.h"
-#include "explorer/ast/value_category.h"
 #include "explorer/ast/value_node.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
@@ -200,7 +200,9 @@ class NamespaceDeclaration : public Declaration {
   }
 
   auto name() const -> const DeclaredName& { return name_; }
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Value;
+  }
 
  private:
   DeclaredName name_;
@@ -255,7 +257,9 @@ class CallableDeclaration : public Declaration {
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
   auto virt_override() const -> VirtualOverride { return virt_override_; }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Value;
+  }
 
   auto is_method() const -> bool { return self_pattern_.has_value(); }
 
@@ -356,7 +360,9 @@ class SelfDeclaration : public Declaration {
   }
 
   static auto name() -> std::string_view { return "Self"; }
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Value;
+  }
 };
 
 enum class ClassExtensibility { None, Base, Abstract };
@@ -410,7 +416,9 @@ class ClassDeclaration : public Declaration {
     return std::nullopt;
   }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Value;
+  }
 
   auto base_expr() const -> std::optional<Nonnull<Expression*>> {
     return base_expr_;
@@ -474,7 +482,9 @@ class MixinDeclaration : public Declaration {
     return members_;
   }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Value;
+  }
 
  private:
   DeclaredName name_;
@@ -600,7 +610,9 @@ class ChoiceDeclaration : public Declaration {
     return alternatives_;
   }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Value;
+  }
 
   auto FindAlternative(std::string_view name) const
       -> std::optional<const AlternativeSignature*>;
@@ -617,18 +629,18 @@ class VariableDeclaration : public Declaration {
   VariableDeclaration(SourceLocation source_loc,
                       Nonnull<BindingPattern*> binding,
                       std::optional<Nonnull<Expression*>> initializer,
-                      ValueCategory value_category)
+                      ExpressionCategory expression_category)
       : Declaration(AstNodeKind::VariableDeclaration, source_loc),
         binding_(binding),
         initializer_(initializer),
-        value_category_(value_category) {}
+        expression_category_(expression_category) {}
 
   explicit VariableDeclaration(CloneContext& context,
                                const VariableDeclaration& other)
       : Declaration(context, other),
         binding_(context.Clone(other.binding_)),
         initializer_(context.Clone(other.initializer_)),
-        value_category_(other.value_category_) {}
+        expression_category_(other.expression_category_) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromVariableDeclaration(node->kind());
@@ -638,7 +650,9 @@ class VariableDeclaration : public Declaration {
   auto binding() -> BindingPattern& { return *binding_; }
   auto initializer() const -> const Expression& { return **initializer_; }
   auto initializer() -> Expression& { return **initializer_; }
-  auto value_category() const -> ValueCategory { return value_category_; }
+  auto expression_category() const -> ExpressionCategory {
+    return expression_category_;
+  }
 
   auto has_initializer() const -> bool { return initializer_.has_value(); }
 
@@ -651,7 +665,7 @@ class VariableDeclaration : public Declaration {
  private:
   Nonnull<BindingPattern*> binding_;
   std::optional<Nonnull<Expression*>> initializer_;
-  ValueCategory value_category_;
+  ExpressionCategory expression_category_;
 };
 
 // Base class for constraint and interface declarations. Interfaces and named
@@ -703,7 +717,9 @@ class ConstraintTypeDeclaration : public Declaration {
     return members_;
   }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Value;
+  }
 
   // Get the constraint type corresponding to this interface, or nullopt if
   // this interface is incomplete.
@@ -846,7 +862,9 @@ class AssociatedConstantDeclaration : public Declaration {
   auto binding() const -> const GenericBinding& { return *binding_; }
   auto binding() -> GenericBinding& { return *binding_; }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Value;
+  }
 
  private:
   Nonnull<GenericBinding*> binding_;
@@ -908,7 +926,9 @@ class ImplDeclaration : public Declaration {
   auto members() const -> llvm::ArrayRef<Nonnull<Declaration*>> {
     return members_;
   }
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Value;
+  }
   void set_impl_bindings(llvm::ArrayRef<Nonnull<const ImplBinding*>> imps) {
     impl_bindings_ = imps;
   }
@@ -993,7 +1013,9 @@ class AliasDeclaration : public Declaration {
   auto name() const -> const DeclaredName& { return name_; }
   auto target() const -> const Expression& { return *target_; }
   auto target() -> Expression& { return *target_; }
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Value;
+  }
 
  private:
   DeclaredName name_;

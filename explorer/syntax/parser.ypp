@@ -71,9 +71,9 @@
   #include "explorer/ast/ast.h"
   #include "explorer/ast/declaration.h"
   #include "explorer/ast/expression.h"
+  #include "explorer/ast/expression_category.h"
   #include "explorer/ast/paren_contents.h"
   #include "explorer/ast/pattern.h"
-  #include "explorer/ast/value_category.h"
   #include "explorer/common/arena.h"
   #include "explorer/common/nonnull.h"
   #include "explorer/syntax/bison_wrap.h"
@@ -941,7 +941,7 @@ clause:
       $$ = Match::Clause(arena->New<BindingPattern>(
                              context.source_loc(), std::string(AnonymousName),
                              arena->New<AutoPattern>(context.source_loc()),
-                             ValueCategory::Let),
+                             ExpressionCategory::Value),
                          $3);
     }
 ;
@@ -959,31 +959,31 @@ statement:
 | VAR pattern SEMICOLON
     {
       $$ = arena->New<VariableDefinition>(
-          context.source_loc(), $2, std::nullopt, ValueCategory::Var,
+          context.source_loc(), $2, std::nullopt, ExpressionCategory::Reference,
           VariableDefinition::DefinitionType::Var);
     }
 | VAR pattern EQUAL expression SEMICOLON
     {
       $$ = arena->New<VariableDefinition>(
-          context.source_loc(), $2, $4, ValueCategory::Var,
+          context.source_loc(), $2, $4, ExpressionCategory::Reference,
           VariableDefinition::DefinitionType::Var);
     }
 | RETURNED VAR variable_declaration SEMICOLON
     {
       $$ = arena->New<VariableDefinition>(
-          context.source_loc(), $3, std::nullopt, ValueCategory::Var,
+          context.source_loc(), $3, std::nullopt, ExpressionCategory::Reference,
           VariableDefinition::DefinitionType::Returned);
     }
 | RETURNED VAR variable_declaration EQUAL expression SEMICOLON
     {
       $$ = arena->New<VariableDefinition>(
-          context.source_loc(), $3, $5, ValueCategory::Var,
+          context.source_loc(), $3, $5, ExpressionCategory::Reference,
           VariableDefinition::DefinitionType::Returned);
     }
 | LET pattern EQUAL expression SEMICOLON
     {
       $$ = arena->New<VariableDefinition>(
-          context.source_loc(), $2, $4, ValueCategory::Let,
+          context.source_loc(), $2, $4, ExpressionCategory::Value,
           VariableDefinition::DefinitionType::Var);
     }
 | statement_expression SEMICOLON
@@ -1280,17 +1280,18 @@ declaration:
 | VAR variable_declaration SEMICOLON
     {
       $$ = arena->New<VariableDeclaration>(context.source_loc(), $2,
-                                           std::nullopt, ValueCategory::Var);
+                                           std::nullopt,
+                                           ExpressionCategory::Reference);
     }
 | VAR variable_declaration EQUAL expression SEMICOLON
     {
       $$ = arena->New<VariableDeclaration>(context.source_loc(), $2, $4,
-                                           ValueCategory::Var);
+                                           ExpressionCategory::Reference);
     }
 | LET variable_declaration EQUAL expression SEMICOLON
     {
       $$ = arena->New<VariableDeclaration>(context.source_loc(), $2, $4,
-                                           ValueCategory::Let);
+                                           ExpressionCategory::Value);
     }
 | INTERFACE declared_name type_params LEFT_CURLY_BRACE interface_body RIGHT_CURLY_BRACE
     {
