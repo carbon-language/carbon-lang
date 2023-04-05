@@ -10,7 +10,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
-#include "explorer/ast/value_category.h"
+#include "explorer/ast/expression_category.h"
 
 namespace Carbon {
 

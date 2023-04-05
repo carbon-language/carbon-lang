@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_AST_VALUE_CATEGORY_H_
-#define CARBON_EXPLORER_AST_VALUE_CATEGORY_H_
+#ifndef CARBON_EXPLORER_AST_EXPRESSION_CATEGORY_H_
+#define CARBON_EXPLORER_AST_EXPRESSION_CATEGORY_H_
 
 namespace Carbon {
 
@@ -20,4 +20,4 @@ enum class ExpressionCategory {
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_AST_VALUE_CATEGORY_H_
+#endif  // CARBON_EXPLORER_AST_EXPRESSION_CATEGORY_H_

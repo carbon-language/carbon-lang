@@ -14,11 +14,11 @@
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/clone_context.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/impl_binding.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/return_term.h"
 #include "explorer/ast/statement.h"
-#include "explorer/ast/value_category.h"
 #include "explorer/ast/value_node.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
@@ -629,18 +629,18 @@ class VariableDeclaration : public Declaration {
   VariableDeclaration(SourceLocation source_loc,
                       Nonnull<BindingPattern*> binding,
                       std::optional<Nonnull<Expression*>> initializer,
-                      ExpressionCategory value_category)
+                      ExpressionCategory expression_category)
       : Declaration(AstNodeKind::VariableDeclaration, source_loc),
         binding_(binding),
         initializer_(initializer),
-        value_category_(value_category) {}
+        expression_category_(expression_category) {}
 
   explicit VariableDeclaration(CloneContext& context,
                                const VariableDeclaration& other)
       : Declaration(context, other),
         binding_(context.Clone(other.binding_)),
         initializer_(context.Clone(other.initializer_)),
-        value_category_(other.value_category_) {}
+        expression_category_(other.expression_category_) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromVariableDeclaration(node->kind());
@@ -651,7 +651,7 @@ class VariableDeclaration : public Declaration {
   auto initializer() const -> const Expression& { return **initializer_; }
   auto initializer() -> Expression& { return **initializer_; }
   auto expression_category() const -> ExpressionCategory {
-    return value_category_;
+    return expression_category_;
   }
 
   auto has_initializer() const -> bool { return initializer_.has_value(); }
@@ -665,7 +665,7 @@ class VariableDeclaration : public Declaration {
  private:
   Nonnull<BindingPattern*> binding_;
   std::optional<Nonnull<Expression*>> initializer_;
-  ExpressionCategory value_category_;
+  ExpressionCategory expression_category_;
 };
 
 // Base class for constraint and interface declarations. Interfaces and named

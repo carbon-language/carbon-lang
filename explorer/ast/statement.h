@@ -12,9 +12,9 @@
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/clone_context.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/return_term.h"
-#include "explorer/ast/value_category.h"
 #include "explorer/ast/value_node.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/source_location.h"
@@ -219,11 +219,12 @@ class VariableDefinition : public Statement {
 
   VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
                      std::optional<Nonnull<Expression*>> init,
-                     ExpressionCategory value_category, DefinitionType def_type)
+                     ExpressionCategory expression_category,
+                     DefinitionType def_type)
       : Statement(AstNodeKind::VariableDefinition, source_loc),
         pattern_(pattern),
         init_(init),
-        value_category_(value_category),
+        expression_category_(expression_category),
         def_type_(def_type) {}
 
   explicit VariableDefinition(CloneContext& context,
@@ -231,7 +232,7 @@ class VariableDefinition : public Statement {
       : Statement(context, other),
         pattern_(context.Clone(other.pattern_)),
         init_(context.Clone(other.init_)),
-        value_category_(other.value_category_),
+        expression_category_(other.expression_category_),
         def_type_(other.def_type_) {}
 
   static auto classof(const AstNode* node) -> bool {
@@ -259,7 +260,7 @@ class VariableDefinition : public Statement {
   }
 
   auto expression_category() const -> ExpressionCategory {
-    return value_category_;
+    return expression_category_;
   }
 
   auto is_returned() const -> bool { return def_type_ == Returned; };
@@ -267,7 +268,7 @@ class VariableDefinition : public Statement {
  private:
   Nonnull<Pattern*> pattern_;
   std::optional<Nonnull<Expression*>> init_;
-  ExpressionCategory value_category_;
+  ExpressionCategory expression_category_;
   const DefinitionType def_type_;
 };
 

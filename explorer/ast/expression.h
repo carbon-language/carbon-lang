@@ -16,8 +16,8 @@
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/bindings.h"
 #include "explorer/ast/element.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/paren_contents.h"
-#include "explorer/ast/value_category.h"
 #include "explorer/ast/value_node.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/source_location.h"
@@ -67,21 +67,21 @@ class Expression : public AstNode {
   // The value category of this expression. Cannot be called before
   // typechecking.
   auto expression_category() const -> ExpressionCategory {
-    return *value_category_;
+    return *expression_category_;
   }
 
   // Sets the value category of this expression. Can be called multiple times,
   // but the argument must have the same value each time.
-  void set_value_category(ExpressionCategory value_category) {
-    CARBON_CHECK(!value_category_.has_value() ||
-                 value_category == *value_category_);
-    value_category_ = value_category;
+  void set_expression_category(ExpressionCategory expression_category) {
+    CARBON_CHECK(!expression_category_.has_value() ||
+                 expression_category == *expression_category_);
+    expression_category_ = expression_category;
   }
 
   // Determines whether the expression has already been type-checked. Should
   // only be used by type-checking.
   auto is_type_checked() const -> bool {
-    return static_type_.has_value() && value_category_.has_value();
+    return static_type_.has_value() && expression_category_.has_value();
   }
 
  protected:
@@ -96,7 +96,7 @@ class Expression : public AstNode {
 
  private:
   std::optional<Nonnull<const Value*>> static_type_;
-  std::optional<ExpressionCategory> value_category_;
+  std::optional<ExpressionCategory> expression_category_;
 };
 
 // A mixin for expressions that can be rewritten to a different expression by
@@ -116,7 +116,7 @@ class RewritableMixin : public Base {
     CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
     rewritten_form_ = rewritten_form;
     this->set_static_type(&rewritten_form->static_type());
-    this->set_value_category(rewritten_form->expression_category());
+    this->set_expression_category(rewritten_form->expression_category());
   }
 
   // Get the rewritten form of this expression. A rewritten form is used when
@@ -479,7 +479,7 @@ class BaseAccessExpression : public MemberAccessExpression {
                                object),
         base_(base) {
     set_static_type(&base->type());
-    set_value_category(ExpressionCategory::Value);
+    set_expression_category(ExpressionCategory::Value);
   }
 
   explicit BaseAccessExpression(CloneContext& context,
@@ -851,10 +851,11 @@ class ValueLiteral : public ConstantValueLiteral {
   // Value literals are created by type-checking, and so are created with their
   // type and value category already known.
   ValueLiteral(SourceLocation source_loc, Nonnull<const Value*> value,
-               Nonnull<const Value*> type, ExpressionCategory value_category)
+               Nonnull<const Value*> type,
+               ExpressionCategory expression_category)
       : ConstantValueLiteral(AstNodeKind::ValueLiteral, source_loc, value) {
     set_static_type(type);
-    set_value_category(value_category);
+    set_expression_category(expression_category);
   }
 
   explicit ValueLiteral(CloneContext& context, const ValueLiteral& other)
@@ -1142,7 +1143,7 @@ class BuiltinConvertExpression : public Expression {
                    source_expression->source_loc()),
         source_expression_(source_expression) {
     set_static_type(destination_type);
-    set_value_category(ExpressionCategory::Value);
+    set_expression_category(ExpressionCategory::Value);
   }
 
   explicit BuiltinConvertExpression(CloneContext& context,

@@ -14,7 +14,7 @@
 #include "explorer/ast/ast_rtti.h"
 #include "explorer/ast/clone_context.h"
 #include "explorer/ast/expression.h"
-#include "explorer/ast/value_category.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/value_node.h"
 #include "explorer/common/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -168,17 +168,17 @@ class BindingPattern : public Pattern {
 
   BindingPattern(SourceLocation source_loc, std::string name,
                  Nonnull<Pattern*> type,
-                 std::optional<ExpressionCategory> value_category)
+                 std::optional<ExpressionCategory> expression_category)
       : Pattern(AstNodeKind::BindingPattern, source_loc),
         name_(std::move(name)),
         type_(type),
-        value_category_(value_category) {}
+        expression_category_(expression_category) {}
 
   explicit BindingPattern(CloneContext& context, const BindingPattern& other)
       : Pattern(context, other),
         name_(other.name_),
         type_(context.Clone(other.type_)),
-        value_category_(other.value_category_) {}
+        expression_category_(other.expression_category_) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBindingPattern(node->kind());
@@ -196,20 +196,20 @@ class BindingPattern : public Pattern {
   // Returns the value category of this pattern. Can only be called after
   // typechecking.
   auto expression_category() const -> ExpressionCategory {
-    return value_category_.value();
+    return expression_category_.value();
   }
 
   // Returns whether the value category has been set. Should only be called
   // during typechecking.
-  auto has_value_category() const -> bool {
-    return value_category_.has_value();
+  auto has_expression_category() const -> bool {
+    return expression_category_.has_value();
   }
 
   // Sets the value category of the variable being bound. Can only be called
   // once during typechecking
-  void set_value_category(ExpressionCategory vc) {
-    CARBON_CHECK(!value_category_.has_value());
-    value_category_ = vc;
+  void set_expression_category(ExpressionCategory vc) {
+    CARBON_CHECK(!expression_category_.has_value());
+    expression_category_ = vc;
   }
 
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
@@ -222,7 +222,7 @@ class BindingPattern : public Pattern {
  private:
   std::string name_;
   Nonnull<Pattern*> type_;
-  std::optional<ExpressionCategory> value_category_;
+  std::optional<ExpressionCategory> expression_category_;
 };
 
 class AddrPattern : public Pattern {

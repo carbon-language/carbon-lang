@@ -11,7 +11,7 @@
 
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/clone_context.h"
-#include "explorer/ast/value_category.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/common/nonnull.h"
 
 namespace Carbon {
@@ -81,7 +81,7 @@ class ValueNodeView {
         static_type_([](const AstNode& base) -> const Value& {
           return llvm::cast<NodeType>(base).static_type();
         }),
-        value_category_([](const AstNode& base) -> ExpressionCategory {
+        expression_category_([](const AstNode& base) -> ExpressionCategory {
           return llvm::cast<NodeType>(base).expression_category();
         }) {}
 
@@ -92,7 +92,7 @@ class ValueNodeView {
         symbolic_identity_(other.symbolic_identity_),
         print_(other.print_),
         static_type_(other.static_type_),
-        value_category_(other.value_category_) {}
+        expression_category_(other.expression_category_) {}
 
   ValueNodeView(const ValueNodeView&) = default;
   ValueNodeView(ValueNodeView&&) = default;
@@ -119,7 +119,7 @@ class ValueNodeView {
 
   // Returns node->expression_category()
   auto expression_category() const -> ExpressionCategory {
-    return value_category_(*base_);
+    return expression_category_(*base_);
   }
 
   friend auto operator==(const ValueNodeView& lhs, const ValueNodeView& rhs)
@@ -145,7 +145,7 @@ class ValueNodeView {
       symbolic_identity_;
   std::function<void(const AstNode&, llvm::raw_ostream&)> print_;
   std::function<const Value&(const AstNode&)> static_type_;
-  std::function<ExpressionCategory(const AstNode&)> value_category_;
+  std::function<ExpressionCategory(const AstNode&)> expression_category_;
 };
 
 }  // namespace Carbon

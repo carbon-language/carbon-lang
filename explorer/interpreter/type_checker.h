@@ -196,7 +196,7 @@ class TypeChecker {
   auto TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected,
                         ImplScope& impl_scope,
-                        ExpressionCategory enclosing_value_category)
+                        ExpressionCategory enclosing_expression_category)
       -> ErrorOr<Success>;
 
   // Type checks a generic binding. `symbolic_value` is the symbolic name by

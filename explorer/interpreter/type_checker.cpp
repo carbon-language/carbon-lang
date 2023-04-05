@@ -2624,7 +2624,7 @@ auto TypeChecker::LookupRewriteInWitness(
 // Rewrites a member access expression to produce the given constant value.
 static void RewriteMemberAccess(Nonnull<MemberAccessExpression*> access,
                                 Nonnull<const RewriteConstraint*> value) {
-  access->set_value_category(ExpressionCategory::Value);
+  access->set_expression_category(ExpressionCategory::Value);
   access->set_static_type(value->unconverted_replacement_type);
   access->set_constant_value(value->unconverted_replacement);
 }
@@ -2718,7 +2718,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << tuple_type;
           }
           index.set_static_type(tuple_type.elements()[i]);
-          index.set_value_category(index.object().expression_category());
+          index.set_expression_category(index.object().expression_category());
           return Success();
         }
         case Value::Kind::StaticArrayType: {
@@ -2728,7 +2728,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                               &index.offset().static_type(), impl_scope));
           index.set_static_type(
               &cast<StaticArrayType>(object_type).element_type());
-          index.set_value_category(index.object().expression_category());
+          index.set_expression_category(index.object().expression_category());
           return Success();
         }
         default:
@@ -2746,7 +2746,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         arg_types.push_back(&arg->static_type());
       }
       e->set_static_type(arena_->New<TupleType>(std::move(arg_types)));
-      e->set_value_category(ExpressionCategory::Value);
+      e->set_expression_category(ExpressionCategory::Value);
       return Success();
     }
     case ExpressionKind::StructLiteral: {
@@ -2758,7 +2758,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         arg_types.push_back({arg.name(), &arg.expression().static_type()});
       }
       e->set_static_type(arena_->New<StructType>(std::move(arg_types)));
-      e->set_value_category(ExpressionCategory::Value);
+      e->set_expression_category(ExpressionCategory::Value);
       return Success();
     }
     case ExpressionKind::StructTypeLiteral: {
@@ -2771,7 +2771,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         fields.push_back({arg.name(), type});
       }
       struct_type.set_static_type(arena_->New<TypeType>());
-      struct_type.set_value_category(ExpressionCategory::Value);
+      struct_type.set_expression_category(ExpressionCategory::Value);
       struct_type.set_constant_value(
           arena_->New<StructType>(std::move(fields)));
       return Success();
@@ -2801,7 +2801,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             if (access.member_name() == field.name) {
               access.set_member(arena_->New<NamedElement>(&field));
               access.set_static_type(field.value);
-              access.set_value_category(access.object().expression_category());
+              access.set_expression_category(
+                  access.object().expression_category());
               return Success();
             }
           }
@@ -2824,14 +2825,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             access.set_is_type_access(!IsInstanceMember(&access.member()));
             switch (member->kind()) {
               case DeclarationKind::VariableDeclaration:
-                access.set_value_category(
+                access.set_expression_category(
                     access.object().expression_category());
                 break;
               case DeclarationKind::FunctionDeclaration: {
                 const auto* func_decl = cast<FunctionDeclaration>(member);
                 CARBON_RETURN_IF_ERROR(CheckAddrMeAccess(
                     &access, func_decl, t_class.bindings(), impl_scope));
-                access.set_value_category(ExpressionCategory::Value);
+                access.set_expression_category(ExpressionCategory::Value);
                 break;
               }
               default:
@@ -2959,7 +2960,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             // member accesses that name them.
             access.set_static_type(
                 arena_->New<TypeOfMemberName>(NamedElement(result.member)));
-            access.set_value_category(ExpressionCategory::Value);
+            access.set_expression_category(ExpressionCategory::Value);
           } else {
             // This is a non-instance member whose value is found directly via
             // the witness table, such as a non-method function or an
@@ -2970,7 +2971,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_member_type,
                                     Substitute(bindings, &member_type));
             access.set_static_type(inst_member_type);
-            access.set_value_category(ExpressionCategory::Value);
+            access.set_expression_category(ExpressionCategory::Value);
           }
           return Success();
         }
@@ -2989,7 +2990,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   access.set_member(arena_->New<NamedElement>(&field));
                   access.set_static_type(
                       arena_->New<TypeOfMemberName>(NamedElement(&field)));
-                  access.set_value_category(ExpressionCategory::Value);
+                  access.set_expression_category(ExpressionCategory::Value);
                   return Success();
                 }
               }
@@ -3014,7 +3015,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                     arena_->New<NamedElement>(arena_->New<NamedValue>(
                         NamedValue{access.member_name(), &choice})));
                 access.set_static_type(&choice);
-                access.set_value_category(ExpressionCategory::Value);
+                access.set_expression_category(ExpressionCategory::Value);
                 return Success();
               }
 
@@ -3030,7 +3031,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   arena_->New<NamedElement>(arena_->New<NamedValue>(
                       NamedValue{access.member_name(), type})));
               access.set_static_type(type);
-              access.set_value_category(ExpressionCategory::Value);
+              access.set_expression_category(ExpressionCategory::Value);
               return Success();
             }
             case Value::Kind::NominalClassType: {
@@ -3053,7 +3054,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                             Substitute(class_type.bindings(),
                                                        &member->static_type()));
                     access.set_static_type(field_type);
-                    access.set_value_category(ExpressionCategory::Value);
+                    access.set_expression_category(ExpressionCategory::Value);
                     return Success();
                   }
                   default:
@@ -3061,7 +3062,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 }
                 access.set_static_type(
                     arena_->New<TypeOfMemberName>(NamedElement(member)));
-                access.set_value_category(ExpressionCategory::Value);
+                access.set_expression_category(ExpressionCategory::Value);
                 return Success();
               } else {
                 return ProgramError(access.source_loc())
@@ -3080,7 +3081,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               access.set_found_in_interface(result.interface);
               access.set_static_type(
                   arena_->New<TypeOfMemberName>(NamedElement(result.member)));
-              access.set_value_category(ExpressionCategory::Value);
+              access.set_expression_category(ExpressionCategory::Value);
               return Success();
             }
             default:
@@ -3209,7 +3210,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case DeclarationKind::VariableDeclaration:
           if (has_instance) {
             CARBON_RETURN_IF_ERROR(set_static_type_as_member_type());
-            access.set_value_category(access.object().expression_category());
+            access.set_expression_category(
+                access.object().expression_category());
             return Success();
           }
           break;
@@ -3221,7 +3223,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                          !member_name.base_type().has_value())
                 << "vacuous compound member access";
             CARBON_RETURN_IF_ERROR(set_static_type_as_member_type());
-            access.set_value_category(ExpressionCategory::Value);
+            access.set_expression_category(ExpressionCategory::Value);
             CARBON_RETURN_IF_ERROR(
                 CheckAddrMeAccess(&access, cast<FunctionDeclaration>(*decl),
                                   bindings_for_member(), impl_scope));
@@ -3231,7 +3233,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
         case DeclarationKind::AssociatedConstantDeclaration:
           CARBON_RETURN_IF_ERROR(set_static_type_as_member_type());
-          access.set_value_category(access.object().expression_category());
+          access.set_expression_category(access.object().expression_category());
           return Success();
         default:
           CARBON_FATAL() << "member " << member_name
@@ -3241,7 +3243,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
 
       access.set_static_type(
           arena_->New<TypeOfMemberName>(member_name.member()));
-      access.set_value_category(ExpressionCategory::Value);
+      access.set_expression_category(ExpressionCategory::Value);
       return Success();
     }
     case ExpressionKind::IdentifierExpression: {
@@ -3257,7 +3259,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         }
       }
       ident.set_static_type(&ident.value_node().static_type());
-      ident.set_value_category(ident.value_node().expression_category());
+      ident.set_expression_category(ident.value_node().expression_category());
       return Success();
     }
     case ExpressionKind::DotSelfExpression: {
@@ -3268,15 +3270,15 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         dot_self.set_static_type(arena_->New<TypeType>());
         dot_self.self_binding().set_named_as_type_via_dot_self();
       }
-      dot_self.set_value_category(ExpressionCategory::Value);
+      dot_self.set_expression_category(ExpressionCategory::Value);
       return Success();
     }
     case ExpressionKind::IntLiteral:
-      e->set_value_category(ExpressionCategory::Value);
+      e->set_expression_category(ExpressionCategory::Value);
       e->set_static_type(arena_->New<IntType>());
       return Success();
     case ExpressionKind::BoolLiteral:
-      e->set_value_category(ExpressionCategory::Value);
+      e->set_expression_category(ExpressionCategory::Value);
       e->set_static_type(arena_->New<BoolType>());
       return Success();
     case ExpressionKind::OperatorExpression: {
@@ -3321,7 +3323,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         if (isa<IntType>(ts[0]) && isa<IntType>(ts[1]) &&
             IsSameType(ts[0], ts[1], impl_scope)) {
           op.set_static_type(ts[0]);
-          op.set_value_category(ExpressionCategory::Value);
+          op.set_expression_category(ExpressionCategory::Value);
           return Success();
         }
 
@@ -3351,7 +3353,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // TODO: Replace this with an intrinsic.
           if (isa<IntType>(ts[0])) {
             op.set_static_type(arena_->New<IntType>());
-            op.set_value_category(ExpressionCategory::Value);
+            op.set_expression_category(ExpressionCategory::Value);
             return Success();
           }
           // Now try an overloaded negation.
@@ -3413,7 +3415,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                                  arena_->New<BoolType>(), ts[1],
                                                  impl_scope));
           op.set_static_type(arena_->New<BoolType>());
-          op.set_value_category(ExpressionCategory::Value);
+          op.set_expression_category(ExpressionCategory::Value);
           return Success();
         case Operator::Or:
           CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "||(1)",
@@ -3423,14 +3425,14 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                                  arena_->New<BoolType>(), ts[1],
                                                  impl_scope));
           op.set_static_type(arena_->New<BoolType>());
-          op.set_value_category(ExpressionCategory::Value);
+          op.set_expression_category(ExpressionCategory::Value);
           return Success();
         case Operator::Not:
           CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "!",
                                                  arena_->New<BoolType>(), ts[0],
                                                  impl_scope));
           op.set_static_type(arena_->New<BoolType>());
-          op.set_value_category(ExpressionCategory::Value);
+          op.set_expression_category(ExpressionCategory::Value);
           return Success();
         case Operator::Eq:
           return handle_compare(Builtin::EqWith, "Equal", "equality");
@@ -3449,7 +3451,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", ts[0]));
           op.set_static_type(&cast<PointerType>(*ts[0]).pointee_type());
-          op.set_value_category(ExpressionCategory::Reference);
+          op.set_expression_category(ExpressionCategory::Reference);
           return Success();
         case Operator::Ptr: {
           auto* type_type = arena_->New<TypeType>();
@@ -3459,7 +3461,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                 type_type));
           op.arguments()[0] = converted;
           op.set_static_type(arena_->New<TypeType>());
-          op.set_value_category(ExpressionCategory::Value);
+          op.set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case Operator::AddressOf:
@@ -3470,7 +3472,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                    << " should be a reference expression.";
           }
           op.set_static_type(arena_->New<PointerType>(ts[0]));
-          op.set_value_category(ExpressionCategory::Value);
+          op.set_expression_category(ExpressionCategory::Value);
           return Success();
         case Operator::As: {
           CARBON_ASSIGN_OR_RETURN(
@@ -3515,7 +3517,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               Nonnull<const Value*> return_type,
               Substitute(call.bindings(), &fun_t.return_type()));
           call.set_static_type(return_type);
-          call.set_value_category(ExpressionCategory::Value);
+          call.set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case Value::Kind::TypeOfParameterizedEntityName: {
@@ -3548,7 +3550,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                   ChoiceDeclaration>(param_name.declaration()))
               << "unknown type of ParameterizedEntityName for " << param_name;
           call.set_static_type(arena_->New<TypeType>());
-          call.set_value_category(ExpressionCategory::Value);
+          call.set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case Value::Kind::ChoiceType: {
@@ -3585,13 +3587,13 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> ret,
                               TypeCheckTypeExp(&fn.return_type(), impl_scope));
       fn.set_static_type(arena_->New<TypeType>());
-      fn.set_value_category(ExpressionCategory::Value);
+      fn.set_expression_category(ExpressionCategory::Value);
       fn.set_constant_value(arena_->New<FunctionType>(param, ret));
       return Success();
     }
     case ExpressionKind::StringLiteral:
       e->set_static_type(arena_->New<StringType>());
-      e->set_value_category(ExpressionCategory::Value);
+      e->set_expression_category(ExpressionCategory::Value);
       return Success();
     case ExpressionKind::IntrinsicExpression: {
       auto& intrinsic_exp = cast<IntrinsicExpression>(*e);
@@ -3615,7 +3617,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 &args[1]->static_type(), impl_scope));
           }
           e->set_static_type(TupleType::Empty());
-          e->set_value_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         case IntrinsicExpression::Intrinsic::Assert: {
           if (args.size() != 2) {
@@ -3629,7 +3631,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               e->source_loc(), "__intrinsic_assert argument 1",
               arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(TupleType::Empty());
-          e->set_value_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::Alloc: {
@@ -3639,7 +3641,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           const auto* arg_type = &args[0]->static_type();
           e->set_static_type(arena_->New<PointerType>(arg_type));
-          e->set_value_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::Dealloc: {
@@ -3651,7 +3653,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", arg_type));
           e->set_static_type(TupleType::Empty());
-          e->set_value_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::Rand: {
@@ -3668,7 +3670,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               &args[1]->static_type(), impl_scope));
 
           e->set_static_type(arena_->New<IntType>());
-          e->set_value_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::ImplicitAs: {
@@ -3678,7 +3680,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(args[0], impl_scope));
           e->set_static_type(arena_->New<TypeType>());
-          e->set_value_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::ImplicitAsConvert: {
@@ -3691,7 +3693,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // TODO: Check that the type of args[0] implicitly converts to
           // args[1].
           e->set_static_type(result);
-          e->set_value_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::IntEq: {
@@ -3706,7 +3708,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               e->source_loc(), "__intrinsic_int_eq argument 2",
               arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<BoolType>());
-          e->set_value_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::IntCompare: {
@@ -3721,7 +3723,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               e->source_loc(), "__intrinsic_int_compare argument 2",
               arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<IntType>());
-          e->set_value_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::StrEq: {
@@ -3736,7 +3738,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               e->source_loc(), "__intrinsic_str_eq argument 2",
               arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<BoolType>());
-          e->set_value_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::StrCompare: {
@@ -3751,7 +3753,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               e->source_loc(), "__intrinsic_str_compare argument 2",
               arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<IntType>());
-          e->set_value_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::IntBitComplement:
@@ -3763,7 +3765,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               e->source_loc(), "complement argument", arena_->New<IntType>(),
               &args[0]->static_type(), impl_scope));
           e->set_static_type(arena_->New<IntType>());
-          e->set_value_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         case IntrinsicExpression::Intrinsic::IntBitAnd:
         case IntrinsicExpression::Intrinsic::IntBitOr:
@@ -3781,7 +3783,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               e->source_loc(), "argument 2", arena_->New<IntType>(),
               &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<IntType>());
-          e->set_value_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
       }
     }
@@ -3790,7 +3792,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::ContinuationTypeLiteral:
-      e->set_value_category(ExpressionCategory::Value);
+      e->set_expression_category(ExpressionCategory::Value);
       e->set_static_type(arena_->New<TypeType>());
       return Success();
     case ExpressionKind::IfExpression: {
@@ -3812,7 +3814,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           &if_expr.then_expression().static_type(),
           &if_expr.else_expression().static_type(), impl_scope));
       e->set_static_type(&if_expr.then_expression().static_type());
-      e->set_value_category(ExpressionCategory::Value);
+      e->set_expression_category(ExpressionCategory::Value);
       return Success();
     }
     case ExpressionKind::WhereExpression: {
@@ -3996,7 +3998,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                << "Array size cannot be negative";
       }
       array_literal.set_static_type(arena_->New<TypeType>());
-      array_literal.set_value_category(ExpressionCategory::Value);
+      array_literal.set_expression_category(ExpressionCategory::Value);
       array_literal.set_constant_value(arena_->New<StaticArrayType>(
           element_type, cast<IntValue>(size_value)->value()));
       return Success();
@@ -4132,7 +4134,7 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
 
 auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
-    ImplScope& impl_scope, ExpressionCategory enclosing_value_category)
+    ImplScope& impl_scope, ExpressionCategory enclosing_expression_category)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "checking " << p->kind() << " " << *p;
@@ -4155,8 +4157,9 @@ auto TypeChecker::TypeCheckPattern(
         return ProgramError(binding.type().source_loc())
                << "the type of a binding pattern cannot contain bindings";
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-          &binding.type(), std::nullopt, impl_scope, enclosing_value_category));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&binding.type(), std::nullopt,
+                                              impl_scope,
+                                              enclosing_expression_category));
       Nonnull<const Value*> type = &binding.type().value();
       // Convert to a type.
       // TODO: Convert the pattern before interpreting it rather than doing
@@ -4202,8 +4205,8 @@ auto TypeChecker::TypeCheckPattern(
                             ? arena_->New<BindingPlaceholderValue>(&binding)
                             : arena_->New<BindingPlaceholderValue>());
 
-      if (!binding.has_value_category()) {
-        binding.set_value_category(enclosing_value_category);
+      if (!binding.has_expression_category()) {
+        binding.set_expression_category(enclosing_expression_category);
       }
       return Success();
     }
@@ -4235,8 +4238,9 @@ auto TypeChecker::TypeCheckPattern(
         if (expected) {
           expected_field_type = cast<TupleType>(**expected).elements()[i];
         }
-        CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-            field, expected_field_type, impl_scope, enclosing_value_category));
+        CARBON_RETURN_IF_ERROR(TypeCheckPattern(field, expected_field_type,
+                                                impl_scope,
+                                                enclosing_expression_category));
         if (trace_stream_->is_enabled()) {
           *trace_stream_ << "finished checking tuple pattern field " << *field
                          << "\n";
@@ -4281,7 +4285,7 @@ auto TypeChecker::TypeCheckPattern(
                      *(*signature)->parameters_static_type()));
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(&alternative.arguments(),
                                               parameter_type, impl_scope,
-                                              enclosing_value_category));
+                                              enclosing_expression_category));
       alternative.set_static_type(&choice_type);
       alternative.set_value(arena_->New<AlternativeValue>(
           &choice_type, *signature,
@@ -4316,7 +4320,7 @@ auto TypeChecker::TypeCheckPattern(
       }
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(&addr_pattern.binding(),
                                               expected_ptr, impl_scope,
-                                              enclosing_value_category));
+                                              enclosing_expression_category));
 
       if (const auto* inner_binding_type =
               dyn_cast<PointerType>(&addr_pattern.binding().static_type())) {
