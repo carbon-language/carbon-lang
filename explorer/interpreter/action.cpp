@@ -110,8 +110,8 @@ auto RuntimeScope::Capture(
 
 void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
-    case Action::Kind::LValAction:
-      out << cast<LValAction>(*this).expression() << " ";
+    case Action::Kind::LocationAction:
+      out << cast<LocationAction>(*this).expression() << " ";
       break;
     case Action::Kind::ExpressionAction:
       out << cast<ExpressionAction>(*this).expression() << " ";

@@ -90,7 +90,7 @@ class RuntimeScope {
 class Action {
  public:
   enum class Kind {
-    LValAction,
+    LocationAction,
     ExpressionAction,
     WitnessAction,
     StatementAction,
@@ -165,13 +165,13 @@ class Action {
 
 // An Action which implements evaluation of an Expression to produce an
 // LocationValue.
-class LValAction : public Action {
+class LocationAction : public Action {
  public:
-  explicit LValAction(Nonnull<const Expression*> expression)
-      : Action(Kind::LValAction), expression_(expression) {}
+  explicit LocationAction(Nonnull<const Expression*> expression)
+      : Action(Kind::LocationAction), expression_(expression) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->kind() == Kind::LValAction;
+    return action->kind() == Kind::LocationAction;
   }
 
   // The Expression this Action evaluates.

@@ -84,7 +84,7 @@ class Interpreter {
   // State transitions for expressions.
   auto StepExp() -> ErrorOr<Success>;
   // State transitions for lvalues.
-  auto StepLvalue() -> ErrorOr<Success>;
+  auto StepLocation() -> ErrorOr<Success>;
   // State transitions for witnesses.
   auto StepWitness() -> ErrorOr<Success>;
   // State transition for statements.
@@ -406,9 +406,9 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
   }
 }
 
-auto Interpreter::StepLvalue() -> ErrorOr<Success> {
+auto Interpreter::StepLocation() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
-  const Expression& exp = cast<LValAction>(act).expression();
+  const Expression& exp = cast<LocationAction>(act).expression();
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- step lvalue " << exp << " ." << act.pos() << "."
                    << " (" << exp.source_loc() << ") --->\n";
@@ -428,12 +428,12 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
       const auto constant_value = access.constant_value();
       if (auto rewrite = access.rewritten_form()) {
-        return todo_.ReplaceWith(std::make_unique<LValAction>(*rewrite));
+        return todo_.ReplaceWith(std::make_unique<LocationAction>(*rewrite));
       }
       if (act.pos() == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+        return todo_.Spawn(std::make_unique<LocationAction>(&access.object()));
       } else if (act.pos() == 1 && constant_value) {
         return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
             *constant_value, access.source_loc()));
@@ -453,7 +453,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       const auto& access = cast<CompoundMemberAccessExpression>(exp);
       const auto constant_value = access.constant_value();
       if (act.pos() == 0) {
-        return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+        return todo_.Spawn(std::make_unique<LocationAction>(&access.object()));
       }
       if (act.pos() == 1 && constant_value) {
         return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
@@ -477,7 +477,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       const auto& access = cast<BaseAccessExpression>(exp);
       if (act.pos() == 0) {
         // Get LocationValue for expression.
-        return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+        return todo_.Spawn(std::make_unique<LocationAction>(&access.object()));
       } else {
         // Append `.base` element to the address, and return the new
         // LocationValue.
@@ -490,8 +490,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
-        return todo_.Spawn(
-            std::make_unique<LValAction>(&cast<IndexExpression>(exp).object()));
+        return todo_.Spawn(std::make_unique<LocationAction>(
+            &cast<IndexExpression>(exp).object()));
 
       } else if (act.pos() == 1) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
@@ -509,7 +509,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::OperatorExpression: {
       const auto& op = cast<OperatorExpression>(exp);
       if (auto rewrite = op.rewritten_form()) {
-        return todo_.ReplaceWith(std::make_unique<LValAction>(*rewrite));
+        return todo_.ReplaceWith(std::make_unique<LocationAction>(*rewrite));
       }
       if (op.op() != Operator::Deref) {
         CARBON_FATAL()
@@ -1170,7 +1170,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         // First, evaluate the first operand.
         if (access.is_addr_me_method()) {
-          return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+          return todo_.Spawn(
+              std::make_unique<LocationAction>(&access.object()));
         } else {
           return todo_.Spawn(
               std::make_unique<ExpressionAction>(&access.object()));
@@ -1271,7 +1272,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         // First, evaluate the first operand.
         if (access.is_addr_me_method()) {
-          return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
+          return todo_.Spawn(
+              std::make_unique<LocationAction>(&access.object()));
         } else {
           return todo_.Spawn(
               std::make_unique<ExpressionAction>(&access.object()));
@@ -1416,7 +1418,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
         Nonnull<const Expression*> arg = op.arguments()[act.pos()];
         if (op.op() == Operator::AddressOf) {
-          return todo_.Spawn(std::make_unique<LValAction>(arg));
+          return todo_.Spawn(std::make_unique<LocationAction>(arg));
         } else if ((op.op() == Operator::And || op.op() == Operator::Or) &&
                    act.pos() == 1) {
           // Short-circuit evaluation for 'and' & 'or'
@@ -2070,7 +2072,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         //    { {(lv = e) :: C, E, F} :: S, H}
         // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<LValAction>(&assign.lhs()));
+        return todo_.Spawn(std::make_unique<LocationAction>(&assign.lhs()));
       } else if (act.pos() == 1) {
         //    { { a :: ([] = e) :: C, E, F} :: S, H}
         // -> { { e :: (a = []) :: C, E, F} :: S, H}
@@ -2356,8 +2358,8 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
 auto Interpreter::Step() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   switch (act.kind()) {
-    case Action::Kind::LValAction:
-      CARBON_RETURN_IF_ERROR(StepLvalue());
+    case Action::Kind::LocationAction:
+      CARBON_RETURN_IF_ERROR(StepLocation());
       break;
     case Action::Kind::ExpressionAction:
       CARBON_RETURN_IF_ERROR(StepExp());

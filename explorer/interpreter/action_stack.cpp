@@ -129,7 +129,7 @@ static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
   switch (kind) {
     case Action::Kind::ExpressionAction:
     case Action::Kind::WitnessAction:
-    case Action::Kind::LValAction:
+    case Action::Kind::LocationAction:
     case Action::Kind::TypeInstantiationAction:
       return FinishActionKind::Value;
     case Action::Kind::StatementAction:
