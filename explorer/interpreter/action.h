@@ -299,9 +299,9 @@ class DestroyAction : public Action {
  public:
   // location: Location of the object to be destroyed
   // value:    The value to be destroyed
-  //           In most cases the lvalue address points to value
+  //           In most cases the location address points to value
   //           In the case that the member of a class is to be destroyed,
-  //           the lvalue points to the address of the class object
+  //           the location points to the address of the class object
   //           and the value is the member of the class
   explicit DestroyAction(Nonnull<const LocationValue*> location,
                          Nonnull<const Value*> value)

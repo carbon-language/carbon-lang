@@ -300,9 +300,9 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
     case Value::Kind::AddrValue: {
       const auto& addr = cast<AddrValue>(*p);
       CARBON_CHECK(v->kind() == Value::Kind::LocationValue);
-      const auto& lvalue = cast<LocationValue>(*v);
+      const auto& location = cast<LocationValue>(*v);
       return PatternMatch(
-          &addr.pattern(), arena->New<PointerValue>(lvalue.address()),
+          &addr.pattern(), arena->New<PointerValue>(location.address()),
           source_loc, bindings, generic_args, trace_stream, arena);
     }
     case Value::Kind::VariableType: {
@@ -410,7 +410,7 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<LocationAction>(act).expression();
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- step lvalue " << exp << " ." << act.pos() << "."
+    *trace_stream_ << "--- step location " << exp << " ." << act.pos() << "."
                    << " (" << exp.source_loc() << ") --->\n";
   }
   switch (exp.kind()) {
@@ -463,7 +463,7 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
           return todo_.FinishAction(act.results().back());
         }
         CARBON_CHECK(!access.member().interface().has_value())
-            << "unexpected lvalue interface member";
+            << "unexpected location interface member";
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> val,
             Convert(act.results()[0], *access.member().base_type(),
@@ -513,7 +513,7 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
       }
       if (op.op() != Operator::Deref) {
         CARBON_FATAL()
-            << "Can't treat primitive operator expression as lvalue: " << exp;
+            << "Can't treat primitive operator expression as location: " << exp;
       }
       if (act.pos() == 0) {
         return todo_.Spawn(
@@ -544,7 +544,7 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::ArrayTypeLiteral:
     case ExpressionKind::BuiltinConvertExpression:
-      CARBON_FATAL() << "Can't treat expression as lvalue: " << exp;
+      CARBON_FATAL() << "Can't treat expression as location: " << exp;
     case ExpressionKind::UnimplementedExpression:
       CARBON_FATAL() << "Unimplemented: " << exp;
   }
@@ -625,9 +625,9 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           todo_.ValueOfNode(&cast<VariableType>(*type).binding(), source_loc));
-      if (const auto* lvalue = dyn_cast<LocationValue>(value)) {
+      if (const auto* location = dyn_cast<LocationValue>(value)) {
         CARBON_ASSIGN_OR_RETURN(value,
-                                heap_.Read(lvalue->address(), source_loc));
+                                heap_.Read(location->address(), source_loc));
       }
       return value;
     }
@@ -1249,11 +1249,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             const Value* aggregate;
             if (access.is_type_access()) {
               aggregate = act.results().back();
-            } else if (const auto* lvalue =
+            } else if (const auto* location =
                            dyn_cast<LocationValue>(act.results()[0])) {
               CARBON_ASSIGN_OR_RETURN(
                   aggregate,
-                  this->heap_.Read(lvalue->address(), exp.source_loc()));
+                  this->heap_.Read(location->address(), exp.source_loc()));
             } else {
               aggregate = act.results()[0];
             }
@@ -1387,9 +1387,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           todo_.ValueOfNode(ident.value_node(), ident.source_loc()));
-      if (const auto* lvalue = dyn_cast<LocationValue>(value)) {
+      if (const auto* location = dyn_cast<LocationValue>(value)) {
         CARBON_ASSIGN_OR_RETURN(
-            value, heap_.Read(lvalue->address(), exp.source_loc()));
+            value, heap_.Read(location->address(), exp.source_loc()));
       }
       return todo_.FinishAction(value);
     }
@@ -1809,11 +1809,11 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           todo_.ValueOfNode(binding, binding->type_var()->source_loc()));
-      if (const auto* lvalue = dyn_cast<LocationValue>(value)) {
+      if (const auto* location = dyn_cast<LocationValue>(value)) {
         // TODO: Why do we store values for impl bindings on the heap?
         CARBON_ASSIGN_OR_RETURN(
             value,
-            heap_.Read(lvalue->address(), binding->type_var()->source_loc()));
+            heap_.Read(location->address(), binding->type_var()->source_loc()));
       }
       return todo_.FinishAction(value);
     }
@@ -1945,9 +1945,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
               Nonnull<const Value*> assigned_array_element,
               todo_.ValueOfNode(*(loop_var->value_node()), stmt.source_loc()));
 
-          const auto* lvalue = cast<LocationValue>(assigned_array_element);
+          const auto* location = cast<LocationValue>(assigned_array_element);
           CARBON_RETURN_IF_ERROR(heap_.Write(
-              lvalue->address(), source_array->elements()[current_index],
+              location->address(), source_array->elements()[current_index],
               stmt.source_loc()));
 
           act.ReplaceResult(CurrentIndexPosInResult,
@@ -2139,9 +2139,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
                               todo_.ValueOfNode(value_node, stmt.source_loc()));
-      if (const auto* lvalue = dyn_cast<LocationValue>(value)) {
+      if (const auto* location = dyn_cast<LocationValue>(value)) {
         CARBON_ASSIGN_OR_RETURN(
-            value, heap_.Read(lvalue->address(), ret_var.source_loc()));
+            value, heap_.Read(location->address(), ret_var.source_loc()));
       }
       const CallableDeclaration& function = cast<Return>(stmt).function();
       CARBON_ASSIGN_OR_RETURN(
@@ -2336,12 +2336,12 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
     const size_t alloc_index = cleanup.allocations_count() - act.pos() / 2 - 1;
     auto allocation = act.scope()->allocations()[alloc_index];
     if (act.pos() % 2 == 0) {
-      auto* lvalue = arena_->New<LocationValue>(Address(allocation));
+      auto* location = arena_->New<LocationValue>(Address(allocation));
       auto value =
-          heap_.Read(lvalue->address(), SourceLocation("destructor", 1));
+          heap_.Read(location->address(), SourceLocation("destructor", 1));
       // Step over uninitialized values.
       if (value.ok()) {
-        return todo_.Spawn(std::make_unique<DestroyAction>(lvalue, *value));
+        return todo_.Spawn(std::make_unique<DestroyAction>(location, *value));
       } else {
         return todo_.RunAgain();
       }
