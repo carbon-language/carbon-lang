@@ -249,7 +249,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
     case Operator::Deref:
       return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc);
     case Operator::AddressOf:
-      return arena_->New<PointerValue>(cast<LValue>(*args[0]).address());
+      return arena_->New<PointerValue>(cast<LocationValue>(*args[0]).address());
     case Operator::As:
     case Operator::Eq:
     case Operator::NotEq:
@@ -299,8 +299,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
     }
     case Value::Kind::AddrValue: {
       const auto& addr = cast<AddrValue>(*p);
-      CARBON_CHECK(v->kind() == Value::Kind::LValue);
-      const auto& lvalue = cast<LValue>(*v);
+      CARBON_CHECK(v->kind() == Value::Kind::LocationValue);
+      const auto& lvalue = cast<LocationValue>(*v);
       return PatternMatch(
           &addr.pattern(), arena->New<PointerValue>(lvalue.address()),
           source_loc, bindings, generic_args, trace_stream, arena);
@@ -421,7 +421,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
           Nonnull<const Value*> value,
           todo_.ValueOfNode(cast<IdentifierExpression>(exp).value_node(),
                             exp.source_loc()));
-      CARBON_CHECK(isa<LValue>(value)) << *value;
+      CARBON_CHECK(isa<LocationValue>(value)) << *value;
       return todo_.FinishAction(value);
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
@@ -443,9 +443,9 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         } else {
           //    { v :: [].f :: C, E, F} :: S, H}
           // -> { { &v.f :: C, E, F} :: S, H }
-          Address object = cast<LValue>(*act.results()[0]).address();
+          Address object = cast<LocationValue>(*act.results()[0]).address();
           Address member = object.ElementAddress(&access.member());
-          return todo_.FinishAction(arena_->New<LValue>(member));
+          return todo_.FinishAction(arena_->New<LocationValue>(member));
         }
       }
     }
@@ -468,21 +468,22 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
             Nonnull<const Value*> val,
             Convert(act.results()[0], *access.member().base_type(),
                     exp.source_loc()));
-        Address object = cast<LValue>(*val).address();
+        Address object = cast<LocationValue>(*val).address();
         Address field = object.ElementAddress(&access.member().member());
-        return todo_.FinishAction(arena_->New<LValue>(field));
+        return todo_.FinishAction(arena_->New<LocationValue>(field));
       }
     }
     case ExpressionKind::BaseAccessExpression: {
       const auto& access = cast<BaseAccessExpression>(exp);
       if (act.pos() == 0) {
-        // Get LValue for expression.
+        // Get LocationValue for expression.
         return todo_.Spawn(std::make_unique<LValAction>(&access.object()));
       } else {
-        // Append `.base` element to the address, and return the new LValue.
-        Address object = cast<LValue>(*act.results()[0]).address();
+        // Append `.base` element to the address, and return the new
+        // LocationValue.
+        Address object = cast<LocationValue>(*act.results()[0]).address();
         Address base = object.ElementAddress(&access.element());
-        return todo_.FinishAction(arena_->New<LValue>(base));
+        return todo_.FinishAction(arena_->New<LocationValue>(base));
       }
     }
     case ExpressionKind::IndexExpression: {
@@ -498,11 +499,11 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
       } else {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
-        Address object = cast<LValue>(*act.results()[0]).address();
+        Address object = cast<LocationValue>(*act.results()[0]).address();
         const auto index = cast<IntValue>(*act.results()[1]).value();
         Address field = object.ElementAddress(
             arena_->New<PositionalElement>(index, &exp.static_type()));
-        return todo_.FinishAction(arena_->New<LValue>(field));
+        return todo_.FinishAction(arena_->New<LocationValue>(field));
       }
     }
     case ExpressionKind::OperatorExpression: {
@@ -519,7 +520,7 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
             std::make_unique<ExpressionAction>(op.arguments()[0]));
       } else {
         const auto& res = cast<PointerValue>(*act.results()[0]);
-        return todo_.FinishAction(arena_->New<LValue>(res.address()));
+        return todo_.FinishAction(arena_->New<LocationValue>(res.address()));
       }
       break;
     }
@@ -624,7 +625,7 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           todo_.ValueOfNode(&cast<VariableType>(*type).binding(), source_loc));
-      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+      if (const auto* lvalue = dyn_cast<LocationValue>(value)) {
         CARBON_ASSIGN_OR_RETURN(value,
                                 heap_.Read(lvalue->address(), source_loc));
       }
@@ -735,7 +736,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
-    case Value::Kind::LValue:
+    case Value::Kind::LocationValue:
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
@@ -1248,7 +1249,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             if (access.is_type_access()) {
               aggregate = act.results().back();
             } else if (const auto* lvalue =
-                           dyn_cast<LValue>(act.results()[0])) {
+                           dyn_cast<LocationValue>(act.results()[0])) {
               CARBON_ASSIGN_OR_RETURN(
                   aggregate,
                   this->heap_.Read(lvalue->address(), exp.source_loc()));
@@ -1384,7 +1385,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           todo_.ValueOfNode(ident.value_node(), ident.source_loc()));
-      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+      if (const auto* lvalue = dyn_cast<LocationValue>(value)) {
         CARBON_ASSIGN_OR_RETURN(
             value, heap_.Read(lvalue->address(), exp.source_loc()));
       }
@@ -1557,7 +1558,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                                          : ptr->address();
             if (act.pos() == 1) {
               return todo_.Spawn(std::make_unique<DestroyAction>(
-                  arena_->New<LValue>(obj_addr), child_class_value));
+                  arena_->New<LocationValue>(obj_addr), child_class_value));
             } else {
               heap_.Deallocate(obj_addr);
               return todo_.FinishAction(TupleValue::Empty());
@@ -1565,7 +1566,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           } else {
             if (act.pos() == 1) {
               return todo_.Spawn(std::make_unique<DestroyAction>(
-                  arena_->New<LValue>(ptr->address()), pointee));
+                  arena_->New<LocationValue>(ptr->address()), pointee));
             } else {
               heap_.Deallocate(ptr->address());
               return todo_.FinishAction(TupleValue::Empty());
@@ -1806,7 +1807,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> value,
           todo_.ValueOfNode(binding, binding->type_var()->source_loc()));
-      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+      if (const auto* lvalue = dyn_cast<LocationValue>(value)) {
         // TODO: Why do we store values for impl bindings on the heap?
         CARBON_ASSIGN_OR_RETURN(
             value,
@@ -1942,7 +1943,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
               Nonnull<const Value*> assigned_array_element,
               todo_.ValueOfNode(*(loop_var->value_node()), stmt.source_loc()));
 
-          const auto* lvalue = cast<LValue>(assigned_array_element);
+          const auto* lvalue = cast<LocationValue>(assigned_array_element);
           CARBON_RETURN_IF_ERROR(heap_.Write(
               lvalue->address(), source_array->elements()[current_index],
               stmt.source_loc()));
@@ -2077,7 +2078,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       } else {
         //    { { v :: (a = []) :: C, E, F} :: S, H}
         // -> { { C, E, F} :: S, H(a := v)}
-        const auto& lval = cast<LValue>(*act.results()[0]);
+        const auto& lval = cast<LocationValue>(*act.results()[0]);
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> rval,
             Convert(act.results()[1], &assign.lhs().static_type(),
@@ -2136,7 +2137,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
                               todo_.ValueOfNode(value_node, stmt.source_loc()));
-      if (const auto* lvalue = dyn_cast<LValue>(value)) {
+      if (const auto* lvalue = dyn_cast<LocationValue>(value)) {
         CARBON_ASSIGN_OR_RETURN(
             value, heap_.Read(lvalue->address(), ret_var.source_loc()));
       }
@@ -2267,7 +2268,7 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
         const int index = class_decl.members().size() - act.pos();
         const auto& member = class_decl.members()[index];
         if (const auto* var = dyn_cast<VariableDeclaration>(member)) {
-          const Address object = destroy_act.lvalue()->address();
+          const Address object = destroy_act.location()->address();
           const Address var_addr =
               object.ElementAddress(arena_->New<NamedElement>(var));
           const auto v = heap_.Read(var_addr, SourceLocation("destructor", 1));
@@ -2275,18 +2276,18 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
               << "Failed to read member `" << var->binding().name()
               << "` from class `" << class_decl.name() << "`";
           return todo_.Spawn(std::make_unique<DestroyAction>(
-              arena_->New<LValue>(var_addr), *v));
+              arena_->New<LocationValue>(var_addr), *v));
         } else {
           return todo_.RunAgain();
         }
       } else if (act.pos() == member_count + 1) {
         // Destroy the parent, if there is one.
         if (auto base = class_obj->base()) {
-          const Address obj_addr = destroy_act.lvalue()->address();
+          const Address obj_addr = destroy_act.location()->address();
           const Address base_addr =
               obj_addr.ElementAddress(arena_->New<BaseElement>(class_obj));
           return todo_.Spawn(std::make_unique<DestroyAction>(
-              arena_->New<LValue>(base_addr), base.value()));
+              arena_->New<LocationValue>(base_addr), base.value()));
         } else {
           return todo_.RunAgain();
         }
@@ -2301,13 +2302,13 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
       if (static_cast<size_t>(act.pos()) < element_count) {
         const size_t index = element_count - act.pos() - 1;
         const auto& item = tuple->elements()[index];
-        const auto object_addr = destroy_act.lvalue()->address();
+        const auto object_addr = destroy_act.location()->address();
         Address field_address = object_addr.ElementAddress(
             arena_->New<PositionalElement>(index, item));
         if (item->kind() == Value::Kind::NominalClassValue ||
             item->kind() == Value::Kind::TupleValue) {
           return todo_.Spawn(std::make_unique<DestroyAction>(
-              arena_->New<LValue>(field_address), item));
+              arena_->New<LocationValue>(field_address), item));
         } else {
           // The tuple element's type is an integral type (e.g., i32)
           // or the type doesn't support destruction.
@@ -2333,7 +2334,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
     const size_t alloc_index = cleanup.allocations_count() - act.pos() / 2 - 1;
     auto allocation = act.scope()->allocations()[alloc_index];
     if (act.pos() % 2 == 0) {
-      auto* lvalue = arena_->New<LValue>(Address(allocation));
+      auto* lvalue = arena_->New<LocationValue>(Address(allocation));
       auto value =
           heap_.Read(lvalue->address(), SourceLocation("destructor", 1));
       // Step over uninitialized values.
