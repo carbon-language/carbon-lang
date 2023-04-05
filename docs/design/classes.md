@@ -1315,9 +1315,9 @@ This means either
 [creating the object in the return statement itself](/proposals/p0257.md#function-returns-and-initialization),
 or in
 [a `returned var` declaration](/proposals/p0257.md#declared-returned-variable).
-As before, instances can be created using by casting a struct value into the
-class type, this time with a `.base` member to initialize the members of the
-immediate base type.
+As before, instances can be created by casting a struct value into the class
+type, this time with a `.base` member to initialize the members of the immediate
+base type.
 
 ```
 class MyDerivedType extends MyBaseType {
