@@ -44,7 +44,7 @@ static constexpr bool ImplementsValueNode = false;
 // auto static_type() const -> const Value&;
 //
 // // Returns the value category of an IdentifierExpression that names *this.
-// auto value_category() const -> ValueCategory;
+// auto expression_category() const -> ExpressionCategory;
 //
 // // Print the node's identity (e.g. its name).
 // void PrintID(llvm::raw_ostream& out) const;
@@ -81,8 +81,8 @@ class ValueNodeView {
         static_type_([](const AstNode& base) -> const Value& {
           return llvm::cast<NodeType>(base).static_type();
         }),
-        value_category_([](const AstNode& base) -> ValueCategory {
-          return llvm::cast<NodeType>(base).value_category();
+        value_category_([](const AstNode& base) -> ExpressionCategory {
+          return llvm::cast<NodeType>(base).expression_category();
         }) {}
 
   explicit ValueNodeView(CloneContext& context, const ValueNodeView& other)
@@ -117,8 +117,8 @@ class ValueNodeView {
   // Returns node->static_type()
   auto static_type() const -> const Value& { return static_type_(*base_); }
 
-  // Returns node->value_category()
-  auto value_category() const -> ValueCategory {
+  // Returns node->expression_category()
+  auto expression_category() const -> ExpressionCategory {
     return value_category_(*base_);
   }
 
@@ -145,7 +145,7 @@ class ValueNodeView {
       symbolic_identity_;
   std::function<void(const AstNode&, llvm::raw_ostream&)> print_;
   std::function<const Value&(const AstNode&)> static_type_;
-  std::function<ValueCategory(const AstNode&)> value_category_;
+  std::function<ExpressionCategory(const AstNode&)> value_category_;
 };
 
 }  // namespace Carbon

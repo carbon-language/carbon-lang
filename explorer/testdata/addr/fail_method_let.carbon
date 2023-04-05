@@ -26,7 +26,7 @@ class Point {
 
 fn Main() -> i32 {
   let p: Point = Point.Origin();
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_let.carbon:[[@LINE+1]]: method p.GetSetX requires its receiver to be an lvalue
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/addr/fail_method_let.carbon:[[@LINE+1]]: method p.GetSetX requires its receiver to be a reference expression
   var x: auto = p.GetSetX(42);
   if (p.x == 42) {
     return x;

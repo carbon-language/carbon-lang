@@ -66,11 +66,13 @@ class Expression : public AstNode {
 
   // The value category of this expression. Cannot be called before
   // typechecking.
-  auto value_category() const -> ValueCategory { return *value_category_; }
+  auto expression_category() const -> ExpressionCategory {
+    return *value_category_;
+  }
 
   // Sets the value category of this expression. Can be called multiple times,
   // but the argument must have the same value each time.
-  void set_value_category(ValueCategory value_category) {
+  void set_value_category(ExpressionCategory value_category) {
     CARBON_CHECK(!value_category_.has_value() ||
                  value_category == *value_category_);
     value_category_ = value_category;
@@ -94,7 +96,7 @@ class Expression : public AstNode {
 
  private:
   std::optional<Nonnull<const Value*>> static_type_;
-  std::optional<ValueCategory> value_category_;
+  std::optional<ExpressionCategory> value_category_;
 };
 
 // A mixin for expressions that can be rewritten to a different expression by
@@ -114,7 +116,7 @@ class RewritableMixin : public Base {
     CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
     rewritten_form_ = rewritten_form;
     this->set_static_type(&rewritten_form->static_type());
-    this->set_value_category(rewritten_form->value_category());
+    this->set_value_category(rewritten_form->expression_category());
   }
 
   // Get the rewritten form of this expression. A rewritten form is used when
@@ -477,7 +479,7 @@ class BaseAccessExpression : public MemberAccessExpression {
                                object),
         base_(base) {
     set_static_type(&base->type());
-    set_value_category(ValueCategory::Let);
+    set_value_category(ExpressionCategory::Value);
   }
 
   explicit BaseAccessExpression(CloneContext& context,
@@ -849,7 +851,7 @@ class ValueLiteral : public ConstantValueLiteral {
   // Value literals are created by type-checking, and so are created with their
   // type and value category already known.
   ValueLiteral(SourceLocation source_loc, Nonnull<const Value*> value,
-               Nonnull<const Value*> type, ValueCategory value_category)
+               Nonnull<const Value*> type, ExpressionCategory value_category)
       : ConstantValueLiteral(AstNodeKind::ValueLiteral, source_loc, value) {
     set_static_type(type);
     set_value_category(value_category);
@@ -1140,7 +1142,7 @@ class BuiltinConvertExpression : public Expression {
                    source_expression->source_loc()),
         source_expression_(source_expression) {
     set_static_type(destination_type);
-    set_value_category(ValueCategory::Let);
+    set_value_category(ExpressionCategory::Value);
   }
 
   explicit BuiltinConvertExpression(CloneContext& context,

@@ -7,14 +7,15 @@
 
 namespace Carbon {
 
-// The value category of a Carbon expression indicates whether it evaluates
-// to a variable or a value. A variable can be mutated, and can have its
-// address taken, whereas a value cannot.
-enum class ValueCategory {
-  // A variable. This roughly corresponds to a C++ lvalue.
-  Var,
-  // A value. This roughly corresponds to a C++ rvalue.
-  Let,
+// The category of a Carbon expression indicates whether it evaluates
+// to a value, reference, or initialization.
+enum class ExpressionCategory {
+  // A "value expression" produces a value (with no associated location).
+  Value,
+  // A "reference expression" produces a location of an existing value.
+  Reference,
+  // An "initializing expression" takes a location and initialize it.
+  Initializing,
 };
 
 }  // namespace Carbon

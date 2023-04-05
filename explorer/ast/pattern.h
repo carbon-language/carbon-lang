@@ -152,7 +152,9 @@ class VarPattern : public Pattern {
   auto pattern() const -> const Pattern& { return *pattern_; }
   auto pattern() -> Pattern& { return *pattern_; }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Reference;
+  }
 
  private:
   Nonnull<Pattern*> pattern_;
@@ -166,7 +168,7 @@ class BindingPattern : public Pattern {
 
   BindingPattern(SourceLocation source_loc, std::string name,
                  Nonnull<Pattern*> type,
-                 std::optional<ValueCategory> value_category)
+                 std::optional<ExpressionCategory> value_category)
       : Pattern(AstNodeKind::BindingPattern, source_loc),
         name_(std::move(name)),
         type_(type),
@@ -193,7 +195,7 @@ class BindingPattern : public Pattern {
 
   // Returns the value category of this pattern. Can only be called after
   // typechecking.
-  auto value_category() const -> ValueCategory {
+  auto expression_category() const -> ExpressionCategory {
     return value_category_.value();
   }
 
@@ -205,7 +207,7 @@ class BindingPattern : public Pattern {
 
   // Sets the value category of the variable being bound. Can only be called
   // once during typechecking
-  void set_value_category(ValueCategory vc) {
+  void set_value_category(ExpressionCategory vc) {
     CARBON_CHECK(!value_category_.has_value());
     value_category_ = vc;
   }
@@ -220,7 +222,7 @@ class BindingPattern : public Pattern {
  private:
   std::string name_;
   Nonnull<Pattern*> type_;
-  std::optional<ValueCategory> value_category_;
+  std::optional<ExpressionCategory> value_category_;
 };
 
 class AddrPattern : public Pattern {
@@ -305,7 +307,9 @@ class GenericBinding : public Pattern {
     index_ = index;
   }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Value;
+  }
 
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return template_value_;

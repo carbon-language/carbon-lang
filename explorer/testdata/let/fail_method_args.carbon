@@ -14,7 +14,7 @@ class Point {
   }
 
   fn SetX[self: Point](x: i32) {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_method_args.carbon:[[@LINE+1]]: Cannot assign to rvalue 'x'
+    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_method_args.carbon:[[@LINE+1]]: Only assign a reference expression can be assigned, but got `'x`'
     x = 10;
   }
 

@@ -219,7 +219,7 @@ class VariableDefinition : public Statement {
 
   VariableDefinition(SourceLocation source_loc, Nonnull<Pattern*> pattern,
                      std::optional<Nonnull<Expression*>> init,
-                     ValueCategory value_category, DefinitionType def_type)
+                     ExpressionCategory value_category, DefinitionType def_type)
       : Statement(AstNodeKind::VariableDefinition, source_loc),
         pattern_(pattern),
         init_(init),
@@ -258,14 +258,16 @@ class VariableDefinition : public Statement {
     init_ = init;
   }
 
-  auto value_category() const -> ValueCategory { return value_category_; }
+  auto expression_category() const -> ExpressionCategory {
+    return value_category_;
+  }
 
   auto is_returned() const -> bool { return def_type_ == Returned; };
 
  private:
   Nonnull<Pattern*> pattern_;
   std::optional<Nonnull<Expression*>> init_;
-  ValueCategory value_category_;
+  ExpressionCategory value_category_;
   const DefinitionType def_type_;
 };
 
@@ -620,7 +622,9 @@ class Continuation : public Statement {
     static_type_ = type;
   }
 
-  auto value_category() const -> ValueCategory { return ValueCategory::Var; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Reference;
+  }
   auto constant_value() const -> std::optional<Nonnull<const Value*>> {
     return std::nullopt;
   }
