@@ -422,7 +422,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
           todo_.ValueOfNode(cast<IdentifierExpression>(exp).value_node(),
                             exp.source_loc()));
       if (!isa<LValue>(value)) {
-        return Error("Identifier is not an lvalue");
+        return ProgramError(exp.source_loc())
+               << "Identifier `" << *value << "`is not an lvalue";
       }
       return todo_.FinishAction(value);
     }
@@ -446,7 +447,8 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
         }
         if (act.is_optional() &&
             act.results()[0]->kind() == Value::Kind::BoolValue) {
-          return Error("Failed to get LValue from member access");
+          return ProgramError(exp.source_loc())
+                 << "Failed to get LValue from member access";
         }
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
@@ -468,7 +470,9 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
           return todo_.FinishAction(instantiated);
         }
         if (access.member().interface().has_value()) {
-          return Error("Unexpected lvalue interface member");
+          return ProgramError(exp.source_loc())
+                 << "Unexpected lvalue interface member"
+                 << *access.member().interface().value();
         }
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> val,
@@ -519,7 +523,9 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
             std::make_unique<LValAction>(*rewrite, act.is_optional()));
       }
       if (op.op() != Operator::Deref) {
-        return Error("Can't treat primitive operator expression as lvalue");
+        return ProgramError(exp.source_loc())
+               << "Can't treat primitive operator expression  " << op
+               << " as lvalue";
       }
       if (act.pos() == 0) {
         return todo_.Spawn(
@@ -550,9 +556,10 @@ auto Interpreter::StepLvalue() -> ErrorOr<Success> {
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::ArrayTypeLiteral:
     case ExpressionKind::BuiltinConvertExpression:
-      return Error("Can't treat expression as lvalue");
+      return ProgramError(exp.source_loc())
+             << "Can't treat expression `" << exp << "` as lvalue";
     case ExpressionKind::UnimplementedExpression:
-      return Error("Expression unimplemented");
+      return ProgramError(exp.source_loc()) << "Expression unimplemented";
   }
 }
 
