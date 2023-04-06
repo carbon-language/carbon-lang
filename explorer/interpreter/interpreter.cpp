@@ -235,7 +235,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
       if (result.isSignedIntN(32)) {
         return arena_->New<IntValue>(result.getSExtValue());
       } else {
-        return ProgramError(source_loc) << "Integer overflow";
+        return ProgramError(source_loc) << "integer overflow";
       }
     }
     case Operator::Mod: {
