@@ -4558,9 +4558,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       CARBON_RETURN_IF_ERROR(TypeCheckExp(&assign.lhs(), impl_scope));
       if (assign.lhs().expression_category() != ExpressionCategory::Reference) {
         return ProgramError(assign.source_loc())
-               << "Only assign a reference expression can be assigned, but got "
-                  "`'"
-               << assign.lhs() << "`'";
+               << "Only a reference expression can be assigned to, but got `"
+               << assign.lhs() << "`";
       }
       if (assign.op() == AssignOperator::Plain &&
           IsSameType(&assign.lhs().static_type(), &assign.rhs().static_type(),
