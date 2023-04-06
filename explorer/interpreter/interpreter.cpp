@@ -952,6 +952,10 @@ auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
                                ImplWitnessMap&& witnesses) -> ErrorOr<Success> {
+  constexpr int StackSizeLimit = 1000;
+  if (todo_.Count() > StackSizeLimit) {
+    return ProgramError(call.source_loc()) << "stack overflow";
+  }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "calling function: " << *fun << "\n";
   }
