@@ -2210,15 +2210,6 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::VariableDeclaration: {
       const auto& var_decl = cast<VariableDeclaration>(decl);
       if (var_decl.has_initializer()) {
-        auto initializer = &var_decl.binding().static_type();
-        if (const auto* dest_class = dyn_cast<NominalClassType>(initializer)) {
-          if (dest_class->declaration().extensibility() ==
-              ClassExtensibility::Abstract) {
-            return ProgramError(var_decl.source_loc())
-                   << "Cannot instantiate abstract class "
-                   << dest_class->declaration().name();
-          }
-        }
         if (act.pos() == 0) {
           return todo_.Spawn(
               std::make_unique<ExpressionAction>(&var_decl.initializer()));

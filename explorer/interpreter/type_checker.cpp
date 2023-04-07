@@ -309,6 +309,21 @@ static auto ExpectCompleteType(SourceLocation source_loc,
          << "incomplete type `" << *type << "` used in " << context;
 }
 
+// Expect that a type is concreate. Issue a diagnostic if not.
+static auto ExpectConcreteType(SourceLocation source_loc,
+                               Nonnull<const Value*> type) -> ErrorOr<Success> {
+  CARBON_CHECK(IsType(type));
+
+  if (const auto* dest_class = dyn_cast<NominalClassType>(type)) {
+    if (dest_class->declaration().extensibility() ==
+        ClassExtensibility::Abstract) {
+      return ProgramError(source_loc) << "Cannot instantiate abstract class "
+                                      << dest_class->declaration().name();
+    }
+  }
+  return Success();
+}
+
 // Returns whether *value represents the type of a Carbon value, as
 // opposed to a type pattern or a non-type value.
 static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
@@ -6135,6 +6150,8 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
                                               var.expression_category()));
       CARBON_RETURN_IF_ERROR(ExpectCompleteType(
           var.source_loc(), "type of variable", &var.binding().static_type()));
+      CARBON_RETURN_IF_ERROR(
+          ExpectConcreteType(var.source_loc(), &var.binding().static_type()));
       var.set_static_type(&var.binding().static_type());
       break;
     }
