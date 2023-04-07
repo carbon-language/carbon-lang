@@ -309,7 +309,7 @@ static auto ExpectCompleteType(SourceLocation source_loc,
          << "incomplete type `" << *type << "` used in " << context;
 }
 
-// Expect that a type is concreate. Issue a diagnostic if not.
+// Expect that a type is concrete. Issue a diagnostic if not.
 static auto ExpectConcreteType(SourceLocation source_loc,
                                Nonnull<const Value*> type) -> ErrorOr<Success> {
   CARBON_CHECK(IsType(type));
