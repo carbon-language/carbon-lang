@@ -27,7 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Escape hatches for R-values in Carbon](#escape-hatches-for-r-values-in-carbon)
 -   [Initializing expressions](#initializing-expressions)
 -   [Pointers](#pointers)
-    -   [References](#references)
+    -   [Reference types](#reference-types)
     -   [Syntax](#syntax)
     -   [Syntax-free dereference and address-of](#syntax-free-dereference-and-address-of)
     -   [Dereferencing customization](#dereferencing-customization)
