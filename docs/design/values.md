@@ -10,18 +10,22 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Value categories](#value-categories)
+-   [Values, variables, and expressions](#values-variables-and-expressions)
+    -   [Expression categories](#expression-categories)
 -   [Binding patterns and local variables with `let` and `var`](#binding-patterns-and-local-variables-with-let-and-var)
     -   [Local variables](#local-variables)
     -   [Consuming function parameters](#consuming-function-parameters)
--   [L-values or _located_ values](#l-values-or-located-values)
--   [R-values or _readonly_ values](#r-values-or-readonly-values)
+-   [Reference expressions](#reference-expressions)
+    -   [Durable reference expressions](#durable-reference-expressions)
+    -   [Ephemeral reference expressions](#ephemeral-reference-expressions)
+-   [Value expressions](#value-expressions)
     -   [Comparison to C++ parameters](#comparison-to-c-parameters)
     -   [Representation and type-based modeling](#representation-and-type-based-modeling)
-    -   [R-value customization](#r-value-customization)
+    -   [Value representation customization](#value-representation-customization)
     -   [Polymorphic types](#polymorphic-types)
     -   [Interop with C++ `const &` and `const` methods.](#interop-with-c-const--and-const-methods)
     -   [Escape hatches for R-values in Carbon](#escape-hatches-for-r-values-in-carbon)
+-   [Initializing expressions](#initializing-expressions)
 -   [Pointers](#pointers)
     -   [References](#references)
     -   [Syntax](#syntax)
@@ -73,9 +77,13 @@ below:
 
 -   An _initializing expression_ can be formed from:
     -   A _value expression_ by using the value to initialize the storage,
-        analogous to [direct initialization](TODO) in C++.
+        analogous to
+        [direct initialization](https://en.cppreference.com/w/cpp/language/direct_initialization)
+        in C++.
     -   A _reference expression_ by copying the referenced value into the
-        storage, analogous to [copy initialization](TODO) in C++.
+        storage, analogous to
+        [copy initialization](https://en.cppreference.com/w/cpp/language/copy_initialization)
+        in C++.
 -   An _ephemeral reference expression_ can be formed from an _initializing
     expression_ by materializing temporary storage to be initialized and then
     referencing that storage.
@@ -431,14 +439,15 @@ fn F(immutable_s: S) {
 }
 ```
 
-## Initializing expresssions
+## Initializing expressions
 
 ...
 
 ## Pointers
 
-Pointers in Carbon are the primary mechanism for _indirect access_ to a value,
-which is always an [_L-value_](#l-values-or-located-values).
+Pointers in Carbon are the primary mechanism for _indirect access_ to storage
+containing some value. Dereferencing a pointer is one of the primary ways to
+form a [_reference expression_](#reference-expressions).
 
 Carbon pointers are heavily restricted compared to C++ pointers -- they cannot
 be null and they cannot be indexed or have pointer arithmetic performed on them.
@@ -454,12 +463,12 @@ specialized constructs given the specialized nature of these operations.
 
 > TODO: Add explicit designs for these use cases and link to them here.
 
-### References
+### Reference types
 
-Unlike C++, Carbon does not currently have references. The only form of indirect
-access are pointers. There are a few aspects to this decision that need to be
-separated carefully from each other as the motivations and considerations are
-different.
+Unlike C++, Carbon does not currently have reference types. The only form of
+indirect access are pointers. There are a few aspects to this decision that need
+to be separated carefully from each other as the motivations and considerations
+are different.
 
 First, Carbon has only a single fundamental construct for indirection because
 this gives it a single point that needs extension and configuration if and when
@@ -492,7 +501,7 @@ written with a prefix `*` as in `*pointer`:
 var i: i32 = 42;
 var p: i32* = &i;
 
-// Form an L-value and assign it to `13`.
+// Form a reference expression `*p` and assign `13` to the referenced storage.
 *p = 13;
 ```
 
