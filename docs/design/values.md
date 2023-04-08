@@ -84,9 +84,10 @@ below:
         storage, analogous to
         [copy initialization](https://en.cppreference.com/w/cpp/language/copy_initialization)
         in C++.
--   An _ephemeral reference expression_ can be formed from an _initializing
-    expression_ by materializing temporary storage to be initialized and then
-    referencing that storage.
+-   An _ephemeral reference expression_ can be formed from:
+    -   A _durable reference expression_ trivially.
+    -   An _initializing expression_ by materializing temporary storage to be
+        initialized and then referencing that storage.
 -   A _durable reference expression_ cannot be produced by converting from
     another expression category.
 -   A _value expression_ can be formed from a _reference expression_ by reading
@@ -98,33 +99,46 @@ from its storage.
 
 ## Binding patterns and local variables with `let` and `var`
 
-[_Binding patterns_](/docs/design/README.md#binding-patterns) produce named
-R-values by default. This is the desired default for many pattern contexts,
-especially function parameters. R-values are a good model for "input" function
+[_Binding patterns_](/docs/design/README.md#binding-patterns) introduce names
+that are [_value expressions_](#value-expressions) by default and are called
+_value bindings_. This is the desired default for many pattern contexts,
+especially function parameters. Values are a good model for "input" function
 parameters which are the dominant and default style of function parameters:
 
 ```carbon
 fn Sum(x: i32, y: i32) -> i32 {
-  // `x` and `y` are R-values here. We can read them, but not modify.
+  // `x` and `y` are value expressions here. We can use their value, but not
+  // modify them or take their address.
   return x + y;
 }
 ```
 
-A pattern can be introduced with the `var` keyword to create a _variable
-pattern_. This creates an L-value including the necessary storage. Every binding
-pattern name introduced within a variable pattern is also an L-value. The
-initializer for a variable pattern is directly used to initialize the storage.
+Value bindings require the matched expression to be a _value expression_,
+converting it into one as necessary.
+
+A pattern can be introduced with the `var` keyword to create a variable with
+storage. Every binding pattern name introduced within a variable pattern is
+called a _variable binding_ and forms a
+[_reference_expression_](#reference-expressions) when used. Variable bindings
+require their matched expression to be an _initializing expression_ and provide
+the underlying variable storage to it to be initialized.
 
 ```carbon
 fn MutateThing(ptr: i64*);
 
 fn Example() {
+  // Both `1` and `2` here start as value expressions. That is a match for `1`.
+  // For `2`, the variable binding requires it to be converted to an
+  // initializing expression by using the value `2` to initialize the provided
+  // variable storage that `y` will refer to.
   let (x: i64, var y: i64) = (1, 2);
 
-  // Allowed to take the address and mutate `y`.
+  // Allowed to take the address and mutate `y` as it is a durable reference
+  // expression.
   MutateThing(&y);
 
-  // ❌ This would be an error though due to trying to take the address of `x`.
+  // ❌ This would be an error though due to trying to take the address of the
+  // value expression `x`.
   MutateThing(&x);
 }
 ```
@@ -132,10 +146,10 @@ fn Example() {
 ### Local variables
 
 A local binding pattern can be introduced with either the `let` or `var`
-keyword. The `let` introducer begins a readonly pattern just like the default
-patterns in other contexts. The `var` introduce works exactly the same as
-introducing the pattern inside of a `let` binding with `var` -- there's just no
-need for the outer `let`.
+keyword. The `let` introducer begins a value pattern just like the default
+patterns in other contexts. The `var` introducer works exactly the same as
+introducing the pattern in some other context with `var` -- there's just no need
+for the outer `let`.
 
 -   `let` _identifier_`:` _< expression |_ `auto` _>_ `=` _value_`;`
 -   `var` _identifier_`:` _< expression |_ `auto` _> [_ `=` _value ]_`;`
@@ -145,7 +159,7 @@ declarations. Local `let` and `var` declarations build on Carbon's general
 [pattern matching](/docs/design/pattern_matching.md) design, with `var`
 declarations implicitly starting off within a `var` pattern while `let`
 declarations introduce patterns that work the same as function parameters and
-others with bindings that are R-values by default.
+others with bindings that produce values by default.
 
 ### Consuming function parameters
 
@@ -161,30 +175,48 @@ fn Consume(var x: SomeData) {
 This allows us to model an important special case of function inputs -- those
 that are _consumed_ by the function, either through local processing or being
 moved into some persistent storage. Marking these in the pattern and thus
-signature of the function allows callers to optimize for the fact that they
-_must_ initialize a separate L-value owned by the function being called rather
-than binding an R-value to something owned by the caller.
+signature of the function changes the expression category of arguments in the
+caller, causing them to become _initializing expressions_ that directly
+initialize storage dedicated-to and owned-by the function parameter.
 
 This pattern serves the same purpose as C++'s pass-by-value when used with types
 that have non-trivial resources attached to pass ownership into the function and
 consume the resource. But rather than that being the seeming _default_, Carbon
 makes this a use case that requires a special marking.
 
-## Reference expressions
+## Reference expressions and variables
+
+_Reference expressions_ refer to storage at some particular location where a
+value may be read or written, and the address of the storage taken. There are
+two sub-categories: _durable_ and _ephemeral_.
+
+All reference expressions can have their storage's address taken implicitly when
+calling a [method](TODO) on the reference expression where the method's `self`
+parameter has an [`addr` specifier](TODO) -- the address of the reference
+expression's storage is passed as a [pointer](#pointers) to the `self` parameter
+for such methods.
 
 ### Durable reference expressions
 
+_Durable reference expressions_ are those where the storage outlives the full
+expression and the address could be meaningfully propagated out of it as well.
+The address of a durable reference expression can be explicitly and directly
+with an address-of expression: `&x`.
+
+There is no way to convert another category of expression into a durable
+reference expression, they always directly refer to some declared variable
+binding.
+
 ### Ephemeral reference expressions
 
-Located values in Carbon with language-provided storage and a stable address for
-that storage. This means that an L-value's address can be taken to produce a
-[pointer](#pointers) to that value.
+_Ephemeral reference expressions_ still refer to storage, but it may be storage
+materialized for a temporary that will not outlive the full expression. Their
+address can only be taken implicitly as part of a method call.
 
-Taking an L-value's address can be done explicitly using an address-of
-expression: `&x` requires `x` to be an L-value and produces the address of that
-value's storage. It can also be done implicitly when calling a [method]() on an
-L-value object where the method's `self` parameter has an [`addr` qualifier]().
-The address of the L-value is passed as a pointer to the `self` parameter.
+These expressions are typically formed by conversion from another expression
+category. Either a trivial conversion from a durable reference expression, or a
+conversion of an initializing expression by materializing temporary storage to
+be initialized and then producing an ephemeral reference to it.
 
 ## Value expressions
 
