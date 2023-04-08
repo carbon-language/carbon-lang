@@ -32,18 +32,61 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## Value categories
+## Values, variables, and expressions
 
-Every value in Carbon has a
-[value category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>)
-that is either an L-value or an R-value.
+Carbon has both _values_ like `42`, `true`, and `i32` (a type value). It can
+also have a _variable_ which has _storage_ where we can read and write values.
+Storage also allows taking the address and working with the memory.
 
-[_L-values_ are _located values_.](#l-values-or-located-values) They represent
-_storage_ and have a stable address. They are in principle mutable, although
-their type's API may limit the mutating operations available.
+However, while these terms are convenient are often used to casually describe an
+entity in Carbon, they're not the right way to categorize or formalize the
+semantics of Carbon code. Instead, it uses a more precise model which
+categorizes the _expressions_. This allows us to both be more precise and
+articulate important differences not captured without looking at the expression
+itself.
 
-[_R-values_ are _readonly values_.](#r-values-or-readonly-values) They cannot be
-mutated in any way and may not have storage or a stable address.
+### Expression categories
+
+There are three expression categories in Carbon:
+
+-   [_Value expressions_](#value-expressions) produce an abstract, read-only
+    value that cannot be modified or have its address taken.
+-   [_Reference expressions_](#reference-expressions) refer to _storage_ with a
+    particular _location_ where a value may be read, written, or its address
+    taken.
+    -   [_Durable reference expressions_](#durable-reference-expressions) are
+        reference expressions which cannot refer to _temporary_ storage, but
+        must refer to some storage with outlives the full expression.
+    -   [_Ephemeral reference expressions_](#ephemeral-reference-expressions)
+        are reference expressions which _can_ refer to temporary storage.
+-   [_Initializing expressions_](#initializing-expressions) which require
+    storage to be provided as an input and initialize it to some value.
+
+The syntax and syntactic context of an expression fully determines both the
+expressions initial category and which if any conversions from one category to
+another must take place. Carbon specifically works to avoid involving the _type
+system_ in this determination as a way to reduce the complexity required within
+the type system.
+
+The general conversions and the semantics implied between these categories are
+below:
+
+-   An _initializing expression_ can be formed from:
+    -   A _value expression_ by using the value to initialize the storage,
+        analogous to [direct initialization](TODO) in C++.
+    -   A _reference expression_ by copying the referenced value into the
+        storage, analogous to [copy initialization](TODO) in C++.
+-   An _ephemeral reference expression_ can be formed from an _initializing
+    expression_ by materializing temporary storage to be initialized and then
+    referencing that storage.
+-   A _durable reference expression_ cannot be produced by converting from
+    another expression category.
+-   A _value expression_ can be formed from a _reference expression_ by reading
+    the value from its storage.
+
+Multiple steps of these conversions can be combined, for example to produce a
+value by first initializing an ephemeral reference and then reading the value
+from its storage.
 
 ## Binding patterns and local variables with `let` and `var`
 
@@ -119,7 +162,11 @@ that have non-trivial resources attached to pass ownership into the function and
 consume the resource. But rather than that being the seeming _default_, Carbon
 makes this a use case that requires a special marking.
 
-## L-values or _located_ values
+## Reference expressions
+
+### Durable reference expressions
+
+### Ephemeral reference expressions
 
 Located values in Carbon with language-provided storage and a stable address for
 that storage. This means that an L-value's address can be taken to produce a
@@ -131,7 +178,7 @@ value's storage. It can also be done implicitly when calling a [method]() on an
 L-value object where the method's `self` parameter has an [`addr` qualifier]().
 The address of the L-value is passed as a pointer to the `self` parameter.
 
-## R-values or _readonly_ values
+## Value expressions
 
 An R-value cannot be mutated, cannot have its address taken, and may not have
 storage at all or a stable address of storage. They model abstract values like
@@ -194,7 +241,7 @@ customized by types as needed. For example, types with dedicated and optimized
 "view" representations can immediately use this to back any R-value, and it will
 even be used in generic code.
 
-### R-value customization
+### Value representation customization
 
 Carbon models both the conversion from L-value to R-value and the representation
 of R-values in a way that permits customization. We can also explain the
@@ -261,14 +308,14 @@ interface RValueRep {
 
   // Called to for the representation object when binding an L-value as an
   // R-value.
-  fn LValueTRValue[addr self: const Self*]() -> RepType;
+  fn LValueToRValue[addr self: const Self*]() -> RepType;
 
   // Extend the implicit conversions.
   extends ImplicitAs(RepType);
 
   // Provide the language-provided conversion given the above. Custom
   // conversions can still be provided here.
-  default fn Convert[self: Self]() -> RepType { return self; }
+  final fn Convert[self: Self]() -> RepType { ... }
 }
 
 class StringView {
@@ -383,6 +430,10 @@ fn F(immutable_s: S) {
   immutable_s.unsafe MutableMemberFunction();
 }
 ```
+
+## Initializing expresssions
+
+...
 
 ## Pointers
 
