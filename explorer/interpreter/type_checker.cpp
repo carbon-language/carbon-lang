@@ -4991,7 +4991,8 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
           return ProgramError(fun->source_loc())
                  << "Error declaring `" << fun->name() << "`"
                  << ": abstract method cannot be declared in non-abstract "
-                    "class `" << class_decl->name() << "`.";
+                    "class `"
+                 << class_decl->name() << "`.";
         }
         if (fun->body()) {
           return ProgramError(fun->source_loc())
