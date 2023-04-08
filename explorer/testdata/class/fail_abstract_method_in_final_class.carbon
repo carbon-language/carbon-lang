@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 class C {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_in_final_class:[[@LINE+1]]: Error declaring `Foo`: abstract method cannot be declared in non-abstract class `C`.
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_in_final_class.carbon:[[@LINE+1]]: Error declaring `Foo`: abstract method cannot be declared in non-abstract class `C`.
   abstract fn Foo[self:Self]() -> i32;
 }
 

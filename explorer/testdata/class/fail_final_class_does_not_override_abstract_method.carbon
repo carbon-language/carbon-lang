@@ -13,7 +13,7 @@ abstract class C {
 }
 
 class D extends C {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_final_class_does_not_override_abstract_method:[[@LINE+1]]: Final class `D` must implement abstract method `Foo` from base class.
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_final_class_does_not_override_abstract_method.carbon:[[@LINE+1]]: Final class `D` must implement abstract method `Foo` from base class.
 }
 
 fn Main() -> i32 {

@@ -19,8 +19,8 @@ abstract class D extends C {
 }
 
 class E extends D {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_hides_base_implementation:[[@LINE+1]]: Final class `E` must implement abstract method `Foo` from base class.
 
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_hides_base_implementation.carbon:[[@LINE+1]]: Final class `E` must implement abstract method `Foo` from base class.
 }
 
 fn Main() -> i32 {

@@ -14,7 +14,7 @@ base class C {
 class D extends C {
   abstract fn Foo[self:Self]() -> i32 {
     return 1;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_declared_and_implemented.carbon:[[@LINE+1]]: Error declaring `Foo`: abstract method cannot be implemented in the same class where it is declared. Either remove the implementation or use `virtual` instead.
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_declared_and_implemented.carbon:[[@LINE+1]]: Error declaring `Foo`: abstract method cannot be declared in non-abstract class `D`.
   }
 }
 

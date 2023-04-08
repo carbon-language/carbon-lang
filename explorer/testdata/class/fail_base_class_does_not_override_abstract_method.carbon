@@ -16,7 +16,7 @@ base class D extends C {}
 
 fn Main() -> i32 {
   let d: D = {.base = {}};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_base_class_does_not_override_abstract_method:[[@LINE+1]]: attempt to call function `Foo` that has not been defined
+  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/class/fail_base_class_does_not_override_abstract_method.carbon:[[@LINE+1]]: attempt to call function `Foo` that has not been defined
   d.Foo();
   return 0;
 }
