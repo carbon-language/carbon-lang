@@ -1027,7 +1027,6 @@ class AliasDeclaration : public Declaration {
       -> std::optional<Nonnull<const Declaration*>> {
     return resolved_declaration_;
   }
-  auto resolved_declaration() -> Expression& { return *target_; }
 
  private:
   DeclaredName name_;
