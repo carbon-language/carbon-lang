@@ -4987,10 +4987,20 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     // `/docs/design/classes.md#virtual-methods`.
     switch (fun->virt_override()) {
       case VirtualOverride::Abstract:
-        // Not supported yet.
-        return ProgramError(fun->source_loc())
-               << "Error declaring `" << fun->name() << "`"
-               << ": `abstract` methods are not yet supported.";
+        if (class_decl->extensibility() != ClassExtensibility::Abstract) {
+          return ProgramError(fun->source_loc())
+                 << "Error declaring `" << fun->name() << "`"
+                 << ": abstract method cannot be declared in non-abstract "
+                    "class `" << class_decl->name() << "`.";
+        }
+        if (fun->body()) {
+          return ProgramError(fun->source_loc())
+                 << "Error declaring `" << fun->name() << "`"
+                 << ": abstract method cannot be declared and implemented at "
+                    "the same time. Either remove the implementation or "
+                    "declare as `virtual` instead.";
+        }
+        break;
       case VirtualOverride::None:
       case VirtualOverride::Virtual:
         if (has_vtable_entry) {
@@ -5024,6 +5034,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     static constexpr llvm::StringRef DestructorName = "destructor";
     bool has_vtable_entry =
         class_vtable.find(DestructorName) != class_vtable.end();
+
     switch (fun->virt_override()) {
       case VirtualOverride::None:
         break;
@@ -5048,6 +5059,19 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
         }
         class_vtable[DestructorName] = {fun, class_level};
         break;
+    }
+  }
+
+  // Check for implementations of all virtual methods if class is final.
+  if (class_decl->extensibility() == ClassExtensibility::None) {
+    for (const auto& [_, entry] : class_vtable) {
+      const auto* vfn = dyn_cast<FunctionDeclaration>(entry.first);
+      if (vfn && !vfn->body()) {
+        return ProgramError(class_decl->source_loc())
+               << "Final class `" << class_decl->name() << "` "
+               << "must implement abstract method `" << vfn->name()
+               << "` from base class.";
+      }
     }
   }
 
