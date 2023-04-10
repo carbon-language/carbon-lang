@@ -2031,14 +2031,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     case StatementKind::VariableDefinition: {
       const auto& definition = cast<VariableDefinition>(stmt);
       const auto* dest_type = &definition.pattern().static_type();
-      if (const auto* dest_class = dyn_cast<NominalClassType>(dest_type)) {
-        if (dest_class->declaration().extensibility() ==
-            ClassExtensibility::Abstract) {
-          return ProgramError(stmt.source_loc())
-                 << "Cannot instantiate abstract class "
-                 << dest_class->declaration().name();
-        }
-      }
       if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}

@@ -4557,7 +4557,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
           &var.pattern(), init_type, var_scope, var.expression_category()));
       CARBON_RETURN_IF_ERROR(ExpectCompleteType(
           var.source_loc(), "type of variable", &var.pattern().static_type()));
-
+      CARBON_RETURN_IF_ERROR(
+          ExpectConcreteType(var.source_loc(), &var.pattern().static_type()));
       if (var.has_init()) {
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<Expression*> converted_init,
