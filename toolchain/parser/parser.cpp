@@ -600,8 +600,7 @@ auto Parser::HandleBraceExpressionParameterAfterDesignator(
   } else if (PositionIs(TokenKind::Equal)) {
     is_type = false;
   } else {
-    HandleBraceExpressionParameterError(
-        state, ParserState::BraceExpressionParameterFinishAsUnknown);
+    HandleBraceExpressionParameterError(state, param_finish_state);
     return;
   }
 
