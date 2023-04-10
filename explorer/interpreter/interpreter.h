@@ -15,6 +15,7 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/value.h"
+#include "explorer/common/source_location.h"
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/heap.h"
 #include "explorer/interpreter/trace_stream.h"
@@ -32,6 +33,11 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
 // code this evaluates has been typechecked.
 auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
                Nonnull<TraceStream*> trace_stream)
+    -> ErrorOr<Nonnull<const Value*>>;
+
+auto InterpInstantiateType(Nonnull<const Value*> type,
+                           SourceLocation source_loc, Nonnull<Arena*> arena,
+                           Nonnull<TraceStream*> trace_stream)
     -> ErrorOr<Nonnull<const Value*>>;
 
 // Attempts to match `v` against the pattern `p`, returning whether matching

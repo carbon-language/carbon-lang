@@ -593,7 +593,8 @@ auto Interpreter::EvalAssociatedConstant(
     -> ErrorOr<Nonnull<const Value*>> {
   // Instantiate the associated constant.
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> interface,
-                          InstantiateType(&assoc->interface(), source_loc));
+                          InterpInstantiateType(&assoc->interface(), source_loc,
+                                                arena_, trace_stream_));
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
                           InstantiateWitness(&assoc->witness()));
 
@@ -602,7 +603,8 @@ auto Interpreter::EvalAssociatedConstant(
     CARBON_CHECK(phase() == Phase::CompileTime)
         << "symbolic witnesses should only be formed at compile time";
     CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base,
-                            InstantiateType(&assoc->base(), source_loc));
+                            InterpInstantiateType(&assoc->base(), source_loc,
+                                                  arena_, trace_stream_));
     return arena_->New<AssociatedConstant>(base, cast<InterfaceType>(interface),
                                            &assoc->constant(), witness);
   }
@@ -682,7 +684,8 @@ auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
     -> ErrorOr<Nonnull<const Bindings*>> {
   BindingMap args = bindings->args();
   for (auto& [var, arg] : args) {
-    CARBON_ASSIGN_OR_RETURN(arg, InstantiateType(arg, source_loc));
+    CARBON_ASSIGN_OR_RETURN(
+        arg, InterpInstantiateType(arg, source_loc, arena_, trace_stream_));
   }
 
   ImplWitnessMap witnesses = bindings->witnesses();
@@ -713,8 +716,9 @@ auto Interpreter::ConvertStructToClass(
   std::optional<Nonnull<const NominalClassValue*>> base_instance;
   // Instantiate the `destination_type` to obtain the runtime
   // type of the object.
-  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_class,
-                          InstantiateType(class_type, source_loc));
+  CARBON_ASSIGN_OR_RETURN(
+      Nonnull<const Value*> inst_class,
+      InterpInstantiateType(class_type, source_loc, arena_, trace_stream_));
   for (const auto& field : init_struct->elements()) {
     if (field.name == NominalClassValue::BaseField) {
       CARBON_CHECK(class_type->base().has_value())
@@ -998,7 +1002,8 @@ auto Interpreter::CallFunction(const CallExpression& call,
       // Bring the deduced arguments and their witnesses into scope.
       for (const auto& [bind, val] : call.deduced_args()) {
         CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_val,
-                                InstantiateType(val, call.source_loc()));
+                                InterpInstantiateType(val, call.source_loc(),
+                                                      arena_, trace_stream_));
         binding_scope.Initialize(bind->original(), inst_val);
       }
       for (const auto& [impl_bind, witness] : witnesses) {
@@ -1121,7 +1126,8 @@ auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
       }
     }
     default:
-      CARBON_ASSIGN_OR_RETURN(auto inst_type, InstantiateType(type, source_loc))
+      CARBON_ASSIGN_OR_RETURN(auto inst_type,
+                              InstantiateType(type, source_loc));
       return todo_.FinishAction(inst_type);
   }
 }
@@ -2449,6 +2455,16 @@ auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
   Interpreter interpreter(Phase::CompileTime, arena, trace_stream);
   CARBON_RETURN_IF_ERROR(
       interpreter.RunAllSteps(std::make_unique<ExpressionAction>(e)));
+  return interpreter.result();
+}
+
+auto InterpInstantiateType(Nonnull<const Value*> type,
+                           SourceLocation source_loc, Nonnull<Arena*> arena,
+                           Nonnull<TraceStream*> trace_stream)
+    -> ErrorOr<Nonnull<const Value*>> {
+  Interpreter interpreter(Phase::CompileTime, arena, trace_stream);
+  CARBON_RETURN_IF_ERROR(interpreter.RunAllSteps(
+      std::make_unique<TypeInstantiationAction>(type, source_loc)));
   return interpreter.result();
 }
 
