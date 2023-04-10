@@ -23,7 +23,7 @@ void Builtins::Register(Nonnull<const Declaration*> decl) {
 
     static std::map<std::string, int, std::less<>>* builtin_indexes = [] {
       std::map<std::string, int, std::less<>> builtin_indexes;
-      for (int index = 0; index <= Builtin::NumBuiltins; ++index) {
+      for (int index = 0; index < Builtin::NumBuiltins; ++index) {
         builtin_indexes.emplace(Builtin::FromInt(index).name(), index);
       }
       return new auto(std::move(builtin_indexes));
