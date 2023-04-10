@@ -832,7 +832,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
           return false;
         }
         for (size_t j = 0; j < equality1.values.size(); ++j) {
-          if (!ValueEqual(equality1.values[i], equality2.values[i],
+          if (!ValueEqual(equality1.values[j], equality2.values[j],
                           equality_ctx)) {
             return false;
           }
