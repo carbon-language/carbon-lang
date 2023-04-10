@@ -227,7 +227,9 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
     case DeclarationKind::AssociatedConstantDeclaration: {
       const auto& let = cast<AssociatedConstantDeclaration>(declaration);
       if (let.binding().name() != AnonymousName) {
-        CARBON_RETURN_IF_ERROR(enclosing_scope.Add(let.binding().name(), &let));
+        CARBON_RETURN_IF_ERROR(
+            enclosing_scope.Add(let.binding().name(), &let,
+                                StaticScope::NameStatus::KnownButNotDeclared));
       }
       break;
     }
@@ -829,7 +831,9 @@ auto NameResolver::ResolveNames(Declaration& declaration,
     case DeclarationKind::AssociatedConstantDeclaration: {
       auto& let = cast<AssociatedConstantDeclaration>(declaration);
       StaticScope constant_scope(&enclosing_scope);
+      enclosing_scope.MarkDeclared(let.binding().name());
       CARBON_RETURN_IF_ERROR(ResolveNames(let.binding(), constant_scope));
+      enclosing_scope.MarkUsable(let.binding().name());
       break;
     }
 
