@@ -1120,40 +1120,47 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
                << SourceOrDestination[missing_from_source ? 0 : 1] << " type `"
                << struct_type << "`";
       };
-      for (size_t i = 0; i < param_struct.fields().size(); ++i) {
-        NamedValue param_field = param_struct.fields()[i];
-        std::optional<NamedValue> arg_field;
-        if (allow_implicit_conversion) {
-          if (std::optional<NamedValue> maybe_arg_field =
-                  FindField(arg_struct.fields(), param_field.name)) {
-            arg_field = maybe_arg_field;
+      const auto& param_fields = param_struct.fields();
+      const auto& arg_fields = arg_struct.fields();
+      if (allow_implicit_conversion) {
+        for (const NamedValue& param_field : param_fields) {
+          if (std::optional<NamedValue> arg_field =
+                  FindField(arg_fields, param_field.name)) {
+            CARBON_RETURN_IF_ERROR(Deduce(param_field.value, arg_field->value,
+                                          allow_implicit_conversion));
           } else {
             return diagnose_missing_field(arg_struct, param_field, true);
           }
-        } else {
-          if (i >= arg_struct.fields().size()) {
-            return diagnose_missing_field(arg_struct, param_field, true);
+        }
+        if (param_fields.size() != arg_fields.size()) {
+          for (const NamedValue& arg_field : arg_fields) {
+            if (!FindField(param_fields, arg_field.name).has_value()) {
+              return diagnose_missing_field(param_struct, arg_field, false);
+            }
           }
-          arg_field = arg_struct.fields()[i];
-          if (param_field.name != arg_field->name) {
+          CARBON_FATAL() << "field count mismatch but no missing field; "
+                         << "duplicate field name?";
+        }
+      } else {
+        size_t smaller_size = std::min(param_fields.size(), arg_fields.size());
+        for (size_t i = 0; i < smaller_size; ++i) {
+          NamedValue param_field = param_fields[i];
+          NamedValue arg_field = arg_fields[i];
+          if (param_field.name != arg_field.name) {
             return ProgramError(source_loc_)
                    << "mismatch in field names, `" << param_field.name
-                   << "` != `" << arg_field->name << "`";
+                   << "` != `" << arg_field.name << "`";
           }
+          CARBON_RETURN_IF_ERROR(Deduce(param_field.value, arg_field.value,
+                                        allow_implicit_conversion));
         }
-        CARBON_RETURN_IF_ERROR(Deduce(param_field.value, arg_field->value,
-                                      allow_implicit_conversion));
-      }
-      if (param_struct.fields().size() != arg_struct.fields().size()) {
-        CARBON_CHECK(allow_implicit_conversion)
-            << "should have caught this earlier";
-        for (const NamedValue& arg_field : arg_struct.fields()) {
-          if (!FindField(param_struct.fields(), arg_field.name).has_value()) {
-            return diagnose_missing_field(param_struct, arg_field, false);
-          }
+        if (param_fields.size() < arg_fields.size()) {
+          return diagnose_missing_field(param_struct,
+                                        arg_fields[param_fields.size()], false);
+        } else if (param_fields.size() > arg_fields.size()) {
+          return diagnose_missing_field(arg_struct,
+                                        param_fields[arg_fields.size()], true);
         }
-        CARBON_FATAL() << "field count mismatch but no missing field; "
-                       << "duplicate field name?";
       }
       return Success();
     }
