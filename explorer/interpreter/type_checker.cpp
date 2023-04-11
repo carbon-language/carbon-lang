@@ -752,7 +752,6 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
   auto simple_conversion = [&] {
     auto* result = arena_->New<BuiltinConvertExpression>(source);
     result->set_static_type(destination);
-    // TODO: Initializing.
     result->set_expression_category(ExpressionCategory::Value);
     return result;
   };
@@ -849,23 +848,21 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
           break;
         }
         case Value::Kind::TypeType: {
-          // A tuple value converts to type `type` if all of its fields do.
-          bool all_types = true;
-          for (Nonnull<const Value*> source_element : source_tuple.elements()) {
+          // First, convert to (type, type, ..., type) if necessary.
+          if (!std::all_of(source_tuple.elements().begin(),
+                           source_tuple.elements().end(),
+                           [](Nonnull<const Value*> element_type) {
+                             return isa<TypeType>(element_type);
+                           })) {
+            auto* destination_tuple_type = arena_->New<TupleType>(
+                std::vector(source_tuple.elements().size(), destination));
             CARBON_ASSIGN_OR_RETURN(
-                bool convertible,
-                IsImplicitlyConvertible(
-                    source_element, destination, impl_scope,
-                    allow_user_defined_conversions));
-            if (!convertible) {
-              all_types = false;
-              break;
-            }
+                source, BuildBuiltinConversion(source, destination_tuple_type,
+                                               impl_scope));
           }
-          if (all_types) {
-            return simple_conversion();
-          }
-          break;
+          // The conversion from (type, type, ..., type) to type can be
+          // performed directly by the interpreter.
+          return simple_conversion();
         }
         default:
           break;
@@ -895,8 +892,8 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
   // This should only be visible if people directly call
   // __builtin_implicit_as_convert.
   return ProgramError(source->source_loc())
-         << "no builtin conversion from " << *source_type
-         << " to " << *destination << " is known";
+         << "no builtin conversion from " << *source_type << " to "
+         << *destination << " is known";
 }
 
 auto TypeChecker::ImplicitlyConvert(std::string_view context,
@@ -959,17 +956,15 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
     destination = destination_constraint;
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << "converting type " << *converted_value
-                     << " to constraint " << *destination_constraint
-                     << " for " << context << " in scope " << impl_scope
-                     << "\n";
+                     << " to constraint " << *destination_constraint << " for "
+                     << context << " in scope " << impl_scope << "\n";
     }
     // Note, we discard the witness. We don't actually need it in order to
     // perform the conversion, but we do want to know it exists.
     // TODO: A value of constraint type should carry both the type and the
     // witness.
-    CARBON_RETURN_IF_ERROR(impl_scope.Resolve(destination_constraint,
-                                              converted_value,
-                                              source->source_loc(), *this));
+    CARBON_RETURN_IF_ERROR(impl_scope.Resolve(
+        destination_constraint, converted_value, source->source_loc(), *this));
     return arena_->New<ValueLiteral>(source->source_loc(), converted_value,
                                      destination_constraint,
                                      ExpressionCategory::Value);
@@ -1000,7 +995,7 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
       }
       auto* result = arena_->New<TupleLiteral>(source->source_loc(),
                                                std::move(converted_elements));
-      // TODO: Initializing.
+      // TODO: Should be ExpressionCategory::Initializing.
       result->set_expression_category(ExpressionCategory::Value);
       result->set_static_type(destination);
       return result;
@@ -1507,20 +1502,6 @@ auto TypeChecker::ArgumentDeduction::Finish(
         type_checker.Substitute(bindings, &binding->static_type()));
     const auto* first_value = values[0];
     for (const auto* value : values) {
-      // TODO: It's not clear that conversions are or should be possible here.
-      // If they are permitted, we should allow user-defined conversions, and
-      // actually perform the conversion.
-      if (!IsTypeOfType(binding_type)) {
-        CARBON_ASSIGN_OR_RETURN(bool convertible,
-                                type_checker.IsImplicitlyConvertible(
-                                    value, binding_type, impl_scope, false));
-        if (!convertible) {
-          return ProgramError(source_loc_)
-                 << "cannot convert deduced value " << *value << " for "
-                 << binding->name() << " to parameter type " << *binding_type;
-        }
-      }
-
       // All deductions are required to produce the same value. Note that we
       // intentionally don't consider equality constraints here; we need the
       // same symbolic type, otherwise it would be ambiguous which spelling
@@ -5847,7 +5828,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   // processing the interface, in case the interface expression uses `Self`.
   Nonnull<SelfDeclaration*> self = impl_decl->self();
   self->set_constant_value(impl_type_value);
-  self->set_static_type(&impl_decl->impl_type()->static_type());
+  self->set_static_type(arena_->New<TypeType>());
 
   // Check and interpret the interface.
   CARBON_ASSIGN_OR_RETURN(
@@ -5864,7 +5845,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   {
     // TODO: Combine this with the SelfDeclaration.
     auto* self_binding = arena_->New<GenericBinding>(
-        self->source_loc(), "Self", impl_decl->impl_type(),
+        self->source_loc(), "Self", &impl_decl->interface(),
         GenericBinding::BindingKind::Checked);
     self_binding->set_symbolic_identity(impl_type_value);
     self_binding->set_value(impl_type_value);
