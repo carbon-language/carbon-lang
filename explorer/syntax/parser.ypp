@@ -350,9 +350,9 @@ import_directive:
 import_directives:
   // Empty
     { $$ = std::vector<LibraryName>(); }
-| import_directives[accumulated] import_directive
+| import_directives[accumulated_list] import_directive
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back($[import_directive]);
     }
 ;
@@ -429,10 +429,10 @@ primary_expression:
 ;
 postfix_expression:
   primary_expression
-| postfix_expression[child_postfix] designator
+| postfix_expression[lhs_expression] designator
     {
       $$ = arena->New<SimpleMemberAccessExpression>(
-          context.source_loc(), $[child_postfix], $[designator]);
+          context.source_loc(), $[lhs_expression], $[designator]);
     }
 | postfix_expression[child_postfix] ARROW identifier
     {
@@ -488,23 +488,23 @@ postfix_expression:
 ;
 ref_deref_expression:
   postfix_expression
-| PREFIX_STAR ref_deref_expression[child_ref_deref]
+| PREFIX_STAR ref_deref_expression[expression]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Deref,
-          std::vector<Nonnull<Expression*>>({$[child_ref_deref]}));
+          std::vector<Nonnull<Expression*>>({$[expression]}));
     }
-| UNARY_STAR ref_deref_expression[child_ref_deref]
+| UNARY_STAR ref_deref_expression[expression]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Deref,
-          std::vector<Nonnull<Expression*>>({$[child_ref_deref]}));
+          std::vector<Nonnull<Expression*>>({$[expression]}));
     }
-| AMPERSAND ref_deref_expression[child_ref_deref]
+| AMPERSAND ref_deref_expression[expression]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::AddressOf,
-          std::vector<Nonnull<Expression*>>({$[child_ref_deref]}));
+          std::vector<Nonnull<Expression*>>({$[expression]}));
     }
 ;
 fn_type_expression:
@@ -594,11 +594,11 @@ additive_expression:
     }
 ;
 modulo_expression:
-  simple_binary_operand[lhs] PERCENT simple_binary_operand[rhs]
+  simple_binary_operand[lhs_operand] PERCENT simple_binary_operand[rhs_operand]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Mod,
-          std::vector<Nonnull<Expression*>>({$[lhs], $[rhs]}));
+          std::vector<Nonnull<Expression*>>({$[lhs_operand], $[rhs_operand]}));
     }
 ;
 bitwise_and_lhs:
@@ -646,33 +646,34 @@ bitwise_expression:
 | bitwise_xor_expression
 ;
 bit_shift_expression:
-  simple_binary_operand[lhs] LESS_LESS simple_binary_operand[rhs]
+  simple_binary_operand[lhs_operand] LESS_LESS simple_binary_operand[rhs_operand]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::BitShiftLeft,
-          std::vector<Nonnull<Expression*>>({$[lhs], $[rhs]}));
+          std::vector<Nonnull<Expression*>>({$[lhs_operand], $[rhs_operand]}));
     }
-| simple_binary_operand[lhs] GREATER_GREATER simple_binary_operand[rhs]
+| simple_binary_operand[lhs_operand] GREATER_GREATER simple_binary_operand[rhs_operand]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::BitShiftRight,
-          std::vector<Nonnull<Expression*>>({$[lhs], $[rhs]}));
+          std::vector<Nonnull<Expression*>>({$[lhs_operand], $[rhs_operand]}));
     }
 ;
 as_expression:
-  simple_binary_operand[lhs] AS simple_binary_operand[rhs]
+  simple_binary_operand[lhs_operand] AS simple_binary_operand[rhs_operand]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::As,
-          std::vector<Nonnull<Expression*>>{$[lhs], $[rhs]});
+          std::vector<Nonnull<Expression*>>{$[lhs_operand], $[rhs_operand]});
     }
 ;
 unimpl_expression:
   // ref_deref_expression excluded due to precedence diamond.
-  ref_deref_expression[lhs] UNIMPL_EXAMPLE ref_deref_expression[rhs]
+  ref_deref_expression[lhs_expression] UNIMPL_EXAMPLE ref_deref_expression[rhs_expression]
     {
-      $$ = arena->New<UnimplementedExpression>(context.source_loc(),
-                                               "ExampleInfix", $[lhs], $[rhs]);
+      $$ = arena->New<UnimplementedExpression>(
+          context.source_loc(), "ExampleInfix", $[lhs_expression],
+          $[rhs_expression]);
     }
 ;
 value_expression:
@@ -706,11 +707,11 @@ comparison_operator:
 ;
 comparison_expression:
   value_expression
-| comparison_operand[lhs] comparison_operator comparison_operand[rhs]
+| comparison_operand[lhs_operand] comparison_operator comparison_operand[rhs_operand]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), $[comparison_operator],
-          std::vector<Nonnull<Expression*>>({$[lhs], $[rhs]}));
+          std::vector<Nonnull<Expression*>>({$[lhs_operand], $[rhs_operand]}));
     }
 ;
 not_expression:
@@ -757,11 +758,15 @@ or_expression:
     }
 ;
 where_clause:
-  comparison_operand[lhs] IMPLS comparison_operand[rhs]
-    { $$ = arena->New<ImplsWhereClause>(context.source_loc(), $[lhs], $[rhs]); }
-| comparison_operand[lhs] EQUAL_EQUAL comparison_operand[rhs]
+  comparison_operand[lhs_operand] IMPLS comparison_operand[rhs_operand]
     {
-      $$ = arena->New<EqualsWhereClause>(context.source_loc(), $[lhs], $[rhs]);
+      $$ = arena->New<ImplsWhereClause>(context.source_loc(), $[lhs_operand],
+                                        $[rhs_operand]);
+    }
+| comparison_operand[lhs_operand] EQUAL_EQUAL comparison_operand[rhs_operand]
+    {
+      $$ = arena->New<EqualsWhereClause>(context.source_loc(), $[lhs_operand],
+                                         $[rhs_operand]);
     }
 // TODO: .(expression) = expression
 | designator EQUAL comparison_operand
@@ -773,9 +778,9 @@ where_clause:
 where_clause_list:
   where_clause
     { $$ = {$[where_clause]}; }
-| where_clause_list[accumulated] AND where_clause
+| where_clause_list[accumulated_list] AND where_clause
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back($[where_clause]);
     }
 ;
@@ -841,9 +846,9 @@ paren_expression_base:
 paren_expression_contents:
   expression
     { $$ = {.elements = {$[expression]}, .has_trailing_comma = false}; }
-| paren_expression_contents[accumulated] COMMA expression
+| paren_expression_contents[accumulated_list] COMMA expression
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.elements.push_back($[expression]);
     }
 ;
@@ -865,9 +870,9 @@ struct_literal:
 struct_literal_contents:
   designator EQUAL expression
     { $$ = {FieldInitializer($[designator], $[expression])}; }
-| struct_literal_contents[accumulated] COMMA designator EQUAL expression
+| struct_literal_contents[accumulated_list] COMMA designator EQUAL expression
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back(FieldInitializer($[designator], $[expression]));
     }
 ;
@@ -887,9 +892,9 @@ struct_type_literal:
 struct_type_literal_contents:
   designator COLON expression
     { $$ = {FieldInitializer($[designator], $[expression])}; }
-| struct_type_literal_contents[accumulated] COMMA designator COLON expression
+| struct_type_literal_contents[accumulated_list] COMMA designator COLON expression
   {
-    $$ = std::move($[accumulated]);
+    $$ = std::move($[accumulated_list]);
     $$.push_back(FieldInitializer($[designator], $[expression]));
   }
 ;
@@ -940,8 +945,8 @@ non_expression_pattern:
         YYERROR;
       }
     }
-| VAR non_expression_pattern[var_pattern]
-    { $$ = arena->New<VarPattern>(context.source_loc(), $[var_pattern]); }
+| VAR non_expression_pattern[pattern]
+    { $$ = arena->New<VarPattern>(context.source_loc(), $[pattern]); }
 ;
 binding_lhs:
   identifier { $$ = $[identifier]; }
@@ -973,19 +978,19 @@ paren_pattern_contents:
       $$ = {.elements = {$[non_expression_pattern]},
             .has_trailing_comma = false};
     }
-| paren_expression_contents[accumulated] COMMA non_expression_pattern
+| paren_expression_contents[accumulated_list] COMMA non_expression_pattern
     {
-      $$ = ParenExpressionToParenPattern(arena, $[accumulated]);
+      $$ = ParenExpressionToParenPattern(arena, $[accumulated_list]);
       $$.elements.push_back($[non_expression_pattern]);
     }
-| paren_pattern_contents[accumulated] COMMA expression
+| paren_pattern_contents[accumulated_list] COMMA expression
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.elements.push_back(arena->New<ExpressionPattern>($[expression]));
     }
-| paren_pattern_contents[accumulated] COMMA non_expression_pattern
+| paren_pattern_contents[accumulated_list] COMMA non_expression_pattern
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.elements.push_back($[non_expression_pattern]);
     }
 ;
@@ -1023,9 +1028,9 @@ clause:
 clause_list:
   // Empty
     { $$ = {}; }
-| clause_list[accumulated] clause
+| clause_list[accumulated_list] clause
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back($[clause]);
     }
 ;
@@ -1177,9 +1182,9 @@ return_expression:
 statement_list:
   // Empty
     { $$ = {}; }
-| statement_list[accumulated] statement
+| statement_list[accumulated_list] statement
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back($[statement]);
     }
 ;
@@ -1228,9 +1233,9 @@ deduced_param_list:
     { $$ = {}; }
 | deduced_param
     { $$ = {$[deduced_param]}; }
-| deduced_param_list[accumulated] COMMA deduced_param
+| deduced_param_list[accumulated_list] COMMA deduced_param
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back($[deduced_param]);
     }
 ;
@@ -1330,15 +1335,15 @@ alternative:
 alternative_list:
   // Empty
     { $$ = {}; }
-| alternative_list_contents[accumulated]
-| alternative_list_contents[accumulated] COMMA
+| alternative_list_contents[accumulated_list]
+| alternative_list_contents[accumulated_list] COMMA
 ;
 alternative_list_contents:
   alternative
     { $$ = {std::move($[alternative])}; }
-| alternative_list_contents[accumulated] COMMA alternative
+| alternative_list_contents[accumulated_list] COMMA alternative
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back(std::move($[alternative]));
     }
 ;
@@ -1483,9 +1488,9 @@ match_first_declaration:
 match_first_declaration_list:
   // Empty
     { $$ = {}; }
-| match_first_declaration_list[accumulated] impl_declaration
+| match_first_declaration_list[accumulated_list] impl_declaration
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back($[impl_declaration]);
     }
 destructor_virtual_override_intro:
@@ -1517,23 +1522,23 @@ destructor_declaration:
 declaration_list:
   // Empty
     { $$ = {}; }
-| declaration_list[accumulated] declaration
+| declaration_list[accumulated_list] declaration
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back(Nonnull<Declaration*>($[declaration]));
     }
 ;
 class_body:
   // Empty
     { $$ = {}; }
-| class_body[accumulated] declaration
+| class_body[accumulated_list] declaration
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back(Nonnull<Declaration*>($[declaration]));
     }
-| class_body[accumulated] mix_declaration
+| class_body[accumulated_list] mix_declaration
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back(Nonnull<Declaration*>($[mix_declaration]));
     }
 ;
@@ -1541,41 +1546,41 @@ class_body:
 mixin_body:
   // Empty
     { $$ = {}; }
-| mixin_body[accumulated] function_declaration
+| mixin_body[accumulated_list] function_declaration
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back(Nonnull<Declaration*>($[function_declaration]));
     }
-| mixin_body[accumulated] mix_declaration
+| mixin_body[accumulated_list] mix_declaration
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back(Nonnull<Declaration*>($[mix_declaration]));
     }
 ;
 interface_body:
   // Empty
     { $$ = {}; }
-| interface_body[accumulated] function_declaration
+| interface_body[accumulated_list] function_declaration
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back($[function_declaration]);
     }
-| interface_body[accumulated] LET generic_binding SEMICOLON
+| interface_body[accumulated_list] LET generic_binding SEMICOLON
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back(arena->New<AssociatedConstantDeclaration>(
           context.source_loc(), $[generic_binding]));
     }
-| interface_body[accumulated] EXTENDS expression SEMICOLON
+| interface_body[accumulated_list] EXTENDS expression SEMICOLON
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back(arena->New<InterfaceExtendsDeclaration>(context.source_loc(),
                                                            $[expression]));
     }
-| interface_body[accumulated] IMPL impl_type AS type_or_where_expression
+| interface_body[accumulated_list] IMPL impl_type AS type_or_where_expression
   SEMICOLON
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back(arena->New<InterfaceImplDeclaration>(
           context.source_loc(), $[impl_type], $[type_or_where_expression]));
     }
@@ -1583,14 +1588,14 @@ interface_body:
 impl_body:
   // Empty
     { $$ = {}; }
-| impl_body[accumulated] function_declaration
+| impl_body[accumulated_list] function_declaration
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back($[function_declaration]);
     }
-| impl_body[accumulated] alias_declaration
+| impl_body[accumulated_list] alias_declaration
     {
-      $$ = std::move($[accumulated]);
+      $$ = std::move($[accumulated_list]);
       $$.push_back($[alias_declaration]);
     }
 ;
