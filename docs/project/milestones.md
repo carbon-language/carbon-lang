@@ -10,6 +10,18 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
+-   [Overview](#overview)
+-   [Milestone 0.1: a minimum viable product (MVP) for evaluation](#milestone-01-a-minimum-viable-product-mvp-for-evaluation)
+    -   [Goals](#goals)
+    -   [Features](#features)
+        -   [Code organization and structuring](#code-organization-and-structuring)
+        -   [Type system](#type-system)
+        -   [Functions, statements, expressions, ...](#functions-statements-expressions-)
+-   [Milestone 0.2: feature complete product for evaluation](#milestone-02-feature-complete-product-for-evaluation)
+    -   [Features explicitly deferred until at least 0.2](#features-explicitly-deferred-until-at-least-02)
+-   [Milestone 1.0: no longer an experiment, usable in production](#milestone-10-no-longer-an-experiment-usable-in-production)
+    -   [Features explicitly deferred beyond 0.2](#features-explicitly-deferred-beyond-02)
+
 <!-- tocstop -->
 
 ## Overview
