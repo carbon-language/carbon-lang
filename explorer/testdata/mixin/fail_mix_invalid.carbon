@@ -9,6 +9,7 @@
 package ExplorerTest api;
 
 __mixin EmptyIdentifier{
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_invalid.carbon:[[@LINE+1]]: Not a valid mixin: `()`
   __mix ();
 }
 
