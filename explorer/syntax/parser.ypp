@@ -421,10 +421,11 @@ primary_expression:
 | paren_expression { $$ = $[paren_expression]; }
 | struct_literal { $$ = $[struct_literal]; }
 | struct_type_literal { $$ = $[struct_type_literal]; }
-| LEFT_SQUARE_BRACKET expression[type] SEMICOLON expression[size]
-  RIGHT_SQUARE_BRACKET
+| LEFT_SQUARE_BRACKET expression[type_expression] SEMICOLON
+  expression[size_expression] RIGHT_SQUARE_BRACKET
     {
-      $$ = arena->New<ArrayTypeLiteral>(context.source_loc(), $[type], $[size]);
+      $$ = arena->New<ArrayTypeLiteral>(context.source_loc(),
+                                        $[type_expression], $[size_expression]);
     }
 ;
 postfix_expression:
@@ -646,13 +647,15 @@ bitwise_expression:
 | bitwise_xor_expression
 ;
 bit_shift_expression:
-  simple_binary_operand[lhs_operand] LESS_LESS simple_binary_operand[rhs_operand]
+  simple_binary_operand[lhs_operand] LESS_LESS
+  simple_binary_operand[rhs_operand]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::BitShiftLeft,
           std::vector<Nonnull<Expression*>>({$[lhs_operand], $[rhs_operand]}));
     }
-| simple_binary_operand[lhs_operand] GREATER_GREATER simple_binary_operand[rhs_operand]
+| simple_binary_operand[lhs_operand] GREATER_GREATER
+  simple_binary_operand[rhs_operand]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::BitShiftRight,
@@ -707,7 +710,8 @@ comparison_operator:
 ;
 comparison_expression:
   value_expression
-| comparison_operand[lhs_operand] comparison_operator comparison_operand[rhs_operand]
+| comparison_operand[lhs_operand] comparison_operator
+  comparison_operand[rhs_operand]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), $[comparison_operator],
@@ -892,7 +896,8 @@ struct_type_literal:
 struct_type_literal_contents:
   designator COLON expression
     { $$ = {FieldInitializer($[designator], $[expression])}; }
-| struct_type_literal_contents[accumulated_list] COMMA designator COLON expression
+| struct_type_literal_contents[accumulated_list] COMMA designator COLON
+  expression
   {
     $$ = std::move($[accumulated_list]);
     $$.push_back(FieldInitializer($[designator], $[expression]));
