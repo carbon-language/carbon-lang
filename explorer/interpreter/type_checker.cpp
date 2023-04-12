@@ -6122,8 +6122,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> mixin,
           InterpExp(&mix_decl.mixin(), arena_, trace_stream_));
-      if (const auto* mixin_value = dyn_cast<MixinPseudoType>(mixin);
-          mixin_value) {
+      if (const auto* mixin_value = dyn_cast<MixinPseudoType>(mixin)) {
         mix_decl.set_mixin_value(mixin_value);
       } else {
         return ProgramError(mix_decl.source_loc())
