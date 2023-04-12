@@ -339,7 +339,7 @@ auto NameResolver::ResolveNames(Expression& expression,
         CARBON_RETURN_IF_ERROR(
             ResolveNames(init.expression(), enclosing_scope));
         if (!member_names.insert(init.name()).second) {
-          return ProgramError(init.source_loc())
+          return ProgramError(init.expression().source_loc())
                  << "Duplicate name `" << init.name()
                  << "` in struct type literal";
         }
