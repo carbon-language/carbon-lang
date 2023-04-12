@@ -80,7 +80,7 @@ around what we expect evaluations to be able to include:
 -   Evaluators can build some key benchmarks that include C++ interoperation in
     the critical path and get representative performance results.
     -   This can in turn be a still smaller subset of all aspects of C++
-        interoperability based around what impacts interest benchmarks.
+        interoperability based around what impacts interesting benchmarks.
 
 ### Language features
 
