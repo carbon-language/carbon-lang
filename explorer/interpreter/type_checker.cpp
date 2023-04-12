@@ -711,12 +711,9 @@ auto TypeChecker::BuildSubtypeConversion(Nonnull<Expression*> source,
                                          Nonnull<const PointerType*> src_ptr,
                                          Nonnull<const PointerType*> dest_ptr)
     -> ErrorOr<Nonnull<const Expression*>> {
-  const auto* src_class = dyn_cast<NominalClassType>(&src_ptr->pointee_type());
-  const auto* dest_class =
-      dyn_cast<NominalClassType>(&dest_ptr->pointee_type());
+  const auto* src_class = cast<NominalClassType>(&src_ptr->pointee_type());
+  const auto* dest_class = cast<NominalClassType>(&dest_ptr->pointee_type());
   const auto dest = dest_class->declaration().name();
-  CARBON_CHECK(src_class && dest_class)
-      << "Invalid source or destination pointee";
   Nonnull<Expression*> last_expr = source;
   const auto* cur_class = src_class;
   while (!TypeEqual(cur_class, dest_class, std::nullopt)) {
@@ -6033,9 +6030,7 @@ auto TypeChecker::TypeCheckDeclaration(
       if (var.has_initializer()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.initializer(), impl_scope));
       }
-      const auto* binding_type =
-          dyn_cast<ExpressionPattern>(&var.binding().type());
-      if (binding_type == nullptr) {
+      if (!isa<ExpressionPattern>(&var.binding().type())) {
         // TODO: consider adding support for `auto`
         return ProgramError(var.source_loc())
                << "Type of a top-level variable must be an expression.";
@@ -6141,7 +6136,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       auto& var = cast<VariableDeclaration>(*d);
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
-      if (!llvm::isa<ExpressionPattern>(var.binding().type())) {
+      if (!isa<ExpressionPattern>(var.binding().type())) {
         return ProgramError(var.binding().type().source_loc())
                << "Expected expression for variable type";
       }
@@ -6201,7 +6196,7 @@ auto TypeChecker::FindMixedMemberAndType(
     -> ErrorOr<std::optional<
         std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>> {
   for (Nonnull<const Declaration*> member : members) {
-    if (llvm::isa<MixDeclaration>(member)) {
+    if (isa<MixDeclaration>(member)) {
       const auto& mix_decl = cast<MixDeclaration>(*member);
       Nonnull<const MixinPseudoType*> mixin = &mix_decl.mixin_value();
       CARBON_ASSIGN_OR_RETURN(
