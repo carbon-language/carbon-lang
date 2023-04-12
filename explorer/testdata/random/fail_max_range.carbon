@@ -7,9 +7,7 @@
 // RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
-fn test(para: i32)->bool{
-  return true;
-}
+
 fn Main() -> i32 {
   // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/random/fail_max_range.carbon:[[@LINE+1]]: Invalid integer literal: 2147483648
   Rand(-2147483648, 2147483647);
