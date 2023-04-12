@@ -5038,20 +5038,20 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   }
 
   if (class_decl->extensibility() == ClassExtensibility::None) {
-    for (const auto& vt : class_vtable) {
-      const auto* const fun = vt.getValue().first;
-      if (!fun->is_method()) {
-        continue;
-      }
+    auto abstract_method_it = std::find_if(
+        class_vtable.begin(), class_vtable.end(), [](const auto& vt) {
+          const auto* const fun = vt.getValue().first;
+          return fun->is_method() &&
+                 fun->virt_override() == VirtualOverride::Abstract;
+        });
 
-      if (fun->virt_override() == VirtualOverride::Abstract) {
-        auto fun_name = GetName(*fun);
-        CARBON_CHECK(fun_name.has_value());
-        return ProgramError(class_decl->source_loc())
-               << "Error declaring `" << class_decl->name() << "`"
-               << ": final class should implement abstract method `"
-               << *fun_name << "`.";
-      }
+    if (abstract_method_it != class_vtable.end()) {
+      auto fun_name = GetName(*abstract_method_it->getValue().first);
+      CARBON_CHECK(fun_name.has_value());
+      return ProgramError(class_decl->source_loc())
+             << "Error declaring `" << class_decl->name() << "`"
+             << ": final class should implement abstract method `" << *fun_name
+             << "`.";
     }
   }
 

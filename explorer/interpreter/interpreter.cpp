@@ -1164,22 +1164,21 @@ auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
 
         if (class_type.declaration().extensibility() ==
             ClassExtensibility::Base) {
-          for (const auto& vt : class_type.vtable()) {
-            const auto* const fun = vt.getValue().first;
+          const auto& class_vtable = class_type.vtable();
+          auto abstract_method_it = std::find_if(
+              class_vtable.begin(), class_vtable.end(), [](const auto& vt) {
+                const auto* const fun = vt.getValue().first;
+                return fun->is_method() &&
+                       fun->virt_override() == VirtualOverride::Abstract;
+              });
 
-            if (!fun->is_method()) {
-              continue;
-            }
-
-            if (fun->virt_override() == VirtualOverride::Abstract) {
-              auto fun_name = GetName(*fun);
-              CARBON_CHECK(fun_name.has_value());
-              return ProgramError(source_loc)
-                     << "Cannot instantiate base class `"
-                     << class_type.declaration().name()
-                     << "`: abstract method `" << *fun_name
-                     << "` should be implemented.";
-            }
+          if (abstract_method_it != class_vtable.end()) {
+            auto fun_name = GetName(*abstract_method_it->getValue().first);
+            CARBON_CHECK(fun_name.has_value());
+            return ProgramError(source_loc)
+                   << "Cannot instantiate base class `"
+                   << class_type.declaration().name() << "`: abstract method `"
+                   << *fun_name << "` should be implemented.";
           }
         }
 
