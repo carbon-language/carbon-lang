@@ -1086,51 +1086,6 @@ auto Interpreter::CallFunction(const CallExpression& call,
   }
 }
 
-// Returns true if the format string is okay to pass to formatv. This only
-// supports `{{` and `{N}` as special syntax.
-static auto IsValidFormatString(const char* format_string, int num_args)
-    -> bool {
-  const char* cursor = format_string;
-  while (*cursor != '\0') {
-    if (*cursor == '{') {
-      ++cursor;
-      if (*cursor == '\0') {
-        // Early end.
-        return false;
-      } else if (*cursor == '{') {
-        // Escaped `{`.
-        ++cursor;
-        continue;
-      } else if (*cursor == '}') {
-        // Reject `{}`.
-        return false;
-      } else {
-        int index = 0;
-        while (*cursor != '}') {
-          if (*cursor < '0' || *cursor > '9') {
-            // Non-numeric text.
-            return false;
-          }
-          index = (10 * index) + (*cursor - '0');
-          ++cursor;
-          if (*cursor == '\0') {
-            // Early end.
-            return false;
-          }
-        }
-        ++cursor;
-        if (index >= num_args) {
-          // Out-of-bounds.
-          return false;
-        }
-      }
-    } else {
-      ++cursor;
-    }
-  }
-  return true;
-}
-
 auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
   const Action& act = todo_.CurrentAction();
   const Nonnull<const Value*> type = cast<TypeInstantiationAction>(act).type();
@@ -1559,22 +1514,16 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               Convert(args[0], arena_->New<StringType>(), exp.source_loc()));
           const char* format_string =
               cast<StringValue>(*format_string_value).value().c_str();
-          int num_format_args = args.size() - 1;
-          if (!IsValidFormatString(format_string, num_format_args)) {
-            return ProgramError(intrinsic.source_loc())
-                   << "Invalid format string for Print with " << num_format_args
-                   << " arg(s) : `" << format_string << "`";
-          }
-          switch (num_format_args) {
-            case 0:
+          switch (args.size()) {
+            case 1:
               llvm::outs() << llvm::formatv(format_string);
               break;
-            case 1:
+            case 2:
               llvm::outs() << llvm::formatv(format_string,
                                             cast<IntValue>(*args[1]).value());
               break;
             default:
-              CARBON_FATAL() << "Too many format args: " << num_format_args;
+              CARBON_FATAL() << "Unexpected arg count: " << args.size();
           }
           // Implicit newline; currently no way to disable it.
           llvm::outs() << "\n";
