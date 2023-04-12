@@ -979,7 +979,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
     }
     case Value::Kind::FunctionValue:
     case Value::Kind::BoundMethodValue: {
-      const auto* func_val = dyn_cast<FunctionOrMethodValue>(fun);
+      const auto* func_val = cast<FunctionOrMethodValue>(fun);
 
       const FunctionDeclaration& function = func_val->declaration();
       if (!function.body().has_value()) {
