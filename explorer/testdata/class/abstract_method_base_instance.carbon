@@ -3,21 +3,21 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-base class C {
+abstract class A {
+    abstract fn Foo[self: Self]();
 }
 
-class D {
-  extend base: C;
-  abstract fn Foo[self:Self]() -> i32 {
-    return 1;
-  // CHECK:STDERR: COMPILATION ERROR: fail_abstract_method_not_supported.carbon:[[@LINE+1]]: Error declaring `Foo`: `abstract` methods are not yet supported.
-  }
+base class B extends A {
+    impl fn Foo[self: Self]() {}
 }
 
 fn Main() -> i32 {
-  let d: D = {};
+  var b: B = { .base = {} };
   return 0;
 }
