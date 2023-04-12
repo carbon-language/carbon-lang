@@ -55,7 +55,8 @@ around what we expect evaluations to be able to include:
     evaluators without placeholders.
     -   The components and language features must include the foundational core
         of the language. These features must also be sufficient to translate
-        existing C++ code ([except coroutines](#why-coroutines-and-async-here))
+        existing C++ code
+        ([except coroutines](#why-are-coroutines-and-async-in-this-milestone))
         into obvious and unsurprising Carbon code.
     -   Also in-scope are additional features that impact API design or need
         early feedback, but only if they are low cost to both the design and
@@ -113,33 +114,103 @@ into Carbon.
 #### Type system
 
 -   User-defined types
+    -   C++ interop: importing C++ types into Carbon, exporting Carbon types
+        into C++
     -   Single inheritance
         -   Virtual dispatch
+        -   C++ interop:
+            -   Support bi-directional inheritance: C++ <-> Carbon
+            -   Support hierarchy roots in both C++ and Carbon
+            -   Mappings across inheritance features: abstract, final, virtual.
     -   Operator overloading
+        -   C++ interop:
+            -   Synthesize Carbon overloads for imported C++ types
+            -   Export Carbon overloads into C++
+    -   Sum types (discriminated unions)
+    -   Unions (un-discriminated)
+        -   C++ interop: mapping to and from C++ unions.
     -   **Uncertain:** Mixins (depending on how much need there is to evaluate
         C++'s multiple inheritance use cases)
+        -   C++ interop: model for C++ multiple inheritance maps cleanly into
+            Carbon.
 -   Generics
     -   Both generic functions and types
     -   Checked generics
         -   Definition-checked variadics
     -   Integrated templates
         -   "Template interfaces" and named predicates
--   Sum types
+    -   C++ interop:
+        -   Importing C++ templates, instantiating on Carbon types
+        -   Exporting Carbon templates, instantiating on C++ types
+        -   Exporting Carbon checked generics (as templates), instantiating on
+            C++ types.
+        -   Mapping C++20 concepts into named predicates, and named predicates
+            into C++20 concepts.
 
 #### Functions, statements, expressions, ...
 
 -   Functions
     -   Separate declaration and definition
     -   Function overloading
+    -   C++ interop:
+        -   Importing C++ functions and methods and calling them from Carbon
+        -   Exporting Carbon functions and methods and calling them from C++
+        -   Importing C++ overload sets into Carbon overload sets where the
+            model (closed overloading) fits
+        -   Importing C++ open-overload-sets-as-extension-points (`swap`, etc)
+            into synthetic Carbon interfaces for common cases (likely based on
+            heuristics)
 -   Control flow statements
     -   Conditions
     -   Loops
         -   Range-based loops
         -   Good equivalents for a range of existing C/C++ looping constructs
         -   (maybe? hard to justify) Labeled-break and complex loop support
-    -   Match (someth
--   Interoperation with C++ threading and atomic primitives
+    -   Matching
+        -   Good equivalents for C/C++ uses of `switch`
+        -   Working with sum-types, especially for C++ `std::variant` and
+            `std::optional` interop
+        -   Both positive (`if let` in Rust) and negative (`let else` in Rust)
+            combined match control flow and variable declaration
+-   C++ interop: support for C++'s threading and atomic primitives, memory
+    model, and synchronization tools
 -   Error handling
+    -   Any dedicated error handling control flow constructs
+    -   C++ interop:
+        -   Mechanisms to configure how exception handling should or shouldn't
+            be integrated into C++ interop sufficient to address both
+            `-fno-except` C++ dialects and standard C++ dialects
+        -   Calling C++ functions which throw exceptions from Carbon and
+            automatically using Carbon's error handling
+        -   Export Carbon error handling using some reasonably ergonomic mapping
+            into C++ -- `std::expected`, something roughly compatible with
+            `std::expected`, C++ exceptions, etc.
+
+#### Standard library components
+
+Note: we expect to _heavily_ leverage the C++ standard library via interop for
+the vast majority of what is needed in Carbon initially. As a consequence, this
+is a surprisingly more minimal area than the language features.
+
+-   Language and syntax support library components
+    -   Fundamental types (`bool`, `iN`, `fN`)
+    -   Any parts of tuple or array types needed in the library
+    -   Pointer types
+    -   Interfaces powering language syntax (operators, conversions, etc.)
+-   Types with important language support
+    -   String and related types used with string literals
+    -   Optional
+    -   Slices
+-   C++ interop:
+    -   Transparent mapping between Carbon fundamental types and C++ equivalents
+    -   Transparent mapping between Carbon and C++ _non-owning_ string-related
+        types
+    -   Transparent mapping between Carbon and C++ _non-owning_ contiguous
+        container types
+        -   Includes starting from an owning container and forming the
+            non-owning view and then transparently mapping that between
+            languages.
+    -   Transparent mapping between Carbon and C++ iteration abstractions
 
 ### Project features
 
@@ -191,7 +262,7 @@ being listed somewhere could cause confusion.
     language versions, build configurations, and other FFI or ABI boundaries.
 -   Necessary parts of the standard library
 
-#### Why coroutines and async here?
+#### Why are coroutines and async in this milestone?
 
 Specifically, why not address them earlier in 0.1? Or if they can be deferred
 why not defer them further?
