@@ -1155,6 +1155,34 @@ auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
         if (base.has_value()) {
           base = cast<NominalClassType>(act.results().back());
         }
+        if (class_type.declaration().extensibility() ==
+            ClassExtensibility::Abstract) {
+          return ProgramError(source_loc)
+                 << "Cannot instantiate abstract class "
+                 << class_type.declaration().name();
+        }
+
+        if (class_type.declaration().extensibility() ==
+            ClassExtensibility::Base) {
+          for (const auto& vt : class_type.vtable()) {
+            const auto* const fun = vt.getValue().first;
+
+            if (!fun->is_method()) {
+              continue;
+            }
+
+            if (fun->virt_override() == VirtualOverride::Abstract) {
+              auto fun_name = GetName(*fun);
+              CARBON_CHECK(fun_name.has_value());
+              return ProgramError(source_loc)
+                     << "Cannot instantiate base class `"
+                     << class_type.declaration().name()
+                     << "`: abstract method `" << *fun_name
+                     << "` should be implemented.";
+            }
+          }
+        }
+
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Bindings*> bindings,
             InstantiateBindings(&class_type.bindings(), source_loc));
