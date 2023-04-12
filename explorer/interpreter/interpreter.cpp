@@ -7,6 +7,7 @@
 #include <llvm/Support/raw_ostream.h>
 
 #include <iterator>
+#include <limits>
 #include <map>
 #include <memory>
 #include <optional>
@@ -39,8 +40,6 @@ using llvm::dyn_cast;
 using llvm::isa;
 
 namespace Carbon {
-
-static std::mt19937 generator(12);
 
 // Constructs an ActionStack suitable for the specified phase.
 static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
@@ -1644,12 +1643,24 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         }
         case IntrinsicExpression::Intrinsic::Rand: {
           CARBON_CHECK(args.size() == 2);
-          const auto& low = cast<IntValue>(*args[0]).value();
-          const auto& high = cast<IntValue>(*args[1]).value();
-          CARBON_CHECK(high > low);
+          const int64_t low = cast<IntValue>(*args[0]).value();
+          const int64_t high = cast<IntValue>(*args[1]).value();
+          if (low >= high) {
+            return ProgramError(exp.source_loc())
+                   << "Rand inputs must be ordered for a non-empty range: "
+                   << low << " must be less than " << high;
+          }
+          // Use 64-bit to handle large ranges where `high - low` might exceed
+          // int32_t maximums.
+          static std::mt19937_64 generator(12);
+          const int64_t range = high - low;
           // We avoid using std::uniform_int_distribution because it's not
           // reproducible across builds/platforms.
-          int r = (generator() % (high - low)) + low;
+          int64_t r = (generator() % range) + low;
+          CARBON_CHECK(r >= std::numeric_limits<int32_t>::min() &&
+                       r <= std::numeric_limits<int32_t>::max())
+              << "Non-int32 result: " << r;
+          CARBON_CHECK(r >= low && r <= high) << "Out-of-range result: " << r;
           return todo_.FinishAction(arena_->New<IntValue>(r));
         }
         case IntrinsicExpression::Intrinsic::ImplicitAs: {

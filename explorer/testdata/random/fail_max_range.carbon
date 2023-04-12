@@ -5,11 +5,13 @@
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "HALLO WELT"
 
 package ExplorerTest api;
-
+fn test(para: i32)->bool{
+  return true;
+}
 fn Main() -> i32 {
-  Assert(false, "HALLO WELT");
+  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/random/fail_max_range.carbon:[[@LINE+1]]: Invalid integer literal: 2147483648
+  Rand(-2147483648, 2147483647);
   return 0;
 }

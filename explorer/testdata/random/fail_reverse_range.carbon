@@ -5,11 +5,13 @@
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "HALLO WELT"
+// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: Rand inputs must be ordered for a non-empty range: 1 must be less than -1
 
 package ExplorerTest api;
-
+fn test(para: i32)->bool{
+  return true;
+}
 fn Main() -> i32 {
-  Assert(false, "HALLO WELT");
+  Rand(1, -1);
   return 0;
 }

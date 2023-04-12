@@ -5,11 +5,14 @@
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "HALLO WELT"
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  Assert(false, "HALLO WELT");
+  var x: i32;
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/pointer/fail_intrinsic_delete_type.carbon:[[@LINE+3]]: type error in *
+  // CHECK:STDERR: expected a pointer type
+  // CHECK:STDERR: actual: i32
+  __intrinsic_delete(x);
   return 0;
 }

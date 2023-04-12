@@ -5,11 +5,11 @@
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "HALLO WELT"
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  Assert(false, "HALLO WELT");
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/pointer/fail_intrinsic_delete_no_args.carbon:[[@LINE+1]]: __intrinsic_delete takes 1 argument
+  __intrinsic_delete();
   return 0;
 }
