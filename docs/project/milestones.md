@@ -17,10 +17,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Code organization and structuring](#code-organization-and-structuring)
         -   [Type system](#type-system)
         -   [Functions, statements, expressions, ...](#functions-statements-expressions-)
+        -   [Standard library components](#standard-library-components)
     -   [Project features](#project-features)
 -   [Milestone 0.2: feature complete product for evaluation](#milestone-02-feature-complete-product-for-evaluation)
     -   [Features explicitly deferred until at least 0.2](#features-explicitly-deferred-until-at-least-02)
-        -   [Why coroutines and async here?](#why-coroutines-and-async-here)
+        -   [Why are coroutines and async in this milestone?](#why-are-coroutines-and-async-in-this-milestone)
 -   [Milestone 1.0: no longer an experiment, usable in production](#milestone-10-no-longer-an-experiment-usable-in-production)
     -   [Features explicitly deferred beyond 0.2](#features-explicitly-deferred-beyond-02)
 
@@ -188,9 +189,9 @@ into Carbon.
 
 #### Standard library components
 
-Note: we expect to _heavily_ leverage the C++ standard library via interop for
-the vast majority of what is needed in Carbon initially. As a consequence, this
-is a surprisingly more minimal area than the language features.
+Note: we expect to _heavily_ leverage the C++ standard library by way of interop
+for the vast majority of what is needed in Carbon initially. As a consequence,
+this is a surprisingly more minimal area than the language features.
 
 -   Language and syntax support library components
     -   Fundamental types (`bool`, `iN`, `fN`)
