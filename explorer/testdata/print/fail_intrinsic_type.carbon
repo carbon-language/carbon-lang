@@ -6,10 +6,12 @@
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
 
-package ExplorerTest impl;
+package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/print/fail_index_text.carbon:[[@LINE+1]]: Invalid format string for Print with 0 arg(s) : `Print: {1a}`
-  Print("Print: {1a}");
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/print/fail_intrinsic_type.carbon:[[@LINE+3]]: type error in Print argument 1
+  // CHECK:STDERR: expected: i32
+  // CHECK:STDERR: actual: {.x: i32}
+  __intrinsic_print("{0}", {.x = 1});
   return 0;
 }

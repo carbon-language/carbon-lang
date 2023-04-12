@@ -6,7 +6,7 @@
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
 
-package EmptyIdentifier impl;
+package ExplorerTest impl;
 
 fn Main() -> i32 {
   // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/print/fail_index_bounds0.carbon:[[@LINE+1]]: Invalid format string for Print with 0 arg(s) : `Print: {0}`

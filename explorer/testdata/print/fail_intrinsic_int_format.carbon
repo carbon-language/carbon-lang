@@ -9,7 +9,8 @@
 package ExplorerTest impl;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/print/fail_index_text.carbon:[[@LINE+1]]: Invalid format string for Print with 0 arg(s) : `Print: {1a}`
-  Print("Print: {1a}");
-  return 0;
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/print/fail_intrinsic_int_format.carbon:[[@LINE+3]]: type error in Print argument 0
+  // CHECK:STDERR: expected: String
+  // CHECK:STDERR: actual: i32
+  __intrinsic_print(0);
 }
