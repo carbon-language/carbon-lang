@@ -47,12 +47,14 @@ evaluation.
 From the perspective of outcomes, our goals for the 0.1 language are centered
 around what we expect evaluations to be able to include:
 
+-   Evaluators have a clear idea of the long-term evolution strategy of Carbon
+    and how it addresses different use cases and requirements.
 -   Language design components are documented, cohesive, and understandable by
     evaluators without placeholders.
     -   The components and language features must include the foundational core
         of the language. These features must also be sufficient to translate
-        existing C++ code (not using coroutines) into obvious and unsurprising
-        Carbon code.
+        existing C++ code ([except coroutines](#why-coroutines-and-async-here))
+        into obvious and unsurprising Carbon code.
     -   Also in-scope are additional features that impact API design or need
         early feedback, but only if they are low cost to both the design and
         implementation.
@@ -78,7 +80,7 @@ around what we expect evaluations to be able to include:
     -   This can in turn be a still smaller subset of all aspects of C++
         interoperability based around what impacts interest benchmarks.
 
-### Features
+### Language features
 
 These are focused on the core _necessary_ features for us to reach a successful
 0.1 language that can address our goals. Some of these features are required
@@ -137,6 +139,24 @@ into Carbon.
 -   Interoperation with C++ threading and atomic primitives
 -   Error handling
 
+### Project features
+
+There are a few important components of the overarching Carbon project that need
+to be completed as part of 0.1 beyond _language_ features:
+
+-   A functioning Carbon toolchain:
+    -   Supports drop-in usage as a Clang C++ toolchain with the most common
+        Make and CMake derived build systems.
+    -   Implements most of the [features](#language-features) above, including
+        C++ interop, and any remaining gaps don't undermine the ability to
+        evaluate the remaining features or the confidence in the overall
+        evaluation.
+    -   Supports building working programs on Windows, macOS, and Linux.
+-   Build system integration for CMake, and documentation for integrating with
+    Make or similar build systems.
+-   An installation system or packages for Windows, macOS, and Linux.
+-   Basic documentation for evaluators from getting started to FAQs.
+
 ## Milestone 0.2: feature complete product for evaluation
 
 The second milestone already concretely in mind is reaching a level of
@@ -169,6 +189,25 @@ being listed somewhere could cause confusion.
     language versions, build configurations, and other FFI or ABI boundaries.
 -   Necessary parts of the standard library
 
+#### Why coroutines and async here?
+
+Specifically, why not address them earlier in 0.1? Or if they can be deferred
+why not defer them further?
+
+Coroutines and async programming are large and complex topics to introduce into
+the language. From watching C++, Rust, Swift, Kotlin, and many other languages
+working in this space, we have a strong belief that trying to add these to the
+0.1 language would _significantly_ increase the amount of work and likely delay
+when we reach that milestone. Also, given the recency of coroutines being added
+to C++, we expect evaluators to be able to reason about their absence and still
+accomplish most of the evaluation of Carbon without issue.
+
+However, we also expect that as coroutines start to be widely adopted in C++,
+they will become an essential feature of the language that would be extremely
+difficult to give up when moving to Carbon. So we expect coroutines to be a
+necessary feature for us to effectively decide that the Carbon experiment is a
+success and begin planning large-scale adoption and migration.
+
 ## Milestone 1.0: no longer an experiment, usable in production
 
 Even less concrete is the milestone that marks Carbon no longer being an
@@ -179,8 +218,14 @@ defer and not cause confusion by omission above.
 
 ### Features explicitly deferred beyond 0.2
 
--   Complete language evolution story
--   Package management story
+-   Robust language evolution strategy and plan, specifically addressing:
+    -   The need to make on-going changes to the language to address feedback
+        and a changing landscape.
+    -   The cost on users of churn and change over time and how to manage that
+        cost.
+    -   A mechanism to address users who need true, durable stability over long
+        time horizons.
+-   Package management strategy and plan, and any early groundwork needed.
 -   High quality developer experience, ranging from compiler error messages to
     development tooling
 -   Everything we've learned we need as part of the evaluation of 0.1 and 0.2
