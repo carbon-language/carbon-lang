@@ -320,19 +320,32 @@ auto NameResolver::ResolveNames(Expression& expression,
         CARBON_RETURN_IF_ERROR(ResolveNames(*field, enclosing_scope));
       }
       break;
-    case ExpressionKind::StructLiteral:
+    case ExpressionKind::StructLiteral: {
+      std::set<std::string_view> member_names;
       for (FieldInitializer& init : cast<StructLiteral>(expression).fields()) {
         CARBON_RETURN_IF_ERROR(
             ResolveNames(init.expression(), enclosing_scope));
+        if (!member_names.insert(init.name()).second) {
+          return ProgramError(init.expression().source_loc())
+                 << "Duplicate name `" << init.name() << "` in struct literal";
+        }
       }
       break;
-    case ExpressionKind::StructTypeLiteral:
+    }
+    case ExpressionKind::StructTypeLiteral: {
+      std::set<std::string_view> member_names;
       for (FieldInitializer& init :
            cast<StructTypeLiteral>(expression).fields()) {
         CARBON_RETURN_IF_ERROR(
             ResolveNames(init.expression(), enclosing_scope));
+        if (!member_names.insert(init.name()).second) {
+          return ProgramError(init.source_loc())
+                 << "Duplicate name `" << init.name()
+                 << "` in struct type literal";
+        }
       }
       break;
+    }
     case ExpressionKind::IdentifierExpression: {
       auto& identifier = cast<IdentifierExpression>(expression);
       CARBON_ASSIGN_OR_RETURN(
