@@ -16,9 +16,9 @@ class ConvertTo(T:! type) {
 }
 
 fn Main() -> i32 {
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assert/fail_intrinsic_str_type.carbon:[[@LINE+3]]: type error in __intrinsic_assert argument 1
-// CHECK:STDERR: expected: String
-// CHECK:STDERR: actual: i32
--  __intrinsic_assert(true, 1);
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assert/fail_intrinsic_str_type.carbon:[[@LINE+3]]: type error in __intrinsic_assert argument 1
+  // CHECK:STDERR: expected: String
+  // CHECK:STDERR: actual: i32
+  __intrinsic_assert(true, 1);
   return 0;
 }
