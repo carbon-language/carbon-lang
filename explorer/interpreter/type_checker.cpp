@@ -6129,7 +6129,12 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> mixin,
           InterpExp(&mix_decl.mixin(), arena_, trace_stream_));
-      mix_decl.set_mixin_value(cast<MixinPseudoType>(mixin));
+      if (const auto* mixin_value = dyn_cast<MixinPseudoType>(mixin)) {
+        mix_decl.set_mixin_value(mixin_value);
+      } else {
+        return ProgramError(mix_decl.source_loc())
+               << "Not a valid mixin: `" << mix_decl.mixin() << "`";
+      }
       const auto& mixin_decl = mix_decl.mixin_value().declaration();
       if (!mixin_decl.is_declared()) {
         return ProgramError(mix_decl.source_loc())
