@@ -350,9 +350,9 @@ import_directive:
 import_directives:
   // Empty
     { $$ = std::vector<LibraryName>(); }
-| import_directives[accumulated_list] import_directive
+| import_directives[accumulated_import_directives] import_directive
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_import_directives]);
       $$.push_back($[import_directive]);
     }
 ;
@@ -782,9 +782,9 @@ where_clause:
 where_clause_list:
   where_clause
     { $$ = {$[where_clause]}; }
-| where_clause_list[accumulated_list] AND where_clause
+| where_clause_list[accumulated_where_clause_list] AND where_clause
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_where_clause_list]);
       $$.push_back($[where_clause]);
     }
 ;
@@ -850,9 +850,10 @@ paren_expression_base:
 paren_expression_contents:
   expression
     { $$ = {.elements = {$[expression]}, .has_trailing_comma = false}; }
-| paren_expression_contents[accumulated_list] COMMA expression
+| paren_expression_contents[accumulated_paren_expression_contents] COMMA
+  expression
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_paren_expression_contents]);
       $$.elements.push_back($[expression]);
     }
 ;
@@ -874,9 +875,10 @@ struct_literal:
 struct_literal_contents:
   designator EQUAL expression
     { $$ = {FieldInitializer($[designator], $[expression])}; }
-| struct_literal_contents[accumulated_list] COMMA designator EQUAL expression
+| struct_literal_contents[accumulated_struct_literal_contents] COMMA designator
+  EQUAL expression
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_struct_literal_contents]);
       $$.push_back(FieldInitializer($[designator], $[expression]));
     }
 ;
@@ -896,10 +898,10 @@ struct_type_literal:
 struct_type_literal_contents:
   designator COLON expression
     { $$ = {FieldInitializer($[designator], $[expression])}; }
-| struct_type_literal_contents[accumulated_list] COMMA designator COLON
-  expression
+| struct_type_literal_contents[accumulated_struct_type_literal_contents] COMMA
+  designator COLON expression
   {
-    $$ = std::move($[accumulated_list]);
+    $$ = std::move($[accumulated_struct_type_literal_contents]);
     $$.push_back(FieldInitializer($[designator], $[expression]));
   }
 ;
@@ -983,19 +985,22 @@ paren_pattern_contents:
       $$ = {.elements = {$[non_expression_pattern]},
             .has_trailing_comma = false};
     }
-| paren_expression_contents[accumulated_list] COMMA non_expression_pattern
+| paren_expression_contents[accumulated_paren_pattern_contents] COMMA
+  non_expression_pattern
     {
-      $$ = ParenExpressionToParenPattern(arena, $[accumulated_list]);
+      $$ = ParenExpressionToParenPattern(arena,
+                                         $[accumulated_paren_pattern_contents]);
       $$.elements.push_back($[non_expression_pattern]);
     }
-| paren_pattern_contents[accumulated_list] COMMA expression
+| paren_pattern_contents[accumulated_paren_pattern_contents] COMMA expression
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_paren_pattern_contents]);
       $$.elements.push_back(arena->New<ExpressionPattern>($[expression]));
     }
-| paren_pattern_contents[accumulated_list] COMMA non_expression_pattern
+| paren_pattern_contents[accumulated_paren_pattern_contents] COMMA
+  non_expression_pattern
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_paren_pattern_contents]);
       $$.elements.push_back($[non_expression_pattern]);
     }
 ;
@@ -1033,9 +1038,9 @@ clause:
 clause_list:
   // Empty
     { $$ = {}; }
-| clause_list[accumulated_list] clause
+| clause_list[accumulated_clause_list] clause
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_clause_list]);
       $$.push_back($[clause]);
     }
 ;
@@ -1187,9 +1192,9 @@ return_expression:
 statement_list:
   // Empty
     { $$ = {}; }
-| statement_list[accumulated_list] statement
+| statement_list[accumulated_statement_list] statement
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_statement_list]);
       $$.push_back($[statement]);
     }
 ;
@@ -1238,9 +1243,9 @@ deduced_param_list:
     { $$ = {}; }
 | deduced_param
     { $$ = {$[deduced_param]}; }
-| deduced_param_list[accumulated_list] COMMA deduced_param
+| deduced_param_list[accumulated_deduced_param_list] COMMA deduced_param
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_deduced_param_list]);
       $$.push_back($[deduced_param]);
     }
 ;
@@ -1340,15 +1345,16 @@ alternative:
 alternative_list:
   // Empty
     { $$ = {}; }
-| alternative_list_contents[accumulated_list]
-| alternative_list_contents[accumulated_list] COMMA
+| alternative_list_contents[accumulated_alternative_list_contents]
+| alternative_list_contents[accumulated_alternative_list_contents] COMMA
 ;
 alternative_list_contents:
   alternative
     { $$ = {std::move($[alternative])}; }
-| alternative_list_contents[accumulated_list] COMMA alternative
+| alternative_list_contents[accumulated_alternative_list_contents] COMMA
+  alternative
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_alternative_list_contents]);
       $$.push_back(std::move($[alternative]));
     }
 ;
@@ -1493,9 +1499,10 @@ match_first_declaration:
 match_first_declaration_list:
   // Empty
     { $$ = {}; }
-| match_first_declaration_list[accumulated_list] impl_declaration
+| match_first_declaration_list[accumulated_match_first_declaration_list]
+  impl_declaration
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_match_first_declaration_list]);
       $$.push_back($[impl_declaration]);
     }
 destructor_virtual_override_intro:
@@ -1527,23 +1534,23 @@ destructor_declaration:
 declaration_list:
   // Empty
     { $$ = {}; }
-| declaration_list[accumulated_list] declaration
+| declaration_list[accumulated_declaration_list] declaration
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_declaration_list]);
       $$.push_back(Nonnull<Declaration*>($[declaration]));
     }
 ;
 class_body:
   // Empty
     { $$ = {}; }
-| class_body[accumulated_list] declaration
+| class_body[accumulated_class_body] declaration
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_class_body]);
       $$.push_back(Nonnull<Declaration*>($[declaration]));
     }
-| class_body[accumulated_list] mix_declaration
+| class_body[accumulated_class_body] mix_declaration
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_class_body]);
       $$.push_back(Nonnull<Declaration*>($[mix_declaration]));
     }
 ;
@@ -1551,41 +1558,41 @@ class_body:
 mixin_body:
   // Empty
     { $$ = {}; }
-| mixin_body[accumulated_list] function_declaration
+| mixin_body[accumulated_mixin_body] function_declaration
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_mixin_body]);
       $$.push_back(Nonnull<Declaration*>($[function_declaration]));
     }
-| mixin_body[accumulated_list] mix_declaration
+| mixin_body[accumulated_mixin_body] mix_declaration
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_mixin_body]);
       $$.push_back(Nonnull<Declaration*>($[mix_declaration]));
     }
 ;
 interface_body:
   // Empty
     { $$ = {}; }
-| interface_body[accumulated_list] function_declaration
+| interface_body[accumulated_interface_body] function_declaration
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_interface_body]);
       $$.push_back($[function_declaration]);
     }
-| interface_body[accumulated_list] LET generic_binding SEMICOLON
+| interface_body[accumulated_interface_body] LET generic_binding SEMICOLON
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_interface_body]);
       $$.push_back(arena->New<AssociatedConstantDeclaration>(
           context.source_loc(), $[generic_binding]));
     }
-| interface_body[accumulated_list] EXTENDS expression SEMICOLON
+| interface_body[accumulated_interface_body] EXTENDS expression SEMICOLON
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_interface_body]);
       $$.push_back(arena->New<InterfaceExtendsDeclaration>(context.source_loc(),
                                                            $[expression]));
     }
-| interface_body[accumulated_list] IMPL impl_type AS type_or_where_expression
-  SEMICOLON
+| interface_body[accumulated_interface_body] IMPL impl_type AS
+  type_or_where_expression SEMICOLON
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_interface_body]);
       $$.push_back(arena->New<InterfaceImplDeclaration>(
           context.source_loc(), $[impl_type], $[type_or_where_expression]));
     }
@@ -1593,14 +1600,14 @@ interface_body:
 impl_body:
   // Empty
     { $$ = {}; }
-| impl_body[accumulated_list] function_declaration
+| impl_body[accumulated_impl_body] function_declaration
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_impl_body]);
       $$.push_back($[function_declaration]);
     }
-| impl_body[accumulated_list] alias_declaration
+| impl_body[accumulated_impl_body] alias_declaration
     {
-      $$ = std::move($[accumulated_list]);
+      $$ = std::move($[accumulated_impl_body]);
       $$.push_back($[alias_declaration]);
     }
 ;
