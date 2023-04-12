@@ -1087,7 +1087,8 @@ auto Interpreter::CallFunction(const CallExpression& call,
   }
 }
 
-// Returns true if the format string is okay to pass to formatv.
+// Returns true if the format string is okay to pass to formatv. This only
+// supports `{{` and `{N}` as special syntax.
 static auto IsValidFormatString(const char* format_string, int num_args)
     -> bool {
   const char* cursor = format_string;
