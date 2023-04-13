@@ -5,11 +5,18 @@
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "HALLO WELT"
 
 package ExplorerTest api;
 
+class ConvertTo(T:! type) {
+  var v: T;
+  impl as ImplicitAs(T) {
+    fn Convert[self: Self]() -> T { return self.v; }
+  }
+}
+
 fn Main() -> i32 {
-  Assert(false, "HALLO WELT");
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assert/fail_intrinsic_no_args.carbon:[[@LINE+1]]: __intrinsic_assert takes 2 arguments
+  __intrinsic_assert();
   return 0;
 }

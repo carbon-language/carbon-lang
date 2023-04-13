@@ -5,7 +5,6 @@
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "Fail"
 
 package ExplorerTest api;
 
@@ -17,6 +16,9 @@ class ConvertTo(T:! type) {
 }
 
 fn Main() -> i32 {
-  Assert({.v = false} as ConvertTo(bool), {.v = "Fail"} as ConvertTo(String));
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assert/fail_intrinsic_str_type.carbon:[[@LINE+3]]: type error in __intrinsic_assert argument 1
+  // CHECK:STDERR: expected: String
+  // CHECK:STDERR: actual: i32
+  __intrinsic_assert(true, 1);
   return 0;
 }

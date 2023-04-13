@@ -5,11 +5,12 @@
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "HALLO WELT"
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  Assert(false, "HALLO WELT");
+  var p: i32*;
+  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/pointer/fail_delete_uninit.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<p>>
+  heap.Delete(p);
   return 0;
 }

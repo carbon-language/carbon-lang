@@ -3666,7 +3666,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case IntrinsicExpression::Intrinsic::Dealloc: {
           if (args.size() != 1) {
             return ProgramError(e->source_loc())
-                   << "__intrinsic_new takes 1 argument";
+                   << "__intrinsic_delete takes 1 argument";
           }
           const auto* arg_type = &args[0]->static_type();
           CARBON_RETURN_IF_ERROR(
