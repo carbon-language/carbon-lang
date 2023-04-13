@@ -1092,44 +1092,49 @@ auto Interpreter::CallFunction(const CallExpression& call,
 static auto IsValidFormatString(const char* format_string, int num_args)
     -> bool {
   const char* cursor = format_string;
-  while (*cursor != '\0') {
-    if (*cursor == '{') {
-      ++cursor;
-      if (*cursor == '\0') {
-        // Early end.
-        return false;
-      } else if (*cursor == '{') {
-        // Escaped `{`.
+  while (true) {
+    switch (*cursor) {
+      case '\0':
+        // End of string.
+        return true;
+      case '{':
+        // `{` is a special character.
         ++cursor;
-        continue;
-      } else if (*cursor == '}') {
-        // Reject `{}`.
-        return false;
-      } else {
-        int index = 0;
-        while (*cursor != '}') {
-          if (*cursor < '0' || *cursor > '9') {
-            // Non-numeric text.
-            return false;
-          }
-          index = (10 * index) + (*cursor - '0');
-          ++cursor;
-          if (*cursor == '\0') {
+        switch (*cursor) {
+          case '\0':
             // Early end.
             return false;
-          }
+          case '{':
+            // Escaped `{`.
+            ++cursor;
+            break;
+          case '}':
+            // Reject `{}`.
+            return false;
+          default:
+            int index = 0;
+            while (*cursor != '}') {
+              if (*cursor < '0' || *cursor > '9') {
+                // Non-numeric text, including `\0`.
+                return false;
+              }
+              index = (10 * index) + (*cursor - '0');
+              ++cursor;
+            }
+            if (index >= num_args) {
+              // Out-of-bounds.
+              return false;
+            }
+            // Move past the `}`.
+            ++cursor;
         }
+        break;
+      default:
+        // Arbitrary text.
         ++cursor;
-        if (index >= num_args) {
-          // Out-of-bounds.
-          return false;
-        }
-      }
-    } else {
-      ++cursor;
     }
   }
-  return true;
+  llvm_unreachable("Loop returns directly");
 }
 
 auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
