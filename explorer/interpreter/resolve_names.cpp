@@ -282,19 +282,20 @@ auto NameResolver::ResolveNames(Expression& expression,
         break;
       }
 
-      std::optional<Nonnull<const NamespaceDeclaration*>> namespace_decl;
-      if (isa<AliasDeclaration>(scope->base())) {
-        const AliasDeclaration& alias = cast<AliasDeclaration>(scope->base());
-        auto resolved_decl = alias.resolved_declaration();
-        if (resolved_decl && isa<NamespaceDeclaration>(resolved_decl.value())) {
-          namespace_decl = cast<NamespaceDeclaration>(resolved_decl.value());
+      Nonnull<const AstNode*> base = &scope->base();
+      auto namespace_alias =
+          [](const AstNode& base) -> std::optional<Nonnull<const AstNode*>> {
+        if (const auto* alias = dyn_cast<AliasDeclaration>(&base)) {
+          return alias->resolved_declaration();
         }
-      } else if (isa<NamespaceDeclaration>(scope->base())) {
-        namespace_decl = &cast<NamespaceDeclaration>(scope->base());
+        return std::nullopt;
+      };
+      while (auto new_base = namespace_alias(*base)) {
+        base = *new_base;
       }
 
-      if (namespace_decl) {
-        auto ns_it = namespace_scopes_.find(namespace_decl.value());
+      if (const auto* namespace_decl = dyn_cast<NamespaceDeclaration>(base)) {
+        auto ns_it = namespace_scopes_.find(namespace_decl);
         CARBON_CHECK(ns_it != namespace_scopes_.end())
             << "name resolved to undeclared namespace";
         CARBON_ASSIGN_OR_RETURN(
