@@ -430,82 +430,82 @@ primary_expression:
 ;
 postfix_expression:
   primary_expression
-| postfix_expression[lhs_expression] designator
+| postfix_expression[child_postfix_expression] designator
     {
       $$ = arena->New<SimpleMemberAccessExpression>(
-          context.source_loc(), $[lhs_expression], $[designator]);
+          context.source_loc(), $[child_postfix_expression], $[designator]);
     }
-| postfix_expression[child_postfix] ARROW identifier
+| postfix_expression[child_postfix_expression] ARROW identifier
     {
       auto deref = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Deref,
-          std::vector<Nonnull<Expression*>>({$[child_postfix]}));
+          std::vector<Nonnull<Expression*>>({$[child_postfix_expression]}));
       $$ = arena->New<SimpleMemberAccessExpression>(context.source_loc(), deref,
                                                     $[identifier]);
     }
-| postfix_expression[child_postfix] PERIOD LEFT_PARENTHESIS expression
-  RIGHT_PARENTHESIS
+| postfix_expression[child_postfix_expression] PERIOD LEFT_PARENTHESIS
+  expression RIGHT_PARENTHESIS
     {
       $$ = arena->New<CompoundMemberAccessExpression>(
-          context.source_loc(), $[child_postfix], $[expression]);
+          context.source_loc(), $[child_postfix_expression], $[expression]);
     }
-| postfix_expression[child_postfix] ARROW LEFT_PARENTHESIS expression
+| postfix_expression[child_postfix_expression] ARROW LEFT_PARENTHESIS expression
   RIGHT_PARENTHESIS
     {
       auto deref = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Deref,
-          std::vector<Nonnull<Expression*>>({$[child_postfix]}));
+          std::vector<Nonnull<Expression*>>({$[child_postfix_expression]}));
       $$ = arena->New<CompoundMemberAccessExpression>(context.source_loc(),
                                                       deref, $[expression]);
     }
-| postfix_expression[child_postfix] LEFT_SQUARE_BRACKET expression
+| postfix_expression[child_postfix_expression] LEFT_SQUARE_BRACKET expression
   RIGHT_SQUARE_BRACKET
     {
-      $$ = arena->New<IndexExpression>(context.source_loc(), $[child_postfix],
-                                       $[expression]);
+      $$ = arena->New<IndexExpression>(
+          context.source_loc(), $[child_postfix_expression], $[expression]);
     }
 | intrinsic_identifier tuple
     {
       $$ = arena->New<IntrinsicExpression>($[intrinsic_identifier], $[tuple],
                                            context.source_loc());
     }
-| postfix_expression[child_postfix] tuple
+| postfix_expression[child_postfix_expression] tuple
     {
-      $$ = arena->New<CallExpression>(context.source_loc(), $[child_postfix],
-                                      $[tuple]);
+      $$ = arena->New<CallExpression>(context.source_loc(),
+                                      $[child_postfix_expression], $[tuple]);
     }
-| postfix_expression[child_postfix] POSTFIX_STAR
+| postfix_expression[child_postfix_expression] POSTFIX_STAR
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Ptr,
-          std::vector<Nonnull<Expression*>>({$[child_postfix]}));
+          std::vector<Nonnull<Expression*>>({$[child_postfix_expression]}));
     }
-| postfix_expression[child_postfix] UNARY_STAR
+| postfix_expression[child_postfix_expression] UNARY_STAR
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Ptr,
-          std::vector<Nonnull<Expression*>>({$[child_postfix]}));
+          std::vector<Nonnull<Expression*>>({$[child_postfix_expression]}));
     }
 ;
 ref_deref_expression:
   postfix_expression
-| PREFIX_STAR ref_deref_expression[expression]
+| PREFIX_STAR ref_deref_expression[child_ref_deref_expression]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Deref,
-          std::vector<Nonnull<Expression*>>({$[expression]}));
+          std::vector<Nonnull<Expression*>>({$[child_ref_deref_expression]}));
     }
-| UNARY_STAR ref_deref_expression[expression]
+| UNARY_STAR ref_deref_expression[child_ref_deref_expression]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Deref,
-          std::vector<Nonnull<Expression*>>({$[expression]}));
+          std::vector<Nonnull<Expression*>>({$[child_ref_deref_expression]}));
     }
-| AMPERSAND ref_deref_expression[expression]
+| AMPERSAND ref_deref_expression[child_ref_deref_expression]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::AddressOf,
-          std::vector<Nonnull<Expression*>>({$[expression]}));
+          std::vector<Nonnull<Expression*>>({$[child_ref_deref_expression]}));
     }
 ;
 fn_type_expression:
@@ -595,11 +595,13 @@ additive_expression:
     }
 ;
 modulo_expression:
-  simple_binary_operand[lhs_operand] PERCENT simple_binary_operand[rhs_operand]
+  simple_binary_operand[lhs_simple_binary_operand] PERCENT
+  simple_binary_operand[rhs_simple_binary_operand]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::Mod,
-          std::vector<Nonnull<Expression*>>({$[lhs_operand], $[rhs_operand]}));
+          std::vector<Nonnull<Expression*>>(
+              {$[lhs_simple_binary_operand], $[rhs_simple_binary_operand]}));
     }
 ;
 bitwise_and_lhs:
@@ -647,36 +649,41 @@ bitwise_expression:
 | bitwise_xor_expression
 ;
 bit_shift_expression:
-  simple_binary_operand[lhs_operand] LESS_LESS
-  simple_binary_operand[rhs_operand]
+  simple_binary_operand[lhs_simple_binary_operand] LESS_LESS
+  simple_binary_operand[rhs_simple_binary_operand]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::BitShiftLeft,
-          std::vector<Nonnull<Expression*>>({$[lhs_operand], $[rhs_operand]}));
+          std::vector<Nonnull<Expression*>>(
+              {$[lhs_simple_binary_operand], $[rhs_simple_binary_operand]}));
     }
-| simple_binary_operand[lhs_operand] GREATER_GREATER
-  simple_binary_operand[rhs_operand]
+| simple_binary_operand[lhs_simple_binary_operand] GREATER_GREATER
+  simple_binary_operand[rhs_simple_binary_operand]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::BitShiftRight,
-          std::vector<Nonnull<Expression*>>({$[lhs_operand], $[rhs_operand]}));
+          std::vector<Nonnull<Expression*>>(
+              {$[lhs_simple_binary_operand], $[rhs_simple_binary_operand]}));
     }
 ;
 as_expression:
-  simple_binary_operand[lhs_operand] AS simple_binary_operand[rhs_operand]
+  simple_binary_operand[lhs_simple_binary_operand] AS
+  simple_binary_operand[rhs_simple_binary_operand]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), Operator::As,
-          std::vector<Nonnull<Expression*>>{$[lhs_operand], $[rhs_operand]});
+          std::vector<Nonnull<Expression*>>{$[lhs_simple_binary_operand],
+                                            $[rhs_simple_binary_operand]});
     }
 ;
 unimpl_expression:
   // ref_deref_expression excluded due to precedence diamond.
-  ref_deref_expression[lhs_expression] UNIMPL_EXAMPLE ref_deref_expression[rhs_expression]
+  ref_deref_expression[lhs_ref_deref_expression] UNIMPL_EXAMPLE
+  ref_deref_expression[rhs_ref_deref_expression]
     {
       $$ = arena->New<UnimplementedExpression>(
-          context.source_loc(), "ExampleInfix", $[lhs_expression],
-          $[rhs_expression]);
+          context.source_loc(), "ExampleInfix", $[lhs_ref_deref_expression],
+          $[rhs_ref_deref_expression]);
     }
 ;
 value_expression:
@@ -710,12 +717,13 @@ comparison_operator:
 ;
 comparison_expression:
   value_expression
-| comparison_operand[lhs_operand] comparison_operator
-  comparison_operand[rhs_operand]
+| comparison_operand[lhs_simple_binary_operand] comparison_operator
+  comparison_operand[rhs_simple_binary_operand]
     {
       $$ = arena->New<OperatorExpression>(
           context.source_loc(), $[comparison_operator],
-          std::vector<Nonnull<Expression*>>({$[lhs_operand], $[rhs_operand]}));
+          std::vector<Nonnull<Expression*>>(
+              {$[lhs_simple_binary_operand], $[rhs_simple_binary_operand]}));
     }
 ;
 not_expression:
@@ -762,15 +770,19 @@ or_expression:
     }
 ;
 where_clause:
-  comparison_operand[lhs_operand] IMPLS comparison_operand[rhs_operand]
+  comparison_operand[lhs_simple_binary_operand] IMPLS
+  comparison_operand[rhs_simple_binary_operand]
     {
-      $$ = arena->New<ImplsWhereClause>(context.source_loc(), $[lhs_operand],
-                                        $[rhs_operand]);
+      $$ = arena->New<ImplsWhereClause>(context.source_loc(),
+                                        $[lhs_simple_binary_operand],
+                                        $[rhs_simple_binary_operand]);
     }
-| comparison_operand[lhs_operand] EQUAL_EQUAL comparison_operand[rhs_operand]
+| comparison_operand[lhs_simple_binary_operand] EQUAL_EQUAL
+  comparison_operand[rhs_simple_binary_operand]
     {
-      $$ = arena->New<EqualsWhereClause>(context.source_loc(), $[lhs_operand],
-                                         $[rhs_operand]);
+      $$ = arena->New<EqualsWhereClause>(context.source_loc(),
+                                         $[lhs_simple_binary_operand],
+                                         $[rhs_simple_binary_operand]);
     }
 // TODO: .(expression) = expression
 | designator EQUAL comparison_operand
@@ -811,10 +823,12 @@ statement_expression:
 ;
 if_expression:
   statement_expression
-| IF expression THEN if_expression[then_expr] ELSE if_expression[else_expr]
+| IF expression THEN if_expression[then_if_expression] ELSE
+  if_expression[else_if_expression]
     {
       $$ = arena->New<IfExpression>(context.source_loc(), $[expression],
-                                    $[then_expr], $[else_expr]);
+                                    $[then_if_expression],
+                                    $[else_if_expression]);
     }
 ;
 expression:
@@ -952,8 +966,11 @@ non_expression_pattern:
         YYERROR;
       }
     }
-| VAR non_expression_pattern[pattern]
-    { $$ = arena->New<VarPattern>(context.source_loc(), $[pattern]); }
+| VAR non_expression_pattern[child_non_expression_pattern]
+    {
+      $$ = arena->New<VarPattern>(context.source_loc(),
+                                  $[child_non_expression_pattern]);
+    }
 ;
 binding_lhs:
   identifier { $$ = $[identifier]; }
@@ -1264,13 +1281,13 @@ impl_deduced_params:
 declared_name:
   identifier
     { $$ = DeclaredName(context.source_loc(), $[identifier]); }
-| declared_name[name] PERIOD identifier
+| declared_name[child_declared_name] PERIOD identifier
     {
-      $$ = std::move($[name]);
+      $$ = std::move($[child_declared_name]);
       $$.Unwrap().Append(context.source_loc(), $[identifier]);
     }
-| LEFT_PARENTHESIS declared_name[name] RIGHT_PARENTHESIS
-    { $$ = $[name]; }
+| LEFT_PARENTHESIS declared_name[child_declared_name] RIGHT_PARENTHESIS
+    { $$ = $[child_declared_name]; }
 ;
 // This includes the FN keyword to work around a shift-reduce conflict between
 // virtual function's `IMPL FN` and interfaces `IMPL`.
