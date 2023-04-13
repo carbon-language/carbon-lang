@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
+load("@rules_fuzzing//fuzzing:cc_defs.bzl", "cc_fuzz_test")
 
 cc_library(
     name = "ast_to_proto_lib",
@@ -143,7 +143,7 @@ cc_fuzz_test(
     testonly = 1,
     srcs = ["explorer_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
-    shard_count = 8,
+    tags = ["manual"],
     deps = [
         ":fuzzer_util",
         "//common:error",

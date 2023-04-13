@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
-load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
+load("@rules_fuzzing//fuzzing:cc_defs.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
 

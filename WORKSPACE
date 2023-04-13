@@ -120,8 +120,7 @@ http_archive(
     patch_args = ["-p1"],
     patches = [
         "@carbon//bazel/patches/llvm:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
-        "@carbon//bazel/patches/llvm:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
-        "@carbon//bazel/patches/llvm:0003_Modernize_py_binary_rule_for_lit.patch",
+        "@carbon//bazel/patches/llvm:0002_Modernize_py_binary_rule_for_lit.patch",
     ],
     sha256 = "8b2fa8ae3e434577b4fdd1e91b8990b0651776bd78cf4fbf9b709dcdcdbfbd21",
     strip_prefix = "llvm-project-{0}".format(llvm_version),
@@ -211,6 +210,25 @@ load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 # When building Bison, disable all compiler warnings as we can't realistically
 # fix them anyways.
 bison_register_toolchains(extra_copts = ["-w"])
+
+###############################################################################
+# Fuzzing rules.
+###############################################################################
+
+http_archive(
+    name = "rules_fuzzing",
+    sha256 = "d9002dd3cd6437017f08593124fdd1b13b3473c7b929ceb0e60d317cb9346118",
+    strip_prefix = "rules_fuzzing-0.3.2",
+    urls = ["https://github.com/bazelbuild/rules_fuzzing/archive/v0.3.2.zip"],
+)
+
+load("@rules_fuzzing//fuzzing:repositories.bzl", "rules_fuzzing_dependencies")
+
+rules_fuzzing_dependencies()
+
+load("@rules_fuzzing//fuzzing:init.bzl", "rules_fuzzing_init")
+
+rules_fuzzing_init()
 
 ###############################################################################
 # Protocol buffers - for structured fuzzer testing.
