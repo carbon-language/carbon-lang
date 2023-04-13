@@ -283,6 +283,7 @@ auto NameResolver::ResolveNames(Expression& expression,
       }
 
       Nonnull<const AstNode*> base = &scope->base();
+      // recursively resolve aliases
       auto namespace_alias =
           [](const AstNode& base) -> std::optional<Nonnull<const AstNode*>> {
         if (const auto* alias = dyn_cast<AliasDeclaration>(&base)) {
