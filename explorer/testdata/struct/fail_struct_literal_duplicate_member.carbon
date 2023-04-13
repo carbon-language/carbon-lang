@@ -3,20 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
-// CHECK:STDOUT: Nice!
-// CHECK:STDOUT: result: 0
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var i: i32 = Rand(0, 100);
-  var j: i32 = Rand(0, 100);
-  if (i == j) {
-    Print("HALLO WELT");
-  } else {
-    Print("Nice!");
-  }
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/struct/fail_struct_literal_duplicate_member.carbon:[[@LINE+1]]: Duplicate name `x` in struct literal
+  var x: auto = {.x = 0, .x = 0};
   return 0;
 }

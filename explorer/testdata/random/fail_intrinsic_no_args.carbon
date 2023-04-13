@@ -3,20 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
-// CHECK:STDOUT: Nice!
-// CHECK:STDOUT: result: 0
+// RUN: %{not} %{explorer-run}
+// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var i: i32 = Rand(0, 100);
-  var j: i32 = Rand(0, 100);
-  if (i == j) {
-    Print("HALLO WELT");
-  } else {
-    Print("Nice!");
-  }
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/random/fail_intrinsic_no_args.carbon:[[@LINE+1]]: Rand takes 2 arguments, received 0
+  __intrinsic_rand();
   return 0;
 }

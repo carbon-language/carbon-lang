@@ -5,18 +5,18 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: Nice!
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-fn Main() -> i32 {
-  var i: i32 = Rand(0, 100);
-  var j: i32 = Rand(0, 100);
-  if (i == j) {
-    Print("HALLO WELT");
-  } else {
-    Print("Nice!");
+class ConvertTo(T:! type) {
+  var v: T;
+  impl as ImplicitAs(T) {
+    fn Convert[self: Self]() -> T { return self.v; }
   }
+}
+
+fn Main() -> i32 {
+  Assert({.v = true} as ConvertTo(bool), {.v = "Pass"} as ConvertTo(String));
   return 0;
 }

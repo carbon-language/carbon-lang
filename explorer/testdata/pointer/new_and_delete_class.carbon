@@ -5,18 +5,19 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: Nice!
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
+class C {
+  fn DoPrint() { Print("test"); }
+}
+
 fn Main() -> i32 {
-  var i: i32 = Rand(0, 100);
-  var j: i32 = Rand(0, 100);
-  if (i == j) {
-    Print("HALLO WELT");
-  } else {
-    Print("Nice!");
-  }
+  var p: auto = heap.New(C);
+  var y: auto = *p;
+  // The following line would fail with: "could not find `y: auto`"
+  // y.DoPrint();
+  heap.Delete(p);
   return 0;
 }

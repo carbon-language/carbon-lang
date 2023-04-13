@@ -5,11 +5,11 @@
 // AUTOUPDATE
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "HALLO WELT"
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  Assert(false, "HALLO WELT");
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/struct/fail_struct_type_literal_duplicate_member.carbon:[[@LINE+1]]: Duplicate name `x` in struct type literal
+  var y: {.x: i32, .x: i32};
   return 0;
 }

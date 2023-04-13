@@ -5,18 +5,15 @@
 // AUTOUPDATE
 // RUN: %{explorer-run}
 // RUN: %{explorer-run-trace}
-// CHECK:STDOUT: Nice!
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var i: i32 = Rand(0, 100);
-  var j: i32 = Rand(0, 100);
-  if (i == j) {
-    Print("HALLO WELT");
-  } else {
-    Print("Nice!");
-  }
+  // -2147483648 is unsupported as a literal, but we can do it with a decrement.
+  var low: i32 = -2147483647;
+  low -= 1;
+  var high: i32 = 2147483647;
+  Rand(low, high);
   return 0;
 }

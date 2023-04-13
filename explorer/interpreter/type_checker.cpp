@@ -711,12 +711,9 @@ auto TypeChecker::BuildSubtypeConversion(Nonnull<Expression*> source,
                                          Nonnull<const PointerType*> src_ptr,
                                          Nonnull<const PointerType*> dest_ptr)
     -> ErrorOr<Nonnull<const Expression*>> {
-  const auto* src_class = dyn_cast<NominalClassType>(&src_ptr->pointee_type());
-  const auto* dest_class =
-      dyn_cast<NominalClassType>(&dest_ptr->pointee_type());
+  const auto* src_class = cast<NominalClassType>(&src_ptr->pointee_type());
+  const auto* dest_class = cast<NominalClassType>(&dest_ptr->pointee_type());
   const auto dest = dest_class->declaration().name();
-  CARBON_CHECK(src_class && dest_class)
-      << "Invalid source or destination pointee";
   Nonnull<Expression*> last_expr = source;
   const auto* cur_class = src_class;
   while (!TypeEqual(cur_class, dest_class, std::nullopt)) {
@@ -1120,40 +1117,47 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
                << SourceOrDestination[missing_from_source ? 0 : 1] << " type `"
                << struct_type << "`";
       };
-      for (size_t i = 0; i < param_struct.fields().size(); ++i) {
-        NamedValue param_field = param_struct.fields()[i];
-        std::optional<NamedValue> arg_field;
-        if (allow_implicit_conversion) {
-          if (std::optional<NamedValue> maybe_arg_field =
-                  FindField(arg_struct.fields(), param_field.name)) {
-            arg_field = maybe_arg_field;
+      const auto& param_fields = param_struct.fields();
+      const auto& arg_fields = arg_struct.fields();
+      if (allow_implicit_conversion) {
+        for (const NamedValue& param_field : param_fields) {
+          if (std::optional<NamedValue> arg_field =
+                  FindField(arg_fields, param_field.name)) {
+            CARBON_RETURN_IF_ERROR(Deduce(param_field.value, arg_field->value,
+                                          allow_implicit_conversion));
           } else {
             return diagnose_missing_field(arg_struct, param_field, true);
           }
-        } else {
-          if (i >= arg_struct.fields().size()) {
-            return diagnose_missing_field(arg_struct, param_field, true);
+        }
+        if (param_fields.size() != arg_fields.size()) {
+          for (const NamedValue& arg_field : arg_fields) {
+            if (!FindField(param_fields, arg_field.name).has_value()) {
+              return diagnose_missing_field(param_struct, arg_field, false);
+            }
           }
-          arg_field = arg_struct.fields()[i];
-          if (param_field.name != arg_field->name) {
+          CARBON_FATAL() << "field count mismatch but no missing field; "
+                         << "duplicate field name?";
+        }
+      } else {
+        size_t smaller_size = std::min(param_fields.size(), arg_fields.size());
+        for (size_t i = 0; i < smaller_size; ++i) {
+          NamedValue param_field = param_fields[i];
+          NamedValue arg_field = arg_fields[i];
+          if (param_field.name != arg_field.name) {
             return ProgramError(source_loc_)
                    << "mismatch in field names, `" << param_field.name
-                   << "` != `" << arg_field->name << "`";
+                   << "` != `" << arg_field.name << "`";
           }
+          CARBON_RETURN_IF_ERROR(Deduce(param_field.value, arg_field.value,
+                                        allow_implicit_conversion));
         }
-        CARBON_RETURN_IF_ERROR(Deduce(param_field.value, arg_field->value,
-                                      allow_implicit_conversion));
-      }
-      if (param_struct.fields().size() != arg_struct.fields().size()) {
-        CARBON_CHECK(allow_implicit_conversion)
-            << "should have caught this earlier";
-        for (const NamedValue& arg_field : arg_struct.fields()) {
-          if (!FindField(param_struct.fields(), arg_field.name).has_value()) {
-            return diagnose_missing_field(param_struct, arg_field, false);
-          }
+        if (param_fields.size() < arg_fields.size()) {
+          return diagnose_missing_field(param_struct,
+                                        arg_fields[param_fields.size()], false);
+        } else if (param_fields.size() > arg_fields.size()) {
+          return diagnose_missing_field(arg_struct,
+                                        param_fields[arg_fields.size()], true);
         }
-        CARBON_FATAL() << "field count mismatch but no missing field; "
-                       << "duplicate field name?";
       }
       return Success();
     }
@@ -3662,7 +3666,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case IntrinsicExpression::Intrinsic::Dealloc: {
           if (args.size() != 1) {
             return ProgramError(e->source_loc())
-                   << "__intrinsic_new takes 1 argument";
+                   << "__intrinsic_delete takes 1 argument";
           }
           const auto* arg_type = &args[0]->static_type();
           CARBON_RETURN_IF_ERROR(
@@ -6033,9 +6037,7 @@ auto TypeChecker::TypeCheckDeclaration(
       if (var.has_initializer()) {
         CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.initializer(), impl_scope));
       }
-      const auto* binding_type =
-          dyn_cast<ExpressionPattern>(&var.binding().type());
-      if (binding_type == nullptr) {
+      if (!isa<ExpressionPattern>(&var.binding().type())) {
         // TODO: consider adding support for `auto`
         return ProgramError(var.source_loc())
                << "Type of a top-level variable must be an expression.";
@@ -6122,7 +6124,12 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> mixin,
           InterpExp(&mix_decl.mixin(), arena_, trace_stream_));
-      mix_decl.set_mixin_value(cast<MixinPseudoType>(mixin));
+      if (const auto* mixin_value = dyn_cast<MixinPseudoType>(mixin)) {
+        mix_decl.set_mixin_value(mixin_value);
+      } else {
+        return ProgramError(mix_decl.source_loc())
+               << "Not a valid mixin: `" << mix_decl.mixin() << "`";
+      }
       const auto& mixin_decl = mix_decl.mixin_value().declaration();
       if (!mixin_decl.is_declared()) {
         return ProgramError(mix_decl.source_loc())
@@ -6141,7 +6148,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       auto& var = cast<VariableDeclaration>(*d);
       // Associate the variable name with it's declared type in the
       // compile-time symbol table.
-      if (!llvm::isa<ExpressionPattern>(var.binding().type())) {
+      if (!isa<ExpressionPattern>(var.binding().type())) {
         return ProgramError(var.binding().type().source_loc())
                << "Expected expression for variable type";
       }
@@ -6201,7 +6208,7 @@ auto TypeChecker::FindMixedMemberAndType(
     -> ErrorOr<std::optional<
         std::pair<Nonnull<const Value*>, Nonnull<const Declaration*>>>> {
   for (Nonnull<const Declaration*> member : members) {
-    if (llvm::isa<MixDeclaration>(member)) {
+    if (isa<MixDeclaration>(member)) {
       const auto& mix_decl = cast<MixDeclaration>(*member);
       Nonnull<const MixinPseudoType*> mixin = &mix_decl.mixin_value();
       CARBON_ASSIGN_OR_RETURN(
