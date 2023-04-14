@@ -1474,7 +1474,7 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
   }
 
   // Handle an invalid pattern introducer for parameters and variables.
-  auto on_error = [&](bool add_type_placeholder) {
+  auto on_error = [&]() {
     switch (pattern_kind) {
       case PatternKind::DeducedParameter:
       case PatternKind::Parameter: {
@@ -1490,12 +1490,8 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
         break;
       }
     }
-    AddLeafNode(ParseNodeKind::InvalidParse, *position_,
-                /*has_error=*/true);
-    if (add_type_placeholder) {
-      AddLeafNode(ParseNodeKind::InvalidParse, *position_,
-                  /*has_error=*/true);
-    }
+    // Add a placeholder for the type.
+    AddLeafNode(ParseNodeKind::InvalidParse, *position_, /*has_error=*/true);
     state.state = ParserState::PatternFinishAsRegular;
     state.has_error = true;
     PushState(state);
@@ -1513,7 +1509,9 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
     }
   }
   if (!has_name) {
-    on_error(/*add_type_placeholder=*/true);
+    // Add a placeholder for the name.
+    AddLeafNode(ParseNodeKind::DeclaredName, *position_, /*has_error=*/true);
+    on_error();
     return;
   }
 
@@ -1527,7 +1525,7 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
     PushState(state);
     PushStateForExpression(PrecedenceGroup::ForType());
   } else {
-    on_error(/*add_type_placeholder=*/false);
+    on_error();
     return;
   }
 }

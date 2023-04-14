@@ -26,7 +26,7 @@
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'Mul'},
 // CHECK:STDOUT:       {kind: 'DeducedParameterListStart', text: '['},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: 'Self', has_error: yes},
+// CHECK:STDOUT:         {kind: 'DeclaredName', text: 'Self', has_error: yes},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: 'Self', has_error: yes},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: 'Self', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'DeducedParameterList', text: ']', has_error: yes, subtree_size: 5},
