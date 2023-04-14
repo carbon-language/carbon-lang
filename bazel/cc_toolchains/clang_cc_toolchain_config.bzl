@@ -156,10 +156,32 @@ def _impl(ctx):
                 actions = all_cpp_compile_actions + all_link_actions,
                 flag_groups = ([
                     flag_group(
-                        flags = ["-std=c++17", "-stdlib=libc++"],
+                        flags = ["-std=c++17"],
                     ),
                 ]),
             ),
+        ],
+    )
+
+    # libc++ usage is split out so that it can easily be switched off (using
+    # libstdc++ instead) when trying to use libfuzzer.
+    libcpp_flags = feature(
+        name = "libc++",
+        enabled = True,
+        flag_sets = [flag_set(
+            actions = all_cpp_compile_actions + all_link_actions,
+            flag_groups = ([
+                flag_group(
+                    flags = ["-stdlib=libc++"],
+                ),
+            ]),
+        )],
+    )
+
+    default_flags_feature_resume = feature(
+        name = "default_flags_resume",
+        enabled = True,
+        flag_sets = [
             flag_set(
                 actions = codegen_compile_actions,
                 flag_groups = ([
@@ -250,21 +272,6 @@ def _impl(ctx):
                 ],
             ),
         ],
-    )
-
-    # libc++ usage is split out so that it can easily be switched off (using
-    # libstdc++ instead) when trying to use libfuzzer.
-    libcpp_flags = feature(
-        name = "libc++",
-        enabled = True,
-        flag_sets = [flag_set(
-            actions = all_cpp_compile_actions + all_link_actions,
-            flag_groups = ([
-                flag_group(
-                    flags = ["-stdlib=libc++"],
-                ),
-            ]),
-        )],
     )
 
     # Handle different levels of optimization with individual features so that
@@ -535,7 +542,6 @@ def _impl(ctx):
                     flag_group(
                         flags = [
                             "-fuse-ld=lld",
-                            "-stdlib=libc++",
                             "-unwindlib=libunwind",
                             # Force the C++ standard library and runtime
                             # libraries to be statically linked. This works even
@@ -841,8 +847,15 @@ def _impl(ctx):
 
     # The order of the features determines the relative order of flags used.
     # Start off adding the baseline features.
+    features.append(default_flags_feature)
+
+    # The stdlib flag isn't parsed properly if not in this order.
+    # libc++ is used on non-Windows platforms.
+    if ctx.attr.target_cpu != "x64_windows":
+        features.append(libcpp_flags)
+
     features += [
-        default_flags_feature,
+        default_flags_feature_resume,
         minimal_optimization_flags,
         default_optimization_flags,
         minimal_debug_info_flags,
@@ -877,10 +890,6 @@ def _impl(ctx):
         sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")
-
-    # libc++ is used on non-Windows platforms.
-    if ctx.attr.target_cpu == "x64_windows":
-        features.append(libcpp_flags)
 
     # TODO: Need to support non-macOS ARM platforms here.
     if ctx.attr.target_cpu == "darwin_arm64":
