@@ -36,16 +36,22 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## Values, variables, and expressions
+## Values, objects, and expressions
 
-Carbon has both _values_ like `42`, `true`, and `i32` (a type value). It can
-also have a _variable_ which has _storage_ where we can read and write values.
-Storage also allows taking the address and working with the memory.
+Carbon has both abstract _values_ and _objects_. Carbon _values_ are things like
+`42`, `true`, and `i32` (a type value). Carbon _objects_ have _storage_ where a
+values can read and written. Storage also allows taking the address of an object
+in memory in Carbon.
 
-However, while these terms are convenient are often used to casually describe an
-entity in Carbon, they're not the right way to categorize or formalize the
-semantics of Carbon code. Instead, it uses a more precise model which
-categorizes the _expressions_. This allows us to both be more precise and
+Both objects and values can be nested within each other. For example
+`(true, true)` is both a value and also contains two sub-values. When a
+two-tuple is stored somewhere, it is both a tuple-typed object and contains two
+subobjects.
+
+However, while these terms are convenient are often used to casually describe
+something in Carbon, they're not the right way to categorize or formalize the
+semantics of Carbon code. Instead, the semantics follow a more precise model
+which categorizes the _expressions_. This allows us to both be more precise and
 articulate important differences not captured without looking at the expression
 itself.
 
@@ -55,16 +61,17 @@ There are three expression categories in Carbon:
 
 -   [_Value expressions_](#value-expressions) produce an abstract, read-only
     value that cannot be modified or have its address taken.
--   [_Reference expressions_](#reference-expressions) refer to _storage_ with a
-    particular _location_ where a value may be read, written, or its address
-    taken.
+-   [_Reference expressions_](#reference-expressions) refer to _objects_ with
+    _storage_ where a value may be read or written and the object's address can
+    be taken.
     -   [_Durable reference expressions_](#durable-reference-expressions) are
         reference expressions which cannot refer to _temporary_ storage, but
-        must refer to some storage with outlives the full expression.
+        must refer to some storage that outlives the full expression.
     -   [_Ephemeral reference expressions_](#ephemeral-reference-expressions)
         are reference expressions which _can_ refer to temporary storage.
 -   [_Initializing expressions_](#initializing-expressions) which require
-    storage to be provided as an input and initialize it to some value.
+    storage to be provided as an input and initializes an object in that
+    storage.
 
 The syntax and syntactic context of an expression fully determines both the
 expressions initial category and which if any conversions from one category to
@@ -76,26 +83,29 @@ The general conversions and the semantics implied between these categories are
 below:
 
 -   An _initializing expression_ can be formed from:
-    -   A _value expression_ by using the value to initialize the storage,
-        analogous to
+    -   A _value expression_ by using the value to initialize an object in the
+        provided storage, analogous to
         [direct initialization](https://en.cppreference.com/w/cpp/language/direct_initialization)
         in C++.
-    -   A _reference expression_ by copying the referenced value into the
-        storage, analogous to
+    -   A _durable reference expression_ by copying the referenced object into
+        the new storage, analogous to
         [copy initialization](https://en.cppreference.com/w/cpp/language/copy_initialization)
         in C++.
 -   An _ephemeral reference expression_ can be formed from:
     -   A _durable reference expression_ trivially.
-    -   An _initializing expression_ by materializing temporary storage to be
-        initialized and then referencing that storage.
+    -   An _initializing expression_ by materializing temporary storage for an
+        object that is initialized and then referencing that object.
 -   A _durable reference expression_ cannot be produced by converting from
     another expression category.
 -   A _value expression_ can be formed from a _reference expression_ by reading
     the value from its storage.
 
-Multiple steps of these conversions can be combined, for example to produce a
-value by first initializing an ephemeral reference and then reading the value
-from its storage.
+Multiple steps of these conversions can be combined. For example, to produce a
+value expression from an initializing expression, first the initializing
+expression is converted to an ephemeral reference expression by materializing
+temporary storage and initializing an object stored there, and that is then
+turned into the desired value expression by reading the value from that stored
+object.
 
 ## Binding patterns and local variables with `let` and `var`
 
@@ -116,12 +126,13 @@ fn Sum(x: i32, y: i32) -> i32 {
 Value bindings require the matched expression to be a _value expression_,
 converting it into one as necessary.
 
-A pattern can be introduced with the `var` keyword to create a variable with
-storage. Every binding pattern name introduced within a variable pattern is
-called a _variable binding_ and forms a
-[_reference_expression_](#reference-expressions) when used. Variable bindings
-require their matched expression to be an _initializing expression_ and provide
-the underlying variable storage to it to be initialized.
+A _variable pattern_ can be introduced with the `var` keyword to create an
+object with storage when match.d Every binding pattern name introduced within a
+variable pattern is called a _variable binding_ and forms a
+[_reference_expression_](#reference-expressions) to an object within the
+variable pattern's storage when used. Variable patterns require their matched
+expression to be an _initializing expression_ and provide their storage to it to
+be initialized.
 
 ```carbon
 fn MutateThing(ptr: i64*);
@@ -164,11 +175,12 @@ others with bindings that produce values by default.
 ### Consuming function parameters
 
 Just as part of a `let` binding can use a `var` prefix to become a variable
-pattern and bind a name to an L-value, so can function parameters:
+pattern and bind names that will form reference expressions to the variable's
+storage, so can function parameters:
 
 ```carbon
 fn Consume(var x: SomeData) {
-  // We can mutate and use the local `x` L-value here.
+  // We can mutate and use variable that `x` refers to here.
 }
 ```
 
@@ -182,26 +194,44 @@ initialize storage dedicated-to and owned-by the function parameter.
 This pattern serves the same purpose as C++'s pass-by-value when used with types
 that have non-trivial resources attached to pass ownership into the function and
 consume the resource. But rather than that being the seeming _default_, Carbon
-makes this a use case that requires a special marking.
+makes this a use case that requires a special marking on the declaration.
 
-## Reference expressions and variables
+## Reference expressions
 
-_Reference expressions_ refer to storage at some particular location where a
-value may be read or written, and the address of the storage taken. There are
-two sub-categories: _durable_ and _ephemeral_.
+_Reference expressions_ refer to _objects_ with _storage_ where a value may be
+read or written and the object's address can be taken. There are two
+sub-categories of reference expressions: _durable_ and _ephemeral_.
 
-All reference expressions can have their storage's address taken implicitly when
-calling a [method](TODO) on the reference expression where the method's `self`
-parameter has an [`addr` specifier](TODO) -- the address of the reference
-expression's storage is passed as a [pointer](#pointers) to the `self` parameter
-for such methods.
+Calling a [method](TODO) on a reference expression where the method's `self`
+parameter has an [`addr` specifier](TODO) can always implicitly take the address
+of the referred-to object. This address is passed as a [pointer](#pointers) to
+the `self` parameter for such methods.
 
 ### Durable reference expressions
 
-_Durable reference expressions_ are those where the storage outlives the full
-expression and the address could be meaningfully propagated out of it as well.
-The address of a durable reference expression can be explicitly and directly
-with an address-of expression: `&x`.
+_Durable reference expressions_ are those where the object's storage outlives
+the full expression and the address could be meaningfully propagated out of it
+as well.
+
+There are two expressions that require one of their operands to be a durable
+reference expression in Carbon:
+
+-   [Assignment expressions](TODO) require the left-hand-side of the `=` to be a
+    durable reference. This stronger requirement is enforced before the
+    expression is rewritten to dispatch into the `Carbon.Assign.Op` interface
+    method.
+-   [Address-of expressions](TODO) require their operand to be a durable
+    reference and compute the address of the referenced object.
+
+There are several kinds of expressions that produce durable references in
+Carbon:
+
+-   Names of objects introduced with a
+    [variable binding](#binding-patterns-and-local-variables-with-let-and-var):
+    `x`
+-   Dereferenced [pointers](#pointers): `*p`
+-   Names of subobjects through member access: `x.member` or `p->member`
+-   [Indexing](#indexing): `array[i]`
 
 There is no way to convert another category of expression into a durable
 reference expression, they always directly refer to some declared variable
@@ -213,21 +243,39 @@ _Ephemeral reference expressions_ still refer to storage, but it may be storage
 materialized for a temporary that will not outlive the full expression. Their
 address can only be taken implicitly as part of a method call.
 
-These expressions are typically formed by conversion from another expression
-category. Either a trivial conversion from a durable reference expression, or a
-conversion of an initializing expression by materializing temporary storage to
-be initialized and then producing an ephemeral reference to it.
+The only expressions in Carbon that directly require an ephemeral reference are
+method calls where the method is marked with the `addr` specifier. However, they
+are frequently indirectly required to enable converting an initializing
+expression into a value expression.
+
+Ephemeral reference expressions can only be formed by conversion from another
+expression category. In the trivial case, a durable reference expression can be
+used. They can also be formed by materializing temporary storage to provide to
+an initializing expression, and referencing the initialized object in that
+storage.
+
+**Future work:** The current design allows directly requiring an ephemeral
+reference for `addr`-methods because this replicates the flexibility in C++ --
+very few C++ methods are L-value-ref-qualified which would have a similar effect
+to `addr`-methods requiring a durable reference expression. This is leveraged
+frequently in C++ for builder APIs and other patterns. However, Carbon provides
+more tools in this space than C++ already, and so it may be worth evaluating
+whether we can switch `addr`-methods to the same restrictions as assignment and
+`&`. Temporaries would never have their address escaped (in a safe way) in that
+world and there would be fewer different kinds of entities. But this is reserved
+for future work as we should be very careful about the expressivity hit being
+tolerable both for native-Carbon API design and for migrated C++ code.
 
 ## Value expressions
 
-An R-value cannot be mutated, cannot have its address taken, and may not have
-storage at all or a stable address of storage. They model abstract values like
-function input parameters and constants. They can be formed in two ways -- a
-literal expression like `42`, or by converting an L-value to an R-value.
+A value cannot be mutated, cannot have its address taken, and may not have
+storage at all or a stable address of storage. Values are abstract constructs
+like function input parameters and constants. They can be formed in two ways --
+a literal expression like `42`, or by reading the value of some stored object.
 
-A core goal of R-values is to provide a single model that can get both the
-efficiency of passing by value when working with small types such as those that
-fit into a machine register, but also the efficiency of minimal copies when
+A core goal of values in Carbon is to provide a single model that can get both
+the efficiency of passing by value when working with small types such as those
+that fit into a machine register, but also the efficiency of minimal copies when
 working with types where a copy would require extra allocations or other costly
 resources. This directly helps programmers by providing a simpler model to
 select the mechanism of passing function inputs. But it is also important to
@@ -235,175 +283,157 @@ enable generic code that needs a single type model that will have generically
 good performance.
 
 To achieve this goal, a Carbon program must in general behave equivalently with
-R-values that are implemented as a _reference_ to the original object or as
-either a _copy_ or _move_ if that would be valid for the type. However, using a
-copy or a move is purely optional and an optimization. R-values support
-uncopyable and unmovable types.
+value expressions that are implemented as a _reference_ to the original object
+or as either a _copy_ or _move_ if that would be valid for the type. However,
+using a copy or a move is purely optional and an optimization. Value expressions
+are valid with both uncopyable and unmovable types.
 
 **Experimental:** We currently make an additional requirement that helps ensure
 this equivalence will be true and allows us to detect the most risky cases where
-it would not be true: we require that once an R-value is formed, any original
-object must not be mutated prior to the last read from that R-value. We consider
-this restriction experimental as we may want to strengthen or weaken it based on
-our experience with Carbon code using these constructs, and especially
-interoperating with C++.
+it would not be true: we require that once a value is formed by reading a stored
+object, that original object must not be mutated prior to the last use of the
+value, or any transitive value. We consider this restriction experimental as we
+may want to strengthen or weaken it based on our experience with Carbon code
+using these constructs, and especially interoperating with C++.
 
-We expect even with these restrictions to make R-values in Carbon useful in
+Even with these restrictions, we expect to make values in Carbon useful in
 roughly the same places as `const &`s in C++, but with added efficiency in the
 case where the values can usefully be kept in machine registers. We also
 specifically encourage a mental model of a `const &` with extra efficiency.
 
 ### Comparison to C++ parameters
 
-While these are called _R-values_ in Carbon and sometimes shortened to just
-"values", they are not related to "by-value" parameters as they exist in C++.
-C++ by-value parameters are semantically defined to create a new local copy of
-the argument, although it may move into this copy.
+While these are called "values" in Carbon, they are not related to "by-value"
+parameters as they exist in C++. The semantics of C++'s by-value parameters are
+defined to create a new local copy of the argument, although it may move into
+this copy.
 
 Carbon's values are much closer to a `const &` in C++ with extra restrictions
-such as allowing copies under "as-if" in limited cases and preventing taking the
-address. Combined, these allow implementation strategies such as in-register
+such as allowing copies under "as-if" and preventing taking the address.
+Combined, these restrictions allow implementation strategies such as in-register
 parameters.
 
-### Representation and type-based modeling
+### Value representation and customization
 
-The representation of an R-value binding is especially important because it
+The representation of a value expression is especially important because it
 forms the calling convention used for the vast majority of function parameters
 -- function inputs. Given this importance, it's important that it is predictable
 and customizable by the value's type. Similarly, while Carbon code must be
 correct with either a copy or a reference-based implementation, we want which
 implementation strategy is used to be a predictable and customizable property of
-the type of a value. To achieve both of these, Carbon models forming R-values as
-a conversion to a representation type that is specified with an [interface]().
-The default implementation of this interface works to choose a good default
-based on the size and complexity of a given type, and it can be further
-customized by types as needed. For example, types with dedicated and optimized
-"view" representations can immediately use this to back any R-value, and it will
-even be used in generic code.
+the type of a value.
 
-### Value representation customization
-
-Carbon models both the conversion from L-value to R-value and the representation
-of R-values in a way that permits customization. We can also explain the
-expected default options using the same framework. Customization occurs by
-implementing an interface:
+A type can optionally control its value representation using a custom syntax
+similar to customizing its [destructor](TODO). This syntax sets the
+representation to some type uses a keyword `value_rep` and can appear where a
+member declaration would be valid within the type:
 
 ```carbon
-interface RValueRep {
-  // ...
-}
-
-class CustomRValue {
-  // I want a custom R-value!
-  impl as RValueRep ... { ... }
+class SomeType {
+  value_rep = RepresentationType;
 }
 ```
 
-The first aspect of customization is the representation of an R-value for a type
-`T`. One option is to leave this uncustomized and let the language implement it
-however is most effective. A second option is to provide a custom type that is
-used to model the _representation_ of an R-value.
+**Open question:** The syntax for this is just placeholder, using a placeholder
+keyword. It isn't final at all and likely will need to change to read well.
 
-An uncustomized representation that leaves it up to the language to implement
-can be requested by selecting the identity. This doesn't imply a _copy_ in any
-way, it simply leaves it up to the language to pick an effective representation.
-When this representation is used, fields of a type can be accessed from an
-R-value of that type using normal field access syntax. The result of such an
-access is an R-value of the field type. Example:
+The provided representation type must be one of the following:
+
+-   `const Self` -- this forces the use of a _copy_ of the object.
+-   `const Self *` -- this forces the use of a [_pointer_](#pointers) to the
+    original object.
+-   A custom type that is not `Self`.
+
+If the representation is `const Self` or `const Self *`, then the type fields
+will be accessible as [_value expressions_](#value-expressions) using the normal
+member access syntax for value expressions of a type. These will be implemented
+by either accessing a copy of the object in the non-pointer case or a pointer to
+the original object in the pointer case. A representation of `const Self`
+requires copying to be valid for the type. This provides the builtin
+functionality but allows explicitly controlling which representation should be
+used. If no customization is provided, the implementation will select one based
+on a set of heuristics.
+
+When a custom type is provided, it must not be `Self` (or the other two cases).
+The type provided will be used on function call boundaries and as the
+implementation representation for `let` bindings and other value expressions
+referencing an object of the type. A specifier of `value_rep = T;` will require
+that the type `impls ReferenceImplicitAs(T)` using the following interface:
 
 ```carbon
-class SomeDataType {
-  var x: f64;
-  var y: f64;
-
-  // No custom `impl` for `RValueRep`.
-}
-
-fn F(data: SomeDataType) {
-  // Can directly access `x` and `y` here as R-values.
-  let sum: f64 = data.x + data.y;
-
-  // Can't mutate them, that would require an L-value field.
-  data.x = sum;
+interface ReferenceImplicitAs(T:! type) {
+  fn Op[addr self: const Self*]() -> T;
 }
 ```
 
-However, it is also possible to customize the representation of R-values for a
-particular type. This involves specifying a custom type as the associated type
-of the `RValueRep` impl. When forming an R-value of type `T`, the actual
-representation will be an object of type `T.(RValueRep.RepType)`. This will be
-used on function call boundaries and elsewhere we need to materialize a physical
-manifestation of an R-value. It also dictates what operations are valid on an
-R-value of type `T`. When `T` has a customized R-value representation type, the
-_only_ valid operation on a `T` R-value is to convert it to that representation
-type. No filed access or other operations are permitted. This is mostly useful
-when there is a dedicated type that models an R-value semantic more effectively
-to trigger conversions to that type and define the readonly API in terms of it.
-This interface extends `ImplicitAs`, because it can only work when an implicit
-conversion to the representation type is desirable. Example:
+Converting a reference expression into a value expression for such a type calls
+this customization point to form a representation object from the original
+reference expression.
+
+When using a custom representation type in this way, no fields are accessible
+through a value expression. Instead, only methods can be called using member
+access, as they simply bind the value expression to the `self` parameter.
+However, one important method can be called -- `.(ImplicitAs(T).Convert()`. This
+implicitly converting a value expression for the type into its custom
+representation type. The customization of the representation above causes the
+class to have a builtin `impl as ImplicitAs(T)` which converts to the
+representation type as a no-op, exposing the object created by the
+`ReferenceImplicitAs` operation, and preserved as a representation of the value
+expression.
+
+Here is a more complete example of code using these features:
 
 ```carbon
-interface RValueRep {
-  let RepType:! type;
-
-  // Called to for the representation object when binding an L-value as an
-  // R-value.
-  fn LValueToRValue[addr self: const Self*]() -> RepType;
-
-  // Extend the implicit conversions.
-  extends ImplicitAs(RepType);
-
-  // Provide the language-provided conversion given the above. Custom
-  // conversions can still be provided here.
-  final fn Convert[self: Self]() -> RepType { ... }
-}
-
 class StringView {
   // A typical readonly view of a string API...
   fn ExampleMethod[self: Self]() { ... }
 }
 
 class String {
-  var data_ptr: Char*;
-  var size: i64;
+  // Customize the value representation to be `StringView`.
+  value_rep = StringView;
 
-  // Define the R-value method API by delegating to `StringView`. Note that
-  // using `self: StringView` here instead of `self: Self` isn't necessary,
-  // it merely allows immediately accessing that API rather than requiring
-  // a conversion first.
+  private var data_ptr: Char*;
+  private var size: i64;
+
+  // We can directly declare methods that take `self` as a `StringView` which
+  // will cause the caller to implicitly convert value expressions to
+  // `StringView` prior to calling.
   fn ExampleMethod[self: StringView]() { self.ExampleMethod(); }
 
-  // Extends `ImplicitAs(StringView)` with a default implementation.
-  impl as RValueRep where .RepType = StringView {
-    fn LValueToRValue[addr self: const Self*]() -> StringView {
-      // Because this is called on the L-value being bound to an R-value, we
-      // can get at an SSO buffer or other interior pointers of `self`.
+  // Or we can use a value binding for `self` much like normal, but the
+  // implementation will be constrained because of the custom value rep.
+  fn ExampleMethod2[self: String]() {
+    // Error due to custom value rep:
+    self.data_ptr;
+
+    // Fine, this uses the builtin `ImplicitAs(StringView)`.
+    (self as StringView).ExampleMethod();
+  }
+
+  impl as ReferenceImplicitAs(StringView) {
+    fn Op[addr self: const Self*]() -> StringView {
+      // Because this is called on the String object prior to it becoming
+      // a value, we can access an SSO buffer or other interior pointers
+      // of `self`.
       return StringView::Create(self->data_ptr, self->size);
     }
   }
 }
 ```
 
-When using a customized R-value representation, the `LValueToRValue` interface
-method is called on an L-value in order to construct the representation used to
-bind an R-value. Because this is done on the _L-value_, it has the opportunity
-to capture the address of the underlying object as needed, for example to
-provide an implementation similar to a C++ `const &` and the `StringView` above.
-This also allows types with inline buffers or small-size-optimization buffers to
-create effective R-value representations by capturing pointers into the original
-L-value object's inline buffer.
-
-However, it is important to note that the _representation_ type of an R-value is
-just its representation and does not impact the type itself. Name lookup and
-`impl` search occur for the same type regardless of R-value or L-value. But once
-an particular method or function is selected, an implicit conversion can occur
-from the original type to the representation type as part of the parameter or
-receiver type. In fact, this conversion is the _only_ operation that can occur
-for a customized representation type, wherever it is necessary as implemented.
+It is important to note that the _representation_ type of a value expression is
+just its representation and does not impact the name lookup or type. Name lookup
+and `impl` search occur for the same type regardless of the expression category.
+But once a particular method or function is selected, an implicit conversion can
+occur from the original type to the representation type as part of the parameter
+or receiver type. In fact, this conversion is the _only_ operation that can
+occur for a customized representation type, wherever it is necessary as
+implemented.
 
 ### Polymorphic types
 
-R-values can be used with
+Value expressions and value bindings can be used with
 [polymorphic types](/docs/design/classes.md#inheritance), for example:
 
 ```
@@ -426,30 +456,35 @@ the available implementation strategies.
 
 ### Interop with C++ `const &` and `const` methods.
 
-While R-values cannot have their address taken in Carbon, they should be
-interoperable with C++ `const &`s and C++ `const`-qualified methods. This will
-in-effect "pin" the R-value (or a copy) into memory and allow C++ to take its
-address. Without supporting this, R-values would likely create an untenable
-interop ergonomic barrier. However, this does create some additional constraints
-on R-values and a way that their addresses can escape unexpectedly.
+While value expressions cannot have their address taken in Carbon, they should
+be interoperable with C++ `const &`s and C++ `const`-qualified methods. This
+will in-effect "pin" some object (potentially a copy or temporary) into memory
+and allow C++ to take its address. Without supporting this, values would likely
+create an untenable interop ergonomic barrier. However, this does create some
+additional constraints on value expressions and a way that their addresses can
+escape unexpectedly.
 
 Despite interop requiring an address to implement, the address isn't guaranteed
-to be stable or useful or point back to some original L-value necessarily. The
+to be stable or useful or point back to some original object necessarily. The
 ability of the implementation to introduce copies or a temporary specifically
 for the purpose of the interop remains.
 
-**Open question:** when a type customizes its R-value representation, as
-currently specified this will break the use of `const &` C++ APIs with such an
-R-value. We may need to further extend the R-value customization interface to
-allow types to define how a `const &` is manifested when needed.
+**Future work:** when a type customizes its value representation, as currently
+specified this will break the use of `const &` C++ APIs with such an value. We
+should extend the rules around value representation customization to require
+that either the representation type can be converted to (a copy) of the
+customized type, or implements an interop-specific interface to compute a
+`const` pointer to the original object used to form the representation object.
+This will allow custom representations to either create copies for interop or
+retain a pointer to the original object and expose that for interop as desired.
 
-### Escape hatches for R-values in Carbon
+### Escape hatches for value addresses in Carbon
 
 **Open question:** It may be necessary to provide some amount of escape hatch
-for taking the address of R-values. The
+for taking the address of values. The
 [C++ interop](#interop-with-c-const--and-const-methods) above already takes
-their address. Currently, this is the extent of an escape hatch to the
-restrictions on R-values.
+their address functionally. Currently, this is the extent of an escape hatch to
+the restrictions on values.
 
 If a further escape hatch is needed, this kind of fundamental weakening of the
 semantic model would be a good case for some syntactic marker like Rust's
@@ -458,22 +493,22 @@ to the operation in question. For example:
 
 ```carbon
 class S {
-  fn ImmutableMemberFunction[me: Self]();
-  fn MutableMemberFunction[addr me: Self*]();
+  fn ValueMemberFunction[me: Self]();
+  fn AddrMemberFunction[addr me: const Self*]();
 }
 
-fn F(immutable_s: S) {
+fn F(s_value: S) {
   // This is fine.
-  immutable_s.ImmutableMemberFunction();
+  s_value.ValueMemberFunction();
 
   // This requires an unsafe marker in the syntax.
-  immutable_s.unsafe MutableMemberFunction();
+  s_value.unsafe MutableMemberFunction();
 }
 ```
 
 ## Initializing expressions
 
-...
+TODO
 
 ## Pointers
 
@@ -493,7 +528,7 @@ view style types are expected to provide access to indexable regions. And even
 raw pointer arithmetic is expected to be provided at some point, but through
 specialized constructs given the specialized nature of these operations.
 
-> TODO: Add explicit designs for these use cases and link to them here.
+**Future work:** Add explicit designs for these use cases and link to them here.
 
 ### Reference types
 
@@ -526,8 +561,8 @@ aspect is covered by our design decision around
 ### Syntax
 
 The type of a pointer to a type `T` is written with a postfix `*` as in `T*`.
-Dereferencing a pointer is an expression that produces an _L-value_ and is
-written with a prefix `*` as in `*pointer`:
+Dereferencing a pointer is a [_reference expression_] and is written with a
+prefix `*` as in `*p`:
 
 ```carbon
 var i: i32 = 42;
@@ -548,15 +583,16 @@ Carbon also supports an infix `->` operation, much like C++. However, Carbon
 directly defines this as an exact rewrite to `*` and `.` so that `p->member`
 becomes `(*p).member` for example.
 
-As also covered extensively in
+**Future work:** As also covered extensively in
 [#523](https://github.com/carbon-language/carbon-lang/issues/523), one of the
 primary challenges of the C++ syntax is the composition of a prefix dereference
 operation and other postfix or infix operations, especially when chained
 together such as a classic C++ frustrations of mixes of dereference and
 indexing: `(*(*p)[42])[13]`. Where these compositions are sufficiently common to
-create ergonomic problems, the current plan is to introduce custom syntax
-analogous to `->` that rewrites down to the grouped dereference. However,
-nothing beyond `->` itself is currently provided.
+create ergonomic problems, the plan is to introduce custom syntax analogous to
+`->` that rewrites down to the grouped dereference. However, nothing beyond `->`
+itself is currently provided. Extending this, including the exact design and
+scope of extension desired, is a future work area.
 
 ### Syntax-free dereference and address-of
 
@@ -570,19 +606,19 @@ potentially interfere with being generic. Currently, Carbon prioritizes making
 the distinction here visible.
 
 It may prove desirable to provide an ergonomic aid to reduce dereferencing
-syntax within function bodies, but this proposal suggests deferring that at
-least initially in order to better understand the extent and importance of that
-use case. If and when it is considered, a direction based around a way to bind a
-name to an L-value produced by dereferencing in a pattern appears to be a
-promising technique. Alternatively, there are various languages with
-implicit-dereference designs that might be considered.
+syntax within function bodies, but this proposal suggests deferring that in
+order to better understand the extent and importance of that use case. If and
+when it is considered, a direction based around a way to bind a name to a
+reference expression in a pattern appears to be a promising technique.
+Alternatively, there are various languages with implicit- or
+automatic-dereference designs that might be considered.
 
 A closely related concern to syntax-free dereference is syntax-free address-of.
 Here, Carbon supports one very narrow form of this: implicitly taking the
 address of the implicit object parameter of member functions. Currently that is
 the only place with such an implicit affordance. It is designed to be
 syntactically sound to extend to other parameters, but currently that is not
-planned to avoid surprise.
+planned.
 
 ### Dereferencing customization
 
@@ -597,7 +633,7 @@ The interface might look like:
 ```
 interface Pointer {
   let ValueT:! Type;
-  fn Dereference[me: Self]() -> ValueT*;
+  fn Dereference[self: Self]() -> ValueT*;
 }
 ```
 
@@ -611,7 +647,7 @@ class TaggedPtr(T:! Type) {
 }
 external impl [T:! Type] TaggedPtr(T) as Pointer {
   let ValueT:$ T;
-  fn Dereference[me: Self]() -> T* { return me.ptr; }
+  fn Dereference[self: Self]() -> T* { return self.ptr; }
 }
 
 fn Test(arg: TaggedPtr(T), dest: TaggedPtr(TaggedPtr(T))) {
@@ -622,53 +658,54 @@ fn Test(arg: TaggedPtr(T), dest: TaggedPtr(TaggedPtr(T))) {
 
 There is one tricky aspect of this. The function in the interface which
 implements a pointer-like dereference must return a raw pointer which the
-language then actually dereferences to form an L-value similar to that formed by
-`var` declarations. This interface is implemented for normal pointers as a
-no-op:
+language then actually dereferences to form a reference expression similar to
+that formed by `var` declarations. This interface is implemented for normal
+pointers as a no-op:
 
 ```
 impl [T:! Type] T* as Pointer {
   let ValueT:$ Type = T;
-  fn Dereference[me: Self]() -> T* { return me; }
+  fn Dereference[self: Self]() -> T* { return self; }
 }
 ```
 
 Dereference expressions such as `*x` are syntactically rewritten to use this
 interface to get a raw pointer and then that raw pointer is dereferenced. If we
-imagine this language level dereference to form an L-value as a unary `deref`
-operator, then `(*x)` becomes `(deref (x.(Pointer.Dereference)()))`.
+imagine this language level dereference to form a reference expression as a
+unary `deref` operator, then `(*x)` becomes
+`(deref (x.(Pointer.Dereference)()))`.
 
-Carbon should also use a simple syntactic rewrite for implementing `x->Method()`
+Carbon will also use a simple syntactic rewrite for implementing `x->Method()`
 as `(*x).Method()` without separate or different customization.
 
 ## `const`-qualified types
 
 Carbon provides the ability to qualify a type `T` with the keyword `const` to
 get a `const`-qualified type: `const T`. This is exclusively an API-subsetting
-feature in Carbon -- for more fundamentally "immutable" use cases, R-values
-should be used instead. Pointers to `const`-qualified types in Carbon provide
-access to a shared L-value with an API subset that can help model important
-requirements like ensuring usage is exclusively by way of a _thread-safe_
-interface subset of an otherwise _thread-compatible_ type.
+feature in Carbon -- for more fundamentally "immutable" use cases, value
+expressions and bindings should be used instead. Pointers to `const`-qualified
+types in Carbon provide access to an object with an API subset that can help
+model important requirements like ensuring usage is exclusively by way of a
+_thread-safe_ interface subset of an otherwise _thread-compatible_ type.
 
 The `const T` type has the same representation as `T` with the same field names,
 but all of its field types are also `const`-qualified. Other than fields, all
 other members `T` are also members of `const T`, and impl lookup ignores the
 `const` qualification. There is an implicit conversion from `T` to `const T`,
-but not the reverse. L-value-to-R-value conversion can be performed on
-`const T`.
+but not the reverse. Conversion of reference expressions to value expressions is
+defined in terms of `const T` reference expressions to `T` value expressions.
 
 It is expected that `const T` will overwhelmingly occur as part of a
-[pointer](#pointers), as the express purpose is to reference an L-value. Carbon
-will support conversions between pointers to `const`-qualified types that follow
-the same rules as used in C++ to avoid inadvertent loss of
+[pointer](#pointers), as the express purpose is to form reference expressions.
+Carbon will support conversions between pointers to `const`-qualified types that
+follow the same rules as used in C++ to avoid inadvertent loss of
 `const`-qualification.
 
 ## Lifetime overloading
 
-One use case not obviously or fully addressed by these designs in Carbon is
-overloading function calls by observing the lifetime of arguments. The use case
-here would be selecting different implementation strategies for the same
+One use case that is not obviously or fully addressed by these designs in Carbon
+is overloading function calls by observing the lifetime of arguments. The use
+case here would be selecting different implementation strategies for the same
 function or operation based on whether an argument lifetime happens to be ending
 and viable to move-from.
 
@@ -676,11 +713,12 @@ Carbon currently intentionally leaves this use case unaddressed. There is a
 fundamental scaling problem in this style of overloading: it creates a
 combinatorial explosion of possible overloads similar to other permutations of
 indirection models. Consider a function with N parameters that would benefit
-from lifetime overloading. If each one benefits _independently_ from the others,
-we would need 2<sup>N</sup> overloads to express all the possibilities.
+from lifetime overloading. If each parameter benefits _independently_ from the
+others, as is commonly the case, we would need 2<sup>N</sup> overloads to
+express all the possibilities.
 
-Carbon should initially see if code can be designed without this facility. Some
-of the tools needed to avoid it are suggested above such as the
+Carbon will initially see if code can be designed without this facility. Some of
+the tools needed to avoid it are suggested above such as the
 [consuming](#consuming-function-parameters) input pattern. But it is possible
 that more will be needed in practice. It would be good to identify the specific
 and realistic Carbon code patterns that cannot be expressed with the tools in
