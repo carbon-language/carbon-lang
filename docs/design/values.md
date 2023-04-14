@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Values, variables, and expressions](#values-variables-and-expressions)
+-   [Values, objects, and expressions](#values-objects-and-expressions)
     -   [Expression categories](#expression-categories)
 -   [Binding patterns and local variables with `let` and `var`](#binding-patterns-and-local-variables-with-let-and-var)
     -   [Local variables](#local-variables)
@@ -20,11 +20,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Ephemeral reference expressions](#ephemeral-reference-expressions)
 -   [Value expressions](#value-expressions)
     -   [Comparison to C++ parameters](#comparison-to-c-parameters)
-    -   [Representation and type-based modeling](#representation-and-type-based-modeling)
-    -   [Value representation customization](#value-representation-customization)
+    -   [Value representation and customization](#value-representation-and-customization)
     -   [Polymorphic types](#polymorphic-types)
     -   [Interop with C++ `const &` and `const` methods.](#interop-with-c-const--and-const-methods)
-    -   [Escape hatches for R-values in Carbon](#escape-hatches-for-r-values-in-carbon)
+    -   [Escape hatches for value addresses in Carbon](#escape-hatches-for-value-addresses-in-carbon)
 -   [Initializing expressions](#initializing-expressions)
 -   [Pointers](#pointers)
     -   [Reference types](#reference-types)
