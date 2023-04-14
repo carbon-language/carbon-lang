@@ -9,7 +9,7 @@
 package ExplorerTest impl;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/print/fail_index_bounds0.carbon:[[@LINE+1]]: Invalid format string for Print with 0 arg(s) : `Print: {0}`
+  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/print/fail_index_bounds0.carbon:[[@LINE+1]]: Index invalid with argument count of 0 at offset 8 in `Print: {0}`
   Print("Print: {0}");
   return 0;
 }

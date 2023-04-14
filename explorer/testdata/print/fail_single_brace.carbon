@@ -9,7 +9,7 @@
 package ExplorerTest impl;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/print/fail_single_brace.carbon:[[@LINE+1]]: Invalid format string for Print with 0 arg(s) : `{`
+  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/print/fail_single_brace.carbon:[[@LINE+1]]: `{` must be followed by a second `{` or index in `{`
   Print("{");
   return 0;
 }
