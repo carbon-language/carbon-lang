@@ -85,15 +85,13 @@ a crash is triggered, or forever in a bug-free program ;).
 To run in 'unit test' mode:
 
 ```bash
-bazel test --config=proto-fuzzer --test_output=all //explorer/fuzzing:explorer_fuzzer
+bazel test --config=fuzzer --test_output=all //explorer/fuzzing:explorer_fuzzer
 ```
 
 To run in 'fuzzing' mode:
 
 ```bash
-bazel build --config=proto-fuzzer //explorer/fuzzing:explorer_fuzzer
-
-bazel-bin/explorer/fuzzing/explorer_fuzzer
+bazel run --config=fuzzer //explorer/fuzzing:explorer_fuzzer_run
 ```
 
 It's also possible to run the fuzzer on a single input:
