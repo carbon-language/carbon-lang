@@ -642,6 +642,10 @@ def _impl(ctx):
         ],
     )
 
+    whole_archive_flag = "-Wl,-whole-archive"
+    if ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
+        whole_archive_flag = "-Wl,-force_load"
+
     default_link_libraries_feature = feature(
         name = "default_link_libraries",
         enabled = True,
@@ -665,7 +669,7 @@ def _impl(ctx):
                                 ),
                             ),
                             flag_group(
-                                flags = ["-Wl,-whole-archive"],
+                                flags = [whole_archive_flag],
                                 expand_if_true =
                                     "libraries_to_link.is_whole_archive",
                             ),
