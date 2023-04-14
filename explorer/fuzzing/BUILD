@@ -143,8 +143,8 @@ cc_fuzz_test(
     testonly = 1,
     srcs = ["explorer_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
-    # TODO: This takes several minutes to run. Either we need to fuzz the
-    # corpus, trim it down to reduce execution time, or find a way to shard
+    # TODO: This takes several minutes to test the corpus. Either we need to
+    # trim the corpus down to reduce execution time, or find a way to shard
     # execution.
     tags = ["manual"],
     deps = [
