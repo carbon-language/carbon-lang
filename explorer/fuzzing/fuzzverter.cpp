@@ -32,7 +32,7 @@ namespace cl = llvm::cl;
 
 // Reads a file and returns its contents as a string.
 static auto ReadFile(std::string_view file_name) -> ErrorOr<std::string> {
-  std::ifstream file(file_name.data(), std::ios::in);
+  std::ifstream file(file_name, std::ios::in);
   if (!file.is_open()) {
     return ErrorBuilder() << "Could not open " << file_name << " for reading";
   }
@@ -44,7 +44,7 @@ static auto ReadFile(std::string_view file_name) -> ErrorOr<std::string> {
 // Writes string `s` to `file_name`.
 static auto WriteFile(std::string_view s, std::string_view file_name)
     -> ErrorOr<Success> {
-  std::ofstream file(file_name.data(), std::ios::out);
+  std::ofstream file(file_name, std::ios::out);
   if (!file.is_open()) {
     return ErrorBuilder() << "Could not open " << file_name << " for writing";
   }

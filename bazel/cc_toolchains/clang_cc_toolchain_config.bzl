@@ -156,7 +156,7 @@ def _impl(ctx):
                 actions = all_cpp_compile_actions + all_link_actions,
                 flag_groups = ([
                     flag_group(
-                        flags = ["-std=c++17"],
+                        flags = ["-std=c++17", "-stdlib=libc++"],
                     ),
                 ]),
             ),
@@ -535,6 +535,7 @@ def _impl(ctx):
                     flag_group(
                         flags = [
                             "-fuse-ld=lld",
+                            "-stdlib=libc++",
                             "-unwindlib=libunwind",
                             # Force the C++ standard library and runtime
                             # libraries to be statically linked. This works even
@@ -852,7 +853,6 @@ def _impl(ctx):
         asan,
         enable_asan_in_fastbuild,
         fuzzer,
-        proto_fuzzer,
         layering_check,
         module_maps,
         use_module_maps,
