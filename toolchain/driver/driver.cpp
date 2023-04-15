@@ -252,6 +252,6 @@ auto Driver::ReportExtraArgs(llvm::StringRef subcommand_text,
   }
 
   error_stream_ << "\n";
-}
+}   // namespace
 
 }  // namespace Carbon
