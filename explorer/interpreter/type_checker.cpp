@@ -411,7 +411,7 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
 // depends on any template paramaeter.
 static auto IsTemplateDependent(Nonnull<const Value*> value) -> bool {
   // A VariableType is template dependent if it names a template binding.
-  if (auto* var_type = dyn_cast<VariableType>(value)) {
+  if (const auto* var_type = dyn_cast<VariableType>(value)) {
     return var_type->binding().binding_kind() ==
            GenericBinding::BindingKind::Template;
   }
@@ -448,7 +448,7 @@ static auto IsTemplateSaturated(const Bindings& bindings) -> bool {
 // have template argument values specified.
 static auto IsTemplateSaturated(
     llvm::ArrayRef<Nonnull<const GenericBinding*>> bindings) -> bool {
-  for (auto* binding : bindings) {
+  for (const auto* binding : bindings) {
     if (binding->binding_kind() == GenericBinding::BindingKind::Template &&
         !binding->has_template_value()) {
       return false;
@@ -5583,7 +5583,7 @@ auto TypeChecker::CheckAndAddImplBindings(
                                                  iface_witness, iface_scope));
 
       std::optional<TypeStructureSortKey> sort_key;
-      if (deduced_bindings.size()) {
+      if (!deduced_bindings.empty()) {
         sort_key = TypeStructureSortKey::ForImpl(impl_type, iface_type);
         if (trace_stream_->is_enabled()) {
           *trace_stream_ << "type structure sort key for `impl " << *impl_type
@@ -5622,7 +5622,7 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   if (!IsTemplateSaturated(impl_decl->deduced_parameters())) {
     CloneContext context(arena_);
     TemplateInfo template_info = {.pattern = context.Clone(impl_decl)};
-    for (auto deduced : impl_decl->deduced_parameters()) {
+    for (const auto* deduced : impl_decl->deduced_parameters()) {
       template_info.param_map.insert(
           {deduced, context.GetExistingClone(deduced)});
     }
