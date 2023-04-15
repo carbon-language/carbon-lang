@@ -133,7 +133,7 @@ converting it into one as necessary.
 A _variable pattern_ can be introduced with the `var` keyword to create an
 object with storage when match.d Every binding pattern name introduced within a
 variable pattern is called a _variable binding_ and forms a
-[_reference_expression_](#reference-expressions) to an object within the
+[_reference expression_](#reference-expressions) to an object within the
 variable pattern's storage when used. Variable patterns require their matched
 expression to be an _initializing expression_ and provide their storage to it to
 be initialized.
@@ -626,6 +626,9 @@ this storage is an implementation detail. It simply allows deferring an
 important case of initializing that storage from a value or reference expression
 already available in the caller to the caller so that it can identify cases
 where that initialization is not necessary.
+
+**References:** This addresses an issue-for-leads about
+[reducing the potential copies incurred by returns](https://github.com/carbon-language/carbon-lang/issues/828).
 
 #### Declared `returned` variable
 
