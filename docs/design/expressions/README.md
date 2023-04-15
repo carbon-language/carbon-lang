@@ -140,7 +140,7 @@ graph BT
     complement --> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
-    not -----> memberAccess
+    not ------> memberAccess
     multiplication & modulo & as & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     comparison --> modulo & addition & as & bitwise_and & bitwise_or & bitwise_xor & shift
