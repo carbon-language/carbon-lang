@@ -8,8 +8,11 @@
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Div'},
 // CHECK:STDOUT:     {kind: 'DeducedParameterListStart', text: '['},
-// CHECK:STDOUT:   {kind: 'DeducedParameterList', text: ']', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT: {kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'DeclaredName', text: '(', has_error: yes},
+// CHECK:STDOUT:       {kind: 'InvalidParse', text: '(', has_error: yes},
+// CHECK:STDOUT:     {kind: 'PatternBinding', text: '(', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:   {kind: 'DeducedParameterList', text: ']', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT: {kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 8},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 

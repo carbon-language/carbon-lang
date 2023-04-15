@@ -959,8 +959,7 @@ auto Parser::HandleExpressionInPostfixState() -> void {
     }
     default: {
       // Add a node to keep the parse tree balanced.
-      AddLeafNode(ParseNodeKind::InvalidExpression, *position_,
-                  /*has_error=*/true);
+      AddLeafNode(ParseNodeKind::InvalidParse, *position_, /*has_error=*/true);
       CARBON_DIAGNOSTIC(ExpectedExpression, Error, "Expected expression.");
       emitter_->Emit(*position_, ExpectedExpression);
       ReturnErrorOnState();
@@ -1490,23 +1489,27 @@ auto Parser::HandlePattern(PatternKind pattern_kind) -> void {
         break;
       }
     }
-    // Still use the finish state for errors.
+    // Add a placeholder for the type.
+    AddLeafNode(ParseNodeKind::InvalidParse, *position_, /*has_error=*/true);
     state.state = ParserState::PatternFinishAsRegular;
     state.has_error = true;
     PushState(state);
   };
 
   // The first item should be an identifier or, for deduced parameters, `self`.
+  bool has_name = false;
   if (auto identifier = ConsumeIf(TokenKind::Identifier)) {
     AddLeafNode(ParseNodeKind::DeclaredName, *identifier);
+    has_name = true;
   } else if (pattern_kind == PatternKind::DeducedParameter) {
     if (auto self = ConsumeIf(TokenKind::SelfValueIdentifier)) {
       AddLeafNode(ParseNodeKind::SelfValueIdentifier, *self);
-    } else {
-      on_error();
-      return;
+      has_name = true;
     }
-  } else {
+  }
+  if (!has_name) {
+    // Add a placeholder for the name.
+    AddLeafNode(ParseNodeKind::DeclaredName, *position_, /*has_error=*/true);
     on_error();
     return;
   }
@@ -1541,14 +1544,13 @@ auto Parser::HandlePatternAsVariableState() -> void {
 auto Parser::HandlePatternFinish(ParseNodeKind node_kind) -> void {
   auto state = PopState();
 
-  // If an error was encountered, propagate it without adding a node.
+  AddNode(node_kind, state.token, state.subtree_start, state.has_error);
+
+  // Propagate errors to the parent state so that they can take different
+  // actions on invalid patterns.
   if (state.has_error) {
     ReturnErrorOnState();
-    return;
   }
-
-  // TODO: may need to mark has_error if !type.
-  AddNode(node_kind, state.token, state.subtree_start, /*has_error=*/false);
 }
 
 auto Parser::HandlePatternFinishAsGenericState() -> void {
