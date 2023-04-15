@@ -435,7 +435,7 @@ implemented.
 Value expressions and value bindings can be used with
 [polymorphic types](/docs/design/classes.md#inheritance), for example:
 
-```
+```carbon
 base class MyBase { ... }
 
 fn UseBase(b: MyBase) { ... }
@@ -792,7 +792,7 @@ _user-defined dereference_ syntax.
 
 The interface might look like:
 
-```
+```carbon
 interface Pointer {
   let ValueT:! Type;
   fn Dereference[self: Self]() -> ValueT*;
@@ -802,7 +802,7 @@ interface Pointer {
 Here is an example using a hypothetical `TaggedPtr` that carries some extra
 integer tag next to the pointer it emulates:
 
-```
+```carbon
 class TaggedPtr(T:! Type) {
   var tag: Int32;
   var ptr: T*;
@@ -824,7 +824,7 @@ language then actually dereferences to form a reference expression similar to
 that formed by `var` declarations. This interface is implemented for normal
 pointers as a no-op:
 
-```
+```carbon
 impl [T:! Type] T* as Pointer {
   let ValueT:$ Type = T;
   fn Dereference[self: Self]() -> T* { return self; }
