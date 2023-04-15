@@ -507,6 +507,171 @@ fn F(s_value: S) {
 
 ## Initializing expressions
 
+Storage in Carbon is initialized using _initializing expressions_. Their
+evaluation produces an initialized object in the storage, although that object
+may still be _unformed_.
+
+**Future work:** More details on initialization and unformed objects should be
+added to the design from the proposal [#257](/pull/257), see
+[#1993](/issues/1993). When added, it should be linked from here for the details
+on the initialization semantics specifically.
+
+The simplest form of initializing expressions are value or durable reference
+expressions that are converted into an initializing expression. Value
+expressions are written directly into the storage to form a new object.
+Reference expressions have the object they refer to copied into a new object in
+the provided storage.
+
+**Future work:** The design should be expanded to fully cover how copying is
+managed and linked to from here.
+
+The first place where an initializing expression is _required_ is to satisfy
+[_variable patterns_](#binding-patterns-and-local-variables-with-let-and-var).
+These require the expression they match to be an initializing expression for the
+storage they create. The simplest example is the expression after the `=` in a
+local `var` declaration.
+
+The next place where a Carbon expression requires an initializing expression is
+the expression operand to `return` statements. We expand more completely on how
+return statements interact with expressions, values, objects, and storage
+[below](#function-calls-and-returns).
+
+The last path that requires forming an initializing expression in Carbon is when
+attempting to convert a non-reference expression into an ephemeral reference
+expression, where temporary storage is materialized and provided to an
+initializing expression. The resulting object can then form the ephemeral
+reference expression.
+
+### Function calls and returns
+
+Functions with a return type and return statement in Carbon are called
+_returning functions_. Calls to these functions are modeled directly as
+initializing expressions -- they require storage as an input and when evaluated
+cause that storage to be initialized with an object. This means that when a
+function call is used to initialize some variable pattern as here:
+
+```carbon
+fn CreateMyObject() -> MyType {
+  return <return-expression>;
+}
+
+var x: MyType = CreateMyObject();
+```
+
+The `<return-expression>` in the `return` statement actually initializes the
+storage provided for `x`. There is no "copy" or other step.
+
+All `return` statement expressions are required to be initializing expressions
+and in fact initialize the storage provided to the returning function's call
+expression. This in turn causes the property to hold _transitively_ across an
+arbitrary number of function calls and returns. The storage is forwarded at each
+stage and initialized exactly once.
+
+#### Deferred initialization from values and references
+
+Carbon also makes the evaluation of returning function calls and return
+statements are tightly linked in order to enable more efficiency improvements.
+It allows the actual initialization performed by the `return` statement with its
+expression can be deferred from within the body of the function to the caller
+initializer expression if it can simply propagate a value or reference
+expression to the caller that is guaranteed to be alive and available to the
+caller.
+
+Consider the following code:
+
+```carbon
+fn SelectSecond(first: Point, second: Point, third: Point) -> Point {
+  return second;
+}
+
+fn UsePoint(p: Point);
+
+fn F(p1: Point, p2: Point) {
+  UsePoint(SelectSecond(p2, p1, p2));
+}
+```
+
+The call to `SelectSecond` must provide storage for a `Point` that can be
+initialized. However, Carbon allows an implementation of the actual
+`SelectSecond` function to not initialize this storage when it reaches
+`return second`. Because the expression `second` is a value expression which is
+necessarily valid in the caller, Carbon allows an implementation that simply
+communicates that this value expression is the return expression and _if
+necessary_ should initialize the temporary storage. This in turn allows the
+caller `F` to recognize that the value expression (`p1` in the caller) is
+already valid to pass as the argument to `UsePoint` without initializing the
+temporary storage from it and reading it back out of that storage.
+
+None of this impacts the type system and so an implementation can freely select
+specific strategies here based on concrete types without harming generic code.
+There is always a generic fallback as well if monomorphization isn't desired.
+
+This freedom mirrors that of [input values](#value-expressions) where might be
+implemented as either a reference or a copy without breaking genericity. Here
+too, many small types will not need to be lazy and simply eagerly initialize the
+temporary which is implemented as an actual machine register. But for large
+types or ones with associated allocated storage, this can reliably avoid
+extraneous memory allocations and other costs.
+
+Note that this flexibility doesn't avoid the call expression materializing
+temporary storage and providing it to the function. Whether the function needs
+this storage is an implementation detail. It simply allows deferring an
+important case of initializing that storage from a value or reference expression
+already available in the caller to the caller so that it can identify cases
+where that initialization is not necessary.
+
+#### Declared `returned` variable
+
+This also allows the return's storage to be matched into a local `returned var`
+variable declaration within a function body, which can then be initialized and
+used just like any other `var` declaration. The storage used for the declaration
+is exactly that provided to a call to the function For example:
+
+```carbon
+fn CreateMyObject2() -> MyType {
+  returned var result: MyType = CreateMyObject;
+
+  // ... Any code we want here ...
+
+  // Must explicitly use the variable return syntax rather than returning an
+  // expression.
+  return var;
+}
+```
+
+The pattern used for a `returned var` declaration does have some restrictions:
+it must produce the same _storage_ as a call would for the return type. The
+initializer for the declared storage also first initializes storage _with the
+return type_, and then the pattern is matched to bind names.
+
+There are also a set of restrictions on control flow in the presence of a
+`returned var` declaration to provide simple and understandable behavior while
+having reasonable expressivity:
+
+1. Once a `returned var` is in scope, another `returned var` cannot be declared.
+2. Any `return` with a `returned var` in scope must be `return var;` and returns
+   the declared `returned var`.
+3. If control flow exits the scope of a `returned var` in any way other than a
+   `return var;`, it ends the lifetime of the declared `returned var` exactly
+   like it would end the lifetime of a `var` declaration.
+4. There must be a `returned var` declaration in scope for any `return var;`
+   statement.
+
+These rules allows code like:
+
+```carbon
+fn MaybeReturnedVar() -> Point {
+  while (KeepTryingThings()) {
+    returned var p: Point = ...;
+    if (...) {
+      return var;
+    }
+  }
+
+  return MakeMeAPoint();
+}
+```
+
 ## Pointers
 
 Pointers in Carbon are the primary mechanism for _indirect access_ to storage
