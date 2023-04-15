@@ -25,9 +25,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Interop with C++ `const &` and `const` methods.](#interop-with-c-const--and-const-methods)
     -   [Escape hatches for value addresses in Carbon](#escape-hatches-for-value-addresses-in-carbon)
 -   [Initializing expressions](#initializing-expressions)
+    -   [Function calls and returns](#function-calls-and-returns)
+        -   [Deferred initialization from values and references](#deferred-initialization-from-values-and-references)
+        -   [Declared `returned` variable](#declared-returned-variable)
 -   [Pointers](#pointers)
     -   [Reference types](#reference-types)
-    -   [Syntax](#syntax)
+    -   [Pointer syntax](#pointer-syntax)
     -   [Syntax-free dereference and address-of](#syntax-free-dereference-and-address-of)
     -   [Dereferencing customization](#dereferencing-customization)
 -   [`const`-qualified types](#const-qualified-types)
@@ -219,8 +222,8 @@ reference expression in Carbon:
     left-hand-side of the `=` to be a durable reference. This stronger
     requirement is enforced before the expression is rewritten to dispatch into
     the `Carbon.Assign.Op` interface method.
--   [Address-of expressions](#pointer-syntax) require their operand to be a durable
-    reference and compute the address of the referenced object.
+-   [Address-of expressions](#pointer-syntax) require their operand to be a
+    durable reference and compute the address of the referenced object.
 
 There are several kinds of expressions that produce durable references in
 Carbon:
@@ -230,7 +233,7 @@ Carbon:
     `x`
 -   Dereferenced [pointers](#pointers): `*p`
 -   Names of subobjects through member access: `x.member` or `p->member`
--   [Indexing](#indexing): `array[i]`
+-   [Indexing](/docs/design/indexing.md): `array[i]`
 
 There is no way to convert another category of expression into a durable
 reference expression, they always directly refer to some declared variable
@@ -512,9 +515,11 @@ evaluation produces an initialized object in the storage, although that object
 may still be _unformed_.
 
 **Future work:** More details on initialization and unformed objects should be
-added to the design from the proposal [#257](/pull/257), see
-[#1993](/issues/1993). When added, it should be linked from here for the details
-on the initialization semantics specifically.
+added to the design from the proposal
+[#257](https://github.com/carbon-language/carbon-lang/pull/257), see
+[#1993](https://github.com/carbon-language/carbon-lang/issues/1993). When added,
+it should be linked from here for the details on the initialization semantics
+specifically.
 
 The simplest form of initializing expressions are value or durable reference
 expressions that are converted into an initializing expression. Value
@@ -897,3 +902,14 @@ functionality already proposed here or for [classes](/docs/design/classes.md):
 Perhaps more options will emerge as well. Again, the goal isn't to completely
 preclude pursuing this direction, but instead to try to ensure it is only
 pursued based on a real and concrete need, and the minimal extension is adopted.
+
+## Alternatives considered
+
+TODO
+
+## References
+
+-   Proposal
+    [#257: Initialization of memory and values](https://github.com/carbon-language/carbon-lang/pull/257)
+-   Proposal
+    [#2006: Values, variables, and pointers](https://github.com/carbon-language/carbon-lang/pull/2006)

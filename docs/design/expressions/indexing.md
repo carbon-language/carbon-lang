@@ -23,14 +23,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 Carbon supports indexing using the conventional `a[i]` subscript syntax. When
-`a` is an l-value, the result of subscripting is always an l-value, but when `a`
-is an r-value, the result can be an l-value or an r-value, depending on which
+`a` is a
+[_durable reference expression_](/docs/design/values.md#durable-reference-expressions),
+the result of subscripting is also a durable reference expression, but when `a`
+is a [_value expression_](/docs/design/values.md#value-expressions), the result
+can be a durable reference expression or a value expression, depending on which
 interface the type implements:
 
--   If subscripting an r-value produces an r-value result, as with an array, the
-    type should implement `IndexWith`.
--   If subscripting an r-value produces an l-value result, as with C++'s
-    `std::span`, the type should implement `IndirectIndexWith`.
+-   If subscripting a value expression produces a value expression, as with an
+    array, the type should implement `IndexWith`.
+-   If subscripting an value expression produces a durable reference expression,
+    as with C++'s `std::span`, the type should implement `IndirectIndexWith`.
 
 `IndirectIndexWith` is a subtype of `IndexWith`, and subscript expressions are
 rewritten to method calls on `IndirectIndexWith` if the type is known to
@@ -38,6 +41,19 @@ implement that interface, or to method calls on `IndexWith` otherwise.
 
 `IndirectIndexWith` provides a final blanket `impl` of `IndexWith`, so a type
 can implement at most one of those two interfaces.
+
+The `Addr` methods of these interfaces, which are used to form durable reference
+expressions on indexing, must return a pointer and work similarly to the
+[pointer dereference customization interface](/docs/design/values.md#dereferencing-customization).
+The returned pointer is then dereferenced by the language to form the reference
+expression referring to the pointed-to object. These methods must return a raw
+pointer, and do not automatically chain with customized dereference interfaces.
+
+**Open question:** It's not clear that the lack of chaining is necessary, and it
+might be more expressive for the pointer type returned by the `Addr` methods to
+be an associated type with a default to allow types to produce custom
+pointer-like types on their indexing boundary and have them still be
+automatically dereferenced.
 
 ## Details
 
@@ -136,3 +152,5 @@ Carbon API.
 
 -   Proposal
     [#2274: Subscript syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2274)
+-   Proposal
+    [#2006: Values, variables, and pointers](https://github.com/carbon-language/carbon-lang/pull/2006)

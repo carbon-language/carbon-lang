@@ -13,9 +13,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Details](#details)
     -   [Precedence](#precedence)
-    -   [Associativity](#associativity)
-    -   [Conversions](#conversions)
-    -   [Overloading](#overloading)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
