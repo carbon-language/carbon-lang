@@ -74,8 +74,6 @@ graph BT
              &x<br>"]
     click pointer "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/pointer.md"
 
-    pointerUnary((" "))
-
     negation["-x"]
     click negation "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
 
@@ -138,12 +136,11 @@ graph BT
     memberAccess --> parens & braces & unqualifiedName
     pointerType --> memberAccess
     pointer --> memberAccess
-    pointerUnary --> pointer
-    negation --> pointerUnary
-    complement --> pointerUnary
+    negation --> pointer
+    complement --> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
-    not --------> memberAccess
+    not -------> memberAccess
     multiplication & modulo & as & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
     comparison --> modulo & addition & as & bitwise_and & bitwise_or & bitwise_xor & shift
