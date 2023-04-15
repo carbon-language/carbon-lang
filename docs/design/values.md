@@ -35,6 +35,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Dereferencing customization](#dereferencing-customization)
 -   [`const`-qualified types](#const-qualified-types)
 -   [Lifetime overloading](#lifetime-overloading)
+-   [Alternatives considered](#alternatives-considered)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -233,7 +235,7 @@ Carbon:
     `x`
 -   Dereferenced [pointers](#pointers): `*p`
 -   Names of subobjects through member access: `x.member` or `p->member`
--   [Indexing](/docs/design/indexing.md): `array[i]`
+-   [Indexing](/docs/design/expressions/indexing.md): `array[i]`
 
 There is no way to convert another category of expression into a durable
 reference expression, they always directly refer to some declared variable
