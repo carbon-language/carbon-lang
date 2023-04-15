@@ -201,10 +201,10 @@ _Reference expressions_ refer to _objects_ with _storage_ where a value may be
 read or written and the object's address can be taken. There are two
 sub-categories of reference expressions: _durable_ and _ephemeral_.
 
-Calling a [method](TODO) on a reference expression where the method's `self`
-parameter has an [`addr` specifier](TODO) can always implicitly take the address
-of the referred-to object. This address is passed as a [pointer](#pointers) to
-the `self` parameter for such methods.
+Calling a [method](/docs/design/classes.md#methods) on a reference expression
+where the method's `self` parameter has an `addr` specifier can always
+implicitly take the address of the referred-to object. This address is passed as
+a [pointer](#pointers) to the `self` parameter for such methods.
 
 ### Durable reference expressions
 
@@ -215,11 +215,11 @@ as well.
 There are two expressions that require one of their operands to be a durable
 reference expression in Carbon:
 
--   [Assignment expressions](TODO) require the left-hand-side of the `=` to be a
-    durable reference. This stronger requirement is enforced before the
-    expression is rewritten to dispatch into the `Carbon.Assign.Op` interface
-    method.
--   [Address-of expressions](TODO) require their operand to be a durable
+-   [Assignment expressions](/docs/design/assignment.md) require the
+    left-hand-side of the `=` to be a durable reference. This stronger
+    requirement is enforced before the expression is rewritten to dispatch into
+    the `Carbon.Assign.Op` interface method.
+-   [Address-of expressions](#pointer-syntax) require their operand to be a durable
     reference and compute the address of the referenced object.
 
 There are several kinds of expressions that produce durable references in
@@ -323,9 +323,9 @@ implementation strategy is used to be a predictable and customizable property of
 the type of a value.
 
 A type can optionally control its value representation using a custom syntax
-similar to customizing its [destructor](TODO). This syntax sets the
-representation to some type uses a keyword `value_rep` and can appear where a
-member declaration would be valid within the type:
+similar to customizing its [destructor](/docs/design/classes.md#destructors).
+This syntax sets the representation to some type uses a keyword `value_rep` and
+can appear where a member declaration would be valid within the type:
 
 ```carbon
 class SomeType {
@@ -720,7 +720,7 @@ avoid the syntactic distinction between indirect access and direct access. This
 aspect is covered by our design decision around
 [syntax-free dereference](#syntax-free-dereference-and-address-of).
 
-### Syntax
+### Pointer syntax
 
 The type of a pointer to a type `T` is written with a postfix `*` as in `T*`.
 Dereferencing a pointer is a [_reference expression_] and is written with a
