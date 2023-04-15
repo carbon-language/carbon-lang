@@ -37,20 +37,20 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Values, objects, and expressions
 
-Carbon has both abstract _values_ and _objects_. Carbon _values_ are things like
-`42`, `true`, and `i32` (a type value). Carbon _objects_ have _storage_ where a
-values can read and written. Storage also allows taking the address of an object
-in memory in Carbon.
+Carbon has both abstract _values_ and concrete _objects_. Carbon _values_ are
+things like `42`, `true`, and `i32` (a type value). Carbon _objects_ have
+_storage_ where values can be read and written. Storage also allows taking the
+address of an object in memory in Carbon.
 
 Both objects and values can be nested within each other. For example
 `(true, true)` is both a value and also contains two sub-values. When a
 two-tuple is stored somewhere, it is both a tuple-typed object and contains two
 subobjects.
 
-However, while these terms are convenient are often used to casually describe
-something in Carbon, they're not the right way to categorize or formalize the
-semantics of Carbon code. Instead, the semantics follow a more precise model
-which categorizes the _expressions_. This allows us to both be more precise and
+These terms are important components in the describing the semantics of Carbon
+code, but they aren't sufficient. We also need to explicitly and precisely talk
+about the Carbon _expressions_ that produce or reference values and objects.
+Categorizing the expressions themselves allows us to be more precise and
 articulate important differences not captured without looking at the expression
 itself.
 
@@ -58,8 +58,8 @@ itself.
 
 There are three expression categories in Carbon:
 
--   [_Value expressions_](#value-expressions) produce an abstract, read-only
-    value that cannot be modified or have its address taken.
+-   [_Value expressions_](#value-expressions) produce abstract, read-only
+    _values_ that cannot be modified or have its address taken.
 -   [_Reference expressions_](#reference-expressions) refer to _objects_ with
     _storage_ where a value may be read or written and the object's address can
     be taken.
@@ -506,8 +506,6 @@ fn F(s_value: S) {
 ```
 
 ## Initializing expressions
-
-TODO
 
 ## Pointers
 
