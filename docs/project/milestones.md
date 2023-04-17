@@ -120,20 +120,20 @@ into Carbon.
     -   Single inheritance
         -   Virtual dispatch
         -   C++ interop:
-            -   Support bi-directional inheritance: C++ <-> Carbon
-            -   Support hierarchy roots in both C++ and Carbon
-            -   Mappings across inheritance features: abstract, final, virtual.
+            -   Bi-directional inheritance between C++ and Carbon
+            -   Type hierarchy roots in both C++ and Carbon
+            -   Mappings of inheritance features: abstract, final, virtual
     -   Operator overloading
         -   C++ interop:
-            -   Synthesize Carbon overloads for imported C++ types
-            -   Export Carbon overloads into C++
+            -   Synthesizing Carbon overloads for imported C++ types
+            -   Exporting Carbon overloads into C++
     -   Sum types (discriminated unions)
     -   Unions (un-discriminated)
         -   C++ interop: mapping to and from C++ unions.
     -   **Uncertain:** Mixins (depending on how much need there is to evaluate
         C++'s multiple inheritance use cases)
-        -   C++ interop: model for C++ multiple inheritance maps cleanly into
-            Carbon.
+        -   C++ interop: model for C++ multiple inheritance cleanly mapped into
+            Carbon
 -   Generics
     -   Both generic functions and types
     -   Checked generics
@@ -144,9 +144,9 @@ into Carbon.
         -   Importing C++ templates, instantiating on Carbon types
         -   Exporting Carbon templates, instantiating on C++ types
         -   Exporting Carbon checked generics (as templates), instantiating on
-            C++ types.
+            C++ types
         -   Mapping C++20 concepts into named predicates, and named predicates
-            into C++20 concepts.
+            into C++20 concepts
 
 #### Functions, statements, expressions, ...
 
@@ -246,8 +246,8 @@ Carbon _experiment_ with this feature set.
 That said, this is about as concrete as we can get for a milestone that remains
 years in the future. The full scope of requirements for this milestone will be
 defined as we complete 0.1 and begin getting feedback on it. Currently, we just
-call out specific features that we are actively deferring until 0.2 but without
-being listed somewhere could cause confusion.
+call out specific features that we are actively deferring until at least 0.2 but
+without being listed somewhere could cause confusion.
 
 ### Features explicitly deferred until at least 0.2
 
@@ -287,8 +287,8 @@ success and begin planning large-scale adoption and migration.
 Even less concrete is the milestone that marks Carbon no longer being an
 experiment, but if successful, a usable language. Currently this is
 speculatively called 1.0 but even that is highly subject to change as we
-approach. Again, we simply call out features here that we want to explicitly
-defer and not cause confusion by omission above.
+approach. Again, we simply call out features here that we _do_ expect to have in
+a 1.0 milestone, but want to explicitly defer beyond the 0.2 milestone.
 
 ### Features explicitly deferred beyond 0.2
 
@@ -300,6 +300,7 @@ defer and not cause confusion by omission above.
     -   A mechanism to address users who need true, durable stability over long
         time horizons.
 -   Package management strategy and plan, and any early groundwork needed.
--   High quality developer experience, ranging from compiler error messages to
-    development tooling
+-   Developer experience is high enough quality to enable initial production
+    users.
+    -   Includes compiler error messages and basic developer tooling.
 -   Everything we've learned we need as part of the evaluation of 0.1 and 0.2
