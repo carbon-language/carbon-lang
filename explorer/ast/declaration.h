@@ -1016,10 +1016,22 @@ class AliasDeclaration : public Declaration {
   auto expression_category() const -> ExpressionCategory {
     return ExpressionCategory::Value;
   }
+  // Sets the resolved declaration of alias target. Should only be called once,
+  // during name resolution.
+  void set_resolved_declaration(Nonnull<const Declaration*> decl) {
+    CARBON_CHECK(!resolved_declaration_.has_value());
+    resolved_declaration_ = decl;
+  }
+  // Get the resolved declaration of alias target, if any exists.
+  auto resolved_declaration() const
+      -> std::optional<Nonnull<const Declaration*>> {
+    return resolved_declaration_;
+  }
 
  private:
   DeclaredName name_;
   Nonnull<Expression*> target_;
+  std::optional<Nonnull<const Declaration*>> resolved_declaration_;
 };
 
 // Return the unqualified name of a declaration, if it has one.

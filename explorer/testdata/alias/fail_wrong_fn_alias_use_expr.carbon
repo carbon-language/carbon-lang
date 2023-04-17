@@ -8,13 +8,10 @@
 
 package ExplorerTest api;
 
-namespace N;
-fn N.F() {}
-// TODO: This should work.
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/namespace/fail_namespace_alias.carbon:[[@LINE+1]]: could not find `namespace N;`
-alias M = N;
+fn F() {}
+alias A = F;
 
 fn Main() -> i32 {
-  M.F();
-  return 0;
+    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/alias/fail_wrong_fn_alias_use_expr.carbon:[[@LINE+1]]: member access, unexpected fn () -> () in A.x
+    return A.x;
 }
