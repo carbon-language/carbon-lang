@@ -283,18 +283,14 @@ auto NameResolver::ResolveNames(Expression& expression,
       }
 
       Nonnull<const AstNode*> base = &scope->base();
-      // recursively resolve aliases
-      auto namespace_alias =
-          [](const AstNode& base) -> std::optional<Nonnull<const AstNode*>> {
-        if (const auto* alias = dyn_cast<AliasDeclaration>(&base)) {
-          return alias->resolved_declaration();
+      // recursively resolve aliases.
+      while (const auto* alias = dyn_cast<AliasDeclaration>(base)) {
+        if (auto resolved = alias->resolved_declaration()) {
+          base = *resolved;
+        } else {
+          break;
         }
-        return std::nullopt;
-      };
-      while (auto new_base = namespace_alias(*base)) {
-        base = *new_base;
       }
-
       if (const auto* namespace_decl = dyn_cast<NamespaceDeclaration>(base)) {
         auto ns_it = namespace_scopes_.find(namespace_decl);
         CARBON_CHECK(ns_it != namespace_scopes_.end())
