@@ -542,7 +542,7 @@ def _impl(ctx):
                     flag_group(
                         flags = [
                             "-fuse-ld=lld",
-                            "-unwindlib=libunwind",
+                            #"-unwindlib=libunwind",
                             # Force the C++ standard library and runtime
                             # libraries to be statically linked. This works even
                             # with libc++ and libunwind despite the names,
