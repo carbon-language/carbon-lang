@@ -542,7 +542,7 @@ def _impl(ctx):
                     flag_group(
                         flags = [
                             "-fuse-ld=lld",
-                            #"-unwindlib=libunwind",
+                            "-unwindlib=libunwind",
                             # Force the C++ standard library and runtime
                             # libraries to be statically linked. This works even
                             # with libc++ and libunwind despite the names,
@@ -554,8 +554,8 @@ def _impl(ctx):
                             # PR46321 (impacting most other packages).
                             # We recommend using Homebrew's LLVM install on
                             # Linux.
-                            #"-static-libstdc++",
-                            #"-static-libgcc",
+                            "-static-libstdc++",
+                            "-static-libgcc",
                             # Link with Clang's runtime library. This is always
                             # linked statically.
                             "-rtlib=compiler-rt",
