@@ -216,7 +216,7 @@ to be completed as part of 0.1 beyond _language_ features:
 
 -   A functioning Carbon toolchain:
     -   Supports drop-in usage as a Clang C++ toolchain with the most common
-        Make and CMake derived build systems.
+        Make- and CMake-derived build systems.
     -   Implements most of the [features](#language-features) above, including
         C++ interop, and any remaining gaps don't undermine the ability to
         evaluate the remaining features or the confidence in the overall
