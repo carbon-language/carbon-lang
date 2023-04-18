@@ -105,9 +105,6 @@
   FINAL(Break)                                          \
   FINAL(Continue)                                       \
   FINAL(Match)                                          \
-  FINAL(Continuation)                                   \
-  FINAL(Run)                                            \
-  FINAL(Await)                                          \
   FINAL(For)
 
 #define CARBON_Return_KINDS(ABSTRACT, FINAL) \
@@ -124,7 +121,6 @@
       ABSTRACT(MemberAccessExpression)                 \
   FINAL(IndexExpression)                               \
   FINAL(IntTypeLiteral)                                \
-  FINAL(ContinuationTypeLiteral)                       \
   FINAL(IntLiteral)                                    \
   FINAL(OperatorExpression)                            \
   FINAL(StringLiteral)                                 \

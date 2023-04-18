@@ -97,7 +97,6 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
@@ -116,7 +115,6 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::NominalClassType:
     case Value::Kind::MixinPseudoType:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::StringType:
     case Value::Kind::StaticArrayType:
     case Value::Kind::TupleType:
@@ -159,7 +157,6 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
@@ -181,7 +178,6 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::NamedConstraintType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::StaticArrayType:
@@ -230,7 +226,6 @@ static auto ExpectCompleteType(SourceLocation source_loc,
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
@@ -250,7 +245,6 @@ static auto ExpectCompleteType(SourceLocation source_loc,
     case Value::Kind::FunctionType:
     case Value::Kind::StructType:
     case Value::Kind::ConstraintType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::AssociatedConstant:
     case Value::Kind::TypeOfParameterizedEntityName:
@@ -344,7 +338,6 @@ static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
@@ -372,7 +365,6 @@ static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
     case Value::Kind::NamedConstraintType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::AssociatedConstant:
       // These types can contain other types, but those types can't involve
       // `auto`.
@@ -1240,7 +1232,6 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       // are not deduced as part of this deduction step.
     case Value::Kind::StaticArrayType:
       // TODO: We could deduce the array type from an array or tuple argument.
-    case Value::Kind::ContinuationType:
     case Value::Kind::ChoiceType:
       // TODO: Choice types should be handled like other named declarations.
     case Value::Kind::ConstraintType:
@@ -1274,7 +1265,6 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue: {
       // Argument deduction within the parameters of a parameterized class type
@@ -3810,7 +3800,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
       e->set_expression_category(ExpressionCategory::Value);
       e->set_static_type(arena_->New<TypeType>());
       return Success();
@@ -4673,26 +4662,6 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       }
       return Success();
     }
-    case StatementKind::Continuation: {
-      auto& cont = cast<Continuation>(*s);
-      CARBON_RETURN_IF_ERROR(TypeCheckStmt(&cont.body(), impl_scope));
-      cont.set_static_type(arena_->New<ContinuationType>());
-      return Success();
-    }
-    case StatementKind::Run: {
-      auto& run = cast<Run>(*s);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&run.argument(), impl_scope));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<Expression*> converted_argument,
-          ImplicitlyConvert("argument of `run`", impl_scope, &run.argument(),
-                            arena_->New<ContinuationType>()));
-      run.set_argument(converted_argument);
-      return Success();
-    }
-    case StatementKind::Await: {
-      // Nothing to do here.
-      return Success();
-    }
   }
 }
 
@@ -4754,9 +4723,6 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::ReturnVar:
     case StatementKind::ReturnExpression:
       return Success();
-    case StatementKind::Continuation:
-    case StatementKind::Run:
-    case StatementKind::Await:
     case StatementKind::Assign:
     case StatementKind::IncrementDecrement:
     case StatementKind::ExpressionStatement:
@@ -5895,7 +5861,6 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
       CARBON_FATAL() << "type of alias target is not a type";
@@ -5912,7 +5877,6 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::TupleType:
     case Value::Kind::NominalClassType:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::StringType:
     case Value::Kind::AssociatedConstant:
       return false;

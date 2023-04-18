@@ -366,10 +366,6 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       out << "String";
       break;
 
-    case Fuzzing::Expression::kContinuationTypeLiteral:
-      out << "__Continuation";
-      break;
-
     case Fuzzing::Expression::kTypeTypeLiteral:
       out << "type";
       break;
@@ -675,26 +671,6 @@ static auto StatementToCarbon(const Fuzzing::Statement& statement,
       out << "}";
       break;
     }
-
-    case Fuzzing::Statement::kContinuation: {
-      const auto& continuation = statement.continuation();
-      out << "__continuation ";
-      IdentifierToCarbon(continuation.name(), out);
-      BlockStatementToCarbon(continuation.body(), out);
-      break;
-    }
-
-    case Fuzzing::Statement::kRun: {
-      const auto& run = statement.run();
-      out << "__run ";
-      ExpressionToCarbon(run.argument(), out);
-      out << ";";
-      break;
-    }
-
-    case Fuzzing::Statement::kAwaitStatement:
-      out << "__await;";
-      break;
 
     case Fuzzing::Statement::kBreakStatement:
       out << "break;";

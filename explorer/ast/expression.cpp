@@ -300,7 +300,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::ValueLiteral:
       PrintID(out);
       break;
@@ -337,9 +336,6 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       break;
     case ExpressionKind::TypeTypeLiteral:
       out << "type";
-      break;
-    case ExpressionKind::ContinuationTypeLiteral:
-      out << "Continuation";
       break;
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::StructLiteral:

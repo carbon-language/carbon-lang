@@ -817,20 +817,6 @@ class IntTypeLiteral : public Expression {
   }
 };
 
-class ContinuationTypeLiteral : public Expression {
- public:
-  explicit ContinuationTypeLiteral(SourceLocation source_loc)
-      : Expression(AstNodeKind::ContinuationTypeLiteral, source_loc) {}
-
-  explicit ContinuationTypeLiteral(CloneContext& context,
-                                   const ContinuationTypeLiteral& other)
-      : Expression(context, other) {}
-
-  static auto classof(const AstNode* node) -> bool {
-    return InheritsFromContinuationTypeLiteral(node->kind());
-  }
-};
-
 class TypeTypeLiteral : public Expression {
  public:
   explicit TypeTypeLiteral(SourceLocation source_loc)

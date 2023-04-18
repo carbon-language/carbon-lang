@@ -134,7 +134,6 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::ValueLiteral:
     case ExpressionKind::IndexExpression:
     case ExpressionKind::CompoundMemberAccessExpression:
@@ -283,9 +282,6 @@ static auto ResolveUnformed(Nonnull<const Statement*> statement,
     }
     case StatementKind::Break:
     case StatementKind::Continue:
-    case StatementKind::Continuation:
-    case StatementKind::Run:
-    case StatementKind::Await:
     case StatementKind::For:
       // do nothing
       break;

@@ -28,7 +28,6 @@
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/action_stack.h"
 #include "explorer/interpreter/stack.h"
-#include "explorer/interpreter/stack_fragment.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -66,8 +65,6 @@ class Interpreter {
         todo_(MakeTodo(phase, &heap_)),
         trace_stream_(trace_stream),
         phase_(phase) {}
-
-  ~Interpreter();
 
   // Runs all the steps of `action`.
   // It's not safe to call `RunAllSteps()` or `result()` after an error.
@@ -180,21 +177,9 @@ class Interpreter {
   Heap heap_;
   ActionStack todo_;
 
-  // The underlying states of continuation values. All StackFragments created
-  // during execution are tracked here, in order to safely deallocate the
-  // contents of any non-completed continuations at the end of execution.
-  std::vector<Nonnull<StackFragment*>> stack_fragments_;
-
   Nonnull<TraceStream*> trace_stream_;
   Phase phase_;
 };
-
-Interpreter::~Interpreter() {
-  // Clean up any remaining suspended continuations.
-  for (Nonnull<StackFragment*> fragment : stack_fragments_) {
-    fragment->Clear();
-  }
-}
 
 //
 // State Operations
@@ -545,7 +530,6 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::FunctionTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::ValueLiteral:
@@ -771,12 +755,10 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringType:
     case Value::Kind::StringValue:
     case Value::Kind::TypeOfMixinPseudoType:
@@ -1812,10 +1794,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       CARBON_CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<TypeType>());
     }
-    case ExpressionKind::ContinuationTypeLiteral: {
-      CARBON_CHECK(act.pos() == 0);
-      return todo_.FinishAction(arena_->New<ContinuationType>());
-    }
     case ExpressionKind::StringLiteral:
       CARBON_CHECK(act.pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
@@ -2248,34 +2226,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                     stmt.source_loc()));
         return todo_.UnwindPast(*function.body(), return_value);
       }
-    case StatementKind::Continuation: {
-      CARBON_CHECK(act.pos() == 0);
-      const auto& continuation = cast<Continuation>(stmt);
-      // Create a continuation object by creating a frame similar the
-      // way one is created in a function call.
-      auto* fragment = arena_->New<StackFragment>();
-      stack_fragments_.push_back(fragment);
-      todo_.InitializeFragment(*fragment, &continuation.body());
-      // Bind the continuation object to the continuation variable
-      todo_.Initialize(&cast<Continuation>(stmt),
-                       arena_->New<ContinuationValue>(fragment));
-      return todo_.FinishAction();
-    }
-    case StatementKind::Run: {
-      const auto& run = cast<Run>(stmt);
-      if (act.pos() == 0) {
-        // Evaluate the argument of the run statement.
-        return todo_.Spawn(std::make_unique<ExpressionAction>(&run.argument()));
-      } else if (act.pos() == 1) {
-        // Push the continuation onto the current stack.
-        return todo_.Resume(cast<const ContinuationValue>(act.results()[0]));
-      } else {
-        return todo_.FinishAction();
-      }
-    }
-    case StatementKind::Await:
-      CARBON_CHECK(act.pos() == 0);
-      return todo_.Suspend();
   }
 }
 
