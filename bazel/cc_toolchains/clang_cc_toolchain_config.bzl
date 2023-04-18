@@ -554,8 +554,8 @@ def _impl(ctx):
                             # PR46321 (impacting most other packages).
                             # We recommend using Homebrew's LLVM install on
                             # Linux.
-                            "-static-libstdc++",
-                            "-static-libgcc",
+                            #"-static-libstdc++",
+                            #"-static-libgcc",
                             # Link with Clang's runtime library. This is always
                             # linked statically.
                             "-rtlib=compiler-rt",
