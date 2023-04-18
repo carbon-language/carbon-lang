@@ -6,15 +6,10 @@
 // RUN: %{not} %{explorer-run}
 // RUN: %{not} %{explorer-run-trace}
 
-package ExplorerTest api;
-
-namespace N;
-fn N.F() {}
-// TODO: This should work.
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/namespace/fail_namespace_alias.carbon:[[@LINE+1]]: could not find `namespace N;`
-alias M = N;
+package ExplorerTest impl;
 
 fn Main() -> i32 {
-  M.F();
+  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/print/fail_index_text.carbon:[[@LINE+1]]: Index invalid with argument count of 0 at offset 8 in `Print: {1a}`
+  Print("Print: {1a}");
   return 0;
 }

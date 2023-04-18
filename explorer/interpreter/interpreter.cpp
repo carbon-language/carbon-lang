@@ -1086,6 +1086,66 @@ auto Interpreter::CallFunction(const CallExpression& call,
   }
 }
 
+// Returns true if the format string is okay to pass to formatv. This only
+// supports `{{` and `{N}` as special syntax.
+static auto ValidateFormatString(SourceLocation source_loc,
+                                 const char* format_string, int num_args)
+    -> ErrorOr<Success> {
+  const char* cursor = format_string;
+  while (true) {
+    switch (*cursor) {
+      case '\0':
+        // End of string.
+        return Success();
+      case '{':
+        // `{` is a special character.
+        ++cursor;
+        switch (*cursor) {
+          case '\0':
+            return ProgramError(source_loc)
+                   << "`{` must be followed by a second `{` or index in `"
+                   << format_string << "`";
+          case '{':
+            // Escaped `{`.
+            ++cursor;
+            break;
+          case '}':
+            return ProgramError(source_loc)
+                   << "Invalid `{}` in `" << format_string << "`";
+          default:
+            int index = 0;
+            while (*cursor != '}') {
+              if (*cursor == '\0') {
+                return ProgramError(source_loc)
+                       << "Index incomplete in `" << format_string << "`";
+              }
+              if (*cursor < '0' || *cursor > '9') {
+                return ProgramError(source_loc)
+                       << "Non-numeric character in index at offset "
+                       << cursor - format_string << " in `" << format_string
+                       << "`";
+              }
+              index = (10 * index) + (*cursor - '0');
+              if (index >= num_args) {
+                return ProgramError(source_loc)
+                       << "Index invalid with argument count of " << num_args
+                       << " at offset " << cursor - format_string << " in `"
+                       << format_string << "`";
+              }
+              ++cursor;
+            }
+            // Move past the `}`.
+            ++cursor;
+        }
+        break;
+      default:
+        // Arbitrary text.
+        ++cursor;
+    }
+  }
+  llvm_unreachable("Loop returns directly");
+}
+
 auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
   const Action& act = todo_.CurrentAction();
   const Nonnull<const Value*> type = cast<TypeInstantiationAction>(act).type();
@@ -1514,16 +1574,19 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               Convert(args[0], arena_->New<StringType>(), exp.source_loc()));
           const char* format_string =
               cast<StringValue>(*format_string_value).value().c_str();
-          switch (args.size()) {
-            case 1:
+          int num_format_args = args.size() - 1;
+          CARBON_RETURN_IF_ERROR(ValidateFormatString(
+              intrinsic.source_loc(), format_string, num_format_args));
+          switch (num_format_args) {
+            case 0:
               llvm::outs() << llvm::formatv(format_string);
               break;
-            case 2:
+            case 1:
               llvm::outs() << llvm::formatv(format_string,
                                             cast<IntValue>(*args[1]).value());
               break;
             default:
-              CARBON_FATAL() << "Unexpected arg count: " << args.size();
+              CARBON_FATAL() << "Too many format args: " << num_format_args;
           }
           // Implicit newline; currently no way to disable it.
           llvm::outs() << "\n";

@@ -8,14 +8,10 @@
 
 package ExplorerTest api;
 
-namespace N;
-alias M = N;
-// TODO: It's unclear whether this should be permitted. If not, we should
-// produce a better diagnostic.
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/namespace/fail_namespace_alias_member.carbon:[[@LINE+1]]: alias M cannot be used as a name qualifier
-fn M.F() {}
+fn F() {}
+alias A = F;
 
 fn Main() -> i32 {
-  N.F();
-  return 0;
+    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/alias/fail_wrong_fn_alias_use_expr.carbon:[[@LINE+1]]: member access, unexpected fn () -> () in A.x
+    return A.x;
 }
