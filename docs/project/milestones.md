@@ -62,12 +62,12 @@ around what we expect evaluations to be able to include:
     -   Also in-scope are additional features that impact API design or need
         early feedback, but only if they are low cost to both the design and
         implementation.
-    -   Example language components for this are: lexical structure,
-        expressions, statements, conditions, loops, user-defined types,
+    -   Example language components include: lexical structure, expressions,
+        statements, conditions, loops, user-defined types, and their
         dependencies.
-    -   Example library components are integer types, floating point types,
+    -   Example library components include: integer types, floating point types,
         strings, arrays, ranges, pointers, optionals, variants, heap allocation,
-        etc.
+        and their dependencies.
     -   Where these build on top of other language or library designs, those are
         transitively in-scope.
 -   Design for both Carbon use of C++ and C++ use of Carbon, including all major
