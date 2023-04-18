@@ -135,7 +135,9 @@ into Carbon.
     -   Checked generics
         -   Definition-checked variadics
     -   Integrated templates
-        -   "Template interfaces" and named predicates
+        -   Including template-style structural conformance to nominal
+            constraints, both modeling the members (like interfaces) and
+            arbitrary predicates (like C++20 expression validity predicates)
     -   C++ interop:
         -   Importing C++ templates, instantiating on Carbon types
         -   Exporting Carbon templates, instantiating on C++ types
@@ -162,7 +164,6 @@ into Carbon.
     -   Loops
         -   Range-based loops
         -   Good equivalents for a range of existing C/C++ looping constructs
-        -   (maybe? hard to justify) Labeled-break and complex loop support
     -   Matching
         -   Good equivalents for C/C++ uses of `switch`
         -   Working with sum-types, especially for C++ `std::variant` and
