@@ -479,8 +479,8 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::PointerValue:
       out << "ptr<" << cast<PointerValue>(*this).address() << ">";
       break;
-    case Value::Kind::LValue:
-      out << "lval<" << cast<LValue>(*this).address() << ">";
+    case Value::Kind::LocationValue:
+      out << "lval<" << cast<LocationValue>(*this).address() << ">";
       break;
     case Value::Kind::BoolType:
       out << "bool";
@@ -832,7 +832,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
           return false;
         }
         for (size_t j = 0; j < equality1.values.size(); ++j) {
-          if (!ValueEqual(equality1.values[i], equality2.values[i],
+          if (!ValueEqual(equality1.values[j], equality2.values[j],
                           equality_ctx)) {
             return false;
           }
@@ -895,7 +895,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::StringValue:
     case Value::Kind::PointerValue:
-    case Value::Kind::LValue:
+    case Value::Kind::LocationValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::ContinuationValue:
@@ -1049,7 +1049,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::ContinuationValue:
     case Value::Kind::PointerValue:
-    case Value::Kind::LValue:
+    case Value::Kind::LocationValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::MemberName:
       // TODO: support pointer comparisons once we have a clearer distinction

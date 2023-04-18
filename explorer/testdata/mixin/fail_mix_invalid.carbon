@@ -8,14 +8,11 @@
 
 package ExplorerTest api;
 
-namespace N;
-alias M = N;
-// TODO: It's unclear whether this should be permitted. If not, we should
-// produce a better diagnostic.
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/namespace/fail_namespace_alias_member.carbon:[[@LINE+1]]: alias M cannot be used as a name qualifier
-fn M.F() {}
+__mixin Mixin {
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_invalid.carbon:[[@LINE+1]]: Not a valid mixin: `()`
+  __mix ();
+}
 
 fn Main() -> i32 {
-  N.F();
   return 0;
 }

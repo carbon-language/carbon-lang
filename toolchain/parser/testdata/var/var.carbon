@@ -33,7 +33,6 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// NOTE: Move to its own directory when more tests are added.
 var v: i32 = 0;
 var w: i32;
 fn F() {

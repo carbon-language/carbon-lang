@@ -64,7 +64,7 @@ class CloneContext::CloneValueTransform
   // A FunctionType may or may not own its bindings.
   auto operator()(Nonnull<const FunctionType*> fn_type)
       -> Nonnull<const FunctionType*> {
-    for (auto* binding : fn_type->deduced_bindings()) {
+    for (const auto* binding : fn_type->deduced_bindings()) {
       context_->MaybeCloneBase(binding);
     }
     for (auto [index, binding] : fn_type->generic_parameters()) {

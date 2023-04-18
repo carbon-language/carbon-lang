@@ -11,7 +11,6 @@
 
 using llvm::cast;
 using llvm::dyn_cast;
-using llvm::isa;
 
 namespace Carbon {
 
@@ -251,10 +250,7 @@ auto ImplScope::VisitEqualValues(
       return false;
     }
   }
-  if (parent_scope_ && !(*parent_scope_)->VisitEqualValues(value, visitor)) {
-    return false;
-  }
-  return true;
+  return !parent_scope_ || (*parent_scope_)->VisitEqualValues(value, visitor);
 }
 
 auto ImplScope::TryResolveInterface(Nonnull<const InterfaceType*> iface_type,
