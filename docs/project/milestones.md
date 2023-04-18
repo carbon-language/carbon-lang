@@ -130,10 +130,6 @@ into Carbon.
     -   Sum types (discriminated unions)
     -   Unions (un-discriminated)
         -   C++ interop: mapping to and from C++ unions.
-    -   **Uncertain:** Mixins (depending on how much need there is to evaluate
-        C++'s multiple inheritance use cases)
-        -   C++ interop: model for C++ multiple inheritance cleanly mapped into
-            Carbon
 -   Generics
     -   Both generic functions and types
     -   Checked generics
@@ -225,10 +221,10 @@ to be completed as part of 0.1 beyond _language_ features:
         C++ interop, and any remaining gaps don't undermine the ability to
         evaluate the remaining features or the confidence in the overall
         evaluation.
-    -   Supports building working programs on Windows, macOS, and Linux.
+    -   Installs on Windows, macOS, and Linux, and builds working programs for
+        those platforms.
 -   Build system integration for CMake, and documentation for integrating with
     Make or similar build systems.
--   An installation system or packages for Windows, macOS, and Linux.
 -   Basic documentation for evaluators from getting started to FAQs.
 
 ## Milestone 0.2: feature complete product for evaluation
@@ -257,6 +253,8 @@ without being listed somewhere could cause confusion.
     across effects
 -   Carbon-native threading
 -   Long tail of metaprogramming features
+-   Mixins
+-   Properties
 -   Inline assembly
 -   SIMD
 -   Some ability to define an API that communicates & shares data across
