@@ -60,11 +60,13 @@ class Interpreter {
   // traces if `trace` is true. `phase` indicates whether it executes at
   // compile time or run time.
   Interpreter(Phase phase, Nonnull<Arena*> arena,
-              Nonnull<TraceStream*> trace_stream)
+              Nonnull<TraceStream*> trace_stream,
+              Nonnull<llvm::raw_ostream*> print_stream)
       : arena_(arena),
         heap_(arena),
         todo_(MakeTodo(phase, &heap_)),
         trace_stream_(trace_stream),
+        print_stream_(print_stream),
         phase_(phase) {}
 
   ~Interpreter();
@@ -186,6 +188,10 @@ class Interpreter {
   std::vector<Nonnull<StackFragment*>> stack_fragments_;
 
   Nonnull<TraceStream*> trace_stream_;
+
+  // The stream for the Print intrinsic.
+  Nonnull<llvm::raw_ostream*> print_stream_;
+
   Phase phase_;
 };
 
@@ -1579,17 +1585,17 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               intrinsic.source_loc(), format_string, num_format_args));
           switch (num_format_args) {
             case 0:
-              llvm::outs() << llvm::formatv(format_string);
+              *print_stream_ << llvm::formatv(format_string);
               break;
             case 1:
-              llvm::outs() << llvm::formatv(format_string,
-                                            cast<IntValue>(*args[1]).value());
+              *print_stream_ << llvm::formatv(format_string,
+                                              cast<IntValue>(*args[1]).value());
               break;
             default:
               CARBON_FATAL() << "Too many format args: " << num_format_args;
           }
           // Implicit newline; currently no way to disable it.
-          llvm::outs() << "\n";
+          *print_stream_ << "\n";
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Assert: {
@@ -2488,8 +2494,9 @@ auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
 }
 
 auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
-                   Nonnull<TraceStream*> trace_stream) -> ErrorOr<int> {
-  Interpreter interpreter(Phase::RunTime, arena, trace_stream);
+                   Nonnull<TraceStream*> trace_stream,
+                   Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int> {
+  Interpreter interpreter(Phase::RunTime, arena, trace_stream, print_stream);
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** initializing globals **********\n";
   }
@@ -2510,9 +2517,11 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
 }
 
 auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
-               Nonnull<TraceStream*> trace_stream)
+               Nonnull<TraceStream*> trace_stream,
+               Nonnull<llvm::raw_ostream*> print_stream)
     -> ErrorOr<Nonnull<const Value*>> {
-  Interpreter interpreter(Phase::CompileTime, arena, trace_stream);
+  Interpreter interpreter(Phase::CompileTime, arena, trace_stream,
+                          print_stream);
   CARBON_RETURN_IF_ERROR(
       interpreter.RunAllSteps(std::make_unique<ExpressionAction>(e)));
   return interpreter.result();
