@@ -158,7 +158,7 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       if (!impl_decl.deduced_parameters().empty()) {
         out << "forall [";
         llvm::ListSeparator sep;
-        for (auto* param : impl_decl.deduced_parameters()) {
+        for (const auto* param : impl_decl.deduced_parameters()) {
           out << sep << *param;
         }
         out << "] ";

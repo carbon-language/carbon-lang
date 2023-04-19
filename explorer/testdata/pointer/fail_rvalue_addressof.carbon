@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: i32 = 5;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/pointer/fail_rvalue_addressof.carbon:[[@LINE+1]]: Argument to & should be an lvalue.
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/pointer/fail_rvalue_addressof.carbon:[[@LINE+1]]: Argument to & should be a reference expression.
   var p: i32* = &5;
   return 0;
 }

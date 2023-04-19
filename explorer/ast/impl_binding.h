@@ -10,7 +10,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
-#include "explorer/ast/value_category.h"
+#include "explorer/ast/expression_category.h"
 
 namespace Carbon {
 
@@ -77,7 +77,9 @@ class ImplBinding : public AstNode {
   auto static_type() const -> const Value& {
     CARBON_FATAL() << "an ImplBinding has no type";
   }
-  auto value_category() const -> ValueCategory { return ValueCategory::Let; }
+  auto expression_category() const -> ExpressionCategory {
+    return ExpressionCategory::Value;
+  }
 
   // Return the original impl binding.
   auto original() const -> Nonnull<const ImplBinding*> {

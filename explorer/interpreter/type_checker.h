@@ -161,7 +161,7 @@ class TypeChecker {
 
   // Checks a member access that might be accessing a function taking `addr
   // self: Self*`. If it does, this function marks the member access accordingly
-  // and ensures the object argument is an lvalue.
+  // and ensures the object argument is a reference expression.
   auto CheckAddrMeAccess(Nonnull<MemberAccessExpression*> access,
                          Nonnull<const FunctionDeclaration*> func_decl,
                          const Bindings& bindings, const ImplScope& impl_scope)
@@ -196,7 +196,7 @@ class TypeChecker {
   auto TypeCheckPattern(Nonnull<Pattern*> p,
                         std::optional<Nonnull<const Value*>> expected,
                         ImplScope& impl_scope,
-                        ValueCategory enclosing_value_category)
+                        ExpressionCategory enclosing_expression_category)
       -> ErrorOr<Success>;
 
   // Type checks a generic binding. `symbolic_value` is the symbolic name by

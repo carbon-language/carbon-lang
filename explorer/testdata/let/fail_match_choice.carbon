@@ -25,7 +25,7 @@ fn Main() -> i32 {
       n = n - 1;
     }
     case Ints.Two(x: auto, y: auto) => {
-      // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_match_choice.carbon:[[@LINE+1]]: Cannot assign to rvalue 'x'
+      // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_match_choice.carbon:[[@LINE+1]]: Only a reference expression can be assigned to, but got `x`
       x = 0;
     }
   }

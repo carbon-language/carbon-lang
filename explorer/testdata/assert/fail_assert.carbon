@@ -10,7 +10,6 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  Assert(true, "HALLO WELT");
   Assert(false, "HALLO WELT");
   return 0;
 }

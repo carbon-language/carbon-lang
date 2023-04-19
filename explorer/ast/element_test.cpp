@@ -34,8 +34,8 @@ TEST_F(ElementTest, NamedElementType) {
       src_loc,
       arena.New<BindingPattern>(src_loc, "valuename",
                                 arena.New<AutoPattern>(src_loc),
-                                ValueCategory::Var),
-      std::nullopt, ValueCategory::Var};
+                                ExpressionCategory::Reference),
+      std::nullopt, ExpressionCategory::Reference};
   const auto* static_type = arena.New<IntValue>(1);
   decl.set_static_type(static_type);
   NamedElement element_decl(&decl);
@@ -53,8 +53,8 @@ TEST_F(ElementTest, NamedElementDeclaration) {
       src_loc,
       arena.New<BindingPattern>(src_loc, "valuename",
                                 arena.New<AutoPattern>(src_loc),
-                                ValueCategory::Var),
-      std::nullopt, ValueCategory::Var};
+                                ExpressionCategory::Reference),
+      std::nullopt, ExpressionCategory::Reference};
   const auto* static_type = arena.New<IntValue>(1);
   NamedElement element_decl(&decl);
 
@@ -71,8 +71,8 @@ TEST_F(ElementTest, NamedElementIsNamed) {
       src_loc,
       arena.New<BindingPattern>(src_loc, "valuename",
                                 arena.New<AutoPattern>(src_loc),
-                                ValueCategory::Var),
-      std::nullopt, ValueCategory::Var};
+                                ExpressionCategory::Reference),
+      std::nullopt, ExpressionCategory::Reference};
   NamedElement member_decl(&decl);
   EXPECT_TRUE(member_decl.IsNamed("valuename"));
   EXPECT_FALSE(member_decl.IsNamed("anything"));

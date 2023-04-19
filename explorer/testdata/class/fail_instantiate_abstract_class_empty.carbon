@@ -13,7 +13,7 @@ abstract class C {
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/class/fail_instantiate_abstract_class_empty.carbon:[[@LINE+1]]: Cannot instantiate abstract class C
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_instantiate_abstract_class_empty.carbon:[[@LINE+1]]: Cannot instantiate abstract class C
   var c: C;
   return 0;
 }

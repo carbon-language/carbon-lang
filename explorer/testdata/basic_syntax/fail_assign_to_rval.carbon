@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_assign_to_rval.carbon:[[@LINE+1]]: Cannot assign to rvalue '1'
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_assign_to_rval.carbon:[[@LINE+1]]: Only a reference expression can be assigned to, but got `1`
   1 = 0;
   return 0;
 }

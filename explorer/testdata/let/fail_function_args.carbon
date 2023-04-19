@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 fn f((var x: i32, y: i32)) -> i32 {
   x = 0;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_function_args.carbon:[[@LINE+1]]: Cannot assign to rvalue 'y'
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_function_args.carbon:[[@LINE+1]]: Only a reference expression can be assigned to, but got `y`
   y = 0;
   return x - 1;
 }

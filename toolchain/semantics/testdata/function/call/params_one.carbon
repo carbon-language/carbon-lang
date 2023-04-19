@@ -30,7 +30,7 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str2, arg1: callable1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+5, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Call, arg0: call0, arg1: callable0, type: nodeEmptyTuple},
+// CHECK:STDOUT:   {kind: Call, arg0: call0, arg1: callable0},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+4, arg1: block6},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [

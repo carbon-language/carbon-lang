@@ -12,7 +12,7 @@ fn F() {}
 fn G() {}
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_assign_to_function.carbon:[[@LINE+1]]: Cannot assign to rvalue 'F'
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_assign_to_function.carbon:[[@LINE+1]]: Only a reference expression can be assigned to, but got `F`
   F = G;
   return 0;
 }

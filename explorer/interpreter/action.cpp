@@ -46,16 +46,17 @@ void RuntimeScope::Print(llvm::raw_ostream& out) const {
 
 void RuntimeScope::Bind(ValueNodeView value_node, Nonnull<const Value*> value) {
   CARBON_CHECK(!value_node.constant_value().has_value());
-  CARBON_CHECK(value->kind() != Value::Kind::LValue);
+  CARBON_CHECK(value->kind() != Value::Kind::LocationValue);
   auto allocation_id = heap_->GetAllocationId(value);
   if (!allocation_id) {
     auto id = heap_->AllocateValue(value);
-    auto [it, success] =
-        locals_.insert({value_node, heap_->arena().New<LValue>(Address(id))});
+    auto [it, success] = locals_.insert(
+        {value_node, heap_->arena().New<LocationValue>(Address(id))});
     CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
   } else {
     auto [it, success] = locals_.insert(
-        {value_node, heap_->arena().New<LValue>(Address(*allocation_id))});
+        {value_node,
+         heap_->arena().New<LocationValue>(Address(*allocation_id))});
     CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
   }
 }
@@ -63,10 +64,11 @@ void RuntimeScope::Bind(ValueNodeView value_node, Nonnull<const Value*> value) {
 void RuntimeScope::Initialize(ValueNodeView value_node,
                               Nonnull<const Value*> value) {
   CARBON_CHECK(!value_node.constant_value().has_value());
-  CARBON_CHECK(value->kind() != Value::Kind::LValue);
+  CARBON_CHECK(value->kind() != Value::Kind::LocationValue);
   allocations_.push_back(heap_->AllocateValue(value));
   auto [it, success] = locals_.insert(
-      {value_node, heap_->arena().New<LValue>(Address(allocations_.back()))});
+      {value_node,
+       heap_->arena().New<LocationValue>(Address(allocations_.back()))});
   CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
 }
 
@@ -83,7 +85,7 @@ void RuntimeScope::Merge(RuntimeScope other) {
 }
 
 auto RuntimeScope::Get(ValueNodeView value_node) const
-    -> std::optional<Nonnull<const LValue*>> {
+    -> std::optional<Nonnull<const LocationValue*>> {
   auto it = locals_.find(value_node);
   if (it != locals_.end()) {
     return it->second;
@@ -108,8 +110,8 @@ auto RuntimeScope::Capture(
 
 void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
-    case Action::Kind::LValAction:
-      out << cast<LValAction>(*this).expression() << " ";
+    case Action::Kind::LocationAction:
+      out << cast<LocationAction>(*this).expression() << " ";
       break;
     case Action::Kind::ExpressionAction:
       out << cast<ExpressionAction>(*this).expression() << " ";
@@ -123,6 +125,10 @@ void Action::Print(llvm::raw_ostream& out) const {
       break;
     case Action::Kind::DeclarationAction:
       cast<DeclarationAction>(*this).declaration().Print(out);
+      out << " ";
+      break;
+    case Action::Kind::TypeInstantiationAction:
+      cast<TypeInstantiationAction>(*this).type()->Print(out);
       out << " ";
       break;
     case Action::Kind::ScopeAction:

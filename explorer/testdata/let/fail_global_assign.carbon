@@ -11,7 +11,7 @@ package ExplorerTest api;
 let x: i32 = 10;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_global_assign.carbon:[[@LINE+1]]: Cannot assign to rvalue 'x'
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_global_assign.carbon:[[@LINE+1]]: Only a reference expression can be assigned to, but got `x`
   x = 0;
   return 0;
 }

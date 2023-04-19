@@ -63,5 +63,5 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_too_few_values.carbon:[[@LINE+1]]:37: Cannot implicitly convert from {.a: i32} to {.a: i32, .b: i32}.
+// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_too_few_values.carbon:[[@LINE+1]]:37: Cannot implicitly convert from `{.a: i32}` to `{.a: i32, .b: i32}`.
 var x: {.a: i32, .b: i32} = {.a = 1};

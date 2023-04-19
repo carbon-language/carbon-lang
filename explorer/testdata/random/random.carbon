@@ -9,15 +9,13 @@
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
-fn test(para: i32)->bool{
-  return true;
-}
+
 fn Main() -> i32 {
-  var i : i32 = Rand(0,100);
-  var j : i32 = Rand(0,100);
-  if(i == j){
+  var i: i32 = Rand(0, 100);
+  var j: i32 = Rand(0, 100);
+  if (i == j) {
     Print("HALLO WELT");
-  }else{
+  } else {
     Print("Nice!");
   }
   return 0;

@@ -49,7 +49,7 @@ class ActionStack {
   void Initialize(ValueNodeView value_node, Nonnull<const Value*> value);
 
   // Returns the value bound to `value_node`. If `value_node` is a local
-  // variable, this will be an LValue.
+  // variable, this will be an LocationValue.
   auto ValueOfNode(ValueNodeView value_node, SourceLocation source_loc) const
       -> ErrorOr<Nonnull<const Value*>>;
 
@@ -118,6 +118,8 @@ class ActionStack {
   auto Suspend() -> ErrorOr<Success>;
 
   void Pop() { todo_.Pop(); }
+
+  auto Count() const -> int { return todo_.Count(); }
 
  private:
   // Pop any ScopeActions from the top of the stack, propagating results as
