@@ -8,8 +8,13 @@
 
 package ExplorerTest api;
 
+fn Foo() {
+  returned var x: () = ();
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/returned/fail_returned_var_mismatch_signature.carbon:[[@LINE+1]]: return var; should not provide a return value, to match the function's signature.
+  return var;
+}
+
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_nested_binding.carbon:[[@LINE+1]]: the type of a binding pattern cannot contain bindings
-  var x: (T: type) = 1;
-  return 1;
+  Foo();
+  return 0;
 }

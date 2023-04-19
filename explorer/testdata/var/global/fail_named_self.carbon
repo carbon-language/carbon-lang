@@ -8,12 +8,10 @@
 
 package ExplorerTest api;
 
-fn AddInt(a: i32, b: i32) -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_returned_var_type_mismatch.carbon:[[@LINE+1]]: type of returned var `bool` does not match return type `i32`
-  returned var ret: bool = true;
-  return var;
-}
+// Error: global variable may not be named with keyword `Self`.
+// CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/var/global/fail_named_self.carbon:[[@LINE+1]]: syntax error, unexpected SELF, expecting identifier
+var Self: i32 = 0;
 
 fn Main() -> i32 {
-  return AddInt(1, 2);
+  return Self;
 }

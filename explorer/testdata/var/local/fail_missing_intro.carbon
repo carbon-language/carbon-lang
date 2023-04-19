@@ -8,12 +8,9 @@
 
 package ExplorerTest api;
 
-abstract class B {
-}
-
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/global_variable/fail_instantiate_global_abstract.carbon:[[@LINE+1]]: Cannot instantiate abstract class B
-var b: B = {};
-
 fn Main() -> i32 {
-    return 0;
+  // error
+  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/var/local/fail_missing_intro.carbon:[[@LINE+1]]: syntax error, unexpected COLON
+  x : i32;
+  return 1;
 }

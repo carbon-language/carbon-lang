@@ -8,9 +8,7 @@
 
 package ExplorerTest api;
 
-fn Main() -> i32 {
-  // error
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_missing_var.carbon:[[@LINE+1]]: syntax error, unexpected COLON
-  x : i32;
-  return 1;
-}
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/global/fail_invalid_var_expression.carbon:[[@LINE+1]]: Expected expression for variable type
+var a: auto;
+
+fn Main() -> i32 { return 0; }

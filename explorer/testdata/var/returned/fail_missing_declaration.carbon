@@ -9,9 +9,9 @@
 package ExplorerTest api;
 
 fn AddInt(a: i32, b: i32) -> i32 {
-  returned var ret: i32 = a + b;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_missing_return.carbon:[[@LINE+1]]: `return <expression>` is not allowed with a returned var defined in scope: {{.*}}/explorer/testdata/returned_var/fail_missing_return.carbon:[[@LINE-1]]
-  return ret;
+  var ret: i32 = a + b;
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/returned/fail_missing_declaration.carbon:[[@LINE+1]]: `return var` is not allowed without a returned var defined in scope.
+  return var;
 }
 
 fn Main() -> i32 {

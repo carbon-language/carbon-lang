@@ -8,11 +8,8 @@
 
 package ExplorerTest api;
 
-// Test type checking of global variable. Error expected.
-
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/global_variable/fail_init_type_mismatch.carbon:[[@LINE+1]]: type error in initializer of variable: 'bool' is not implicitly convertible to 'i32'
-var flag: i32 = true;
-
 fn Main() -> i32 {
-  return 0;
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/local/fail_nested_binding.carbon:[[@LINE+1]]: the type of a binding pattern cannot contain bindings
+  var x: (T: type) = 1;
+  return 1;
 }

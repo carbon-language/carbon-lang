@@ -8,13 +8,11 @@
 
 package ExplorerTest api;
 
-fn Foo() {
-  returned var x: () = ();
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_returned_var_mismatch_signature.carbon:[[@LINE+1]]: return var; should not provide a return value, to match the function's signature.
-  return var;
-}
+// Test type checking of global variable. Error expected.
+
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/global/fail_init_type_mismatch.carbon:[[@LINE+1]]: type error in initializer of variable: 'bool' is not implicitly convertible to 'i32'
+var flag: i32 = true;
 
 fn Main() -> i32 {
-  Foo();
   return 0;
 }
