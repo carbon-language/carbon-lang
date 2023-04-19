@@ -217,7 +217,6 @@
   ARROW
   AS
   AUTO
-  AWAIT
   BASE
   BOOL
   BREAK
@@ -230,8 +229,6 @@
   COLON_BANG
   COMMA
   CONSTRAINT
-  CONTINUATION
-  CONTINUATION_TYPE
   CONTINUE
   DEFAULT
   DESTRUCTOR
@@ -291,7 +288,6 @@
   RIGHT_CURLY_BRACE
   RIGHT_PARENTHESIS
   RIGHT_SQUARE_BRACKET
-  RUN
   SELF
   SEMICOLON
   SLASH
@@ -416,8 +412,6 @@ primary_expression:
     { $$ = arena->New<BoolTypeLiteral>(context.source_loc()); }
 | TYPE
     { $$ = arena->New<TypeTypeLiteral>(context.source_loc()); }
-| CONTINUATION_TYPE
-    { $$ = arena->New<ContinuationTypeLiteral>(context.source_loc()); }
 | paren_expression { $$ = $[paren_expression]; }
 | struct_literal { $$ = $[struct_literal]; }
 | struct_type_literal { $$ = $[struct_type_literal]; }
@@ -1124,15 +1118,6 @@ statement:
       $$ = arena->New<Match>(context.source_loc(), $[expression],
                              $[clause_list]);
     }
-| CONTINUATION identifier block
-    {
-      $$ = arena->New<Continuation>(context.source_loc(), $[identifier],
-                                    $[block]);
-    }
-| RUN expression SEMICOLON
-    { $$ = arena->New<Run>(context.source_loc(), $[expression]); }
-| AWAIT SEMICOLON
-    { $$ = arena->New<Await>(context.source_loc()); }
 | FOR LEFT_PARENTHESIS variable_declaration IN type_expression RIGHT_PARENTHESIS
   block
     {

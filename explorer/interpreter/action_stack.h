@@ -13,7 +13,6 @@
 #include "explorer/ast/statement.h"
 #include "explorer/ast/value.h"
 #include "explorer/interpreter/action.h"
-#include "explorer/interpreter/stack_fragment.h"
 
 namespace Carbon {
 
@@ -55,11 +54,6 @@ class ActionStack {
 
   // Merges `scope` into the innermost scope currently on the stack.
   void MergeScope(RuntimeScope scope);
-
-  // Initializes `fragment` so that, when resumed, it begins execution of
-  // `body`.
-  void InitializeFragment(StackFragment& fragment,
-                          Nonnull<const Statement*> body);
 
   // The result produced by the `action` argument of the most recent
   // Start call. Cannot be called if IsEmpty() is false, or if `action`
@@ -109,13 +103,6 @@ class ActionStack {
   auto UnwindPast(Nonnull<const Statement*> ast_node) -> ErrorOr<Success>;
   auto UnwindPast(Nonnull<const Statement*> ast_node,
                   Nonnull<const Value*> result) -> ErrorOr<Success>;
-
-  // Resumes execution of a suspended continuation.
-  auto Resume(Nonnull<const ContinuationValue*> continuation)
-      -> ErrorOr<Success>;
-
-  // Suspends execution of the currently-executing continuation.
-  auto Suspend() -> ErrorOr<Success>;
 
   void Pop() { todo_.Pop(); }
 

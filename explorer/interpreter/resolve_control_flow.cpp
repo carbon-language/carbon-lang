@@ -124,16 +124,10 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       }
       return Success();
     }
-    case StatementKind::Continuation:
-      CARBON_RETURN_IF_ERROR(ResolveControlFlow(
-          &cast<Continuation>(*statement).body(), std::nullopt, std::nullopt));
-      return Success();
     case StatementKind::ExpressionStatement:
     case StatementKind::Assign:
     case StatementKind::IncrementDecrement:
     case StatementKind::VariableDefinition:
-    case StatementKind::Run:
-    case StatementKind::Await:
       return Success();
   }
 }
