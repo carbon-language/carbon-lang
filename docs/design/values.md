@@ -74,8 +74,9 @@ There are three expression categories in Carbon:
     -   [_Ephemeral reference expressions_](#ephemeral-reference-expressions)
         are reference expressions which _can_ refer to temporary storage.
 -   [_Initializing expressions_](#initializing-expressions) which require
-    storage to be provided as an input and initializes an object in that
-    storage.
+    storage to be provided implicitly when evaluating the expression. The
+    expression then initializes an object in that storage. These are used to
+    model function returns.
 
 The syntax and syntactic context of an expression fully determines both the
 expressions initial category and which if any conversions from one category to
@@ -191,8 +192,9 @@ fn Consume(var x: SomeData) {
 This allows us to model an important special case of function inputs -- those
 that are _consumed_ by the function, either through local processing or being
 moved into some persistent storage. Marking these in the pattern and thus
-signature of the function changes the expression category of arguments in the
-caller, causing them to become _initializing expressions_ that directly
+signature of the function changes the expression category required for arguments
+in the caller. These arguments are required to be _initializing expressions_,
+potentially being converted into such an expression if necessary, that directly
 initialize storage dedicated-to and owned-by the function parameter.
 
 This pattern serves the same purpose as C++'s pass-by-value when used with types
@@ -233,7 +235,8 @@ Carbon:
     [variable binding](#binding-patterns-and-local-variables-with-let-and-var):
     `x`
 -   Dereferenced [pointers](#pointers): `*p`
--   Names of subobjects through member access: `x.member` or `p->member`
+-   Names of subobjects through member access to some other durable reference
+    expression: `x.member` or `p->member`
 -   [Indexing](/docs/design/expressions/indexing.md): `array[i]`
 
 There is no way to convert another category of expression into a durable
