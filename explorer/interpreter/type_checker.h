@@ -193,7 +193,7 @@ class TypeChecker {
   // Implicit conversions from `expected` to the pattern's type are permitted.
   //
   // `impl_scope` is extended with all implementations implied by the pattern.
-  auto TypeCheckPattern(Nonnull<Pattern*> p,
+  auto TypeCheckPattern(Nonnull<Pattern*> p, bool require_binding,
                         std::optional<Nonnull<const Value*>> expected,
                         ImplScope& impl_scope,
                         ExpressionCategory enclosing_expression_category)

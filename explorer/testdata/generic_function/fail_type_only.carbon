@@ -8,9 +8,11 @@
 
 package ExplorerTest api;
 
+class C {}
+
+// CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/generic_function/fail_type_only.carbon:[[@LINE+1]]: syntax error, unexpected RIGHT_SQUARE_BRACKET, expecting COLON
+fn f[x:! i32, addr C]() {}
+
 fn Main() -> i32 {
-  // 42 cannot be used as the type of a variable.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/local/fail_value_as_type.carbon:[[@LINE+1]]: type error in type of name binding: 'i32' is not implicitly convertible to 'type'
-  var x: 42 = 0;
-  return x;
+  return 0;
 }

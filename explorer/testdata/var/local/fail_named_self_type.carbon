@@ -13,6 +13,6 @@ fn Main() -> i32 {
   // TODO: Current error message is unclear, better would be to say
   // something like: unexpected `Self`, expecting identifier
   // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/var/local/fail_named_self_type.carbon:[[@LINE+1]]: syntax error, unexpected COLON, expecting EQUAL or SEMICOLON
-  var Self : i32 = 0;
-  return Self;
+  var Self: i32 = 0;
+  return 0;
 }

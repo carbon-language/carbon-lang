@@ -9,8 +9,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // error
   // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/var/local/fail_missing_intro.carbon:[[@LINE+1]]: syntax error, unexpected COLON
-  x : i32;
+  x: i32;
   return 1;
 }

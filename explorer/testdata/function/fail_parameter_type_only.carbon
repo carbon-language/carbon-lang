@@ -8,9 +8,9 @@
 
 package ExplorerTest api;
 
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_parameter_type_only.carbon:[[@LINE+1]]: Missing name to bind to.
+fn f(x: i32, i32) {}
+
 fn Main() -> i32 {
-  // 42 cannot be used as the type of a variable.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/local/fail_value_as_type.carbon:[[@LINE+1]]: type error in type of name binding: 'i32' is not implicitly convertible to 'type'
-  var x: 42 = 0;
-  return x;
+  return 0;
 }
