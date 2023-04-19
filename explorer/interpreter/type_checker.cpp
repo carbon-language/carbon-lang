@@ -6125,6 +6125,8 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
     }
     case DeclarationKind::MixDeclaration: {
       auto& mix_decl = cast<MixDeclaration>(*d);
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&mix_decl.mixin(), *scope_info.innermost_scope));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> mixin,
           InterpExp(&mix_decl.mixin(), arena_, trace_stream_));
