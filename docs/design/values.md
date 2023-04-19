@@ -217,10 +217,9 @@ _Durable reference expressions_ are those where the object's storage outlives
 the full expression and the address could be meaningfully propagated out of it
 as well.
 
-There are two expressions that require one of their operands to be a durable
-reference expression in Carbon:
+There are two contexts that require a durable reference expression in Carbon:
 
--   [Assignment expressions](/docs/design/assignment.md) require the
+-   [Assignment statements](/docs/design/assignment.md) require the
     left-hand-side of the `=` to be a durable reference. This stronger
     requirement is enforced before the expression is rewritten to dispatch into
     the `Carbon.Assign.Op` interface method.
