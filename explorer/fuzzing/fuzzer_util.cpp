@@ -86,8 +86,11 @@ auto ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit)
   AddPrelude(*prelude_path, &arena, &ast.declarations,
              &ast.num_prelude_declarations);
   TraceStream trace_stream;
-  CARBON_ASSIGN_OR_RETURN(ast, AnalyzeProgram(&arena, ast, &trace_stream));
-  return ExecProgram(&arena, ast, &trace_stream);
+
+  // Use llvm::nulls() to suppress output from the Print intrinsic.
+  CARBON_ASSIGN_OR_RETURN(
+      ast, AnalyzeProgram(&arena, ast, &trace_stream, &llvm::nulls()));
+  return ExecProgram(&arena, ast, &trace_stream, &llvm::nulls());
 }
 
 }  // namespace Carbon

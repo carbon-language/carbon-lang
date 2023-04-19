@@ -17,11 +17,13 @@ namespace Carbon {
 
 // Perform semantic analysis on the AST.
 auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
-                    Nonnull<TraceStream*> trace_stream) -> ErrorOr<AST>;
+                    Nonnull<TraceStream*> trace_stream,
+                    Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<AST>;
 
 // Run the program's `Main` function.
 auto ExecProgram(Nonnull<Arena*> arena, AST ast,
-                 Nonnull<TraceStream*> trace_stream) -> ErrorOr<int>;
+                 Nonnull<TraceStream*> trace_stream,
+                 Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int>;
 
 }  // namespace Carbon
 
