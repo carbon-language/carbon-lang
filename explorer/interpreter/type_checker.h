@@ -43,13 +43,13 @@ class TypeChecker {
 
     // The pattern is refutable, which means it may also contain irrefutable
     // patterns.
-    Any,
+    Refutable,
 
     // A special case for types of bindings, which must be either `auto` or a
     // valid expression.
     // TODO: `auto` should be refactored from a pattern to an expression.
     // Once that's done, this should be handled differently.
-    NoBindings,
+    BindingType,
   };
 
   explicit TypeChecker(Nonnull<Arena*> arena,

@@ -4149,7 +4149,7 @@ auto TypeChecker::TypeCheckPattern(
       break;
     case PatternKind::BindingPattern:
     case PatternKind::GenericBinding:
-      if (refutability == PatternRefutability::NoBindings) {
+      if (refutability == PatternRefutability::BindingType) {
         return ProgramError(p->source_loc())
                << "Binding types cannot contain bindings, but `" << *p
                << "` is a binding.";
@@ -4167,7 +4167,7 @@ auto TypeChecker::TypeCheckPattern(
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
       CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-          &binding.type(), PatternRefutability::NoBindings, expected,
+          &binding.type(), PatternRefutability::BindingType, expected,
           impl_scope, enclosing_expression_category));
       Nonnull<const Value*> type = &binding.type().value();
       // Convert to a type.
@@ -4447,7 +4447,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         // TODO: Should user-defined conversions be permitted in `match`
         // statements? When would we run them? See #1283.
         CARBON_RETURN_IF_ERROR(
-            TypeCheckPattern(&clause.pattern(), PatternRefutability::Any,
+            TypeCheckPattern(&clause.pattern(), PatternRefutability::Refutable,
                              &match.expression().static_type(), clause_scope,
                              ExpressionCategory::Value));
         if (expected_type.has_value()) {
@@ -5802,9 +5802,9 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
   if (choice->type_params().has_value()) {
     Nonnull<TuplePattern*> type_params = *choice->type_params();
-    CARBON_RETURN_IF_ERROR(
-        TypeCheckPattern(type_params, PatternRefutability::Any, std::nullopt,
-                         choice_scope, ExpressionCategory::Value));
+    CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+        type_params, PatternRefutability::Refutable, std::nullopt, choice_scope,
+        ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(type_params, bindings);
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << choice_scope;
