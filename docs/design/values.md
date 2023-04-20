@@ -78,12 +78,6 @@ There are three expression categories in Carbon:
     expression then initializes an object in that storage. These are used to
     model function returns, which can construct the returned value directly in the caller's storage.
 
-The syntax and syntactic context of an expression fully determines both the
-expressions initial category and which if any conversions from one category to
-another must take place. Carbon specifically works to avoid involving the _type
-system_ in this determination as a way to reduce the complexity required within
-the type system.
-
 The general conversions and the semantics implied between these categories are
 below:
 

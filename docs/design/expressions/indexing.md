@@ -77,13 +77,15 @@ interface IndirectIndexWith(SubscriptType:! type) {
 ```
 
 A subscript expression where _lhs_ has type `T` and _index_ has type `I` is
-rewritten based on the value category of _lhs_ and whether `T` is known to
+rewritten based on the expression category of _lhs_ and whether `T` is known to
 implement `IndirectIndexWith(I)`:
 
 -   If `T` implements `IndirectIndexWith(I)`, the expression is rewritten to
     "`*((` _lhs_ `).(IndirectIndexWith(I).Addr)(` _index_ `))`".
--   Otherwise, if _lhs_ is an l-value, the expression is rewritten to "`*((`
-    _lhs_ `).(IndexWith(I).Addr)(` _index_ `))`".
+-   Otherwise, if _lhs_ is a
+    [_durable reference expression_](/docs/design/values.md#durable-reference-expressions),
+    the expression is rewritten to "`*((` _lhs_ `).(IndexWith(I).Addr)(` _index_
+    `))`".
 -   Otherwise, the expression is rewritten to "`(` _lhs_ `).(IndexWith(I).At)(`
     _index_ `)`".
 
