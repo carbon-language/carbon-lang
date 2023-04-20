@@ -517,7 +517,8 @@ void Value::Print(llvm::raw_ostream& out) const {
         out << "]";
       }
       const auto* params = dyn_cast<TupleType>(&fn_type.parameters());
-      CARBON_CHECK(params) << "Parameters of function type must be a tuple type";
+      CARBON_CHECK(params)
+          << "Parameters of function type must be a tuple type";
       out << "(";
       llvm::ListSeparator sep;
       for (Nonnull<const Value*> element : params->elements()) {
