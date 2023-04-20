@@ -48,7 +48,8 @@ class TypeChecker {
     // A special case for types of bindings, which must be either `auto` or a
     // valid expression.
     // TODO: `auto` should be refactored from a pattern to an expression.
-    // Once that's done, this should be handled differently.
+    // Once that's done, this may be removable.
+    // https://github.com/carbon-language/carbon-lang/issues/2788
     BindingType,
   };
 
