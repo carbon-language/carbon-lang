@@ -28,3 +28,14 @@ cc_library(
         "@llvm-project//llvm:Support",
     ],
 )
+
+cc_binary(
+    name = "proto_to_carbon",
+    testonly = 1,
+    srcs = ["proto_to_carbon_main.cpp"],
+    deps = [
+        ":carbon_cc_proto",
+        "//common:bazel_working_dir",
+        "@llvm-project//llvm:Support",
+    ],
+)
