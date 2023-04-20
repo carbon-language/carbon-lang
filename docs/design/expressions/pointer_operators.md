@@ -34,6 +34,12 @@ The semantic details of pointer operators are collected in the main
 [pointers](/docs/design/values.md#pointers) design. The syntax and precedence
 details are covered here.
 
+The syntax tries to remain as similar as possible to C++ pointer types as they
+are commonly written in code and are expected to be extremely common and a key
+anchor of syntactic similarity between the languages. The different alternatives
+and tradeoffs for this syntax issue were discussed extensively in
+[#523](https://github.com/carbon-language/carbon-lang/issues/523).
+
 ### Precedence
 
 All of these operators have high precedence. Only
