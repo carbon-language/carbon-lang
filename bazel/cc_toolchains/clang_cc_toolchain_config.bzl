@@ -844,7 +844,6 @@ def _impl(ctx):
         asan,
         enable_asan_in_fastbuild,
         fuzzer,
-        proto_fuzzer,
         layering_check,
         module_maps,
         use_module_maps,
