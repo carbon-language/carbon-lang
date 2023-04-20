@@ -76,7 +76,8 @@ There are three expression categories in Carbon:
 -   [_Initializing expressions_](#initializing-expressions) which require
     storage to be provided implicitly when evaluating the expression. The
     expression then initializes an object in that storage. These are used to
-    model function returns, which can construct the returned value directly in the caller's storage.
+    model function returns, which can construct the returned value directly in
+    the caller's storage.
 
 The general conversions and the semantics implied between these categories are
 below:
