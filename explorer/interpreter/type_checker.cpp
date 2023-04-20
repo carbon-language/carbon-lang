@@ -4128,15 +4128,26 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
 }
 
 auto TypeChecker::TypeCheckPattern(
-    Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
-    ImplScope& impl_scope, ExpressionCategory enclosing_expression_category)
-    -> ErrorOr<Success> {
+    Nonnull<Pattern*> p, bool require_irrefutable,
+    std::optional<Nonnull<const Value*>> expected, ImplScope& impl_scope,
+    ExpressionCategory enclosing_expression_category) -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "checking " << p->kind() << " " << *p;
     if (expected) {
       *trace_stream_ << ", expecting " << **expected;
     }
     *trace_stream_ << "\n";
+  }
+  if (require_irrefutable) {
+    switch (p->kind()) {
+      case PatternKind::AutoPattern:
+      case PatternKind::ExpressionPattern:
+        return ProgramError(p->source_loc())
+               << "An irrefutable pattern is required, but `" << *p
+               << "` is refutable.";
+      default:
+        break;
+    }
   }
   switch (p->kind()) {
     case PatternKind::AutoPattern: {
@@ -4152,9 +4163,9 @@ auto TypeChecker::TypeCheckPattern(
         return ProgramError(binding.type().source_loc())
                << "the type of a binding pattern cannot contain bindings";
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&binding.type(), expected,
-                                              impl_scope,
-                                              enclosing_expression_category));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+          &binding.type(), /*require_irrefutable=*/false, expected, impl_scope,
+          enclosing_expression_category));
       Nonnull<const Value*> type = &binding.type().value();
       // Convert to a type.
       // TODO: Convert the pattern before interpreting it rather than doing
@@ -4232,8 +4243,8 @@ auto TypeChecker::TypeCheckPattern(
         if (expected) {
           expected_field_type = cast<TupleType>(**expected).elements()[i];
         }
-        CARBON_RETURN_IF_ERROR(TypeCheckPattern(field, expected_field_type,
-                                                impl_scope,
+        CARBON_RETURN_IF_ERROR(TypeCheckPattern(field, require_irrefutable,
+                                                expected_field_type, impl_scope,
                                                 enclosing_expression_category));
         if (trace_stream_->is_enabled()) {
           *trace_stream_ << "finished checking tuple pattern field " << *field
@@ -4277,9 +4288,9 @@ auto TypeChecker::TypeCheckPattern(
           Nonnull<const Value*> parameter_type,
           Substitute(choice_type.bindings(),
                      *(*signature)->parameters_static_type()));
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&alternative.arguments(),
-                                              parameter_type, impl_scope,
-                                              enclosing_expression_category));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+          &alternative.arguments(), require_irrefutable, parameter_type,
+          impl_scope, enclosing_expression_category));
       alternative.set_static_type(&choice_type);
       alternative.set_value(arena_->New<AlternativeValue>(
           &choice_type, *signature,
@@ -4299,9 +4310,9 @@ auto TypeChecker::TypeCheckPattern(
     case PatternKind::VarPattern: {
       auto& var_pattern = cast<VarPattern>(*p);
 
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckPattern(&var_pattern.pattern(), expected, impl_scope,
-                           var_pattern.expression_category()));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+          &var_pattern.pattern(), require_irrefutable, expected, impl_scope,
+          var_pattern.expression_category()));
       var_pattern.set_static_type(&var_pattern.pattern().static_type());
       var_pattern.set_value(&var_pattern.pattern().value());
       return Success();
@@ -4312,9 +4323,9 @@ auto TypeChecker::TypeCheckPattern(
       if (expected) {
         expected_ptr = arena_->New<PointerType>(expected.value());
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&addr_pattern.binding(),
-                                              expected_ptr, impl_scope,
-                                              enclosing_expression_category));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+          &addr_pattern.binding(), require_irrefutable, expected_ptr,
+          impl_scope, enclosing_expression_category));
 
       if (const auto* inner_binding_type =
               dyn_cast<PointerType>(&addr_pattern.binding().static_type())) {
@@ -4432,9 +4443,10 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         ImplScope clause_scope(&impl_scope);
         // TODO: Should user-defined conversions be permitted in `match`
         // statements? When would we run them? See #1283.
-        CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-            &clause.pattern(), &match.expression().static_type(), clause_scope,
-            ExpressionCategory::Value));
+        CARBON_RETURN_IF_ERROR(
+            TypeCheckPattern(&clause.pattern(), /*require_irrefutable=*/false,
+                             &match.expression().static_type(), clause_scope,
+                             ExpressionCategory::Value));
         if (expected_type.has_value()) {
           // TODO: For now, we require all patterns to have the same type. If
           // that's not the same type as the scrutinee, we will convert the
@@ -4485,10 +4497,10 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
 
       const Value& rhs = for_stmt.loop_target().static_type();
       if (rhs.kind() == Value::Kind::StaticArrayType) {
-        CARBON_RETURN_IF_ERROR(
-            TypeCheckPattern(&for_stmt.variable_declaration(),
-                             &cast<StaticArrayType>(rhs).element_type(),
-                             inner_impl_scope, ExpressionCategory::Reference));
+        CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+            &for_stmt.variable_declaration(), /*require_irrefutable=*/true,
+            &cast<StaticArrayType>(rhs).element_type(), inner_impl_scope,
+            ExpressionCategory::Reference));
         CARBON_RETURN_IF_ERROR(ExpectExactType(
             for_stmt.source_loc(), "`for` pattern",
             &cast<StaticArrayType>(rhs).element_type(),
@@ -4532,8 +4544,9 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
             var.init().source_loc(), &var.init().static_type()));
         init_type = &var.init().static_type();
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-          &var.pattern(), init_type, var_scope, var.expression_category()));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckPattern(&var.pattern(), /*require_irrefutable=*/true,
+                           init_type, var_scope, var.expression_category()));
       CARBON_RETURN_IF_ERROR(ExpectCompleteType(
           var.source_loc(), "type of variable", &var.pattern().static_type()));
       CARBON_RETURN_IF_ERROR(
@@ -4739,23 +4752,24 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   std::vector<Nonnull<const ImplBinding*>> impl_bindings;
   // Bring the deduced parameters into scope.
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
-    CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-        deduced, std::nullopt, function_scope, ExpressionCategory::Value));
+    CARBON_RETURN_IF_ERROR(
+        TypeCheckPattern(deduced, /*require_irrefutable=*/true, std::nullopt,
+                         function_scope, ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(deduced, all_bindings);
     CollectImplBindingsInPattern(deduced, impl_bindings);
   }
   // Type check the receiver pattern.
   if (f->is_method()) {
-    CARBON_RETURN_IF_ERROR(TypeCheckPattern(&f->self_pattern(), std::nullopt,
-                                            function_scope,
-                                            ExpressionCategory::Value));
+    CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+        &f->self_pattern(), /*require_irrefutable=*/true, std::nullopt,
+        function_scope, ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(&f->self_pattern(), all_bindings);
     CollectImplBindingsInPattern(&f->self_pattern(), impl_bindings);
   }
   // Type check the parameter pattern.
-  CARBON_RETURN_IF_ERROR(TypeCheckPattern(&f->param_pattern(), std::nullopt,
-                                          function_scope,
-                                          ExpressionCategory::Value));
+  CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+      &f->param_pattern(), /*require_irrefutable=*/true, std::nullopt,
+      function_scope, ExpressionCategory::Value));
   CollectImplBindingsInPattern(&f->param_pattern(), impl_bindings);
 
   // All bindings we've seen so far in this scope are our deduced bindings.
@@ -4915,8 +4929,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
   if (class_decl->type_params().has_value()) {
     Nonnull<TuplePattern*> type_params = *class_decl->type_params();
-    CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-        type_params, std::nullopt, class_scope, ExpressionCategory::Value));
+    CARBON_RETURN_IF_ERROR(
+        TypeCheckPattern(type_params, /*require_irrefutable=*/true,
+                         std::nullopt, class_scope, ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(type_params, bindings);
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << class_scope;
@@ -5084,9 +5099,9 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
   ImplScope mixin_scope(scope_info.innermost_scope);
 
   if (mixin_decl->params().has_value()) {
-    CARBON_RETURN_IF_ERROR(TypeCheckPattern(*mixin_decl->params(), std::nullopt,
-                                            mixin_scope,
-                                            ExpressionCategory::Value));
+    CARBON_RETURN_IF_ERROR(
+        TypeCheckPattern(*mixin_decl->params(), /*require_irrefutable=*/true,
+                         std::nullopt, mixin_scope, ExpressionCategory::Value));
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << mixin_scope;
     }
@@ -5104,9 +5119,9 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
   }
 
   // Process the Self parameter.
-  CARBON_RETURN_IF_ERROR(TypeCheckPattern(mixin_decl->self(), std::nullopt,
-                                          mixin_scope,
-                                          ExpressionCategory::Value));
+  CARBON_RETURN_IF_ERROR(
+      TypeCheckPattern(mixin_decl->self(), /*require_irrefutable=*/true,
+                       std::nullopt, mixin_scope, ExpressionCategory::Value));
 
   ScopeInfo mixin_scope_info = ScopeInfo::ForNonClassScope(&mixin_scope);
   for (Nonnull<Declaration*> m : mixin_decl->members()) {
@@ -5214,9 +5229,9 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
   // Type-check the parameters and find the set of bindings that are in scope.
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
   if (constraint_decl->params().has_value()) {
-    CARBON_RETURN_IF_ERROR(TypeCheckPattern(*constraint_decl->params(),
-                                            std::nullopt, constraint_scope,
-                                            ExpressionCategory::Value));
+    CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+        *constraint_decl->params(), /*require_irrefutable=*/true, std::nullopt,
+        constraint_scope, ExpressionCategory::Value));
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << constraint_scope;
     }
@@ -5589,8 +5604,9 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   // Bring the deduced parameters into scope.
   for (Nonnull<GenericBinding*> deduced : impl_decl->deduced_parameters()) {
     generic_bindings.push_back(deduced);
-    CARBON_RETURN_IF_ERROR(TypeCheckPattern(deduced, std::nullopt, impl_scope,
-                                            ExpressionCategory::Value));
+    CARBON_RETURN_IF_ERROR(
+        TypeCheckPattern(deduced, /*require_irrefutable=*/true, std::nullopt,
+                         impl_scope, ExpressionCategory::Value));
     CollectImplBindingsInPattern(deduced, impl_bindings);
   }
   impl_decl->set_impl_bindings(impl_bindings);
@@ -5784,7 +5800,8 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   if (choice->type_params().has_value()) {
     Nonnull<TuplePattern*> type_params = *choice->type_params();
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-        type_params, std::nullopt, choice_scope, ExpressionCategory::Value));
+        type_params, /*require_irrefutable=*/false, std::nullopt, choice_scope,
+        ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(type_params, bindings);
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << choice_scope;
@@ -6107,9 +6124,9 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
         return ProgramError(var.binding().type().source_loc())
                << "Expected expression for variable type";
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var.binding(), std::nullopt,
-                                              *scope_info.innermost_scope,
-                                              var.expression_category()));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+          &var.binding(), /*require_irrefutable=*/true, std::nullopt,
+          *scope_info.innermost_scope, var.expression_category()));
       CARBON_RETURN_IF_ERROR(ExpectCompleteType(
           var.source_loc(), "type of variable", &var.binding().static_type()));
       CARBON_RETURN_IF_ERROR(

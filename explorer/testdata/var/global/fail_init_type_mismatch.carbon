@@ -8,10 +8,11 @@
 
 package ExplorerTest api;
 
-// Error: global variable may not be named with keyword `Self`.
-// CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/global_variable/fail_named_self.carbon:[[@LINE+1]]: syntax error, unexpected SELF, expecting identifier
-var Self: i32 = 0;
+// Test type checking of global variable. Error expected.
+
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/global/fail_init_type_mismatch.carbon:[[@LINE+1]]: type error in initializer of variable: 'bool' is not implicitly convertible to 'i32'
+var flag: i32 = true;
 
 fn Main() -> i32 {
-  return Self;
+  return 0;
 }

@@ -9,11 +9,8 @@
 package ExplorerTest api;
 
 fn AddInt(a: i32, b: i32) -> i32 {
-  returned var ret: i32 = a + b;
-  if (a == b) {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_duplicate_return_var.carbon:[[@LINE+1]]: Duplicate definition of returned var also found at {{.*}}/explorer/testdata/returned_var/fail_duplicate_return_var.carbon:[[@LINE-2]]
-    returned var ret2: i32 = a + b;
-  }
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/returned/fail_returned_var_type_mismatch.carbon:[[@LINE+1]]: type of returned var `bool` does not match return type `i32`
+  returned var ret: bool = true;
   return var;
 }
 

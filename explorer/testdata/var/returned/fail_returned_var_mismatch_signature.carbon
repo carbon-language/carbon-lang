@@ -8,12 +8,13 @@
 
 package ExplorerTest api;
 
-abstract class B {
+fn Foo() {
+  returned var x: () = ();
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/returned/fail_returned_var_mismatch_signature.carbon:[[@LINE+1]]: return var; should not provide a return value, to match the function's signature.
+  return var;
 }
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/global_variable/fail_instantiate_global_abstract.carbon:[[@LINE+1]]: Cannot instantiate abstract class B
-var b: B = {};
-
 fn Main() -> i32 {
-    return 0;
+  Foo();
+  return 0;
 }

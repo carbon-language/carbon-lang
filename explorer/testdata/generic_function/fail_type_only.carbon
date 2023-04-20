@@ -8,12 +8,11 @@
 
 package ExplorerTest api;
 
-fn AddInt(a: i32, b: i32) -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_returned_var_type_mismatch.carbon:[[@LINE+1]]: type of returned var `bool` does not match return type `i32`
-  returned var ret: bool = true;
-  return var;
-}
+class C {}
+
+// CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/generic_function/fail_type_only.carbon:[[@LINE+1]]: syntax error, unexpected RIGHT_SQUARE_BRACKET, expecting COLON
+fn f[x:! i32, addr C]() {}
 
 fn Main() -> i32 {
-  return AddInt(1, 2);
+  return 0;
 }

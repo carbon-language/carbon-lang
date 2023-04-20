@@ -8,13 +8,8 @@
 
 package ExplorerTest api;
 
-fn Foo() {
-  returned var x: () = ();
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_returned_var_mismatch_signature.carbon:[[@LINE+1]]: return var; should not provide a return value, to match the function's signature.
-  return var;
-}
-
 fn Main() -> i32 {
-  Foo();
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/local/fail_nested_type_only.carbon:[[@LINE+1]]: An irrefutable pattern is required, but `i32` is refutable.
+  var (x: i32, i32);
   return 0;
 }

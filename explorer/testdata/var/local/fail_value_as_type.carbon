@@ -9,8 +9,8 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // error
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_missing_var.carbon:[[@LINE+1]]: syntax error, unexpected COLON
-  x : i32;
-  return 1;
+  // 42 cannot be used as the type of a variable.
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/local/fail_value_as_type.carbon:[[@LINE+1]]: type error in type of name binding: 'i32' is not implicitly convertible to 'type'
+  var x: 42 = 0;
+  return x;
 }

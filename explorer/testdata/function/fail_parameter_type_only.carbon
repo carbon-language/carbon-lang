@@ -8,7 +8,9 @@
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_invalid_var_expression.carbon:[[@LINE+1]]: Expected expression for variable type
-var a: auto;
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/function/fail_parameter_type_only.carbon:[[@LINE+1]]: An irrefutable pattern is required, but `i32` is refutable.
+fn f(x: i32, i32) {}
 
-fn Main() -> i32 { return 0; }
+fn Main() -> i32 {
+  return 0;
+}

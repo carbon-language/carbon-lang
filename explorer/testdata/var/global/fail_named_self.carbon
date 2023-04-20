@@ -8,12 +8,10 @@
 
 package ExplorerTest api;
 
-fn AddInt(a: i32, b: i32) -> i32 {
-  var ret: i32 = a + b;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/returned_var/fail_missing_declaration.carbon:[[@LINE+1]]: `return var` is not allowed without a returned var defined in scope.
-  return var;
-}
+// Error: global variable may not be named with keyword `Self`.
+// CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/var/global/fail_named_self.carbon:[[@LINE+1]]: syntax error, unexpected SELF, expecting identifier
+var Self: i32 = 0;
 
 fn Main() -> i32 {
-  return AddInt(1, 2);
+  return Self;
 }

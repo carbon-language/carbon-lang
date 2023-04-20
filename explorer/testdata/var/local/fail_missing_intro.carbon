@@ -8,11 +8,8 @@
 
 package ExplorerTest api;
 
-// Test type checking of global variable. Error expected.
-
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/global_variable/fail_init_type_mismatch.carbon:[[@LINE+1]]: type error in initializer of variable: 'bool' is not implicitly convertible to 'i32'
-var flag: i32 = true;
-
 fn Main() -> i32 {
-  return 0;
+  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/var/local/fail_missing_intro.carbon:[[@LINE+1]]: syntax error, unexpected COLON
+  x: i32;
+  return 1;
 }

@@ -9,8 +9,7 @@
 
 package ExplorerTest api;
 
-fn Main () -> i32
-{
+fn Main() -> i32 {
   var x: i32 = 0;
   return x;
 }

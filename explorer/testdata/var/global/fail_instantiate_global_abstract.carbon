@@ -8,8 +8,12 @@
 
 package ExplorerTest api;
 
+abstract class B {
+}
+
+// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/global/fail_instantiate_global_abstract.carbon:[[@LINE+1]]: Cannot instantiate abstract class B
+var b: B = {};
+
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_nested_binding.carbon:[[@LINE+1]]: the type of a binding pattern cannot contain bindings
-  var x: (T: type) = 1;
-  return 1;
+    return 0;
 }
