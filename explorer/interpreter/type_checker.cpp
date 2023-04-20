@@ -4152,7 +4152,7 @@ auto TypeChecker::TypeCheckPattern(
         return ProgramError(binding.type().source_loc())
                << "the type of a binding pattern cannot contain bindings";
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&binding.type(), std::nullopt,
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&binding.type(), expected,
                                               impl_scope,
                                               enclosing_expression_category));
       Nonnull<const Value*> type = &binding.type().value();
