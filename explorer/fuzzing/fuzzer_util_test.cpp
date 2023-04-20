@@ -9,6 +9,7 @@
 
 #include <fstream>
 
+#include "common/fuzzing/proto_to_carbon.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -41,7 +42,7 @@ TEST(FuzzerUtilTest, ParseAndExecute) {
       }
     })");
   ASSERT_TRUE(carbon_proto.ok());
-  const ErrorOr<int> result = ParseAndExecute(carbon_proto->compilation_unit());
+  const ErrorOr<int> result = ParseAndExecute(*carbon_proto);
   ASSERT_TRUE(result.ok()) << "Execution failed: " << result.error();
   EXPECT_EQ(*result, 0);
 }
@@ -54,8 +55,7 @@ TEST(FuzzerUtilTest, GetRunfilesFile) {
 }
 
 TEST(FuzzerUtilTest, ParseCarbonTextProtoWithUnknownField) {
-  const ErrorOr<Fuzzing::Carbon> carbon_proto =
-      ParseCarbonTextProto(R"(
+  const ErrorOr<Fuzzing::Carbon> carbon_proto = ParseCarbonTextProto(R"(
     compilation_unit {
       garbage: "value"
       declarations {
@@ -65,13 +65,8 @@ TEST(FuzzerUtilTest, ParseCarbonTextProtoWithUnknownField) {
           }
         }
       }
-    })",
-                           /*allow_unknown=*/true);
-  ASSERT_TRUE(carbon_proto.ok());
-  // No EqualsProto in gmock - https://github.com/google/googletest/issues/1761.
-  EXPECT_EQ(
-      carbon_proto->compilation_unit().declarations(0).choice().name().name(),
-      "Ch");
+    })");
+  ASSERT_FALSE(carbon_proto.ok());
 }
 
 }  // namespace

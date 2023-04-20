@@ -66,6 +66,7 @@ cc_binary(
         ":fuzzer_util",
         "//common:error",
         "//common/fuzzing:carbon_cc_proto",
+        "//common/fuzzing:proto_to_carbon_lib",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
         "//explorer/syntax",
@@ -88,6 +89,7 @@ cc_test(
     deps = [
         ":fuzzer_util",
         "//common:gtest_main",
+        "//common/fuzzing:proto_to_carbon_lib",
         "@com_google_googletest//:gtest",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",

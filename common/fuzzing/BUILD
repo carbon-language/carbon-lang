@@ -25,6 +25,7 @@ cc_library(
     hdrs = ["proto_to_carbon.h"],
     deps = [
         ":carbon_cc_proto",
+        "//common:error",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -35,7 +36,10 @@ cc_binary(
     srcs = ["proto_to_carbon_main.cpp"],
     deps = [
         ":carbon_cc_proto",
+        ":proto_to_carbon_lib",
         "//common:bazel_working_dir",
+        "//common:error",
+        "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -10,20 +10,9 @@
 
 namespace Carbon {
 
-// Parses text proto with a Carbon message, optionally ignoring unknown fields.
-auto ParseCarbonTextProto(const std::string& contents,
-                          bool allow_unknown = true)
-    -> ErrorOr<Fuzzing::Carbon>;
-
-// Converts `compilation_unit` to Carbon. Adds an default `Main()`
-// definition if one is not present in the proto.
-auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
-    -> std::string;
-
 // Parses and executes a fuzzer-generated program.
 // Returns program result if execution was successful.
-auto ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit)
-    -> ErrorOr<int>;
+auto ParseAndExecute(const Fuzzing::Carbon& carbon) -> ErrorOr<int>;
 
 namespace Internal {
 

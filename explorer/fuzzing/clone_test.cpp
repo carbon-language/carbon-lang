@@ -47,8 +47,8 @@ TEST(CloneTest, SameProtoAfterClone) {
     if (ast.ok()) {
       ++parsed_ok_count;
       const AST clone = CloneAST(arena, *ast);
-      const Fuzzing::CompilationUnit orig_proto = AstToProto(*ast);
-      const Fuzzing::CompilationUnit clone_proto = AstToProto(clone);
+      const Fuzzing::Carbon orig_proto = AstToProto(*ast);
+      const Fuzzing::Carbon clone_proto = AstToProto(clone);
       // TODO: Use EqualsProto once it's available.
       EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(
           orig_proto, clone_proto))

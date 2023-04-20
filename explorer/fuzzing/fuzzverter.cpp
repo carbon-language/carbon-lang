@@ -19,6 +19,7 @@
 
 #include "common/error.h"
 #include "common/fuzzing/carbon.pb.h"
+#include "common/fuzzing/proto_to_carbon.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/fuzzing/ast_to_proto.h"
 #include "explorer/fuzzing/fuzzer_util.h"
@@ -60,8 +61,7 @@ static auto TextProtoToCarbon(std::string_view input_file_name,
                           ReadFile(input_file_name));
   CARBON_ASSIGN_OR_RETURN(const Fuzzing::Carbon carbon_proto,
                           ParseCarbonTextProto(input_contents));
-  const std::string carbon_source =
-      ProtoToCarbonWithMain(carbon_proto.compilation_unit());
+  const std::string carbon_source = ProtoToCarbon(carbon_proto);
   return WriteFile(carbon_source, output_file_name);
 }
 
@@ -75,8 +75,7 @@ static auto CarbonToTextProto(std::string_view input_file_name,
   if (!ast.ok()) {
     return ErrorBuilder() << "Parsing failed: " << ast.error().message();
   }
-  Fuzzing::Carbon carbon_proto;
-  *carbon_proto.mutable_compilation_unit() = AstToProto(*ast);
+  Fuzzing::Carbon carbon_proto = AstToProto(*ast);
 
   std::string proto_string;
   google::protobuf::TextFormat::Printer p;
