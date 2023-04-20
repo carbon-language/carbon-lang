@@ -418,7 +418,7 @@ void Value::Print(llvm::raw_ostream& out) const {
       for (Nonnull<const Value*> element : elements) {
         out << sep << *element;
       }
-      // print trailing comma for single element tuples: (i32,)
+      // Print trailing comma for single element tuples: (i32,).
       if (elements.size() == 1) {
         out << ",";
       }
