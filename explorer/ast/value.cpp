@@ -494,9 +494,6 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::AutoType:
       out << "auto";
       break;
-    case Value::Kind::ContinuationType:
-      out << "Continuation";
-      break;
     case Value::Kind::PointerType:
       out << cast<PointerType>(*this).pointee_type() << "*";
       break;
@@ -670,10 +667,6 @@ void Value::Print(llvm::raw_ostream& out) const {
       PrintNameWithBindings(out, &assoc.interface().declaration(),
                             assoc.interface().args());
       out << "." << *GetName(assoc.constant()) << ")";
-      break;
-    }
-    case Value::Kind::ContinuationValue: {
-      out << cast<ContinuationValue>(*this).representation();
       break;
     }
     case Value::Kind::StringType:
@@ -870,7 +863,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     }
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
       return true;
@@ -898,7 +890,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::LocationValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -1034,7 +1025,6 @@ auto ValueStructurallyEqual(
     case Value::Kind::ConstraintWitness:
     case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfMixinPseudoType:
@@ -1047,7 +1037,6 @@ auto ValueStructurallyEqual(
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
     case Value::Kind::UninitializedValue:

@@ -1290,21 +1290,6 @@ class ChoiceType : public Value {
   Nonnull<const Bindings*> bindings_;
 };
 
-// A continuation type.
-class ContinuationType : public Value {
- public:
-  ContinuationType() : Value(Kind::ContinuationType) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::ContinuationType;
-  }
-
-  template <typename F>
-  auto Decompose(F f) const {
-    return f();
-  }
-};
-
 // A variable type.
 class VariableType : public Value {
  public:
@@ -1447,48 +1432,6 @@ class AssociatedConstant : public Value {
   Nonnull<const InterfaceType*> interface_;
   Nonnull<const AssociatedConstantDeclaration*> constant_;
   Nonnull<const Witness*> witness_;
-};
-
-// A first-class continuation representation of a fragment of the stack.
-// The representation of a continuation is opaque and determined by the
-// interpreter.
-class ContinuationValue : public Value {
- public:
-  // Base class for the representation of a continuation, which is not defined
-  // here for layering reasons. The interpreter provides the derived class
-  // `StackFragment` that defines the concrete representation, which is
-  // expected to be the only derived class outside of tests.
-  class Representation {
-   public:
-    virtual ~Representation() {}
-
-    Representation(Representation&&) = delete;
-    auto operator=(Representation&&) -> Representation& = delete;
-
-    virtual void Print(llvm::raw_ostream& out) const = 0;
-    LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
-
-   protected:
-    Representation() = default;
-  };
-
-  explicit ContinuationValue(Nonnull<Representation*> representation)
-      : Value(Kind::ContinuationValue), representation_(representation) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::ContinuationValue;
-  }
-
-  template <typename F>
-  auto Decompose(F f) const {
-    return f(representation_);
-  }
-
-  // The representation of the continuation.
-  auto representation() const -> Representation& { return *representation_; }
-
- private:
-  Nonnull<Representation*> representation_;
 };
 
 // The String type.

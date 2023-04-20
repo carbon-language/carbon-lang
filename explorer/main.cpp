@@ -105,7 +105,8 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   auto time_after_prelude = std::chrono::system_clock::now();
 
   // Semantically analyze the parsed program.
-  if (ErrorOr<AST> analyze_result = AnalyzeProgram(&arena, ast, &trace_stream);
+  if (ErrorOr<AST> analyze_result =
+          AnalyzeProgram(&arena, ast, &trace_stream, &llvm::outs());
       analyze_result.ok()) {
     ast = *std::move(analyze_result);
   } else {
@@ -117,7 +118,8 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
 
   // Run the program.
   auto ret = EXIT_SUCCESS;
-  if (ErrorOr<int> exec_result = ExecProgram(&arena, ast, &trace_stream);
+  if (ErrorOr<int> exec_result =
+          ExecProgram(&arena, ast, &trace_stream, &llvm::outs());
       exec_result.ok()) {
     // Print the return code to stdout.
     llvm::outs() << "result: " << *exec_result << "\n";
