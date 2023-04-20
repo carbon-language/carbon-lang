@@ -95,7 +95,7 @@ def main() -> None:
                 "bazel",
                 "build",
                 "--config=fuzzer",
-                "//explorer/fuzzing:explorer_fuzzer",
+                "//explorer/fuzzing:explorer_fuzzer.full_corpus",
             ]
         )
 
@@ -105,7 +105,7 @@ def main() -> None:
         )
         subprocess.check_call(
             [
-                "bazel-bin/explorer/fuzzing/explorer_fuzzer",
+                "bazel-bin/explorer/fuzzing/explorer_fuzzer.full_corpus",
                 "-merge=1",
                 _FUZZER_CORPUS,
                 new_corpus_dir,
