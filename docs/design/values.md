@@ -864,7 +864,7 @@ other members `T` are also members of `const T`, and impl lookup ignores the
 but not the reverse. Conversion of reference expressions to value expressions is
 defined in terms of `const T` reference expressions to `T` value expressions.
 
-It is expected that `const T` will overwhelmingly occur as part of a
+It is expected that `const T` will largely occur as part of a
 [pointer](#pointers), as the express purpose is to form reference expressions.
 Carbon will support conversions between pointers to `const`-qualified types that
 follow the same rules as used in C++ to avoid inadvertent loss of
@@ -872,11 +872,11 @@ follow the same rules as used in C++ to avoid inadvertent loss of
 
 ## Lifetime overloading
 
-One use case that is not obviously or fully addressed by these designs in Carbon
-is overloading function calls by observing the lifetime of arguments. The use
-case here would be selecting different implementation strategies for the same
-function or operation based on whether an argument lifetime happens to be ending
-and viable to move-from.
+One potential use case that is not obviously or fully addressed by these designs
+in Carbon is overloading function calls by observing the lifetime of arguments.
+The use case here would be selecting different implementation strategies for the
+same function or operation based on whether an argument lifetime happens to be
+ending and viable to move-from.
 
 Carbon currently intentionally leaves this use case unaddressed. There is a
 fundamental scaling problem in this style of overloading: it creates a
