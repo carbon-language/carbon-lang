@@ -94,7 +94,7 @@ def main() -> None:
             [
                 "bazel",
                 "build",
-                "--features=proto-fuzzer",
+                "--config=fuzzer",
                 "//explorer/fuzzing:explorer_fuzzer",
             ]
         )
