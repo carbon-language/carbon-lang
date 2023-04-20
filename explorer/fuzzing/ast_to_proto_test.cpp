@@ -125,6 +125,13 @@ TEST(AstToProtoTest, SetsAllProtoFields) {
                          });
 }
 
+// Ensures that `carbon.proto` is able to represent ASTs correctly without
+// information loss by doing round-trip testing of files:
+//
+// 1) Converts each parseable Carbon file to a proto representation.
+// 2) Converts back to Carbon source.
+// 3) Parses the source into a second instance of an AST.
+// 4) Compares the second AST with the original.
 TEST(AstToProtoTest, Roundtrip) {
   int parsed_ok_count = 0;
   for (const llvm::StringRef f : *carbon_files) {
@@ -163,6 +170,7 @@ auto CloneAST(Arena& arena, const AST& ast) -> AST {
   };
 }
 
+// Verifies that an AST and its clone produce identical protos.
 TEST(AstToProtoTest, SameProtoAfterClone) {
   int parsed_ok_count = 0;
   for (const llvm::StringRef f : *carbon_files) {

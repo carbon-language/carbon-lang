@@ -509,13 +509,6 @@ def _impl(ctx):
         )],
     )
 
-    proto_fuzzer = feature(
-        name = "proto-fuzzer",
-        enabled = False,
-        requires = [feature_set(["nonhost"])],
-        implies = ["fuzzer"],
-    )
-
     # With clang 14 and lower, we expect it to be built with libc++ debug
     # support. In later LLVM versions, we expect the assertions define to work.
     if clang_version and clang_version <= 14:

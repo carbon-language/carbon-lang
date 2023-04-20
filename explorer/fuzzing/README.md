@@ -36,44 +36,29 @@ message definition in `common/fuzzing/carbon.proto`.
 
 ## Incorporating AST changes into the fuzzer
 
-Fuzzer AST representation in
-[carbon.proto](https://github.com/carbon-language/carbon-lang/blob/trunk/common/fuzzing/carbon.proto)
-needs to be updated when changes are made to the AST, like adding a new AST node
+Fuzzer AST representation in [carbon.proto](/common/fuzzing/carbon.proto) needs
+to be updated when changes are made to the AST, like adding a new AST node
 classes or changing relevant data members of existing nodes.
 
-There are two unit tests which normally should not require direct changes, as
-both tests work off of Carbon test files in
-[testdata](https://github.com/carbon-language/carbon-lang/tree/trunk/explorer/testdata).
-
--   [ast_to_proto_test.cpp](https://github.com/carbon-language/carbon-lang/blob/trunk/explorer/fuzzing/ast_to_proto_test.cpp)
-    is a 'smoke' test which verifies that each field of Carbon proto is
-    populated at least once after converting all of test Carbon files and
-    merging the results into a single protocol buffer.
-
--   [proto_to_carbon_test.cpp](https://github.com/carbon-language/carbon-lang/blob/trunk/explorer/fuzzing/proto_to_carbon_test.cpp)
-    uses a 'roundtrip' approach, by converting each parseable Carbon file to a
-    proto representation, then back to Carbon source, parsing this source into a
-    second instance of an AST, and comparing the second AST with the original
-    AST using `AST::Dump()` method. The goal of the test is to ensure that
-    `carbon.proto` is able to represent ASTs correctly without information loss.
+[ast_to_proto_test](ast_to_proto_test.cpp) normally should not require direct
+changes, as tests work off of Carbon test files in
+[testdata](/explorer/testdata).
 
 To incorporate AST changes into fuzzing logic:
 
 1. Add appropriate AST information to
-   [carbon.proto](https://github.com/carbon-language/carbon-lang/blob/trunk/common/fuzzing/carbon.proto).
-   Use existing similar cases as examples.
+   [carbon.proto](/common/fuzzing/carbon.proto). Use existing similar cases as
+   examples.
 
-1. Add logic to populate the proto to
-   [ast_to_proto.cpp](https://github.com/carbon-language/carbon-lang/blob/trunk/explorer/fuzzing/ast_to_proto.cpp).
+2. Modify [proto_to_carbon.cpp](/common/fuzzing/proto_to_carbon.cpp) which
+   handles printing of a Carbon proto instance as a Carbon source string. For
+   example, add code to print newly introduced proto fields.
 
-1. Make sure `ast_to_proto_test` passes with the new changes.
+3. Add logic to populate the proto to
+   [ast_to_proto.cpp](/explorer/fuzzing/ast_to_proto.cpp).
 
-1. Modify
-   [proto_to_carbon.cpp](https://github.com/carbon-language/carbon-lang/blob/trunk/common/fuzzing/proto_to_carbon.cpp)
-   which handles printing of a Carbon proto instance as a Carbon source string.
-   For example, add code to print newly introduced proto fields.
-
-1. Make sure `proto_to_carbon_test` passes after the changes.
+4. Make sure `bazel test //explorer/fuzzing:ast_to_proto_test` passes with the
+   new changes.
 
 ## Running the fuzzer
 
@@ -85,36 +70,35 @@ a crash is triggered, or forever in a bug-free program ;).
 To run in 'unit test' mode:
 
 ```bash
-bazel test --config=proto-fuzzer --test_output=all //explorer/fuzzing:explorer_fuzzer
+bazel test //explorer/fuzzing:explorer_fuzzer
 ```
 
 To run in 'fuzzing' mode:
 
 ```bash
-bazel build --config=proto-fuzzer //explorer/fuzzing:explorer_fuzzer
+bazel build --config=fuzzer //explorer/fuzzing:explorer_fuzzer.full_corpus
 
-bazel-bin/explorer/fuzzing/explorer_fuzzer
+bazel-bin/explorer/fuzzing/explorer_fuzzer.full_corpus
+```
+
+## Investigating a crash
+
+Typically it's going to be easiest to run explorer on directly. You can do this
+with:
+
+````bash
+# Convert the crash to a source file.
+bazel run //common/fuzzing:proto_to_carbon -- /tmp/crash.textproto > crash.carbon
+
+# Run explorer on the crash.
+bazel run //explorer -- crash.carbon
 ```
 
 It's also possible to run the fuzzer on a single input:
 
 ```bash
-bazel-bin/explorer/fuzzing/explorer_fuzzer /tmp/crash.textproto
-```
-
-## Investigating a crash
-
-To reproduce a crash, run the fuzzer on the crashing input as described above.
-
-A separate tool called `fuzzverter` can be used for things like converting a
-crashing input to Carbon source code for running `explorer` on the code
-directly.
-
-To convert a `Fuzzing::Carbon` text proto to Carbon source:
-
-```bash
-bazel-bin/explorer/fuzzing/fuzzverter --mode proto_to_carbon --input /tmp/crash.textproto
-```
+bazel-bin/explorer/fuzzing/explorer_fuzzer.full_corpus /tmp/crash.textproto
+````
 
 ## Generating new fuzzer corpus entries
 
@@ -125,5 +109,5 @@ to be a `Fuzzing::Carbon` text proto.
 To generate a text proto from Carbon source:
 
 ```bash
-bazel-bin/explorer/fuzzing/fuzzverter --mode carbon_to_proto --input /tmp/crash.carbon --output /tmp/crash.textproto
+bazel run //explorer/fuzzing:ast_to_proto -- /tmp/crash.carbon > crash.textproto
 ```
