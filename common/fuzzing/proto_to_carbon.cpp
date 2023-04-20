@@ -992,7 +992,8 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
   }
 }
 
-auto ProtoToCarbon(const Fuzzing::Carbon& proto) -> std::string {
+auto ProtoToCarbon(const Fuzzing::Carbon& proto, bool maybe_add_main)
+    -> std::string {
   std::string source;
   llvm::raw_string_ostream out(source);
 
@@ -1014,7 +1015,7 @@ auto ProtoToCarbon(const Fuzzing::Carbon& proto) -> std::string {
     }
   }
 
-  if (!has_main) {
+  if (maybe_add_main && !has_main) {
     out << "fn Main() -> i32 { return 0; }\n";
   }
 

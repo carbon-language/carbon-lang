@@ -7,6 +7,7 @@
 
 #include "common/error.h"
 #include "common/fuzzing/carbon.pb.h"
+#include "explorer/ast/ast.h"
 
 namespace Carbon {
 
@@ -14,13 +15,10 @@ namespace Carbon {
 // Returns program result if execution was successful.
 auto ParseAndExecute(const Fuzzing::Carbon& carbon) -> ErrorOr<int>;
 
-namespace Internal {
-
 // Returns a full path for a file under bazel runfiles.
 // Exposed for testing.
 auto GetRunfilesFile(const std::string& file) -> ErrorOr<std::string>;
 
-}  // namespace Internal
 }  // namespace Carbon
 
 #endif  // CARBON_EXPLORER_FUZZING_FUZZER_UTIL_H_

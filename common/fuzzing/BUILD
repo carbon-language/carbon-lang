@@ -43,3 +43,15 @@ cc_binary(
         "@llvm-project//llvm:Support",
     ],
 )
+
+cc_test(
+    name = "proto_to_carbon_test",
+    srcs = ["proto_to_carbon_test.cpp"],
+    deps = [
+        ":carbon_cc_proto",
+        ":proto_to_carbon_lib",
+        "//common:error",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)

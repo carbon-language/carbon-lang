@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// To convert a crashing input in text proto to Carbon source:
-// `proto_to_carbon <file.textproto>`
+// To convert a Carbon file to a text proto:
+// `ast_to_proto <file.carbon>`
 
 #include <google/protobuf/text_format.h>
 
@@ -13,7 +13,11 @@
 
 #include "common/bazel_working_dir.h"
 #include "common/error.h"
-#include "common/fuzzing/proto_to_carbon.h"
+#include "common/fuzzing/carbon.pb.h"
+#include "explorer/ast/ast.h"
+#include "explorer/common/arena.h"
+#include "explorer/fuzzing/ast_to_proto.h"
+#include "explorer/syntax/parse.h"
 
 namespace Carbon {
 
@@ -21,7 +25,7 @@ auto Main(int argc, char** argv) -> ErrorOr<Success> {
   Carbon::SetWorkingDirForBazel();
 
   if (argc != 2) {
-    return Error("Syntax: proto_to_carbon <file.textproto>");
+    return Error("Syntax: ast_to_proto <file.carbon>");
   }
   if (!std::filesystem::is_regular_file(argv[1])) {
     return Error("Argument must be a file.");
@@ -33,9 +37,20 @@ auto Main(int argc, char** argv) -> ErrorOr<Success> {
   buffer << proto_file.rdbuf();
   proto_file.close();
 
-  CARBON_ASSIGN_OR_RETURN(Fuzzing::Carbon proto,
-                          Carbon::ParseCarbonTextProto(buffer.str()));
-  std::cout << Carbon::ProtoToCarbon(proto, /*maybe_add_main=*/true);
+  Arena arena;
+  const ErrorOr<AST> ast = Parse(&arena, argv[1],
+                                 /*parser_debug=*/false);
+  if (!ast.ok()) {
+    return ErrorBuilder() << "Parsing failed: " << ast.error().message();
+  }
+  Fuzzing::Carbon carbon_proto = AstToProto(*ast);
+
+  std::string proto_string;
+  google::protobuf::TextFormat::Printer p;
+  if (!p.PrintToString(carbon_proto, &proto_string)) {
+    return Error("Failed to convert to text proto");
+  }
+  std::cout << proto_string;
   return Success();
 }
 
