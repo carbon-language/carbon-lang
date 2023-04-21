@@ -37,13 +37,12 @@ using GlobalMembersMap =
 
 class TypeChecker {
  public:
-  enum class PatternRefutability {
+  // Requirements for TypeCheckPattern.
+  enum class PatternRequirements {
+    None,
+
     // The pattern must be fully irrefutable.
     Irrefutable,
-
-    // The pattern is refutable, which means it may also contain irrefutable
-    // patterns.
-    Refutable,
 
     // A special case for types of bindings, which must be either `auto` or a
     // valid expression.
@@ -212,7 +211,7 @@ class TypeChecker {
   // Implicit conversions from `expected` to the pattern's type are permitted.
   //
   // `impl_scope` is extended with all implementations implied by the pattern.
-  auto TypeCheckPattern(Nonnull<Pattern*> p, PatternRefutability refutability,
+  auto TypeCheckPattern(Nonnull<Pattern*> p, PatternRequirements requirements,
                         std::optional<Nonnull<const Value*>> expected,
                         ImplScope& impl_scope,
                         ExpressionCategory enclosing_expression_category)
