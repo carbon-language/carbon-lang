@@ -32,7 +32,7 @@ struct Stack {
   //
   // - Requires: !this->IsEmpty()
   auto Pop() -> T {
-    CARBON_CHECK(!IsEmpty()) << "Can't pop from empty stack.";
+    CARBON_CHECK(!empty()) << "Can't pop from empty stack.";
     auto r = std::move(elements_.back());
     elements_.pop_back();
     return r;
@@ -52,15 +52,15 @@ struct Stack {
   //
   // - Requires: !this->IsEmpty()
   auto Top() const -> const T& {
-    CARBON_CHECK(!IsEmpty()) << "Empty stack has no Top().";
+    CARBON_CHECK(!empty()) << "Empty stack has no Top().";
     return elements_.back();
   }
 
   // Returns `true` iff `Count() > 0`.
-  auto IsEmpty() const -> bool { return elements_.empty(); }
+  auto empty() const -> bool { return elements_.empty(); }
 
   // Returns the number of elements in `*this`.
-  auto Count() const -> int { return elements_.size(); }
+  auto size() const -> int { return elements_.size(); }
 
   // Iterates over the Stack from top to bottom.
   auto begin() const -> const_iterator { return elements_.crbegin(); }

@@ -35,6 +35,7 @@ class Arena {
         std::make_unique<ArenaEntryTyped<T>>(std::forward<Args>(args)...);
     Nonnull<T*> ptr = smart_ptr->Instance();
     arena_.push_back(std::move(smart_ptr));
+    allocated_ += sizeof(T);
     return ptr;
   }
 
@@ -45,7 +46,10 @@ class Arena {
   void New(WriteAddressTo<U> addr, Args&&... args) {
     arena_.push_back(std::make_unique<ArenaEntryTyped<T>>(
         addr, std::forward<Args>(args)...));
+    allocated_ += sizeof(T);
   }
+
+  auto allocated() -> int64_t { return allocated_; }
 
  private:
   // Virtualizes arena entries so that a single vector can contain many types,
@@ -83,6 +87,7 @@ class Arena {
 
   // Manages allocations in an arena for destruction at shutdown.
   std::vector<std::unique_ptr<ArenaEntry>> arena_;
+  int64_t allocated_ = 0;
 };
 
 }  // namespace Carbon

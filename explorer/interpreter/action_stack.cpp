@@ -21,7 +21,7 @@ void ActionStack::Print(llvm::raw_ostream& out) const {
 
 void ActionStack::Start(std::unique_ptr<Action> action) {
   result_ = std::nullopt;
-  CARBON_CHECK(todo_.IsEmpty());
+  CARBON_CHECK(todo_.empty());
   todo_.Push(std::move(action));
 }
 
@@ -253,7 +253,7 @@ auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
 
 void ActionStack::PopScopes(
     std::stack<std::unique_ptr<Action>>& cleanup_stack) {
-  while (!todo_.IsEmpty() && llvm::isa<ScopeAction>(*todo_.Top())) {
+  while (!todo_.empty() && llvm::isa<ScopeAction>(*todo_.Top())) {
     auto act = todo_.Pop();
     if (act->scope()) {
       cleanup_stack.push(std::move(act));
@@ -262,7 +262,7 @@ void ActionStack::PopScopes(
 }
 
 void ActionStack::SetResult(Nonnull<const Value*> result) {
-  if (todo_.IsEmpty()) {
+  if (todo_.empty()) {
     result_ = result;
   } else {
     todo_.Top()->AddResult(result);
