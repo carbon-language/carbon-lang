@@ -38,7 +38,7 @@ class ActionStack {
   void Start(std::unique_ptr<Action> action);
 
   // True if the stack is empty.
-  auto IsEmpty() const -> bool { return todo_.IsEmpty(); }
+  auto empty() const -> bool { return todo_.empty(); }
 
   // The Action currently at the top of the stack. This will never be a
   // ScopeAction.
@@ -106,7 +106,7 @@ class ActionStack {
 
   void Pop() { todo_.Pop(); }
 
-  auto Count() const -> int { return todo_.Count(); }
+  auto size() const -> int { return todo_.size(); }
 
  private:
   // Pop any ScopeActions from the top of the stack, propagating results as

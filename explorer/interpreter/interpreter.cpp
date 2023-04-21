@@ -40,6 +40,11 @@ using llvm::isa;
 
 namespace Carbon {
 
+// Limits for various overflow conditions.
+static constexpr int64_t MaxTodoSize = 1e3;
+static constexpr int64_t MaxStepsTaken = 1e6;
+static constexpr int64_t MaxArenaAllocated = 1e9;
+
 // Constructs an ActionStack suitable for the specified phase.
 static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
   switch (phase) {
@@ -185,6 +190,10 @@ class Interpreter {
   Nonnull<llvm::raw_ostream*> print_stream_;
 
   Phase phase_;
+
+  // The number of steps taken by the interpreter. Used for infinite loop
+  // detection.
+  int64_t steps_taken_ = 0;
 };
 
 //
@@ -951,10 +960,6 @@ auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
                                ImplWitnessMap&& witnesses) -> ErrorOr<Success> {
-  constexpr int StackSizeLimit = 1000;
-  if (todo_.Count() > StackSizeLimit) {
-    return ProgramError(call.source_loc()) << "stack overflow";
-  }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "calling function: " << *fun << "\n";
   }
@@ -2394,6 +2399,20 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
 
 // State transition.
 auto Interpreter::Step() -> ErrorOr<Success> {
+  // Check for various overflow conditions before stepping.
+  if (todo_.size() > MaxTodoSize) {
+    return ProgramError(SourceLocation("overflow", 1))
+           << "Stack overflow: too many interpreter actions on stack";
+  }
+  if (++steps_taken_ > MaxStepsTaken) {
+    return ProgramError(SourceLocation("overflow", 1))
+           << "Possible infinite loop: too many interpreter steps executed";
+  }
+  if (arena_->allocated() > MaxArenaAllocated) {
+    return ProgramError(SourceLocation("overflow", 1))
+           << "Out of memory: exceeded arena allocation limit";
+  }
+
   Action& act = todo_.CurrentAction();
   switch (act.kind()) {
     case Action::Kind::LocationAction:
@@ -2434,7 +2453,7 @@ auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     TraceState();
   }
   todo_.Start(std::move(action));
-  while (!todo_.IsEmpty()) {
+  while (!todo_.empty()) {
     CARBON_RETURN_IF_ERROR(Step());
     if (trace_stream_->is_enabled()) {
       TraceState();
