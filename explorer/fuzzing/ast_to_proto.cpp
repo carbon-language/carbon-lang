@@ -843,15 +843,15 @@ static auto DeclarationToProto(const Declaration& declaration)
   return declaration_proto;
 }
 
-auto AstToProto(const AST& ast) -> Fuzzing::CompilationUnit {
-  Fuzzing::CompilationUnit compilation_unit;
-  *compilation_unit.mutable_package_statement() =
-      LibraryNameToProto(ast.package);
-  compilation_unit.set_is_api(ast.is_api);
+auto AstToProto(const AST& ast) -> Fuzzing::Carbon {
+  Fuzzing::Carbon carbon;
+  auto* unit = carbon.mutable_compilation_unit();
+  *unit->mutable_package_statement() = LibraryNameToProto(ast.package);
+  unit->set_is_api(ast.is_api);
   for (const Declaration* declaration : ast.declarations) {
-    *compilation_unit.add_declarations() = DeclarationToProto(*declaration);
+    *unit->add_declarations() = DeclarationToProto(*declaration);
   }
-  return compilation_unit;
+  return carbon;
 }
 
 }  // namespace Carbon
