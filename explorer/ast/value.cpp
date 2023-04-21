@@ -414,9 +414,13 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::TupleValue: {
       out << "(";
       llvm::ListSeparator sep;
-      for (Nonnull<const Value*> element :
-           cast<TupleValueBase>(*this).elements()) {
+      const auto elements = cast<TupleValueBase>(*this).elements();
+      for (Nonnull<const Value*> element : elements) {
         out << sep << *element;
+      }
+      // Print trailing comma for single element tuples: (i32,).
+      if (elements.size() == 1) {
+        out << ",";
       }
       out << ")";
       break;
