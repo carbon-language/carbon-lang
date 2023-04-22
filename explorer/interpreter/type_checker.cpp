@@ -2843,11 +2843,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 access.set_expression_category(ExpressionCategory::Value);
                 break;
               }
-              case DeclarationKind::AliasDeclaration: {
-                const auto* alias = cast<AliasDeclaration>(member);
-                access.set_expression_category(alias->expression_category());
-                break;
-              }
+              case DeclarationKind::AliasDeclaration:
+                return ProgramError(access.source_loc())
+                       << "Member access to aliases is not yet supported.";
               default:
                 CARBON_FATAL() << "member " << access.member_name()
                                << " is not a field or method";

@@ -35,7 +35,7 @@ impl forall [U:! Printable] Vector(U) as Printable {
 
 fn Main() -> i32 {
   var v: Vector(String) = {.x = "test"};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/alias/interface_method_as_class_member.carbon:[[@LINE+1]]: in call `v.PrintIt()`, expected callee to be a function, found `member name PrintIt`
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/alias/interface_method_as_class_member.carbon:[[@LINE+1]]: Member access to aliases is not yet supported.
   v.PrintIt();
   return 42;
 }
