@@ -855,7 +855,10 @@ auto NameResolver::ResolveNames(Declaration& declaration,
       scope->MarkDeclared(alias.name().inner_name());
       CARBON_ASSIGN_OR_RETURN(auto target,
                               ResolveNames(alias.target(), *scope));
-      if (target && isa<Declaration>(target->base())) {
+      // Skip if declaration is already resolved in previous name resolution
+      // phase.
+      if (target && isa<Declaration>(target->base()) &&
+          !alias.resolved_declaration()) {
         alias.set_resolved_declaration(&cast<Declaration>(target->base()));
       }
       scope->MarkUsable(alias.name().inner_name());
