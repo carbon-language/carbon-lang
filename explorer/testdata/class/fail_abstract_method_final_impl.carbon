@@ -13,7 +13,7 @@ abstract class A {
 }
 
 class B extends A {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_final_impl.carbon:[[@LINE+1]]: Error declaring `B`: final class should implement abstract method `Foo`.
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_final_impl.carbon:[[@LINE+1]]: Error declaring `B`: non abstract class should implement abstract method `Foo`.
 }
 
 fn Main() -> i32 {
