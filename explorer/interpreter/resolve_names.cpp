@@ -855,11 +855,14 @@ auto NameResolver::ResolveNames(Declaration& declaration,
       scope->MarkDeclared(alias.name().inner_name());
       CARBON_ASSIGN_OR_RETURN(auto target,
                               ResolveNames(alias.target(), *scope));
-      // Skip if declaration is already resolved in previous name resolution
-      // phase.
-      if (target && isa<Declaration>(target->base()) &&
-          !alias.resolved_declaration()) {
-        alias.set_resolved_declaration(&cast<Declaration>(target->base()));
+      if (target && isa<Declaration>(target->base())) {
+        if (alias.resolved_declaration()) {
+          // Skip if the declaration is already resolved in a previous name resolution
+          // phase.
+          CARBON_CHECK(*alias.resolved_declaration() == target->base());
+        } else {
+          alias.set_resolved_declaration(&cast<Declaration>(target->base()));
+        }
       }
       scope->MarkUsable(alias.name().inner_name());
       break;
