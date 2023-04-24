@@ -19,15 +19,10 @@ namespace {
 class ParseAndExecuteTest : public ::testing::Test {
  protected:
   auto ParseAndExecute(const std::string& source,
-                       std::optional<testing::Matcher<std::string>> err_matcher)
-      -> void {
+                       testing::Matcher<std::string> err_matcher) -> void {
     auto err = ParseAndExecuteImpl(source);
-    if (err_matcher) {
-      ASSERT_FALSE(err.ok());
-      EXPECT_THAT(err.error().message(), *err_matcher);
-    } else {
-      EXPECT_TRUE(err.ok()) << err.error();
-    }
+    ASSERT_FALSE(err.ok());
+    EXPECT_THAT(err.error().message(), err_matcher);
   }
 
   auto ParseAndExecuteImpl(const std::string& source) -> ErrorOr<int> {
