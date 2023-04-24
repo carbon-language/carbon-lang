@@ -857,8 +857,8 @@ auto NameResolver::ResolveNames(Declaration& declaration,
                               ResolveNames(alias.target(), *scope));
       if (target && isa<Declaration>(target->base())) {
         if (alias.resolved_declaration()) {
-          // Skip if the declaration is already resolved in a previous name resolution
-          // phase.
+          // Skip if the declaration is already resolved in a previous name
+          // resolution phase.
           CARBON_CHECK(*alias.resolved_declaration() == &target->base());
         } else {
           alias.set_resolved_declaration(&cast<Declaration>(target->base()));
