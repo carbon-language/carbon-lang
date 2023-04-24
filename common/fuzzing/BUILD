@@ -26,7 +26,6 @@ cc_library(
     deps = [
         ":carbon_cc_proto",
         "//common:error",
-        "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
     ],
 )
