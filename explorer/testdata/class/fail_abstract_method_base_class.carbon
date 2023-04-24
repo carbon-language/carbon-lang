@@ -13,11 +13,9 @@ abstract class A {
 }
 
 base class B extends A {
-
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_base_class.carbon:[[@LINE+1]]: Error declaring `B`: non abstract class should implement abstract method `Foo`.
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/class/fail_abstract_method_base_instance.carbon:[[@LINE+1]]: Cannot instantiate base class `B`: abstract method `Foo` should be implemented.
-  var b: B = { .base = {} };
   return 0;
 }
