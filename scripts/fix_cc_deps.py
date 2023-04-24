@@ -16,36 +16,53 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import re
 import subprocess
-from typing import Callable, Dict, List, NamedTuple, Set, Tuple
+from typing import Callable, Dict, List, NamedTuple, Optional, Set, Tuple
 from xml.etree import ElementTree
 
 import scripts_utils
 
 
+class ExternalRepo(NamedTuple):
+    # A function for remapping files in the repo.
+    remap: Callable[[str], str]
+    # The target expression to gather rules for within the repo.
+    target: str
+    # The repo to use for dependencies.
+    dep_repo: Optional[str]
+
+
 # Maps external repository names to a method translating bazel labels to file
 # paths for that repository.
-EXTERNAL_REPOS: Dict[str, Callable[[str], str]] = {
+EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
     # @llvm-project//llvm:include/llvm/Support/Error.h ->
     #   llvm/Support/Error.h
-    "@llvm-project": lambda x: re.sub("^(.*:(lib|include))/", "", x),
+    "@llvm-project": ExternalRepo(
+        lambda x: re.sub("^(.*:(lib|include))/", "", x), "...", None
+    ),
     # @com_google_protobuf//:src/google/protobuf/descriptor.h ->
     #   google/protobuf/descriptor.h
-    "@com_google_protobuf": lambda x: re.sub("^(.*:src)/", "", x),
+    # protobuf_headers is specified because there are multiple overlapping
+    # targets.
+    "@com_github_protocolbuffers_protobuf": ExternalRepo(
+        lambda x: re.sub("^(.*:src)/", "", x),
+        ":protobuf_headers",
+        "@com_google_protobuf",
+    ),
     # @com_google_libprotobuf_mutator//:src/libfuzzer/libfuzzer_macro.h ->
     #   libprotobuf_mutator/src/libfuzzer/libfuzzer_macro.h
-    "@com_google_libprotobuf_mutator": lambda x: re.sub(
-        "^(.*:)", "libprotobuf_mutator/", x
+    "@com_google_libprotobuf_mutator": ExternalRepo(
+        lambda x: re.sub("^(.*:)", "libprotobuf_mutator/", x), "...", None
     ),
     # @bazel_tools//tools/cpp/runfiles:runfiles.h ->
     #   tools/cpp/runfiles/runfiles.h
-    "@bazel_tools": lambda x: re.sub(":", "/", x),
+    "@bazel_tools": ExternalRepo(lambda x: re.sub(":", "/", x), "...", None),
 }
 
 # TODO: proto rules are aspect-based and their generated files don't show up in
 # `bazel query` output.
 # Try using `bazel cquery --output=starlark` to print `target.files`.
 # For protobuf, need to add support for `alias` rule kind.
-IGNORE_HEADER_REGEX = re.compile("^(.*\\.pb\\.h)|(.*google/protobuf/.*)$")
+IGNORE_HEADER_REGEX = re.compile("^(.*\\.pb\\.h)$")
 
 
 class Rule(NamedTuple):
@@ -68,7 +85,7 @@ def remap_file(label: str) -> str:
     if not repo:
         return path.replace(":", "/")
     assert repo in EXTERNAL_REPOS, repo
-    return EXTERNAL_REPOS[repo](path)
+    return EXTERNAL_REPOS[repo].remap(path)
     exit(f"Don't know how to remap label '{label}'")
 
 
@@ -146,6 +163,10 @@ def map_headers(
     The map maps header paths to rule names.
     """
     for rule_name, rule in rules.items():
+        repo, _, path = rule_name.partition("//")
+        if repo and EXTERNAL_REPOS[repo].dep_repo:
+            rule_name = f"{EXTERNAL_REPOS[repo].dep_repo}//{path}"
+
         for header in rule.hdrs:
             if header in header_to_rule_map:
                 header_to_rule_map[header].add(rule_name)
@@ -171,7 +192,7 @@ def get_missing_deps(
             continue
         with open(source_file, "r") as f:
             for header_groups in re.findall(
-                r'^(#include (?:"([^"]+)"|<((?:gmock|gtest)/[^>]+)>))',
+                r'^(#include (?:"([^"]+)"|<((?:google|gmock|gtest)/[^>]+)>))',
                 f.read(),
                 re.MULTILINE,
             ):
@@ -215,7 +236,9 @@ def main() -> None:
     print("Querying bazel for Carbon targets...")
     carbon_rules = get_rules(bazel, "//...", False)
     print("Querying bazel for external targets...")
-    external_repo_query = " ".join([f"{repo}//..." for repo in EXTERNAL_REPOS])
+    external_repo_query = " ".join(
+        [f"{repo}//{EXTERNAL_REPOS[repo].target}" for repo in EXTERNAL_REPOS]
+    )
     external_rules = get_rules(bazel, external_repo_query, True)
 
     print("Building header map...")
