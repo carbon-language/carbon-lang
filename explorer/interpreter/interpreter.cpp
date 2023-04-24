@@ -1116,33 +1116,6 @@ auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
         if (base.has_value()) {
           base = cast<NominalClassType>(act.results().back());
         }
-        if (class_type.declaration().extensibility() ==
-            ClassExtensibility::Abstract) {
-          return ProgramError(source_loc)
-                 << "Cannot instantiate abstract class "
-                 << class_type.declaration().name();
-        }
-
-        if (class_type.declaration().extensibility() ==
-            ClassExtensibility::Base) {
-          const auto& class_vtable = class_type.vtable();
-          auto abstract_method_it = std::find_if(
-              class_vtable.begin(), class_vtable.end(), [](const auto& vt) {
-                const auto* const fun = vt.getValue().first;
-                return fun->is_method() &&
-                       fun->virt_override() == VirtualOverride::Abstract;
-              });
-
-          if (abstract_method_it != class_vtable.end()) {
-            auto fun_name = GetName(*abstract_method_it->getValue().first);
-            CARBON_CHECK(fun_name.has_value());
-            return ProgramError(source_loc)
-                   << "Cannot instantiate base class `"
-                   << class_type.declaration().name() << "`: abstract method `"
-                   << *fun_name << "` should be implemented.";
-          }
-        }
-
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Bindings*> bindings,
             InstantiateBindings(&class_type.bindings(), source_loc));
