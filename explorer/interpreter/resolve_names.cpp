@@ -95,11 +95,38 @@ class NameResolver {
   auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
                     ResolveFunctionBodies bodies) -> ErrorOr<Success>;
 
-  auto ResolveMemberNames(llvm::ArrayRef<Nonnull<Declaration*>> members,
+  auto ResolveMemberNames(SourceLocation source_loc,
+                          llvm::ArrayRef<Nonnull<Declaration*>> members,
                           StaticScope& scope, ResolveFunctionBodies bodies)
       -> ErrorOr<Success>;
 
  private:
+  static constexpr int StackDepthLimit = 200;
+
+  // Manages the parser's stack depth, particularly decrementing on destruction.
+  // This should only be instantiated through RETURN_IF_STACK_LIMITED.
+  class ScopedStackStep {
+   public:
+    explicit ScopedStackStep(NameResolver* parent) : parent_(parent) {
+      ++parent_->stack_depth_;
+    }
+    ~ScopedStackStep() { --parent_->stack_depth_; }
+
+    auto VerifyUnderLimit(SourceLocation loc) -> ErrorOr<Success> {
+      if (parent_->stack_depth_ >= StackDepthLimit) {
+        return ProgramError(loc)
+               << "Exceeded recursion limit (" << StackDepthLimit << ")";
+      }
+      return Success();
+    }
+
+   private:
+    NameResolver* parent_;
+  };
+
+  // The current stack depth.
+  int stack_depth_ = 0;
+
   // Mapping from namespaces to their scopes.
   llvm::DenseMap<const NamespaceDeclaration*, StaticScope> namespace_scopes_;
 
@@ -108,6 +135,12 @@ class NameResolver {
 };
 
 }  // namespace
+
+// Encapsulates checking the stack and erroring if needed. This should be called
+// at the start of recursive functions.
+#define CARBON_RETURN_IF_STACK_LIMITED(loc) \
+  ScopedStackStep scoped_stack_step(this);  \
+  CARBON_RETURN_IF_ERROR(scoped_stack_step.VerifyUnderLimit(loc))
 
 auto NameResolver::ResolveQualifier(DeclaredName name,
                                     StaticScope& enclosing_scope,
@@ -159,6 +192,7 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
                                    StaticScope& enclosing_scope,
                                    bool allow_qualified_names)
     -> ErrorOr<Success> {
+  CARBON_RETURN_IF_STACK_LIMITED(declaration.source_loc());
   switch (declaration.kind()) {
     case DeclarationKind::NamespaceDeclaration: {
       const auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
@@ -259,6 +293,7 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
 auto NameResolver::ResolveNames(Expression& expression,
                                 const StaticScope& enclosing_scope)
     -> ErrorOr<std::optional<ValueNodeView>> {
+  CARBON_RETURN_IF_STACK_LIMITED(expression.source_loc());
   switch (expression.kind()) {
     case ExpressionKind::CallExpression: {
       auto& call = cast<CallExpression>(expression);
@@ -437,6 +472,7 @@ auto NameResolver::ResolveNames(Expression& expression,
 auto NameResolver::ResolveNames(WhereClause& clause,
                                 const StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
+  CARBON_RETURN_IF_STACK_LIMITED(clause.source_loc());
   switch (clause.kind()) {
     case WhereClauseKind::ImplsWhereClause: {
       auto& impls_clause = cast<ImplsWhereClause>(clause);
@@ -466,6 +502,7 @@ auto NameResolver::ResolveNames(WhereClause& clause,
 
 auto NameResolver::ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
+  CARBON_RETURN_IF_STACK_LIMITED(pattern.source_loc());
   switch (pattern.kind()) {
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(pattern);
@@ -520,6 +557,7 @@ auto NameResolver::ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
 auto NameResolver::ResolveNames(Statement& statement,
                                 StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
+  CARBON_RETURN_IF_STACK_LIMITED(statement.source_loc());
   switch (statement.kind()) {
     case StatementKind::ExpressionStatement:
       CARBON_RETURN_IF_ERROR(ResolveNames(
@@ -633,8 +671,9 @@ auto NameResolver::ResolveNames(Statement& statement,
 }
 
 auto NameResolver::ResolveMemberNames(
-    llvm::ArrayRef<Nonnull<Declaration*>> members, StaticScope& scope,
-    ResolveFunctionBodies bodies) -> ErrorOr<Success> {
+    SourceLocation source_loc, llvm::ArrayRef<Nonnull<Declaration*>> members,
+    StaticScope& scope, ResolveFunctionBodies bodies) -> ErrorOr<Success> {
+  CARBON_RETURN_IF_STACK_LIMITED(source_loc);
   for (Nonnull<Declaration*> member : members) {
     CARBON_RETURN_IF_ERROR(AddExposedNames(*member, scope));
   }
@@ -657,6 +696,7 @@ auto NameResolver::ResolveNames(Declaration& declaration,
                                 StaticScope& enclosing_scope,
                                 ResolveFunctionBodies bodies)
     -> ErrorOr<Success> {
+  CARBON_RETURN_IF_STACK_LIMITED(declaration.source_loc());
   switch (declaration.kind()) {
     case DeclarationKind::NamespaceDeclaration: {
       auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
@@ -680,8 +720,8 @@ auto NameResolver::ResolveNames(Declaration& declaration,
       // Don't resolve names in the type of the self binding. The
       // ConstraintTypeDeclaration constructor already did that.
       CARBON_RETURN_IF_ERROR(iface_scope.Add("Self", iface.self()));
-      CARBON_RETURN_IF_ERROR(
-          ResolveMemberNames(iface.members(), iface_scope, bodies));
+      CARBON_RETURN_IF_ERROR(ResolveMemberNames(
+          iface.source_loc(), iface.members(), iface_scope, bodies));
       break;
     }
     case DeclarationKind::ImplDeclaration: {
@@ -701,8 +741,8 @@ auto NameResolver::ResolveNames(Declaration& declaration,
         CARBON_RETURN_IF_ERROR(AddExposedNames(*impl.self(), impl_scope));
       }
       CARBON_RETURN_IF_ERROR(ResolveNames(impl.interface(), impl_scope));
-      CARBON_RETURN_IF_ERROR(
-          ResolveMemberNames(impl.members(), impl_scope, bodies));
+      CARBON_RETURN_IF_ERROR(ResolveMemberNames(
+          impl.source_loc(), impl.members(), impl_scope, bodies));
       break;
     }
     case DeclarationKind::MatchFirstDeclaration: {
@@ -762,8 +802,8 @@ auto NameResolver::ResolveNames(Declaration& declaration,
       }
       scope->MarkUsable(class_decl.name().inner_name());
       CARBON_RETURN_IF_ERROR(AddExposedNames(*class_decl.self(), class_scope));
-      CARBON_RETURN_IF_ERROR(
-          ResolveMemberNames(class_decl.members(), class_scope, bodies));
+      CARBON_RETURN_IF_ERROR(ResolveMemberNames(
+          class_decl.source_loc(), class_decl.members(), class_scope, bodies));
       break;
     }
     case DeclarationKind::MixinDeclaration: {
@@ -779,8 +819,8 @@ auto NameResolver::ResolveNames(Declaration& declaration,
       }
       scope->MarkUsable(mixin_decl.name().inner_name());
       CARBON_RETURN_IF_ERROR(mixin_scope.Add("Self", mixin_decl.self()));
-      CARBON_RETURN_IF_ERROR(
-          ResolveMemberNames(mixin_decl.members(), mixin_scope, bodies));
+      CARBON_RETURN_IF_ERROR(ResolveMemberNames(
+          mixin_decl.source_loc(), mixin_decl.members(), mixin_scope, bodies));
       break;
     }
     case DeclarationKind::MixDeclaration: {

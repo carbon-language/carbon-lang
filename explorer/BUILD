@@ -31,6 +31,21 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "parse_and_execute_test",
+    srcs = ["parse_and_execute_test.cpp"],
+    deps = [
+        "//common:check",
+        "//common:error",
+        "//common:gtest_main",
+        "//explorer/interpreter:exec_program",
+        "//explorer/interpreter:trace_stream",
+        "//explorer/syntax",
+        "//explorer/syntax:prelude",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 cc_binary(
     name = "explorer",
     srcs = ["main_bin.cpp"],
