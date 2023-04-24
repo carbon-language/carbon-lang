@@ -5037,7 +5037,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     }
   }
 
-  if (class_decl->extensibility() == ClassExtensibility::None) {
+  if (class_decl->extensibility() != ClassExtensibility::Abstract) {
     auto abstract_method_it = std::find_if(
         class_vtable.begin(), class_vtable.end(), [](const auto& vt) {
           const auto* const fun = vt.getValue().first;
