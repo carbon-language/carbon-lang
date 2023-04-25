@@ -34,13 +34,11 @@ class ExternalRepo(NamedTuple):
 # Maps external repository names to a method translating bazel labels to file
 # paths for that repository.
 EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
-    # @llvm-project//llvm:include/llvm/Support/Error.h ->
-    #   llvm/Support/Error.h
+    # llvm:include/llvm/Support/Error.h ->llvm/Support/Error.h
     "@llvm-project": ExternalRepo(
         lambda x: re.sub("^(.*:(lib|include))/", "", x), "...", None
     ),
-    # @com_google_protobuf//:src/google/protobuf/descriptor.h ->
-    #   google/protobuf/descriptor.h
+    # :src/google/protobuf/descriptor.h -> google/protobuf/descriptor.h
     # - protobuf_headers is specified because there are multiple overlapping
     #   targets.
     # - @com_google_protobuf is the official dependency, and we use it, but it
@@ -50,13 +48,12 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
         ":protobuf_headers",
         "@com_google_protobuf",
     ),
-    # @com_google_libprotobuf_mutator//:src/libfuzzer/libfuzzer_macro.h ->
+    # :src/libfuzzer/libfuzzer_macro.h ->
     #   libprotobuf_mutator/src/libfuzzer/libfuzzer_macro.h
     "@com_google_libprotobuf_mutator": ExternalRepo(
         lambda x: re.sub("^(.*:)", "libprotobuf_mutator/", x), "...", None
     ),
-    # @bazel_tools//tools/cpp/runfiles:runfiles.h ->
-    #   tools/cpp/runfiles/runfiles.h
+    # tools/cpp/runfiles:runfiles.h -> tools/cpp/runfiles/runfiles.h
     "@bazel_tools": ExternalRepo(lambda x: re.sub(":", "/", x), "...", None),
 }
 
