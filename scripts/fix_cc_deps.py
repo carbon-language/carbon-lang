@@ -23,7 +23,7 @@ import scripts_utils
 
 
 class ExternalRepo(NamedTuple):
-    # A function for remapping files in the repo.
+    # A function for remapping files to #include paths.
     remap: Callable[[str], str]
     # The target expression to gather rules for within the repo.
     target: str
@@ -48,10 +48,9 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
         ":protobuf_headers",
         "@com_google_protobuf",
     ),
-    # :src/libfuzzer/libfuzzer_macro.h ->
-    #   libprotobuf_mutator/src/libfuzzer/libfuzzer_macro.h
+    # :src/libfuzzer/libfuzzer_macro.h -> libfuzzer/libfuzzer_macro.h
     "@com_google_libprotobuf_mutator": ExternalRepo(
-        lambda x: re.sub("^(.*:)", "libprotobuf_mutator/", x), "...", None
+        lambda x: re.sub("^(.*:src)/", "", x), "...", None
     ),
     # tools/cpp/runfiles:runfiles.h -> tools/cpp/runfiles/runfiles.h
     "@bazel_tools": ExternalRepo(lambda x: re.sub(":", "/", x), "...", None),
@@ -191,7 +190,8 @@ def get_missing_deps(
             continue
         with open(source_file, "r") as f:
             for header_groups in re.findall(
-                r'^(#include (?:"([^"]+)"|<((?:google|gmock|gtest)/[^>]+)>))',
+                r'^(#include (?:"([^"]+)"|'
+                r"<((?:google|gmock|gtest|libfuzzer)/[^>]+)>))",
                 f.read(),
                 re.MULTILINE,
             ):
