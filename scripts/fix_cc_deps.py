@@ -41,8 +41,10 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
     ),
     # @com_google_protobuf//:src/google/protobuf/descriptor.h ->
     #   google/protobuf/descriptor.h
-    # protobuf_headers is specified because there are multiple overlapping
-    # targets.
+    # - protobuf_headers is specified because there are multiple overlapping
+    #   targets.
+    # - @com_google_protobuf is the official dependency, and we use it, but it
+    #   aliases @com_github_protocolbuffers_protobuf.
     "@com_github_protocolbuffers_protobuf": ExternalRepo(
         lambda x: re.sub("^(.*:src)/", "", x),
         ":protobuf_headers",
