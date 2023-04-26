@@ -235,10 +235,12 @@ feature-completeness. The completeness metric here is based around the features
 necessary to credibly address the _existing_ needs of C++ users and developers
 interested in moving to Carbon, and so will be heavily driven by either features
 already in use in C++ or necessary features to make moving off of C++ a viable
-tradeoff. Carbon will continue to evolve and grow features beyond this, but at
-this point there shouldn't be any feature gaps that are problematic for the
-initial target audience coming from C++, and we should be able to finalize the
-Carbon _experiment_ with this feature set.
+tradeoff. Ultimately, we need this milestone to be sufficiently feature complete
+that _users can complete their evaluation of Carbon_. The language will continue
+to evolve and grow features beyond this, but at this point there shouldn't be
+any feature gaps that are problematic for the initial target audience coming
+from C++, and we should be able to finalize the Carbon _experiment_ with this
+feature set.
 
 That said, this is about as concrete as we can get for a milestone that remains
 years in the future. The full scope of requirements for this milestone will be
