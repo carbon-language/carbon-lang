@@ -2,43 +2,24 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "explorer/parse_and_execute.h"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-
-#include "common/check.h"
-#include "common/error.h"
-#include "explorer/interpreter/exec_program.h"
-#include "explorer/interpreter/trace_stream.h"
-#include "explorer/syntax/parse.h"
-#include "explorer/syntax/prelude.h"
-#include "gtest/gtest.h"
 
 namespace Carbon::Testing {
 namespace {
 
+using ::testing::Eq;
+
 class ParseAndExecuteTest : public ::testing::Test {
  protected:
-  auto ParseAndExecute(const std::string& source,
-                       testing::Matcher<std::string> err_matcher) -> void {
-    auto err = ParseAndExecuteImpl(source);
+  auto ParseAndExecuteHelper(const std::string& source,
+                             testing::Matcher<std::string> err_matcher)
+      -> void {
+    auto err = ParseAndExecute("explorer/data/prelude.carbon", source);
     ASSERT_FALSE(err.ok());
     EXPECT_THAT(err.error().message(), err_matcher);
-  }
-
-  auto ParseAndExecuteImpl(const std::string& source) -> ErrorOr<int> {
-    Arena arena;
-    CARBON_ASSIGN_OR_RETURN(AST ast,
-                            ParseFromString(&arena, "test.carbon", source,
-                                            /*parser_debug=*/false));
-
-    AddPrelude("explorer/data/prelude.carbon", &arena, &ast.declarations,
-               &ast.num_prelude_declarations);
-    TraceStream trace_stream;
-
-    // Use llvm::nulls() to suppress output from the Print intrinsic.
-    CARBON_ASSIGN_OR_RETURN(
-        ast, AnalyzeProgram(&arena, ast, &trace_stream, &llvm::nulls()));
-    return ExecProgram(&arena, ast, &trace_stream, &llvm::nulls());
   }
 };
 
@@ -48,19 +29,21 @@ TEST_F(ParseAndExecuteTest, Recursion) {
     fn Main() -> i32 {
       return
   )";
-  for (int i = 0; i < 1000; ++i) {
+  // A high depth that's expected to complete in ~10s.
+  static constexpr int Depth = 2500;
+  for (int i = 0; i < Depth; ++i) {
     source += "if true then\n";
   }
   source += "1\n";
-  for (int i = 0; i < 1000; ++i) {
+  for (int i = 0; i < Depth; ++i) {
     source += "else 0\n";
   }
   source += R"(
         ;
     }
   )";
-  ParseAndExecute(source,
-                  testing::MatchesRegex(R"(Exceeded recursion limit \(\d+\))"));
+  ParseAndExecuteHelper(
+      source, Eq("stack overflow: too many interpreter actions on stack"));
 }
 
 }  // namespace

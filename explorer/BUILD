@@ -31,17 +31,26 @@ cc_library(
     ],
 )
 
-cc_test(
-    name = "parse_and_execute_test",
-    srcs = ["parse_and_execute_test.cpp"],
+cc_library(
+    name = "parse_and_execute",
+    srcs = ["parse_and_execute.cpp"],
+    hdrs = ["parse_and_execute.h"],
     deps = [
         "//common:check",
         "//common:error",
-        "//common:gtest_main",
         "//explorer/interpreter:exec_program",
         "//explorer/interpreter:trace_stream",
         "//explorer/syntax",
         "//explorer/syntax:prelude",
+    ],
+)
+
+cc_test(
+    name = "parse_and_execute_test",
+    srcs = ["parse_and_execute_test.cpp"],
+    deps = [
+        ":parse_and_execute",
+        "//common:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )

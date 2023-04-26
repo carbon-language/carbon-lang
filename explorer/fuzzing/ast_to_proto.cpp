@@ -10,7 +10,7 @@
 #include "explorer/ast/expression.h"
 #include "llvm/Support/Casting.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 using ::llvm::cast;
 using ::llvm::dyn_cast;
@@ -854,4 +854,4 @@ auto AstToProto(const AST& ast) -> Fuzzing::Carbon {
   return carbon;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Testing

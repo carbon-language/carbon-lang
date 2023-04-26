@@ -9,16 +9,16 @@
 #include "common/fuzzing/carbon.pb.h"
 #include "explorer/ast/ast.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 // Parses and executes a fuzzer-generated program.
 // Returns program result if execution was successful.
-auto ParseAndExecute(const Fuzzing::Carbon& carbon) -> ErrorOr<int>;
+auto ParseAndExecuteProto(const Fuzzing::Carbon& carbon) -> ErrorOr<int>;
 
 // Returns a full path for a file under bazel runfiles.
 // Exposed for testing.
 auto GetRunfilesFile(const std::string& file) -> ErrorOr<std::string>;
 
-}  // namespace Carbon
+}  // namespace Carbon::Testing
 
 #endif  // CARBON_EXPLORER_FUZZING_FUZZER_UTIL_H_

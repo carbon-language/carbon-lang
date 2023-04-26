@@ -19,10 +19,10 @@
 #include "explorer/fuzzing/ast_to_proto.h"
 #include "explorer/syntax/parse.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 auto Main(int argc, char** argv) -> ErrorOr<Success> {
-  Carbon::SetWorkingDirForBazel();
+  SetWorkingDirForBazel();
 
   if (argc != 2) {
     return Error("Syntax: ast_to_proto <file.carbon>");
@@ -54,10 +54,10 @@ auto Main(int argc, char** argv) -> ErrorOr<Success> {
   return Success();
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Testing
 
 auto main(int argc, char** argv) -> int {
-  auto err = Carbon::Main(argc, argv);
+  auto err = Carbon::Testing::Main(argc, argv);
   if (!err.ok()) {
     std::cerr << err.error().message() << "\n";
     return EXIT_FAILURE;
