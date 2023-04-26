@@ -8,9 +8,10 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 
-namespace Carbon {
+namespace Carbon::Internal {
 
-namespace Internal {
+static constexpr int64_t SufficientStack = 1e6;
+static constexpr int64_t DesiredStackSpace = 1e8;
 
 static LLVM_THREAD_LOCAL intptr_t bottom_of_stack = 0;
 
@@ -23,25 +24,18 @@ static auto GetStackPointer() -> intptr_t {
 
 auto IsStackSpaceNearlyExhausted() -> bool {
   CARBON_CHECK(bottom_of_stack != 0) << "InitStackSpace not called";
-  return std::abs(GetStackPointer() - bottom_of_stack) < 1e6;
+  return std::abs(GetStackPointer() - bottom_of_stack) >
+         (DesiredStackSpace - SufficientStack);
 }
 
 auto RunWithStackSpaceHelper(std::function<void()> fn) -> void {
   llvm::CrashRecoveryContext context;
-  static constexpr int DesiredStackSize = 1e8;
   context.RunSafelyOnThread(
       [&] {
-        InitStackSpace();
+        bottom_of_stack = GetStackPointer();
         fn();
       },
-      DesiredStackSize);
+      DesiredStackSpace);
 }
 
-}  // namespace Internal
-
-auto InitStackSpace() -> void {
-  Internal::bottom_of_stack = Internal::GetStackPointer();
-  CARBON_CHECK(Internal::bottom_of_stack != 0) << "Issue with GetStackPointer";
-}
-
-}  // namespace Carbon
+}  // namespace Carbon::Internal

@@ -20,13 +20,9 @@ cc_library(
     srcs = ["main.cpp"],
     hdrs = ["main.h"],
     deps = [
+        ":parse_and_execute",
         "//common:error",
-        "//explorer/common:arena",
-        "//explorer/common:nonnull",
-        "//explorer/interpreter:exec_program",
         "//explorer/interpreter:trace_stream",
-        "//explorer/syntax",
-        "//explorer/syntax:prelude",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -39,6 +35,7 @@ cc_library(
         "//common:check",
         "//common:error",
         "//explorer/interpreter:exec_program",
+        "//explorer/interpreter:stack_space",
         "//explorer/interpreter:trace_stream",
         "//explorer/syntax",
         "//explorer/syntax:prelude",

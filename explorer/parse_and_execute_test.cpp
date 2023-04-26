@@ -12,25 +12,14 @@ namespace {
 
 using ::testing::Eq;
 
-class ParseAndExecuteTest : public ::testing::Test {
- protected:
-  auto ParseAndExecuteHelper(const std::string& source,
-                             testing::Matcher<std::string> err_matcher)
-      -> void {
-    auto err = ParseAndExecute("explorer/data/prelude.carbon", source);
-    ASSERT_FALSE(err.ok());
-    EXPECT_THAT(err.error().message(), err_matcher);
-  }
-};
-
-TEST_F(ParseAndExecuteTest, Recursion) {
+TEST(ParseAndExecuteTest, Recursion) {
   std::string source = R"(
     package Test api;
     fn Main() -> i32 {
       return
   )";
-  // A high depth that's expected to complete in ~10s.
-  static constexpr int Depth = 2500;
+  // A high depth that's expected to complete in a few seconds.
+  static constexpr int Depth = 50000;
   for (int i = 0; i < Depth; ++i) {
     source += "if true then\n";
   }
@@ -42,8 +31,11 @@ TEST_F(ParseAndExecuteTest, Recursion) {
         ;
     }
   )";
-  ParseAndExecuteHelper(
-      source, Eq("stack overflow: too many interpreter actions on stack"));
+  auto err = ParseAndExecute("explorer/data/prelude.carbon", source);
+  ASSERT_FALSE(err.ok());
+  EXPECT_THAT(err.error().message(),
+              Eq("RUNTIME ERROR: overflow:1: stack overflow: too many "
+                 "interpreter actions on stack"));
 }
 
 }  // namespace

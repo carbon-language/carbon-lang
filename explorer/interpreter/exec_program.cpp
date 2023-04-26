@@ -22,7 +22,6 @@ namespace Carbon {
 auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
                     Nonnull<TraceStream*> trace_stream,
                     Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<AST> {
-  InitStackSpace();
   return RunWithStackSpace<ErrorOr<AST>>([&]() -> ErrorOr<AST> {
     if (trace_stream->is_enabled()) {
       *trace_stream << "********** source program **********\n";
@@ -72,7 +71,6 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
 auto ExecProgram(Nonnull<Arena*> arena, AST ast,
                  Nonnull<TraceStream*> trace_stream,
                  Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int> {
-  InitStackSpace();
   return RunWithStackSpace<ErrorOr<int>>([&]() -> ErrorOr<int> {
     if (trace_stream->is_enabled()) {
       *trace_stream << "********** starting execution **********\n";

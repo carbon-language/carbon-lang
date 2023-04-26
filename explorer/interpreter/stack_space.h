@@ -15,7 +15,12 @@ auto IsStackSpaceNearlyExhausted() -> bool;
 auto RunWithStackSpaceHelper(std::function<void()> fn) -> void;
 }  // namespace Internal
 
-auto InitStackSpace() -> void;
+template <typename ReturnType>
+auto InitStackSpace(std::function<ReturnType()> fn) -> ReturnType {
+  std::optional<ReturnType> result;
+  Internal::RunWithStackSpaceHelper([&] { result = fn(); });
+  return std::move(*result);
+}
 
 template <typename ReturnType>
 auto RunWithStackSpace(std::function<ReturnType()> fn) -> ReturnType {
