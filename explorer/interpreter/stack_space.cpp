@@ -10,8 +10,8 @@
 
 namespace Carbon::Internal {
 
-static constexpr int64_t SufficientStack = 1e6;
-static constexpr int64_t DesiredStackSpace = 1e8;
+static constexpr int64_t SufficientStack = 256 << 10;
+static constexpr int64_t DesiredStackSpace = 8 << 20;
 
 static LLVM_THREAD_LOCAL intptr_t bottom_of_stack = 0;
 
