@@ -38,7 +38,7 @@ auto InitStackSpace(std::function<ReturnType()> fn) -> ReturnType {
 // Runs a function. May start a thread if more stack space is desirable.
 //
 // Usage:
-//   return StackSpaceRun<ReturnType>([&]() -> ReturnType {
+//   return RunWithStackSpace<ReturnType>([&]() -> ReturnType {
 //         <function body>
 //       });
 template <typename ReturnType>
