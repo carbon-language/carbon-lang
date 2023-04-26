@@ -214,7 +214,7 @@ class SemanticsIR {
   auto StringifyNode(SemanticsNodeId node_id) -> std::string;
 
   // Implements StringifyNode using streaming.
-  auto StringifyNodeImpl(llvm::raw_ostream& out, SemanticsNodeId node_id)
+  auto StringifyNodeImpl(llvm::raw_ostream& out, SemanticsNodeId root_node_id)
       -> void;
 
   bool has_errors_ = false;
