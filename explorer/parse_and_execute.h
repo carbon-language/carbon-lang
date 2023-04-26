@@ -10,21 +10,16 @@
 
 namespace Carbon {
 
-// Parses and executes source code.
-// Returns program result if execution was successful.
-auto ParseAndExecute(const std::string& prelude_path,
-                     const std::string& input_file_name, bool parser_debug,
-                     TraceStream* trace_stream) -> ErrorOr<int>;
+// Parses and executes the input file, returning the program result on success.
+// This API is intended for use by main execution.
+auto ParseAndExecuteFile(const std::string& prelude_path,
+                         const std::string& input_file_name, bool parser_debug,
+                         TraceStream* trace_stream) -> ErrorOr<int>;
 
-}  // namespace Carbon
-
-namespace Carbon::Testing {
-
-// Parses and executes source code.
-// Returns program result if execution was successful.
+// Parses and executes the source, returning the program result on success.
 auto ParseAndExecute(const std::string& prelude_path, const std::string& source)
     -> ErrorOr<int>;
 
-}  // namespace Carbon::Testing
+}  // namespace Carbon
 
 #endif  // CARBON_EXPLORER_PARSE_AND_EXECUTE_H_

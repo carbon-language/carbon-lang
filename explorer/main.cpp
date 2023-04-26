@@ -81,8 +81,8 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
     }
   }
 
-  ErrorOr<int> result = ParseAndExecute(prelude_file_name, input_file_name,
-                                        parser_debug, &trace_stream);
+  ErrorOr<int> result = ParseAndExecuteFile(prelude_file_name, input_file_name,
+                                            parser_debug, &trace_stream);
   if (result.ok()) {
     // Print the return code to stdout.
     llvm::outs() << "result: " << *result << "\n";

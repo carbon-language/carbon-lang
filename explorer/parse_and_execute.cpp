@@ -72,7 +72,17 @@ static auto ParseAndExecuteHelper(
   return exec_result;
 }
 
-namespace Testing {
+auto ParseAndExecuteFile(const std::string& prelude_path,
+                         const std::string& input_file_name, bool parser_debug,
+                         TraceStream* trace_stream) -> ErrorOr<int> {
+  return InitStackSpace<ErrorOr<int>>([&]() -> ErrorOr<int> {
+    Arena arena;
+    auto time_start = std::chrono::system_clock::now();
+    auto ast = Parse(&arena, input_file_name, parser_debug);
+    return ParseAndExecuteHelper(&arena, time_start, prelude_path,
+                                 std::move(ast), trace_stream);
+  });
+}
 
 auto ParseAndExecute(const std::string& prelude_path, const std::string& source)
     -> ErrorOr<int> {
@@ -84,20 +94,6 @@ auto ParseAndExecute(const std::string& prelude_path, const std::string& source)
                                /*parser_debug=*/false);
     return ParseAndExecuteHelper(&arena, time_start, prelude_path,
                                  std::move(ast), &trace_stream);
-  });
-}
-
-}  // namespace Testing
-
-auto ParseAndExecute(const std::string& prelude_path,
-                     const std::string& input_file_name, bool parser_debug,
-                     TraceStream* trace_stream) -> ErrorOr<int> {
-  return InitStackSpace<ErrorOr<int>>([&]() -> ErrorOr<int> {
-    Arena arena;
-    auto time_start = std::chrono::system_clock::now();
-    auto ast = Parse(&arena, input_file_name, parser_debug);
-    return ParseAndExecuteHelper(&arena, time_start, prelude_path,
-                                 std::move(ast), trace_stream);
   });
 }
 
