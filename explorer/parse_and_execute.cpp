@@ -10,66 +10,66 @@
 #include "explorer/interpreter/stack_space.h"
 #include "explorer/syntax/parse.h"
 #include "explorer/syntax/prelude.h"
+#include "llvm/ADT/ScopeExit.h"
 
 namespace Carbon {
+
+static auto PrintTiming(TraceStream* trace_stream, const char* label,
+                        std::chrono::steady_clock::duration duration) -> void {
+  if (trace_stream->is_enabled()) {
+    *trace_stream << "Time elapsed in " << label << ": "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(
+                         duration)
+                         .count()
+                  << "ms\n";
+  }
+}
+
+static auto PrintTimingOnExit(TraceStream* trace_stream, const char* label,
+                              std::chrono::steady_clock::time_point* cursor)
+    -> ErrorOr<decltype(llvm::make_scope_exit(std::function<void()>()))> {
+  auto end = std::chrono::steady_clock::now();
+  auto duration = end - *cursor;
+  *cursor = end;
+
+  return llvm::make_scope_exit(
+      std::function<void()>([trace_stream, label, duration]() {
+        PrintTiming(trace_stream, label, duration);
+      }));
+}
 
 static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
                                   const std::string& prelude_path,
                                   TraceStream* trace_stream) -> ErrorOr<int> {
   return InitStackSpace<ErrorOr<int>>([&]() -> ErrorOr<int> {
     Arena arena;
-    auto time_start = std::chrono::system_clock::now();
+    auto cursor = std::chrono::steady_clock::now();
 
     ErrorOr<AST> parse_result = parse(&arena);
+    auto print_parse_time = PrintTimingOnExit(trace_stream, "Parse", &cursor);
     if (!parse_result.ok()) {
       return ErrorBuilder() << "SYNTAX ERROR: " << parse_result.error();
     }
 
-    auto time_after_parse = std::chrono::system_clock::now();
-
     AddPrelude(prelude_path, &arena, &parse_result->declarations,
                &parse_result->num_prelude_declarations);
-
-    auto time_after_prelude = std::chrono::system_clock::now();
+    auto print_prelude_time =
+        PrintTimingOnExit(trace_stream, "AddPrelude", &cursor);
 
     // Semantically analyze the parsed program.
     ErrorOr<AST> analyze_result =
         AnalyzeProgram(&arena, *parse_result, trace_stream, &llvm::outs());
+    auto print_analyze_time =
+        PrintTimingOnExit(trace_stream, "AnalyzeProgram", &cursor);
     if (!analyze_result.ok()) {
       return ErrorBuilder() << "COMPILATION ERROR: " << analyze_result.error();
     }
 
-    auto time_after_analyze = std::chrono::system_clock::now();
-
     // Run the program.
     ErrorOr<int> exec_result =
         ExecProgram(&arena, *analyze_result, trace_stream, &llvm::outs());
-
-    auto time_after_exec = std::chrono::system_clock::now();
-    if (trace_stream->is_enabled()) {
-      *trace_stream << "Timings:\n"
-                    << "- Parse: "
-                    << std::chrono::duration_cast<std::chrono::milliseconds>(
-                           time_after_parse - time_start)
-                           .count()
-                    << "ms\n"
-                    << "- AddPrelude: "
-                    << std::chrono::duration_cast<std::chrono::milliseconds>(
-                           time_after_prelude - time_after_parse)
-                           .count()
-                    << "ms\n"
-                    << "- AnalyzeProgram: "
-                    << std::chrono::duration_cast<std::chrono::milliseconds>(
-                           time_after_analyze - time_after_prelude)
-                           .count()
-                    << "ms\n"
-                    << "- ExecProgram: "
-                    << std::chrono::duration_cast<std::chrono::milliseconds>(
-                           time_after_exec - time_after_analyze)
-                           .count()
-                    << "ms\n";
-    }
-
+    auto print_exec_time =
+        PrintTimingOnExit(trace_stream, "ExecProgram", &cursor);
     if (!exec_result.ok()) {
       return ErrorBuilder() << "RUNTIME ERROR: " << exec_result.error();
     }

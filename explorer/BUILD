@@ -39,6 +39,7 @@ cc_library(
         "//explorer/interpreter:trace_stream",
         "//explorer/syntax",
         "//explorer/syntax:prelude",
+        "@llvm-project//llvm:Support",
     ],
 )
 
