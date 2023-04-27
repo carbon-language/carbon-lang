@@ -213,10 +213,6 @@ class SemanticsIR {
   // Produces a string version of a node.
   auto StringifyNode(SemanticsNodeId node_id) -> std::string;
 
-  // Implements StringifyNode using streaming.
-  auto StringifyNodeImpl(llvm::raw_ostream& out, SemanticsNodeId root_node_id)
-      -> void;
-
   bool has_errors_ = false;
 
   // Storage for call objects.

@@ -108,19 +108,14 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
 auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
-  StringifyNodeImpl(out, node_id);
-  return str;
-}
 
-auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
-                                    SemanticsNodeId root_node_id) -> void {
   struct Step {
     // The node to print.
     SemanticsNodeId node_id;
     // The index into node_id to print. Not used by all types.
     int index = 0;
   };
-  llvm::SmallVector<Step> steps = {{.node_id = root_node_id}};
+  llvm::SmallVector<Step> steps = {{.node_id = node_id}};
 
   while (!steps.empty()) {
     auto step = steps.pop_back_val();
@@ -186,6 +181,8 @@ auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
         llvm_unreachable("SemanticsNodeKind::Invalid is never used.");
     }
   }
+
+  return str;
 }
 
 }  // namespace Carbon
