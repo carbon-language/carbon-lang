@@ -14,17 +14,8 @@
 
 namespace Carbon {
 
-static auto PrintTiming(TraceStream* trace_stream, const char* label,
-                        std::chrono::steady_clock::duration duration) -> void {
-  if (trace_stream->is_enabled()) {
-    *trace_stream << "Time elapsed in " << label << ": "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(
-                         duration)
-                         .count()
-                  << "ms\n";
-  }
-}
-
+// Returns a scope exit function for printing the timing of a step on scope
+// exit. Note the use prints step timings in reverse order.
 static auto PrintTimingOnExit(TraceStream* trace_stream, const char* label,
                               std::chrono::steady_clock::time_point* cursor)
     -> ErrorOr<decltype(llvm::make_scope_exit(std::function<void()>()))> {
@@ -32,10 +23,16 @@ static auto PrintTimingOnExit(TraceStream* trace_stream, const char* label,
   auto duration = end - *cursor;
   *cursor = end;
 
-  return llvm::make_scope_exit(
-      std::function<void()>([trace_stream, label, duration]() {
-        PrintTiming(trace_stream, label, duration);
-      }));
+  return llvm::make_scope_exit(std::function<void()>([trace_stream, label,
+                                                      duration]() {
+    if (trace_stream->is_enabled()) {
+      *trace_stream << "Time elapsed in " << label << ": "
+                    << std::chrono::duration_cast<std::chrono::milliseconds>(
+                           duration)
+                           .count()
+                    << "ms\n";
+    }
+  }));
 }
 
 static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
