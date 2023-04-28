@@ -24,7 +24,7 @@ static auto PrintTimingOnExit(TraceStream* trace_stream, const char* label,
   auto duration = end - *cursor;
   *cursor = end;
 
-  return llvm::make_scope_exit([trace_stream, label, duration]() {
+  return llvm::make_scope_exit([=]() {
     if (trace_stream->is_enabled()) {
       *trace_stream << "Time elapsed in " << label << ": "
                     << std::chrono::duration_cast<std::chrono::milliseconds>(
