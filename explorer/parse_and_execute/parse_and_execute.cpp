@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "explorer/parse_and_execute/parse_and_execute.h"
+
 #include <locale>
 
 #include "common/check.h"

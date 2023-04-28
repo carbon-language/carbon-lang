@@ -20,36 +20,10 @@ cc_library(
     srcs = ["main.cpp"],
     hdrs = ["main.h"],
     deps = [
-        ":parse_and_execute",
         "//common:error",
-        "//explorer/interpreter:trace_stream",
+        "//explorer/common:trace_stream",
+        "//explorer/parse_and_execute",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "parse_and_execute",
-    srcs = ["parse_and_execute.cpp"],
-    hdrs = ["parse_and_execute.h"],
-    deps = [
-        "//common:check",
-        "//common:error",
-        "//explorer/interpreter:exec_program",
-        "//explorer/interpreter:stack_space",
-        "//explorer/interpreter:trace_stream",
-        "//explorer/syntax",
-        "//explorer/syntax:prelude",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_test(
-    name = "parse_and_execute_test",
-    srcs = ["parse_and_execute_test.cpp"],
-    deps = [
-        ":parse_and_execute",
-        "//common:gtest_main",
-        "@com_google_googletest//:gtest",
     ],
 )
 

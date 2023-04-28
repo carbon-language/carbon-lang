@@ -2,11 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_PARSE_AND_EXECUTE_H_
-#define CARBON_EXPLORER_PARSE_AND_EXECUTE_H_
+#ifndef CARBON_EXPLORER_PARSE_AND_EXECUTE_PARSE_AND_EXECUTE_H_
+#define CARBON_EXPLORER_PARSE_AND_EXECUTE_PARSE_AND_EXECUTE_H_
 
 #include "common/error.h"
-#include "explorer/interpreter/trace_stream.h"
+#include "explorer/common/trace_stream.h"
 
 namespace Carbon {
 
@@ -22,4 +22,4 @@ auto ParseAndExecute(const std::string& prelude_path, const std::string& source)
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_PARSE_AND_EXECUTE_H_
+#endif  // CARBON_EXPLORER_PARSE_AND_EXECUTE_PARSE_AND_EXECUTE_H_

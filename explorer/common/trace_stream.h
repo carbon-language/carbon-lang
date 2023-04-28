@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_INTERPRETER_TRACE_STREAM_H_
-#define CARBON_EXPLORER_INTERPRETER_TRACE_STREAM_H_
+#ifndef CARBON_EXPLORER_COMMON_TRACE_STREAM_H_
+#define CARBON_EXPLORER_COMMON_TRACE_STREAM_H_
 
 #include <optional>
 #include <string>
@@ -59,4 +59,4 @@ class TraceStream {
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_INTERPRETER_TRACE_STREAM_H_
+#endif  // CARBON_EXPLORER_COMMON_TRACE_STREAM_H_

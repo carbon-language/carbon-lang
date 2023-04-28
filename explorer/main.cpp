@@ -15,8 +15,8 @@
 #include <vector>
 
 #include "common/error.h"
-#include "explorer/interpreter/trace_stream.h"
-#include "explorer/parse_and_execute.h"
+#include "explorer/common/trace_stream.h"
+#include "explorer/parse_and_execute/parse_and_execute.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"

@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package(default_visibility = ["//explorer:__pkg__"])
+package(default_visibility = ["//explorer/parse_and_execute:__pkg__"])
 
 cc_library(
     name = "action",
@@ -62,12 +62,12 @@ cc_library(
         ":resolve_names",
         ":resolve_unformed",
         ":stack_space",
-        ":trace_stream",
         ":type_checker",
         "//common:check",
         "//common:ostream",
         "//explorer/ast",
         "//explorer/common:arena",
+        "//explorer/common:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -111,7 +111,6 @@ cc_library(
         ":action_stack",
         ":heap",
         ":stack",
-        ":trace_stream",
         "//common:check",
         "//common:error",
         "//common:ostream",
@@ -119,6 +118,7 @@ cc_library(
         "//explorer/common:arena",
         "//explorer/common:error_builders",
         "//explorer/common:source_location",
+        "//explorer/common:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -174,16 +174,6 @@ cc_library(
 )
 
 cc_library(
-    name = "trace_stream",
-    hdrs = ["trace_stream.h"],
-    deps = [
-        "//common:check",
-        "//common:ostream",
-        "//explorer/common:nonnull",
-    ],
-)
-
-cc_library(
     name = "type_checker",
     srcs = [
         "builtins.cpp",
@@ -206,7 +196,6 @@ cc_library(
         ":interpreter",
         ":pattern_analysis",
         ":stack_space",
-        ":trace_stream",
         ":type_structure",
         "//common:check",
         "//common:enum_base",
@@ -217,6 +206,7 @@ cc_library(
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
         "//explorer/common:source_location",
+        "//explorer/common:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )

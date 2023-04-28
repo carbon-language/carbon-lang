@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package(default_visibility = ["//explorer:__pkg__"])
+package(default_visibility = ["//explorer/parse_and_execute:__pkg__"])
 
 cc_library(
     name = "bison_wrap",
@@ -73,8 +73,8 @@ cc_library(
         "-Wno-writable-strings",
     ],
     visibility = [
-        "//explorer:__pkg__",
         "//explorer/fuzzing:__pkg__",
+        "//explorer/parse_and_execute:__pkg__",
     ],
     deps = [
         ":bison_wrap",
