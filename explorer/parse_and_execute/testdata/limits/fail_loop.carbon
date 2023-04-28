@@ -4,7 +4,7 @@
 //
 // NOAUTOUPDATE
 // RUN: %{not} %{explorer-run}
-// CHECK:STDERR: RUNTIME ERROR: overflow:1: Possible infinite loop: too many interpreter steps executed
+// CHECK:STDERR: RUNTIME ERROR: overflow:1: possible infinite loop: too many interpreter steps executed
 
 package ExplorerTest impl;
 

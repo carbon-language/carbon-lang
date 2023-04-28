@@ -4,7 +4,7 @@
 //
 // NOAUTOUPDATE
 // RUN: %{not} %{explorer-run}
-// CHECK:STDERR: RUNTIME ERROR: overflow:1: Stack overflow: too many interpreter actions on stack
+// CHECK:STDERR: RUNTIME ERROR: overflow:1: stack overflow: too many interpreter actions on stack
 
 package EmptyIdentifier impl;
 

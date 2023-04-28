@@ -21,12 +21,8 @@ cc_library(
     hdrs = ["main.h"],
     deps = [
         "//common:error",
-        "//explorer/common:arena",
-        "//explorer/common:nonnull",
-        "//explorer/interpreter:exec_program",
-        "//explorer/interpreter:trace_stream",
-        "//explorer/syntax",
-        "//explorer/syntax:prelude",
+        "//explorer/common:trace_stream",
+        "//explorer/parse_and_execute",
         "@llvm-project//llvm:Support",
     ],
 )

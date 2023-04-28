@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package(default_visibility = ["//explorer:__pkg__"])
+package(default_visibility = ["//explorer/parse_and_execute:__pkg__"])
 
 cc_library(
     name = "action",
@@ -56,21 +56,18 @@ cc_library(
     name = "exec_program",
     srcs = ["exec_program.cpp"],
     hdrs = ["exec_program.h"],
-    visibility = [
-        "//explorer:__pkg__",
-        "//explorer/fuzzing:__pkg__",
-    ],
     deps = [
         ":interpreter",
         ":resolve_control_flow",
         ":resolve_names",
         ":resolve_unformed",
-        ":trace_stream",
+        ":stack_space",
         ":type_checker",
         "//common:check",
         "//common:ostream",
         "//explorer/ast",
         "//explorer/common:arena",
+        "//explorer/common:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -114,7 +111,6 @@ cc_library(
         ":action_stack",
         ":heap",
         ":stack",
-        ":trace_stream",
         "//common:check",
         "//common:error",
         "//common:ostream",
@@ -122,6 +118,7 @@ cc_library(
         "//explorer/common:arena",
         "//explorer/common:error_builders",
         "//explorer/common:source_location",
+        "//explorer/common:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -144,6 +141,7 @@ cc_library(
     srcs = ["resolve_names.cpp"],
     hdrs = ["resolve_names.h"],
     deps = [
+        ":stack_space",
         "//common:check",
         "//explorer/ast",
         "//explorer/ast:static_scope",
@@ -176,20 +174,6 @@ cc_library(
 )
 
 cc_library(
-    name = "trace_stream",
-    hdrs = ["trace_stream.h"],
-    visibility = [
-        "//explorer:__pkg__",
-        "//explorer/fuzzing:__pkg__",
-    ],
-    deps = [
-        "//common:check",
-        "//common:ostream",
-        "//explorer/common:nonnull",
-    ],
-)
-
-cc_library(
     name = "type_checker",
     srcs = [
         "builtins.cpp",
@@ -211,7 +195,7 @@ cc_library(
         ":dictionary",
         ":interpreter",
         ":pattern_analysis",
-        ":trace_stream",
+        ":stack_space",
         ":type_structure",
         "//common:check",
         "//common:enum_base",
@@ -222,22 +206,7 @@ cc_library(
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
         "//explorer/common:source_location",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "type_structure",
-    srcs = [
-        "type_structure.cpp",
-    ],
-    hdrs = [
-        "type_structure.h",
-    ],
-    deps = [
-        "//common:ostream",
-        "//explorer/ast",
-        "//explorer/common:nonnull",
+        "//explorer/common:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -255,6 +224,33 @@ cc_library(
         "//explorer/ast",
         "//explorer/ast:static_scope",
         "//explorer/common:error_builders",
+        "//explorer/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "stack_space",
+    srcs = ["stack_space.cpp"],
+    hdrs = ["stack_space.h"],
+    deps = [
+        "//common:check",
+        "//common:error",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "type_structure",
+    srcs = [
+        "type_structure.cpp",
+    ],
+    hdrs = [
+        "type_structure.h",
+    ],
+    deps = [
+        "//common:ostream",
+        "//explorer/ast",
         "//explorer/common:nonnull",
         "@llvm-project//llvm:Support",
     ],
