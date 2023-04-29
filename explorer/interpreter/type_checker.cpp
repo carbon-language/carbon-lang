@@ -97,7 +97,6 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
@@ -116,7 +115,6 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::NominalClassType:
     case Value::Kind::MixinPseudoType:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::StringType:
     case Value::Kind::StaticArrayType:
     case Value::Kind::TupleType:
@@ -159,7 +157,6 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
@@ -181,7 +178,6 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::NamedConstraintType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::StaticArrayType:
@@ -230,7 +226,6 @@ static auto ExpectCompleteType(SourceLocation source_loc,
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
@@ -250,7 +245,6 @@ static auto ExpectCompleteType(SourceLocation source_loc,
     case Value::Kind::FunctionType:
     case Value::Kind::StructType:
     case Value::Kind::ConstraintType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::AssociatedConstant:
     case Value::Kind::TypeOfParameterizedEntityName:
@@ -344,7 +338,6 @@ static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ImplWitness:
@@ -372,7 +365,6 @@ static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
     case Value::Kind::NamedConstraintType:
     case Value::Kind::ConstraintType:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::AssociatedConstant:
       // These types can contain other types, but those types can't involve
       // `auto`.
@@ -764,7 +756,7 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
                               ImplicitlyConvert(context, impl_scope, source,
                                                 arena_->New<TypeType>()));
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> converted_value,
-                              InterpExp(source_as_type, arena_, trace_stream_));
+                              InterpExp(source_as_type));
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const ConstraintType*> destination_constraint,
           ConvertToConstraintType(source->source_loc(), "implicit conversion",
@@ -1240,7 +1232,6 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
       // are not deduced as part of this deduction step.
     case Value::Kind::StaticArrayType:
       // TODO: We could deduce the array type from an array or tuple argument.
-    case Value::Kind::ContinuationType:
     case Value::Kind::ChoiceType:
       // TODO: Choice types should be handled like other named declarations.
     case Value::Kind::ConstraintType:
@@ -1274,7 +1265,6 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue: {
       // Argument deduction within the parameters of a parameterized class type
@@ -1373,7 +1363,7 @@ auto TypeChecker::ArgumentDeduction::Finish(
 
     // Evaluate the argument to get the value.
     CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
-                            InterpExp(arg, type_checker.arena_, trace_stream_));
+                            type_checker.InterpExp(arg));
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << "evaluated generic parameter " << *binding << " as "
                      << *value << "\n";
@@ -2727,9 +2717,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               ExpectExactType(index.offset().source_loc(), "tuple index",
                               arena_->New<IntType>(),
                               &index.offset().static_type(), impl_scope));
-          CARBON_ASSIGN_OR_RETURN(
-              auto offset_value,
-              InterpExp(&index.offset(), arena_, trace_stream_));
+          CARBON_ASSIGN_OR_RETURN(auto offset_value,
+                                  InterpExp(&index.offset()));
           int i = cast<IntValue>(*offset_value).value();
           if (i < 0 || i >= static_cast<int>(tuple_type.elements().size())) {
             return ProgramError(e->source_loc())
@@ -2854,6 +2843,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 access.set_expression_category(ExpressionCategory::Value);
                 break;
               }
+              case DeclarationKind::AliasDeclaration:
+                return ProgramError(access.source_loc())
+                       << "Member access to aliases is not yet supported.";
               default:
                 CARBON_FATAL() << "member " << access.member_name()
                                << " is not a field or method";
@@ -2946,9 +2938,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // TODO: Per the language rules, we are supposed to also perform
           // lookup into `type` and report an ambiguity if the name is found in
           // both places.
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> type,
-              InterpExp(&access.object(), arena_, trace_stream_));
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                                  InterpExp(&access.object()));
           CARBON_ASSIGN_OR_RETURN(
               ConstraintLookupResult result,
               LookupInConstraint(e->source_loc(), "member access", &object_type,
@@ -2997,9 +2988,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         case Value::Kind::TypeType: {
           // This is member access into an unconstrained type. Evaluate it and
           // perform lookup in the result.
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> type,
-              InterpExp(&access.object(), arena_, trace_stream_));
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                                  InterpExp(&access.object()));
           CARBON_RETURN_IF_ERROR(
               ExpectCompleteType(access.source_loc(), "member access", type));
           switch (type->kind()) {
@@ -3129,7 +3119,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       // Evaluate the member name expression to determine which member we're
       // accessing.
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member_name_value,
-                              InterpExp(&access.path(), arena_, trace_stream_));
+                              InterpExp(&access.path()));
       const auto& member_name = cast<MemberName>(*member_name_value);
       access.set_member(&member_name);
       bool is_instance_member = IsInstanceMember(&member_name.member());
@@ -3140,8 +3130,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
         if (IsTypeOfType(&access.object().static_type())) {
           // This is `Type.(member_name)`, where `member_name` doesn't specify
           // a type. This access doesn't perform instance binding.
-          CARBON_ASSIGN_OR_RETURN(
-              base_type, InterpExp(&access.object(), arena_, trace_stream_));
+          CARBON_ASSIGN_OR_RETURN(base_type, InterpExp(&access.object()));
           has_instance = false;
         } else {
           // This is `value.(member_name)`, where `member_name` doesn't specify
@@ -3392,12 +3381,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           // `&` between type-of-types performs constraint combination.
           // TODO: Should this be done via an intrinsic?
           if (IsTypeOfType(ts[0]) && IsTypeOfType(ts[1])) {
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Value*> lhs,
-                InterpExp(op.arguments()[0], arena_, trace_stream_));
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Value*> rhs,
-                InterpExp(op.arguments()[1], arena_, trace_stream_));
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> lhs,
+                                    InterpExp(op.arguments()[0]));
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> rhs,
+                                    InterpExp(op.arguments()[1]));
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const ConstraintType*> lhs_constraint,
                 ConvertToConstraintType(op.arguments()[0]->source_loc(),
@@ -3578,9 +3565,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               dyn_cast<SimpleMemberAccessExpression>(&call.function());
           if (member_access &&
               isa<TypeType>(member_access->object().static_type())) {
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Value*> type,
-                InterpExp(&member_access->object(), arena_, trace_stream_));
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                                    InterpExp(&member_access->object()));
             if (isa<ChoiceType>(type)) {
               return ProgramError(e->source_loc())
                      << "alternative `" << *type << "."
@@ -3810,7 +3796,6 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
       e->set_expression_category(ExpressionCategory::Value);
       e->set_static_type(arena_->New<TypeType>());
       return Success();
@@ -3896,9 +3881,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> type,
                 TypeCheckTypeExp(&impls_clause.type(), inner_impl_scope));
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Value*> constraint,
-                InterpExp(&impls_clause.constraint(), arena_, trace_stream_));
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> constraint,
+                                    InterpExp(&impls_clause.constraint()));
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const ConstraintType*> constraint_type,
                 ConvertToConstraintType(impls_clause.source_loc(),
@@ -3915,12 +3899,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           }
           case WhereClauseKind::EqualsWhereClause: {
             const auto& equals_clause = cast<EqualsWhereClause>(*clause);
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Value*> lhs,
-                InterpExp(&equals_clause.lhs(), arena_, trace_stream_));
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Value*> rhs,
-                InterpExp(&equals_clause.rhs(), arena_, trace_stream_));
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> lhs,
+                                    InterpExp(&equals_clause.lhs()));
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> rhs,
+                                    InterpExp(&equals_clause.rhs()));
             if (!ValueEqual(lhs, rhs, std::nullopt)) {
               builder.AddEqualityConstraint({.values = {lhs, rhs}});
             }
@@ -3956,8 +3938,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
             // type. This is the value we'll rewrite to when type-checking a
             // member access.
             CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> replacement_value,
-                                    InterpExp(&rewrite_clause.replacement(),
-                                              arena_, trace_stream_));
+                                    InterpExp(&rewrite_clause.replacement()));
             Nonnull<const Value*> replacement_type =
                 &rewrite_clause.replacement().static_type();
 
@@ -3975,9 +3956,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                 Nonnull<Expression*> converted_expression,
                 ImplicitlyConvert("rewrite constraint", inner_impl_scope,
                                   replacement_literal, constraint_type));
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Value*> converted_value,
-                InterpExp(converted_expression, arena_, trace_stream_));
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> converted_value,
+                                    InterpExp(converted_expression));
 
             // Add the rewrite constraint.
             builder.AddRewriteConstraint(
@@ -4009,9 +3989,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           array_literal.size_expression().source_loc(), "array size",
           arena_->New<IntType>(),
           &array_literal.size_expression().static_type(), impl_scope));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> size_value,
-          InterpExp(&array_literal.size_expression(), arena_, trace_stream_));
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> size_value,
+                              InterpExp(&array_literal.size_expression()));
       if (cast<IntValue>(size_value)->value() < 0) {
         return ProgramError(array_literal.size_expression().source_loc())
                << "Array size cannot be negative";
@@ -4083,7 +4062,7 @@ auto TypeChecker::TypeCheckTypeExp(Nonnull<Expression*> type_expression,
       ImplicitlyConvert("type expression", impl_scope, type_expression,
                         arena_->New<TypeType>()));
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
-                          InterpExp(type_expression, arena_, trace_stream_));
+                          InterpExp(type_expression));
   CARBON_CHECK(IsType(type))
       << "type expression did not produce a type, got " << *type;
   if (concrete) {
@@ -4152,15 +4131,35 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
 }
 
 auto TypeChecker::TypeCheckPattern(
-    Nonnull<Pattern*> p, std::optional<Nonnull<const Value*>> expected,
-    ImplScope& impl_scope, ExpressionCategory enclosing_expression_category)
-    -> ErrorOr<Success> {
+    Nonnull<Pattern*> p, PatternRequirements requirements,
+    std::optional<Nonnull<const Value*>> expected, ImplScope& impl_scope,
+    ExpressionCategory enclosing_expression_category) -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "checking " << p->kind() << " " << *p;
     if (expected) {
       *trace_stream_ << ", expecting " << **expected;
     }
     *trace_stream_ << "\n";
+  }
+  switch (p->kind()) {
+    case PatternKind::AutoPattern:
+    case PatternKind::ExpressionPattern:
+      if (requirements == PatternRequirements::Irrefutable) {
+        return ProgramError(p->source_loc())
+               << "An irrefutable pattern is required, but `" << *p
+               << "` is refutable.";
+      }
+      break;
+    case PatternKind::BindingPattern:
+    case PatternKind::GenericBinding:
+      if (requirements == PatternRequirements::BindingType) {
+        return ProgramError(p->source_loc())
+               << "Binding types cannot contain bindings, but `" << *p
+               << "` is a binding.";
+      }
+      break;
+    default:
+      break;
   }
   switch (p->kind()) {
     case PatternKind::AutoPattern: {
@@ -4170,15 +4169,9 @@ auto TypeChecker::TypeCheckPattern(
     }
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(*p);
-      if (!VisitNestedPatterns(binding.type(), [](const Pattern& pattern) {
-            return !isa<BindingPattern>(pattern);
-          })) {
-        return ProgramError(binding.type().source_loc())
-               << "the type of a binding pattern cannot contain bindings";
-      }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&binding.type(), std::nullopt,
-                                              impl_scope,
-                                              enclosing_expression_category));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+          &binding.type(), PatternRequirements::BindingType, expected,
+          impl_scope, enclosing_expression_category));
       Nonnull<const Value*> type = &binding.type().value();
       // Convert to a type.
       // TODO: Convert the pattern before interpreting it rather than doing
@@ -4191,8 +4184,7 @@ auto TypeChecker::TypeCheckPattern(
             auto* converted,
             ImplicitlyConvert("type of name binding", impl_scope, literal,
                               arena_->New<TypeType>()));
-        CARBON_ASSIGN_OR_RETURN(type,
-                                InterpExp(converted, arena_, trace_stream_));
+        CARBON_ASSIGN_OR_RETURN(type, InterpExp(converted));
       }
       CARBON_CHECK(IsType(type))
           << "conversion to type succeeded but didn't produce a type, got "
@@ -4257,8 +4249,8 @@ auto TypeChecker::TypeCheckPattern(
         if (expected) {
           expected_field_type = cast<TupleType>(**expected).elements()[i];
         }
-        CARBON_RETURN_IF_ERROR(TypeCheckPattern(field, expected_field_type,
-                                                impl_scope,
+        CARBON_RETURN_IF_ERROR(TypeCheckPattern(field, requirements,
+                                                expected_field_type, impl_scope,
                                                 enclosing_expression_category));
         if (trace_stream_->is_enabled()) {
           *trace_stream_ << "finished checking tuple pattern field " << *field
@@ -4302,9 +4294,9 @@ auto TypeChecker::TypeCheckPattern(
           Nonnull<const Value*> parameter_type,
           Substitute(choice_type.bindings(),
                      *(*signature)->parameters_static_type()));
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&alternative.arguments(),
-                                              parameter_type, impl_scope,
-                                              enclosing_expression_category));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+          &alternative.arguments(), requirements, parameter_type, impl_scope,
+          enclosing_expression_category));
       alternative.set_static_type(&choice_type);
       alternative.set_value(arena_->New<AlternativeValue>(
           &choice_type, *signature,
@@ -4317,7 +4309,7 @@ auto TypeChecker::TypeCheckPattern(
       p->set_static_type(&expression.static_type());
       // TODO: Per proposal #2188, we should form an `==` comparison here.
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> expr_value,
-                              InterpExp(&expression, arena_, trace_stream_));
+                              InterpExp(&expression));
       p->set_value(expr_value);
       return Success();
     }
@@ -4325,8 +4317,8 @@ auto TypeChecker::TypeCheckPattern(
       auto& var_pattern = cast<VarPattern>(*p);
 
       CARBON_RETURN_IF_ERROR(
-          TypeCheckPattern(&var_pattern.pattern(), expected, impl_scope,
-                           var_pattern.expression_category()));
+          TypeCheckPattern(&var_pattern.pattern(), requirements, expected,
+                           impl_scope, var_pattern.expression_category()));
       var_pattern.set_static_type(&var_pattern.pattern().static_type());
       var_pattern.set_value(&var_pattern.pattern().value());
       return Success();
@@ -4337,9 +4329,9 @@ auto TypeChecker::TypeCheckPattern(
       if (expected) {
         expected_ptr = arena_->New<PointerType>(expected.value());
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&addr_pattern.binding(),
-                                              expected_ptr, impl_scope,
-                                              enclosing_expression_category));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckPattern(&addr_pattern.binding(), requirements, expected_ptr,
+                           impl_scope, enclosing_expression_category));
 
       if (const auto* inner_binding_type =
               dyn_cast<PointerType>(&addr_pattern.binding().static_type())) {
@@ -4457,9 +4449,10 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         ImplScope clause_scope(&impl_scope);
         // TODO: Should user-defined conversions be permitted in `match`
         // statements? When would we run them? See #1283.
-        CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-            &clause.pattern(), &match.expression().static_type(), clause_scope,
-            ExpressionCategory::Value));
+        CARBON_RETURN_IF_ERROR(
+            TypeCheckPattern(&clause.pattern(), PatternRequirements::None,
+                             &match.expression().static_type(), clause_scope,
+                             ExpressionCategory::Value));
         if (expected_type.has_value()) {
           // TODO: For now, we require all patterns to have the same type. If
           // that's not the same type as the scrutinee, we will convert the
@@ -4510,10 +4503,10 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
 
       const Value& rhs = for_stmt.loop_target().static_type();
       if (rhs.kind() == Value::Kind::StaticArrayType) {
-        CARBON_RETURN_IF_ERROR(
-            TypeCheckPattern(&for_stmt.variable_declaration(),
-                             &cast<StaticArrayType>(rhs).element_type(),
-                             inner_impl_scope, ExpressionCategory::Reference));
+        CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+            &for_stmt.variable_declaration(), PatternRequirements::Irrefutable,
+            &cast<StaticArrayType>(rhs).element_type(), inner_impl_scope,
+            ExpressionCategory::Reference));
         CARBON_RETURN_IF_ERROR(ExpectExactType(
             for_stmt.source_loc(), "`for` pattern",
             &cast<StaticArrayType>(rhs).element_type(),
@@ -4557,8 +4550,9 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
             var.init().source_loc(), &var.init().static_type()));
         init_type = &var.init().static_type();
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-          &var.pattern(), init_type, var_scope, var.expression_category()));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckPattern(&var.pattern(), PatternRequirements::Irrefutable,
+                           init_type, var_scope, var.expression_category()));
       CARBON_RETURN_IF_ERROR(ExpectCompleteType(
           var.source_loc(), "type of variable", &var.pattern().static_type()));
       CARBON_RETURN_IF_ERROR(
@@ -4673,26 +4667,6 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       }
       return Success();
     }
-    case StatementKind::Continuation: {
-      auto& cont = cast<Continuation>(*s);
-      CARBON_RETURN_IF_ERROR(TypeCheckStmt(&cont.body(), impl_scope));
-      cont.set_static_type(arena_->New<ContinuationType>());
-      return Success();
-    }
-    case StatementKind::Run: {
-      auto& run = cast<Run>(*s);
-      CARBON_RETURN_IF_ERROR(TypeCheckExp(&run.argument(), impl_scope));
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<Expression*> converted_argument,
-          ImplicitlyConvert("argument of `run`", impl_scope, &run.argument(),
-                            arena_->New<ContinuationType>()));
-      run.set_argument(converted_argument);
-      return Success();
-    }
-    case StatementKind::Await: {
-      // Nothing to do here.
-      return Success();
-    }
   }
 }
 
@@ -4754,9 +4728,6 @@ auto TypeChecker::ExpectReturnOnAllPaths(
     case StatementKind::ReturnVar:
     case StatementKind::ReturnExpression:
       return Success();
-    case StatementKind::Continuation:
-    case StatementKind::Run:
-    case StatementKind::Await:
     case StatementKind::Assign:
     case StatementKind::IncrementDecrement:
     case StatementKind::ExpressionStatement:
@@ -4788,22 +4759,23 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   // Bring the deduced parameters into scope.
   for (Nonnull<GenericBinding*> deduced : f->deduced_parameters()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-        deduced, std::nullopt, function_scope, ExpressionCategory::Value));
+        deduced, PatternRequirements::Irrefutable, std::nullopt, function_scope,
+        ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(deduced, all_bindings);
     CollectImplBindingsInPattern(deduced, impl_bindings);
   }
   // Type check the receiver pattern.
   if (f->is_method()) {
-    CARBON_RETURN_IF_ERROR(TypeCheckPattern(&f->self_pattern(), std::nullopt,
-                                            function_scope,
-                                            ExpressionCategory::Value));
+    CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+        &f->self_pattern(), PatternRequirements::Irrefutable, std::nullopt,
+        function_scope, ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(&f->self_pattern(), all_bindings);
     CollectImplBindingsInPattern(&f->self_pattern(), impl_bindings);
   }
   // Type check the parameter pattern.
-  CARBON_RETURN_IF_ERROR(TypeCheckPattern(&f->param_pattern(), std::nullopt,
-                                          function_scope,
-                                          ExpressionCategory::Value));
+  CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+      &f->param_pattern(), PatternRequirements::Irrefutable, std::nullopt,
+      function_scope, ExpressionCategory::Value));
   CollectImplBindingsInPattern(&f->param_pattern(), impl_bindings);
 
   // All bindings we've seen so far in this scope are our deduced bindings.
@@ -4963,8 +4935,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
   if (class_decl->type_params().has_value()) {
     Nonnull<TuplePattern*> type_params = *class_decl->type_params();
-    CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-        type_params, std::nullopt, class_scope, ExpressionCategory::Value));
+    CARBON_RETURN_IF_ERROR(
+        TypeCheckPattern(type_params, PatternRequirements::Irrefutable,
+                         std::nullopt, class_scope, ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(type_params, bindings);
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << class_scope;
@@ -5132,9 +5105,9 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
   ImplScope mixin_scope(scope_info.innermost_scope);
 
   if (mixin_decl->params().has_value()) {
-    CARBON_RETURN_IF_ERROR(TypeCheckPattern(*mixin_decl->params(), std::nullopt,
-                                            mixin_scope,
-                                            ExpressionCategory::Value));
+    CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+        *mixin_decl->params(), PatternRequirements::Irrefutable, std::nullopt,
+        mixin_scope, ExpressionCategory::Value));
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << mixin_scope;
     }
@@ -5152,9 +5125,9 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
   }
 
   // Process the Self parameter.
-  CARBON_RETURN_IF_ERROR(TypeCheckPattern(mixin_decl->self(), std::nullopt,
-                                          mixin_scope,
-                                          ExpressionCategory::Value));
+  CARBON_RETURN_IF_ERROR(
+      TypeCheckPattern(mixin_decl->self(), PatternRequirements::Irrefutable,
+                       std::nullopt, mixin_scope, ExpressionCategory::Value));
 
   ScopeInfo mixin_scope_info = ScopeInfo::ForNonClassScope(&mixin_scope);
   for (Nonnull<Declaration*> m : mixin_decl->members()) {
@@ -5262,9 +5235,9 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
   // Type-check the parameters and find the set of bindings that are in scope.
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
   if (constraint_decl->params().has_value()) {
-    CARBON_RETURN_IF_ERROR(TypeCheckPattern(*constraint_decl->params(),
-                                            std::nullopt, constraint_scope,
-                                            ExpressionCategory::Value));
+    CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+        *constraint_decl->params(), PatternRequirements::Irrefutable,
+        std::nullopt, constraint_scope, ExpressionCategory::Value));
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << constraint_scope;
     }
@@ -5637,8 +5610,9 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   // Bring the deduced parameters into scope.
   for (Nonnull<GenericBinding*> deduced : impl_decl->deduced_parameters()) {
     generic_bindings.push_back(deduced);
-    CARBON_RETURN_IF_ERROR(TypeCheckPattern(deduced, std::nullopt, impl_scope,
-                                            ExpressionCategory::Value));
+    CARBON_RETURN_IF_ERROR(
+        TypeCheckPattern(deduced, PatternRequirements::Irrefutable,
+                         std::nullopt, impl_scope, ExpressionCategory::Value));
     CollectImplBindingsInPattern(deduced, impl_bindings);
   }
   impl_decl->set_impl_bindings(impl_bindings);
@@ -5831,8 +5805,9 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
   if (choice->type_params().has_value()) {
     Nonnull<TuplePattern*> type_params = *choice->type_params();
-    CARBON_RETURN_IF_ERROR(TypeCheckPattern(
-        type_params, std::nullopt, choice_scope, ExpressionCategory::Value));
+    CARBON_RETURN_IF_ERROR(
+        TypeCheckPattern(type_params, PatternRequirements::None, std::nullopt,
+                         choice_scope, ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(type_params, bindings);
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << choice_scope;
@@ -5895,7 +5870,6 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
       CARBON_FATAL() << "type of alias target is not a type";
@@ -5912,7 +5886,6 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::TupleType:
     case Value::Kind::NominalClassType:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::StringType:
     case Value::Kind::AssociatedConstant:
       return false;
@@ -5946,7 +5919,7 @@ auto TypeChecker::DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
   if (alias->target().static_type().kind() !=
       Value::Kind::TypeOfNamespaceName) {
     CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> target,
-                            InterpExp(&alias->target(), arena_, trace_stream_));
+                            InterpExp(&alias->target()));
     alias->set_constant_value(target);
   }
   return Success();
@@ -6125,9 +6098,10 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
     }
     case DeclarationKind::MixDeclaration: {
       auto& mix_decl = cast<MixDeclaration>(*d);
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> mixin,
-          InterpExp(&mix_decl.mixin(), arena_, trace_stream_));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&mix_decl.mixin(), *scope_info.innermost_scope));
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> mixin,
+                              InterpExp(&mix_decl.mixin()));
       if (const auto* mixin_value = dyn_cast<MixinPseudoType>(mixin)) {
         mix_decl.set_mixin_value(mixin_value);
       } else {
@@ -6156,9 +6130,9 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
         return ProgramError(var.binding().type().source_loc())
                << "Expected expression for variable type";
       }
-      CARBON_RETURN_IF_ERROR(TypeCheckPattern(&var.binding(), std::nullopt,
-                                              *scope_info.innermost_scope,
-                                              var.expression_category()));
+      CARBON_RETURN_IF_ERROR(TypeCheckPattern(
+          &var.binding(), PatternRequirements::Irrefutable, std::nullopt,
+          *scope_info.innermost_scope, var.expression_category()));
       CARBON_RETURN_IF_ERROR(ExpectCompleteType(
           var.source_loc(), "type of variable", &var.binding().static_type()));
       CARBON_RETURN_IF_ERROR(
@@ -6365,6 +6339,11 @@ auto TypeChecker::InstantiateImplDeclaration(
   CARBON_RETURN_IF_ERROR(type_checker->TypeCheckImplDeclaration(impl, scope));
 
   return std::pair{impl, arena_->New<Bindings>(std::move(new_bindings))};
+}
+
+auto TypeChecker::InterpExp(Nonnull<const Expression*> e)
+    -> ErrorOr<Nonnull<const Value*>> {
+  return Carbon::InterpExp(e, arena_, trace_stream_, print_stream_);
 }
 
 }  // namespace Carbon

@@ -419,7 +419,6 @@ auto NameResolver::ResolveNames(Expression& expression,
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::IntTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
@@ -626,22 +625,6 @@ auto NameResolver::ResolveNames(Statement& statement,
       }
       break;
     }
-    case StatementKind::Continuation: {
-      auto& continuation = cast<Continuation>(statement);
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(continuation.name(), &continuation,
-                              StaticScope::NameStatus::DeclaredButNotUsable));
-      StaticScope continuation_scope(&enclosing_scope);
-      CARBON_RETURN_IF_ERROR(ResolveNames(cast<Continuation>(statement).body(),
-                                          continuation_scope));
-      enclosing_scope.MarkUsable(continuation.name());
-      break;
-    }
-    case StatementKind::Run:
-      CARBON_RETURN_IF_ERROR(
-          ResolveNames(cast<Run>(statement).argument(), enclosing_scope));
-      break;
-    case StatementKind::Await:
     case StatementKind::Break:
     case StatementKind::Continue:
       break;
@@ -873,7 +856,13 @@ auto NameResolver::ResolveNames(Declaration& declaration,
       CARBON_ASSIGN_OR_RETURN(auto target,
                               ResolveNames(alias.target(), *scope));
       if (target && isa<Declaration>(target->base())) {
-        alias.set_resolved_declaration(&cast<Declaration>(target->base()));
+        if (alias.resolved_declaration()) {
+          // Skip if the declaration is already resolved in a previous name
+          // resolution phase.
+          CARBON_CHECK(*alias.resolved_declaration() == &target->base());
+        } else {
+          alias.set_resolved_declaration(&cast<Declaration>(target->base()));
+        }
       }
       scope->MarkUsable(alias.name().inner_name());
       break;

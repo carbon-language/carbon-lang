@@ -108,69 +108,81 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
 auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
-  StringifyNodeImpl(out, node_id);
-  return str;
-}
 
-auto SemanticsIR::StringifyNodeImpl(llvm::raw_ostream& out,
-                                    SemanticsNodeId node_id) -> void {
-  // Invalid node IDs will use the default invalid printing.
-  if (!node_id.is_valid()) {
-    out << node_id;
-    return;
-  }
+  struct Step {
+    // The node to print.
+    SemanticsNodeId node_id;
+    // The index into node_id to print. Not used by all types.
+    int index = 0;
+  };
+  llvm::SmallVector<Step> steps = {{.node_id = node_id}};
 
-  // Builtins have designated labels.
-  if (node_id.index < SemanticsBuiltinKind::ValidCount) {
-    out << SemanticsBuiltinKind::FromInt(node_id.index).label();
-    return;
-  }
+  while (!steps.empty()) {
+    auto step = steps.pop_back_val();
 
-  auto node = GetNode(node_id);
-  switch (node.kind()) {
-    case SemanticsNodeKind::StructType: {
-      out << "{";
-      auto refs = GetNodeBlock(node.GetAsStructType().second);
-      llvm::ListSeparator sep;
-      for (const auto& ref_id : refs) {
-        out << sep;
-        // TODO: Bound recursion depth or remove recursive step.
-        StringifyNodeImpl(out, ref_id);
+    // Invalid node IDs will use the default invalid printing.
+    if (!step.node_id.is_valid()) {
+      out << step.node_id;
+      continue;
+    }
+
+    // Builtins have designated labels.
+    if (step.node_id.index < SemanticsBuiltinKind::ValidCount) {
+      out << SemanticsBuiltinKind::FromInt(step.node_id.index).label();
+      continue;
+    }
+
+    auto node = GetNode(step.node_id);
+    switch (node.kind()) {
+      case SemanticsNodeKind::StructType: {
+        auto refs = GetNodeBlock(node.GetAsStructType().second);
+        if (step.index == 0) {
+          out << "{";
+        } else if (step.index < static_cast<int>(refs.size())) {
+          out << ", ";
+        } else {
+          out << "}";
+          break;
+        }
+
+        steps.push_back({.node_id = step.node_id, .index = step.index + 1});
+        steps.push_back({.node_id = refs[step.index]});
+        break;
       }
-      out << "}";
-      break;
+      case SemanticsNodeKind::StructTypeField: {
+        out << "." << GetString(node.GetAsStructTypeField()) << ": ";
+        steps.push_back({.node_id = node.type_id()});
+        break;
+      }
+      case SemanticsNodeKind::Assign:
+      case SemanticsNodeKind::BinaryOperatorAdd:
+      case SemanticsNodeKind::BindName:
+      case SemanticsNodeKind::Builtin:
+      case SemanticsNodeKind::Call:
+      case SemanticsNodeKind::CodeBlock:
+      case SemanticsNodeKind::CrossReference:
+      case SemanticsNodeKind::FunctionDeclaration:
+      case SemanticsNodeKind::FunctionDefinition:
+      case SemanticsNodeKind::IntegerLiteral:
+      case SemanticsNodeKind::RealLiteral:
+      case SemanticsNodeKind::Return:
+      case SemanticsNodeKind::ReturnExpression:
+      case SemanticsNodeKind::StringLiteral:
+      case SemanticsNodeKind::StructMemberAccess:
+      case SemanticsNodeKind::StructValue:
+      case SemanticsNodeKind::StubReference:
+      case SemanticsNodeKind::VarStorage:
+        // We don't need to handle stringification for nodes that don't show up
+        // in errors, but make it clear what's going on so that it's clearer
+        // when stringification is needed.
+        out << "<cannot stringify " << step.node_id << ">";
+        break;
+      case SemanticsNodeKind::Invalid:
+        llvm_unreachable("SemanticsNodeKind::Invalid is never used.");
     }
-    case SemanticsNodeKind::StructTypeField: {
-      out << "." << GetString(node.GetAsStructTypeField()) << ": ";
-      StringifyNodeImpl(out, node.type_id());
-      break;
-    }
-    case SemanticsNodeKind::Assign:
-    case SemanticsNodeKind::BinaryOperatorAdd:
-    case SemanticsNodeKind::BindName:
-    case SemanticsNodeKind::Builtin:
-    case SemanticsNodeKind::Call:
-    case SemanticsNodeKind::CodeBlock:
-    case SemanticsNodeKind::CrossReference:
-    case SemanticsNodeKind::FunctionDeclaration:
-    case SemanticsNodeKind::FunctionDefinition:
-    case SemanticsNodeKind::IntegerLiteral:
-    case SemanticsNodeKind::RealLiteral:
-    case SemanticsNodeKind::Return:
-    case SemanticsNodeKind::ReturnExpression:
-    case SemanticsNodeKind::StringLiteral:
-    case SemanticsNodeKind::StructMemberAccess:
-    case SemanticsNodeKind::StructValue:
-    case SemanticsNodeKind::StubReference:
-    case SemanticsNodeKind::VarStorage:
-      // We don't need to handle stringification for nodes that don't show up in
-      // errors, but make it clear what's going on so that it's clearer when
-      // stringification is needed.
-      out << "<cannot stringify " << node_id << ">";
-      return;
-    case SemanticsNodeKind::Invalid:
-      llvm_unreachable("SemanticsNodeKind::Invalid is never used.");
   }
+
+  return str;
 }
 
 }  // namespace Carbon

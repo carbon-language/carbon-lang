@@ -28,7 +28,6 @@
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/action_stack.h"
 #include "explorer/interpreter/stack.h"
-#include "explorer/interpreter/stack_fragment.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -40,6 +39,11 @@ using llvm::dyn_cast;
 using llvm::isa;
 
 namespace Carbon {
+
+// Limits for various overflow conditions.
+static constexpr int64_t MaxTodoSize = 1e3;
+static constexpr int64_t MaxStepsTaken = 1e6;
+static constexpr int64_t MaxArenaAllocated = 1e9;
 
 // Constructs an ActionStack suitable for the specified phase.
 static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
@@ -60,14 +64,14 @@ class Interpreter {
   // traces if `trace` is true. `phase` indicates whether it executes at
   // compile time or run time.
   Interpreter(Phase phase, Nonnull<Arena*> arena,
-              Nonnull<TraceStream*> trace_stream)
+              Nonnull<TraceStream*> trace_stream,
+              Nonnull<llvm::raw_ostream*> print_stream)
       : arena_(arena),
         heap_(arena),
         todo_(MakeTodo(phase, &heap_)),
         trace_stream_(trace_stream),
+        print_stream_(print_stream),
         phase_(phase) {}
-
-  ~Interpreter();
 
   // Runs all the steps of `action`.
   // It's not safe to call `RunAllSteps()` or `result()` after an error.
@@ -180,21 +184,17 @@ class Interpreter {
   Heap heap_;
   ActionStack todo_;
 
-  // The underlying states of continuation values. All StackFragments created
-  // during execution are tracked here, in order to safely deallocate the
-  // contents of any non-completed continuations at the end of execution.
-  std::vector<Nonnull<StackFragment*>> stack_fragments_;
-
   Nonnull<TraceStream*> trace_stream_;
-  Phase phase_;
-};
 
-Interpreter::~Interpreter() {
-  // Clean up any remaining suspended continuations.
-  for (Nonnull<StackFragment*> fragment : stack_fragments_) {
-    fragment->Clear();
-  }
-}
+  // The stream for the Print intrinsic.
+  Nonnull<llvm::raw_ostream*> print_stream_;
+
+  Phase phase_;
+
+  // The number of steps taken by the interpreter. Used for infinite loop
+  // detection.
+  int64_t steps_taken_ = 0;
+};
 
 //
 // State Operations
@@ -545,7 +545,6 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::FunctionTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::ValueLiteral:
@@ -771,12 +770,10 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringType:
     case Value::Kind::StringValue:
     case Value::Kind::TypeOfMixinPseudoType:
@@ -963,10 +960,6 @@ auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
                                ImplWitnessMap&& witnesses) -> ErrorOr<Success> {
-  constexpr int StackSizeLimit = 1000;
-  if (todo_.Count() > StackSizeLimit) {
-    return ProgramError(call.source_loc()) << "stack overflow";
-  }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "calling function: " << *fun << "\n";
   }
@@ -1579,17 +1572,17 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               intrinsic.source_loc(), format_string, num_format_args));
           switch (num_format_args) {
             case 0:
-              llvm::outs() << llvm::formatv(format_string);
+              *print_stream_ << llvm::formatv(format_string);
               break;
             case 1:
-              llvm::outs() << llvm::formatv(format_string,
-                                            cast<IntValue>(*args[1]).value());
+              *print_stream_ << llvm::formatv(format_string,
+                                              cast<IntValue>(*args[1]).value());
               break;
             default:
               CARBON_FATAL() << "Too many format args: " << num_format_args;
           }
           // Implicit newline; currently no way to disable it.
-          llvm::outs() << "\n";
+          *print_stream_ << "\n";
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Assert: {
@@ -1811,10 +1804,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::TypeTypeLiteral: {
       CARBON_CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<TypeType>());
-    }
-    case ExpressionKind::ContinuationTypeLiteral: {
-      CARBON_CHECK(act.pos() == 0);
-      return todo_.FinishAction(arena_->New<ContinuationType>());
     }
     case ExpressionKind::StringLiteral:
       CARBON_CHECK(act.pos() == 0);
@@ -2248,34 +2237,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                     stmt.source_loc()));
         return todo_.UnwindPast(*function.body(), return_value);
       }
-    case StatementKind::Continuation: {
-      CARBON_CHECK(act.pos() == 0);
-      const auto& continuation = cast<Continuation>(stmt);
-      // Create a continuation object by creating a frame similar the
-      // way one is created in a function call.
-      auto* fragment = arena_->New<StackFragment>();
-      stack_fragments_.push_back(fragment);
-      todo_.InitializeFragment(*fragment, &continuation.body());
-      // Bind the continuation object to the continuation variable
-      todo_.Initialize(&cast<Continuation>(stmt),
-                       arena_->New<ContinuationValue>(fragment));
-      return todo_.FinishAction();
-    }
-    case StatementKind::Run: {
-      const auto& run = cast<Run>(stmt);
-      if (act.pos() == 0) {
-        // Evaluate the argument of the run statement.
-        return todo_.Spawn(std::make_unique<ExpressionAction>(&run.argument()));
-      } else if (act.pos() == 1) {
-        // Push the continuation onto the current stack.
-        return todo_.Resume(cast<const ContinuationValue>(act.results()[0]));
-      } else {
-        return todo_.FinishAction();
-      }
-    }
-    case StatementKind::Await:
-      CARBON_CHECK(act.pos() == 0);
-      return todo_.Suspend();
   }
 }
 
@@ -2438,6 +2399,20 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
 
 // State transition.
 auto Interpreter::Step() -> ErrorOr<Success> {
+  // Check for various overflow conditions before stepping.
+  if (todo_.size() > MaxTodoSize) {
+    return ProgramError(SourceLocation("overflow", 1))
+           << "Stack overflow: too many interpreter actions on stack";
+  }
+  if (++steps_taken_ > MaxStepsTaken) {
+    return ProgramError(SourceLocation("overflow", 1))
+           << "Possible infinite loop: too many interpreter steps executed";
+  }
+  if (arena_->allocated() > MaxArenaAllocated) {
+    return ProgramError(SourceLocation("overflow", 1))
+           << "Out of memory: exceeded arena allocation limit";
+  }
+
   Action& act = todo_.CurrentAction();
   switch (act.kind()) {
     case Action::Kind::LocationAction:
@@ -2478,7 +2453,7 @@ auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     TraceState();
   }
   todo_.Start(std::move(action));
-  while (!todo_.IsEmpty()) {
+  while (!todo_.empty()) {
     CARBON_RETURN_IF_ERROR(Step());
     if (trace_stream_->is_enabled()) {
       TraceState();
@@ -2488,8 +2463,9 @@ auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
 }
 
 auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
-                   Nonnull<TraceStream*> trace_stream) -> ErrorOr<int> {
-  Interpreter interpreter(Phase::RunTime, arena, trace_stream);
+                   Nonnull<TraceStream*> trace_stream,
+                   Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int> {
+  Interpreter interpreter(Phase::RunTime, arena, trace_stream, print_stream);
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** initializing globals **********\n";
   }
@@ -2510,9 +2486,11 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
 }
 
 auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
-               Nonnull<TraceStream*> trace_stream)
+               Nonnull<TraceStream*> trace_stream,
+               Nonnull<llvm::raw_ostream*> print_stream)
     -> ErrorOr<Nonnull<const Value*>> {
-  Interpreter interpreter(Phase::CompileTime, arena, trace_stream);
+  Interpreter interpreter(Phase::CompileTime, arena, trace_stream,
+                          print_stream);
   CARBON_RETURN_IF_ERROR(
       interpreter.RunAllSteps(std::make_unique<ExpressionAction>(e)));
   return interpreter.result();

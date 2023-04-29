@@ -41,7 +41,6 @@ API                   "api"
 ARROW                 "->"
 AS                    "as"
 AUTO                  "auto"
-AWAIT                 "__await"
 BASE                  "base"
 BOOL                  "bool"
 BREAK                 "break"
@@ -54,8 +53,6 @@ COLON                 ":"
 COLON_BANG            ":!"
 COMMA                 ","
 CONSTRAINT            "constraint"
-CONTINUATION          "__continuation"
-CONTINUATION_TYPE     "__Continuation"
 CONTINUE              "continue"
 DEFAULT               "default"
 DESTRUCTOR            "destructor"
@@ -114,7 +111,6 @@ RETURNED              "returned"
 RIGHT_CURLY_BRACE     "}"
 RIGHT_PARENTHESIS     ")"
 RIGHT_SQUARE_BRACKET  "]"
-RUN                   "__run"
 SELF                  "Self"
 SEMICOLON             ";"
 SLASH                 "/"
@@ -164,7 +160,6 @@ operand_start         [(A-Za-z0-9_\"]
 {ARROW}                 { return CARBON_SIMPLE_TOKEN(ARROW);                 }
 {AS}                    { return CARBON_SIMPLE_TOKEN(AS);                    }
 {AUTO}                  { return CARBON_SIMPLE_TOKEN(AUTO);                  }
-{AWAIT}                 { return CARBON_SIMPLE_TOKEN(AWAIT);                 }
 {BASE}                  { return CARBON_SIMPLE_TOKEN(BASE);                  }
 {BOOL}                  { return CARBON_SIMPLE_TOKEN(BOOL);                  }
 {BREAK}                 { return CARBON_SIMPLE_TOKEN(BREAK);                 }
@@ -177,8 +172,6 @@ operand_start         [(A-Za-z0-9_\"]
 {COLON}                 { return CARBON_SIMPLE_TOKEN(COLON);                 }
 {COMMA}                 { return CARBON_SIMPLE_TOKEN(COMMA);                 }
 {CONSTRAINT}            { return CARBON_SIMPLE_TOKEN(CONSTRAINT);            }
-{CONTINUATION_TYPE}     { return CARBON_SIMPLE_TOKEN(CONTINUATION_TYPE);     }
-{CONTINUATION}          { return CARBON_SIMPLE_TOKEN(CONTINUATION);          }
 {CONTINUE}              { return CARBON_SIMPLE_TOKEN(CONTINUE);              }
 {DEFAULT}               { return CARBON_SIMPLE_TOKEN(DEFAULT);               }
 {DESTRUCTOR}            { return CARBON_SIMPLE_TOKEN(DESTRUCTOR);            }
@@ -234,7 +227,6 @@ operand_start         [(A-Za-z0-9_\"]
 {PLUS}                  { return CARBON_SIMPLE_TOKEN(PLUS);                  }
 {RETURNED}              { return CARBON_SIMPLE_TOKEN(RETURNED);              }
 {RETURN}                { return CARBON_SIMPLE_TOKEN(RETURN);                }
-{RUN}                   { return CARBON_SIMPLE_TOKEN(RUN);                   }
 {SELF}                  { return CARBON_SIMPLE_TOKEN(SELF);                  }
 {SEMICOLON}             { return CARBON_SIMPLE_TOKEN(SEMICOLON);             }
 {SLASH_EQUAL}           { return CARBON_SIMPLE_TOKEN(SLASH_EQUAL);           }

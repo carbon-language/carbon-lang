@@ -276,7 +276,7 @@ static auto InSameMatchFirst(Nonnull<const Witness*> a,
                              Nonnull<const Witness*> b) -> bool {
   const auto* impl_a = dyn_cast<ImplWitness>(a);
   const auto* impl_b = dyn_cast<ImplWitness>(b);
-  if (!impl_b || !impl_b) {
+  if (!impl_a || !impl_b) {
     return false;
   }
 

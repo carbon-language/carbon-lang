@@ -152,7 +152,7 @@ def get_tests(testdata: str) -> Set[Path]:
     tests = set()
     for root, _, files in os.walk(testdata):
         for f in files:
-            if f in {"lit.cfg.py", "BUILD"}:
+            if f in {"lit.cfg.py", "BUILD", "README.md"}:
                 # Ignore the lit config.
                 continue
             if os.path.splitext(f)[1] == ".carbon":

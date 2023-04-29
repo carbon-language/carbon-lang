@@ -19,16 +19,7 @@
 
 namespace Carbon {
 
-// Appended to fuzzer-generated Carbon source when the source is missing
-// `Main()` definition, to prevent early error return in semantic analysis.
-static constexpr char EmptyMain[] = R"(
-fn Main() -> i32 {
-  return 0;
-}
-)";
-
-auto Internal::GetRunfilesFile(const std::string& file)
-    -> ErrorOr<std::string> {
+auto GetRunfilesFile(const std::string& file) -> ErrorOr<std::string> {
   using bazel::tools::cpp::runfiles::Runfiles;
   std::string error;
   // `Runfiles::Create()` fails if passed an empty `argv0`.
@@ -44,50 +35,26 @@ auto Internal::GetRunfilesFile(const std::string& file)
   return full_path;
 }
 
-auto ParseCarbonTextProto(const std::string& contents, bool allow_unknown)
-    -> ErrorOr<Fuzzing::Carbon> {
-  google::protobuf::TextFormat::Parser parser;
-  if (allow_unknown) {
-    parser.AllowUnknownField(true);
-    parser.AllowUnknownExtension(true);
-  }
-  Fuzzing::Carbon carbon_proto;
-  if (!parser.ParseFromString(contents, &carbon_proto)) {
-    return ErrorBuilder() << "Couldn't parse Carbon text proto";
-  }
-  return carbon_proto;
-}
-
-auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
-    -> std::string {
-  const bool has_main = std::any_of(
-      compilation_unit.declarations().begin(),
-      compilation_unit.declarations().end(),
-      [](const Fuzzing::Declaration& decl) {
-        return decl.kind_case() == Fuzzing::Declaration::kFunction &&
-               decl.function().name().name() == "Main";
-      });
-  return Carbon::ProtoToCarbon(compilation_unit) + (has_main ? "" : EmptyMain);
-}
-
-auto ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit)
-    -> ErrorOr<int> {
-  const std::string source = ProtoToCarbonWithMain(compilation_unit);
+auto ParseAndExecute(const Fuzzing::Carbon& carbon) -> ErrorOr<int> {
+  const std::string source = ProtoToCarbon(carbon, /*maybe_add_main=*/true);
 
   Arena arena;
   CARBON_ASSIGN_OR_RETURN(AST ast,
                           ParseFromString(&arena, "Fuzzer.carbon", source,
                                           /*parser_debug=*/false));
   const ErrorOr<std::string> prelude_path =
-      Internal::GetRunfilesFile("carbon/explorer/data/prelude.carbon");
+      GetRunfilesFile("carbon/explorer/data/prelude.carbon");
   // Can't do anything without a prelude, so it's a fatal error.
   CARBON_CHECK(prelude_path.ok()) << prelude_path.error();
 
   AddPrelude(*prelude_path, &arena, &ast.declarations,
              &ast.num_prelude_declarations);
   TraceStream trace_stream;
-  CARBON_ASSIGN_OR_RETURN(ast, AnalyzeProgram(&arena, ast, &trace_stream));
-  return ExecProgram(&arena, ast, &trace_stream);
+
+  // Use llvm::nulls() to suppress output from the Print intrinsic.
+  CARBON_ASSIGN_OR_RETURN(
+      ast, AnalyzeProgram(&arena, ast, &trace_stream, &llvm::nulls()));
+  return ExecProgram(&arena, ast, &trace_stream, &llvm::nulls());
 }
 
 }  // namespace Carbon

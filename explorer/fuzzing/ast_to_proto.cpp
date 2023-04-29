@@ -340,10 +340,6 @@ static auto ExpressionToProto(const Expression& expression)
       expression_proto.mutable_string_type_literal();
       break;
 
-    case ExpressionKind::ContinuationTypeLiteral:
-      expression_proto.mutable_continuation_type_literal();
-      break;
-
     case ExpressionKind::TypeTypeLiteral:
       expression_proto.mutable_type_type_literal();
       break;
@@ -564,25 +560,6 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       }
       break;
     }
-
-    case StatementKind::Continuation: {
-      const auto& continuation = cast<Continuation>(statement);
-      auto* continuation_proto = statement_proto.mutable_continuation();
-      continuation_proto->set_name(continuation.name());
-      *continuation_proto->mutable_body() =
-          BlockStatementToProto(continuation.body());
-      break;
-    }
-
-    case StatementKind::Run:
-      *statement_proto.mutable_run()->mutable_argument() =
-          ExpressionToProto(cast<Run>(statement).argument());
-      break;
-
-    case StatementKind::Await:
-      // Initializes with the default value; there's nothing to set.
-      statement_proto.mutable_await_statement();
-      break;
 
     case StatementKind::Break:
       // Initializes with the default value; there's nothing to set.
@@ -866,15 +843,15 @@ static auto DeclarationToProto(const Declaration& declaration)
   return declaration_proto;
 }
 
-auto AstToProto(const AST& ast) -> Fuzzing::CompilationUnit {
-  Fuzzing::CompilationUnit compilation_unit;
-  *compilation_unit.mutable_package_statement() =
-      LibraryNameToProto(ast.package);
-  compilation_unit.set_is_api(ast.is_api);
+auto AstToProto(const AST& ast) -> Fuzzing::Carbon {
+  Fuzzing::Carbon carbon;
+  auto* unit = carbon.mutable_compilation_unit();
+  *unit->mutable_package_statement() = LibraryNameToProto(ast.package);
+  unit->set_is_api(ast.is_api);
   for (const Declaration* declaration : ast.declarations) {
-    *compilation_unit.add_declarations() = DeclarationToProto(*declaration);
+    *unit->add_declarations() = DeclarationToProto(*declaration);
   }
-  return compilation_unit;
+  return carbon;
 }
 
 }  // namespace Carbon

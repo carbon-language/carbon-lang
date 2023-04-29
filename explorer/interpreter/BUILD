@@ -31,11 +31,9 @@ cc_library(
     name = "action_stack",
     srcs = [
         "action_stack.cpp",
-        "stack_fragment.cpp",
     ],
     hdrs = [
         "action_stack.h",
-        "stack_fragment.h",
     ],
     deps = [
         ":action",

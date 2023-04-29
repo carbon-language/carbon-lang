@@ -37,9 +37,27 @@ using GlobalMembersMap =
 
 class TypeChecker {
  public:
+  // Requirements for TypeCheckPattern.
+  enum class PatternRequirements {
+    None,
+
+    // The pattern must be fully irrefutable.
+    Irrefutable,
+
+    // A special case for types of bindings, which must be either `auto` or a
+    // valid expression.
+    // TODO: `auto` should be refactored from a pattern to an expression.
+    // Once that's done, this may be removable.
+    // https://github.com/carbon-language/carbon-lang/issues/2788
+    BindingType,
+  };
+
   explicit TypeChecker(Nonnull<Arena*> arena,
-                       Nonnull<TraceStream*> trace_stream)
-      : arena_(arena), trace_stream_(trace_stream) {}
+                       Nonnull<TraceStream*> trace_stream,
+                       Nonnull<llvm::raw_ostream*> print_stream)
+      : arena_(arena),
+        trace_stream_(trace_stream),
+        print_stream_(print_stream) {}
 
   // Type-checks `ast` and sets properties such as `static_type`, as documented
   // on the individual nodes.
@@ -193,7 +211,7 @@ class TypeChecker {
   // Implicit conversions from `expected` to the pattern's type are permitted.
   //
   // `impl_scope` is extended with all implementations implied by the pattern.
-  auto TypeCheckPattern(Nonnull<Pattern*> p,
+  auto TypeCheckPattern(Nonnull<Pattern*> p, PatternRequirements requirements,
                         std::optional<Nonnull<const Value*>> expected,
                         ImplScope& impl_scope,
                         ExpressionCategory enclosing_expression_category)
@@ -523,9 +541,14 @@ class TypeChecker {
 
   // Instantiate an impl with the given set of bindings, including one or more
   // template bindings.
-  ErrorOr<std::pair<Nonnull<ImplDeclaration*>, Nonnull<Bindings*>>>
-  InstantiateImplDeclaration(Nonnull<const ImplDeclaration*> pattern,
-                             Nonnull<const Bindings*> bindings) const;
+  auto InstantiateImplDeclaration(Nonnull<const ImplDeclaration*> pattern,
+                                  Nonnull<const Bindings*> bindings) const
+      -> ErrorOr<std::pair<Nonnull<ImplDeclaration*>, Nonnull<Bindings*>>>;
+
+  // Wraps the interpreter's InterpExp, forwarding TypeChecker members as
+  // arguments.
+  auto InterpExp(Nonnull<const Expression*> e)
+      -> ErrorOr<Nonnull<const Value*>>;
 
   Nonnull<Arena*> arena_;
   Builtins builtins_;
@@ -534,6 +557,9 @@ class TypeChecker {
   GlobalMembersMap collected_members_;
 
   Nonnull<TraceStream*> trace_stream_;
+
+  // The stream for the Print intrinsic.
+  Nonnull<llvm::raw_ostream*> print_stream_;
 
   // The top-level ImplScope, containing `impl` declarations that should be
   // usable from any context. This is used when we want to try to refine a

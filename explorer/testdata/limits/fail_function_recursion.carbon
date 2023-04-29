@@ -1,0 +1,18 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// NOAUTOUPDATE
+// RUN: %{not} %{explorer-run}
+// CHECK:STDERR: RUNTIME ERROR: overflow:1: Stack overflow: too many interpreter actions on stack
+
+package EmptyIdentifier impl;
+
+fn A() {
+  A();
+}
+
+fn Main() -> i32 {
+  A();
+  return 0;
+}

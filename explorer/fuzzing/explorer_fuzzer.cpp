@@ -9,10 +9,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 DEFINE_TEXT_PROTO_FUZZER(const Carbon::Fuzzing::Carbon& input) {
-  const auto result = Carbon::ParseAndExecute(input.compilation_unit());
-  if (result.ok()) {
-    llvm::outs() << "Executed OK: " << *result << "\n";
-  } else {
-    llvm::errs() << "Execution failed: " << result.error() << "\n";
-  }
+  // Only verifying it doesn't crash.
+  (void)Carbon::ParseAndExecute(input);
 }

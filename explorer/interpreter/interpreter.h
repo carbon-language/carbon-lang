@@ -25,13 +25,15 @@ namespace Carbon {
 // Interprets the program defined by `ast`, allocating values on `arena` and
 // printing traces if `trace` is true.
 auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
-                   Nonnull<TraceStream*> trace_stream) -> ErrorOr<int>;
+                   Nonnull<TraceStream*> trace_stream,
+                   Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int>;
 
 // Interprets `e` at compile-time, allocating values on `arena` and
 // printing traces if `trace` is true. The caller must ensure that all the
 // code this evaluates has been typechecked.
 auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
-               Nonnull<TraceStream*> trace_stream)
+               Nonnull<TraceStream*> trace_stream,
+               Nonnull<llvm::raw_ostream*> print_stream)
     -> ErrorOr<Nonnull<const Value*>>;
 
 // Attempts to match `v` against the pattern `p`, returning whether matching

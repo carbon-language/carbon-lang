@@ -236,11 +236,6 @@ class ValueTransform : public TransformBase<Derived, ResultUnwrapper> {
     return node;
   }
 
-  auto operator()(Nonnull<ContinuationValue::Representation*> continuation)
-      -> Nonnull<ContinuationValue::Representation*> {
-    return continuation;
-  }
-
   auto operator()(Address addr) -> Address { return addr; }
 
   auto operator()(ValueNodeView value_node) -> ValueNodeView {
