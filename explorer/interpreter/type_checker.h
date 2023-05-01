@@ -193,7 +193,7 @@ class TypeChecker {
   //    directly used in this function but is passed to InterpExp.
   auto TypeCheckExp(Nonnull<Expression*> e, const ImplScope& impl_scope)
       -> ErrorOr<Success>;
-  // Called via RunWithStackSpace.
+  // For RunWithStackSpace.
   auto TypeCheckExpImpl(Nonnull<Expression*> e, const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
