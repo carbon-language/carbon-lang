@@ -30,7 +30,6 @@
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
-#include "explorer/interpreter/stack_space.h"
 #include "explorer/interpreter/type_structure.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
@@ -2686,7 +2685,6 @@ auto TypeChecker::CheckAddrMeAccess(
   return Success();
 }
 
-// NOLINTNEXTLINE(readability-function-size)
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -2694,6 +2692,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       [&]() { return TypeCheckExpImpl(e, impl_scope); });
 }
 
+// NOLINTNEXTLINE(readability-function-size)
 auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                                    const ImplScope& impl_scope)
     -> ErrorOr<Success> {
@@ -2868,9 +2867,9 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
         }
         case Value::Kind::VariableType:
         case Value::Kind::AssociatedConstant: {
-          // This case handles access to a method on a receiver whose type is
-          // a type variable or associated constant. For example, `x.foo`
-          // where the type of `x` is `T` and `T` implements an interface that
+          // This case handles access to a method on a receiver whose type is a
+          // type variable or associated constant. For example, `x.foo` where
+          // the type of `x` is `T` and `T` implements an interface that
           // includes `foo`, or `x.y().foo` where the type of `x` is `T` and
           // the return type of `y()` is an associated constant from `T`'s
           // constraint.
@@ -2896,8 +2895,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           // `ImplBinding` or, for a constraint, to a witness for an impl
           // constraint within it.
           // TODO: We should only need to look at the impl binding for this
-          // variable or witness for this associated constant, not everything
-          // in the impl scope, to find the witness.
+          // variable or witness for this associated constant, not everything in
+          // the impl scope, to find the witness.
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const ConstraintType*> iface_constraint,
               ConvertToConstraintType(access.source_loc(), "member access",
@@ -2940,12 +2939,12 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
         case Value::Kind::ConstraintType: {
           // This case handles access to a class function from a constrained
           // type variable. If `T` is a type variable and `foo` is a class
-          // function in an interface implemented by `T`, then `T.foo`
-          // accesses the `foo` class function of `T`.
+          // function in an interface implemented by `T`, then `T.foo` accesses
+          // the `foo` class function of `T`.
           //
           // TODO: Per the language rules, we are supposed to also perform
-          // lookup into `type` and report an ambiguity if the name is found
-          // in both places.
+          // lookup into `type` and report an ambiguity if the name is found in
+          // both places.
           CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
                                   InterpExp(&access.object()));
           CARBON_ASSIGN_OR_RETURN(
@@ -2974,8 +2973,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           if (IsInstanceMember(&access.member())) {
             // This is a member name denoting an instance member.
             // TODO: Consider setting the static type of all instance member
-            // declarations to be member name types, rather than
-            // special-casing member accesses that name them.
+            // declarations to be member name types, rather than special-casing
+            // member accesses that name them.
             access.set_static_type(
                 arena_->New<TypeOfMemberName>(NamedElement(result.member)));
             access.set_expression_category(ExpressionCategory::Value);
@@ -3141,15 +3140,14 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           CARBON_ASSIGN_OR_RETURN(base_type, InterpExp(&access.object()));
           has_instance = false;
         } else {
-          // This is `value.(member_name)`, where `member_name` doesn't
-          // specify a type. The member will be found in the type of `value`,
-          // or in a corresponding `impl` if `member_name` is an interface
-          // member.
+          // This is `value.(member_name)`, where `member_name` doesn't specify
+          // a type. The member will be found in the type of `value`, or in a
+          // corresponding `impl` if `member_name` is an interface member.
           base_type = &access.object().static_type();
         }
       } else {
-        // This is `value.(member_name)`, where `member_name` specifies a
-        // type. `value` is implicitly converted to that type.
+        // This is `value.(member_name)`, where `member_name` specifies a type.
+        // `value` is implicitly converted to that type.
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<Expression*> converted_object,
             ImplicitlyConvert("compound member access", impl_scope,
@@ -3158,8 +3156,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
       }
       access.set_is_type_access(has_instance && !is_instance_member);
 
-      // Perform associated constant rewriting and impl selection if
-      // necessary.
+      // Perform associated constant rewriting and impl selection if necessary.
       std::optional<Nonnull<const Witness*>> witness;
       if (std::optional<Nonnull<const InterfaceType*>> iface =
               member_name.interface()) {
@@ -3570,8 +3567,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           return Success();
         }
         case Value::Kind::ChoiceType: {
-          // Give a better diagnostic for an attempt to call a choice
-          // constant.
+          // Give a better diagnostic for an attempt to call a choice constant.
           auto* member_access =
               dyn_cast<SimpleMemberAccessExpression>(&call.function());
           if (member_access &&
@@ -3618,8 +3614,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
       switch (cast<IntrinsicExpression>(*e).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print:
           // TODO: Remove Print special casing once we have variadics or
-          // overloads. Here, that's the name Print instead of
-          // __intrinsic_print in errors.
+          // overloads. Here, that's the name Print instead of __intrinsic_print
+          // in errors.
           if (args.empty() || args.size() > 2) {
             return ProgramError(e->source_loc())
                    << "Print takes 1 or 2 arguments, received " << args.size();
@@ -3841,8 +3837,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
       // If there's some enclosing `.Self` value, our self is symbolically
       // equal to that. Otherwise it's a new type variable.
       if (auto enclosing_dot_self = where.enclosing_dot_self()) {
-        // TODO: We need to also enforce that our `.Self` does end up being
-        // the same as the enclosing type.
+        // TODO: We need to also enforce that our `.Self` does end up being the
+        // same as the enclosing type.
         self.set_symbolic_identity(*(*enclosing_dot_self)->symbolic_identity());
         self.set_value(&(*enclosing_dot_self)->value());
       } else {
@@ -3858,9 +3854,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
       auto pop_partial_constraint_type =
           llvm::make_scope_exit([&] { partial_constraint_types_.pop_back(); });
 
-      // Note, we don't want to call `TypeCheckPattern` here. Most of the
-      // setup for the self binding is instead done by the
-      // `ConstraintTypeBuilder`.
+      // Note, we don't want to call `TypeCheckPattern` here. Most of the setup
+      // for the self binding is instead done by the `ConstraintTypeBuilder`.
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base_type,
                               TypeCheckTypeExp(&self.type(), impl_scope));
       self.set_static_type(base_type);
@@ -3946,9 +3941,9 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
             auto* constant_value = arena_->New<AssociatedConstant>(
                 builder.GetSelfType(), result.interface, constant, witness);
 
-            // Find the replacement value prior to conversion to the
-            // constant's type. This is the value we'll rewrite to when
-            // type-checking a member access.
+            // Find the replacement value prior to conversion to the constant's
+            // type. This is the value we'll rewrite to when type-checking a
+            // member access.
             CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> replacement_value,
                                     InterpExp(&rewrite_clause.replacement()));
             Nonnull<const Value*> replacement_type =

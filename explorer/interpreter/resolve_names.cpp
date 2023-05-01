@@ -299,8 +299,8 @@ auto NameResolver::ResolveNamesImpl(Expression& expression,
       break;
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
-      // If the left-hand side of the `.` is a namespace or alias to
-      // namespace, resolve the name.
+      // If the left-hand side of the `.` is a namespace or alias to namespace,
+      // resolve the name.
       auto& access = cast<SimpleMemberAccessExpression>(expression);
       CARBON_ASSIGN_OR_RETURN(std::optional<ValueNodeView> scope,
                               ResolveNames(access.object(), enclosing_scope));
@@ -746,11 +746,11 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
         CARBON_RETURN_IF_ERROR(impl_scope.Add(binding->name(), binding));
       }
       CARBON_RETURN_IF_ERROR(ResolveNames(*impl.impl_type(), impl_scope));
-      // Only add `Self` to the impl_scope if it is not already in the
-      // enclosing scope. Add `Self` after we resolve names for the impl_type,
-      // so you can't write something like `impl Vector(Self) as ...`. Add
-      // `Self` before resolving names in the interface, so you can write
-      // something like `impl VeryLongTypeName as AddWith(Self)`
+      // Only add `Self` to the impl_scope if it is not already in the enclosing
+      // scope. Add `Self` after we resolve names for the impl_type, so you
+      // can't write something like `impl Vector(Self) as ...`. Add `Self`
+      // before resolving names in the interface, so you can write something
+      // like `impl VeryLongTypeName as AddWith(Self)`
       if (!enclosing_scope.Resolve("Self", impl.source_loc()).ok()) {
         CARBON_RETURN_IF_ERROR(AddExposedNames(*impl.self(), impl_scope));
       }
