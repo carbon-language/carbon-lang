@@ -28,6 +28,17 @@ cc_library(
 cc_test(
     name = "parse_and_execute_test",
     srcs = ["parse_and_execute_test.cpp"],
+    deps = [
+        ":parse_and_execute",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "file_test",
+    srcs = ["file_test.cpp"],
     args = ["$(locations :carbon_files)"],
     data = [":carbon_files"],
     # Bazel limits sharding to 50. We have lots of tests, so this should
@@ -36,7 +47,6 @@ cc_test(
     deps = [
         ":parse_and_execute",
         "//common:gtest_main",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
