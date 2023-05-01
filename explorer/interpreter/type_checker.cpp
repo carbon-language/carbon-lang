@@ -30,7 +30,6 @@
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
-#include "explorer/interpreter/stack_space.h"
 #include "explorer/interpreter/type_structure.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
@@ -2686,1351 +2685,1330 @@ auto TypeChecker::CheckAddrMeAccess(
   return Success();
 }
 
-// NOLINTNEXTLINE(readability-function-size)
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  return RunWithStackSpace<ErrorOr<Success>>([&]() -> ErrorOr<Success> {
+  return RunWithStackSpace<ErrorOr<Success>>(
+      [&]() { return TypeCheckExpImpl(e, impl_scope); });
+}
+
+// NOLINTNEXTLINE(readability-function-size)
+auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
+                                   const ImplScope& impl_scope)
+    -> ErrorOr<Success> {
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "checking " << e->kind() << " " << *e;
+    *trace_stream_ << "\n";
+  }
+  if (e->is_type_checked()) {
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "checking " << e->kind() << " " << *e;
-      *trace_stream_ << "\n";
+      *trace_stream_ << "expression has already been type-checked\n";
     }
-    if (e->is_type_checked()) {
-      if (trace_stream_->is_enabled()) {
-        *trace_stream_ << "expression has already been type-checked\n";
+    return Success();
+  }
+  switch (e->kind()) {
+    case ExpressionKind::ValueLiteral:
+    case ExpressionKind::BuiltinConvertExpression:
+    case ExpressionKind::BaseAccessExpression:
+      CARBON_FATAL() << "attempting to type check node " << *e
+                     << " generated during type checking";
+    case ExpressionKind::IndexExpression: {
+      auto& index = cast<IndexExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.object(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.offset(), impl_scope));
+      const Value& object_type = index.object().static_type();
+      switch (object_type.kind()) {
+        case Value::Kind::TupleType: {
+          const auto& tuple_type = cast<TupleType>(object_type);
+          CARBON_RETURN_IF_ERROR(
+              ExpectExactType(index.offset().source_loc(), "tuple index",
+                              arena_->New<IntType>(),
+                              &index.offset().static_type(), impl_scope));
+          CARBON_ASSIGN_OR_RETURN(auto offset_value,
+                                  InterpExp(&index.offset()));
+          int i = cast<IntValue>(*offset_value).value();
+          if (i < 0 || i >= static_cast<int>(tuple_type.elements().size())) {
+            return ProgramError(e->source_loc())
+                   << "index " << i << " is out of range for type "
+                   << tuple_type;
+          }
+          index.set_static_type(tuple_type.elements()[i]);
+          index.set_expression_category(index.object().expression_category());
+          return Success();
+        }
+        case Value::Kind::StaticArrayType: {
+          CARBON_RETURN_IF_ERROR(
+              ExpectExactType(index.offset().source_loc(), "array index",
+                              arena_->New<IntType>(),
+                              &index.offset().static_type(), impl_scope));
+          index.set_static_type(
+              &cast<StaticArrayType>(object_type).element_type());
+          index.set_expression_category(index.object().expression_category());
+          return Success();
+        }
+        default:
+          return ProgramError(e->source_loc())
+                 << "only arrays and tuples can be indexed, found "
+                 << object_type;
       }
+    }
+    case ExpressionKind::TupleLiteral: {
+      std::vector<Nonnull<const Value*>> arg_types;
+      for (auto* arg : cast<TupleLiteral>(*e).fields()) {
+        CARBON_RETURN_IF_ERROR(TypeCheckExp(arg, impl_scope));
+        CARBON_RETURN_IF_ERROR(
+            ExpectNonPlaceholderType(arg->source_loc(), &arg->static_type()));
+        arg_types.push_back(&arg->static_type());
+      }
+      e->set_static_type(arena_->New<TupleType>(std::move(arg_types)));
+      e->set_expression_category(ExpressionCategory::Value);
       return Success();
     }
-    switch (e->kind()) {
-      case ExpressionKind::ValueLiteral:
-      case ExpressionKind::BuiltinConvertExpression:
-      case ExpressionKind::BaseAccessExpression:
-        CARBON_FATAL() << "attempting to type check node " << *e
-                       << " generated during type checking";
-      case ExpressionKind::IndexExpression: {
-        auto& index = cast<IndexExpression>(*e);
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.object(), impl_scope));
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(&index.offset(), impl_scope));
-        const Value& object_type = index.object().static_type();
-        switch (object_type.kind()) {
-          case Value::Kind::TupleType: {
-            const auto& tuple_type = cast<TupleType>(object_type);
-            CARBON_RETURN_IF_ERROR(
-                ExpectExactType(index.offset().source_loc(), "tuple index",
-                                arena_->New<IntType>(),
-                                &index.offset().static_type(), impl_scope));
-            CARBON_ASSIGN_OR_RETURN(auto offset_value,
-                                    InterpExp(&index.offset()));
-            int i = cast<IntValue>(*offset_value).value();
-            if (i < 0 || i >= static_cast<int>(tuple_type.elements().size())) {
-              return ProgramError(e->source_loc())
-                     << "index " << i << " is out of range for type "
-                     << tuple_type;
-            }
-            index.set_static_type(tuple_type.elements()[i]);
-            index.set_expression_category(index.object().expression_category());
-            return Success();
-          }
-          case Value::Kind::StaticArrayType: {
-            CARBON_RETURN_IF_ERROR(
-                ExpectExactType(index.offset().source_loc(), "array index",
-                                arena_->New<IntType>(),
-                                &index.offset().static_type(), impl_scope));
-            index.set_static_type(
-                &cast<StaticArrayType>(object_type).element_type());
-            index.set_expression_category(index.object().expression_category());
-            return Success();
-          }
-          default:
-            return ProgramError(e->source_loc())
-                   << "only arrays and tuples can be indexed, found "
-                   << object_type;
-        }
+    case ExpressionKind::StructLiteral: {
+      std::vector<NamedValue> arg_types;
+      for (auto& arg : cast<StructLiteral>(*e).fields()) {
+        CARBON_RETURN_IF_ERROR(TypeCheckExp(&arg.expression(), impl_scope));
+        CARBON_RETURN_IF_ERROR(ExpectNonPlaceholderType(
+            arg.expression().source_loc(), &arg.expression().static_type()));
+        arg_types.push_back({arg.name(), &arg.expression().static_type()});
       }
-      case ExpressionKind::TupleLiteral: {
-        std::vector<Nonnull<const Value*>> arg_types;
-        for (auto* arg : cast<TupleLiteral>(*e).fields()) {
-          CARBON_RETURN_IF_ERROR(TypeCheckExp(arg, impl_scope));
-          CARBON_RETURN_IF_ERROR(
-              ExpectNonPlaceholderType(arg->source_loc(), &arg->static_type()));
-          arg_types.push_back(&arg->static_type());
-        }
-        e->set_static_type(arena_->New<TupleType>(std::move(arg_types)));
-        e->set_expression_category(ExpressionCategory::Value);
+      e->set_static_type(arena_->New<StructType>(std::move(arg_types)));
+      e->set_expression_category(ExpressionCategory::Value);
+      return Success();
+    }
+    case ExpressionKind::StructTypeLiteral: {
+      auto& struct_type = cast<StructTypeLiteral>(*e);
+      std::vector<NamedValue> fields;
+      for (auto& arg : struct_type.fields()) {
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Value*> type,
+            TypeCheckTypeExp(&arg.expression(), impl_scope));
+        fields.push_back({arg.name(), type});
+      }
+      struct_type.set_static_type(arena_->New<TypeType>());
+      struct_type.set_expression_category(ExpressionCategory::Value);
+      struct_type.set_constant_value(
+          arena_->New<StructType>(std::move(fields)));
+      return Success();
+    }
+    case ExpressionKind::SimpleMemberAccessExpression: {
+      auto& access = cast<SimpleMemberAccessExpression>(*e);
+
+      // If name lookup resolved this member access statically, rewrite it to
+      // an identifier expression.
+      if (auto value_node = access.value_node()) {
+        auto* rewritten = arena_->New<IdentifierExpression>(
+            access.source_loc(), access.member_name());
+        rewritten->set_value_node(*value_node);
+        CARBON_RETURN_IF_ERROR(TypeCheckExp(rewritten, impl_scope));
+        access.set_rewritten_form(rewritten);
         return Success();
       }
-      case ExpressionKind::StructLiteral: {
-        std::vector<NamedValue> arg_types;
-        for (auto& arg : cast<StructLiteral>(*e).fields()) {
-          CARBON_RETURN_IF_ERROR(TypeCheckExp(&arg.expression(), impl_scope));
-          CARBON_RETURN_IF_ERROR(ExpectNonPlaceholderType(
-              arg.expression().source_loc(), &arg.expression().static_type()));
-          arg_types.push_back({arg.name(), &arg.expression().static_type()});
-        }
-        e->set_static_type(arena_->New<StructType>(std::move(arg_types)));
-        e->set_expression_category(ExpressionCategory::Value);
-        return Success();
-      }
-      case ExpressionKind::StructTypeLiteral: {
-        auto& struct_type = cast<StructTypeLiteral>(*e);
-        std::vector<NamedValue> fields;
-        for (auto& arg : struct_type.fields()) {
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Value*> type,
-              TypeCheckTypeExp(&arg.expression(), impl_scope));
-          fields.push_back({arg.name(), type});
-        }
-        struct_type.set_static_type(arena_->New<TypeType>());
-        struct_type.set_expression_category(ExpressionCategory::Value);
-        struct_type.set_constant_value(
-            arena_->New<StructType>(std::move(fields)));
-        return Success();
-      }
-      case ExpressionKind::SimpleMemberAccessExpression: {
-        auto& access = cast<SimpleMemberAccessExpression>(*e);
 
-        // If name lookup resolved this member access statically, rewrite it to
-        // an identifier expression.
-        if (auto value_node = access.value_node()) {
-          auto* rewritten = arena_->New<IdentifierExpression>(
-              access.source_loc(), access.member_name());
-          rewritten->set_value_node(*value_node);
-          CARBON_RETURN_IF_ERROR(TypeCheckExp(rewritten, impl_scope));
-          access.set_rewritten_form(rewritten);
-          return Success();
-        }
-
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
-        const Value& object_type = access.object().static_type();
-        CARBON_RETURN_IF_ERROR(ExpectCompleteType(
-            access.source_loc(), "member access", &object_type));
-        switch (object_type.kind()) {
-          case Value::Kind::StructType: {
-            const auto& struct_type = cast<StructType>(object_type);
-            for (const auto& field : struct_type.fields()) {
-              if (access.member_name() == field.name) {
-                access.set_member(arena_->New<NamedElement>(&field));
-                access.set_static_type(field.value);
-                access.set_expression_category(
-                    access.object().expression_category());
-                return Success();
-              }
-            }
-            return ProgramError(access.source_loc())
-                   << "struct " << struct_type
-                   << " does not have a field named " << access.member_name();
-          }
-          case Value::Kind::NominalClassType: {
-            const auto& t_class = cast<NominalClassType>(object_type);
-            CARBON_ASSIGN_OR_RETURN(
-                const auto res,
-                FindMemberWithParents(access.member_name(), &t_class));
-            if (res.has_value()) {
-              auto [member_type, member, member_t_class] = res.value();
-              CARBON_ASSIGN_OR_RETURN(
-                  Nonnull<const Value*> field_type,
-                  Substitute(member_t_class->bindings(), member_type));
-              access.set_member(arena_->New<NamedElement>(member));
-              access.set_static_type(field_type);
-              access.set_is_type_access(!IsInstanceMember(&access.member()));
-              switch (member->kind()) {
-                case DeclarationKind::VariableDeclaration:
-                  access.set_expression_category(
-                      access.object().expression_category());
-                  break;
-                case DeclarationKind::FunctionDeclaration: {
-                  const auto* func_decl = cast<FunctionDeclaration>(member);
-                  CARBON_RETURN_IF_ERROR(CheckAddrMeAccess(
-                      &access, func_decl, t_class.bindings(), impl_scope));
-                  access.set_expression_category(ExpressionCategory::Value);
-                  break;
-                }
-                case DeclarationKind::AliasDeclaration:
-                  return ProgramError(access.source_loc())
-                         << "Member access to aliases is not yet supported.";
-                default:
-                  CARBON_FATAL() << "member " << access.member_name()
-                                 << " is not a field or method";
-                  break;
-              }
-              return Success();
-            } else {
-              return ProgramError(e->source_loc())
-                     << "class " << t_class.declaration().name()
-                     << " does not have a field named " << access.member_name();
-            }
-          }
-          case Value::Kind::VariableType:
-          case Value::Kind::AssociatedConstant: {
-            // This case handles access to a method on a receiver whose type is
-            // a type variable or associated constant. For example, `x.foo`
-            // where the type of `x` is `T` and `T` implements an interface that
-            // includes `foo`, or `x.y().foo` where the type of `x` is `T` and
-            // the return type of `y()` is an associated constant from `T`'s
-            // constraint.
-            Nonnull<const Value*> constraint;
-            if (const auto* var_type = dyn_cast<VariableType>(&object_type)) {
-              constraint = &var_type->binding().static_type();
-            } else {
-              CARBON_ASSIGN_OR_RETURN(
-                  constraint, GetTypeForAssociatedConstant(
-                                  cast<AssociatedConstant>(&object_type)));
-            }
-            CARBON_ASSIGN_OR_RETURN(
-                ConstraintLookupResult result,
-                LookupInConstraint(e->source_loc(), "member access", constraint,
-                                   access.member_name()));
-            if (auto replacement = LookupRewrite(constraint, result.interface,
-                                                 result.member)) {
-              RewriteMemberAccess(&access, *replacement);
-              return Success();
-            }
-            // Compute a witness that the variable type implements this
-            // interface. This will typically be either a reference to its
-            // `ImplBinding` or, for a constraint, to a witness for an impl
-            // constraint within it.
-            // TODO: We should only need to look at the impl binding for this
-            // variable or witness for this associated constant, not everything
-            // in the impl scope, to find the witness.
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const ConstraintType*> iface_constraint,
-                ConvertToConstraintType(access.source_loc(), "member access",
-                                        result.interface));
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Witness*> witness,
-                impl_scope.Resolve(iface_constraint, &object_type,
-                                   e->source_loc(), *this));
-
-            Bindings bindings = result.interface->bindings();
-            bindings.Add(result.interface->declaration().self(), &object_type,
-                         witness);
-
-            const Value& member_type = result.member->static_type();
-            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_member_type,
-                                    Substitute(bindings, &member_type))
-            access.set_member(arena_->New<NamedElement>(result.member));
-            access.set_found_in_interface(result.interface);
-            access.set_is_type_access(!IsInstanceMember(&access.member()));
-            access.set_static_type(inst_member_type);
-
-            if (const auto* func_decl =
-                    dyn_cast<FunctionDeclaration>(result.member)) {
-              CARBON_RETURN_IF_ERROR(
-                  CheckAddrMeAccess(&access, func_decl, bindings, impl_scope));
-            }
-
-            // TODO: This is just a ConstraintImplWitness into the
-            // iface_constraint. If we can compute the right index, we can avoid
-            // re-resolving it.
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Witness*> impl,
-                impl_scope.Resolve(result.interface, &object_type,
-                                   e->source_loc(), *this));
-            access.set_impl(impl);
-            return Success();
-          }
-          case Value::Kind::InterfaceType:
-          case Value::Kind::NamedConstraintType:
-          case Value::Kind::ConstraintType: {
-            // This case handles access to a class function from a constrained
-            // type variable. If `T` is a type variable and `foo` is a class
-            // function in an interface implemented by `T`, then `T.foo`
-            // accesses the `foo` class function of `T`.
-            //
-            // TODO: Per the language rules, we are supposed to also perform
-            // lookup into `type` and report an ambiguity if the name is found
-            // in both places.
-            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
-                                    InterpExp(&access.object()));
-            CARBON_ASSIGN_OR_RETURN(
-                ConstraintLookupResult result,
-                LookupInConstraint(e->source_loc(), "member access",
-                                   &object_type, access.member_name()));
-            if (auto replacement = LookupRewrite(&object_type, result.interface,
-                                                 result.member)) {
-              RewriteMemberAccess(&access, *replacement);
-              return Success();
-            }
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const ConstraintType*> iface_constraint,
-                ConvertToConstraintType(access.source_loc(), "member access",
-                                        result.interface));
-            CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
-                                    impl_scope.Resolve(iface_constraint, type,
-                                                       e->source_loc(), *this));
-            CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> impl,
-                                    impl_scope.Resolve(result.interface, type,
-                                                       e->source_loc(), *this));
-            access.set_member(arena_->New<NamedElement>(result.member));
-            access.set_impl(impl);
-            access.set_found_in_interface(result.interface);
-
-            if (IsInstanceMember(&access.member())) {
-              // This is a member name denoting an instance member.
-              // TODO: Consider setting the static type of all instance member
-              // declarations to be member name types, rather than
-              // special-casing member accesses that name them.
-              access.set_static_type(
-                  arena_->New<TypeOfMemberName>(NamedElement(result.member)));
-              access.set_expression_category(ExpressionCategory::Value);
-            } else {
-              // This is a non-instance member whose value is found directly via
-              // the witness table, such as a non-method function or an
-              // associated constant.
-              const Value& member_type = result.member->static_type();
-              Bindings bindings = result.interface->bindings();
-              bindings.Add(result.interface->declaration().self(), type,
-                           witness);
-              CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_member_type,
-                                      Substitute(bindings, &member_type));
-              access.set_static_type(inst_member_type);
-              access.set_expression_category(ExpressionCategory::Value);
-            }
-            return Success();
-          }
-          case Value::Kind::TypeType: {
-            // This is member access into an unconstrained type. Evaluate it and
-            // perform lookup in the result.
-            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
-                                    InterpExp(&access.object()));
-            CARBON_RETURN_IF_ERROR(
-                ExpectCompleteType(access.source_loc(), "member access", type));
-            switch (type->kind()) {
-              case Value::Kind::StructType: {
-                for (const auto& field : cast<StructType>(type)->fields()) {
-                  if (access.member_name() == field.name) {
-                    access.set_member(arena_->New<NamedElement>(&field));
-                    access.set_static_type(
-                        arena_->New<TypeOfMemberName>(NamedElement(&field)));
-                    access.set_expression_category(ExpressionCategory::Value);
-                    return Success();
-                  }
-                }
-                return ProgramError(access.source_loc())
-                       << "struct " << *type << " does not have a field named "
-                       << " does not have a field named "
-                       << access.member_name();
-              }
-              case Value::Kind::ChoiceType: {
-                const auto& choice = cast<ChoiceType>(*type);
-                std::optional<Nonnull<const AlternativeSignature*>> signature =
-                    choice.declaration().FindAlternative(access.member_name());
-                if (!signature.has_value()) {
-                  return ProgramError(e->source_loc())
-                         << choice << " does not have an alternative named "
-                         << access.member_name();
-                }
-
-                // If we find an alternative with no declared signature, we are
-                // constructing an unparameterized alternative value.
-                if (!(*signature)->parameters_static_type()) {
-                  access.set_member(
-                      arena_->New<NamedElement>(arena_->New<NamedValue>(
-                          NamedValue{access.member_name(), &choice})));
-                  access.set_static_type(&choice);
-                  access.set_expression_category(ExpressionCategory::Value);
-                  return Success();
-                }
-
-                CARBON_ASSIGN_OR_RETURN(
-                    Nonnull<const Value*> parameter_type,
-                    Substitute(choice.bindings(),
-                               *(*signature)->parameters_static_type()));
-                Nonnull<const Value*> type =
-                    arena_->New<FunctionType>(parameter_type, &choice);
-                // TODO: Should there be a Declaration corresponding to each
-                // choice type alternative?
-                access.set_member(
-                    arena_->New<NamedElement>(arena_->New<NamedValue>(
-                        NamedValue{access.member_name(), type})));
-                access.set_static_type(type);
-                access.set_expression_category(ExpressionCategory::Value);
-                return Success();
-              }
-              case Value::Kind::NominalClassType: {
-                const auto& class_type = cast<NominalClassType>(*type);
-                CARBON_ASSIGN_OR_RETURN(
-                    auto type_member,
-                    FindMixedMemberAndType(access.member_name(),
-                                           class_type.declaration().members(),
-                                           &class_type));
-                if (type_member.has_value()) {
-                  auto [member_type, member] = type_member.value();
-                  access.set_member(arena_->New<NamedElement>(member));
-                  switch (member->kind()) {
-                    case DeclarationKind::FunctionDeclaration: {
-                      const auto& func = cast<FunctionDeclaration>(*member);
-                      if (func.is_method()) {
-                        break;
-                      }
-                      CARBON_ASSIGN_OR_RETURN(
-                          Nonnull<const Value*> field_type,
-                          Substitute(class_type.bindings(),
-                                     &member->static_type()));
-                      access.set_static_type(field_type);
-                      access.set_expression_category(ExpressionCategory::Value);
-                      return Success();
-                    }
-                    default:
-                      break;
-                  }
-                  access.set_static_type(
-                      arena_->New<TypeOfMemberName>(NamedElement(member)));
-                  access.set_expression_category(ExpressionCategory::Value);
-                  return Success();
-                } else {
-                  return ProgramError(access.source_loc())
-                         << class_type << " does not have a member named "
-                         << access.member_name();
-                }
-              }
-              case Value::Kind::InterfaceType:
-              case Value::Kind::NamedConstraintType:
-              case Value::Kind::ConstraintType: {
-                CARBON_ASSIGN_OR_RETURN(
-                    ConstraintLookupResult result,
-                    LookupInConstraint(e->source_loc(), "member access", type,
-                                       access.member_name()));
-                access.set_member(arena_->New<NamedElement>(result.member));
-                access.set_found_in_interface(result.interface);
-                access.set_static_type(
-                    arena_->New<TypeOfMemberName>(NamedElement(result.member)));
-                access.set_expression_category(ExpressionCategory::Value);
-                return Success();
-              }
-              default:
-                // TODO: We should handle VariableType and AssociatedConstant
-                // here.
-                return ProgramError(access.source_loc())
-                       << "unsupported member access into type " << *type;
-            }
-          }
-          default:
-            return ProgramError(e->source_loc()) << "member access, unexpected "
-                                                 << object_type << " in " << *e;
-        }
-      }
-      case ExpressionKind::CompoundMemberAccessExpression: {
-        auto& access = cast<CompoundMemberAccessExpression>(*e);
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.path(), impl_scope));
-        if (!isa<TypeOfMemberName>(access.path().static_type())) {
-          return ProgramError(e->source_loc())
-                 << "expected name of instance member or interface member in "
-                    "compound member access, found "
-                 << access.path().static_type();
-        }
-
-        // Evaluate the member name expression to determine which member we're
-        // accessing.
-        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member_name_value,
-                                InterpExp(&access.path()));
-        const auto& member_name = cast<MemberName>(*member_name_value);
-        access.set_member(&member_name);
-        bool is_instance_member = IsInstanceMember(&member_name.member());
-
-        bool has_instance = true;
-        std::optional<Nonnull<const Value*>> base_type =
-            member_name.base_type();
-        if (!base_type.has_value()) {
-          if (IsTypeOfType(&access.object().static_type())) {
-            // This is `Type.(member_name)`, where `member_name` doesn't specify
-            // a type. This access doesn't perform instance binding.
-            CARBON_ASSIGN_OR_RETURN(base_type, InterpExp(&access.object()));
-            has_instance = false;
-          } else {
-            // This is `value.(member_name)`, where `member_name` doesn't
-            // specify a type. The member will be found in the type of `value`,
-            // or in a corresponding `impl` if `member_name` is an interface
-            // member.
-            base_type = &access.object().static_type();
-          }
-        } else {
-          // This is `value.(member_name)`, where `member_name` specifies a
-          // type. `value` is implicitly converted to that type.
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<Expression*> converted_object,
-              ImplicitlyConvert("compound member access", impl_scope,
-                                &access.object(), *base_type));
-          access.set_object(converted_object);
-        }
-        access.set_is_type_access(has_instance && !is_instance_member);
-
-        // Perform associated constant rewriting and impl selection if
-        // necessary.
-        std::optional<Nonnull<const Witness*>> witness;
-        if (std::optional<Nonnull<const InterfaceType*>> iface =
-                member_name.interface()) {
-          // If we're naming an associated constant, we might have a rewrite for
-          // it that we can apply immediately.
-          CARBON_ASSIGN_OR_RETURN(
-              auto replacement,
-              LookupRewriteInTypeOf(*base_type, *iface,
-                                    *member_name.member().declaration()));
-          if (replacement) {
-            RewriteMemberAccess(&access, *replacement);
-            return Success();
-          }
-
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const ConstraintType*> iface_constraint,
-              ConvertToConstraintType(access.source_loc(),
-                                      "compound member access", *iface));
-          // TODO: We should check that the base type implements the specified
-          // interface, not only the interface containing the member.
-          // `x.(ImplicitAs(T).Convert)()` should require that the type of `x`
-          // implements `ImplicitAs(T)`, not only `As(T)`.
-          CARBON_ASSIGN_OR_RETURN(
-              witness, impl_scope.Resolve(iface_constraint, *base_type,
-                                          e->source_loc(), *this));
-          CARBON_ASSIGN_OR_RETURN(
-              Nonnull<const Witness*> impl,
-              impl_scope.Resolve(*iface, *base_type, e->source_loc(), *this));
-          CARBON_ASSIGN_OR_RETURN(
-              replacement,
-              LookupRewriteInWitness(impl, *iface,
-                                     *member_name.member().declaration()));
-          if (replacement) {
-            RewriteMemberAccess(&access, *replacement);
-            return Success();
-          }
-          access.set_impl(impl);
-        }
-
-        auto bindings_for_member = [&]() -> Bindings {
-          if (member_name.interface()) {
-            Nonnull<const InterfaceType*> iface_type = *member_name.interface();
-            Bindings bindings = iface_type->bindings();
-            bindings.Add(iface_type->declaration().self(), *base_type, witness);
-            return bindings;
-          }
-          if (const auto* class_type =
-                  dyn_cast<NominalClassType>(base_type.value())) {
-            return class_type->bindings();
-          }
-          return Bindings();
-        };
-
-        auto set_static_type_as_member_type = [&]() -> ErrorOr<Success> {
-          Nonnull<const Value*> member_type = &member_name.member().type();
-          CARBON_ASSIGN_OR_RETURN(
-              member_type, Substitute(bindings_for_member(), member_type));
-          access.set_static_type(member_type);
-          return Success();
-        };
-
-        switch (std::optional<Nonnull<const Declaration*>> decl =
-                    member_name.member().declaration();
-                decl ? decl.value()->kind()
-                     : DeclarationKind::VariableDeclaration) {
-          case DeclarationKind::VariableDeclaration:
-            if (has_instance) {
-              CARBON_RETURN_IF_ERROR(set_static_type_as_member_type());
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
+      const Value& object_type = access.object().static_type();
+      CARBON_RETURN_IF_ERROR(ExpectCompleteType(access.source_loc(),
+                                                "member access", &object_type));
+      switch (object_type.kind()) {
+        case Value::Kind::StructType: {
+          const auto& struct_type = cast<StructType>(object_type);
+          for (const auto& field : struct_type.fields()) {
+            if (access.member_name() == field.name) {
+              access.set_member(arena_->New<NamedElement>(&field));
+              access.set_static_type(field.value);
               access.set_expression_category(
                   access.object().expression_category());
               return Success();
             }
-            break;
-          case DeclarationKind::FunctionDeclaration: {
-            if (has_instance || !is_instance_member) {
-              // This should not be possible: the name of a static member
-              // function should have function type not member name type.
-              CARBON_CHECK(!has_instance || is_instance_member ||
-                           !member_name.base_type().has_value())
-                  << "vacuous compound member access";
-              CARBON_RETURN_IF_ERROR(set_static_type_as_member_type());
+          }
+          return ProgramError(access.source_loc())
+                 << "struct " << struct_type << " does not have a field named "
+                 << access.member_name();
+        }
+        case Value::Kind::NominalClassType: {
+          const auto& t_class = cast<NominalClassType>(object_type);
+          CARBON_ASSIGN_OR_RETURN(
+              const auto res,
+              FindMemberWithParents(access.member_name(), &t_class));
+          if (res.has_value()) {
+            auto [member_type, member, member_t_class] = res.value();
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> field_type,
+                Substitute(member_t_class->bindings(), member_type));
+            access.set_member(arena_->New<NamedElement>(member));
+            access.set_static_type(field_type);
+            access.set_is_type_access(!IsInstanceMember(&access.member()));
+            switch (member->kind()) {
+              case DeclarationKind::VariableDeclaration:
+                access.set_expression_category(
+                    access.object().expression_category());
+                break;
+              case DeclarationKind::FunctionDeclaration: {
+                const auto* func_decl = cast<FunctionDeclaration>(member);
+                CARBON_RETURN_IF_ERROR(CheckAddrMeAccess(
+                    &access, func_decl, t_class.bindings(), impl_scope));
+                access.set_expression_category(ExpressionCategory::Value);
+                break;
+              }
+              case DeclarationKind::AliasDeclaration:
+                return ProgramError(access.source_loc())
+                       << "Member access to aliases is not yet supported.";
+              default:
+                CARBON_FATAL() << "member " << access.member_name()
+                               << " is not a field or method";
+                break;
+            }
+            return Success();
+          } else {
+            return ProgramError(e->source_loc())
+                   << "class " << t_class.declaration().name()
+                   << " does not have a field named " << access.member_name();
+          }
+        }
+        case Value::Kind::VariableType:
+        case Value::Kind::AssociatedConstant: {
+          // This case handles access to a method on a receiver whose type is a
+          // type variable or associated constant. For example, `x.foo` where
+          // the type of `x` is `T` and `T` implements an interface that
+          // includes `foo`, or `x.y().foo` where the type of `x` is `T` and
+          // the return type of `y()` is an associated constant from `T`'s
+          // constraint.
+          Nonnull<const Value*> constraint;
+          if (const auto* var_type = dyn_cast<VariableType>(&object_type)) {
+            constraint = &var_type->binding().static_type();
+          } else {
+            CARBON_ASSIGN_OR_RETURN(
+                constraint, GetTypeForAssociatedConstant(
+                                cast<AssociatedConstant>(&object_type)));
+          }
+          CARBON_ASSIGN_OR_RETURN(
+              ConstraintLookupResult result,
+              LookupInConstraint(e->source_loc(), "member access", constraint,
+                                 access.member_name()));
+          if (auto replacement =
+                  LookupRewrite(constraint, result.interface, result.member)) {
+            RewriteMemberAccess(&access, *replacement);
+            return Success();
+          }
+          // Compute a witness that the variable type implements this
+          // interface. This will typically be either a reference to its
+          // `ImplBinding` or, for a constraint, to a witness for an impl
+          // constraint within it.
+          // TODO: We should only need to look at the impl binding for this
+          // variable or witness for this associated constant, not everything in
+          // the impl scope, to find the witness.
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const ConstraintType*> iface_constraint,
+              ConvertToConstraintType(access.source_loc(), "member access",
+                                      result.interface));
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Witness*> witness,
+              impl_scope.Resolve(iface_constraint, &object_type,
+                                 e->source_loc(), *this));
+
+          Bindings bindings = result.interface->bindings();
+          bindings.Add(result.interface->declaration().self(), &object_type,
+                       witness);
+
+          const Value& member_type = result.member->static_type();
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_member_type,
+                                  Substitute(bindings, &member_type))
+          access.set_member(arena_->New<NamedElement>(result.member));
+          access.set_found_in_interface(result.interface);
+          access.set_is_type_access(!IsInstanceMember(&access.member()));
+          access.set_static_type(inst_member_type);
+
+          if (const auto* func_decl =
+                  dyn_cast<FunctionDeclaration>(result.member)) {
+            CARBON_RETURN_IF_ERROR(
+                CheckAddrMeAccess(&access, func_decl, bindings, impl_scope));
+          }
+
+          // TODO: This is just a ConstraintImplWitness into the
+          // iface_constraint. If we can compute the right index, we can avoid
+          // re-resolving it.
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Witness*> impl,
+              impl_scope.Resolve(result.interface, &object_type,
+                                 e->source_loc(), *this));
+          access.set_impl(impl);
+          return Success();
+        }
+        case Value::Kind::InterfaceType:
+        case Value::Kind::NamedConstraintType:
+        case Value::Kind::ConstraintType: {
+          // This case handles access to a class function from a constrained
+          // type variable. If `T` is a type variable and `foo` is a class
+          // function in an interface implemented by `T`, then `T.foo` accesses
+          // the `foo` class function of `T`.
+          //
+          // TODO: Per the language rules, we are supposed to also perform
+          // lookup into `type` and report an ambiguity if the name is found in
+          // both places.
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                                  InterpExp(&access.object()));
+          CARBON_ASSIGN_OR_RETURN(
+              ConstraintLookupResult result,
+              LookupInConstraint(e->source_loc(), "member access", &object_type,
+                                 access.member_name()));
+          if (auto replacement = LookupRewrite(&object_type, result.interface,
+                                               result.member)) {
+            RewriteMemberAccess(&access, *replacement);
+            return Success();
+          }
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const ConstraintType*> iface_constraint,
+              ConvertToConstraintType(access.source_loc(), "member access",
+                                      result.interface));
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
+                                  impl_scope.Resolve(iface_constraint, type,
+                                                     e->source_loc(), *this));
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> impl,
+                                  impl_scope.Resolve(result.interface, type,
+                                                     e->source_loc(), *this));
+          access.set_member(arena_->New<NamedElement>(result.member));
+          access.set_impl(impl);
+          access.set_found_in_interface(result.interface);
+
+          if (IsInstanceMember(&access.member())) {
+            // This is a member name denoting an instance member.
+            // TODO: Consider setting the static type of all instance member
+            // declarations to be member name types, rather than special-casing
+            // member accesses that name them.
+            access.set_static_type(
+                arena_->New<TypeOfMemberName>(NamedElement(result.member)));
+            access.set_expression_category(ExpressionCategory::Value);
+          } else {
+            // This is a non-instance member whose value is found directly via
+            // the witness table, such as a non-method function or an
+            // associated constant.
+            const Value& member_type = result.member->static_type();
+            Bindings bindings = result.interface->bindings();
+            bindings.Add(result.interface->declaration().self(), type, witness);
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> inst_member_type,
+                                    Substitute(bindings, &member_type));
+            access.set_static_type(inst_member_type);
+            access.set_expression_category(ExpressionCategory::Value);
+          }
+          return Success();
+        }
+        case Value::Kind::TypeType: {
+          // This is member access into an unconstrained type. Evaluate it and
+          // perform lookup in the result.
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                                  InterpExp(&access.object()));
+          CARBON_RETURN_IF_ERROR(
+              ExpectCompleteType(access.source_loc(), "member access", type));
+          switch (type->kind()) {
+            case Value::Kind::StructType: {
+              for (const auto& field : cast<StructType>(type)->fields()) {
+                if (access.member_name() == field.name) {
+                  access.set_member(arena_->New<NamedElement>(&field));
+                  access.set_static_type(
+                      arena_->New<TypeOfMemberName>(NamedElement(&field)));
+                  access.set_expression_category(ExpressionCategory::Value);
+                  return Success();
+                }
+              }
+              return ProgramError(access.source_loc())
+                     << "struct " << *type << " does not have a field named "
+                     << " does not have a field named " << access.member_name();
+            }
+            case Value::Kind::ChoiceType: {
+              const auto& choice = cast<ChoiceType>(*type);
+              std::optional<Nonnull<const AlternativeSignature*>> signature =
+                  choice.declaration().FindAlternative(access.member_name());
+              if (!signature.has_value()) {
+                return ProgramError(e->source_loc())
+                       << choice << " does not have an alternative named "
+                       << access.member_name();
+              }
+
+              // If we find an alternative with no declared signature, we are
+              // constructing an unparameterized alternative value.
+              if (!(*signature)->parameters_static_type()) {
+                access.set_member(
+                    arena_->New<NamedElement>(arena_->New<NamedValue>(
+                        NamedValue{access.member_name(), &choice})));
+                access.set_static_type(&choice);
+                access.set_expression_category(ExpressionCategory::Value);
+                return Success();
+              }
+
+              CARBON_ASSIGN_OR_RETURN(
+                  Nonnull<const Value*> parameter_type,
+                  Substitute(choice.bindings(),
+                             *(*signature)->parameters_static_type()));
+              Nonnull<const Value*> type =
+                  arena_->New<FunctionType>(parameter_type, &choice);
+              // TODO: Should there be a Declaration corresponding to each
+              // choice type alternative?
+              access.set_member(
+                  arena_->New<NamedElement>(arena_->New<NamedValue>(
+                      NamedValue{access.member_name(), type})));
+              access.set_static_type(type);
               access.set_expression_category(ExpressionCategory::Value);
-              CARBON_RETURN_IF_ERROR(
-                  CheckAddrMeAccess(&access, cast<FunctionDeclaration>(*decl),
-                                    bindings_for_member(), impl_scope));
               return Success();
             }
-            break;
+            case Value::Kind::NominalClassType: {
+              const auto& class_type = cast<NominalClassType>(*type);
+              CARBON_ASSIGN_OR_RETURN(
+                  auto type_member,
+                  FindMixedMemberAndType(access.member_name(),
+                                         class_type.declaration().members(),
+                                         &class_type));
+              if (type_member.has_value()) {
+                auto [member_type, member] = type_member.value();
+                access.set_member(arena_->New<NamedElement>(member));
+                switch (member->kind()) {
+                  case DeclarationKind::FunctionDeclaration: {
+                    const auto& func = cast<FunctionDeclaration>(*member);
+                    if (func.is_method()) {
+                      break;
+                    }
+                    CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> field_type,
+                                            Substitute(class_type.bindings(),
+                                                       &member->static_type()));
+                    access.set_static_type(field_type);
+                    access.set_expression_category(ExpressionCategory::Value);
+                    return Success();
+                  }
+                  default:
+                    break;
+                }
+                access.set_static_type(
+                    arena_->New<TypeOfMemberName>(NamedElement(member)));
+                access.set_expression_category(ExpressionCategory::Value);
+                return Success();
+              } else {
+                return ProgramError(access.source_loc())
+                       << class_type << " does not have a member named "
+                       << access.member_name();
+              }
+            }
+            case Value::Kind::InterfaceType:
+            case Value::Kind::NamedConstraintType:
+            case Value::Kind::ConstraintType: {
+              CARBON_ASSIGN_OR_RETURN(
+                  ConstraintLookupResult result,
+                  LookupInConstraint(e->source_loc(), "member access", type,
+                                     access.member_name()));
+              access.set_member(arena_->New<NamedElement>(result.member));
+              access.set_found_in_interface(result.interface);
+              access.set_static_type(
+                  arena_->New<TypeOfMemberName>(NamedElement(result.member)));
+              access.set_expression_category(ExpressionCategory::Value);
+              return Success();
+            }
+            default:
+              // TODO: We should handle VariableType and AssociatedConstant
+              // here.
+              return ProgramError(access.source_loc())
+                     << "unsupported member access into type " << *type;
           }
-          case DeclarationKind::AssociatedConstantDeclaration:
+        }
+        default:
+          return ProgramError(e->source_loc())
+                 << "member access, unexpected " << object_type << " in " << *e;
+      }
+    }
+    case ExpressionKind::CompoundMemberAccessExpression: {
+      auto& access = cast<CompoundMemberAccessExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.object(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&access.path(), impl_scope));
+      if (!isa<TypeOfMemberName>(access.path().static_type())) {
+        return ProgramError(e->source_loc())
+               << "expected name of instance member or interface member in "
+                  "compound member access, found "
+               << access.path().static_type();
+      }
+
+      // Evaluate the member name expression to determine which member we're
+      // accessing.
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> member_name_value,
+                              InterpExp(&access.path()));
+      const auto& member_name = cast<MemberName>(*member_name_value);
+      access.set_member(&member_name);
+      bool is_instance_member = IsInstanceMember(&member_name.member());
+
+      bool has_instance = true;
+      std::optional<Nonnull<const Value*>> base_type = member_name.base_type();
+      if (!base_type.has_value()) {
+        if (IsTypeOfType(&access.object().static_type())) {
+          // This is `Type.(member_name)`, where `member_name` doesn't specify
+          // a type. This access doesn't perform instance binding.
+          CARBON_ASSIGN_OR_RETURN(base_type, InterpExp(&access.object()));
+          has_instance = false;
+        } else {
+          // This is `value.(member_name)`, where `member_name` doesn't specify
+          // a type. The member will be found in the type of `value`, or in a
+          // corresponding `impl` if `member_name` is an interface member.
+          base_type = &access.object().static_type();
+        }
+      } else {
+        // This is `value.(member_name)`, where `member_name` specifies a type.
+        // `value` is implicitly converted to that type.
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<Expression*> converted_object,
+            ImplicitlyConvert("compound member access", impl_scope,
+                              &access.object(), *base_type));
+        access.set_object(converted_object);
+      }
+      access.set_is_type_access(has_instance && !is_instance_member);
+
+      // Perform associated constant rewriting and impl selection if necessary.
+      std::optional<Nonnull<const Witness*>> witness;
+      if (std::optional<Nonnull<const InterfaceType*>> iface =
+              member_name.interface()) {
+        // If we're naming an associated constant, we might have a rewrite for
+        // it that we can apply immediately.
+        CARBON_ASSIGN_OR_RETURN(
+            auto replacement,
+            LookupRewriteInTypeOf(*base_type, *iface,
+                                  *member_name.member().declaration()));
+        if (replacement) {
+          RewriteMemberAccess(&access, *replacement);
+          return Success();
+        }
+
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const ConstraintType*> iface_constraint,
+            ConvertToConstraintType(access.source_loc(),
+                                    "compound member access", *iface));
+        // TODO: We should check that the base type implements the specified
+        // interface, not only the interface containing the member.
+        // `x.(ImplicitAs(T).Convert)()` should require that the type of `x`
+        // implements `ImplicitAs(T)`, not only `As(T)`.
+        CARBON_ASSIGN_OR_RETURN(witness,
+                                impl_scope.Resolve(iface_constraint, *base_type,
+                                                   e->source_loc(), *this));
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Witness*> impl,
+            impl_scope.Resolve(*iface, *base_type, e->source_loc(), *this));
+        CARBON_ASSIGN_OR_RETURN(
+            replacement,
+            LookupRewriteInWitness(impl, *iface,
+                                   *member_name.member().declaration()));
+        if (replacement) {
+          RewriteMemberAccess(&access, *replacement);
+          return Success();
+        }
+        access.set_impl(impl);
+      }
+
+      auto bindings_for_member = [&]() -> Bindings {
+        if (member_name.interface()) {
+          Nonnull<const InterfaceType*> iface_type = *member_name.interface();
+          Bindings bindings = iface_type->bindings();
+          bindings.Add(iface_type->declaration().self(), *base_type, witness);
+          return bindings;
+        }
+        if (const auto* class_type =
+                dyn_cast<NominalClassType>(base_type.value())) {
+          return class_type->bindings();
+        }
+        return Bindings();
+      };
+
+      auto set_static_type_as_member_type = [&]() -> ErrorOr<Success> {
+        Nonnull<const Value*> member_type = &member_name.member().type();
+        CARBON_ASSIGN_OR_RETURN(member_type,
+                                Substitute(bindings_for_member(), member_type));
+        access.set_static_type(member_type);
+        return Success();
+      };
+
+      switch (std::optional<Nonnull<const Declaration*>> decl =
+                  member_name.member().declaration();
+              decl ? decl.value()->kind()
+                   : DeclarationKind::VariableDeclaration) {
+        case DeclarationKind::VariableDeclaration:
+          if (has_instance) {
             CARBON_RETURN_IF_ERROR(set_static_type_as_member_type());
             access.set_expression_category(
                 access.object().expression_category());
             return Success();
-          default:
-            CARBON_FATAL() << "member " << member_name
-                           << " is not a field or method";
-            break;
-        }
-
-        access.set_static_type(
-            arena_->New<TypeOfMemberName>(member_name.member()));
-        access.set_expression_category(ExpressionCategory::Value);
-        return Success();
-      }
-      case ExpressionKind::IdentifierExpression: {
-        auto& ident = cast<IdentifierExpression>(*e);
-        if (ident.value_node().base().kind() ==
-            AstNodeKind::FunctionDeclaration) {
-          const auto& function =
-              cast<FunctionDeclaration>(ident.value_node().base());
-          if (!function.has_static_type()) {
-            CARBON_CHECK(function.return_term().is_auto());
-            return ProgramError(ident.source_loc())
-                   << "Function calls itself, but has a deduced return type";
           }
-        }
-        ident.set_static_type(&ident.value_node().static_type());
-        ident.set_expression_category(ident.value_node().expression_category());
-        return Success();
-      }
-      case ExpressionKind::DotSelfExpression: {
-        auto& dot_self = cast<DotSelfExpression>(*e);
-        if (dot_self.self_binding().is_type_checked()) {
-          dot_self.set_static_type(&dot_self.self_binding().static_type());
-        } else {
-          dot_self.set_static_type(arena_->New<TypeType>());
-          dot_self.self_binding().set_named_as_type_via_dot_self();
-        }
-        dot_self.set_expression_category(ExpressionCategory::Value);
-        return Success();
-      }
-      case ExpressionKind::IntLiteral:
-        e->set_expression_category(ExpressionCategory::Value);
-        e->set_static_type(arena_->New<IntType>());
-        return Success();
-      case ExpressionKind::BoolLiteral:
-        e->set_expression_category(ExpressionCategory::Value);
-        e->set_static_type(arena_->New<BoolType>());
-        return Success();
-      case ExpressionKind::OperatorExpression: {
-        auto& op = cast<OperatorExpression>(*e);
-        std::vector<Nonnull<const Value*>> ts;
-        for (Nonnull<Expression*> argument : op.arguments()) {
-          CARBON_RETURN_IF_ERROR(TypeCheckExp(argument, impl_scope));
-          ts.push_back(&argument->static_type());
-        }
-
-        auto handle_unary_operator = [&](Builtin builtin) -> ErrorOr<Success> {
-          ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin},
-              BuiltinMethodCall{"Op"});
-          if (!result.ok()) {
-            // We couldn't find a matching `impl`.
-            return ProgramError(e->source_loc())
-                   << "type error in `" << OperatorToString(op.op()) << "`:\n"
-                   << result.error().message();
+          break;
+        case DeclarationKind::FunctionDeclaration: {
+          if (has_instance || !is_instance_member) {
+            // This should not be possible: the name of a static member
+            // function should have function type not member name type.
+            CARBON_CHECK(!has_instance || is_instance_member ||
+                         !member_name.base_type().has_value())
+                << "vacuous compound member access";
+            CARBON_RETURN_IF_ERROR(set_static_type_as_member_type());
+            access.set_expression_category(ExpressionCategory::Value);
+            CARBON_RETURN_IF_ERROR(
+                CheckAddrMeAccess(&access, cast<FunctionDeclaration>(*decl),
+                                  bindings_for_member(), impl_scope));
+            return Success();
           }
-          op.set_rewritten_form(*result);
+          break;
+        }
+        case DeclarationKind::AssociatedConstantDeclaration:
+          CARBON_RETURN_IF_ERROR(set_static_type_as_member_type());
+          access.set_expression_category(access.object().expression_category());
           return Success();
-        };
+        default:
+          CARBON_FATAL() << "member " << member_name
+                         << " is not a field or method";
+          break;
+      }
 
-        auto handle_binary_operator = [&](Builtin builtin) -> ErrorOr<Success> {
-          ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{builtin, ts[1]},
-              BuiltinMethodCall{"Op", {op.arguments()[1]}});
-          if (!result.ok()) {
-            // We couldn't find a matching `impl`.
-            return ProgramError(e->source_loc())
-                   << "type error in `" << OperatorToString(op.op()) << "`:\n"
-                   << result.error().message();
-          }
-          op.set_rewritten_form(*result);
+      access.set_static_type(
+          arena_->New<TypeOfMemberName>(member_name.member()));
+      access.set_expression_category(ExpressionCategory::Value);
+      return Success();
+    }
+    case ExpressionKind::IdentifierExpression: {
+      auto& ident = cast<IdentifierExpression>(*e);
+      if (ident.value_node().base().kind() ==
+          AstNodeKind::FunctionDeclaration) {
+        const auto& function =
+            cast<FunctionDeclaration>(ident.value_node().base());
+        if (!function.has_static_type()) {
+          CARBON_CHECK(function.return_term().is_auto());
+          return ProgramError(ident.source_loc())
+                 << "Function calls itself, but has a deduced return type";
+        }
+      }
+      ident.set_static_type(&ident.value_node().static_type());
+      ident.set_expression_category(ident.value_node().expression_category());
+      return Success();
+    }
+    case ExpressionKind::DotSelfExpression: {
+      auto& dot_self = cast<DotSelfExpression>(*e);
+      if (dot_self.self_binding().is_type_checked()) {
+        dot_self.set_static_type(&dot_self.self_binding().static_type());
+      } else {
+        dot_self.set_static_type(arena_->New<TypeType>());
+        dot_self.self_binding().set_named_as_type_via_dot_self();
+      }
+      dot_self.set_expression_category(ExpressionCategory::Value);
+      return Success();
+    }
+    case ExpressionKind::IntLiteral:
+      e->set_expression_category(ExpressionCategory::Value);
+      e->set_static_type(arena_->New<IntType>());
+      return Success();
+    case ExpressionKind::BoolLiteral:
+      e->set_expression_category(ExpressionCategory::Value);
+      e->set_static_type(arena_->New<BoolType>());
+      return Success();
+    case ExpressionKind::OperatorExpression: {
+      auto& op = cast<OperatorExpression>(*e);
+      std::vector<Nonnull<const Value*>> ts;
+      for (Nonnull<Expression*> argument : op.arguments()) {
+        CARBON_RETURN_IF_ERROR(TypeCheckExp(argument, impl_scope));
+        ts.push_back(&argument->static_type());
+      }
+
+      auto handle_unary_operator = [&](Builtin builtin) -> ErrorOr<Success> {
+        ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
+            impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin},
+            BuiltinMethodCall{"Op"});
+        if (!result.ok()) {
+          // We couldn't find a matching `impl`.
+          return ProgramError(e->source_loc())
+                 << "type error in `" << OperatorToString(op.op()) << "`:\n"
+                 << result.error().message();
+        }
+        op.set_rewritten_form(*result);
+        return Success();
+      };
+
+      auto handle_binary_operator = [&](Builtin builtin) -> ErrorOr<Success> {
+        ErrorOr<Nonnull<Expression*>> result = BuildBuiltinMethodCall(
+            impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin, ts[1]},
+            BuiltinMethodCall{"Op", {op.arguments()[1]}});
+        if (!result.ok()) {
+          // We couldn't find a matching `impl`.
+          return ProgramError(e->source_loc())
+                 << "type error in `" << OperatorToString(op.op()) << "`:\n"
+                 << result.error().message();
+        }
+        op.set_rewritten_form(*result);
+        return Success();
+      };
+
+      auto handle_binary_arithmetic = [&](Builtin builtin) -> ErrorOr<Success> {
+        // Handle a built-in operator first.
+        // TODO: Replace this with an intrinsic.
+        if (isa<IntType>(ts[0]) && isa<IntType>(ts[1]) &&
+            IsSameType(ts[0], ts[1], impl_scope)) {
+          op.set_static_type(ts[0]);
+          op.set_expression_category(ExpressionCategory::Value);
           return Success();
-        };
+        }
 
-        auto handle_binary_arithmetic =
-            [&](Builtin builtin) -> ErrorOr<Success> {
-          // Handle a built-in operator first.
+        // Now try an overloaded operator.
+        return handle_binary_operator(builtin);
+      };
+
+      auto handle_compare =
+          [&](Builtin builtin, const std::string& method_name,
+              const std::string_view& operator_desc) -> ErrorOr<Success> {
+        ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
+            impl_scope, op.arguments()[0], BuiltinInterfaceName{builtin, ts[1]},
+            BuiltinMethodCall{method_name, op.arguments()[1]});
+        if (!converted.ok()) {
+          // We couldn't find a matching `impl`.
+          return ProgramError(e->source_loc())
+                 << *ts[0] << " is not " << operator_desc << " comparable with "
+                 << *ts[1] << " (" << converted.error().message() << ")";
+        }
+        op.set_rewritten_form(*converted);
+        return Success();
+      };
+
+      switch (op.op()) {
+        case Operator::Neg: {
+          // Handle a built-in negation first.
           // TODO: Replace this with an intrinsic.
-          if (isa<IntType>(ts[0]) && isa<IntType>(ts[1]) &&
-              IsSameType(ts[0], ts[1], impl_scope)) {
-            op.set_static_type(ts[0]);
+          if (isa<IntType>(ts[0])) {
+            op.set_static_type(arena_->New<IntType>());
             op.set_expression_category(ExpressionCategory::Value);
             return Success();
           }
-
-          // Now try an overloaded operator.
-          return handle_binary_operator(builtin);
-        };
-
-        auto handle_compare =
-            [&](Builtin builtin, const std::string& method_name,
-                const std::string_view& operator_desc) -> ErrorOr<Success> {
-          ErrorOr<Nonnull<Expression*>> converted = BuildBuiltinMethodCall(
-              impl_scope, op.arguments()[0],
-              BuiltinInterfaceName{builtin, ts[1]},
-              BuiltinMethodCall{method_name, op.arguments()[1]});
+          // Now try an overloaded negation.
+          return handle_unary_operator(Builtin::Negate);
+        }
+        case Operator::Add:
+          return handle_binary_arithmetic(Builtin::AddWith);
+        case Operator::Sub:
+          return handle_binary_arithmetic(Builtin::SubWith);
+        case Operator::Mul:
+          return handle_binary_arithmetic(Builtin::MulWith);
+        case Operator::Div:
+          return handle_binary_arithmetic(Builtin::DivWith);
+        case Operator::Mod:
+          return handle_binary_arithmetic(Builtin::ModWith);
+        case Operator::BitwiseAnd:
+          // `&` between type-of-types performs constraint combination.
+          // TODO: Should this be done via an intrinsic?
+          if (IsTypeOfType(ts[0]) && IsTypeOfType(ts[1])) {
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> lhs,
+                                    InterpExp(op.arguments()[0]));
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> rhs,
+                                    InterpExp(op.arguments()[1]));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const ConstraintType*> lhs_constraint,
+                ConvertToConstraintType(op.arguments()[0]->source_loc(),
+                                        "first operand of `&`", lhs));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const ConstraintType*> rhs_constraint,
+                ConvertToConstraintType(op.arguments()[1]->source_loc(),
+                                        "second operand of `&`", rhs));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const ConstraintType*> result,
+                CombineConstraints(e->source_loc(),
+                                   {lhs_constraint, rhs_constraint}));
+            op.set_rewritten_form(arena_->New<ValueLiteral>(
+                op.source_loc(), result, arena_->New<TypeType>(),
+                ExpressionCategory::Value));
+            return Success();
+          }
+          return handle_binary_operator(Builtin::BitAndWith);
+        case Operator::BitwiseOr:
+          return handle_binary_operator(Builtin::BitOrWith);
+        case Operator::BitwiseXor:
+          return handle_binary_operator(Builtin::BitXorWith);
+        case Operator::BitShiftLeft:
+          return handle_binary_operator(Builtin::LeftShiftWith);
+        case Operator::BitShiftRight:
+          return handle_binary_operator(Builtin::RightShiftWith);
+        case Operator::Complement:
+          return handle_unary_operator(Builtin::BitComplement);
+        case Operator::And:
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(1)",
+                                                 arena_->New<BoolType>(), ts[0],
+                                                 impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(2)",
+                                                 arena_->New<BoolType>(), ts[1],
+                                                 impl_scope));
+          op.set_static_type(arena_->New<BoolType>());
+          op.set_expression_category(ExpressionCategory::Value);
+          return Success();
+        case Operator::Or:
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "||(1)",
+                                                 arena_->New<BoolType>(), ts[0],
+                                                 impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "||(2)",
+                                                 arena_->New<BoolType>(), ts[1],
+                                                 impl_scope));
+          op.set_static_type(arena_->New<BoolType>());
+          op.set_expression_category(ExpressionCategory::Value);
+          return Success();
+        case Operator::Not:
+          CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "!",
+                                                 arena_->New<BoolType>(), ts[0],
+                                                 impl_scope));
+          op.set_static_type(arena_->New<BoolType>());
+          op.set_expression_category(ExpressionCategory::Value);
+          return Success();
+        case Operator::Eq:
+          return handle_compare(Builtin::EqWith, "Equal", "equality");
+        case Operator::NotEq:
+          return handle_compare(Builtin::EqWith, "NotEqual", "equality");
+        case Operator::Less:
+          return handle_compare(Builtin::LessWith, "Less", "less");
+        case Operator::LessEq:
+          return handle_compare(Builtin::LessEqWith, "LessEq", "less equal");
+        case Operator::GreaterEq:
+          return handle_compare(Builtin::GreaterEqWith, "GreaterEq",
+                                "greater equal");
+        case Operator::Greater:
+          return handle_compare(Builtin::GreaterWith, "Greater", "greater");
+        case Operator::Deref:
+          CARBON_RETURN_IF_ERROR(
+              ExpectPointerType(e->source_loc(), "*", ts[0]));
+          op.set_static_type(&cast<PointerType>(*ts[0]).pointee_type());
+          op.set_expression_category(ExpressionCategory::Reference);
+          return Success();
+        case Operator::Ptr: {
+          auto* type_type = arena_->New<TypeType>();
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<Expression*> converted,
+              ImplicitlyConvert("pointee type", impl_scope, op.arguments()[0],
+                                type_type));
+          op.arguments()[0] = converted;
+          op.set_static_type(arena_->New<TypeType>());
+          op.set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case Operator::AddressOf:
+          if (op.arguments()[0]->expression_category() !=
+              ExpressionCategory::Reference) {
+            return ProgramError(op.arguments()[0]->source_loc())
+                   << "Argument to " << OperatorToString(op.op())
+                   << " should be a reference expression.";
+          }
+          op.set_static_type(arena_->New<PointerType>(ts[0]));
+          op.set_expression_category(ExpressionCategory::Value);
+          return Success();
+        case Operator::As: {
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> type,
+              TypeCheckTypeExp(op.arguments()[1], impl_scope));
+          ErrorOr<Nonnull<Expression*>> converted =
+              BuildBuiltinMethodCall(impl_scope, op.arguments()[0],
+                                     BuiltinInterfaceName{Builtin::As, type},
+                                     BuiltinMethodCall{"Convert"});
           if (!converted.ok()) {
             // We couldn't find a matching `impl`.
             return ProgramError(e->source_loc())
-                   << *ts[0] << " is not " << operator_desc
-                   << " comparable with " << *ts[1] << " ("
-                   << converted.error().message() << ")";
+                   << "type error in `as`: `" << *ts[0]
+                   << "` is not explicitly convertible to `" << *type << "`:\n"
+                   << converted.error().message();
           }
           op.set_rewritten_form(*converted);
           return Success();
-        };
-
-        switch (op.op()) {
-          case Operator::Neg: {
-            // Handle a built-in negation first.
-            // TODO: Replace this with an intrinsic.
-            if (isa<IntType>(ts[0])) {
-              op.set_static_type(arena_->New<IntType>());
-              op.set_expression_category(ExpressionCategory::Value);
-              return Success();
-            }
-            // Now try an overloaded negation.
-            return handle_unary_operator(Builtin::Negate);
-          }
-          case Operator::Add:
-            return handle_binary_arithmetic(Builtin::AddWith);
-          case Operator::Sub:
-            return handle_binary_arithmetic(Builtin::SubWith);
-          case Operator::Mul:
-            return handle_binary_arithmetic(Builtin::MulWith);
-          case Operator::Div:
-            return handle_binary_arithmetic(Builtin::DivWith);
-          case Operator::Mod:
-            return handle_binary_arithmetic(Builtin::ModWith);
-          case Operator::BitwiseAnd:
-            // `&` between type-of-types performs constraint combination.
-            // TODO: Should this be done via an intrinsic?
-            if (IsTypeOfType(ts[0]) && IsTypeOfType(ts[1])) {
-              CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> lhs,
-                                      InterpExp(op.arguments()[0]));
-              CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> rhs,
-                                      InterpExp(op.arguments()[1]));
-              CARBON_ASSIGN_OR_RETURN(
-                  Nonnull<const ConstraintType*> lhs_constraint,
-                  ConvertToConstraintType(op.arguments()[0]->source_loc(),
-                                          "first operand of `&`", lhs));
-              CARBON_ASSIGN_OR_RETURN(
-                  Nonnull<const ConstraintType*> rhs_constraint,
-                  ConvertToConstraintType(op.arguments()[1]->source_loc(),
-                                          "second operand of `&`", rhs));
-              CARBON_ASSIGN_OR_RETURN(
-                  Nonnull<const ConstraintType*> result,
-                  CombineConstraints(e->source_loc(),
-                                     {lhs_constraint, rhs_constraint}));
-              op.set_rewritten_form(arena_->New<ValueLiteral>(
-                  op.source_loc(), result, arena_->New<TypeType>(),
-                  ExpressionCategory::Value));
-              return Success();
-            }
-            return handle_binary_operator(Builtin::BitAndWith);
-          case Operator::BitwiseOr:
-            return handle_binary_operator(Builtin::BitOrWith);
-          case Operator::BitwiseXor:
-            return handle_binary_operator(Builtin::BitXorWith);
-          case Operator::BitShiftLeft:
-            return handle_binary_operator(Builtin::LeftShiftWith);
-          case Operator::BitShiftRight:
-            return handle_binary_operator(Builtin::RightShiftWith);
-          case Operator::Complement:
-            return handle_unary_operator(Builtin::BitComplement);
-          case Operator::And:
-            CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(1)",
-                                                   arena_->New<BoolType>(),
-                                                   ts[0], impl_scope));
-            CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "&&(2)",
-                                                   arena_->New<BoolType>(),
-                                                   ts[1], impl_scope));
-            op.set_static_type(arena_->New<BoolType>());
-            op.set_expression_category(ExpressionCategory::Value);
-            return Success();
-          case Operator::Or:
-            CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "||(1)",
-                                                   arena_->New<BoolType>(),
-                                                   ts[0], impl_scope));
-            CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "||(2)",
-                                                   arena_->New<BoolType>(),
-                                                   ts[1], impl_scope));
-            op.set_static_type(arena_->New<BoolType>());
-            op.set_expression_category(ExpressionCategory::Value);
-            return Success();
-          case Operator::Not:
-            CARBON_RETURN_IF_ERROR(ExpectExactType(e->source_loc(), "!",
-                                                   arena_->New<BoolType>(),
-                                                   ts[0], impl_scope));
-            op.set_static_type(arena_->New<BoolType>());
-            op.set_expression_category(ExpressionCategory::Value);
-            return Success();
-          case Operator::Eq:
-            return handle_compare(Builtin::EqWith, "Equal", "equality");
-          case Operator::NotEq:
-            return handle_compare(Builtin::EqWith, "NotEqual", "equality");
-          case Operator::Less:
-            return handle_compare(Builtin::LessWith, "Less", "less");
-          case Operator::LessEq:
-            return handle_compare(Builtin::LessEqWith, "LessEq", "less equal");
-          case Operator::GreaterEq:
-            return handle_compare(Builtin::GreaterEqWith, "GreaterEq",
-                                  "greater equal");
-          case Operator::Greater:
-            return handle_compare(Builtin::GreaterWith, "Greater", "greater");
-          case Operator::Deref:
-            CARBON_RETURN_IF_ERROR(
-                ExpectPointerType(e->source_loc(), "*", ts[0]));
-            op.set_static_type(&cast<PointerType>(*ts[0]).pointee_type());
-            op.set_expression_category(ExpressionCategory::Reference);
-            return Success();
-          case Operator::Ptr: {
-            auto* type_type = arena_->New<TypeType>();
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<Expression*> converted,
-                ImplicitlyConvert("pointee type", impl_scope, op.arguments()[0],
-                                  type_type));
-            op.arguments()[0] = converted;
-            op.set_static_type(arena_->New<TypeType>());
-            op.set_expression_category(ExpressionCategory::Value);
-            return Success();
-          }
-          case Operator::AddressOf:
-            if (op.arguments()[0]->expression_category() !=
-                ExpressionCategory::Reference) {
-              return ProgramError(op.arguments()[0]->source_loc())
-                     << "Argument to " << OperatorToString(op.op())
-                     << " should be a reference expression.";
-            }
-            op.set_static_type(arena_->New<PointerType>(ts[0]));
-            op.set_expression_category(ExpressionCategory::Value);
-            return Success();
-          case Operator::As: {
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Value*> type,
-                TypeCheckTypeExp(op.arguments()[1], impl_scope));
-            ErrorOr<Nonnull<Expression*>> converted =
-                BuildBuiltinMethodCall(impl_scope, op.arguments()[0],
-                                       BuiltinInterfaceName{Builtin::As, type},
-                                       BuiltinMethodCall{"Convert"});
-            if (!converted.ok()) {
-              // We couldn't find a matching `impl`.
-              return ProgramError(e->source_loc())
-                     << "type error in `as`: `" << *ts[0]
-                     << "` is not explicitly convertible to `" << *type
-                     << "`:\n"
-                     << converted.error().message();
-            }
-            op.set_rewritten_form(*converted);
-            return Success();
-          }
         }
-        break;
       }
-      case ExpressionKind::CallExpression: {
-        auto& call = cast<CallExpression>(*e);
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.function(), impl_scope));
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.argument(), impl_scope));
-        switch (call.function().static_type().kind()) {
-          case Value::Kind::FunctionType: {
-            const auto& fun_t =
-                cast<FunctionType>(call.function().static_type());
-            if (trace_stream_->is_enabled()) {
-              *trace_stream_ << "checking call to function of type " << fun_t
-                             << "\nwith arguments of type: "
-                             << call.argument().static_type() << "\n";
-            }
-            CARBON_RETURN_IF_ERROR(DeduceCallBindings(
-                call, &fun_t.parameters(), fun_t.generic_parameters(),
-                fun_t.deduced_bindings(), impl_scope));
-
-            // Substitute into the return type to determine the type of the call
-            // expression.
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Value*> return_type,
-                Substitute(call.bindings(), &fun_t.return_type()));
-            call.set_static_type(return_type);
-            call.set_expression_category(ExpressionCategory::Value);
-            return Success();
+      break;
+    }
+    case ExpressionKind::CallExpression: {
+      auto& call = cast<CallExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.function(), impl_scope));
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&call.argument(), impl_scope));
+      switch (call.function().static_type().kind()) {
+        case Value::Kind::FunctionType: {
+          const auto& fun_t = cast<FunctionType>(call.function().static_type());
+          if (trace_stream_->is_enabled()) {
+            *trace_stream_ << "checking call to function of type " << fun_t
+                           << "\nwith arguments of type: "
+                           << call.argument().static_type() << "\n";
           }
-          case Value::Kind::TypeOfParameterizedEntityName: {
-            // This case handles the application of a parameterized class or
-            // interface to a set of arguments, such as Point(i32) or
-            // AddWith(i32).
-            const ParameterizedEntityName& param_name =
-                cast<TypeOfParameterizedEntityName>(
-                    call.function().static_type())
-                    .name();
+          CARBON_RETURN_IF_ERROR(DeduceCallBindings(
+              call, &fun_t.parameters(), fun_t.generic_parameters(),
+              fun_t.deduced_bindings(), impl_scope));
 
-            // Collect the top-level generic parameters and their constraints.
-            std::vector<FunctionType::GenericParameter> generic_parameters;
-            llvm::ArrayRef<Nonnull<const Pattern*>> params =
-                param_name.params().fields();
-            for (size_t i = 0; i != params.size(); ++i) {
-              // TODO: Should we disallow all other kinds of top-level params?
-              if (const auto* binding = dyn_cast<GenericBinding>(params[i])) {
-                generic_parameters.push_back({i, binding});
-              }
+          // Substitute into the return type to determine the type of the call
+          // expression.
+          CARBON_ASSIGN_OR_RETURN(
+              Nonnull<const Value*> return_type,
+              Substitute(call.bindings(), &fun_t.return_type()));
+          call.set_static_type(return_type);
+          call.set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case Value::Kind::TypeOfParameterizedEntityName: {
+          // This case handles the application of a parameterized class or
+          // interface to a set of arguments, such as Point(i32) or
+          // AddWith(i32).
+          const ParameterizedEntityName& param_name =
+              cast<TypeOfParameterizedEntityName>(call.function().static_type())
+                  .name();
+
+          // Collect the top-level generic parameters and their constraints.
+          std::vector<FunctionType::GenericParameter> generic_parameters;
+          llvm::ArrayRef<Nonnull<const Pattern*>> params =
+              param_name.params().fields();
+          for (size_t i = 0; i != params.size(); ++i) {
+            // TODO: Should we disallow all other kinds of top-level params?
+            if (const auto* binding = dyn_cast<GenericBinding>(params[i])) {
+              generic_parameters.push_back({i, binding});
             }
-
-            CARBON_RETURN_IF_ERROR(DeduceCallBindings(
-                call, &param_name.params().static_type(), generic_parameters,
-                /*deduced_bindings=*/std::nullopt, impl_scope));
-
-            // Currently the only kinds of parameterized entities we support are
-            // types.
-            CARBON_CHECK(isa<ClassDeclaration, InterfaceDeclaration,
-                             ConstraintDeclaration, ChoiceDeclaration>(
-                param_name.declaration()))
-                << "unknown type of ParameterizedEntityName for " << param_name;
-            call.set_static_type(arena_->New<TypeType>());
-            call.set_expression_category(ExpressionCategory::Value);
-            return Success();
           }
-          case Value::Kind::ChoiceType: {
-            // Give a better diagnostic for an attempt to call a choice
-            // constant.
-            auto* member_access =
-                dyn_cast<SimpleMemberAccessExpression>(&call.function());
-            if (member_access &&
-                isa<TypeType>(member_access->object().static_type())) {
-              CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
-                                      InterpExp(&member_access->object()));
-              if (isa<ChoiceType>(type)) {
-                return ProgramError(e->source_loc())
-                       << "alternative `" << *type << "."
-                       << member_access->member_name()
-                       << "` does not expect an argument list";
-              }
+
+          CARBON_RETURN_IF_ERROR(DeduceCallBindings(
+              call, &param_name.params().static_type(), generic_parameters,
+              /*deduced_bindings=*/std::nullopt, impl_scope));
+
+          // Currently the only kinds of parameterized entities we support are
+          // types.
+          CARBON_CHECK(
+              isa<ClassDeclaration, InterfaceDeclaration, ConstraintDeclaration,
+                  ChoiceDeclaration>(param_name.declaration()))
+              << "unknown type of ParameterizedEntityName for " << param_name;
+          call.set_static_type(arena_->New<TypeType>());
+          call.set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case Value::Kind::ChoiceType: {
+          // Give a better diagnostic for an attempt to call a choice constant.
+          auto* member_access =
+              dyn_cast<SimpleMemberAccessExpression>(&call.function());
+          if (member_access &&
+              isa<TypeType>(member_access->object().static_type())) {
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> type,
+                                    InterpExp(&member_access->object()));
+            if (isa<ChoiceType>(type)) {
+              return ProgramError(e->source_loc())
+                     << "alternative `" << *type << "."
+                     << member_access->member_name()
+                     << "` does not expect an argument list";
             }
-            [[fallthrough]];
           }
-          default: {
+          [[fallthrough]];
+        }
+        default: {
+          return ProgramError(e->source_loc())
+                 << "in call `" << *e
+                 << "`, expected callee to be a function, found `"
+                 << call.function().static_type() << "`";
+        }
+      }
+      break;
+    }
+    case ExpressionKind::FunctionTypeLiteral: {
+      auto& fn = cast<FunctionTypeLiteral>(*e);
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> param,
+                              TypeCheckTypeExp(&fn.parameter(), impl_scope));
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> ret,
+                              TypeCheckTypeExp(&fn.return_type(), impl_scope));
+      fn.set_static_type(arena_->New<TypeType>());
+      fn.set_expression_category(ExpressionCategory::Value);
+      fn.set_constant_value(arena_->New<FunctionType>(param, ret));
+      return Success();
+    }
+    case ExpressionKind::StringLiteral:
+      e->set_static_type(arena_->New<StringType>());
+      e->set_expression_category(ExpressionCategory::Value);
+      return Success();
+    case ExpressionKind::IntrinsicExpression: {
+      auto& intrinsic_exp = cast<IntrinsicExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&intrinsic_exp.args(), impl_scope));
+      const auto& args = intrinsic_exp.args().fields();
+      switch (cast<IntrinsicExpression>(*e).intrinsic()) {
+        case IntrinsicExpression::Intrinsic::Print:
+          // TODO: Remove Print special casing once we have variadics or
+          // overloads. Here, that's the name Print instead of __intrinsic_print
+          // in errors.
+          if (args.empty() || args.size() > 2) {
             return ProgramError(e->source_loc())
-                   << "in call `" << *e
-                   << "`, expected callee to be a function, found `"
-                   << call.function().static_type() << "`";
+                   << "Print takes 1 or 2 arguments, received " << args.size();
           }
-        }
-        break;
-      }
-      case ExpressionKind::FunctionTypeLiteral: {
-        auto& fn = cast<FunctionTypeLiteral>(*e);
-        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> param,
-                                TypeCheckTypeExp(&fn.parameter(), impl_scope));
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<const Value*> ret,
-            TypeCheckTypeExp(&fn.return_type(), impl_scope));
-        fn.set_static_type(arena_->New<TypeType>());
-        fn.set_expression_category(ExpressionCategory::Value);
-        fn.set_constant_value(arena_->New<FunctionType>(param, ret));
-        return Success();
-      }
-      case ExpressionKind::StringLiteral:
-        e->set_static_type(arena_->New<StringType>());
-        e->set_expression_category(ExpressionCategory::Value);
-        return Success();
-      case ExpressionKind::IntrinsicExpression: {
-        auto& intrinsic_exp = cast<IntrinsicExpression>(*e);
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(&intrinsic_exp.args(), impl_scope));
-        const auto& args = intrinsic_exp.args().fields();
-        switch (cast<IntrinsicExpression>(*e).intrinsic()) {
-          case IntrinsicExpression::Intrinsic::Print:
-            // TODO: Remove Print special casing once we have variadics or
-            // overloads. Here, that's the name Print instead of
-            // __intrinsic_print in errors.
-            if (args.empty() || args.size() > 2) {
-              return ProgramError(e->source_loc())
-                     << "Print takes 1 or 2 arguments, received "
-                     << args.size();
-            }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "Print argument 0", arena_->New<StringType>(),
+              &args[0]->static_type(), impl_scope));
+          if (args.size() >= 2) {
             CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "Print argument 0", arena_->New<StringType>(),
-                &args[0]->static_type(), impl_scope));
-            if (args.size() >= 2) {
-              CARBON_RETURN_IF_ERROR(ExpectExactType(
-                  e->source_loc(), "Print argument 1", arena_->New<IntType>(),
-                  &args[1]->static_type(), impl_scope));
-            }
-            e->set_static_type(TupleType::Empty());
-            e->set_expression_category(ExpressionCategory::Value);
-            return Success();
-          case IntrinsicExpression::Intrinsic::Assert: {
-            if (args.size() != 2) {
-              return ProgramError(e->source_loc())
-                     << "__intrinsic_assert takes 2 arguments";
-            }
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "__intrinsic_assert argument 0",
-                arena_->New<BoolType>(), &args[0]->static_type(), impl_scope));
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "__intrinsic_assert argument 1",
-                arena_->New<StringType>(), &args[1]->static_type(),
-                impl_scope));
-            e->set_static_type(TupleType::Empty());
-            e->set_expression_category(ExpressionCategory::Value);
-            return Success();
-          }
-          case IntrinsicExpression::Intrinsic::Alloc: {
-            if (args.size() != 1) {
-              return ProgramError(e->source_loc())
-                     << "__intrinsic_new takes 1 argument";
-            }
-            const auto* arg_type = &args[0]->static_type();
-            e->set_static_type(arena_->New<PointerType>(arg_type));
-            e->set_expression_category(ExpressionCategory::Value);
-            return Success();
-          }
-          case IntrinsicExpression::Intrinsic::Dealloc: {
-            if (args.size() != 1) {
-              return ProgramError(e->source_loc())
-                     << "__intrinsic_delete takes 1 argument";
-            }
-            const auto* arg_type = &args[0]->static_type();
-            CARBON_RETURN_IF_ERROR(
-                ExpectPointerType(e->source_loc(), "*", arg_type));
-            e->set_static_type(TupleType::Empty());
-            e->set_expression_category(ExpressionCategory::Value);
-            return Success();
-          }
-          case IntrinsicExpression::Intrinsic::Rand: {
-            if (args.size() != 2) {
-              return ProgramError(e->source_loc())
-                     << "Rand takes 2 arguments, received " << args.size();
-            }
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "Rand argument 0", arena_->New<IntType>(),
-                &args[0]->static_type(), impl_scope));
-
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "Rand argument 1", arena_->New<IntType>(),
+                e->source_loc(), "Print argument 1", arena_->New<IntType>(),
                 &args[1]->static_type(), impl_scope));
-
-            e->set_static_type(arena_->New<IntType>());
-            e->set_expression_category(ExpressionCategory::Value);
-            return Success();
           }
-          case IntrinsicExpression::Intrinsic::ImplicitAs: {
-            if (args.size() != 1) {
-              return ProgramError(e->source_loc())
-                     << "__intrinsic_implicit_as takes 1 argument";
-            }
-            CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(args[0], impl_scope));
-            e->set_static_type(arena_->New<TypeType>());
-            e->set_expression_category(ExpressionCategory::Value);
-            return Success();
+          e->set_static_type(TupleType::Empty());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
+        case IntrinsicExpression::Intrinsic::Assert: {
+          if (args.size() != 2) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_assert takes 2 arguments";
           }
-          case IntrinsicExpression::Intrinsic::ImplicitAsConvert: {
-            if (args.size() != 2) {
-              return ProgramError(e->source_loc())
-                     << "__intrinsic_implicit_as_convert takes 2 arguments";
-            }
-            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> result,
-                                    TypeCheckTypeExp(args[1], impl_scope));
-            // TODO: Check that the type of args[0] implicitly converts to
-            // args[1].
-            e->set_static_type(result);
-            e->set_expression_category(ExpressionCategory::Value);
-            return Success();
-          }
-          case IntrinsicExpression::Intrinsic::IntEq: {
-            if (args.size() != 2) {
-              return ProgramError(e->source_loc())
-                     << "__intrinsic_int_eq takes 2 arguments";
-            }
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "__intrinsic_int_eq argument 1",
-                arena_->New<IntType>(), &args[0]->static_type(), impl_scope));
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "__intrinsic_int_eq argument 2",
-                arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
-            e->set_static_type(arena_->New<BoolType>());
-            e->set_expression_category(ExpressionCategory::Value);
-            return Success();
-          }
-          case IntrinsicExpression::Intrinsic::IntCompare: {
-            if (args.size() != 2) {
-              return ProgramError(e->source_loc())
-                     << "__intrinsic_int_compare takes 2 arguments";
-            }
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "__intrinsic_int_compare argument 1",
-                arena_->New<IntType>(), &args[0]->static_type(), impl_scope));
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "__intrinsic_int_compare argument 2",
-                arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
-            e->set_static_type(arena_->New<IntType>());
-            e->set_expression_category(ExpressionCategory::Value);
-            return Success();
-          }
-          case IntrinsicExpression::Intrinsic::StrEq: {
-            if (args.size() != 2) {
-              return ProgramError(e->source_loc())
-                     << "__intrinsic_str_eq takes 2 arguments";
-            }
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "__intrinsic_str_eq argument 1",
-                arena_->New<StringType>(), &args[0]->static_type(),
-                impl_scope));
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "__intrinsic_str_eq argument 2",
-                arena_->New<StringType>(), &args[1]->static_type(),
-                impl_scope));
-            e->set_static_type(arena_->New<BoolType>());
-            e->set_expression_category(ExpressionCategory::Value);
-            return Success();
-          }
-          case IntrinsicExpression::Intrinsic::StrCompare: {
-            if (args.size() != 2) {
-              return ProgramError(e->source_loc())
-                     << "__intrinsic_str_compare takes 2 arguments";
-            }
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "__intrinsic_str_compare argument 1",
-                arena_->New<StringType>(), &args[0]->static_type(),
-                impl_scope));
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "__intrinsic_str_compare argument 2",
-                arena_->New<StringType>(), &args[1]->static_type(),
-                impl_scope));
-            e->set_static_type(arena_->New<IntType>());
-            e->set_expression_category(ExpressionCategory::Value);
-            return Success();
-          }
-          case IntrinsicExpression::Intrinsic::IntBitComplement:
-            if (args.size() != 1) {
-              return ProgramError(e->source_loc())
-                     << intrinsic_exp.name() << " takes 1 argument";
-            }
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "complement argument", arena_->New<IntType>(),
-                &args[0]->static_type(), impl_scope));
-            e->set_static_type(arena_->New<IntType>());
-            e->set_expression_category(ExpressionCategory::Value);
-            return Success();
-          case IntrinsicExpression::Intrinsic::IntBitAnd:
-          case IntrinsicExpression::Intrinsic::IntBitOr:
-          case IntrinsicExpression::Intrinsic::IntBitXor:
-          case IntrinsicExpression::Intrinsic::IntLeftShift:
-          case IntrinsicExpression::Intrinsic::IntRightShift:
-            if (args.size() != 2) {
-              return ProgramError(e->source_loc())
-                     << intrinsic_exp.name() << " takes 2 arguments";
-            }
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "argument 1", arena_->New<IntType>(),
-                &args[0]->static_type(), impl_scope));
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "argument 2", arena_->New<IntType>(),
-                &args[1]->static_type(), impl_scope));
-            e->set_static_type(arena_->New<IntType>());
-            e->set_expression_category(ExpressionCategory::Value);
-            return Success();
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_assert argument 0",
+              arena_->New<BoolType>(), &args[0]->static_type(), impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_assert argument 1",
+              arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
+          e->set_static_type(TupleType::Empty());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
         }
-      }
-      case ExpressionKind::IntTypeLiteral:
-      case ExpressionKind::BoolTypeLiteral:
-      case ExpressionKind::StringTypeLiteral:
-      case ExpressionKind::TypeTypeLiteral:
-        e->set_expression_category(ExpressionCategory::Value);
-        e->set_static_type(arena_->New<TypeType>());
-        return Success();
-      case ExpressionKind::IfExpression: {
-        auto& if_expr = cast<IfExpression>(*e);
-        CARBON_RETURN_IF_ERROR(TypeCheckExp(&if_expr.condition(), impl_scope));
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<Expression*> converted_condition,
-            ImplicitlyConvert("condition of `if`", impl_scope,
-                              &if_expr.condition(), arena_->New<BoolType>()));
-        if_expr.set_condition(converted_condition);
-
-        // TODO: Compute the common type and convert both operands to it.
-        CARBON_RETURN_IF_ERROR(
-            TypeCheckExp(&if_expr.then_expression(), impl_scope));
-        CARBON_RETURN_IF_ERROR(
-            TypeCheckExp(&if_expr.else_expression(), impl_scope));
-        CARBON_RETURN_IF_ERROR(ExpectExactType(
-            e->source_loc(), "expression of `if` expression",
-            &if_expr.then_expression().static_type(),
-            &if_expr.else_expression().static_type(), impl_scope));
-        e->set_static_type(&if_expr.then_expression().static_type());
-        e->set_expression_category(ExpressionCategory::Value);
-        return Success();
-      }
-      case ExpressionKind::WhereExpression: {
-        auto& where = cast<WhereExpression>(*e);
-        ImplScope inner_impl_scope(&impl_scope);
-
-        auto& self = where.self_binding();
-
-        // If there's some enclosing `.Self` value, our self is symbolically
-        // equal to that. Otherwise it's a new type variable.
-        if (auto enclosing_dot_self = where.enclosing_dot_self()) {
-          // TODO: We need to also enforce that our `.Self` does end up being
-          // the same as the enclosing type.
-          self.set_symbolic_identity(
-              *(*enclosing_dot_self)->symbolic_identity());
-          self.set_value(&(*enclosing_dot_self)->value());
-        } else {
-          ConstraintTypeBuilder::PrepareSelfBinding(arena_, &self);
+        case IntrinsicExpression::Intrinsic::Alloc: {
+          if (args.size() != 1) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_new takes 1 argument";
+          }
+          const auto* arg_type = &args[0]->static_type();
+          e->set_static_type(arena_->New<PointerType>(arg_type));
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
         }
-
-        ConstraintTypeBuilder builder(arena_, &self);
-        ConstraintTypeBuilder::ConstraintsInScopeTracker constraint_tracker;
-
-        // Keep track of the builder so that we can look up its rewrites while
-        // processing later constraints.
-        partial_constraint_types_.push_back(&builder);
-        auto pop_partial_constraint_type = llvm::make_scope_exit(
-            [&] { partial_constraint_types_.pop_back(); });
-
-        // Note, we don't want to call `TypeCheckPattern` here. Most of the
-        // setup for the self binding is instead done by the
-        // `ConstraintTypeBuilder`.
-        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base_type,
-                                TypeCheckTypeExp(&self.type(), impl_scope));
-        self.set_static_type(base_type);
-
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<const ConstraintType*> base,
-            ConvertToConstraintType(where.source_loc(),
-                                    "first operand of `where` expression",
-                                    base_type));
-
-        // Start with the given constraint.
-        CARBON_RETURN_IF_ERROR(
-            builder.AddAndSubstitute(*this, base, builder.GetSelfType(),
-                                     builder.GetSelfWitness(), Bindings(),
-                                     /*add_lookup_contexts=*/true));
-
-        // Type-check and apply the `where` clauses.
-        for (Nonnull<WhereClause*> clause : where.clauses()) {
-          // Constraints from the LHS of `where` are in scope in the RHS, and
-          // constraints from earlier `where` clauses are in scope in later
-          // clauses.
-          builder.BringConstraintsIntoScope(*this, &inner_impl_scope,
-                                            &constraint_tracker);
-
+        case IntrinsicExpression::Intrinsic::Dealloc: {
+          if (args.size() != 1) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_delete takes 1 argument";
+          }
+          const auto* arg_type = &args[0]->static_type();
           CARBON_RETURN_IF_ERROR(
-              TypeCheckWhereClause(clause, inner_impl_scope));
-
-          switch (clause->kind()) {
-            case WhereClauseKind::ImplsWhereClause: {
-              auto& impls_clause = cast<ImplsWhereClause>(*clause);
-              CARBON_ASSIGN_OR_RETURN(
-                  Nonnull<const Value*> type,
-                  TypeCheckTypeExp(&impls_clause.type(), inner_impl_scope));
-              CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> constraint,
-                                      InterpExp(&impls_clause.constraint()));
-              CARBON_ASSIGN_OR_RETURN(
-                  Nonnull<const ConstraintType*> constraint_type,
-                  ConvertToConstraintType(impls_clause.source_loc(),
-                                          "expression after `impls`",
-                                          constraint));
-              // Transform `where .B impls (C where .D impls E)` into
-              // `where .B impls C and .B.D impls E` then add all the resulting
-              // constraints.
-              CARBON_RETURN_IF_ERROR(
-                  builder.AddAndSubstitute(*this, constraint_type, type,
-                                           builder.GetSelfWitness(), Bindings(),
-                                           /*add_lookup_contexts=*/false));
-              break;
-            }
-            case WhereClauseKind::EqualsWhereClause: {
-              const auto& equals_clause = cast<EqualsWhereClause>(*clause);
-              CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> lhs,
-                                      InterpExp(&equals_clause.lhs()));
-              CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> rhs,
-                                      InterpExp(&equals_clause.rhs()));
-              if (!ValueEqual(lhs, rhs, std::nullopt)) {
-                builder.AddEqualityConstraint({.values = {lhs, rhs}});
-              }
-              break;
-            }
-            case WhereClauseKind::RewriteWhereClause: {
-              const auto& rewrite_clause = cast<RewriteWhereClause>(*clause);
-              CARBON_ASSIGN_OR_RETURN(
-                  ConstraintLookupResult result,
-                  LookupInConstraint(clause->source_loc(),
-                                     "rewrite constraint lookup", base_type,
-                                     rewrite_clause.member_name()));
-              const auto* constant =
-                  dyn_cast<AssociatedConstantDeclaration>(result.member);
-              if (!constant) {
-                return ProgramError(clause->source_loc())
-                       << "in rewrite constraint lookup, `"
-                       << rewrite_clause.member_name()
-                       << "` does not name an associated constant";
-              }
-
-              // Find (or add) `.Self impls I`, and form a symbolic value naming
-              // the associated constant.
-              // TODO: Reject if the impls constraint didn't already exist.
-              int index =
-                  builder.AddImplsConstraint({.type = builder.GetSelfType(),
-                                              .interface = result.interface});
-              const auto* witness =
-                  MakeConstraintWitnessAccess(builder.GetSelfWitness(), index);
-              auto* constant_value = arena_->New<AssociatedConstant>(
-                  builder.GetSelfType(), result.interface, constant, witness);
-
-              // Find the replacement value prior to conversion to the
-              // constant's type. This is the value we'll rewrite to when
-              // type-checking a member access.
-              CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> replacement_value,
-                                      InterpExp(&rewrite_clause.replacement()));
-              Nonnull<const Value*> replacement_type =
-                  &rewrite_clause.replacement().static_type();
-
-              auto* replacement_literal = arena_->New<ValueLiteral>(
-                  rewrite_clause.source_loc(), replacement_value,
-                  replacement_type, ExpressionCategory::Value);
-
-              // Convert the replacement value to the type of the associated
-              // constant and find the converted value. This is the value that
-              // we'll produce during evaluation and substitution.
-              CARBON_ASSIGN_OR_RETURN(
-                  Nonnull<const Value*> constraint_type,
-                  GetTypeForAssociatedConstant(constant_value));
-              CARBON_ASSIGN_OR_RETURN(
-                  Nonnull<Expression*> converted_expression,
-                  ImplicitlyConvert("rewrite constraint", inner_impl_scope,
-                                    replacement_literal, constraint_type));
-              CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> converted_value,
-                                      InterpExp(converted_expression));
-
-              // Add the rewrite constraint.
-              builder.AddRewriteConstraint(
-                  {.constant = constant_value,
-                   .unconverted_replacement = replacement_value,
-                   .unconverted_replacement_type = replacement_type,
-                   .converted_replacement = converted_value});
-              break;
-            }
+              ExpectPointerType(e->source_loc(), "*", arg_type));
+          e->set_static_type(TupleType::Empty());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::Rand: {
+          if (args.size() != 2) {
+            return ProgramError(e->source_loc())
+                   << "Rand takes 2 arguments, received " << args.size();
           }
-        }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "Rand argument 0", arena_->New<IntType>(),
+              &args[0]->static_type(), impl_scope));
 
-        where.set_rewritten_form(arena_->New<ValueLiteral>(
-            where.source_loc(), std::move(builder).Build(),
-            arena_->New<TypeType>(), ExpressionCategory::Value));
-        return Success();
-      }
-      case ExpressionKind::UnimplementedExpression:
-        CARBON_FATAL() << "Unimplemented: " << *e;
-      case ExpressionKind::ArrayTypeLiteral: {
-        auto& array_literal = cast<ArrayTypeLiteral>(*e);
-        CARBON_ASSIGN_OR_RETURN(
-            Nonnull<const Value*> element_type,
-            TypeCheckTypeExp(&array_literal.element_type_expression(),
-                             impl_scope));
-        CARBON_RETURN_IF_ERROR(
-            TypeCheckExp(&array_literal.size_expression(), impl_scope));
-        CARBON_RETURN_IF_ERROR(ExpectExactType(
-            array_literal.size_expression().source_loc(), "array size",
-            arena_->New<IntType>(),
-            &array_literal.size_expression().static_type(), impl_scope));
-        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> size_value,
-                                InterpExp(&array_literal.size_expression()));
-        if (cast<IntValue>(size_value)->value() < 0) {
-          return ProgramError(array_literal.size_expression().source_loc())
-                 << "Array size cannot be negative";
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "Rand argument 1", arena_->New<IntType>(),
+              &args[1]->static_type(), impl_scope));
+
+          e->set_static_type(arena_->New<IntType>());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
         }
-        array_literal.set_static_type(arena_->New<TypeType>());
-        array_literal.set_expression_category(ExpressionCategory::Value);
-        array_literal.set_constant_value(arena_->New<StaticArrayType>(
-            element_type, cast<IntValue>(size_value)->value()));
-        return Success();
+        case IntrinsicExpression::Intrinsic::ImplicitAs: {
+          if (args.size() != 1) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_implicit_as takes 1 argument";
+          }
+          CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(args[0], impl_scope));
+          e->set_static_type(arena_->New<TypeType>());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::ImplicitAsConvert: {
+          if (args.size() != 2) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_implicit_as_convert takes 2 arguments";
+          }
+          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> result,
+                                  TypeCheckTypeExp(args[1], impl_scope));
+          // TODO: Check that the type of args[0] implicitly converts to
+          // args[1].
+          e->set_static_type(result);
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::IntEq: {
+          if (args.size() != 2) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_int_eq takes 2 arguments";
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_int_eq argument 1",
+              arena_->New<IntType>(), &args[0]->static_type(), impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_int_eq argument 2",
+              arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
+          e->set_static_type(arena_->New<BoolType>());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::IntCompare: {
+          if (args.size() != 2) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_int_compare takes 2 arguments";
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_int_compare argument 1",
+              arena_->New<IntType>(), &args[0]->static_type(), impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_int_compare argument 2",
+              arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
+          e->set_static_type(arena_->New<IntType>());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::StrEq: {
+          if (args.size() != 2) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_str_eq takes 2 arguments";
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_str_eq argument 1",
+              arena_->New<StringType>(), &args[0]->static_type(), impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_str_eq argument 2",
+              arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
+          e->set_static_type(arena_->New<BoolType>());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::StrCompare: {
+          if (args.size() != 2) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_str_compare takes 2 arguments";
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_str_compare argument 1",
+              arena_->New<StringType>(), &args[0]->static_type(), impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "__intrinsic_str_compare argument 2",
+              arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
+          e->set_static_type(arena_->New<IntType>());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::IntBitComplement:
+          if (args.size() != 1) {
+            return ProgramError(e->source_loc())
+                   << intrinsic_exp.name() << " takes 1 argument";
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "complement argument", arena_->New<IntType>(),
+              &args[0]->static_type(), impl_scope));
+          e->set_static_type(arena_->New<IntType>());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
+        case IntrinsicExpression::Intrinsic::IntBitAnd:
+        case IntrinsicExpression::Intrinsic::IntBitOr:
+        case IntrinsicExpression::Intrinsic::IntBitXor:
+        case IntrinsicExpression::Intrinsic::IntLeftShift:
+        case IntrinsicExpression::Intrinsic::IntRightShift:
+          if (args.size() != 2) {
+            return ProgramError(e->source_loc())
+                   << intrinsic_exp.name() << " takes 2 arguments";
+          }
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "argument 1", arena_->New<IntType>(),
+              &args[0]->static_type(), impl_scope));
+          CARBON_RETURN_IF_ERROR(ExpectExactType(
+              e->source_loc(), "argument 2", arena_->New<IntType>(),
+              &args[1]->static_type(), impl_scope));
+          e->set_static_type(arena_->New<IntType>());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
       }
     }
-  });
+    case ExpressionKind::IntTypeLiteral:
+    case ExpressionKind::BoolTypeLiteral:
+    case ExpressionKind::StringTypeLiteral:
+    case ExpressionKind::TypeTypeLiteral:
+      e->set_expression_category(ExpressionCategory::Value);
+      e->set_static_type(arena_->New<TypeType>());
+      return Success();
+    case ExpressionKind::IfExpression: {
+      auto& if_expr = cast<IfExpression>(*e);
+      CARBON_RETURN_IF_ERROR(TypeCheckExp(&if_expr.condition(), impl_scope));
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<Expression*> converted_condition,
+          ImplicitlyConvert("condition of `if`", impl_scope,
+                            &if_expr.condition(), arena_->New<BoolType>()));
+      if_expr.set_condition(converted_condition);
+
+      // TODO: Compute the common type and convert both operands to it.
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&if_expr.then_expression(), impl_scope));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&if_expr.else_expression(), impl_scope));
+      CARBON_RETURN_IF_ERROR(ExpectExactType(
+          e->source_loc(), "expression of `if` expression",
+          &if_expr.then_expression().static_type(),
+          &if_expr.else_expression().static_type(), impl_scope));
+      e->set_static_type(&if_expr.then_expression().static_type());
+      e->set_expression_category(ExpressionCategory::Value);
+      return Success();
+    }
+    case ExpressionKind::WhereExpression: {
+      auto& where = cast<WhereExpression>(*e);
+      ImplScope inner_impl_scope(&impl_scope);
+
+      auto& self = where.self_binding();
+
+      // If there's some enclosing `.Self` value, our self is symbolically
+      // equal to that. Otherwise it's a new type variable.
+      if (auto enclosing_dot_self = where.enclosing_dot_self()) {
+        // TODO: We need to also enforce that our `.Self` does end up being the
+        // same as the enclosing type.
+        self.set_symbolic_identity(*(*enclosing_dot_self)->symbolic_identity());
+        self.set_value(&(*enclosing_dot_self)->value());
+      } else {
+        ConstraintTypeBuilder::PrepareSelfBinding(arena_, &self);
+      }
+
+      ConstraintTypeBuilder builder(arena_, &self);
+      ConstraintTypeBuilder::ConstraintsInScopeTracker constraint_tracker;
+
+      // Keep track of the builder so that we can look up its rewrites while
+      // processing later constraints.
+      partial_constraint_types_.push_back(&builder);
+      auto pop_partial_constraint_type =
+          llvm::make_scope_exit([&] { partial_constraint_types_.pop_back(); });
+
+      // Note, we don't want to call `TypeCheckPattern` here. Most of the setup
+      // for the self binding is instead done by the `ConstraintTypeBuilder`.
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> base_type,
+                              TypeCheckTypeExp(&self.type(), impl_scope));
+      self.set_static_type(base_type);
+
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const ConstraintType*> base,
+          ConvertToConstraintType(where.source_loc(),
+                                  "first operand of `where` expression",
+                                  base_type));
+
+      // Start with the given constraint.
+      CARBON_RETURN_IF_ERROR(
+          builder.AddAndSubstitute(*this, base, builder.GetSelfType(),
+                                   builder.GetSelfWitness(), Bindings(),
+                                   /*add_lookup_contexts=*/true));
+
+      // Type-check and apply the `where` clauses.
+      for (Nonnull<WhereClause*> clause : where.clauses()) {
+        // Constraints from the LHS of `where` are in scope in the RHS, and
+        // constraints from earlier `where` clauses are in scope in later
+        // clauses.
+        builder.BringConstraintsIntoScope(*this, &inner_impl_scope,
+                                          &constraint_tracker);
+
+        CARBON_RETURN_IF_ERROR(TypeCheckWhereClause(clause, inner_impl_scope));
+
+        switch (clause->kind()) {
+          case WhereClauseKind::ImplsWhereClause: {
+            auto& impls_clause = cast<ImplsWhereClause>(*clause);
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> type,
+                TypeCheckTypeExp(&impls_clause.type(), inner_impl_scope));
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> constraint,
+                                    InterpExp(&impls_clause.constraint()));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const ConstraintType*> constraint_type,
+                ConvertToConstraintType(impls_clause.source_loc(),
+                                        "expression after `impls`",
+                                        constraint));
+            // Transform `where .B impls (C where .D impls E)` into
+            // `where .B impls C and .B.D impls E` then add all the resulting
+            // constraints.
+            CARBON_RETURN_IF_ERROR(
+                builder.AddAndSubstitute(*this, constraint_type, type,
+                                         builder.GetSelfWitness(), Bindings(),
+                                         /*add_lookup_contexts=*/false));
+            break;
+          }
+          case WhereClauseKind::EqualsWhereClause: {
+            const auto& equals_clause = cast<EqualsWhereClause>(*clause);
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> lhs,
+                                    InterpExp(&equals_clause.lhs()));
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> rhs,
+                                    InterpExp(&equals_clause.rhs()));
+            if (!ValueEqual(lhs, rhs, std::nullopt)) {
+              builder.AddEqualityConstraint({.values = {lhs, rhs}});
+            }
+            break;
+          }
+          case WhereClauseKind::RewriteWhereClause: {
+            const auto& rewrite_clause = cast<RewriteWhereClause>(*clause);
+            CARBON_ASSIGN_OR_RETURN(
+                ConstraintLookupResult result,
+                LookupInConstraint(clause->source_loc(),
+                                   "rewrite constraint lookup", base_type,
+                                   rewrite_clause.member_name()));
+            const auto* constant =
+                dyn_cast<AssociatedConstantDeclaration>(result.member);
+            if (!constant) {
+              return ProgramError(clause->source_loc())
+                     << "in rewrite constraint lookup, `"
+                     << rewrite_clause.member_name()
+                     << "` does not name an associated constant";
+            }
+
+            // Find (or add) `.Self impls I`, and form a symbolic value naming
+            // the associated constant.
+            // TODO: Reject if the impls constraint didn't already exist.
+            int index = builder.AddImplsConstraint(
+                {.type = builder.GetSelfType(), .interface = result.interface});
+            const auto* witness =
+                MakeConstraintWitnessAccess(builder.GetSelfWitness(), index);
+            auto* constant_value = arena_->New<AssociatedConstant>(
+                builder.GetSelfType(), result.interface, constant, witness);
+
+            // Find the replacement value prior to conversion to the constant's
+            // type. This is the value we'll rewrite to when type-checking a
+            // member access.
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> replacement_value,
+                                    InterpExp(&rewrite_clause.replacement()));
+            Nonnull<const Value*> replacement_type =
+                &rewrite_clause.replacement().static_type();
+
+            auto* replacement_literal = arena_->New<ValueLiteral>(
+                rewrite_clause.source_loc(), replacement_value,
+                replacement_type, ExpressionCategory::Value);
+
+            // Convert the replacement value to the type of the associated
+            // constant and find the converted value. This is the value that
+            // we'll produce during evaluation and substitution.
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<const Value*> constraint_type,
+                GetTypeForAssociatedConstant(constant_value));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<Expression*> converted_expression,
+                ImplicitlyConvert("rewrite constraint", inner_impl_scope,
+                                  replacement_literal, constraint_type));
+            CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> converted_value,
+                                    InterpExp(converted_expression));
+
+            // Add the rewrite constraint.
+            builder.AddRewriteConstraint(
+                {.constant = constant_value,
+                 .unconverted_replacement = replacement_value,
+                 .unconverted_replacement_type = replacement_type,
+                 .converted_replacement = converted_value});
+            break;
+          }
+        }
+      }
+
+      where.set_rewritten_form(arena_->New<ValueLiteral>(
+          where.source_loc(), std::move(builder).Build(),
+          arena_->New<TypeType>(), ExpressionCategory::Value));
+      return Success();
+    }
+    case ExpressionKind::UnimplementedExpression:
+      CARBON_FATAL() << "Unimplemented: " << *e;
+    case ExpressionKind::ArrayTypeLiteral: {
+      auto& array_literal = cast<ArrayTypeLiteral>(*e);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> element_type,
+          TypeCheckTypeExp(&array_literal.element_type_expression(),
+                           impl_scope));
+      CARBON_RETURN_IF_ERROR(
+          TypeCheckExp(&array_literal.size_expression(), impl_scope));
+      CARBON_RETURN_IF_ERROR(ExpectExactType(
+          array_literal.size_expression().source_loc(), "array size",
+          arena_->New<IntType>(),
+          &array_literal.size_expression().static_type(), impl_scope));
+      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> size_value,
+                              InterpExp(&array_literal.size_expression()));
+      if (cast<IntValue>(size_value)->value() < 0) {
+        return ProgramError(array_literal.size_expression().source_loc())
+               << "Array size cannot be negative";
+      }
+      array_literal.set_static_type(arena_->New<TypeType>());
+      array_literal.set_expression_category(ExpressionCategory::Value);
+      array_literal.set_constant_value(arena_->New<StaticArrayType>(
+          element_type, cast<IntValue>(size_value)->value()));
+      return Success();
+    }
+  }
 }
 
 void TypeChecker::CollectAndNumberGenericBindingsInPattern(
