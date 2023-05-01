@@ -193,6 +193,9 @@ class TypeChecker {
   //    directly used in this function but is passed to InterpExp.
   auto TypeCheckExp(Nonnull<Expression*> e, const ImplScope& impl_scope)
       -> ErrorOr<Success>;
+  // Called via RunWithStackSpace.
+  auto TypeCheckExpImpl(Nonnull<Expression*> e, const ImplScope& impl_scope)
+      -> ErrorOr<Success>;
 
   // Type checks and interprets `type_expression`, and validates it represents a
   // [concrete] type.

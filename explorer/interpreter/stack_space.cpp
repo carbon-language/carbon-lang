@@ -28,7 +28,7 @@ auto IsStackSpaceNearlyExhausted() -> bool {
          (DesiredStackSpace - SufficientStack);
 }
 
-auto RunWithStackSpaceHelper(std::function<void()> fn) -> void {
+auto RunWithStackSpaceHelper(llvm::function_ref<void()> fn) -> void {
   llvm::CrashRecoveryContext context;
   context.RunSafelyOnThread(
       [&] {
