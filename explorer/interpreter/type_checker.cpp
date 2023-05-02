@@ -2688,7 +2688,7 @@ auto TypeChecker::CheckAddrMeAccess(
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
-  return RunWithStackSpace<ErrorOr<Success>>(
+  return ReserveStackIfExhaustedAndRun<ErrorOr<Success>>(
       [&]() { return TypeCheckExpImpl(e, impl_scope); });
 }
 

@@ -61,7 +61,6 @@ cc_library(
         ":resolve_control_flow",
         ":resolve_names",
         ":resolve_unformed",
-        ":stack_space",
         ":type_checker",
         "//common:check",
         "//common:ostream",
