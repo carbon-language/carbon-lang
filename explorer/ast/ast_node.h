@@ -15,10 +15,9 @@ class CloneContext;
 
 // Base class for all nodes in the AST.
 //
-// Every class derived from this class must be listed in ast_rtti.txt. See
-// the documentation of gen_rtti.py for details about the format. As a result,
-// every abstract class `Foo` will have a `FooKind` enumerated type, whose
-// enumerators correspond to the subclasses of `Foo`.
+// Every class derived from this class must be listed in ast_kinds.h. As a
+// result, every abstract class `Foo` will have a `FooKind` enumerated type,
+// whose enumerators correspond to the subclasses of `Foo`.
 //
 // AstNode and its derived classes support LLVM-style RTTI, including
 // llvm::isa, llvm::cast, and llvm::dyn_cast. To support this, every
@@ -35,7 +34,7 @@ class CloneContext;
 // auto kind() const -> FooKind { return static_cast<FooKind>(root_kind()); }
 //
 // The definitions of `InheritsFromFoo` and `FooKind` are generated from
-// ast_rtti.txt, and are implicitly provided by this header.
+// ast_rtti.h, and are implicitly provided by this header.
 //
 // Every AST node is expected to provide a cloning constructor:
 //
