@@ -23,12 +23,12 @@ static auto GetStackPointer() -> intptr_t {
 }
 
 auto IsStackSpaceNearlyExhausted() -> bool {
-  CARBON_CHECK(bottom_of_stack != 0) << "InitStackSpace not called";
+  CARBON_CHECK(bottom_of_stack != 0) << "ReserveStackAndRun not called";
   return std::abs(GetStackPointer() - bottom_of_stack) >
          (DesiredStackSpace - SufficientStack);
 }
 
-auto RunWithStackSpaceHelper(llvm::function_ref<void()> fn) -> void {
+auto ReserveStackAndRunHelper(llvm::function_ref<void()> fn) -> void {
   llvm::CrashRecoveryContext context;
   context.RunSafelyOnThread(
       [&] {

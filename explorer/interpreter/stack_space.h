@@ -17,40 +17,39 @@ namespace Internal {
 auto IsStackSpaceNearlyExhausted() -> bool;
 
 // Starts a thread to run the function.
-auto RunWithStackSpaceHelper(llvm::function_ref<void()> fn) -> void;
+auto ReserveStackAndRunHelper(llvm::function_ref<void()> fn) -> void;
 
 }  // namespace Internal
 
-// Initializes stack space information for RunWithStackSpace by creating a new
+// Initializes stack space information for ReserveStackAndRun by creating a new
 // thread, and runs the function on the new thread. This only needs to be called
 // once within a given recursion.
 //
 // Usage:
-//   return InitStackSpace<ReturnType>([&]() -> ReturnType {
+//   return ReserveStackAndRun<ReturnType>([&]() -> ReturnType {
 //         <function body>
 //       });
 template <typename ReturnType>
-auto InitStackSpace(llvm::function_ref<ReturnType()> fn) -> ReturnType {
+auto ReserveStackAndRun(llvm::function_ref<ReturnType()> fn) -> ReturnType {
   std::optional<ReturnType> result;
-  Internal::RunWithStackSpaceHelper([&] { result = fn(); });
+  Internal::ReserveStackAndRunHelper([&] { result = fn(); });
   return std::move(*result);
 }
 
 // Runs a function. May start a new thread for the function if too much stack
 // space has been consumed since the last time a thread was spawned (by either
-// InitStackSpace or RunWithStackSpace). Require InitStackSpace be used first
-// within the recursion.
+// ReserveStackAndRun or ReserveStackIfExhaustedAndRun). Requires
+// ReserveStackAndRun be used first within the recursion.
 //
 // Usage:
-//   return RunWithStackSpace<ReturnType>([&]() -> ReturnType {
+//   return ReserveStackIfExhaustedAndRun<ReturnType>([&]() -> ReturnType {
 //         <function body>
 //       });
 template <typename ReturnType>
-auto RunWithStackSpace(llvm::function_ref<ReturnType()> fn) -> ReturnType {
+auto ReserveStackIfExhaustedAndRun(llvm::function_ref<ReturnType()> fn)
+    -> ReturnType {
   if (Internal::IsStackSpaceNearlyExhausted()) {
-    std::optional<ReturnType> result;
-    Internal::RunWithStackSpaceHelper([&] { result = fn(); });
-    return std::move(*result);
+    return ReserveStackAndRun(fn);
   } else {
     return fn();
   }

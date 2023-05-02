@@ -38,7 +38,7 @@ static auto PrintTimingOnExit(TraceStream* trace_stream, const char* label,
 static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
                                   const std::string& prelude_path,
                                   TraceStream* trace_stream) -> ErrorOr<int> {
-  return InitStackSpace<ErrorOr<int>>([&]() -> ErrorOr<int> {
+  return ReserveStackAndRun<ErrorOr<int>>([&]() -> ErrorOr<int> {
     Arena arena;
     auto cursor = std::chrono::steady_clock::now();
 
