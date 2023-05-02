@@ -46,8 +46,7 @@ cc_test(
     shard_count = 50,
     deps = [
         ":parse_and_execute",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
+        "//testing/file_test:file_test_base",
     ],
 )
 

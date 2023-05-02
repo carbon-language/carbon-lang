@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/string/fail_newline.carbon:[[@LINE+2]]: missing closing quote in single-line string: "new
-  // CHECK-EMPTY:
+  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/parse_and_execute/testdata/string/fail_newline.carbon:[[@LINE+2]]: missing closing quote in single-line string: "new
+  // CHECK:STDERR:
   Print("new
 line");
   return 0;

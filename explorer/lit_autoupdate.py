@@ -24,7 +24,7 @@ def main() -> None:
         sys.argv[0],
         # Flags to configure for explorer testing.
         "--tool=explorer",
-        "--testdata=explorer/testdata/lit",
+        "--testdata=explorer/testdata",
         "--lit_run=%{explorer-run}",
         "--lit_run=%{explorer-run-trace}",
     ] + sys.argv[1:]

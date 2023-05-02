@@ -1,0 +1,172 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#include "testing/file_test/file_test_base.h"
+
+#include <fstream>
+
+#include "common/check.h"
+#include "llvm/ADT/Twine.h"
+
+namespace Carbon::Testing {
+
+void FileTestBase::RegisterTests(
+    const char* fixture_label, int argc, char** argv,
+    std::function<FileTestBase*(llvm::StringRef)> factory) {
+  // Use RegisterTest instead of INSTANTIATE_TEST_CASE_P because of ordering
+  // issues between container initialization and test instantiation by
+  // InitGoogleTest.
+  for (int i = 1; i < argc; ++i) {
+    llvm::StringRef path = argv[i];
+    testing::RegisterTest(fixture_label, path.data(), nullptr, path.data(),
+                          __FILE__, __LINE__, [=]() { return factory(path); });
+  }
+}
+
+// Splits outputs to string_view because gtest handles string_view by default.
+static auto SplitOutput(llvm::StringRef output)
+    -> std::vector<std::string_view> {
+  if (output.empty()) {
+    return {};
+  }
+  llvm::SmallVector<llvm::StringRef> lines;
+  llvm::StringRef(output).split(lines, "\n");
+  return std::vector<std::string_view>(lines.begin(), lines.end());
+}
+
+// Runs a test and compares output. This keeps output split by line so that
+// issues are a little easier to identify by the different line.
+auto FileTestBase::TestBody() -> void {
+  // Load expected output.
+  std::vector<testing::Matcher<std::string>> expected_stdout;
+  std::vector<testing::Matcher<std::string>> expected_stderr;
+  std::ifstream file_content(path_.str());
+  int line_index = 0;
+  std::string line_str;
+  while (std::getline(file_content, line_str)) {
+    ++line_index;
+    llvm::StringRef line = line_str;
+    line = line.drop_while([](char c) { return c == ' '; });
+    if (!line.consume_front("// CHECK")) {
+      continue;
+    }
+    if (line.consume_front(":STDOUT:")) {
+      expected_stdout.push_back(TransformExpectation(line_index, line));
+    } else if (line.consume_front(":STDERR:")) {
+      expected_stderr.push_back(TransformExpectation(line_index, line));
+    } else {
+      FAIL() << "Unexpected CHECK in input: " << line_str;
+    }
+  }
+
+  // Assume there is always a suffix `\n` in output.
+  if (!expected_stdout.empty()) {
+    expected_stdout.push_back(testing::StrEq(""));
+  }
+  if (!expected_stderr.empty()) {
+    expected_stderr.push_back(testing::StrEq(""));
+  }
+
+  // Capture trace streaming, but only when in debug mode.
+  std::string stdout;
+  std::string stderr;
+  llvm::raw_string_ostream stdout_ostream(stdout);
+  llvm::raw_string_ostream stderr_ostream(stderr);
+  RunOverFile(stdout_ostream, stderr_ostream);
+  if (HasFailure()) {
+    return;
+  }
+
+  // Check results.
+  EXPECT_THAT(SplitOutput(stdout), ElementsAreArray(expected_stdout));
+  EXPECT_THAT(SplitOutput(stderr), ElementsAreArray(expected_stderr));
+}
+
+auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
+    -> testing::Matcher<std::string> {
+  if (in.empty()) {
+    return testing::StrEq("");
+  }
+  CARBON_CHECK(in[0] == ' ') << "Malformated input: " << in;
+  std::string str = in.substr(1).str();
+  for (int pos = 0; pos < static_cast<int>(str.size());) {
+    switch (str[pos]) {
+      case '*':
+      case '(':
+      case ')':
+      case ']':
+      case '}':
+      case '+':
+      case '\\': {
+        // Escape regex characters.
+        str.insert(pos, "\\");
+        pos += 2;
+        break;
+      }
+      case '[': {
+        static constexpr llvm::StringLiteral LineKeyword = "[[@LINE";
+        llvm::StringRef line_keyword_cursor = llvm::StringRef(str).substr(pos);
+        if (line_keyword_cursor.consume_front(LineKeyword)) {
+          // Allow + or - here; consumeInteger handles -.
+          line_keyword_cursor.consume_front("+");
+          int offset;
+          // consumeInteger returns true for errors, not false.
+          CARBON_CHECK(!line_keyword_cursor.consumeInteger(10, offset) &&
+                       line_keyword_cursor.consume_front("]]"))
+              << "Unexpected @LINE offset at `"
+              << line_keyword_cursor.substr(0, 5) << "` in: " << in;
+          std::string int_str = llvm::Twine(line_index + offset).str();
+          int remove_len = (line_keyword_cursor.data() - str.data()) - pos;
+          str.replace(pos, remove_len, int_str);
+          pos += int_str.size();
+        } else {
+          // Escape the `[`.
+          str.insert(pos, "\\");
+          pos += 2;
+        }
+        break;
+      }
+      case '{': {
+        static constexpr llvm::StringLiteral PathBefore = "{{.*}}/explorer/";
+        static constexpr llvm::StringLiteral PathAfter = "explorer/";
+        if (pos + 1 == static_cast<int>(str.size()) || str[pos + 1] != '{') {
+          // Single `{`, escape it.
+          str.insert(pos, "\\");
+          pos += 2;
+        } else if (llvm::StringRef(str).substr(pos).starts_with(PathBefore)) {
+          str.replace(pos, PathBefore.size(), PathAfter);
+          // Move the position; the loop still increments position by 1.
+          pos += PathAfter.size();
+        } else {
+          // Replace the `{{...}}` regex syntax with standard `(...)` syntax.
+          str.replace(pos, 2, "(");
+          for (++pos; pos < static_cast<int>(str.size() - 1); ++pos) {
+            if (str[pos] == '}' && str[pos + 1] == '}') {
+              str.replace(pos, 2, ")");
+              ++pos;
+              break;
+            }
+          }
+        }
+        break;
+      }
+      default: {
+        ++pos;
+      }
+    }
+  }
+
+  return testing::MatchesRegex(str);
+}
+
+auto FileTestBase::filename() -> llvm::StringRef {
+  auto last_slash = path_.rfind("/");
+  if (last_slash == llvm::StringRef::npos) {
+    return path_;
+  } else {
+    return path_.substr(last_slash + 1);
+  }
+}
+
+}  // namespace Carbon::Testing

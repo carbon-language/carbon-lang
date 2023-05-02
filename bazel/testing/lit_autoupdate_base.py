@@ -111,7 +111,8 @@ def parse_args() -> ParsedArgs:
     parser.add_argument(
         "--lit_run",
         metavar="COMMAND",
-        required=True,
+        default=[],
+        required=False,
         action="append",
         help="RUN lines to set.",
     )
