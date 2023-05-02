@@ -14,9 +14,12 @@ namespace Carbon {
 // This API is intended for use by main execution.
 auto ParseAndExecuteFile(const std::string& prelude_path,
                          const std::string& input_file_name, bool parser_debug,
-                         TraceStream* trace_stream) -> ErrorOr<int>;
+                         Nonnull<TraceStream*> trace_stream,
+                         Nonnull<llvm::raw_ostream*> print_stream)
+    -> ErrorOr<int>;
 
 // Parses and executes the source, returning the program result on success.
+// Discards output.
 auto ParseAndExecute(const std::string& prelude_path, const std::string& source)
     -> ErrorOr<int>;
 

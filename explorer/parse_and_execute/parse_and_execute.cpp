@@ -37,7 +37,9 @@ static auto PrintTimingOnExit(TraceStream* trace_stream, const char* label,
 
 static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
                                   const std::string& prelude_path,
-                                  TraceStream* trace_stream) -> ErrorOr<int> {
+                                  Nonnull<TraceStream*> trace_stream,
+                                  Nonnull<llvm::raw_ostream*> print_stream)
+    -> ErrorOr<int> {
   return ReserveStackAndRun<ErrorOr<int>>([&]() -> ErrorOr<int> {
     Arena arena;
     auto cursor = std::chrono::steady_clock::now();
@@ -55,7 +57,7 @@ static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
 
     // Semantically analyze the parsed program.
     ErrorOr<AST> analyze_result =
-        AnalyzeProgram(&arena, *parse_result, trace_stream, &llvm::outs());
+        AnalyzeProgram(&arena, *parse_result, trace_stream, print_stream);
     auto print_analyze_time =
         PrintTimingOnExit(trace_stream, "AnalyzeProgram", &cursor);
     if (!analyze_result.ok()) {
@@ -64,7 +66,7 @@ static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
 
     // Run the program.
     ErrorOr<int> exec_result =
-        ExecProgram(&arena, *analyze_result, trace_stream, &llvm::outs());
+        ExecProgram(&arena, *analyze_result, trace_stream, print_stream);
     auto print_exec_time =
         PrintTimingOnExit(trace_stream, "ExecProgram", &cursor);
     if (!exec_result.ok()) {
@@ -76,11 +78,13 @@ static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
 
 auto ParseAndExecuteFile(const std::string& prelude_path,
                          const std::string& input_file_name, bool parser_debug,
-                         TraceStream* trace_stream) -> ErrorOr<int> {
+                         Nonnull<TraceStream*> trace_stream,
+                         Nonnull<llvm::raw_ostream*> print_stream)
+    -> ErrorOr<int> {
   auto parse = [&](Arena* arena) {
     return Parse(arena, input_file_name, parser_debug);
   };
-  return ParseAndExecuteHelper(parse, prelude_path, trace_stream);
+  return ParseAndExecuteHelper(parse, prelude_path, trace_stream, print_stream);
 }
 
 auto ParseAndExecute(const std::string& prelude_path, const std::string& source)
@@ -90,7 +94,8 @@ auto ParseAndExecute(const std::string& prelude_path, const std::string& source)
                            /*parser_debug=*/false);
   };
   TraceStream trace_stream;
-  return ParseAndExecuteHelper(parse, prelude_path, &trace_stream);
+  return ParseAndExecuteHelper(parse, prelude_path, &trace_stream,
+                               &llvm::nulls());
 }
 
 }  // namespace Carbon
