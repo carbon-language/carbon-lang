@@ -19,7 +19,8 @@ namespace Carbon::Testing {
 // A framework for testing files. Children implement `RegisterTestFiles` with
 // calls to `RegisterTests` using a factory that constructs the child.
 // `RunOverFile` must also be implemented and will be called as part of
-// individual test executions.
+// individual test executions. This framework includes a `main` implementation,
+// so users must not provide one.
 //
 // Tests should have CHECK lines similar to `FileCheck` syntax:
 //   https://llvm.org/docs/CommandGuide/FileCheck.html
