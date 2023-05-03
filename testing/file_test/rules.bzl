@@ -37,6 +37,7 @@ def add_file_tests(name, srcs, deps, tests, shard_count = 1):
         data = tests,
         args = ["$(location {0})".format(x) for x in tests],
         shard_count = shard_count,
+        tags = ["manual"],
     )
 
     # But we also produce per-file tests that can be run directly.
@@ -47,5 +48,5 @@ def add_file_tests(name, srcs, deps, tests, shard_count = 1):
             out = "{0}.copy.{1}".format(bin, test),
             data = [test],
             args = ["$(location {0})".format(test)],
-            tags = ["manual"],
+            #tags = ["manual"],
         )
