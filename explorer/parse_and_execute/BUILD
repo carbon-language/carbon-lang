@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
-load("//testing/file_test:rules.bzl", "add_file_tests")
+load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = [
     "//explorer:__pkg__",
@@ -37,7 +37,7 @@ cc_test(
     ],
 )
 
-add_file_tests(
+file_test(
     name = "file_test",
     srcs = ["file_test.cpp"],
     # Bazel limits sharding to 50. We have lots of tests, so this should

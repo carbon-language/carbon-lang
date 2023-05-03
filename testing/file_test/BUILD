@@ -2,6 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("rules.bzl", "file_test")
+
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
@@ -15,14 +17,13 @@ cc_library(
     ],
 )
 
-cc_test(
+file_test(
     name = "file_test",
     srcs = ["file_test_base_test.cpp"],
-    args = ["$(location :example.carbon)"],
-    data = ["example.carbon"],
+    tests = ["example.carbon"],
     deps = [
         ":file_test_base",
-        "//common:check",
+        "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )

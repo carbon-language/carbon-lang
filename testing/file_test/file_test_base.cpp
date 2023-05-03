@@ -8,17 +8,19 @@
 
 #include "common/check.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/InitLLVM.h"
 
 namespace Carbon::Testing {
 
+static const char* subset_target = nullptr;
+
 void FileTestBase::RegisterTests(
-    const char* fixture_label, int argc, char** argv,
+    const char* fixture_label, const std::vector<llvm::StringRef>& paths,
     std::function<FileTestBase*(llvm::StringRef)> factory) {
   // Use RegisterTest instead of INSTANTIATE_TEST_CASE_P because of ordering
   // issues between container initialization and test instantiation by
   // InitGoogleTest.
-  for (int i = 1; i < argc; ++i) {
-    llvm::StringRef path = argv[i];
+  for (auto path : paths) {
     testing::RegisterTest(fixture_label, path.data(), nullptr, path.data(),
                           __FILE__, __LINE__, [=]() { return factory(path); });
   }
@@ -38,6 +40,9 @@ static auto SplitOutput(llvm::StringRef output)
 // Runs a test and compares output. This keeps output split by line so that
 // issues are a little easier to identify by the different line.
 auto FileTestBase::TestBody() -> void {
+  CARBON_CHECK(subset_target != nullptr);
+  llvm::errs() << "\nTo test this file alone, run:\n  bazel test "
+               << subset_target << " --test_arg=" << path() << "\n\n";
   // Load expected output.
   std::vector<testing::Matcher<std::string>> expected_stdout;
   std::vector<testing::Matcher<std::string>> expected_stderr;
@@ -92,12 +97,17 @@ auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
   std::string str = in.substr(1).str();
   for (int pos = 0; pos < static_cast<int>(str.size());) {
     switch (str[pos]) {
-      case '*':
       case '(':
       case ')':
       case ']':
       case '}':
+      case '.':
+      case '^':
+      case '$':
+      case '*':
       case '+':
+      case '?':
+      case '|':
       case '\\': {
         // Escape regex characters.
         str.insert(pos, "\\");
@@ -170,3 +180,27 @@ auto FileTestBase::filename() -> llvm::StringRef {
 }
 
 }  // namespace Carbon::Testing
+
+auto main(int argc, char** argv) -> int {
+  testing::InitGoogleTest(&argc, argv);
+  llvm::setBugReportMsg(
+      "Please report issues to "
+      "https://github.com/carbon-language/carbon-lang/issues and include the "
+      "crash backtrace.\n");
+  llvm::InitLLVM init_llvm(argc, argv);
+
+  if (argc < 3) {
+    llvm::errs() << "At least one test file must be provided.\n";
+    return EXIT_FAILURE;
+  }
+  if (!llvm::StringRef(argv[1]).ends_with(".subset")) {
+    llvm::errs() << "Unexpected subset target: " << argv[1] << "\n";
+    return EXIT_FAILURE;
+  }
+
+  Carbon::Testing::subset_target = argv[1];
+  std::vector<llvm::StringRef> paths(argv + 2, argv + argc);
+  Carbon::Testing::RegisterFileTests(paths);
+
+  return RUN_ALL_TESTS();
+}

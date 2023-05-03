@@ -4,10 +4,13 @@
 
 #include "testing/file_test/file_test_base.h"
 
-#include <fstream>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
-#include "common/check.h"
-#include "llvm/ADT/Twine.h"
+#include <vector>
+
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -30,13 +33,12 @@ class FileTestBaseTest : public FileTestBase {
 };
 
 }  // namespace
-}  // namespace Carbon::Testing
 
-auto main(int argc, char** argv) -> int {
-  ::testing::InitGoogleTest(&argc, argv);
+auto RegisterFileTests(const std::vector<llvm::StringRef>& paths) -> void {
   Carbon::Testing::FileTestBaseTest::RegisterTests(
-      "FileTestBaseTest", argc, argv, [](llvm::StringRef path) {
+      "FileTestBaseTest", paths, [](llvm::StringRef path) {
         return new Carbon::Testing::FileTestBaseTest(path);
       });
-  return RUN_ALL_TESTS();
 }
+
+}  // namespace Carbon::Testing

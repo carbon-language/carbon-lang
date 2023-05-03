@@ -64,18 +64,17 @@ class ParseAndExecuteTestFile : public FileTestBase {
 };
 
 }  // namespace
-}  // namespace Carbon::Testing
 
-auto main(int argc, char** argv) -> int {
-  ::testing::InitGoogleTest(&argc, argv);
-  using Carbon::Testing::ParseAndExecuteTestFile;
+extern auto RegisterFileTests(const std::vector<llvm::StringRef>& paths)
+    -> void {
   ParseAndExecuteTestFile::RegisterTests(
-      "ParseAndExecuteTestFile", argc, argv, [=](llvm::StringRef path) {
+      "ParseAndExecuteTestFile", paths, [=](llvm::StringRef path) {
         return new ParseAndExecuteTestFile(path, /*trace=*/true);
       });
   ParseAndExecuteTestFile::RegisterTests(
-      "ParseAndExecuteTestFile.debug", argc, argv, [=](llvm::StringRef path) {
+      "ParseAndExecuteTestFile.debug", paths, [=](llvm::StringRef path) {
         return new ParseAndExecuteTestFile(path, /*trace=*/false);
       });
-  return RUN_ALL_TESTS();
 }
+
+}  // namespace Carbon::Testing

@@ -6,7 +6,7 @@
 
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 
-def add_file_tests(name, srcs, deps, tests, shard_count = 1):
+def file_test(name, srcs, deps, tests, shard_count = 1):
     """Generates tests using the file_test base.
 
     There will be one main test using `name` that can be sharded, and includes
@@ -15,37 +15,28 @@ def add_file_tests(name, srcs, deps, tests, shard_count = 1):
 
     Args:
       name: The base name of the tests.
-      srcs: cc_binary srcs.
-      deps: cc_binary deps.
+      srcs: cc_test srcs.
+      deps: cc_test deps.
       tests: The list of test files to use as data.
       shard_count: The number of shards to use; defaults to 1.
     """
-    bin = "{0}.bin".format(name)
+    subset_name = "{0}.subset".format(name)
+    subset_target = str(Label(subset_name))
 
-    # Produce a single binary for all test forms.
-    native.cc_binary(
-        name = bin,
+    native.cc_test(
+        name = name,
         srcs = srcs,
         deps = deps,
-    )
-
-    # There's one main test for files.
-    native_test(
-        name = name,
-        src = bin,
-        out = "{0}.copy".format(bin),
         data = tests,
-        args = ["$(location {0})".format(x) for x in tests],
+        args = [subset_target] + ["$(location {0})".format(x) for x in tests],
         shard_count = shard_count,
     )
 
-    # But we also produce per-file tests that can be run directly.
-    for test in tests:
-        native_test(
-            name = "{0}.{1}".format(name, test),
-            src = bin,
-            out = "{0}.copy.{1}".format(bin, test),
-            data = [test],
-            args = ["$(location {0})".format(test)],
-            tags = ["manual"],
-        )
+    native_test(
+        name = subset_name,
+        src = name,
+        out = subset_name,
+        data = tests,
+        args = [subset_target],
+        tags = ["manual"],
+    )
