@@ -21,14 +21,13 @@ def file_test(name, srcs, deps, tests, shard_count = 1):
       shard_count: The number of shards to use; defaults to 1.
     """
     subset_name = "{0}.subset".format(name)
-    subset_target = str(Label(subset_name))
 
     native.cc_test(
         name = name,
         srcs = srcs,
         deps = deps,
         data = tests,
-        args = [subset_target] + ["$(location {0})".format(x) for x in tests],
+        args = ["$(location {0})".format(x) for x in tests],
         shard_count = shard_count,
     )
 
@@ -37,6 +36,5 @@ def file_test(name, srcs, deps, tests, shard_count = 1):
         src = name,
         out = subset_name,
         data = tests,
-        args = [subset_target],
         tags = ["manual"],
     )

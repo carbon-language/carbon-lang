@@ -12,8 +12,6 @@
 
 namespace Carbon::Testing {
 
-static const char* subset_target = nullptr;
-
 void FileTestBase::RegisterTests(
     const char* fixture_label, const std::vector<llvm::StringRef>& paths,
     std::function<FileTestBase*(llvm::StringRef)> factory) {
@@ -37,12 +35,26 @@ static auto SplitOutput(llvm::StringRef output)
   return std::vector<std::string_view>(lines.begin(), lines.end());
 }
 
+// Returns the name of the subset target.
+static auto GetSubsetTarget() -> std::string {
+  char* name = getenv("TEST_TARGET");
+  if (name == nullptr) {
+    return "<missing TEST_TARGET>";
+  }
+
+  if (llvm::StringRef(name).ends_with(".subset")) {
+    return name;
+  } else {
+    return std::string(name) + ".subset";
+  }
+}
+
 // Runs a test and compares output. This keeps output split by line so that
 // issues are a little easier to identify by the different line.
 auto FileTestBase::TestBody() -> void {
-  CARBON_CHECK(subset_target != nullptr);
   llvm::errs() << "\nTo test this file alone, run:\n  bazel test "
-               << subset_target << " --test_arg=" << path() << "\n\n";
+               << GetSubsetTarget() << " --test_arg=" << path() << "\n\n";
+
   // Load expected output.
   std::vector<testing::Matcher<std::string>> expected_stdout;
   std::vector<testing::Matcher<std::string>> expected_stderr;
@@ -189,17 +201,12 @@ auto main(int argc, char** argv) -> int {
       "crash backtrace.\n");
   llvm::InitLLVM init_llvm(argc, argv);
 
-  if (argc < 3) {
+  if (argc < 2) {
     llvm::errs() << "At least one test file must be provided.\n";
     return EXIT_FAILURE;
   }
-  if (!llvm::StringRef(argv[1]).ends_with(".subset")) {
-    llvm::errs() << "Unexpected subset target: " << argv[1] << "\n";
-    return EXIT_FAILURE;
-  }
 
-  Carbon::Testing::subset_target = argv[1];
-  std::vector<llvm::StringRef> paths(argv + 2, argv + argc);
+  std::vector<llvm::StringRef> paths(argv + 1, argv + argc);
   Carbon::Testing::RegisterFileTests(paths);
 
   return RUN_ALL_TESTS();
