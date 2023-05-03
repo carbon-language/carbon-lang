@@ -6,7 +6,20 @@
 
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 
-def add_file_tests(name, srcs, tests, deps, shard_count = 1):
+def add_file_tests(name, srcs, deps, tests, shard_count = 1):
+    """Generates tests using the file_test base.
+
+    There will be one main test using `name` that can be sharded, and includes
+    all files. Additionally, per-file tests will be generated as
+    `name.file_path`; these per-file tests will be manual.
+
+    Args:
+      name: The base name of the tests.
+      srcs: cc_binary srcs.
+      deps: cc_binary deps.
+      tests: The list of test files to use as data.
+      shard_count: The number of shards to use; defaults to 1.
+    """
     bin = "{0}.bin".format(name)
 
     # Produce a single binary for all test forms.
