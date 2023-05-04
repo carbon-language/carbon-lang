@@ -13,7 +13,8 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
-#include "toolchain/parser/parser.h"
+#include "toolchain/parser/parser_context.h"
+#include "toolchain/parser/parser_handle_states.h"
 
 namespace Carbon {
 
@@ -24,7 +25,29 @@ auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   TokenDiagnosticEmitter emitter(translator, consumer);
 
   // Delegate to the parser.
-  auto tree = Parser::Parse(tokens, emitter, vlog_stream);
+  ParseTree tree(tokens);
+  ParserContext context(tree, tokens, emitter, vlog_stream);
+
+  context.PushState(ParserState::DeclarationScopeLoop);
+
+  // The package should always be the first token, if it's present. Any other
+  // use is invalid.
+  if (context.PositionIs(TokenKind::Package)) {
+    context.PushState(ParserState::Package);
+  }
+
+  while (!context.state_stack().empty()) {
+    switch (context.state_stack().back().state) {
+#define CARBON_PARSER_STATE(Name) \
+  case ParserState::Name:         \
+    ParserHandle##Name(context);  \
+    break;
+#include "toolchain/parser/parser_state.def"
+    }
+  }
+
+  context.AddLeafNode(ParseNodeKind::FileEnd, *context.position());
+
   if (auto verify = tree.Verify(); !verify.ok()) {
     if (vlog_stream) {
       tree.Print(*vlog_stream);
