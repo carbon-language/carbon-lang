@@ -16,7 +16,7 @@
 namespace Carbon::Testing {
 namespace {
 
-TEST(FuzzerUtilTest, ParseAndExecute) {
+TEST(FuzzerUtilTest, ParseAndExecuteProto) {
   const ErrorOr<Fuzzing::Carbon> carbon_proto = ParseCarbonTextProto(R"(
     compilation_unit {
       package_statement { package_name: "P" }
@@ -42,7 +42,7 @@ TEST(FuzzerUtilTest, ParseAndExecute) {
       }
     })");
   ASSERT_TRUE(carbon_proto.ok());
-  const ErrorOr<int> result = ParseAndExecute(*carbon_proto);
+  const ErrorOr<int> result = ParseAndExecuteProto(*carbon_proto);
   ASSERT_TRUE(result.ok()) << "Execution failed: " << result.error();
   EXPECT_EQ(*result, 0);
 }

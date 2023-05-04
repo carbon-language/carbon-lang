@@ -9,15 +9,12 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "common/fuzzing/proto_to_carbon.h"
-#include "explorer/interpreter/exec_program.h"
-#include "explorer/interpreter/trace_stream.h"
-#include "explorer/syntax/parse.h"
-#include "explorer/syntax/prelude.h"
+#include "explorer/parse_and_execute/parse_and_execute.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "tools/cpp/runfiles/runfiles.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 auto GetRunfilesFile(const std::string& file) -> ErrorOr<std::string> {
   using bazel::tools::cpp::runfiles::Runfiles;
@@ -35,26 +32,14 @@ auto GetRunfilesFile(const std::string& file) -> ErrorOr<std::string> {
   return full_path;
 }
 
-auto ParseAndExecute(const Fuzzing::Carbon& carbon) -> ErrorOr<int> {
-  const std::string source = ProtoToCarbon(carbon, /*maybe_add_main=*/true);
-
-  Arena arena;
-  CARBON_ASSIGN_OR_RETURN(AST ast,
-                          ParseFromString(&arena, "Fuzzer.carbon", source,
-                                          /*parser_debug=*/false));
+auto ParseAndExecuteProto(const Fuzzing::Carbon& carbon) -> ErrorOr<int> {
   const ErrorOr<std::string> prelude_path =
       GetRunfilesFile("carbon/explorer/data/prelude.carbon");
   // Can't do anything without a prelude, so it's a fatal error.
   CARBON_CHECK(prelude_path.ok()) << prelude_path.error();
 
-  AddPrelude(*prelude_path, &arena, &ast.declarations,
-             &ast.num_prelude_declarations);
-  TraceStream trace_stream;
-
-  // Use llvm::nulls() to suppress output from the Print intrinsic.
-  CARBON_ASSIGN_OR_RETURN(
-      ast, AnalyzeProgram(&arena, ast, &trace_stream, &llvm::nulls()));
-  return ExecProgram(&arena, ast, &trace_stream, &llvm::nulls());
+  const std::string source = ProtoToCarbon(carbon, /*maybe_add_main=*/true);
+  return ParseAndExecute(*prelude_path, source);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Testing
