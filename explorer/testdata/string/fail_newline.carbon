@@ -10,7 +10,7 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/string/fail_newline.carbon:[[@LINE+2]]: missing closing quote in single-line string: "new
-  // CHECK-EMPTY:
+  // CHECK:STDERR:
   Print("new
 line");
   return 0;
