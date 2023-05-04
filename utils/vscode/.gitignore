@@ -1,0 +1,7 @@
+out
+dist
+node_modules
+.vscode-test/
+*.vsix
+syntaxes/carbon.tmGrammar.yaml
+testdir

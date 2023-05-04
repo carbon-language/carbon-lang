@@ -1,0 +1,89 @@
+{
+    "Create a Function": {
+        "prefix": "function",
+        "body": [
+            "fn ${1:name} {",
+            "   return $2;",
+            "}"
+        ],
+        "description": "Carbon Function: A function is a block of code that can be called from other code. Functions can be used to create custom logic, to handle events, or to create reusable components."
+    },
+    "Class": {
+        "prefix": "class",
+        "body": [
+            "class ${1:name} {",
+            "   var $2;",
+            "};"
+        ],
+        "description": "Carbon Class: A class is a block of code that can be used to create objects. Classes can be used to create reusable components or to serve as a prototype for other objects."
+    },
+    "If Statement": {
+        "prefix": "if",
+        "body": [
+            "if (${1:condition}) {",
+            "   ${2:code}",
+            "}"
+        ],
+        "description": "Carbon If: An if statement is a block of code that is executed if a condition is true."
+    },
+    "Else Statement": {
+        "prefix": "else",
+        "body": [
+            "else {",
+            "   ${1:code}",
+            "}"
+        ],
+        "description": "Carbon Else: An else statement is a block of code that is executed if a condition is false."
+    },
+    "If Else Statement": {
+        "prefix": "ifelse",
+        "body": [
+            "if (${1:condition}) {",
+            "   //${2:code}",
+            "} else {",
+            "   //${3:code}",
+            "}"
+        ],
+        "description": "Carbon If: An if statement is a block of code that is executed if a condition is true. And else block of code is executed when condition is false."
+    },
+    "For Loop": {
+        "prefix": "for",
+        "body": [
+            "for (int $1 = 0; $1 < $2; $1++) {",
+            "\t$3",
+            "}"
+        ],
+        "description": "Creates a for loop"
+    },
+    "While Loop": {
+        "prefix": "while",
+        "body": [
+            "while ($1) {",
+            "\t$2",
+            "}"
+        ],
+        "description": "Creates a while loop"
+    },
+    "Do While Loop": {
+        "prefix": "dowhile",
+        "body": [
+            "do {",
+            "\t$1",
+            "} while ($2);"
+        ],
+        "description": "Creates a do-while loop"
+    },
+     "Switch Statement": {
+    "prefix": "switch",
+    "body": [
+      "switch ($1) {",
+      "\tcase $2:",
+      "\t\t$3",
+      "\t\tbreak;",
+      "\tdefault:",
+      "\t\t$4",
+      "}"
+    ],
+    "description": "Creates a switch statement"
+  }
+}
