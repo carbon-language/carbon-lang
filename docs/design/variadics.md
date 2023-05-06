@@ -11,14 +11,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Statically sized arrays](#statically-sized-arrays)
--   [Overview](#overview)
-    -   [Syntactic semantics](#syntactic-semantics)
-    -   [Reified semantics and pack values](#reified-semantics-and-pack-values)
-    -   [Pattern semantics](#pattern-semantics)
-    -   [Typechecking](#typechecking)
-        -   [Pattern matching](#pattern-matching)
-            -   [Identifying potential matchings](#identifying-potential-matchings)
-            -   [The type-checking algorithm](#the-type-checking-algorithm)
+-   [Basics](#basics)
+-   [Syntactic semantics](#syntactic-semantics)
+-   [Reified semantics and pack values](#reified-semantics-and-pack-values)
+-   [Pattern semantics](#pattern-semantics)
+-   [Typechecking](#typechecking)
+    -   [Pattern matching](#pattern-matching)
+        -   [Identifying potential matchings](#identifying-potential-matchings)
+        -   [The type-checking algorithm](#the-type-checking-algorithm)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -42,9 +42,26 @@ caller a way to bypass deduction with an explicit cast.
 > **TODO:** Complete the design of statically-sized arrays, and move it to a
 > separate document.
 
-## Overview
+## Basics
 
-FIXME from here down, revise to work as a standalone design document.
+This example illustrates many of the key concepts of variadics:
+
+```carbon
+// Takes an arbitrary number of vectors with arbitrary element types, and
+// returns a vector of tuples where the i'th element of the vector is
+// a tuple of the i'th elements of the input vectors.
+fn Zip[ElementTypes:! [type;]]
+      (..., vectors: Vector([:]ElementTypes))
+      -> Vector((..., [:]ElementTypes)) {
+  var iters: auto = (..., vectors.Begin());
+  var result: Vector((..., [:]ElementTypes));
+  while (...and [:]iters != vectors.End()) {
+    result.push_back((..., *[:]iters));
+    ...{ ([:]iters)++; }
+  }
+  return result;
+}
+```
 
 `...,`, `...and`, and `...or` are prefix unary expression operators with the
 same precedence as `,`, `and`, and `or`, respectively. They are single tokens,
@@ -54,14 +71,18 @@ rooted at any of these operations is called a _pack expansion_.
 
 A pack expansion must contain one or more _expansion arguments_. These are
 usually marked by the `[:]` operator, but can also be unmarked usages of names
-that have pack types (which will be defined below). The _arity_ of an expansion
-argument is a compile-time value representing the number of elements it
-evaluates to. Every pack expansion must contain at least one expansion argument,
-and all arguments of a given expansion must have the same arity (which we will
-also refer to as the arity of the expansion). If any expansion argument is a
-non-expression pattern, the entire pack expansion is a pattern. In particular,
-this means that the expansion arguments of a `...{` expansion must be
-expressions.
+that have `[:]` in the type (called pack types). For example, in the body of
+`Zip`, the loop condition `...and [:]iters != vectors.End()` is a pack expansion
+with two arguments: `[:]iters` is explicitly marked as an argument, and
+`vectors` is an argument because its type is `Vector([:]ElementTypes)`.
+
+The _arity_ of an expansion argument is a compile-time value representing the
+number of elements it evaluates to. Every pack expansion must contain at least
+one expansion argument, and all arguments of a given expansion must have the
+same arity (which we will also refer to as the arity of the expansion). If any
+expansion argument is a non-expression pattern, the entire pack expansion is a
+pattern. In particular, this means that the expansion arguments of a `...{`
+expansion must be expressions.
 
 > **Open question:** Is it possible to drop that requirement, and support code
 > like `let [:]x: ElementTypes = *[:]iters;` within a `...{` expansion?
@@ -109,7 +130,7 @@ they are inherently symbolic.
 > consist of instantiating a series of copies of the code, where the symbolic
 > pack index is replaced with successive integer constants.
 
-### Syntactic semantics
+## Syntactic semantics
 
 In the syntactic model, the semantics of packs and pack expansions are specified
 in terms of a procedure for rewriting an AST rooted at `...{`, `...,`, `...and`,
@@ -134,7 +155,7 @@ expansion with arity 0 is rewritten to `false` (the identities of the respective
 logical operations). A `...,` expansion with arity 0 is rewritten to `,`, and
 any `,` immediately before or after the expansion is removed.
 
-### Reified semantics and pack values
+## Reified semantics and pack values
 
 We can intuitively think of packs as being much like tuples. For every tuple
 value there is a corresponding pack value, and the other way around, but the two
@@ -267,7 +288,7 @@ type. No other leaf AST node can evaluate to a pack value.
 A tuple cannot be indexed unless all of its components are scalar. There is no
 syntax for indexing into a pack.
 
-### Pattern semantics
+## Pattern semantics
 
 Pack expansions can also appear in patterns. The semantics are chosen to follow
 the general principle that pattern matching is the inverse of expression
@@ -298,15 +319,14 @@ the operand pattern matches a tuple consisting of the elements of the scrutinee
 pack.
 
 Other kinds of patterns cannot have a pack type or pack-type operands, and
-cannot match a pack scrutinee. Consequently, they are unchanged by this
-proposal.
+cannot match a pack scrutinee.
 
 > **Future work:** It is probably possible to define a rule that generalizes
 > other kinds of patterns to support variadics. However, we don't yet have
 > motivating use cases for that, and it appears that in many if not most cases
 > such patterns would be refutable, which substantially limits their usefulness.
 
-### Typechecking
+## Typechecking
 
 Variadic typechecking for expressions follows the reified model, but applied to
 the types of expressions instead of the values of expressions. For example, for
@@ -336,7 +356,7 @@ shape. If the parent statement is a `...{}` block, it will have type `()` (and
 there must be at least one child with a pack type), and otherwise its type will
 be the shape of the pack-type children (or `()` if there are none).
 
-#### Pattern matching
+### Pattern matching
 
 Typechecking for a pattern matching operation proceeds in three phases:
 
@@ -348,15 +368,15 @@ If the pattern appears in a context that requires it to be irrefutable, such as
 the parameter list of a function declaration, phase 3 ensures that the pattern
 can match _any_ possible value of the scrutinee expression. Otherwise, it
 ensures that the pattern can match _some_ possible value of the scrutinee
-expression. For simplicity, this proposal will focus on the rules for the first
-case, since it's by far the most important for variadics.
+expression. For simplicity, we currently only support variadic pattern matching
+in contexts that require irrefutability.
 
-FUTURE WORK: specify rules for refutable matching of variadics, for example to
-support C++-style recursive variadics.
+> **Future work:** specify rules for refutable matching of variadics, for
+> example to support C++-style recursive variadics.
 
 Phases 1 and 2 were described earlier, so we only need to describe phase 3. We
-will focus on the forms of symbolic type that are introduced or modified in this
-proposal: array types, tuple types, and pack types.
+will focus on the forms of symbolic type that are most relevant to variadics:
+array types, tuple types, and pack types.
 
 An array type pattern `[T; N]` matches an array type scrutinee `[U; M]` if `T`
 matches `U` and `N` matches `M`. It can also match a tuple scrutinee type if the
@@ -420,7 +440,7 @@ starting with `Q` (corresponding to the cases where `x` and/or `z` are empty).
 Extending the type system to support deduction that splits into multiple cases
 would add a fearsome amount of complexity to the type system.
 
-##### Identifying potential matchings
+#### Identifying potential matchings
 
 Our solution will rely on being able to identify which pattern pack components
 can potentially match which scrutinee pack components. We can do so as follows:
@@ -497,7 +517,7 @@ matches for a symbolic argument $E$ as follows:
         earlier trailing parameters, and the variadic parameter.
 -   Otherwise, $E$ can only match the variadic parameter.
 
-##### The type-checking algorithm
+#### The type-checking algorithm
 
 In order to avoid type deduction that splits into multiple cases, we require
 that if the variadic parameter's type involves a deduced value that is used in
@@ -507,11 +527,11 @@ defined in the previous section). This ensures that each symbolic argument can
 only match one parameter, and so type deduction deterministically produces a
 single result.
 
-> **Open question:** Is that restriction too strict? If so, it may be possible
-> to forbid only situations that would actually cause type deduction to split
-> into multiple cases. As well as being much less restrictive, that would avoid
-> the need to give special treatment to deduced arrays that are used only once.
-> It would still disallow cases like the call to `H` above, but that call seems
+> **Open question:** Is that restriction too strict? If so, is it possible to
+> forbid only situations that would actually cause type deduction to split into
+> multiple cases. As well as being much less restrictive, that would avoid the
+> need to give special treatment to deduced arrays that are used only once. It
+> would still disallow cases like the call to `H` above, but that call seems
 > unnatural for reasons that seem closely related to the fact that its type
 > splits into cases.
 
