@@ -31,23 +31,11 @@ cc_library(
         "parse_tree.cpp",
         "parser_context.cpp",
         "parser_context.h",
-        "parser_handle_brace_expression.cpp",
-        "parser_handle_call_expression.cpp",
-        "parser_handle_code_block.cpp",
-        "parser_handle_declaration_name_and_params.cpp",
-        "parser_handle_declaration_scope_loop.cpp",
-        "parser_handle_designator.cpp",
-        "parser_handle_expression.cpp",
-        "parser_handle_function.cpp",
-        "parser_handle_package.cpp",
-        "parser_handle_parameter.cpp",
-        "parser_handle_paren_condition.cpp",
-        "parser_handle_paren_expression.cpp",
-        "parser_handle_pattern.cpp",
-        "parser_handle_statement.cpp",
-        "parser_handle_type.cpp",
-        "parser_handle_var.cpp",
-    ],
+    ] +
+    # Glob handler files to avoid missing anyway.
+    glob([
+        "parser_handle_*.cpp",
+    ]),
     hdrs = ["parse_tree.h"],
     deps = [
         ":parse_node_kind",
