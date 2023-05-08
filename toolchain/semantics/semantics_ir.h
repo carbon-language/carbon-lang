@@ -10,10 +10,6 @@
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon::Testing {
-class SemanticsIRForTest;
-}  // namespace Carbon::Testing
-
 namespace Carbon {
 
 // A call.
@@ -84,57 +80,6 @@ class SemanticsIR {
   }
   auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
 
-  // Returns the requested callable.
-  auto GetCallable(SemanticsCallableId callable_id) const -> SemanticsCallable {
-    return callables_[callable_id.index];
-  }
-
-  // Returns the requested integer literal.
-  auto GetIntegerLiteral(SemanticsIntegerLiteralId int_id) const
-      -> const llvm::APInt& {
-    return integer_literals_[int_id.index];
-  }
-
-  // Returns the requested node.
-  auto GetNode(SemanticsNodeId node_id) const -> SemanticsNode {
-    return nodes_[node_id.index];
-  }
-
-  // Returns the requested node block.
-  auto GetNodeBlock(SemanticsNodeBlockId block_id) const
-      -> const llvm::SmallVector<SemanticsNodeId>& {
-    return node_blocks_[block_id.index];
-  }
-
-  // Returns the requested real literal.
-  auto GetRealLiteral(SemanticsRealLiteralId int_id) const
-      -> const SemanticsRealLiteral& {
-    return real_literals_[int_id.index];
-  }
-
-  // Returns the requested string.
-  auto GetString(SemanticsStringId string_id) const -> llvm::StringRef {
-    return strings_[string_id.index];
-  }
-
-  auto nodes_size() const -> int { return nodes_.size(); }
-
-  auto top_node_block_id() const -> SemanticsNodeBlockId {
-    return top_node_block_id_;
-  }
-
-  // Returns true if there were errors creating the semantics IR.
-  auto has_errors() const -> bool { return has_errors_; }
-
- private:
-  friend class SemanticsParseTreeHandler;
-
-  explicit SemanticsIR(const SemanticsIR* builtin_ir)
-      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {
-    // For SemanticsNodeBlockId::Empty.
-    node_blocks_.resize(1);
-  }
-
   // Adds a call, returning an ID to reference it.
   auto AddCall(SemanticsCall call) -> SemanticsCallId {
     SemanticsCallId id(calls_.size());
@@ -149,12 +94,23 @@ class SemanticsIR {
     return id;
   }
 
+  // Returns the requested callable.
+  auto GetCallable(SemanticsCallableId callable_id) const -> SemanticsCallable {
+    return callables_[callable_id.index];
+  }
+
   // Adds an integer literal, returning an ID to reference it.
   auto AddIntegerLiteral(llvm::APInt integer_literal)
       -> SemanticsIntegerLiteralId {
     SemanticsIntegerLiteralId id(integer_literals_.size());
     integer_literals_.push_back(integer_literal);
     return id;
+  }
+
+  // Returns the requested integer literal.
+  auto GetIntegerLiteral(SemanticsIntegerLiteralId int_id) const
+      -> const llvm::APInt& {
+    return integer_literals_[int_id.index];
   }
 
   // Adds a node to a specified block, returning an ID to reference the node.
@@ -166,14 +122,18 @@ class SemanticsIR {
     return node_id;
   }
 
-  // Adds an empty new node block, returning an ID to reference it and add
-  // items.
-  auto AddNodeBlock() -> SemanticsNodeBlockId {
-    SemanticsNodeBlockId id(node_blocks_.size());
-    node_blocks_.resize(node_blocks_.size() + 1);
-    return id;
+  // Returns the requested node.
+  auto GetNode(SemanticsNodeId node_id) const -> SemanticsNode {
+    return nodes_[node_id.index];
   }
 
+  // Returns the requested node block.
+  auto GetNodeBlock(SemanticsNodeBlockId block_id) const
+      -> const llvm::SmallVector<SemanticsNodeId>& {
+    return node_blocks_[block_id.index];
+  }
+
+  // Returns the requested node block.
   auto GetNodeBlock(SemanticsNodeBlockId block_id)
       -> llvm::SmallVector<SemanticsNodeId>& {
     return node_blocks_[block_id.index];
@@ -185,6 +145,12 @@ class SemanticsIR {
     SemanticsRealLiteralId id(real_literals_.size());
     real_literals_.push_back(real_literal);
     return id;
+  }
+
+  // Returns the requested real literal.
+  auto GetRealLiteral(SemanticsRealLiteralId int_id) const
+      -> const SemanticsRealLiteral& {
+    return real_literals_[int_id.index];
   }
 
   // Adds an string, returning an ID to reference it.
@@ -201,6 +167,11 @@ class SemanticsIR {
     return id;
   }
 
+  // Returns the requested string.
+  auto GetString(SemanticsStringId string_id) const -> llvm::StringRef {
+    return strings_[string_id.index];
+  }
+
   // Returns an ID for the string if it's previously been stored.
   auto GetStringID(llvm::StringRef str) -> std::optional<SemanticsStringId> {
     auto str_find = string_to_id_.find(str);
@@ -212,6 +183,27 @@ class SemanticsIR {
 
   // Produces a string version of a node.
   auto StringifyNode(SemanticsNodeId node_id) -> std::string;
+
+  auto nodes_size() const -> int { return nodes_.size(); }
+
+  // The node blocks, for direct mutation.
+  auto node_blocks() -> llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>>& {
+    return node_blocks_;
+  }
+
+  auto top_node_block_id() const -> SemanticsNodeBlockId {
+    return top_node_block_id_;
+  }
+
+  // Returns true if there were errors creating the semantics IR.
+  auto has_errors() const -> bool { return has_errors_; }
+
+ private:
+  explicit SemanticsIR(const SemanticsIR* builtin_ir)
+      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {
+    // For SemanticsNodeBlockId::Empty.
+    node_blocks_.resize(1);
+  }
 
   bool has_errors_ = false;
 
