@@ -193,7 +193,7 @@ class SemanticsContext {
   }
 
   auto finished_params_stack() -> llvm::SmallVector<
-      std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId>> {
+      std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId>>& {
     return finished_params_stack_;
   }
 
