@@ -17,6 +17,42 @@
 
 namespace Carbon {
 
+SemanticsContext::SemanticsContext(const TokenizedBuffer& tokens,
+                                   DiagnosticEmitter<ParseTree::Node>& emitter,
+                                   const ParseTree& parse_tree,
+                                   SemanticsIR& semantics,
+                                   llvm::raw_ostream* vlog_stream)
+    : tokens_(&tokens),
+      emitter_(&emitter),
+      parse_tree_(&parse_tree),
+      semantics_(&semantics),
+      vlog_stream_(vlog_stream),
+      node_stack_(parse_tree, vlog_stream),
+      node_block_stack_("node_block_stack_", semantics.node_blocks(),
+                        vlog_stream),
+      params_or_args_stack_("params_or_args_stack_", semantics.node_blocks(),
+                            vlog_stream),
+      args_type_info_stack_("args_type_info_stack_", semantics.node_blocks(),
+                            vlog_stream) {}
+
+auto SemanticsContext::TODO(ParseTree::Node parse_node, std::string label)
+    -> bool {
+  CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: {0}", std::string);
+  emitter_->Emit(parse_node, SemanticsTodo, std::move(label));
+  return false;
+}
+
+auto SemanticsContext::VerifyOnFinish() -> void {
+  // Information in all the various context objects should be cleaned up as
+  // various pieces of context go out of scope. At this point, nothing should
+  // remain.
+  // node_stack_ will still contain top-level entities.
+  CARBON_CHECK(name_lookup_.empty()) << name_lookup_.size();
+  CARBON_CHECK(scope_stack_.empty()) << scope_stack_.size();
+  CARBON_CHECK(node_block_stack_.empty()) << node_block_stack_.size();
+  CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
+}
+
 auto SemanticsContext::AddNode(SemanticsNode node) -> SemanticsNodeId {
   auto block = node_block_stack_.PeekForAdd();
   CARBON_VLOG() << "AddNode " << block << ": " << node << "\n";
@@ -61,6 +97,45 @@ auto SemanticsContext::BindName(ParseTree::Node name_node,
       SemanticsNode::BindName::Make(name_node, type_id, name_id, target_id));
   AddNameToLookup(name_node, name_id, target_id);
   return name_id;
+}
+
+auto SemanticsContext::TempRemoveLatestNameFromLookup() -> SemanticsNodeId {
+  // Save the storage ID.
+  auto it = name_lookup_.find(
+      node_stack_.PeekForNameId(ParseNodeKind::PatternBinding));
+  CARBON_CHECK(it != name_lookup_.end());
+  CARBON_CHECK(!it->second.empty());
+  auto storage_id = it->second.back();
+
+  // Pop the name from lookup.
+  if (it->second.size() == 1) {
+    // Erase names that no longer resolve.
+    name_lookup_.erase(it);
+  } else {
+    it->second.pop_back();
+  }
+  return storage_id;
+}
+
+auto SemanticsContext::LookupName(ParseTree::Node parse_node,
+                                  llvm::StringRef name) -> SemanticsNodeId {
+  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name {0} not found", llvm::StringRef);
+
+  auto name_id = semantics_->GetStringID(name);
+  if (!name_id) {
+    emitter_->Emit(parse_node, NameNotFound, name);
+    return SemanticsNodeId::BuiltinInvalidType;
+  }
+
+  auto it = name_lookup_.find(*name_id);
+  if (it == name_lookup_.end()) {
+    emitter_->Emit(parse_node, NameNotFound, name);
+    return SemanticsNodeId::BuiltinInvalidType;
+  }
+  CARBON_CHECK(!it->second.empty()) << "Should have been erased: " << name;
+
+  // TODO: Check for ambiguous lookups.
+  return it->second.back();
 }
 
 auto SemanticsContext::PushScope() -> void { scope_stack_.push_back({}); }
@@ -278,6 +353,14 @@ auto SemanticsContext::ParamOrArgSave(bool for_args) -> void {
   auto& params_or_args =
       semantics_->GetNodeBlock(params_or_args_stack_.PeekForAdd());
   params_or_args.push_back(param_or_arg_id);
+}
+
+auto SemanticsContext::PrintForStackDump(llvm::raw_ostream& output) const
+    -> void {
+  node_stack_.PrintForStackDump(output);
+  node_block_stack_.PrintForStackDump(output);
+  params_or_args_stack_.PrintForStackDump(output);
+  args_type_info_stack_.PrintForStackDump(output);
 }
 
 }  // namespace Carbon

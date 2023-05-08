@@ -21,65 +21,6 @@ auto SemanticsHandleBreakStatementStart(SemanticsContext& context,
   return context.TODO(parse_node, "HandleBreakStatementStart");
 }
 
-auto SemanticsHandleCallExpression(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
-  auto [ir_id, refs_id] = context.ParamOrArgEnd(
-      /*for_args=*/true, ParseNodeKind::CallExpressionStart);
-
-  // TODO: Convert to call expression.
-  auto [call_expr_parse_node, name_id] =
-      context.node_stack().PopForParseNodeAndNodeId(
-          ParseNodeKind::CallExpressionStart);
-  auto name_node = context.semantics().GetNode(name_id);
-  if (name_node.kind() != SemanticsNodeKind::FunctionDeclaration) {
-    // TODO: Work on error.
-    context.TODO(parse_node, "Not a callable name");
-    context.node_stack().Push(parse_node, name_id);
-    return true;
-  }
-
-  auto [_, callable_id] = name_node.GetAsFunctionDeclaration();
-  auto callable = context.semantics().GetCallable(callable_id);
-
-  CARBON_DIAGNOSTIC(NoMatchingCall, Error, "No matching callable was found.");
-  auto diagnostic =
-      context.emitter().Build(call_expr_parse_node, NoMatchingCall);
-  if (!context.ImplicitAsForArgs(ir_id, refs_id, name_node.parse_node(),
-                                 callable.param_refs_id, &diagnostic)) {
-    diagnostic.Emit();
-    context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinInvalidType);
-    return true;
-  }
-
-  CARBON_CHECK(context.ImplicitAsForArgs(ir_id, refs_id, name_node.parse_node(),
-                                         callable.param_refs_id,
-                                         /*diagnostic=*/nullptr));
-
-  auto call_id = context.semantics().AddCall({ir_id, refs_id});
-  // TODO: Propagate return types from callable.
-  auto call_node_id = context.AddNode(SemanticsNode::Call::Make(
-      call_expr_parse_node, callable.return_type_id, call_id, callable_id));
-
-  context.node_stack().Push(parse_node, call_node_id);
-  return true;
-}
-
-auto SemanticsHandleCallExpressionComma(SemanticsContext& context,
-                                        ParseTree::Node /*parse_node*/)
-    -> bool {
-  context.ParamOrArgComma(/*for_args=*/true);
-  return true;
-}
-
-auto SemanticsHandleCallExpressionStart(SemanticsContext& context,
-                                        ParseTree::Node parse_node) -> bool {
-  auto name_id =
-      context.node_stack().PopForNodeId(ParseNodeKind::NameReference);
-  context.node_stack().Push(parse_node, name_id);
-  context.ParamOrArgStart();
-  return true;
-}
-
 auto SemanticsHandleClassDeclaration(SemanticsContext& context,
                                      ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleClassDeclaration");
@@ -238,74 +179,6 @@ auto SemanticsHandleForStatement(SemanticsContext& context,
   return context.TODO(parse_node, "HandleForStatement");
 }
 
-auto SemanticsHandleFunctionDeclaration(SemanticsContext& context,
-                                        ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleFunctionDeclaration");
-}
-
-auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
-                                       ParseTree::Node parse_node) -> bool {
-  // Merges code block children up under the FunctionDefinitionStart.
-  while (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
-         ParseNodeKind::FunctionDefinitionStart) {
-    context.node_stack().PopAndIgnore();
-  }
-  auto decl_id =
-      context.node_stack().PopForNodeId(ParseNodeKind::FunctionDefinitionStart);
-
-  context.return_scope_stack().pop_back();
-  context.PopScope();
-  auto block_id = context.node_block_stack().Pop();
-  context.AddNode(
-      SemanticsNode::FunctionDefinition::Make(parse_node, decl_id, block_id));
-  context.node_stack().Push(parse_node);
-
-  return true;
-}
-
-auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
-                                            ParseTree::Node parse_node)
-    -> bool {
-  SemanticsNodeId return_type_id = SemanticsNodeId::Invalid;
-  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
-      ParseNodeKind::ReturnType) {
-    return_type_id =
-        context.node_stack().PopForNodeId(ParseNodeKind::ReturnType);
-  }
-  context.node_stack().PopForSoloParseNode(ParseNodeKind::ParameterList);
-  auto [param_ir_id, param_refs_id] =
-      context.finished_params_stack().pop_back_val();
-  auto name_node =
-      context.node_stack().PopForSoloParseNode(ParseNodeKind::DeclaredName);
-  auto fn_node = context.node_stack().PopForSoloParseNode(
-      ParseNodeKind::FunctionIntroducer);
-
-  auto name_str = context.parse_tree().GetNodeText(name_node);
-  auto name_id = context.semantics().AddString(name_str);
-
-  auto callable_id =
-      context.semantics().AddCallable({.param_ir_id = param_ir_id,
-                                       .param_refs_id = param_refs_id,
-                                       .return_type_id = return_type_id});
-  auto decl_id = context.AddNode(
-      SemanticsNode::FunctionDeclaration::Make(fn_node, name_id, callable_id));
-  context.AddNameToLookup(name_node, name_id, decl_id);
-
-  context.node_block_stack().Push();
-  context.PushScope();
-  context.return_scope_stack().push_back(decl_id);
-  context.node_stack().Push(parse_node, decl_id);
-
-  return true;
-}
-
-auto SemanticsHandleFunctionIntroducer(SemanticsContext& context,
-                                       ParseTree::Node parse_node) -> bool {
-  // No action, just a bracketing node.
-  context.node_stack().Push(parse_node);
-  return true;
-}
-
 auto SemanticsHandleGenericPatternBinding(SemanticsContext& context,
                                           ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "GenericPatternBinding");
@@ -445,7 +318,7 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
 auto SemanticsHandleNameReference(SemanticsContext& context,
                                   ParseTree::Node parse_node) -> bool {
   auto name = context.parse_tree().GetNodeText(parse_node);
-  context.node_stack().Push(parse_node, context.Lookup(parse_node, name));
+  context.node_stack().Push(parse_node, context.LookupName(parse_node, name));
   return true;
 }
 

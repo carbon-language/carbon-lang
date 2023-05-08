@@ -23,44 +23,13 @@ class SemanticsContext {
   explicit SemanticsContext(const TokenizedBuffer& tokens,
                             DiagnosticEmitter<ParseTree::Node>& emitter,
                             const ParseTree& parse_tree, SemanticsIR& semantics,
-                            llvm::raw_ostream* vlog_stream)
-      : tokens_(&tokens),
-        emitter_(&emitter),
-        parse_tree_(&parse_tree),
-        semantics_(&semantics),
-        vlog_stream_(vlog_stream),
-        node_stack_(parse_tree, vlog_stream),
-        node_block_stack_("node_block_stack_", semantics.node_blocks(),
-                          vlog_stream),
-        params_or_args_stack_("params_or_args_stack_", semantics.node_blocks(),
-                              vlog_stream),
-        args_type_info_stack_("args_type_info_stack_", semantics.node_blocks(),
-                              vlog_stream) {}
+                            llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
-  auto TODO(ParseTree::Node parse_node, std::string label) -> bool {
-    CARBON_DIAGNOSTIC(SemanticsTodo, Error, "Semantics TODO: {0}", std::string);
-    emitter_->Emit(parse_node, SemanticsTodo, std::move(label));
-    return false;
-  }
+  auto TODO(ParseTree::Node parse_node, std::string label) -> bool;
 
   // Runs verification that the processing cleanly finished.
-  auto VerifyOnFinish() -> void {
-    // Information in all the various context objects should be cleaned up as
-    // various pieces of context go out of scope. At this point, nothing should
-    // remain.
-    // node_stack_ will still contain top-level entities.
-    CARBON_CHECK(name_lookup_.empty()) << name_lookup_.size();
-    CARBON_CHECK(scope_stack_.empty()) << scope_stack_.size();
-    CARBON_CHECK(node_block_stack_.empty()) << node_block_stack_.size();
-    CARBON_CHECK(params_or_args_stack_.empty()) << params_or_args_stack_.size();
-  }
-
-  // Pushes a new scope onto scope_stack_.
-  auto PushScope() -> void;
-
-  // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
-  auto PopScope() -> void;
+  auto VerifyOnFinish() -> void;
 
   // Adds a node to the current block, returning the produced ID.
   auto AddNode(SemanticsNode node) -> SemanticsNodeId;
@@ -68,6 +37,35 @@ class SemanticsContext {
   // Pushes a parse tree node onto the stack, storing the SemanticsNode as the
   // result.
   auto AddNodeAndPush(ParseTree::Node parse_node, SemanticsNode node) -> void;
+
+  // Adds a name to name lookup.
+  auto AddNameToLookup(ParseTree::Node name_node, SemanticsStringId name_id,
+                       SemanticsNodeId target_id) -> void;
+
+  // Binds a DeclaredName to a target node with the given type.
+  auto BindName(ParseTree::Node name_node, SemanticsNodeId type_id,
+                SemanticsNodeId target_id) -> SemanticsStringId;
+
+  // Temporarily remove name lookup entries added by the `var`. These will be
+  // restored by `VariableDeclaration` using `ReaddNameToLookup`.
+  auto TempRemoveLatestNameFromLookup() -> SemanticsNodeId;
+
+  // Re-adds a name to name lookup. This is typically done through BindName, but
+  // can also be used to restore removed names.
+  auto ReaddNameToLookup(SemanticsStringId name_id, SemanticsNodeId storage_id)
+      -> void {
+    name_lookup_[name_id].push_back(storage_id);
+  }
+
+  // Lookup up a name, returning the referenced node.
+  auto LookupName(ParseTree::Node parse_node, llvm::StringRef name)
+      -> SemanticsNodeId;
+
+  // Pushes a new scope onto scope_stack_.
+  auto PushScope() -> void;
+
+  // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
+  auto PopScope() -> void;
 
   // Runs ImplicitAsImpl for a set of arguments and parameters.
   //
@@ -109,70 +107,7 @@ class SemanticsContext {
   auto ParamOrArgSave(bool for_args) -> void;
 
   // Prints information for a stack dump.
-  auto PrintForStackDump(llvm::raw_ostream& output) const -> void {
-    node_stack_.PrintForStackDump(output);
-    node_block_stack_.PrintForStackDump(output);
-    params_or_args_stack_.PrintForStackDump(output);
-    args_type_info_stack_.PrintForStackDump(output);
-  }
-
-  // Adds a name to name lookup.
-  auto AddNameToLookup(ParseTree::Node name_node, SemanticsStringId name_id,
-                       SemanticsNodeId target_id) -> void;
-
-  // Temporarily remove name lookup entries added by the `var`. These will be
-  // restored by `VariableDeclaration` using `ReaddNameToLookup`.
-  auto TempRemoveLatestNameFromLookup() -> SemanticsNodeId {
-    // Save the storage ID.
-    auto it = name_lookup_.find(
-        node_stack_.PeekForNameId(ParseNodeKind::PatternBinding));
-    CARBON_CHECK(it != name_lookup_.end());
-    CARBON_CHECK(!it->second.empty());
-    auto storage_id = it->second.back();
-
-    // Pop the name from lookup.
-    if (it->second.size() == 1) {
-      // Erase names that no longer resolve.
-      name_lookup_.erase(it);
-    } else {
-      it->second.pop_back();
-    }
-    return storage_id;
-  }
-
-  // Re-adds a name to name lookup. This is typically done through BindName, but
-  // can also be used to restore removed names.
-  auto ReaddNameToLookup(SemanticsStringId name_id, SemanticsNodeId storage_id)
-      -> void {
-    name_lookup_[name_id].push_back(storage_id);
-  }
-
-  // Lookup up a name, returning the referenced node.
-  auto Lookup(ParseTree::Node parse_node, llvm::StringRef name)
-      -> SemanticsNodeId {
-    CARBON_DIAGNOSTIC(NameNotFound, Error, "Name {0} not found",
-                      llvm::StringRef);
-
-    auto name_id = semantics_->GetStringID(name);
-    if (!name_id) {
-      emitter_->Emit(parse_node, NameNotFound, name);
-      return SemanticsNodeId::BuiltinInvalidType;
-    }
-
-    auto it = name_lookup_.find(*name_id);
-    if (it == name_lookup_.end()) {
-      emitter_->Emit(parse_node, NameNotFound, name);
-      return SemanticsNodeId::BuiltinInvalidType;
-    }
-    CARBON_CHECK(!it->second.empty()) << "Should have been erased: " << name;
-
-    // TODO: Check for ambiguous lookups.
-    return it->second.back();
-  }
-
-  // Binds a DeclaredName to a target node with the given type.
-  auto BindName(ParseTree::Node name_node, SemanticsNodeId type_id,
-                SemanticsNodeId target_id) -> SemanticsStringId;
+  auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
   auto tokens() -> const TokenizedBuffer& { return *tokens_; }
 

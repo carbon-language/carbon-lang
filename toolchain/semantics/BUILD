@@ -70,7 +70,7 @@ cc_library(
     ] +
     # Glob handler files to avoid missing anyway.
     glob([
-        "semantics_handle_*.cpp",
+        "semantics_handle*.cpp",
     ]),
     hdrs = [
         "semantics_context.h",
