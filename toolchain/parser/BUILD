@@ -45,7 +45,6 @@ cc_library(
         "parser_handle_paren_expression.cpp",
         "parser_handle_pattern.cpp",
         "parser_handle_statement.cpp",
-        "parser_handle_states.h",
         "parser_handle_type.cpp",
         "parser_handle_var.cpp",
     ],

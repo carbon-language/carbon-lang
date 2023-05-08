@@ -296,11 +296,11 @@ class ParserContext {
   llvm::SmallVector<StateStackEntry> state_stack_;
 };
 
-// Parses the tokens into a parse tree, emitting any errors encountered.
-//
-// This is the entry point to the parser implementation.
-auto Parse(TokenizedBuffer& tokens, TokenDiagnosticEmitter& emitter,
-           llvm::raw_ostream* vlog_stream) -> ParseTree;
+// `clang-format` has a bug with spacing around `->` returns in macros. See
+// https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
+#define CARBON_PARSER_STATE(Name) \
+  auto ParserHandle##Name(ParserContext& context)->void;
+#include "toolchain/parser/parser_state.def"
 
 // The diagnostics below may be emitted a couple different ways as part of
 // operator parsing.

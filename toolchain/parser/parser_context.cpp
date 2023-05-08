@@ -13,7 +13,6 @@
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parse_tree.h"
-#include "toolchain/parser/parser_handle_states.h"
 
 namespace Carbon {
 
