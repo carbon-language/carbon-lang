@@ -39,9 +39,6 @@ class ParserContext {
     NamedConstraint,
   };
 
-  // Helper class for tracing state_stack_ on crashes.
-  class PrettyStackTraceParseState;
-
   // Used to track state on state_stack_.
   struct StateStackEntry {
     explicit StateStackEntry(ParserState state,

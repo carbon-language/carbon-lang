@@ -9,7 +9,6 @@
 #include <optional>
 
 #include "common/check.h"
-#include "llvm/Support/PrettyStackTrace.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
@@ -41,36 +40,6 @@ static auto operator<<(llvm::raw_ostream& out, RelativeLocation loc)
   }
   return out;
 }
-
-class PrettyStackTraceParseState : public llvm::PrettyStackTraceEntry {
- public:
-  explicit PrettyStackTraceParseState(const ParserContext* context)
-      : context_(context) {}
-  ~PrettyStackTraceParseState() override = default;
-
-  auto print(llvm::raw_ostream& output) const -> void override {
-    output << "Parser stack:\n";
-    for (int i = 0; i < static_cast<int>(context_->state_stack().size()); ++i) {
-      const auto& entry = context_->state_stack()[i];
-      output << "\t" << i << ".\t" << entry.state;
-      Print(output, entry.token);
-    }
-    output << "\tcursor\tposition_";
-    Print(output, *context_->position());
-  }
-
- private:
-  auto Print(llvm::raw_ostream& output, TokenizedBuffer::Token token) const
-      -> void {
-    auto line = context_->tokens().GetLine(token);
-    output << " @ " << context_->tokens().GetLineNumber(line) << ":"
-           << context_->tokens().GetColumnNumber(token) << ":"
-           << " token " << token << " : " << context_->tokens().GetKind(token)
-           << "\n";
-  }
-
-  const ParserContext* context_;
-};
 
 ParserContext::ParserContext(ParseTree& tree, TokenizedBuffer& tokens,
                              TokenDiagnosticEmitter& emitter,
