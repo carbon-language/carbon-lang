@@ -42,10 +42,9 @@ class FileTestBaseTest : public FileTestBase {
 }  // namespace
 
 auto RegisterFileTests(const std::vector<llvm::StringRef>& paths) -> void {
-  Carbon::Testing::FileTestBaseTest::RegisterTests(
-      "FileTestBaseTest", paths, [](llvm::StringRef path) {
-        return new Carbon::Testing::FileTestBaseTest(path);
-      });
+  FileTestBaseTest::RegisterTests(
+      "FileTestBaseTest", paths,
+      [](llvm::StringRef path) { return new FileTestBaseTest(path); });
 }
 
 }  // namespace Carbon::Testing
