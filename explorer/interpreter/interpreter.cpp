@@ -944,9 +944,15 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
 
   // TODO: move this logic into PatternMatch, and call it here.
   const auto* p = &method.self_pattern().value();
-  const auto& placeholder = cast<BindingPlaceholderValue>(*p);
-  if (placeholder.value_node().has_value()) {
-    method_scope.Bind(*placeholder.value_node(), receiver);
+  const auto* placeholder = dyn_cast<BindingPlaceholderValue>(p);
+  if (!placeholder) {
+    // TODO: Fix this, probably merging logic with CallFunction.
+    // https://github.com/carbon-language/carbon-lang/issues/2802
+    return ProgramError(fun->source_loc())
+           << "destructors currently don't support `addr self` bindings";
+  }
+  if (placeholder->value_node().has_value()) {
+    method_scope.Bind(*placeholder->value_node(), receiver);
   }
   CARBON_CHECK(method.body().has_value())
       << "Calling a method that's missing a body";

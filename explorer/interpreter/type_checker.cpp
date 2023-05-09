@@ -2685,16 +2685,9 @@ auto TypeChecker::CheckAddrMeAccess(
   return Success();
 }
 
+// NOLINTNEXTLINE(readability-function-size)
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
-    -> ErrorOr<Success> {
-  return ReserveStackIfExhaustedAndRun<ErrorOr<Success>>(
-      [&]() { return TypeCheckExpImpl(e, impl_scope); });
-}
-
-// NOLINTNEXTLINE(readability-function-size)
-auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
-                                   const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "checking " << e->kind() << " " << *e;

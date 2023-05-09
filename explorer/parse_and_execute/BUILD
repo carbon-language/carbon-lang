@@ -25,17 +25,6 @@ cc_library(
     ],
 )
 
-cc_test(
-    name = "parse_and_execute_test",
-    srcs = ["parse_and_execute_test.cpp"],
-    deps = [
-        ":parse_and_execute",
-        "//common:gtest_main",
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
 file_test(
     name = "file_test",
     srcs = ["file_test.cpp"],
