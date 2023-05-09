@@ -7,7 +7,7 @@
 package ExplorerTest impl;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/parse_and_execute/testdata/print/fail_index_text.carbon:[[@LINE+1]]: Index invalid with argument count of 0 at offset 8 in `Print: {1a}`
+  // CHECK:STDERR: RUNTIME ERROR: explorer/parse_and_execute/testdata/print/fail_index_text.carbon:[[@LINE+1]]: Index invalid with argument count of 0 at offset 8 in `Print: {1a}`
   Print("Print: {1a}");
   return 0;
 }

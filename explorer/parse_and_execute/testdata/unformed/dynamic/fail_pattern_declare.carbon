@@ -13,6 +13,6 @@ fn Main() -> i32 {
     y = 0;
   }
   // Static analysis thinks `y` may be formed, defer the check to run-time.
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/parse_and_execute/testdata/unformed/dynamic/fail_pattern_declare.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<y>>
+  // CHECK:STDERR: RUNTIME ERROR: explorer/parse_and_execute/testdata/unformed/dynamic/fail_pattern_declare.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<y>>
   return y;
 }

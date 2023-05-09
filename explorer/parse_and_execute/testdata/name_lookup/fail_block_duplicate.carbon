@@ -8,7 +8,7 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: i32 = 0;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/name_lookup/fail_block_duplicate.carbon:[[@LINE+1]]: Duplicate name `x` also found at {{.*}}/explorer/parse_and_execute/testdata/name_lookup/fail_block_duplicate.carbon:[[@LINE-1]]
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/name_lookup/fail_block_duplicate.carbon:[[@LINE+1]]: Duplicate name `x` also found at explorer/parse_and_execute/testdata/name_lookup/fail_block_duplicate.carbon:[[@LINE-1]]
   var x: i32 = 0;
   return 0;
 }

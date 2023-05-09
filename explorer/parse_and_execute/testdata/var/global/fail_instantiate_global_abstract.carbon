@@ -9,7 +9,7 @@ package ExplorerTest api;
 abstract class B {
 }
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/var/global/fail_instantiate_global_abstract.carbon:[[@LINE+1]]: Cannot instantiate abstract class B
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/var/global/fail_instantiate_global_abstract.carbon:[[@LINE+1]]: Cannot instantiate abstract class B
 var b: B = {};
 
 fn Main() -> i32 {

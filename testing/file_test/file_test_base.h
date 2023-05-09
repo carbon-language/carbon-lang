@@ -40,9 +40,10 @@ class FileTestBase : public testing::Test {
       std::function<FileTestBase*(llvm::StringRef)> factory);
 
   // Implemented by children to run the test. Called by the TestBody
-  // implementation, which will validate stdout and stderr.
+  // implementation, which will validate stdout and stderr. The return value
+  // should be false when "fail_" is in the filename.
   virtual auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
-      -> void = 0;
+      -> bool = 0;
 
   // Runs a test and compares output. This keeps output split by line so that
   // issues are a little easier to identify by the different line.

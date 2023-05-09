@@ -11,7 +11,7 @@ abstract class C {
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/class/fail_instantiate_abstract_class_struct.carbon:[[@LINE+1]]: Cannot instantiate abstract class C
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/class/fail_instantiate_abstract_class_struct.carbon:[[@LINE+1]]: Cannot instantiate abstract class C
   var c: C = { .a = 1 };
   return 0;
 }

@@ -12,6 +12,6 @@ class A {
 
 fn Main() -> i32 {
   var a: A = {};
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/parse_and_execute/testdata/class/fail_call_undefined_method.carbon:[[@LINE+1]]: attempt to call function `F` that has not been defined
+  // CHECK:STDERR: RUNTIME ERROR: explorer/parse_and_execute/testdata/class/fail_call_undefined_method.carbon:[[@LINE+1]]: attempt to call function `F` that has not been defined
   return a.F();
 }

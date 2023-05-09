@@ -11,6 +11,6 @@ fn id[T:! type](x: i32) -> i32 {
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/generic_function/fail_type_deduction_unused.carbon:[[@LINE+1]]: could not deduce type argument for type parameter T in call
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/generic_function/fail_type_deduction_unused.carbon:[[@LINE+1]]: could not deduce type argument for type parameter T in call
   return id(0);
 }

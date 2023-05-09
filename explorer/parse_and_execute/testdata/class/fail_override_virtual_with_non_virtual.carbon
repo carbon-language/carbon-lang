@@ -11,7 +11,7 @@ base class A {
 }
 
 class B extends A {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/class/fail_override_virtual_with_non_virtual.carbon:[[@LINE+1]]: Error declaring `Foo`: method is declared virtual in base class, use `impl` to override it.
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/class/fail_override_virtual_with_non_virtual.carbon:[[@LINE+1]]: Error declaring `Foo`: method is declared virtual in base class, use `impl` to override it.
   fn Foo[self: Self]() {}
 }
 

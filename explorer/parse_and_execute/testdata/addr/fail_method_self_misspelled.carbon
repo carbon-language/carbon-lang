@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 class C {
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/parse_and_execute/testdata/addr/fail_method_self_misspelled.carbon:[[@LINE+1]]: illegal binding pattern in implicit parameter list
+  // CHECK:STDERR: SYNTAX ERROR: explorer/parse_and_execute/testdata/addr/fail_method_self_misspelled.carbon:[[@LINE+1]]: illegal binding pattern in implicit parameter list
   fn F[addr slef: Self*]() {}
 }
 

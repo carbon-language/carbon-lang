@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 constraint X {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/named_constraint/fail_associated_function.carbon:[[@LINE+1]]: associated function not permitted in named constraint
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/named_constraint/fail_associated_function.carbon:[[@LINE+1]]: associated function not permitted in named constraint
   fn F();
 }
 

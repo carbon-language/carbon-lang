@@ -12,7 +12,7 @@ class Point(T:! type) {
   }
 
   // Error: wrote `Point` instead of `Point(T)`, `Point` by itself is not a type.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/generic_class/fail_no_args.carbon:[[@LINE+1]]: 'Point' must be given an argument list
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/generic_class/fail_no_args.carbon:[[@LINE+1]]: 'Point' must be given an argument list
   fn GetX[self: Point]() -> T {
     return self.x;
   }

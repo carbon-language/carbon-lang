@@ -6,7 +6,7 @@
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/var/global/fail_invalid_var_expression.carbon:[[@LINE+1]]: Expected expression for variable type
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/var/global/fail_invalid_var_expression.carbon:[[@LINE+1]]: Expected expression for variable type
 var a: auto;
 
 fn Main() -> i32 { return 0; }

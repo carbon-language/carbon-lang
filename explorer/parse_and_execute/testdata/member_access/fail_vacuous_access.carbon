@@ -13,6 +13,6 @@ class X {
 }
 fn Main() -> i32 {
   var a: X = {};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/member_access/fail_vacuous_access.carbon:[[@LINE+1]]: expected name of instance member or interface member in compound member access, found fn () -> i32
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/member_access/fail_vacuous_access.carbon:[[@LINE+1]]: expected name of instance member or interface member in compound member access, found fn () -> i32
   return a.(X.(A.F))();
 }

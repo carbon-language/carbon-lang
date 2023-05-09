@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 interface Vector {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/interface/fail_qualified_method.carbon:[[@LINE+1]]: qualified declaration names are not permitted in this context
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/interface/fail_qualified_method.carbon:[[@LINE+1]]: qualified declaration names are not permitted in this context
   fn Vector.Zero() -> i32;
 }
 

@@ -20,7 +20,7 @@ fn Main() -> i32 {
   // representation to describe the conversion.
   for (x: IntLike in arr) {
     Print("{0}", x.n);
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/for/fail_convert.carbon:[[@LINE+3]]: type error in `for` pattern
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/for/fail_convert.carbon:[[@LINE+3]]: type error in `for` pattern
   // CHECK:STDERR: expected: i32
   // CHECK:STDERR: actual: class IntLike
   }

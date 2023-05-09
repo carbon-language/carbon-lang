@@ -26,7 +26,7 @@ __mixin M3 {
 class C {
   __mix M2;
   __mix M3;
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/mixin/fail_mix_diamond_clash.carbon:[[@LINE+1]]: Member named F1 (declared at {{.*}}/explorer/parse_and_execute/testdata/mixin/fail_mix_diamond_clash.carbon:[[@LINE-18]]) is being mixed multiple times into C
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/mixin/fail_mix_diamond_clash.carbon:[[@LINE+1]]: Member named F1 (declared at explorer/parse_and_execute/testdata/mixin/fail_mix_diamond_clash.carbon:[[@LINE-18]]) is being mixed multiple times into C
 }
 
 fn Main() -> i32 {

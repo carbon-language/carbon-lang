@@ -9,7 +9,7 @@ package ExplorerTest api;
 namespace N;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/namespace/fail_use_as_expression.carbon:[[@LINE+1]]: expected `.member_name` after name of namespace N
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/namespace/fail_use_as_expression.carbon:[[@LINE+1]]: expected `.member_name` after name of namespace N
   N;
   return 0;
 }

@@ -13,7 +13,7 @@ fn Foo(a: i32, b: i32) -> auto {
     return var;
   }
   ret = a - b;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/var/returned/fail_returned_var_multi_auto.carbon:[[@LINE+1]]: Only one return is allowed in a function with an `auto` return type.
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/var/returned/fail_returned_var_multi_auto.carbon:[[@LINE+1]]: Only one return is allowed in a function with an `auto` return type.
   return var;
 }
 

@@ -7,7 +7,7 @@
 package ExplorerTest impl;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/parse_and_execute/testdata/print/fail_single_brace.carbon:[[@LINE+1]]: `{` must be followed by a second `{` or index in `{`
+  // CHECK:STDERR: RUNTIME ERROR: explorer/parse_and_execute/testdata/print/fail_single_brace.carbon:[[@LINE+1]]: `{` must be followed by a second `{` or index in `{`
   Print("{");
   return 0;
 }

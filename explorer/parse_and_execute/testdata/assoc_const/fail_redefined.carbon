@@ -8,7 +8,7 @@ package ExplorerTest api;
 
 interface Iface {
   let T:! type;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/assoc_const/fail_redefined.carbon:[[@LINE+1]]: Duplicate name `T` also found at {{.*}}/explorer/parse_and_execute/testdata/assoc_const/fail_redefined.carbon:[[@LINE-1]]
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/assoc_const/fail_redefined.carbon:[[@LINE+1]]: Duplicate name `T` also found at explorer/parse_and_execute/testdata/assoc_const/fail_redefined.carbon:[[@LINE-1]]
   let T:! type;
 }
 

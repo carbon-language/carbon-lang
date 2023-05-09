@@ -13,7 +13,7 @@ choice Ints {
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/basic_syntax/fail_choice_extra_parens.carbon:[[@LINE+1]]: alternative `choice Ints.None` does not expect an argument list
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/basic_syntax/fail_choice_extra_parens.carbon:[[@LINE+1]]: alternative `choice Ints.None` does not expect an argument list
   match (Ints.None()) {
     case Ints.None => { return 0; }
     default => { return 1; }

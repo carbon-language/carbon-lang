@@ -10,6 +10,6 @@ fn F() {}
 alias A = F;
 
 fn Main() -> i32 {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/alias/fail_wrong_fn_alias_use_expr.carbon:[[@LINE+1]]: member access, unexpected fn () -> () in A.x
+    // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/alias/fail_wrong_fn_alias_use_expr.carbon:[[@LINE+1]]: member access, unexpected fn () -> () in A.x
     return A.x;
 }

@@ -10,7 +10,7 @@ class A {}
 
 fn Main() -> i32 {
   var a: A = {};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/operators/fail_no_negate.carbon:[[@LINE+2]]: type error in `-`:
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/operators/fail_no_negate.carbon:[[@LINE+2]]: type error in `-`:
   // CHECK:STDERR: could not find implementation of interface Negate for class A
   -a;
   return 0;

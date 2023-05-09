@@ -7,6 +7,6 @@
 package ExplorerTest api;
 
 fn CompareBools(a: bool, b: bool) -> bool {
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/parse_and_execute/testdata/basic_syntax/fail_compare_precedence.carbon:[[@LINE+1]]: syntax error, unexpected EQUAL_EQUAL, expecting SEMICOLON
+  // CHECK:STDERR: SYNTAX ERROR: explorer/parse_and_execute/testdata/basic_syntax/fail_compare_precedence.carbon:[[@LINE+1]]: syntax error, unexpected EQUAL_EQUAL, expecting SEMICOLON
   return not a == b;
 }

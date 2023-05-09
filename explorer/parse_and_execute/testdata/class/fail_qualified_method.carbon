@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 class Point {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/class/fail_qualified_method.carbon:[[@LINE+1]]: qualified declaration names are not permitted in this context
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/class/fail_qualified_method.carbon:[[@LINE+1]]: qualified declaration names are not permitted in this context
   fn Point.F[self: Self]() {}
 }
 

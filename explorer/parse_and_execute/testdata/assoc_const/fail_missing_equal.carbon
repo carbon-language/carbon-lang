@@ -16,7 +16,7 @@ fn A[T:! Container where .Element == i32](x: T) -> T.Element {
 }
 
 fn B[T:! Container](x: T) -> T.Element {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/assoc_const/fail_missing_equal.carbon:[[@LINE+1]]: constraint requires that (T).(Container.Element) (with value (T).(Container.Element)) == i32, which is not known to be true
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/assoc_const/fail_missing_equal.carbon:[[@LINE+1]]: constraint requires that (T).(Container.Element) (with value (T).(Container.Element)) == i32, which is not known to be true
   return A(x);
 }
 

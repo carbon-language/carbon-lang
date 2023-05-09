@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/parse_and_execute/testdata/string/fail_raw_block_more_hash_tags_on_left.carbon:[[@LINE+1]]: Unexpected end of file
+  // CHECK:STDERR: SYNTAX ERROR: explorer/parse_and_execute/testdata/string/fail_raw_block_more_hash_tags_on_left.carbon:[[@LINE+1]]: Unexpected end of file
   var s: String = ##'''
     error: there are more #s on the left than the right.
   '''#;

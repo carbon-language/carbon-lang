@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/parse_and_execute/testdata/string/fail_hex_lower.carbon:[[@LINE+1]]: Invalid escaping in string: "str\xaa"
+  // CHECK:STDERR: SYNTAX ERROR: explorer/parse_and_execute/testdata/string/fail_hex_lower.carbon:[[@LINE+1]]: Invalid escaping in string: "str\xaa"
   Print("str\xaa");
   return 0;
 }

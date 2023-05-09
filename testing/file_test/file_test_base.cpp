@@ -14,6 +14,8 @@ static std::string* subset_target = nullptr;
 
 namespace Carbon::Testing {
 
+using ::testing::Eq;
+
 void FileTestBase::RegisterTests(
     const char* fixture_label, const std::vector<llvm::StringRef>& paths,
     std::function<FileTestBase*(llvm::StringRef)> factory) {
@@ -78,10 +80,13 @@ auto FileTestBase::TestBody() -> void {
   std::string stderr;
   llvm::raw_string_ostream stdout_ostream(stdout);
   llvm::raw_string_ostream stderr_ostream(stderr);
-  RunOverFile(stdout_ostream, stderr_ostream);
+  bool run_succeeded = RunOverFile(stdout_ostream, stderr_ostream);
   if (HasFailure()) {
     return;
   }
+  EXPECT_THAT(!filename().starts_with("fail_"), Eq(run_succeeded))
+      << "Tests should be prefixed with `fail_` if and only if running them "
+         "is expected to fail.";
 
   // Check results.
   EXPECT_THAT(SplitOutput(stdout), ElementsAreArray(expected_stdout));
@@ -138,16 +143,10 @@ auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
         break;
       }
       case '{': {
-        static constexpr llvm::StringLiteral PathBefore = "{{.*}}/explorer/";
-        static constexpr llvm::StringLiteral PathAfter = "explorer/";
         if (pos + 1 == static_cast<int>(str.size()) || str[pos + 1] != '{') {
           // Single `{`, escape it.
           str.insert(pos, "\\");
           pos += 2;
-        } else if (llvm::StringRef(str).substr(pos).starts_with(PathBefore)) {
-          str.replace(pos, PathBefore.size(), PathAfter);
-          // Move the position; the loop still increments position by 1.
-          pos += PathAfter.size();
         } else {
           // Replace the `{{...}}` regex syntax with standard `(...)` syntax.
           str.replace(pos, 2, "(");

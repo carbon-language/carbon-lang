@@ -10,7 +10,7 @@ class C {
   fn PickType() -> type { return i32; }
   // This is invalid even though `PickType` is defined earlier, because
   // checking of member bodies is deferred until after the class is completed.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/class/fail_member_call_before_typecheck.carbon:[[@LINE+1]]: attempt to call function `PickType` that has not been fully type-checked
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/class/fail_member_call_before_typecheck.carbon:[[@LINE+1]]: attempt to call function `PickType` that has not been fully type-checked
   fn GetZero() -> PickType() { return 0; }
 }
 

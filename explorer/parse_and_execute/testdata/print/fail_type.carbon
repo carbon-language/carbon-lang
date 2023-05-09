@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/print/fail_type.carbon:[[@LINE+3]]: type error in Print argument 1
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/print/fail_type.carbon:[[@LINE+3]]: type error in Print argument 1
   // CHECK:STDERR: expected: i32
   // CHECK:STDERR: actual: {.x: i32}
   Print("{0}", {.x = 1});

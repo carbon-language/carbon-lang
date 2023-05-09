@@ -13,6 +13,6 @@ class Point {
 
 fn Main() -> i32 {
   var p: Point = {.x = 1, .y = 2};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/class/fail_field_access_mismatch.carbon:[[@LINE+1]]: class Point does not have a field named z
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/class/fail_field_access_mismatch.carbon:[[@LINE+1]]: class Point does not have a field named z
   return p.z - 1;
 }

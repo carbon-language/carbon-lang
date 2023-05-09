@@ -8,7 +8,7 @@ package ExplorerTest api;
 
 class C {}
 
-// CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/parse_and_execute/testdata/generic_function/fail_type_only.carbon:[[@LINE+1]]: syntax error, unexpected RIGHT_SQUARE_BRACKET, expecting COLON
+// CHECK:STDERR: SYNTAX ERROR: explorer/parse_and_execute/testdata/generic_function/fail_type_only.carbon:[[@LINE+1]]: syntax error, unexpected RIGHT_SQUARE_BRACKET, expecting COLON
 fn f[x:! i32, addr C]() {}
 
 fn Main() -> i32 {

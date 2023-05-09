@@ -9,7 +9,7 @@ package ExplorerTest api;
 class Point(T:! type) {
 
   // Error: wrote `Self(T)` instead of `Self`.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/generic_class/fail_self_with_arg.carbon:[[@LINE+1]]: in call `Self(T)`, expected callee to be a function, found `type`
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/generic_class/fail_self_with_arg.carbon:[[@LINE+1]]: in call `Self(T)`, expected callee to be a function, found `type`
   fn Origin(zero: T) -> Self(T) {
     return {.x = zero, .y = zero};
   }

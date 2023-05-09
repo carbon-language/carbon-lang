@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 // This declaration is not allowed.
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/function/auto_return/fail_separate_decl.carbon:[[@LINE+1]]: Function declaration has deduced return type but no body
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/function/auto_return/fail_separate_decl.carbon:[[@LINE+1]]: Function declaration has deduced return type but no body
 fn ComputeSum(x: i32, y: i32) -> auto;
 
 fn Main() -> i32 {

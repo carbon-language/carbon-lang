@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/tuple/fail_unexpected_tuple.carbon:[[@LINE+1]]: didn't expect a tuple
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/tuple/fail_unexpected_tuple.carbon:[[@LINE+1]]: didn't expect a tuple
   var a: (auto,) = 1;
   return 0;
 }

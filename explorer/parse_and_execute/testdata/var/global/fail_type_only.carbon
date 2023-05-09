@@ -6,7 +6,7 @@
 
 package ExplorerTest api;
 
-// CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/parse_and_execute/testdata/var/global/fail_type_only.carbon:[[@LINE+1]]: syntax error, unexpected sized_type_literal, expecting identifier
+// CHECK:STDERR: SYNTAX ERROR: explorer/parse_and_execute/testdata/var/global/fail_type_only.carbon:[[@LINE+1]]: syntax error, unexpected sized_type_literal, expecting identifier
 var i32;
 
 fn Main() -> i32 {

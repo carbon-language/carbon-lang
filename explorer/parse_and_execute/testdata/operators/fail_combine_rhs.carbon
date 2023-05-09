@@ -8,7 +8,7 @@ package ExplorerTest api;
 
 class C {}
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/operators/fail_combine_rhs.carbon:[[@LINE+1]]: expected a constraint in second operand of `&`, found class C
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/operators/fail_combine_rhs.carbon:[[@LINE+1]]: expected a constraint in second operand of `&`, found class C
 fn F[T:! type & C]();
 
 fn Main() -> i32 {

@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 interface IFace {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/interface/fail_use_assoc_const_in_defn.carbon:[[@LINE+1]]: 'T' is not usable until after it has been completely declared
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/interface/fail_use_assoc_const_in_defn.carbon:[[@LINE+1]]: 'T' is not usable until after it has been completely declared
   let T:! T.IFace;
 }
 

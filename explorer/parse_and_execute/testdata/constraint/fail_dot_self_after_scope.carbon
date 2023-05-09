@@ -9,7 +9,7 @@ package ExplorerTest api;
 interface FrobWith(T:! type) {}
 
 fn F[T:! FrobWith(.Self)]
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/constraint/fail_dot_self_after_scope.carbon:[[@LINE+1]]: could not resolve '.Self'
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/constraint/fail_dot_self_after_scope.carbon:[[@LINE+1]]: could not resolve '.Self'
   (U: .Self) {
 }
 

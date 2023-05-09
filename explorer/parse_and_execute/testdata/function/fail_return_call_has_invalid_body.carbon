@@ -7,7 +7,7 @@
 package EmptyIdentifier impl;
 
 fn apply[T:! type, U:! type](f: T, EmptyIdentifier: U) {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/function/fail_return_call_has_invalid_body.carbon:[[@LINE+1]]: only arrays and tuples can be indexed, found bool
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/function/fail_return_call_has_invalid_body.carbon:[[@LINE+1]]: only arrays and tuples can be indexed, found bool
   match (true[true]) {}
 }
 

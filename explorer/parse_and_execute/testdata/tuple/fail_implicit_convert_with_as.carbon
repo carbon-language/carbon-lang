@@ -19,7 +19,7 @@ external impl A as As(B) {
 
 fn Main() -> i32 {
   var a: (i32, A) = (1, {.a = 2});
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/tuple/fail_implicit_convert_with_as.carbon:[[@LINE+1]]: type error in initializer of variable: '(i32, class A)' is not implicitly convertible to '(i32, class B)'
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/tuple/fail_implicit_convert_with_as.carbon:[[@LINE+1]]: type error in initializer of variable: '(i32, class A)' is not implicitly convertible to '(i32, class B)'
   var b: (i32, B) = a;
   return b[1].b;
 }

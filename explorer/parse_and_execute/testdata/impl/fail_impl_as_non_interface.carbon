@@ -6,7 +6,7 @@
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/impl/fail_impl_as_non_interface.carbon:[[@LINE+1]]: expected a constraint in impl declaration, found String
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/impl/fail_impl_as_non_interface.carbon:[[@LINE+1]]: expected a constraint in impl declaration, found String
 external impl i32 as String {}
 
 fn Main() -> i32 {

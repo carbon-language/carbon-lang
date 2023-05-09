@@ -12,7 +12,7 @@ interface HasThreeTypes {
   let C:! type;
 }
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/assoc_const/fail_incomplete_impl_1.carbon:[[@LINE+1]]: implementation doesn't provide a concrete value for interface HasThreeTypes.B
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/assoc_const/fail_incomplete_impl_1.carbon:[[@LINE+1]]: implementation doesn't provide a concrete value for interface HasThreeTypes.B
 external impl i32 as HasThreeTypes where .A = i32 and .C = i32 {}
 
 fn Main() -> i32 { return 0; }

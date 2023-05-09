@@ -8,7 +8,7 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   var p: i32*;
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/parse_and_execute/testdata/pointer/fail_delete_uninit.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<p>>
+  // CHECK:STDERR: RUNTIME ERROR: explorer/parse_and_execute/testdata/pointer/fail_delete_uninit.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<p>>
   heap.Delete(p);
   return 0;
 }

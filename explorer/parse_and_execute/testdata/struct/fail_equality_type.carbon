@@ -19,7 +19,7 @@ external impl {.x: i32, .y: i32} as EqWith(Self) {
 fn Main() -> i32 {
   var t1: {.x: i32, .y: i32} = {.x = 5, .y = 2};
   var t2: {.x: i32,} = {.x = 5,};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/struct/fail_equality_type.carbon:[[@LINE+1]]: {.x: i32, .y: i32} is not equality comparable with {.x: i32} (could not find implementation of interface EqWith(U = {.x: i32}) for {.x: i32, .y: i32})
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/struct/fail_equality_type.carbon:[[@LINE+1]]: {.x: i32, .y: i32} is not equality comparable with {.x: i32} (could not find implementation of interface EqWith(U = {.x: i32}) for {.x: i32, .y: i32})
   if (t1 == t2) {
     return 1;
   } else {

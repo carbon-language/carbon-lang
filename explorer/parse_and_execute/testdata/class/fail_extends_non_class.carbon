@@ -6,7 +6,7 @@
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/class/fail_extends_non_class.carbon:[[@LINE+1]]: type error in type expression: 'i32' is not implicitly convertible to 'type'
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/class/fail_extends_non_class.carbon:[[@LINE+1]]: type error in type expression: 'i32' is not implicitly convertible to 'type'
 class C extends 3 {
   var x: i32;
   var y: i32;

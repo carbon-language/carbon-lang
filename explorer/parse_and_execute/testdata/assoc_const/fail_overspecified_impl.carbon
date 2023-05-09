@@ -10,7 +10,7 @@ interface HasType {
   let T:! type;
 }
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/assoc_const/fail_overspecified_impl.carbon:[[@LINE+3]]: multiple different rewrites for `(i32).(HasType.T)`:
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/assoc_const/fail_overspecified_impl.carbon:[[@LINE+3]]: multiple different rewrites for `(i32).(HasType.T)`:
 // CHECK:STDERR:   i32
 // CHECK:STDERR:   {.a: i32}
 external impl i32 as HasType where .T = i32 and .T = {.a: i32} {}

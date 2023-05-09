@@ -17,7 +17,7 @@ class A {
     return 0;
   }
 
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/name_lookup/fail_class_fn_use_before_declaration.carbon:[[@LINE+1]]: 'I' has not been declared yet
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/name_lookup/fail_class_fn_use_before_declaration.carbon:[[@LINE+1]]: 'I' has not been declared yet
   fn H() -> I() {
     return 0;
   }

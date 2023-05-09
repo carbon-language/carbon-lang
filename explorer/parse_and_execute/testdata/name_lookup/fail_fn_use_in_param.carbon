@@ -6,7 +6,7 @@
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/name_lookup/fail_fn_use_in_param.carbon:[[@LINE+1]]: 'F' is not usable until after it has been completely declared
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/name_lookup/fail_fn_use_in_param.carbon:[[@LINE+1]]: 'F' is not usable until after it has been completely declared
 fn F(x: F(0)) -> type {
   return i32;
 }

@@ -17,7 +17,7 @@ fn Main() -> i32 {
   let n: i32 = 0;
   CheckSimilar(true, false);
   CheckSimilar(true, n);
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/impl/fail_param_interface_in_impl.carbon:[[@LINE+1]]: could not find implementation of interface Similar(T = i32) for bool
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/impl/fail_param_interface_in_impl.carbon:[[@LINE+1]]: could not find implementation of interface Similar(T = i32) for bool
   CheckSimilar(n, false);
   return 0;
 }

@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/pointer/fail_intrinsic_new_no_args.carbon:[[@LINE+1]]: __intrinsic_new takes 1 argument
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/pointer/fail_intrinsic_new_no_args.carbon:[[@LINE+1]]: __intrinsic_new takes 1 argument
   __intrinsic_new();
   return 0;
 }

@@ -25,6 +25,6 @@ fn Main() -> i32 {
   // MemberName value. We will likely need MemberName to remember the
   // constraint as written, not only the interface in which the member was
   // found.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/named_constraint/fail_compound_member_access.carbon:[[@LINE+1]]: could not find implementation of interface MyAddWith(T = Self) for i32
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/named_constraint/fail_compound_member_access.carbon:[[@LINE+1]]: could not find implementation of interface MyAddWith(T = Self) for i32
   return n.(MyAdd.Op)(n);
 }

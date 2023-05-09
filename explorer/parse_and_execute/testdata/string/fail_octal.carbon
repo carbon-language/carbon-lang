@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/parse_and_execute/testdata/string/fail_octal.carbon:[[@LINE+1]]: Invalid escaping in string: "str\01"
+  // CHECK:STDERR: SYNTAX ERROR: explorer/parse_and_execute/testdata/string/fail_octal.carbon:[[@LINE+1]]: Invalid escaping in string: "str\01"
   Print("str\01");
   return 0;
 }

@@ -12,7 +12,7 @@ base class A {
 }
 
 class B extends A {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/destructor/fail_override_virtual_virtual.carbon:[[@LINE+1]]: Error declaring destructor for `B`: use `impl` to implement virtual destructor in child class.
+    // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/destructor/fail_override_virtual_virtual.carbon:[[@LINE+1]]: Error declaring destructor for `B`: use `impl` to implement virtual destructor in child class.
     virtual destructor[self: Self]{}
 }
 

@@ -9,6 +9,6 @@ package ExplorerTest api;
 namespace N;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/namespace/fail_unknown_member.carbon:[[@LINE+1]]: name 'value' has not been declared in namespace N
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/namespace/fail_unknown_member.carbon:[[@LINE+1]]: name 'value' has not been declared in namespace N
   return N.value;
 }

@@ -11,7 +11,7 @@ fn A(n: i32) -> i32 {
     case 1 => { return 1; }
     case 2 => { return 2; }
   }
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/match/fail_exhaustive_int.carbon:[[@LINE+1]]: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/match/fail_exhaustive_int.carbon:[[@LINE+1]]: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
 }
 
 fn Main() -> i32 {

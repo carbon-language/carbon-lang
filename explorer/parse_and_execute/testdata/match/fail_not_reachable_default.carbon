@@ -16,7 +16,7 @@ fn A(a: Opt, b: Opt) -> i32 {
     case (Opt.None(), Opt.None()) => { return 0; }
     case (Opt.Some(n: i32), _: auto) => { return n; }
     case (_: auto, Opt.Some(n: i32)) => { return n; }
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/match/fail_not_reachable_default.carbon:[[@LINE+1]]: unreachable case: all values matched by this case are matched by earlier cases
+    // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/match/fail_not_reachable_default.carbon:[[@LINE+1]]: unreachable case: all values matched by this case are matched by earlier cases
     default => { return -1; }
   }
   return 0;

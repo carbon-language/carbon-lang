@@ -9,7 +9,7 @@ package ExplorerTest api;
 class C {
   virtual fn Foo() -> i32 {
     return 1;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/class/fail_virtual_class_function.carbon:[[@LINE+1]]: Error declaring `Foo`: class functions cannot be virtual.
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/class/fail_virtual_class_function.carbon:[[@LINE+1]]: Error declaring `Foo`: class functions cannot be virtual.
   }
 }
 

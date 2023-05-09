@@ -10,7 +10,7 @@ interface HasType {
   let T:! type;
 }
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/assoc_const/fail_rewrite_creates_infinite_type.carbon:[[@LINE+1]]: rewrite of (H).(HasType.T) applies within its own resolved expansion of (H).(HasType.T)*
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/assoc_const/fail_rewrite_creates_infinite_type.carbon:[[@LINE+1]]: rewrite of (H).(HasType.T) applies within its own resolved expansion of (H).(HasType.T)*
 fn F[H:! HasType where .T = .T*]() {}
 
 fn Main() -> i32 {

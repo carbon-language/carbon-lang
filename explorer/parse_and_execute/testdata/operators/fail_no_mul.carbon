@@ -10,7 +10,7 @@ class A {}
 
 fn Main() -> i32 {
   var a: A = {};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/operators/fail_no_mul.carbon:[[@LINE+2]]: type error in `*`:
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/operators/fail_no_mul.carbon:[[@LINE+2]]: type error in `*`:
   // CHECK:STDERR: could not find implementation of interface MulWith(U = i32) for class A
   a * 1;
   return 0;

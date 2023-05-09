@@ -12,7 +12,7 @@ fn PickType(N: i32) -> type { return i32; }
 
 fn F[T:! Iface where .N == 5](x: T) -> i32 {
   // TODO: This should be valid: the value of T.N is known to be 5 here.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/assoc_const/fail_unknown_value_specified_in_constraint.carbon:[[@LINE+1]]: value of associated constant (T).(Iface.N) is not known
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/assoc_const/fail_unknown_value_specified_in_constraint.carbon:[[@LINE+1]]: value of associated constant (T).(Iface.N) is not known
   var x: PickType(T.N) = 0;
   return x;
 }

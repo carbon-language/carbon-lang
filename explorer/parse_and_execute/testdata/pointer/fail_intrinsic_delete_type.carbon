@@ -8,7 +8,7 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: i32;
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/pointer/fail_intrinsic_delete_type.carbon:[[@LINE+3]]: type error in *
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/pointer/fail_intrinsic_delete_type.carbon:[[@LINE+3]]: type error in *
   // CHECK:STDERR: expected a pointer type
   // CHECK:STDERR: actual: i32
   __intrinsic_delete(x);

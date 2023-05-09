@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/parse_and_execute/testdata/operators/fail_overflow_sub.carbon:[[@LINE+1]]: integer overflow
+  // CHECK:STDERR: RUNTIME ERROR: explorer/parse_and_execute/testdata/operators/fail_overflow_sub.carbon:[[@LINE+1]]: integer overflow
   var a: auto = -2147483647 - 2;
   return 0;
 }

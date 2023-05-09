@@ -6,7 +6,7 @@
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/namespace/fail_unknown_namespace.carbon:[[@LINE+1]]: name 'N' has not been declared in this scope
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/namespace/fail_unknown_namespace.carbon:[[@LINE+1]]: name 'N' has not been declared in this scope
 fn N.F() {}
 
 fn Main() -> i32 {

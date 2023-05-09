@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 class C {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/mixin/fail_mix_invalid_array.carbon:[[@LINE+1]]: type error in type expression: 'bool' is not implicitly convertible to 'type'
+  // CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/mixin/fail_mix_invalid_array.carbon:[[@LINE+1]]: type error in type expression: 'bool' is not implicitly convertible to 'type'
   __mix [true; true];
 }
 

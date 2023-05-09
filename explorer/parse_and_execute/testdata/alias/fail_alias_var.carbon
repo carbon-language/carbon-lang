@@ -8,7 +8,7 @@ package ExplorerTest api;
 
 var v: i32;
 // TODO: This should probably be valid if we allow global variables at all.
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/parse_and_execute/testdata/alias/fail_alias_var.carbon:[[@LINE+1]]: invalid target for alias declaration
+// CHECK:STDERR: COMPILATION ERROR: explorer/parse_and_execute/testdata/alias/fail_alias_var.carbon:[[@LINE+1]]: invalid target for alias declaration
 alias A = v;
 
 fn Main() -> i32 { return 0; }

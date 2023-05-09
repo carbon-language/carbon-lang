@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/parse_and_execute/testdata/let/fail_tuple_pattern_let_in_var.carbon:[[@LINE+1]]: syntax error, unexpected LET
+  // CHECK:STDERR: SYNTAX ERROR: explorer/parse_and_execute/testdata/let/fail_tuple_pattern_let_in_var.carbon:[[@LINE+1]]: syntax error, unexpected LET
   var (var a: auto, b: auto, let c: auto, d: auto) = (1, 2, 3, 4);
   return 0;
 }

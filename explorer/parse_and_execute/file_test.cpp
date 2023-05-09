@@ -32,7 +32,7 @@ class ParseAndExecuteTestFile : public FileTestBase {
   }
 
   auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
-      -> void override {
+      -> bool override {
     // Capture trace streaming, but only when in debug mode.
     TraceStream trace_stream;
     std::string trace_stream_str;
@@ -57,6 +57,8 @@ class ParseAndExecuteTestFile : public FileTestBase {
       EXPECT_FALSE(trace_stream_str.empty())
           << "Tracing should always do something";
     }
+
+    return result.ok();
   }
 
  private:
