@@ -19,7 +19,6 @@ cc_library(
         "//common:error",
         "//explorer/common:trace_stream",
         "//explorer/interpreter:exec_program",
-        "//explorer/interpreter:stack_space",
         "//explorer/syntax",
         "//explorer/syntax:prelude",
         "@llvm-project//llvm:Support",
