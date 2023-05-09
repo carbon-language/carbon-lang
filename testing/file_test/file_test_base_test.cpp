@@ -19,16 +19,23 @@ class FileTestBaseTest : public FileTestBase {
  public:
   explicit FileTestBaseTest(llvm::StringRef path) : FileTestBase(path) {}
 
-  void RunOverFile(llvm::raw_ostream& stdout_stream,
-                   llvm::raw_ostream& /*stderr*/) override {
-    ASSERT_THAT(filename(), testing::StrEq("example.carbon"));
-
-    stdout_stream << "something\n"
-                     "\n"
-                     "8: Line delta\n"
-                     "7: Negative line delta\n"
-                     "+*[]{}\n"
-                     "Foo baz\n";
+  auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
+      -> bool override {
+    if (filename() == "example.carbon") {
+      stdout << "something\n"
+                "\n"
+                "8: Line delta\n"
+                "7: Negative line delta\n"
+                "+*[]{}\n"
+                "Foo baz\n";
+      return true;
+    } else if (filename() == "fail_example.carbon") {
+      stderr << "Oops\n";
+      return false;
+    } else {
+      ADD_FAILURE() << "Unexpected file: " << path().str();
+      return false;
+    }
   }
 };
 
