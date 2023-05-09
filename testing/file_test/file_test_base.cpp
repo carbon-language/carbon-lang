@@ -14,6 +14,8 @@ static std::string* subset_target = nullptr;
 
 namespace Carbon::Testing {
 
+using ::testing::Eq;
+
 void FileTestBase::RegisterTests(
     const char* fixture_label, const std::vector<llvm::StringRef>& paths,
     std::function<FileTestBase*(llvm::StringRef)> factory) {
@@ -78,10 +80,13 @@ auto FileTestBase::TestBody() -> void {
   std::string stderr;
   llvm::raw_string_ostream stdout_ostream(stdout);
   llvm::raw_string_ostream stderr_ostream(stderr);
-  RunOverFile(stdout_ostream, stderr_ostream);
+  bool run_succeeded = RunOverFile(stdout_ostream, stderr_ostream);
   if (HasFailure()) {
     return;
   }
+  EXPECT_THAT(!filename().starts_with("fail_"), Eq(run_succeeded))
+      << "Tests should be prefixed with `fail_` if and only if running them "
+         "is expected to fail.";
 
   // Check results.
   EXPECT_THAT(SplitOutput(stdout), ElementsAreArray(expected_stdout));
