@@ -67,5 +67,5 @@
 // CHECK:STDOUT: ]
 
 var x: {.a: f64} = {.a = 4.0};
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_member_access_type.carbon:[[@LINE+1]]:15: Type `{.a: f64}` does not have a member `b`.
+// CHECK:STDERR: toolchain/semantics/testdata/struct/fail_member_access_type.carbon:[[@LINE+1]]:15: Type `{.a: f64}` does not have a member `b`.
 var y: i32 = x.b;

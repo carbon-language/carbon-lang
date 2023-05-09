@@ -47,5 +47,5 @@ fn Main() {
   var x: i32;
 }
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_lookup_outside_scope.carbon:[[@LINE+1]]:14: Name x not found
+// CHECK:STDERR: toolchain/semantics/testdata/var/fail_lookup_outside_scope.carbon:[[@LINE+1]]:14: Name x not found
 var y: i32 = x;

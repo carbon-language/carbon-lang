@@ -44,6 +44,6 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/fail_param_name_conflict.carbon:[[@LINE+2]]:16: Redefining a in the same scope.
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/fail_param_name_conflict.carbon:[[@LINE+1]]:8: Previous definition is here.
+// CHECK:STDERR: toolchain/semantics/testdata/function/definition/fail_param_name_conflict.carbon:[[@LINE+2]]:16: Redefining a in the same scope.
+// CHECK:STDERR: toolchain/semantics/testdata/function/definition/fail_param_name_conflict.carbon:[[@LINE+1]]:8: Previous definition is here.
 fn Bar(a: i32, a: i32) {}
