@@ -19,10 +19,10 @@ class SemanticsFileTest : public FileTestBase {
  public:
   explicit SemanticsFileTest(llvm::StringRef path) : FileTestBase(path) {}
 
-  void RunOverFile(llvm::raw_ostream& stdout,
-                   llvm::raw_ostream& stderr) override {
+  auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
+      -> bool override {
     Driver driver(stdout, stderr);
-    driver.RunFullCommand({"dump", "semantics-ir", path()});
+    return driver.RunFullCommand({"dump", "semantics-ir", path()});
   }
 };
 

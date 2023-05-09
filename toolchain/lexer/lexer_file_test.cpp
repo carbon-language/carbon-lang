@@ -19,10 +19,10 @@ class LexerFileTest : public FileTestBase {
  public:
   explicit LexerFileTest(llvm::StringRef path) : FileTestBase(path) {}
 
-  void RunOverFile(llvm::raw_ostream& stdout,
-                   llvm::raw_ostream& stderr) override {
+  auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
+      -> bool override {
     Driver driver(stdout, stderr);
-    driver.RunFullCommand({"dump", "tokens", path()});
+    return driver.RunFullCommand({"dump", "tokens", path()});
   }
 };
 
