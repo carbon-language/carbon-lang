@@ -295,6 +295,7 @@ def replace_all(s: str, replacements: List[Tuple[str, str]]) -> str:
 
 def get_matchable_test_output(
     autoupdate_args: List[str],
+    for_lit: bool,
     extra_check_replacements: List[Tuple[Pattern, Pattern, str]],
     tool: str,
     bazel_runfiles: Pattern,
@@ -312,21 +313,16 @@ def get_matchable_test_output(
         encoding="utf-8",
     ).stdout
 
+    # Escape things that mirror FileCheck special characters.
+    out = out.replace("{{", "{{[{][{]}}")
+    out = out.replace("[[", "{{[[][[]}}")
     # `lit` uses full paths to the test file, so use a regex to ignore paths
     # when used.
-    out = replace_all(
-        out,
-        [
-            ("{{", "{{[{][{]}}"),
-            ("[[", "{{[[][[]}}"),
-            # TODO: Maybe revisit and see if lit can be convinced to give a
-            # root-relative path.
-            (test, f"{{{{.*}}}}/{test}"),
-        ],
-    )
-    # Replacing runfiles is a more complex replacement.
-    # We have some things show up under runfiles; this removes them.
-    out = bazel_runfiles.sub("{{.*}}/", out)
+    if for_lit:
+        out = out.replace(test, f"{{{{.*}}}}/{test}")
+        # Replacing runfiles is a more complex replacement.
+        # We have some things show up under runfiles; this removes them.
+        out = bazel_runfiles.sub("{{.*}}/", out)
     out_lines = out.splitlines()
 
     for i, line in enumerate(out_lines):
@@ -413,6 +409,7 @@ def update_check(
     # Determine the merged output lines.
     out_lines = get_matchable_test_output(
         parsed_args.autoupdate_args,
+        bool(parsed_args.lit_run),
         parsed_args.extra_check_replacements,
         parsed_args.tool,
         bazel_runfiles,

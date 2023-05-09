@@ -138,16 +138,10 @@ auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
         break;
       }
       case '{': {
-        static constexpr llvm::StringLiteral PathBefore = "{{.*}}/explorer/";
-        static constexpr llvm::StringLiteral PathAfter = "explorer/";
         if (pos + 1 == static_cast<int>(str.size()) || str[pos + 1] != '{') {
           // Single `{`, escape it.
           str.insert(pos, "\\");
           pos += 2;
-        } else if (llvm::StringRef(str).substr(pos).starts_with(PathBefore)) {
-          str.replace(pos, PathBefore.size(), PathAfter);
-          // Move the position; the loop still increments position by 1.
-          pos += PathAfter.size();
         } else {
           // Replace the `{{...}}` regex syntax with standard `(...)` syntax.
           str.replace(pos, 2, "(");
