@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'n'},
@@ -17,5 +16,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/operators/recover_infix_uneven_space_before.carbon:[[@LINE+1]]:15: Whitespace missing after binary operator.
+// CHECK:STDERR: toolchain/parser/testdata/operators/recover_infix_uneven_space_before.carbon:[[@LINE+1]]:15: Whitespace missing after binary operator.
 var n: i8 = n *n;

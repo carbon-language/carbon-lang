@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'n'},
@@ -21,5 +20,5 @@
 // before we notice the missing whitespace around the second `*`.
 // It'd be better to (somehow) form n*(*p) and reject due to the missing
 // whitespace around the first `*`.
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/operators/fail_star_star_no_space.carbon:[[@LINE+1]]:16: Expected `;` after expression.
+// CHECK:STDERR: toolchain/parser/testdata/operators/fail_star_star_no_space.carbon:[[@LINE+1]]:16: Expected `;` after expression.
 var n: i8 = n**p;

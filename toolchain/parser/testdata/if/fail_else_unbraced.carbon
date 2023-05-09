@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
@@ -62,15 +61,15 @@
 
 fn F() {
   if (a)
-    // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_else_unbraced.carbon:[[@LINE+1]]:5: Expected braced code block.
+    // CHECK:STDERR: toolchain/parser/testdata/if/fail_else_unbraced.carbon:[[@LINE+1]]:5: Expected braced code block.
     if (b)
-      // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_else_unbraced.carbon:[[@LINE+1]]:7: Expected braced code block.
+      // CHECK:STDERR: toolchain/parser/testdata/if/fail_else_unbraced.carbon:[[@LINE+1]]:7: Expected braced code block.
       c;
     else
-      // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_else_unbraced.carbon:[[@LINE+1]]:7: Expected braced code block.
+      // CHECK:STDERR: toolchain/parser/testdata/if/fail_else_unbraced.carbon:[[@LINE+1]]:7: Expected braced code block.
       d;
   else
-    // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_else_unbraced.carbon:[[@LINE+1]]:5: Expected braced code block.
+    // CHECK:STDERR: toolchain/parser/testdata/if/fail_else_unbraced.carbon:[[@LINE+1]]:5: Expected braced code block.
     e;
   if (x) { f; }
   else if (x) { g; }

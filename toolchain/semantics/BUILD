@@ -2,8 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//testing/file_test:rules.bzl", "file_test")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
+load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -114,9 +114,8 @@ file_test(
     srcs = ["semantics_file_test.cpp"],
     tests = glob(["testdata/**/*.carbon"]),
     deps = [
-        ":semantics_ir",
         "//testing/file_test:file_test_base",
-        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/driver",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

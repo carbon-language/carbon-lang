@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'x'},
@@ -25,5 +24,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/struct/fail_extra_token_in_type.carbon:[[@LINE+1]]:17: Expected `,` or `}`.
+// CHECK:STDERR: toolchain/parser/testdata/struct/fail_extra_token_in_type.carbon:[[@LINE+1]]:17: Expected `,` or `}`.
 var x: {.a: i32 banana} = {.a = 0};

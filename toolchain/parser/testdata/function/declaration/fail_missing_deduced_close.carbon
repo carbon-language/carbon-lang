@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Div'},
@@ -17,7 +16,7 @@
 // CHECK:STDOUT: ]
 
 // Fix and uncomment this to test error handling.
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_missing_deduced_close.carbon:[[@LINE+2]]:7: Closing symbol does not match most recent opening symbol.
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_missing_deduced_close.carbon:[[@LINE+1]]:8: Expected parameter declaration.
+// CHECK:STDERR: toolchain/parser/testdata/function/declaration/fail_missing_deduced_close.carbon:[[@LINE+2]]:7: Closing symbol does not match most recent opening symbol.
+// CHECK:STDERR: toolchain/parser/testdata/function/declaration/fail_missing_deduced_close.carbon:[[@LINE+1]]:8: Expected parameter declaration.
 fn Div[();
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_missing_deduced_close.carbon:[[@LINE+0]]:181: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: toolchain/parser/testdata/function/declaration/fail_missing_deduced_close.carbon:[[@LINE+0]]:174: A `(` for parameters is required after deduced parameters.

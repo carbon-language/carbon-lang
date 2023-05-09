@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'n'},
@@ -18,5 +17,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/operators/fail_precedence_star_star.carbon:[[@LINE+1]]:16: Parentheses are required to disambiguate operator precedence.
+// CHECK:STDERR: toolchain/parser/testdata/operators/fail_precedence_star_star.carbon:[[@LINE+1]]:16: Parentheses are required to disambiguate operator precedence.
 var n: i8 = n* *p;

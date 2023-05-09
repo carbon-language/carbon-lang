@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
@@ -19,5 +18,5 @@ fn F() {
   // Note: this might become valid depending on the expression syntax. This test
   // shouldn't be taken as a sign it should remain invalid.
   bar
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/definition/fail_identifier_in_statements.carbon:[[@LINE+1]]:1: Expected `;` after expression.
+// CHECK:STDERR: toolchain/parser/testdata/function/definition/fail_identifier_in_statements.carbon:[[@LINE+1]]:1: Expected `;` after expression.
 }

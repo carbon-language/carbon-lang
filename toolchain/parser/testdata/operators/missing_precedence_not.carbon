@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
@@ -24,8 +23,8 @@
 // CHECK:STDOUT: ]
 
 fn F() {
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/operators/missing_precedence_not.carbon:[[@LINE+3]]:3: Whitespace is required before this unary operator.
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/operators/missing_precedence_not.carbon:[[@LINE+2]]:13: Whitespace is required before this unary operator.
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/operators/missing_precedence_not.carbon:[[@LINE+1]]:23: Whitespace is required before this unary operator.
+  // CHECK:STDERR: toolchain/parser/testdata/operators/missing_precedence_not.carbon:[[@LINE+3]]:3: Whitespace is required before this unary operator.
+  // CHECK:STDERR: toolchain/parser/testdata/operators/missing_precedence_not.carbon:[[@LINE+2]]:13: Whitespace is required before this unary operator.
+  // CHECK:STDERR: toolchain/parser/testdata/operators/missing_precedence_not.carbon:[[@LINE+1]]:23: Whitespace is required before this unary operator.
   not a and not b and not c;
 }

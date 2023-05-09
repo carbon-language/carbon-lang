@@ -26,7 +26,6 @@ def main() -> None:
         "--tool=carbon",
         "--autoupdate_arg=dump",
         "--autoupdate_arg=llvm-ir",
-        "--lit_run=%{carbon-run-lowering}",
         "--testdata=toolchain/lowering/testdata",
     ] + sys.argv[1:]
     os.execv(actual_py, args)
