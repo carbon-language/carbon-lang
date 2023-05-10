@@ -11,11 +11,42 @@
 #include "common/error.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
-#include "toolchain/parser/parser.h"
+#include "toolchain/parser/parser_context.h"
 
 namespace Carbon {
+
+class PrettyStackTraceParserContext : public llvm::PrettyStackTraceEntry {
+ public:
+  explicit PrettyStackTraceParserContext(const ParserContext* context)
+      : context_(context) {}
+  ~PrettyStackTraceParserContext() override = default;
+
+  auto print(llvm::raw_ostream& output) const -> void override {
+    output << "Parser stack:\n";
+    for (int i = 0; i < static_cast<int>(context_->state_stack().size()); ++i) {
+      const auto& entry = context_->state_stack()[i];
+      output << "\t" << i << ".\t" << entry.state;
+      Print(output, entry.token);
+    }
+    output << "\tcursor\tposition_";
+    Print(output, *context_->position());
+  }
+
+ private:
+  auto Print(llvm::raw_ostream& output, TokenizedBuffer::Token token) const
+      -> void {
+    auto line = context_->tokens().GetLine(token);
+    output << " @ " << context_->tokens().GetLineNumber(line) << ":"
+           << context_->tokens().GetColumnNumber(token) << ":"
+           << " token " << token << " : " << context_->tokens().GetKind(token)
+           << "\n";
+  }
+
+  const ParserContext* context_;
+};
 
 auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
                       llvm::raw_ostream* vlog_stream) -> ParseTree {
@@ -24,7 +55,30 @@ auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
   TokenDiagnosticEmitter emitter(translator, consumer);
 
   // Delegate to the parser.
-  auto tree = Parser::Parse(tokens, emitter, vlog_stream);
+  ParseTree tree(tokens);
+  ParserContext context(tree, tokens, emitter, vlog_stream);
+  PrettyStackTraceParserContext pretty_context(&context);
+
+  context.PushState(ParserState::DeclarationScopeLoop);
+
+  // The package should always be the first token, if it's present. Any other
+  // use is invalid.
+  if (context.PositionIs(TokenKind::Package)) {
+    context.PushState(ParserState::Package);
+  }
+
+  while (!context.state_stack().empty()) {
+    switch (context.state_stack().back().state) {
+#define CARBON_PARSER_STATE(Name) \
+  case ParserState::Name:         \
+    ParserHandle##Name(context);  \
+    break;
+#include "toolchain/parser/parser_state.def"
+    }
+  }
+
+  context.AddLeafNode(ParseNodeKind::FileEnd, *context.position());
+
   if (auto verify = tree.Verify(); !verify.ok()) {
     if (vlog_stream) {
       tree.Print(*vlog_stream);
