@@ -28,6 +28,7 @@ cc_library(
     hdrs = ["lowering_context.h"],
     deps = [
         "//common:check",
+        "//common:vlog",
         "//toolchain/semantics:semantics_ir",
         "//toolchain/semantics:semantics_node",
         "//toolchain/semantics:semantics_node_kind",
