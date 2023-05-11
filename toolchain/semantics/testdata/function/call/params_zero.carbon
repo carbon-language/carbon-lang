@@ -4,12 +4,9 @@
 //
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: calls: [
-// CHECK:STDOUT:   {arg_ir: block0, arg_refs: block0},
-// CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
+// CHECK:STDOUT:   {param_refs: block0},
+// CHECK:STDOUT:   {param_refs: block0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -23,7 +20,7 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+0, arg1: block0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str1, arg1: callable1},
-// CHECK:STDOUT:   {kind: Call, arg0: call0, arg1: callable0},
+// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: callable0},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+2, arg1: block2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [

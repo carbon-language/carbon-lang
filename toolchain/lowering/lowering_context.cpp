@@ -78,7 +78,7 @@ auto LoweringContext::BuildLoweredNodeAsType(SemanticsNodeId node_id)
   auto node = semantics_ir_->GetNode(node_id);
   switch (node.kind()) {
     case SemanticsNodeKind::StructType: {
-      auto refs = semantics_ir_->GetNodeBlock(node.GetAsStructType().second);
+      auto refs = semantics_ir_->GetNodeBlock(node.GetAsStructType());
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(refs.size());
       for (auto ref_id : refs) {

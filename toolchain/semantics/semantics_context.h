@@ -75,8 +75,8 @@ class SemanticsContext {
   // future we may want to remember the right implicit conversions to do for
   // valid cases in order to efficiently handle generics.
   auto ImplicitAsForArgs(
-      SemanticsNodeBlockId arg_ir_id, SemanticsNodeBlockId arg_refs_id,
-      ParseTree::Node param_parse_node, SemanticsNodeBlockId param_refs_id,
+      SemanticsNodeBlockId arg_refs_id, ParseTree::Node param_parse_node,
+      SemanticsNodeBlockId param_refs_id,
       DiagnosticEmitter<ParseTree::Node>::DiagnosticBuilder* diagnostic)
       -> bool;
 
@@ -95,9 +95,9 @@ class SemanticsContext {
 
   // Detects whether there's an entry to push. On return, the top of
   // node_stack_ will be start_kind, and the caller should do type-specific
-  // processing. Returns a pair of {ir_id, refs_id}.
+  // processing. Returns refs_id.
   auto ParamOrArgEnd(bool for_args, ParseNodeKind start_kind)
-      -> std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId>;
+      -> SemanticsNodeBlockId;
 
   // Saves a parameter from the top block in node_stack_ to the top block in
   // params_or_args_stack_. If for_args, adds a StubReference of the previous
@@ -125,11 +125,6 @@ class SemanticsContext {
 
   auto args_type_info_stack() -> SemanticsNodeBlockStack& {
     return args_type_info_stack_;
-  }
-
-  auto finished_params_stack() -> llvm::SmallVector<
-      std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId>>& {
-    return finished_params_stack_;
   }
 
   auto return_scope_stack() -> llvm::SmallVector<SemanticsNodeId>& {
@@ -225,12 +220,6 @@ class SemanticsContext {
   // currently only used for struct literals, where we need to track names
   // for a type separate from the literal arguments.
   SemanticsNodeBlockStack args_type_info_stack_;
-
-  // Completed parameters that are held temporarily on a side-channel for a
-  // function. This can't use node_stack_ because it has space for only one
-  // value, whereas parameters return two values.
-  llvm::SmallVector<std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId>>
-      finished_params_stack_;
 
   // A stack of return scopes; i.e., targets for `return`. Inside a function,
   // this will be a FunctionDeclaration.

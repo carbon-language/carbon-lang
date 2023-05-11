@@ -163,8 +163,8 @@ auto LoweringHandleStructType(LoweringContext& /*context*/,
 
 auto LoweringHandleStructTypeField(LoweringContext& /*context*/,
                                    SemanticsNodeId /*node_id*/,
-                                   SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+                                   SemanticsNode /*node*/) -> void {
+  // No action to take.
 }
 
 auto LoweringHandleStructValue(LoweringContext& context,
@@ -174,21 +174,18 @@ auto LoweringHandleStructValue(LoweringContext& context,
   auto* alloca = context.builder().CreateAlloca(type);
   context.SetLoweredNodeAsValue(node_id, alloca);
 
-  // TODO: Figure out changes to flow so that values are calculated for store.
-  // Right now, the struct value IR is unevaluated.
-  // auto refs =
-  //     context.semantics_ir().GetNodeBlock(node.GetAsStructValue().second);
-  // for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
-  //   auto* gep = context.builder().CreateStructGEP(type, alloca, i);
-  //   context.builder().CreateStore(context.GetLoweredNodeAsValue(refs[i]),
-  //                                 gep);
-  // }
+  auto refs = context.semantics_ir().GetNodeBlock(node.GetAsStructValue());
+  for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
+    auto* gep = context.builder().CreateStructGEP(type, alloca, i);
+    context.builder().CreateStore(context.GetLoweredNodeAsValue(refs[i]), gep);
+  }
 }
 
-auto LoweringHandleStubReference(LoweringContext& /*context*/,
-                                 SemanticsNodeId /*node_id*/,
-                                 SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+auto LoweringHandleStubReference(LoweringContext& context,
+                                 SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  context.SetLoweredNodeAsValue(
+      node_id, context.GetLoweredNodeAsValue(node.GetAsStubReference()));
 }
 
 auto LoweringHandleVarStorage(LoweringContext& context, SemanticsNodeId node_id,
