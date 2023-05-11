@@ -6,7 +6,7 @@
 // CHECK:STDOUT: ; ModuleID = 'toolchain/lowering/testdata/function/definition/params_two.carbon'
 // CHECK:STDOUT: source_filename = "toolchain/lowering/testdata/function/definition/params_two.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Foo(i32 %a, i32 %b) {
+// CHECK:STDOUT: define [0 x i8] @Foo(i32 %a, i32 %b) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT: }
 

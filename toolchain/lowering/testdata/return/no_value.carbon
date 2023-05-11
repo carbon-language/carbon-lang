@@ -6,7 +6,7 @@
 // CHECK:STDOUT: ; ModuleID = 'toolchain/lowering/testdata/return/no_value.carbon'
 // CHECK:STDOUT: source_filename = "toolchain/lowering/testdata/return/no_value.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Main() {
+// CHECK:STDOUT: define [0 x i8] @Main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
