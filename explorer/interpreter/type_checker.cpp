@@ -5058,6 +5058,17 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
       ScopeInfo::ForClassScope(scope_info, &class_scope, std::move(bindings));
   for (Nonnull<Declaration*> m : class_decl->members()) {
     CARBON_RETURN_IF_ERROR(DeclareDeclaration(m, class_scope_info));
+
+    if (const auto* fun = dyn_cast<FunctionDeclaration>(m)) {
+      if (fun->virt_override() == VirtualOverride::Impl) {
+        const VTable& vtable = (*base_class)->vtable();
+        const auto* vtable_fun = vtable.find(fun->name())->second.first;
+
+        CARBON_RETURN_IF_ERROR(ExpectExactType(
+            fun->source_loc(), "impl method", &vtable_fun->static_type(),
+            &fun->static_type(), class_scope));
+      }
+    }
   }
 
   if (trace_stream_->is_enabled()) {
