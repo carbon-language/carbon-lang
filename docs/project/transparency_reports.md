@@ -33,9 +33,9 @@ that we ask all community members to adhere to:
 -   be friendly and patient,
 -   be considerate,
 -   be kind,
--   be careful in the words that we choose, when we disagree, we try to
-    understand why, and recognize when progress has stopped, and take a step
-    back.
+-   be careful in the words that we choose,
+-   when we disagree, try to understand why, and
+-   recognize when progress has stopped, and take a step back.
 
 The following summary is intended to help the community understand what kinds of
 Code of Conduct (CoC) incidents were brought to our attention lately, and how we
