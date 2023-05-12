@@ -115,7 +115,8 @@ auto LoweringHandleIntegerLiteral(LoweringContext& context,
     -> void {
   llvm::APInt i =
       context.semantics_ir().GetIntegerLiteral(node.GetAsIntegerLiteral());
-  llvm::Value* v = context.builder().getInt32(i.getLimitedValue());
+  llvm::Value* v =
+      llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getSExtValue());
   context.SetLoweredNodeAsValue(node_id, v);
 }
 
@@ -125,15 +126,9 @@ auto LoweringHandleRealLiteral(LoweringContext& context,
   SemanticsRealLiteral real =
       context.semantics_ir().GetRealLiteral(node.GetAsRealLiteral());
   double val =
-      real.mantissa.getLimitedValue() *
-      std::pow((real.is_decimal ? 10 : 2), real.exponent.getLimitedValue());
-  llvm::errs() << val << "\n";
-  llvm::APFloat llvm_val(
-      real.mantissa.getLimitedValue() *
-      std::pow((real.is_decimal ? 10 : 2), real.exponent.getLimitedValue()));
-  llvm::SmallString<100> x;
-  llvm_val.toString(x);
-  llvm::errs() << x << "\n";
+      real.mantissa.getSExtValue() *
+      std::pow((real.is_decimal ? 10 : 2), real.exponent.getSExtValue());
+  llvm::APFloat llvm_val(val);
   context.SetLoweredNodeAsValue(
       node_id,
       llvm::ConstantFP::get(context.builder().getDoubleTy(), llvm_val));
