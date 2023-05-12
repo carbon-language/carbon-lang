@@ -6,7 +6,7 @@
 // RUN: %{carbon-run-lowering}
 // CHECK:STDOUT: ; ModuleID = '{{.*}}/toolchain/lowering/testdata/function/definition/params_two.carbon'
 // CHECK:STDOUT: source_filename = "{{.*}}/toolchain/lowering/testdata/function/definition/params_two.carbon"
-// CHECK-EMPTY:
+// CHECK:STDOUT:
 // CHECK:STDOUT: define void @Foo(i32 %a, i32 %b) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT: }

@@ -6,7 +6,7 @@
 // RUN: %{carbon-run-lowering}
 // CHECK:STDOUT: ; ModuleID = '{{.*}}/toolchain/lowering/testdata/return/value.carbon'
 // CHECK:STDOUT: source_filename = "{{.*}}/toolchain/lowering/testdata/return/value.carbon"
-// CHECK-EMPTY:
+// CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 0
