@@ -19,12 +19,12 @@
 #include "explorer/ast/statement.h"
 #include "explorer/ast/value.h"
 #include "explorer/common/nonnull.h"
+#include "explorer/common/trace_stream.h"
 #include "explorer/interpreter/builtins.h"
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/matching_impl_set.h"
-#include "explorer/interpreter/trace_stream.h"
 #include "llvm/ADT/identity.h"
 
 namespace Carbon {

@@ -15,9 +15,9 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/value.h"
+#include "explorer/common/trace_stream.h"
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/heap.h"
-#include "explorer/interpreter/trace_stream.h"
 #include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {

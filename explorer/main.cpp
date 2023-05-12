@@ -15,12 +15,8 @@
 #include <vector>
 
 #include "common/error.h"
-#include "explorer/common/arena.h"
-#include "explorer/common/nonnull.h"
-#include "explorer/interpreter/exec_program.h"
-#include "explorer/interpreter/trace_stream.h"
-#include "explorer/syntax/parse.h"
-#include "explorer/syntax/prelude.h"
+#include "explorer/common/trace_stream.h"
+#include "explorer/parse_and_execute/parse_and_execute.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
@@ -85,81 +81,22 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
     }
   }
 
-  auto time_start = std::chrono::system_clock::now();
-
-  Arena arena;
-  AST ast;
-  if (ErrorOr<AST> parse_result = Parse(&arena, input_file_name, parser_debug);
-      parse_result.ok()) {
-    ast = *std::move(parse_result);
-  } else {
-    llvm::errs() << "SYNTAX ERROR: " << parse_result.error() << "\n";
-    return EXIT_FAILURE;
-  }
-
-  auto time_after_parse = std::chrono::system_clock::now();
-
-  AddPrelude(prelude_file_name, &arena, &ast.declarations,
-             &ast.num_prelude_declarations);
-
-  auto time_after_prelude = std::chrono::system_clock::now();
-
-  // Semantically analyze the parsed program.
-  if (ErrorOr<AST> analyze_result =
-          AnalyzeProgram(&arena, ast, &trace_stream, &llvm::outs());
-      analyze_result.ok()) {
-    ast = *std::move(analyze_result);
-  } else {
-    llvm::errs() << "COMPILATION ERROR: " << analyze_result.error() << "\n";
-    return EXIT_FAILURE;
-  }
-
-  auto time_after_analyze = std::chrono::system_clock::now();
-
-  // Run the program.
-  auto ret = EXIT_SUCCESS;
-  if (ErrorOr<int> exec_result =
-          ExecProgram(&arena, ast, &trace_stream, &llvm::outs());
-      exec_result.ok()) {
+  ErrorOr<int> result =
+      ParseAndExecuteFile(prelude_file_name, input_file_name, parser_debug,
+                          &trace_stream, &llvm::outs());
+  if (result.ok()) {
     // Print the return code to stdout.
-    llvm::outs() << "result: " << *exec_result << "\n";
+    llvm::outs() << "result: " << *result << "\n";
 
     // When there's a dedicated trace file, print the return code to it too.
     if (scoped_trace_stream) {
-      trace_stream << "result: " << *exec_result << "\n";
+      trace_stream << "result: " << *result << "\n";
     }
+    return EXIT_SUCCESS;
   } else {
-    llvm::errs() << "RUNTIME ERROR: " << exec_result.error() << "\n";
-    ret = EXIT_FAILURE;
+    llvm::errs() << result.error() << "\n";
+    return EXIT_FAILURE;
   }
-
-  auto time_after_exec = std::chrono::system_clock::now();
-
-  if (trace_stream.is_enabled()) {
-    trace_stream << "Timings:\n"
-                 << "- Parse: "
-                 << std::chrono::duration_cast<std::chrono::milliseconds>(
-                        time_after_parse - time_start)
-                        .count()
-                 << "ms\n"
-                 << "- AddPrelude: "
-                 << std::chrono::duration_cast<std::chrono::milliseconds>(
-                        time_after_prelude - time_after_parse)
-                        .count()
-                 << "ms\n"
-                 << "- AnalyzeProgram: "
-                 << std::chrono::duration_cast<std::chrono::milliseconds>(
-                        time_after_analyze - time_after_prelude)
-                        .count()
-                 << "ms\n"
-                 << "- ExecProgram: "
-                 << std::chrono::duration_cast<std::chrono::milliseconds>(
-                        time_after_exec - time_after_analyze)
-                        .count()
-                 << "ms\n";
-  }
-
-  return ret;
 }
 
 }  // namespace Carbon
