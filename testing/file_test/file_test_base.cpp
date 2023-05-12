@@ -54,7 +54,7 @@ auto FileTestBase::TestBody() -> void {
   while (std::getline(file_content, line_str)) {
     ++line_index;
     llvm::StringRef line = line_str;
-    line = line.drop_while([](char c) { return c == ' '; });
+    line = line.ltrim();
     if (!line.consume_front("// CHECK")) {
       continue;
     }
