@@ -16,7 +16,7 @@
 
 namespace Carbon {
 
-// Handles processing of a ParseTree for semantics.
+// Context and shared functionality for semantics handlers.
 class SemanticsContext {
  public:
   // Stores references for work.
