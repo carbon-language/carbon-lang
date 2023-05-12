@@ -13,15 +13,15 @@
 
 namespace Carbon {
 
-// Context for lowering. `Run()` should only be called once, and handles the
-// main execution.
+// Context and shared functionality for lowering handlers.
 class LoweringContext {
  public:
   explicit LoweringContext(llvm::LLVMContext& llvm_context,
                            llvm::StringRef module_name,
                            const SemanticsIR& semantics_ir);
 
-  // Lowers the SemanticsIR to LLVM IR.
+  // Lowers the SemanticsIR to LLVM IR. Should only be called once, and handles
+  // the main execution loop.
   auto Run() -> std::unique_ptr<llvm::Module>;
 
   // Returns a type for the given node.
