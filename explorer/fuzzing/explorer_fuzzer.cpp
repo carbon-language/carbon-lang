@@ -10,5 +10,5 @@
 
 DEFINE_TEXT_PROTO_FUZZER(const Carbon::Fuzzing::Carbon& input) {
   // Only verifying it doesn't crash.
-  (void)Carbon::ParseAndExecute(input);
+  (void)Carbon::Testing::ParseAndExecuteProto(input);
 }
