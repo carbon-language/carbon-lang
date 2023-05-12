@@ -64,16 +64,16 @@ The following is the initial list of symbolic tokens recognized in a Carbon
 source file:
 
 | Symbolic Tokens and Explanation                                                                                |
-| -------------------------------------------------------------------------------------------------------------- | ------------ |
+| -------------------------------------------------------------------------------------------------------------- |
 | `+` Addition                                                                                                   |
 | `-` Subtraction and negation                                                                                   |
-| `*` Indirection, multiplication, and forming pointers                                                          |
+| `*` Indirection, multiplication, and forming pointer types                                                     |
 | `/` Division                                                                                                   |
 | `%` Modulus                                                                                                    |
 | `=` Assignment                                                                                                 |
 | `^` Complementing and Bitwise XOR                                                                              |
 | `&` Address-of and Bitwise AND                                                                                 |
-| `                                                                                                              | ` Bitwise OR |
+| `\|` Bitwise OR                                                                                                |
 | `<<` Arithmetic and Logical Left-shift                                                                         |
 | `>>` Arithmetic and Logical Right-shift                                                                        |
 | `==` Equality or equal to                                                                                      |
@@ -93,8 +93,8 @@ source file:
 | `,` Separate tuple and struct elements                                                                         |
 | `.` Member access                                                                                              |
 | `:` Name bindings                                                                                              |
+| `:!` Generic binding                                                                                           |
 | `;` Statement separator                                                                                        |
-| `:!` Type-checking                                                                                             |
 
 TODO: Arithmetic operators, Bitwise operators, Comparison operators & :!
 [#2657](https://github.com/carbon-language/carbon-lang/pull/2657/files#r1137826711)
