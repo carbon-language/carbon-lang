@@ -6,7 +6,7 @@
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: callables: [
 // CHECK:STDOUT:   {param_refs: block2},
-// CHECK:STDOUT:   {param_refs: block3},
+// CHECK:STDOUT:   {param_refs: block5},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -33,15 +33,19 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,

@@ -113,16 +113,30 @@ auto LoweringHandleFunctionDefinition(LoweringContext& context,
 auto LoweringHandleIntegerLiteral(LoweringContext& context,
                                   SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  SemanticsIntegerLiteralId int_id = node.GetAsIntegerLiteral();
-  llvm::APInt i = context.semantics_ir().GetIntegerLiteral(int_id);
+  llvm::APInt i =
+      context.semantics_ir().GetIntegerLiteral(node.GetAsIntegerLiteral());
   llvm::Value* v = context.builder().getInt32(i.getLimitedValue());
   context.SetLoweredNodeAsValue(node_id, v);
 }
 
-auto LoweringHandleRealLiteral(LoweringContext& /*context*/,
-                               SemanticsNodeId /*node_id*/, SemanticsNode node)
+auto LoweringHandleRealLiteral(LoweringContext& context,
+                               SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  SemanticsRealLiteral real =
+      context.semantics_ir().GetRealLiteral(node.GetAsRealLiteral());
+  double val =
+      real.mantissa.getLimitedValue() *
+      std::pow((real.is_decimal ? 10 : 2), real.exponent.getLimitedValue());
+  llvm::errs() << val << "\n";
+  llvm::APFloat llvm_val(
+      real.mantissa.getLimitedValue() *
+      std::pow((real.is_decimal ? 10 : 2), real.exponent.getLimitedValue()));
+  llvm::SmallString<100> x;
+  llvm_val.toString(x);
+  llvm::errs() << x << "\n";
+  context.SetLoweredNodeAsValue(
+      node_id,
+      llvm::ConstantFP::get(context.builder().getDoubleTy(), llvm_val));
 }
 
 auto LoweringHandleReturn(LoweringContext& context, SemanticsNodeId /*node_id*/,
@@ -190,11 +204,12 @@ auto LoweringHandleStubReference(LoweringContext& context,
 
 auto LoweringHandleVarStorage(LoweringContext& context, SemanticsNodeId node_id,
                               SemanticsNode node) -> void {
-  // TODO: This doesn't handle globals. Also, LLVM requires globals to have a
-  // name. Do we want to generate a name, which would need to be consistent
-  // across translation units, or use the given name, which requires either
-  // looking ahead for BindName or restructuring semantics, either of which
-  // affects the destructuring due to the difference in storage?
+  // TODO: This doesn't handle globals. Also, LLVM requires globals to have
+  // a name. Do we want to generate a name, which would need to be
+  // consistent across translation units, or use the given name, which
+  // requires either looking ahead for BindName or restructuring semantics,
+  // either of which affects the destructuring due to the difference in
+  // storage?
   auto* alloca = context.builder().CreateAlloca(
       context.GetLoweredNodeAsType(node.type_id()));
   context.SetLoweredNodeAsValue(node_id, alloca);

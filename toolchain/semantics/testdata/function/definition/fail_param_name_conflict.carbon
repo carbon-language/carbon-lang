@@ -31,12 +31,14 @@
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

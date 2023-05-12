@@ -26,15 +26,15 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str1, arg1: callable0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+2, arg1: block3},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+2, arg1: block4},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str2, arg1: callable1},
 // CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+7, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+9, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Call, arg0: block5, arg1: callable0, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: Call, arg0: block6, arg1: callable0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+7, arg1: node+11, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+6, arg1: block4},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+6, arg1: block5},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -42,13 +42,15 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+3,
