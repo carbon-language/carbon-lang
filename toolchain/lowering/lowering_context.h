@@ -13,10 +13,8 @@
 
 namespace Carbon {
 
-// Use LowerToLLVM rather than calling this directly.
-//
-// This carries state for lowering. `Run()` should only be called once, and
-// handles the main execution.
+// Context for lowering. `Run()` should only be called once, and handles the
+// main execution.
 class LoweringContext {
  public:
   explicit LoweringContext(llvm::LLVMContext& llvm_context,
