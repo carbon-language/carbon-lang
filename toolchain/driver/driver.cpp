@@ -13,6 +13,7 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/lowering/lower_to_llvm.h"
@@ -40,7 +41,8 @@ auto GetSubcommand(llvm::StringRef name) -> Subcommand {
 }  // namespace
 
 auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
-  DiagnosticConsumer* consumer = &ConsoleDiagnosticConsumer();
+  StreamDiagnosticConsumer stream_consumer(error_stream_);
+  DiagnosticConsumer* consumer = &stream_consumer;
   std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
   // TODO: Figure out a command-line support library, this is temporary.
   if (!args.empty() && args[0] == "-v") {

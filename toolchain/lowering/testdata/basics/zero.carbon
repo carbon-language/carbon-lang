@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-lowering}
-// CHECK:STDOUT: ; ModuleID = '{{.*}}/toolchain/lowering/testdata/basics/zero.carbon'
-// CHECK:STDOUT: source_filename = "{{.*}}/toolchain/lowering/testdata/basics/zero.carbon"
+// CHECK:STDOUT: ; ModuleID = 'toolchain/lowering/testdata/basics/zero.carbon'
+// CHECK:STDOUT: source_filename = "toolchain/lowering/testdata/basics/zero.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Main() {
 // CHECK:STDOUT: entry:

@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-lowering}
-// CHECK:STDOUT: ; ModuleID = '{{.*}}/toolchain/lowering/testdata/function/definition/params_zero.carbon'
-// CHECK:STDOUT: source_filename = "{{.*}}/toolchain/lowering/testdata/function/definition/params_zero.carbon"
+// CHECK:STDOUT: ; ModuleID = 'toolchain/lowering/testdata/function/definition/params_zero.carbon'
+// CHECK:STDOUT: source_filename = "toolchain/lowering/testdata/function/definition/params_zero.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Foo() {
 // CHECK:STDOUT: entry:

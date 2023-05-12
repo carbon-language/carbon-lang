@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'foo'},
@@ -31,7 +30,7 @@
 // CHECK:STDOUT: ]
 
 fn foo() {
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/for/fail_colon_instead_of_in.carbon:[[@LINE+1]]:19: `:` should be replaced by `in`.
+  // CHECK:STDERR: toolchain/parser/testdata/for/fail_colon_instead_of_in.carbon:[[@LINE+1]]:19: `:` should be replaced by `in`.
   for (var x: i32 : y) {
     Print(x);
   }

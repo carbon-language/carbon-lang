@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
@@ -40,11 +39,11 @@ fn F() {
   while (a) {
     if (b) {
       break
-    // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/while/fail_no_semi.carbon:[[@LINE+1]]:5: Expected `;` after `break`.
+    // CHECK:STDERR: toolchain/parser/testdata/while/fail_no_semi.carbon:[[@LINE+1]]:5: Expected `;` after `break`.
     }
     if (c) {
       continue
-    // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/while/fail_no_semi.carbon:[[@LINE+1]]:5: Expected `;` after `continue`.
+    // CHECK:STDERR: toolchain/parser/testdata/while/fail_no_semi.carbon:[[@LINE+1]]:5: Expected `;` after `continue`.
     }
   }
 }

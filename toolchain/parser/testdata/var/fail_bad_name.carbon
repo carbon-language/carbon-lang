@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: '*', has_error: yes},
@@ -13,5 +12,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/var/fail_bad_name.carbon:[[@LINE+1]]:5: Expected pattern in `var` declaration.
+// CHECK:STDERR: toolchain/parser/testdata/var/fail_bad_name.carbon:[[@LINE+1]]:5: Expected pattern in `var` declaration.
 var *;

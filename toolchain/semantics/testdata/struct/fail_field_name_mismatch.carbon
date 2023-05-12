@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
@@ -60,5 +59,5 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_field_name_mismatch.carbon:[[@LINE+1]]:28: Cannot implicitly convert from `{.b: i32}` to `{.a: i32}`.
+// CHECK:STDERR: toolchain/semantics/testdata/struct/fail_field_name_mismatch.carbon:[[@LINE+1]]:28: Cannot implicitly convert from `{.b: i32}` to `{.a: i32}`.
 var x: {.a: i32} = {.b = 1};

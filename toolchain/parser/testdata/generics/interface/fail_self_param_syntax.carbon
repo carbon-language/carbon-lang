@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'Foo'},
@@ -43,9 +42,9 @@
 // CHECK:STDOUT: ]
 
 interface Foo {
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_self_param_syntax.carbon:[[@LINE+1]]:13: Expected parameter declaration.
+  // CHECK:STDERR: toolchain/parser/testdata/generics/interface/fail_self_param_syntax.carbon:[[@LINE+1]]:13: Expected parameter declaration.
   fn Sub[me Self](b: Self) -> Self;
 
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/interface/fail_self_param_syntax.carbon:[[@LINE+1]]:10: Expected parameter declaration.
+  // CHECK:STDERR: toolchain/parser/testdata/generics/interface/fail_self_param_syntax.carbon:[[@LINE+1]]:10: Expected parameter declaration.
   fn Mul[Self](b: Self) -> Self;
 }

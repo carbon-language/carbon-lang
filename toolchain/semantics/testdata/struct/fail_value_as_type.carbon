@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
@@ -48,5 +47,5 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_value_as_type.carbon:[[@LINE+1]]:15: Cannot implicitly convert from `{.a: i32}` to `Type`.
+// CHECK:STDERR: toolchain/semantics/testdata/struct/fail_value_as_type.carbon:[[@LINE+1]]:15: Cannot implicitly convert from `{.a: i32}` to `Type`.
 var x: {.a = 1};

@@ -7,8 +7,6 @@ load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["lit.cfg.py"])
-
 cc_library(
     name = "driver",
     srcs = ["driver.cpp"],

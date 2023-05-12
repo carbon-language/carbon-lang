@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
@@ -59,7 +58,7 @@
 fn Run(a: i32) {}
 
 fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE+2]]:6: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE-4]]:1: Callable cannot be used: Cannot implicityly convert argument 0 from `f64` to `i32`.
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE+2]]:6: No matching callable was found.
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE-4]]:1: Callable cannot be used: Cannot implicityly convert argument 0 from `f64` to `i32`.
   Run(1.0);
 }

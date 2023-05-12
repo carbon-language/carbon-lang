@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
@@ -68,5 +67,5 @@
 // CHECK:STDOUT: ]
 
 var x: {.a: f64} = {.a = 4.0};
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/struct/fail_member_access_type.carbon:[[@LINE+1]]:15: Type `{.a: f64}` does not have a member `b`.
+// CHECK:STDERR: toolchain/semantics/testdata/struct/fail_member_access_type.carbon:[[@LINE+1]]:15: Type `{.a: f64}` does not have a member `b`.
 var y: i32 = x.b;

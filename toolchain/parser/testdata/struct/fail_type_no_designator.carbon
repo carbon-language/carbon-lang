@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'x'},
@@ -18,5 +17,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/struct/fail_type_no_designator.carbon:[[@LINE+1]]:9: Expected `.field: field_type` or `.field = value`.
+// CHECK:STDERR: toolchain/parser/testdata/struct/fail_type_no_designator.carbon:[[@LINE+1]]:9: Expected `.field: field_type` or `.field = value`.
 var x: {i32} = {};

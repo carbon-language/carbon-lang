@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: '=', has_error: yes},
@@ -17,7 +16,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_paren_match_regression.carbon:[[@LINE+3]]:5: Expected pattern in `var` declaration.
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_paren_match_regression.carbon:[[@LINE+2]]:12: Expected `,` or `)`.
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/basics/fail_paren_match_regression.carbon:[[@LINE+1]]:15: Expected `;` after expression.
+// CHECK:STDERR: toolchain/parser/testdata/basics/fail_paren_match_regression.carbon:[[@LINE+3]]:5: Expected pattern in `var` declaration.
+// CHECK:STDERR: toolchain/parser/testdata/basics/fail_paren_match_regression.carbon:[[@LINE+2]]:12: Expected `,` or `)`.
+// CHECK:STDERR: toolchain/parser/testdata/basics/fail_paren_match_regression.carbon:[[@LINE+1]]:15: Expected `;` after expression.
 var = (foo {})

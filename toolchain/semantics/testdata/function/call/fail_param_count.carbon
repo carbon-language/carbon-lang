@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
@@ -130,24 +129,24 @@ fn Run1(a: i32) {}
 fn Run2(a: i32, b: i32) {}
 
 fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-6]]:1: Callable cannot be used: Received 1 argument(s), but require 0 argument(s).
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-6]]:1: Callable cannot be used: Received 1 argument(s), but require 0 argument(s).
   Run0(1);
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-9]]:1: Callable cannot be used: Received 2 argument(s), but require 0 argument(s).
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-9]]:1: Callable cannot be used: Received 2 argument(s), but require 0 argument(s).
   Run0(0, 1);
 
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-12]]:1: Callable cannot be used: Received 0 argument(s), but require 1 argument(s).
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-12]]:1: Callable cannot be used: Received 0 argument(s), but require 1 argument(s).
   Run1();
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-15]]:1: Callable cannot be used: Received 2 argument(s), but require 1 argument(s).
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-15]]:1: Callable cannot be used: Received 2 argument(s), but require 1 argument(s).
   Run1(0, 1);
 
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-18]]:1: Callable cannot be used: Received 0 argument(s), but require 2 argument(s).
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-18]]:1: Callable cannot be used: Received 0 argument(s), but require 2 argument(s).
   Run2();
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-21]]:1: Callable cannot be used: Received 1 argument(s), but require 2 argument(s).
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
+  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_count.carbon:[[@LINE-21]]:1: Callable cannot be used: Received 1 argument(s), but require 2 argument(s).
   Run2(0);
 }

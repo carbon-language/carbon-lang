@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Geometry'},
@@ -12,5 +11,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/package/fail_no_semi.carbon:[[@LINE+1]]:21: Expected `;` to end package directive.
+// CHECK:STDERR: toolchain/parser/testdata/package/fail_no_semi.carbon:[[@LINE+1]]:21: Expected `;` to end package directive.
 package Geometry api

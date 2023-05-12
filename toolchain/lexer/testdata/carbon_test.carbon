@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-tokens}
 // CHECK:STDOUT: [
 
 // CHECK:STDOUT: { index:  0, kind:                'Fn', line: {{ *}}[[@LINE+7]], column:  1, indent: 1, spelling: 'fn', has_trailing_space: true },
