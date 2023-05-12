@@ -18,8 +18,8 @@
 
 namespace Carbon {
 
-// This parser uses a stack for state transitions. See parser_state.def for
-// state documentation.
+// Context and shared functionality for parser handlers. See parser_state.def
+// for state documentation.
 class ParserContext {
  public:
   // Possible operator fixities for errors.
@@ -304,6 +304,7 @@ class ParserContext {
 
 // The diagnostics below may be emitted a couple different ways as part of
 // operator parsing.
+// TODO: Clean these up, maybe as context functions?
 
 CARBON_DIAGNOSTIC(
     OperatorRequiresParentheses, Error,
