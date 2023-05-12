@@ -54,7 +54,7 @@ auto FileTestBase::TestBody() -> void {
   while (std::getline(file_content, line_str)) {
     ++line_index;
     llvm::StringRef line = line_str;
-    line = line.drop_while([](char c) { return c == ' '; });
+    line = line.ltrim();
     if (!line.consume_front("// CHECK")) {
       continue;
     }
@@ -120,21 +120,27 @@ auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
         break;
       }
       case '[': {
-        static constexpr llvm::StringLiteral LineKeyword = "[[@LINE";
         llvm::StringRef line_keyword_cursor = llvm::StringRef(str).substr(pos);
-        if (line_keyword_cursor.consume_front(LineKeyword)) {
-          // Allow + or - here; consumeInteger handles -.
-          line_keyword_cursor.consume_front("+");
-          int offset;
-          // consumeInteger returns true for errors, not false.
-          CARBON_CHECK(!line_keyword_cursor.consumeInteger(10, offset) &&
-                       line_keyword_cursor.consume_front("]]"))
-              << "Unexpected @LINE offset at `"
-              << line_keyword_cursor.substr(0, 5) << "` in: " << in;
-          std::string int_str = llvm::Twine(line_index + offset).str();
-          int remove_len = (line_keyword_cursor.data() - str.data()) - pos;
-          str.replace(pos, remove_len, int_str);
-          pos += int_str.size();
+        if (line_keyword_cursor.consume_front("[[")) {
+          static constexpr llvm::StringLiteral LineKeyword = "@LINE";
+          if (line_keyword_cursor.consume_front(LineKeyword)) {
+            // Allow + or - here; consumeInteger handles -.
+            line_keyword_cursor.consume_front("+");
+            int offset;
+            // consumeInteger returns true for errors, not false.
+            CARBON_CHECK(!line_keyword_cursor.consumeInteger(10, offset) &&
+                         line_keyword_cursor.consume_front("]]"))
+                << "Unexpected @LINE offset at `"
+                << line_keyword_cursor.substr(0, 5) << "` in: " << in;
+            std::string int_str = llvm::Twine(line_index + offset).str();
+            int remove_len = (line_keyword_cursor.data() - str.data()) - pos;
+            str.replace(pos, remove_len, int_str);
+            pos += int_str.size();
+          } else {
+            CARBON_FATAL() << "Unexpected [[, should be {{\\[\\[}} at `"
+                           << line_keyword_cursor.substr(0, 5)
+                           << "` in: " << in;
+          }
         } else {
           // Escape the `[`.
           str.insert(pos, "\\");
