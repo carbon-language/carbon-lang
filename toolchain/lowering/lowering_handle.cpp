@@ -115,6 +115,7 @@ auto LoweringHandleIntegerLiteral(LoweringContext& context,
     -> void {
   llvm::APInt i =
       context.semantics_ir().GetIntegerLiteral(node.GetAsIntegerLiteral());
+  // TODO: This won't offer correct semantics, but seems close enough for now.
   llvm::Value* v =
       llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getSExtValue());
   context.SetLoweredNodeAsValue(node_id, v);
@@ -125,6 +126,7 @@ auto LoweringHandleRealLiteral(LoweringContext& context,
     -> void {
   SemanticsRealLiteral real =
       context.semantics_ir().GetRealLiteral(node.GetAsRealLiteral());
+  // TODO: This will probably have overflow issues, and should be fixed.
   double val =
       real.mantissa.getSExtValue() *
       std::pow((real.is_decimal ? 10 : 2), real.exponent.getSExtValue());
