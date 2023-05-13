@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Geometry'},
@@ -11,5 +10,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/package/fail_library_is_identifier.carbon:[[@LINE+1]]:26: Expected a string literal to specify the library name.
+// CHECK:STDERR: toolchain/parser/testdata/package/fail_library_is_identifier.carbon:[[@LINE+1]]:26: Expected a string literal to specify the library name.
 package Geometry library Shapes api;

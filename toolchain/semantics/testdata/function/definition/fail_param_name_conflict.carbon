@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
@@ -45,6 +44,6 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/fail_param_name_conflict.carbon:[[@LINE+2]]:16: Redefining a in the same scope.
-// CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/function/definition/fail_param_name_conflict.carbon:[[@LINE+1]]:8: Previous definition is here.
+// CHECK:STDERR: toolchain/semantics/testdata/function/definition/fail_param_name_conflict.carbon:[[@LINE+2]]:16: Redefining a in the same scope.
+// CHECK:STDERR: toolchain/semantics/testdata/function/definition/fail_param_name_conflict.carbon:[[@LINE+1]]:8: Previous definition is here.
 fn Bar(a: i32, a: i32) {}

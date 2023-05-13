@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
@@ -21,6 +20,6 @@
 // CHECK:STDOUT: ]
 
 fn F() {
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/operators/fail_precedence_or_and.carbon:[[@LINE+1]]:10: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: toolchain/parser/testdata/operators/fail_precedence_or_and.carbon:[[@LINE+1]]:10: Parentheses are required to disambiguate operator precedence.
   a or b and c;
 }

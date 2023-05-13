@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
@@ -40,6 +39,6 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/var/fail_init_with_self.carbon:[[@LINE+1]]:16: Name x not found
+  // CHECK:STDERR: toolchain/semantics/testdata/var/fail_init_with_self.carbon:[[@LINE+1]]:16: Name x not found
   var x: i32 = x;
 }

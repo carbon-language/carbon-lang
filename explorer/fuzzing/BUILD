@@ -29,7 +29,6 @@ cc_binary(
         "//explorer/common:arena",
         "//explorer/syntax",
         "@com_google_protobuf//:protobuf_headers",
-        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -65,10 +64,7 @@ cc_library(
         "//common/fuzzing:carbon_cc_proto",
         "//common/fuzzing:proto_to_carbon_lib",
         "//explorer/ast",
-        "//explorer/interpreter:exec_program",
-        "//explorer/interpreter:trace_stream",
-        "//explorer/syntax",
-        "//explorer/syntax:prelude",
+        "//explorer/parse_and_execute",
         "@bazel_tools//tools/cpp/runfiles",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",

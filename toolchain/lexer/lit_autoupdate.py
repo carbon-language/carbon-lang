@@ -36,7 +36,6 @@ def main() -> None:
         "--line_number_delta_prefix={{ *}}",
         "--line_number_pattern="
         r"(?P<prefix> line: )(?P<line> *\d+)(?P<suffix>,)",
-        "--lit_run=%{carbon-run-tokens}",
         "--testdata=toolchain/lexer/testdata",
     ] + sys.argv[1:]
     os.execv(actual_py, args)

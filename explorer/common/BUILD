@@ -48,3 +48,13 @@ cc_library(
         "//common:ostream",
     ],
 )
+
+cc_library(
+    name = "trace_stream",
+    hdrs = ["trace_stream.h"],
+    deps = [
+        "//common:check",
+        "//common:ostream",
+        "//explorer/common:nonnull",
+    ],
+)

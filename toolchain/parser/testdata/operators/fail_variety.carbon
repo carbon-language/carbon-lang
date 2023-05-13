@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
@@ -36,9 +35,9 @@
 // CHECK:STDOUT: ]
 
 fn F() {
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/operators/fail_variety.carbon:[[@LINE+4]]:29: Parentheses are required to disambiguate operator precedence.
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/operators/fail_variety.carbon:[[@LINE+3]]:34: Parentheses are required to disambiguate operator precedence.
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/operators/fail_variety.carbon:[[@LINE+2]]:38: Parentheses are required to disambiguate operator precedence.
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/operators/fail_variety.carbon:[[@LINE+1]]:40: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: toolchain/parser/testdata/operators/fail_variety.carbon:[[@LINE+4]]:29: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: toolchain/parser/testdata/operators/fail_variety.carbon:[[@LINE+3]]:34: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: toolchain/parser/testdata/operators/fail_variety.carbon:[[@LINE+2]]:38: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: toolchain/parser/testdata/operators/fail_variety.carbon:[[@LINE+1]]:40: Parentheses are required to disambiguate operator precedence.
   n = a * b + c * d = d * d << e & f - not g;
 }

@@ -8,7 +8,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import subprocess
 import sys
-import textwrap
+
+
+def _print(output: str, label: str) -> None:
+    if output:
+        for line in output.splitlines():
+            if line:
+                print(f"{label}: {line}")
+            else:
+                print(f"{label}:")
 
 
 def main() -> None:
@@ -18,10 +26,9 @@ def main() -> None:
         stderr=subprocess.PIPE,
         encoding="utf-8",
     )
-    if p.stdout:
-        print(textwrap.indent(p.stdout, "STDOUT: "), end="")
-    if p.stderr:
-        print(textwrap.indent(p.stderr, "STDERR: "), end="")
+    # The `lambda line` forces prefixes on empty lines.
+    _print(p.stdout, "STDOUT")
+    _print(p.stderr, "STDERR")
     exit(p.returncode)
 
 

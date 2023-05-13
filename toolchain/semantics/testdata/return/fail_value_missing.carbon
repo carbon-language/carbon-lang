@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
@@ -35,6 +34,6 @@
 // CHECK:STDOUT: ]
 
 fn Main() -> i32 {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/return/fail_value_missing.carbon:[[@LINE+1]]:9: Must return a i32.
+  // CHECK:STDERR: toolchain/semantics/testdata/return/fail_value_missing.carbon:[[@LINE+1]]:9: Must return a i32.
   return;
 }

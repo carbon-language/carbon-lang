@@ -26,7 +26,6 @@ def main() -> None:
         "--tool=carbon",
         "--autoupdate_arg=dump",
         "--autoupdate_arg=parse-tree",
-        "--lit_run=%{carbon-run-parser}",
         "--testdata=toolchain/parser/testdata",
     ] + sys.argv[1:]
     os.execv(actual_py, args)

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'x'},
@@ -26,5 +25,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/struct/fail_dot_string_colon.carbon:[[@LINE+1]]:10: Expected identifier after `.`.
+// CHECK:STDERR: toolchain/parser/testdata/struct/fail_dot_string_colon.carbon:[[@LINE+1]]:10: Expected identifier after `.`.
 var x: {."hello": i32, .y: i32} = {};

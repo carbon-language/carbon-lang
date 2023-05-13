@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT: {kind: 'EmptyDeclaration', text: 'struct', has_error: yes},
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
@@ -14,6 +13,6 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_skip_without_semi_to_curly.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
+// CHECK:STDERR: toolchain/parser/testdata/function/declaration/fail_skip_without_semi_to_curly.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
 struct X { fn () }
 fn F();

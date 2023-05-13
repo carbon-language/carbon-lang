@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: calls: [
 // CHECK:STDOUT: ]
@@ -43,6 +42,6 @@
 // CHECK:STDOUT: ]
 
 fn Main() -> i32 {
-  // CHECK:STDERR: {{.*}}/toolchain/semantics/testdata/operators/fail_type_mismatch.carbon:[[@LINE+1]]:13: Cannot implicitly convert from `i32` to `f64`.
+  // CHECK:STDERR: toolchain/semantics/testdata/operators/fail_type_mismatch.carbon:[[@LINE+1]]:13: Cannot implicitly convert from `i32` to `f64`.
   return 12 + 3.4;
 }

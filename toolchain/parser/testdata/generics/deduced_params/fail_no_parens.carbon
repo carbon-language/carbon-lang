@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Foo'},
@@ -34,14 +33,14 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/deduced_params/fail_no_parens.carbon:[[@LINE+1]]:12: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: toolchain/parser/testdata/generics/deduced_params/fail_no_parens.carbon:[[@LINE+1]]:12: A `(` for parameters is required after deduced parameters.
 class Foo[];
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/deduced_params/fail_no_parens.carbon:[[@LINE+1]]:18: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: toolchain/parser/testdata/generics/deduced_params/fail_no_parens.carbon:[[@LINE+1]]:18: A `(` for parameters is required after deduced parameters.
 class Foo[a: i32];
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/deduced_params/fail_no_parens.carbon:[[@LINE+1]]:17: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: toolchain/parser/testdata/generics/deduced_params/fail_no_parens.carbon:[[@LINE+1]]:17: A `(` for parameters is required after deduced parameters.
 interface Bar[] {}
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/generics/deduced_params/fail_no_parens.carbon:[[@LINE+1]]:23: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: toolchain/parser/testdata/generics/deduced_params/fail_no_parens.carbon:[[@LINE+1]]:23: A `(` for parameters is required after deduced parameters.
 interface Bar[a: i32] {}
