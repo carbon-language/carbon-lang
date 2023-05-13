@@ -63,41 +63,38 @@ overloading.
 The following is the initial list of symbolic tokens recognized in a Carbon
 source file:
 
-| Symbolic Tokens and Explanation                                                                                |
-| -------------------------------------------------------------------------------------------------------------- |
-| `+` Addition                                                                                                   |
-| `-` Subtraction and negation                                                                                   |
-| `*` Indirection, multiplication, and forming pointer types                                                     |
-| `/` Division                                                                                                   |
-| `%` Modulus                                                                                                    |
-| `=` Assignment                                                                                                 |
-| `^` Complementing and Bitwise XOR                                                                              |
-| `&` Address-of and Bitwise AND                                                                                 |
-| `\|` Bitwise OR                                                                                                |
-| `<<` Arithmetic and Logical Left-shift                                                                         |
-| `>>` Arithmetic and Logical Right-shift                                                                        |
-| `==` Equality or equal to                                                                                      |
-| `!=` Inequality or not equal to                                                                                |
-| `>` Greater than                                                                                               |
-| `>=` Greater than or equal to                                                                                  |
-| `<` Less than                                                                                                  |
-| `<=` Less than or equal to                                                                                     |
-| `->` Return type and indirect member access                                                                    |
-| `=>` Match syntax                                                                                              |
-| `[` Subscript and deduced parameter lists                                                                      |
-| `]` Subscript and deduced parameter lists                                                                      |
-| `(` Function call, function declaration and tuple literals                                                     |
-| `)` Function call, function declaration and tuple literals                                                     |
-| `{` Struct literals, blocks of control flow statements and the bodies of definitions (classes, functions, etc) |
-| `}` Struct literals, blocks of control flow statements and the bodies of definitions (classes, functions, etc) |
-| `,` Separate tuple and struct elements                                                                         |
-| `.` Member access                                                                                              |
-| `:` Name bindings                                                                                              |
-| `:!` Generic binding                                                                                           |
-| `;` Statement separator                                                                                        |
-
-TODO: Arithmetic operators, Bitwise operators, Comparison operators & :!
-[#2657](https://github.com/carbon-language/carbon-lang/pull/2657/files#r1137826711)
+| Symbolic Tokens | Explanation                                                                                                |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
+| `+`             | Addition                                                                                                   |
+| `-`             | Subtraction and negation                                                                                   |
+| `*`             | Indirection, multiplication, and forming pointer types                                                     |
+| `/`             | Division                                                                                                   |
+| `%`             | Modulus                                                                                                    |
+| `=`             | Assignment                                                                                                 |
+| `^`             | Complementing and Bitwise XOR                                                                              |
+| `&`             | Address-of and Bitwise AND                                                                                 |
+| `\|`            | Bitwise OR                                                                                                 |
+| `<<`            | Arithmetic and Logical Left-shift                                                                          |
+| `>>`            | Arithmetic and Logical Right-shift                                                                         |
+| `==`            | Equality or equal to                                                                                       |
+| `!=`            | Inequality or not equal to                                                                                 |
+| `>`             | Greater than                                                                                               |
+| `>=`            | Greater than or equal to                                                                                   |
+| `<`             | Less than                                                                                                  |
+| `<=`            | Less than or equal to                                                                                      |
+| `->`            | Return type and indirect member access                                                                     |
+| `=>`            | Match syntax                                                                                               |
+| `[`             | Subscript and deduced parameter lists                                                                      |
+| `]`             | Subscript and deduced parameter lists                                                                      |
+| `(`             | Function call, function declaration and tuple literals                                                     |
+| `)`             | Function call, function declaration and tuple literals                                                     |
+| `{`             | Struct literals, blocks of control flow statements and the bodies of definitions (classes, functions, etc) |
+| `}`             | Struct literals, blocks of control flow statements and the bodies of definitions (classes, functions, etc) |
+| `,`             | Separate tuple and struct elements                                                                         |
+| `.`             | Member access                                                                                              |
+| `:`             | Name bindings                                                                                              |
+| `:!`            | Generic binding                                                                                            |
+| `;`             | Statement separator                                                                                        |
 
 ## Alternatives considered
 
