@@ -381,7 +381,9 @@ static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
     case Value::Kind::PointerType:
       return TypeContainsAuto(&cast<PointerType>(type)->pointee_type());
     case Value::Kind::StaticArrayType:
-      return TypeContainsAuto(&cast<StaticArrayType>(type)->element_type());
+      const auto* array_type = cast<StaticArrayType>(type);
+      return !array_type->has_size() ||
+             TypeContainsAuto(&array_type->element_type());
   }
 }
 
@@ -397,6 +399,25 @@ static auto IsPlaceholderType(Nonnull<const Value*> type) -> bool {
 // static type of an expression. This is currently any type other than `auto`.
 static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
   return IsType(value) && !TypeContainsAuto(value);
+}
+
+static auto ExpectResolvedBindingType(const BindingPattern& binding,
+                                      Nonnull<const Value*> type)
+    -> ErrorOr<Success> {
+  if (!TypeContainsAuto(type)) {
+    return Success();
+  }
+
+  if (type->kind() == Value::Kind::StaticArrayType) {
+    const auto& arr = cast<StaticArrayType>(*type);
+    if (!arr.has_size()) {
+      return ProgramError(binding.source_loc())
+             << "cannot deduce size for " << binding;
+    }
+  }
+
+  return ProgramError(binding.source_loc())
+         << "cannot deduce `auto` type for " << binding;
 }
 
 // Returns whether the given value is template-dependent, that is, if it
@@ -3983,22 +4004,26 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           Nonnull<const Value*> element_type,
           TypeCheckTypeExp(&array_literal.element_type_expression(),
                            impl_scope));
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckExp(&array_literal.size_expression(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ExpectExactType(
-          array_literal.size_expression().source_loc(), "array size",
-          arena_->New<IntType>(),
-          &array_literal.size_expression().static_type(), impl_scope));
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> size_value,
-                              InterpExp(&array_literal.size_expression()));
-      if (cast<IntValue>(size_value)->value() < 0) {
-        return ProgramError(array_literal.size_expression().source_loc())
-               << "Array size cannot be negative";
+      std::optional<size_t> array_size;
+      if (array_literal.has_size_expression()) {
+        CARBON_RETURN_IF_ERROR(
+            TypeCheckExp(&array_literal.size_expression(), impl_scope));
+        CARBON_RETURN_IF_ERROR(ExpectExactType(
+            array_literal.size_expression().source_loc(), "array size",
+            arena_->New<IntType>(),
+            &array_literal.size_expression().static_type(), impl_scope));
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> size_value,
+                                InterpExp(&array_literal.size_expression()));
+        if (cast<IntValue>(size_value)->value() < 0) {
+          return ProgramError(array_literal.size_expression().source_loc())
+                 << "Array size cannot be negative";
+        }
+        array_size = cast<IntValue>(size_value)->value();
       }
       array_literal.set_static_type(arena_->New<TypeType>());
       array_literal.set_expression_category(ExpressionCategory::Value);
-      array_literal.set_constant_value(arena_->New<StaticArrayType>(
-          element_type, cast<IntValue>(size_value)->value()));
+      array_literal.set_constant_value(
+          arena_->New<StaticArrayType>(element_type, array_size));
       return Success();
     }
   }
@@ -4201,12 +4226,12 @@ auto TypeChecker::TypeCheckPattern(
                    << "type pattern '" << *type
                    << "' does not match actual type '" << **expected << "'";
           }
-          type = *expected;
+          type = DeduceType(type, *expected);
         }
-      } else if (TypeContainsAuto(type)) {
-        return ProgramError(binding.source_loc())
-               << "cannot deduce `auto` type for " << binding;
+      } else {
+        CARBON_RETURN_IF_ERROR(ExpectResolvedBindingType(binding, type));
       }
+
       CARBON_CHECK(IsConcreteType(type)) << "did not resolve " << binding
                                          << " to concrete type, got " << *type;
       CARBON_CHECK(!IsPlaceholderType(type))
@@ -4399,6 +4424,83 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
 
   binding.set_static_type(type);
   return Success();
+}
+
+auto GetSize(Nonnull<const Value*> from) -> size_t {
+  switch (from->kind()) {
+    case Value::Kind::TupleType:
+    case Value::Kind::TupleValue: {
+      const auto& from_tup = cast<TupleValueBase>(*from);
+      CARBON_CHECK(!from_tup.elements().empty());
+      return from_tup.elements().size();
+    }
+    case Value::Kind::StaticArrayType: {
+      const auto& from_arr = cast<StaticArrayType>(*from);
+      CARBON_CHECK(from_arr.has_size());
+      return from_arr.size().value();
+    }
+    default:
+      return 0;
+  }
+}
+
+auto TypeChecker::DeduceType(Nonnull<const Value*> type,
+                             Nonnull<const Value*> expected)
+    -> Nonnull<const Value*> {
+  switch (type->kind()) {
+    case Value::Kind::IntValue:
+    case Value::Kind::FunctionValue:
+    case Value::Kind::DestructorValue:
+    case Value::Kind::BoundMethodValue:
+    case Value::Kind::PointerValue:
+    case Value::Kind::LocationValue:
+    case Value::Kind::BoolValue:
+    case Value::Kind::TupleValue:
+    case Value::Kind::StructValue:
+    case Value::Kind::NominalClassValue:
+    case Value::Kind::AlternativeValue:
+    case Value::Kind::BindingPlaceholderValue:
+    case Value::Kind::AddrValue:
+    case Value::Kind::AlternativeConstructorValue:
+    case Value::Kind::StringValue:
+    case Value::Kind::UninitializedValue:
+    case Value::Kind::ImplWitness:
+    case Value::Kind::BindingWitness:
+    case Value::Kind::ConstraintWitness:
+    case Value::Kind::ConstraintImplWitness:
+    case Value::Kind::ParameterizedEntityName:
+    case Value::Kind::MemberName:
+    case Value::Kind::IntType:
+    case Value::Kind::BoolType:
+    case Value::Kind::TypeType:
+    case Value::Kind::PointerType:
+    case Value::Kind::FunctionType:
+    case Value::Kind::StructType:
+    case Value::Kind::TupleType:
+    case Value::Kind::NominalClassType:
+    case Value::Kind::InterfaceType:
+    case Value::Kind::NamedConstraintType:
+    case Value::Kind::ConstraintType:
+    case Value::Kind::ChoiceType:
+    case Value::Kind::VariableType:
+    case Value::Kind::StringType:
+    case Value::Kind::AutoType:
+    case Value::Kind::TypeOfParameterizedEntityName:
+    case Value::Kind::TypeOfMemberName:
+    case Value::Kind::TypeOfMixinPseudoType:
+    case Value::Kind::TypeOfNamespaceName:
+    case Value::Kind::AssociatedConstant:
+    case Value::Kind::MixinPseudoType: {
+      return expected;
+    }
+    case Value::Kind::StaticArrayType: {
+      const auto& arr = cast<StaticArrayType>(*type);
+      CARBON_CHECK(!arr.has_size());
+      const size_t size = GetSize(expected);
+      CARBON_CHECK(size != 0);
+      return arena_->New<StaticArrayType>(&arr.element_type(), size);
+    }
+  }
 }
 
 // Get the builtin interface that should be used for the given kind of

@@ -384,7 +384,9 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       out << "[";
       ExpressionToCarbon(array_literal.element_type(), out);
       out << "; ";
-      ExpressionToCarbon(array_literal.size(), out);
+      if (array_literal.has_size()) {
+        ExpressionToCarbon(array_literal.size(), out);
+      }
       out << "]";
       break;
     }

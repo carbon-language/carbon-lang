@@ -287,8 +287,11 @@ void Expression::Print(llvm::raw_ostream& out) const {
     }
     case ExpressionKind::ArrayTypeLiteral: {
       const auto& array_literal = cast<ArrayTypeLiteral>(*this);
-      out << "[" << array_literal.element_type_expression() << "; "
-          << array_literal.size_expression() << "]";
+      out << "[" << array_literal.element_type_expression() << "; ";
+      if (array_literal.has_size_expression()) {
+        out << array_literal.size_expression();
+      }
+      out << "]";
       break;
     }
     case ExpressionKind::IdentifierExpression:

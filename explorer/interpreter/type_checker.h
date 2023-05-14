@@ -224,6 +224,10 @@ class TypeChecker {
                                std::string_view context, ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
+  // Given `expected` type deduce concrete type for `type`
+  auto DeduceType(Nonnull<const Value*> type, Nonnull<const Value*> expected)
+      -> Nonnull<const Value*>;
+
   // Equivalent to TypeCheckExp, but operates on the AST rooted at `s`.
   //
   // REQUIRES: f.return_term().has_static_type() || f.return_term().is_auto(),

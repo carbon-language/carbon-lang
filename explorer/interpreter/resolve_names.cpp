@@ -412,8 +412,10 @@ auto NameResolver::ResolveNames(Expression& expression,
       auto& array_literal = cast<ArrayTypeLiteral>(expression);
       CARBON_RETURN_IF_ERROR(ResolveNames(
           array_literal.element_type_expression(), enclosing_scope));
-      CARBON_RETURN_IF_ERROR(
-          ResolveNames(array_literal.size_expression(), enclosing_scope));
+      if (array_literal.has_size_expression()) {
+        CARBON_RETURN_IF_ERROR(
+            ResolveNames(array_literal.size_expression(), enclosing_scope));
+      }
       break;
     }
     case ExpressionKind::BoolTypeLiteral:
