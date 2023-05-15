@@ -8,6 +8,7 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "file_test_base",
+    testonly = 1,
     srcs = ["file_test_base.cpp"],
     hdrs = ["file_test_base.h"],
     deps = [
