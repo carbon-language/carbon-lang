@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_PARSE_TREE_HANDLER_H_
-#define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_PARSE_TREE_HANDLER_H_
+#ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_CONTEXT_H_
+#define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_CONTEXT_H_
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -16,36 +16,127 @@
 
 namespace Carbon {
 
-// Handles processing of a ParseTree for semantics.
-class SemanticsParseTreeHandler {
+// Context and shared functionality for semantics handlers.
+class SemanticsContext {
  public:
   // Stores references for work.
-  explicit SemanticsParseTreeHandler(
-      const TokenizedBuffer& tokens,
-      DiagnosticEmitter<ParseTree::Node>& emitter, const ParseTree& parse_tree,
-      SemanticsIR& semantics, llvm::raw_ostream* vlog_stream)
-      : tokens_(&tokens),
-        emitter_(&emitter),
-        parse_tree_(&parse_tree),
-        semantics_(&semantics),
-        vlog_stream_(vlog_stream),
-        node_stack_(parse_tree, vlog_stream),
-        node_block_stack_("node_block_stack_", semantics.node_blocks_,
-                          vlog_stream),
-        params_or_args_stack_("params_or_args_stack_", semantics.node_blocks_,
-                              vlog_stream),
-        args_type_info_stack_("args_type_info_stack_", semantics.node_blocks_,
-                              vlog_stream) {}
+  explicit SemanticsContext(const TokenizedBuffer& tokens,
+                            DiagnosticEmitter<ParseTree::Node>& emitter,
+                            const ParseTree& parse_tree, SemanticsIR& semantics,
+                            llvm::raw_ostream* vlog_stream);
 
-  // Outputs the ParseTree information into SemanticsIR.
-  auto Build() -> void;
+  // Marks an implementation TODO. Always returns false.
+  auto TODO(ParseTree::Node parse_node, std::string label) -> bool;
+
+  // Runs verification that the processing cleanly finished.
+  auto VerifyOnFinish() -> void;
+
+  // Adds a node to the current block, returning the produced ID.
+  auto AddNode(SemanticsNode node) -> SemanticsNodeId;
+
+  // Pushes a parse tree node onto the stack, storing the SemanticsNode as the
+  // result.
+  auto AddNodeAndPush(ParseTree::Node parse_node, SemanticsNode node) -> void;
+
+  // Adds a name to name lookup.
+  auto AddNameToLookup(ParseTree::Node name_node, SemanticsStringId name_id,
+                       SemanticsNodeId target_id) -> void;
+
+  // Binds a DeclaredName to a target node with the given type.
+  auto BindName(ParseTree::Node name_node, SemanticsNodeId type_id,
+                SemanticsNodeId target_id) -> SemanticsStringId;
+
+  // Temporarily remove name lookup entries added by the `var`. These will be
+  // restored by `VariableDeclaration` using `ReaddNameToLookup`.
+  auto TempRemoveLatestNameFromLookup() -> SemanticsNodeId;
+
+  // Re-adds a name to name lookup. This is typically done through BindName, but
+  // can also be used to restore removed names.
+  auto ReaddNameToLookup(SemanticsStringId name_id, SemanticsNodeId storage_id)
+      -> void {
+    name_lookup_[name_id].push_back(storage_id);
+  }
+
+  // Lookup up a name, returning the referenced node.
+  auto LookupName(ParseTree::Node parse_node, llvm::StringRef name)
+      -> SemanticsNodeId;
+
+  // Pushes a new scope onto scope_stack_.
+  auto PushScope() -> void;
+
+  // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
+  auto PopScope() -> void;
+
+  // Runs ImplicitAsImpl for a set of arguments and parameters.
+  //
+  // This will eventually need to support checking against multiple possible
+  // overloads, multiple of which may be possible but not "best". While this can
+  // currently be done by calling twice, toggling `apply_implicit_as`, in the
+  // future we may want to remember the right implicit conversions to do for
+  // valid cases in order to efficiently handle generics.
+  auto ImplicitAsForArgs(
+      SemanticsNodeBlockId arg_ir_id, SemanticsNodeBlockId arg_refs_id,
+      ParseTree::Node param_parse_node, SemanticsNodeBlockId param_refs_id,
+      DiagnosticEmitter<ParseTree::Node>::DiagnosticBuilder* diagnostic)
+      -> bool;
+
+  // Runs ImplicitAsImpl for a situation where a cast is required, returning the
+  // updated `value_id`. Prints a diagnostic and returns an InvalidType if
+  // unsupported.
+  auto ImplicitAsRequired(ParseTree::Node parse_node, SemanticsNodeId value_id,
+                          SemanticsNodeId as_type_id) -> SemanticsNodeId;
+
+  // Starts handling parameters or arguments.
+  auto ParamOrArgStart() -> void;
+
+  // On a comma, pushes the entry. On return, the top of node_stack_ will be
+  // start_kind.
+  auto ParamOrArgComma(bool for_args) -> void;
+
+  // Detects whether there's an entry to push. On return, the top of
+  // node_stack_ will be start_kind, and the caller should do type-specific
+  // processing. Returns a pair of {ir_id, refs_id}.
+  auto ParamOrArgEnd(bool for_args, ParseNodeKind start_kind)
+      -> std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId>;
+
+  // Saves a parameter from the top block in node_stack_ to the top block in
+  // params_or_args_stack_. If for_args, adds a StubReference of the previous
+  // node's result to the IR.
+  //
+  // This should only be called by other ParamOrArg functions, not directly.
+  auto ParamOrArgSave(bool for_args) -> void;
+
+  // Prints information for a stack dump.
+  auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
+
+  auto tokens() -> const TokenizedBuffer& { return *tokens_; }
+
+  auto emitter() -> DiagnosticEmitter<ParseTree::Node>& { return *emitter_; }
+
+  auto parse_tree() -> const ParseTree& { return *parse_tree_; }
+
+  auto semantics() -> SemanticsIR& { return *semantics_; }
+
+  auto node_stack() -> SemanticsNodeStack& { return node_stack_; }
+
+  auto node_block_stack() -> SemanticsNodeBlockStack& {
+    return node_block_stack_;
+  }
+
+  auto args_type_info_stack() -> SemanticsNodeBlockStack& {
+    return args_type_info_stack_;
+  }
+
+  auto finished_params_stack() -> llvm::SmallVector<
+      std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId>>& {
+    return finished_params_stack_;
+  }
+
+  auto return_scope_stack() -> llvm::SmallVector<SemanticsNodeId>& {
+    return return_scope_stack_;
+  }
 
  private:
-  // Prints the node_stack_ on stack dumps.
-  class PrettyStackTraceNodeStack;
-  // Prints the node_block_stack_ on stack dumps.
-  class PrettyStackTraceNodeBlockStack;
-
   // For CanImplicitAs, the detected conversion to apply.
   enum ImplicitAsKind {
     // Incompatible types.
@@ -84,53 +175,6 @@ class SemanticsParseTreeHandler {
     // TODO: This likely needs to track things which need to be destructed.
   };
 
-  // Adds a node to the current block, returning the produced ID.
-  auto AddNode(SemanticsNode node) -> SemanticsNodeId;
-
-  // Pushes a parse tree node onto the stack, storing the SemanticsNode as the
-  // result.
-  auto AddNodeAndPush(ParseTree::Node parse_node, SemanticsNode node) -> void;
-
-  // Adds a name to name lookup.
-  auto AddNameToLookup(ParseTree::Node name_node, SemanticsStringId name_id,
-                       SemanticsNodeId target_id) -> void;
-
-  // Re-adds a name to name lookup. This is typically done through BindName, but
-  // can also be used to restore removed names.
-  auto ReaddNameToLookup(SemanticsStringId name_id, SemanticsNodeId storage_id)
-      -> void {
-    name_lookup_[name_id].push_back(storage_id);
-  }
-
-  // Binds a DeclaredName to a target node with the given type.
-  auto BindName(ParseTree::Node name_node, SemanticsNodeId type_id,
-                SemanticsNodeId target_id) -> SemanticsStringId;
-
-  // Pushes a new scope onto scope_stack_.
-  auto PushScope() -> void;
-
-  // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
-  auto PopScope() -> void;
-
-  // Runs ImplicitAsImpl for a set of arguments and parameters.
-  //
-  // This will eventually need to support checking against multiple possible
-  // overloads, multiple of which may be possible but not "best". While this can
-  // currently be done by calling twice, toggling `apply_implicit_as`, in the
-  // future we may want to remember the right implicit conversions to do for
-  // valid cases in order to efficiently handle generics.
-  auto ImplicitAsForArgs(
-      SemanticsNodeBlockId arg_ir_id, SemanticsNodeBlockId arg_refs_id,
-      ParseTree::Node param_parse_node, SemanticsNodeBlockId param_refs_id,
-      DiagnosticEmitter<ParseTree::Node>::DiagnosticBuilder* diagnostic)
-      -> bool;
-
-  // Runs ImplicitAsImpl for a situation where a cast is required, returning the
-  // updated `value_id`. Prints a diagnostic and returns an InvalidType if
-  // unsupported.
-  auto ImplicitAsRequired(ParseTree::Node parse_node, SemanticsNodeId value_id,
-                          SemanticsNodeId as_type_id) -> SemanticsNodeId;
-
   // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
   // result type. The result will be the node to use to replace `value`.
   //
@@ -146,31 +190,6 @@ class SemanticsParseTreeHandler {
   // TODO: This currently only supports struct types that precisely match.
   auto CanImplicitAsStruct(SemanticsNode value_type, SemanticsNode as_type)
       -> bool;
-
-  // Starts handling parameters or arguments.
-  auto ParamOrArgStart() -> void;
-
-  // On a comma, pushes the entry. On return, the top of node_stack_ will be
-  // start_kind.
-  auto ParamOrArgComma(bool for_args) -> void;
-
-  // Detects whether there's an entry to push. On return, the top of
-  // node_stack_ will be start_kind, and the caller should do type-specific
-  // processing. Returns a pair of {ir_id, refs_id}.
-  auto ParamOrArgEnd(bool for_args, ParseNodeKind start_kind)
-      -> std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId>;
-
-  // Saves a parameter from the top block in node_stack_ to the top block in
-  // params_or_args_stack_. If for_args, adds a StubReference of the previous
-  // node's result to the IR.
-  //
-  // This should only be called by other ParamOrArg functions, not directly.
-  auto ParamOrArgSave(bool for_args) -> void;
-
-  // Parse node handlers. Returns false for unrecoverable errors.
-#define CARBON_PARSE_NODE_KIND(Name) \
-  auto Handle##Name(ParseTree::Node parse_node)->bool;
-#include "toolchain/parser/parse_node_kind.def"
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
 
@@ -231,6 +250,13 @@ class SemanticsParseTreeHandler {
       name_lookup_;
 };
 
+// Parse node handlers. Returns false for unrecoverable errors.
+#define CARBON_PARSE_NODE_KIND(Name)                     \
+  auto SemanticsHandle##Name(SemanticsContext& context,  \
+                             ParseTree::Node parse_node) \
+      ->bool;
+#include "toolchain/parser/parse_node_kind.def"
+
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_PARSE_TREE_HANDLER_H_
+#endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_CONTEXT_H_

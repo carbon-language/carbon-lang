@@ -69,11 +69,15 @@ cc_library(
     name = "semantics_ir",
     srcs = [
         "semantics_ir.cpp",
-        "semantics_parse_tree_handler.cpp",
-    ],
+        "semantics_context.cpp",
+    ] +
+    # Glob handler files to avoid missing anyway.
+    glob([
+        "semantics_handle*.cpp",
+    ]),
     hdrs = [
+        "semantics_context.h",
         "semantics_ir.h",
-        "semantics_parse_tree_handler.h",
     ],
     deps = [
         ":semantics_builtin_kind",
@@ -83,6 +87,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/common:pretty_stack_trace_function",
         "//toolchain/diagnostics:diagnostic_kind",
         "//toolchain/lexer:numeric_literal",
         "//toolchain/lexer:token_kind",
