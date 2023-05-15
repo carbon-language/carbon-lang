@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_LOWERING_LOWERING_H_
-#define CARBON_TOOLCHAIN_LOWERING_LOWERING_H_
+#ifndef CARBON_TOOLCHAIN_LOWERING_LOWERING_CONTEXT_H_
+#define CARBON_TOOLCHAIN_LOWERING_LOWERING_CONTEXT_H_
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
@@ -13,30 +13,35 @@
 
 namespace Carbon {
 
-// Use LowerToLLVM rather than calling this directly.
-//
-// This carries state for lowering. `Run()` should only be called once, and
-// handles the main execution.
-class Lowering {
+// Context and shared functionality for lowering handlers.
+class LoweringContext {
  public:
-  explicit Lowering(llvm::LLVMContext& llvm_context,
-                    llvm::StringRef module_name,
-                    const SemanticsIR& semantics_ir);
+  explicit LoweringContext(llvm::LLVMContext& llvm_context,
+                           llvm::StringRef module_name,
+                           const SemanticsIR& semantics_ir);
 
-  // Lowers the SemanticsIR to LLVM IR.
+  // Lowers the SemanticsIR to LLVM IR. Should only be called once, and handles
+  // the main execution loop.
   auto Run() -> std::unique_ptr<llvm::Module>;
-
- private:
-  // Declare handlers for each SemanticsIR node.
-#define CARBON_SEMANTICS_NODE_KIND(Name) \
-  auto Handle##Name##Node(SemanticsNodeId node_id, SemanticsNode node)->void;
-#include "toolchain/semantics/semantics_node_kind.def"
-
-  // Runs lowering for a block.
-  auto LowerBlock(SemanticsNodeBlockId block_id) -> void;
 
   // Returns a type for the given node.
   auto LowerNodeToType(SemanticsNodeId node_id) -> llvm::Type*;
+
+  auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
+  auto llvm_module() -> llvm::Module& { return *llvm_module_; }
+  auto builder() -> llvm::IRBuilder<>& { return builder_; }
+  auto semantics_ir() -> const SemanticsIR& { return *semantics_ir_; }
+  auto todo_blocks() -> llvm::SmallVector<
+      std::pair<llvm::BasicBlock*, SemanticsNodeBlockId>>& {
+    return todo_blocks_;
+  }
+  auto lowered_nodes() -> llvm::SmallVector<llvm::Value*>& {
+    return lowered_nodes_;
+  }
+
+ private:
+  // Runs lowering for a block.
+  auto LowerBlock(SemanticsNodeBlockId block_id) -> void;
 
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
@@ -61,6 +66,13 @@ class Lowering {
   llvm::SmallVector<llvm::Value*> lowered_nodes_;
 };
 
+// Declare handlers for each SemanticsIR node.
+#define CARBON_SEMANTICS_NODE_KIND(Name)                                       \
+  auto LoweringHandle##Name(LoweringContext& context, SemanticsNodeId node_id, \
+                            SemanticsNode node)                                \
+      ->void;
+#include "toolchain/semantics/semantics_node_kind.def"
+
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_LOWERING_LOWERING_H_
+#endif  // CARBON_TOOLCHAIN_LOWERING_LOWERING_CONTEXT_H_

@@ -12,7 +12,7 @@ cc_library(
     srcs = ["lower_to_llvm.cpp"],
     hdrs = ["lower_to_llvm.h"],
     deps = [
-        ":lowering",
+        ":lowering_context",
         "//toolchain/semantics:semantics_ir",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
@@ -20,9 +20,12 @@ cc_library(
 )
 
 cc_library(
-    name = "lowering",
-    srcs = ["lowering.cpp"],
-    hdrs = ["lowering.h"],
+    name = "lowering_context",
+    srcs = [
+        "lowering_context.cpp",
+        "lowering_handle.cpp",
+    ],
+    hdrs = ["lowering_context.h"],
     deps = [
         "//common:check",
         "//toolchain/semantics:semantics_ir",
