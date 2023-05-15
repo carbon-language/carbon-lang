@@ -149,7 +149,7 @@ class ParseTree {
   [[nodiscard]] auto Verify() const -> ErrorOr<Success>;
 
  private:
-  friend class Parser;
+  friend class ParserContext;
 
   // The in-memory representation of data used for a particular node in the
   // tree.
@@ -205,8 +205,8 @@ class ParseTree {
   static_assert(sizeof(NodeImpl) == 12,
                 "Unexpected size of node implementation!");
 
-  // Wires up the reference to the tokenized buffer. The global `parse` routine
-  // should be used to actually parse the tokens into a tree.
+  // Wires up the reference to the tokenized buffer. The `Parse` function should
+  // be used to actually parse the tokens into a tree.
   explicit ParseTree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
     // If the tree is valid, there will be one node per token, so reserve once.
     node_impls_.reserve(tokens_->size());

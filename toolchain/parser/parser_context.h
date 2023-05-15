@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_PARSER_PARSER_H_
-#define CARBON_TOOLCHAIN_PARSER_PARSER_H_
+#ifndef CARBON_TOOLCHAIN_PARSER_PARSER_CONTEXT_H_
+#define CARBON_TOOLCHAIN_PARSER_PARSER_CONTEXT_H_
 
 #include <optional>
 
@@ -18,22 +18,10 @@
 
 namespace Carbon {
 
-// This parser uses a stack for state transitions. See parser_state.def for
-// state documentation.
-class Parser {
+// Context and shared functionality for parser handlers. See parser_state.def
+// for state documentation.
+class ParserContext {
  public:
-  // Parses the tokens into a parse tree, emitting any errors encountered.
-  //
-  // This is the entry point to the parser implementation.
-  static auto Parse(TokenizedBuffer& tokens, TokenDiagnosticEmitter& emitter,
-                    llvm::raw_ostream* vlog_stream) -> ParseTree {
-    ParseTree tree(tokens);
-    Parser parser(tree, tokens, emitter, vlog_stream);
-    parser.Parse();
-    return tree;
-  }
-
- private:
   // Possible operator fixities for errors.
   enum class OperatorFixity { Prefix, Infix, Postfix };
 
@@ -50,9 +38,6 @@ class Parser {
     Interface,
     NamedConstraint,
   };
-
-  // Helper class for tracing state_stack_ on crashes.
-  class PrettyStackTraceParseState;
 
   // Used to track state on state_stack_.
   struct StateStackEntry {
@@ -106,11 +91,9 @@ class Parser {
   static_assert(sizeof(StateStackEntry) == 12,
                 "StateStackEntry has unexpected size!");
 
-  explicit Parser(ParseTree& tree, TokenizedBuffer& tokens,
-                  TokenDiagnosticEmitter& emitter,
-                  llvm::raw_ostream* vlog_stream);
-
-  auto Parse() -> void;
+  explicit ParserContext(ParseTree& tree, TokenizedBuffer& tokens,
+                         TokenDiagnosticEmitter& emitter,
+                         llvm::raw_ostream* vlog_stream);
 
   // Adds a node to the parse tree that has no children (a leaf).
   auto AddLeafNode(ParseNodeKind kind, TokenizedBuffer::Token token,
@@ -264,106 +247,40 @@ class Parser {
   // DeclarationScopeLoop.
   auto GetDeclarationContext() -> DeclarationContext;
 
-  // Handles error recovery in a declaration, particularly before any possible
-  // definition has started (although one could be present). Recover to a
-  // semicolon when it makes sense as a possible end, otherwise use the
-  // introducer token for the error.
-  auto HandleDeclarationError(StateStackEntry state,
-                              ParseNodeKind parse_node_kind,
-                              bool skip_past_likely_end) -> void;
-
-  // Handles an unrecognized declaration, adding an error node.
-  auto HandleUnrecognizedDeclaration() -> void;
-
   // Propagates an error up the state stack, to the parent state.
   auto ReturnErrorOnState() -> void { state_stack_.back().has_error = true; }
 
-  // Prints a diagnostic for brace expression syntax errors.
-  auto HandleBraceExpressionParameterError(StateStackEntry state,
-                                           ParserState param_finish_state)
-      -> void;
-
-  // Handles BraceExpressionParameterAs(Type|Value|Unknown).
-  auto HandleBraceExpressionParameter(ParserState after_designator_state,
-                                      ParserState param_finish_state) -> void;
-
-  // Handles BraceExpressionParameterAfterDesignatorAs(Type|Value|Unknown).
-  auto HandleBraceExpressionParameterAfterDesignator(
-      ParserState param_finish_state) -> void;
-
-  // Handles BraceExpressionParameterFinishAs(Type|Value|Unknown).
-  auto HandleBraceExpressionParameterFinish(ParseNodeKind node_kind,
-                                            ParserState param_state) -> void;
-
-  // Handles BraceExpressionFinishAs(Type|Value|Unknown).
-  auto HandleBraceExpressionFinish(ParseNodeKind node_kind) -> void;
-
-  // Handles DeclarationNameAndParamsAs(Optional|Required).
-  auto HandleDeclarationNameAndParams(bool params_required) -> void;
-
-  // Handles DesignatorAs.
-  auto HandleDesignator(bool as_struct) -> void;
-
-  // Handles ParameterAs(Deduced|Regular).
-  auto HandleParameter(ParserState pattern_state, ParserState finish_state)
-      -> void;
-
-  // Handles ParameterFinishAs(Deduced|Regular).
-  auto HandleParameterFinish(TokenKind close_token, ParserState param_state)
-      -> void;
-
-  // Handles ParameterListAs(Deduced|Regular).
-  auto HandleParameterList(ParseNodeKind parse_node_kind,
-                           TokenKind open_token_kind,
-                           TokenKind close_token_kind, ParserState param_state,
-                           ParserState finish_state) -> void;
-
-  // Handles ParameterListFinishAs(Deduced|Regular).
-  auto HandleParameterListFinish(ParseNodeKind parse_node_kind,
-                                 TokenKind token_kind) -> void;
-
-  // Handles ParenConditionAs(If|While)
-  auto HandleParenCondition(ParseNodeKind start_kind, ParserState finish_state)
-      -> void;
-
-  // Handles ParenExpressionParameterFinishAs(Unknown|Tuple).
-  auto HandleParenExpressionParameterFinish(bool as_tuple) -> void;
-
-  // Handles PatternAs(DeducedParameter|FunctionParameter|Variable).
-  auto HandlePattern(PatternKind pattern_kind) -> void;
-
-  // Handles PatternFinishAs(Generic|Regular).
-  auto HandlePatternFinish(ParseNodeKind node_kind) -> void;
-
-  // For HandlePattern, tries to consume a wrapping keyword.
+  // For ParserHandlePattern, tries to consume a wrapping keyword.
   auto ConsumeIfPatternKeyword(TokenKind keyword_token,
                                ParserState keyword_state, int subtree_start)
       -> void;
 
-  // Handles the `;` after a keyword statement.
-  auto HandleStatementKeywordFinish(ParseNodeKind node_kind) -> void;
+  // Handles error recovery in a declaration, particularly before any possible
+  // definition has started (although one could be present). Recover to a
+  // semicolon when it makes sense as a possible end, otherwise use the
+  // introducer token for the error.
+  auto RecoverFromDeclarationError(StateStackEntry state,
+                                   ParseNodeKind parse_node_kind,
+                                   bool skip_past_likely_end) -> void;
 
-  // Handles processing of a type's introducer.
-  auto HandleTypeIntroducer(ParseNodeKind introducer_kind,
-                            ParserState after_params_state) -> void;
+  auto tree() const -> const ParseTree& { return *tree_; }
 
-  // Handles processing after params, deciding whether it's a declaration or
-  // definition.
-  auto HandleTypeAfterParams(ParseNodeKind declaration_kind,
-                             ParseNodeKind definition_start_kind,
-                             ParserState definition_finish_state) -> void;
+  auto tokens() const -> const TokenizedBuffer& { return *tokens_; }
 
-  // Handles parsing after the declaration scope of a type.
-  auto HandleTypeDefinitionFinish(ParseNodeKind definition_kind) -> void;
+  auto emitter() -> TokenDiagnosticEmitter& { return *emitter_; }
 
-  // Handles VarAs(Semicolon|For).
-  auto HandleVar(ParserState finish_state) -> void;
+  auto position() -> TokenizedBuffer::TokenIterator& { return position_; }
+  auto position() const -> TokenizedBuffer::TokenIterator { return position_; }
 
-  // `clang-format` has a bug with spacing around `->` returns in macros. See
-  // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
-#define CARBON_PARSER_STATE(Name) auto Handle##Name##State()->void;
-#include "toolchain/parser/parser_state.def"
+  auto state_stack() -> llvm::SmallVector<StateStackEntry>& {
+    return state_stack_;
+  }
 
+  auto state_stack() const -> const llvm::SmallVector<StateStackEntry>& {
+    return state_stack_;
+  }
+
+ private:
   ParseTree* tree_;
   TokenizedBuffer* tokens_;
   TokenDiagnosticEmitter* emitter_;
@@ -379,6 +296,30 @@ class Parser {
   llvm::SmallVector<StateStackEntry> state_stack_;
 };
 
+// `clang-format` has a bug with spacing around `->` returns in macros. See
+// https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
+#define CARBON_PARSER_STATE(Name) \
+  auto ParserHandle##Name(ParserContext& context)->void;
+#include "toolchain/parser/parser_state.def"
+
+// The diagnostics below may be emitted a couple different ways as part of
+// operator parsing.
+// TODO: Clean these up, maybe as context functions?
+
+CARBON_DIAGNOSTIC(
+    OperatorRequiresParentheses, Error,
+    "Parentheses are required to disambiguate operator precedence.");
+
+CARBON_DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
+                  "Expected `;` after expression.");
+
+CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
+                  "`{0}` introducer should be followed by a name.", TokenKind);
+CARBON_DIAGNOSTIC(ExpectedDeclarationSemiOrDefinition, Error,
+                  "`{0}` should either end with a `;` for a declaration or "
+                  "have a `{{ ... }` block for a definition.",
+                  TokenKind);
+
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_PARSER_PARSER_H_
+#endif  // CARBON_TOOLCHAIN_PARSER_PARSER_CONTEXT_H_
