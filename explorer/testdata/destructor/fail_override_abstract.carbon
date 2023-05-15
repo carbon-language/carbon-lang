@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 
 base class A {
-    // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/destructor/fail_override_abstract.carbon:[[@LINE+1]]: syntax error, unexpected DESTRUCTOR, expecting CLASS
+    // CHECK:STDERR: SYNTAX ERROR: explorer/testdata/destructor/fail_override_abstract.carbon:[[@LINE+1]]: syntax error, unexpected DESTRUCTOR, expecting CLASS
     abstract destructor[self: Self]{}
 }
 

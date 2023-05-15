@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest impl;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/print/fail_index_empty.carbon:[[@LINE+1]]: Invalid `{}` in `Print: {}`
+  // CHECK:STDERR: RUNTIME ERROR: explorer/testdata/print/fail_index_empty.carbon:[[@LINE+1]]: Invalid `{}` in `Print: {}`
   Print("Print: {}");
   return 0;
 }

@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -16,7 +14,7 @@ class D {
 
 fn Main() -> i32 {
   var d: D = {};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_invalid_subtyping.carbon:[[@LINE+1]]: type error in initializer of variable: 'class D*' is not implicitly convertible to 'class C*'
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/class/fail_invalid_subtyping.carbon:[[@LINE+1]]: type error in initializer of variable: 'class D*' is not implicitly convertible to 'class C*'
   var c: C* = &d;
   return 0;
 }

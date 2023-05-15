@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 class C {
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/addr/fail_method_self_misspelled.carbon:[[@LINE+1]]: illegal binding pattern in implicit parameter list
+  // CHECK:STDERR: SYNTAX ERROR: explorer/testdata/addr/fail_method_self_misspelled.carbon:[[@LINE+1]]: illegal binding pattern in implicit parameter list
   fn F[addr slef: Self*]() {}
 }
 

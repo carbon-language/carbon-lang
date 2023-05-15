@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -22,7 +20,7 @@ class Point {
     }
     fn Scale[self: Point](v: i32) -> i32 {
       return 0;
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_bad_member.carbon:[[@LINE+3]]: type error in member of implementation
+    // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/interface/fail_impl_bad_member.carbon:[[@LINE+3]]: type error in member of implementation
     // CHECK:STDERR: expected: fn (i32,) -> class Point
     // CHECK:STDERR: actual: fn (i32,) -> i32
     }

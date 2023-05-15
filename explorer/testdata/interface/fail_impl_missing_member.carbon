@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -20,7 +18,7 @@ class Point {
     fn Add[self: Point](b: Point) -> Point {
       return {.x = self.x + b.x, .y = self.y + b.y};
     }
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_impl_missing_member.carbon:[[@LINE+1]]: implementation missing Scale
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/interface/fail_impl_missing_member.carbon:[[@LINE+1]]: implementation missing Scale
   }
 }
 

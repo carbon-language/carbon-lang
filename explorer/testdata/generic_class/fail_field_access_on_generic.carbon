@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn BadSimpleMemberAccess[T:! type](a: T) -> T {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_field_access_on_generic.carbon:[[@LINE+1]]: member access in unconstrained type
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/generic_class/fail_field_access_on_generic.carbon:[[@LINE+1]]: member access in unconstrained type
   return a.x;
 }
 

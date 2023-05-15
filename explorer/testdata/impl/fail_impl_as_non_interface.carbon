@@ -3,12 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as_non_interface.carbon:[[@LINE+1]]: expected a constraint in impl declaration, found String
+// CHECK:STDERR: COMPILATION ERROR: explorer/testdata/impl/fail_impl_as_non_interface.carbon:[[@LINE+1]]: expected a constraint in impl declaration, found String
 external impl i32 as String {}
 
 fn Main() -> i32 {

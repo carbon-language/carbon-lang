@@ -3,9 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: Rand inputs must be ordered for a non-empty range: 1 must be less than -1
+// CHECK:STDERR: RUNTIME ERROR: explorer/data/prelude.carbon:{{.*}}: Rand inputs must be ordered for a non-empty range: 1 must be less than -1
 
 package ExplorerTest api;
 

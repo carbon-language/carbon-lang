@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 class A {
   fn F[self: Self]() -> type {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_call_method_before_typecheck.carbon:[[@LINE+1]]: attempt to call function `F` that has not been fully type-checked
+    // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/class/fail_call_method_before_typecheck.carbon:[[@LINE+1]]: attempt to call function `F` that has not been fully type-checked
     var a: ({} as A).F() = 0;
     return i32;
   }

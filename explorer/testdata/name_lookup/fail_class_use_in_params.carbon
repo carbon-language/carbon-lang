@@ -3,12 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/name_lookup/fail_class_use_in_params.carbon:[[@LINE+1]]: 'A' is not usable until after it has been completely declared
+// CHECK:STDERR: COMPILATION ERROR: explorer/testdata/name_lookup/fail_class_use_in_params.carbon:[[@LINE+1]]: 'A' is not usable until after it has been completely declared
 class A(X:! A(i32)) {
 }
 

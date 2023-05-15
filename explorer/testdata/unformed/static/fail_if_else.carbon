@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -15,7 +13,7 @@ fn Main() -> i32 {
   if (Foo() == 0) {
     return 0;
   } else {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/unformed/static/fail_if_else.carbon:[[@LINE+1]]: use of uninitialized variable x
+    // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/unformed/static/fail_if_else.carbon:[[@LINE+1]]: use of uninitialized variable x
     return x;
   }
 }

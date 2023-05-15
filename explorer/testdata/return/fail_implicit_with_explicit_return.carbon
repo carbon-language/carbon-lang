@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn F() {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/return/fail_implicit_with_explicit_return.carbon:[[@LINE+1]]: return (); should not provide a return value, to match the function's signature.
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/return/fail_implicit_with_explicit_return.carbon:[[@LINE+1]]: return (); should not provide a return value, to match the function's signature.
   return ();
 }
 

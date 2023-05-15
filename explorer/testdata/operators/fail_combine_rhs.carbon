@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 class C {}
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/operators/fail_combine_rhs.carbon:[[@LINE+1]]: expected a constraint in second operand of `&`, found class C
+// CHECK:STDERR: COMPILATION ERROR: explorer/testdata/operators/fail_combine_rhs.carbon:[[@LINE+1]]: expected a constraint in second operand of `&`, found class C
 fn F[T:! type & C]();
 
 fn Main() -> i32 {

@@ -32,9 +32,3 @@ glob_sh_run(
     file_exts = ["carbon"],
     run_ext = "verbose",
 )
-
-filegroup(
-    name = "carbon_files",
-    srcs = glob(["**/*.carbon"]),
-    visibility = ["//visibility:public"],
-)

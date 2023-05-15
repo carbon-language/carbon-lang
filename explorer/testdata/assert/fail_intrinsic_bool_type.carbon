@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -16,7 +14,7 @@ class ConvertTo(T:! type) {
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/assert/fail_intrinsic_bool_type.carbon:[[@LINE+1]]: syntax error, unexpected COMMA
+  // CHECK:STDERR: SYNTAX ERROR: explorer/testdata/assert/fail_intrinsic_bool_type.carbon:[[@LINE+1]]: syntax error, unexpected COMMA
   __intrinsic_assert(, "unused");
   return 0;
 }

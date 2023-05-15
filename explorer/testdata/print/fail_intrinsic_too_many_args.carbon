@@ -3,12 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest impl;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/print/fail_intrinsic_too_many_args.carbon:[[@LINE+1]]: Print takes 1 or 2 arguments, received 4
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/print/fail_intrinsic_too_many_args.carbon:[[@LINE+1]]: Print takes 1 or 2 arguments, received 4
   __intrinsic_print("", 1, 2, 3);
 }

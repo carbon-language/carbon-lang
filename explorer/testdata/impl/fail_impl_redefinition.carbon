@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 
 package ExplorerTest api;
@@ -35,7 +33,7 @@ external impl Point as Vector {
   fn Scale[self: Point](v: i32) -> Point {
       return {.x = self.x * v, .y = self.y * v};
   }
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_redefinition.carbon:[[@LINE+1]]: ambiguous implementations of interface Vector for class Point
+// CHECK:STDERR: COMPILATION ERROR: explorer/testdata/impl/fail_impl_redefinition.carbon:[[@LINE+1]]: ambiguous implementations of interface Vector for class Point
 }
 
 fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: i32) -> T {

@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -12,6 +10,6 @@ fn F() {}
 alias A = F;
 
 fn Main() -> i32 {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/alias/fail_wrong_fn_alias_use_expr.carbon:[[@LINE+1]]: member access, unexpected fn () -> () in A.x
+    // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/alias/fail_wrong_fn_alias_use_expr.carbon:[[@LINE+1]]: member access, unexpected fn () -> () in A.x
     return A.x;
 }

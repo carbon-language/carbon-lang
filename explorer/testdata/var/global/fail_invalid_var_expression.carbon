@@ -3,12 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/var/global/fail_invalid_var_expression.carbon:[[@LINE+1]]: Expected expression for variable type
+// CHECK:STDERR: COMPILATION ERROR: explorer/testdata/var/global/fail_invalid_var_expression.carbon:[[@LINE+1]]: Expected expression for variable type
 var a: auto;
 
 fn Main() -> i32 { return 0; }

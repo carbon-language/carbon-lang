@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -14,7 +12,7 @@ base class A {
 }
 
 class B extends A {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/destructor/fail_override_virtual_virtual.carbon:[[@LINE+1]]: Error declaring destructor for `B`: use `impl` to implement virtual destructor in child class.
+    // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/destructor/fail_override_virtual_virtual.carbon:[[@LINE+1]]: Error declaring destructor for `B`: use `impl` to implement virtual destructor in child class.
     virtual destructor[self: Self]{}
 }
 

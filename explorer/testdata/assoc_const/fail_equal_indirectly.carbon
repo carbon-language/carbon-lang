@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -26,7 +24,7 @@ fn G[U:! type where .Self == i32, T:! Iface where .T = U](x: T, y: U) {
 
 // Not OK: would require looking through two levels of `==`.
 fn H[V:! type where .Self == i32, W:! Iface where .T == V](x: W, y: V) {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_equal_indirectly.carbon:[[@LINE+1]]: constraint requires that (T).(Iface.T) (with value (W).(Iface.T)) == i32, which is not known to be true
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/assoc_const/fail_equal_indirectly.carbon:[[@LINE+1]]: constraint requires that (T).(Iface.T) (with value (W).(Iface.T)) == i32, which is not known to be true
   F(x);
 }
 

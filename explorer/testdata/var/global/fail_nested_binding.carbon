@@ -3,15 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 // If support for this is added, it'll be necessary to verify that either the
 // implementation is shared with locals or that tests are copied over for edge
 // cases.
-// CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/var/global/fail_nested_binding.carbon:[[@LINE+1]]: syntax error, unexpected LEFT_PARENTHESIS, expecting identifier
+// CHECK:STDERR: SYNTAX ERROR: explorer/testdata/var/global/fail_nested_binding.carbon:[[@LINE+1]]: syntax error, unexpected LEFT_PARENTHESIS, expecting identifier
 var (x: i32,);
 
 fn Main() -> i32 {

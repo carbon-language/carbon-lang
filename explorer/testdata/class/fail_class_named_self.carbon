@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 // Error: Can't use keyword `Self` as the name of a class.
-// CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/class/fail_class_named_self.carbon:[[@LINE+1]]: syntax error, unexpected SELF, expecting identifier or LEFT_PARENTHESIS
+// CHECK:STDERR: SYNTAX ERROR: explorer/testdata/class/fail_class_named_self.carbon:[[@LINE+1]]: syntax error, unexpected SELF, expecting identifier or LEFT_PARENTHESIS
 class Self {
   var x: i32;
   var y: i32;

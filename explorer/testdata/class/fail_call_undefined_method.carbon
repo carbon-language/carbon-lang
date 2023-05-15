@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -14,6 +12,6 @@ class A {
 
 fn Main() -> i32 {
   var a: A = {};
-  // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/testdata/class/fail_call_undefined_method.carbon:[[@LINE+1]]: attempt to call function `F` that has not been defined
+  // CHECK:STDERR: RUNTIME ERROR: explorer/testdata/class/fail_call_undefined_method.carbon:[[@LINE+1]]: attempt to call function `F` that has not been defined
   return a.F();
 }

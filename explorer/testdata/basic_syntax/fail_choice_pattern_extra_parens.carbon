@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -16,7 +14,7 @@ choice Ints {
 
 fn Main() -> i32 {
   match (Ints.None) {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_choice_pattern_extra_parens.carbon:[[@LINE+1]]: alternative `choice Ints.None` does not expect an argument list
+    // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/basic_syntax/fail_choice_pattern_extra_parens.carbon:[[@LINE+1]]: alternative `choice Ints.None` does not expect an argument list
     case Ints.None() => { return 0; }
     default => { return 1; }
   }

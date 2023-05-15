@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -29,5 +27,5 @@ fn Main() -> i32 {
     case (_: AB,  _: AB,  _: AB,  _: AB,  _: AB,  _: AB,  _: AB,  AB.B(), AB.A()) => { return 8; }
     case (_: AB,  _: AB,  _: AB,  _: AB,  _: AB,  _: AB,  _: AB,  _: AB,  AB.B()) => { return 9; }
   }
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/match/fail_exhaustive_exponential_9x.carbon:[[@LINE+1]]: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
+// CHECK:STDERR: COMPILATION ERROR: explorer/testdata/match/fail_exhaustive_exponential_9x.carbon:[[@LINE+1]]: non-exhaustive match may allow control-flow to reach the end of a function that provides a `->` return type
 }
