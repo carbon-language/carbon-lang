@@ -4,10 +4,7 @@
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files([
-    "lit_test.py",
-    "merge_output.py",
-])
+exports_files(["lit_test.py"])
 
 py_binary(
     name = "merge_output",
