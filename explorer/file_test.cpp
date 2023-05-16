@@ -44,7 +44,7 @@ class ParseAndExecuteTestFile : public FileTestBase {
     // Run the parse. Parser debug output is always off because it's difficult
     // to redirect.
     auto result =
-        ParseAndExecuteFile(PreludePath, path().str(),
+        ParseAndExecuteFile(PreludePath, filename().str(),
                             /*parser_debug=*/false, &trace_stream, &stdout);
     // This mirrors printing currently done by main.cpp.
     if (result.ok()) {

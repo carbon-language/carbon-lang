@@ -22,7 +22,7 @@ class SemanticsFileTest : public FileTestBase {
   auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
       -> bool override {
     Driver driver(stdout, stderr);
-    return driver.RunFullCommand({"dump", "semantics-ir", path()});
+    return driver.RunFullCommand({"dump", "semantics-ir", filename()});
   }
 };
 
