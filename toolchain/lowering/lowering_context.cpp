@@ -54,7 +54,7 @@ auto LoweringContext::BuildLoweredNodeAsType(SemanticsNodeId node_id)
     case SemanticsBuiltinKind::EmptyStructType.AsInt():
     case SemanticsBuiltinKind::EmptyTuple.AsInt():
     case SemanticsBuiltinKind::EmptyTupleType.AsInt():
-      // Represent empty data as 0-length arrays.
+      // Represent empty types as empty structs.
       // TODO: Investigate special-casing handling of these so that they can be
       // collectively replaced with LLVM's void, particularly around function
       // returns. LLVM doesn't allow declaring variables with a void type, so
