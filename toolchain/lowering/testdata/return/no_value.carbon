@@ -6,9 +6,9 @@
 // CHECK:STDOUT: ; ModuleID = 'toolchain/lowering/testdata/return/no_value.carbon'
 // CHECK:STDOUT: source_filename = "toolchain/lowering/testdata/return/no_value.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %0 = type {}
+// CHECK:STDOUT: %EmptyTuple = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %0 @Main() {
+// CHECK:STDOUT: define %EmptyTuple @Main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

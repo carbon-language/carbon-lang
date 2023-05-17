@@ -6,9 +6,9 @@
 // CHECK:STDOUT: ; ModuleID = 'toolchain/lowering/testdata/function/definition/params_zero.carbon'
 // CHECK:STDOUT: source_filename = "toolchain/lowering/testdata/function/definition/params_zero.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %0 = type {}
+// CHECK:STDOUT: %EmptyTuple = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %0 @Foo() {
+// CHECK:STDOUT: define %EmptyTuple @Foo() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT: }
 

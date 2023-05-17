@@ -6,23 +6,23 @@
 // CHECK:STDOUT: ; ModuleID = 'toolchain/lowering/testdata/struct/member_access.carbon'
 // CHECK:STDOUT: source_filename = "toolchain/lowering/testdata/struct/member_access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %0 = type { double, i32 }
-// CHECK:STDOUT: %1 = type { double, i32 }
+// CHECK:STDOUT: %StructLiteralType = type { double, i32 }
+// CHECK:STDOUT: %StructLiteralType.0 = type { double, i32 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Run() {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %0 = alloca %0, align 8
-// CHECK:STDOUT:   %1 = alloca %1, align 8
-// CHECK:STDOUT:   %2 = getelementptr inbounds %1, ptr %1, i32 0, i32 0
-// CHECK:STDOUT:   store double 0.000000e+00, ptr %2, align 8
-// CHECK:STDOUT:   %3 = getelementptr inbounds %1, ptr %1, i32 0, i32 1
-// CHECK:STDOUT:   store i32 1, ptr %3, align 4
-// CHECK:STDOUT:   store ptr %1, ptr %0, align 8
-// CHECK:STDOUT:   %4 = alloca i32, align 4
-// CHECK:STDOUT:   %5 = getelementptr inbounds %0, ptr %0, i32 0, i32 1
-// CHECK:STDOUT:   store ptr %5, ptr %4, align 8
-// CHECK:STDOUT:   %6 = alloca i32, align 4
-// CHECK:STDOUT:   store ptr %4, ptr %6, align 8
+// CHECK:STDOUT:   %var = alloca %StructLiteralType, align 8
+// CHECK:STDOUT:   %StructLiteralValue = alloca %StructLiteralType.0, align 8
+// CHECK:STDOUT:   %a = getelementptr inbounds %StructLiteralType.0, ptr %StructLiteralValue, i32 0, i32 0
+// CHECK:STDOUT:   store double 0.000000e+00, ptr %a, align 8
+// CHECK:STDOUT:   %b = getelementptr inbounds %StructLiteralType.0, ptr %StructLiteralValue, i32 0, i32 1
+// CHECK:STDOUT:   store i32 1, ptr %b, align 4
+// CHECK:STDOUT:   store ptr %StructLiteralValue, ptr %var, align 8
+// CHECK:STDOUT:   %var1 = alloca i32, align 4
+// CHECK:STDOUT:   %b2 = getelementptr inbounds %StructLiteralType, ptr %var, i32 0, i32 1
+// CHECK:STDOUT:   store ptr %b2, ptr %var1, align 8
+// CHECK:STDOUT:   %var3 = alloca i32, align 4
+// CHECK:STDOUT:   store ptr %var1, ptr %var3, align 8
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
 
