@@ -161,6 +161,7 @@ auto LoweringHandleStructMemberAccess(LoweringContext& context,
   auto struct_type_id = context.semantics_ir().GetNode(struct_id).type_id();
   auto* llvm_type = context.GetLoweredNodeAsType(struct_type_id);
 
+  // Get type information for member names.
   auto type_refs = context.semantics_ir().GetNodeBlock(
       context.semantics_ir().GetNode(struct_type_id).GetAsStructType());
   auto member_name = context.semantics_ir().GetString(
@@ -195,6 +196,7 @@ auto LoweringHandleStructValue(LoweringContext& context,
   context.SetLoweredNodeAsValue(node_id, alloca);
 
   auto refs = context.semantics_ir().GetNodeBlock(node.GetAsStructValue());
+  // Get type information for member names.
   auto type_refs = context.semantics_ir().GetNodeBlock(
       context.semantics_ir().GetNode(node.type_id()).GetAsStructType());
   for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
