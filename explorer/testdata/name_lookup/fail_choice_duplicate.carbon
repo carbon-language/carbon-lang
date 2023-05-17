@@ -8,7 +8,7 @@ package ExplorerTest api;
 
 choice Ints {
   None,
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/name_lookup/fail_choice_duplicate.carbon:[[@LINE+1]]: Duplicate name `None` in choice type
+  // CHECK:STDERR: COMPILATION ERROR: fail_choice_duplicate.carbon:[[@LINE+1]]: Duplicate name `None` in choice type
   None,
 }
 

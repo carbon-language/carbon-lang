@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: ; ModuleID = 'toolchain/lowering/testdata/function/definition/params_two.carbon'
-// CHECK:STDOUT: source_filename = "toolchain/lowering/testdata/function/definition/params_two.carbon"
+// CHECK:STDOUT: ; ModuleID = 'params_two.carbon'
+// CHECK:STDOUT: source_filename = "params_two.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: %0 = type {}
 // CHECK:STDOUT:

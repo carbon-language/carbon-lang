@@ -9,7 +9,7 @@ __mixin M1 {
   fn F1[self: Self](x: Self) -> Self{
      return x;
   }
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/mixin/fail_recursive_mixing.carbon:[[@LINE+1]]: incomplete mixin `M1` used in mix declaration
+  // CHECK:STDERR: COMPILATION ERROR: fail_recursive_mixing.carbon:[[@LINE+1]]: incomplete mixin `M1` used in mix declaration
   __mix M1;
 }
 

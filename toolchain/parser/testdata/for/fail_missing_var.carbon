@@ -25,7 +25,7 @@
 // CHECK:STDOUT: ]
 
 fn foo() {
-  // CHECK:STDERR: toolchain/parser/testdata/for/fail_missing_var.carbon:[[@LINE+1]]:8: Expected `var` declaration.
+  // CHECK:STDERR: fail_missing_var.carbon:[[@LINE+1]]:8: Expected `var` declaration.
   for (x: i32 in y) {
     Print(x);
   }

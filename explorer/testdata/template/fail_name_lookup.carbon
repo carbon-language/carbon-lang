@@ -17,7 +17,7 @@ interface HasF {
 impl forall [template T:! HasF] T as CallF {
   // TODO: This case should be accepted, using `ClassWithExternalF.(HasF.F)`.
   // TODO: The other case should be rejected due to ambiguity.
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/template/fail_name_lookup.carbon:[[@LINE+1]]: class ClassWithExternalF does not have a field named F
+  // CHECK:STDERR: COMPILATION ERROR: fail_name_lookup.carbon:[[@LINE+1]]: class ClassWithExternalF does not have a field named F
   fn DoIt[self: Self]() { self.F(); }
 }
 

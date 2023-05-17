@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn CompareStr(s: String) -> i32 {
-  // CHECK:STDERR: SYNTAX ERROR: explorer/testdata/string/fail_raw_more_hash_tags_on_left.carbon:[[@LINE+2]]: missing closing quote in single-line string: ##"str"#) {
+  // CHECK:STDERR: SYNTAX ERROR: fail_raw_more_hash_tags_on_left.carbon:[[@LINE+2]]: missing closing quote in single-line string: ##"str"#) {
   // CHECK:STDERR:
   if (s == ##"str"#) {
     return 0;

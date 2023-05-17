@@ -30,7 +30,7 @@
 // CHECK:STDOUT: ]
 
 fn foo() {
-  // CHECK:STDERR: toolchain/parser/testdata/for/fail_missing_in.carbon:[[@LINE+1]]:19: Expected `in` after loop `var` declaration.
+  // CHECK:STDERR: fail_missing_in.carbon:[[@LINE+1]]:19: Expected `in` after loop `var` declaration.
   for (var x: i32 y) {
     Print(x);
   }

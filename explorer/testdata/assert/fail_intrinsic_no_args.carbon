@@ -14,7 +14,7 @@ class ConvertTo(T:! type) {
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/assert/fail_intrinsic_no_args.carbon:[[@LINE+1]]: __intrinsic_assert takes 2 arguments
+  // CHECK:STDERR: COMPILATION ERROR: fail_intrinsic_no_args.carbon:[[@LINE+1]]: __intrinsic_assert takes 2 arguments
   __intrinsic_assert();
   return 0;
 }

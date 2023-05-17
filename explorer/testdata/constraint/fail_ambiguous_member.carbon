@@ -9,7 +9,7 @@ package ExplorerTest api;
 interface A { fn F() -> i32; }
 interface B { fn F() -> i32; }
 
-// CHECK:STDERR: COMPILATION ERROR: explorer/testdata/constraint/fail_ambiguous_member.carbon:[[@LINE+1]]: ambiguous member access, F found in interface A and interface B
+// CHECK:STDERR: COMPILATION ERROR: fail_ambiguous_member.carbon:[[@LINE+1]]: ambiguous member access, F found in interface A and interface B
 fn Get[T:! A & B](n: T) -> i32 { return n.F(); }
 
 impl i32 as A {

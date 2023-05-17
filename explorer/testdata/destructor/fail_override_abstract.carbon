@@ -8,7 +8,7 @@ package ExplorerTest api;
 
 
 base class A {
-    // CHECK:STDERR: SYNTAX ERROR: explorer/testdata/destructor/fail_override_abstract.carbon:[[@LINE+1]]: syntax error, unexpected DESTRUCTOR, expecting CLASS
+    // CHECK:STDERR: SYNTAX ERROR: fail_override_abstract.carbon:[[@LINE+1]]: syntax error, unexpected DESTRUCTOR, expecting CLASS
     abstract destructor[self: Self]{}
 }
 

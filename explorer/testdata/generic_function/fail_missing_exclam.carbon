@@ -6,7 +6,7 @@
 
 package ExplorerTest api;
 
-// CHECK:STDERR: SYNTAX ERROR: explorer/testdata/generic_function/fail_missing_exclam.carbon:[[@LINE+1]]: illegal binding pattern in implicit parameter list
+// CHECK:STDERR: SYNTAX ERROR: fail_missing_exclam.carbon:[[@LINE+1]]: illegal binding pattern in implicit parameter list
 fn F[T: type]();
 
 fn Main() -> i32 {

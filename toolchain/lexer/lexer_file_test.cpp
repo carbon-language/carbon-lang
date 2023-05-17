@@ -17,21 +17,25 @@ namespace {
 
 class LexerFileTest : public FileTestBase {
  public:
-  explicit LexerFileTest(llvm::StringRef path) : FileTestBase(path) {}
+  explicit LexerFileTest(const std::filesystem::path& path)
+      : FileTestBase(path) {}
 
   auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
       -> bool override {
     Driver driver(stdout, stderr);
-    return driver.RunFullCommand({"dump", "tokens", filename()});
+    return driver.RunFullCommand(
+        {"dump", "tokens", path().filename().string()});
   }
 };
 
 }  // namespace
 
-auto RegisterFileTests(const std::vector<llvm::StringRef>& paths) -> void {
-  LexerFileTest::RegisterTests(
-      "LexerFileTest", paths,
-      [](llvm::StringRef path) { return new LexerFileTest(path); });
+auto RegisterFileTests(const std::vector<std::filesystem::path>& paths)
+    -> void {
+  LexerFileTest::RegisterTests("LexerFileTest", paths,
+                               [](const std::filesystem::path& path) {
+                                 return new LexerFileTest(path);
+                               });
 }
 
 }  // namespace Carbon::Testing

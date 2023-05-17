@@ -17,21 +17,25 @@ namespace {
 
 class SemanticsFileTest : public FileTestBase {
  public:
-  explicit SemanticsFileTest(llvm::StringRef path) : FileTestBase(path) {}
+  explicit SemanticsFileTest(const std::filesystem::path& path)
+      : FileTestBase(path) {}
 
   auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
       -> bool override {
     Driver driver(stdout, stderr);
-    return driver.RunFullCommand({"dump", "semantics-ir", filename()});
+    return driver.RunFullCommand(
+        {"dump", "semantics-ir", path().filename().string()});
   }
 };
 
 }  // namespace
 
-auto RegisterFileTests(const std::vector<llvm::StringRef>& paths) -> void {
-  SemanticsFileTest::RegisterTests(
-      "SemanticsFileTest", paths,
-      [](llvm::StringRef path) { return new SemanticsFileTest(path); });
+auto RegisterFileTests(const std::vector<std::filesystem::path>& paths)
+    -> void {
+  SemanticsFileTest::RegisterTests("SemanticsFileTest", paths,
+                                   [](const std::filesystem::path& path) {
+                                     return new SemanticsFileTest(path);
+                                   });
 }
 
 }  // namespace Carbon::Testing

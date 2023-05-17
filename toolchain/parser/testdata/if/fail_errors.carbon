@@ -39,13 +39,13 @@
 // CHECK:STDOUT: ]
 
 fn F() {
-  // CHECK:STDERR: toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+1]]:6: Expected `(` after `if`.
+  // CHECK:STDERR: fail_errors.carbon:[[@LINE+1]]:6: Expected `(` after `if`.
   if a {}
-  // CHECK:STDERR: toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+1]]:7: Expected expression.
+  // CHECK:STDERR: fail_errors.carbon:[[@LINE+1]]:7: Expected expression.
   if () {}
-  // CHECK:STDERR: toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+1]]:9: Unexpected tokens before `)`.
+  // CHECK:STDERR: fail_errors.carbon:[[@LINE+1]]:9: Unexpected tokens before `)`.
   if (b c) {}
   if (d)
-// CHECK:STDERR: toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+2]]:1: Expected braced code block.
-// CHECK:STDERR: toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+1]]:1: Expected expression.
+// CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:1: Expected braced code block.
+// CHECK:STDERR: fail_errors.carbon:[[@LINE+1]]:1: Expected expression.
 }

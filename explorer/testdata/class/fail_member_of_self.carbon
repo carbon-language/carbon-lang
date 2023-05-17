@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 class C {
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/class/fail_member_of_self.carbon:[[@LINE+1]]: incomplete type `class C` used in type of variable
+  // CHECK:STDERR: COMPILATION ERROR: fail_member_of_self.carbon:[[@LINE+1]]: incomplete type `class C` used in type of variable
   var m: Self;
 }
 

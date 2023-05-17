@@ -17,21 +17,25 @@ namespace {
 
 class ParserFileTest : public FileTestBase {
  public:
-  explicit ParserFileTest(llvm::StringRef path) : FileTestBase(path) {}
+  explicit ParserFileTest(const std::filesystem::path& path)
+      : FileTestBase(path) {}
 
   auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
       -> bool override {
     Driver driver(stdout, stderr);
-    return driver.RunFullCommand({"dump", "parse-tree", filename()});
+    return driver.RunFullCommand(
+        {"dump", "parse-tree", path().filename().string()});
   }
 };
 
 }  // namespace
 
-auto RegisterFileTests(const std::vector<llvm::StringRef>& paths) -> void {
-  ParserFileTest::RegisterTests(
-      "ParserFileTest", paths,
-      [](llvm::StringRef path) { return new ParserFileTest(path); });
+auto RegisterFileTests(const std::vector<std::filesystem::path>& paths)
+    -> void {
+  ParserFileTest::RegisterTests("ParserFileTest", paths,
+                                [](const std::filesystem::path& path) {
+                                  return new ParserFileTest(path);
+                                });
 }
 
 }  // namespace Carbon::Testing

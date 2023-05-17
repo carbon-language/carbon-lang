@@ -53,7 +53,7 @@
 
 fn Main() {
   var x: i32 = 0;
-  // CHECK:STDERR: toolchain/semantics/testdata/var/fail_duplicate_decl.carbon:[[@LINE+2]]:7: Redefining x in the same scope.
-  // CHECK:STDERR: toolchain/semantics/testdata/var/fail_duplicate_decl.carbon:[[@LINE-2]]:7: Previous definition is here.
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+2]]:7: Redefining x in the same scope.
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-2]]:7: Previous definition is here.
   var x: i32 = 0;
 }

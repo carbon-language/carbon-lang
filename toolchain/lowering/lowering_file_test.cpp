@@ -17,21 +17,25 @@ namespace {
 
 class LoweringFileTest : public FileTestBase {
  public:
-  explicit LoweringFileTest(llvm::StringRef path) : FileTestBase(path) {}
+  explicit LoweringFileTest(const std::filesystem::path& path)
+      : FileTestBase(path) {}
 
   auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
       -> bool override {
     Driver driver(stdout, stderr);
-    return driver.RunFullCommand({"dump", "llvm-ir", filename()});
+    return driver.RunFullCommand(
+        {"dump", "llvm-ir", path().filename().string()});
   }
 };
 
 }  // namespace
 
-auto RegisterFileTests(const std::vector<llvm::StringRef>& paths) -> void {
-  LoweringFileTest::RegisterTests(
-      "LoweringFileTest", paths,
-      [](llvm::StringRef path) { return new LoweringFileTest(path); });
+auto RegisterFileTests(const std::vector<std::filesystem::path>& paths)
+    -> void {
+  LoweringFileTest::RegisterTests("LoweringFileTest", paths,
+                                  [=](const std::filesystem::path& path) {
+                                    return new LoweringFileTest(path);
+                                  });
 }
 
 }  // namespace Carbon::Testing

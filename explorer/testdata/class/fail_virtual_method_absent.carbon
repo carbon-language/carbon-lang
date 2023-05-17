@@ -17,6 +17,6 @@ fn Main() -> i32 {
   var bp: B* = &b;
   var ap: A* = bp;
   // Shouldn't look into the vtable for B.
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/class/fail_virtual_method_absent.carbon:[[@LINE+1]]: class A does not have a field named Foo
+  // CHECK:STDERR: COMPILATION ERROR: fail_virtual_method_absent.carbon:[[@LINE+1]]: class A does not have a field named Foo
   return ap->Foo();
 }

@@ -28,7 +28,7 @@ class Point {
 
 fn Main() -> i32 {
   var p: Point = Point.Origin();
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/addr/fail_method_self_type.carbon:[[@LINE+3]]: type error in method access, receiver type
+  // CHECK:STDERR: COMPILATION ERROR: fail_method_self_type.carbon:[[@LINE+3]]: type error in method access, receiver type
   // CHECK:STDERR: expected: class Shape
   // CHECK:STDERR: actual: class Point
   var x: auto = p.GetSetX(42);

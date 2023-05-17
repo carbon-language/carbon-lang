@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 constraint X {
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/named_constraint/fail_associated_constant.carbon:[[@LINE+1]]: associated constant not permitted in named constraint
+  // CHECK:STDERR: COMPILATION ERROR: fail_associated_constant.carbon:[[@LINE+1]]: associated constant not permitted in named constraint
   let N:! type;
 }
 

@@ -10,5 +10,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/package/fail_omit_library_keyword.carbon:[[@LINE+1]]:18: Missing `library` keyword.
+// CHECK:STDERR: fail_omit_library_keyword.carbon:[[@LINE+1]]:18: Missing `library` keyword.
 package Geometry "Shapes" api;

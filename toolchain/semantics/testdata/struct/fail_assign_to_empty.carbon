@@ -49,5 +49,5 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/semantics/testdata/struct/fail_assign_to_empty.carbon:[[@LINE+1]]:21: Cannot implicitly convert from `{.a: i32}` to `{} as Type`.
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+1]]:21: Cannot implicitly convert from `{.a: i32}` to `{} as Type`.
 var x: {} = {.a = 1};

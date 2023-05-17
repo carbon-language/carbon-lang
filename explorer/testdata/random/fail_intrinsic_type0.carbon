@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/random/fail_intrinsic_type0.carbon:[[@LINE+3]]: type error in Rand argument 0
+  // CHECK:STDERR: COMPILATION ERROR: fail_intrinsic_type0.carbon:[[@LINE+3]]: type error in Rand argument 0
   // CHECK:STDERR: expected: i32
   // CHECK:STDERR: actual: String
   __intrinsic_rand("a", 1);

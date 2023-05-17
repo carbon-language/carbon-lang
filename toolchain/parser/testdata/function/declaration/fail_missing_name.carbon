@@ -9,5 +9,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/function/declaration/fail_missing_name.carbon:[[@LINE+1]]:4: `fn` introducer should be followed by a name.
+// CHECK:STDERR: fail_missing_name.carbon:[[@LINE+1]]:4: `fn` introducer should be followed by a name.
 fn ();

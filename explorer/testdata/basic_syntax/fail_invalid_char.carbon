@@ -4,5 +4,5 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: SYNTAX ERROR: explorer/testdata/basic_syntax/fail_invalid_char.carbon:[[@LINE+1]]: invalid character '\xEF' in source file.
+// CHECK:STDERR: SYNTAX ERROR: fail_invalid_char.carbon:[[@LINE+1]]: invalid character '\xEF' in source file.
 �
