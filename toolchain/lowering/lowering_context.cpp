@@ -60,7 +60,8 @@ auto LoweringContext::BuildLoweredNodeAsType(SemanticsNodeId node_id)
       // returns. LLVM doesn't allow declaring variables with a void type, so
       // that may require significant special casing.
       // TODO: Work to remove EmptyTuple here.
-      return llvm::ArrayType::get(builder_.getInt8Ty(), 0);
+      return llvm::StructType::create(*llvm_context_,
+                                      llvm::ArrayRef<llvm::Type*>());
     case SemanticsBuiltinKind::FloatingPointType.AsInt():
       // TODO: Handle different sizes.
       return builder_.getDoubleTy();
@@ -83,9 +84,7 @@ auto LoweringContext::BuildLoweredNodeAsType(SemanticsNodeId node_id)
             << type_id;
         subtypes.push_back(GetLoweredNodeAsType(type_id));
       }
-      auto* type = llvm::StructType::create(*llvm_context_, subtypes);
-      lowered_nodes_[node_id.index] = type;
-      return type;
+      return llvm::StructType::create(*llvm_context_, subtypes);
     }
     default: {
       CARBON_FATAL() << "Cannot use node as type: " << node_id;
