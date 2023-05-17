@@ -74,9 +74,7 @@ auto ParserHandleFunctionSignatureFinish(ParserContext& context) -> void {
     }
     default: {
       if (!state.has_error) {
-        context.emitter().Emit(*context.position(),
-                               ExpectedDeclarationSemiOrDefinition,
-                               TokenKind::Fn);
+        context.EmitExpectedDeclarationSemiOrDefinition(TokenKind::Fn);
       }
       // Only need to skip if we've not already found a new line.
       bool skip_past_likely_end =

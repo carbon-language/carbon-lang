@@ -18,5 +18,5 @@
 
 // CHECK:STDERR: toolchain/parser/testdata/basics/fail_paren_match_regression.carbon:[[@LINE+3]]:5: Expected pattern in `var` declaration.
 // CHECK:STDERR: toolchain/parser/testdata/basics/fail_paren_match_regression.carbon:[[@LINE+2]]:12: Expected `,` or `)`.
-// CHECK:STDERR: toolchain/parser/testdata/basics/fail_paren_match_regression.carbon:[[@LINE+1]]:15: Expected `;` after expression.
+// CHECK:STDERR: toolchain/parser/testdata/basics/fail_paren_match_regression.carbon:[[@LINE+1]]:15: Expected `;` to terminate `var` declaration.
 var = (foo {})

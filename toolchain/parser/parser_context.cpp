@@ -422,4 +422,14 @@ auto ParserContext::RecoverFromDeclarationError(StateStackEntry state,
           /*has_error=*/true);
 }
 
+auto ParserContext::EmitExpectedDeclarationSemiOrDefinition(
+    TokenKind expected_kind) -> void {
+  CARBON_DIAGNOSTIC(ExpectedDeclarationSemiOrDefinition, Error,
+                    "`{0}` should either end with a `;` for a declaration or "
+                    "have a `{{ ... }` block for a definition.",
+                    TokenKind);
+  emitter().Emit(*position(), ExpectedDeclarationSemiOrDefinition,
+                 expected_kind);
+}
+
 }  // namespace Carbon
