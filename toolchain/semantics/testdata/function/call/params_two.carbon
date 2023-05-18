@@ -3,14 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: calls: [
-// CHECK:STDOUT:   {arg_ir: block4, arg_refs: block5},
-// CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block1, param_refs: block2},
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
+// CHECK:STDOUT:   {param_refs: block2},
+// CHECK:STDOUT:   {param_refs: block0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,
@@ -36,8 +32,8 @@
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+7, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+9, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Call, arg0: call0, arg1: callable0},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+6, arg1: block6},
+// CHECK:STDOUT:   {kind: Call, arg0: block5, arg1: callable0},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+6, arg1: block4},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -63,13 +59,11 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

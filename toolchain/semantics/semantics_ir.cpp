@@ -5,10 +5,11 @@
 #include "toolchain/semantics/semantics_ir.h"
 
 #include "common/check.h"
+#include "toolchain/common/pretty_stack_trace_function.h"
 #include "toolchain/parser/parse_tree_node_location_translator.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
+#include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
-#include "toolchain/semantics/semantics_parse_tree_handler.h"
 
 namespace Carbon {
 
@@ -52,8 +53,37 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
   ParseTreeNodeLocationTranslator translator(&tokens, &parse_tree);
   ErrorTrackingDiagnosticConsumer err_tracker(consumer);
   DiagnosticEmitter<ParseTree::Node> emitter(translator, err_tracker);
-  SemanticsParseTreeHandler(tokens, emitter, parse_tree, semantics, vlog_stream)
-      .Build();
+
+  SemanticsContext context(tokens, emitter, parse_tree, semantics, vlog_stream);
+  PrettyStackTraceFunction context_dumper(
+      [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
+
+  // Add a block for the ParseTree.
+  context.node_block_stack().Push();
+  context.PushScope();
+
+  // Loops over all nodes in the tree. On some errors, this may return early,
+  // for example if an unrecoverable state is encountered.
+  for (auto parse_node : parse_tree.postorder()) {
+    switch (auto parse_kind = parse_tree.node_kind(parse_node)) {
+#define CARBON_PARSE_NODE_KIND(Name)                   \
+  case ParseNodeKind::Name: {                          \
+    if (!SemanticsHandle##Name(context, parse_node)) { \
+      semantics.has_errors_ = true;                    \
+      return semantics;                                \
+    }                                                  \
+    break;                                             \
+  }
+#include "toolchain/parser/parse_node_kind.def"
+    }
+  }
+
+  // Pop information for the file-level scope.
+  semantics.top_node_block_id_ = context.node_block_stack().Pop();
+  context.PopScope();
+
+  context.VerifyOnFinish();
+
   semantics.has_errors_ = err_tracker.seen_error();
   return semantics;
 }
@@ -75,7 +105,6 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
     -> void {
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
 
-  PrintList(out, "calls", calls_);
   PrintList(out, "callables", callables_);
   PrintList(out, "integer_literals", integer_literals_);
   PrintList(out, "real_literals", real_literals_);
@@ -135,7 +164,7 @@ auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
     auto node = GetNode(step.node_id);
     switch (node.kind()) {
       case SemanticsNodeKind::StructType: {
-        auto refs = GetNodeBlock(node.GetAsStructType().second);
+        auto refs = GetNodeBlock(node.GetAsStructType());
         if (step.index == 0) {
           out << "{";
         } else if (step.index < static_cast<int>(refs.size())) {

@@ -50,7 +50,6 @@ TEST(SemanticsIRTest, YAML) {
       Yaml::Value::FromText(print_output),
       ElementsAre(Yaml::Mapping(ElementsAre(
           Pair("cross_reference_irs_size", "1"),
-          Pair("calls", Yaml::Sequence(IsEmpty())),
           Pair("callables", Yaml::Sequence(IsEmpty())),
           Pair("integer_literals", Yaml::Sequence(ElementsAre("0"))),
           Pair("real_literals", Yaml::Sequence(IsEmpty())),

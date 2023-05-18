@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Geometry'},

@@ -13,6 +13,7 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/lowering/lower_to_llvm.h"
@@ -40,7 +41,8 @@ auto GetSubcommand(llvm::StringRef name) -> Subcommand {
 }  // namespace
 
 auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
-  DiagnosticConsumer* consumer = &ConsoleDiagnosticConsumer();
+  StreamDiagnosticConsumer stream_consumer(error_stream_);
+  DiagnosticConsumer* consumer = &stream_consumer;
   std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
   // TODO: Figure out a command-line support library, this is temporary.
   if (!args.empty() && args[0] == "-v") {
@@ -133,8 +135,8 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                        .Case("llvm-ir", DumpMode::LLVMIR)
                        .Default(DumpMode::Unknown);
   if (dump_mode == DumpMode::Unknown) {
-    error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, or "
-                     "semantics-ir.\n";
+    error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, "
+                     "semantics-ir, or llvm-ir.\n";
     return false;
   }
   args = args.drop_front();
@@ -225,7 +227,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   CARBON_VLOG() << "*** LowerToLLVM ***\n";
   llvm::LLVMContext llvm_context;
   const std::unique_ptr<llvm::Module> module =
-      LowerToLLVM(llvm_context, input_file_name, semantics_ir);
+      LowerToLLVM(llvm_context, input_file_name, semantics_ir, vlog_stream_);
   CARBON_VLOG() << "*** LowerToLLVM done ***\n";
   if (dump_mode == DumpMode::LLVMIR) {
     consumer.Flush();

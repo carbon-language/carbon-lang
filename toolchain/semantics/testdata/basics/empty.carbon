@@ -3,10 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: calls: [
-// CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [

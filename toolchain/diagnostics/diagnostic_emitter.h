@@ -296,22 +296,30 @@ class DiagnosticEmitter {
   DiagnosticConsumer* consumer_;
 };
 
+class StreamDiagnosticConsumer : public DiagnosticConsumer {
+ public:
+  explicit StreamDiagnosticConsumer(llvm::raw_ostream& stream)
+      : stream_(&stream) {}
+
+  auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
+    Print(diagnostic.message);
+    for (const auto& note : diagnostic.notes) {
+      Print(note);
+    }
+  }
+  auto Print(const DiagnosticMessage& message) -> void {
+    *stream_ << message.location.file_name << ":"
+             << message.location.line_number << ":"
+             << message.location.column_number << ": "
+             << message.format_fn(message) << "\n";
+  }
+
+ private:
+  llvm::raw_ostream* stream_;
+};
+
 inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
-  class Consumer : public DiagnosticConsumer {
-    auto HandleDiagnostic(Diagnostic diagnostic) -> void override {
-      Print(diagnostic.message);
-      for (const auto& note : diagnostic.notes) {
-        Print(note);
-      }
-    }
-    auto Print(const DiagnosticMessage& message) -> void {
-      llvm::errs() << message.location.file_name << ":"
-                   << message.location.line_number << ":"
-                   << message.location.column_number << ": "
-                   << message.format_fn(message) << "\n";
-    }
-  };
-  static auto* consumer = new Consumer;
+  static auto* consumer = new StreamDiagnosticConsumer(llvm::errs());
   return *consumer;
 }
 

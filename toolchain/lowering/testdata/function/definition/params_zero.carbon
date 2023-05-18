@@ -3,11 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-lowering}
-// CHECK:STDOUT: ; ModuleID = '{{.*}}/toolchain/lowering/testdata/function/definition/params_zero.carbon'
-// CHECK:STDOUT: source_filename = "{{.*}}/toolchain/lowering/testdata/function/definition/params_zero.carbon"
-// CHECK-EMPTY:
-// CHECK:STDOUT: define void @Foo() {
+// CHECK:STDOUT: ; ModuleID = 'params_zero.carbon'
+// CHECK:STDOUT: source_filename = "params_zero.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: %EmptyTupleType = type {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: define %EmptyTupleType @Foo() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT: }
 

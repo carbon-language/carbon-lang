@@ -2,8 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// NOAUTOUPDATE
-// RUN: %{not} %{explorer-run}
+// AUTOUPDATE
 // CHECK:STDERR: RUNTIME ERROR: overflow:1: possible infinite loop: too many interpreter steps executed
 
 package EmptyIdentifier impl;
