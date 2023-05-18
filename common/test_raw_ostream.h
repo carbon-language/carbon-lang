@@ -13,34 +13,26 @@
 
 namespace Carbon::Testing {
 
-/// A raw_ostream that makes it easy to repeatedly check streamed output.
-class TestRawOstream : public llvm::raw_ostream {
+// A raw_ostream that makes it easy to repeatedly check streamed output.
+class TestRawOstream : public llvm::raw_string_ostream {
  public:
+  explicit TestRawOstream() : llvm::raw_string_ostream(buffer_) {}
+
   ~TestRawOstream() override {
-    flush();
     if (!buffer_.empty()) {
       ADD_FAILURE() << "Unchecked output:\n" << buffer_;
     }
   }
 
-  /// Flushes the stream and returns the contents so far, clearing the stream
-  /// back to empty.
+  // Flushes the stream and returns the contents so far, clearing the stream
+  // back to empty.
   auto TakeStr() -> std::string {
-    flush();
     std::string result = std::move(buffer_);
     buffer_.clear();
     return result;
   }
 
  private:
-  void write_impl(const char* ptr, size_t size) override {
-    buffer_.append(ptr, ptr + size);
-  }
-
-  [[nodiscard]] auto current_pos() const -> uint64_t override {
-    return buffer_.size();
-  }
-
   std::string buffer_;
 };
 
