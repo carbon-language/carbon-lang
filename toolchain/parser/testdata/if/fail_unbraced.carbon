@@ -36,10 +36,10 @@
 
 fn F() {
   if (a)
-    // CHECK:STDERR: toolchain/parser/testdata/if/fail_unbraced.carbon:[[@LINE+1]]:5: Expected braced code block.
+    // CHECK:STDERR: fail_unbraced.carbon:[[@LINE+1]]:5: Expected braced code block.
     if (b)
-      // CHECK:STDERR: toolchain/parser/testdata/if/fail_unbraced.carbon:[[@LINE+1]]:7: Expected braced code block.
+      // CHECK:STDERR: fail_unbraced.carbon:[[@LINE+1]]:7: Expected braced code block.
       if (c)
-        // CHECK:STDERR: toolchain/parser/testdata/if/fail_unbraced.carbon:[[@LINE+1]]:9: Expected braced code block.
+        // CHECK:STDERR: fail_unbraced.carbon:[[@LINE+1]]:9: Expected braced code block.
         d;
 }

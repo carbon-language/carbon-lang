@@ -8,6 +8,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <filesystem>
 #include <functional>
 #include <vector>
 
@@ -32,12 +33,14 @@ namespace Carbon::Testing {
 // `lit_autoupdate.py` automatically constructs compatible lines.
 class FileTestBase : public testing::Test {
  public:
-  explicit FileTestBase(const llvm::StringRef path) : path_(path) {}
+  explicit FileTestBase(const std::filesystem::path& path);
+  ~FileTestBase() override;
 
   // Used by children to register tests with gtest.
   static void RegisterTests(
-      const char* fixture_label, const std::vector<llvm::StringRef>& paths,
-      std::function<FileTestBase*(llvm::StringRef)> factory);
+      const char* fixture_label,
+      const std::vector<std::filesystem::path>& paths,
+      std::function<FileTestBase*(const std::filesystem::path&)> factory);
 
   // Implemented by children to run the test. Called by the TestBody
   // implementation, which will validate stdout and stderr. The return value
@@ -49,11 +52,8 @@ class FileTestBase : public testing::Test {
   // issues are a little easier to identify by the different line.
   auto TestBody() -> void final;
 
-  // Returns the filename of the file being tested.
-  auto filename() -> llvm::StringRef;
-
   // Returns the full path of the file being tested.
-  auto path() -> llvm::StringRef { return path_; };
+  auto path() -> const std::filesystem::path& { return *path_; };
 
  private:
   // Transforms an expectation on a given line from `FileCheck` syntax into a
@@ -61,11 +61,11 @@ class FileTestBase : public testing::Test {
   static auto TransformExpectation(int line_index, llvm::StringRef in)
       -> testing::Matcher<std::string>;
 
-  llvm::StringRef path_;
+  const std::filesystem::path* path_;
 };
 
 // Must be implemented by the individual file_test to initialize tests.
-extern auto RegisterFileTests(const std::vector<llvm::StringRef>& paths)
+extern auto RegisterFileTests(const std::vector<std::filesystem::path>& paths)
     -> void;
 
 }  // namespace Carbon::Testing

@@ -30,7 +30,7 @@
 // CHECK:STDOUT: ]
 
 fn foo() {
-  // CHECK:STDERR: toolchain/parser/testdata/for/fail_colon_instead_of_in.carbon:[[@LINE+1]]:19: `:` should be replaced by `in`.
+  // CHECK:STDERR: fail_colon_instead_of_in.carbon:[[@LINE+1]]:19: `:` should be replaced by `in`.
   for (var x: i32 : y) {
     Print(x);
   }

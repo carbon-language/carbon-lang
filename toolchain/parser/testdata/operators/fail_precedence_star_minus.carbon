@@ -17,5 +17,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/operators/fail_precedence_star_minus.carbon:[[@LINE+1]]:16: Parentheses are required to disambiguate operator precedence.
+// CHECK:STDERR: fail_precedence_star_minus.carbon:[[@LINE+1]]:16: Parentheses are required to disambiguate operator precedence.
 var n: i8 = n* -n;

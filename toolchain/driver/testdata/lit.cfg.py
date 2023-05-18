@@ -1,1 +1,1 @@
-../../../bazel/testing/lit.cfg.py
+../../../testing/lit_test/lit.cfg.py

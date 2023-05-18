@@ -2440,15 +2440,15 @@ auto Interpreter::Step() -> ErrorOr<Success> {
   // Check for various overflow conditions before stepping.
   if (todo_.size() > MaxTodoSize) {
     return ProgramError(SourceLocation("overflow", 1))
-           << "Stack overflow: too many interpreter actions on stack";
+           << "stack overflow: too many interpreter actions on stack";
   }
   if (++steps_taken_ > MaxStepsTaken) {
     return ProgramError(SourceLocation("overflow", 1))
-           << "Possible infinite loop: too many interpreter steps executed";
+           << "possible infinite loop: too many interpreter steps executed";
   }
   if (arena_->allocated() > MaxArenaAllocated) {
     return ProgramError(SourceLocation("overflow", 1))
-           << "Out of memory: exceeded arena allocation limit";
+           << "out of memory: exceeded arena allocation limit";
   }
 
   Action& act = todo_.CurrentAction();

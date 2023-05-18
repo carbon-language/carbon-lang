@@ -12,5 +12,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/var/fail_empty.carbon:[[@LINE+1]]:4: Expected pattern in `var` declaration.
+// CHECK:STDERR: fail_empty.carbon:[[@LINE+1]]:4: Expected pattern in `var` declaration.
 var;
