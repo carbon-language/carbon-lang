@@ -17,5 +17,5 @@
 
 // TODO: We could figure out that this first Failed example is infix
 // with one-token lookahead.
-// CHECK:STDERR: fail_infix_uneven_space_after.carbon:[[@LINE+1]]:16: Expected `;` after expression.
+// CHECK:STDERR: fail_infix_uneven_space_after.carbon:[[@LINE+1]]:16: Expected `;` to terminate `var` declaration.
 var n: i8 = n* n;

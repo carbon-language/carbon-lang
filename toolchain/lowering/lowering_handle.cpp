@@ -77,8 +77,9 @@ auto LoweringHandleFunctionDeclaration(LoweringContext& context,
   }
 
   llvm::Type* return_type = context.GetLoweredNodeAsType(
-      callable.return_type_id.is_valid() ? callable.return_type_id
-                                         : SemanticsNodeId::BuiltinEmptyTuple);
+      callable.return_type_id.is_valid()
+          ? callable.return_type_id
+          : SemanticsNodeId::BuiltinEmptyTupleType);
   llvm::FunctionType* function_type =
       llvm::FunctionType::get(return_type, args, /*isVarArg=*/false);
   auto* function = llvm::Function::Create(

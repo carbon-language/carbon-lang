@@ -57,14 +57,12 @@ auto LoweringContext::BuildLoweredNodeAsType(SemanticsNodeId node_id)
     -> llvm::Type* {
   switch (node_id.index) {
     case SemanticsBuiltinKind::EmptyStructType.AsInt():
-    case SemanticsBuiltinKind::EmptyTuple.AsInt():
     case SemanticsBuiltinKind::EmptyTupleType.AsInt():
       // Represent empty types as empty structs.
       // TODO: Investigate special-casing handling of these so that they can be
       // collectively replaced with LLVM's void, particularly around function
       // returns. LLVM doesn't allow declaring variables with a void type, so
       // that may require significant special casing.
-      // TODO: Work to remove EmptyTuple here.
       return llvm::StructType::create(
           *llvm_context_, llvm::ArrayRef<llvm::Type*>(),
           SemanticsBuiltinKind::FromInt(node_id.index).name());

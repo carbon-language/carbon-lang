@@ -6,9 +6,9 @@
 // CHECK:STDOUT: ; ModuleID = 'no_value.carbon'
 // CHECK:STDOUT: source_filename = "no_value.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %EmptyTuple = type {}
+// CHECK:STDOUT: %EmptyTupleType = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTuple @Main() {
+// CHECK:STDOUT: define %EmptyTupleType @Main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

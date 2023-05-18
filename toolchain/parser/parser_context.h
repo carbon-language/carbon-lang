@@ -255,6 +255,8 @@ class ParserContext {
                                ParserState keyword_state, int subtree_start)
       -> void;
 
+  auto EmitExpectedDeclarationSemiOrDefinition(TokenKind expected_kind) -> void;
+
   // Handles error recovery in a declaration, particularly before any possible
   // definition has started (although one could be present). Recover to a
   // semicolon when it makes sense as a possible end, otherwise use the
@@ -301,24 +303,6 @@ class ParserContext {
 #define CARBON_PARSER_STATE(Name) \
   auto ParserHandle##Name(ParserContext& context)->void;
 #include "toolchain/parser/parser_state.def"
-
-// The diagnostics below may be emitted a couple different ways as part of
-// operator parsing.
-// TODO: Clean these up, maybe as context functions?
-
-CARBON_DIAGNOSTIC(
-    OperatorRequiresParentheses, Error,
-    "Parentheses are required to disambiguate operator precedence.");
-
-CARBON_DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
-                  "Expected `;` after expression.");
-
-CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
-                  "`{0}` introducer should be followed by a name.", TokenKind);
-CARBON_DIAGNOSTIC(ExpectedDeclarationSemiOrDefinition, Error,
-                  "`{0}` should either end with a `;` for a declaration or "
-                  "have a `{{ ... }` block for a definition.",
-                  TokenKind);
 
 }  // namespace Carbon
 
