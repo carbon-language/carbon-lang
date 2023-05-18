@@ -158,11 +158,20 @@ auto LoweringHandleStructMemberAccess(LoweringContext& context,
                                       SemanticsNodeId node_id,
                                       SemanticsNode node) -> void {
   auto [struct_id, member_index] = node.GetAsStructMemberAccess();
-  auto* struct_type = context.GetLoweredNodeAsType(
-      context.semantics_ir().GetNode(struct_id).type_id());
+  auto struct_type_id = context.semantics_ir().GetNode(struct_id).type_id();
+  auto* llvm_type = context.GetLoweredNodeAsType(struct_type_id);
+
+  // Get type information for member names.
+  auto type_refs = context.semantics_ir().GetNodeBlock(
+      context.semantics_ir().GetNode(struct_type_id).GetAsStructType());
+  auto member_name = context.semantics_ir().GetString(
+      context.semantics_ir()
+          .GetNode(type_refs[member_index.index])
+          .GetAsStructTypeField());
+
   auto* gep = context.builder().CreateStructGEP(
-      struct_type, context.GetLoweredNodeAsValue(struct_id),
-      member_index.index);
+      llvm_type, context.GetLoweredNodeAsValue(struct_id), member_index.index,
+      member_name);
   context.SetLoweredNodeAsValue(node_id, gep);
 }
 
@@ -181,13 +190,20 @@ auto LoweringHandleStructTypeField(LoweringContext& /*context*/,
 auto LoweringHandleStructValue(LoweringContext& context,
                                SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  auto* type = context.GetLoweredNodeAsType(node.type_id());
-  auto* alloca = context.builder().CreateAlloca(type);
+  auto* llvm_type = context.GetLoweredNodeAsType(node.type_id());
+  auto* alloca = context.builder().CreateAlloca(
+      llvm_type, /*ArraySize=*/nullptr, "StructLiteralValue");
   context.SetLoweredNodeAsValue(node_id, alloca);
 
   auto refs = context.semantics_ir().GetNodeBlock(node.GetAsStructValue());
+  // Get type information for member names.
+  auto type_refs = context.semantics_ir().GetNodeBlock(
+      context.semantics_ir().GetNode(node.type_id()).GetAsStructType());
   for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
-    auto* gep = context.builder().CreateStructGEP(type, alloca, i);
+    auto member_name = context.semantics_ir().GetString(
+        context.semantics_ir().GetNode(type_refs[i]).GetAsStructTypeField());
+    auto* gep =
+        context.builder().CreateStructGEP(llvm_type, alloca, i, member_name);
     context.builder().CreateStore(context.GetLoweredNodeAsValue(refs[i]), gep);
   }
 }
@@ -201,14 +217,15 @@ auto LoweringHandleStubReference(LoweringContext& context,
 
 auto LoweringHandleVarStorage(LoweringContext& context, SemanticsNodeId node_id,
                               SemanticsNode node) -> void {
-  // TODO: This doesn't handle globals. Also, LLVM requires globals to have
-  // a name. Do we want to generate a name, which would need to be
-  // consistent across translation units, or use the given name, which
+  // TODO: This should provide a name, not just `var`. Also, LLVM requires
+  // globals to have a name. Do we want to generate a name, which would need to
+  // be consistent across translation units, or use the given name, which
   // requires either looking ahead for BindName or restructuring semantics,
   // either of which affects the destructuring due to the difference in
   // storage?
   auto* alloca = context.builder().CreateAlloca(
-      context.GetLoweredNodeAsType(node.type_id()));
+      context.GetLoweredNodeAsType(node.type_id()), /*ArraySize=*/nullptr,
+      "var");
   context.SetLoweredNodeAsValue(node_id, alloca);
 }
 

@@ -6,21 +6,21 @@
 // CHECK:STDOUT: ; ModuleID = 'two_entries.carbon'
 // CHECK:STDOUT: source_filename = "two_entries.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %0 = type { i32, i32 }
-// CHECK:STDOUT: %1 = type { i32, i32 }
-// CHECK:STDOUT: %2 = type { i32, i32 }
+// CHECK:STDOUT: %StructLiteralType = type { i32, i32 }
+// CHECK:STDOUT: %StructLiteralType.0 = type { i32, i32 }
+// CHECK:STDOUT: %StructLiteralType.1 = type { i32, i32 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Run() {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %0 = alloca %0, align 8
-// CHECK:STDOUT:   %1 = alloca %1, align 8
-// CHECK:STDOUT:   %2 = getelementptr inbounds %1, ptr %1, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %2, align 4
-// CHECK:STDOUT:   %3 = getelementptr inbounds %1, ptr %1, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %3, align 4
-// CHECK:STDOUT:   store ptr %1, ptr %0, align 8
-// CHECK:STDOUT:   %4 = alloca %2, align 8
-// CHECK:STDOUT:   store ptr %0, ptr %4, align 8
+// CHECK:STDOUT:   %var = alloca %StructLiteralType, align 8
+// CHECK:STDOUT:   %StructLiteralValue = alloca %StructLiteralType.0, align 8
+// CHECK:STDOUT:   %a = getelementptr inbounds %StructLiteralType.0, ptr %StructLiteralValue, i32 0, i32 0
+// CHECK:STDOUT:   store i32 1, ptr %a, align 4
+// CHECK:STDOUT:   %b = getelementptr inbounds %StructLiteralType.0, ptr %StructLiteralValue, i32 0, i32 1
+// CHECK:STDOUT:   store i32 2, ptr %b, align 4
+// CHECK:STDOUT:   store ptr %StructLiteralValue, ptr %var, align 8
+// CHECK:STDOUT:   %var1 = alloca %StructLiteralType.1, align 8
+// CHECK:STDOUT:   store ptr %var, ptr %var1, align 8
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
 

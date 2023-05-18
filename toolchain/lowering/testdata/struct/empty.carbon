@@ -6,13 +6,13 @@
 // CHECK:STDOUT: ; ModuleID = 'empty.carbon'
 // CHECK:STDOUT: source_filename = "empty.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %0 = type {}
+// CHECK:STDOUT: %EmptyStructType = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Run() {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %0 = alloca %0, align 8
-// CHECK:STDOUT:   %1 = alloca %0, align 8
-// CHECK:STDOUT:   store ptr %0, ptr %1, align 8
+// CHECK:STDOUT:   %var = alloca %EmptyStructType, align 8
+// CHECK:STDOUT:   %var1 = alloca %EmptyStructType, align 8
+// CHECK:STDOUT:   store ptr %var, ptr %var1, align 8
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
 
