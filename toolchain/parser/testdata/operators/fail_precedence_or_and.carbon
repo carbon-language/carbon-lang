@@ -20,6 +20,6 @@
 // CHECK:STDOUT: ]
 
 fn F() {
-  // CHECK:STDERR: toolchain/parser/testdata/operators/fail_precedence_or_and.carbon:[[@LINE+1]]:10: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR: fail_precedence_or_and.carbon:[[@LINE+1]]:10: Parentheses are required to disambiguate operator precedence.
   a or b and c;
 }

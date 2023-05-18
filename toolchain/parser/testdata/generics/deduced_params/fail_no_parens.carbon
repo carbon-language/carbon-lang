@@ -33,14 +33,14 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/generics/deduced_params/fail_no_parens.carbon:[[@LINE+1]]:12: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+1]]:12: A `(` for parameters is required after deduced parameters.
 class Foo[];
 
-// CHECK:STDERR: toolchain/parser/testdata/generics/deduced_params/fail_no_parens.carbon:[[@LINE+1]]:18: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+1]]:18: A `(` for parameters is required after deduced parameters.
 class Foo[a: i32];
 
-// CHECK:STDERR: toolchain/parser/testdata/generics/deduced_params/fail_no_parens.carbon:[[@LINE+1]]:17: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+1]]:17: A `(` for parameters is required after deduced parameters.
 interface Bar[] {}
 
-// CHECK:STDERR: toolchain/parser/testdata/generics/deduced_params/fail_no_parens.carbon:[[@LINE+1]]:23: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+1]]:23: A `(` for parameters is required after deduced parameters.
 interface Bar[a: i32] {}

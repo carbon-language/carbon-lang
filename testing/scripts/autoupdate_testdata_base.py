@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Updates the CHECK: lines in lit tests based on the AUTOUPDATE line."""
+"""Updates the CHECK: lines in tests with an AUTOUPDATE line."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -33,24 +33,10 @@ AUTOUPDATE_MARKER = "// AUTOUPDATE"
 # Indicates no autoupdate is requested.
 NOAUTOUPDATE_MARKER = "// NOAUTOUPDATE"
 
-# Standard replacements normally done in lit.cfg.py.
-MERGE_OUTPUT = "./bazel-bin/bazel/testing/merge_output"
-
-
-class Tool(NamedTuple):
-    build_target: str
-    autoupdate_cmd: List[str]
-
-
-tools = {
-    "carbon": Tool(
-        "//toolchain/driver:carbon",
-        [MERGE_OUTPUT, "./bazel-bin/toolchain/driver/carbon"],
-    ),
-    "explorer": Tool(
-        "//explorer",
-        [MERGE_OUTPUT, "./bazel-bin/explorer/explorer"],
-    ),
+# Supported tools.
+TOOLS = {
+    "carbon": "//toolchain/driver:carbon",
+    "explorer": "//explorer:explorer",
 }
 
 
@@ -101,7 +87,7 @@ def parse_args() -> ParsedArgs:
     parser.add_argument(
         "--line_number_pattern",
         metavar="PATTERN",
-        default=r"(?P<prefix>/(?P<filename>\w+\.carbon):)"
+        default=r"(?P<prefix>(?P<filename>\w+\.carbon):)"
         r"(?P<line>\d+)(?P<suffix>(?:\D|$))",
         help="A regular expression which matches line numbers to update as its "
         "only group. Capture groups 'prefix', 'line', and 'suffix' are "
@@ -127,7 +113,7 @@ def parse_args() -> ParsedArgs:
         "--tool",
         metavar="TOOL",
         required=True,
-        choices=tools.keys(),
+        choices=TOOLS.keys(),
         help="The tool being tested.",
     )
     parsed_args = parser.parse_args()
@@ -227,8 +213,7 @@ class CheckLine(Line):
     def format(
         self, *, output_line_number: int, line_number_remap: Dict[int, int]
     ) -> str:
-        if not self.out_line:
-            return f"{self.indent}// CHECK-EMPTY:\n"
+        assert self.out_line
         result = self.out_line
         while True:
             match = self.line_number_pattern.search(result)
@@ -293,6 +278,20 @@ def replace_all(s: str, replacements: List[Tuple[str, str]]) -> str:
     return s
 
 
+def label_output(label: str, output: str) -> List[str]:
+    """Merges output with labels.
+
+    This mirrors label_output in lit_test/merge_output.py and should
+    be kept in sync. They're separate in order to avoid a subprocess or import
+    complexity.
+    """
+    result = []
+    if output:
+        for line in output.splitlines():
+            result.append(" ".join(filter(None, (label, line))))
+    return result
+
+
 def get_matchable_test_output(
     autoupdate_args: List[str],
     for_lit: bool,
@@ -305,31 +304,36 @@ def get_matchable_test_output(
     """Runs the autoupdate command and returns the output lines."""
     # Run the autoupdate command to generate output.
     # (`bazel run` would serialize)
-    out = subprocess.run(
-        tools[tool].autoupdate_cmd + autoupdate_args + [test],
+    autoupdate_cmd = Path.cwd().joinpath(
+        TOOLS[tool].replace("//", "./bazel-bin/").replace(":", "/")
+    )
+    p = subprocess.run(
+        [str(autoupdate_cmd)] + autoupdate_args + [Path(test).name],
         env={"LLVM_SYMBOLIZER_PATH": llvm_symbolizer},
         stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+        stderr=subprocess.PIPE,
         encoding="utf-8",
-    ).stdout
+        cwd=str(Path(test).parent),
+    )
 
-    # Escape things that mirror FileCheck special characters.
-    out = out.replace("{{", "{{[{][{]}}")
-    out = out.replace("[[", "{{[[][[]}}")
-    if for_lit:
-        # `lit` uses full paths to the test file, so use a regex to ignore paths
-        # when used.
-        out = out.replace(test, f"{{{{.*}}}}/{test}")
-        out = bazel_runfiles.sub("{{.*}}/", out)
-    else:
-        # When not using `lit`, the runfiles path is removed.
-        out = bazel_runfiles.sub("", out)
-    out_lines = out.splitlines()
+    out_lines = label_output("STDOUT:", p.stdout)
+    out_lines.extend(label_output("STDERR:", p.stderr))
 
     for i, line in enumerate(out_lines):
+        # Escape things that mirror FileCheck special characters.
+        line = line.replace("{{", "{{[{][{]}}")
+        line = line.replace("[[", "{{[[][[]}}")
+        if for_lit:
+            # `lit` uses full paths to the test file, so use a regex to ignore
+            # paths when used.
+            line = line.replace(test, f"{{{{.*}}}}/{test}")
+        line = bazel_runfiles.sub("{{.*}}/", line)
+
         for line_matcher, before, after in extra_check_replacements:
             if line_matcher.match(line):
-                out_lines[i] = before.sub(after, line)
+                line = before.sub(after, line)
+
+        out_lines[i] = line
 
     return out_lines
 
@@ -508,8 +512,7 @@ def main() -> None:
             "build",
             "-c",
             parsed_args.build_mode,
-            "//bazel/testing:merge_output",
-            tools[parsed_args.tool].build_target,
+            TOOLS[parsed_args.tool],
         ]
     )
     bazel_bin_dir = subprocess.check_output(

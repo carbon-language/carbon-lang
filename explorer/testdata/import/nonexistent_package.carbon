@@ -5,8 +5,6 @@
 // TODO: This SHOULD fail but doesn't presently.
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;

@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: ; ModuleID = 'toolchain/lowering/testdata/struct/one_entry.carbon'
-// CHECK:STDOUT: source_filename = "toolchain/lowering/testdata/struct/one_entry.carbon"
+// CHECK:STDOUT: ; ModuleID = 'one_entry.carbon'
+// CHECK:STDOUT: source_filename = "one_entry.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: %StructLiteralType = type { i32 }
 // CHECK:STDOUT: %StructLiteralType.0 = type { i32 }

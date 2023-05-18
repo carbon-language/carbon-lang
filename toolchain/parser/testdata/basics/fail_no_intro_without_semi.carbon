@@ -8,5 +8,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/basics/fail_no_intro_without_semi.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
+// CHECK:STDERR: fail_no_intro_without_semi.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
 foo bar baz

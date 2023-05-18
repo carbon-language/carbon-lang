@@ -23,8 +23,8 @@
 // CHECK:STDOUT: ]
 
 fn F() {
-  // CHECK:STDERR: toolchain/parser/testdata/operators/missing_precedence_not.carbon:[[@LINE+3]]:3: Whitespace is required before this unary operator.
-  // CHECK:STDERR: toolchain/parser/testdata/operators/missing_precedence_not.carbon:[[@LINE+2]]:13: Whitespace is required before this unary operator.
-  // CHECK:STDERR: toolchain/parser/testdata/operators/missing_precedence_not.carbon:[[@LINE+1]]:23: Whitespace is required before this unary operator.
+  // CHECK:STDERR: missing_precedence_not.carbon:[[@LINE+3]]:3: Whitespace is required before this unary operator.
+  // CHECK:STDERR: missing_precedence_not.carbon:[[@LINE+2]]:13: Whitespace is required before this unary operator.
+  // CHECK:STDERR: missing_precedence_not.carbon:[[@LINE+1]]:23: Whitespace is required before this unary operator.
   not a and not b and not c;
 }

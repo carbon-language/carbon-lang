@@ -37,11 +37,11 @@ cc_test(
     srcs = ["ast_to_proto_test.cpp"],
     args = [
         "$(locations //explorer:standard_libraries)",
-        "$(locations //explorer/testdata:carbon_files)",
+        "$(locations //explorer:carbon_files)",
     ],
     data = [
+        "//explorer:carbon_files",
         "//explorer:standard_libraries",
-        "//explorer/testdata:carbon_files",
     ],
     deps = [
         ":ast_to_proto_lib",

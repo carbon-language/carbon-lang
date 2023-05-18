@@ -4,27 +4,49 @@
 
 #include "testing/file_test/file_test_base.h"
 
+#include <filesystem>
 #include <fstream>
 
 #include "common/check.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/InitLLVM.h"
 
-static std::string* subset_target = nullptr;
-
 namespace Carbon::Testing {
+
+// The length of the base directory.
+static int base_dir_len = 0;
+// The name of the `.subset` target.
+static std::string* subset_target = nullptr;
+// The original working directory for restoration after each test.
+static std::filesystem::path* orig_working_dir = nullptr;
 
 using ::testing::Eq;
 
+FileTestBase::FileTestBase(const std::filesystem::path& path) : path_(&path) {
+  // Run from the file's parent directory.
+  std::error_code ec;
+  std::filesystem::current_path(path.parent_path(), ec);
+  CARBON_CHECK(!ec) << ec.message();
+}
+
+FileTestBase::~FileTestBase() {
+  // Restore the original working directory.
+  std::error_code ec;
+  std::filesystem::current_path(*orig_working_dir, ec);
+  CARBON_CHECK(!ec) << ec.message();
+}
+
 void FileTestBase::RegisterTests(
-    const char* fixture_label, const std::vector<llvm::StringRef>& paths,
-    std::function<FileTestBase*(llvm::StringRef)> factory) {
+    const char* fixture_label, const std::vector<std::filesystem::path>& paths,
+    std::function<FileTestBase*(const std::filesystem::path&)> factory) {
   // Use RegisterTest instead of INSTANTIATE_TEST_CASE_P because of ordering
   // issues between container initialization and test instantiation by
   // InitGoogleTest.
-  for (auto path : paths) {
-    testing::RegisterTest(fixture_label, path.data(), nullptr, path.data(),
-                          __FILE__, __LINE__, [=]() { return factory(path); });
+  for (const auto& path : paths) {
+    std::string test_name = path.string().substr(base_dir_len);
+    testing::RegisterTest(fixture_label, test_name.c_str(), nullptr,
+                          test_name.c_str(), __FILE__, __LINE__,
+                          [=]() { return factory(path); });
   }
 }
 
@@ -48,7 +70,7 @@ auto FileTestBase::TestBody() -> void {
   // Load expected output.
   std::vector<testing::Matcher<std::string>> expected_stdout;
   std::vector<testing::Matcher<std::string>> expected_stderr;
-  std::ifstream file_content(path_.str());
+  std::ifstream file_content(path());
   int line_index = 0;
   std::string line_str;
   while (std::getline(file_content, line_str)) {
@@ -84,7 +106,8 @@ auto FileTestBase::TestBody() -> void {
   if (HasFailure()) {
     return;
   }
-  EXPECT_THAT(!filename().starts_with("fail_"), Eq(run_succeeded))
+  EXPECT_THAT(!llvm::StringRef(path().filename()).starts_with("fail_"),
+              Eq(run_succeeded))
       << "Tests should be prefixed with `fail_` if and only if running them "
          "is expected to fail.";
 
@@ -175,30 +198,7 @@ auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
   return testing::MatchesRegex(str);
 }
 
-auto FileTestBase::filename() -> llvm::StringRef {
-  auto last_slash = path_.rfind("/");
-  if (last_slash == llvm::StringRef::npos) {
-    return path_;
-  } else {
-    return path_.substr(last_slash + 1);
-  }
-}
-
 }  // namespace Carbon::Testing
-
-// Returns the name of the subset target.
-static auto GetSubsetTarget() -> std::string {
-  char* name = getenv("TEST_TARGET");
-  if (name == nullptr) {
-    return "<missing TEST_TARGET>";
-  }
-
-  if (llvm::StringRef(name).ends_with(".subset")) {
-    return name;
-  } else {
-    return std::string(name) + ".subset";
-  }
-}
 
 auto main(int argc, char** argv) -> int {
   testing::InitGoogleTest(&argc, argv);
@@ -213,10 +213,42 @@ auto main(int argc, char** argv) -> int {
     return EXIT_FAILURE;
   }
 
-  std::string subset_target_storage = GetSubsetTarget();
-  ::subset_target = &subset_target_storage;
+  const char* target = getenv("TEST_TARGET");
+  CARBON_CHECK(target != nullptr);
 
-  std::vector<llvm::StringRef> paths(argv + 1, argv + argc);
+  // Configure the name of the subset target.
+  std::string subset_target_storage = target;
+  static constexpr char SubsetSuffix[] = ".subset";
+  if (!llvm::StringRef(subset_target_storage).ends_with(SubsetSuffix)) {
+    subset_target_storage += SubsetSuffix;
+  }
+  Carbon::Testing::subset_target = &subset_target_storage;
+
+  // Save the working directory for later restoration.
+  std::error_code ec;
+  std::filesystem::path orig_working_dir_storage =
+      std::filesystem::current_path(ec);
+  CARBON_CHECK(!ec) << ec.message();
+  Carbon::Testing::orig_working_dir = &orig_working_dir_storage;
+
+  // Configure the base directory for test names.
+  llvm::StringRef target_dir = target;
+  // Leaves one slash.
+  CARBON_CHECK(target_dir.consume_front("/"));
+  target_dir = target_dir.substr(0, target_dir.rfind(":"));
+  std::string base_dir =
+      orig_working_dir_storage.string() + target_dir.str() + "/";
+  Carbon::Testing::base_dir_len = base_dir.size();
+
+  // Register tests based on their absolute path.
+  std::vector<std::filesystem::path> paths;
+  for (int i = 1; i < argc; ++i) {
+    auto path = std::filesystem::absolute(argv[i], ec);
+    CARBON_CHECK(!ec) << argv[i] << ": " << ec.message();
+    CARBON_CHECK(llvm::StringRef(path.string()).starts_with(base_dir))
+        << "\n  " << path << "\n  should start with\n  " << base_dir;
+    paths.push_back(path);
+  }
   Carbon::Testing::RegisterFileTests(paths);
 
   return RUN_ALL_TESTS();

@@ -33,8 +33,8 @@ def glob_lit_tests(driver, data, test_file_exts, exclude = None, **kwargs):
         test = "%s.test" % f
         native.py_test(
             name = test,
-            srcs = ["//bazel/testing:lit_test.py"],
-            main = "//bazel/testing:lit_test.py",
+            srcs = ["//testing/lit_test:lit_test.py"],
+            main = "//testing/lit_test:lit_test.py",
             data = data + [driver, f],
             args = ["--package_name=%s" % native.package_name(), "--"],
             size = "small",

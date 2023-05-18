@@ -2,9 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// NOAUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// CHECK:STDERR: COMPILATION ERROR: overflow:1: Possible infinite loop: too many interpreter steps executed
+// AUTOUPDATE
+// CHECK:STDERR: COMPILATION ERROR: overflow:1: possible infinite loop: too many interpreter steps executed
 
 package ExplorerTest impl;
 
