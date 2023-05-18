@@ -9,7 +9,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/array/fail_to_deduce_size_from_int.carbon:[[@LINE+1]]: type pattern '[i32; None]' does not match actual type 'i32'
+  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/array/fail_to_deduce_size_from_int.carbon:[[@LINE+1]]: type pattern '[i32;]' does not match actual type 'i32'
   var x: [i32;] = 42;
   return x[0];
 }

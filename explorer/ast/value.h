@@ -1594,8 +1594,11 @@ class StaticArrayType : public Value {
   }
 
   auto element_type() const -> const Value& { return *element_type_; }
-  auto size() const noexcept -> std::optional<size_t> { return size_; }
-  auto has_size() const noexcept -> bool { return size_.has_value(); }
+  auto size() const -> size_t {
+    CARBON_CHECK(has_size());
+    return *size_;
+  }
+  auto has_size() const -> bool { return size_.has_value(); }
 
  private:
   Nonnull<const Value*> element_type_;

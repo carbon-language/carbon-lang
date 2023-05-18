@@ -1217,17 +1217,12 @@ class ArrayTypeLiteral : public ConstantValueLiteral {
  public:
   // Constructs an array type literal which uses the given expressions to
   // represent the element type and size.
-  explicit ArrayTypeLiteral(SourceLocation source_loc,
-                            Nonnull<Expression*> element_type_expression,
-                            Nonnull<Expression*> size_expression)
+  explicit ArrayTypeLiteral(
+      SourceLocation source_loc, Nonnull<Expression*> element_type_expression,
+      std::optional<Nonnull<Expression*>> size_expression = std::nullopt)
       : ConstantValueLiteral(AstNodeKind::ArrayTypeLiteral, source_loc),
         element_type_expression_(element_type_expression),
         size_expression_(size_expression) {}
-
-  explicit ArrayTypeLiteral(SourceLocation source_loc,
-                            Nonnull<Expression*> element_type_expression)
-      : ConstantValueLiteral(AstNodeKind::ArrayTypeLiteral, source_loc),
-        element_type_expression_(element_type_expression) {}
 
   explicit ArrayTypeLiteral(CloneContext& context,
                             const ArrayTypeLiteral& other)
@@ -1246,7 +1241,7 @@ class ArrayTypeLiteral : public ConstantValueLiteral {
     return *element_type_expression_;
   }
 
-  auto has_size_expression() const noexcept -> bool {
+  auto has_size_expression() const -> bool {
     return size_expression_.has_value();
   }
 

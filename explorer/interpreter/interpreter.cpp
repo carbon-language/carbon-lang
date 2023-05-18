@@ -854,7 +854,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         case Value::Kind::StaticArrayType: {
           const auto& array_type = cast<StaticArrayType>(*destination_type);
           CARBON_CHECK(array_type.has_size());
-          destination_element_types.resize(array_type.size().value(),
+          destination_element_types.resize(array_type.size(),
                                            &array_type.element_type());
           break;
         }
@@ -2139,7 +2139,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           const auto& array = cast<StaticArrayType>(dest_type);
           CARBON_CHECK(array->has_size());
           const auto& element_type = array->element_type();
-          const auto size = array->size().value();
+          const auto size = array->size();
 
           std::vector<Nonnull<const Value*>> elements;
           elements.reserve(size);
@@ -2308,7 +2308,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
         const auto& array = cast<StaticArrayType>(var_type);
         CARBON_CHECK(array->has_size());
         const auto& element_type = array->element_type();
-        const auto size = array->size().value();
+        const auto size = array->size();
 
         std::vector<Nonnull<const Value*>> elements;
         elements.reserve(size);
