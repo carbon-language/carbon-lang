@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/basic_syntax/fail_assign_to_rval.carbon:[[@LINE+1]]: Only a reference expression can be assigned to, but got `1`
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/basic_syntax/fail_assign_to_rval.carbon:[[@LINE+1]]: Only a reference expression can be assigned to, but got `1`
   1 = 0;
   return 0;
 }

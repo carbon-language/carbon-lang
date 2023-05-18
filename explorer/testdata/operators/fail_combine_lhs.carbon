@@ -3,12 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/operators/fail_combine_lhs.carbon:[[@LINE+1]]: expected a constraint in first operand of `&`, found i32
+// CHECK:STDERR: COMPILATION ERROR: explorer/testdata/operators/fail_combine_lhs.carbon:[[@LINE+1]]: expected a constraint in first operand of `&`, found i32
 fn F[T:! i32 & type]();
 
 fn Main() -> i32 {

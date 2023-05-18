@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/pointer/fail_intrinsic_delete_no_args.carbon:[[@LINE+1]]: __intrinsic_delete takes 1 argument
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/pointer/fail_intrinsic_delete_no_args.carbon:[[@LINE+1]]: __intrinsic_delete takes 1 argument
   __intrinsic_delete();
   return 0;
 }

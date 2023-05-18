@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -19,7 +17,7 @@ interface A {
 }
 
 external impl i32 as A {
-  // CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_in_impl.carbon:[[@LINE+1]]: syntax error, unexpected MIX
+  // CHECK:STDERR: SYNTAX ERROR: explorer/testdata/mixin/fail_mix_in_impl.carbon:[[@LINE+1]]: syntax error, unexpected MIX
   __mix Operations;
   fn F() {}
 }

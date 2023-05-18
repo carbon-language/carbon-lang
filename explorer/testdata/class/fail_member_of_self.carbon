@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 class C {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_member_of_self.carbon:[[@LINE+1]]: incomplete type `class C` used in type of variable
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/class/fail_member_of_self.carbon:[[@LINE+1]]: incomplete type `class C` used in type of variable
   var m: Self;
 }
 

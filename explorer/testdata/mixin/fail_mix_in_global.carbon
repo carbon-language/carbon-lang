@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -14,7 +12,7 @@ __mixin Operations {
   }
 }
 
-// CHECK:STDERR: SYNTAX ERROR: {{.*}}/explorer/testdata/mixin/fail_mix_in_global.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting END_OF_FILE
+// CHECK:STDERR: SYNTAX ERROR: explorer/testdata/mixin/fail_mix_in_global.carbon:[[@LINE+1]]: syntax error, unexpected MIX, expecting END_OF_FILE
 __mix Operations;
 
 class Point {

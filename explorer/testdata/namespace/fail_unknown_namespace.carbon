@@ -3,12 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/namespace/fail_unknown_namespace.carbon:[[@LINE+1]]: name 'N' has not been declared in this scope
+// CHECK:STDERR: COMPILATION ERROR: explorer/testdata/namespace/fail_unknown_namespace.carbon:[[@LINE+1]]: name 'N' has not been declared in this scope
 fn N.F() {}
 
 fn Main() -> i32 {

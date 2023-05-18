@@ -3,13 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/print/fail_no_args.carbon:[[@LINE+1]]: Print takes 1 or 2 arguments, received 0
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/print/fail_no_args.carbon:[[@LINE+1]]: Print takes 1 or 2 arguments, received 0
   Print();
   return 0;
 }

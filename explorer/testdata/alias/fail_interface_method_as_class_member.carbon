@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -35,7 +33,7 @@ impl forall [U:! Printable] Vector(U) as Printable {
 
 fn Main() -> i32 {
   var v: Vector(String) = {.x = "test"};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/alias/fail_interface_method_as_class_member.carbon:[[@LINE+1]]: Member access to aliases is not yet supported.
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/alias/fail_interface_method_as_class_member.carbon:[[@LINE+1]]: Member access to aliases is not yet supported.
   v.PrintIt();
   return 42;
 }

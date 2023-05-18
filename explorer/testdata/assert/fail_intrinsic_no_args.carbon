@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -16,7 +14,7 @@ class ConvertTo(T:! type) {
 }
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assert/fail_intrinsic_no_args.carbon:[[@LINE+1]]: __intrinsic_assert takes 2 arguments
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/assert/fail_intrinsic_no_args.carbon:[[@LINE+1]]: __intrinsic_assert takes 2 arguments
   __intrinsic_assert();
   return 0;
 }

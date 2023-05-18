@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 // CHECK:STDERR: RUNTIME ERROR: <Main()>:0: attempt to call function `Main` that has not been defined
 
 package ExplorerTest api;

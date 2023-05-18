@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package Foo api;
 interface A { fn F() -> i32; }
@@ -15,6 +13,6 @@ class X {
 }
 fn Main() -> i32 {
   var a: X = {};
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/member_access/fail_vacuous_access.carbon:[[@LINE+1]]: expected name of instance member or interface member in compound member access, found fn () -> i32
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/member_access/fail_vacuous_access.carbon:[[@LINE+1]]: expected name of instance member or interface member in compound member access, found fn () -> i32
   return a.(X.(A.F))();
 }

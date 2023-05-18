@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -12,6 +10,6 @@ interface Foo {}
 alias A = Foo;
 
 fn Main() -> i32 {
-    // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/alias/fail_wrong_interface_alias_use.carbon:[[@LINE+1]]: member access, bar not in interface Foo
+    // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/alias/fail_wrong_interface_alias_use.carbon:[[@LINE+1]]: member access, bar not in interface Foo
     return A.bar;
 }

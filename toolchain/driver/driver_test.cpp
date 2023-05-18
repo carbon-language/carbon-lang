@@ -7,6 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "common/test_raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/SourceMgr.h"
@@ -20,40 +21,9 @@ using ::testing::ElementsAre;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
 
-/// A raw_ostream that makes it easy to repeatedly check streamed output.
-class RawTestOstream : public llvm::raw_ostream {
- public:
-  ~RawTestOstream() override {
-    flush();
-    if (!buffer_.empty()) {
-      ADD_FAILURE() << "Unchecked output:\n" << buffer_;
-    }
-  }
-
-  /// Flushes the stream and returns the contents so far, clearing the stream
-  /// back to empty.
-  auto TakeStr() -> std::string {
-    flush();
-    std::string result = std::move(buffer_);
-    buffer_.clear();
-    return result;
-  }
-
- private:
-  void write_impl(const char* ptr, size_t size) override {
-    buffer_.append(ptr, ptr + size);
-  }
-
-  [[nodiscard]] auto current_pos() const -> uint64_t override {
-    return buffer_.size();
-  }
-
-  std::string buffer_;
-};
-
 TEST(DriverTest, FullCommandErrors) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
+  TestRawOstream test_output_stream;
+  TestRawOstream test_error_stream;
   Driver driver = Driver(test_output_stream, test_error_stream);
 
   EXPECT_FALSE(driver.RunFullCommand({}));
@@ -67,8 +37,8 @@ TEST(DriverTest, FullCommandErrors) {
 }
 
 TEST(DriverTest, Help) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
+  TestRawOstream test_output_stream;
+  TestRawOstream test_error_stream;
   Driver driver = Driver(test_output_stream, test_error_stream);
 
   EXPECT_TRUE(driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {}));
@@ -87,8 +57,8 @@ TEST(DriverTest, Help) {
 }
 
 TEST(DriverTest, HelpErrors) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
+  TestRawOstream test_output_stream;
+  TestRawOstream test_error_stream;
   Driver driver = Driver(test_output_stream, test_error_stream);
 
   EXPECT_FALSE(driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"foo"}));
@@ -122,8 +92,8 @@ auto CreateTestFile(llvm::StringRef text) -> std::string {
 }
 
 TEST(DriverTest, DumpTokens) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
+  TestRawOstream test_output_stream;
+  TestRawOstream test_error_stream;
   Driver driver = Driver(test_output_stream, test_error_stream);
 
   auto test_file_path = CreateTestFile("Hello World");
@@ -164,8 +134,8 @@ TEST(DriverTest, DumpTokens) {
 }
 
 TEST(DriverTest, DumpErrors) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
+  TestRawOstream test_output_stream;
+  TestRawOstream test_error_stream;
   Driver driver = Driver(test_output_stream, test_error_stream);
 
   EXPECT_FALSE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"foo"}));
@@ -189,8 +159,8 @@ TEST(DriverTest, DumpErrors) {
 }
 
 TEST(DriverTest, DumpParseTree) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
+  TestRawOstream test_output_stream;
+  TestRawOstream test_error_stream;
   Driver driver = Driver(test_output_stream, test_error_stream);
 
   auto test_file_path = CreateTestFile("var v: Int = 42;");

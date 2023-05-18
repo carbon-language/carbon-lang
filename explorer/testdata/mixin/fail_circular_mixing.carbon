@@ -3,15 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 package ExplorerTest api;
 
 __mixin M1 {
   fn F1[self: Self](x: Self) -> Self{
      return x;
   }
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/mixin/fail_circular_mixing.carbon:[[@LINE+1]]: 'M3' has not been declared yet
+  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/mixin/fail_circular_mixing.carbon:[[@LINE+1]]: 'M3' has not been declared yet
   __mix M3;
 }
 
