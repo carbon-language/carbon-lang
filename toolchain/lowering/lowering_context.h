@@ -18,7 +18,8 @@ class LoweringContext {
  public:
   explicit LoweringContext(llvm::LLVMContext& llvm_context,
                            llvm::StringRef module_name,
-                           const SemanticsIR& semantics_ir);
+                           const SemanticsIR& semantics_ir,
+                           llvm::raw_ostream* vlog_stream);
 
   // Lowers the SemanticsIR to LLVM IR. Should only be called once, and handles
   // the main execution loop.
@@ -68,6 +69,9 @@ class LoweringContext {
 
   // The input Semantics IR.
   const SemanticsIR* const semantics_ir_;
+
+  // The optional vlog stream.
+  llvm::raw_ostream* vlog_stream_;
 
   // Blocks which we've observed and need to lower.
   llvm::SmallVector<std::pair<llvm::BasicBlock*, SemanticsNodeBlockId>>

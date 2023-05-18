@@ -4,6 +4,7 @@
 
 #include "toolchain/lowering/lowering_context.h"
 
+#include "common/vlog.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node_kind.h"
 
@@ -11,11 +12,13 @@ namespace Carbon {
 
 LoweringContext::LoweringContext(llvm::LLVMContext& llvm_context,
                                  llvm::StringRef module_name,
-                                 const SemanticsIR& semantics_ir)
+                                 const SemanticsIR& semantics_ir,
+                                 llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
       builder_(llvm_context),
       semantics_ir_(&semantics_ir),
+      vlog_stream_(vlog_stream),
       lowered_nodes_(semantics_ir_->nodes_size(), nullptr) {
   CARBON_CHECK(!semantics_ir.has_errors())
       << "Generating LLVM IR from invalid SemanticsIR is unsupported.";
@@ -36,8 +39,10 @@ auto LoweringContext::Run() -> std::unique_ptr<llvm::Module> {
 }
 
 auto LoweringContext::LowerBlock(SemanticsNodeBlockId block_id) -> void {
+  CARBON_VLOG() << "Lowering block " << block_id << "\n";
   for (const auto& node_id : semantics_ir_->GetNodeBlock(block_id)) {
     auto node = semantics_ir_->GetNode(node_id);
+    CARBON_VLOG() << "Lowering node" << node_id << ": " << node << "\n";
     switch (node.kind()) {
 #define CARBON_SEMANTICS_NODE_KIND(Name)        \
   case SemanticsNodeKind::Name:                 \
