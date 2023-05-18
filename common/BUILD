@@ -147,6 +147,26 @@ cc_test(
 )
 
 cc_library(
+    name = "test_raw_ostream",
+    testonly = 1,
+    hdrs = ["test_raw_ostream.h"],
+    deps = [
+        ":ostream",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_test(
+    name = "test_raw_ostream_test",
+    srcs = ["test_raw_ostream_test.cpp"],
+    deps = [
+        ":test_raw_ostream",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "vlog",
     srcs = ["vlog_internal.h"],
     hdrs = ["vlog.h"],
