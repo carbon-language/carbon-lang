@@ -79,8 +79,7 @@ auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
 
   switch (base_type.kind()) {
     case SemanticsNodeKind::StructType: {
-      auto refs =
-          context.semantics().GetNodeBlock(base_type.GetAsStructType().second);
+      auto refs = context.semantics().GetNodeBlock(base_type.GetAsStructType());
       // TODO: Do we need to optimize this with a lookup table for O(1)?
       for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
         auto ref = context.semantics().GetNode(refs[i]);
@@ -307,14 +306,20 @@ auto SemanticsHandleNamedConstraintIntroducer(SemanticsContext& context,
 
 auto SemanticsHandleParameterList(SemanticsContext& context,
                                   ParseTree::Node parse_node) -> bool {
-  auto [ir_id, refs_id] = context.ParamOrArgEnd(
+  auto refs_id = context.ParamOrArgEnd(
       /*for_args=*/false, ParseNodeKind::ParameterListStart);
+  // TODO: This contains the IR block for parameters. At present, it's just
+  // loose, but it's not strictly required for parameter refs; we should either
+  // stop constructing it completely or, if it turns out to be needed, store it.
+  // Note, the underlying issue is that the LLVM IR has nowhere clear to emit,
+  // so changing storage would require addressing that problem. For comparison
+  // with function calls, the IR needs to be emitted prior to the call.
+  context.node_block_stack().Pop();
 
   context.PopScope();
   context.node_stack().PopAndDiscardSoloParseNode(
       ParseNodeKind::ParameterListStart);
-  context.finished_params_stack().push_back({ir_id, refs_id});
-  context.node_stack().Push(parse_node);
+  context.node_stack().Push(parse_node, refs_id);
   return true;
 }
 
@@ -328,6 +333,7 @@ auto SemanticsHandleParameterListStart(SemanticsContext& context,
                                        ParseTree::Node parse_node) -> bool {
   context.PushScope();
   context.node_stack().Push(parse_node);
+  context.node_block_stack().Push();
   context.ParamOrArgStart();
   return true;
 }

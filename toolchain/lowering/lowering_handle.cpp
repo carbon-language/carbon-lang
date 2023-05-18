@@ -113,16 +113,27 @@ auto LoweringHandleFunctionDefinition(LoweringContext& context,
 auto LoweringHandleIntegerLiteral(LoweringContext& context,
                                   SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  SemanticsIntegerLiteralId int_id = node.GetAsIntegerLiteral();
-  llvm::APInt i = context.semantics_ir().GetIntegerLiteral(int_id);
-  llvm::Value* v = context.builder().getInt32(i.getLimitedValue());
+  llvm::APInt i =
+      context.semantics_ir().GetIntegerLiteral(node.GetAsIntegerLiteral());
+  // TODO: This won't offer correct semantics, but seems close enough for now.
+  llvm::Value* v =
+      llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getSExtValue());
   context.SetLoweredNodeAsValue(node_id, v);
 }
 
-auto LoweringHandleRealLiteral(LoweringContext& /*context*/,
-                               SemanticsNodeId /*node_id*/, SemanticsNode node)
+auto LoweringHandleRealLiteral(LoweringContext& context,
+                               SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  SemanticsRealLiteral real =
+      context.semantics_ir().GetRealLiteral(node.GetAsRealLiteral());
+  // TODO: This will probably have overflow issues, and should be fixed.
+  double val =
+      real.mantissa.getSExtValue() *
+      std::pow((real.is_decimal ? 10 : 2), real.exponent.getSExtValue());
+  llvm::APFloat llvm_val(val);
+  context.SetLoweredNodeAsValue(
+      node_id,
+      llvm::ConstantFP::get(context.builder().getDoubleTy(), llvm_val));
 }
 
 auto LoweringHandleReturn(LoweringContext& context, SemanticsNodeId /*node_id*/,
@@ -163,8 +174,8 @@ auto LoweringHandleStructType(LoweringContext& /*context*/,
 
 auto LoweringHandleStructTypeField(LoweringContext& /*context*/,
                                    SemanticsNodeId /*node_id*/,
-                                   SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+                                   SemanticsNode /*node*/) -> void {
+  // No action to take.
 }
 
 auto LoweringHandleStructValue(LoweringContext& context,
@@ -174,30 +185,28 @@ auto LoweringHandleStructValue(LoweringContext& context,
   auto* alloca = context.builder().CreateAlloca(type);
   context.SetLoweredNodeAsValue(node_id, alloca);
 
-  // TODO: Figure out changes to flow so that values are calculated for store.
-  // Right now, the struct value IR is unevaluated.
-  // auto refs =
-  //     context.semantics_ir().GetNodeBlock(node.GetAsStructValue().second);
-  // for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
-  //   auto* gep = context.builder().CreateStructGEP(type, alloca, i);
-  //   context.builder().CreateStore(context.GetLoweredNodeAsValue(refs[i]),
-  //                                 gep);
-  // }
+  auto refs = context.semantics_ir().GetNodeBlock(node.GetAsStructValue());
+  for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
+    auto* gep = context.builder().CreateStructGEP(type, alloca, i);
+    context.builder().CreateStore(context.GetLoweredNodeAsValue(refs[i]), gep);
+  }
 }
 
-auto LoweringHandleStubReference(LoweringContext& /*context*/,
-                                 SemanticsNodeId /*node_id*/,
-                                 SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+auto LoweringHandleStubReference(LoweringContext& context,
+                                 SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  context.SetLoweredNodeAsValue(
+      node_id, context.GetLoweredNodeAsValue(node.GetAsStubReference()));
 }
 
 auto LoweringHandleVarStorage(LoweringContext& context, SemanticsNodeId node_id,
                               SemanticsNode node) -> void {
-  // TODO: This doesn't handle globals. Also, LLVM requires globals to have a
-  // name. Do we want to generate a name, which would need to be consistent
-  // across translation units, or use the given name, which requires either
-  // looking ahead for BindName or restructuring semantics, either of which
-  // affects the destructuring due to the difference in storage?
+  // TODO: This doesn't handle globals. Also, LLVM requires globals to have
+  // a name. Do we want to generate a name, which would need to be
+  // consistent across translation units, or use the given name, which
+  // requires either looking ahead for BindName or restructuring semantics,
+  // either of which affects the destructuring due to the difference in
+  // storage?
   auto* alloca = context.builder().CreateAlloca(
       context.GetLoweredNodeAsType(node.type_id()));
   context.SetLoweredNodeAsValue(node_id, alloca);

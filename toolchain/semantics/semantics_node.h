@@ -50,15 +50,6 @@ constexpr SemanticsNodeId SemanticsNodeId::Invalid =
       SemanticsNodeId(SemanticsBuiltinKind::Name.AsInt());
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
-// The ID of a call.
-struct SemanticsCallId : public IndexBase {
-  using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "call";
-    IndexBase::Print(out);
-  }
-};
-
 // The ID of a callable, such as a function.
 struct SemanticsCallableId : public IndexBase {
   using IndexBase::IndexBase;
@@ -256,8 +247,9 @@ class SemanticsNode {
     }
   };
 
-  using Call = Factory<SemanticsNodeKind::Call, SemanticsCallId /*call_id*/,
-                       SemanticsCallableId /*callable_id*/>;
+  using Call =
+      Factory<SemanticsNodeKind::Call, SemanticsNodeBlockId /*refs_id*/,
+              SemanticsCallableId /*callable_id*/>;
 
   using CodeBlock = FactoryPreTyped<SemanticsNodeKind::CodeBlock,
                                     SemanticsNodeId::InvalidIndex,
@@ -312,16 +304,15 @@ class SemanticsNode {
                                      SemanticsNodeId /*struct_id*/,
                                      SemanticsMemberIndex /*ref_index*/>;
 
-  using StructType = FactoryPreTyped<
-      SemanticsNodeKind::StructType, SemanticsBuiltinKind::TypeType.AsInt(),
-      SemanticsNodeBlockId /*ir_id*/, SemanticsNodeBlockId /*refs_id*/>;
+  using StructType = FactoryPreTyped<SemanticsNodeKind::StructType,
+                                     SemanticsBuiltinKind::TypeType.AsInt(),
+                                     SemanticsNodeBlockId /*refs_id*/>;
 
   using StructTypeField = Factory<SemanticsNodeKind::StructTypeField,
                                   SemanticsStringId /*name_id*/>;
 
   using StructValue =
-      Factory<SemanticsNodeKind::StructValue, SemanticsNodeBlockId /*ir_id*/,
-              SemanticsNodeBlockId /*refs_id*/>;
+      Factory<SemanticsNodeKind::StructValue, SemanticsNodeBlockId /*refs_id*/>;
 
   using StubReference =
       Factory<SemanticsNodeKind::StubReference, SemanticsNodeId /*node_id*/>;

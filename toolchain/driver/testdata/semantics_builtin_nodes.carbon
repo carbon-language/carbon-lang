@@ -5,8 +5,6 @@
 // RUN: %{carbon} dump semantics-ir --include_builtins %s | \
 // RUN:   %{FileCheck-strict}
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: calls: [
-// CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [

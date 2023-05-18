@@ -40,9 +40,8 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
     return_type_id =
         context.node_stack().PopForNodeId(ParseNodeKind::ReturnType);
   }
-  context.node_stack().PopForSoloParseNode(ParseNodeKind::ParameterList);
-  auto [param_ir_id, param_refs_id] =
-      context.finished_params_stack().pop_back_val();
+  auto param_refs_id =
+      context.node_stack().PopForNodeBlockId(ParseNodeKind::ParameterList);
   auto name_node =
       context.node_stack().PopForSoloParseNode(ParseNodeKind::DeclaredName);
   auto fn_node = context.node_stack().PopForSoloParseNode(
@@ -51,10 +50,8 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
   auto name_str = context.parse_tree().GetNodeText(name_node);
   auto name_id = context.semantics().AddString(name_str);
 
-  auto callable_id =
-      context.semantics().AddCallable({.param_ir_id = param_ir_id,
-                                       .param_refs_id = param_refs_id,
-                                       .return_type_id = return_type_id});
+  auto callable_id = context.semantics().AddCallable(
+      {.param_refs_id = param_refs_id, .return_type_id = return_type_id});
   auto decl_id = context.AddNode(
       SemanticsNode::FunctionDeclaration::Make(fn_node, name_id, callable_id));
   context.AddNameToLookup(name_node, name_id, decl_id);

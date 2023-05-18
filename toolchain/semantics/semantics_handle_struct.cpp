@@ -67,7 +67,7 @@ auto SemanticsHandleStructFieldValue(SemanticsContext& context,
 
 auto SemanticsHandleStructLiteral(SemanticsContext& context,
                                   ParseTree::Node parse_node) -> bool {
-  auto [ir_id, refs_id] = context.ParamOrArgEnd(
+  auto refs_id = context.ParamOrArgEnd(
       /*for_args=*/true, ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();
@@ -81,14 +81,13 @@ auto SemanticsHandleStructLiteral(SemanticsContext& context,
     return true;
   }
 
-  // Construct a type for the literal. Each field is one node, so ir_id and
-  // refs_id match.
+  // Construct a type for the literal.
   auto refs = context.semantics().GetNodeBlock(refs_id);
-  auto type_id = context.AddNode(SemanticsNode::StructType::Make(
-      parse_node, type_block_id, type_block_id));
+  auto type_id = context.AddNode(
+      SemanticsNode::StructType::Make(parse_node, type_block_id));
 
   auto value_id = context.AddNode(
-      SemanticsNode::StructValue::Make(parse_node, type_id, ir_id, refs_id));
+      SemanticsNode::StructValue::Make(parse_node, type_id, refs_id));
   context.node_stack().Push(parse_node, value_id);
   return true;
 }
@@ -107,7 +106,7 @@ auto SemanticsHandleStructLiteralOrStructTypeLiteralStart(
 
 auto SemanticsHandleStructTypeLiteral(SemanticsContext& context,
                                       ParseTree::Node parse_node) -> bool {
-  auto [ir_id, refs_id] = context.ParamOrArgEnd(
+  auto refs_id = context.ParamOrArgEnd(
       /*for_args=*/false, ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();
@@ -119,8 +118,8 @@ auto SemanticsHandleStructTypeLiteral(SemanticsContext& context,
   CARBON_CHECK(refs_id != SemanticsNodeBlockId::Empty)
       << "{} is handled by StructLiteral.";
 
-  auto type_id = context.AddNode(
-      SemanticsNode::StructType::Make(parse_node, ir_id, refs_id));
+  auto type_id =
+      context.AddNode(SemanticsNode::StructType::Make(parse_node, refs_id));
   context.node_stack().Push(parse_node, type_id);
   return true;
 }
