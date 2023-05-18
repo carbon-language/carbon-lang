@@ -5,6 +5,7 @@
 #include "toolchain/lowering/lowering_context.h"
 
 #include "toolchain/semantics/semantics_ir.h"
+#include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
 
@@ -47,19 +48,59 @@ auto LoweringContext::LowerBlock(SemanticsNodeBlockId block_id) -> void {
   }
 }
 
-auto LoweringContext::LowerNodeToType(SemanticsNodeId node_id) -> llvm::Type* {
-  CARBON_CHECK(node_id.is_valid());
+auto LoweringContext::BuildLoweredNodeAsType(SemanticsNodeId node_id)
+    -> llvm::Type* {
   switch (node_id.index) {
+    case SemanticsBuiltinKind::EmptyStructType.AsInt():
     case SemanticsBuiltinKind::EmptyTuple.AsInt():
-      // TODO: Should probably switch this to an actual empty tuple in the
-      // future, but it's implemented as void for now.
-      return builder_.getVoidTy();
+    case SemanticsBuiltinKind::EmptyTupleType.AsInt():
+      // Represent empty types as empty structs.
+      // TODO: Investigate special-casing handling of these so that they can be
+      // collectively replaced with LLVM's void, particularly around function
+      // returns. LLVM doesn't allow declaring variables with a void type, so
+      // that may require significant special casing.
+      // TODO: Work to remove EmptyTuple here.
+      return llvm::StructType::create(*llvm_context_,
+                                      llvm::ArrayRef<llvm::Type*>());
+    case SemanticsBuiltinKind::FloatingPointType.AsInt():
+      // TODO: Handle different sizes.
+      return builder_.getDoubleTy();
     case SemanticsBuiltinKind::IntegerType.AsInt():
       // TODO: Handle different sizes.
       return builder_.getInt32Ty();
-    default:
-      CARBON_FATAL() << "Cannot use node as type: " << node_id;
   }
+
+  auto node = semantics_ir_->GetNode(node_id);
+  switch (node.kind()) {
+    case SemanticsNodeKind::StructType: {
+      auto refs = semantics_ir_->GetNodeBlock(node.GetAsStructType().second);
+      llvm::SmallVector<llvm::Type*> subtypes;
+      subtypes.reserve(refs.size());
+      for (auto ref_id : refs) {
+        auto type_id = semantics_ir_->GetNode(ref_id).type_id();
+        // TODO: Handle recursive types. The restriction for builtins prevents
+        // recursion while still letting them cache.
+        CARBON_CHECK(type_id.index < SemanticsBuiltinKind::ValidCount)
+            << type_id;
+        subtypes.push_back(GetLoweredNodeAsType(type_id));
+      }
+      return llvm::StructType::create(*llvm_context_, subtypes);
+    }
+    default: {
+      CARBON_FATAL() << "Cannot use node as type: " << node_id;
+    }
+  }
+}
+
+auto LoweringContext::GetLoweredNodeAsType(SemanticsNodeId node_id)
+    -> llvm::Type* {
+  if (lowered_nodes_[node_id.index]) {
+    return lowered_nodes_[node_id.index].get<llvm::Type*>();
+  }
+
+  auto* type = BuildLoweredNodeAsType(node_id);
+  lowered_nodes_[node_id.index] = type;
+  return type;
 }
 
 }  // namespace Carbon
