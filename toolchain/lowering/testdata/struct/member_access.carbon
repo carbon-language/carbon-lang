@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: ; ModuleID = 'toolchain/lowering/testdata/struct/member_access.carbon'
-// CHECK:STDOUT: source_filename = "toolchain/lowering/testdata/struct/member_access.carbon"
+// CHECK:STDOUT: ; ModuleID = 'member_access.carbon'
+// CHECK:STDOUT: source_filename = "member_access.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: %0 = type { double, i32 }
 // CHECK:STDOUT: %1 = type { double, i32 }

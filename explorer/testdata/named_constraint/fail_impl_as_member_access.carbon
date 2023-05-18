@@ -17,7 +17,7 @@ constraint ImplAsHasFoo {
 fn CallFoo[T:! ImplAsHasFoo](x: T) {
   // OK, T is HasFoo.
   x.(HasFoo.Foo)();
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/named_constraint/fail_impl_as_member_access.carbon:[[@LINE+1]]: member access, Foo not in constraint ImplAsHasFoo where T impls interface HasFoo
+  // CHECK:STDERR: COMPILATION ERROR: fail_impl_as_member_access.carbon:[[@LINE+1]]: member access, Foo not in constraint ImplAsHasFoo where T impls interface HasFoo
   x.Foo();
 }
 

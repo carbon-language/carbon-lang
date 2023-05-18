@@ -10,7 +10,7 @@ namespace N;
 alias M = N;
 // TODO: It's unclear whether this should be permitted. If not, we should
 // produce a better diagnostic.
-// CHECK:STDERR: COMPILATION ERROR: explorer/testdata/alias/fail_namespace_alias_member.carbon:[[@LINE+1]]: alias M cannot be used as a name qualifier
+// CHECK:STDERR: COMPILATION ERROR: fail_namespace_alias_member.carbon:[[@LINE+1]]: alias M cannot be used as a name qualifier
 fn M.F() {}
 
 fn Main() -> i32 {

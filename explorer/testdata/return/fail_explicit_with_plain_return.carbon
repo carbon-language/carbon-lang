@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn F() -> () {
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/return/fail_explicit_with_plain_return.carbon:[[@LINE+1]]: return; should provide a return value, to match the function's signature.
+  // CHECK:STDERR: COMPILATION ERROR: fail_explicit_with_plain_return.carbon:[[@LINE+1]]: return; should provide a return value, to match the function's signature.
   return;
 }
 

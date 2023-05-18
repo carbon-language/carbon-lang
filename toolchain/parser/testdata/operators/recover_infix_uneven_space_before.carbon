@@ -16,5 +16,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/operators/recover_infix_uneven_space_before.carbon:[[@LINE+1]]:15: Whitespace missing after binary operator.
+// CHECK:STDERR: recover_infix_uneven_space_before.carbon:[[@LINE+1]]:15: Whitespace missing after binary operator.
 var n: i8 = n *n;

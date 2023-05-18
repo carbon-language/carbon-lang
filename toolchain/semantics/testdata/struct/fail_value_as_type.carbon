@@ -47,5 +47,5 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/semantics/testdata/struct/fail_value_as_type.carbon:[[@LINE+1]]:15: Cannot implicitly convert from `{.a: i32}` to `Type`.
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+1]]:15: Cannot implicitly convert from `{.a: i32}` to `Type`.
 var x: {.a = 1};

@@ -13,7 +13,7 @@ interface TwoTypes {
 
 // Attempting to fully resolve the replacement for `.T` would never create a
 // situation where `.T`'s expansion involves `.T`. Ensure we catch this anyway.
-// CHECK:STDERR: COMPILATION ERROR: explorer/testdata/assoc_const/fail_simple_rewrite_cycle_2.carbon:[[@LINE+1]]: rewrite of (X).(TwoTypes.U) applies within its own resolved expansion of (X).(TwoTypes.U)*
+// CHECK:STDERR: COMPILATION ERROR: fail_simple_rewrite_cycle_2.carbon:[[@LINE+1]]: rewrite of (X).(TwoTypes.U) applies within its own resolved expansion of (X).(TwoTypes.U)*
 fn F[X:! TwoTypes where .U = .U* and .T = .U]() {}
 
 fn Main() -> i32 {

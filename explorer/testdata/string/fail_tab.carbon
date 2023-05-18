@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: SYNTAX ERROR: explorer/testdata/string/fail_tab.carbon:[[@LINE+1]]: Invalid escaping in string: "new	line"
+  // CHECK:STDERR: SYNTAX ERROR: fail_tab.carbon:[[@LINE+1]]: Invalid escaping in string: "new	line"
   Print("new	line");
   return 0;
 }

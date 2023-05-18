@@ -8,7 +8,7 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   {
-    // CHECK:STDERR: SYNTAX ERROR: explorer/testdata/basic_syntax/fail_block.carbon:[[@LINE+1]]: syntax error, unexpected RETURN, expecting PERIOD or RIGHT_CURLY_BRACE
+    // CHECK:STDERR: SYNTAX ERROR: fail_block.carbon:[[@LINE+1]]: syntax error, unexpected RETURN, expecting PERIOD or RIGHT_CURLY_BRACE
     return 0;
   }
 }

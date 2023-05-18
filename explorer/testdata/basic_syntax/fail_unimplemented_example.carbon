@@ -7,6 +7,6 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/basic_syntax/fail_unimplemented_example.carbon:[[@LINE+1]]: Unimplemented
+  // CHECK:STDERR: COMPILATION ERROR: fail_unimplemented_example.carbon:[[@LINE+1]]: Unimplemented
   return 1 __unimplemented_example_infix 2;
 }

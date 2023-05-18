@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/print/fail_not_str.carbon:[[@LINE+3]]: type error in Print argument 0
+  // CHECK:STDERR: COMPILATION ERROR: fail_not_str.carbon:[[@LINE+3]]: type error in Print argument 0
   // CHECK:STDERR: expected: String
   // CHECK:STDERR: actual: {.x: i32}
   Print({.x = 1});

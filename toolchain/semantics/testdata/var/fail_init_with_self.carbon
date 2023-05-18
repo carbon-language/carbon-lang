@@ -39,6 +39,6 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: toolchain/semantics/testdata/var/fail_init_with_self.carbon:[[@LINE+1]]:16: Name x not found
+  // CHECK:STDERR: fail_init_with_self.carbon:[[@LINE+1]]:16: Name x not found
   var x: i32 = x;
 }

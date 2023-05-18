@@ -15,5 +15,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/function/declaration/fail_with_identifier_as_param.carbon:[[@LINE+1]]:11: Expected parameter declaration.
+// CHECK:STDERR: fail_with_identifier_as_param.carbon:[[@LINE+1]]:11: Expected parameter declaration.
 fn foo(bar);

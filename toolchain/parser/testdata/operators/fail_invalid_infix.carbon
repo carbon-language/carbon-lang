@@ -34,10 +34,10 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/operators/fail_invalid_infix.carbon:[[@LINE+1]]:19: Expected expression.
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+1]]:19: Expected expression.
 var a: i32 = n == ;
-// CHECK:STDERR: toolchain/parser/testdata/operators/fail_invalid_infix.carbon:[[@LINE+1]]:14: Expected expression.
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+1]]:14: Expected expression.
 var b: i32 = == n;
-// CHECK:STDERR: toolchain/parser/testdata/operators/fail_invalid_infix.carbon:[[@LINE+2]]:14: Expected expression.
-// CHECK:STDERR: toolchain/parser/testdata/operators/fail_invalid_infix.carbon:[[@LINE+1]]:17: Expected expression.
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+2]]:14: Expected expression.
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+1]]:17: Expected expression.
 var c: i32 = == ;

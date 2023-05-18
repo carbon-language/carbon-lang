@@ -8,23 +8,24 @@
 namespace Carbon::Testing {
 namespace {
 
-static constexpr char PreludePath[] = "explorer/data/prelude.carbon";
-
 class ParseAndExecuteTestFile : public FileTestBase {
  public:
-  explicit ParseAndExecuteTestFile(llvm::StringRef path, bool trace)
+  explicit ParseAndExecuteTestFile(const std::filesystem::path& path,
+                                   bool trace)
       : FileTestBase(path), trace_(trace) {}
 
   auto SetUp() -> void override {
     if (trace_) {
-      if (path().find("/limits/") != llvm::StringRef::npos) {
+      std::string path_str = path().string();
+      llvm::StringRef path_ref = path_str;
+      if (path_ref.find("/limits/") != llvm::StringRef::npos) {
         GTEST_SKIP()
             << "`limits` tests check for various limit conditions (such as an "
                "infinite loop). The tests collectively don't test tracing "
                "because it creates substantial additional overhead.";
-      } else if (path().endswith(
+      } else if (path_ref.endswith(
                      "testdata/assoc_const/rewrite_large_type.carbon") ||
-                 path().endswith(
+                 path_ref.endswith(
                      "testdata/linked_list/typed_linked_list.carbon")) {
         GTEST_SKIP() << "Expensive test to trace";
       }
@@ -41,10 +42,16 @@ class ParseAndExecuteTestFile : public FileTestBase {
       trace_stream.set_stream(&trace_stream_ostream);
     }
 
+    // Set the location of the prelude.
+    char* test_srcdir = getenv("TEST_SRCDIR");
+    CARBON_CHECK(test_srcdir != nullptr);
+    std::string prelude_path(test_srcdir);
+    prelude_path += "/carbon/explorer/data/prelude.carbon";
+
     // Run the parse. Parser debug output is always off because it's difficult
     // to redirect.
     auto result =
-        ParseAndExecuteFile(PreludePath, path().str(),
+        ParseAndExecuteFile(prelude_path, path().filename().string(),
                             /*parser_debug=*/false, &trace_stream, &stdout);
     // This mirrors printing currently done by main.cpp.
     if (result.ok()) {
@@ -67,14 +74,15 @@ class ParseAndExecuteTestFile : public FileTestBase {
 
 }  // namespace
 
-extern auto RegisterFileTests(const std::vector<llvm::StringRef>& paths)
+extern auto RegisterFileTests(const std::vector<std::filesystem::path>& paths)
     -> void {
   ParseAndExecuteTestFile::RegisterTests(
-      "ParseAndExecuteTestFile", paths, [=](llvm::StringRef path) {
+      "ParseAndExecuteTestFile", paths, [=](const std::filesystem::path& path) {
         return new ParseAndExecuteTestFile(path, /*trace=*/false);
       });
   ParseAndExecuteTestFile::RegisterTests(
-      "ParseAndExecuteTestFile.trace", paths, [=](llvm::StringRef path) {
+      "ParseAndExecuteTestFile.trace", paths,
+      [=](const std::filesystem::path& path) {
         return new ParseAndExecuteTestFile(path, /*trace=*/true);
       });
 }

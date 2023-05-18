@@ -15,7 +15,7 @@ fn Main() -> i32 {
       return 2;
     }
     case 1 => {
-      // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/unformed/static/fail_match_clause.carbon:[[@LINE+1]]: use of uninitialized variable x
+      // CHECK:STDERR: COMPILATION ERROR: fail_match_clause.carbon:[[@LINE+1]]: use of uninitialized variable x
       return x;
     }
     default => {

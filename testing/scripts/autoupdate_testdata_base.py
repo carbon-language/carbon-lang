@@ -87,7 +87,7 @@ def parse_args() -> ParsedArgs:
     parser.add_argument(
         "--line_number_pattern",
         metavar="PATTERN",
-        default=r"(?P<prefix>/(?P<filename>\w+\.carbon):)"
+        default=r"(?P<prefix>(?P<filename>\w+\.carbon):)"
         r"(?P<line>\d+)(?P<suffix>(?:\D|$))",
         help="A regular expression which matches line numbers to update as its "
         "only group. Capture groups 'prefix', 'line', and 'suffix' are "
@@ -304,13 +304,16 @@ def get_matchable_test_output(
     """Runs the autoupdate command and returns the output lines."""
     # Run the autoupdate command to generate output.
     # (`bazel run` would serialize)
-    autoupdate_cmd = TOOLS[tool].replace("//", "./bazel-bin/").replace(":", "/")
+    autoupdate_cmd = Path.cwd().joinpath(
+        TOOLS[tool].replace("//", "./bazel-bin/").replace(":", "/")
+    )
     p = subprocess.run(
-        [autoupdate_cmd] + autoupdate_args + [test],
+        [str(autoupdate_cmd)] + autoupdate_args + [Path(test).name],
         env={"LLVM_SYMBOLIZER_PATH": llvm_symbolizer},
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         encoding="utf-8",
+        cwd=str(Path(test).parent),
     )
 
     out_lines = label_output("STDOUT:", p.stdout)
@@ -324,10 +327,7 @@ def get_matchable_test_output(
             # `lit` uses full paths to the test file, so use a regex to ignore
             # paths when used.
             line = line.replace(test, f"{{{{.*}}}}/{test}")
-            line = bazel_runfiles.sub("{{.*}}/", line)
-        else:
-            # When not using `lit`, the runfiles path is removed.
-            line = bazel_runfiles.sub("", line)
+        line = bazel_runfiles.sub("{{.*}}/", line)
 
         for line_matcher, before, after in extra_check_replacements:
             if line_matcher.match(line):

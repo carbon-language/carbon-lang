@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: SYNTAX ERROR: explorer/testdata/basic_syntax/fail_unsupported_integer_type.carbon:[[@LINE+1]]: Only i32 is supported for now: i64
+  // CHECK:STDERR: SYNTAX ERROR: fail_unsupported_integer_type.carbon:[[@LINE+1]]: Only i32 is supported for now: i64
   var x: i64 = 1;
   return 0;
 }

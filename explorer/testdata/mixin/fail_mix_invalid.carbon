@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 __mixin Mixin {
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/mixin/fail_mix_invalid.carbon:[[@LINE+1]]: Not a valid mixin: `()`
+  // CHECK:STDERR: COMPILATION ERROR: fail_mix_invalid.carbon:[[@LINE+1]]: Not a valid mixin: `()`
   __mix ();
 }
 

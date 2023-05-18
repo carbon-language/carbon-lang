@@ -12,6 +12,6 @@ fn AddInt(a: i32, b: i32) -> auto {
 
 fn Main() -> i32 {
   var x: i32;
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/unformed/static/fail_param.carbon:[[@LINE+1]]: use of uninitialized variable x
+  // CHECK:STDERR: COMPILATION ERROR: fail_param.carbon:[[@LINE+1]]: use of uninitialized variable x
   return AddInt(x, 2);
 }
