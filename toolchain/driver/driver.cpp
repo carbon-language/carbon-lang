@@ -135,8 +135,8 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                        .Case("llvm-ir", DumpMode::LLVMIR)
                        .Default(DumpMode::Unknown);
   if (dump_mode == DumpMode::Unknown) {
-    error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, or "
-                     "semantics-ir.\n";
+    error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, "
+                     "semantics-ir or llvm-ir.\n";
     return false;
   }
   args = args.drop_front();
