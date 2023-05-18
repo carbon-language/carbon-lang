@@ -28,6 +28,6 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: toolchain/semantics/testdata/basics/fail_name_lookup.carbon:[[@LINE+1]]:3: Name x not found
+  // CHECK:STDERR: fail_name_lookup.carbon:[[@LINE+1]]:3: Name x not found
   x;
 }

@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // This doesn't check trace output because it's too slow with it.
-// NOAUTOUPDATE
-// RUN: %{explorer-run}
+// AUTOUPDATE
 // CHECK:STDOUT: result: 1
 
 package ExplorerTest api;

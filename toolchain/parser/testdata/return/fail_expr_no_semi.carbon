@@ -18,5 +18,5 @@
 
 fn F() {
   return x
-// CHECK:STDERR: toolchain/parser/testdata/return/fail_expr_no_semi.carbon:[[@LINE+1]]:1: Expected `;` after `return`.
+// CHECK:STDERR: fail_expr_no_semi.carbon:[[@LINE+1]]:1: Expected `;` after `return`.
 }

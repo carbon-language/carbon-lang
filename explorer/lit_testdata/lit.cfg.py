@@ -1,0 +1,1 @@
+../../testing/lit_test/lit.cfg.py

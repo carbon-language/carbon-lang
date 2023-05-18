@@ -18,5 +18,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/operators/recover_postfix_space_in_call.carbon:[[@LINE+1]]:18: Whitespace is not allowed before this unary operator.
+// CHECK:STDERR: recover_postfix_space_in_call.carbon:[[@LINE+1]]:18: Whitespace is not allowed before this unary operator.
 var n: i8 = F(i8 *);

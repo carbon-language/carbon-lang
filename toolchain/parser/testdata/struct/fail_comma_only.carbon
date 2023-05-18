@@ -18,5 +18,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/struct/fail_comma_only.carbon:[[@LINE+1]]:9: Expected `.field: field_type` or `.field = value`.
+// CHECK:STDERR: fail_comma_only.carbon:[[@LINE+1]]:9: Expected `.field: field_type` or `.field = value`.
 var x: {,} = {};

@@ -27,7 +27,7 @@
 // CHECK:STDOUT: ]
 
 interface Foo {
-  // CHECK:STDERR: toolchain/parser/testdata/generics/interface/fail_no_impl_allowed.carbon:[[@LINE+1]]:39: Method implementations are not allowed in interfaces.
+  // CHECK:STDERR: fail_no_impl_allowed.carbon:[[@LINE+1]]:39: Method implementations are not allowed in interfaces.
   fn Add[self: Self](b: Self) -> Self {
     print("You can't do that.");
   }

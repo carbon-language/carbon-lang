@@ -35,5 +35,5 @@
 // CHECK:STDOUT: ]
 
 var x: i32;
-// CHECK:STDERR: toolchain/semantics/testdata/designators/fail_unsupported.carbon:[[@LINE+1]]:15: Type `i32` does not support designator expressions.
+// CHECK:STDERR: fail_unsupported.carbon:[[@LINE+1]]:15: Type `i32` does not support designator expressions.
 var y: i32 = x.b;

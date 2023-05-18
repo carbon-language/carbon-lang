@@ -20,5 +20,5 @@
 // before we notice the missing whitespace around the second `*`.
 // It'd be better to (somehow) form n*(*p) and reject due to the missing
 // whitespace around the first `*`.
-// CHECK:STDERR: toolchain/parser/testdata/operators/fail_star_star_no_space.carbon:[[@LINE+1]]:16: Expected `;` after expression.
+// CHECK:STDERR: fail_star_star_no_space.carbon:[[@LINE+1]]:16: Expected `;` after expression.
 var n: i8 = n**p;

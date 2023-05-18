@@ -10,13 +10,16 @@ import subprocess
 import sys
 
 
-def _print(output: str, label: str) -> None:
+def label_output(label: str, output: str) -> None:
+    """Prints output with labels.
+
+    This mirrors label_output in scripts/autoupdate_testdata_base.py and should
+    be kept in sync. They're separate in order to avoid a subprocess or import
+    complexity.
+    """
     if output:
         for line in output.splitlines():
-            if line:
-                print(f"{label}: {line}")
-            else:
-                print(f"{label}:")
+            print(" ".join(filter(None, (label, line))))
 
 
 def main() -> None:
@@ -26,9 +29,8 @@ def main() -> None:
         stderr=subprocess.PIPE,
         encoding="utf-8",
     )
-    # The `lambda line` forces prefixes on empty lines.
-    _print(p.stdout, "STDOUT")
-    _print(p.stderr, "STDERR")
+    label_output("STDOUT:", p.stdout)
+    label_output("STDERR:", p.stderr)
     exit(p.returncode)
 
 
