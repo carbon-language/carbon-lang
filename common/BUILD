@@ -5,6 +5,23 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "argparse",
+    srcs = ["argparse.cpp"],
+    hdrs = ["argparse.h"],
+    deps = ["@llvm-project//llvm:Support"],
+)
+
+cc_test(
+    name = "argparse_test",
+    srcs = ["argparse_test.cpp"],
+    deps = [
+        ":argparse",
+        ":test_raw_ostream",
+        "//common:gtest_main",
+    ],
+)
+
+cc_library(
     name = "bazel_working_dir",
     hdrs = ["bazel_working_dir.h"],
     deps = [
