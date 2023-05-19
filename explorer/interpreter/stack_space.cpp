@@ -23,7 +23,10 @@ static auto GetStackPointer() -> intptr_t {
 }
 
 auto IsStackSpaceNearlyExhausted() -> bool {
-  CARBON_CHECK(bottom_of_stack != 0) << "ReserveStackAndRun not called";
+  if (bottom_of_stack == 0) {
+    // Not initialized on the thread; always start a new thread.
+    return true;
+  }
   return std::abs(GetStackPointer() - bottom_of_stack) >
          (DesiredStackSpace - SufficientStack);
 }

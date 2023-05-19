@@ -21,25 +21,9 @@ auto ReserveStackAndRunHelper(llvm::function_ref<void()> fn) -> void;
 
 }  // namespace Internal
 
-// Initializes stack space information for ReserveStackAndRun by creating a new
-// thread, and runs the function on the new thread. This only needs to be called
-// once within a given recursion.
-//
-// Usage:
-//   return ReserveStackAndRun<ReturnType>([&]() -> ReturnType {
-//         <function body>
-//       });
-template <typename ReturnType>
-auto ReserveStackAndRun(llvm::function_ref<ReturnType()> fn) -> ReturnType {
-  std::optional<ReturnType> result;
-  Internal::ReserveStackAndRunHelper([&] { result = fn(); });
-  return std::move(*result);
-}
-
 // Runs a function. May start a new thread for the function if too much stack
-// space has been consumed since the last time a thread was spawned (by either
-// ReserveStackAndRun or ReserveStackIfExhaustedAndRun). Requires
-// ReserveStackAndRun be used first within the recursion.
+// space has been consumed since the last time a thread was spawned. Always
+// spawns a new thread when it didn't create the current thread.
 //
 // Usage:
 //   return ReserveStackIfExhaustedAndRun<ReturnType>([&]() -> ReturnType {
@@ -49,7 +33,9 @@ template <typename ReturnType>
 auto ReserveStackIfExhaustedAndRun(llvm::function_ref<ReturnType()> fn)
     -> ReturnType {
   if (Internal::IsStackSpaceNearlyExhausted()) {
-    return ReserveStackAndRun(fn);
+    std::optional<ReturnType> result;
+    Internal::ReserveStackAndRunHelper([&] { result = fn(); });
+    return std::move(*result);
   } else {
     return fn();
   }
