@@ -614,8 +614,7 @@ auto NameResolver::ResolveNamesImpl(Statement& statement,
           enclosing_scope.ResolveReturned();
       if (!returned_var_def_view.has_value()) {
         return ProgramError(ret_var_stmt.source_loc())
-               << "`return var` is not allowed without a returned var "
-                  "defined "
+               << "`return var` is not allowed without a returned var defined "
                   "in scope.";
       }
       ret_var_stmt.set_value_node(*returned_var_def_view);
