@@ -19,7 +19,8 @@ LoweringContext::LoweringContext(llvm::LLVMContext& llvm_context,
       builder_(llvm_context),
       semantics_ir_(&semantics_ir),
       vlog_stream_(vlog_stream),
-      lowered_nodes_(semantics_ir_->nodes_size(), nullptr) {
+      lowered_nodes_(semantics_ir_->nodes_size(), nullptr),
+      lowered_callables_(semantics_ir_->callables_size(), nullptr) {
   CARBON_CHECK(!semantics_ir.has_errors())
       << "Generating LLVM IR from invalid SemanticsIR is unsupported.";
 }
