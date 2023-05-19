@@ -109,4 +109,32 @@ auto LoweringContext::GetLoweredNodeAsType(SemanticsNodeId node_id)
   return type;
 }
 
+auto LoweringContext::GetLoweredNodeAsValue(SemanticsNodeId node_id)
+    -> llvm::Value* {
+  auto& node = lowered_nodes_[node_id.index];
+  if (node.is<llvm::Value*>()) {
+    return node.get<llvm::Value*>();
+  }
+  CARBON_CHECK(node.isNull())
+      << node_id << " is already set as a type, not a value";
+  // Empty values are built lazily.
+  // TODO: It might be better to built them at initialization, putting them in
+  // every IR even if not used. This is probably a performance decision since it
+  // would simplify this function.
+  if (node_id == SemanticsNodeId::BuiltinEmptyStruct) {
+    auto* type = GetLoweredNodeAsType(SemanticsNodeId::BuiltinEmptyStructType);
+    auto* value = llvm::ConstantStruct::get(llvm::cast<llvm::StructType>(type),
+                                            llvm::ArrayRef<llvm::Constant*>());
+    node = value;
+    return value;
+  } else if (node_id == SemanticsNodeId::BuiltinEmptyTuple) {
+    auto* type = GetLoweredNodeAsType(SemanticsNodeId::BuiltinEmptyTupleType);
+    auto* value = llvm::ConstantStruct::get(llvm::cast<llvm::StructType>(type),
+                                            llvm::ArrayRef<llvm::Constant*>());
+    node = value;
+    return value;
+  }
+  CARBON_FATAL() << node_id << " is null, cannot be initialized";
+}
+
 }  // namespace Carbon

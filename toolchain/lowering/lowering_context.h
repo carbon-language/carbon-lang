@@ -34,11 +34,8 @@ class LoweringContext {
   auto GetLoweredNodeAsType(SemanticsNodeId node_id) -> llvm::Type*;
 
   // Returns a value for the given node.
-  auto GetLoweredNodeAsValue(SemanticsNodeId node_id) -> llvm::Value* {
-    CARBON_CHECK(lowered_nodes_[node_id.index].is<llvm::Value*>())
-        << node_id << ": isNull == " << lowered_nodes_[node_id.index].isNull();
-    return lowered_nodes_[node_id.index].get<llvm::Value*>();
-  }
+  auto GetLoweredNodeAsValue(SemanticsNodeId node_id) -> llvm::Value*;
+
   // Sets the value for the given node.
   auto SetLoweredNodeAsValue(SemanticsNodeId node_id, llvm::Value* value) {
     CARBON_CHECK(lowered_nodes_[node_id.index].isNull()) << node_id;
