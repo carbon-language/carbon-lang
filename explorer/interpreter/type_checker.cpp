@@ -4161,7 +4161,6 @@ static auto GetSize(Nonnull<const Value*> from) -> size_t {
     case Value::Kind::TupleType:
     case Value::Kind::TupleValue: {
       const auto& from_tup = cast<TupleValueBase>(*from);
-      CARBON_CHECK(!from_tup.elements().empty());
       return from_tup.elements().size();
     }
     case Value::Kind::StaticArrayType: {
@@ -4250,7 +4249,6 @@ auto TypeChecker::TypeCheckPattern(
             const auto& arr = cast<StaticArrayType>(*type);
             CARBON_CHECK(!arr.has_size());
             const size_t size = GetSize(*expected);
-            CARBON_CHECK(size != 0);
             type = arena_->New<StaticArrayType>(&arr.element_type(), size);
           } else {
             type = *expected;

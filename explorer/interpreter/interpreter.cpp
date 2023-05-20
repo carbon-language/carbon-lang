@@ -416,8 +416,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       switch (v->kind()) {
         case Value::Kind::TupleType:
         case Value::Kind::TupleValue: {
-          const auto& v_tup = cast<TupleValueBase>(*v);
-          return !v_tup.elements().empty();
+          return true;
         }
         case Value::Kind::StaticArrayType: {
           const auto& v_arr = cast<StaticArrayType>(*v);

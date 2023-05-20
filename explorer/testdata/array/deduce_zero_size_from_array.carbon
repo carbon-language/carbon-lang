@@ -3,11 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var x: [i32;] = (0, 1);
-  // CHECK:STDERR: RUNTIME ERROR: fail_index_deduced_size_from_tuple.carbon:[[@LINE+1]]: index 2 out of range in (0, 1)
-  return x[2];
+  var a: [i32;0] = ();
+  var b: [i32;] = a;
+  return 0;
 }
