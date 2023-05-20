@@ -404,20 +404,53 @@ static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
 static auto ExpectResolvedBindingType(const BindingPattern& binding,
                                       Nonnull<const Value*> type)
     -> ErrorOr<Success> {
-  if (!TypeContainsAuto(type)) {
-    return Success();
-  }
-
-  if (type->kind() == Value::Kind::StaticArrayType) {
-    const auto& arr = cast<StaticArrayType>(*type);
-    if (!arr.has_size()) {
-      return ProgramError(binding.source_loc())
-             << "cannot deduce size for " << binding;
+  switch (type->kind()) {
+    case Value::Kind::AutoType: {
+      auto error = ProgramError(binding.source_loc());
+      error << "cannot deduce `auto` type for ";
+      if (type != &binding.type().value()) {
+        error << *type << " in ";
+      }
+      return error << binding;
     }
+    case Value::Kind::StructType: {
+      const auto fields = cast<StructType>(type)->fields();
+      for (const auto& field : fields) {
+        if (auto result = ExpectResolvedBindingType(binding, field.value);
+            !result.ok()) {
+          return result;
+        }
+      }
+      return Success();
+    }
+    case Value::Kind::TupleType: {
+      const auto elems = cast<TupleType>(type)->elements();
+      for (const auto* elem : elems) {
+        if (auto result = ExpectResolvedBindingType(binding, elem);
+            !result.ok()) {
+          return result;
+        }
+      }
+      return Success();
+    }
+    case Value::Kind::PointerType:
+      return ExpectResolvedBindingType(
+          binding, &cast<PointerType>(type)->pointee_type());
+    case Value::Kind::StaticArrayType: {
+      const auto* array_type = cast<StaticArrayType>(type);
+      if (!array_type->has_size()) {
+        auto error = ProgramError(binding.source_loc());
+        error << "cannot deduce size for ";
+        if (type != &binding.type().value()) {
+          error << *array_type << " in ";
+        }
+        return error << binding;
+      }
+      return ExpectResolvedBindingType(binding, &array_type->element_type());
+    }
+    default:
+      return Success();
   }
-
-  return ProgramError(binding.source_loc())
-         << "cannot deduce `auto` type for " << binding;
 }
 
 // Returns whether the given value is template-dependent, that is, if it
