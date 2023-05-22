@@ -5,16 +5,17 @@
 #ifndef CARBON_COMMON_ARG_PARSE_H_
 #define CARBON_COMMON_ARG_PARSE_H_
 
+#include <array>
 #include <string>
 #include <type_traits>
 
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/MapVector.h"
-#include "llvm/ADT/SmallBitVector.h"
-#include "common/ostream.h"
 #include "common/check.h"
+#include "common/ostream.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
 
