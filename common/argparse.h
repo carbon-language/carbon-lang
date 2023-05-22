@@ -24,6 +24,7 @@ namespace ArgParser {
 enum class FlagKind {
   Boolean,
   String,
+  Int,
   Enum,
 
   StringList,
@@ -63,6 +64,22 @@ constexpr inline auto MakeStringFlag(llvm::StringLiteral name) -> StringFlag {
 constexpr inline auto MakeStringFlag(llvm::StringLiteral name,
                                      StringDefault defaults)
     -> StringFlag {
+  return {{.name = name}, {defaults.default_value}};
+}
+
+struct IntFlag : Flag {
+  std::optional<ssize_t> default_value = {};
+};
+
+struct IntDefault {
+  ssize_t default_value;
+};
+constexpr inline auto MakeIntFlag(llvm::StringLiteral name) -> IntFlag {
+  return {{.name = name}};
+}
+constexpr inline auto MakeIntFlag(llvm::StringLiteral name,
+                                     IntDefault defaults)
+    -> IntFlag {
   return {{.name = name}, {defaults.default_value}};
 }
 
@@ -171,6 +188,7 @@ class Args {
   using Flag = ArgParser::Flag;
   using BooleanFlag = ArgParser::BooleanFlag;
   using StringFlag = ArgParser::StringFlag;
+  using IntFlag = ArgParser::IntFlag;
   template <typename EnumT, ssize_t N>
   using EnumFlag = ArgParser::EnumFlag<EnumT, N>;
   using StringListFlag = ArgParser::StringListFlag;
@@ -201,6 +219,13 @@ class Args {
   auto GetStringFlag(const StringFlag* flag) const
       -> std::optional<llvm::StringRef> {
     return GetStringFlagImpl(flags_, flag);
+  }
+
+  // Gets an int flag's value if available, whether via a default or
+  // explicitly set value. If unavailable, returns an empty optional.
+  auto GetIntFlag(const IntFlag* flag) const
+      -> std::optional<ssize_t> {
+    return GetIntFlagImpl(flags_, flag);
   }
 
   // Gets an enum flag's value if available, whether via a default or explicitly
@@ -261,7 +286,7 @@ class Args {
   ParseResult parse_result_;
 
   llvm::SmallVector<llvm::StringRef, 4> string_flag_values_;
-
+  llvm::SmallVector<ssize_t, 4> int_flag_values_;
   llvm::SmallVector<llvm::SmallVector<llvm::StringRef, 1>, 4>
       string_list_flag_values_;
 
@@ -272,6 +297,8 @@ class Args {
   auto TestFlagImpl(const FlagMap& flags, const BooleanFlag* flag) const -> bool;
   auto GetStringFlagImpl(const FlagMap& flags, const StringFlag* flag) const
       -> std::optional<llvm::StringRef>;
+  auto GetIntFlagImpl(const FlagMap& flags, const IntFlag* flag) const
+      -> std::optional<ssize_t>;
   template <typename EnumT, ssize_t N>
   auto GetEnumFlagImpl(const FlagMap& flags,
                        const EnumFlag<EnumT, N>* flag) const
@@ -281,6 +308,7 @@ class Args {
 
   void AddFlagDefault(Args::FlagMap& flags, const BooleanFlag* flag);
   void AddFlagDefault(Args::FlagMap& flags, const StringFlag* flag);
+  void AddFlagDefault(Args::FlagMap& flags, const IntFlag* flag);
   template <typename EnumT, ssize_t N>
   void AddFlagDefault(Args::FlagMap& flags, const EnumFlag<EnumT, N>* flag);
   void AddFlagDefault(Args::FlagMap& flags, const StringListFlag* flag);
@@ -291,6 +319,9 @@ class Args {
                      std::optional<llvm::StringRef> value,
                      llvm::raw_ostream& errors) -> bool;
   auto AddParsedFlag(FlagMap& flags, const StringFlag* flag,
+                     std::optional<llvm::StringRef> value,
+                     llvm::raw_ostream& errors) -> bool;
+  auto AddParsedFlag(FlagMap& flags, const IntFlag* flag,
                      std::optional<llvm::StringRef> value,
                      llvm::raw_ostream& errors) -> bool;
   template <typename EnumT, ssize_t N>
@@ -334,6 +365,13 @@ class SubcommandArgs : public Args {
   auto GetSubcommandStringFlag(const StringFlag *flag) const
       -> std::optional<llvm::StringRef> {
     return GetStringFlagImpl(subcommand_flags_, flag);
+  }
+
+  // Get's a subcommand int flag's value if available, whether via a default
+  // or explicitly set value. If unavailable, returns an empty optional.
+  auto GetSubcommandIntFlag(const IntFlag* flag) const
+      -> std::optional<ssize_t> {
+    return GetIntFlagImpl(subcommand_flags_, flag);
   }
 
   // Gets a subcommand enum flag's value if available, whether via a default or
@@ -522,6 +560,9 @@ inline auto operator<<(llvm::raw_ostream& out, FlagKind kind)
       break;
     case FlagKind::String:
       out << "String";
+      break;
+    case FlagKind::Int:
+      out << "Int";
       break;
     case FlagKind::Enum:
       out << "Enum";

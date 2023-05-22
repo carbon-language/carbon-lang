@@ -121,6 +121,29 @@ TEST(ArgParserTest, DefaultsWithExplictFlags) {
   EXPECT_THAT(args.GetSubcommandStringFlag(&TestFlag4), Optional(StrEq("default")));
 }
 
+constexpr auto TestIntFlag = ArgParser::MakeIntFlag(
+    "int-flag");
+
+constexpr auto TestIntFlagWithDefault = ArgParser::MakeIntFlag(
+    "int-defaulted-flag", {.default_value = 42});
+
+constexpr auto TestCommandWithIntFlags =
+    ArgParser::MakeCommand("command", &TestIntFlag, &TestIntFlagWithDefault);
+constexpr auto TestSubWithIntFlags = ArgParser::MakeSubcommand(
+    "sub", Subcommands::Sub1, &TestIntFlag, &TestIntFlagWithDefault);
+
+TEST(ArgParserTest, IntFlags) {
+  auto args = ArgParser::Parse(
+      {"--int-flag=1", "sub", "--int-flag=2", "--int-defaulted_flag=3"},
+      llvm::errs(), TestCommandWithIntFlags, TestSubWithIntFlags);
+  EXPECT_TRUE(args);
+  EXPECT_THAT(args.GetIntFlag(&TestIntFlag), Optional(Eq(1)));
+  EXPECT_THAT(args.GetIntFlag(&TestIntFlagWithDefault), Optional(Eq(42)));
+  EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub1));
+  EXPECT_THAT(args.GetSubcommandIntFlag(&TestIntFlag), Optional(Eq(1)));
+  EXPECT_THAT(args.GetSubcommandIntFlag(&TestIntFlagWithDefault), Optional(Eq(42)));
+}
+
 enum class FlagEnum {
   Val1,
   Val2,

@@ -63,6 +63,17 @@ void Args::AddFlagDefault(Args::FlagMap& flags, const StringFlag* flag) {
   string_flag_values_.push_back(*flag->default_value);
 }
 
+void Args::AddFlagDefault(Args::FlagMap& flags, const IntFlag* flag) {
+  if (!flag->default_value.has_value()) {
+    return;
+  }
+  auto [flag_it, inserted] = flags.insert({flag, {.kind = FlagKind::Int}});
+  CARBON_CHECK(inserted) << "Defaults must be added to an empty set of flags!";
+  auto& value = flag_it->second;
+  value.value_index = int_flag_values_.size();
+  int_flag_values_.push_back(*flag->default_value);
+}
+
 void Args::AddFlagDefault(Args::FlagMap& flags, const StringListFlag* flag) {
   if (flag->default_values.empty()) {
     return;
@@ -121,6 +132,36 @@ auto Args::AddParsedFlag(FlagMap& flags, const StringFlag* flag,
     string_flag_values_.push_back(value_str);
   } else {
     string_flag_values_[value.value_index] = value_str;
+  }
+  return true;
+}
+
+auto Args::AddParsedFlag(FlagMap& flags, const IntFlag* flag,
+                         std::optional<llvm::StringRef> arg_value, llvm::raw_ostream& errors)
+    -> bool {
+  auto [inserted, value] = AddParsedFlagToMap(flags, flag, FlagKind::Int);
+  if (!arg_value && !flag->default_value) {
+    errors << "ERROR: Invalid missing value for the int flag '--"
+           << flag->name << "' which does not have a default value\n";
+    return false;
+  }
+  ssize_t value_int;
+  if (arg_value) {
+    // Note that LLVM's function for parsing as an integer confusingly returns
+    // true *on an error* in parsing.
+    if (arg_value->getAsInteger(/*Radix=*/0, value_int)) {
+      errors << "ERROR: Unable to parse int flag '--" << flag->name << "' value '"
+             << *arg_value << "' as an integer\n";
+      return false;
+    }
+  } else {
+    value_int = *flag->default_value;
+  }
+  if (inserted) {
+    value.value_index = int_flag_values_.size();
+    int_flag_values_.push_back(value_int);
+  } else {
+    int_flag_values_[value.value_index] = value_int;
   }
   return true;
 }
