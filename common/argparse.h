@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_COMMON_ARG_PARSE_H_
-#define CARBON_COMMON_ARG_PARSE_H_
+#ifndef CARBON_COMMON_ARGPARSE_H_
+#define CARBON_COMMON_ARGPARSE_H_
 
 #include <array>
 #include <string>
@@ -108,7 +108,7 @@ class Args {
 
   // Test whether a boolean flag value is true, either by being set explicitly
   // or having a true default.
-  auto TestFlag(const BooleanFlag *flag) const -> bool {
+  auto TestFlag(const BooleanFlag* flag) const -> bool {
     return TestFlagImpl(flags_, flag);
   }
 
@@ -121,8 +121,7 @@ class Args {
 
   // Gets an int flag's value if available, whether via a default or
   // explicitly set value. If unavailable, returns an empty optional.
-  auto GetIntFlag(const IntFlag* flag) const
-      -> std::optional<ssize_t> {
+  auto GetIntFlag(const IntFlag* flag) const -> std::optional<ssize_t> {
     return GetIntFlagImpl(flags_, flag);
   }
 
@@ -183,7 +182,7 @@ class Args {
       int enum_value;
     };
   };
-  
+
   using FlagMap = llvm::SmallDenseMap<const Flag*, FlagKindAndValue, 4>;
 
   ParseResult parse_result_;
@@ -202,7 +201,8 @@ class Args {
       llvm::StringLiteral name, const EnumValue<EnumT> (&args)[N],
       std::index_sequence<Indices...> /*indices*/) -> EnumFlag<EnumT, N>;
 
-  auto TestFlagImpl(const FlagMap& flags, const BooleanFlag* flag) const -> bool;
+  auto TestFlagImpl(const FlagMap& flags, const BooleanFlag* flag) const
+      -> bool;
   auto GetStringFlagImpl(const FlagMap& flags, const StringFlag* flag) const
       -> std::optional<llvm::StringRef>;
   auto GetIntFlagImpl(const FlagMap& flags, const IntFlag* flag) const
@@ -211,7 +211,8 @@ class Args {
   auto GetEnumFlagImpl(const FlagMap& flags,
                        const EnumFlag<EnumT, N>* flag) const
       -> std::optional<EnumT>;
-  auto GetStringListFlagImpl(const FlagMap& flags, const StringListFlag* flag) const
+  auto GetStringListFlagImpl(const FlagMap& flags,
+                             const StringListFlag* flag) const
       -> llvm::ArrayRef<llvm::StringRef>;
 
   void AddFlagDefault(Args::FlagMap& flags, const BooleanFlag* flag);
@@ -270,19 +271,17 @@ class SubcommandArgs : public Args {
                 "Must provide an enum type to enumerate subcommands.");
   using SubcommandEnum = SubcommandEnumT;
 
-  auto subcommand() const -> SubcommandEnum {
-    return subcommand_;
-  }
+  auto subcommand() const -> SubcommandEnum { return subcommand_; }
 
   // Test whether a boolean subcommand flag value is true, either by being set
   // explicitly or having a true default.
-  auto TestSubcommandFlag(const BooleanFlag *flag) const -> bool {
+  auto TestSubcommandFlag(const BooleanFlag* flag) const -> bool {
     return TestFlagImpl(subcommand_flags_, flag);
   }
 
   // Get's a subcommand string flag's value if available, whether via a default
   // or explicitly set value. If unavailable, returns an empty optional.
-  auto GetSubcommandStringFlag(const StringFlag *flag) const
+  auto GetSubcommandStringFlag(const StringFlag* flag) const
       -> std::optional<llvm::StringRef> {
     return GetStringFlagImpl(subcommand_flags_, flag);
   }
@@ -327,7 +326,8 @@ struct Args::BooleanFlag : Flag {
 };
 
 constexpr inline auto Args::MakeBooleanFlag(llvm::StringLiteral name,
-                                     BooleanDefault defaults) -> BooleanFlag {
+                                            BooleanDefault defaults)
+    -> BooleanFlag {
   return {{.name = name}, defaults.default_value};
 }
 
@@ -335,11 +335,13 @@ struct Args::StringFlag : Flag {
   std::optional<llvm::StringLiteral> default_value = {};
 };
 
-constexpr inline auto Args::MakeStringFlag(llvm::StringLiteral name) -> StringFlag {
+constexpr inline auto Args::MakeStringFlag(llvm::StringLiteral name)
+    -> StringFlag {
   return {{.name = name}};
 }
 constexpr inline auto Args::MakeStringFlag(llvm::StringLiteral name,
-                                    StringDefault defaults) -> StringFlag {
+                                           StringDefault defaults)
+    -> StringFlag {
   return {{.name = name}, {defaults.default_value}};
 }
 
@@ -350,8 +352,8 @@ struct Args::IntFlag : Flag {
 constexpr inline auto Args::MakeIntFlag(llvm::StringLiteral name) -> IntFlag {
   return {{.name = name}};
 }
-constexpr inline auto Args::MakeIntFlag(llvm::StringLiteral name, IntDefault defaults)
-    -> IntFlag {
+constexpr inline auto Args::MakeIntFlag(llvm::StringLiteral name,
+                                        IntDefault defaults) -> IntFlag {
   return {{.name = name}, {defaults.default_value}};
 }
 
@@ -377,7 +379,7 @@ constexpr inline auto Args::MakeEnumFlagHelper(
 
 template <typename EnumT, ssize_t N>
 constexpr inline auto Args::MakeEnumFlag(llvm::StringLiteral name,
-                                   const EnumValue<EnumT> (&args)[N])
+                                         const EnumValue<EnumT> (&args)[N])
     -> EnumFlag<EnumT, N> {
   return MakeEnumFlagHelper(name, args, std::make_index_sequence<N>{});
 }
@@ -442,7 +444,8 @@ constexpr inline auto Args::MakeSubcommand(llvm::StringLiteral name,
 
 namespace Detail {
 
-template <typename... SubcommandTs> struct SubcommandEnum;
+template <typename... SubcommandTs>
+struct SubcommandEnum;
 
 template <typename SubcommandT, typename... SubcommandTs>
 struct SubcommandEnum<SubcommandT, SubcommandTs...> {
@@ -450,7 +453,10 @@ struct SubcommandEnum<SubcommandT, SubcommandTs...> {
 };
 
 enum NoSubcommands {};
-template <> struct SubcommandEnum<> { using Type = NoSubcommands; };
+template <>
+struct SubcommandEnum<> {
+  using Type = NoSubcommands;
+};
 
 }  // namespace Detail
 
@@ -458,7 +464,8 @@ template <typename CommandT, typename... SubcommandTs>
 auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
                  llvm::raw_ostream& errors, const CommandT& command,
                  const SubcommandTs&... subcommands) {
-  // Extract the enum type from the subcommand types, and ensure it is a single type.
+  // Extract the enum type from the subcommand types, and ensure it is a single
+  // type.
   using SubcommandEnum = typename Detail::SubcommandEnum<SubcommandTs...>::Type;
   constexpr bool HasSubcommands = sizeof...(SubcommandTs) > 0;
   if constexpr (HasSubcommands) {
@@ -467,7 +474,8 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
         "Must have the same enum type for all subcommands.");
   }
 
-  using ArgsType = std::conditional_t<HasSubcommands, SubcommandArgs<SubcommandEnum>, Args>;
+  using ArgsType =
+      std::conditional_t<HasSubcommands, SubcommandArgs<SubcommandEnum>, Args>;
   ArgsType args;
 
   // Start in the error state to allow early returns whenever a parse error is
@@ -505,7 +513,8 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
   // Process the input subcommands into a lookup table. We just handle the
   // subcommand name here to be lazy. We'll process the subcommand itself only
   // if it is needed.
-  llvm::SmallDenseMap<llvm::StringRef, std::function<void()>, 16> subcommand_map;
+  llvm::SmallDenseMap<llvm::StringRef, std::function<void()>, 16>
+      subcommand_map;
   auto parsed_subcommand = [&](const auto* subcommand) {
     if constexpr (HasSubcommands) {
       args.subcommand_ = subcommand->enumerator;
@@ -558,7 +567,8 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
       CARBON_FATAL() << "TODO: handle short flags";
     }
     if (arg.size() == 2) {
-      // A parameter of `--` disables all flag processing making the remaining args always positional.
+      // A parameter of `--` disables all flag processing making the remaining
+      // args always positional.
       args.positional_args_.append(raw_args.begin() + i + 1, raw_args.end());
       break;
     }
@@ -606,7 +616,8 @@ auto Args::GetEnumFlagImpl(const FlagMap& flags,
 }
 
 template <typename EnumT, ssize_t N>
-void Args::AddFlagDefault(Args::FlagMap& flags, const EnumFlag<EnumT, N>* flag) {
+void Args::AddFlagDefault(Args::FlagMap& flags,
+                          const EnumFlag<EnumT, N>* flag) {
   if (!flag->default_value.has_value()) {
     return;
   }
@@ -630,8 +641,8 @@ auto Args::AddParsedFlag(FlagMap& flags, const EnumFlag<EnumT, N>* flag,
                          llvm::raw_ostream& errors) -> bool {
   auto [inserted, value] = AddParsedFlagToMap(flags, flag, FlagKind::Enum);
   if (!arg_value && !flag->default_value) {
-    errors << "ERROR: Invalid missing value for the enum flag '--"
-           << flag->name << "' which does not have a default value\n";
+    errors << "ERROR: Invalid missing value for the enum flag '--" << flag->name
+           << "' which does not have a default value\n";
     return false;
   }
   EnumT enum_value;
@@ -675,4 +686,4 @@ auto Args::AddParsedFlag(FlagMap& flags, const EnumFlag<EnumT, N>* flag,
 
 }  // namespace Carbon
 
-#endif  // CARBON_COMMON_ARG_PARSE_H_
+#endif  // CARBON_COMMON_ARGPARSE_H_

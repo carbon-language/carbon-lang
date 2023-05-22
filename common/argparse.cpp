@@ -9,7 +9,8 @@
 
 namespace Carbon {
 
-auto Args::TestFlagImpl(const FlagMap& flags, const BooleanFlag* flag) const -> bool {
+auto Args::TestFlagImpl(const FlagMap& flags, const BooleanFlag* flag) const
+    -> bool {
   auto flag_iterator = flags.find(flag);
   CARBON_CHECK(flag_iterator != flags.end()) << "Invalid flag: " << flag->name;
   FlagKind kind = flag_iterator->second.kind;
@@ -87,7 +88,8 @@ void Args::AddFlagDefault(Args::FlagMap& flags, const IntFlag* flag) {
 }
 
 void Args::AddFlagDefault(Args::FlagMap& flags, const StringListFlag* flag) {
-  AddFlagDefaultGeneric(flags, flag, FlagKind::StringList, string_list_flag_values_);
+  AddFlagDefaultGeneric(flags, flag, FlagKind::StringList,
+                        string_list_flag_values_);
 }
 
 auto Args::AddParsedFlagToMap(FlagMap& flags, const Flag* flag, FlagKind kind)
@@ -103,8 +105,8 @@ auto Args::AddParsedFlagToMap(FlagMap& flags, const Flag* flag, FlagKind kind)
 }
 
 auto Args::AddParsedFlag(FlagMap& flags, const BooleanFlag* flag,
-                         std::optional<llvm::StringRef> arg_value, llvm::raw_ostream& errors)
-    -> bool {
+                         std::optional<llvm::StringRef> arg_value,
+                         llvm::raw_ostream& errors) -> bool {
   auto [_, value] = AddParsedFlagToMap(flags, flag, FlagKind::Boolean);
   if (!arg_value || *arg_value == "true") {
     value.boolean_value = true;
@@ -120,8 +122,8 @@ auto Args::AddParsedFlag(FlagMap& flags, const BooleanFlag* flag,
 }
 
 auto Args::AddParsedFlag(FlagMap& flags, const StringFlag* flag,
-                         std::optional<llvm::StringRef> arg_value, llvm::raw_ostream& errors)
-    -> bool {
+                         std::optional<llvm::StringRef> arg_value,
+                         llvm::raw_ostream& errors) -> bool {
   auto [inserted, value] = AddParsedFlagToMap(flags, flag, FlagKind::String);
   if (!arg_value && !flag->default_value) {
     errors << "ERROR: Invalid missing value for the string flag '--"
@@ -141,12 +143,12 @@ auto Args::AddParsedFlag(FlagMap& flags, const StringFlag* flag,
 }
 
 auto Args::AddParsedFlag(FlagMap& flags, const IntFlag* flag,
-                         std::optional<llvm::StringRef> arg_value, llvm::raw_ostream& errors)
-    -> bool {
+                         std::optional<llvm::StringRef> arg_value,
+                         llvm::raw_ostream& errors) -> bool {
   auto [inserted, value] = AddParsedFlagToMap(flags, flag, FlagKind::Int);
   if (!arg_value && !flag->default_value) {
-    errors << "ERROR: Invalid missing value for the int flag '--"
-           << flag->name << "' which does not have a default value\n";
+    errors << "ERROR: Invalid missing value for the int flag '--" << flag->name
+           << "' which does not have a default value\n";
     return false;
   }
   ssize_t value_int;
@@ -154,8 +156,8 @@ auto Args::AddParsedFlag(FlagMap& flags, const IntFlag* flag,
     // Note that LLVM's function for parsing as an integer confusingly returns
     // true *on an error* in parsing.
     if (arg_value->getAsInteger(/*Radix=*/0, value_int)) {
-      errors << "ERROR: Unable to parse int flag '--" << flag->name << "' value '"
-             << *arg_value << "' as an integer\n";
+      errors << "ERROR: Unable to parse int flag '--" << flag->name
+             << "' value '" << *arg_value << "' as an integer\n";
       return false;
     }
   } else {
@@ -171,9 +173,10 @@ auto Args::AddParsedFlag(FlagMap& flags, const IntFlag* flag,
 }
 
 auto Args::AddParsedFlag(FlagMap& flags, const StringListFlag* flag,
-                         std::optional<llvm::StringRef> arg_value, llvm::raw_ostream& errors)
-    -> bool {
-  auto [inserted, value] = AddParsedFlagToMap(flags, flag, FlagKind::StringList);
+                         std::optional<llvm::StringRef> arg_value,
+                         llvm::raw_ostream& errors) -> bool {
+  auto [inserted, value] =
+      AddParsedFlagToMap(flags, flag, FlagKind::StringList);
   if (!arg_value) {
     errors << "ERROR: Must specify a value for the string list flag '--"
            << flag->name << "'\n";

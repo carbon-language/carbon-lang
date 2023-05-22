@@ -22,6 +22,7 @@ cc_test(
         ":argparse",
         ":test_raw_ostream",
         "//common:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 
