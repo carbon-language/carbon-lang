@@ -21,108 +21,51 @@ namespace Carbon {
 
 class Args {
  public:
-  enum class FlagKind {
-    Boolean,
-    String,
-    Int,
-    Enum,
-
-    StringList,
-  };
-
-  struct Flag {
-    llvm::StringLiteral name;
-    // llvm::StringLiteral short_name = "";
-
-    // The address of a flag is used as the identity after parsing.
-    Flag(const Flag&) = delete;
-  };
-
-  struct BooleanFlag : Flag {
-    bool default_value = false;
-  };
+  struct BooleanFlag;
+  struct StringFlag;
+  struct IntFlag;
+  template <typename EnumT, ssize_t N>
+  struct EnumFlag;
+  struct StringListFlag;
+  template <typename... Ts>
+  struct Command;
+  template <typename EnumT, typename... FlagTs>
+  struct Subcommand;
 
   struct BooleanDefault {
     bool default_value;
   };
   constexpr static auto MakeBooleanFlag(
       llvm::StringLiteral name,
-      BooleanDefault defaults = {.default_value = false}) -> BooleanFlag {
-    return {{.name = name}, defaults.default_value};
-  }
-
-  struct StringFlag : Flag {
-    std::optional<llvm::StringLiteral> default_value = {};
-  };
+      BooleanDefault defaults = {.default_value = false}) -> BooleanFlag;
 
   struct StringDefault {
     llvm::StringLiteral default_value;
   };
-  constexpr static auto MakeStringFlag(llvm::StringLiteral name) -> StringFlag {
-    return {{.name = name}};
-  }
+  constexpr static auto MakeStringFlag(llvm::StringLiteral name) -> StringFlag;
   constexpr static auto MakeStringFlag(llvm::StringLiteral name,
-                                       StringDefault defaults) -> StringFlag {
-    return {{.name = name}, {defaults.default_value}};
-  }
-
-  struct IntFlag : Flag {
-    std::optional<ssize_t> default_value = {};
-  };
+                                       StringDefault defaults) -> StringFlag;
 
   struct IntDefault {
     ssize_t default_value;
   };
-  constexpr static auto MakeIntFlag(llvm::StringLiteral name) -> IntFlag {
-    return {{.name = name}};
-  }
+  constexpr static auto MakeIntFlag(llvm::StringLiteral name) -> IntFlag;
   constexpr static auto MakeIntFlag(llvm::StringLiteral name,
-                                    IntDefault defaults) -> IntFlag {
-    return {{.name = name}, {defaults.default_value}};
-  }
+                                    IntDefault defaults) -> IntFlag;
 
   template <typename EnumT>
-  struct EnumValue {
-    llvm::StringLiteral name;
-    EnumT value;
-  };
-
-  template <typename EnumT, ssize_t N>
-  struct EnumFlag : Flag {
-    std::array<EnumValue<EnumT>, N> values;
-
-    std::optional<EnumT> default_value = {};
-  };
-
-  //namespace Detail {
-  template <typename EnumT, ssize_t N, size_t... Indices>
-  constexpr static auto MakeEnumFlagHelper(
-      llvm::StringLiteral name, const EnumValue<EnumT> (&args)[N],
-      std::index_sequence<Indices...> /*indices*/) -> EnumFlag<EnumT, N> {
-    return {{.name = name}, {args[Indices]...}};
-  }
-  //}  // namespace Detail
-
+  struct EnumValue;
   template <typename EnumT, ssize_t N>
   constexpr static auto MakeEnumFlag(llvm::StringLiteral name,
                                      const EnumValue<EnumT> (&args)[N])
-      -> EnumFlag<EnumT, N> {
-    return MakeEnumFlagHelper(name, args,
-                                      std::make_index_sequence<N>{});
-  }
-
-  struct StringListFlag : Flag {
-    llvm::ArrayRef<llvm::StringLiteral> default_values = {};
-  };
+      -> EnumFlag<EnumT, N>;
 
   struct StringListDefault {
     llvm::ArrayRef<llvm::StringLiteral> default_values;
   };
-  constexpr inline static auto MakeStringListFlag(
+  constexpr static auto MakeStringListFlag(
       llvm::StringLiteral name,
-      StringListDefault defaults = {.default_values = {}}) -> StringListFlag {
-    return {{.name = name}, defaults.default_values};
-  }
+      StringListDefault defaults = {.default_values = {}}) -> StringListFlag;
 
   struct CommandInfo {
     llvm::StringLiteral description = "";
@@ -130,50 +73,20 @@ class Args {
     llvm::StringLiteral epilog = "";
   };
   template <typename... Ts>
-  struct Command {
-    llvm::StringLiteral name;
-
-    std::tuple<const Ts*...> flags = {};
-
-    CommandInfo info;
-  };
-
+  constexpr static auto MakeCommand(llvm::StringLiteral name,
+                                    const Ts*... flags) -> Command<Ts...>;
   template <typename... Ts>
-  constexpr inline static auto MakeCommand(llvm::StringLiteral name,
-                                    const Ts*... flags) -> Command<Ts...> {
-    return {.name = name, .flags = std::tuple{flags...}, .info = {}};
-  }
-
-  template <typename... Ts>
-  constexpr inline static auto MakeCommand(llvm::StringLiteral name, CommandInfo info,
-                                    const Ts*... flags) -> Command<Ts...> {
-    return {.name = name, .flags = std::tuple{flags...}, .info = info};
-  }
-
+  constexpr static auto MakeCommand(llvm::StringLiteral name, CommandInfo info,
+                                    const Ts*... flags) -> Command<Ts...>;
   template <typename EnumT, typename... FlagTs>
-  struct Subcommand : Command<FlagTs...> {
-    static_assert(std::is_enum_v<EnumT>,
-                  "Must provide an enum type to enumerate subcommands.");
-    using Enum = EnumT;
-    EnumT enumerator;
-  };
-
-  template <typename EnumT, typename... FlagTs>
-  constexpr inline static auto MakeSubcommand(llvm::StringLiteral name,
+  constexpr static auto MakeSubcommand(llvm::StringLiteral name,
                                        EnumT enumerator, const FlagTs*... flags)
-      -> Subcommand<EnumT, FlagTs...> {
-    return {{.name = name, .flags = std::tuple{flags...}, .info = {}},
-            enumerator};
-  }
-
+      -> Subcommand<EnumT, FlagTs...>;
   template <typename EnumT, typename... FlagTs>
-  constexpr inline static auto MakeSubcommand(llvm::StringLiteral name,
+  constexpr static auto MakeSubcommand(llvm::StringLiteral name,
                                        EnumT enumerator, CommandInfo info,
                                        const FlagTs*... flags)
-      -> Subcommand<EnumT, FlagTs...> {
-    return {{.name = name, .flags = std::tuple{flags...}, .info = info},
-            enumerator};
-  }
+      -> Subcommand<EnumT, FlagTs...>;
 
   template <typename CommandT, typename... SubcommandTs>
   static auto Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
@@ -231,6 +144,17 @@ class Args {
   }
 
  protected:
+  enum class FlagKind {
+    Boolean,
+    String,
+    Int,
+    Enum,
+
+    StringList,
+  };
+
+  struct Flag;
+
   enum class ParseResult {
     // Signifies an error parsing arguments. It will have been diagnosed using
     // the streams provided to the parser, and no useful parsed arguments are
@@ -272,6 +196,11 @@ class Args {
   FlagMap flags_;
 
   llvm::SmallVector<llvm::StringRef, 12> positional_args_;
+
+  template <typename EnumT, ssize_t N, size_t... Indices>
+  constexpr static auto MakeEnumFlagHelper(
+      llvm::StringLiteral name, const EnumValue<EnumT> (&args)[N],
+      std::index_sequence<Indices...> /*indices*/) -> EnumFlag<EnumT, N>;
 
   auto TestFlagImpl(const FlagMap& flags, const BooleanFlag* flag) const -> bool;
   auto GetStringFlagImpl(const FlagMap& flags, const StringFlag* flag) const
@@ -384,6 +313,132 @@ class SubcommandArgs : public Args {
   SubcommandEnum subcommand_;
   FlagMap subcommand_flags_;
 };
+
+struct Args::Flag {
+  llvm::StringLiteral name;
+  // llvm::StringLiteral short_name = "";
+
+  // The address of a flag is used as the identity after parsing.
+  Flag(const Flag&) = delete;
+};
+
+struct Args::BooleanFlag : Flag {
+  bool default_value = false;
+};
+
+constexpr inline auto Args::MakeBooleanFlag(llvm::StringLiteral name,
+                                     BooleanDefault defaults) -> BooleanFlag {
+  return {{.name = name}, defaults.default_value};
+}
+
+struct Args::StringFlag : Flag {
+  std::optional<llvm::StringLiteral> default_value = {};
+};
+
+constexpr inline auto Args::MakeStringFlag(llvm::StringLiteral name) -> StringFlag {
+  return {{.name = name}};
+}
+constexpr inline auto Args::MakeStringFlag(llvm::StringLiteral name,
+                                    StringDefault defaults) -> StringFlag {
+  return {{.name = name}, {defaults.default_value}};
+}
+
+struct Args::IntFlag : Flag {
+  std::optional<ssize_t> default_value = {};
+};
+
+constexpr inline auto Args::MakeIntFlag(llvm::StringLiteral name) -> IntFlag {
+  return {{.name = name}};
+}
+constexpr inline auto Args::MakeIntFlag(llvm::StringLiteral name, IntDefault defaults)
+    -> IntFlag {
+  return {{.name = name}, {defaults.default_value}};
+}
+
+template <typename EnumT>
+struct Args::EnumValue {
+  llvm::StringLiteral name;
+  EnumT value;
+};
+
+template <typename EnumT, ssize_t N>
+struct Args::EnumFlag : Flag {
+  std::array<EnumValue<EnumT>, N> values;
+
+  std::optional<EnumT> default_value = {};
+};
+
+template <typename EnumT, ssize_t N, size_t... Indices>
+constexpr inline auto Args::MakeEnumFlagHelper(
+    llvm::StringLiteral name, const EnumValue<EnumT> (&args)[N],
+    std::index_sequence<Indices...> /*indices*/) -> EnumFlag<EnumT, N> {
+  return {{.name = name}, {args[Indices]...}};
+}
+
+template <typename EnumT, ssize_t N>
+constexpr inline auto Args::MakeEnumFlag(llvm::StringLiteral name,
+                                   const EnumValue<EnumT> (&args)[N])
+    -> EnumFlag<EnumT, N> {
+  return MakeEnumFlagHelper(name, args, std::make_index_sequence<N>{});
+}
+
+struct Args::StringListFlag : Flag {
+  llvm::ArrayRef<llvm::StringLiteral> default_values = {};
+};
+
+constexpr inline auto Args::MakeStringListFlag(llvm::StringLiteral name,
+                                               StringListDefault defaults)
+    -> StringListFlag {
+  return {{.name = name}, defaults.default_values};
+}
+
+template <typename... Ts>
+struct Args::Command {
+  llvm::StringLiteral name;
+
+  std::tuple<const Ts*...> flags = {};
+
+  CommandInfo info;
+};
+
+template <typename... Ts>
+constexpr inline auto Args::MakeCommand(llvm::StringLiteral name,
+                                        const Ts*... flags) -> Command<Ts...> {
+  return {.name = name, .flags = std::tuple{flags...}, .info = {}};
+}
+
+template <typename... Ts>
+constexpr inline auto Args::MakeCommand(llvm::StringLiteral name,
+                                        CommandInfo info, const Ts*... flags)
+    -> Command<Ts...> {
+  return {.name = name, .flags = std::tuple{flags...}, .info = info};
+}
+
+template <typename EnumT, typename... FlagTs>
+struct Args::Subcommand : Command<FlagTs...> {
+  static_assert(std::is_enum_v<EnumT>,
+                "Must provide an enum type to enumerate subcommands.");
+  using Enum = EnumT;
+  EnumT enumerator;
+};
+
+template <typename EnumT, typename... FlagTs>
+constexpr inline auto Args::MakeSubcommand(llvm::StringLiteral name,
+                                           EnumT enumerator,
+                                           const FlagTs*... flags)
+    -> Subcommand<EnumT, FlagTs...> {
+  return {{.name = name, .flags = std::tuple{flags...}, .info = {}},
+          enumerator};
+}
+
+template <typename EnumT, typename... FlagTs>
+constexpr inline auto Args::MakeSubcommand(llvm::StringLiteral name,
+                                           EnumT enumerator, CommandInfo info,
+                                           const FlagTs*... flags)
+    -> Subcommand<EnumT, FlagTs...> {
+  return {{.name = name, .flags = std::tuple{flags...}, .info = info},
+          enumerator};
+}
 
 namespace Detail {
 

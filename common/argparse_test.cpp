@@ -15,7 +15,6 @@ namespace {
 
 using ::testing::ElementsAre;
 using ::testing::Eq;
-using ::testing::Ne;
 using ::testing::StrEq;
 using ::testing::Optional;
 
@@ -26,11 +25,6 @@ constexpr auto TestCommand =
     Args::MakeCommand("command", &TestFlag1, &TestFlag2);
 
 TEST(ArgParserTest, GlobalCommand) {
-  ASSERT_THAT(reinterpret_cast<uintptr_t>(&TestFlag1),
-              Ne(reinterpret_cast<uintptr_t>(&TestFlag2)));
-  ASSERT_THAT(static_cast<const Args::Flag*>(&TestFlag1),
-              Ne(static_cast<const Args::Flag*>(&TestFlag2)));
-
   auto args = Args::Parse(
       {"--flag1", "a", "--flag2=test", "b", "c", "--", "--x--"}, llvm::errs(),
       TestCommand);
@@ -91,7 +85,7 @@ constexpr auto TestCommand2 =
 constexpr auto TestSub3 = Args::MakeSubcommand(
     "sub3", Subcommands::Sub3, &TestSubFlag1, &TestSubFlag2, &TestFlag3, &TestFlag4);
 
-TEST(ArgParserTest, Defaults) {
+TEST(ArgParserTest, GlobalDefaults) {
   auto args = Args::Parse({"sub3", "a", "b", "c"},
       llvm::errs(), TestCommand2, TestSub1, TestSub2, TestSub3);
   EXPECT_TRUE(args);
@@ -122,24 +116,24 @@ TEST(ArgParserTest, DefaultsWithExplictFlags) {
 }
 
 TEST(ArgParserTest, IntFlags) {
-  constexpr static auto TestIntFlag = Args::MakeIntFlag("int-flag");
-  constexpr static auto TestIntFlagWithDefault =
+  constexpr static auto Flag = Args::MakeIntFlag("int-flag");
+  constexpr static auto FlagWithDefault =
       Args::MakeIntFlag("int-defaulted-flag", {.default_value = 42});
 
-  constexpr auto TestCommandWithIntFlags =
-      Args::MakeCommand("command", &TestIntFlag, &TestIntFlagWithDefault);
-  constexpr auto TestSubWithIntFlags = Args::MakeSubcommand(
-      "sub", Subcommands::Sub1, &TestIntFlag, &TestIntFlagWithDefault);
+  constexpr auto Command =
+      Args::MakeCommand("command", &Flag, &FlagWithDefault);
+  constexpr auto Subcommand =
+      Args::MakeSubcommand("sub", Subcommands::Sub1, &Flag, &FlagWithDefault);
 
   auto args = Args::Parse(
       {"--int-flag=1", "sub", "--int-flag=2", "--int-defaulted-flag=3"},
-      llvm::errs(), TestCommandWithIntFlags, TestSubWithIntFlags);
+      llvm::errs(), Command, Subcommand);
   EXPECT_TRUE(args);
-  EXPECT_THAT(args.GetIntFlag(&TestIntFlag), Optional(Eq(1)));
-  EXPECT_THAT(args.GetIntFlag(&TestIntFlagWithDefault), Optional(Eq(42)));
+  EXPECT_THAT(args.GetIntFlag(&Flag), Optional(Eq(1)));
+  EXPECT_THAT(args.GetIntFlag(&FlagWithDefault), Optional(Eq(42)));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub1));
-  EXPECT_THAT(args.GetSubcommandIntFlag(&TestIntFlag), Optional(Eq(2)));
-  EXPECT_THAT(args.GetSubcommandIntFlag(&TestIntFlagWithDefault), Optional(Eq(3)));
+  EXPECT_THAT(args.GetSubcommandIntFlag(&Flag), Optional(Eq(2)));
+  EXPECT_THAT(args.GetSubcommandIntFlag(&FlagWithDefault), Optional(Eq(3)));
 }
 
 TEST(ArgParserTest, EnumFlags) {
@@ -149,66 +143,58 @@ TEST(ArgParserTest, EnumFlags) {
     Val3,
   };
 
-  constexpr static auto TestEnumFlag1 = Args::MakeEnumFlag<FlagEnum>(
+  constexpr static auto Flag = Args::MakeEnumFlag<FlagEnum>(
       "enum-flag1", {
                         {.name = "val1", .value = FlagEnum::Val1},
                         {.name = "val2", .value = FlagEnum::Val2},
                         {.name = "val3", .value = FlagEnum::Val3},
                     });
 
-  constexpr auto TestCommandWithEnumFlag =
-      Args::MakeCommand("command", &TestEnumFlag1);
-  constexpr auto TestSubWithEnumFlag =
-      Args::MakeSubcommand("sub", Subcommands::Sub1, &TestEnumFlag1);
-  auto args = Args::Parse(
-      {"--enum-flag1=val1", "sub", "--enum-flag1=val2"},
-      llvm::errs(), TestCommandWithEnumFlag, TestSubWithEnumFlag);
+  constexpr auto Command = Args::MakeCommand("command", &Flag);
+  constexpr auto Subcommand =
+      Args::MakeSubcommand("sub", Subcommands::Sub1, &Flag);
+  auto args = Args::Parse({"--enum-flag1=val1", "sub", "--enum-flag1=val2"},
+                          llvm::errs(), Command, Subcommand);
 
   EXPECT_TRUE(args);
-  EXPECT_THAT(args.GetEnumFlag(&TestEnumFlag1), Optional(Eq(FlagEnum::Val1)));
+  EXPECT_THAT(args.GetEnumFlag(&Flag), Optional(Eq(FlagEnum::Val1)));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub1));
-  EXPECT_THAT(args.GetSubcommandEnumFlag(&TestEnumFlag1),
-              Optional(Eq(FlagEnum::Val2)));
+  EXPECT_THAT(args.GetSubcommandEnumFlag(&Flag), Optional(Eq(FlagEnum::Val2)));
 }
 
 TEST(ArgParserTest, StringListFlag) {
-  constexpr static auto TestStringListFlag1 =
-      Args::MakeStringListFlag("strings1");
+  constexpr static auto Flag = Args::MakeStringListFlag("strings1");
 
-  constexpr auto TestCommandWithStringListFlag =
-      Args::MakeCommand("command", &TestStringListFlag1);
-  constexpr auto TestSubWithStringListFlag =
-      Args::MakeSubcommand("sub", Subcommands::Sub1, &TestStringListFlag1);
+  constexpr auto Command = Args::MakeCommand("command", &Flag);
+  constexpr auto Subcommand =
+      Args::MakeSubcommand("sub", Subcommands::Sub1, &Flag);
 
   auto args = Args::Parse({"--strings1=a", "--strings1=b", "sub",
                            "--strings1=a", "--strings1=b", "--strings1=c"},
-                          llvm::errs(), TestCommandWithStringListFlag,
-                          TestSubWithStringListFlag);
+                          llvm::errs(), Command, Subcommand);
   EXPECT_TRUE(args);
-  EXPECT_THAT(args.GetStringListFlag(&TestStringListFlag1),
+  EXPECT_THAT(args.GetStringListFlag(&Flag),
               ElementsAre(StrEq("a"), StrEq("b")));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub1));
-  EXPECT_THAT(args.GetSubcommandStringListFlag(&TestStringListFlag1),
+  EXPECT_THAT(args.GetSubcommandStringListFlag(&Flag),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c")));
 }
 
 TEST(ArgParserTest, StringListFlagDefaults) {
   constexpr static llvm::StringLiteral DefaultValues[] = {"a", "b", "c"};
-  constexpr static auto TestStringListFlag1 =
+  constexpr static auto Flag =
       Args::MakeStringListFlag("strings1", {.default_values = DefaultValues});
 
-  constexpr auto TestCommandWithStringListFlag =
-      Args::MakeCommand("command", &TestStringListFlag1);
-  constexpr auto TestSubWithStringListFlag =
-      Args::MakeSubcommand("sub", Subcommands::Sub1, &TestStringListFlag1);
+  constexpr auto Command = Args::MakeCommand("command", &Flag);
+  constexpr auto Subcommand =
+      Args::MakeSubcommand("sub", Subcommands::Sub1, &Flag);
 
-  auto args = Args::Parse({"sub"}, llvm::errs(), TestCommandWithStringListFlag,
-                          TestSubWithStringListFlag);
+  auto args = Args::Parse({"sub"}, llvm::errs(), Command, Subcommand);
   EXPECT_TRUE(args);
-  EXPECT_THAT(args.GetStringListFlag(&TestStringListFlag1),
+  EXPECT_THAT(args.GetStringListFlag(&Flag),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c")));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub1));
-  EXPECT_THAT(args.GetSubcommandStringListFlag(&TestStringListFlag1),
+  EXPECT_THAT(args.GetSubcommandStringListFlag(&Flag),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c")));
 }
 
