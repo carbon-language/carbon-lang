@@ -134,14 +134,14 @@ constexpr auto TestSubWithIntFlags = ArgParser::MakeSubcommand(
 
 TEST(ArgParserTest, IntFlags) {
   auto args = ArgParser::Parse(
-      {"--int-flag=1", "sub", "--int-flag=2", "--int-defaulted_flag=3"},
+      {"--int-flag=1", "sub", "--int-flag=2", "--int-defaulted-flag=3"},
       llvm::errs(), TestCommandWithIntFlags, TestSubWithIntFlags);
   EXPECT_TRUE(args);
   EXPECT_THAT(args.GetIntFlag(&TestIntFlag), Optional(Eq(1)));
   EXPECT_THAT(args.GetIntFlag(&TestIntFlagWithDefault), Optional(Eq(42)));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub1));
-  EXPECT_THAT(args.GetSubcommandIntFlag(&TestIntFlag), Optional(Eq(1)));
-  EXPECT_THAT(args.GetSubcommandIntFlag(&TestIntFlagWithDefault), Optional(Eq(42)));
+  EXPECT_THAT(args.GetSubcommandIntFlag(&TestIntFlag), Optional(Eq(2)));
+  EXPECT_THAT(args.GetSubcommandIntFlag(&TestIntFlagWithDefault), Optional(Eq(3)));
 }
 
 enum class FlagEnum {

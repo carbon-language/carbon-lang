@@ -31,6 +31,19 @@ auto Args::GetStringFlagImpl(const FlagMap& flags, const StringFlag* flag) const
   return string_flag_values_[flag_iterator->second.value_index];
 }
 
+auto Args::GetIntFlagImpl(const FlagMap& flags, const IntFlag* flag) const
+    -> std::optional<ssize_t> {
+  auto flag_iterator = flags.find(flag);
+  if (flag_iterator == flags.end()) {
+    // No value for this flag.
+    return {};
+  }
+  FlagKind kind = flag_iterator->second.kind;
+  CARBON_CHECK(kind == FlagKind::Int)
+      << "Flag '" << flag->name << "' has inconsistent kinds";
+  return int_flag_values_[flag_iterator->second.value_index];
+}
+
 auto Args::GetStringListFlagImpl(const FlagMap& flags,
                                  const StringListFlag* flag) const
     -> llvm::ArrayRef<llvm::StringRef> {
