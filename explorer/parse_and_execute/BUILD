@@ -16,8 +16,19 @@ cc_library(
         "//common:error",
         "//explorer/common:trace_stream",
         "//explorer/interpreter:exec_program",
+        "//explorer/interpreter:stack_space",
         "//explorer/syntax",
         "//explorer/syntax:prelude",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "parse_and_execute_test",
+    srcs = ["parse_and_execute_test.cpp"],
+    deps = [
+        ":parse_and_execute",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
