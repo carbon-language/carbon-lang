@@ -279,14 +279,14 @@ class SubcommandArgs : public Args {
     return TestFlagImpl(subcommand_flags_, flag);
   }
 
-  // Get's a subcommand string flag's value if available, whether via a default
+  // Gets a subcommand string flag's value if available, whether via a default
   // or explicitly set value. If unavailable, returns an empty optional.
   auto GetSubcommandStringFlag(const StringFlag* flag) const
       -> std::optional<llvm::StringRef> {
     return GetStringFlagImpl(subcommand_flags_, flag);
   }
 
-  // Get's a subcommand int flag's value if available, whether via a default
+  // Gets a subcommand int flag's value if available, whether via a default
   // or explicitly set value. If unavailable, returns an empty optional.
   auto GetSubcommandIntFlag(const IntFlag* flag) const
       -> std::optional<ssize_t> {
