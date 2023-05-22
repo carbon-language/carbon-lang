@@ -74,7 +74,7 @@ class NameResolver {
   // such as a namespace.
   auto ResolveNames(Expression& expression, const StaticScope& enclosing_scope)
       -> ErrorOr<std::optional<ValueNodeView>>;
-  // For ReserveStackIfExhaustedAndRun.
+  // For RunWithExtraStack.
   auto ResolveNamesImpl(Expression& expression,
                         const StaticScope& enclosing_scope)
       -> ErrorOr<std::optional<ValueNodeView>>;
@@ -83,7 +83,7 @@ class NameResolver {
   // enclosing scope.
   auto ResolveNames(WhereClause& clause, const StaticScope& enclosing_scope)
       -> ErrorOr<Success>;
-  // For ReserveStackIfExhaustedAndRun.
+  // For RunWithExtraStack.
   auto ResolveNamesImpl(WhereClause& clause, const StaticScope& enclosing_scope)
       -> ErrorOr<Success>;
 
@@ -91,7 +91,7 @@ class NameResolver {
   // any introduced names.
   auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
       -> ErrorOr<Success>;
-  // For ReserveStackIfExhaustedAndRun.
+  // For RunWithExtraStack.
   auto ResolveNamesImpl(Pattern& pattern, StaticScope& enclosing_scope)
       -> ErrorOr<Success>;
 
@@ -99,7 +99,7 @@ class NameResolver {
   // with any names introduced by declaration statements.
   auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
       -> ErrorOr<Success>;
-  // For ReserveStackIfExhaustedAndRun.
+  // For RunWithExtraStack.
   auto ResolveNamesImpl(Statement& statement, StaticScope& enclosing_scope)
       -> ErrorOr<Success>;
 
@@ -108,7 +108,7 @@ class NameResolver {
   // present.
   auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
                     ResolveFunctionBodies bodies) -> ErrorOr<Success>;
-  // For ReserveStackIfExhaustedAndRun.
+  // For RunWithExtraStack.
   auto ResolveNamesImpl(Declaration& declaration, StaticScope& enclosing_scope,
                         ResolveFunctionBodies bodies) -> ErrorOr<Success>;
 
@@ -276,7 +276,7 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
 auto NameResolver::ResolveNames(Expression& expression,
                                 const StaticScope& enclosing_scope)
     -> ErrorOr<std::optional<ValueNodeView>> {
-  return ReserveStackIfExhaustedAndRun<ErrorOr<std::optional<ValueNodeView>>>(
+  return RunWithExtraStack<ErrorOr<std::optional<ValueNodeView>>>(
       [&]() { return ResolveNamesImpl(expression, enclosing_scope); });
 }
 
@@ -461,7 +461,7 @@ auto NameResolver::ResolveNamesImpl(Expression& expression,
 auto NameResolver::ResolveNames(WhereClause& clause,
                                 const StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
-  return ReserveStackIfExhaustedAndRun<ErrorOr<Success>>(
+  return RunWithExtraStack<ErrorOr<Success>>(
       [&]() { return ResolveNamesImpl(clause, enclosing_scope); });
 }
 
@@ -497,7 +497,7 @@ auto NameResolver::ResolveNamesImpl(WhereClause& clause,
 
 auto NameResolver::ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
-  return ReserveStackIfExhaustedAndRun<ErrorOr<Success>>(
+  return RunWithExtraStack<ErrorOr<Success>>(
       [&]() { return ResolveNamesImpl(pattern, enclosing_scope); });
 }
 
@@ -558,7 +558,7 @@ auto NameResolver::ResolveNamesImpl(Pattern& pattern,
 auto NameResolver::ResolveNames(Statement& statement,
                                 StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
-  return ReserveStackIfExhaustedAndRun<ErrorOr<Success>>(
+  return RunWithExtraStack<ErrorOr<Success>>(
       [&]() { return ResolveNamesImpl(statement, enclosing_scope); });
 }
 
@@ -702,7 +702,7 @@ auto NameResolver::ResolveNames(Declaration& declaration,
                                 StaticScope& enclosing_scope,
                                 ResolveFunctionBodies bodies)
     -> ErrorOr<Success> {
-  return ReserveStackIfExhaustedAndRun<ErrorOr<Success>>(
+  return RunWithExtraStack<ErrorOr<Success>>(
       [&]() { return ResolveNamesImpl(declaration, enclosing_scope, bodies); });
 }
 
@@ -925,24 +925,22 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
 }
 
 auto ResolveNames(AST& ast) -> ErrorOr<Success> {
-  return ReserveStackIfExhaustedAndRun<ErrorOr<Success>>(
-      [&]() -> ErrorOr<Success> {
-        NameResolver resolver;
+  return RunWithExtraStack<ErrorOr<Success>>([&]() -> ErrorOr<Success> {
+    NameResolver resolver;
 
-        StaticScope file_scope;
-        for (auto* declaration : ast.declarations) {
-          CARBON_RETURN_IF_ERROR(resolver.AddExposedNames(
-              *declaration, file_scope, /*allow_qualified_names=*/true));
-        }
-        for (auto* declaration : ast.declarations) {
-          CARBON_RETURN_IF_ERROR(resolver.ResolveNames(
-              *declaration, file_scope,
-              NameResolver::ResolveFunctionBodies::AfterDeclarations));
-        }
-        CARBON_RETURN_IF_ERROR(
-            resolver.ResolveNames(**ast.main_call, file_scope));
-        return Success();
-      });
+    StaticScope file_scope;
+    for (auto* declaration : ast.declarations) {
+      CARBON_RETURN_IF_ERROR(resolver.AddExposedNames(
+          *declaration, file_scope, /*allow_qualified_names=*/true));
+    }
+    for (auto* declaration : ast.declarations) {
+      CARBON_RETURN_IF_ERROR(resolver.ResolveNames(
+          *declaration, file_scope,
+          NameResolver::ResolveFunctionBodies::AfterDeclarations));
+    }
+    CARBON_RETURN_IF_ERROR(resolver.ResolveNames(**ast.main_call, file_scope));
+    return Success();
+  });
 }
 
 }  // namespace Carbon

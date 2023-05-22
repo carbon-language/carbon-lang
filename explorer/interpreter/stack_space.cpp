@@ -31,7 +31,7 @@ auto IsStackSpaceNearlyExhausted() -> bool {
          (DesiredStackSpace - SufficientStack);
 }
 
-auto ReserveStackAndRunHelper(llvm::function_ref<void()> fn) -> void {
+auto RunWithExtraStackHelper(llvm::function_ref<void()> fn) -> void {
   llvm::CrashRecoveryContext context;
   context.RunSafelyOnThread(
       [&] {

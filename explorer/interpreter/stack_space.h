@@ -17,24 +17,24 @@ namespace Internal {
 auto IsStackSpaceNearlyExhausted() -> bool;
 
 // Starts a thread to run the function.
-auto ReserveStackAndRunHelper(llvm::function_ref<void()> fn) -> void;
+auto RunWithExtraStackHelper(llvm::function_ref<void()> fn) -> void;
 
 }  // namespace Internal
 
-// Runs a function. May start a new thread for the function if too much stack
-// space has been consumed since the last time a thread was spawned. Always
-// spawns a new thread when it didn't create the current thread.
+// Runs `fn` after ensuring there is a reasonable amount of space left on the
+// stack for it to run in. This will run `fn` in a separate thread if there is
+// not enough space left on the current stack, or if RunWithExtraStack didn't
+// create the current thread.
 //
 // Usage:
-//   return ReserveStackIfExhaustedAndRun<ReturnType>([&]() -> ReturnType {
+//   return RunWithExtraStack<ReturnType>([&]() -> ReturnType {
 //         <function body>
 //       });
 template <typename ReturnType>
-auto ReserveStackIfExhaustedAndRun(llvm::function_ref<ReturnType()> fn)
-    -> ReturnType {
+auto RunWithExtraStack(llvm::function_ref<ReturnType()> fn) -> ReturnType {
   if (Internal::IsStackSpaceNearlyExhausted()) {
     std::optional<ReturnType> result;
-    Internal::ReserveStackAndRunHelper([&] { result = fn(); });
+    Internal::RunWithExtraStackHelper([&] { result = fn(); });
     return std::move(*result);
   } else {
     return fn();
