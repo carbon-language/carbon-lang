@@ -421,6 +421,11 @@ primary_expression:
       $$ = arena->New<ArrayTypeLiteral>(context.source_loc(),
                                         $[type_expression], $[size_expression]);
     }
+| LEFT_SQUARE_BRACKET expression[type_expression] SEMICOLON RIGHT_SQUARE_BRACKET
+    {
+      $$ = arena->New<ArrayTypeLiteral>(context.source_loc(),
+                                        $[type_expression]);
+    }
 ;
 postfix_expression:
   primary_expression
