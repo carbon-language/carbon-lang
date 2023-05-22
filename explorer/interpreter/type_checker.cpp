@@ -66,14 +66,11 @@ auto TypeChecker::ExpectOneOfTypes(SourceLocation source_loc,
     }
   }
   if (!match) {
-    auto res = ProgramError(source_loc) << "type error in " << context << "\n"
-                                        << "expected:";
-    for (Nonnull<const Value*> expect : expected) {
-      res << " " << *expect;
-    }
-    res << "\n";
-    res << "actual: " << *actual;
-    return res;
+    return ProgramError(source_loc) << "type error in " << context << "\n"
+                                    << "expected: "
+                                    << "i32 or f64"
+                                    << "\n"
+                                    << "actual: " << *actual;
   }
   return Success();
 }
@@ -3656,10 +3653,11 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               e->source_loc(), "Print argument 0", arena_->New<StringType>(),
               &args[0]->static_type(), impl_scope));
           if (args.size() >= 2) {
-            CARBON_RETURN_IF_ERROR(ExpectOneOfTypes(
-                e->source_loc(), "Print argument 1",
-                {arena_->New<IntType>(), arena_->New<RealType>()},
-                &args[1]->static_type(), impl_scope));
+            std::vector<Nonnull<const Value*>> expected = {
+                arena_->New<IntType>(), arena_->New<RealType>()};
+            CARBON_RETURN_IF_ERROR(
+                ExpectOneOfTypes(e->source_loc(), "Print argument 1", expected,
+                                 &args[1]->static_type(), impl_scope));
           }
           e->set_static_type(TupleType::Empty());
           e->set_expression_category(ExpressionCategory::Value);
