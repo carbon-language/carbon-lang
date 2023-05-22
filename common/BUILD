@@ -8,7 +8,11 @@ cc_library(
     name = "argparse",
     srcs = ["argparse.cpp"],
     hdrs = ["argparse.h"],
-    deps = ["@llvm-project//llvm:Support"],
+    deps = [
+        ":check",
+        ":ostream",
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_test(
