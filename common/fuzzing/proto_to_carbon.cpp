@@ -360,6 +360,15 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
       break;
     }
 
+    case Fuzzing::Expression::kRealTypeLiteral:
+      out << "f64";
+      break;
+
+    case Fuzzing::Expression::kRealLiteral: {
+      out << expression.real_literal().value();
+      break;
+    }
+
     case Fuzzing::Expression::kStringLiteral:
       StringLiteralToCarbon(expression.string_literal().value(), out);
       break;

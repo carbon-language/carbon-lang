@@ -135,6 +135,7 @@ identifier            [A-Za-z_][A-Za-z0-9_]*
 intrinsic_identifier  (Print|__intrinsic_[A-Za-z0-9_]*)
 sized_type_literal    [iuf][1-9][0-9]*
 integer_literal       [0-9]+
+real_literal          [0-9]+\.[0-9]+
 horizontal_whitespace [ \t\r]
 whitespace            [ \t\r\n]
 one_line_comment      \/\/[^\n]*\n
@@ -328,6 +329,16 @@ operand_start         [(A-Za-z0-9_\"]
         llvm::formatv("Invalid integer literal: {0}", yytext));
   }
   return CARBON_ARG_TOKEN(integer_literal, val);
+}
+
+{real_literal} {
+  BEGIN(AFTER_OPERAND);
+  double val = 0;
+  if (!llvm::to_float(yytext, val)) {
+    return context.RecordSyntaxError(
+        llvm::formatv("Invalid real literal: {0}", yytext));
+  }
+  return CARBON_ARG_TOKEN(real_literal, val);
 }
 
 #*\" {

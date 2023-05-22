@@ -52,6 +52,31 @@ auto TypeChecker::IsSameType(Nonnull<const Value*> type1,
   return TypeEqual(type1, type2, std::nullopt);
 }
 
+auto TypeChecker::ExpectOneOfTypes(SourceLocation source_loc,
+                                   std::string_view context,
+                                   std::vector<Nonnull<const Value*>> expected,
+                                   Nonnull<const Value*> actual,
+                                   const ImplScope& impl_scope) const
+    -> ErrorOr<Success> {
+  bool match = false;
+  for (Nonnull<const Value*> expect : expected) {
+    if (IsSameType(expect, actual, impl_scope)) {
+      match = true;
+      break;
+    }
+  }
+  if (!match) {
+    auto res = ProgramError(source_loc) << "type error in " << context << "\n"
+                                        << "expected:";
+    for (Nonnull<const Value*> expect : expected) {
+      res << " " << *expect;
+    }
+    res << "\n";
+    res << "actual: " << *actual;
+    return res;
+  }
+  return Success();
+}
 auto TypeChecker::ExpectExactType(SourceLocation source_loc,
                                   std::string_view context,
                                   Nonnull<const Value*> expected,
@@ -84,6 +109,7 @@ static auto ExpectPointerType(SourceLocation source_loc,
 static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::BoundMethodValue:
@@ -108,6 +134,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
       // These are values, not types.
       return false;
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::FunctionType:
     case Value::Kind::PointerType:
@@ -144,6 +171,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
 static auto IsType(Nonnull<const Value*> value) -> bool {
   switch (value->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
@@ -167,6 +195,7 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::MemberName:
       return false;
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::PointerType:
@@ -213,6 +242,7 @@ static auto ExpectCompleteType(SourceLocation source_loc,
 
   switch (type->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
@@ -238,6 +268,7 @@ static auto ExpectCompleteType(SourceLocation source_loc,
       CARBON_FATAL() << "should not see non-type values";
 
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::StringType:
     case Value::Kind::PointerType:
@@ -325,6 +356,7 @@ static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
 
   switch (type->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
@@ -349,6 +381,7 @@ static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
     case Value::Kind::MixinPseudoType:
       CARBON_FATAL() << "non-type value";
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::VariableType:
@@ -1237,6 +1270,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::ConstraintType:
     case Value::Kind::AssociatedConstant:
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
@@ -1252,6 +1286,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::BoolValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
@@ -3285,6 +3320,10 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       e->set_expression_category(ExpressionCategory::Value);
       e->set_static_type(arena_->New<IntType>());
       return Success();
+    case ExpressionKind::RealLiteral:
+      e->set_expression_category(ExpressionCategory::Value);
+      e->set_static_type(arena_->New<RealType>());
+      return Success();
     case ExpressionKind::BoolLiteral:
       e->set_expression_category(ExpressionCategory::Value);
       e->set_static_type(arena_->New<BoolType>());
@@ -3617,8 +3656,9 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
               e->source_loc(), "Print argument 0", arena_->New<StringType>(),
               &args[0]->static_type(), impl_scope));
           if (args.size() >= 2) {
-            CARBON_RETURN_IF_ERROR(ExpectExactType(
-                e->source_loc(), "Print argument 1", arena_->New<IntType>(),
+            CARBON_RETURN_IF_ERROR(ExpectOneOfTypes(
+                e->source_loc(), "Print argument 1",
+                {arena_->New<IntType>(), arena_->New<RealType>()},
                 &args[1]->static_type(), impl_scope));
           }
           e->set_static_type(TupleType::Empty());
@@ -3793,6 +3833,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
       }
     }
     case ExpressionKind::IntTypeLiteral:
+    case ExpressionKind::RealTypeLiteral:
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
@@ -5849,6 +5890,7 @@ auto TypeChecker::TypeCheckChoiceDeclaration(
 static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
   switch (type->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
@@ -5879,6 +5921,7 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
       CARBON_FATAL() << "pattern type in alias target";
 
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::PointerType:
     case Value::Kind::StaticArrayType:

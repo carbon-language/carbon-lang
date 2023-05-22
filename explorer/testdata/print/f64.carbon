@@ -3,12 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: Printing 1.10
+// CHECK:STDOUT: Printing 1.01
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/print/fail_type.carbon:[[@LINE+2]]: type error in Print argument 1
-  // CHECK:STDERR: expected:
-  Print("{0}", {.x = 1});
+  Print("Printing {0}", 1.1);
+  Print("Printing {0}", 1.01);
   return 0;
 }

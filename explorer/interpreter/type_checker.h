@@ -446,6 +446,13 @@ class TypeChecker {
   auto IsSameType(Nonnull<const Value*> type1, Nonnull<const Value*> type2,
                   const ImplScope& impl_scope) const -> bool;
 
+  // Check whether `actual` is one of types in `expected` and halt with a
+  // fatal compilation error if it is not.
+  auto ExpectOneOfTypes(SourceLocation source_loc, std::string_view context,
+                        std::vector<Nonnull<const Value*>> expected,
+                        Nonnull<const Value*> actual,
+                        const ImplScope& impl_scope) const -> ErrorOr<Success>;
+
   // Check whether `actual` is the same type as `expected` and halt with a
   // fatal compilation error if it is not.
   auto ExpectExactType(SourceLocation source_loc, std::string_view context,

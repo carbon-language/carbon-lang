@@ -122,6 +122,8 @@
   FINAL(IndexExpression)                               \
   FINAL(IntTypeLiteral)                                \
   FINAL(IntLiteral)                                    \
+  FINAL(RealTypeLiteral)                               \
+  FINAL(RealLiteral)                                   \
   FINAL(OperatorExpression)                            \
   FINAL(StringLiteral)                                 \
   FINAL(StringTypeLiteral)                             \

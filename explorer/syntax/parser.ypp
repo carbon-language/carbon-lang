@@ -92,6 +92,7 @@
 }  // %code
 
 %token <int> integer_literal
+%token <double> real_literal
 %token <std::string> identifier
 %token <IntrinsicExpression::Intrinsic> intrinsic_identifier
 %token <std::string> sized_type_literal
@@ -381,6 +382,8 @@ primary_expression:
     { $$ = arena->New<DotSelfExpression>(context.source_loc()); }
 | integer_literal
     { $$ = arena->New<IntLiteral>(context.source_loc(), $[integer_literal]); }
+| real_literal
+    { $$ = arena->New<RealLiteral>(context.source_loc(), $[real_literal]); }
 | string_literal
     { $$ = arena->New<StringLiteral>(context.source_loc(), $[string_literal]); }
 | TRUE
@@ -395,12 +398,15 @@ primary_expression:
         context.RecordSyntaxError(
             llvm::formatv("Invalid type literal: {0}", $[sized_type_literal]));
         YYERROR;
-      } else if ($[sized_type_literal][0] != 'i' || val != 32) {
-        context.RecordSyntaxError(llvm::formatv(
-            "Only i32 is supported for now: {0}", $[sized_type_literal]));
-        YYERROR;
-      } else {
+      } else if ($[sized_type_literal][0] == 'i' && val == 32) {
         $$ = arena->New<IntTypeLiteral>(context.source_loc());
+      } else if ($[sized_type_literal][0] == 'f' && val == 64) {
+        $$ = arena->New<RealTypeLiteral>(context.source_loc());
+      } else {
+        context.RecordSyntaxError(
+            llvm::formatv("Only i32 and f64 is supported for now: {0}",
+                          $[sized_type_literal]));
+        YYERROR;
       }
     }
 | SELF

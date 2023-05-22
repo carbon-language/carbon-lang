@@ -11,6 +11,7 @@
 #endif
 
 CARBON_VALUE_KIND(IntValue)
+CARBON_VALUE_KIND(RealValue)
 CARBON_VALUE_KIND(FunctionValue)
 CARBON_VALUE_KIND(DestructorValue)
 CARBON_VALUE_KIND(BoundMethodValue)
@@ -27,6 +28,7 @@ CARBON_VALUE_KIND(BindingWitness)
 CARBON_VALUE_KIND(ConstraintWitness)
 CARBON_VALUE_KIND(ConstraintImplWitness)
 CARBON_VALUE_KIND(IntType)
+CARBON_VALUE_KIND(RealType)
 CARBON_VALUE_KIND(BoolType)
 CARBON_VALUE_KIND(TypeType)
 CARBON_VALUE_KIND(FunctionType)

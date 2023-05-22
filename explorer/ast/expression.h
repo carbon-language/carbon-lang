@@ -515,6 +515,24 @@ class IntLiteral : public Expression {
   int value_;
 };
 
+class RealLiteral : public Expression {
+ public:
+  explicit RealLiteral(SourceLocation source_loc, double value)
+      : Expression(AstNodeKind::RealLiteral, source_loc), value_(value) {}
+
+  explicit RealLiteral(CloneContext& context, const RealLiteral& other)
+      : Expression(context, other), value_(other.value_) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromRealLiteral(node->kind());
+  }
+
+  auto value() const -> double { return value_; }
+
+ private:
+  double value_;
+};
+
 class BoolLiteral : public Expression {
  public:
   explicit BoolLiteral(SourceLocation source_loc, bool value)
@@ -814,6 +832,19 @@ class IntTypeLiteral : public Expression {
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromIntTypeLiteral(node->kind());
+  }
+};
+
+class RealTypeLiteral : public Expression {
+ public:
+  explicit RealTypeLiteral(SourceLocation source_loc)
+      : Expression(AstNodeKind::RealTypeLiteral, source_loc) {}
+
+  explicit RealTypeLiteral(CloneContext& context, const RealTypeLiteral& other)
+      : Expression(context, other) {}
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromRealTypeLiteral(node->kind());
   }
 };
 

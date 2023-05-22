@@ -119,6 +119,12 @@ message IntLiteral {
   optional int64 value = 1;
 }
 
+message RealTypeLiteral {}
+
+message RealLiteral {
+  optional double value = 1;
+}
+
 message StringLiteral {
   optional string value = 1;
 }
@@ -185,6 +191,8 @@ message Expression {
     CompoundMemberAccessExpression compound_member_access = 21;
     WhereExpression where = 22;
     DesignatorExpression designator = 23;
+    RealTypeLiteral real_type_literal = 24;
+    RealLiteral real_literal = 25;
   }
 }
 

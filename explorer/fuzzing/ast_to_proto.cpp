@@ -326,8 +326,17 @@ static auto ExpressionToProto(const Expression& expression)
       expression_proto.mutable_int_type_literal();
       break;
 
+    case ExpressionKind::RealTypeLiteral:
+      expression_proto.mutable_real_type_literal();
+      break;
+
     case ExpressionKind::IntLiteral:
       expression_proto.mutable_int_literal()->set_value(
+          cast<IntLiteral>(expression).value());
+      break;
+
+    case ExpressionKind::RealLiteral:
+      expression_proto.mutable_real_literal()->set_value(
           cast<IntLiteral>(expression).value());
       break;
 

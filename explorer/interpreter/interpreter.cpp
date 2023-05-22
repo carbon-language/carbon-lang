@@ -539,9 +539,11 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
     case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
     case ExpressionKind::IntLiteral:
+    case ExpressionKind::RealLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::CallExpression:
     case ExpressionKind::IntTypeLiteral:
+    case ExpressionKind::RealTypeLiteral:
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::FunctionTypeLiteral:
@@ -743,6 +745,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     -> ErrorOr<Nonnull<const Value*>> {
   switch (value->kind()) {
     case Value::Kind::IntValue:
+    case Value::Kind::RealValue:
     case Value::Kind::FunctionValue:
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
@@ -752,6 +755,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::AlternativeValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::IntType:
+    case Value::Kind::RealType:
     case Value::Kind::BoolType:
     case Value::Kind::TypeType:
     case Value::Kind::FunctionType:
@@ -1477,6 +1481,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       return todo_.FinishAction(
           arena_->New<IntValue>(cast<IntLiteral>(exp).value()));
+    case ExpressionKind::RealLiteral:
+      return todo_.FinishAction(
+          arena_->New<RealValue>(cast<RealLiteral>(exp).value()));
     case ExpressionKind::BoolLiteral:
       CARBON_CHECK(act.pos() == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
@@ -1584,9 +1591,13 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               if ((*args[1]).kind() == Value::Kind::UninitializedValue) {
                 return ProgramError(exp.source_loc())
                        << "Printing uninitialized value";
+              } else if ((*args[1]).kind() == Value::Kind::IntValue) {
+                *print_stream_ << llvm::formatv(
+                    format_string, cast<IntValue>(*args[1]).value());
+              } else if ((*args[1]).kind() == Value::Kind::RealValue) {
+                *print_stream_ << llvm::formatv(
+                    format_string, cast<RealValue>(*args[1]).value());
               }
-              *print_stream_ << llvm::formatv(format_string,
-                                              cast<IntValue>(*args[1]).value());
               break;
             }
             default:
@@ -1807,6 +1818,10 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::IntTypeLiteral: {
       CARBON_CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<IntType>());
+    }
+    case ExpressionKind::RealTypeLiteral: {
+      CARBON_CHECK(act.pos() == 0);
+      return todo_.FinishAction(arena_->New<RealType>());
     }
     case ExpressionKind::BoolTypeLiteral: {
       CARBON_CHECK(act.pos() == 0);
