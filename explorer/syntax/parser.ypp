@@ -1323,8 +1323,8 @@ function_declaration:
 ;
 variable_declaration: identifier COLON pattern
     {
-      $$ = arena->New<BindingPattern>(context.source_loc(), $1, $3,
-                                      std::nullopt);
+      $$ = arena->New<BindingPattern>(context.source_loc(), $[identifier],
+                                      $[pattern], std::nullopt);
     }
 ;
 alias_declaration: ALIAS declared_name EQUAL expression SEMICOLON
