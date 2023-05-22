@@ -383,13 +383,13 @@ constexpr inline auto Args::MakeEnumFlag(llvm::StringLiteral name,
 }
 
 struct Args::StringListFlag : Flag {
-  llvm::ArrayRef<llvm::StringLiteral> default_values = {};
+  std::optional<llvm::ArrayRef<llvm::StringLiteral>> default_value = {};
 };
 
 constexpr inline auto Args::MakeStringListFlag(llvm::StringLiteral name,
                                                StringListDefault defaults)
     -> StringListFlag {
-  return {{.name = name}, defaults.default_values};
+  return {{.name = name}, {defaults.default_values}};
 }
 
 template <typename... Ts>

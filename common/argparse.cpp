@@ -18,44 +18,43 @@ auto Args::TestFlagImpl(const FlagMap& flags, const BooleanFlag* flag) const -> 
   return flag_iterator->second.boolean_value;
 }
 
-auto Args::GetStringFlagImpl(const FlagMap& flags, const StringFlag* flag) const
-    -> std::optional<llvm::StringRef> {
+template <typename ValueT, typename FlagMapT, typename FlagT,
+          typename FlagKindT, typename ValuesT>
+static auto GetFlagGenericImpl(const FlagMapT& flags, const FlagT* flag,
+                               FlagKindT kind, const ValuesT& values)
+    -> std::optional<ValueT> {
   auto flag_iterator = flags.find(flag);
   if (flag_iterator == flags.end()) {
     // No value for this flag.
     return {};
   }
-  FlagKind kind = flag_iterator->second.kind;
-  CARBON_CHECK(kind == FlagKind::String)
-      << "Flag '" << flag->name << "' has inconsistent kinds";
-  return string_flag_values_[flag_iterator->second.value_index];
+  FlagKindT stored_kind = flag_iterator->second.kind;
+  CARBON_CHECK(stored_kind == kind)
+      << "Flag '" << flag->name << "' has inconsistent kinds: expected '"
+      << kind << "' but found '" << stored_kind << "'";
+  return values[flag_iterator->second.value_index];
+}
+
+auto Args::GetStringFlagImpl(const FlagMap& flags, const StringFlag* flag) const
+    -> std::optional<llvm::StringRef> {
+  return GetFlagGenericImpl<llvm::StringRef>(flags, flag, FlagKind::String,
+                                             string_flag_values_);
 }
 
 auto Args::GetIntFlagImpl(const FlagMap& flags, const IntFlag* flag) const
     -> std::optional<ssize_t> {
-  auto flag_iterator = flags.find(flag);
-  if (flag_iterator == flags.end()) {
-    // No value for this flag.
-    return {};
-  }
-  FlagKind kind = flag_iterator->second.kind;
-  CARBON_CHECK(kind == FlagKind::Int)
-      << "Flag '" << flag->name << "' has inconsistent kinds";
-  return int_flag_values_[flag_iterator->second.value_index];
+  return GetFlagGenericImpl<ssize_t>(flags, flag, FlagKind::Int,
+                                     int_flag_values_);
 }
 
 auto Args::GetStringListFlagImpl(const FlagMap& flags,
                                  const StringListFlag* flag) const
     -> llvm::ArrayRef<llvm::StringRef> {
-  auto flag_iterator = flags.find(flag);
-  if (flag_iterator == flags.end()) {
-    // An empty sequence is always used when list flags are absent.
-    return {};
+  if (auto flag_values = GetFlagGenericImpl<llvm::ArrayRef<llvm::StringRef>>(
+          flags, flag, FlagKind::StringList, string_list_flag_values_)) {
+    return *flag_values;
   }
-  FlagKind kind = flag_iterator->second.kind;
-  CARBON_CHECK(kind == FlagKind::StringList)
-      << "Flag '" << flag->name << "' has inconsistent kinds";
-  return string_list_flag_values_[flag_iterator->second.value_index];
+  return {};
 }
 
 void Args::AddFlagDefault(Args::FlagMap& flags, const BooleanFlag* flag) {
@@ -65,38 +64,30 @@ void Args::AddFlagDefault(Args::FlagMap& flags, const BooleanFlag* flag) {
   value.boolean_value = flag->default_value;
 }
 
-void Args::AddFlagDefault(Args::FlagMap& flags, const StringFlag* flag) {
-  if (!flag->default_value.has_value()) {
+template <typename FlagMapT, typename FlagT, typename FlagKindT,
+          typename ValuesT>
+auto AddFlagDefaultGeneric(FlagMapT& flags, const FlagT* flag, FlagKindT kind,
+                           ValuesT& values) {
+  if (!flag->default_value) {
     return;
   }
-  auto [flag_it, inserted] = flags.insert({flag, {.kind = FlagKind::String}});
+  auto [flag_it, inserted] = flags.insert({flag, {.kind = kind}});
   CARBON_CHECK(inserted) << "Defaults must be added to an empty set of flags!";
   auto& value = flag_it->second;
-  value.value_index = string_flag_values_.size();
-  string_flag_values_.push_back(*flag->default_value);
+  value.value_index = values.size();
+  values.emplace_back(*flag->default_value);
+}
+
+void Args::AddFlagDefault(Args::FlagMap& flags, const StringFlag* flag) {
+  AddFlagDefaultGeneric(flags, flag, FlagKind::String, string_flag_values_);
 }
 
 void Args::AddFlagDefault(Args::FlagMap& flags, const IntFlag* flag) {
-  if (!flag->default_value.has_value()) {
-    return;
-  }
-  auto [flag_it, inserted] = flags.insert({flag, {.kind = FlagKind::Int}});
-  CARBON_CHECK(inserted) << "Defaults must be added to an empty set of flags!";
-  auto& value = flag_it->second;
-  value.value_index = int_flag_values_.size();
-  int_flag_values_.push_back(*flag->default_value);
+  AddFlagDefaultGeneric(flags, flag, FlagKind::Int, int_flag_values_);
 }
 
 void Args::AddFlagDefault(Args::FlagMap& flags, const StringListFlag* flag) {
-  if (flag->default_values.empty()) {
-    return;
-  }
-  auto [flag_it, inserted] = flags.insert({flag, {.kind = FlagKind::StringList}});
-  CARBON_CHECK(inserted) << "Defaults must be added to an empty set of flags!";
-  auto& value = flag_it->second;
-  value.value_index = string_list_flag_values_.size();
-  string_list_flag_values_.emplace_back(flag->default_values.begin(),
-                                        flag->default_values.end());
+  AddFlagDefaultGeneric(flags, flag, FlagKind::StringList, string_list_flag_values_);
 }
 
 auto Args::AddParsedFlagToMap(FlagMap& flags, const Flag* flag, FlagKind kind)
