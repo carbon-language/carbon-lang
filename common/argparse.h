@@ -73,7 +73,7 @@ struct EnumValue {
 
 template <typename EnumT, ssize_t N>
 struct EnumFlag : Flag {
-  EnumValue<EnumT> values[N];
+  std::array<EnumValue<EnumT>, N> values;
 
   std::optional<EnumT> default_value = {};
 };
