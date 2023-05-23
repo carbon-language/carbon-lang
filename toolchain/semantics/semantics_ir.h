@@ -12,30 +12,16 @@
 
 namespace Carbon {
 
-// A call.
-struct SemanticsCall {
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{arg_ir: " << arg_ir_id << ", arg_refs: " << arg_refs_id << "}";
-  }
-
-  // The full IR for arguments.
-  SemanticsNodeBlockId arg_ir_id;
-  // A block containing a single reference node per argument.
-  SemanticsNodeBlockId arg_refs_id;
-};
-
 // A callable object.
 struct SemanticsCallable {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{param_ir: " << param_ir_id << ", param_refs: " << param_refs_id;
+    out << "{param_refs: " << param_refs_id;
     if (return_type_id.is_valid()) {
       out << ", return_type: " << return_type_id;
     }
     out << "}";
   }
 
-  // The full IR for parameters.
-  SemanticsNodeBlockId param_ir_id;
   // A block containing a single reference node per parameter.
   SemanticsNodeBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
@@ -79,13 +65,6 @@ class SemanticsIR {
     Print(out, /*include_builtins=*/false);
   }
   auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
-
-  // Adds a call, returning an ID to reference it.
-  auto AddCall(SemanticsCall call) -> SemanticsCallId {
-    SemanticsCallId id(calls_.size());
-    calls_.push_back(call);
-    return id;
-  }
 
   // Adds a callable, returning an ID to reference it.
   auto AddCallable(SemanticsCallable callable) -> SemanticsCallableId {
@@ -206,9 +185,6 @@ class SemanticsIR {
   }
 
   bool has_errors_ = false;
-
-  // Storage for call objects.
-  llvm::SmallVector<SemanticsCall> calls_;
 
   // Storage for callable objects.
   llvm::SmallVector<SemanticsCallable> callables_;

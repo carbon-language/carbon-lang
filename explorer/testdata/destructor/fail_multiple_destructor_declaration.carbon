@@ -12,7 +12,7 @@ class A{
     }
     destructor[self: Self]{
         Print("DESTRUCTOR A2 {0}",self.n);
-    // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/destructor/fail_multiple_destructor_declaration.carbon:[[@LINE+1]]: Duplicate name `destructor` also found at explorer/testdata/destructor/fail_multiple_destructor_declaration.carbon:[[@LINE-3]]
+    // CHECK:STDERR: COMPILATION ERROR: fail_multiple_destructor_declaration.carbon:[[@LINE+1]]: Duplicate name `destructor` also found at fail_multiple_destructor_declaration.carbon:[[@LINE-3]]
     }
     var n: i32;
 }

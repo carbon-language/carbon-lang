@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
-load("//bazel/testing:lit.bzl", "glob_lit_tests")
+load("//testing/lit_test:rules.bzl", "glob_lit_tests")
 
 glob_lit_tests(
     data = [
-        "//bazel/testing:merge_output",
         "//explorer",
+        "//testing/lit_test:merge_output",
         "@llvm-project//llvm:FileCheck",
         "@llvm-project//llvm:not",
     ],

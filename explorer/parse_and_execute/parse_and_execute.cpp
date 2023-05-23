@@ -9,6 +9,7 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "explorer/interpreter/exec_program.h"
+#include "explorer/interpreter/stack_space.h"
 #include "explorer/syntax/parse.h"
 #include "explorer/syntax/prelude.h"
 #include "llvm/ADT/ScopeExit.h"
@@ -39,38 +40,40 @@ static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
                                   Nonnull<TraceStream*> trace_stream,
                                   Nonnull<llvm::raw_ostream*> print_stream)
     -> ErrorOr<int> {
-  Arena arena;
-  auto cursor = std::chrono::steady_clock::now();
+  return RunWithExtraStack<ErrorOr<int>>([&]() -> ErrorOr<int> {
+    Arena arena;
+    auto cursor = std::chrono::steady_clock::now();
 
-  ErrorOr<AST> parse_result = parse(&arena);
-  auto print_parse_time = PrintTimingOnExit(trace_stream, "Parse", &cursor);
-  if (!parse_result.ok()) {
-    return ErrorBuilder() << "SYNTAX ERROR: " << parse_result.error();
-  }
+    ErrorOr<AST> parse_result = parse(&arena);
+    auto print_parse_time = PrintTimingOnExit(trace_stream, "Parse", &cursor);
+    if (!parse_result.ok()) {
+      return ErrorBuilder() << "SYNTAX ERROR: " << parse_result.error();
+    }
 
-  AddPrelude(prelude_path, &arena, &parse_result->declarations,
-             &parse_result->num_prelude_declarations);
-  auto print_prelude_time =
-      PrintTimingOnExit(trace_stream, "AddPrelude", &cursor);
+    AddPrelude(prelude_path, &arena, &parse_result->declarations,
+               &parse_result->num_prelude_declarations);
+    auto print_prelude_time =
+        PrintTimingOnExit(trace_stream, "AddPrelude", &cursor);
 
-  // Semantically analyze the parsed program.
-  ErrorOr<AST> analyze_result =
-      AnalyzeProgram(&arena, *parse_result, trace_stream, print_stream);
-  auto print_analyze_time =
-      PrintTimingOnExit(trace_stream, "AnalyzeProgram", &cursor);
-  if (!analyze_result.ok()) {
-    return ErrorBuilder() << "COMPILATION ERROR: " << analyze_result.error();
-  }
+    // Semantically analyze the parsed program.
+    ErrorOr<AST> analyze_result =
+        AnalyzeProgram(&arena, *parse_result, trace_stream, print_stream);
+    auto print_analyze_time =
+        PrintTimingOnExit(trace_stream, "AnalyzeProgram", &cursor);
+    if (!analyze_result.ok()) {
+      return ErrorBuilder() << "COMPILATION ERROR: " << analyze_result.error();
+    }
 
-  // Run the program.
-  ErrorOr<int> exec_result =
-      ExecProgram(&arena, *analyze_result, trace_stream, print_stream);
-  auto print_exec_time =
-      PrintTimingOnExit(trace_stream, "ExecProgram", &cursor);
-  if (!exec_result.ok()) {
-    return ErrorBuilder() << "RUNTIME ERROR: " << exec_result.error();
-  }
-  return exec_result;
+    // Run the program.
+    ErrorOr<int> exec_result =
+        ExecProgram(&arena, *analyze_result, trace_stream, print_stream);
+    auto print_exec_time =
+        PrintTimingOnExit(trace_stream, "ExecProgram", &cursor);
+    if (!exec_result.ok()) {
+      return ErrorBuilder() << "RUNTIME ERROR: " << exec_result.error();
+    }
+    return exec_result;
+  });
 }
 
 auto ParseAndExecuteFile(const std::string& prelude_path,

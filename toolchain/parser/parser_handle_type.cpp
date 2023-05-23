@@ -58,9 +58,8 @@ static auto ParserHandleTypeAfterParams(ParserContext& context,
   }
 
   if (!context.PositionIs(TokenKind::OpenCurlyBrace)) {
-    context.emitter().Emit(*context.position(),
-                           ExpectedDeclarationSemiOrDefinition,
-                           context.tokens().GetKind(state.token));
+    context.EmitExpectedDeclarationSemiOrDefinition(
+        context.tokens().GetKind(state.token));
     context.RecoverFromDeclarationError(state, declaration_kind,
                                         /*skip_past_likely_end=*/true);
     return;

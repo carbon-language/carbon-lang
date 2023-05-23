@@ -6,7 +6,7 @@
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: explorer/testdata/function/fail_recurse_in_return_type.carbon:[[@LINE+1]]: 'T' is not usable until after it has been completely declared
+// CHECK:STDERR: COMPILATION ERROR: fail_recurse_in_return_type.carbon:[[@LINE+1]]: 'T' is not usable until after it has been completely declared
 fn T() -> T() { return i32; }
 
 fn Main() -> i32 {

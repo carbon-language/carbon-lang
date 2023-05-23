@@ -9,6 +9,6 @@ package ExplorerTest api;
 fn F() -> i32;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: explorer/testdata/function/fail_call_undefined.carbon:[[@LINE+1]]: attempt to call function `F` that has not been defined
+  // CHECK:STDERR: RUNTIME ERROR: fail_call_undefined.carbon:[[@LINE+1]]: attempt to call function `F` that has not been defined
   return F();
 }

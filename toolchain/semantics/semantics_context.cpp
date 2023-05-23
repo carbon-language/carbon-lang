@@ -154,8 +154,8 @@ auto SemanticsContext::PopScope() -> void {
 }
 
 auto SemanticsContext::ImplicitAsForArgs(
-    SemanticsNodeBlockId /*arg_ir_id*/, SemanticsNodeBlockId arg_refs_id,
-    ParseTree::Node param_parse_node, SemanticsNodeBlockId param_refs_id,
+    SemanticsNodeBlockId arg_refs_id, ParseTree::Node param_parse_node,
+    SemanticsNodeBlockId param_refs_id,
     DiagnosticEmitter<ParseTree::Node>::DiagnosticBuilder* diagnostic) -> bool {
   // If both arguments and parameters are empty, return quickly. Otherwise,
   // we'll fetch both so that errors are consistent.
@@ -292,10 +292,8 @@ auto SemanticsContext::CanImplicitAsStruct(SemanticsNode value_type,
       as_type.kind() != SemanticsNodeKind::StructType) {
     return false;
   }
-  auto value_type_refs =
-      semantics_->GetNodeBlock(value_type.GetAsStructType().second);
-  auto as_type_refs =
-      semantics_->GetNodeBlock(as_type.GetAsStructType().second);
+  auto value_type_refs = semantics_->GetNodeBlock(value_type.GetAsStructType());
+  auto as_type_refs = semantics_->GetNodeBlock(as_type.GetAsStructType());
   if (value_type_refs.size() != as_type_refs.size()) {
     return false;
   }
@@ -314,7 +312,6 @@ auto SemanticsContext::CanImplicitAsStruct(SemanticsNode value_type,
 
 auto SemanticsContext::ParamOrArgStart() -> void {
   params_or_args_stack_.Push();
-  node_block_stack_.Push();
 }
 
 auto SemanticsContext::ParamOrArgComma(bool for_args) -> void {
@@ -322,11 +319,11 @@ auto SemanticsContext::ParamOrArgComma(bool for_args) -> void {
 }
 
 auto SemanticsContext::ParamOrArgEnd(bool for_args, ParseNodeKind start_kind)
-    -> std::pair<SemanticsNodeBlockId, SemanticsNodeBlockId> {
+    -> SemanticsNodeBlockId {
   if (parse_tree_->node_kind(node_stack_.PeekParseNode()) != start_kind) {
     ParamOrArgSave(for_args);
   }
-  return {node_block_stack_.Pop(), params_or_args_stack_.Pop()};
+  return params_or_args_stack_.Pop();
 }
 
 auto SemanticsContext::ParamOrArgSave(bool for_args) -> void {

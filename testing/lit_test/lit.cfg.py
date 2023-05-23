@@ -30,7 +30,7 @@ def add_substitutions():
         "explorer_prelude": fullpath("carbon/explorer/data/prelude.carbon"),
         "filecheck": fullpath("llvm-project/llvm/FileCheck"),
         "not": fullpath("llvm-project/llvm/not"),
-        "merge_output": fullpath("carbon/bazel/testing/merge_output"),
+        "merge_output": fullpath("carbon/testing/lit_test/merge_output"),
     }
 
     run_carbon = f"{tools['merge_output']} {tools['carbon']}"

@@ -24,6 +24,6 @@
 
 fn F() {
   while (a)
-    // CHECK:STDERR: toolchain/parser/testdata/while/fail_unbraced.carbon:[[@LINE+1]]:5: Expected braced code block.
+    // CHECK:STDERR: fail_unbraced.carbon:[[@LINE+1]]:5: Expected braced code block.
     break;
 }

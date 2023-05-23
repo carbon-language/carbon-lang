@@ -4,12 +4,9 @@
 //
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: calls: [
-// CHECK:STDOUT:   {arg_ir: block6, arg_refs: block7},
-// CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block1, param_refs: block2, return_type: nodeIntegerType},
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
+// CHECK:STDOUT:   {param_refs: block2, return_type: nodeIntegerType},
+// CHECK:STDOUT:   {param_refs: block0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,
@@ -35,7 +32,7 @@
 // CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+7, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+9, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Call, arg0: call0, arg1: callable0, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: Call, arg0: block6, arg1: callable0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+7, arg1: node+11, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+6, arg1: block5},
 // CHECK:STDOUT: ]
@@ -62,12 +59,10 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
-// CHECK:STDOUT:     node+11,
-// CHECK:STDOUT:     node+12,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+10,

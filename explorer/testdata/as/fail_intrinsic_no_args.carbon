@@ -7,7 +7,7 @@
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/as/fail_intrinsic_no_args.carbon:[[@LINE+1]]: __intrinsic_implicit_as takes 1 argument
+  // CHECK:STDERR: COMPILATION ERROR: fail_intrinsic_no_args.carbon:[[@LINE+1]]: __intrinsic_implicit_as takes 1 argument
   __intrinsic_implicit_as();
   return 0;
 }

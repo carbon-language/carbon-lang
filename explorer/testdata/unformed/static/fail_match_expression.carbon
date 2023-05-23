@@ -8,7 +8,7 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   var x : i32;
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/unformed/static/fail_match_expression.carbon:[[@LINE+1]]: use of uninitialized variable x
+  // CHECK:STDERR: COMPILATION ERROR: fail_match_expression.carbon:[[@LINE+1]]: use of uninitialized variable x
   match (x) {
     case 0 => {
       return 1;

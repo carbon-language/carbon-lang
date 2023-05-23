@@ -9,6 +9,6 @@ package ExplorerTest api;
 fn Main() -> i32 {
   var (x: i32, y: i32);
   x = 1;
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/unformed/static/fail_local_pattern_declare.carbon:[[@LINE+1]]: use of uninitialized variable y
+  // CHECK:STDERR: COMPILATION ERROR: fail_local_pattern_declare.carbon:[[@LINE+1]]: use of uninitialized variable y
   return y;
 }

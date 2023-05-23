@@ -130,6 +130,13 @@ auto SemanticsNodeStack::PopForParseNodeAndNodeId(ParseNodeKind pop_parse_kind)
   return {back.parse_node, back.node_id};
 }
 
+auto SemanticsNodeStack::PopForNodeBlockId(ParseNodeKind pop_parse_kind)
+    -> SemanticsNodeBlockId {
+  auto back = PopEntry(pop_parse_kind);
+  RequireValidId(back);
+  return back.node_block_id;
+}
+
 auto SemanticsNodeStack::PopForParseNodeAndNameId(ParseNodeKind pop_parse_kind)
     -> std::pair<ParseTree::Node, SemanticsStringId> {
   auto back = PopEntry(pop_parse_kind);

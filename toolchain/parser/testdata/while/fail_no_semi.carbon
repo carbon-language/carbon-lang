@@ -39,11 +39,11 @@ fn F() {
   while (a) {
     if (b) {
       break
-    // CHECK:STDERR: toolchain/parser/testdata/while/fail_no_semi.carbon:[[@LINE+1]]:5: Expected `;` after `break`.
+    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+1]]:5: Expected `;` after `break`.
     }
     if (c) {
       continue
-    // CHECK:STDERR: toolchain/parser/testdata/while/fail_no_semi.carbon:[[@LINE+1]]:5: Expected `;` after `continue`.
+    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+1]]:5: Expected `;` after `continue`.
     }
   }
 }

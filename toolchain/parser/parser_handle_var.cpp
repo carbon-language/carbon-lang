@@ -52,7 +52,10 @@ auto ParserHandleVarFinishAsSemicolon(ParserContext& context) -> void {
   if (context.PositionIs(TokenKind::Semi)) {
     end_token = context.Consume();
   } else {
-    context.emitter().Emit(*context.position(), ExpectedSemiAfterExpression);
+    // TODO: Disambiguate between statement and member declaration.
+    CARBON_DIAGNOSTIC(ExpectedSemiAfterVar, Error,
+                      "Expected `;` to terminate `var` declaration.");
+    context.emitter().Emit(*context.position(), ExpectedSemiAfterVar);
     state.has_error = true;
     if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {
       end_token = *semi_token;

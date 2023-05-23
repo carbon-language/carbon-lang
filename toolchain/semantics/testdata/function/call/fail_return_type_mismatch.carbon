@@ -4,12 +4,9 @@
 //
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: calls: [
-// CHECK:STDOUT:   {arg_ir: block0, arg_refs: block0},
-// CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0, return_type: nodeFloatingPointType},
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
+// CHECK:STDOUT:   {param_refs: block0, return_type: nodeFloatingPointType},
+// CHECK:STDOUT:   {param_refs: block0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -29,7 +26,7 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str1, arg1: callable1},
 // CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+5, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Call, arg0: call0, arg1: callable0, type: nodeFloatingPointType},
+// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: callable0, type: nodeFloatingPointType},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: nodeInvalidType, type: nodeInvalidType},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+4, arg1: block3},
 // CHECK:STDOUT: ]
@@ -57,6 +54,6 @@
 fn Foo() -> f64 { return 1.0; }
 
 fn Run() {
-  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_return_type_mismatch.carbon:[[@LINE+1]]:21: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+1]]:21: Cannot implicitly convert from `f64` to `i32`.
   var x: i32 = Foo();
 }

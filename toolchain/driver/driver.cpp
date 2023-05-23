@@ -135,8 +135,8 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                        .Case("llvm-ir", DumpMode::LLVMIR)
                        .Default(DumpMode::Unknown);
   if (dump_mode == DumpMode::Unknown) {
-    error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, or "
-                     "semantics-ir.\n";
+    error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, "
+                     "semantics-ir, or llvm-ir.\n";
     return false;
   }
   args = args.drop_front();
@@ -227,7 +227,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   CARBON_VLOG() << "*** LowerToLLVM ***\n";
   llvm::LLVMContext llvm_context;
   const std::unique_ptr<llvm::Module> module =
-      LowerToLLVM(llvm_context, input_file_name, semantics_ir);
+      LowerToLLVM(llvm_context, input_file_name, semantics_ir, vlog_stream_);
   CARBON_VLOG() << "*** LowerToLLVM done ***\n";
   if (dump_mode == DumpMode::LLVMIR) {
     consumer.Flush();

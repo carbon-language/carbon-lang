@@ -7,7 +7,7 @@
 package ExplorerTest impl;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: explorer/testdata/print/fail_index_empty.carbon:[[@LINE+1]]: Invalid `{}` in `Print: {}`
+  // CHECK:STDERR: RUNTIME ERROR: fail_index_empty.carbon:[[@LINE+1]]: Invalid `{}` in `Print: {}`
   Print("Print: {}");
   return 0;
 }

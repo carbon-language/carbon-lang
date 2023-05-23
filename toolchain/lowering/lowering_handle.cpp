@@ -18,10 +18,17 @@ auto LoweringHandleCrossReference(LoweringContext& /*context*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleAssign(LoweringContext& /*context*/,
-                          SemanticsNodeId /*node_id*/, SemanticsNode node)
-    -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+auto LoweringHandleAssign(LoweringContext& context, SemanticsNodeId /*node_id*/,
+                          SemanticsNode node) -> void {
+  auto [storage_id, value_id] = node.GetAsAssign();
+  if (value_id == SemanticsNodeId::BuiltinEmptyStruct ||
+      value_id == SemanticsNodeId::BuiltinEmptyTuple) {
+    // Elide the 0-length store; these have no value assigned and it should have
+    // no effect.
+    return;
+  }
+  context.builder().CreateStore(context.GetLoweredNodeAsValue(value_id),
+                                context.GetLoweredNodeAsValue(storage_id));
 }
 
 auto LoweringHandleBinaryOperatorAdd(LoweringContext& /*context*/,
@@ -31,9 +38,9 @@ auto LoweringHandleBinaryOperatorAdd(LoweringContext& /*context*/,
 }
 
 auto LoweringHandleBindName(LoweringContext& /*context*/,
-                            SemanticsNodeId /*node_id*/, SemanticsNode node)
+                            SemanticsNodeId /*node_id*/, SemanticsNode /*node*/)
     -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  // Probably need to do something here, but not necessary for now.
 }
 
 auto LoweringHandleBuiltin(LoweringContext& /*context*/,
@@ -65,13 +72,14 @@ auto LoweringHandleFunctionDeclaration(LoweringContext& context,
   llvm::SmallVector<llvm::Type*> args;
   args.resize_for_overwrite(param_refs.size());
   for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
-    args[i] = context.LowerNodeToType(
+    args[i] = context.GetLoweredNodeAsType(
         context.semantics_ir().GetNode(param_refs[i]).type_id());
   }
 
-  llvm::Type* return_type = context.LowerNodeToType(
-      callable.return_type_id.is_valid() ? callable.return_type_id
-                                         : SemanticsNodeId::BuiltinEmptyTuple);
+  llvm::Type* return_type = context.GetLoweredNodeAsType(
+      callable.return_type_id.is_valid()
+          ? callable.return_type_id
+          : SemanticsNodeId::BuiltinEmptyTupleType);
   llvm::FunctionType* function_type =
       llvm::FunctionType::get(return_type, args, /*isVarArg=*/false);
   auto* function = llvm::Function::Create(
@@ -106,17 +114,27 @@ auto LoweringHandleFunctionDefinition(LoweringContext& context,
 auto LoweringHandleIntegerLiteral(LoweringContext& context,
                                   SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  SemanticsIntegerLiteralId int_id = node.GetAsIntegerLiteral();
-  llvm::APInt i = context.semantics_ir().GetIntegerLiteral(int_id);
-  llvm::Value* v = llvm::ConstantInt::get(context.builder().getInt32Ty(),
-                                          i.getLimitedValue());
-  context.lowered_nodes()[node_id.index] = v;
+  llvm::APInt i =
+      context.semantics_ir().GetIntegerLiteral(node.GetAsIntegerLiteral());
+  // TODO: This won't offer correct semantics, but seems close enough for now.
+  llvm::Value* v =
+      llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getSExtValue());
+  context.SetLoweredNodeAsValue(node_id, v);
 }
 
-auto LoweringHandleRealLiteral(LoweringContext& /*context*/,
-                               SemanticsNodeId /*node_id*/, SemanticsNode node)
+auto LoweringHandleRealLiteral(LoweringContext& context,
+                               SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  SemanticsRealLiteral real =
+      context.semantics_ir().GetRealLiteral(node.GetAsRealLiteral());
+  // TODO: This will probably have overflow issues, and should be fixed.
+  double val =
+      real.mantissa.getSExtValue() *
+      std::pow((real.is_decimal ? 10 : 2), real.exponent.getSExtValue());
+  llvm::APFloat llvm_val(val);
+  context.SetLoweredNodeAsValue(
+      node_id,
+      llvm::ConstantFP::get(context.builder().getDoubleTy(), llvm_val));
 }
 
 auto LoweringHandleReturn(LoweringContext& context, SemanticsNodeId /*node_id*/,
@@ -128,7 +146,7 @@ auto LoweringHandleReturnExpression(LoweringContext& context,
                                     SemanticsNodeId /*node_id*/,
                                     SemanticsNode node) -> void {
   SemanticsNodeId expr_id = node.GetAsReturnExpression();
-  context.builder().CreateRet(context.lowered_nodes()[expr_id.index]);
+  context.builder().CreateRet(context.GetLoweredNodeAsValue(expr_id));
 }
 
 auto LoweringHandleStringLiteral(LoweringContext& /*context*/,
@@ -137,40 +155,79 @@ auto LoweringHandleStringLiteral(LoweringContext& /*context*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleStructMemberAccess(LoweringContext& /*context*/,
-                                      SemanticsNodeId /*node_id*/,
+auto LoweringHandleStructMemberAccess(LoweringContext& context,
+                                      SemanticsNodeId node_id,
                                       SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  auto [struct_id, member_index] = node.GetAsStructMemberAccess();
+  auto struct_type_id = context.semantics_ir().GetNode(struct_id).type_id();
+  auto* llvm_type = context.GetLoweredNodeAsType(struct_type_id);
+
+  // Get type information for member names.
+  auto type_refs = context.semantics_ir().GetNodeBlock(
+      context.semantics_ir().GetNode(struct_type_id).GetAsStructType());
+  auto member_name = context.semantics_ir().GetString(
+      context.semantics_ir()
+          .GetNode(type_refs[member_index.index])
+          .GetAsStructTypeField());
+
+  auto* gep = context.builder().CreateStructGEP(
+      llvm_type, context.GetLoweredNodeAsValue(struct_id), member_index.index,
+      member_name);
+  context.SetLoweredNodeAsValue(node_id, gep);
 }
 
 auto LoweringHandleStructType(LoweringContext& /*context*/,
-                              SemanticsNodeId /*node_id*/, SemanticsNode node)
-    -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+                              SemanticsNodeId /*node_id*/,
+                              SemanticsNode /*node*/) -> void {
+  // No action to take.
 }
 
 auto LoweringHandleStructTypeField(LoweringContext& /*context*/,
                                    SemanticsNodeId /*node_id*/,
-                                   SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+                                   SemanticsNode /*node*/) -> void {
+  // No action to take.
 }
 
-auto LoweringHandleStructValue(LoweringContext& /*context*/,
-                               SemanticsNodeId /*node_id*/, SemanticsNode node)
+auto LoweringHandleStructValue(LoweringContext& context,
+                               SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  auto* llvm_type = context.GetLoweredNodeAsType(node.type_id());
+  auto* alloca = context.builder().CreateAlloca(
+      llvm_type, /*ArraySize=*/nullptr, "StructLiteralValue");
+  context.SetLoweredNodeAsValue(node_id, alloca);
+
+  auto refs = context.semantics_ir().GetNodeBlock(node.GetAsStructValue());
+  // Get type information for member names.
+  auto type_refs = context.semantics_ir().GetNodeBlock(
+      context.semantics_ir().GetNode(node.type_id()).GetAsStructType());
+  for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
+    auto member_name = context.semantics_ir().GetString(
+        context.semantics_ir().GetNode(type_refs[i]).GetAsStructTypeField());
+    auto* gep =
+        context.builder().CreateStructGEP(llvm_type, alloca, i, member_name);
+    context.builder().CreateStore(context.GetLoweredNodeAsValue(refs[i]), gep);
+  }
 }
 
-auto LoweringHandleStubReference(LoweringContext& /*context*/,
-                                 SemanticsNodeId /*node_id*/,
-                                 SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
-}
-
-auto LoweringHandleVarStorage(LoweringContext& /*context*/,
-                              SemanticsNodeId /*node_id*/, SemanticsNode node)
+auto LoweringHandleStubReference(LoweringContext& context,
+                                 SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  context.SetLoweredNodeAsValue(
+      node_id, context.GetLoweredNodeAsValue(node.GetAsStubReference()));
+}
+
+auto LoweringHandleVarStorage(LoweringContext& context, SemanticsNodeId node_id,
+                              SemanticsNode node) -> void {
+  // TODO: This should provide a name, not just `var`. Also, LLVM requires
+  // globals to have a name. Do we want to generate a name, which would need to
+  // be consistent across translation units, or use the given name, which
+  // requires either looking ahead for BindName or restructuring semantics,
+  // either of which affects the destructuring due to the difference in
+  // storage?
+  auto* alloca = context.builder().CreateAlloca(
+      context.GetLoweredNodeAsType(node.type_id()), /*ArraySize=*/nullptr,
+      "var");
+  context.SetLoweredNodeAsValue(node_id, alloca);
 }
 
 }  // namespace Carbon

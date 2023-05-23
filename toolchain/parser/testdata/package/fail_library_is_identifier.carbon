@@ -10,5 +10,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/package/fail_library_is_identifier.carbon:[[@LINE+1]]:26: Expected a string literal to specify the library name.
+// CHECK:STDERR: fail_library_is_identifier.carbon:[[@LINE+1]]:26: Expected a string literal to specify the library name.
 package Geometry library Shapes api;

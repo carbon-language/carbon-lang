@@ -4,8 +4,6 @@
 //
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: calls: [
-// CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
@@ -37,5 +35,5 @@
 // CHECK:STDOUT: ]
 
 var x: i32;
-// CHECK:STDERR: toolchain/semantics/testdata/designators/fail_unsupported.carbon:[[@LINE+1]]:15: Type `i32` does not support designator expressions.
+// CHECK:STDERR: fail_unsupported.carbon:[[@LINE+1]]:15: Type `i32` does not support designator expressions.
 var y: i32 = x.b;

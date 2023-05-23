@@ -8,6 +8,6 @@ package ExplorerTest api;
 
 fn Main() -> i32 {
   var x: auto = (0, 1);
-  // CHECK:STDERR: COMPILATION ERROR: explorer/testdata/tuple/fail_index.carbon:[[@LINE+1]]: index 2 is out of range for type (i32, i32)
+  // CHECK:STDERR: COMPILATION ERROR: fail_index.carbon:[[@LINE+1]]: index 2 is out of range for type (i32, i32)
   return x[2];
 }

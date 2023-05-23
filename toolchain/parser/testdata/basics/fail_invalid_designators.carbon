@@ -27,10 +27,10 @@
 
 // NOTE: Move to its own directory when more tests are added.
 fn F() {
-  // CHECK:STDERR: toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
+  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
   a.;
-  // CHECK:STDERR: toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
+  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
   a.fn;
-  // CHECK:STDERR: toolchain/parser/testdata/basics/fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
+  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+1]]:5: Expected identifier after `.`.
   a.42;
 }

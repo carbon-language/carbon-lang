@@ -105,7 +105,6 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
     -> void {
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
 
-  PrintList(out, "calls", calls_);
   PrintList(out, "callables", callables_);
   PrintList(out, "integer_literals", integer_literals_);
   PrintList(out, "real_literals", real_literals_);
@@ -165,7 +164,7 @@ auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
     auto node = GetNode(step.node_id);
     switch (node.kind()) {
       case SemanticsNodeKind::StructType: {
-        auto refs = GetNodeBlock(node.GetAsStructType().second);
+        auto refs = GetNodeBlock(node.GetAsStructType());
         if (step.index == 0) {
           out << "{";
         } else if (step.index < static_cast<int>(refs.size())) {

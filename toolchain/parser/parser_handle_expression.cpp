@@ -6,6 +6,10 @@
 
 namespace Carbon {
 
+CARBON_DIAGNOSTIC(
+    OperatorRequiresParentheses, Error,
+    "Parentheses are required to disambiguate operator precedence.");
+
 auto ParserHandleExpression(ParserContext& context) -> void {
   auto state = context.PopState();
 
@@ -209,6 +213,8 @@ auto ParserHandleExpressionStatementFinish(ParserContext& context) -> void {
   }
 
   if (!state.has_error) {
+    CARBON_DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
+                      "Expected `;` after expression.");
     context.emitter().Emit(*context.position(), ExpectedSemiAfterExpression);
   }
 

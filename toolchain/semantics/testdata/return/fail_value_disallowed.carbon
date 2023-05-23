@@ -4,10 +4,8 @@
 //
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: calls: [
-// CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
+// CHECK:STDOUT:   {param_refs: block0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -37,7 +35,7 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: toolchain/semantics/testdata/return/fail_value_disallowed.carbon:[[@LINE+2]]:11: No return expression should be provided in this context.
-  // CHECK:STDERR: toolchain/semantics/testdata/return/fail_value_disallowed.carbon:[[@LINE-2]]:1: There was no return type provided.
+  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE+2]]:11: No return expression should be provided in this context.
+  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE-2]]:1: There was no return type provided.
   return 0;
 }
