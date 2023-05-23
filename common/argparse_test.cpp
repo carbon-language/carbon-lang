@@ -21,8 +21,7 @@ using ::testing::StrEq;
 constexpr auto TestFlag = Args::MakeFlag("flag");
 constexpr auto TestOpt = Args::MakeStringOpt("option");
 
-constexpr auto TestCommand =
-    Args::MakeCommand("command", &TestFlag, &TestOpt);
+constexpr auto TestCommand = Args::MakeCommand("command", &TestFlag, &TestOpt);
 
 TEST(ArgParserTest, GlobalCommand) {
   auto args =
@@ -47,8 +46,8 @@ enum class Subcommands {
 
 constexpr auto TestSub1 =
     Args::MakeSubcommand("sub1", Subcommands::Sub1, &TestSubFlag);
-constexpr auto TestSub2 = Args::MakeSubcommand("sub2", Subcommands::Sub2,
-                                               &TestSubFlag, &TestSubOpt);
+constexpr auto TestSub2 =
+    Args::MakeSubcommand("sub2", Subcommands::Sub2, &TestSubFlag, &TestSubOpt);
 
 TEST(ArgParserTest, GlobalSubcommands) {
   auto args = Args::Parse({"--flag", "sub1", "a", "b", "c", "--", "--x--"},
@@ -72,8 +71,7 @@ TEST(ArgParserTest, GlobalSubcommands2) {
   EXPECT_THAT(args.GetStringOpt(&TestOpt), Optional(StrEq("main")));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub2));
   EXPECT_FALSE(args.TestSubcommandFlag(&TestSubFlag));
-  EXPECT_THAT(args.GetSubcommandStringOpt(&TestSubOpt),
-              Optional(StrEq("sub")));
+  EXPECT_THAT(args.GetSubcommandStringOpt(&TestSubOpt), Optional(StrEq("sub")));
   EXPECT_THAT(args.positional_args(),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c")));
 }
@@ -85,8 +83,8 @@ constexpr auto TestOptDefault =
 constexpr auto TestCommand2 = Args::MakeCommand(
     "command", &TestFlag, &TestOpt, &TestFlagDefault, &TestOptDefault);
 constexpr auto TestSub3 =
-    Args::MakeSubcommand("sub3", Subcommands::Sub3, &TestSubFlag,
-                         &TestSubOpt, &TestFlagDefault, &TestOptDefault);
+    Args::MakeSubcommand("sub3", Subcommands::Sub3, &TestSubFlag, &TestSubOpt,
+                         &TestFlagDefault, &TestOptDefault);
 
 TEST(ArgParserTest, GlobalDefaults) {
   auto args = Args::Parse({"sub3", "a", "b", "c"}, llvm::errs(), TestCommand2,
@@ -126,8 +124,7 @@ TEST(ArgParserTest, IntOptions) {
   constexpr static auto OptWithDefault =
       Args::MakeIntOpt("int-defaulted-opt", {.default_value = 42});
 
-  constexpr auto Command =
-      Args::MakeCommand("command", &Opt, &OptWithDefault);
+  constexpr auto Command = Args::MakeCommand("command", &Opt, &OptWithDefault);
   constexpr auto Subcommand =
       Args::MakeSubcommand("sub", Subcommands::Sub1, &Opt, &OptWithDefault);
 
@@ -179,8 +176,7 @@ TEST(ArgParserTest, StringListOption) {
                            "--strings1=a", "--strings1=b", "--strings1=c"},
                           llvm::errs(), Command, Subcommand);
   EXPECT_TRUE(args);
-  EXPECT_THAT(args.GetStringListOpt(&Opt),
-              ElementsAre(StrEq("a"), StrEq("b")));
+  EXPECT_THAT(args.GetStringListOpt(&Opt), ElementsAre(StrEq("a"), StrEq("b")));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub1));
   EXPECT_THAT(args.GetSubcommandStringListOpt(&Opt),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c")));

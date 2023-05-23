@@ -35,29 +35,29 @@ class Args {
   struct FlagDefault {
     bool default_value;
   };
-  constexpr static auto MakeFlag(
-      llvm::StringLiteral name,
-      FlagDefault defaults = {.default_value = false}) -> Flag;
+  constexpr static auto MakeFlag(llvm::StringLiteral name,
+                                 FlagDefault defaults = {
+                                     .default_value = false}) -> Flag;
 
   struct StringDefault {
     llvm::StringLiteral default_value;
   };
   constexpr static auto MakeStringOpt(llvm::StringLiteral name) -> StringOpt;
   constexpr static auto MakeStringOpt(llvm::StringLiteral name,
-                                       StringDefault defaults) -> StringOpt;
+                                      StringDefault defaults) -> StringOpt;
 
   struct IntDefault {
     ssize_t default_value;
   };
   constexpr static auto MakeIntOpt(llvm::StringLiteral name) -> IntOpt;
   constexpr static auto MakeIntOpt(llvm::StringLiteral name,
-                                    IntDefault defaults) -> IntOpt;
+                                   IntDefault defaults) -> IntOpt;
 
   template <typename EnumT>
   struct EnumValue;
   template <typename EnumT, ssize_t N>
   constexpr static auto MakeEnumOpt(llvm::StringLiteral name,
-                                     const EnumValue<EnumT> (&args)[N])
+                                    const EnumValue<EnumT> (&args)[N])
       -> EnumOpt<EnumT, N>;
 
   struct StringListDefault {
@@ -73,8 +73,8 @@ class Args {
     llvm::StringLiteral epilog = "";
   };
   template <typename... Ts>
-  constexpr static auto MakeCommand(llvm::StringLiteral name,
-                                    const Ts*... opts) -> Command<Ts...>;
+  constexpr static auto MakeCommand(llvm::StringLiteral name, const Ts*... opts)
+      -> Command<Ts...>;
   template <typename... Ts>
   constexpr static auto MakeCommand(llvm::StringLiteral name, CommandInfo info,
                                     const Ts*... opts) -> Command<Ts...>;
@@ -128,8 +128,7 @@ class Args {
   // Gets an enum opt's value if available, whether via a default or explicitly
   // set value. If unavailable, returns an empty optional.
   template <typename EnumT, ssize_t N>
-  auto GetEnumOpt(const EnumOpt<EnumT, N>* opt) const
-      -> std::optional<EnumT> {
+  auto GetEnumOpt(const EnumOpt<EnumT, N>* opt) const -> std::optional<EnumT> {
     return GetEnumOptImpl(opts_, opt);
   }
 
@@ -202,18 +201,15 @@ class Args {
       llvm::StringLiteral name, const EnumValue<EnumT> (&args)[N],
       std::index_sequence<Indices...> /*indices*/) -> EnumOpt<EnumT, N>;
 
-  auto TestFlagImpl(const OptMap& opts, const Flag* opt) const
-      -> bool;
+  auto TestFlagImpl(const OptMap& opts, const Flag* opt) const -> bool;
   auto GetStringOptImpl(const OptMap& opts, const StringOpt* opt) const
       -> std::optional<llvm::StringRef>;
   auto GetIntOptImpl(const OptMap& opts, const IntOpt* opt) const
       -> std::optional<ssize_t>;
   template <typename EnumT, ssize_t N>
-  auto GetEnumOptImpl(const OptMap& opts,
-                       const EnumOpt<EnumT, N>* opt) const
+  auto GetEnumOptImpl(const OptMap& opts, const EnumOpt<EnumT, N>* opt) const
       -> std::optional<EnumT>;
-  auto GetStringListOptImpl(const OptMap& opts,
-                             const StringListOpt* opt) const
+  auto GetStringListOptImpl(const OptMap& opts, const StringListOpt* opt) const
       -> llvm::ArrayRef<llvm::StringRef>;
 
   void AddOptDefault(Args::OptMap& opts, const Flag* opt);
@@ -226,21 +222,21 @@ class Args {
   auto AddParsedOptToMap(OptMap& opts, const Opt* opt, OptKind kind)
       -> std::pair<bool, OptKindAndValue&>;
   auto AddParsedOpt(OptMap& opts, const Flag* opt,
-                     std::optional<llvm::StringRef> value,
-                     llvm::raw_ostream& errors) -> bool;
+                    std::optional<llvm::StringRef> value,
+                    llvm::raw_ostream& errors) -> bool;
   auto AddParsedOpt(OptMap& opts, const StringOpt* opt,
-                     std::optional<llvm::StringRef> value,
-                     llvm::raw_ostream& errors) -> bool;
+                    std::optional<llvm::StringRef> value,
+                    llvm::raw_ostream& errors) -> bool;
   auto AddParsedOpt(OptMap& opts, const IntOpt* opt,
-                     std::optional<llvm::StringRef> value,
-                     llvm::raw_ostream& errors) -> bool;
+                    std::optional<llvm::StringRef> value,
+                    llvm::raw_ostream& errors) -> bool;
   template <typename EnumT, ssize_t N>
   auto AddParsedOpt(OptMap& opts, const EnumOpt<EnumT, N>* opt,
-                     std::optional<llvm::StringRef> value,
-                     llvm::raw_ostream& errors) -> bool;
+                    std::optional<llvm::StringRef> value,
+                    llvm::raw_ostream& errors) -> bool;
   auto AddParsedOpt(OptMap& opts, const StringListOpt* opt,
-                     std::optional<llvm::StringRef> value,
-                     llvm::raw_ostream& errors) -> bool;
+                    std::optional<llvm::StringRef> value,
+                    llvm::raw_ostream& errors) -> bool;
 
   friend auto operator<<(llvm::raw_ostream& out, OptKind kind)
       -> llvm::raw_ostream& {
@@ -289,8 +285,7 @@ class SubcommandArgs : public Args {
 
   // Gets a subcommand int opt's value if available, whether via a default
   // or explicitly set value. If unavailable, returns an empty optional.
-  auto GetSubcommandIntOpt(const IntOpt* opt) const
-      -> std::optional<ssize_t> {
+  auto GetSubcommandIntOpt(const IntOpt* opt) const -> std::optional<ssize_t> {
     return GetIntOptImpl(subcommand_opts_, opt);
   }
 
@@ -327,8 +322,7 @@ struct Args::Flag : Opt {
 };
 
 constexpr inline auto Args::MakeFlag(llvm::StringLiteral name,
-                                            FlagDefault defaults)
-    -> Flag {
+                                     FlagDefault defaults) -> Flag {
   return {{.name = name}, defaults.default_value};
 }
 
@@ -341,8 +335,7 @@ constexpr inline auto Args::MakeStringOpt(llvm::StringLiteral name)
   return {{.name = name}};
 }
 constexpr inline auto Args::MakeStringOpt(llvm::StringLiteral name,
-                                           StringDefault defaults)
-    -> StringOpt {
+                                          StringDefault defaults) -> StringOpt {
   return {{.name = name}, {defaults.default_value}};
 }
 
@@ -354,7 +347,7 @@ constexpr inline auto Args::MakeIntOpt(llvm::StringLiteral name) -> IntOpt {
   return {{.name = name}};
 }
 constexpr inline auto Args::MakeIntOpt(llvm::StringLiteral name,
-                                        IntDefault defaults) -> IntOpt {
+                                       IntDefault defaults) -> IntOpt {
   return {{.name = name}, {defaults.default_value}};
 }
 
@@ -380,7 +373,7 @@ constexpr inline auto Args::MakeEnumOptHelper(
 
 template <typename EnumT, ssize_t N>
 constexpr inline auto Args::MakeEnumOpt(llvm::StringLiteral name,
-                                         const EnumValue<EnumT> (&args)[N])
+                                        const EnumValue<EnumT> (&args)[N])
     -> EnumOpt<EnumT, N> {
   return MakeEnumOptHelper(name, args, std::make_index_sequence<N>{});
 }
@@ -390,7 +383,7 @@ struct Args::StringListOpt : Opt {
 };
 
 constexpr inline auto Args::MakeStringListOpt(llvm::StringLiteral name,
-                                               StringListDefault defaults)
+                                              StringListDefault defaults)
     -> StringListOpt {
   return {{.name = name}, {defaults.default_values}};
 }
@@ -430,8 +423,7 @@ constexpr inline auto Args::MakeSubcommand(llvm::StringLiteral name,
                                            EnumT enumerator,
                                            const OptTs*... opts)
     -> Subcommand<EnumT, OptTs...> {
-  return {{.name = name, .opts = std::tuple{opts...}, .info = {}},
-          enumerator};
+  return {{.name = name, .opts = std::tuple{opts...}, .info = {}}, enumerator};
 }
 
 template <typename EnumT, typename... OptTs>
@@ -500,7 +492,7 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
                        [opt, &args, &opts,
                         &errors](std::optional<llvm::StringRef> arg_value) {
                          return args.AddParsedOpt(*opts, opt, arg_value,
-                                                   errors);
+                                                  errors);
                        }})
               .second;
       CARBON_CHECK(inserted) << "Duplicate opts named: " << opt->name;
@@ -603,7 +595,7 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
 
 template <typename EnumT, ssize_t N>
 auto Args::GetEnumOptImpl(const OptMap& opts,
-                           const EnumOpt<EnumT, N>* opt) const
+                          const EnumOpt<EnumT, N>* opt) const
     -> std::optional<EnumT> {
   auto opt_iterator = opts.find(opt);
   if (opt_iterator == opts.end()) {
@@ -617,8 +609,7 @@ auto Args::GetEnumOptImpl(const OptMap& opts,
 }
 
 template <typename EnumT, ssize_t N>
-void Args::AddOptDefault(Args::OptMap& opts,
-                          const EnumOpt<EnumT, N>* opt) {
+void Args::AddOptDefault(Args::OptMap& opts, const EnumOpt<EnumT, N>* opt) {
   if (!opt->default_value.has_value()) {
     return;
   }
@@ -638,8 +629,8 @@ void Args::AddOptDefault(Args::OptMap& opts,
 
 template <typename EnumT, ssize_t N>
 auto Args::AddParsedOpt(OptMap& opts, const EnumOpt<EnumT, N>* opt,
-                         std::optional<llvm::StringRef> arg_value,
-                         llvm::raw_ostream& errors) -> bool {
+                        std::optional<llvm::StringRef> arg_value,
+                        llvm::raw_ostream& errors) -> bool {
   auto [inserted, value] = AddParsedOptToMap(opts, opt, OptKind::Enum);
   if (!arg_value && !opt->default_value) {
     errors << "ERROR: Invalid missing value for the enum opt '--" << opt->name

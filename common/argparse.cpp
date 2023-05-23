@@ -9,8 +9,7 @@
 
 namespace Carbon {
 
-auto Args::TestFlagImpl(const OptMap& opts, const Flag* opt) const
-    -> bool {
+auto Args::TestFlagImpl(const OptMap& opts, const Flag* opt) const -> bool {
   auto opt_iterator = opts.find(opt);
   CARBON_CHECK(opt_iterator != opts.end()) << "Invalid opt: " << opt->name;
   OptKind kind = opt_iterator->second.kind;
@@ -19,8 +18,8 @@ auto Args::TestFlagImpl(const OptMap& opts, const Flag* opt) const
   return opt_iterator->second.flag_value;
 }
 
-template <typename ValueT, typename OptMapT, typename OptT,
-          typename OptKindT, typename ValuesT>
+template <typename ValueT, typename OptMapT, typename OptT, typename OptKindT,
+          typename ValuesT>
 static auto GetFlagGenericImpl(const OptMapT& opts, const OptT* opt,
                                OptKindT kind, const ValuesT& values)
     -> std::optional<ValueT> {
@@ -31,8 +30,8 @@ static auto GetFlagGenericImpl(const OptMapT& opts, const OptT* opt,
   }
   OptKindT stored_kind = opt_iterator->second.kind;
   CARBON_CHECK(stored_kind == kind)
-      << "Opt '" << opt->name << "' has inconsistent kinds: expected '"
-      << kind << "' but found '" << stored_kind << "'";
+      << "Opt '" << opt->name << "' has inconsistent kinds: expected '" << kind
+      << "' but found '" << stored_kind << "'";
   return values[opt_iterator->second.value_index];
 }
 
@@ -44,12 +43,11 @@ auto Args::GetStringOptImpl(const OptMap& opts, const StringOpt* opt) const
 
 auto Args::GetIntOptImpl(const OptMap& opts, const IntOpt* opt) const
     -> std::optional<ssize_t> {
-  return GetFlagGenericImpl<ssize_t>(opts, opt, OptKind::Int,
-                                     int_opt_values_);
+  return GetFlagGenericImpl<ssize_t>(opts, opt, OptKind::Int, int_opt_values_);
 }
 
 auto Args::GetStringListOptImpl(const OptMap& opts,
-                                 const StringListOpt* opt) const
+                                const StringListOpt* opt) const
     -> llvm::ArrayRef<llvm::StringRef> {
   if (auto opt_values = GetFlagGenericImpl<llvm::ArrayRef<llvm::StringRef>>(
           opts, opt, OptKind::StringList, string_list_opt_values_)) {
@@ -65,10 +63,9 @@ void Args::AddOptDefault(Args::OptMap& opts, const Flag* opt) {
   value.flag_value = opt->default_value;
 }
 
-template <typename OptMapT, typename OptT, typename OptKindT,
-          typename ValuesT>
+template <typename OptMapT, typename OptT, typename OptKindT, typename ValuesT>
 auto AddOptDefaultGeneric(OptMapT& opts, const OptT* opt, OptKindT kind,
-                           ValuesT& values) {
+                          ValuesT& values) {
   if (!opt->default_value) {
     return;
   }
@@ -88,8 +85,7 @@ void Args::AddOptDefault(Args::OptMap& opts, const IntOpt* opt) {
 }
 
 void Args::AddOptDefault(Args::OptMap& opts, const StringListOpt* opt) {
-  AddOptDefaultGeneric(opts, opt, OptKind::StringList,
-                        string_list_opt_values_);
+  AddOptDefaultGeneric(opts, opt, OptKind::StringList, string_list_opt_values_);
 }
 
 auto Args::AddParsedOptToMap(OptMap& opts, const Opt* opt, OptKind kind)
@@ -105,8 +101,8 @@ auto Args::AddParsedOptToMap(OptMap& opts, const Opt* opt, OptKind kind)
 }
 
 auto Args::AddParsedOpt(OptMap& opts, const Flag* opt,
-                         std::optional<llvm::StringRef> arg_value,
-                         llvm::raw_ostream& errors) -> bool {
+                        std::optional<llvm::StringRef> arg_value,
+                        llvm::raw_ostream& errors) -> bool {
   auto [_, value] = AddParsedOptToMap(opts, opt, OptKind::Flag);
   if (!arg_value || *arg_value == "true") {
     value.flag_value = true;
@@ -122,12 +118,12 @@ auto Args::AddParsedOpt(OptMap& opts, const Flag* opt,
 }
 
 auto Args::AddParsedOpt(OptMap& opts, const StringOpt* opt,
-                         std::optional<llvm::StringRef> arg_value,
-                         llvm::raw_ostream& errors) -> bool {
+                        std::optional<llvm::StringRef> arg_value,
+                        llvm::raw_ostream& errors) -> bool {
   auto [inserted, value] = AddParsedOptToMap(opts, opt, OptKind::String);
   if (!arg_value && !opt->default_value) {
-    errors << "ERROR: Invalid missing value for the string opt '--"
-           << opt->name << "' which does not have a default value\n";
+    errors << "ERROR: Invalid missing value for the string opt '--" << opt->name
+           << "' which does not have a default value\n";
     return false;
   }
   llvm::StringRef value_str =
@@ -143,8 +139,8 @@ auto Args::AddParsedOpt(OptMap& opts, const StringOpt* opt,
 }
 
 auto Args::AddParsedOpt(OptMap& opts, const IntOpt* opt,
-                         std::optional<llvm::StringRef> arg_value,
-                         llvm::raw_ostream& errors) -> bool {
+                        std::optional<llvm::StringRef> arg_value,
+                        llvm::raw_ostream& errors) -> bool {
   auto [inserted, value] = AddParsedOptToMap(opts, opt, OptKind::Int);
   if (!arg_value && !opt->default_value) {
     errors << "ERROR: Invalid missing value for the int opt '--" << opt->name
@@ -156,8 +152,8 @@ auto Args::AddParsedOpt(OptMap& opts, const IntOpt* opt,
     // Note that LLVM's function for parsing as an integer confusingly returns
     // true *on an error* in parsing.
     if (arg_value->getAsInteger(/*Radix=*/0, value_int)) {
-      errors << "ERROR: Unable to parse int opt '--" << opt->name
-             << "' value '" << *arg_value << "' as an integer\n";
+      errors << "ERROR: Unable to parse int opt '--" << opt->name << "' value '"
+             << *arg_value << "' as an integer\n";
       return false;
     }
   } else {
@@ -173,10 +169,9 @@ auto Args::AddParsedOpt(OptMap& opts, const IntOpt* opt,
 }
 
 auto Args::AddParsedOpt(OptMap& opts, const StringListOpt* opt,
-                         std::optional<llvm::StringRef> arg_value,
-                         llvm::raw_ostream& errors) -> bool {
-  auto [inserted, value] =
-      AddParsedOptToMap(opts, opt, OptKind::StringList);
+                        std::optional<llvm::StringRef> arg_value,
+                        llvm::raw_ostream& errors) -> bool {
+  auto [inserted, value] = AddParsedOptToMap(opts, opt, OptKind::StringList);
   if (!arg_value) {
     errors << "ERROR: Must specify a value for the string list opt '--"
            << opt->name << "'\n";
