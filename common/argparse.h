@@ -21,7 +21,7 @@ namespace Carbon {
 
 class Args {
  public:
-  struct BooleanFlag;
+  struct Flag;
   struct StringOpt;
   struct IntOpt;
   template <typename EnumT, ssize_t N>
@@ -32,12 +32,12 @@ class Args {
   template <typename EnumT, typename... OptTs>
   struct Subcommand;
 
-  struct BooleanDefault {
+  struct FlagDefault {
     bool default_value;
   };
   constexpr static auto MakeFlag(
       llvm::StringLiteral name,
-      BooleanDefault defaults = {.default_value = false}) -> BooleanFlag;
+      FlagDefault defaults = {.default_value = false}) -> Flag;
 
   struct StringDefault {
     llvm::StringLiteral default_value;
@@ -106,9 +106,9 @@ class Args {
     return parse_result_ == ParseResult::Error ? EXIT_FAILURE : EXIT_SUCCESS;
   }
 
-  // Test whether a boolean opt value is true, either by being set explicitly
-  // or having a true default.
-  auto TestFlag(const BooleanFlag* opt) const -> bool {
+  // Test whether a flag value is true, either by being set explicitly or having
+  // a true default.
+  auto TestFlag(const Flag* opt) const -> bool {
     return TestFlagImpl(opts_, opt);
   }
 
@@ -144,7 +144,7 @@ class Args {
 
  protected:
   enum class OptKind {
-    Boolean,
+    Flag,
     String,
     Int,
     Enum,
@@ -177,9 +177,10 @@ class Args {
     // index into a side array. Which member is active, and if an index which
     // array is indexed, is determined by the kind.
     union {
-      bool boolean_value;
-      int value_index;
+      bool flag_value;
       int enum_value;
+
+      int value_index;
     };
   };
 
@@ -201,7 +202,7 @@ class Args {
       llvm::StringLiteral name, const EnumValue<EnumT> (&args)[N],
       std::index_sequence<Indices...> /*indices*/) -> EnumOpt<EnumT, N>;
 
-  auto TestFlagImpl(const OptMap& opts, const BooleanFlag* opt) const
+  auto TestFlagImpl(const OptMap& opts, const Flag* opt) const
       -> bool;
   auto GetStringOptImpl(const OptMap& opts, const StringOpt* opt) const
       -> std::optional<llvm::StringRef>;
@@ -215,7 +216,7 @@ class Args {
                              const StringListOpt* opt) const
       -> llvm::ArrayRef<llvm::StringRef>;
 
-  void AddOptDefault(Args::OptMap& opts, const BooleanFlag* opt);
+  void AddOptDefault(Args::OptMap& opts, const Flag* opt);
   void AddOptDefault(Args::OptMap& opts, const StringOpt* opt);
   void AddOptDefault(Args::OptMap& opts, const IntOpt* opt);
   template <typename EnumT, ssize_t N>
@@ -224,7 +225,7 @@ class Args {
 
   auto AddParsedOptToMap(OptMap& opts, const Opt* opt, OptKind kind)
       -> std::pair<bool, OptKindAndValue&>;
-  auto AddParsedOpt(OptMap& opts, const BooleanFlag* opt,
+  auto AddParsedOpt(OptMap& opts, const Flag* opt,
                      std::optional<llvm::StringRef> value,
                      llvm::raw_ostream& errors) -> bool;
   auto AddParsedOpt(OptMap& opts, const StringOpt* opt,
@@ -244,8 +245,8 @@ class Args {
   friend auto operator<<(llvm::raw_ostream& out, OptKind kind)
       -> llvm::raw_ostream& {
     switch (kind) {
-      case OptKind::Boolean:
-        out << "Boolean";
+      case OptKind::Flag:
+        out << "Flag";
         break;
       case OptKind::String:
         out << "String";
@@ -273,22 +274,22 @@ class SubcommandArgs : public Args {
 
   auto subcommand() const -> SubcommandEnum { return subcommand_; }
 
-  // Test whether a boolean subcommand opt value is true, either by being set
+  // Test whether a subcommand flag value is true, either by being set
   // explicitly or having a true default.
-  auto TestSubcommandFlag(const BooleanFlag* opt) const -> bool {
+  auto TestSubcommandFlag(const Flag* opt) const -> bool {
     return TestFlagImpl(subcommand_opts_, opt);
   }
 
   // Gets a subcommand string opt's value if available, whether via a default
   // or explicitly set value. If unavailable, returns an empty optional.
-  auto GetSubcommandStringFlag(const StringOpt* opt) const
+  auto GetSubcommandStringOpt(const StringOpt* opt) const
       -> std::optional<llvm::StringRef> {
     return GetStringOptImpl(subcommand_opts_, opt);
   }
 
   // Gets a subcommand int opt's value if available, whether via a default
   // or explicitly set value. If unavailable, returns an empty optional.
-  auto GetSubcommandIntFlag(const IntOpt* opt) const
+  auto GetSubcommandIntOpt(const IntOpt* opt) const
       -> std::optional<ssize_t> {
     return GetIntOptImpl(subcommand_opts_, opt);
   }
@@ -296,12 +297,12 @@ class SubcommandArgs : public Args {
   // Gets a subcommand enum opt's value if available, whether via a default or
   // explicitly set value. If unavailable, returns an empty optional.
   template <typename EnumT, ssize_t N>
-  auto GetSubcommandEnumFlag(const EnumOpt<EnumT, N>* opt) const
+  auto GetSubcommandEnumOpt(const EnumOpt<EnumT, N>* opt) const
       -> std::optional<EnumT> {
     return GetEnumOptImpl(subcommand_opts_, opt);
   }
 
-  auto GetSubcommandStringListFlag(const StringListOpt* opt) const
+  auto GetSubcommandStringListOpt(const StringListOpt* opt) const
       -> llvm::ArrayRef<llvm::StringRef> {
     return GetStringListOptImpl(subcommand_opts_, opt);
   }
@@ -321,13 +322,13 @@ struct Args::Opt {
   Opt(const Opt&) = delete;
 };
 
-struct Args::BooleanFlag : Opt {
+struct Args::Flag : Opt {
   bool default_value = false;
 };
 
 constexpr inline auto Args::MakeFlag(llvm::StringLiteral name,
-                                            BooleanDefault defaults)
-    -> BooleanFlag {
+                                            FlagDefault defaults)
+    -> Flag {
   return {{.name = name}, defaults.default_value};
 }
 
@@ -486,15 +487,15 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
   llvm::SmallDenseMap<
       llvm::StringRef,
       std::function<bool(std::optional<llvm::StringRef> arg_value)>, 16>
-      opt_map;
-  auto build_flag_map = [&](const auto*... command_flags) {
+      opt_parse_map;
+  auto build_opt_parse_map = [&](const auto*... command_flags) {
     // Process the input opts into a lookup table for parsing, also setting up
     // any default values.
-    opt_map.clear();
+    opt_parse_map.clear();
 
-    auto add_flag = [&](const auto* opt) {
+    auto add_opt = [&](const auto* opt) {
       bool inserted =
-          opt_map
+          opt_parse_map
               .insert({opt->name,
                        [opt, &args, &opts,
                         &errors](std::optional<llvm::StringRef> arg_value) {
@@ -506,26 +507,26 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
       args.AddOptDefault(*opts, opt);
     };
     // Fold over the opts, calling `add_flag` for each one.
-    (add_flag(command_flags), ...);
+    (add_opt(command_flags), ...);
   };
-  std::apply(build_flag_map, command.opts);
+  std::apply(build_opt_parse_map, command.opts);
 
   // Process the input subcommands into a lookup table. We just handle the
   // subcommand name here to be lazy. We'll process the subcommand itself only
   // if it is needed.
   llvm::SmallDenseMap<llvm::StringRef, std::function<void()>, 16>
-      subcommand_map;
+      subcommand_parse_map;
   auto parsed_subcommand = [&](const auto* subcommand) {
     if constexpr (HasSubcommands) {
       args.subcommand_ = subcommand->enumerator;
       opts = &args.subcommand_opts_;
       // Rebuild the opt map for this subcommand.
-      std::apply(build_flag_map, subcommand->opts);
+      std::apply(build_opt_parse_map, subcommand->opts);
     }
   };
   if constexpr (HasSubcommands) {
     auto add_subcommand = [&](const auto* subcommand) {
-      bool inserted = subcommand_map
+      bool inserted = subcommand_parse_map
                           .insert({subcommand->name,
                                    [subcommand, &parsed_subcommand] {
                                      parsed_subcommand(subcommand);
@@ -551,8 +552,8 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
       if constexpr (HasSubcommands) {
         is_subcommand_parsed = true;
         // This should be a subcommand, parse it as such.
-        auto subcommand_it = subcommand_map.find(arg);
-        if (subcommand_it == subcommand_map.end()) {
+        auto subcommand_it = subcommand_parse_map.find(arg);
+        if (subcommand_it == subcommand_parse_map.end()) {
           errors << "ERROR: Invalid subcommand: " << arg << "\n";
           // TODO: show usage
           return args;
@@ -583,9 +584,9 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
       arg = arg.substr(0, index);
     }
 
-    auto opt_it = opt_map.find(arg);
-    if (opt_it == opt_map.end()) {
-      errors << "ERROR: Flag '--" << arg << "' does not exist.\n";
+    auto opt_it = opt_parse_map.find(arg);
+    if (opt_it == opt_parse_map.end()) {
+      errors << "ERROR: Opt '--" << arg << "' does not exist.\n";
       // TODO: show usage
       return args;
     }
@@ -611,7 +612,7 @@ auto Args::GetEnumOptImpl(const OptMap& opts,
   }
   OptKind kind = opt_iterator->second.kind;
   CARBON_CHECK(kind == OptKind::Enum)
-      << "Flag '" << opt->name << "' has inconsistent kinds";
+      << "Opt '" << opt->name << "' has inconsistent kinds";
   return static_cast<EnumT>(opt_iterator->second.enum_value);
 }
 

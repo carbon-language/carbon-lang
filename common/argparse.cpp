@@ -9,14 +9,14 @@
 
 namespace Carbon {
 
-auto Args::TestFlagImpl(const OptMap& opts, const BooleanFlag* opt) const
+auto Args::TestFlagImpl(const OptMap& opts, const Flag* opt) const
     -> bool {
   auto opt_iterator = opts.find(opt);
   CARBON_CHECK(opt_iterator != opts.end()) << "Invalid opt: " << opt->name;
   OptKind kind = opt_iterator->second.kind;
-  CARBON_CHECK(kind == OptKind::Boolean)
-      << "Flag '" << opt->name << "' has inconsistent kinds";
-  return opt_iterator->second.boolean_value;
+  CARBON_CHECK(kind == OptKind::Flag)
+      << "Opt '" << opt->name << "' has inconsistent kinds";
+  return opt_iterator->second.flag_value;
 }
 
 template <typename ValueT, typename OptMapT, typename OptT,
@@ -31,7 +31,7 @@ static auto GetFlagGenericImpl(const OptMapT& opts, const OptT* opt,
   }
   OptKindT stored_kind = opt_iterator->second.kind;
   CARBON_CHECK(stored_kind == kind)
-      << "Flag '" << opt->name << "' has inconsistent kinds: expected '"
+      << "Opt '" << opt->name << "' has inconsistent kinds: expected '"
       << kind << "' but found '" << stored_kind << "'";
   return values[opt_iterator->second.value_index];
 }
@@ -58,11 +58,11 @@ auto Args::GetStringListOptImpl(const OptMap& opts,
   return {};
 }
 
-void Args::AddOptDefault(Args::OptMap& opts, const BooleanFlag* opt) {
-  auto [opt_it, inserted] = opts.insert({opt, {.kind = OptKind::Boolean}});
+void Args::AddOptDefault(Args::OptMap& opts, const Flag* opt) {
+  auto [opt_it, inserted] = opts.insert({opt, {.kind = OptKind::Flag}});
   CARBON_CHECK(inserted) << "Defaults must be added to an empty set of opts!";
   auto& value = opt_it->second;
-  value.boolean_value = opt->default_value;
+  value.flag_value = opt->default_value;
 }
 
 template <typename OptMapT, typename OptT, typename OptKindT,
@@ -104,20 +104,20 @@ auto Args::AddParsedOptToMap(OptMap& opts, const Opt* opt, OptKind kind)
   return {inserted, value};
 }
 
-auto Args::AddParsedOpt(OptMap& opts, const BooleanFlag* opt,
+auto Args::AddParsedOpt(OptMap& opts, const Flag* opt,
                          std::optional<llvm::StringRef> arg_value,
                          llvm::raw_ostream& errors) -> bool {
-  auto [_, value] = AddParsedOptToMap(opts, opt, OptKind::Boolean);
+  auto [_, value] = AddParsedOptToMap(opts, opt, OptKind::Flag);
   if (!arg_value || *arg_value == "true") {
-    value.boolean_value = true;
+    value.flag_value = true;
     return true;
   }
   if (*arg_value == "false") {
-    value.boolean_value = false;
+    value.flag_value = false;
     return true;
   }
   errors << "ERROR: Invalid value '" << *arg_value
-         << "' provided for the boolean opt '--" << opt->name << "'\n";
+         << "' provided for the flag '--" << opt->name << "'\n";
   return false;
 }
 
