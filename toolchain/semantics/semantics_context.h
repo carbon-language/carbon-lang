@@ -38,9 +38,16 @@ class SemanticsContext {
   // result.
   auto AddNodeAndPush(ParseTree::Node parse_node, SemanticsNode node) -> void;
 
-  // Adds a name to name lookup.
+  // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameToLookup(ParseTree::Node name_node, SemanticsStringId name_id,
                        SemanticsNodeId target_id) -> void;
+
+  // Adds a name to name lookup. Ignores any name conflicts; the caller should
+  // ensure they were previously diagnosed by AddNameToLookup.
+  auto AddNameToLookupIgnoreConflicts(SemanticsStringId name_id,
+                                      SemanticsNodeId target_id) -> void {
+    AddNameToLookupImpl(name_id, target_id);
+  }
 
   // Binds a DeclaredName to a target node with the given type.
   auto BindName(ParseTree::Node name_node, SemanticsNodeId type_id,
@@ -169,6 +176,10 @@ class SemanticsContext {
 
     // TODO: This likely needs to track things which need to be destructed.
   };
+
+  // Adds a name to lookup. Returns false on a name conflict.
+  auto AddNameToLookupImpl(SemanticsStringId name_id, SemanticsNodeId target_id)
+      -> bool;
 
   // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
   // result type. The result will be the node to use to replace `value`.
