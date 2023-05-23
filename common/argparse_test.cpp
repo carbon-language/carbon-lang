@@ -18,8 +18,8 @@ using ::testing::Eq;
 using ::testing::Optional;
 using ::testing::StrEq;
 
-constexpr auto TestFlag1 = Args::MakeBooleanFlag("flag1");
-constexpr auto TestFlag2 = Args::MakeStringFlag("flag2");
+constexpr auto TestFlag1 = Args::MakeFlag("flag1");
+constexpr auto TestFlag2 = Args::MakeStringOpt("flag2");
 
 constexpr auto TestCommand =
     Args::MakeCommand("command", &TestFlag1, &TestFlag2);
@@ -31,13 +31,13 @@ TEST(ArgParserTest, GlobalCommand) {
 
   EXPECT_TRUE(args);
   EXPECT_TRUE(args.TestFlag(&TestFlag1));
-  EXPECT_THAT(args.GetStringFlag(&TestFlag2), Optional(StrEq("test")));
+  EXPECT_THAT(args.GetStringOpt(&TestFlag2), Optional(StrEq("test")));
   EXPECT_THAT(args.positional_args(),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c"), StrEq("--x--")));
 }
 
-constexpr auto TestSubFlag1 = Args::MakeBooleanFlag("flag1");
-constexpr auto TestSubFlag2 = Args::MakeStringFlag("flag2");
+constexpr auto TestSubFlag1 = Args::MakeFlag("flag1");
+constexpr auto TestSubFlag2 = Args::MakeStringOpt("flag2");
 
 enum class Subcommands {
   Sub1,
@@ -55,21 +55,21 @@ TEST(ArgParserTest, GlobalSubcommands) {
                           llvm::errs(), TestCommand, TestSub1, TestSub2);
   EXPECT_TRUE(args);
   EXPECT_TRUE(args.TestFlag(&TestFlag1));
-  EXPECT_THAT(args.GetStringFlag(&TestFlag2), Eq(std::nullopt));
+  EXPECT_THAT(args.GetStringOpt(&TestFlag2), Eq(std::nullopt));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub1));
   EXPECT_THAT(args.positional_args(),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c"), StrEq("--x--")));
 }
 
 TEST(ArgParserTest, GlobalSubcommands2) {
-  // Same flag spelling but in different parts of subcommand. Also repeated
-  // flags and a value for a boolean.
+  // Same opt spelling but in different parts of subcommand. Also repeated
+  // opts and a value for a boolean.
   auto args = Args::Parse({"--flag1", "--flag2=main", "sub2", "a", "--flag1",
                            "--flag2=sub", "b", "c", "--flag1=false"},
                           llvm::errs(), TestCommand, TestSub1, TestSub2);
   EXPECT_TRUE(args);
   EXPECT_TRUE(args.TestFlag(&TestFlag1));
-  EXPECT_THAT(args.GetStringFlag(&TestFlag2), Optional(StrEq("main")));
+  EXPECT_THAT(args.GetStringOpt(&TestFlag2), Optional(StrEq("main")));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub2));
   EXPECT_FALSE(args.TestSubcommandFlag(&TestSubFlag1));
   EXPECT_THAT(args.GetSubcommandStringFlag(&TestSubFlag2),
@@ -79,9 +79,9 @@ TEST(ArgParserTest, GlobalSubcommands2) {
 }
 
 constexpr auto TestFlag3 =
-    Args::MakeBooleanFlag("flag3", {.default_value = true});
+    Args::MakeFlag("flag3", {.default_value = true});
 constexpr auto TestFlag4 =
-    Args::MakeStringFlag("flag4", {.default_value = "default"});
+    Args::MakeStringOpt("flag4", {.default_value = "default"});
 constexpr auto TestCommand2 = Args::MakeCommand(
     "command", &TestFlag1, &TestFlag2, &TestFlag3, &TestFlag4);
 constexpr auto TestSub3 =
@@ -94,9 +94,9 @@ TEST(ArgParserTest, GlobalDefaults) {
   EXPECT_TRUE(args);
 
   EXPECT_FALSE(args.TestFlag(&TestFlag1));
-  EXPECT_THAT(args.GetStringFlag(&TestFlag2), Eq(std::nullopt));
+  EXPECT_THAT(args.GetStringOpt(&TestFlag2), Eq(std::nullopt));
   EXPECT_TRUE(args.TestFlag(&TestFlag3));
-  EXPECT_THAT(args.GetStringFlag(&TestFlag4), Optional(StrEq("default")));
+  EXPECT_THAT(args.GetStringOpt(&TestFlag4), Optional(StrEq("default")));
 
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub3));
   EXPECT_FALSE(args.TestSubcommandFlag(&TestSubFlag1));
@@ -115,16 +115,16 @@ TEST(ArgParserTest, DefaultsWithExplictFlags) {
       llvm::errs(), TestCommand2, TestSub1, TestSub2, TestSub3);
   EXPECT_TRUE(args);
 
-  EXPECT_THAT(args.GetStringFlag(&TestFlag4), Optional(StrEq("default")));
+  EXPECT_THAT(args.GetStringOpt(&TestFlag4), Optional(StrEq("default")));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub3));
   EXPECT_THAT(args.GetSubcommandStringFlag(&TestFlag4),
               Optional(StrEq("default")));
 }
 
 TEST(ArgParserTest, IntFlags) {
-  constexpr static auto Flag = Args::MakeIntFlag("int-flag");
+  constexpr static auto Flag = Args::MakeIntOpt("int-opt");
   constexpr static auto FlagWithDefault =
-      Args::MakeIntFlag("int-defaulted-flag", {.default_value = 42});
+      Args::MakeIntOpt("int-defaulted-opt", {.default_value = 42});
 
   constexpr auto Command =
       Args::MakeCommand("command", &Flag, &FlagWithDefault);
@@ -132,28 +132,28 @@ TEST(ArgParserTest, IntFlags) {
       Args::MakeSubcommand("sub", Subcommands::Sub1, &Flag, &FlagWithDefault);
 
   auto args = Args::Parse(
-      {"--int-flag=1", "sub", "--int-flag=2", "--int-defaulted-flag=3"},
+      {"--int-opt=1", "sub", "--int-opt=2", "--int-defaulted-opt=3"},
       llvm::errs(), Command, Subcommand);
   EXPECT_TRUE(args);
-  EXPECT_THAT(args.GetIntFlag(&Flag), Optional(Eq(1)));
-  EXPECT_THAT(args.GetIntFlag(&FlagWithDefault), Optional(Eq(42)));
+  EXPECT_THAT(args.GetIntOpt(&Flag), Optional(Eq(1)));
+  EXPECT_THAT(args.GetIntOpt(&FlagWithDefault), Optional(Eq(42)));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub1));
   EXPECT_THAT(args.GetSubcommandIntFlag(&Flag), Optional(Eq(2)));
   EXPECT_THAT(args.GetSubcommandIntFlag(&FlagWithDefault), Optional(Eq(3)));
 }
 
 TEST(ArgParserTest, EnumFlags) {
-  enum class FlagEnum {
+  enum class OptEnum {
     Val1,
     Val2,
     Val3,
   };
 
-  constexpr static auto Flag = Args::MakeEnumFlag<FlagEnum>(
+  constexpr static auto Flag = Args::MakeEnumOpt<OptEnum>(
       "enum-flag1", {
-                        {.name = "val1", .value = FlagEnum::Val1},
-                        {.name = "val2", .value = FlagEnum::Val2},
-                        {.name = "val3", .value = FlagEnum::Val3},
+                        {.name = "val1", .value = OptEnum::Val1},
+                        {.name = "val2", .value = OptEnum::Val2},
+                        {.name = "val3", .value = OptEnum::Val3},
                     });
 
   constexpr auto Command = Args::MakeCommand("command", &Flag);
@@ -163,13 +163,13 @@ TEST(ArgParserTest, EnumFlags) {
                           llvm::errs(), Command, Subcommand);
 
   EXPECT_TRUE(args);
-  EXPECT_THAT(args.GetEnumFlag(&Flag), Optional(Eq(FlagEnum::Val1)));
+  EXPECT_THAT(args.GetEnumOpt(&Flag), Optional(Eq(OptEnum::Val1)));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub1));
-  EXPECT_THAT(args.GetSubcommandEnumFlag(&Flag), Optional(Eq(FlagEnum::Val2)));
+  EXPECT_THAT(args.GetSubcommandEnumFlag(&Flag), Optional(Eq(OptEnum::Val2)));
 }
 
 TEST(ArgParserTest, StringListFlag) {
-  constexpr static auto Flag = Args::MakeStringListFlag("strings1");
+  constexpr static auto Flag = Args::MakeStringListOpt("strings1");
 
   constexpr auto Command = Args::MakeCommand("command", &Flag);
   constexpr auto Subcommand =
@@ -179,7 +179,7 @@ TEST(ArgParserTest, StringListFlag) {
                            "--strings1=a", "--strings1=b", "--strings1=c"},
                           llvm::errs(), Command, Subcommand);
   EXPECT_TRUE(args);
-  EXPECT_THAT(args.GetStringListFlag(&Flag),
+  EXPECT_THAT(args.GetStringListOpt(&Flag),
               ElementsAre(StrEq("a"), StrEq("b")));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub1));
   EXPECT_THAT(args.GetSubcommandStringListFlag(&Flag),
@@ -189,7 +189,7 @@ TEST(ArgParserTest, StringListFlag) {
 TEST(ArgParserTest, StringListFlagDefaults) {
   constexpr static llvm::StringLiteral DefaultValues[] = {"a", "b", "c"};
   constexpr static auto Flag =
-      Args::MakeStringListFlag("strings1", {.default_values = DefaultValues});
+      Args::MakeStringListOpt("strings1", {.default_values = DefaultValues});
 
   constexpr auto Command = Args::MakeCommand("command", &Flag);
   constexpr auto Subcommand =
@@ -197,7 +197,7 @@ TEST(ArgParserTest, StringListFlagDefaults) {
 
   auto args = Args::Parse({"sub"}, llvm::errs(), Command, Subcommand);
   EXPECT_TRUE(args);
-  EXPECT_THAT(args.GetStringListFlag(&Flag),
+  EXPECT_THAT(args.GetStringListOpt(&Flag),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c")));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub1));
   EXPECT_THAT(args.GetSubcommandStringListFlag(&Flag),

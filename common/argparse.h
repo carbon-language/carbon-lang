@@ -22,50 +22,50 @@ namespace Carbon {
 class Args {
  public:
   struct BooleanFlag;
-  struct StringFlag;
-  struct IntFlag;
+  struct StringOpt;
+  struct IntOpt;
   template <typename EnumT, ssize_t N>
-  struct EnumFlag;
-  struct StringListFlag;
+  struct EnumOpt;
+  struct StringListOpt;
   template <typename... Ts>
   struct Command;
-  template <typename EnumT, typename... FlagTs>
+  template <typename EnumT, typename... OptTs>
   struct Subcommand;
 
   struct BooleanDefault {
     bool default_value;
   };
-  constexpr static auto MakeBooleanFlag(
+  constexpr static auto MakeFlag(
       llvm::StringLiteral name,
       BooleanDefault defaults = {.default_value = false}) -> BooleanFlag;
 
   struct StringDefault {
     llvm::StringLiteral default_value;
   };
-  constexpr static auto MakeStringFlag(llvm::StringLiteral name) -> StringFlag;
-  constexpr static auto MakeStringFlag(llvm::StringLiteral name,
-                                       StringDefault defaults) -> StringFlag;
+  constexpr static auto MakeStringOpt(llvm::StringLiteral name) -> StringOpt;
+  constexpr static auto MakeStringOpt(llvm::StringLiteral name,
+                                       StringDefault defaults) -> StringOpt;
 
   struct IntDefault {
     ssize_t default_value;
   };
-  constexpr static auto MakeIntFlag(llvm::StringLiteral name) -> IntFlag;
-  constexpr static auto MakeIntFlag(llvm::StringLiteral name,
-                                    IntDefault defaults) -> IntFlag;
+  constexpr static auto MakeIntOpt(llvm::StringLiteral name) -> IntOpt;
+  constexpr static auto MakeIntOpt(llvm::StringLiteral name,
+                                    IntDefault defaults) -> IntOpt;
 
   template <typename EnumT>
   struct EnumValue;
   template <typename EnumT, ssize_t N>
-  constexpr static auto MakeEnumFlag(llvm::StringLiteral name,
+  constexpr static auto MakeEnumOpt(llvm::StringLiteral name,
                                      const EnumValue<EnumT> (&args)[N])
-      -> EnumFlag<EnumT, N>;
+      -> EnumOpt<EnumT, N>;
 
   struct StringListDefault {
     llvm::ArrayRef<llvm::StringLiteral> default_values;
   };
-  constexpr static auto MakeStringListFlag(
+  constexpr static auto MakeStringListOpt(
       llvm::StringLiteral name,
-      StringListDefault defaults = {.default_values = {}}) -> StringListFlag;
+      StringListDefault defaults = {.default_values = {}}) -> StringListOpt;
 
   struct CommandInfo {
     llvm::StringLiteral description = "";
@@ -74,19 +74,19 @@ class Args {
   };
   template <typename... Ts>
   constexpr static auto MakeCommand(llvm::StringLiteral name,
-                                    const Ts*... flags) -> Command<Ts...>;
+                                    const Ts*... opts) -> Command<Ts...>;
   template <typename... Ts>
   constexpr static auto MakeCommand(llvm::StringLiteral name, CommandInfo info,
-                                    const Ts*... flags) -> Command<Ts...>;
-  template <typename EnumT, typename... FlagTs>
+                                    const Ts*... opts) -> Command<Ts...>;
+  template <typename EnumT, typename... OptTs>
   constexpr static auto MakeSubcommand(llvm::StringLiteral name,
-                                       EnumT enumerator, const FlagTs*... flags)
-      -> Subcommand<EnumT, FlagTs...>;
-  template <typename EnumT, typename... FlagTs>
+                                       EnumT enumerator, const OptTs*... opts)
+      -> Subcommand<EnumT, OptTs...>;
+  template <typename EnumT, typename... OptTs>
   constexpr static auto MakeSubcommand(llvm::StringLiteral name,
                                        EnumT enumerator, CommandInfo info,
-                                       const FlagTs*... flags)
-      -> Subcommand<EnumT, FlagTs...>;
+                                       const OptTs*... opts)
+      -> Subcommand<EnumT, OptTs...>;
 
   template <typename CommandT, typename... SubcommandTs>
   static auto Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
@@ -106,36 +106,36 @@ class Args {
     return parse_result_ == ParseResult::Error ? EXIT_FAILURE : EXIT_SUCCESS;
   }
 
-  // Test whether a boolean flag value is true, either by being set explicitly
+  // Test whether a boolean opt value is true, either by being set explicitly
   // or having a true default.
-  auto TestFlag(const BooleanFlag* flag) const -> bool {
-    return TestFlagImpl(flags_, flag);
+  auto TestFlag(const BooleanFlag* opt) const -> bool {
+    return TestFlagImpl(opts_, opt);
   }
 
-  // Gets a string flag's value if available, whether via a default or
+  // Gets a string opt's value if available, whether via a default or
   // explicitly set value. If unavailable, returns an empty optional.
-  auto GetStringFlag(const StringFlag* flag) const
+  auto GetStringOpt(const StringOpt* opt) const
       -> std::optional<llvm::StringRef> {
-    return GetStringFlagImpl(flags_, flag);
+    return GetStringOptImpl(opts_, opt);
   }
 
-  // Gets an int flag's value if available, whether via a default or
+  // Gets an int opt's value if available, whether via a default or
   // explicitly set value. If unavailable, returns an empty optional.
-  auto GetIntFlag(const IntFlag* flag) const -> std::optional<ssize_t> {
-    return GetIntFlagImpl(flags_, flag);
+  auto GetIntOpt(const IntOpt* opt) const -> std::optional<ssize_t> {
+    return GetIntOptImpl(opts_, opt);
   }
 
-  // Gets an enum flag's value if available, whether via a default or explicitly
+  // Gets an enum opt's value if available, whether via a default or explicitly
   // set value. If unavailable, returns an empty optional.
   template <typename EnumT, ssize_t N>
-  auto GetEnumFlag(const EnumFlag<EnumT, N>* flag) const
+  auto GetEnumOpt(const EnumOpt<EnumT, N>* opt) const
       -> std::optional<EnumT> {
-    return GetEnumFlagImpl(flags_, flag);
+    return GetEnumOptImpl(opts_, opt);
   }
 
-  auto GetStringListFlag(const StringListFlag* flag) const
+  auto GetStringListOpt(const StringListOpt* opt) const
       -> llvm::ArrayRef<llvm::StringRef> {
-    return GetStringListFlagImpl(flags_, flag);
+    return GetStringListOptImpl(opts_, opt);
   }
 
   auto positional_args() const -> llvm::ArrayRef<llvm::StringRef> {
@@ -143,7 +143,7 @@ class Args {
   }
 
  protected:
-  enum class FlagKind {
+  enum class OptKind {
     Boolean,
     String,
     Int,
@@ -152,7 +152,7 @@ class Args {
     StringList,
   };
 
-  struct Flag;
+  struct Opt;
 
   enum class ParseResult {
     // Signifies an error parsing arguments. It will have been diagnosed using
@@ -170,8 +170,8 @@ class Args {
     MetaSuccess,
   };
 
-  struct FlagKindAndValue {
-    FlagKind kind;
+  struct OptKindAndValue {
+    OptKind kind;
 
     // For values that can be stored in-line, we do so. Otherwise, we store an
     // index into a side array. Which member is active, and if an index which
@@ -183,80 +183,80 @@ class Args {
     };
   };
 
-  using FlagMap = llvm::SmallDenseMap<const Flag*, FlagKindAndValue, 4>;
+  using OptMap = llvm::SmallDenseMap<const Opt*, OptKindAndValue, 4>;
 
   ParseResult parse_result_;
 
-  llvm::SmallVector<llvm::StringRef, 4> string_flag_values_;
-  llvm::SmallVector<ssize_t, 4> int_flag_values_;
+  llvm::SmallVector<llvm::StringRef, 4> string_opt_values_;
+  llvm::SmallVector<ssize_t, 4> int_opt_values_;
   llvm::SmallVector<llvm::SmallVector<llvm::StringRef, 1>, 4>
-      string_list_flag_values_;
+      string_list_opt_values_;
 
-  FlagMap flags_;
+  OptMap opts_;
 
   llvm::SmallVector<llvm::StringRef, 12> positional_args_;
 
   template <typename EnumT, ssize_t N, size_t... Indices>
-  constexpr static auto MakeEnumFlagHelper(
+  constexpr static auto MakeEnumOptHelper(
       llvm::StringLiteral name, const EnumValue<EnumT> (&args)[N],
-      std::index_sequence<Indices...> /*indices*/) -> EnumFlag<EnumT, N>;
+      std::index_sequence<Indices...> /*indices*/) -> EnumOpt<EnumT, N>;
 
-  auto TestFlagImpl(const FlagMap& flags, const BooleanFlag* flag) const
+  auto TestFlagImpl(const OptMap& opts, const BooleanFlag* opt) const
       -> bool;
-  auto GetStringFlagImpl(const FlagMap& flags, const StringFlag* flag) const
+  auto GetStringOptImpl(const OptMap& opts, const StringOpt* opt) const
       -> std::optional<llvm::StringRef>;
-  auto GetIntFlagImpl(const FlagMap& flags, const IntFlag* flag) const
+  auto GetIntOptImpl(const OptMap& opts, const IntOpt* opt) const
       -> std::optional<ssize_t>;
   template <typename EnumT, ssize_t N>
-  auto GetEnumFlagImpl(const FlagMap& flags,
-                       const EnumFlag<EnumT, N>* flag) const
+  auto GetEnumOptImpl(const OptMap& opts,
+                       const EnumOpt<EnumT, N>* opt) const
       -> std::optional<EnumT>;
-  auto GetStringListFlagImpl(const FlagMap& flags,
-                             const StringListFlag* flag) const
+  auto GetStringListOptImpl(const OptMap& opts,
+                             const StringListOpt* opt) const
       -> llvm::ArrayRef<llvm::StringRef>;
 
-  void AddFlagDefault(Args::FlagMap& flags, const BooleanFlag* flag);
-  void AddFlagDefault(Args::FlagMap& flags, const StringFlag* flag);
-  void AddFlagDefault(Args::FlagMap& flags, const IntFlag* flag);
+  void AddOptDefault(Args::OptMap& opts, const BooleanFlag* opt);
+  void AddOptDefault(Args::OptMap& opts, const StringOpt* opt);
+  void AddOptDefault(Args::OptMap& opts, const IntOpt* opt);
   template <typename EnumT, ssize_t N>
-  void AddFlagDefault(Args::FlagMap& flags, const EnumFlag<EnumT, N>* flag);
-  void AddFlagDefault(Args::FlagMap& flags, const StringListFlag* flag);
+  void AddOptDefault(Args::OptMap& opts, const EnumOpt<EnumT, N>* opt);
+  void AddOptDefault(Args::OptMap& opts, const StringListOpt* opt);
 
-  auto AddParsedFlagToMap(FlagMap& flags, const Flag* flag, FlagKind kind)
-      -> std::pair<bool, FlagKindAndValue&>;
-  auto AddParsedFlag(FlagMap& flags, const BooleanFlag* flag,
+  auto AddParsedOptToMap(OptMap& opts, const Opt* opt, OptKind kind)
+      -> std::pair<bool, OptKindAndValue&>;
+  auto AddParsedOpt(OptMap& opts, const BooleanFlag* opt,
                      std::optional<llvm::StringRef> value,
                      llvm::raw_ostream& errors) -> bool;
-  auto AddParsedFlag(FlagMap& flags, const StringFlag* flag,
+  auto AddParsedOpt(OptMap& opts, const StringOpt* opt,
                      std::optional<llvm::StringRef> value,
                      llvm::raw_ostream& errors) -> bool;
-  auto AddParsedFlag(FlagMap& flags, const IntFlag* flag,
+  auto AddParsedOpt(OptMap& opts, const IntOpt* opt,
                      std::optional<llvm::StringRef> value,
                      llvm::raw_ostream& errors) -> bool;
   template <typename EnumT, ssize_t N>
-  auto AddParsedFlag(FlagMap& flags, const EnumFlag<EnumT, N>* flag,
+  auto AddParsedOpt(OptMap& opts, const EnumOpt<EnumT, N>* opt,
                      std::optional<llvm::StringRef> value,
                      llvm::raw_ostream& errors) -> bool;
-  auto AddParsedFlag(FlagMap& flags, const StringListFlag* flag,
+  auto AddParsedOpt(OptMap& opts, const StringListOpt* opt,
                      std::optional<llvm::StringRef> value,
                      llvm::raw_ostream& errors) -> bool;
 
-  friend auto operator<<(llvm::raw_ostream& out, FlagKind kind)
+  friend auto operator<<(llvm::raw_ostream& out, OptKind kind)
       -> llvm::raw_ostream& {
     switch (kind) {
-      case FlagKind::Boolean:
+      case OptKind::Boolean:
         out << "Boolean";
         break;
-      case FlagKind::String:
+      case OptKind::String:
         out << "String";
         break;
-      case FlagKind::Int:
+      case OptKind::Int:
         out << "Int";
         break;
-      case FlagKind::Enum:
+      case OptKind::Enum:
         out << "Enum";
         break;
-      case FlagKind::StringList:
+      case OptKind::StringList:
         out << "StringList";
         break;
     }
@@ -273,87 +273,87 @@ class SubcommandArgs : public Args {
 
   auto subcommand() const -> SubcommandEnum { return subcommand_; }
 
-  // Test whether a boolean subcommand flag value is true, either by being set
+  // Test whether a boolean subcommand opt value is true, either by being set
   // explicitly or having a true default.
-  auto TestSubcommandFlag(const BooleanFlag* flag) const -> bool {
-    return TestFlagImpl(subcommand_flags_, flag);
+  auto TestSubcommandFlag(const BooleanFlag* opt) const -> bool {
+    return TestFlagImpl(subcommand_opts_, opt);
   }
 
-  // Gets a subcommand string flag's value if available, whether via a default
+  // Gets a subcommand string opt's value if available, whether via a default
   // or explicitly set value. If unavailable, returns an empty optional.
-  auto GetSubcommandStringFlag(const StringFlag* flag) const
+  auto GetSubcommandStringFlag(const StringOpt* opt) const
       -> std::optional<llvm::StringRef> {
-    return GetStringFlagImpl(subcommand_flags_, flag);
+    return GetStringOptImpl(subcommand_opts_, opt);
   }
 
-  // Gets a subcommand int flag's value if available, whether via a default
+  // Gets a subcommand int opt's value if available, whether via a default
   // or explicitly set value. If unavailable, returns an empty optional.
-  auto GetSubcommandIntFlag(const IntFlag* flag) const
+  auto GetSubcommandIntFlag(const IntOpt* opt) const
       -> std::optional<ssize_t> {
-    return GetIntFlagImpl(subcommand_flags_, flag);
+    return GetIntOptImpl(subcommand_opts_, opt);
   }
 
-  // Gets a subcommand enum flag's value if available, whether via a default or
+  // Gets a subcommand enum opt's value if available, whether via a default or
   // explicitly set value. If unavailable, returns an empty optional.
   template <typename EnumT, ssize_t N>
-  auto GetSubcommandEnumFlag(const EnumFlag<EnumT, N>* flag) const
+  auto GetSubcommandEnumFlag(const EnumOpt<EnumT, N>* opt) const
       -> std::optional<EnumT> {
-    return GetEnumFlagImpl(subcommand_flags_, flag);
+    return GetEnumOptImpl(subcommand_opts_, opt);
   }
 
-  auto GetSubcommandStringListFlag(const StringListFlag* flag) const
+  auto GetSubcommandStringListFlag(const StringListOpt* opt) const
       -> llvm::ArrayRef<llvm::StringRef> {
-    return GetStringListFlagImpl(subcommand_flags_, flag);
+    return GetStringListOptImpl(subcommand_opts_, opt);
   }
 
  private:
   friend class Args;
 
   SubcommandEnum subcommand_;
-  FlagMap subcommand_flags_;
+  OptMap subcommand_opts_;
 };
 
-struct Args::Flag {
+struct Args::Opt {
   llvm::StringLiteral name;
   // llvm::StringLiteral short_name = "";
 
-  // The address of a flag is used as the identity after parsing.
-  Flag(const Flag&) = delete;
+  // The address of a opt is used as the identity after parsing.
+  Opt(const Opt&) = delete;
 };
 
-struct Args::BooleanFlag : Flag {
+struct Args::BooleanFlag : Opt {
   bool default_value = false;
 };
 
-constexpr inline auto Args::MakeBooleanFlag(llvm::StringLiteral name,
+constexpr inline auto Args::MakeFlag(llvm::StringLiteral name,
                                             BooleanDefault defaults)
     -> BooleanFlag {
   return {{.name = name}, defaults.default_value};
 }
 
-struct Args::StringFlag : Flag {
+struct Args::StringOpt : Opt {
   std::optional<llvm::StringLiteral> default_value = {};
 };
 
-constexpr inline auto Args::MakeStringFlag(llvm::StringLiteral name)
-    -> StringFlag {
+constexpr inline auto Args::MakeStringOpt(llvm::StringLiteral name)
+    -> StringOpt {
   return {{.name = name}};
 }
-constexpr inline auto Args::MakeStringFlag(llvm::StringLiteral name,
+constexpr inline auto Args::MakeStringOpt(llvm::StringLiteral name,
                                            StringDefault defaults)
-    -> StringFlag {
+    -> StringOpt {
   return {{.name = name}, {defaults.default_value}};
 }
 
-struct Args::IntFlag : Flag {
+struct Args::IntOpt : Opt {
   std::optional<ssize_t> default_value = {};
 };
 
-constexpr inline auto Args::MakeIntFlag(llvm::StringLiteral name) -> IntFlag {
+constexpr inline auto Args::MakeIntOpt(llvm::StringLiteral name) -> IntOpt {
   return {{.name = name}};
 }
-constexpr inline auto Args::MakeIntFlag(llvm::StringLiteral name,
-                                        IntDefault defaults) -> IntFlag {
+constexpr inline auto Args::MakeIntOpt(llvm::StringLiteral name,
+                                        IntDefault defaults) -> IntOpt {
   return {{.name = name}, {defaults.default_value}};
 }
 
@@ -364,33 +364,33 @@ struct Args::EnumValue {
 };
 
 template <typename EnumT, ssize_t N>
-struct Args::EnumFlag : Flag {
+struct Args::EnumOpt : Opt {
   std::array<EnumValue<EnumT>, N> values;
 
   std::optional<EnumT> default_value = {};
 };
 
 template <typename EnumT, ssize_t N, size_t... Indices>
-constexpr inline auto Args::MakeEnumFlagHelper(
+constexpr inline auto Args::MakeEnumOptHelper(
     llvm::StringLiteral name, const EnumValue<EnumT> (&args)[N],
-    std::index_sequence<Indices...> /*indices*/) -> EnumFlag<EnumT, N> {
+    std::index_sequence<Indices...> /*indices*/) -> EnumOpt<EnumT, N> {
   return {{.name = name}, {args[Indices]...}};
 }
 
 template <typename EnumT, ssize_t N>
-constexpr inline auto Args::MakeEnumFlag(llvm::StringLiteral name,
+constexpr inline auto Args::MakeEnumOpt(llvm::StringLiteral name,
                                          const EnumValue<EnumT> (&args)[N])
-    -> EnumFlag<EnumT, N> {
-  return MakeEnumFlagHelper(name, args, std::make_index_sequence<N>{});
+    -> EnumOpt<EnumT, N> {
+  return MakeEnumOptHelper(name, args, std::make_index_sequence<N>{});
 }
 
-struct Args::StringListFlag : Flag {
+struct Args::StringListOpt : Opt {
   std::optional<llvm::ArrayRef<llvm::StringLiteral>> default_value = {};
 };
 
-constexpr inline auto Args::MakeStringListFlag(llvm::StringLiteral name,
+constexpr inline auto Args::MakeStringListOpt(llvm::StringLiteral name,
                                                StringListDefault defaults)
-    -> StringListFlag {
+    -> StringListOpt {
   return {{.name = name}, {defaults.default_values}};
 }
 
@@ -398,47 +398,47 @@ template <typename... Ts>
 struct Args::Command {
   llvm::StringLiteral name;
 
-  std::tuple<const Ts*...> flags = {};
+  std::tuple<const Ts*...> opts = {};
 
   CommandInfo info;
 };
 
 template <typename... Ts>
 constexpr inline auto Args::MakeCommand(llvm::StringLiteral name,
-                                        const Ts*... flags) -> Command<Ts...> {
-  return {.name = name, .flags = std::tuple{flags...}, .info = {}};
+                                        const Ts*... opts) -> Command<Ts...> {
+  return {.name = name, .opts = std::tuple{opts...}, .info = {}};
 }
 
 template <typename... Ts>
 constexpr inline auto Args::MakeCommand(llvm::StringLiteral name,
-                                        CommandInfo info, const Ts*... flags)
+                                        CommandInfo info, const Ts*... opts)
     -> Command<Ts...> {
-  return {.name = name, .flags = std::tuple{flags...}, .info = info};
+  return {.name = name, .opts = std::tuple{opts...}, .info = info};
 }
 
-template <typename EnumT, typename... FlagTs>
-struct Args::Subcommand : Command<FlagTs...> {
+template <typename EnumT, typename... OptTs>
+struct Args::Subcommand : Command<OptTs...> {
   static_assert(std::is_enum_v<EnumT>,
                 "Must provide an enum type to enumerate subcommands.");
   using Enum = EnumT;
   EnumT enumerator;
 };
 
-template <typename EnumT, typename... FlagTs>
+template <typename EnumT, typename... OptTs>
 constexpr inline auto Args::MakeSubcommand(llvm::StringLiteral name,
                                            EnumT enumerator,
-                                           const FlagTs*... flags)
-    -> Subcommand<EnumT, FlagTs...> {
-  return {{.name = name, .flags = std::tuple{flags...}, .info = {}},
+                                           const OptTs*... opts)
+    -> Subcommand<EnumT, OptTs...> {
+  return {{.name = name, .opts = std::tuple{opts...}, .info = {}},
           enumerator};
 }
 
-template <typename EnumT, typename... FlagTs>
+template <typename EnumT, typename... OptTs>
 constexpr inline auto Args::MakeSubcommand(llvm::StringLiteral name,
                                            EnumT enumerator, CommandInfo info,
-                                           const FlagTs*... flags)
-    -> Subcommand<EnumT, FlagTs...> {
-  return {{.name = name, .flags = std::tuple{flags...}, .info = info},
+                                           const OptTs*... opts)
+    -> Subcommand<EnumT, OptTs...> {
+  return {{.name = name, .opts = std::tuple{opts...}, .info = info},
           enumerator};
 }
 
@@ -482,33 +482,33 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
   // found.
   args.parse_result_ = ArgsType::ParseResult::Error;
 
-  auto* flags = &args.flags_;
+  auto* opts = &args.opts_;
   llvm::SmallDenseMap<
       llvm::StringRef,
       std::function<bool(std::optional<llvm::StringRef> arg_value)>, 16>
-      flag_map;
+      opt_map;
   auto build_flag_map = [&](const auto*... command_flags) {
-    // Process the input flags into a lookup table for parsing, also setting up
+    // Process the input opts into a lookup table for parsing, also setting up
     // any default values.
-    flag_map.clear();
+    opt_map.clear();
 
-    auto add_flag = [&](const auto* flag) {
+    auto add_flag = [&](const auto* opt) {
       bool inserted =
-          flag_map
-              .insert({flag->name,
-                       [flag, &args, &flags,
+          opt_map
+              .insert({opt->name,
+                       [opt, &args, &opts,
                         &errors](std::optional<llvm::StringRef> arg_value) {
-                         return args.AddParsedFlag(*flags, flag, arg_value,
+                         return args.AddParsedOpt(*opts, opt, arg_value,
                                                    errors);
                        }})
               .second;
-      CARBON_CHECK(inserted) << "Duplicate flags named: " << flag->name;
-      args.AddFlagDefault(*flags, flag);
+      CARBON_CHECK(inserted) << "Duplicate opts named: " << opt->name;
+      args.AddOptDefault(*opts, opt);
     };
-    // Fold over the flags, calling `add_flag` for each one.
+    // Fold over the opts, calling `add_flag` for each one.
     (add_flag(command_flags), ...);
   };
-  std::apply(build_flag_map, command.flags);
+  std::apply(build_flag_map, command.opts);
 
   // Process the input subcommands into a lookup table. We just handle the
   // subcommand name here to be lazy. We'll process the subcommand itself only
@@ -518,9 +518,9 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
   auto parsed_subcommand = [&](const auto* subcommand) {
     if constexpr (HasSubcommands) {
       args.subcommand_ = subcommand->enumerator;
-      flags = &args.subcommand_flags_;
-      // Rebuild the flag map for this subcommand.
-      std::apply(build_flag_map, subcommand->flags);
+      opts = &args.subcommand_opts_;
+      // Rebuild the opt map for this subcommand.
+      std::apply(build_flag_map, subcommand->opts);
     }
   };
   if constexpr (HasSubcommands) {
@@ -564,10 +564,10 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
       }
     }
     if (arg[1] != '-') {
-      CARBON_FATAL() << "TODO: handle short flags";
+      CARBON_FATAL() << "TODO: handle short opts";
     }
     if (arg.size() == 2) {
-      // A parameter of `--` disables all flag processing making the remaining
+      // A parameter of `--` disables all opt processing making the remaining
       // args always positional.
       args.positional_args_.append(raw_args.begin() + i + 1, raw_args.end());
       break;
@@ -583,13 +583,13 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
       arg = arg.substr(0, index);
     }
 
-    auto flag_it = flag_map.find(arg);
-    if (flag_it == flag_map.end()) {
+    auto opt_it = opt_map.find(arg);
+    if (opt_it == opt_map.end()) {
       errors << "ERROR: Flag '--" << arg << "' does not exist.\n";
       // TODO: show usage
       return args;
     }
-    if (!flag_it->second(value)) {
+    if (!opt_it->second(value)) {
       // TODO: show usage
       return args;
     }
@@ -601,47 +601,47 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
 }
 
 template <typename EnumT, ssize_t N>
-auto Args::GetEnumFlagImpl(const FlagMap& flags,
-                           const EnumFlag<EnumT, N>* flag) const
+auto Args::GetEnumOptImpl(const OptMap& opts,
+                           const EnumOpt<EnumT, N>* opt) const
     -> std::optional<EnumT> {
-  auto flag_iterator = flags.find(flag);
-  if (flag_iterator == flags.end()) {
-    // No value for this flag.
+  auto opt_iterator = opts.find(opt);
+  if (opt_iterator == opts.end()) {
+    // No value for this opt.
     return {};
   }
-  FlagKind kind = flag_iterator->second.kind;
-  CARBON_CHECK(kind == FlagKind::Enum)
-      << "Flag '" << flag->name << "' has inconsistent kinds";
-  return static_cast<EnumT>(flag_iterator->second.enum_value);
+  OptKind kind = opt_iterator->second.kind;
+  CARBON_CHECK(kind == OptKind::Enum)
+      << "Flag '" << opt->name << "' has inconsistent kinds";
+  return static_cast<EnumT>(opt_iterator->second.enum_value);
 }
 
 template <typename EnumT, ssize_t N>
-void Args::AddFlagDefault(Args::FlagMap& flags,
-                          const EnumFlag<EnumT, N>* flag) {
-  if (!flag->default_value.has_value()) {
+void Args::AddOptDefault(Args::OptMap& opts,
+                          const EnumOpt<EnumT, N>* opt) {
+  if (!opt->default_value.has_value()) {
     return;
   }
-  auto [flag_it, inserted] = flags.insert({flag, {.kind = FlagKind::String}});
-  CARBON_CHECK(inserted) << "Defaults must be added to an empty set of flags!";
+  auto [opt_it, inserted] = opts.insert({opt, {.kind = OptKind::String}});
+  CARBON_CHECK(inserted) << "Defaults must be added to an empty set of opts!";
 
   // Make sure any value we store will round-trip through our type erased
   // storage of `int` correctly.
-  EnumT enum_value = *flag->default_value;
+  EnumT enum_value = *opt->default_value;
   int storage_value = static_cast<int>(enum_value);
   CARBON_CHECK(enum_value == static_cast<EnumT>(storage_value))
-      << "Default for enum flag '--" << flag->name << "' has a storage value '"
+      << "Default for enum opt '--" << opt->name << "' has a storage value '"
       << storage_value << "' which won't round-trip!";
 
-  flag_it->second.enum_value = storage_value;
+  opt_it->second.enum_value = storage_value;
 }
 
 template <typename EnumT, ssize_t N>
-auto Args::AddParsedFlag(FlagMap& flags, const EnumFlag<EnumT, N>* flag,
+auto Args::AddParsedOpt(OptMap& opts, const EnumOpt<EnumT, N>* opt,
                          std::optional<llvm::StringRef> arg_value,
                          llvm::raw_ostream& errors) -> bool {
-  auto [inserted, value] = AddParsedFlagToMap(flags, flag, FlagKind::Enum);
-  if (!arg_value && !flag->default_value) {
-    errors << "ERROR: Invalid missing value for the enum flag '--" << flag->name
+  auto [inserted, value] = AddParsedOptToMap(opts, opt, OptKind::Enum);
+  if (!arg_value && !opt->default_value) {
+    errors << "ERROR: Invalid missing value for the enum opt '--" << opt->name
            << "' which does not have a default value\n";
     return false;
   }
@@ -649,34 +649,34 @@ auto Args::AddParsedFlag(FlagMap& flags, const EnumFlag<EnumT, N>* flag,
   if (arg_value) {
     bool matched_value = false;
     for (ssize_t i = 0; i < N; ++i) {
-      if (*arg_value == flag->values[i].name) {
-        enum_value = flag->values[i].value;
+      if (*arg_value == opt->values[i].name) {
+        enum_value = opt->values[i].value;
         matched_value = true;
         break;
       }
     }
     if (!matched_value) {
       errors << "ERROR: Invalid value '" << *arg_value
-             << "' for the enum flag '--" << flag->name
+             << "' for the enum opt '--" << opt->name
              << "', must be one of the following: ";
       for (ssize_t i = 0; i < N; ++i) {
         if (i != 0) {
           errors << ", ";
         }
-        errors << flag->values[i].name;
+        errors << opt->values[i].name;
       }
       errors << "\n";
       return false;
     }
   } else {
-    enum_value = *flag->default_value;
+    enum_value = *opt->default_value;
   }
 
   // Make sure any value we store will round-trip through our type erased
   // storage of `int` correctly.
   int storage_value = static_cast<int>(enum_value);
   CARBON_CHECK(enum_value == static_cast<EnumT>(storage_value))
-      << "Parsed value for enum flag '--" << flag->name
+      << "Parsed value for enum opt '--" << opt->name
       << "' has a storage value '" << storage_value
       << "' which won't round-trip!";
 

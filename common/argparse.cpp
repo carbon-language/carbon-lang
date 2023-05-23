@@ -9,105 +9,105 @@
 
 namespace Carbon {
 
-auto Args::TestFlagImpl(const FlagMap& flags, const BooleanFlag* flag) const
+auto Args::TestFlagImpl(const OptMap& opts, const BooleanFlag* opt) const
     -> bool {
-  auto flag_iterator = flags.find(flag);
-  CARBON_CHECK(flag_iterator != flags.end()) << "Invalid flag: " << flag->name;
-  FlagKind kind = flag_iterator->second.kind;
-  CARBON_CHECK(kind == FlagKind::Boolean)
-      << "Flag '" << flag->name << "' has inconsistent kinds";
-  return flag_iterator->second.boolean_value;
+  auto opt_iterator = opts.find(opt);
+  CARBON_CHECK(opt_iterator != opts.end()) << "Invalid opt: " << opt->name;
+  OptKind kind = opt_iterator->second.kind;
+  CARBON_CHECK(kind == OptKind::Boolean)
+      << "Flag '" << opt->name << "' has inconsistent kinds";
+  return opt_iterator->second.boolean_value;
 }
 
-template <typename ValueT, typename FlagMapT, typename FlagT,
-          typename FlagKindT, typename ValuesT>
-static auto GetFlagGenericImpl(const FlagMapT& flags, const FlagT* flag,
-                               FlagKindT kind, const ValuesT& values)
+template <typename ValueT, typename OptMapT, typename OptT,
+          typename OptKindT, typename ValuesT>
+static auto GetFlagGenericImpl(const OptMapT& opts, const OptT* opt,
+                               OptKindT kind, const ValuesT& values)
     -> std::optional<ValueT> {
-  auto flag_iterator = flags.find(flag);
-  if (flag_iterator == flags.end()) {
-    // No value for this flag.
+  auto opt_iterator = opts.find(opt);
+  if (opt_iterator == opts.end()) {
+    // No value for this opt.
     return {};
   }
-  FlagKindT stored_kind = flag_iterator->second.kind;
+  OptKindT stored_kind = opt_iterator->second.kind;
   CARBON_CHECK(stored_kind == kind)
-      << "Flag '" << flag->name << "' has inconsistent kinds: expected '"
+      << "Flag '" << opt->name << "' has inconsistent kinds: expected '"
       << kind << "' but found '" << stored_kind << "'";
-  return values[flag_iterator->second.value_index];
+  return values[opt_iterator->second.value_index];
 }
 
-auto Args::GetStringFlagImpl(const FlagMap& flags, const StringFlag* flag) const
+auto Args::GetStringOptImpl(const OptMap& opts, const StringOpt* opt) const
     -> std::optional<llvm::StringRef> {
-  return GetFlagGenericImpl<llvm::StringRef>(flags, flag, FlagKind::String,
-                                             string_flag_values_);
+  return GetFlagGenericImpl<llvm::StringRef>(opts, opt, OptKind::String,
+                                             string_opt_values_);
 }
 
-auto Args::GetIntFlagImpl(const FlagMap& flags, const IntFlag* flag) const
+auto Args::GetIntOptImpl(const OptMap& opts, const IntOpt* opt) const
     -> std::optional<ssize_t> {
-  return GetFlagGenericImpl<ssize_t>(flags, flag, FlagKind::Int,
-                                     int_flag_values_);
+  return GetFlagGenericImpl<ssize_t>(opts, opt, OptKind::Int,
+                                     int_opt_values_);
 }
 
-auto Args::GetStringListFlagImpl(const FlagMap& flags,
-                                 const StringListFlag* flag) const
+auto Args::GetStringListOptImpl(const OptMap& opts,
+                                 const StringListOpt* opt) const
     -> llvm::ArrayRef<llvm::StringRef> {
-  if (auto flag_values = GetFlagGenericImpl<llvm::ArrayRef<llvm::StringRef>>(
-          flags, flag, FlagKind::StringList, string_list_flag_values_)) {
-    return *flag_values;
+  if (auto opt_values = GetFlagGenericImpl<llvm::ArrayRef<llvm::StringRef>>(
+          opts, opt, OptKind::StringList, string_list_opt_values_)) {
+    return *opt_values;
   }
   return {};
 }
 
-void Args::AddFlagDefault(Args::FlagMap& flags, const BooleanFlag* flag) {
-  auto [flag_it, inserted] = flags.insert({flag, {.kind = FlagKind::Boolean}});
-  CARBON_CHECK(inserted) << "Defaults must be added to an empty set of flags!";
-  auto& value = flag_it->second;
-  value.boolean_value = flag->default_value;
+void Args::AddOptDefault(Args::OptMap& opts, const BooleanFlag* opt) {
+  auto [opt_it, inserted] = opts.insert({opt, {.kind = OptKind::Boolean}});
+  CARBON_CHECK(inserted) << "Defaults must be added to an empty set of opts!";
+  auto& value = opt_it->second;
+  value.boolean_value = opt->default_value;
 }
 
-template <typename FlagMapT, typename FlagT, typename FlagKindT,
+template <typename OptMapT, typename OptT, typename OptKindT,
           typename ValuesT>
-auto AddFlagDefaultGeneric(FlagMapT& flags, const FlagT* flag, FlagKindT kind,
+auto AddOptDefaultGeneric(OptMapT& opts, const OptT* opt, OptKindT kind,
                            ValuesT& values) {
-  if (!flag->default_value) {
+  if (!opt->default_value) {
     return;
   }
-  auto [flag_it, inserted] = flags.insert({flag, {.kind = kind}});
-  CARBON_CHECK(inserted) << "Defaults must be added to an empty set of flags!";
-  auto& value = flag_it->second;
+  auto [opt_it, inserted] = opts.insert({opt, {.kind = kind}});
+  CARBON_CHECK(inserted) << "Defaults must be added to an empty set of opts!";
+  auto& value = opt_it->second;
   value.value_index = values.size();
-  values.emplace_back(*flag->default_value);
+  values.emplace_back(*opt->default_value);
 }
 
-void Args::AddFlagDefault(Args::FlagMap& flags, const StringFlag* flag) {
-  AddFlagDefaultGeneric(flags, flag, FlagKind::String, string_flag_values_);
+void Args::AddOptDefault(Args::OptMap& opts, const StringOpt* opt) {
+  AddOptDefaultGeneric(opts, opt, OptKind::String, string_opt_values_);
 }
 
-void Args::AddFlagDefault(Args::FlagMap& flags, const IntFlag* flag) {
-  AddFlagDefaultGeneric(flags, flag, FlagKind::Int, int_flag_values_);
+void Args::AddOptDefault(Args::OptMap& opts, const IntOpt* opt) {
+  AddOptDefaultGeneric(opts, opt, OptKind::Int, int_opt_values_);
 }
 
-void Args::AddFlagDefault(Args::FlagMap& flags, const StringListFlag* flag) {
-  AddFlagDefaultGeneric(flags, flag, FlagKind::StringList,
-                        string_list_flag_values_);
+void Args::AddOptDefault(Args::OptMap& opts, const StringListOpt* opt) {
+  AddOptDefaultGeneric(opts, opt, OptKind::StringList,
+                        string_list_opt_values_);
 }
 
-auto Args::AddParsedFlagToMap(FlagMap& flags, const Flag* flag, FlagKind kind)
-    -> std::pair<bool, FlagKindAndValue&> {
-  auto [flag_it, inserted] = flags.insert({flag, {.kind = kind}});
-  auto& value = flag_it->second;
+auto Args::AddParsedOptToMap(OptMap& opts, const Opt* opt, OptKind kind)
+    -> std::pair<bool, OptKindAndValue&> {
+  auto [opt_it, inserted] = opts.insert({opt, {.kind = kind}});
+  auto& value = opt_it->second;
   if (!inserted) {
     CARBON_CHECK(value.kind == kind)
-        << "Inconsistent flag kind for repeated flag '--" << flag->name
+        << "Inconsistent opt kind for repeated opt '--" << opt->name
         << "': originally '" << value.kind << "' and now '" << kind << "'";
   }
   return {inserted, value};
 }
 
-auto Args::AddParsedFlag(FlagMap& flags, const BooleanFlag* flag,
+auto Args::AddParsedOpt(OptMap& opts, const BooleanFlag* opt,
                          std::optional<llvm::StringRef> arg_value,
                          llvm::raw_ostream& errors) -> bool {
-  auto [_, value] = AddParsedFlagToMap(flags, flag, FlagKind::Boolean);
+  auto [_, value] = AddParsedOptToMap(opts, opt, OptKind::Boolean);
   if (!arg_value || *arg_value == "true") {
     value.boolean_value = true;
     return true;
@@ -117,37 +117,37 @@ auto Args::AddParsedFlag(FlagMap& flags, const BooleanFlag* flag,
     return true;
   }
   errors << "ERROR: Invalid value '" << *arg_value
-         << "' provided for the boolean flag '--" << flag->name << "'\n";
+         << "' provided for the boolean opt '--" << opt->name << "'\n";
   return false;
 }
 
-auto Args::AddParsedFlag(FlagMap& flags, const StringFlag* flag,
+auto Args::AddParsedOpt(OptMap& opts, const StringOpt* opt,
                          std::optional<llvm::StringRef> arg_value,
                          llvm::raw_ostream& errors) -> bool {
-  auto [inserted, value] = AddParsedFlagToMap(flags, flag, FlagKind::String);
-  if (!arg_value && !flag->default_value) {
-    errors << "ERROR: Invalid missing value for the string flag '--"
-           << flag->name << "' which does not have a default value\n";
+  auto [inserted, value] = AddParsedOptToMap(opts, opt, OptKind::String);
+  if (!arg_value && !opt->default_value) {
+    errors << "ERROR: Invalid missing value for the string opt '--"
+           << opt->name << "' which does not have a default value\n";
     return false;
   }
   llvm::StringRef value_str =
       arg_value ? *arg_value
-                : static_cast<llvm::StringRef>(*flag->default_value);
+                : static_cast<llvm::StringRef>(*opt->default_value);
   if (inserted) {
-    value.value_index = string_flag_values_.size();
-    string_flag_values_.push_back(value_str);
+    value.value_index = string_opt_values_.size();
+    string_opt_values_.push_back(value_str);
   } else {
-    string_flag_values_[value.value_index] = value_str;
+    string_opt_values_[value.value_index] = value_str;
   }
   return true;
 }
 
-auto Args::AddParsedFlag(FlagMap& flags, const IntFlag* flag,
+auto Args::AddParsedOpt(OptMap& opts, const IntOpt* opt,
                          std::optional<llvm::StringRef> arg_value,
                          llvm::raw_ostream& errors) -> bool {
-  auto [inserted, value] = AddParsedFlagToMap(flags, flag, FlagKind::Int);
-  if (!arg_value && !flag->default_value) {
-    errors << "ERROR: Invalid missing value for the int flag '--" << flag->name
+  auto [inserted, value] = AddParsedOptToMap(opts, opt, OptKind::Int);
+  if (!arg_value && !opt->default_value) {
+    errors << "ERROR: Invalid missing value for the int opt '--" << opt->name
            << "' which does not have a default value\n";
     return false;
   }
@@ -156,37 +156,37 @@ auto Args::AddParsedFlag(FlagMap& flags, const IntFlag* flag,
     // Note that LLVM's function for parsing as an integer confusingly returns
     // true *on an error* in parsing.
     if (arg_value->getAsInteger(/*Radix=*/0, value_int)) {
-      errors << "ERROR: Unable to parse int flag '--" << flag->name
+      errors << "ERROR: Unable to parse int opt '--" << opt->name
              << "' value '" << *arg_value << "' as an integer\n";
       return false;
     }
   } else {
-    value_int = *flag->default_value;
+    value_int = *opt->default_value;
   }
   if (inserted) {
-    value.value_index = int_flag_values_.size();
-    int_flag_values_.push_back(value_int);
+    value.value_index = int_opt_values_.size();
+    int_opt_values_.push_back(value_int);
   } else {
-    int_flag_values_[value.value_index] = value_int;
+    int_opt_values_[value.value_index] = value_int;
   }
   return true;
 }
 
-auto Args::AddParsedFlag(FlagMap& flags, const StringListFlag* flag,
+auto Args::AddParsedOpt(OptMap& opts, const StringListOpt* opt,
                          std::optional<llvm::StringRef> arg_value,
                          llvm::raw_ostream& errors) -> bool {
   auto [inserted, value] =
-      AddParsedFlagToMap(flags, flag, FlagKind::StringList);
+      AddParsedOptToMap(opts, opt, OptKind::StringList);
   if (!arg_value) {
-    errors << "ERROR: Must specify a value for the string list flag '--"
-           << flag->name << "'\n";
+    errors << "ERROR: Must specify a value for the string list opt '--"
+           << opt->name << "'\n";
     return false;
   }
   if (inserted) {
-    value.value_index = string_list_flag_values_.size();
-    string_list_flag_values_.push_back({*arg_value});
+    value.value_index = string_list_opt_values_.size();
+    string_list_opt_values_.push_back({*arg_value});
   } else {
-    string_list_flag_values_[value.value_index].push_back(*arg_value);
+    string_list_opt_values_[value.value_index].push_back(*arg_value);
   }
   return true;
 }
