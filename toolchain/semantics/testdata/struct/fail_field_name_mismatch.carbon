@@ -16,6 +16,11 @@
 // CHECK:STDOUT:   x,
 // CHECK:STDOUT:   b,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT:   node+1,
+// CHECK:STDOUT:   node+7,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StructType, arg0: block2, type: nodeTypeType},

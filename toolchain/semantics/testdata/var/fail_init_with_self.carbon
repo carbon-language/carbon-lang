@@ -15,6 +15,9 @@
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT:   x,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
 // CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},

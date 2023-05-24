@@ -19,6 +19,9 @@
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT:   b,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeIntegerType},

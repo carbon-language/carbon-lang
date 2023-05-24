@@ -15,6 +15,9 @@
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},

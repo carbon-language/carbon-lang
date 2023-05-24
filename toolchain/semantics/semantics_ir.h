@@ -160,11 +160,18 @@ class SemanticsIR {
     return std::nullopt;
   }
 
+  // Adds a type.
+  auto AddType(SemanticsNodeId node_id) -> void { types_.push_back(node_id); }
+
   // Produces a string version of a node.
   auto StringifyNode(SemanticsNodeId node_id) -> std::string;
 
   auto callables_size() const -> int { return callables_.size(); }
   auto nodes_size() const -> int { return nodes_.size(); }
+
+  auto types() const -> const llvm::SmallVector<SemanticsNodeId>& {
+    return types_;
+  }
 
   // The node blocks, for direct mutation.
   auto node_blocks() -> llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>>& {
@@ -205,6 +212,10 @@ class SemanticsIR {
   // string_to_id_ provides a mapping to identify strings.
   llvm::StringMap<SemanticsStringId> string_to_id_;
   llvm::SmallVector<llvm::StringRef> strings_;
+
+  // Nodes which correspond to in-use types. Stored separately for easy access
+  // by lowering.
+  llvm::SmallVector<SemanticsNodeId> types_;
 
   // All nodes. The first entries will always be cross-references to builtins,
   // at indices matching SemanticsBuiltinKind ordering.

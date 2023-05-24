@@ -13,6 +13,8 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeTypeType, type: nodeTypeType},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeInvalidType, type: nodeInvalidType},

@@ -15,6 +15,10 @@
 // CHECK:STDOUT:   a,
 // CHECK:STDOUT:   x,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT:   node+3,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},

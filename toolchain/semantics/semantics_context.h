@@ -93,6 +93,18 @@ class SemanticsContext {
   auto ImplicitAsRequired(ParseTree::Node parse_node, SemanticsNodeId value_id,
                           SemanticsNodeId as_type_id) -> SemanticsNodeId;
 
+  // Canonicalizes a type which is tracked as a single node.
+  // TODO: This should eventually return a type ID.
+  auto CanonicalizeType(SemanticsNodeId node_id) -> SemanticsNodeId;
+
+  // Converts an expression for use as a type.
+  // TODO: This should eventually return a type ID.
+  auto ExpressionAsType(ParseTree::Node parse_node, SemanticsNodeId value_id)
+      -> SemanticsNodeId {
+    return CanonicalizeType(ImplicitAsRequired(
+        parse_node, value_id, SemanticsNodeId::BuiltinTypeType));
+  }
+
   // Starts handling parameters or arguments.
   auto ParamOrArgStart() -> void;
 
@@ -149,30 +161,11 @@ class SemanticsContext {
     Compatible,
   };
 
-  // Provides DenseMapInfo for SemanticsStringId.
-  struct SemanticsStringIdMapInfo {
-    static inline auto getEmptyKey() -> SemanticsStringId {
-      return SemanticsStringId(llvm::DenseMapInfo<int32_t>::getEmptyKey());
-    }
-    static inline auto getTombstoneKey() -> SemanticsStringId {
-      return SemanticsStringId(llvm::DenseMapInfo<int32_t>::getTombstoneKey());
-    }
-
-    static auto getHashValue(const SemanticsStringId& val) -> unsigned {
-      return llvm::DenseMapInfo<int32_t>::getHashValue(val.index);
-    }
-
-    static auto isEqual(const SemanticsStringId& lhs,
-                        const SemanticsStringId& rhs) -> bool {
-      return lhs == rhs;
-    }
-  };
-
   // An entry in scope_stack_.
   struct ScopeStackEntry {
     // Names which are registered with name_lookup_, and will need to be
     // deregistered when the scope ends.
-    llvm::DenseSet<SemanticsStringId, SemanticsStringIdMapInfo> names;
+    llvm::DenseSet<SemanticsStringId> names;
 
     // TODO: This likely needs to track things which need to be destructed.
   };
@@ -245,9 +238,12 @@ class SemanticsContext {
   // reference.
   //
   // Names which no longer have lookup results are erased.
-  llvm::DenseMap<SemanticsStringId, llvm::SmallVector<SemanticsNodeId>,
-                 SemanticsStringIdMapInfo>
+  llvm::DenseMap<SemanticsStringId, llvm::SmallVector<SemanticsNodeId>>
       name_lookup_;
+
+  // Tracks types which have been used, so that they aren't repeatedly added to
+  // SemanticsIR.
+  llvm::DenseSet<SemanticsNodeId> canonical_types_;
 };
 
 // Parse node handlers. Returns false for unrecoverable errors.

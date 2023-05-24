@@ -18,6 +18,12 @@
 // CHECK:STDOUT:   x,
 // CHECK:STDOUT:   y,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT:   node+2,
+// CHECK:STDOUT:   node+11,
+// CHECK:STDOUT:   node+16,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, type: nodeIntegerType},
