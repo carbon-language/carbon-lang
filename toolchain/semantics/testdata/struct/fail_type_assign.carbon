@@ -4,8 +4,6 @@
 //
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: calls: [
-// CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
@@ -18,11 +16,11 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: StructType, arg0: block1, arg1: block2, type: nodeTypeType},
+// CHECK:STDOUT:   {kind: StructType, arg0: block2, type: nodeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: node+1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: node+1},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: StructType, arg0: block4, arg1: block5, type: nodeTypeType},
+// CHECK:STDOUT:   {kind: StructType, arg0: block3, type: nodeTypeType},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeInvalidType, type: nodeInvalidType},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -30,24 +28,20 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/semantics/testdata/struct/fail_type_assign.carbon:[[@LINE+1]]:29: Cannot implicitly convert from `Type` to `{.a: i32}`.
+// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+1]]:29: Cannot implicitly convert from `Type` to `{.a: i32}`.
 var x: {.a: i32} = {.a: i32};

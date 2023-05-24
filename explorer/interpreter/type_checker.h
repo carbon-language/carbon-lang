@@ -25,6 +25,7 @@
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/matching_impl_set.h"
+#include "explorer/interpreter/stack_space.h"
 #include "llvm/ADT/identity.h"
 
 namespace Carbon {
@@ -191,6 +192,9 @@ class TypeChecker {
   // `values` maps variable names to their compile-time values. It is not
   //    directly used in this function but is passed to InterpExp.
   auto TypeCheckExp(Nonnull<Expression*> e, const ImplScope& impl_scope)
+      -> ErrorOr<Success>;
+  // For RunWithExtraStack.
+  auto TypeCheckExpImpl(Nonnull<Expression*> e, const ImplScope& impl_scope)
       -> ErrorOr<Success>;
 
   // Type checks and interprets `type_expression`, and validates it represents a

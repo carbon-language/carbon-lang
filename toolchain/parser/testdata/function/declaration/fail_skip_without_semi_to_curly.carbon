@@ -13,6 +13,6 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/function/declaration/fail_skip_without_semi_to_curly.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
+// CHECK:STDERR: fail_skip_without_semi_to_curly.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
 struct X { fn () }
 fn F();

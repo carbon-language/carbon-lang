@@ -9,5 +9,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/package/fail_no_name.carbon:[[@LINE+1]]:8: Expected identifier after `package`.
+// CHECK:STDERR: fail_no_name.carbon:[[@LINE+1]]:8: Expected identifier after `package`.
 package;

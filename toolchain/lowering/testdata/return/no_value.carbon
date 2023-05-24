@@ -3,10 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: ; ModuleID = 'toolchain/lowering/testdata/return/no_value.carbon'
-// CHECK:STDOUT: source_filename = "toolchain/lowering/testdata/return/no_value.carbon"
+// CHECK:STDOUT: ; ModuleID = 'no_value.carbon'
+// CHECK:STDOUT: source_filename = "no_value.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @Main() {
+// CHECK:STDOUT: %EmptyTupleType = type {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: define %EmptyTupleType @Main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

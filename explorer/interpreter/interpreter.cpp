@@ -412,6 +412,20 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       // `auto` matches any type, without binding any new names. We rely
       // on the typechecker to ensure that `v` is a type.
       return true;
+    case Value::Kind::StaticArrayType: {
+      switch (v->kind()) {
+        case Value::Kind::TupleType:
+        case Value::Kind::TupleValue: {
+          return true;
+        }
+        case Value::Kind::StaticArrayType: {
+          const auto& v_arr = cast<StaticArrayType>(*v);
+          return v_arr.has_size();
+        }
+        default:
+          return false;
+      }
+    }
     default:
       return ValueEqual(p, v, std::nullopt);
   }
@@ -838,6 +852,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           break;
         case Value::Kind::StaticArrayType: {
           const auto& array_type = cast<StaticArrayType>(*destination_type);
+          CARBON_CHECK(array_type.has_size());
           destination_element_types.resize(array_type.size(),
                                            &array_type.element_type());
           break;
@@ -2121,6 +2136,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
               v, Convert(act.results()[0], dest_type, stmt.source_loc()));
         } else if (dest_type->kind() == Value::Kind::StaticArrayType) {
           const auto& array = cast<StaticArrayType>(dest_type);
+          CARBON_CHECK(array->has_size());
           const auto& element_type = array->element_type();
           const auto size = array->size();
 
@@ -2289,6 +2305,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
         }
       } else if (var_type->kind() == Value::Kind::StaticArrayType) {
         const auto& array = cast<StaticArrayType>(var_type);
+        CARBON_CHECK(array->has_size());
         const auto& element_type = array->element_type();
         const auto size = array->size();
 
@@ -2440,15 +2457,15 @@ auto Interpreter::Step() -> ErrorOr<Success> {
   // Check for various overflow conditions before stepping.
   if (todo_.size() > MaxTodoSize) {
     return ProgramError(SourceLocation("overflow", 1))
-           << "Stack overflow: too many interpreter actions on stack";
+           << "stack overflow: too many interpreter actions on stack";
   }
   if (++steps_taken_ > MaxStepsTaken) {
     return ProgramError(SourceLocation("overflow", 1))
-           << "Possible infinite loop: too many interpreter steps executed";
+           << "possible infinite loop: too many interpreter steps executed";
   }
   if (arena_->allocated() > MaxArenaAllocated) {
     return ProgramError(SourceLocation("overflow", 1))
-           << "Out of memory: exceeded arena allocation limit";
+           << "out of memory: exceeded arena allocation limit";
   }
 
   Action& act = todo_.CurrentAction();

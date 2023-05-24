@@ -383,8 +383,11 @@ static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
           expression.array_type_literal();
       out << "[";
       ExpressionToCarbon(array_literal.element_type(), out);
-      out << "; ";
-      ExpressionToCarbon(array_literal.size(), out);
+      out << ";";
+      if (array_literal.has_size()) {
+        out << " ";
+        ExpressionToCarbon(array_literal.size(), out);
+      }
       out << "]";
       break;
     }

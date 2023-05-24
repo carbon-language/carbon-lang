@@ -19,5 +19,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/struct/fail_dot_only.carbon:[[@LINE+1]]:10: Expected identifier after `.`.
+// CHECK:STDERR: fail_dot_only.carbon:[[@LINE+1]]:10: Expected identifier after `.`.
 var x: {.} = {};

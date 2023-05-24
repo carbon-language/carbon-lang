@@ -140,6 +140,7 @@ cc_library(
     srcs = ["resolve_names.cpp"],
     hdrs = ["resolve_names.h"],
     deps = [
+        ":stack_space",
         "//common:check",
         "//explorer/ast",
         "//explorer/ast:static_scope",
@@ -193,6 +194,7 @@ cc_library(
         ":dictionary",
         ":interpreter",
         ":pattern_analysis",
+        ":stack_space",
         ":type_structure",
         "//common:check",
         "//common:enum_base",
@@ -222,6 +224,17 @@ cc_library(
         "//explorer/ast:static_scope",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "stack_space",
+    srcs = ["stack_space.cpp"],
+    hdrs = ["stack_space.h"],
+    deps = [
+        "//common:check",
+        "//common:error",
         "@llvm-project//llvm:Support",
     ],
 )

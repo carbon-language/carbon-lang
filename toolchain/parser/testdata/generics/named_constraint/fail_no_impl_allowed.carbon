@@ -27,6 +27,6 @@
 // CHECK:STDOUT: ]
 
 constraint Foo {
-  // CHECK:STDERR: toolchain/parser/testdata/generics/named_constraint/fail_no_impl_allowed.carbon:[[@LINE+1]]:39: Method implementations are not allowed in interfaces.
+  // CHECK:STDERR: fail_no_impl_allowed.carbon:[[@LINE+1]]:39: Method implementations are not allowed in interfaces.
   fn Add[self: Self](b: Self) -> Self {}
 }

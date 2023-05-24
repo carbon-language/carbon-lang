@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: ; ModuleID = 'toolchain/lowering/testdata/return/value.carbon'
-// CHECK:STDOUT: source_filename = "toolchain/lowering/testdata/return/value.carbon"
+// CHECK:STDOUT: ; ModuleID = 'value.carbon'
+// CHECK:STDOUT: source_filename = "value.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Main() {
 // CHECK:STDOUT: entry:

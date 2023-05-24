@@ -17,11 +17,13 @@ namespace {
 
 class FileTestBaseTest : public FileTestBase {
  public:
-  explicit FileTestBaseTest(llvm::StringRef path) : FileTestBase(path) {}
+  explicit FileTestBaseTest(const std::filesystem::path& path)
+      : FileTestBase(path) {}
 
   auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
       -> bool override {
-    if (filename() == "example.carbon") {
+    auto filename = path().filename();
+    if (filename == "example.carbon") {
       stdout << "something\n"
                 "\n"
                 "8: Line delta\n"
@@ -29,11 +31,11 @@ class FileTestBaseTest : public FileTestBase {
                 "+*[]{}\n"
                 "Foo baz\n";
       return true;
-    } else if (filename() == "fail_example.carbon") {
+    } else if (filename == "fail_example.carbon") {
       stderr << "Oops\n";
       return false;
     } else {
-      ADD_FAILURE() << "Unexpected file: " << path().str();
+      ADD_FAILURE() << "Unexpected file: " << filename;
       return false;
     }
   }
@@ -41,10 +43,12 @@ class FileTestBaseTest : public FileTestBase {
 
 }  // namespace
 
-auto RegisterFileTests(const std::vector<llvm::StringRef>& paths) -> void {
-  FileTestBaseTest::RegisterTests(
-      "FileTestBaseTest", paths,
-      [](llvm::StringRef path) { return new FileTestBaseTest(path); });
+auto RegisterFileTests(const std::vector<std::filesystem::path>& paths)
+    -> void {
+  FileTestBaseTest::RegisterTests("FileTestBaseTest", paths,
+                                  [](const std::filesystem::path& path) {
+                                    return new FileTestBaseTest(path);
+                                  });
 }
 
 }  // namespace Carbon::Testing

@@ -4,11 +4,9 @@
 //
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: calls: [
-// CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block1, param_refs: block2},
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
+// CHECK:STDOUT:   {param_refs: block2},
+// CHECK:STDOUT:   {param_refs: block0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -28,7 +26,7 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str2, arg1: callable1},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: nodeFloatingPointType},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+5, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+4, arg1: block0},
+// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+4, arg1: block4},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -58,7 +56,7 @@
 fn Run(a: i32) {}
 
 fn Main() {
-  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE+2]]:6: No matching callable was found.
-  // CHECK:STDERR: toolchain/semantics/testdata/function/call/fail_param_type.carbon:[[@LINE-4]]:1: Callable cannot be used: Cannot implicityly convert argument 0 from `f64` to `i32`.
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+2]]:6: No matching callable was found.
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-4]]:1: Callable cannot be used: Cannot implicityly convert argument 0 from `f64` to `i32`.
   Run(1.0);
 }

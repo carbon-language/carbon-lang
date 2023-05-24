@@ -8,6 +8,7 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "file_test_base",
+    testonly = 1,
     srcs = ["file_test_base.cpp"],
     hdrs = ["file_test_base.h"],
     deps = [
@@ -18,7 +19,7 @@ cc_library(
 )
 
 file_test(
-    name = "file_test",
+    name = "file_test_base_test",
     srcs = ["file_test_base_test.cpp"],
     tests = ["example.carbon"],
     deps = [

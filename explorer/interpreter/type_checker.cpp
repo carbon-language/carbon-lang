@@ -320,7 +320,7 @@ static auto ExpectConcreteType(SourceLocation source_loc,
 
 // Returns whether *value represents the type of a Carbon value, as
 // opposed to a type pattern or a non-type value.
-static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
+static auto TypeIsDeduceable(Nonnull<const Value*> type) -> bool {
   CARBON_CHECK(IsType(type)) << "expected a type, but found " << *type;
 
   switch (type->kind()) {
@@ -375,13 +375,15 @@ static auto TypeContainsAuto(Nonnull<const Value*> type) -> bool {
       return llvm::any_of(
           llvm::map_range(cast<StructType>(type)->fields(),
                           [](const NamedValue& v) { return v.value; }),
-          TypeContainsAuto);
+          TypeIsDeduceable);
     case Value::Kind::TupleType:
-      return llvm::any_of(cast<TupleType>(type)->elements(), TypeContainsAuto);
+      return llvm::any_of(cast<TupleType>(type)->elements(), TypeIsDeduceable);
     case Value::Kind::PointerType:
-      return TypeContainsAuto(&cast<PointerType>(type)->pointee_type());
+      return TypeIsDeduceable(&cast<PointerType>(type)->pointee_type());
     case Value::Kind::StaticArrayType:
-      return TypeContainsAuto(&cast<StaticArrayType>(type)->element_type());
+      const auto* array_type = cast<StaticArrayType>(type);
+      return !array_type->has_size() ||
+             TypeIsDeduceable(&array_type->element_type());
   }
 }
 
@@ -395,8 +397,60 @@ static auto IsPlaceholderType(Nonnull<const Value*> type) -> bool {
 
 // Returns whether `value` is a concrete type, which would be valid as the
 // static type of an expression. This is currently any type other than `auto`.
-static auto IsConcreteType(Nonnull<const Value*> value) -> bool {
-  return IsType(value) && !TypeContainsAuto(value);
+static auto IsNonDeduceableType(Nonnull<const Value*> value) -> bool {
+  return IsType(value) && !TypeIsDeduceable(value);
+}
+
+static auto ExpectResolvedBindingType(const BindingPattern& binding,
+                                      Nonnull<const Value*> type)
+    -> ErrorOr<Success> {
+  switch (type->kind()) {
+    case Value::Kind::AutoType: {
+      auto error = ProgramError(binding.source_loc());
+      error << "cannot deduce `auto` type for ";
+      if (type != &binding.type().value()) {
+        error << *type << " in ";
+      }
+      return error << binding;
+    }
+    case Value::Kind::StructType: {
+      const auto fields = cast<StructType>(type)->fields();
+      for (const auto& field : fields) {
+        if (auto result = ExpectResolvedBindingType(binding, field.value);
+            !result.ok()) {
+          return result;
+        }
+      }
+      return Success();
+    }
+    case Value::Kind::TupleType: {
+      const auto elems = cast<TupleType>(type)->elements();
+      for (const auto* elem : elems) {
+        if (auto result = ExpectResolvedBindingType(binding, elem);
+            !result.ok()) {
+          return result;
+        }
+      }
+      return Success();
+    }
+    case Value::Kind::PointerType:
+      return ExpectResolvedBindingType(
+          binding, &cast<PointerType>(type)->pointee_type());
+    case Value::Kind::StaticArrayType: {
+      const auto* array_type = cast<StaticArrayType>(type);
+      if (!array_type->has_size()) {
+        auto error = ProgramError(binding.source_loc());
+        error << "cannot deduce size for ";
+        if (type != &binding.type().value()) {
+          error << *array_type << " in ";
+        }
+        return error << binding;
+      }
+      return ExpectResolvedBindingType(binding, &array_type->element_type());
+    }
+    default:
+      return Success();
+  }
 }
 
 // Returns whether the given value is template-dependent, that is, if it
@@ -535,8 +589,8 @@ auto TypeChecker::IsImplicitlyConvertible(
   // Check for an exact match or for an implicit conversion.
   // TODO: `impl` definitions of `ImplicitAs` should be provided to cover these
   // conversions.
-  CARBON_CHECK(IsConcreteType(source));
-  CARBON_CHECK(IsConcreteType(destination));
+  CARBON_CHECK(IsNonDeduceableType(source));
+  CARBON_CHECK(IsNonDeduceableType(destination));
   if (IsSameType(source, destination, impl_scope)) {
     return true;
   }
@@ -2685,9 +2739,16 @@ auto TypeChecker::CheckAddrMeAccess(
   return Success();
 }
 
-// NOLINTNEXTLINE(readability-function-size)
 auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
+    -> ErrorOr<Success> {
+  return RunWithExtraStack<ErrorOr<Success>>(
+      [&]() { return TypeCheckExpImpl(e, impl_scope); });
+}
+
+// NOLINTNEXTLINE(readability-function-size)
+auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
+                                   const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "checking " << e->kind() << " " << *e;
@@ -3983,22 +4044,26 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
           Nonnull<const Value*> element_type,
           TypeCheckTypeExp(&array_literal.element_type_expression(),
                            impl_scope));
-      CARBON_RETURN_IF_ERROR(
-          TypeCheckExp(&array_literal.size_expression(), impl_scope));
-      CARBON_RETURN_IF_ERROR(ExpectExactType(
-          array_literal.size_expression().source_loc(), "array size",
-          arena_->New<IntType>(),
-          &array_literal.size_expression().static_type(), impl_scope));
-      CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> size_value,
-                              InterpExp(&array_literal.size_expression()));
-      if (cast<IntValue>(size_value)->value() < 0) {
-        return ProgramError(array_literal.size_expression().source_loc())
-               << "Array size cannot be negative";
+      std::optional<size_t> array_size;
+      if (array_literal.has_size_expression()) {
+        CARBON_RETURN_IF_ERROR(
+            TypeCheckExp(&array_literal.size_expression(), impl_scope));
+        CARBON_RETURN_IF_ERROR(ExpectExactType(
+            array_literal.size_expression().source_loc(), "array size",
+            arena_->New<IntType>(),
+            &array_literal.size_expression().static_type(), impl_scope));
+        CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> size_value,
+                                InterpExp(&array_literal.size_expression()));
+        if (cast<IntValue>(size_value)->value() < 0) {
+          return ProgramError(array_literal.size_expression().source_loc())
+                 << "Array size cannot be negative";
+        }
+        array_size = cast<IntValue>(size_value)->value();
       }
       array_literal.set_static_type(arena_->New<TypeType>());
       array_literal.set_expression_category(ExpressionCategory::Value);
-      array_literal.set_constant_value(arena_->New<StaticArrayType>(
-          element_type, cast<IntValue>(size_value)->value()));
+      array_literal.set_constant_value(
+          arena_->New<StaticArrayType>(element_type, array_size));
       return Success();
     }
   }
@@ -4066,11 +4131,11 @@ auto TypeChecker::TypeCheckTypeExp(Nonnull<Expression*> type_expression,
   CARBON_CHECK(IsType(type))
       << "type expression did not produce a type, got " << *type;
   if (concrete) {
-    if (TypeContainsAuto(type)) {
+    if (TypeIsDeduceable(type)) {
       return ProgramError(type_expression->source_loc())
              << "`auto` is not permitted in this context";
     }
-    CARBON_CHECK(IsConcreteType(type))
+    CARBON_CHECK(IsNonDeduceableType(type))
         << "unknown kind of non-concrete type " << *type;
   }
   CARBON_CHECK(!IsPlaceholderType(type))
@@ -4127,6 +4192,24 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
           TypeCheckExp(&rewrite_clause.replacement(), impl_scope));
       return Success();
     }
+  }
+}
+
+// Returns the list size for type deduction.
+static auto GetSize(Nonnull<const Value*> from) -> size_t {
+  switch (from->kind()) {
+    case Value::Kind::TupleType:
+    case Value::Kind::TupleValue: {
+      const auto& from_tup = cast<TupleValueBase>(*from);
+      return from_tup.elements().size();
+    }
+    case Value::Kind::StaticArrayType: {
+      const auto& from_arr = cast<StaticArrayType>(*from);
+      CARBON_CHECK(from_arr.has_size());
+      return from_arr.size();
+    }
+    default:
+      return 0;
   }
 }
 
@@ -4192,7 +4275,7 @@ auto TypeChecker::TypeCheckPattern(
       if (expected) {
         // TODO: Per proposal #2188, we should be performing conversions at
         // this level rather than on the overall initializer.
-        if (!IsConcreteType(type)) {
+        if (!IsNonDeduceableType(type)) {
           BindingMap generic_args;
           if (!PatternMatch(type, *expected, binding.type().source_loc(),
                             std::nullopt, generic_args, trace_stream_,
@@ -4201,14 +4284,23 @@ auto TypeChecker::TypeCheckPattern(
                    << "type pattern '" << *type
                    << "' does not match actual type '" << **expected << "'";
           }
-          type = *expected;
+
+          if (type->kind() == Value::Kind::StaticArrayType) {
+            const auto& arr = cast<StaticArrayType>(*type);
+            CARBON_CHECK(!arr.has_size());
+            const size_t size = GetSize(*expected);
+            type = arena_->New<StaticArrayType>(&arr.element_type(), size);
+          } else {
+            type = *expected;
+          }
         }
-      } else if (TypeContainsAuto(type)) {
-        return ProgramError(binding.source_loc())
-               << "cannot deduce `auto` type for " << binding;
+      } else {
+        CARBON_RETURN_IF_ERROR(ExpectResolvedBindingType(binding, type));
       }
-      CARBON_CHECK(IsConcreteType(type)) << "did not resolve " << binding
-                                         << " to concrete type, got " << *type;
+
+      CARBON_CHECK(IsNonDeduceableType(type))
+          << "did not resolve " << binding << " to concrete type, got "
+          << *type;
       CARBON_CHECK(!IsPlaceholderType(type))
           << "should be no way to write a placeholder type";
       binding.set_static_type(type);
@@ -4638,8 +4730,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
         return_term.set_static_type(&ret.value_node().static_type());
       } else {
         // TODO: Consider using `ExpectExactType` here.
-        CARBON_CHECK(IsConcreteType(&return_term.static_type()));
-        CARBON_CHECK(IsConcreteType(&ret.value_node().static_type()));
+        CARBON_CHECK(IsNonDeduceableType(&return_term.static_type()));
+        CARBON_CHECK(IsNonDeduceableType(&ret.value_node().static_type()));
         if (!IsSameType(&return_term.static_type(),
                         &ret.value_node().static_type(), impl_scope)) {
           return ProgramError(ret.value_node().base().source_loc())
@@ -4825,7 +4917,7 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
           ExpectReturnOnAllPaths(f->body(), f->source_loc()));
     }
   }
-  CARBON_CHECK(IsConcreteType(&f->return_term().static_type()));
+  CARBON_CHECK(IsNonDeduceableType(&f->return_term().static_type()));
 
   f->set_static_type(arena_->New<FunctionType>(
       &f->param_pattern().static_type(), std::move(generic_parameters),

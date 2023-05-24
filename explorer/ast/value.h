@@ -1578,7 +1578,8 @@ class StaticArrayType : public Value {
  public:
   // Constructs a statically-sized array type with the given element type and
   // size.
-  StaticArrayType(Nonnull<const Value*> element_type, size_t size)
+  StaticArrayType(Nonnull<const Value*> element_type,
+                  std::optional<size_t> size)
       : Value(Kind::StaticArrayType),
         element_type_(element_type),
         size_(size) {}
@@ -1593,11 +1594,15 @@ class StaticArrayType : public Value {
   }
 
   auto element_type() const -> const Value& { return *element_type_; }
-  auto size() const -> size_t { return size_; }
+  auto size() const -> size_t {
+    CARBON_CHECK(has_size());
+    return *size_;
+  }
+  auto has_size() const -> bool { return size_.has_value(); }
 
  private:
   Nonnull<const Value*> element_type_;
-  size_t size_;
+  std::optional<size_t> size_;
 };
 
 template <typename R, typename F>

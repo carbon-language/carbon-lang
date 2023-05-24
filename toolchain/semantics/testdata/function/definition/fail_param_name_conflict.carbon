@@ -4,10 +4,8 @@
 //
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: calls: [
-// CHECK:STDOUT: ]
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block1, param_refs: block2},
+// CHECK:STDOUT:   {param_refs: block2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -44,6 +42,6 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/semantics/testdata/function/definition/fail_param_name_conflict.carbon:[[@LINE+2]]:16: Redefining a in the same scope.
-// CHECK:STDERR: toolchain/semantics/testdata/function/definition/fail_param_name_conflict.carbon:[[@LINE+1]]:8: Previous definition is here.
+// CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+2]]:16: Redefining a in the same scope.
+// CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+1]]:8: Previous definition is here.
 fn Bar(a: i32, a: i32) {}

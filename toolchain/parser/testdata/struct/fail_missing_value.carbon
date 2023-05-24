@@ -20,5 +20,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/struct/fail_missing_value.carbon:[[@LINE+1]]:12: Expected expression.
+// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+1]]:12: Expected expression.
 var x: {.a=} = {};

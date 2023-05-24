@@ -354,8 +354,10 @@ static auto ExpressionToProto(const Expression& expression)
           expression_proto.mutable_array_type_literal();
       *array_literal_proto->mutable_element_type() =
           ExpressionToProto(array_literal.element_type_expression());
-      *array_literal_proto->mutable_size() =
-          ExpressionToProto(array_literal.size_expression());
+      if (array_literal.has_size_expression()) {
+        *array_literal_proto->mutable_size() =
+            ExpressionToProto(array_literal.size_expression());
+      }
       break;
     }
   }

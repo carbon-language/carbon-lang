@@ -31,9 +31,13 @@ cc_library(
     name = "parse_tree",
     srcs = [
         "parse_tree.cpp",
-        "parser.cpp",
-        "parser.h",
-    ],
+        "parser_context.cpp",
+        "parser_context.h",
+    ] +
+    # Glob handler files to avoid missing anyway.
+    glob([
+        "parser_handle_*.cpp",
+    ]),
     hdrs = ["parse_tree.h"],
     deps = [
         ":parse_node_kind",

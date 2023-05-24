@@ -10,5 +10,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: toolchain/parser/testdata/package/fail_no_type.carbon:[[@LINE+1]]:17: Expected a `api` or `impl`.
+// CHECK:STDERR: fail_no_type.carbon:[[@LINE+1]]:17: Expected a `api` or `impl`.
 package Geometry;
