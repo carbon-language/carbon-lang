@@ -71,13 +71,12 @@ class Args {
   constexpr static auto MakeCommand(llvm::StringRef name, CommandInfo info,
                                     const Ts*... opts) -> Command<Ts...>;
   template <typename EnumT, typename... OptTs>
-  constexpr static auto MakeSubcommand(llvm::StringRef name,
-                                       EnumT enumerator, const OptTs*... opts)
+  constexpr static auto MakeSubcommand(llvm::StringRef name, EnumT enumerator,
+                                       const OptTs*... opts)
       -> Subcommand<EnumT, OptTs...>;
   template <typename EnumT, typename... OptTs>
-  constexpr static auto MakeSubcommand(llvm::StringRef name,
-                                       EnumT enumerator, CommandInfo info,
-                                       const OptTs*... opts)
+  constexpr static auto MakeSubcommand(llvm::StringRef name, EnumT enumerator,
+                                       CommandInfo info, const OptTs*... opts)
       -> Subcommand<EnumT, OptTs...>;
 
   template <typename CommandT, typename... SubcommandTs>
