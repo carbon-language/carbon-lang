@@ -18,8 +18,8 @@ using ::testing::Eq;
 using ::testing::Optional;
 using ::testing::StrEq;
 
-constexpr auto TestFlag = Args::MakeFlag("flag");
-constexpr auto TestOpt = Args::MakeStringOpt("option");
+constexpr auto TestFlag = Args::MakeFlag("flag", /*short_name=*/"f");
+constexpr auto TestOpt = Args::MakeStringOpt("option", /*short_name=*/"o");
 
 constexpr auto TestCommand = Args::MakeCommand("command", &TestFlag, &TestOpt);
 
@@ -27,12 +27,53 @@ TEST(ArgParserTest, GlobalCommand) {
   auto args =
       Args::Parse({"--flag", "a", "--option=test", "b", "c", "--", "--x--"},
                   llvm::errs(), TestCommand);
-
   EXPECT_TRUE(args);
   EXPECT_TRUE(args.TestFlag(&TestFlag));
   EXPECT_THAT(args.GetStringOpt(&TestOpt), Optional(StrEq("test")));
   EXPECT_THAT(args.positional_args(),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c"), StrEq("--x--")));
+}
+
+TEST(ArgParserTest, ShortNames) {
+  constexpr static auto OtherFlag1 =
+      Args::MakeFlag("other-flag1", /*short_name=*/"x");
+  constexpr static auto OtherFlag2 =
+      Args::MakeFlag("other-flag2", /*short_name=*/"y");
+  constexpr static auto OtherFlag3 =
+      Args::MakeFlag("other-flag3", /*short_name=*/"z");
+  constexpr auto Command = Args::MakeCommand(
+      "command", &TestFlag, &TestOpt, &OtherFlag1, &OtherFlag2, &OtherFlag3);
+  auto args = Args::Parse({"a", "-xfyo=test", "b", "c"},
+                          llvm::errs(), Command);
+  EXPECT_TRUE(args);
+  EXPECT_TRUE(args.TestFlag(&TestFlag));
+  EXPECT_TRUE(args.TestFlag(&OtherFlag1));
+  EXPECT_TRUE(args.TestFlag(&OtherFlag2));
+  EXPECT_FALSE(args.TestFlag(&OtherFlag3));
+  EXPECT_THAT(args.GetStringOpt(&TestOpt), Optional(StrEq("test")));
+  EXPECT_THAT(args.positional_args(),
+              ElementsAre(StrEq("a"), StrEq("b"), StrEq("c")));
+}
+
+TEST(ArgParserTest, Overriding) {
+  {
+    auto args = Args::Parse({"--option=test1", "--option=test2"}, llvm::errs(),
+                            TestCommand);
+    EXPECT_TRUE(args);
+    EXPECT_THAT(args.GetStringOpt(&TestOpt), Optional(StrEq("test2")));
+  }
+  {
+    auto args = Args::Parse({"--option=test1", "-o=test2", "--option=test3"},
+                            llvm::errs(), TestCommand);
+    EXPECT_TRUE(args);
+    EXPECT_THAT(args.GetStringOpt(&TestOpt), Optional(StrEq("test3")));
+  }
+  {
+    auto args = Args::Parse({"--option=test1", "--option=test2", "-o=test3"},
+                            llvm::errs(), TestCommand);
+    EXPECT_TRUE(args);
+    EXPECT_THAT(args.GetStringOpt(&TestOpt), Optional(StrEq("test3")));
+  }
 }
 
 constexpr auto TestSubFlag = Args::MakeFlag("flag");

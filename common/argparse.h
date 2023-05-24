@@ -6,6 +6,7 @@
 #define CARBON_COMMON_ARGPARSE_H_
 
 #include <array>
+#include <forward_list>
 #include <string>
 #include <type_traits>
 
@@ -15,6 +16,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
@@ -470,29 +472,45 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
   // found.
   args.parse_result_ = ArgsType::ParseResult::Error;
 
+  using OptParserFunctionT = std::function<bool(std::optional<llvm::StringRef> arg_value)>;
+
   auto* opts = &args.opts_;
+  std::forward_list<OptParserFunctionT> parsers;
   llvm::SmallDenseMap<
       llvm::StringRef,
-      std::function<bool(std::optional<llvm::StringRef> arg_value)>, 16>
+      OptParserFunctionT*, 16>
       opt_parse_map;
+  OptParserFunctionT* opt_parse_char_map[128] = {};
+  auto add_opt = [&](const auto* opt) {
+    auto& parser = parsers.emplace_front(
+        [opt, &args, &opts, &errors](std::optional<llvm::StringRef> arg_value) {
+          return args.AddParsedOpt(*opts, opt, arg_value, errors);
+        });
+    bool inserted = opt_parse_map.insert({opt->name, &parser}).second;
+    CARBON_CHECK(inserted) << "Duplicate opts named: " << opt->name;
+    if (!opt->short_name.empty()) {
+      // TODO: extract to a method on `Opt`.
+      CARBON_CHECK(opt->short_name.size() == 1)
+          << "Option with a short name longer than a single character: "
+          << opt->name;
+      CARBON_CHECK(llvm::isAlpha(opt->short_name[0]))
+          << "Option with a short name that isn't a valid letter in the 'C' "
+             "locale: "
+          << opt->name;
+      int short_index = static_cast<int>(opt->short_name[0]);
+      CARBON_CHECK(!opt_parse_char_map[short_index])
+          << "Duplicate option short name '" << opt->short_name
+          << "' for option: " << opt->name;
+      
+      opt_parse_char_map[short_index] = &parser;
+    }
+    args.AddOptDefault(*opts, opt);
+  };
   auto build_opt_parse_map = [&](const auto*... command_flags) {
     // Process the input opts into a lookup table for parsing, also setting up
     // any default values.
     opt_parse_map.clear();
 
-    auto add_opt = [&](const auto* opt) {
-      bool inserted =
-          opt_parse_map
-              .insert({opt->name,
-                       [opt, &args, &opts,
-                        &errors](std::optional<llvm::StringRef> arg_value) {
-                         return args.AddParsedOpt(*opts, opt, arg_value,
-                                                  errors);
-                       }})
-              .second;
-      CARBON_CHECK(inserted) << "Duplicate opts named: " << opt->name;
-      args.AddOptDefault(*opts, opt);
-    };
     // Fold over the opts, calling `add_flag` for each one.
     (add_opt(command_flags), ...);
   };
@@ -552,7 +570,30 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
       }
     }
     if (arg[1] != '-') {
-      CARBON_FATAL() << "TODO: handle short opts";
+      auto short_args = arg.drop_front();
+      std::optional<llvm::StringRef> value = {};
+      auto index = short_args.find('=');
+      if (index != llvm::StringRef::npos) {
+        value = short_args.substr(index + 1);
+        short_args = short_args.substr(0, index);
+      }
+      for (unsigned char c : short_args) {
+        if (!llvm::isAlpha(c)) {
+          errors << "ERROR: Invalid short option string: '-";
+          llvm::printEscapedString(short_args, errors);
+          errors << "'\n";
+          // TODO: show usage
+          return args;
+        }
+      }
+      // All but the last short character are parsed without a value.
+      for (unsigned char c : short_args.drop_back()) {
+        (*opt_parse_char_map[c])(std::nullopt);
+      }
+      // The last character gets the value if present.
+      (*opt_parse_char_map[static_cast<unsigned char>(short_args.back())])(
+          value);
+      continue;
     }
     if (arg.size() == 2) {
       // A parameter of `--` disables all opt processing making the remaining
@@ -577,7 +618,7 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
       // TODO: show usage
       return args;
     }
-    if (!opt_it->second(value)) {
+    if (!(*opt_it->second)(value)) {
       // TODO: show usage
       return args;
     }
