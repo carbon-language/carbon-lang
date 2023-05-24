@@ -186,4 +186,85 @@ auto Args::AddParsedOpt(OptMap& opts, const StringListOpt* opt,
   return true;
 }
 
+auto Args::Parser::ParseArgs(llvm::ArrayRef<llvm::StringRef> raw_args) -> bool {
+  // Now walk the input args, and build up the program args from them. Part-way
+  // through, if we discover a subcommand, we'll re-set the mappings and switch
+  // to parsing the subcommand.
+  bool has_subcommands = !subcommand_parsers.empty();
+  bool is_subcommand_parsed = false;
+  for (int i = 0, size = raw_args.size(); i < size; ++i) {
+    llvm::StringRef arg = raw_args[i];
+    if (arg[0] != '-') {
+      if (!has_subcommands || is_subcommand_parsed) {
+        positional_args.push_back(arg);
+        continue;
+      }
+      is_subcommand_parsed = true;
+
+      // This should be a subcommand, parse it as such.
+      auto subcommand_it = subcommand_parsers.find(arg);
+      if (subcommand_it == subcommand_parsers.end()) {
+        errors << "ERROR: Invalid subcommand: " << arg << "\n";
+        return false;
+      }
+
+      // Switch to subcommand parsing and continue.
+      subcommand_it->second();
+      continue;
+    }
+    if (arg[1] != '-') {
+      auto short_args = arg.drop_front();
+      std::optional<llvm::StringRef> value = {};
+      auto index = short_args.find('=');
+      if (index != llvm::StringRef::npos) {
+        value = short_args.substr(index + 1);
+        short_args = short_args.substr(0, index);
+      }
+      for (unsigned char c : short_args) {
+        if (!llvm::isAlpha(c)) {
+          errors << "ERROR: Invalid short option string: '-";
+          llvm::printEscapedString(short_args, errors);
+          errors << "'\n";
+          return false;
+        }
+      }
+      // All but the last short character are parsed without a value.
+      for (unsigned char c : short_args.drop_back()) {
+        (*opt_char_parsers[c])(std::nullopt);
+      }
+      // The last character gets the value if present.
+      (*opt_char_parsers[static_cast<unsigned char>(short_args.back())])(
+          value);
+      continue;
+    }
+    if (arg.size() == 2) {
+      // A parameter of `--` disables all opt processing making the remaining
+      // args always positional.
+      positional_args.append(raw_args.begin() + i + 1, raw_args.end());
+      break;
+    }
+    // Walk past the double dash.
+    arg = arg.drop_front(2);
+
+    // Split out a value if present.
+    std::optional<llvm::StringRef> value = {};
+    auto index = arg.find('=');
+    if (index != llvm::StringRef::npos) {
+      value = arg.substr(index + 1);
+      arg = arg.substr(0, index);
+    }
+
+    auto opt_it = opt_parsers.find(arg);
+    if (opt_it == opt_parsers.end()) {
+      errors << "ERROR: Opt '--" << arg << "' does not exist.\n";
+      return false;
+    }
+    if (!(*opt_it->second)(value)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 }  // namespace Carbon

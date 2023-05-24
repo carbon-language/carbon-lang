@@ -178,6 +178,8 @@ class Args {
 
   using OptMap = llvm::SmallDenseMap<const Opt*, OptKindAndValue, 4>;
 
+  struct Parser;
+
   ParseResult parse_result_;
 
   llvm::SmallVector<llvm::StringRef, 4> string_opt_values_;
@@ -432,6 +434,24 @@ constexpr inline auto Args::MakeSubcommand(llvm::StringRef name,
           enumerator};
 }
 
+struct Args::Parser {
+  OptMap* parsing_opts;
+  llvm::SmallVectorImpl<llvm::StringRef>& positional_args;
+  llvm::raw_ostream& errors;
+
+  using OptParserFunctionT =
+      std::function<bool(std::optional<llvm::StringRef> arg_value)>;
+
+  llvm::SmallDenseMap<llvm::StringRef, std::unique_ptr<OptParserFunctionT>, 16>
+      opt_parsers{};
+  OptParserFunctionT* opt_char_parsers[128] = {};
+
+  llvm::SmallDenseMap<llvm::StringRef, std::function<void()>, 16>
+      subcommand_parsers{};
+
+  auto ParseArgs(llvm::ArrayRef<llvm::StringRef> raw_args) -> bool;
+};
+
 namespace Detail {
 
 template <typename... SubcommandTs>
@@ -472,20 +492,22 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
   // found.
   args.parse_result_ = ArgsType::ParseResult::Error;
 
-  using OptParserFunctionT =
-      std::function<bool(std::optional<llvm::StringRef> arg_value)>;
+  Parser parser = {.parsing_opts = &args.opts_,
+                   .positional_args = args.positional_args_,
+                   .errors = errors};
 
-  auto* opts = &args.opts_;
-  std::forward_list<OptParserFunctionT> parsers;
-  llvm::SmallDenseMap<llvm::StringRef, OptParserFunctionT*, 16> opt_parse_map;
-  OptParserFunctionT* opt_parse_char_map[128] = {};
+  using OptParserFunctionT = Parser::OptParserFunctionT;
+
   auto add_opt = [&](const auto* opt) {
-    auto& parser = parsers.emplace_front(
-        [opt, &args, &opts, &errors](std::optional<llvm::StringRef> arg_value) {
-          return args.AddParsedOpt(*opts, opt, arg_value, errors);
-        });
-    bool inserted = opt_parse_map.insert({opt->name, &parser}).second;
+    auto [it, inserted] = parser.opt_parsers.try_emplace(
+        opt->name,
+        std::make_unique<OptParserFunctionT>(
+            [opt, &args, &parser](std::optional<llvm::StringRef> arg_value) {
+              return args.AddParsedOpt(*parser.parsing_opts, opt, arg_value,
+                                       parser.errors);
+            }));
     CARBON_CHECK(inserted) << "Duplicate opts named: " << opt->name;
+    auto *opt_parser = it->second.get();
     if (!opt->short_name.empty()) {
       // TODO: extract to a method on `Opt`.
       CARBON_CHECK(opt->short_name.size() == 1)
@@ -496,18 +518,18 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
              "locale: "
           << opt->name;
       int short_index = static_cast<int>(opt->short_name[0]);
-      CARBON_CHECK(!opt_parse_char_map[short_index])
+      CARBON_CHECK(!parser.opt_char_parsers[short_index])
           << "Duplicate option short name '" << opt->short_name
           << "' for option: " << opt->name;
 
-      opt_parse_char_map[short_index] = &parser;
+      parser.opt_char_parsers[short_index] = opt_parser;
     }
-    args.AddOptDefault(*opts, opt);
+    args.AddOptDefault(*parser.parsing_opts, opt);
   };
   auto build_opt_parse_map = [&](const auto*... command_flags) {
     // Process the input opts into a lookup table for parsing, also setting up
     // any default values.
-    opt_parse_map.clear();
+    parser.opt_parsers.clear();
 
     // Fold over the opts, calling `add_flag` for each one.
     (add_opt(command_flags), ...);
@@ -517,19 +539,17 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
   // Process the input subcommands into a lookup table. We just handle the
   // subcommand name here to be lazy. We'll process the subcommand itself only
   // if it is needed.
-  llvm::SmallDenseMap<llvm::StringRef, std::function<void()>, 16>
-      subcommand_parse_map;
   auto parsed_subcommand = [&](const auto* subcommand) {
     if constexpr (HasSubcommands) {
       args.subcommand_ = subcommand->enumerator;
-      opts = &args.subcommand_opts_;
+      parser.parsing_opts = &args.subcommand_opts_;
       // Rebuild the opt map for this subcommand.
       std::apply(build_opt_parse_map, subcommand->opts);
     }
   };
   if constexpr (HasSubcommands) {
     auto add_subcommand = [&](const auto* subcommand) {
-      bool inserted = subcommand_parse_map
+      bool inserted = parser.subcommand_parsers
                           .insert({subcommand->name,
                                    [subcommand, &parsed_subcommand] {
                                      parsed_subcommand(subcommand);
@@ -541,85 +561,9 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
     (add_subcommand(&subcommands), ...);
   }
 
-  // Now walk the input args, and build up the program args from them. Part-way
-  // through, if we discover a subcommand, we'll re-set the mappings and switch
-  // to parsing the subcommand.
-  bool is_subcommand_parsed = false;
-  for (int i = 0, size = raw_args.size(); i < size; ++i) {
-    llvm::StringRef arg = raw_args[i];
-    if (arg[0] != '-') {
-      if (!HasSubcommands || is_subcommand_parsed) {
-        args.positional_args_.push_back(arg);
-        continue;
-      }
-      if constexpr (HasSubcommands) {
-        is_subcommand_parsed = true;
-        // This should be a subcommand, parse it as such.
-        auto subcommand_it = subcommand_parse_map.find(arg);
-        if (subcommand_it == subcommand_parse_map.end()) {
-          errors << "ERROR: Invalid subcommand: " << arg << "\n";
-          // TODO: show usage
-          return args;
-        }
-
-        // Switch to subcommand parsing and continue.
-        subcommand_it->second();
-        continue;
-      }
-    }
-    if (arg[1] != '-') {
-      auto short_args = arg.drop_front();
-      std::optional<llvm::StringRef> value = {};
-      auto index = short_args.find('=');
-      if (index != llvm::StringRef::npos) {
-        value = short_args.substr(index + 1);
-        short_args = short_args.substr(0, index);
-      }
-      for (unsigned char c : short_args) {
-        if (!llvm::isAlpha(c)) {
-          errors << "ERROR: Invalid short option string: '-";
-          llvm::printEscapedString(short_args, errors);
-          errors << "'\n";
-          // TODO: show usage
-          return args;
-        }
-      }
-      // All but the last short character are parsed without a value.
-      for (unsigned char c : short_args.drop_back()) {
-        (*opt_parse_char_map[c])(std::nullopt);
-      }
-      // The last character gets the value if present.
-      (*opt_parse_char_map[static_cast<unsigned char>(short_args.back())])(
-          value);
-      continue;
-    }
-    if (arg.size() == 2) {
-      // A parameter of `--` disables all opt processing making the remaining
-      // args always positional.
-      args.positional_args_.append(raw_args.begin() + i + 1, raw_args.end());
-      break;
-    }
-    // Walk past the double dash.
-    arg = arg.drop_front(2);
-
-    // Split out a value if present.
-    std::optional<llvm::StringRef> value = {};
-    auto index = arg.find('=');
-    if (index != llvm::StringRef::npos) {
-      value = arg.substr(index + 1);
-      arg = arg.substr(0, index);
-    }
-
-    auto opt_it = opt_parse_map.find(arg);
-    if (opt_it == opt_parse_map.end()) {
-      errors << "ERROR: Opt '--" << arg << "' does not exist.\n";
-      // TODO: show usage
-      return args;
-    }
-    if (!(*opt_it->second)(value)) {
-      // TODO: show usage
-      return args;
-    }
+  if (!parser.ParseArgs(raw_args)) {
+    // TODO: show usage
+    return args;
   }
 
   // We successfully parsed all the arguments.
