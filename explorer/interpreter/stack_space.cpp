@@ -16,10 +16,15 @@ static constexpr int64_t DesiredStackSpace = 8 << 20;
 static LLVM_THREAD_LOCAL intptr_t bottom_of_stack = 0;
 
 // Returns the current bottom of stack.
-static auto GetStackPointer() -> intptr_t {
+LLVM_NO_SANITIZE("address")
+LLVM_ATTRIBUTE_NOINLINE static auto GetStackPointer() -> intptr_t {
+#if __GNUC__ || __has_builtin(__builtin_frame_address)
+  return reinterpret_cast<intptr_t>(__builtin_frame_address(0));
+#else
   char char_on_stack = 0;
   char* volatile ptr = &char_on_stack;
   return reinterpret_cast<intptr_t>(ptr);
+#endif
 }
 
 auto IsStackSpaceNearlyExhausted() -> bool {
