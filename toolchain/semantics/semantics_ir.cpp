@@ -166,7 +166,10 @@ auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
     switch (node.kind()) {
       case SemanticsNodeKind::StructType: {
         auto refs = GetNodeBlock(node.GetAsStructType());
-        if (step.index == 0) {
+        if (refs.empty()) {
+          out << "{} as Type";
+          break;
+        } else if (step.index == 0) {
           out << "{";
         } else if (step.index < static_cast<int>(refs.size())) {
           out << ", ";

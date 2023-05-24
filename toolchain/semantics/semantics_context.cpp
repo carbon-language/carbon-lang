@@ -251,10 +251,12 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     // If the value is invalid, we can't do much, but do "succeed".
     return ImplicitAsKind::Identical;
   }
-  auto value_type_id = semantics_->GetNode(value_id).type_id();
+  auto value = semantics_->GetNode(value_id);
+  auto value_type_id = value.type_id();
   if (value_type_id == SemanticsNodeId::BuiltinInvalidType) {
     return ImplicitAsKind::Identical;
   }
+
   if (as_type_id == SemanticsNodeId::BuiltinInvalidType) {
     // Although the target type is invalid, this still changes the value.
     if (output_value_id != nullptr) {
@@ -268,18 +270,21 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     return ImplicitAsKind::Identical;
   }
 
-  // When converting to a Type, there are some automatic conversions that can be
-  // done.
   if (as_type_id == SemanticsNodeId::BuiltinTypeType) {
+    // When converting `()` to a type, the result is `() as Type`.
+    // TODO: This might switch to be closer to the struct conversion below.
     if (value_id == SemanticsNodeId::BuiltinEmptyTuple) {
       if (output_value_id != nullptr) {
         *output_value_id = SemanticsNodeId::BuiltinEmptyTupleType;
       }
       return ImplicitAsKind::Compatible;
     }
-    if (value_id == SemanticsNodeId::BuiltinEmptyStruct) {
+
+    // When converting `{}` to a type, the result is `{} as Type`.
+    if (value.kind() == SemanticsNodeKind::StructValue &&
+        value.GetAsStructValue() == SemanticsNodeBlockId::Empty) {
       if (output_value_id != nullptr) {
-        *output_value_id = SemanticsNodeId::BuiltinEmptyStructType;
+        *output_value_id = value_type_id;
       }
       return ImplicitAsKind::Compatible;
     }

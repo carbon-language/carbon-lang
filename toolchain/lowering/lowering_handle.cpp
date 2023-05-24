@@ -21,12 +21,6 @@ auto LoweringHandleCrossReference(LoweringContext& /*context*/,
 auto LoweringHandleAssign(LoweringContext& context, SemanticsNodeId /*node_id*/,
                           SemanticsNode node) -> void {
   auto [storage_id, value_id] = node.GetAsAssign();
-  if (value_id == SemanticsNodeId::BuiltinEmptyStruct ||
-      value_id == SemanticsNodeId::BuiltinEmptyTuple) {
-    // Elide the 0-length store; these have no value assigned and it should have
-    // no effect.
-    return;
-  }
   context.builder().CreateStore(context.GetLoweredNodeAsValue(value_id),
                                 context.GetLoweredNodeAsValue(storage_id));
 }

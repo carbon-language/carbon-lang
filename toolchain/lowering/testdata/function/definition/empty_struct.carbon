@@ -7,20 +7,11 @@
 // CHECK:STDOUT: source_filename = "empty_struct.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: %EmptyTupleType = type {}
-// CHECK:STDOUT: %EmptyStructType = type {}
+// CHECK:STDOUT: %StructLiteralType = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Echo(%EmptyStructType %a) {
+// CHECK:STDOUT: define %EmptyTupleType @Echo(%StructLiteralType %a) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Main() {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Echo = call %EmptyTupleType @Echo(%EmptyStructType zeroinitializer)
 // CHECK:STDOUT: }
 
 fn Echo(a: {}) {
-}
-
-fn Main() {
-  Echo({});
 }
