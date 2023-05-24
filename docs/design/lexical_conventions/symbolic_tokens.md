@@ -84,12 +84,9 @@ source file:
 | `<=`            | Less than or equal to                                                                                      |
 | `->`            | Return type and indirect member access                                                                     |
 | `=>`            | Match syntax                                                                                               |
-| `[`             | Subscript and deduced parameter lists                                                                      |
-| `]`             | Subscript and deduced parameter lists                                                                      |
-| `(`             | Function call, function declaration and tuple literals                                                     |
-| `)`             | Function call, function declaration and tuple literals                                                     |
-| `{`             | Struct literals, blocks of control flow statements and the bodies of definitions (classes, functions, etc) |
-| `}`             | Struct literals, blocks of control flow statements and the bodies of definitions (classes, functions, etc) |
+| `[` and `]`     | Subscript and deduced parameter lists                                                                      |
+| `(` and `)`     | Function call, function declaration and tuple literals                                                     |
+| `{` and `}`     | Struct literals, blocks of control flow statements and the bodies of definitions (classes, functions, etc) |
 | `,`             | Separate tuple and struct elements                                                                         |
 | `.`             | Member access                                                                                              |
 | `:`             | Name bindings                                                                                              |
