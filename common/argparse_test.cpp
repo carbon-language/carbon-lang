@@ -43,8 +43,7 @@ TEST(ArgParserTest, ShortNames) {
       Args::MakeFlag("other-flag3", /*short_name=*/"z");
   constexpr auto Command = Args::MakeCommand(
       "command", &TestFlag, &TestOpt, &OtherFlag1, &OtherFlag2, &OtherFlag3);
-  auto args = Args::Parse({"a", "-xfyo=test", "b", "c"},
-                          llvm::errs(), Command);
+  auto args = Args::Parse({"a", "-xfyo=test", "b", "c"}, llvm::errs(), Command);
   EXPECT_TRUE(args);
   EXPECT_TRUE(args.TestFlag(&TestFlag));
   EXPECT_TRUE(args.TestFlag(&OtherFlag1));

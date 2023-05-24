@@ -472,14 +472,12 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
   // found.
   args.parse_result_ = ArgsType::ParseResult::Error;
 
-  using OptParserFunctionT = std::function<bool(std::optional<llvm::StringRef> arg_value)>;
+  using OptParserFunctionT =
+      std::function<bool(std::optional<llvm::StringRef> arg_value)>;
 
   auto* opts = &args.opts_;
   std::forward_list<OptParserFunctionT> parsers;
-  llvm::SmallDenseMap<
-      llvm::StringRef,
-      OptParserFunctionT*, 16>
-      opt_parse_map;
+  llvm::SmallDenseMap<llvm::StringRef, OptParserFunctionT*, 16> opt_parse_map;
   OptParserFunctionT* opt_parse_char_map[128] = {};
   auto add_opt = [&](const auto* opt) {
     auto& parser = parsers.emplace_front(
@@ -501,7 +499,7 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
       CARBON_CHECK(!opt_parse_char_map[short_index])
           << "Duplicate option short name '" << opt->short_name
           << "' for option: " << opt->name;
-      
+
       opt_parse_char_map[short_index] = &parser;
     }
     args.AddOptDefault(*opts, opt);
