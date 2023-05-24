@@ -77,9 +77,9 @@ TEST(ArgParserTest, GlobalSubcommands2) {
 }
 
 constexpr auto TestFlagDefault =
-    Args::MakeFlag("flag2", {.default_value = true});
-constexpr auto TestOptDefault =
-    Args::MakeStringOpt("option2", {.default_value = "default"});
+    Args::MakeFlag("flag2", /*short_name=*/"", /*default_value=*/true);
+constexpr auto TestOptDefault = Args::MakeStringOpt(
+    "option2", /*short_name=*/"", /*default_value=*/"default");
 constexpr auto TestCommand2 = Args::MakeCommand(
     "command", &TestFlag, &TestOpt, &TestFlagDefault, &TestOptDefault);
 constexpr auto TestSub3 =
@@ -122,7 +122,7 @@ TEST(ArgParserTest, DefaultsWithExplictOptions) {
 TEST(ArgParserTest, IntOptions) {
   constexpr static auto Opt = Args::MakeIntOpt("int-opt");
   constexpr static auto OptWithDefault =
-      Args::MakeIntOpt("int-defaulted-opt", {.default_value = 42});
+      Args::MakeIntOpt("int-defaulted-opt", /*short_name=*/"", /*default_value=*/42);
 
   constexpr auto Command = Args::MakeCommand("command", &Opt, &OptWithDefault);
   constexpr auto Subcommand =
@@ -183,9 +183,9 @@ TEST(ArgParserTest, StringListOption) {
 }
 
 TEST(ArgParserTest, StringListOptionDefaults) {
-  constexpr static llvm::StringLiteral DefaultValues[] = {"a", "b", "c"};
+  constexpr static llvm::StringRef DefaultValues[] = {"a", "b", "c"};
   constexpr static auto Opt =
-      Args::MakeStringListOpt("strings1", {.default_values = DefaultValues});
+      Args::MakeStringListOpt("strings1", /*short_name=*/"", /*default_values=*/DefaultValues);
 
   constexpr auto Command = Args::MakeCommand("command", &Opt);
   constexpr auto Subcommand =

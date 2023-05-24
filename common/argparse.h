@@ -32,58 +32,50 @@ class Args {
   template <typename EnumT, typename... OptTs>
   struct Subcommand;
 
-  struct FlagDefault {
-    bool default_value;
-  };
-  constexpr static auto MakeFlag(llvm::StringLiteral name,
-                                 FlagDefault defaults = {
-                                     .default_value = false}) -> Flag;
+  constexpr static auto MakeFlag(llvm::StringRef name,
+                                 llvm::StringRef short_name = "",
+                                 bool default_value = false) -> Flag;
 
-  struct StringDefault {
-    llvm::StringLiteral default_value;
-  };
-  constexpr static auto MakeStringOpt(llvm::StringLiteral name) -> StringOpt;
-  constexpr static auto MakeStringOpt(llvm::StringLiteral name,
-                                      StringDefault defaults) -> StringOpt;
+  constexpr static auto MakeStringOpt(
+      llvm::StringRef name, llvm::StringRef short_name = "",
+      std::optional<llvm::StringRef> default_value = {}) -> StringOpt;
 
-  struct IntDefault {
-    ssize_t default_value;
-  };
-  constexpr static auto MakeIntOpt(llvm::StringLiteral name) -> IntOpt;
-  constexpr static auto MakeIntOpt(llvm::StringLiteral name,
-                                   IntDefault defaults) -> IntOpt;
+  constexpr static auto MakeIntOpt(llvm::StringRef name,
+                                   llvm::StringRef short_name = "",
+                                   std::optional<ssize_t> default_value = {})
+      -> IntOpt;
 
   template <typename EnumT>
   struct EnumValue;
   template <typename EnumT, ssize_t N>
-  constexpr static auto MakeEnumOpt(llvm::StringLiteral name,
-                                    const EnumValue<EnumT> (&args)[N])
+  constexpr static auto MakeEnumOpt(llvm::StringRef name,
+                                    const EnumValue<EnumT> (&args)[N],
+                                    llvm::StringRef short_name = "",
+                                    std::optional<EnumT> default_value = {})
       -> EnumOpt<EnumT, N>;
 
-  struct StringListDefault {
-    llvm::ArrayRef<llvm::StringLiteral> default_values;
-  };
   constexpr static auto MakeStringListOpt(
-      llvm::StringLiteral name,
-      StringListDefault defaults = {.default_values = {}}) -> StringListOpt;
+      llvm::StringRef name, llvm::StringRef short_name = "",
+      std::optional<llvm::ArrayRef<llvm::StringRef>> default_values = {})
+      -> StringListOpt;
 
   struct CommandInfo {
-    llvm::StringLiteral description = "";
-    llvm::StringLiteral usage = "";
-    llvm::StringLiteral epilog = "";
+    llvm::StringRef description = "";
+    llvm::StringRef usage = "";
+    llvm::StringRef epilog = "";
   };
   template <typename... Ts>
-  constexpr static auto MakeCommand(llvm::StringLiteral name, const Ts*... opts)
+  constexpr static auto MakeCommand(llvm::StringRef name, const Ts*... opts)
       -> Command<Ts...>;
   template <typename... Ts>
-  constexpr static auto MakeCommand(llvm::StringLiteral name, CommandInfo info,
+  constexpr static auto MakeCommand(llvm::StringRef name, CommandInfo info,
                                     const Ts*... opts) -> Command<Ts...>;
   template <typename EnumT, typename... OptTs>
-  constexpr static auto MakeSubcommand(llvm::StringLiteral name,
+  constexpr static auto MakeSubcommand(llvm::StringRef name,
                                        EnumT enumerator, const OptTs*... opts)
       -> Subcommand<EnumT, OptTs...>;
   template <typename EnumT, typename... OptTs>
-  constexpr static auto MakeSubcommand(llvm::StringLiteral name,
+  constexpr static auto MakeSubcommand(llvm::StringRef name,
                                        EnumT enumerator, CommandInfo info,
                                        const OptTs*... opts)
       -> Subcommand<EnumT, OptTs...>;
@@ -198,7 +190,8 @@ class Args {
 
   template <typename EnumT, ssize_t N, size_t... Indices>
   constexpr static auto MakeEnumOptHelper(
-      llvm::StringLiteral name, const EnumValue<EnumT> (&args)[N],
+      llvm::StringRef name, const EnumValue<EnumT> (&args)[N],
+      llvm::StringRef short_name, std::optional<EnumT> default_value,
       std::index_sequence<Indices...> /*indices*/) -> EnumOpt<EnumT, N>;
 
   auto TestFlagImpl(const OptMap& opts, const Flag* opt) const -> bool;
@@ -310,8 +303,8 @@ class SubcommandArgs : public Args {
 };
 
 struct Args::Opt {
-  llvm::StringLiteral name;
-  // llvm::StringLiteral short_name = "";
+  llvm::StringRef name;
+  llvm::StringRef short_name = "";
 
   // The address of a opt is used as the identity after parsing.
   Opt(const Opt&) = delete;
@@ -321,39 +314,36 @@ struct Args::Flag : Opt {
   bool default_value = false;
 };
 
-constexpr inline auto Args::MakeFlag(llvm::StringLiteral name,
-                                     FlagDefault defaults) -> Flag {
-  return {{.name = name}, defaults.default_value};
+constexpr inline auto Args::MakeFlag(llvm::StringRef name,
+                                     llvm::StringRef short_name,
+                                     bool default_value) -> Flag {
+  return {{.name = name, .short_name = short_name}, default_value};
 }
 
 struct Args::StringOpt : Opt {
-  std::optional<llvm::StringLiteral> default_value = {};
+  std::optional<llvm::StringRef> default_value = {};
 };
 
-constexpr inline auto Args::MakeStringOpt(llvm::StringLiteral name)
-    -> StringOpt {
-  return {{.name = name}};
-}
-constexpr inline auto Args::MakeStringOpt(llvm::StringLiteral name,
-                                          StringDefault defaults) -> StringOpt {
-  return {{.name = name}, {defaults.default_value}};
+constexpr inline auto Args::MakeStringOpt(
+    llvm::StringRef name, llvm::StringRef short_name,
+    std::optional<llvm::StringRef> default_value) -> StringOpt {
+  return {{.name = name, .short_name = short_name}, default_value};
 }
 
 struct Args::IntOpt : Opt {
   std::optional<ssize_t> default_value = {};
 };
 
-constexpr inline auto Args::MakeIntOpt(llvm::StringLiteral name) -> IntOpt {
-  return {{.name = name}};
-}
-constexpr inline auto Args::MakeIntOpt(llvm::StringLiteral name,
-                                       IntDefault defaults) -> IntOpt {
-  return {{.name = name}, {defaults.default_value}};
+constexpr inline auto Args::MakeIntOpt(llvm::StringRef name,
+                                       llvm::StringRef short_name,
+                                       std::optional<ssize_t> default_value)
+    -> IntOpt {
+  return {{.name = name, .short_name = short_name}, default_value};
 }
 
 template <typename EnumT>
 struct Args::EnumValue {
-  llvm::StringLiteral name;
+  llvm::StringRef name;
   EnumT value;
 };
 
@@ -366,31 +356,38 @@ struct Args::EnumOpt : Opt {
 
 template <typename EnumT, ssize_t N, size_t... Indices>
 constexpr inline auto Args::MakeEnumOptHelper(
-    llvm::StringLiteral name, const EnumValue<EnumT> (&args)[N],
+    llvm::StringRef name, const EnumValue<EnumT> (&args)[N],
+    llvm::StringRef short_name, std::optional<EnumT> default_value,
     std::index_sequence<Indices...> /*indices*/) -> EnumOpt<EnumT, N> {
-  return {{.name = name}, {args[Indices]...}};
+  return {{.name = name, .short_name = short_name},
+          {args[Indices]...},
+          default_value};
 }
 
 template <typename EnumT, ssize_t N>
-constexpr inline auto Args::MakeEnumOpt(llvm::StringLiteral name,
-                                        const EnumValue<EnumT> (&args)[N])
+constexpr inline auto Args::MakeEnumOpt(llvm::StringRef name,
+                                        const EnumValue<EnumT> (&args)[N],
+                                        llvm::StringRef short_name,
+                                        std::optional<EnumT> default_value)
     -> EnumOpt<EnumT, N> {
-  return MakeEnumOptHelper(name, args, std::make_index_sequence<N>{});
+  return MakeEnumOptHelper(name, args, short_name, default_value,
+                           std::make_index_sequence<N>{});
 }
 
 struct Args::StringListOpt : Opt {
-  std::optional<llvm::ArrayRef<llvm::StringLiteral>> default_value = {};
+  std::optional<llvm::ArrayRef<llvm::StringRef>> default_value = {};
 };
 
-constexpr inline auto Args::MakeStringListOpt(llvm::StringLiteral name,
-                                              StringListDefault defaults)
+constexpr inline auto Args::MakeStringListOpt(
+    llvm::StringRef name, llvm::StringRef short_name,
+    std::optional<llvm::ArrayRef<llvm::StringRef>> default_values)
     -> StringListOpt {
-  return {{.name = name}, {defaults.default_values}};
+  return {{.name = name, .short_name = short_name}, default_values};
 }
 
 template <typename... Ts>
 struct Args::Command {
-  llvm::StringLiteral name;
+  llvm::StringRef name;
 
   std::tuple<const Ts*...> opts = {};
 
@@ -398,15 +395,14 @@ struct Args::Command {
 };
 
 template <typename... Ts>
-constexpr inline auto Args::MakeCommand(llvm::StringLiteral name,
-                                        const Ts*... opts) -> Command<Ts...> {
+constexpr inline auto Args::MakeCommand(llvm::StringRef name, const Ts*... opts)
+    -> Command<Ts...> {
   return {.name = name, .opts = std::tuple{opts...}, .info = {}};
 }
 
 template <typename... Ts>
-constexpr inline auto Args::MakeCommand(llvm::StringLiteral name,
-                                        CommandInfo info, const Ts*... opts)
-    -> Command<Ts...> {
+constexpr inline auto Args::MakeCommand(llvm::StringRef name, CommandInfo info,
+                                        const Ts*... opts) -> Command<Ts...> {
   return {.name = name, .opts = std::tuple{opts...}, .info = info};
 }
 
@@ -419,7 +415,7 @@ struct Args::Subcommand : Command<OptTs...> {
 };
 
 template <typename EnumT, typename... OptTs>
-constexpr inline auto Args::MakeSubcommand(llvm::StringLiteral name,
+constexpr inline auto Args::MakeSubcommand(llvm::StringRef name,
                                            EnumT enumerator,
                                            const OptTs*... opts)
     -> Subcommand<EnumT, OptTs...> {
@@ -427,7 +423,7 @@ constexpr inline auto Args::MakeSubcommand(llvm::StringLiteral name,
 }
 
 template <typename EnumT, typename... OptTs>
-constexpr inline auto Args::MakeSubcommand(llvm::StringLiteral name,
+constexpr inline auto Args::MakeSubcommand(llvm::StringRef name,
                                            EnumT enumerator, CommandInfo info,
                                            const OptTs*... opts)
     -> Subcommand<EnumT, OptTs...> {
