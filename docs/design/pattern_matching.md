@@ -13,25 +13,32 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Pattern Syntax and Semantics](#pattern-syntax-and-semantics)
     -   [Expression patterns](#expression-patterns)
+        -   [Alternatives considered](#alternatives-considered)
     -   [Bindings](#bindings)
         -   [Name bindings](#name-bindings)
-        -   [Wildcard](#wildcard)
+        -   [Unused bindings](#unused-bindings)
+            -   [Alternatives considered](#alternatives-considered-1)
         -   [Generic bindings](#generic-bindings)
         -   [`auto` and type deduction](#auto-and-type-deduction)
+        -   [Alternatives considered](#alternatives-considered-2)
     -   [`var`](#var)
     -   [Tuple patterns](#tuple-patterns)
     -   [Struct patterns](#struct-patterns)
+        -   [Alternatives considered](#alternatives-considered-3)
     -   [Alternative patterns](#alternative-patterns)
     -   [Templates](#templates)
-    -   [Guards](#guards)
     -   [Refutability, overlap, usefulness, and exhaustiveness](#refutability-overlap-usefulness-and-exhaustiveness)
+        -   [Alternatives considered](#alternatives-considered-4)
 -   [Pattern usage](#pattern-usage)
     -   [Pattern match control flow](#pattern-match-control-flow)
+        -   [Guards](#guards)
     -   [Pattern matching in local variables](#pattern-matching-in-local-variables)
 -   [Open questions](#open-questions)
     -   [Slice or array nested value pattern matching](#slice-or-array-nested-value-pattern-matching)
     -   [Generic/template pattern matching](#generictemplate-pattern-matching)
     -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
+-   [Alternatives considered](#alternatives-considered-5)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -53,7 +60,7 @@ not permitted as proper patterns, so cannot contain bindings.
 
 -   _pattern_ ::= _proper-pattern_
 
-```
+```carbon
 fn F(n: i32) -> i32 { return n; }
 
 match (F(42)) {
@@ -71,7 +78,7 @@ An expression is a pattern.
 The pattern is compared with the expression using the `==` operator: _pattern_
 `==` _scrutinee_.
 
-```
+```carbon
 fn F(n: i32) {
   match (n) {
     // ✅ Results in an `n == 5` comparison.
@@ -85,7 +92,7 @@ Any `==` operations performed by a pattern match occur in lexical order, but for
 repeated matches against the same _pattern_, later comparisons may be skipped by
 reusing the result from an earlier comparison:
 
-```
+```carbon
 class ChattyIntMatcher {
   external impl as EqWith(i32) {
     fn Eq[me: ChattyIntMatcher](other: i32) {
@@ -106,21 +113,25 @@ fn F() {
 }
 ```
 
+#### Alternatives considered
+
+-   [Introducer syntax for expression patterns](/proposals/p2188.md#introducer-syntax-for-expression-patterns)
+
 ### Bindings
 
 #### Name bindings
 
 A name binding is a pattern.
 
--   _binding-pattern_ ::= `unused`? _identifier_ `:` _expression_
+-   _binding-pattern_ ::= _identifier_ `:` _expression_
 -   _proper-pattern_ ::= _binding-pattern_
 
 The type of the _identifier_ is specified by the _expression_. The scrutinee is
 implicitly converted to that type if necessary.
 
-```
+```carbon
 fn F() -> i32 {
-  match (5) (
+  match (5) {
     // ✅ `5` is implicitly converted to `i32`.
     // Returns `5 as i32`.
     case n: i32 => { return n; }
@@ -131,7 +142,7 @@ fn F() -> i32 {
 When a new object needs to be created for the binding, the lifetime of the bound
 value matches the scope of the binding.
 
-```
+```carbon
 class NoisyDestructor {
   fn Make() -> Self { return {}; }
   external impl i32 as ImplicitAs(NoisyDestructor) {
@@ -157,22 +168,15 @@ fn H(n: i32) {
 }
 ```
 
-As specified in
-[#2022](/proposals/p2022.md#the-behavior-of-unused-name-bindings), the `unused`
-keyword indicates that the binding is intended to not be used.
+#### Unused bindings
 
-#### Wildcard
-
-A syntax like a binding but with `_` in place of an identifier can be used to
-ignore part of a value.
+A syntax like a binding but with `_` in place of an identifier, or `unused`
+before the name, can be used to ignore part of a value.
 
 -   _binding-pattern_ ::= `_` `:` _expression_
+-   _binding-pattern_ ::= `unused` _identifier_ `:` _expression_
 
-See [#2022](/proposals/p2022.md) for details.
-
-The behavior is similar to that of an `unused` binding with a unique name.
-
-```
+```carbon
 fn F(n: i32) {
   match (n) {
     // ✅ Matches and discards the value of `n`.
@@ -186,7 +190,7 @@ fn F(n: i32) {
 As specified in [#1084](/proposals/p1084.md), function redeclarations may
 replace named bindings with wildcards but may not use different names.
 
-```
+```carbon
 fn G(n: i32);
 fn H(n: i32);
 fn J(n: i32);
@@ -199,6 +203,14 @@ fn H(m: i32) {}
 fn J(unused n: i32);
 ```
 
+##### Alternatives considered
+
+-   [Commented names](/proposals/p2022.md#commented-names)
+-   [Only short form support with `_`](/proposals/p2022.md#only-short-form-support-with-_)
+-   [Named identifiers prefixed with `_`](/proposals/p2022.md#named-identifiers-prefixed-with-_)
+-   [Anonymous, named identifiers](/proposals/p2022.md#anonymous-named-identifiers)
+-   [Attributes](/proposals/p2022.md#attributes)
+
 #### Generic bindings
 
 A `:!` can be used in place of `:` for a binding that is usable at compile time.
@@ -207,7 +219,7 @@ A `:!` can be used in place of `:` for a binding that is usable at compile time.
 -   _generic-pattern_ ::= `template`? `_` `:!` _expression_
 -   _proper-pattern_ ::= _generic-pattern_
 
-```
+```carbon
 // ✅ `F` takes a generic type parameter `T` and a parameter `x` of type `T`.
 fn F(T:! Type, x: T) {
   var v: T = x;
@@ -224,7 +236,7 @@ The `auto` keyword is a placeholder for a unique deduced type.
 
 -   _expression_ ::= `auto`
 
-```
+```carbon
 fn F(n: i32) {
   var v: auto = SomeComplicatedExpression(n);
   // Equivalent to:
@@ -246,7 +258,7 @@ When the type of a binding requires type deduction, the type is deduced against
 the type of the scrutinee and deduced values are substituted back into the type
 before pattern matching is performed.
 
-```
+```carbon
 fn G[T:! Type](p: T*);
 class X { external impl as ImplicitAs(i32*); }
 // ✅ Deduces `T = i32` then implicitly and
@@ -256,8 +268,12 @@ fn H1(p: i32*) { G(p); }
 fn H2(p: X) { G(p); }
 ```
 
-The above is only an illustration; the behavior of type deduction is not
-specified in this proposal.
+The above is only an illustration; the behavior of type deduction is not yet
+specified.
+
+#### Alternatives considered
+
+-   [Shorthand for `auto`](/proposals/p2188.md#shorthand-for-auto)
 
 ### `var`
 
@@ -271,7 +287,7 @@ is the resolved type of the nested _pattern_. Any bindings within the nested
 pattern refer to portions of the corresponding storage rather than to the
 scrutinee.
 
-```
+```carbon
 fn F(p: i32*);
 fn G() {
   match ((1, 2)) {
@@ -287,7 +303,7 @@ Pattern matching precedes the initialization of the storage for any `var`
 patterns. An introduced variable is only initialized if the complete pattern
 matches.
 
-```
+```carbon
 class X {
   destructor { Print("Destroyed!"); }
 }
@@ -340,7 +356,7 @@ A struct can be matched with a struct pattern.
 A struct pattern resembles a struct literal, with at least one field initialized
 with a proper pattern:
 
-```
+```carbon
 match ({.a = 1, .b = 2}) {
   // Struct literal as an expression pattern.
   case {.b = 2, .a = 1} => {}
@@ -360,7 +376,7 @@ for fields are performed.
 In the case where a field will be bound to an identifier with the same name, a
 shorthand syntax is available: `a: T` is synonymous with `.a = a: T`.
 
-```
+```carbon
 match ({.a = 1, .b = 2}) {
   case {a: i32, b: i32} => { return a + b; }
 }
@@ -369,7 +385,7 @@ match ({.a = 1, .b = 2}) {
 If some fields should be ignored when matching, a trailing `, _` can be added to
 specify this:
 
-```
+```carbon
 match ({.a = 1, .b = 2}) {
   case {.a = 1, _} => { return 1; }
   case {b: i32, _} => { return b; }
@@ -377,6 +393,10 @@ match ({.a = 1, .b = 2}) {
 ```
 
 This is valid even if all fields are actually named in the pattern.
+
+#### Alternatives considered
+
+-   [Struct pattern syntax](/proposals/p2188.md#struct-pattern-syntax)
 
 ### Alternative patterns
 
@@ -400,7 +420,7 @@ The pattern matches if the active alternative in the scrutinee is the specified
 alternative, and the arguments of the alternative match the given tuple pattern
 (if any).
 
-```
+```carbon
 choice Optional(T:! Type) {
   None,
   Some(T)
@@ -439,7 +459,7 @@ instantiation, patterns that are not meaningful due to a type error are instead
 treated as not matching. This includes cases where an `==` fails because of a
 missing `EqWith` implementation.
 
-```
+```carbon
 fn TypeName[template T:! Type](x: T) -> String {
   match (x) {
     // ✅ OK, the type of `x` is a template parameter.
@@ -454,7 +474,7 @@ fn TypeName[template T:! Type](x: T) -> String {
 Cases where the match is invalid for reasons not involving the template
 parameter are rejected when type-checking the template:
 
-```
+```carbon
 fn MeaninglessMatch[template T:! Type](x: T*) {
   match (*x) {
     // ✅ OK, `T` could be a tuple.
@@ -473,25 +493,6 @@ fn MeaninglessMatch[template T:! Type](x: T*) {
   }
 }
 ```
-
-### Guards
-
-We allow `case`s within a `match` statement to have _guards_. These are not part
-of pattern syntax, but instead are specific to `case` syntax:
-
--   _case_ ::= `case` _pattern_ [`if` _expression_]? `=>` _block_
-
-A guard indicates that a `case` only matches if some predicate holds. The
-bindings in the pattern are in scope in the guard:
-
-```
-match (x) {
-  case (m: i32, n: i32) if m + n < 5 => { return m - n; }
-}
-```
-
-For consistency, this facility is also available for `default` clauses, so that
-`default` remains equivalent to `case _: auto`.
 
 ### Refutability, overlap, usefulness, and exhaustiveness
 
@@ -516,7 +517,7 @@ Any expression patterns that remain after applying this rule are considered to
 match a single value from an infinite set of values so that a set of expression
 patterns is never exhaustive:
 
-```
+```carbon
 fn IsEven(n: u8) -> bool {
   // Not considered exhaustive.
   match (n) {
@@ -529,7 +530,7 @@ fn IsEven(n: u8) -> bool {
 }
 ```
 
-```
+```carbon
 fn IsTrue(b: bool) -> bool {
   // Considered exhaustive.
   match (b) {
@@ -552,7 +553,7 @@ We will diagnose the following situations:
     cases it could cover are handled by prior cases or a prior `default`. For
     example:
 
-    ```
+    ```carbon
     choice Optional(T:! Type) {
       None,
       Some(T)
@@ -577,7 +578,7 @@ We will diagnose the following situations:
     -   If the patterns in a `match` are not exhaustive and no `default` is
         provided.
 
-        ```
+        ```carbon
         fn F(n: i32) -> i32 {
           // ❌ Error, this `match` is not exhaustive.
           match (n) {
@@ -598,7 +599,7 @@ We will diagnose the following situations:
         introduce a second context permitting refutable matches, and overloaded
         functions might introduce a third context.
 
-        ```
+        ```carbon
         fn F(n: i32) {
           // ❌ Error, refutable expression pattern `5` used in context
           // requiring an irrefutable pattern.
@@ -621,8 +622,12 @@ We will diagnose the following situations:
     -   For a set of `impl`s that match a given `impl` lookup, argument
         deduction is used rather than pattern matching, but `impl`s with the
         same type structure are an error unless a `match_first` declaration is
-        used to order the `impl`s. (This is a pre-existing rule and is unchanged
-        by this proposal.)
+        used to order the `impl`s.
+
+#### Alternatives considered
+
+-   [Treat expression patterns as exhaustive if they cover all possible values](/proposals/p2188.md#treat-expression-patterns-as-exhaustive-if-they-cover-all-possible-values)
+-   [Allow non-exhaustive `match` statements](/proposals/p2188.md#allow-non-exhaustive-match-statements)
 
 ## Pattern usage
 
@@ -639,7 +644,7 @@ something much more powerful, `match`. This is not a novel construct, and is
 widely used in existing languages (Swift and Rust among others) and is currently
 under active investigation for C++. Carbon's `match` can be used as follows:
 
-```
+```carbon
 fn Bar() -> (i32, (f32, f32));
 fn Foo() -> f32 {
   match (Bar()) {
@@ -685,13 +690,32 @@ In order to match a value, whatever is specified in the pattern must match.
 Using `auto` for a type will always match, making `_: auto` the wildcard
 pattern.
 
+#### Guards
+
+We allow `case`s within a `match` statement to have _guards_. These are not part
+of pattern syntax, but instead are specific to `case` syntax:
+
+-   _case_ ::= `case` _pattern_ [`if` _expression_]? `=>` _block_
+
+A guard indicates that a `case` only matches if some predicate holds. The
+bindings in the pattern are in scope in the guard:
+
+```carbon
+match (x) {
+  case (m: i32, n: i32) if m + n < 5 => { return m - n; }
+}
+```
+
+For consistency, this facility is also available for `default` clauses, so that
+`default` remains equivalent to `case _: auto`.
+
 ### Pattern matching in local variables
 
 Value patterns may be used when declaring local variables to conveniently
 destructure them and do other type manipulations. However, the patterns must
 match at compile time, so they can't use an `if` clause.
 
-```
+```carbon
 fn Bar() -> (i32, (f32, f32));
 fn Foo() -> i32 {
   var (p: i32, _: auto) = Bar();
@@ -718,3 +742,15 @@ and/or templates.
 
 Need to flesh out specific details of how overload selection leverages the
 pattern matching machinery, what (if any) restrictions are imposed, etc.
+
+## Alternatives considered
+
+-   [Type pattern matching](/proposals/p2188.md#type-pattern-matching)
+-   [Allow guards on arbitrary patterns](/proposals/p2188.md#allow-guards-on-arbitrary-patterns)
+
+## References
+
+-   Proposal
+    [#2022: Unused Pattern Bindings (Unused Function Parameters)](https://github.com/carbon-language/carbon-lang/pull/2022)
+-   Proposal
+    [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
