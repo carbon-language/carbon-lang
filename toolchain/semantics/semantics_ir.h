@@ -163,6 +163,7 @@ class SemanticsIR {
   // Produces a string version of a node.
   auto StringifyNode(SemanticsNodeId node_id) -> std::string;
 
+  auto callables_size() const -> int { return callables_.size(); }
   auto nodes_size() const -> int { return nodes_.size(); }
 
   // The node blocks, for direct mutation.

@@ -68,10 +68,7 @@ auto SemanticsContext::AddNodeAndPush(ParseTree::Node parse_node,
 auto SemanticsContext::AddNameToLookup(ParseTree::Node name_node,
                                        SemanticsStringId name_id,
                                        SemanticsNodeId target_id) -> void {
-  auto [it, inserted] = current_scope().names.insert(name_id);
-  if (inserted) {
-    name_lookup_[name_id].push_back(target_id);
-  } else {
+  if (!AddNameToLookupImpl(name_id, target_id)) {
     CARBON_DIAGNOSTIC(NameRedefined, Error, "Redefining {0} in the same scope.",
                       llvm::StringRef);
     CARBON_DIAGNOSTIC(PreviousDefinition, Note, "Previous definition is here.");
@@ -81,6 +78,16 @@ auto SemanticsContext::AddNameToLookup(ParseTree::Node name_node,
     emitter_->Build(name_node, NameRedefined, semantics_->GetString(name_id))
         .Note(prev_def.parse_node(), PreviousDefinition)
         .Emit();
+  }
+}
+
+auto SemanticsContext::AddNameToLookupImpl(SemanticsStringId name_id,
+                                           SemanticsNodeId target_id) -> bool {
+  if (current_scope().names.insert(name_id).second) {
+    name_lookup_[name_id].push_back(target_id);
+    return true;
+  } else {
+    return false;
   }
 }
 

@@ -152,8 +152,8 @@ void Action::Print(llvm::raw_ostream& out) const {
     }
     out << "]]";
   }
-  if (this->scope().has_value()) {
-    out << " " << *this->scope();
+  if (scope_.has_value()) {
+    out << " " << *scope_;
   }
 }
 

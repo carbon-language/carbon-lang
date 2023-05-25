@@ -49,10 +49,17 @@ auto LoweringHandleBuiltin(LoweringContext& /*context*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleCall(LoweringContext& /*context*/,
-                        SemanticsNodeId /*node_id*/, SemanticsNode node)
-    -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+auto LoweringHandleCall(LoweringContext& context, SemanticsNodeId node_id,
+                        SemanticsNode node) -> void {
+  auto [refs_id, callable_id] = node.GetAsCall();
+  auto* function = context.GetLoweredCallable(callable_id);
+  std::vector<llvm::Value*> args;
+  for (auto ref_id : context.semantics_ir().GetNodeBlock(refs_id)) {
+    args.push_back(context.GetLoweredNodeAsValue(ref_id));
+  }
+  auto* value =
+      context.builder().CreateCall(function, args, function->getName());
+  context.SetLoweredNodeAsValue(node_id, value);
 }
 
 auto LoweringHandleCodeBlock(LoweringContext& /*context*/,
@@ -85,6 +92,7 @@ auto LoweringHandleFunctionDeclaration(LoweringContext& context,
   auto* function = llvm::Function::Create(
       function_type, llvm::Function::ExternalLinkage,
       context.semantics_ir().GetString(name_id), context.llvm_module());
+  context.SetLoweredCallable(callable_id, function);
 
   // Set parameter names.
   for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
