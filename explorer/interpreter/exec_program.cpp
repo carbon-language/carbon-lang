@@ -69,7 +69,6 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
       *trace_stream << *ast.declarations[i];
     }
   }
-  trace_stream->set_current_phase(ProgramPhase::Other);
   return ast;
 }
 
@@ -79,6 +78,7 @@ auto ExecProgram(Nonnull<Arena*> arena, AST ast,
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** starting execution **********\n";
   }
+  trace_stream->set_current_phase(ProgramPhase::Execution);
   return InterpProgram(ast, arena, trace_stream, print_stream);
 }
 

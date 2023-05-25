@@ -24,7 +24,8 @@ enum class ProgramPhase {
   TypeChecking,
   UnformedVariableResolution,
   Declarations,
-  Execution
+  Execution,
+  Timing
 };
 
 // This enum class defines the context in which code is being added to the trace
@@ -91,8 +92,9 @@ class TraceStream {
   // Outputs a trace message. Requires is_enabled.
   template <typename T>
   auto operator<<(T&& message) const -> llvm::raw_ostream& {
-    CARBON_CHECK(is_enabled());
-    **stream_ << message;
+    if (is_enabled()) {
+      **stream_ << message;
+    }
     return **stream_;
   }
 

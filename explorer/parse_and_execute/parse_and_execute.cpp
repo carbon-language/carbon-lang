@@ -20,6 +20,7 @@ namespace Carbon {
 // exit. Note the use prints step timings in reverse order.
 static auto PrintTimingOnExit(TraceStream* trace_stream, const char* label,
                               std::chrono::steady_clock::time_point* cursor) {
+  trace_stream->set_current_phase(ProgramPhase::Timing);
   auto end = std::chrono::steady_clock::now();
   auto duration = end - *cursor;
   *cursor = end;
@@ -65,10 +66,12 @@ static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
     }
 
     // Run the program.
+    trace_stream->set_current_phase(ProgramPhase::Execution);
     ErrorOr<int> exec_result =
         ExecProgram(&arena, *analyze_result, trace_stream, print_stream);
     auto print_exec_time =
         PrintTimingOnExit(trace_stream, "ExecProgram", &cursor);
+
     if (!exec_result.ok()) {
       return ErrorBuilder() << "RUNTIME ERROR: " << exec_result.error();
     }

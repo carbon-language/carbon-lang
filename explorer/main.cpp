@@ -68,7 +68,8 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
           clEnumValN(ProgramPhase::Declarations, "p_declarations",
                      "Print Declarations"),
           clEnumValN(ProgramPhase::Execution, "p_execution",
-                     "Program Execution")));
+                     "Program Execution"),
+          clEnumValN(ProgramPhase::Timing, "p_timing", "Timing")));
 
   // Use the executable path as a base for the relative prelude path.
   std::string exe =
