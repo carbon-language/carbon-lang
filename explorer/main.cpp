@@ -32,6 +32,7 @@ namespace path = llvm::sys::path;
 auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
                   llvm::StringRef relative_prelude_path) -> int {
   llvm::setBugReportMsg(
+
       "Please report issues to "
       "https://github.com/carbon-language/carbon-lang/issues and include the "
       "crash backtrace.\n");
@@ -48,6 +49,26 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   cl::opt<std::string> trace_file_name(
       "trace_file",
       cl::desc("Output file for tracing; set to `-` to output to stdout."));
+
+  cl::list<ProgramPhase> allowed_program_phases(
+      cl::desc("Select the phases to be added to the output, by default only "
+               "execution trace will be added to the output"),
+      cl::values(
+          clEnumValN(ProgramPhase::SourceProgram, "p_source_program",
+                     "Source Program"),
+          clEnumValN(ProgramPhase::NameResolution, "p_name_resolution",
+                     "Name Resolution"),
+          clEnumValN(ProgramPhase::ControlFlowResolution,
+                     "p_control_flow_resolution", "Control Flow Resolution"),
+          clEnumValN(ProgramPhase::TypeChecking, "p_type_checking",
+                     "Type Checking"),
+          clEnumValN(ProgramPhase::UnformedVariableResolution,
+                     "p_unformed_variables_resolution",
+                     "Unformed Variable Resolutiusing on"),
+          clEnumValN(ProgramPhase::Declarations, "p_declarations",
+                     "Print Declarations"),
+          clEnumValN(ProgramPhase::Execution, "p_execution",
+                     "Program Execution")));
 
   // Use the executable path as a base for the relative prelude path.
   std::string exe =
@@ -66,7 +87,10 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   // Set up a stream for trace output.
   std::unique_ptr<llvm::raw_ostream> scoped_trace_stream;
   TraceStream trace_stream;
+
   if (!trace_file_name.empty()) {
+    // Adding allowed phases in the trace_stream
+    trace_stream.set_allowed_phases(allowed_program_phases);
     if (trace_file_name == "-") {
       trace_stream.set_stream(&llvm::outs());
     } else {

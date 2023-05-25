@@ -9,6 +9,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/common/arena.h"
+#include "explorer/common/trace_stream.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/resolve_control_flow.h"
 #include "explorer/interpreter/resolve_names.h"
@@ -21,6 +22,7 @@ namespace Carbon {
 auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
                     Nonnull<TraceStream*> trace_stream,
                     Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<AST> {
+  trace_stream->set_current_phase(ProgramPhase::SourceProgram);
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** source program **********\n";
     for (int i = ast.num_prelude_declarations;
@@ -34,27 +36,32 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
       arena->New<TupleLiteral>(source_loc));
   // Although name resolution is currently done once, generic programming
   // (particularly templates) may require more passes.
+  trace_stream->set_current_phase(ProgramPhase::NameResolution);
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** resolving names **********\n";
   }
   CARBON_RETURN_IF_ERROR(ResolveNames(ast));
 
+  trace_stream->set_current_phase(ProgramPhase::ControlFlowResolution);
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** resolving control flow **********\n";
   }
   CARBON_RETURN_IF_ERROR(ResolveControlFlow(ast));
 
+  trace_stream->set_current_phase(ProgramPhase::TypeChecking);
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** type checking **********\n";
   }
   CARBON_RETURN_IF_ERROR(
       TypeChecker(arena, trace_stream, print_stream).TypeCheck(ast));
 
+  trace_stream->set_current_phase(ProgramPhase::UnformedVariableResolution);
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** resolving unformed variables **********\n";
   }
   CARBON_RETURN_IF_ERROR(ResolveUnformed(ast));
 
+  trace_stream->set_current_phase(ProgramPhase::SourceProgram);
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** printing declarations **********\n";
     for (int i = ast.num_prelude_declarations;
@@ -62,6 +69,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
       *trace_stream << *ast.declarations[i];
     }
   }
+  trace_stream->set_current_phase(ProgramPhase::Other);
   return ast;
 }
 

@@ -7,12 +7,29 @@
 
 #include <optional>
 #include <string>
+#include <unordered_set>
 
 #include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/common/nonnull.h"
 
 namespace Carbon {
+
+// This enum class's members can be used to indicate the current phase.
+enum class ProgramPhase {
+  Other,
+  SourceProgram,
+  NameResolution,
+  ControlFlowResolution,
+  TypeChecking,
+  UnformedVariableResolution,
+  Declarations,
+  Execution
+};
+
+// This enum class defines the context in which code is being added to the trace
+// output.
+enum class CodeContext { Other, Prelude, Import };
 
 // Encapsulates the trace stream so that we can cleanly disable tracing while
 // the prelude is being processed. The prelude is expected to take a
@@ -23,11 +40,13 @@ namespace Carbon {
 // is fully treated as a separate file, we should be able to take a different
 // approach where the caller explicitly toggles tracing when switching file
 // contexts.
+
 class TraceStream {
  public:
   // Returns true if tracing is currently enabled.
   auto is_enabled() const -> bool {
-    return stream_.has_value() && !in_prelude_;
+    return stream_.has_value() && !in_prelude_ &&
+           allowed_phases_.count(current_phase_) > 0;
   }
 
   // Sets whether the prelude is being skipped.
@@ -38,10 +57,35 @@ class TraceStream {
     stream_ = stream;
   }
 
+  auto set_current_phase(ProgramPhase current_phase) -> void {
+    current_phase_ = current_phase;
+  }
+
+  auto set_current_code_context(CodeContext current_code_context) -> void {
+    current_code_context_ = current_code_context;
+  }
+
+  auto set_allowed_phases(std::vector<ProgramPhase> allowed_phases) {
+    if (allowed_phases.empty()) {
+      allowed_phases_.insert(ProgramPhase::Execution);
+    } else {
+      for (auto phase : allowed_phases) {
+        allowed_phases_.insert(phase);
+      }
+    }
+  }
+
   // Returns the internal stream. Requires is_enabled.
   auto stream() const -> llvm::raw_ostream& {
     CARBON_CHECK(is_enabled());
+    CARBON_CHECK(stream_.has_value());
     return **stream_;
+  }
+
+  auto current_phase() const -> ProgramPhase { return current_phase_; }
+
+  auto current_code_context() const -> CodeContext {
+    return current_code_context_;
   }
 
   // Outputs a trace message. Requires is_enabled.
@@ -55,6 +99,9 @@ class TraceStream {
  private:
   std::optional<Nonnull<llvm::raw_ostream*>> stream_;
   bool in_prelude_ = false;
+  ProgramPhase current_phase_ = ProgramPhase::Other;
+  std::unordered_set<ProgramPhase> allowed_phases_;
+  CodeContext current_code_context_ = CodeContext::Other;
 };
 
 }  // namespace Carbon
