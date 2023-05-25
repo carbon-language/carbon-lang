@@ -100,7 +100,7 @@ class TraceStream {
   std::optional<Nonnull<llvm::raw_ostream*>> stream_;
   bool in_prelude_ = false;
   ProgramPhase current_phase_ = ProgramPhase::Other;
-  std::unordered_set<ProgramPhase> allowed_phases_;
+  std::unordered_set<ProgramPhase> allowed_phases_ = {ProgramPhase::Other};
   CodeContext current_code_context_ = CodeContext::Other;
 };
 
