@@ -30,7 +30,7 @@ enum class ProgramPhase {
 
 // This enum class defines the context in which code is being added to the trace
 // output.
-enum class CodeContext { Other, Prelude, Import };
+enum class CodeContext { Main, Prelude, Import };
 
 // Encapsulates the trace stream so that we can cleanly disable tracing while
 // the prelude is being processed. The prelude is expected to take a
@@ -46,12 +46,10 @@ class TraceStream {
  public:
   // Returns true if tracing is currently enabled.
   auto is_enabled() const -> bool {
-    return stream_.has_value() && !in_prelude_ &&
+    return stream_.has_value() &&
+           current_code_context_ != CodeContext::Prelude &&
            allowed_phases_.count(current_phase_) > 0;
   }
-
-  // Sets whether the prelude is being skipped.
-  auto set_in_prelude(bool in_prelude) -> void { in_prelude_ = in_prelude; }
 
   // Sets the trace stream. This should only be called from the main.
   auto set_stream(Nonnull<llvm::raw_ostream*> stream) -> void {
@@ -100,10 +98,9 @@ class TraceStream {
 
  private:
   std::optional<Nonnull<llvm::raw_ostream*>> stream_;
-  bool in_prelude_ = false;
   ProgramPhase current_phase_ = ProgramPhase::Other;
   std::unordered_set<ProgramPhase> allowed_phases_ = {ProgramPhase::Other};
-  CodeContext current_code_context_ = CodeContext::Other;
+  CodeContext current_code_context_ = CodeContext::Main;
 };
 
 }  // namespace Carbon
