@@ -17,6 +17,7 @@
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},

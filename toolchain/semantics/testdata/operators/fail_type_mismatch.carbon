@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_refs: block0, return_type: nodeIntegerType},
+// CHECK:STDOUT:   {param_refs: block0, return_type: type0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   12,
@@ -22,10 +22,10 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: nodeInvalidType, arg1: node+2, type: nodeInvalidType},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3, type: nodeInvalidType},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
+// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
+// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: nodeInvalidType, arg1: node+2, type: typeInvalidType},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3, type: typeInvalidType},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+0, arg1: block2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [

@@ -75,7 +75,8 @@ auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
 
   auto base_id = context.node_stack().PopForNodeId();
   auto base = context.semantics().GetNode(base_id);
-  auto base_type = context.semantics().GetNode(base.type_id());
+  auto base_type =
+      context.semantics().GetNode(context.semantics().GetType(base.type_id()));
 
   switch (base_type.kind()) {
     case SemanticsNodeKind::StructType: {
@@ -95,7 +96,7 @@ auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
                         "Type `{0}` does not have a member `{1}`.", std::string,
                         llvm::StringRef);
       context.emitter().Emit(parse_node, DesignatorExpressionNameNotFound,
-                             context.semantics().StringifyNode(base.type_id()),
+                             context.semantics().StringifyType(base.type_id()),
                              context.semantics().GetString(name_id));
       break;
     }
@@ -104,7 +105,7 @@ auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
                         "Type `{0}` does not support designator expressions.",
                         std::string);
       context.emitter().Emit(parse_node, DesignatorExpressionUnsupported,
-                             context.semantics().StringifyNode(base.type_id()));
+                             context.semantics().StringifyType(base.type_id()));
       break;
     }
   }
@@ -364,8 +365,7 @@ auto SemanticsHandlePatternBinding(SemanticsContext& context,
                                    ParseTree::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
       context.node_stack().PopForParseNodeAndNodeId();
-  SemanticsNodeId cast_type_id =
-      context.ExpressionAsType(type_node, parsed_type_id);
+  auto cast_type_id = context.ExpressionAsType(type_node, parsed_type_id);
 
   // Get the name.
   auto name_node = context.node_stack().PopForSoloParseNode();
@@ -414,7 +414,7 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
                         "Must return a {0}.", std::string);
       context.emitter()
           .Build(parse_node, ReturnStatementMissingExpression,
-                 context.semantics().StringifyNode(callable.return_type_id))
+                 context.semantics().StringifyType(callable.return_type_id))
           .Emit();
     }
 

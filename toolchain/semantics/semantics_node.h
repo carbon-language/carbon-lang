@@ -115,6 +115,37 @@ struct SemanticsStringId : public IndexBase {
   }
 };
 
+// The ID of a node block.
+struct SemanticsTypeId : public IndexBase {
+  // The builtin TypeType.
+  static const SemanticsTypeId TypeType;
+
+  // The builtin InvalidType.
+  static const SemanticsTypeId InvalidType;
+
+  // An explicitly invalid ID.
+  static const SemanticsTypeId Invalid;
+
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "type";
+    if (index == TypeType.index) {
+      out << "TypeType";
+    } else if (index == InvalidType.index) {
+      out << "InvalidType";
+    } else {
+      IndexBase::Print(out);
+    }
+  }
+};
+
+constexpr SemanticsTypeId SemanticsTypeId::TypeType =
+    SemanticsTypeId(SemanticsTypeId::InvalidIndex - 2);
+constexpr SemanticsTypeId SemanticsTypeId::InvalidType =
+    SemanticsTypeId(SemanticsTypeId::InvalidIndex - 1);
+constexpr SemanticsTypeId SemanticsTypeId::Invalid =
+    SemanticsTypeId(SemanticsTypeId::InvalidIndex);
+
 // An index for member access.
 struct SemanticsMemberIndex : public IndexBase {
   using IndexBase::IndexBase;
@@ -160,7 +191,7 @@ class SemanticsNode {
   template <KindTemplateEnum Kind, typename... ArgTypes>
   class FactoryBase {
    protected:
-    static auto Make(ParseTree::Node parse_node, SemanticsNodeId type_id,
+    static auto Make(ParseTree::Node parse_node, SemanticsTypeId type_id,
                      ArgTypes... arg_ids) -> SemanticsNode {
       return SemanticsNode(parse_node, SemanticsNodeKind::Create(Kind), type_id,
                            arg_ids.index...);
@@ -204,7 +235,7 @@ class SemanticsNode {
    public:
     static auto Make(ParseTree::Node parse_node, ArgTypes... args) {
       return FactoryBase<Kind, ArgTypes...>::Make(
-          parse_node, SemanticsNodeId::Invalid, args...);
+          parse_node, SemanticsTypeId::Invalid, args...);
     }
     using FactoryBase<Kind, ArgTypes...>::Get;
   };
@@ -233,7 +264,7 @@ class SemanticsNode {
 
   class Builtin {
    public:
-    static auto Make(SemanticsBuiltinKind builtin_kind, SemanticsNodeId type_id)
+    static auto Make(SemanticsBuiltinKind builtin_kind, SemanticsTypeId type_id)
         -> SemanticsNode {
       // Builtins won't have a ParseTree node associated, so we provide the
       // default invalid one.
@@ -259,7 +290,7 @@ class SemanticsNode {
                            SemanticsCrossReferenceIRId /*ir_id*/,
                            SemanticsNodeId /*node_id*/> {
    public:
-    static auto Make(SemanticsNodeId type_id, SemanticsCrossReferenceIRId ir_id,
+    static auto Make(SemanticsTypeId type_id, SemanticsCrossReferenceIRId ir_id,
                      SemanticsNodeId node_id) -> SemanticsNode {
       // A node's parse tree node must refer to a node in the current parse
       // tree. This cannot use the cross-referenced node's parse tree node
@@ -314,7 +345,7 @@ class SemanticsNode {
 
   SemanticsNode()
       : SemanticsNode(ParseTree::Node::Invalid, SemanticsNodeKind::Invalid,
-                      SemanticsNodeId::Invalid) {}
+                      SemanticsTypeId::Invalid) {}
 
   // Provide `node.GetAsKind()` as an instance method for all kinds, essentially
   // an alias for`SemanticsNode::Kind::Get(node)`.
@@ -324,7 +355,7 @@ class SemanticsNode {
 
   auto parse_node() const -> ParseTree::Node { return parse_node_; }
   auto kind() const -> SemanticsNodeKind { return kind_; }
-  auto type_id() const -> SemanticsNodeId { return type_id_; }
+  auto type_id() const -> SemanticsTypeId { return type_id_; }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
@@ -334,7 +365,7 @@ class SemanticsNode {
   friend struct SemanticsNodeForBuiltin;
 
   explicit SemanticsNode(ParseTree::Node parse_node, SemanticsNodeKind kind,
-                         SemanticsNodeId type_id,
+                         SemanticsTypeId type_id,
                          int32_t arg0 = SemanticsNodeId::InvalidIndex,
                          int32_t arg1 = SemanticsNodeId::InvalidIndex)
       : parse_node_(parse_node),
@@ -345,7 +376,7 @@ class SemanticsNode {
 
   ParseTree::Node parse_node_;
   SemanticsNodeKind kind_;
-  SemanticsNodeId type_id_;
+  SemanticsTypeId type_id_;
 
   // Use GetAsKind to access arg0 and arg1.
   int32_t arg0_;

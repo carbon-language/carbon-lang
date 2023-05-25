@@ -36,8 +36,10 @@ SemanticsContext::SemanticsContext(const TokenizedBuffer& tokens,
                             vlog_stream) {
   // Inserts the "Invalid" and "Type" types as "used types" so that
   // canonicalization can skip them. We don't emit either for lowering.
-  canonical_types_.insert(SemanticsNodeId::BuiltinInvalidType);
-  canonical_types_.insert(SemanticsNodeId::BuiltinTypeType);
+  canonical_types_.insert(
+      {SemanticsNodeId::BuiltinInvalidType, SemanticsTypeId::InvalidType});
+  canonical_types_.insert(
+      {SemanticsNodeId::BuiltinTypeType, SemanticsTypeId::TypeType});
 }
 
 auto SemanticsContext::TODO(ParseTree::Node parse_node, std::string label)
@@ -59,10 +61,6 @@ auto SemanticsContext::VerifyOnFinish() -> void {
 }
 
 auto SemanticsContext::AddNode(SemanticsNode node) -> SemanticsNodeId {
-  CARBON_CHECK(!node.type_id().is_valid() ||
-               node.type_id() == SemanticsNodeId::BuiltinInvalidType ||
-               canonical_types_.contains(node.type_id()))
-      << "Added node without canonicalizing its type: " << node;
   auto block = node_block_stack_.PeekForAdd();
   CARBON_VLOG() << "AddNode " << block << ": " << node << "\n";
   return semantics_->AddNode(block, node);
@@ -101,7 +99,7 @@ auto SemanticsContext::AddNameToLookupImpl(SemanticsStringId name_id,
 }
 
 auto SemanticsContext::BindName(ParseTree::Node name_node,
-                                SemanticsNodeId type_id,
+                                SemanticsTypeId type_id,
                                 SemanticsNodeId target_id)
     -> SemanticsStringId {
   CARBON_CHECK(parse_tree_->node_kind(name_node) == ParseNodeKind::DeclaredName)
@@ -211,8 +209,8 @@ auto SemanticsContext::ImplicitAsForArgs(
                         size_t, std::string, std::string);
       diagnostic->Note(
           param_parse_node, CallArgTypeMismatch, i,
-          semantics_->StringifyNode(semantics_->GetNode(value_id).type_id()),
-          semantics_->StringifyNode(as_type_id));
+          semantics_->StringifyType(semantics_->GetNode(value_id).type_id()),
+          semantics_->StringifyType(as_type_id));
       return false;
     }
   }
@@ -222,7 +220,7 @@ auto SemanticsContext::ImplicitAsForArgs(
 
 auto SemanticsContext::ImplicitAsRequired(ParseTree::Node parse_node,
                                           SemanticsNodeId value_id,
-                                          SemanticsNodeId as_type_id)
+                                          SemanticsTypeId as_type_id)
     -> SemanticsNodeId {
   SemanticsNodeId output_value_id = value_id;
   if (ImplicitAsImpl(value_id, as_type_id, &output_value_id) ==
@@ -234,15 +232,15 @@ auto SemanticsContext::ImplicitAsRequired(ParseTree::Node parse_node,
     emitter_
         ->Build(
             parse_node, ImplicitAsConversionFailure,
-            semantics_->StringifyNode(semantics_->GetNode(value_id).type_id()),
-            semantics_->StringifyNode(as_type_id))
+            semantics_->StringifyType(semantics_->GetNode(value_id).type_id()),
+            semantics_->StringifyType(as_type_id))
         .Emit();
   }
   return output_value_id;
 }
 
 auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
-                                      SemanticsNodeId as_type_id,
+                                      SemanticsTypeId as_type_id,
                                       SemanticsNodeId* output_value_id)
     -> ImplicitAsKind {
   // Start by making sure both sides are valid. If any part is invalid, the
@@ -253,11 +251,11 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
   }
   auto value = semantics_->GetNode(value_id);
   auto value_type_id = value.type_id();
-  if (value_type_id == SemanticsNodeId::BuiltinInvalidType) {
+  if (value_type_id == SemanticsTypeId::InvalidType) {
     return ImplicitAsKind::Identical;
   }
 
-  if (as_type_id == SemanticsNodeId::BuiltinInvalidType) {
+  if (as_type_id == SemanticsTypeId::InvalidType) {
     // Although the target type is invalid, this still changes the value.
     if (output_value_id != nullptr) {
       *output_value_id = SemanticsNodeId::BuiltinInvalidType;
@@ -270,7 +268,7 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     return ImplicitAsKind::Identical;
   }
 
-  if (as_type_id == SemanticsNodeId::BuiltinTypeType) {
+  if (as_type_id == SemanticsTypeId::TypeType) {
     // TODO: When converting `()` to a type, the result is `() as Type`.
     // Right now there is no tuple value support.
 
@@ -278,21 +276,24 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     if (value.kind() == SemanticsNodeKind::StructValue &&
         value.GetAsStructValue() == SemanticsNodeBlockId::Empty) {
       if (output_value_id != nullptr) {
-        *output_value_id = value_type_id;
+        *output_value_id = semantics_->GetType(value_type_id);
       }
       return ImplicitAsKind::Compatible;
     }
   }
 
-  auto value_type = semantics_->GetNode(value_type_id);
-  auto as_type = semantics_->GetNode(as_type_id);
-  if (CanImplicitAsStruct(value_type, as_type)) {
-    // Under the current implementation, struct types are only allowed to
-    // ImplicitAs when they're equivalent. What's really missing is type
-    // consolidation such that this would fall under the above `value_type_id ==
-    // as_type_id` case. In the future, this will need to handle actual
-    // conversions.
-    return ImplicitAsKind::Identical;
+  if (value_type_id != SemanticsTypeId::TypeType &&
+      as_type_id != SemanticsTypeId::TypeType) {
+    auto value_type = semantics_->GetNode(semantics_->GetType(value_type_id));
+    auto as_type = semantics_->GetNode(semantics_->GetType(as_type_id));
+    if (CanImplicitAsStruct(value_type, as_type)) {
+      // Under the current implementation, struct types are only allowed to
+      // ImplicitAs when they're equivalent. What's really missing is type
+      // consolidation such that this would fall under the above `value_type_id
+      // == as_type_id` case. In the future, this will need to handle actual
+      // conversions.
+      return ImplicitAsKind::Identical;
+    }
   }
 
   if (output_value_id != nullptr) {
@@ -368,11 +369,15 @@ auto SemanticsContext::ParamOrArgSave(bool for_args) -> void {
 }
 
 auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
-    -> SemanticsNodeId {
-  if (canonical_types_.insert(node_id).second) {
-    semantics_->AddType(node_id);
+    -> SemanticsTypeId {
+  auto it = canonical_types_.find(node_id);
+  if (it != canonical_types_.end()) {
+    return it->second;
   }
-  return node_id;
+
+  auto type_id = semantics_->AddType(node_id);
+  CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
+  return type_id;
 }
 
 auto SemanticsContext::PrintForStackDump(llvm::raw_ostream& output) const

@@ -49,12 +49,17 @@ class SemanticsNodeStack {
   auto Push(ParseTree::Node parse_node, SemanticsNodeBlockId node_block_id)
       -> void {
     PushEntry({.parse_node = parse_node, .node_block_id = node_block_id},
-              DebugLog::NodeId);
+              DebugLog::NodeBlockId);
   }
 
   // Pushes a parse tree node onto the stack with its name.
   auto Push(ParseTree::Node parse_node, SemanticsStringId name_id) -> void {
     PushEntry({.parse_node = parse_node, .name_id = name_id}, DebugLog::NameId);
+  }
+
+  // Pushes a parse tree node onto the stack with a semantics node block.
+  auto Push(ParseTree::Node parse_node, SemanticsTypeId type_id) -> void {
+    PushEntry({.parse_node = parse_node, .type_id = type_id}, DebugLog::TypeId);
   }
 
   // Pops the top of the stack without any verification.
@@ -92,6 +97,9 @@ class SemanticsNodeStack {
   // Pops the top of the stack and returns the node_block_id.
   auto PopForNodeBlockId(ParseNodeKind pop_parse_kind) -> SemanticsNodeBlockId;
 
+  // Pops the top of the stack and returns the type_id.
+  auto PopForTypeId(ParseNodeKind pop_parse_kind) -> SemanticsTypeId;
+
   // Pops the top of the stack and returns the parse_node and name_id.
   auto PopForParseNodeAndNameId(ParseNodeKind pop_parse_kind)
       -> std::pair<ParseTree::Node, SemanticsStringId>;
@@ -121,8 +129,9 @@ class SemanticsNodeStack {
     // is used based on the ParseNodeKind.
     union {
       SemanticsNodeId node_id;
-      SemanticsStringId name_id;
       SemanticsNodeBlockId node_block_id;
+      SemanticsStringId name_id;
+      SemanticsTypeId type_id;
     };
   };
   static_assert(sizeof(Entry) == 8, "Unexpected Entry size");
@@ -131,7 +140,9 @@ class SemanticsNodeStack {
   enum DebugLog {
     None,
     NodeId,
+    NodeBlockId,
     NameId,
+    TypeId,
   };
 
   // Pushes an entry onto the stack.

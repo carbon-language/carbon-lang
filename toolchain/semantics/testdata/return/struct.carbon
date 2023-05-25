@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_refs: block0, return_type: node+1},
+// CHECK:STDOUT:   {param_refs: block0, return_type: type1},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   3,
@@ -22,15 +22,15 @@
 // CHECK:STDOUT:   node+6,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: StructType, arg0: block2, type: nodeTypeType},
+// CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: type0},
+// CHECK:STDOUT:   {kind: StructType, arg0: block2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str1, arg1: callable0},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+3, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: StructType, arg0: block4, type: nodeTypeType},
-// CHECK:STDOUT:   {kind: StructValue, arg0: block5, type: node+6},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+7, type: node+6},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
+// CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+3, type: type0},
+// CHECK:STDOUT:   {kind: StructType, arg0: block4, type: typeTypeType},
+// CHECK:STDOUT:   {kind: StructValue, arg0: block5, type: type2},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+7, type: type2},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+2, arg1: block3},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
