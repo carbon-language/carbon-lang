@@ -145,7 +145,7 @@ class SemanticsContext {
 
   auto parse_tree() -> const ParseTree& { return *parse_tree_; }
 
-  auto semantics() -> SemanticsIR& { return *semantics_; }
+  auto semantics_ir() -> SemanticsIR& { return *semantics_ir_; }
 
   auto node_stack() -> SemanticsNodeStack& { return node_stack_; }
 
@@ -221,7 +221,7 @@ class SemanticsContext {
   const ParseTree* parse_tree_;
 
   // The SemanticsIR being added to.
-  SemanticsIR* semantics_;
+  SemanticsIR* semantics_ir_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
