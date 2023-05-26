@@ -1,0 +1,51 @@
+INFO: Invocation ID: 9e93809e-c0c2-4dd3-ac21-fa56924cfdae
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //explorer:explorer (0 packages loaded, 0 targets configured)
+INFO: Analyzed target //explorer:explorer (0 packages loaded, 0 targets configured).
+INFO: Found 1 target...
+[0 / 1] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+Target //explorer:explorer up-to-date:
+  bazel-bin/explorer/explorer
+INFO: Elapsed time: 0.182s, Critical Path: 0.01s
+INFO: 1 process: 1 internal.
+INFO: Build completed successfully, 1 total action
+INFO: Running command line: bazel-bin/explorer/explorer test.carbon
+explorer: external/llvm-project/llvm/include/llvm/Support/Casting.h:567: decltype(auto) llvm::cast(const From &) [To = Carbon::IntValue, From = Carbon::Value]: Assertion `isa<To>(Val) && "cast<Ty>() argument of incompatible type!"' failed.
+Please report issues to https://github.com/carbon-language/carbon-lang/issues and include the crash backtrace.
+ #0 0x0000563086cca84d llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) /proc/self/cwd/external/llvm-project/llvm/lib/Support/Unix/Signals.inc:567:11
+ #1 0x0000563086ccadeb PrintStackTraceSignalHandler(void*) /proc/self/cwd/external/llvm-project/llvm/lib/Support/Unix/Signals.inc:641:1
+ #2 0x0000563086cc80b6 llvm::sys::RunSignalHandlers() /proc/self/cwd/external/llvm-project/llvm/lib/Support/Signals.cpp:104:5
+ #3 0x0000563086ccbbe5 SignalHandler(int) /proc/self/cwd/external/llvm-project/llvm/lib/Support/Unix/Signals.inc:412:1
+ #4 0x00007fcd468e2f90 (/lib/x86_64-linux-gnu/libc.so.6+0x3bf90)
+ #5 0x00007fcd46931ccc __pthread_kill_implementation ./nptl/./nptl/pthread_kill.c:44:76
+ #6 0x00007fcd468e2ef2 raise ./signal/../sysdeps/posix/raise.c:27:6
+ #7 0x00007fcd468cd472 abort ./stdlib/./stdlib/abort.c:81:7
+ #8 0x00007fcd468cd395 _nl_load_domain ./intl/./intl/loadmsgcat.c:1177:9
+ #9 0x00007fcd468dbdf2 (/lib/x86_64-linux-gnu/libc.so.6+0x34df2)
+#10 0x0000563086a36888 decltype(auto) llvm::cast<Carbon::IntValue, Carbon::Value>(Carbon::Value const&) /proc/self/cwd/external/llvm-project/llvm/include/llvm/Support/Casting.h:568:43
+#11 0x0000563086b0204b Carbon::Interpreter::EvalPrim(Carbon::Operator, Carbon::Value const*, std::__1::vector<Carbon::Value const*, std::__1::allocator<Carbon::Value const*> > const&, Carbon::SourceLocation) /proc/self/cwd/explorer/interpreter/interpreter.cpp:217:27
+#12 0x0000563086b175f0 Carbon::Interpreter::StepExp() /proc/self/cwd/explorer/interpreter/interpreter.cpp:1526:9
+#13 0x0000563086b0acbb Carbon::Interpreter::Step() /proc/self/cwd/explorer/interpreter/interpreter.cpp:2477:7
+#14 0x0000563086b28223 Carbon::Interpreter::RunAllSteps(std::__1::unique_ptr<Carbon::Action, std::__1::default_delete<Carbon::Action> >) /proc/self/cwd/explorer/interpreter/interpreter.cpp:2512:5
+#15 0x0000563086b2874f Carbon::InterpProgram(Carbon::AST const&, Carbon::Arena*, Carbon::TraceStream*, llvm::raw_ostream*) /proc/self/cwd/explorer/interpreter/interpreter.cpp:2537:3
+#16 0x0000563086977a16 Carbon::ExecProgram(Carbon::Arena*, Carbon::AST, Carbon::TraceStream*, llvm::raw_ostream*) /proc/self/cwd/explorer/interpreter/exec_program.cpp:74:10
+#17 0x000056308696dc79 Carbon::ParseAndExecuteHelper(std::__1::function<Carbon::ErrorOr<Carbon::AST> (Carbon::Arena*)>, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, Carbon::TraceStream*, llvm::raw_ostream*)::$_3::operator()() const /proc/self/cwd/explorer/parse_and_execute/parse_and_execute.cpp:69:9
+#18 0x000056308696d713 Carbon::ErrorOr<int> llvm::function_ref<Carbon::ErrorOr<int> ()>::callback_fn<Carbon::ParseAndExecuteHelper(std::__1::function<Carbon::ErrorOr<Carbon::AST> (Carbon::Arena*)>, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, Carbon::TraceStream*, llvm::raw_ostream*)::$_3>(long) /proc/self/cwd/external/llvm-project/llvm/include/llvm/ADT/STLFunctionalExtras.h:45:12
+#19 0x000056308696c1b7 llvm::function_ref<Carbon::ErrorOr<int> ()>::operator()() const /proc/self/cwd/external/llvm-project/llvm/include/llvm/ADT/STLFunctionalExtras.h:68:12
+#20 0x000056308696c2d5 Carbon::ErrorOr<int> Carbon::RunWithExtraStack<Carbon::ErrorOr<int> >(llvm::function_ref<Carbon::ErrorOr<int> ()>)::'lambda'()::operator()() const /proc/self/cwd/./explorer/interpreter/stack_space.h:37:54
+#21 0x000056308696c2a5 void llvm::function_ref<void ()>::callback_fn<Carbon::ErrorOr<int> Carbon::RunWithExtraStack<Carbon::ErrorOr<int> >(llvm::function_ref<Carbon::ErrorOr<int> ()>)::'lambda'()>(long) /proc/self/cwd/external/llvm-project/llvm/include/llvm/ADT/STLFunctionalExtras.h:45:5
+#22 0x0000563086b6e159 llvm::function_ref<void ()>::operator()() const /proc/self/cwd/external/llvm-project/llvm/include/llvm/ADT/STLFunctionalExtras.h:68:5
+#23 0x0000563086b6e133 Carbon::Internal::RunWithExtraStackHelper(llvm::function_ref<void ()>)::$_0::operator()() const /proc/self/cwd/explorer/interpreter/stack_space.cpp:45:7
+#24 0x0000563086b6e0e5 void llvm::function_ref<void ()>::callback_fn<Carbon::Internal::RunWithExtraStackHelper(llvm::function_ref<void ()>)::$_0>(long) /proc/self/cwd/external/llvm-project/llvm/include/llvm/ADT/STLFunctionalExtras.h:45:5
+#25 0x0000563086b6e159 llvm::function_ref<void ()>::operator()() const /proc/self/cwd/external/llvm-project/llvm/include/llvm/ADT/STLFunctionalExtras.h:68:5
+#26 0x0000563086c8a21a llvm::CrashRecoveryContext::RunSafely(llvm::function_ref<void ()>) /proc/self/cwd/external/llvm-project/llvm/lib/Support/CrashRecoveryContext.cpp:427:3
+#27 0x0000563086c8a69f RunSafelyOnThread_Dispatch(void*) /proc/self/cwd/external/llvm-project/llvm/lib/Support/CrashRecoveryContext.cpp:510:29
+#28 0x0000563086c8af49 auto void llvm::thread::GenericThreadProxy<std::__1::tuple<void (*)(void*), (anonymous namespace)::RunSafelyOnThreadInfo*> >(void*)::'lambda'(auto&&, auto&&...)::operator()<void (*&)(void*), (anonymous namespace)::RunSafelyOnThreadInfo*&>(auto&&, auto&&...) const /proc/self/cwd/external/llvm-project/llvm/include/llvm/Support/thread.h:44:9
+#29 0x0000563086c8aec5 decltype(static_cast<auto>(fp)(static_cast<auto>(fp0)...)) std::__1::__invoke_constexpr<void llvm::thread::GenericThreadProxy<std::__1::tuple<void (*)(void*), (anonymous namespace)::RunSafelyOnThreadInfo*> >(void*)::'lambda'(auto&&, auto&&...), void (*&)(void*), (anonymous namespace)::RunSafelyOnThreadInfo*&>(auto&&, auto&&...) /usr/local/google/home/joshl/Cellar/llvm/13.0.1_1/bin/../include/c++/v1/type_traits:3924:1
+#30 0x0000563086c8ae73 decltype(auto) std::__1::__apply_tuple_impl<void llvm::thread::GenericThreadProxy<std::__1::tuple<void (*)(void*), (anonymous namespace)::RunSafelyOnThreadInfo*> >(void*)::'lambda'(auto&&, auto&&...), std::__1::tuple<void (*)(void*), (anonymous namespace)::RunSafelyOnThreadInfo*>&, 0ul, 1ul>(auto&&, std::__1::tuple<void (*)(void*), (anonymous namespace)::RunSafelyOnThreadInfo*>&, std::__1::__tuple_indices<0ul, 1ul>) /usr/local/google/home/joshl/Cellar/llvm/13.0.1_1/bin/../include/c++/v1/tuple:1536:1
+#31 0x0000563086c8adf2 decltype(auto) std::__1::apply<void llvm::thread::GenericThreadProxy<std::__1::tuple<void (*)(void*), (anonymous namespace)::RunSafelyOnThreadInfo*> >(void*)::'lambda'(auto&&, auto&&...), std::__1::tuple<void (*)(void*), (anonymous namespace)::RunSafelyOnThreadInfo*>&>(auto&&, std::__1::tuple<void (*)(void*), (anonymous namespace)::RunSafelyOnThreadInfo*>&) /usr/local/google/home/joshl/Cellar/llvm/13.0.1_1/bin/../include/c++/v1/tuple:1545:1
+#32 0x0000563086c8ad8c void llvm::thread::GenericThreadProxy<std::__1::tuple<void (*)(void*), (anonymous namespace)::RunSafelyOnThreadInfo*> >(void*) /proc/self/cwd/external/llvm-project/llvm/include/llvm/Support/thread.h:41:5
+#33 0x0000563086c8ab25 void* llvm::thread::ThreadProxy<std::__1::tuple<void (*)(void*), (anonymous namespace)::RunSafelyOnThreadInfo*> >(void*) /proc/self/cwd/external/llvm-project/llvm/include/llvm/Support/thread.h:56:5
+#34 0x00007fcd4692ffd4 start_thread ./nptl/./nptl/pthread_create.c:442:8
+#35 0x00007fcd469b066c clone3 ./misc/../sysdeps/unix/sysv/linux/x86_64/clone3.S:83:0
