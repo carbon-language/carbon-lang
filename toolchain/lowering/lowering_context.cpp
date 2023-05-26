@@ -57,7 +57,6 @@ auto LoweringContext::LowerBlock(SemanticsNodeBlockId block_id) -> void {
 auto LoweringContext::BuildLoweredNodeAsType(SemanticsNodeId node_id)
     -> llvm::Type* {
   switch (node_id.index) {
-    case SemanticsBuiltinKind::EmptyStructType.AsInt():
     case SemanticsBuiltinKind::EmptyTupleType.AsInt():
       // Represent empty types as empty structs.
       // TODO: Investigate special-casing handling of these so that they can be
@@ -121,13 +120,7 @@ auto LoweringContext::GetLoweredNodeAsValue(SemanticsNodeId node_id)
   // TODO: It might be better to built them at initialization, putting them in
   // every IR even if not used. This is probably a performance decision since it
   // would simplify this function.
-  if (node_id == SemanticsNodeId::BuiltinEmptyStruct) {
-    auto* type = GetLoweredNodeAsType(SemanticsNodeId::BuiltinEmptyStructType);
-    auto* value = llvm::ConstantStruct::get(llvm::cast<llvm::StructType>(type),
-                                            llvm::ArrayRef<llvm::Constant*>());
-    node = value;
-    return value;
-  } else if (node_id == SemanticsNodeId::BuiltinEmptyTuple) {
+  if (node_id == SemanticsNodeId::BuiltinEmptyTuple) {
     auto* type = GetLoweredNodeAsType(SemanticsNodeId::BuiltinEmptyTupleType);
     auto* value = llvm::ConstantStruct::get(llvm::cast<llvm::StructType>(type),
                                             llvm::ArrayRef<llvm::Constant*>());
