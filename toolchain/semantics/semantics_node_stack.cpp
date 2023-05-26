@@ -19,8 +19,14 @@ auto SemanticsNodeStack::PushEntry(Entry entry, DebugLog debug_log) -> void {
     case DebugLog::NodeId:
       CARBON_VLOG() << entry.node_id;
       break;
+    case DebugLog::NodeBlockId:
+      CARBON_VLOG() << entry.node_block_id;
+      break;
     case DebugLog::NameId:
       CARBON_VLOG() << entry.name_id;
+      break;
+    case DebugLog::TypeId:
+      CARBON_VLOG() << entry.type_id;
       break;
   }
   CARBON_VLOG() << "\n";
@@ -135,6 +141,13 @@ auto SemanticsNodeStack::PopForNodeBlockId(ParseNodeKind pop_parse_kind)
   auto back = PopEntry(pop_parse_kind);
   RequireValidId(back);
   return back.node_block_id;
+}
+
+auto SemanticsNodeStack::PopForTypeId(ParseNodeKind pop_parse_kind)
+    -> SemanticsTypeId {
+  auto back = PopEntry(pop_parse_kind);
+  RequireValidId(back);
+  return back.type_id;
 }
 
 auto SemanticsNodeStack::PopForParseNodeAndNameId(ParseNodeKind pop_parse_kind)

@@ -16,12 +16,12 @@
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeTypeType, type: nodeTypeType},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeInvalidType, type: nodeInvalidType},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeIntegerType, type: nodeTypeType},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeFloatingPointType, type: nodeTypeType},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeStringType, type: nodeTypeType},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeEmptyTupleType, type: nodeTypeType},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeTypeType, type: typeTypeType},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeInvalidType, type: typeInvalidType},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeIntegerType, type: typeTypeType},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeFloatingPointType, type: typeTypeType},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeStringType, type: typeTypeType},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeEmptyTupleType, type: typeTypeType},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

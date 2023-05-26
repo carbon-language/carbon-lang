@@ -50,7 +50,7 @@ class SemanticsContext {
   }
 
   // Binds a DeclaredName to a target node with the given type.
-  auto BindName(ParseTree::Node name_node, SemanticsNodeId type_id,
+  auto BindName(ParseTree::Node name_node, SemanticsTypeId type_id,
                 SemanticsNodeId target_id) -> SemanticsStringId;
 
   // Temporarily remove name lookup entries added by the `var`. These will be
@@ -91,18 +91,18 @@ class SemanticsContext {
   // updated `value_id`. Prints a diagnostic and returns an InvalidType if
   // unsupported.
   auto ImplicitAsRequired(ParseTree::Node parse_node, SemanticsNodeId value_id,
-                          SemanticsNodeId as_type_id) -> SemanticsNodeId;
+                          SemanticsTypeId as_type_id) -> SemanticsNodeId;
 
   // Canonicalizes a type which is tracked as a single node.
   // TODO: This should eventually return a type ID.
-  auto CanonicalizeType(SemanticsNodeId node_id) -> SemanticsNodeId;
+  auto CanonicalizeType(SemanticsNodeId node_id) -> SemanticsTypeId;
 
   // Converts an expression for use as a type.
   // TODO: This should eventually return a type ID.
   auto ExpressionAsType(ParseTree::Node parse_node, SemanticsNodeId value_id)
-      -> SemanticsNodeId {
-    return CanonicalizeType(ImplicitAsRequired(
-        parse_node, value_id, SemanticsNodeId::BuiltinTypeType));
+      -> SemanticsTypeId {
+    return CanonicalizeType(
+        ImplicitAsRequired(parse_node, value_id, SemanticsTypeId::TypeType));
   }
 
   // Starts handling parameters or arguments.
@@ -182,7 +182,7 @@ class SemanticsContext {
   //
   // If `output_value_id` is not null, then it will be set if there is a need to
   // cast.
-  auto ImplicitAsImpl(SemanticsNodeId value_id, SemanticsNodeId as_type_id,
+  auto ImplicitAsImpl(SemanticsNodeId value_id, SemanticsTypeId as_type_id,
                       SemanticsNodeId* output_value_id) -> ImplicitAsKind;
 
   // Returns true if the ImplicitAs can use struct conversion.
@@ -243,7 +243,7 @@ class SemanticsContext {
 
   // Tracks types which have been used, so that they aren't repeatedly added to
   // SemanticsIR.
-  llvm::DenseSet<SemanticsNodeId> canonical_types_;
+  llvm::DenseMap<SemanticsNodeId, SemanticsTypeId> canonical_types_;
 };
 
 // Parse node handlers. Returns false for unrecoverable errors.

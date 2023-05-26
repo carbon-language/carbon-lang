@@ -17,12 +17,13 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+2, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+2, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str1, arg1: callable0},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+4, arg1: block0},
 // CHECK:STDOUT: ]

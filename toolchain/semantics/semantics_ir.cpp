@@ -24,8 +24,8 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
   semantics.nodes_.push_back(SemanticsNode::Builtin::Make(            \
       SemanticsBuiltinKind::Name,                                     \
       SemanticsBuiltinKind::Name == SemanticsBuiltinKind::InvalidType \
-          ? SemanticsNodeId::BuiltinInvalidType                       \
-          : SemanticsNodeId::BuiltinTypeType));
+          ? SemanticsTypeId::InvalidType                              \
+          : SemanticsTypeId::TypeType));
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
   CARBON_CHECK(semantics.node_blocks_.size() == 1)
@@ -141,7 +141,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
   out << "]\n";
 }
 
-auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
+auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
@@ -151,7 +151,8 @@ auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
     // The index into node_id to print. Not used by all types.
     int index = 0;
   };
-  llvm::SmallVector<Step> steps = {{.node_id = node_id}};
+  llvm::SmallVector<Step> steps = {
+      {.node_id = GetTypeAllowBuiltinTypes(type_id)}};
 
   while (!steps.empty()) {
     auto step = steps.pop_back_val();
@@ -190,7 +191,7 @@ auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
       }
       case SemanticsNodeKind::StructTypeField: {
         out << "." << GetString(node.GetAsStructTypeField()) << ": ";
-        steps.push_back({.node_id = node.type_id()});
+        steps.push_back({.node_id = GetTypeAllowBuiltinTypes(node.type_id())});
         break;
       }
       case SemanticsNodeKind::Assign:

@@ -26,19 +26,25 @@ class LoweringContext {
   auto Run() -> std::unique_ptr<llvm::Module>;
 
   auto HasLoweredNode(SemanticsNodeId node_id) -> bool {
-    return !lowered_nodes_[node_id.index].isNull();
+    return lowered_nodes_[node_id.index];
   }
 
-  // Returns a type for the given node. May construct and cache the type
-  // if it hasn't yet been built.
-  auto GetLoweredNodeAsType(SemanticsNodeId node_id) -> llvm::Type*;
+  // Returns a lowered type for the given type_id.
+  auto GetType(SemanticsTypeId type_id) -> llvm::Type* {
+    // Neither TypeType nor InvalidType should be passed in.
+    CARBON_CHECK(type_id.index >= 0) << type_id;
+    return lowered_types_[type_id.index];
+  }
 
   // Returns a value for the given node.
-  auto GetLoweredNodeAsValue(SemanticsNodeId node_id) -> llvm::Value*;
+  auto GetLoweredNodeAsValue(SemanticsNodeId node_id) -> llvm::Value* {
+    CARBON_CHECK(lowered_nodes_[node_id.index]) << node_id;
+    return lowered_nodes_[node_id.index];
+  }
 
   // Sets the value for the given node.
   auto SetLoweredNodeAsValue(SemanticsNodeId node_id, llvm::Value* value) {
-    CARBON_CHECK(lowered_nodes_[node_id.index].isNull()) << node_id;
+    CARBON_CHECK(!lowered_nodes_[node_id.index]) << node_id;
     lowered_nodes_[node_id.index] = value;
   }
 
@@ -92,16 +98,16 @@ class LoweringContext {
   // Maps nodes in SemanticsIR to a lowered value. This will have one entry per
   // node, and will be non-null when lowered. It's expected to be sparse during
   // execution because while expressions will have entries, statements won't.
-  // TODO: Long-term, we should examine the practical trade-offs of making this
-  // a map; a map may end up lower memory consumption, but a vector offers cache
-  // efficiency and better performance. As a consequence, the right choice is
-  // unclear.
-  llvm::SmallVector<llvm::PointerUnion<llvm::Type*, llvm::Value*>>
-      lowered_nodes_;
+  // TODO: This is transitioning to only track global and local values, rather
+  // than one large map for all nodes.
+  llvm::SmallVector<llvm::Value*> lowered_nodes_;
 
   // Maps callables to lowered functions. Semantics treats callables as the
   // canonical form of a function, so lowering needs to do the same.
   llvm::SmallVector<llvm::Function*> lowered_callables_;
+
+  // Provides lowered versions of types.
+  llvm::SmallVector<llvm::Type*> lowered_types_;
 };
 
 // Declare handlers for each SemanticsIR node.

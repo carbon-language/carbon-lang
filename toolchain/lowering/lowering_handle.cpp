@@ -73,14 +73,14 @@ auto LoweringHandleFunctionDeclaration(LoweringContext& context,
   llvm::SmallVector<llvm::Type*> args;
   args.resize_for_overwrite(param_refs.size());
   for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
-    args[i] = context.GetLoweredNodeAsType(
+    args[i] = context.GetType(
         context.semantics_ir().GetNode(param_refs[i]).type_id());
   }
 
-  llvm::Type* return_type = context.GetLoweredNodeAsType(
-      callable.return_type_id.is_valid()
-          ? callable.return_type_id
-          : SemanticsNodeId::BuiltinEmptyTupleType);
+  llvm::Type* return_type =
+      context.GetType(callable.return_type_id.is_valid()
+                          ? callable.return_type_id
+                          : context.semantics_ir().empty_tuple_type_id());
   llvm::FunctionType* function_type =
       llvm::FunctionType::get(return_type, args, /*isVarArg=*/false);
   auto* function = llvm::Function::Create(
@@ -162,11 +162,13 @@ auto LoweringHandleStructMemberAccess(LoweringContext& context,
                                       SemanticsNode node) -> void {
   auto [struct_id, member_index] = node.GetAsStructMemberAccess();
   auto struct_type_id = context.semantics_ir().GetNode(struct_id).type_id();
-  auto* llvm_type = context.GetLoweredNodeAsType(struct_type_id);
+  auto* llvm_type = context.GetType(struct_type_id);
 
   // Get type information for member names.
   auto type_refs = context.semantics_ir().GetNodeBlock(
-      context.semantics_ir().GetNode(struct_type_id).GetAsStructType());
+      context.semantics_ir()
+          .GetNode(context.semantics_ir().GetType(struct_type_id))
+          .GetAsStructType());
   auto member_name = context.semantics_ir().GetString(
       context.semantics_ir()
           .GetNode(type_refs[member_index.index])
@@ -193,7 +195,7 @@ auto LoweringHandleStructTypeField(LoweringContext& /*context*/,
 auto LoweringHandleStructValue(LoweringContext& context,
                                SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  auto* llvm_type = context.GetLoweredNodeAsType(node.type_id());
+  auto* llvm_type = context.GetType(node.type_id());
   auto* alloca = context.builder().CreateAlloca(
       llvm_type, /*ArraySize=*/nullptr, "StructLiteralValue");
   context.SetLoweredNodeAsValue(node_id, alloca);
@@ -201,7 +203,9 @@ auto LoweringHandleStructValue(LoweringContext& context,
   auto refs = context.semantics_ir().GetNodeBlock(node.GetAsStructValue());
   // Get type information for member names.
   auto type_refs = context.semantics_ir().GetNodeBlock(
-      context.semantics_ir().GetNode(node.type_id()).GetAsStructType());
+      context.semantics_ir()
+          .GetNode(context.semantics_ir().GetType(node.type_id()))
+          .GetAsStructType());
   for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
     auto member_name = context.semantics_ir().GetString(
         context.semantics_ir().GetNode(type_refs[i]).GetAsStructTypeField());
@@ -226,9 +230,8 @@ auto LoweringHandleVarStorage(LoweringContext& context, SemanticsNodeId node_id,
   // requires either looking ahead for BindName or restructuring semantics,
   // either of which affects the destructuring due to the difference in
   // storage?
-  auto* alloca = context.builder().CreateAlloca(
-      context.GetLoweredNodeAsType(node.type_id()), /*ArraySize=*/nullptr,
-      "var");
+  auto* alloca = context.builder().CreateAlloca(context.GetType(node.type_id()),
+                                                /*ArraySize=*/nullptr, "var");
   context.SetLoweredNodeAsValue(node_id, alloca);
 }
 

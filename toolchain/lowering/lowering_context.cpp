@@ -23,6 +23,12 @@ LoweringContext::LoweringContext(llvm::LLVMContext& llvm_context,
       lowered_callables_(semantics_ir_->callables_size(), nullptr) {
   CARBON_CHECK(!semantics_ir.has_errors())
       << "Generating LLVM IR from invalid SemanticsIR is unsupported.";
+
+  auto types = semantics_ir_->types();
+  lowered_types_.resize_for_overwrite(types.size());
+  for (int i = 0; i < static_cast<int>(types.size()); ++i) {
+    lowered_types_[i] = BuildLoweredNodeAsType(types[i]);
+  }
 }
 
 auto LoweringContext::Run() -> std::unique_ptr<llvm::Module> {
@@ -86,7 +92,7 @@ auto LoweringContext::BuildLoweredNodeAsType(SemanticsNodeId node_id)
         // recursion while still letting them cache.
         CARBON_CHECK(type_id.index < SemanticsBuiltinKind::ValidCount)
             << type_id;
-        subtypes.push_back(GetLoweredNodeAsType(type_id));
+        subtypes.push_back(GetType(type_id));
       }
       return llvm::StructType::create(*llvm_context_, subtypes,
                                       "StructLiteralType");
@@ -95,27 +101,6 @@ auto LoweringContext::BuildLoweredNodeAsType(SemanticsNodeId node_id)
       CARBON_FATAL() << "Cannot use node as type: " << node_id;
     }
   }
-}
-
-auto LoweringContext::GetLoweredNodeAsType(SemanticsNodeId node_id)
-    -> llvm::Type* {
-  if (lowered_nodes_[node_id.index]) {
-    return lowered_nodes_[node_id.index].get<llvm::Type*>();
-  }
-
-  auto* type = BuildLoweredNodeAsType(node_id);
-  lowered_nodes_[node_id.index] = type;
-  return type;
-}
-
-auto LoweringContext::GetLoweredNodeAsValue(SemanticsNodeId node_id)
-    -> llvm::Value* {
-  auto& node = lowered_nodes_[node_id.index];
-  auto* value = node.dyn_cast<llvm::Value*>();
-  CARBON_CHECK(value != nullptr)
-      << node_id << " doesn't have a Value (either Type or null); nullness: "
-      << node.isNull();
-  return value;
 }
 
 }  // namespace Carbon
