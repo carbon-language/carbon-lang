@@ -58,6 +58,11 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
 
   context.node_block_stack().Push();
   context.PushScope();
+  for (auto ref_id : context.semantics().GetNodeBlock(param_refs_id)) {
+    auto ref = context.semantics().GetNode(ref_id);
+    auto [name_id, target_id] = ref.GetAsBindName();
+    context.AddNameToLookupIgnoreConflicts(name_id, target_id);
+  }
   context.return_scope_stack().push_back(decl_id);
   context.node_stack().Push(parse_node, decl_id);
 

@@ -19,7 +19,8 @@ LoweringContext::LoweringContext(llvm::LLVMContext& llvm_context,
       builder_(llvm_context),
       semantics_ir_(&semantics_ir),
       vlog_stream_(vlog_stream),
-      lowered_nodes_(semantics_ir_->nodes_size(), nullptr) {
+      lowered_nodes_(semantics_ir_->nodes_size(), nullptr),
+      lowered_callables_(semantics_ir_->callables_size(), nullptr) {
   CARBON_CHECK(!semantics_ir.has_errors())
       << "Generating LLVM IR from invalid SemanticsIR is unsupported.";
 }
@@ -106,6 +107,34 @@ auto LoweringContext::GetLoweredNodeAsType(SemanticsNodeId node_id)
   auto* type = BuildLoweredNodeAsType(node_id);
   lowered_nodes_[node_id.index] = type;
   return type;
+}
+
+auto LoweringContext::GetLoweredNodeAsValue(SemanticsNodeId node_id)
+    -> llvm::Value* {
+  auto& node = lowered_nodes_[node_id.index];
+  if (node.is<llvm::Value*>()) {
+    return node.get<llvm::Value*>();
+  }
+  CARBON_CHECK(node.isNull())
+      << node_id << " is already set as a type, not a value";
+  // Empty values are built lazily.
+  // TODO: It might be better to built them at initialization, putting them in
+  // every IR even if not used. This is probably a performance decision since it
+  // would simplify this function.
+  if (node_id == SemanticsNodeId::BuiltinEmptyStruct) {
+    auto* type = GetLoweredNodeAsType(SemanticsNodeId::BuiltinEmptyStructType);
+    auto* value = llvm::ConstantStruct::get(llvm::cast<llvm::StructType>(type),
+                                            llvm::ArrayRef<llvm::Constant*>());
+    node = value;
+    return value;
+  } else if (node_id == SemanticsNodeId::BuiltinEmptyTuple) {
+    auto* type = GetLoweredNodeAsType(SemanticsNodeId::BuiltinEmptyTupleType);
+    auto* value = llvm::ConstantStruct::get(llvm::cast<llvm::StructType>(type),
+                                            llvm::ArrayRef<llvm::Constant*>());
+    node = value;
+    return value;
+  }
+  CARBON_FATAL() << node_id << " is null, cannot be initialized";
 }
 
 }  // namespace Carbon

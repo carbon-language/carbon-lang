@@ -34,15 +34,27 @@ class LoweringContext {
   auto GetLoweredNodeAsType(SemanticsNodeId node_id) -> llvm::Type*;
 
   // Returns a value for the given node.
-  auto GetLoweredNodeAsValue(SemanticsNodeId node_id) -> llvm::Value* {
-    CARBON_CHECK(lowered_nodes_[node_id.index].is<llvm::Value*>())
-        << node_id << ": isNull == " << lowered_nodes_[node_id.index].isNull();
-    return lowered_nodes_[node_id.index].get<llvm::Value*>();
-  }
+  auto GetLoweredNodeAsValue(SemanticsNodeId node_id) -> llvm::Value*;
+
   // Sets the value for the given node.
   auto SetLoweredNodeAsValue(SemanticsNodeId node_id, llvm::Value* value) {
     CARBON_CHECK(lowered_nodes_[node_id.index].isNull()) << node_id;
     lowered_nodes_[node_id.index] = value;
+  }
+
+  // Gets a callable's function.
+  auto GetLoweredCallable(SemanticsCallableId callable_id) -> llvm::Function* {
+    CARBON_CHECK(lowered_callables_[callable_id.index] != nullptr)
+        << callable_id;
+    return lowered_callables_[callable_id.index];
+  }
+
+  // Sets a callable's function.
+  auto SetLoweredCallable(SemanticsCallableId callable_id,
+                          llvm::Function* function) {
+    CARBON_CHECK(lowered_callables_[callable_id.index] == nullptr)
+        << callable_id;
+    lowered_callables_[callable_id.index] = function;
   }
 
   auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
@@ -86,6 +98,10 @@ class LoweringContext {
   // unclear.
   llvm::SmallVector<llvm::PointerUnion<llvm::Type*, llvm::Value*>>
       lowered_nodes_;
+
+  // Maps callables to lowered functions. Semantics treats callables as the
+  // canonical form of a function, so lowering needs to do the same.
+  llvm::SmallVector<llvm::Function*> lowered_callables_;
 };
 
 // Declare handlers for each SemanticsIR node.
