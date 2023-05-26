@@ -19,15 +19,15 @@ LoweringContext::LoweringContext(llvm::LLVMContext& llvm_context,
       builder_(llvm_context),
       semantics_ir_(&semantics_ir),
       vlog_stream_(vlog_stream),
-      lowered_nodes_(semantics_ir_->nodes_size(), nullptr),
-      lowered_callables_(semantics_ir_->callables_size(), nullptr) {
+      nodes_(semantics_ir_->nodes_size(), nullptr),
+      callables_(semantics_ir_->callables_size(), nullptr) {
   CARBON_CHECK(!semantics_ir.has_errors())
       << "Generating LLVM IR from invalid SemanticsIR is unsupported.";
 
   auto types = semantics_ir_->types();
-  lowered_types_.resize_for_overwrite(types.size());
+  types_.resize_for_overwrite(types.size());
   for (int i = 0; i < static_cast<int>(types.size()); ++i) {
-    lowered_types_[i] = BuildLoweredNodeAsType(types[i]);
+    types_[i] = BuildType(types[i]);
   }
 }
 
@@ -60,8 +60,7 @@ auto LoweringContext::LowerBlock(SemanticsNodeBlockId block_id) -> void {
   }
 }
 
-auto LoweringContext::BuildLoweredNodeAsType(SemanticsNodeId node_id)
-    -> llvm::Type* {
+auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
   switch (node_id.index) {
     case SemanticsBuiltinKind::EmptyTupleType.AsInt():
       // Represent empty types as empty structs.

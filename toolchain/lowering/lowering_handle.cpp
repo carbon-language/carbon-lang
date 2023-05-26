@@ -21,8 +21,8 @@ auto LoweringHandleCrossReference(LoweringContext& /*context*/,
 auto LoweringHandleAssign(LoweringContext& context, SemanticsNodeId /*node_id*/,
                           SemanticsNode node) -> void {
   auto [storage_id, value_id] = node.GetAsAssign();
-  context.builder().CreateStore(context.GetLoweredNodeAsValue(value_id),
-                                context.GetLoweredNodeAsValue(storage_id));
+  context.builder().CreateStore(context.GetNode(value_id),
+                                context.GetNode(storage_id));
 }
 
 auto LoweringHandleBinaryOperatorAdd(LoweringContext& /*context*/,
@@ -46,14 +46,14 @@ auto LoweringHandleBuiltin(LoweringContext& /*context*/,
 auto LoweringHandleCall(LoweringContext& context, SemanticsNodeId node_id,
                         SemanticsNode node) -> void {
   auto [refs_id, callable_id] = node.GetAsCall();
-  auto* function = context.GetLoweredCallable(callable_id);
+  auto* function = context.GetCallable(callable_id);
   std::vector<llvm::Value*> args;
   for (auto ref_id : context.semantics_ir().GetNodeBlock(refs_id)) {
-    args.push_back(context.GetLoweredNodeAsValue(ref_id));
+    args.push_back(context.GetNode(ref_id));
   }
   auto* value =
       context.builder().CreateCall(function, args, function->getName());
-  context.SetLoweredNodeAsValue(node_id, value);
+  context.SetNode(node_id, value);
 }
 
 auto LoweringHandleCodeBlock(LoweringContext& /*context*/,
@@ -86,7 +86,7 @@ auto LoweringHandleFunctionDeclaration(LoweringContext& context,
   auto* function = llvm::Function::Create(
       function_type, llvm::Function::ExternalLinkage,
       context.semantics_ir().GetString(name_id), context.llvm_module());
-  context.SetLoweredCallable(callable_id, function);
+  context.SetCallable(callable_id, function);
 
   // Set parameter names.
   for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
@@ -121,7 +121,7 @@ auto LoweringHandleIntegerLiteral(LoweringContext& context,
   // TODO: This won't offer correct semantics, but seems close enough for now.
   llvm::Value* v =
       llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getSExtValue());
-  context.SetLoweredNodeAsValue(node_id, v);
+  context.SetNode(node_id, v);
 }
 
 auto LoweringHandleRealLiteral(LoweringContext& context,
@@ -134,9 +134,8 @@ auto LoweringHandleRealLiteral(LoweringContext& context,
       real.mantissa.getSExtValue() *
       std::pow((real.is_decimal ? 10 : 2), real.exponent.getSExtValue());
   llvm::APFloat llvm_val(val);
-  context.SetLoweredNodeAsValue(
-      node_id,
-      llvm::ConstantFP::get(context.builder().getDoubleTy(), llvm_val));
+  context.SetNode(node_id, llvm::ConstantFP::get(
+                               context.builder().getDoubleTy(), llvm_val));
 }
 
 auto LoweringHandleReturn(LoweringContext& context, SemanticsNodeId /*node_id*/,
@@ -148,7 +147,7 @@ auto LoweringHandleReturnExpression(LoweringContext& context,
                                     SemanticsNodeId /*node_id*/,
                                     SemanticsNode node) -> void {
   SemanticsNodeId expr_id = node.GetAsReturnExpression();
-  context.builder().CreateRet(context.GetLoweredNodeAsValue(expr_id));
+  context.builder().CreateRet(context.GetNode(expr_id));
 }
 
 auto LoweringHandleStringLiteral(LoweringContext& /*context*/,
@@ -175,9 +174,8 @@ auto LoweringHandleStructMemberAccess(LoweringContext& context,
           .GetAsStructTypeField());
 
   auto* gep = context.builder().CreateStructGEP(
-      llvm_type, context.GetLoweredNodeAsValue(struct_id), member_index.index,
-      member_name);
-  context.SetLoweredNodeAsValue(node_id, gep);
+      llvm_type, context.GetNode(struct_id), member_index.index, member_name);
+  context.SetNode(node_id, gep);
 }
 
 auto LoweringHandleStructType(LoweringContext& /*context*/,
@@ -198,7 +196,7 @@ auto LoweringHandleStructValue(LoweringContext& context,
   auto* llvm_type = context.GetType(node.type_id());
   auto* alloca = context.builder().CreateAlloca(
       llvm_type, /*ArraySize=*/nullptr, "StructLiteralValue");
-  context.SetLoweredNodeAsValue(node_id, alloca);
+  context.SetNode(node_id, alloca);
 
   auto refs = context.semantics_ir().GetNodeBlock(node.GetAsStructValue());
   // Get type information for member names.
@@ -211,15 +209,14 @@ auto LoweringHandleStructValue(LoweringContext& context,
         context.semantics_ir().GetNode(type_refs[i]).GetAsStructTypeField());
     auto* gep =
         context.builder().CreateStructGEP(llvm_type, alloca, i, member_name);
-    context.builder().CreateStore(context.GetLoweredNodeAsValue(refs[i]), gep);
+    context.builder().CreateStore(context.GetNode(refs[i]), gep);
   }
 }
 
 auto LoweringHandleStubReference(LoweringContext& context,
                                  SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  context.SetLoweredNodeAsValue(
-      node_id, context.GetLoweredNodeAsValue(node.GetAsStubReference()));
+  context.SetNode(node_id, context.GetNode(node.GetAsStubReference()));
 }
 
 auto LoweringHandleVarStorage(LoweringContext& context, SemanticsNodeId node_id,
@@ -232,7 +229,7 @@ auto LoweringHandleVarStorage(LoweringContext& context, SemanticsNodeId node_id,
   // storage?
   auto* alloca = context.builder().CreateAlloca(context.GetType(node.type_id()),
                                                 /*ArraySize=*/nullptr, "var");
-  context.SetLoweredNodeAsValue(node_id, alloca);
+  context.SetNode(node_id, alloca);
 }
 
 }  // namespace Carbon
