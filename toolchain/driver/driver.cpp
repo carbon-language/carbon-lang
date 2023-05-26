@@ -57,7 +57,7 @@ auto operator<<(llvm::raw_ostream& out, CompilePhase phase)
 
 }  // namespace
 
-constexpr auto VerboseFlag = Args::MakeFlag("verbose", /*short_name*/"v");
+constexpr auto VerboseFlag = Args::MakeFlag("verbose", /*short_name*/ "v");
 
 constexpr auto CompilePhaseOption = Args::MakeEnumOpt<CompilePhase>(
     "phase",
@@ -82,12 +82,13 @@ constexpr auto PreorderParseTreeFlag = Args::MakeFlag("preorder-parse-tree");
 constexpr auto BuiltinSemanticsIRFlag = Args::MakeFlag("builtin-semantics-ir");
 
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
-  constexpr static auto DriverCommand = Args::MakeCommand("carbon",
-                                                   {
-                                                       .description = "TODO",
-                                                       .usage = "TODO",
-                                                   },
-                                                   &VerboseFlag);
+  constexpr static auto DriverCommand =
+      Args::MakeCommand("carbon",
+                        {
+                            .description = "TODO",
+                            .usage = "TODO",
+                        },
+                        &VerboseFlag);
 
   constexpr static auto CompileSubcommand = Args::MakeSubcommand(
       "compile", Driver::Subcommands::Compile, &CompilePhaseOption,
@@ -134,8 +135,7 @@ auto Driver::RunCompileSubcommand(SubcommandArgs<Subcommands> args) -> bool {
   std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
   // Enable sorted diagnostics only if we're not using verbose logging and
   // streamed diagnostics haven't been requested.
-  if (!args.TestFlag(&VerboseFlag) &&
-      !args.TestFlag(&StreamErrorsFlag)) {
+  if (!args.TestFlag(&VerboseFlag) && !args.TestFlag(&StreamErrorsFlag)) {
     sorting_consumer = std::make_unique<SortingDiagnosticConsumer>(*consumer);
     consumer = sorting_consumer.get();
   }

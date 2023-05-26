@@ -172,8 +172,8 @@ TEST(ArgParserTest, IntOptions) {
       "int-defaulted-opt", /*short_name=*/"", /*default_value=*/42);
 
   constexpr auto Command = Args::MakeCommand("command", &Opt, &OptWithDefault);
-  constexpr auto Subcommand =
-      Args::MakeSubcommand("sub", Subcommands::Sub1, &SubOpt, &SubOptWithDefault);
+  constexpr auto Subcommand = Args::MakeSubcommand("sub", Subcommands::Sub1,
+                                                   &SubOpt, &SubOptWithDefault);
 
   auto args = Args::Parse(
       {"--int-opt=1", "sub", "--int-opt=2", "--int-defaulted-opt=3"},

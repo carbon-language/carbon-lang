@@ -217,14 +217,11 @@ class Args {
 
   auto AddParsedOptToMap(const Opt* opt, OptKind kind)
       -> std::pair<bool, OptKindAndValue&>;
-  auto AddParsedOpt(const Flag* opt,
-                    std::optional<llvm::StringRef> value,
+  auto AddParsedOpt(const Flag* opt, std::optional<llvm::StringRef> value,
                     llvm::raw_ostream& errors) -> bool;
-  auto AddParsedOpt(const StringOpt* opt,
-                    std::optional<llvm::StringRef> value,
+  auto AddParsedOpt(const StringOpt* opt, std::optional<llvm::StringRef> value,
                     llvm::raw_ostream& errors) -> bool;
-  auto AddParsedOpt(const IntOpt* opt,
-                    std::optional<llvm::StringRef> value,
+  auto AddParsedOpt(const IntOpt* opt, std::optional<llvm::StringRef> value,
                     llvm::raw_ostream& errors) -> bool;
   template <typename EnumT, ssize_t N>
   auto AddParsedOpt(const EnumOpt<EnumT, N>* opt,
@@ -470,7 +467,7 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
               return parser.args.AddParsedOpt(opt, arg_value, parser.errors);
             }));
     CARBON_CHECK(inserted) << "Duplicate opts named: " << opt->name;
-    auto *opt_parser = it->second.get();
+    auto* opt_parser = it->second.get();
     if (!opt->short_name.empty()) {
       // TODO: extract to a method on `Opt`.
       CARBON_CHECK(opt->short_name.size() == 1)
@@ -489,10 +486,11 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
     }
     parser.args.AddOptDefault(opt);
   };
-  auto build_opt_parse_map = [&parser, &add_opt](const auto*... command_options) {
+  auto build_opt_parse_map = [&parser,
+                              &add_opt](const auto*... command_options) {
     // Clear the option parsers in preparation for rebuilding them for these
     // options.
-    parser.opt_parsers.clear(); 
+    parser.opt_parsers.clear();
     for (auto*& char_parser : parser.opt_char_parsers) {
       char_parser = nullptr;
     }
@@ -506,7 +504,8 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
   // subcommand name here to be lazy. We'll process the subcommand itself only
   // if it is needed.
   if constexpr (HasSubcommands) {
-    auto add_subcommand = [&args, &parser, &build_opt_parse_map](const auto* subcommand) {
+    auto add_subcommand = [&args, &parser,
+                           &build_opt_parse_map](const auto* subcommand) {
       bool inserted =
           parser.subcommand_parsers
               .insert({subcommand->name,

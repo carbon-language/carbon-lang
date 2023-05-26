@@ -85,7 +85,8 @@ void Args::AddOptDefault(const IntOpt* opt) {
 }
 
 void Args::AddOptDefault(const StringListOpt* opt) {
-  AddOptDefaultGeneric(opts_, opt, OptKind::StringList, string_list_opt_values_);
+  AddOptDefaultGeneric(opts_, opt, OptKind::StringList,
+                       string_list_opt_values_);
 }
 
 auto Args::AddParsedOptToMap(const Opt* opt, OptKind kind)
@@ -233,8 +234,7 @@ auto Args::Parser::ParseArgs(llvm::ArrayRef<llvm::StringRef> raw_args) -> bool {
         (*opt_char_parsers[c])(std::nullopt);
       }
       // The last character gets the value if present.
-      (*opt_char_parsers[static_cast<unsigned char>(short_args.back())])(
-          value);
+      (*opt_char_parsers[static_cast<unsigned char>(short_args.back())])(value);
       continue;
     }
     if (arg.size() == 2) {
