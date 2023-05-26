@@ -14,9 +14,11 @@
 // CHECK:STDOUT:   %StructLiteralValue = alloca %StructLiteralType, align 8
 // CHECK:STDOUT:   %a = getelementptr inbounds %StructLiteralType, ptr %StructLiteralValue, i32 0, i32 0
 // CHECK:STDOUT:   store i32 4, ptr %a, align 4
-// CHECK:STDOUT:   store ptr %StructLiteralValue, ptr %var, align 8
+// CHECK:STDOUT:   %0 = load %StructLiteralType, ptr %StructLiteralValue, align 4
+// CHECK:STDOUT:   store %StructLiteralType %0, ptr %var, align 4
 // CHECK:STDOUT:   %var1 = alloca %StructLiteralType, align 8
-// CHECK:STDOUT:   store ptr %var, ptr %var1, align 8
+// CHECK:STDOUT:   %1 = load %StructLiteralType, ptr %var, align 4
+// CHECK:STDOUT:   store %StructLiteralType %1, ptr %var1, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
 

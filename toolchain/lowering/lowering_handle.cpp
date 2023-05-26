@@ -21,7 +21,7 @@ auto LoweringHandleCrossReference(LoweringContext& /*context*/,
 auto LoweringHandleAssign(LoweringContext& context, SemanticsNodeId /*node_id*/,
                           SemanticsNode node) -> void {
   auto [storage_id, value_id] = node.GetAsAssign();
-  context.builder().CreateStore(context.GetNode(value_id),
+  context.builder().CreateStore(context.GetNodeLoaded(value_id),
                                 context.GetNode(storage_id));
 }
 
@@ -49,7 +49,7 @@ auto LoweringHandleCall(LoweringContext& context, SemanticsNodeId node_id,
   auto* function = context.GetCallable(callable_id);
   std::vector<llvm::Value*> args;
   for (auto ref_id : context.semantics_ir().GetNodeBlock(refs_id)) {
-    args.push_back(context.GetNode(ref_id));
+    args.push_back(context.GetNodeLoaded(ref_id));
   }
   auto* value =
       context.builder().CreateCall(function, args, function->getName());
@@ -147,7 +147,7 @@ auto LoweringHandleReturnExpression(LoweringContext& context,
                                     SemanticsNodeId /*node_id*/,
                                     SemanticsNode node) -> void {
   SemanticsNodeId expr_id = node.GetAsReturnExpression();
-  context.builder().CreateRet(context.GetNode(expr_id));
+  context.builder().CreateRet(context.GetNodeLoaded(expr_id));
 }
 
 auto LoweringHandleStringLiteral(LoweringContext& /*context*/,

@@ -31,6 +31,10 @@ class LoweringContext {
     return nodes_[node_id.index];
   }
 
+  // Returns a value for the given node in loaded state. Loads will only be
+  // inserted on an as-needed basis.
+  auto GetNodeLoaded(SemanticsNodeId node_id) -> llvm::Value*;
+
   // Sets the value for the given node.
   auto SetNode(SemanticsNodeId node_id, llvm::Value* value) {
     CARBON_CHECK(!nodes_[node_id.index]) << node_id;

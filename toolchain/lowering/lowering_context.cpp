@@ -46,10 +46,10 @@ auto LoweringContext::Run() -> std::unique_ptr<llvm::Module> {
 }
 
 auto LoweringContext::LowerBlock(SemanticsNodeBlockId block_id) -> void {
-  CARBON_VLOG() << "Lowering block " << block_id << "\n";
+  CARBON_VLOG() << "Lowering " << block_id << "\n";
   for (const auto& node_id : semantics_ir_->GetNodeBlock(block_id)) {
     auto node = semantics_ir_->GetNode(node_id);
-    CARBON_VLOG() << "Lowering node" << node_id << ": " << node << "\n";
+    CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
     switch (node.kind()) {
 #define CARBON_SEMANTICS_NODE_KIND(Name)        \
   case SemanticsNodeKind::Name:                 \
@@ -99,6 +99,17 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
     default: {
       CARBON_FATAL() << "Cannot use node as type: " << node_id;
     }
+  }
+}
+
+auto LoweringContext::GetNodeLoaded(SemanticsNodeId node_id) -> llvm::Value* {
+  auto* value = GetNode(node_id);
+  if (llvm::isa<llvm::AllocaInst, llvm::GetElementPtrInst>(value)) {
+    auto* load_type = GetType(semantics_ir().GetNode(node_id).type_id());
+    return builder().CreateLoad(load_type, value);
+  } else {
+    // No load is needed.
+    return value;
   }
 }
 
