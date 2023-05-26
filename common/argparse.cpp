@@ -56,8 +56,8 @@ auto Args::GetStringListOptImpl(const OptMap& opts,
   return {};
 }
 
-void Args::AddOptDefault(Args::OptMap& opts, const Flag* opt) {
-  auto [opt_it, inserted] = opts.insert({opt, {.kind = OptKind::Flag}});
+void Args::AddOptDefault(const Flag* opt) {
+  auto [opt_it, inserted] = opts_.insert({opt, {.kind = OptKind::Flag}});
   CARBON_CHECK(inserted) << "Defaults must be added to an empty set of opts!";
   auto& value = opt_it->second;
   value.flag_value = opt->default_value;
@@ -76,21 +76,21 @@ auto AddOptDefaultGeneric(OptMapT& opts, const OptT* opt, OptKindT kind,
   values.emplace_back(*opt->default_value);
 }
 
-void Args::AddOptDefault(Args::OptMap& opts, const StringOpt* opt) {
-  AddOptDefaultGeneric(opts, opt, OptKind::String, string_opt_values_);
+void Args::AddOptDefault(const StringOpt* opt) {
+  AddOptDefaultGeneric(opts_, opt, OptKind::String, string_opt_values_);
 }
 
-void Args::AddOptDefault(Args::OptMap& opts, const IntOpt* opt) {
-  AddOptDefaultGeneric(opts, opt, OptKind::Int, int_opt_values_);
+void Args::AddOptDefault(const IntOpt* opt) {
+  AddOptDefaultGeneric(opts_, opt, OptKind::Int, int_opt_values_);
 }
 
-void Args::AddOptDefault(Args::OptMap& opts, const StringListOpt* opt) {
-  AddOptDefaultGeneric(opts, opt, OptKind::StringList, string_list_opt_values_);
+void Args::AddOptDefault(const StringListOpt* opt) {
+  AddOptDefaultGeneric(opts_, opt, OptKind::StringList, string_list_opt_values_);
 }
 
-auto Args::AddParsedOptToMap(OptMap& opts, const Opt* opt, OptKind kind)
+auto Args::AddParsedOptToMap(const Opt* opt, OptKind kind)
     -> std::pair<bool, OptKindAndValue&> {
-  auto [opt_it, inserted] = opts.insert({opt, {.kind = kind}});
+  auto [opt_it, inserted] = opts_.insert({opt, {.kind = kind}});
   auto& value = opt_it->second;
   if (!inserted) {
     CARBON_CHECK(value.kind == kind)
@@ -100,10 +100,10 @@ auto Args::AddParsedOptToMap(OptMap& opts, const Opt* opt, OptKind kind)
   return {inserted, value};
 }
 
-auto Args::AddParsedOpt(OptMap& opts, const Flag* opt,
+auto Args::AddParsedOpt(const Flag* opt,
                         std::optional<llvm::StringRef> arg_value,
                         llvm::raw_ostream& errors) -> bool {
-  auto [_, value] = AddParsedOptToMap(opts, opt, OptKind::Flag);
+  auto [_, value] = AddParsedOptToMap(opt, OptKind::Flag);
   if (!arg_value || *arg_value == "true") {
     value.flag_value = true;
     return true;
@@ -117,10 +117,10 @@ auto Args::AddParsedOpt(OptMap& opts, const Flag* opt,
   return false;
 }
 
-auto Args::AddParsedOpt(OptMap& opts, const StringOpt* opt,
+auto Args::AddParsedOpt(const StringOpt* opt,
                         std::optional<llvm::StringRef> arg_value,
                         llvm::raw_ostream& errors) -> bool {
-  auto [inserted, value] = AddParsedOptToMap(opts, opt, OptKind::String);
+  auto [inserted, value] = AddParsedOptToMap(opt, OptKind::String);
   if (!arg_value && !opt->default_value) {
     errors << "ERROR: Invalid missing value for the string opt '--" << opt->name
            << "' which does not have a default value\n";
@@ -138,10 +138,10 @@ auto Args::AddParsedOpt(OptMap& opts, const StringOpt* opt,
   return true;
 }
 
-auto Args::AddParsedOpt(OptMap& opts, const IntOpt* opt,
+auto Args::AddParsedOpt(const IntOpt* opt,
                         std::optional<llvm::StringRef> arg_value,
                         llvm::raw_ostream& errors) -> bool {
-  auto [inserted, value] = AddParsedOptToMap(opts, opt, OptKind::Int);
+  auto [inserted, value] = AddParsedOptToMap(opt, OptKind::Int);
   if (!arg_value && !opt->default_value) {
     errors << "ERROR: Invalid missing value for the int opt '--" << opt->name
            << "' which does not have a default value\n";
@@ -168,10 +168,10 @@ auto Args::AddParsedOpt(OptMap& opts, const IntOpt* opt,
   return true;
 }
 
-auto Args::AddParsedOpt(OptMap& opts, const StringListOpt* opt,
+auto Args::AddParsedOpt(const StringListOpt* opt,
                         std::optional<llvm::StringRef> arg_value,
                         llvm::raw_ostream& errors) -> bool {
-  auto [inserted, value] = AddParsedOptToMap(opts, opt, OptKind::StringList);
+  auto [inserted, value] = AddParsedOptToMap(opt, OptKind::StringList);
   if (!arg_value) {
     errors << "ERROR: Must specify a value for the string list opt '--"
            << opt->name << "'\n";
@@ -196,7 +196,7 @@ auto Args::Parser::ParseArgs(llvm::ArrayRef<llvm::StringRef> raw_args) -> bool {
     llvm::StringRef arg = raw_args[i];
     if (arg[0] != '-') {
       if (!has_subcommands || is_subcommand_parsed) {
-        positional_args.push_back(arg);
+        args.positional_args_.push_back(arg);
         continue;
       }
       is_subcommand_parsed = true;
@@ -240,7 +240,7 @@ auto Args::Parser::ParseArgs(llvm::ArrayRef<llvm::StringRef> raw_args) -> bool {
     if (arg.size() == 2) {
       // A parameter of `--` disables all opt processing making the remaining
       // args always positional.
-      positional_args.append(raw_args.begin() + i + 1, raw_args.end());
+      args.positional_args_.append(raw_args.begin() + i + 1, raw_args.end());
       break;
     }
     // Walk past the double dash.

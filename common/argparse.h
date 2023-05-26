@@ -208,29 +208,29 @@ class Args {
   auto GetStringListOptImpl(const OptMap& opts, const StringListOpt* opt) const
       -> llvm::ArrayRef<llvm::StringRef>;
 
-  void AddOptDefault(Args::OptMap& opts, const Flag* opt);
-  void AddOptDefault(Args::OptMap& opts, const StringOpt* opt);
-  void AddOptDefault(Args::OptMap& opts, const IntOpt* opt);
+  void AddOptDefault(const Flag* opt);
+  void AddOptDefault(const StringOpt* opt);
+  void AddOptDefault(const IntOpt* opt);
   template <typename EnumT, ssize_t N>
-  void AddOptDefault(Args::OptMap& opts, const EnumOpt<EnumT, N>* opt);
-  void AddOptDefault(Args::OptMap& opts, const StringListOpt* opt);
+  void AddOptDefault(const EnumOpt<EnumT, N>* opt);
+  void AddOptDefault(const StringListOpt* opt);
 
-  auto AddParsedOptToMap(OptMap& opts, const Opt* opt, OptKind kind)
+  auto AddParsedOptToMap(const Opt* opt, OptKind kind)
       -> std::pair<bool, OptKindAndValue&>;
-  auto AddParsedOpt(OptMap& opts, const Flag* opt,
+  auto AddParsedOpt(const Flag* opt,
                     std::optional<llvm::StringRef> value,
                     llvm::raw_ostream& errors) -> bool;
-  auto AddParsedOpt(OptMap& opts, const StringOpt* opt,
+  auto AddParsedOpt(const StringOpt* opt,
                     std::optional<llvm::StringRef> value,
                     llvm::raw_ostream& errors) -> bool;
-  auto AddParsedOpt(OptMap& opts, const IntOpt* opt,
+  auto AddParsedOpt(const IntOpt* opt,
                     std::optional<llvm::StringRef> value,
                     llvm::raw_ostream& errors) -> bool;
   template <typename EnumT, ssize_t N>
-  auto AddParsedOpt(OptMap& opts, const EnumOpt<EnumT, N>* opt,
+  auto AddParsedOpt(const EnumOpt<EnumT, N>* opt,
                     std::optional<llvm::StringRef> value,
                     llvm::raw_ostream& errors) -> bool;
-  auto AddParsedOpt(OptMap& opts, const StringListOpt* opt,
+  auto AddParsedOpt(const StringListOpt* opt,
                     std::optional<llvm::StringRef> value,
                     llvm::raw_ostream& errors) -> bool;
 
@@ -266,43 +266,10 @@ class SubcommandArgs : public Args {
 
   auto subcommand() const -> SubcommandEnum { return subcommand_; }
 
-  // Test whether a subcommand flag value is true, either by being set
-  // explicitly or having a true default.
-  auto TestSubcommandFlag(const Flag* opt) const -> bool {
-    return TestFlagImpl(subcommand_opts_, opt);
-  }
-
-  // Gets a subcommand string opt's value if available, whether via a default
-  // or explicitly set value. If unavailable, returns an empty optional.
-  auto GetSubcommandStringOpt(const StringOpt* opt) const
-      -> std::optional<llvm::StringRef> {
-    return GetStringOptImpl(subcommand_opts_, opt);
-  }
-
-  // Gets a subcommand int opt's value if available, whether via a default
-  // or explicitly set value. If unavailable, returns an empty optional.
-  auto GetSubcommandIntOpt(const IntOpt* opt) const -> std::optional<ssize_t> {
-    return GetIntOptImpl(subcommand_opts_, opt);
-  }
-
-  // Gets a subcommand enum opt's value if available, whether via a default or
-  // explicitly set value. If unavailable, returns an empty optional.
-  template <typename EnumT, ssize_t N>
-  auto GetSubcommandEnumOpt(const EnumOpt<EnumT, N>* opt) const
-      -> std::optional<EnumT> {
-    return GetEnumOptImpl(subcommand_opts_, opt);
-  }
-
-  auto GetSubcommandStringListOpt(const StringListOpt* opt) const
-      -> llvm::ArrayRef<llvm::StringRef> {
-    return GetStringListOptImpl(subcommand_opts_, opt);
-  }
-
  private:
   friend class Args;
 
   SubcommandEnum subcommand_;
-  OptMap subcommand_opts_;
 };
 
 struct Args::Opt {
@@ -435,8 +402,7 @@ constexpr inline auto Args::MakeSubcommand(llvm::StringRef name,
 }
 
 struct Args::Parser {
-  OptMap* parsing_opts;
-  llvm::SmallVectorImpl<llvm::StringRef>& positional_args;
+  Args& args;
   llvm::raw_ostream& errors;
 
   using OptParserFunctionT =
@@ -444,7 +410,7 @@ struct Args::Parser {
 
   llvm::SmallDenseMap<llvm::StringRef, std::unique_ptr<OptParserFunctionT>, 16>
       opt_parsers{};
-  OptParserFunctionT* opt_char_parsers[128] = {};
+  OptParserFunctionT* opt_char_parsers[128];
 
   llvm::SmallDenseMap<llvm::StringRef, std::function<void()>, 16>
       subcommand_parsers{};
@@ -492,19 +458,16 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
   // found.
   args.parse_result_ = ArgsType::ParseResult::Error;
 
-  Parser parser = {.parsing_opts = &args.opts_,
-                   .positional_args = args.positional_args_,
-                   .errors = errors};
+  Parser parser = {.args = args, .errors = errors};
 
   using OptParserFunctionT = Parser::OptParserFunctionT;
 
-  auto add_opt = [&](const auto* opt) {
+  auto add_opt = [&parser](const auto* opt) {
     auto [it, inserted] = parser.opt_parsers.try_emplace(
         opt->name,
         std::make_unique<OptParserFunctionT>(
-            [opt, &args, &parser](std::optional<llvm::StringRef> arg_value) {
-              return args.AddParsedOpt(*parser.parsing_opts, opt, arg_value,
-                                       parser.errors);
+            [opt, &parser](std::optional<llvm::StringRef> arg_value) {
+              return parser.args.AddParsedOpt(opt, arg_value, parser.errors);
             }));
     CARBON_CHECK(inserted) << "Duplicate opts named: " << opt->name;
     auto *opt_parser = it->second.get();
@@ -524,37 +487,35 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
 
       parser.opt_char_parsers[short_index] = opt_parser;
     }
-    args.AddOptDefault(*parser.parsing_opts, opt);
+    parser.args.AddOptDefault(opt);
   };
-  auto build_opt_parse_map = [&](const auto*... command_flags) {
-    // Process the input opts into a lookup table for parsing, also setting up
-    // any default values.
-    parser.opt_parsers.clear();
+  auto build_opt_parse_map = [&parser, &add_opt](const auto*... command_options) {
+    // Clear the option parsers in preparation for rebuilding them for these
+    // options.
+    parser.opt_parsers.clear(); 
+    for (auto*& char_parser : parser.opt_char_parsers) {
+      char_parser = nullptr;
+    }
 
-    // Fold over the opts, calling `add_flag` for each one.
-    (add_opt(command_flags), ...);
+    // Fold over the opts, calling `add_opt` for each one.
+    (add_opt(command_options), ...);
   };
   std::apply(build_opt_parse_map, command.opts);
 
   // Process the input subcommands into a lookup table. We just handle the
   // subcommand name here to be lazy. We'll process the subcommand itself only
   // if it is needed.
-  auto parsed_subcommand = [&](const auto* subcommand) {
-    if constexpr (HasSubcommands) {
-      args.subcommand_ = subcommand->enumerator;
-      parser.parsing_opts = &args.subcommand_opts_;
-      // Rebuild the opt map for this subcommand.
-      std::apply(build_opt_parse_map, subcommand->opts);
-    }
-  };
   if constexpr (HasSubcommands) {
-    auto add_subcommand = [&](const auto* subcommand) {
-      bool inserted = parser.subcommand_parsers
-                          .insert({subcommand->name,
-                                   [subcommand, &parsed_subcommand] {
-                                     parsed_subcommand(subcommand);
-                                   }})
-                          .second;
+    auto add_subcommand = [&args, &parser, &build_opt_parse_map](const auto* subcommand) {
+      bool inserted =
+          parser.subcommand_parsers
+              .insert({subcommand->name,
+                       [subcommand, &args, &build_opt_parse_map] {
+                         args.subcommand_ = subcommand->enumerator;
+                         // Rebuild the opt map for this subcommand.
+                         std::apply(build_opt_parse_map, subcommand->opts);
+                       }})
+              .second;
       CARBON_CHECK(inserted)
           << "Duplicate subcommands named: " << subcommand->name;
     };
@@ -587,11 +548,11 @@ auto Args::GetEnumOptImpl(const OptMap& opts,
 }
 
 template <typename EnumT, ssize_t N>
-void Args::AddOptDefault(Args::OptMap& opts, const EnumOpt<EnumT, N>* opt) {
+void Args::AddOptDefault(const EnumOpt<EnumT, N>* opt) {
   if (!opt->default_value.has_value()) {
     return;
   }
-  auto [opt_it, inserted] = opts.insert({opt, {.kind = OptKind::String}});
+  auto [opt_it, inserted] = opts_.insert({opt, {.kind = OptKind::Enum}});
   CARBON_CHECK(inserted) << "Defaults must be added to an empty set of opts!";
 
   // Make sure any value we store will round-trip through our type erased
@@ -606,10 +567,10 @@ void Args::AddOptDefault(Args::OptMap& opts, const EnumOpt<EnumT, N>* opt) {
 }
 
 template <typename EnumT, ssize_t N>
-auto Args::AddParsedOpt(OptMap& opts, const EnumOpt<EnumT, N>* opt,
+auto Args::AddParsedOpt(const EnumOpt<EnumT, N>* opt,
                         std::optional<llvm::StringRef> arg_value,
                         llvm::raw_ostream& errors) -> bool {
-  auto [inserted, value] = AddParsedOptToMap(opts, opt, OptKind::Enum);
+  auto [inserted, value] = AddParsedOptToMap(opt, OptKind::Enum);
   if (!arg_value && !opt->default_value) {
     errors << "ERROR: Invalid missing value for the enum opt '--" << opt->name
            << "' which does not have a default value\n";

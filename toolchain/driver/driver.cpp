@@ -25,147 +25,122 @@ namespace Carbon {
 
 namespace {
 
-enum class Subcommand {
-#define CARBON_SUBCOMMAND(Name, ...) Name,
-#include "toolchain/driver/flags.def"
-  Unknown,
+enum class CompilePhase {
+  Tokenize,
+  Parse,
+  Syntax,
+  LLVM,
+  Object,
 };
 
-auto GetSubcommand(llvm::StringRef name) -> Subcommand {
-  return llvm::StringSwitch<Subcommand>(name)
-#define CARBON_SUBCOMMAND(Name, Spelling, ...) .Case(Spelling, Subcommand::Name)
-#include "toolchain/driver/flags.def"
-      .Default(Subcommand::Unknown);
+auto operator<<(llvm::raw_ostream& out, CompilePhase phase)
+    -> llvm::raw_ostream& {
+  switch (phase) {
+    case CompilePhase::Tokenize:
+      out << "tokenize";
+      break;
+    case CompilePhase::Parse:
+      out << "parse";
+      break;
+    case CompilePhase::Syntax:
+      out << "syntax";
+      break;
+    case CompilePhase::LLVM:
+      out << "llvm";
+      break;
+    case CompilePhase::Object:
+      out << "object";
+      break;
+  }
+  return out;
 }
 
 }  // namespace
 
-auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
+constexpr auto VerboseFlag = Args::MakeFlag("verbose", /*short_name*/"v");
+
+constexpr auto CompilePhaseOption = Args::MakeEnumOpt<CompilePhase>(
+    "phase",
+    {
+        {.name = "tokenize", .value = CompilePhase::Tokenize},
+        {.name = "parse", .value = CompilePhase::Parse},
+        {.name = "syntax", .value = CompilePhase::Syntax},
+        {.name = "llvm", .value = CompilePhase::LLVM},
+        {.name = "object", .value = CompilePhase::Object},
+    },
+    /*short_name*/ "", /*default_value=*/CompilePhase::Object);
+
+constexpr auto DumpTokensFlag = Args::MakeFlag("dump-tokens");
+constexpr auto DumpParseTreeFlag = Args::MakeFlag("dump-parse-tree");
+constexpr auto DumpSemanticsIRFlag = Args::MakeFlag("dump-semantics-ir");
+constexpr auto DumpLLVMIRFlag = Args::MakeFlag("dump-llvm-ir");
+
+constexpr auto StreamErrorsFlag = Args::MakeFlag("stream-errors");
+
+constexpr auto PreorderParseTreeFlag = Args::MakeFlag("preorder-parse-tree");
+
+constexpr auto BuiltinSemanticsIRFlag = Args::MakeFlag("builtin-semantics-ir");
+
+auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
+  constexpr static auto DriverCommand = Args::MakeCommand("carbon",
+                                                   {
+                                                       .description = "TODO",
+                                                       .usage = "TODO",
+                                                   },
+                                                   &VerboseFlag);
+
+  constexpr static auto CompileSubcommand = Args::MakeSubcommand(
+      "compile", Driver::Subcommands::Compile, &CompilePhaseOption,
+      &DumpTokensFlag, &DumpParseTreeFlag, &DumpSemanticsIRFlag,
+      &DumpLLVMIRFlag, &StreamErrorsFlag);
+
+  auto parsed_args =
+      Args::Parse(args, error_stream_, DriverCommand, CompileSubcommand);
+  if (!parsed_args) {
+    return false;
+  }
+
+  if (parsed_args.TestFlag(&VerboseFlag)) {
+    vlog_stream_ = &error_stream_;
+    CARBON_VLOG() << "*** Enabled verbose logging ***\n";
+  }
+
+  switch (parsed_args.subcommand()) {
+    case Subcommands::Compile: {
+      CARBON_VLOG() << "*** Running compile subcommand ***\n";
+      return RunCompileSubcommand(parsed_args);
+    }
+  }
+  CARBON_FATAL() << "Unhandled subcommand";
+}
+
+auto Driver::RunCompileSubcommand(SubcommandArgs<Subcommands> args) -> bool {
+  if (args.positional_args().empty()) {
+    error_stream_ << "ERROR: No input file specified.\n";
+    return false;
+  }
+  if (args.positional_args().size() != 1) {
+    error_stream_
+        << "ERROR: Unexpected additional inputs to the 'compile' subcommand:";
+    for (auto arg : args.positional_args()) {
+      error_stream_ << " " << arg;
+    }
+    error_stream_ << "\n";
+    return false;
+  }
+
   StreamDiagnosticConsumer stream_consumer(error_stream_);
   DiagnosticConsumer* consumer = &stream_consumer;
   std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
-  // TODO: Figure out a command-line support library, this is temporary.
-  if (!args.empty() && args[0] == "-v") {
-    args = args.drop_front();
-    // Note this implies streamed output in order to interleave.
-    vlog_stream_ = &error_stream_;
-  } else if (!args.empty() && args[0] == "--print-errors=streamed") {
-    args = args.drop_front();
-  } else {
+  // Enable sorted diagnostics only if we're not using verbose logging and
+  // streamed diagnostics haven't been requested.
+  if (!args.TestFlag(&VerboseFlag) &&
+      !args.TestFlag(&StreamErrorsFlag)) {
     sorting_consumer = std::make_unique<SortingDiagnosticConsumer>(*consumer);
     consumer = sorting_consumer.get();
   }
 
-  if (args.empty()) {
-    error_stream_ << "ERROR: No subcommand specified.\n";
-    return false;
-  }
-
-  llvm::StringRef subcommand_text = args[0];
-  args = args.drop_front();
-  switch (GetSubcommand(subcommand_text)) {
-    case Subcommand::Unknown:
-      error_stream_ << "ERROR: Unknown subcommand '" << subcommand_text
-                    << "'.\n";
-      return false;
-
-#define CARBON_SUBCOMMAND(Name, ...) \
-  case Subcommand::Name:             \
-    return Run##Name##Subcommand(*consumer, args);
-#include "toolchain/driver/flags.def"
-  }
-  llvm_unreachable("All subcommands handled!");
-}
-
-auto Driver::RunHelpSubcommand(DiagnosticConsumer& /*consumer*/,
-                               llvm::ArrayRef<llvm::StringRef> args) -> bool {
-  // TODO: We should support getting detailed help on a subcommand by looking
-  // for it as a positional parameter here.
-  if (!args.empty()) {
-    ReportExtraArgs("help", args);
-    return false;
-  }
-
-  output_stream_ << "List of subcommands:\n\n";
-
-  constexpr llvm::StringLiteral SubcommandsAndHelp[][2] = {
-#define CARBON_SUBCOMMAND(Name, Spelling, HelpText) {Spelling, HelpText},
-#include "toolchain/driver/flags.def"
-  };
-
-  int max_subcommand_width = 0;
-  for (const auto* subcommand_and_help : SubcommandsAndHelp) {
-    max_subcommand_width = std::max(
-        max_subcommand_width, static_cast<int>(subcommand_and_help[0].size()));
-  }
-
-  for (const auto* subcommand_and_help : SubcommandsAndHelp) {
-    llvm::StringRef subcommand_text = subcommand_and_help[0];
-    // TODO: We should wrap this to the number of columns left after the
-    // subcommand on the terminal, and using a hanging indent.
-    llvm::StringRef help_text = subcommand_and_help[1];
-    output_stream_ << "  "
-                   << llvm::left_justify(subcommand_text, max_subcommand_width)
-                   << " - " << help_text << "\n";
-  }
-
-  output_stream_ << "\n";
-  return true;
-}
-
-enum class DumpMode {
-  TokenizedBuffer,
-  ParseTree,
-  SemanticsIR,
-  LLVMIR,
-  Unknown
-};
-
-auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
-                               llvm::ArrayRef<llvm::StringRef> args) -> bool {
-  if (args.empty()) {
-    error_stream_ << "ERROR: No dump mode specified.\n";
-    return false;
-  }
-
-  auto dump_mode = llvm::StringSwitch<DumpMode>(args.front())
-                       .Case("tokens", DumpMode::TokenizedBuffer)
-                       .Case("parse-tree", DumpMode::ParseTree)
-                       .Case("semantics-ir", DumpMode::SemanticsIR)
-                       .Case("llvm-ir", DumpMode::LLVMIR)
-                       .Default(DumpMode::Unknown);
-  if (dump_mode == DumpMode::Unknown) {
-    error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, "
-                     "semantics-ir, or llvm-ir.\n";
-    return false;
-  }
-  args = args.drop_front();
-
-  bool parse_tree_preorder = false;
-  if (dump_mode == DumpMode::ParseTree && !args.empty() &&
-      args.front() == "--preorder") {
-    args = args.drop_front();
-    parse_tree_preorder = true;
-  }
-
-  bool semantics_ir_include_builtins = false;
-  if (dump_mode == DumpMode::SemanticsIR && !args.empty() &&
-      args.front() == "--include_builtins") {
-    args = args.drop_front();
-    semantics_ir_include_builtins = true;
-  }
-
-  if (args.empty()) {
-    error_stream_ << "ERROR: No input file specified.\n";
-    return false;
-  }
-
-  llvm::StringRef input_file_name = args.front();
-  args = args.drop_front();
-  if (!args.empty()) {
-    ReportExtraArgs("dump", args);
-    return false;
-  }
+  llvm::StringRef input_file_name = args.positional_args().front();
 
   CARBON_VLOG() << "*** SourceBuffer::CreateFromFile ***\n";
   auto source = SourceBuffer::CreateFromFile(input_file_name);
@@ -182,45 +157,84 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
 
   bool has_errors = false;
 
+  CompilePhase phase = *args.GetEnumOpt(&CompilePhaseOption);
+  switch (phase) {
+    case CompilePhase::Tokenize:
+      if (args.TestFlag(&DumpParseTreeFlag)) {
+        error_stream_ << "ERROR: Requested dumping the parse tree but compile "
+                         "phase is limited to '"
+                      << phase << "'\n";
+        has_errors = true;
+      }
+      [[clang::fallthrough]];
+    case CompilePhase::Parse:
+      if (args.TestFlag(&DumpSemanticsIRFlag)) {
+        error_stream_ << "ERROR: Requested dumping the semantics IR but "
+                         "compile phase is limited to '"
+                      << phase << "'\n";
+        has_errors = true;
+      }
+      [[clang::fallthrough]];
+    case CompilePhase::Syntax:
+      if (args.TestFlag(&DumpLLVMIRFlag)) {
+        error_stream_ << "ERROR: Requested dumping the LLVM IR but compile "
+                         "phase is limited to '"
+                      << phase << "'\n";
+        has_errors = true;
+      }
+      [[clang::fallthrough]];
+    case CompilePhase::LLVM:
+    case CompilePhase::Object:
+      // Everything can be dumped in these phases.
+      break;
+  }
+
   CARBON_VLOG() << "*** TokenizedBuffer::Lex ***\n";
-  auto tokenized_source = TokenizedBuffer::Lex(*source, consumer);
+  auto tokenized_source = TokenizedBuffer::Lex(*source, *consumer);
   has_errors |= tokenized_source.has_errors();
   CARBON_VLOG() << "*** TokenizedBuffer::Lex done ***\n";
-  if (dump_mode == DumpMode::TokenizedBuffer) {
+  if (args.TestFlag(&DumpTokensFlag)) {
     CARBON_VLOG() << "Finishing output.";
-    consumer.Flush();
+    consumer->Flush();
     output_stream_ << tokenized_source;
-    return !has_errors;
   }
   CARBON_VLOG() << "tokenized_buffer: " << tokenized_source;
-
-  CARBON_VLOG() << "*** ParseTree::Parse ***\n";
-  auto parse_tree = ParseTree::Parse(tokenized_source, consumer, vlog_stream_);
-  has_errors |= parse_tree.has_errors();
-  CARBON_VLOG() << "*** ParseTree::Parse done ***\n";
-  if (dump_mode == DumpMode::ParseTree) {
-    consumer.Flush();
-    parse_tree.Print(output_stream_, parse_tree_preorder);
+  if (args.GetEnumOpt(&CompilePhaseOption) == CompilePhase::Tokenize) {
     return !has_errors;
   }
+
+  CARBON_VLOG() << "*** ParseTree::Parse ***\n";
+  auto parse_tree = ParseTree::Parse(tokenized_source, *consumer, vlog_stream_);
+  has_errors |= parse_tree.has_errors();
+  CARBON_VLOG() << "*** ParseTree::Parse done ***\n";
+  if (args.TestFlag(&DumpParseTreeFlag)) {
+    consumer->Flush();
+    parse_tree.Print(output_stream_, args.TestFlag(&PreorderParseTreeFlag));
+  }
   CARBON_VLOG() << "parse_tree: " << parse_tree;
+  if (args.GetEnumOpt(&CompilePhaseOption) == CompilePhase::Parse) {
+    return !has_errors;
+  }
 
   const SemanticsIR builtin_ir = SemanticsIR::MakeBuiltinIR();
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree ***\n";
   const SemanticsIR semantics_ir = SemanticsIR::MakeFromParseTree(
-      builtin_ir, tokenized_source, parse_tree, consumer, vlog_stream_);
+      builtin_ir, tokenized_source, parse_tree, *consumer, vlog_stream_);
   has_errors |= semantics_ir.has_errors();
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree done ***\n";
-  if (dump_mode == DumpMode::SemanticsIR) {
-    consumer.Flush();
-    semantics_ir.Print(output_stream_, semantics_ir_include_builtins);
-    return !has_errors;
+  if (args.TestFlag(&DumpSemanticsIRFlag)) {
+    consumer->Flush();
+    semantics_ir.Print(output_stream_, args.TestFlag(&BuiltinSemanticsIRFlag));
   }
   CARBON_VLOG() << "semantics_ir: " << semantics_ir;
+  if (args.GetEnumOpt(&CompilePhaseOption) == CompilePhase::Syntax) {
+    return !has_errors;
+  }
 
   // Unlike previous steps, errors block further progress.
   if (has_errors) {
-    CARBON_VLOG() << "Unable to dump llvm-ir due to prior errors.";
+    CARBON_VLOG()
+        << "*** Stopping before lowering to LLVM IR due to syntax errors ***";
     return false;
   }
 
@@ -229,11 +243,10 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   const std::unique_ptr<llvm::Module> module =
       LowerToLLVM(llvm_context, input_file_name, semantics_ir, vlog_stream_);
   CARBON_VLOG() << "*** LowerToLLVM done ***\n";
-  if (dump_mode == DumpMode::LLVMIR) {
-    consumer.Flush();
+  if (args.TestFlag(&DumpLLVMIRFlag)) {
+    consumer->Flush();
     module->print(output_stream_, /*AAW=*/nullptr,
                   /*ShouldPreserveUseListOrder=*/true);
-    return !has_errors;
   }
   if (vlog_stream_) {
     CARBON_VLOG() << "module: ";
@@ -241,19 +254,11 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                   /*ShouldPreserveUseListOrder=*/false,
                   /*IsForDebug=*/true);
   }
-
-  llvm_unreachable("should handle all dump modes");
-}
-
-auto Driver::ReportExtraArgs(llvm::StringRef subcommand_text,
-                             llvm::ArrayRef<llvm::StringRef> args) -> void {
-  error_stream_ << "ERROR: Unexpected additional arguments to the '"
-                << subcommand_text << "' subcommand:";
-  for (auto arg : args) {
-    error_stream_ << " " << arg;
+  if (args.GetEnumOpt(&CompilePhaseOption) == CompilePhase::LLVM) {
+    return !has_errors;
   }
 
-  error_stream_ << "\n";
+  CARBON_FATAL() << "ERROR: Object file emission not yet implemented.";
 }
 
 }  // namespace Carbon

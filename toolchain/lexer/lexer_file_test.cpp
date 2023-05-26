@@ -23,8 +23,8 @@ class LexerFileTest : public FileTestBase {
   auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
       -> bool override {
     Driver driver(stdout, stderr);
-    return driver.RunFullCommand(
-        {"dump", "tokens", path().filename().string()});
+    return driver.RunCommand({"compile", "--phase=tokenize", "--dump-tokens",
+                              path().filename().string()});
   }
 };
 

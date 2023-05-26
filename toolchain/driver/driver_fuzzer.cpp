@@ -70,7 +70,7 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   llvm::raw_string_ostream error_stream(error_text);
   llvm::raw_null_ostream output_stream;
   Driver d(output_stream, error_stream);
-  if (!d.RunFullCommand(args)) {
+  if (!d.RunCommand(args)) {
     error_stream.flush();
     if (error_text.find("ERROR:") == std::string::npos) {
       llvm::errs() << "No error message on a failure!\n";
