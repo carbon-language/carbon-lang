@@ -349,17 +349,19 @@ auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
     -> SemanticsTypeId {
   // Construct the field structure for lookup.
   auto refs = semantics_->GetNodeBlock(refs_id);
-  llvm::SmallVector<std::pair<SemanticsStringId, SemanticsTypeId>> fields;
-  fields.reserve(refs.size());
+  llvm::FoldingSetNodeID canonical_id;
   for (const auto& ref_id : refs) {
     auto ref = semantics_->GetNode(ref_id);
-    fields.push_back({ref.GetAsStructTypeField(), ref.type_id()});
+    canonical_id.AddInteger(ref.GetAsStructTypeField().index);
+    canonical_id.AddInteger(ref.type_id().index);
   }
 
   // If a struct with matching fields was already created, reuse it.
-  auto it = canonical_struct_types_.find(fields);
-  if (it != canonical_struct_types_.end()) {
-    return it->second;
+  void* insert_pos;
+  auto* node =
+      canonical_struct_types_.FindNodeOrInsertPos(canonical_id, insert_pos);
+  if (node != nullptr) {
+    return node->type_id();
   }
 
   // The struct doesn't already exist, so create and store it as canonical.
@@ -367,7 +369,10 @@ auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
       parse_node, SemanticsTypeId::TypeType, refs_id));
   auto type_id = semantics_->AddType(node_id);
   CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
-  CARBON_CHECK(canonical_struct_types_.insert({fields, type_id}).second);
+  canonical_struct_types_nodes_.push_back(
+      std::make_unique<StructTypeNode>(canonical_id, type_id));
+  canonical_struct_types_.InsertNode(canonical_struct_types_nodes_.back().get(),
+                                     insert_pos);
   return type_id;
 }
 

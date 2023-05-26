@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
@@ -171,36 +172,17 @@ class SemanticsContext {
     Compatible,
   };
 
-  // Provides DenseMap support for canonical_struct_types_.
-  struct StructTypeMapInfo {
-    using KeyType =
-        llvm::SmallVector<std::pair<SemanticsStringId, SemanticsTypeId>>;
-    using IntMapInfo = llvm::DenseMapInfo<int32_t>;
+  // A FoldingSet node for a struct type.
+  class StructTypeNode : public llvm::FastFoldingSetNode {
+   public:
+    explicit StructTypeNode(const llvm::FoldingSetNodeID& node_id,
+                            SemanticsTypeId type_id)
+        : llvm::FastFoldingSetNode(node_id), type_id_(type_id) {}
 
-    static inline auto getEmptyKey() -> KeyType {
-      return {{SemanticsStringId(IntMapInfo::getEmptyKey()),
-               SemanticsTypeId(IntMapInfo::getEmptyKey())}};
-    }
+    auto type_id() -> SemanticsTypeId { return type_id_; }
 
-    static inline auto getTombstoneKey() -> KeyType {
-      return {{SemanticsStringId(IntMapInfo::getTombstoneKey()),
-               SemanticsTypeId(IntMapInfo::getTombstoneKey())}};
-    }
-
-    static auto getHashValue(const KeyType& val) -> unsigned {
-      unsigned hash_value = 0;
-      for (const auto& [string_id, type_id] : val) {
-        hash_value = llvm::detail::combineHashValue(
-            hash_value, IntMapInfo::getHashValue(string_id.index));
-        hash_value = llvm::detail::combineHashValue(
-            hash_value, IntMapInfo::getHashValue(type_id.index));
-      }
-      return hash_value;
-    }
-
-    static auto isEqual(const KeyType& lhs, const KeyType& rhs) -> bool {
-      return lhs == rhs;
-    }
+   private:
+    SemanticsTypeId type_id_;
   };
 
   // An entry in scope_stack_.
@@ -284,10 +266,12 @@ class SemanticsContext {
 
   // Tracks struct type literals which have been defined, so that they aren't
   // repeatedly redefined.
-  llvm::DenseMap<
-      llvm::SmallVector<std::pair<SemanticsStringId, SemanticsTypeId>>,
-      SemanticsTypeId, StructTypeMapInfo>
-      canonical_struct_types_;
+  llvm::FoldingSet<StructTypeNode> canonical_struct_types_;
+
+  // Storage for the nodes in canonical_struct_types_. This stores in pointers
+  // so that canonical_struct_types_ can have stable pointers.
+  llvm::SmallVector<std::unique_ptr<StructTypeNode>>
+      canonical_struct_types_nodes_;
 };
 
 // Parse node handlers. Returns false for unrecoverable errors.
