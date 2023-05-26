@@ -604,9 +604,8 @@ auto NameResolver::ResolveNamesImpl(Statement& statement,
           ResolveNames(if_stmt.condition(), enclosing_scope));
       CARBON_RETURN_IF_ERROR(
           ResolveNames(if_stmt.then_block(), enclosing_scope));
-      if (if_stmt.else_block().has_value()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveNames(**if_stmt.else_block(), enclosing_scope));
+      if (auto else_block = if_stmt.else_block(); else_block.has_value()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**else_block, enclosing_scope));
       }
       break;
     }
@@ -728,8 +727,8 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
                               ResolveQualifier(iface.name(), enclosing_scope));
       StaticScope iface_scope(scope);
       scope->MarkDeclared(iface.name().inner_name());
-      if (iface.params().has_value()) {
-        CARBON_RETURN_IF_ERROR(ResolveNames(**iface.params(), iface_scope));
+      if (auto params = iface.params(); params.has_value()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**params, iface_scope));
       }
       scope->MarkUsable(iface.name().inner_name());
       // Don't resolve names in the type of the self binding. The
@@ -789,14 +788,15 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
       }
       CARBON_RETURN_IF_ERROR(
           ResolveNames(function.param_pattern(), function_scope));
-      if (function.return_term().type_expression().has_value()) {
-        CARBON_RETURN_IF_ERROR(ResolveNames(
-            **function.return_term().type_expression(), function_scope));
+      if (auto return_type_expr = function.return_term().type_expression();
+          return_type_expr.has_value()) {
+        CARBON_RETURN_IF_ERROR(
+            ResolveNames(**return_type_expr, function_scope));
       }
       scope->MarkUsable(name.inner_name());
-      if (function.body().has_value() &&
-          bodies != ResolveFunctionBodies::Skip) {
-        CARBON_RETURN_IF_ERROR(ResolveNames(**function.body(), function_scope));
+      if (auto body = function.body();
+          body.has_value() && bodies != ResolveFunctionBodies::Skip) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**body, function_scope));
       }
       break;
     }
@@ -807,13 +807,12 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
           ResolveQualifier(class_decl.name(), enclosing_scope));
       StaticScope class_scope(scope);
       scope->MarkDeclared(class_decl.name().inner_name());
-      if (class_decl.base_expr().has_value()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveNames(**class_decl.base_expr(), class_scope));
+      if (auto base_expr = class_decl.base_expr(); base_expr.has_value()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**base_expr, class_scope));
       }
-      if (class_decl.type_params().has_value()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveNames(**class_decl.type_params(), class_scope));
+      if (auto type_params = class_decl.type_params();
+          type_params.has_value()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**type_params, class_scope));
       }
       scope->MarkUsable(class_decl.name().inner_name());
       CARBON_RETURN_IF_ERROR(AddExposedNames(*class_decl.self(), class_scope));
@@ -828,9 +827,8 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
           ResolveQualifier(mixin_decl.name(), enclosing_scope));
       StaticScope mixin_scope(scope);
       scope->MarkDeclared(mixin_decl.name().inner_name());
-      if (mixin_decl.params().has_value()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveNames(**mixin_decl.params(), mixin_scope));
+      if (auto params = mixin_decl.params(); params.has_value()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**params, mixin_scope));
       }
       scope->MarkUsable(mixin_decl.name().inner_name());
       CARBON_RETURN_IF_ERROR(mixin_scope.Add("Self", mixin_decl.self()));
@@ -849,9 +847,8 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
                               ResolveQualifier(choice.name(), enclosing_scope));
       StaticScope choice_scope(scope);
       scope->MarkDeclared(choice.name().inner_name());
-      if (choice.type_params().has_value()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveNames(**choice.type_params(), choice_scope));
+      if (auto type_params = choice.type_params(); type_params.has_value()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**type_params, choice_scope));
       }
       // Alternative names are never used unqualified, so we don't need to
       // add the alternatives to a scope, or introduce a new scope; we only
@@ -911,10 +908,11 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
       CARBON_ASSIGN_OR_RETURN(auto target,
                               ResolveNames(alias.target(), *scope));
       if (target && isa<Declaration>(target->base())) {
-        if (alias.resolved_declaration()) {
+        if (auto resolved_declaration = alias.resolved_declaration();
+            resolved_declaration.has_value()) {
           // Skip if the declaration is already resolved in a previous name
           // resolution phase.
-          CARBON_CHECK(*alias.resolved_declaration() == &target->base());
+          CARBON_CHECK(*resolved_declaration == &target->base());
         } else {
           alias.set_resolved_declaration(&cast<Declaration>(target->base()));
         }
