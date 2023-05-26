@@ -271,14 +271,8 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
   }
 
   if (as_type_id == SemanticsNodeId::BuiltinTypeType) {
-    // When converting `()` to a type, the result is `() as Type`.
-    // TODO: This might switch to be closer to the struct conversion below.
-    if (value_id == SemanticsNodeId::BuiltinEmptyTuple) {
-      if (output_value_id != nullptr) {
-        *output_value_id = SemanticsNodeId::BuiltinEmptyTupleType;
-      }
-      return ImplicitAsKind::Compatible;
-    }
+    // TODO: When converting `()` to a type, the result is `() as Type`.
+    // Right now there is no tuple value support.
 
     // When converting `{}` to a type, the result is `{} as Type`.
     if (value.kind() == SemanticsNodeKind::StructValue &&

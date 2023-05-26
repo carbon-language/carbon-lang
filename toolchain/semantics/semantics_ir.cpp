@@ -17,9 +17,15 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
   SemanticsIR semantics(/*builtin_ir=*/nullptr);
   semantics.nodes_.reserve(SemanticsBuiltinKind::ValidCount);
 
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type, ...)     \
-  semantics.nodes_.push_back(SemanticsNode::Builtin::Make( \
-      SemanticsBuiltinKind::Name, SemanticsNodeId::Builtin##Type));
+  // InvalidType uses a self-referential type so that it's not accidentally
+  // treated as a normal type. Every other builtin is a type, including the
+  // self-referential TypeType.
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name, ...)                      \
+  semantics.nodes_.push_back(SemanticsNode::Builtin::Make(            \
+      SemanticsBuiltinKind::Name,                                     \
+      SemanticsBuiltinKind::Name == SemanticsBuiltinKind::InvalidType \
+          ? SemanticsNodeId::BuiltinInvalidType                       \
+          : SemanticsNodeId::BuiltinTypeType));
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
   CARBON_CHECK(semantics.node_blocks_.size() == 1)

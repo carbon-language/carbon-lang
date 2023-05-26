@@ -22,7 +22,6 @@
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeFloatingPointType, type: nodeTypeType},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeStringType, type: nodeTypeType},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeEmptyTupleType, type: nodeTypeType},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeEmptyTuple, type: nodeEmptyTupleType},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
