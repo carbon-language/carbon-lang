@@ -17,7 +17,7 @@ impl i32 as Interface {
 
 fn TestConstraint() {
   var n: i32 = 1;
-  if ((n.(Interface.G)() == 2)) {
+  if (n.(Interface.G)() == 2) {
     Print("Constraint OK", );
   }
 }
