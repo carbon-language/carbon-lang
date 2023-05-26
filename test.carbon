@@ -15,14 +15,10 @@ impl i32 as Interface {
   }
 }
 
-fn TestConstraint() {
+fn Main() -> i32 {
   var n: i32 = 1;
   if (n.(Interface.G)() == 2) {
     Print("Constraint OK", );
   }
-}
-
-fn Main() -> i32 {
-  TestConstraint();
   return 3;
 }
