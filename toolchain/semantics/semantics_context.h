@@ -97,6 +97,16 @@ class SemanticsContext {
   // TODO: This should eventually return a type ID.
   auto CanonicalizeType(SemanticsNodeId node_id) -> SemanticsTypeId;
 
+  // Handles canonicalization of struct types. This may create a new struct type
+  // when it has a new structure, or reference an existing struct type when it
+  // duplicates a prior type.
+  //
+  // Individual struct type fields aren't canonicalized because they may have
+  // name conflicts or other diagnostics during creation, which can use the
+  // parse node.
+  auto CanonicalizeStructType(ParseTree::Node parse_node,
+                              SemanticsNodeBlockId refs_id) -> SemanticsTypeId;
+
   // Converts an expression for use as a type.
   // TODO: This should eventually return a type ID.
   auto ExpressionAsType(ParseTree::Node parse_node, SemanticsNodeId value_id)
@@ -161,6 +171,38 @@ class SemanticsContext {
     Compatible,
   };
 
+  // Provides DenseMap support for canonical_struct_types_.
+  struct StructTypeMapInfo {
+    using KeyType =
+        llvm::SmallVector<std::pair<SemanticsStringId, SemanticsTypeId>>;
+    using IntMapInfo = llvm::DenseMapInfo<int32_t>;
+
+    static inline auto getEmptyKey() -> KeyType {
+      return {{SemanticsStringId(IntMapInfo::getEmptyKey()),
+               SemanticsTypeId(IntMapInfo::getEmptyKey())}};
+    }
+
+    static inline auto getTombstoneKey() -> KeyType {
+      return {{SemanticsStringId(IntMapInfo::getTombstoneKey()),
+               SemanticsTypeId(IntMapInfo::getTombstoneKey())}};
+    }
+
+    static auto getHashValue(const KeyType& val) -> unsigned {
+      unsigned hash_value = 0;
+      for (const auto& [string_id, type_id] : val) {
+        hash_value = llvm::detail::combineHashValue(
+            hash_value, IntMapInfo::getHashValue(string_id.index));
+        hash_value = llvm::detail::combineHashValue(
+            hash_value, IntMapInfo::getHashValue(type_id.index));
+      }
+      return hash_value;
+    }
+
+    static auto isEqual(const KeyType& lhs, const KeyType& rhs) -> bool {
+      return lhs == rhs;
+    }
+  };
+
   // An entry in scope_stack_.
   struct ScopeStackEntry {
     // Names which are registered with name_lookup_, and will need to be
@@ -184,11 +226,6 @@ class SemanticsContext {
   // cast.
   auto ImplicitAsImpl(SemanticsNodeId value_id, SemanticsTypeId as_type_id,
                       SemanticsNodeId* output_value_id) -> ImplicitAsKind;
-
-  // Returns true if the ImplicitAs can use struct conversion.
-  // TODO: This currently only supports struct types that precisely match.
-  auto CanImplicitAsStruct(SemanticsNode value_type, SemanticsNode as_type)
-      -> bool;
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
 
@@ -244,6 +281,13 @@ class SemanticsContext {
   // Tracks types which have been used, so that they aren't repeatedly added to
   // SemanticsIR.
   llvm::DenseMap<SemanticsNodeId, SemanticsTypeId> canonical_types_;
+
+  // Tracks struct type literals which have been defined, so that they aren't
+  // repeatedly redefined.
+  llvm::DenseMap<
+      llvm::SmallVector<std::pair<SemanticsStringId, SemanticsTypeId>>,
+      SemanticsTypeId, StructTypeMapInfo>
+      canonical_struct_types_;
 };
 
 // Parse node handlers. Returns false for unrecoverable errors.

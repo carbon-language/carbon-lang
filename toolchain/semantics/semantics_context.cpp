@@ -282,48 +282,12 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     }
   }
 
-  if (value_type_id != SemanticsTypeId::TypeType &&
-      as_type_id != SemanticsTypeId::TypeType) {
-    auto value_type = semantics_->GetNode(semantics_->GetType(value_type_id));
-    auto as_type = semantics_->GetNode(semantics_->GetType(as_type_id));
-    if (CanImplicitAsStruct(value_type, as_type)) {
-      // Under the current implementation, struct types are only allowed to
-      // ImplicitAs when they're equivalent. What's really missing is type
-      // consolidation such that this would fall under the above `value_type_id
-      // == as_type_id` case. In the future, this will need to handle actual
-      // conversions.
-      return ImplicitAsKind::Identical;
-    }
-  }
+  // TODO: Handle ImplicitAs for compatible structs and tuples.
 
   if (output_value_id != nullptr) {
     *output_value_id = SemanticsNodeId::BuiltinInvalidType;
   }
   return ImplicitAsKind::Incompatible;
-}
-
-auto SemanticsContext::CanImplicitAsStruct(SemanticsNode value_type,
-                                           SemanticsNode as_type) -> bool {
-  if (value_type.kind() != SemanticsNodeKind::StructType ||
-      as_type.kind() != SemanticsNodeKind::StructType) {
-    return false;
-  }
-  auto value_type_refs = semantics_->GetNodeBlock(value_type.GetAsStructType());
-  auto as_type_refs = semantics_->GetNodeBlock(as_type.GetAsStructType());
-  if (value_type_refs.size() != as_type_refs.size()) {
-    return false;
-  }
-
-  for (int i = 0; i < static_cast<int>(value_type_refs.size()); ++i) {
-    auto value_type_field = semantics_->GetNode(value_type_refs[i]);
-    auto as_type_field = semantics_->GetNode(as_type_refs[i]);
-    if (value_type_field.type_id() != as_type_field.type_id() ||
-        value_type_field.GetAsStructTypeField() !=
-            as_type_field.GetAsStructTypeField()) {
-      return false;
-    }
-  }
-  return true;
 }
 
 auto SemanticsContext::ParamOrArgStart() -> void {
@@ -377,6 +341,33 @@ auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
 
   auto type_id = semantics_->AddType(node_id);
   CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
+  return type_id;
+}
+
+auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
+                                              SemanticsNodeBlockId refs_id)
+    -> SemanticsTypeId {
+  // Construct the field structure for lookup.
+  auto refs = semantics_->GetNodeBlock(refs_id);
+  llvm::SmallVector<std::pair<SemanticsStringId, SemanticsTypeId>> fields;
+  fields.reserve(refs.size());
+  for (const auto& ref_id : refs) {
+    auto ref = semantics_->GetNode(ref_id);
+    fields.push_back({ref.GetAsStructTypeField(), ref.type_id()});
+  }
+
+  // If a struct with matching fields was already created, reuse it.
+  auto it = canonical_struct_types_.find(fields);
+  if (it != canonical_struct_types_.end()) {
+    return it->second;
+  }
+
+  // The struct doesn't already exist, so create and store it as canonical.
+  auto node_id = AddNode(SemanticsNode::StructType::Make(
+      parse_node, SemanticsTypeId::TypeType, refs_id));
+  auto type_id = semantics_->AddType(node_id);
+  CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
+  CARBON_CHECK(canonical_struct_types_.insert({fields, type_id}).second);
   return type_id;
 }
 

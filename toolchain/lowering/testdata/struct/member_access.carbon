@@ -7,15 +7,14 @@
 // CHECK:STDOUT: source_filename = "member_access.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: %StructLiteralType = type { double, i32 }
-// CHECK:STDOUT: %StructLiteralType.0 = type { double, i32 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %var = alloca %StructLiteralType, align 8
-// CHECK:STDOUT:   %StructLiteralValue = alloca %StructLiteralType.0, align 8
-// CHECK:STDOUT:   %a = getelementptr inbounds %StructLiteralType.0, ptr %StructLiteralValue, i32 0, i32 0
+// CHECK:STDOUT:   %StructLiteralValue = alloca %StructLiteralType, align 8
+// CHECK:STDOUT:   %a = getelementptr inbounds %StructLiteralType, ptr %StructLiteralValue, i32 0, i32 0
 // CHECK:STDOUT:   store double 0.000000e+00, ptr %a, align 8
-// CHECK:STDOUT:   %b = getelementptr inbounds %StructLiteralType.0, ptr %StructLiteralValue, i32 0, i32 1
+// CHECK:STDOUT:   %b = getelementptr inbounds %StructLiteralType, ptr %StructLiteralValue, i32 0, i32 1
 // CHECK:STDOUT:   store i32 1, ptr %b, align 4
 // CHECK:STDOUT:   store ptr %StructLiteralValue, ptr %var, align 8
 // CHECK:STDOUT:   %var1 = alloca i32, align 4
