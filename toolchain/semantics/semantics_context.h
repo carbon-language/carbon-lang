@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
@@ -97,6 +98,16 @@ class SemanticsContext {
   // TODO: This should eventually return a type ID.
   auto CanonicalizeType(SemanticsNodeId node_id) -> SemanticsTypeId;
 
+  // Handles canonicalization of struct types. This may create a new struct type
+  // when it has a new structure, or reference an existing struct type when it
+  // duplicates a prior type.
+  //
+  // Individual struct type fields aren't canonicalized because they may have
+  // name conflicts or other diagnostics during creation, which can use the
+  // parse node.
+  auto CanonicalizeStructType(ParseTree::Node parse_node,
+                              SemanticsNodeBlockId refs_id) -> SemanticsTypeId;
+
   // Converts an expression for use as a type.
   // TODO: This should eventually return a type ID.
   auto ExpressionAsType(ParseTree::Node parse_node, SemanticsNodeId value_id)
@@ -161,6 +172,19 @@ class SemanticsContext {
     Compatible,
   };
 
+  // A FoldingSet node for a struct type.
+  class StructTypeNode : public llvm::FastFoldingSetNode {
+   public:
+    explicit StructTypeNode(const llvm::FoldingSetNodeID& node_id,
+                            SemanticsTypeId type_id)
+        : llvm::FastFoldingSetNode(node_id), type_id_(type_id) {}
+
+    auto type_id() -> SemanticsTypeId { return type_id_; }
+
+   private:
+    SemanticsTypeId type_id_;
+  };
+
   // An entry in scope_stack_.
   struct ScopeStackEntry {
     // Names which are registered with name_lookup_, and will need to be
@@ -184,11 +208,6 @@ class SemanticsContext {
   // cast.
   auto ImplicitAsImpl(SemanticsNodeId value_id, SemanticsTypeId as_type_id,
                       SemanticsNodeId* output_value_id) -> ImplicitAsKind;
-
-  // Returns true if the ImplicitAs can use struct conversion.
-  // TODO: This currently only supports struct types that precisely match.
-  auto CanImplicitAsStruct(SemanticsNode value_type, SemanticsNode as_type)
-      -> bool;
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
 
@@ -244,6 +263,15 @@ class SemanticsContext {
   // Tracks types which have been used, so that they aren't repeatedly added to
   // SemanticsIR.
   llvm::DenseMap<SemanticsNodeId, SemanticsTypeId> canonical_types_;
+
+  // Tracks struct type literals which have been defined, so that they aren't
+  // repeatedly redefined.
+  llvm::FoldingSet<StructTypeNode> canonical_struct_types_;
+
+  // Storage for the nodes in canonical_struct_types_. This stores in pointers
+  // so that canonical_struct_types_ can have stable pointers.
+  llvm::SmallVector<std::unique_ptr<StructTypeNode>>
+      canonical_struct_types_nodes_;
 };
 
 // Parse node handlers. Returns false for unrecoverable errors.
