@@ -15,6 +15,11 @@
 // CHECK:STDOUT:   x,
 // CHECK:STDOUT:   a,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeEmptyStructType,
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT:   node+5,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: VarStorage, type: nodeEmptyStructType},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeEmptyStructType},

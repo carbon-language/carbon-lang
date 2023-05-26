@@ -17,6 +17,12 @@
 // CHECK:STDOUT:   y,
 // CHECK:STDOUT:   b,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeFloatingPointType,
+// CHECK:STDOUT:   node+1,
+// CHECK:STDOUT:   node+7,
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeFloatingPointType},
 // CHECK:STDOUT:   {kind: StructType, arg0: block2, type: nodeTypeType},

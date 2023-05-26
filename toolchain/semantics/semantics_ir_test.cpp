@@ -54,6 +54,7 @@ TEST(SemanticsIRTest, YAML) {
           Pair("integer_literals", Yaml::Sequence(ElementsAre("0"))),
           Pair("real_literals", Yaml::Sequence(IsEmpty())),
           Pair("strings", Yaml::Sequence(ElementsAre("x"))),
+          Pair("types", Yaml::Sequence(ElementsAre(node_builtin))),
           Pair(
               "nodes",
               Yaml::Sequence(AllOf(

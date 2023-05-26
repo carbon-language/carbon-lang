@@ -28,6 +28,9 @@
 // CHECK:STDOUT:   Run2,
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+0, arg1: block0},

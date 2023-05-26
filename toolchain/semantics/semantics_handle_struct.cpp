@@ -28,8 +28,7 @@ auto SemanticsHandleStructFieldDesignator(SemanticsContext& context,
 auto SemanticsHandleStructFieldType(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
   auto [type_node, type_id] = context.node_stack().PopForParseNodeAndNodeId();
-  SemanticsNodeId cast_type_id = context.ImplicitAsRequired(
-      type_node, type_id, SemanticsNodeId::BuiltinTypeType);
+  SemanticsNodeId cast_type_id = context.ExpressionAsType(type_node, type_id);
 
   auto [name_node, name_id] = context.node_stack().PopForParseNodeAndNameId(
       ParseNodeKind::DesignatedName);
@@ -82,9 +81,14 @@ auto SemanticsHandleStructLiteral(SemanticsContext& context,
   }
 
   // Construct a type for the literal.
+  // TODO: This should try to canonicalize the struct form before adding the
+  // node.
   auto refs = context.semantics().GetNodeBlock(refs_id);
-  auto type_id = context.AddNode(
-      SemanticsNode::StructType::Make(parse_node, type_block_id));
+  auto type_id =
+      context.CanonicalizeType(context.AddNode(SemanticsNode::StructType::Make(
+          parse_node,
+          context.CanonicalizeType(SemanticsNodeId::BuiltinTypeType),
+          type_block_id)));
 
   auto value_id = context.AddNode(
       SemanticsNode::StructValue::Make(parse_node, type_id, refs_id));
@@ -118,8 +122,9 @@ auto SemanticsHandleStructTypeLiteral(SemanticsContext& context,
   CARBON_CHECK(refs_id != SemanticsNodeBlockId::Empty)
       << "{} is handled by StructLiteral.";
 
-  auto type_id =
-      context.AddNode(SemanticsNode::StructType::Make(parse_node, refs_id));
+  auto type_id = context.AddNode(SemanticsNode::StructType::Make(
+      parse_node, context.CanonicalizeType(SemanticsNodeId::BuiltinTypeType),
+      refs_id));
   context.node_stack().Push(parse_node, type_id);
   return true;
 }

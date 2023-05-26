@@ -33,7 +33,12 @@ SemanticsContext::SemanticsContext(const TokenizedBuffer& tokens,
       params_or_args_stack_("params_or_args_stack_", semantics.node_blocks(),
                             vlog_stream),
       args_type_info_stack_("args_type_info_stack_", semantics.node_blocks(),
-                            vlog_stream) {}
+                            vlog_stream) {
+  // Inserts the "Invalid" and "Type" types as "used types" so that
+  // canonicalization can skip them. We don't emit either for lowering.
+  canonical_types_.insert(SemanticsNodeId::BuiltinInvalidType);
+  canonical_types_.insert(SemanticsNodeId::BuiltinTypeType);
+}
 
 auto SemanticsContext::TODO(ParseTree::Node parse_node, std::string label)
     -> bool {
@@ -54,6 +59,10 @@ auto SemanticsContext::VerifyOnFinish() -> void {
 }
 
 auto SemanticsContext::AddNode(SemanticsNode node) -> SemanticsNodeId {
+  CARBON_CHECK(!node.type_id().is_valid() ||
+               node.type_id() == SemanticsNodeId::BuiltinInvalidType ||
+               canonical_types_.contains(node.type_id()))
+      << "Added node without canonicalizing its type: " << node;
   auto block = node_block_stack_.PeekForAdd();
   CARBON_VLOG() << "AddNode " << block << ": " << node << "\n";
   return semantics_->AddNode(block, node);
@@ -357,6 +366,14 @@ auto SemanticsContext::ParamOrArgSave(bool for_args) -> void {
   auto& params_or_args =
       semantics_->GetNodeBlock(params_or_args_stack_.PeekForAdd());
   params_or_args.push_back(param_or_arg_id);
+}
+
+auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
+    -> SemanticsNodeId {
+  if (canonical_types_.insert(node_id).second) {
+    semantics_->AddType(node_id);
+  }
+  return node_id;
 }
 
 auto SemanticsContext::PrintForStackDump(llvm::raw_ostream& output) const

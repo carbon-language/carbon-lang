@@ -109,6 +109,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
   PrintList(out, "integer_literals", integer_literals_);
   PrintList(out, "real_literals", real_literals_);
   PrintList(out, "strings", strings_);
+  PrintList(out, "types", types_);
 
   out << "nodes: [\n";
   for (int i = include_builtins ? 0 : SemanticsBuiltinKind::ValidCount;
