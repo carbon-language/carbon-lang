@@ -6,6 +6,7 @@
 #define CARBON_COMMON_ARGPARSE_H_
 
 #include <__utility/integer_sequence.h>
+
 #include <array>
 #include <forward_list>
 #include <string>
@@ -17,11 +18,11 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerUnion.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringSwitch.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLForwardCompat.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSwitch.h"
 
 namespace Carbon {
 
@@ -142,7 +143,7 @@ class Args {
 
   template <auto EnumeratorV, const auto&... Options>
   struct Subcommand;
-  
+
   template <const auto& CommandT, const auto&... Subcommands>
   static auto Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
                     llvm::raw_ostream& errors);
@@ -204,9 +205,8 @@ class Args {
   void SetOptionDefaultImpl(const IntOpt& option,
                             std::optional<ssize_t>& value);
   template <const auto& EnumOptValues>
-  void SetOptionDefaultImpl(
-      const EnumOpt<EnumOptValues>& option,
-      std::optional<EnumOptEnumT<EnumOptValues>>& value);
+  void SetOptionDefaultImpl(const EnumOpt<EnumOptValues>& option,
+                            std::optional<EnumOptEnumT<EnumOptValues>>& value);
   void SetOptionDefaultImpl(const StringListOpt& option,
                             llvm::SmallVectorImpl<llvm::StringRef>& value);
 
@@ -216,14 +216,15 @@ class Args {
                        llvm::raw_ostream& errors,
                        std::optional<llvm::StringRef>& value) -> bool;
   auto ParseOptionImpl(const IntOpt& opt, std::optional<llvm::StringRef> arg,
-                       llvm::raw_ostream& errors,
-                       std::optional<ssize_t>& value) -> bool;
+                       llvm::raw_ostream& errors, std::optional<ssize_t>& value)
+      -> bool;
   template <const auto& EnumOptValues, const EnumOpt<EnumOptValues>& Option>
   auto ParseOptionImpl(std::optional<llvm::StringRef> arg_value,
                        llvm::raw_ostream& errors,
                        std::optional<EnumOptEnumT<EnumOptValues>>& value)
       -> bool;
-  auto ParseOptionImpl(const StringListOpt& opt, std::optional<llvm::StringRef> arg,
+  auto ParseOptionImpl(const StringListOpt& opt,
+                       std::optional<llvm::StringRef> arg,
                        llvm::raw_ostream& errors,
                        llvm::SmallVectorImpl<llvm::StringRef>& value) -> bool;
 
@@ -291,7 +292,8 @@ struct OptionValue<Args::StringListOpt> {
   llvm::SmallVector<llvm::StringRef, 4> value = {};
 };
 
-template <typename LHSOptionT, typename RHSOptionT, const LHSOptionT& LHSOption, const RHSOptionT& RHSOption>
+template <typename LHSOptionT, typename RHSOptionT, const LHSOptionT& LHSOption,
+          const RHSOptionT& RHSOption>
 struct IsSameOptionImpl {
   constexpr static bool Value = false;
 };
@@ -320,7 +322,8 @@ constexpr inline auto FindIndexForOption(std::index_sequence<Is...> /*indices*/)
           ...);
 }
 
-template <const auto& SubcommandV> struct SubcommandHolderT {
+template <const auto& SubcommandV>
+struct SubcommandHolderT {
   constexpr static auto& Subcommand = SubcommandV;
 };
 
@@ -459,8 +462,7 @@ class ArgsImpl : public Args, public Detail::SubcommandImpl<SubcommandEnumT> {
   }
 
   template <typename OptionHoldersT>
-  auto ParseShortOptions(unsigned char c,
-                         std::optional<llvm::StringRef> value,
+  auto ParseShortOptions(unsigned char c, std::optional<llvm::StringRef> value,
                          llvm::raw_ostream& errors, OptionHoldersT options)
       -> bool {
     auto parse_short_option_impl = [&](auto holder) {
@@ -509,10 +511,12 @@ struct HolderT {
   constexpr static auto& Value = ValueV;
 };
 
-template <typename SubcommandEnumT, typename T> struct ArgsImplFromHolderTuple;
+template <typename SubcommandEnumT, typename T>
+struct ArgsImplFromHolderTuple;
 
 template <typename SubcommandEnumT, const auto&... Options>
-struct ArgsImplFromHolderTuple<SubcommandEnumT, std::tuple<ValueHolderT<Options>...>> {
+struct ArgsImplFromHolderTuple<SubcommandEnumT,
+                               std::tuple<ValueHolderT<Options>...>> {
   using ArgsImplT = ArgsImpl<SubcommandEnumT, Options...>;
 };
 
@@ -609,8 +613,8 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
     while (!raw_args.empty()) {
       llvm::StringRef arg = raw_args.front();
       raw_args = raw_args.drop_front();
-      if (!args.ParseOneArg(arg, raw_args, errors, parse_subcommand, parse_option,
-                            parse_short_option)) {
+      if (!args.ParseOneArg(arg, raw_args, errors, parse_subcommand,
+                            parse_option, parse_short_option)) {
         return false;
       }
     }
@@ -622,7 +626,7 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
     return args.ParseOptions(name, value, errors, ThisCommand.options);
   };
   auto parse_short_options = [&](unsigned char c,
-                                std::optional<llvm::StringRef> value) -> bool {
+                                 std::optional<llvm::StringRef> value) -> bool {
     return args.ParseShortOptions(c, value, errors, ThisCommand.options);
   };
 
@@ -681,8 +685,9 @@ auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
 }
 
 template <const auto& EnumOptValues>
-void Args::SetOptionDefaultImpl(const EnumOpt<EnumOptValues>& option,
-                                std::optional<EnumOptEnumT<EnumOptValues>>& value) {
+void Args::SetOptionDefaultImpl(
+    const EnumOpt<EnumOptValues>& option,
+    std::optional<EnumOptEnumT<EnumOptValues>>& value) {
   if (!option.default_value) {
     return;
   }

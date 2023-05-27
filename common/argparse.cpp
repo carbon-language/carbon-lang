@@ -14,18 +14,21 @@ void Args::SetOptionDefaultImpl(const Flag& flag, bool& value) {
 }
 
 template <typename OptionT, typename ValueT>
-auto SetOptionDefaultImplGeneric(const OptionT& option, std::optional<ValueT>& value) {
+auto SetOptionDefaultImplGeneric(const OptionT& option,
+                                 std::optional<ValueT>& value) {
   if (!option.default_value) {
     return;
   }
   value = *option.default_value;
 }
 
-void Args::SetOptionDefaultImpl(const StringOpt& option, std::optional<llvm::StringRef>& value) {
+void Args::SetOptionDefaultImpl(const StringOpt& option,
+                                std::optional<llvm::StringRef>& value) {
   SetOptionDefaultImplGeneric(option, value);
 }
 
-void Args::SetOptionDefaultImpl(const IntOpt& option, std::optional<ssize_t>& value) {
+void Args::SetOptionDefaultImpl(const IntOpt& option,
+                                std::optional<ssize_t>& value) {
   SetOptionDefaultImplGeneric(option, value);
 }
 
@@ -79,8 +82,8 @@ auto Args::ParseOptionImpl(const IntOpt& opt,
     // Note that LLVM's function for parsing as an integer confusingly returns
     // true *on an error* in parsing.
     if (arg_value->getAsInteger(/*Radix=*/0, value_int)) {
-      errors << "ERROR: Unable to parse integer option '--" << opt.name << "' value '"
-             << *arg_value << "' as an integer\n";
+      errors << "ERROR: Unable to parse integer option '--" << opt.name
+             << "' value '" << *arg_value << "' as an integer\n";
       return false;
     }
   } else {

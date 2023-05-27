@@ -21,8 +21,7 @@ using ::testing::StrEq;
 TEST(ArgParserTest, BasicCommand) {
   constexpr static Args::Command<> BasicCommand = {.name = "command"};
   auto args =
-      Args::Parse<BasicCommand>({"a", "b", "c", "--", "--x--"},
-                  llvm::errs());
+      Args::Parse<BasicCommand>({"a", "b", "c", "--", "--x--"}, llvm::errs());
   EXPECT_TRUE(args);
   EXPECT_THAT(args.positional_args(),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c"), StrEq("--x--")));
@@ -43,9 +42,8 @@ constexpr Args::Command<TestFlag, TestOpt> TestCommand = {
 };
 
 TEST(ArgParserTest, GlobalCommand) {
-  auto args =
-      Args::Parse<TestCommand>({"--flag", "a", "--option=test", "b", "c", "--", "--x--"},
-                  llvm::errs());
+  auto args = Args::Parse<TestCommand>(
+      {"--flag", "a", "--option=test", "b", "c", "--", "--x--"}, llvm::errs());
   EXPECT_TRUE(args);
   EXPECT_TRUE(args.TestFlag<TestFlag>());
   EXPECT_THAT(args.GetOption<TestOpt>(), Optional(StrEq("test")));
@@ -67,7 +65,8 @@ TEST(ArgParserTest, ShortNames) {
       .short_name = "z",
   };
   constexpr static Args::Command<TestFlag, TestOpt, OtherFlag1, OtherFlag2,
-                                 OtherFlag3> Command = {.name = "command"};
+                                 OtherFlag3>
+      Command = {.name = "command"};
   auto args = Args::Parse<Command>({"a", "-xfyo=test", "b", "c"}, llvm::errs());
   EXPECT_TRUE(args);
   EXPECT_TRUE(args.TestFlag<TestFlag>());
@@ -181,8 +180,7 @@ TEST(ArgParserTest, GlobalDefaults) {
   EXPECT_FALSE(args.TestFlag<TestSubFlag>());
   EXPECT_THAT(args.GetOption<TestSubOpt>(), Eq(std::nullopt));
   EXPECT_TRUE(args.TestFlag<TestSubFlagDefault>());
-  EXPECT_THAT(args.GetOption<TestSubOptDefault>(),
-              Optional(StrEq("default")));
+  EXPECT_THAT(args.GetOption<TestSubOptDefault>(), Optional(StrEq("default")));
 
   EXPECT_THAT(args.positional_args(),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c")));
@@ -196,8 +194,7 @@ TEST(ArgParserTest, DefaultsWithExplictOptions) {
 
   EXPECT_THAT(args.GetOption<TestOptDefault>(), Optional(StrEq("default")));
   EXPECT_THAT(args.subcommand(), Eq(Subcommands::Sub3));
-  EXPECT_THAT(args.GetOption<TestSubOptDefault>(),
-              Optional(StrEq("default")));
+  EXPECT_THAT(args.GetOption<TestSubOptDefault>(), Optional(StrEq("default")));
 }
 
 TEST(ArgParserTest, IntOptions) {
@@ -237,9 +234,9 @@ TEST(ArgParserTest, EnumOptions) {
   };
 
   constexpr static std::tuple OptEnumValues = {
-    Args::EnumOptValue<OptEnum::Val1>{.name = "val1"},
-    Args::EnumOptValue<OptEnum::Val2>{.name = "val2"},
-    Args::EnumOptValue<OptEnum::Val3>{.name = "val3"},
+      Args::EnumOptValue<OptEnum::Val1>{.name = "val1"},
+      Args::EnumOptValue<OptEnum::Val2>{.name = "val2"},
+      Args::EnumOptValue<OptEnum::Val3>{.name = "val3"},
   };
 
   constexpr static Args::EnumOpt<OptEnumValues> Opt{
