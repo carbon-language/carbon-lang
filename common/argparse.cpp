@@ -9,143 +9,69 @@
 
 namespace Carbon {
 
-auto Args::TestFlagImpl(const OptMap& opts, const Flag* opt) const -> bool {
-  auto opt_iterator = opts.find(opt);
-  CARBON_CHECK(opt_iterator != opts.end()) << "Invalid opt: " << opt->name;
-  OptKind kind = opt_iterator->second.kind;
-  CARBON_CHECK(kind == OptKind::Flag)
-      << "Opt '" << opt->name << "' has inconsistent kinds";
-  return opt_iterator->second.flag_value;
+void Args::SetOptionDefaultImpl(const Flag& flag, bool& value) {
+  value = flag.default_value;
 }
 
-template <typename ValueT, typename OptMapT, typename OptT, typename OptKindT,
-          typename ValuesT>
-static auto GetFlagGenericImpl(const OptMapT& opts, const OptT* opt,
-                               OptKindT kind, const ValuesT& values)
-    -> std::optional<ValueT> {
-  auto opt_iterator = opts.find(opt);
-  if (opt_iterator == opts.end()) {
-    // No value for this opt.
-    return {};
-  }
-  OptKindT stored_kind = opt_iterator->second.kind;
-  CARBON_CHECK(stored_kind == kind)
-      << "Opt '" << opt->name << "' has inconsistent kinds: expected '" << kind
-      << "' but found '" << stored_kind << "'";
-  return values[opt_iterator->second.value_index];
-}
-
-auto Args::GetStringOptImpl(const OptMap& opts, const StringOpt* opt) const
-    -> std::optional<llvm::StringRef> {
-  return GetFlagGenericImpl<llvm::StringRef>(opts, opt, OptKind::String,
-                                             string_opt_values_);
-}
-
-auto Args::GetIntOptImpl(const OptMap& opts, const IntOpt* opt) const
-    -> std::optional<ssize_t> {
-  return GetFlagGenericImpl<ssize_t>(opts, opt, OptKind::Int, int_opt_values_);
-}
-
-auto Args::GetStringListOptImpl(const OptMap& opts,
-                                const StringListOpt* opt) const
-    -> llvm::ArrayRef<llvm::StringRef> {
-  if (auto opt_values = GetFlagGenericImpl<llvm::ArrayRef<llvm::StringRef>>(
-          opts, opt, OptKind::StringList, string_list_opt_values_)) {
-    return *opt_values;
-  }
-  return {};
-}
-
-void Args::AddOptDefault(const Flag* opt) {
-  auto [opt_it, inserted] = opts_.insert({opt, {.kind = OptKind::Flag}});
-  CARBON_CHECK(inserted) << "Defaults must be added to an empty set of opts!";
-  auto& value = opt_it->second;
-  value.flag_value = opt->default_value;
-}
-
-template <typename OptMapT, typename OptT, typename OptKindT, typename ValuesT>
-auto AddOptDefaultGeneric(OptMapT& opts, const OptT* opt, OptKindT kind,
-                          ValuesT& values) {
-  if (!opt->default_value) {
+template <typename OptionT, typename ValueT>
+auto SetOptionDefaultImplGeneric(const OptionT& option, std::optional<ValueT>& value) {
+  if (!option.default_value) {
     return;
   }
-  auto [opt_it, inserted] = opts.insert({opt, {.kind = kind}});
-  CARBON_CHECK(inserted) << "Defaults must be added to an empty set of opts!";
-  auto& value = opt_it->second;
-  value.value_index = values.size();
-  values.emplace_back(*opt->default_value);
+  value = *option.default_value;
 }
 
-void Args::AddOptDefault(const StringOpt* opt) {
-  AddOptDefaultGeneric(opts_, opt, OptKind::String, string_opt_values_);
+void Args::SetOptionDefaultImpl(const StringOpt& option, std::optional<llvm::StringRef>& value) {
+  SetOptionDefaultImplGeneric(option, value);
 }
 
-void Args::AddOptDefault(const IntOpt* opt) {
-  AddOptDefaultGeneric(opts_, opt, OptKind::Int, int_opt_values_);
+void Args::SetOptionDefaultImpl(const IntOpt& option, std::optional<ssize_t>& value) {
+  SetOptionDefaultImplGeneric(option, value);
 }
 
-void Args::AddOptDefault(const StringListOpt* opt) {
-  AddOptDefaultGeneric(opts_, opt, OptKind::StringList,
-                       string_list_opt_values_);
-}
-
-auto Args::AddParsedOptToMap(const Opt* opt, OptKind kind)
-    -> std::pair<bool, OptKindAndValue&> {
-  auto [opt_it, inserted] = opts_.insert({opt, {.kind = kind}});
-  auto& value = opt_it->second;
-  if (!inserted) {
-    CARBON_CHECK(value.kind == kind)
-        << "Inconsistent opt kind for repeated opt '--" << opt->name
-        << "': originally '" << value.kind << "' and now '" << kind << "'";
+void Args::SetOptionDefaultImpl(const StringListOpt& option,
+                                llvm::SmallVectorImpl<llvm::StringRef>& value) {
+  if (option.default_values.empty()) {
+    return;
   }
-  return {inserted, value};
+  value.assign(option.default_values.begin(), option.default_values.end());
 }
 
-auto Args::AddParsedOpt(const Flag* opt,
-                        std::optional<llvm::StringRef> arg_value,
-                        llvm::raw_ostream& errors) -> bool {
-  auto [_, value] = AddParsedOptToMap(opt, OptKind::Flag);
-  if (!arg_value || *arg_value == "true") {
-    value.flag_value = true;
+auto Args::ParseOptionImpl(const Flag& flag, std::optional<llvm::StringRef> arg,
+                           llvm::raw_ostream& errors, bool& value) -> bool {
+  if (!arg || *arg == "true") {
+    value = true;
     return true;
   }
-  if (*arg_value == "false") {
-    value.flag_value = false;
+  if (*arg == "false") {
+    value = false;
     return true;
   }
-  errors << "ERROR: Invalid value '" << *arg_value
-         << "' provided for the flag '--" << opt->name << "'\n";
+  errors << "ERROR: Invalid value '" << *arg << "' provided for the flag '--"
+         << flag.name << "'\n";
   return false;
 }
 
-auto Args::AddParsedOpt(const StringOpt* opt,
-                        std::optional<llvm::StringRef> arg_value,
-                        llvm::raw_ostream& errors) -> bool {
-  auto [inserted, value] = AddParsedOptToMap(opt, OptKind::String);
-  if (!arg_value && !opt->default_value) {
-    errors << "ERROR: Invalid missing value for the string opt '--" << opt->name
+auto Args::ParseOptionImpl(const StringOpt& opt,
+                           std::optional<llvm::StringRef> arg,
+                           llvm::raw_ostream& errors,
+                           std::optional<llvm::StringRef>& value) -> bool {
+  if (!arg && !opt.default_value) {
+    errors << "ERROR: Invalid missing value for the string opt '--" << opt.name
            << "' which does not have a default value\n";
     return false;
   }
-  llvm::StringRef value_str =
-      arg_value ? *arg_value
-                : static_cast<llvm::StringRef>(*opt->default_value);
-  if (inserted) {
-    value.value_index = string_opt_values_.size();
-    string_opt_values_.push_back(value_str);
-  } else {
-    string_opt_values_[value.value_index] = value_str;
-  }
+  value = arg ? *arg : static_cast<llvm::StringRef>(*opt.default_value);
   return true;
 }
 
-auto Args::AddParsedOpt(const IntOpt* opt,
-                        std::optional<llvm::StringRef> arg_value,
-                        llvm::raw_ostream& errors) -> bool {
-  auto [inserted, value] = AddParsedOptToMap(opt, OptKind::Int);
-  if (!arg_value && !opt->default_value) {
-    errors << "ERROR: Invalid missing value for the int opt '--" << opt->name
-           << "' which does not have a default value\n";
+auto Args::ParseOptionImpl(const IntOpt& opt,
+                           std::optional<llvm::StringRef> arg_value,
+                           llvm::raw_ostream& errors,
+                           std::optional<ssize_t>& value) -> bool {
+  if (!arg_value && !opt.default_value) {
+    errors << "ERROR: Invalid missing value for the integer option '--"
+           << opt.name << "' which does not have a default value\n";
     return false;
   }
   ssize_t value_int;
@@ -153,96 +79,58 @@ auto Args::AddParsedOpt(const IntOpt* opt,
     // Note that LLVM's function for parsing as an integer confusingly returns
     // true *on an error* in parsing.
     if (arg_value->getAsInteger(/*Radix=*/0, value_int)) {
-      errors << "ERROR: Unable to parse int opt '--" << opt->name << "' value '"
+      errors << "ERROR: Unable to parse integer option '--" << opt.name << "' value '"
              << *arg_value << "' as an integer\n";
       return false;
     }
   } else {
-    value_int = *opt->default_value;
+    value_int = *opt.default_value;
   }
-  if (inserted) {
-    value.value_index = int_opt_values_.size();
-    int_opt_values_.push_back(value_int);
-  } else {
-    int_opt_values_[value.value_index] = value_int;
-  }
+  value = value_int;
   return true;
 }
 
-auto Args::AddParsedOpt(const StringListOpt* opt,
-                        std::optional<llvm::StringRef> arg_value,
-                        llvm::raw_ostream& errors) -> bool {
-  auto [inserted, value] = AddParsedOptToMap(opt, OptKind::StringList);
+auto Args::ParseOptionImpl(const StringListOpt& opt,
+                           std::optional<llvm::StringRef> arg_value,
+                           llvm::raw_ostream& errors,
+                           llvm::SmallVectorImpl<llvm::StringRef>& value)
+    -> bool {
   if (!arg_value) {
-    errors << "ERROR: Must specify a value for the string list opt '--"
-           << opt->name << "'\n";
+    errors << "ERROR: Invalid missing value for the string list option '--"
+           << opt.name << "'\n";
     return false;
   }
-  if (inserted) {
-    value.value_index = string_list_opt_values_.size();
-    string_list_opt_values_.push_back({*arg_value});
-  } else {
-    string_list_opt_values_[value.value_index].push_back(*arg_value);
-  }
+  value.push_back(*arg_value);
   return true;
 }
 
-auto Args::Parser::ParseArgs(llvm::ArrayRef<llvm::StringRef> raw_args) -> bool {
-  // Now walk the input args, and build up the program args from them. Part-way
-  // through, if we discover a subcommand, we'll re-set the mappings and switch
-  // to parsing the subcommand.
-  bool has_subcommands = !subcommand_parsers.empty();
-  bool is_subcommand_parsed = false;
-  for (int i = 0, size = raw_args.size(); i < size; ++i) {
-    llvm::StringRef arg = raw_args[i];
-    if (arg[0] != '-') {
-      if (!has_subcommands || is_subcommand_parsed) {
-        args.positional_args_.push_back(arg);
-        continue;
-      }
-      is_subcommand_parsed = true;
-
-      // This should be a subcommand, parse it as such.
-      auto subcommand_it = subcommand_parsers.find(arg);
-      if (subcommand_it == subcommand_parsers.end()) {
-        errors << "ERROR: Invalid subcommand: " << arg << "\n";
-        return false;
-      }
-
-      // Switch to subcommand parsing and continue.
-      subcommand_it->second();
-      continue;
+auto Args::ParseOneArg(
+    llvm::StringRef arg, llvm::ArrayRef<llvm::StringRef>& remaining_args,
+    llvm::raw_ostream& errors,
+    llvm::function_ref<bool(llvm::StringRef)> parse_subcommand,
+    llvm::function_ref<bool(llvm::StringRef name,
+                            std::optional<llvm::StringRef> value)>
+        parse_option,
+    llvm::function_ref<bool(unsigned char c,
+                            std::optional<llvm::StringRef> value)>
+        parse_short_option) -> bool {
+  if (arg[0] != '-' || arg.size() <= 1) {
+    if (parse_subcommand) {
+      return parse_subcommand(arg);
     }
-    if (arg[1] != '-') {
-      auto short_args = arg.drop_front();
-      std::optional<llvm::StringRef> value = {};
-      auto index = short_args.find('=');
-      if (index != llvm::StringRef::npos) {
-        value = short_args.substr(index + 1);
-        short_args = short_args.substr(0, index);
-      }
-      for (unsigned char c : short_args) {
-        if (!llvm::isAlpha(c)) {
-          errors << "ERROR: Invalid short option string: '-";
-          llvm::printEscapedString(short_args, errors);
-          errors << "'\n";
-          return false;
-        }
-      }
-      // All but the last short character are parsed without a value.
-      for (unsigned char c : short_args.drop_back()) {
-        (*opt_char_parsers[c])(std::nullopt);
-      }
-      // The last character gets the value if present.
-      (*opt_char_parsers[static_cast<unsigned char>(short_args.back())])(value);
-      continue;
-    }
+
+    positional_args_.push_back(arg);
+    return true;
+  }
+
+  if (arg[1] == '-') {
     if (arg.size() == 2) {
-      // A parameter of `--` disables all opt processing making the remaining
-      // args always positional.
-      args.positional_args_.append(raw_args.begin() + i + 1, raw_args.end());
-      break;
+      // A parameter of `--` consumes all remaining args as positional ones.
+      positional_args_.append(remaining_args.begin(), remaining_args.end());
+      remaining_args = {};
+      return true;
     }
+
     // Walk past the double dash.
     arg = arg.drop_front(2);
 
@@ -254,17 +142,33 @@ auto Args::Parser::ParseArgs(llvm::ArrayRef<llvm::StringRef> raw_args) -> bool {
       arg = arg.substr(0, index);
     }
 
-    auto opt_it = opt_parsers.find(arg);
-    if (opt_it == opt_parsers.end()) {
-      errors << "ERROR: Opt '--" << arg << "' does not exist.\n";
-      return false;
-    }
-    if (!(*opt_it->second)(value)) {
+    return parse_option(arg, value);
+  }
+
+  auto short_args = arg.drop_front();
+  std::optional<llvm::StringRef> value = {};
+  auto index = short_args.find('=');
+  if (index != llvm::StringRef::npos) {
+    value = short_args.substr(index + 1);
+    short_args = short_args.substr(0, index);
+  }
+  for (unsigned char c : short_args) {
+    if (!llvm::isAlpha(c)) {
+      errors << "ERROR: Invalid short option string: '-";
+      llvm::printEscapedString(short_args, errors);
+      errors << "'\n";
       return false;
     }
   }
-
-  return true;
+  // All but the last short character are parsed without a value.
+  for (unsigned char c : short_args.drop_back()) {
+    if (!parse_short_option(c, std::nullopt)) {
+      return false;
+    }
+  }
+  // The last character gets the value if present.
+  return parse_short_option(static_cast<unsigned char>(short_args.back()),
+                            value);
 }
 
 }  // namespace Carbon

@@ -5,9 +5,11 @@
 #ifndef CARBON_COMMON_ARGPARSE_H_
 #define CARBON_COMMON_ARGPARSE_H_
 
+#include <__utility/integer_sequence.h>
 #include <array>
 #include <forward_list>
 #include <string>
+#include <tuple>
 #include <type_traits>
 
 #include "common/check.h"
@@ -16,75 +18,134 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLForwardCompat.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
 
+namespace Detail {
+
+template <const auto& Value>
+using TypeOfValue = llvm::remove_cvref_t<decltype(Value)>;
+
+template <const auto& Param>
+struct ValueHolderT {
+  constexpr static auto& Value = Param;
+};
+
+template <typename EnumOptValuesT>
+struct EnumOptTypeImpl;
+
+template <typename EnumOptValueT, typename... EnumOptValueTs>
+struct EnumOptTypeImpl<std::tuple<EnumOptValueT, EnumOptValueTs...>> {
+  using Type = decltype(EnumOptValueT::Enumerator);
+
+  static_assert(std::is_enum_v<Type>,
+                "Must use an enum value for the enumerator.");
+  static_assert((std::is_same_v<Type, decltype(EnumOptValueTs::Enumerator)> &&
+                 ...),
+                "Must have the same enum type for all enum option values!");
+};
+
+template <const auto& EnumOptValues>
+using EnumOptType = std::remove_const_t<
+    typename EnumOptTypeImpl<TypeOfValue<EnumOptValues>>::Type>;
+
+}  // namespace Detail
+
 class Args {
  public:
-  struct Flag;
-  struct StringOpt;
-  struct IntOpt;
-  template <typename EnumT, ssize_t N>
-  struct EnumOpt;
-  struct StringListOpt;
-  template <typename... Ts>
-  struct Command;
-  template <typename EnumT, typename... OptTs>
-  struct Subcommand;
+  struct Flag {
+    llvm::StringLiteral name;
+    llvm::StringLiteral short_name = "";
 
-  constexpr static auto MakeFlag(llvm::StringRef name,
-                                 llvm::StringRef short_name = "",
-                                 bool default_value = false) -> Flag;
+    bool default_value = false;
+  };
 
-  constexpr static auto MakeStringOpt(
-      llvm::StringRef name, llvm::StringRef short_name = "",
-      std::optional<llvm::StringRef> default_value = {}) -> StringOpt;
+  struct StringOpt {
+    llvm::StringLiteral name;
+    llvm::StringLiteral short_name = "";
 
-  constexpr static auto MakeIntOpt(llvm::StringRef name,
-                                   llvm::StringRef short_name = "",
-                                   std::optional<ssize_t> default_value = {})
-      -> IntOpt;
+    std::optional<llvm::StringRef> default_value = {};
+  };
 
-  template <typename EnumT>
-  struct EnumValue;
-  template <typename EnumT, ssize_t N>
-  constexpr static auto MakeEnumOpt(llvm::StringRef name,
-                                    const EnumValue<EnumT> (&args)[N],
-                                    llvm::StringRef short_name = "",
-                                    std::optional<EnumT> default_value = {})
-      -> EnumOpt<EnumT, N>;
+  struct IntOpt {
+    llvm::StringLiteral name;
+    llvm::StringLiteral short_name = "";
 
-  constexpr static auto MakeStringListOpt(
-      llvm::StringRef name, llvm::StringRef short_name = "",
-      std::optional<llvm::ArrayRef<llvm::StringRef>> default_values = {})
-      -> StringListOpt;
+    std::optional<ssize_t> default_value = {};
+  };
+
+  template <auto EnumeratorV>
+  struct EnumOptValue {
+    constexpr static auto Enumerator = EnumeratorV;
+    static_assert(std::is_enum_v<decltype(Enumerator)>,
+                  "Must use an enum value for the enumerator.");
+
+    llvm::StringLiteral name;
+  };
+
+  template <const auto& EnumOptValues>
+  struct EnumOpt {
+    constexpr static auto& Values = EnumOptValues;
+    using EnumT = Detail::EnumOptType<Values>;
+
+    llvm::StringLiteral name;
+    llvm::StringLiteral short_name = "";
+
+    std::optional<EnumT> default_value = {};
+  };
+
+  template <const auto& EnumOptValues>
+  using EnumOptEnumT = typename EnumOpt<EnumOptValues>::EnumT;
+
+  struct StringListOpt {
+    llvm::StringLiteral name;
+    llvm::StringLiteral short_name = "";
+
+    llvm::ArrayRef<llvm::StringLiteral> default_values = {};
+  };
 
   struct CommandInfo {
-    llvm::StringRef description = "";
-    llvm::StringRef usage = "";
-    llvm::StringRef epilog = "";
+    llvm::StringLiteral description = "";
+    llvm::StringLiteral usage = "";
+    llvm::StringLiteral epilog = "";
   };
-  template <typename... Ts>
-  constexpr static auto MakeCommand(llvm::StringRef name, const Ts*... opts)
-      -> Command<Ts...>;
-  template <typename... Ts>
-  constexpr static auto MakeCommand(llvm::StringRef name, CommandInfo info,
-                                    const Ts*... opts) -> Command<Ts...>;
-  template <typename EnumT, typename... OptTs>
-  constexpr static auto MakeSubcommand(llvm::StringRef name, EnumT enumerator,
-                                       const OptTs*... opts)
-      -> Subcommand<EnumT, OptTs...>;
-  template <typename EnumT, typename... OptTs>
-  constexpr static auto MakeSubcommand(llvm::StringRef name, EnumT enumerator,
-                                       CommandInfo info, const OptTs*... opts)
-      -> Subcommand<EnumT, OptTs...>;
+  template <const auto&... Options>
+  struct Command {
+    llvm::StringLiteral name;
 
-  template <typename CommandT, typename... SubcommandTs>
+    CommandInfo info;
+
+    // Implementation detail to hold the template parameters. Never needs to be
+    // initialized by users.
+    std::tuple<Detail::ValueHolderT<Options>...> options = {};
+  };
+
+  template <auto EnumeratorV, const auto&... Options>
+  struct Subcommand {
+    // Capture the template parameter into a usable name.
+    constexpr static auto Enumerator = EnumeratorV;
+    static_assert(std::is_enum_v<decltype(Enumerator)>,
+                  "Must use an enum to enumerate subcommands.");
+
+    llvm::StringLiteral name;
+
+    CommandInfo info;
+
+    // Implementation detail to hold the template parameters. Never needs to be
+    // initialized by users.
+    std::tuple<Detail::ValueHolderT<Options>...> options = {};
+  };
+
+  template <auto EnumeratorV, const auto&... Options>
+  struct Subcommand;
+  
+  template <const auto& CommandT, const auto&... Subcommands>
   static auto Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
-                    llvm::raw_ostream& errors, const CommandT& command,
-                    const SubcommandTs&... subcommands);
+                    llvm::raw_ostream& errors);
 
   // Query whether there are useful parsed arguments to continue executing the
   // program. Only returns true when the parse result is successful and not
@@ -97,37 +158,6 @@ class Args {
   // used to return from `main`.
   auto main_exit_code() const -> int {
     return parse_result_ == ParseResult::Error ? EXIT_FAILURE : EXIT_SUCCESS;
-  }
-
-  // Test whether a flag value is true, either by being set explicitly or having
-  // a true default.
-  auto TestFlag(const Flag* opt) const -> bool {
-    return TestFlagImpl(opts_, opt);
-  }
-
-  // Gets a string opt's value if available, whether via a default or
-  // explicitly set value. If unavailable, returns an empty optional.
-  auto GetStringOpt(const StringOpt* opt) const
-      -> std::optional<llvm::StringRef> {
-    return GetStringOptImpl(opts_, opt);
-  }
-
-  // Gets an int opt's value if available, whether via a default or
-  // explicitly set value. If unavailable, returns an empty optional.
-  auto GetIntOpt(const IntOpt* opt) const -> std::optional<ssize_t> {
-    return GetIntOptImpl(opts_, opt);
-  }
-
-  // Gets an enum opt's value if available, whether via a default or explicitly
-  // set value. If unavailable, returns an empty optional.
-  template <typename EnumT, ssize_t N>
-  auto GetEnumOpt(const EnumOpt<EnumT, N>* opt) const -> std::optional<EnumT> {
-    return GetEnumOptImpl(opts_, opt);
-  }
-
-  auto GetStringListOpt(const StringListOpt* opt) const
-      -> llvm::ArrayRef<llvm::StringRef> {
-    return GetStringListOptImpl(opts_, opt);
   }
 
   auto positional_args() const -> llvm::ArrayRef<llvm::StringRef> {
@@ -162,74 +192,51 @@ class Args {
     MetaSuccess,
   };
 
-  struct OptKindAndValue {
-    OptKind kind;
-
-    // For values that can be stored in-line, we do so. Otherwise, we store an
-    // index into a side array. Which member is active, and if an index which
-    // array is indexed, is determined by the kind.
-    union {
-      bool flag_value;
-      int enum_value;
-
-      int value_index;
-    };
-  };
-
-  using OptMap = llvm::SmallDenseMap<const Opt*, OptKindAndValue, 4>;
-
   struct Parser;
 
   ParseResult parse_result_;
 
-  llvm::SmallVector<llvm::StringRef, 4> string_opt_values_;
-  llvm::SmallVector<ssize_t, 4> int_opt_values_;
-  llvm::SmallVector<llvm::SmallVector<llvm::StringRef, 1>, 4>
-      string_list_opt_values_;
-
-  OptMap opts_;
-
   llvm::SmallVector<llvm::StringRef, 12> positional_args_;
 
-  template <typename EnumT, ssize_t N, size_t... Indices>
-  constexpr static auto MakeEnumOptHelper(
-      llvm::StringRef name, const EnumValue<EnumT> (&args)[N],
-      llvm::StringRef short_name, std::optional<EnumT> default_value,
-      std::index_sequence<Indices...> /*indices*/) -> EnumOpt<EnumT, N>;
+  void SetOptionDefaultImpl(const Flag& flag, bool& value);
+  void SetOptionDefaultImpl(const StringOpt& option,
+                            std::optional<llvm::StringRef>& value);
+  void SetOptionDefaultImpl(const IntOpt& option,
+                            std::optional<ssize_t>& value);
+  template <const auto& EnumOptValues>
+  void SetOptionDefaultImpl(
+      const EnumOpt<EnumOptValues>& option,
+      std::optional<EnumOptEnumT<EnumOptValues>>& value);
+  void SetOptionDefaultImpl(const StringListOpt& option,
+                            llvm::SmallVectorImpl<llvm::StringRef>& value);
 
-  auto TestFlagImpl(const OptMap& opts, const Flag* opt) const -> bool;
-  auto GetStringOptImpl(const OptMap& opts, const StringOpt* opt) const
-      -> std::optional<llvm::StringRef>;
-  auto GetIntOptImpl(const OptMap& opts, const IntOpt* opt) const
-      -> std::optional<ssize_t>;
-  template <typename EnumT, ssize_t N>
-  auto GetEnumOptImpl(const OptMap& opts, const EnumOpt<EnumT, N>* opt) const
-      -> std::optional<EnumT>;
-  auto GetStringListOptImpl(const OptMap& opts, const StringListOpt* opt) const
-      -> llvm::ArrayRef<llvm::StringRef>;
+  auto ParseOptionImpl(const Flag& flag, std::optional<llvm::StringRef> arg,
+                       llvm::raw_ostream& errors, bool& value) -> bool;
+  auto ParseOptionImpl(const StringOpt& opt, std::optional<llvm::StringRef> arg,
+                       llvm::raw_ostream& errors,
+                       std::optional<llvm::StringRef>& value) -> bool;
+  auto ParseOptionImpl(const IntOpt& opt, std::optional<llvm::StringRef> arg,
+                       llvm::raw_ostream& errors,
+                       std::optional<ssize_t>& value) -> bool;
+  template <const auto& EnumOptValues, const EnumOpt<EnumOptValues>& Option>
+  auto ParseOptionImpl(std::optional<llvm::StringRef> arg_value,
+                       llvm::raw_ostream& errors,
+                       std::optional<EnumOptEnumT<EnumOptValues>>& value)
+      -> bool;
+  auto ParseOptionImpl(const StringListOpt& opt, std::optional<llvm::StringRef> arg,
+                       llvm::raw_ostream& errors,
+                       llvm::SmallVectorImpl<llvm::StringRef>& value) -> bool;
 
-  void AddOptDefault(const Flag* opt);
-  void AddOptDefault(const StringOpt* opt);
-  void AddOptDefault(const IntOpt* opt);
-  template <typename EnumT, ssize_t N>
-  void AddOptDefault(const EnumOpt<EnumT, N>* opt);
-  void AddOptDefault(const StringListOpt* opt);
-
-  auto AddParsedOptToMap(const Opt* opt, OptKind kind)
-      -> std::pair<bool, OptKindAndValue&>;
-  auto AddParsedOpt(const Flag* opt, std::optional<llvm::StringRef> value,
-                    llvm::raw_ostream& errors) -> bool;
-  auto AddParsedOpt(const StringOpt* opt, std::optional<llvm::StringRef> value,
-                    llvm::raw_ostream& errors) -> bool;
-  auto AddParsedOpt(const IntOpt* opt, std::optional<llvm::StringRef> value,
-                    llvm::raw_ostream& errors) -> bool;
-  template <typename EnumT, ssize_t N>
-  auto AddParsedOpt(const EnumOpt<EnumT, N>* opt,
-                    std::optional<llvm::StringRef> value,
-                    llvm::raw_ostream& errors) -> bool;
-  auto AddParsedOpt(const StringListOpt* opt,
-                    std::optional<llvm::StringRef> value,
-                    llvm::raw_ostream& errors) -> bool;
+  auto ParseOneArg(
+      llvm::StringRef arg, llvm::ArrayRef<llvm::StringRef>& remaining_args,
+      llvm::raw_ostream& errors,
+      llvm::function_ref<bool(llvm::StringRef)> parse_subcommand,
+      llvm::function_ref<bool(llvm::StringRef name,
+                              std::optional<llvm::StringRef> value)>
+          parse_option,
+      llvm::function_ref<bool(unsigned char c,
+                              std::optional<llvm::StringRef> value)>
+          parse_short_option) -> bool;
 
   friend auto operator<<(llvm::raw_ostream& out, OptKind kind)
       -> llvm::raw_ostream& {
@@ -254,8 +261,71 @@ class Args {
   }
 };
 
+namespace Detail {
+
+template <typename OptionT>
+struct OptionValue;
+
+template <>
+struct OptionValue<Args::Flag> {
+  bool value = false;
+};
+
+template <>
+struct OptionValue<Args::StringOpt> {
+  std::optional<llvm::StringRef> value = {};
+};
+
+template <>
+struct OptionValue<Args::IntOpt> {
+  std::optional<ssize_t> value = {};
+};
+
+template <const auto& EnumOptValues>
+struct OptionValue<Args::EnumOpt<EnumOptValues>> {
+  std::optional<Args::EnumOptEnumT<EnumOptValues>> value = {};
+};
+
+template <>
+struct OptionValue<Args::StringListOpt> {
+  llvm::SmallVector<llvm::StringRef, 4> value = {};
+};
+
+template <typename LHSOptionT, typename RHSOptionT, const LHSOptionT& LHSOption, const RHSOptionT& RHSOption>
+struct IsSameOptionImpl {
+  constexpr static bool Value = false;
+};
+
+template <typename OptionT, const OptionT& LHSOption, const OptionT& RHSOption>
+struct IsSameOptionImpl<OptionT, OptionT, LHSOption, RHSOption> {
+  constexpr static bool Value = &LHSOption == &RHSOption;
+};
+
+template <const auto& LHSOption, const auto& RHSOption>
+using IsSameOption = IsSameOptionImpl<llvm::remove_cvref_t<decltype(LHSOption)>,
+                                      llvm::remove_cvref_t<decltype(RHSOption)>,
+                                      LHSOption, RHSOption>;
+
+template <const auto& Option, const auto&... Options, size_t... Is>
+constexpr inline auto FindIndexForOption(std::index_sequence<Is...> /*indices*/)
+    -> size_t {
+  static_assert(
+      (static_cast<size_t>(IsSameOption<Option, Options>::Value) + ...) > 0,
+      "Queried an option that was not parsed into the program arguments!");
+  static_assert(
+      (static_cast<size_t>(IsSameOption<Option, Options>::Value) + ...) == 1,
+      "Queried an option that was provided multiple times to the "
+      "program arguments!");
+  return ((static_cast<size_t>(IsSameOption<Option, Options>::Value) * Is) +
+          ...);
+}
+
+template <const auto& SubcommandV> struct SubcommandHolderT {
+  constexpr static auto& Subcommand = SubcommandV;
+};
+
 template <typename SubcommandEnumT>
-class SubcommandArgs : public Args {
+class SubcommandImpl {
  public:
   static_assert(std::is_enum_v<SubcommandEnumT>,
                 "Must provide an enum type to enumerate subcommands.");
@@ -264,354 +334,429 @@ class SubcommandArgs : public Args {
   auto subcommand() const -> SubcommandEnum { return subcommand_; }
 
  private:
+  friend Args;
+
+  SubcommandEnum subcommand_ = {};
+
+  template <const auto& Subcommand, const auto&... Subcommands>
+  auto ParseArgAsSubcommand(llvm::StringRef arg, llvm::raw_ostream& errors)
+      -> bool {
+    if (arg == Subcommand.name) {
+      subcommand_ = Subcommand.Enumerator;
+      return true;
+    }
+    if constexpr (sizeof...(Subcommands) > 0) {
+      return ParseArgAsSubcommand<Subcommands...>(arg, errors);
+    }
+
+    // Otherwise, did not match any of the subcommand names.
+    errors << "ERROR: Invalid subcommand '" << arg << "'\n";
+    return false;
+  }
+};
+
+enum NoSubcommands {};
+
+template <>
+class SubcommandImpl<NoSubcommands> {
   friend class Args;
-
-  SubcommandEnum subcommand_;
 };
 
-struct Args::Opt {
-  llvm::StringRef name;
-  llvm::StringRef short_name = "";
-
-  // The address of a opt is used as the identity after parsing.
-  Opt(const Opt&) = delete;
+template <const auto& Option>
+struct ParseOptionImpl {
+  template <typename ArgsT, typename ValueT>
+  static auto Parse(ArgsT& args, std::optional<llvm::StringRef> arg_value,
+                    llvm::raw_ostream& errors, ValueT& value) -> bool {
+    return args.ParseOptionImpl(Option, arg_value, errors, value);
+  }
 };
 
-struct Args::Flag : Opt {
-  bool default_value = false;
+template <const auto& EnumOptValues, const Args::EnumOpt<EnumOptValues>& Option>
+struct ParseOptionImpl<Option> {
+  template <typename ArgsT>
+  static auto Parse(ArgsT& args, std::optional<llvm::StringRef> arg_value,
+                    llvm::raw_ostream& errors,
+                    std::optional<Args::EnumOptEnumT<EnumOptValues>>& value)
+      -> bool {
+    return args.ParseOptionImpl<EnumOptValues, Option>(arg_value, errors,
+                                                       value);
+  }
 };
 
-constexpr inline auto Args::MakeFlag(llvm::StringRef name,
-                                     llvm::StringRef short_name,
-                                     bool default_value) -> Flag {
-  return {{.name = name, .short_name = short_name}, default_value};
-}
+}  // namespace Detail
 
-struct Args::StringOpt : Opt {
-  std::optional<llvm::StringRef> default_value = {};
-};
+template <typename SubcommandEnumT, const auto&... Options>
+class ArgsImpl : public Args, public Detail::SubcommandImpl<SubcommandEnumT> {
+ public:
+  // Test whether a flag value is true, either by being set explicitly or having
+  // a true default.
+  template <const Flag& F>
+  auto TestFlag() const -> bool {
+    constexpr size_t N = GetOptionIndex<F>();
+    return std::get<N>(option_values_).value;
+  }
 
-constexpr inline auto Args::MakeStringOpt(
-    llvm::StringRef name, llvm::StringRef short_name,
-    std::optional<llvm::StringRef> default_value) -> StringOpt {
-  return {{.name = name, .short_name = short_name}, default_value};
-}
+  // Gets an option value if available, whether via a default or explicitly set
+  // value. If unavailable, returns an empty optional. Cannot be used with
+  // flags, only with options that store an optional value.
+  template <const auto& Option>
+  auto GetOption() const {
+    static_assert(!std::is_same_v<Detail::TypeOfValue<Option>, Flag>,
+                  "Use `TestFlag` with flag options which avoids the "
+                  "`std::optional` wrapping.");
+    constexpr size_t N = GetOptionIndex<Option>();
+    return std::get<N>(option_values_).value;
+  }
 
-struct Args::IntOpt : Opt {
-  std::optional<ssize_t> default_value = {};
-};
+ private:
+  friend Args;
+  template <const auto& Option>
+  friend struct Detail::ParseOptionImpl;
 
-constexpr inline auto Args::MakeIntOpt(llvm::StringRef name,
-                                       llvm::StringRef short_name,
-                                       std::optional<ssize_t> default_value)
-    -> IntOpt {
-  return {{.name = name, .short_name = short_name}, default_value};
-}
+  std::tuple<Detail::OptionValue<llvm::remove_cvref_t<decltype(Options)>>...>
+      option_values_;
 
-template <typename EnumT>
-struct Args::EnumValue {
-  llvm::StringRef name;
-  EnumT value;
-};
+  template <const auto& Option>
+  constexpr static auto GetOptionIndex() -> size_t {
+    return Detail::FindIndexForOption<Option, Options...>(
+        std::make_index_sequence<sizeof...(Options)>{});
+  }
 
-template <typename EnumT, ssize_t N>
-struct Args::EnumOpt : Opt {
-  std::array<EnumValue<EnumT>, N> values;
+  template <const auto& Option>
+  auto SetOptionDefault() -> void {
+    constexpr size_t N = GetOptionIndex<Option>();
+    return SetOptionDefaultImpl(Option, std::get<N>(option_values_).value);
+  }
 
-  std::optional<EnumT> default_value = {};
-};
+  template <const auto& Option>
+  auto ParseOption(std::optional<llvm::StringRef> arg_value,
+                   llvm::raw_ostream& errors) -> bool {
+    constexpr size_t N = GetOptionIndex<Option>();
+    return Detail::ParseOptionImpl<Option>::Parse(
+        *this, arg_value, errors, std::get<N>(option_values_).value);
+  }
 
-template <typename EnumT, ssize_t N, size_t... Indices>
-constexpr inline auto Args::MakeEnumOptHelper(
-    llvm::StringRef name, const EnumValue<EnumT> (&args)[N],
-    llvm::StringRef short_name, std::optional<EnumT> default_value,
-    std::index_sequence<Indices...> /*indices*/) -> EnumOpt<EnumT, N> {
-  return {{.name = name, .short_name = short_name},
-          {args[Indices]...},
-          default_value};
-}
+  template <typename OptionHoldersT>
+  auto ParseOptions(llvm::StringRef name, std::optional<llvm::StringRef> value,
+                    llvm::raw_ostream& errors, OptionHoldersT options) -> bool {
+    auto parse_option_impl = [&](auto holder) {
+      constexpr auto& Option = decltype(holder)::Value;
+      if (name != Option.name) {
+        return false;
+      }
+      return ParseOption<Option>(value, errors);
+    };
+    auto parse_options_impl = [&](auto... holders) {
+      return (parse_option_impl(holders) || ...);
+    };
+    if (std::apply(parse_options_impl, options)) {
+      return true;
+    }
 
-template <typename EnumT, ssize_t N>
-constexpr inline auto Args::MakeEnumOpt(llvm::StringRef name,
-                                        const EnumValue<EnumT> (&args)[N],
-                                        llvm::StringRef short_name,
-                                        std::optional<EnumT> default_value)
-    -> EnumOpt<EnumT, N> {
-  return MakeEnumOptHelper(name, args, short_name, default_value,
-                           std::make_index_sequence<N>{});
-}
+    // Otherwise, no option name matched so diagnose this.
+    errors << "ERROR: Invalid option '--" << name << "'\n";
+    return false;
+  }
 
-struct Args::StringListOpt : Opt {
-  std::optional<llvm::ArrayRef<llvm::StringRef>> default_value = {};
-};
+  template <typename OptionHoldersT>
+  auto ParseShortOptions(unsigned char c,
+                         std::optional<llvm::StringRef> value,
+                         llvm::raw_ostream& errors, OptionHoldersT options)
+      -> bool {
+    auto parse_short_option_impl = [&](auto holder) {
+      constexpr auto& Option = decltype(holder)::Value;
+      constexpr llvm::StringLiteral ShortName = Option.short_name;
+      if constexpr (!ShortName.empty()) {
+        if (c == static_cast<unsigned char>(ShortName[0])) {
+          return ParseOption<Option>(value, errors);
+        }
+      }
+      return false;
+    };
+    auto parse_short_options_impl = [&](auto... holders) {
+      return (parse_short_option_impl(holders) || ...);
+    };
+    if (std::apply(parse_short_options_impl, options)) {
+      return true;
+    }
 
-constexpr inline auto Args::MakeStringListOpt(
-    llvm::StringRef name, llvm::StringRef short_name,
-    std::optional<llvm::ArrayRef<llvm::StringRef>> default_values)
-    -> StringListOpt {
-  return {{.name = name, .short_name = short_name}, default_values};
-}
-
-template <typename... Ts>
-struct Args::Command {
-  llvm::StringRef name;
-
-  std::tuple<const Ts*...> opts = {};
-
-  CommandInfo info;
-};
-
-template <typename... Ts>
-constexpr inline auto Args::MakeCommand(llvm::StringRef name, const Ts*... opts)
-    -> Command<Ts...> {
-  return {.name = name, .opts = std::tuple{opts...}, .info = {}};
-}
-
-template <typename... Ts>
-constexpr inline auto Args::MakeCommand(llvm::StringRef name, CommandInfo info,
-                                        const Ts*... opts) -> Command<Ts...> {
-  return {.name = name, .opts = std::tuple{opts...}, .info = info};
-}
-
-template <typename EnumT, typename... OptTs>
-struct Args::Subcommand : Command<OptTs...> {
-  static_assert(std::is_enum_v<EnumT>,
-                "Must provide an enum type to enumerate subcommands.");
-  using Enum = EnumT;
-  EnumT enumerator;
-};
-
-template <typename EnumT, typename... OptTs>
-constexpr inline auto Args::MakeSubcommand(llvm::StringRef name,
-                                           EnumT enumerator,
-                                           const OptTs*... opts)
-    -> Subcommand<EnumT, OptTs...> {
-  return {{.name = name, .opts = std::tuple{opts...}, .info = {}}, enumerator};
-}
-
-template <typename EnumT, typename... OptTs>
-constexpr inline auto Args::MakeSubcommand(llvm::StringRef name,
-                                           EnumT enumerator, CommandInfo info,
-                                           const OptTs*... opts)
-    -> Subcommand<EnumT, OptTs...> {
-  return {{.name = name, .opts = std::tuple{opts...}, .info = info},
-          enumerator};
-}
-
-struct Args::Parser {
-  Args& args;
-  llvm::raw_ostream& errors;
-
-  using OptParserFunctionT =
-      std::function<bool(std::optional<llvm::StringRef> arg_value)>;
-
-  llvm::SmallDenseMap<llvm::StringRef, std::unique_ptr<OptParserFunctionT>, 16>
-      opt_parsers{};
-  OptParserFunctionT* opt_char_parsers[128];
-
-  llvm::SmallDenseMap<llvm::StringRef, std::function<void()>, 16>
-      subcommand_parsers{};
-
-  auto ParseArgs(llvm::ArrayRef<llvm::StringRef> raw_args) -> bool;
+    // Otherwise, no option name matched so diagnose this.
+    errors << "ERROR: Invalid short option character '" << c << "'\n";
+    return false;
+  }
 };
 
 namespace Detail {
 
-template <typename... SubcommandTs>
+template <const auto& Value>
+using TypeOfValue = llvm::remove_cvref_t<decltype(Value)>;
+
+template <const auto&... Subcommands>
 struct SubcommandEnum;
 
-template <typename SubcommandT, typename... SubcommandTs>
-struct SubcommandEnum<SubcommandT, SubcommandTs...> {
-  using Type = typename SubcommandT::Enum;
+template <const auto& Subcommand, const auto&... Subcommands>
+struct SubcommandEnum<Subcommand, Subcommands...> {
+  using Type = TypeOfValue<Subcommand.Enumerator>;
 };
 
-enum NoSubcommands {};
 template <>
 struct SubcommandEnum<> {
   using Type = NoSubcommands;
 };
 
+template <const auto& ValueV>
+struct HolderT {
+  constexpr static auto& Value = ValueV;
+};
+
+template <typename SubcommandEnumT, typename T> struct ArgsImplFromHolderTuple;
+
+template <typename SubcommandEnumT, const auto&... Options>
+struct ArgsImplFromHolderTuple<SubcommandEnumT, std::tuple<ValueHolderT<Options>...>> {
+  using ArgsImplT = ArgsImpl<SubcommandEnumT, Options...>;
+};
+
 }  // namespace Detail
 
-template <typename CommandT, typename... SubcommandTs>
+template <const auto& ThisCommand, const auto&... Subcommands>
 auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
-                 llvm::raw_ostream& errors, const CommandT& command,
-                 const SubcommandTs&... subcommands) {
+                 llvm::raw_ostream& errors) {
   // Extract the enum type from the subcommand types, and ensure it is a single
   // type.
-  using SubcommandEnum = typename Detail::SubcommandEnum<SubcommandTs...>::Type;
-  constexpr bool HasSubcommands = sizeof...(SubcommandTs) > 0;
+  using SubcommandEnum = typename Detail::SubcommandEnum<Subcommands...>::Type;
+  constexpr bool HasSubcommands = sizeof...(Subcommands) > 0;
   if constexpr (HasSubcommands) {
     static_assert(
-        (std::is_same_v<SubcommandEnum, typename SubcommandTs::Enum> && ...),
+        (std::is_same_v<SubcommandEnum,
+                        Detail::TypeOfValue<Subcommands.Enumerator>> &&
+         ...),
         "Must have the same enum type for all subcommands.");
   }
 
-  using ArgsType =
-      std::conditional_t<HasSubcommands, SubcommandArgs<SubcommandEnum>, Args>;
-  ArgsType args;
+  // Compile-time enforce that within a single command the same option isn't
+  // repeated. This would eventually be found at runtime, but we can give a
+  // better compile-time error here.
+  auto check_duplicate_options = [](auto option_holders) {
+    if constexpr (std::tuple_size_v < decltype(option_holders) >> 0) {
+      auto impl = [](auto self, auto holder, auto... holders) {
+        if constexpr (sizeof...(holders) > 0) {
+          static_assert(
+              (!std::is_same_v<decltype(holder), decltype(holders)> && ...),
+              "Found a duplicate option within a single command!");
+          self(self, holders...);
+        }
+      };
+      std::apply([impl](auto... holders) { impl(impl, holders...); },
+                 option_holders);
+    }
+  };
+  check_duplicate_options(ThisCommand.options);
+  (check_duplicate_options(Subcommands.options), ...);
+
+  // Build some utilities to unique the options in the options tuple as
+  // different subcommands can share a flag.
+  // FIXME: This seems likely to be ... very expensive in terms of compile time,
+  // but more efficient approaches seem very complex.
+  auto merge_options_impl = [](auto self, auto holder, auto... holders) {
+    if constexpr (sizeof...(holders) == 0) {
+      return std::tuple<decltype(holder)>{};
+    } else {
+      if constexpr ((std::is_same_v<decltype(holder), decltype(holders)> ||
+                     ...)) {
+        return self(self, holders...);
+      } else {
+        return std::tuple_cat(std::tuple<decltype(holder)>{},
+                              self(self, holders...));
+      }
+    }
+  };
+  auto merge_options = [impl = merge_options_impl](auto... holders) {
+    // If we don't have subcommands, there is no need to merge so just return a
+    // tuple directly.
+    if constexpr (!HasSubcommands) {
+      static_cast<void>(impl);
+      return std::tuple<decltype(holders)...>{};
+    } else {
+      if constexpr (sizeof...(holders) == 0) {
+        return std::tuple<>{};
+      } else {
+        return impl(impl, holders...);
+      }
+    }
+  };
+
+  // Now use both the enum and the merge tools to collect all the options across
+  // subcommands and build the specific implementation type used for our parsed
+  // arguments.
+  using ArgsT = typename Detail::ArgsImplFromHolderTuple<
+      SubcommandEnum,
+      decltype(std::apply(merge_options,
+                          std::tuple_cat(ThisCommand.options,
+                                         Subcommands.options...)))>::ArgsImplT;
+  ArgsT args;
 
   // Start in the error state to allow early returns whenever a parse error is
   // found.
-  args.parse_result_ = ArgsType::ParseResult::Error;
+  args.parse_result_ = ArgsT::ParseResult::Error;
 
-  Parser parser = {.args = args, .errors = errors};
-
-  using OptParserFunctionT = Parser::OptParserFunctionT;
-
-  auto add_opt = [&parser](const auto* opt) {
-    auto [it, inserted] = parser.opt_parsers.try_emplace(
-        opt->name,
-        std::make_unique<OptParserFunctionT>(
-            [opt, &parser](std::optional<llvm::StringRef> arg_value) {
-              return parser.args.AddParsedOpt(opt, arg_value, parser.errors);
-            }));
-    CARBON_CHECK(inserted) << "Duplicate opts named: " << opt->name;
-    auto* opt_parser = it->second.get();
-    if (!opt->short_name.empty()) {
-      // TODO: extract to a method on `Opt`.
-      CARBON_CHECK(opt->short_name.size() == 1)
-          << "Option with a short name longer than a single character: "
-          << opt->name;
-      CARBON_CHECK(llvm::isAlpha(opt->short_name[0]))
-          << "Option with a short name that isn't a valid letter in the 'C' "
-             "locale: "
-          << opt->name;
-      int short_index = static_cast<int>(opt->short_name[0]);
-      CARBON_CHECK(!parser.opt_char_parsers[short_index])
-          << "Duplicate option short name '" << opt->short_name
-          << "' for option: " << opt->name;
-
-      parser.opt_char_parsers[short_index] = opt_parser;
-    }
-    parser.args.AddOptDefault(opt);
+  auto set_option_defaults = [&args](auto... command_options) {
+    (args.template SetOptionDefault<decltype(command_options)::Value>(), ...);
   };
-  auto build_opt_parse_map = [&parser,
-                              &add_opt](const auto*... command_options) {
-    // Clear the option parsers in preparation for rebuilding them for these
-    // options.
-    parser.opt_parsers.clear();
-    for (auto*& char_parser : parser.opt_char_parsers) {
-      char_parser = nullptr;
+  std::apply(set_option_defaults, ThisCommand.options);
+
+  auto parse_args = [&](const auto& parse_subcommand, const auto& parse_option,
+                        const auto& parse_short_option) {
+    while (!raw_args.empty()) {
+      llvm::StringRef arg = raw_args.front();
+      raw_args = raw_args.drop_front();
+      if (!args.ParseOneArg(arg, raw_args, errors, parse_subcommand, parse_option,
+                            parse_short_option)) {
+        return false;
+      }
     }
-
-    // Fold over the opts, calling `add_opt` for each one.
-    (add_opt(command_options), ...);
+    return true;
   };
-  std::apply(build_opt_parse_map, command.opts);
 
-  // Process the input subcommands into a lookup table. We just handle the
-  // subcommand name here to be lazy. We'll process the subcommand itself only
-  // if it is needed.
+  auto parse_options = [&](llvm::StringRef name,
+                           std::optional<llvm::StringRef> value) -> bool {
+    return args.ParseOptions(name, value, errors, ThisCommand.options);
+  };
+  auto parse_short_options = [&](unsigned char c,
+                                std::optional<llvm::StringRef> value) -> bool {
+    return args.ParseShortOptions(c, value, errors, ThisCommand.options);
+  };
+
   if constexpr (HasSubcommands) {
-    auto add_subcommand = [&args, &parser,
-                           &build_opt_parse_map](const auto* subcommand) {
-      bool inserted =
-          parser.subcommand_parsers
-              .insert({subcommand->name,
-                       [subcommand, &args, &build_opt_parse_map] {
-                         args.subcommand_ = subcommand->enumerator;
-                         // Rebuild the opt map for this subcommand.
-                         std::apply(build_opt_parse_map, subcommand->opts);
-                       }})
-              .second;
-      CARBON_CHECK(inserted)
-          << "Duplicate subcommands named: " << subcommand->name;
-    };
-    (add_subcommand(&subcommands), ...);
-  }
+    auto parse_subcommand_args = [&](auto holder) {
+      constexpr auto& Subcommand = decltype(holder)::Value;
 
-  if (!parser.ParseArgs(raw_args)) {
-    // TODO: show usage
-    return args;
+      args.subcommand_ = Subcommand.Enumerator;
+      std::apply(set_option_defaults, Subcommand.options);
+
+      // Finish parsing args, but with the subcommand's options.
+      auto parse_subcommand_options =
+          [&](llvm::StringRef name,
+              std::optional<llvm::StringRef> value) -> bool {
+        return args.ParseOptions(name, value, errors, Subcommand.options);
+      };
+      auto parse_subcommand_short_options =
+          [&](unsigned char c, std::optional<llvm::StringRef> value) -> bool {
+        return args.ParseShortOptions(c, value, errors, Subcommand.options);
+      };
+
+      return parse_args(nullptr, parse_subcommand_options,
+                        parse_subcommand_short_options);
+    };
+    auto parse_subcommands = [&](llvm::StringRef arg) -> bool {
+      auto parse_subcommand_impl = [&](auto holder) {
+        constexpr auto& Subcommand = decltype(holder)::Value;
+        if (arg != Subcommand.name) {
+          return false;
+        }
+
+        return parse_subcommand_args(holder);
+      };
+      if ((parse_subcommand_impl(Detail::ValueHolderT<Subcommands>{}) || ...)) {
+        return true;
+      }
+
+      // Otherwise, did not match any of the subcommand names.
+      errors << "ERROR: Invalid subcommand '" << arg << "'\n";
+      return false;
+    };
+    if (!parse_args(parse_subcommands, parse_options, parse_short_options)) {
+      // TODO: usage
+      return args;
+    }
+  } else {
+    if (!parse_args(nullptr, parse_options, parse_short_options)) {
+      // TODO: usage
+      return args;
+    }
   }
 
   // We successfully parsed all the arguments.
-  args.parse_result_ = ArgsType::ParseResult::Success;
+  args.parse_result_ = ArgsT::ParseResult::Success;
   return args;
 }
 
-template <typename EnumT, ssize_t N>
-auto Args::GetEnumOptImpl(const OptMap& opts,
-                          const EnumOpt<EnumT, N>* opt) const
-    -> std::optional<EnumT> {
-  auto opt_iterator = opts.find(opt);
-  if (opt_iterator == opts.end()) {
-    // No value for this opt.
-    return {};
-  }
-  OptKind kind = opt_iterator->second.kind;
-  CARBON_CHECK(kind == OptKind::Enum)
-      << "Opt '" << opt->name << "' has inconsistent kinds";
-  return static_cast<EnumT>(opt_iterator->second.enum_value);
-}
-
-template <typename EnumT, ssize_t N>
-void Args::AddOptDefault(const EnumOpt<EnumT, N>* opt) {
-  if (!opt->default_value.has_value()) {
+template <const auto& EnumOptValues>
+void Args::SetOptionDefaultImpl(const EnumOpt<EnumOptValues>& option,
+                                std::optional<EnumOptEnumT<EnumOptValues>>& value) {
+  if (!option.default_value) {
     return;
   }
-  auto [opt_it, inserted] = opts_.insert({opt, {.kind = OptKind::Enum}});
-  CARBON_CHECK(inserted) << "Defaults must be added to an empty set of opts!";
-
-  // Make sure any value we store will round-trip through our type erased
-  // storage of `int` correctly.
-  EnumT enum_value = *opt->default_value;
-  int storage_value = static_cast<int>(enum_value);
-  CARBON_CHECK(enum_value == static_cast<EnumT>(storage_value))
-      << "Default for enum opt '--" << opt->name << "' has a storage value '"
-      << storage_value << "' which won't round-trip!";
-
-  opt_it->second.enum_value = storage_value;
+  value = *option.default_value;
 }
 
-template <typename EnumT, ssize_t N>
-auto Args::AddParsedOpt(const EnumOpt<EnumT, N>* opt,
-                        std::optional<llvm::StringRef> arg_value,
-                        llvm::raw_ostream& errors) -> bool {
-  auto [inserted, value] = AddParsedOptToMap(opt, OptKind::Enum);
-  if (!arg_value && !opt->default_value) {
-    errors << "ERROR: Invalid missing value for the enum opt '--" << opt->name
-           << "' which does not have a default value\n";
+namespace Detail {
+
+template <typename Indices>
+struct IndexSeqTypesHelper;
+
+template <size_t... Indices>
+struct IndexSeqTypesHelper<std::index_sequence<Indices...>> {
+  using Type = std::tuple<std::integral_constant<size_t, Indices>...>;
+};
+
+template <size_t N>
+constexpr inline typename IndexSeqTypesHelper<std::make_index_sequence<N>>::Type
+    IndexConstantSeq = {};
+
+}  // namespace Detail
+
+template <const auto& EnumOptValues, const Args::EnumOpt<EnumOptValues>& Option>
+auto Args::ParseOptionImpl(std::optional<llvm::StringRef> arg_value,
+                           llvm::raw_ostream& errors,
+                           std::optional<EnumOptEnumT<EnumOptValues>>& value)
+    -> bool {
+  if (!arg_value && !Option.default_value) {
+    errors << "ERROR: Invalid missing value for the enum option '--"
+           << Option.name << "' which does not have a default value\n";
     return false;
   }
-  EnumT enum_value;
-  if (arg_value) {
-    bool matched_value = false;
-    for (ssize_t i = 0; i < N; ++i) {
-      if (*arg_value == opt->values[i].name) {
-        enum_value = opt->values[i].value;
-        matched_value = true;
-        break;
-      }
-    }
-    if (!matched_value) {
-      errors << "ERROR: Invalid value '" << *arg_value
-             << "' for the enum opt '--" << opt->name
-             << "', must be one of the following: ";
-      for (ssize_t i = 0; i < N; ++i) {
-        if (i != 0) {
-          errors << ", ";
-        }
-        errors << opt->values[i].name;
-      }
-      errors << "\n";
-      return false;
-    }
-  } else {
-    enum_value = *opt->default_value;
+  if (!arg_value) {
+    value = *Option.default_value;
+    return true;
   }
 
-  // Make sure any value we store will round-trip through our type erased
-  // storage of `int` correctly.
-  int storage_value = static_cast<int>(enum_value);
-  CARBON_CHECK(enum_value == static_cast<EnumT>(storage_value))
-      << "Parsed value for enum opt '--" << opt->name
-      << "' has a storage value '" << storage_value
-      << "' which won't round-trip!";
+  using EnumT = EnumOptEnumT<EnumOptValues>;
+  constexpr size_t NumValues =
+      std::tuple_size_v<Detail::TypeOfValue<EnumOptValues>>;
+  static_assert(NumValues > 0, "Enum options must provide values to parse.");
 
-  value.enum_value = storage_value;
-  return true;
+  auto parse_value = [&](auto i) {
+    constexpr auto& EnumValue = std::get<decltype(i)::value>(EnumOptValues);
+    constexpr EnumT Enumerator = EnumValue.Enumerator;
+    constexpr llvm::StringLiteral Name = EnumValue.name;
+    if (Name != arg_value) {
+      return false;
+    }
+
+    value = Enumerator;
+    return true;
+  };
+  auto parse_values = [&](auto... indices) {
+    return (parse_value(indices) || ...);
+  };
+  if (std::apply(parse_values, Detail::IndexConstantSeq<NumValues>)) {
+    return true;
+  }
+
+  errors << "ERROR: Invalid value '" << *arg_value << "' for the enum opt '--"
+         << Option.name << "', must be one of the following: ";
+  auto print_enum_value_name = [&](auto i) {
+    constexpr auto& EnumValue = std::get<decltype(i)::value>(EnumOptValues);
+    constexpr llvm::StringLiteral Name = EnumValue.name;
+    errors << Name;
+  };
+  auto print_enum_value_names = [&](auto zero, auto... indices) {
+    print_enum_value_name(zero);
+    ((errors << ", ", print_enum_value_name(indices)), ...);
+  };
+  std::apply(print_enum_value_names, Detail::IndexConstantSeq<NumValues>);
+  errors << "\n";
+  return false;
 }
 
 }  // namespace Carbon
