@@ -25,7 +25,8 @@ enum class ProgramPhase {
   UnformedVariableResolution,
   Declarations,
   Execution,
-  Timing
+  Timing,
+  All
 };
 
 // This enum class defines the context in which code is being added to the trace
@@ -48,7 +49,8 @@ class TraceStream {
   auto is_enabled() const -> bool {
     return stream_.has_value() &&
            current_code_context_ != CodeContext::Prelude &&
-           allowed_phases_.count(current_phase_) > 0;
+           (allowed_phases_.count(current_phase_) > 0 ||
+            allowed_phases_.count(ProgramPhase::All) > 0);
   }
 
   // Sets the trace stream. This should only be called from the main.

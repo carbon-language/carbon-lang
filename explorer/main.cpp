@@ -54,22 +54,23 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
       cl::desc("Select the phases to be added to the output, by default only "
                "execution trace will be added to the output"),
       cl::values(
-          clEnumValN(ProgramPhase::SourceProgram, "p_source_program",
+          clEnumValN(ProgramPhase::SourceProgram, "trace_source_program",
                      "Source Program"),
-          clEnumValN(ProgramPhase::NameResolution, "p_name_resolution",
+          clEnumValN(ProgramPhase::NameResolution, "trace_name_resolution",
                      "Name Resolution"),
           clEnumValN(ProgramPhase::ControlFlowResolution,
                      "p_control_flow_resolution", "Control Flow Resolution"),
-          clEnumValN(ProgramPhase::TypeChecking, "p_type_checking",
+          clEnumValN(ProgramPhase::TypeChecking, "trace_type_checking",
                      "Type Checking"),
           clEnumValN(ProgramPhase::UnformedVariableResolution,
-                     "p_unformed_variables_resolution",
+                     "trace_unformed_variables_resolution",
                      "Unformed Variable Resolutiusing on"),
-          clEnumValN(ProgramPhase::Declarations, "p_declarations",
+          clEnumValN(ProgramPhase::Declarations, "trace_declarations",
                      "Print Declarations"),
-          clEnumValN(ProgramPhase::Execution, "p_execution",
+          clEnumValN(ProgramPhase::Execution, "trace_execution",
                      "Program Execution"),
-          clEnumValN(ProgramPhase::Timing, "p_timing", "Timing")));
+          clEnumValN(ProgramPhase::Timing, "trace_timing", "Timing"),
+          clEnumValN(ProgramPhase::All, "trace_all", "All")));
 
   // Use the executable path as a base for the relative prelude path.
   std::string exe =
