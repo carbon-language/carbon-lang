@@ -322,11 +322,6 @@ constexpr inline auto FindIndexForOption(std::index_sequence<Is...> /*indices*/)
           ...);
 }
 
-template <const auto& SubcommandV>
-struct SubcommandHolderT {
-  constexpr static auto& Subcommand = SubcommandV;
-};
-
 template <typename SubcommandEnumT>
 class SubcommandImpl {
  public:
@@ -490,9 +485,6 @@ class ArgsImpl : public Args, public Detail::SubcommandImpl<SubcommandEnumT> {
 
 namespace Detail {
 
-template <const auto& Value>
-using TypeOfValue = llvm::remove_cvref_t<decltype(Value)>;
-
 template <const auto&... Subcommands>
 struct SubcommandEnum;
 
@@ -504,11 +496,6 @@ struct SubcommandEnum<Subcommand, Subcommands...> {
 template <>
 struct SubcommandEnum<> {
   using Type = NoSubcommands;
-};
-
-template <const auto& ValueV>
-struct HolderT {
-  constexpr static auto& Value = ValueV;
 };
 
 template <typename SubcommandEnumT, typename T>
