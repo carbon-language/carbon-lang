@@ -5,24 +5,17 @@
 #ifndef CARBON_COMMON_ARGPARSE_H_
 #define CARBON_COMMON_ARGPARSE_H_
 
-#include <__utility/integer_sequence.h>
-
-#include <array>
-#include <forward_list>
-#include <string>
 #include <tuple>
 #include <type_traits>
+#include <utility>
 
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/STLForwardCompat.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSwitch.h"
 
 namespace Carbon {
 
@@ -264,6 +257,28 @@ class Args {
 
 namespace Detail {
 
+template <typename SubcommandEnumT>
+class SubcommandImpl {
+ public:
+  static_assert(std::is_enum_v<SubcommandEnumT>,
+                "Must provide an enum type to enumerate subcommands.");
+  using SubcommandEnum = SubcommandEnumT;
+
+  auto subcommand() const -> SubcommandEnum { return subcommand_; }
+
+ private:
+  friend Args;
+
+  SubcommandEnum subcommand_ = {};
+};
+
+enum NoSubcommands {};
+
+template <>
+class SubcommandImpl<NoSubcommands> {
+  friend class Args;
+};
+
 template <typename OptionT>
 struct OptionValue;
 
@@ -321,44 +336,6 @@ constexpr inline auto FindIndexForOption(std::index_sequence<Is...> /*indices*/)
   return ((static_cast<size_t>(IsSameOption<Option, Options>::Value) * Is) +
           ...);
 }
-
-template <typename SubcommandEnumT>
-class SubcommandImpl {
- public:
-  static_assert(std::is_enum_v<SubcommandEnumT>,
-                "Must provide an enum type to enumerate subcommands.");
-  using SubcommandEnum = SubcommandEnumT;
-
-  auto subcommand() const -> SubcommandEnum { return subcommand_; }
-
- private:
-  friend Args;
-
-  SubcommandEnum subcommand_ = {};
-
-  template <const auto& Subcommand, const auto&... Subcommands>
-  auto ParseArgAsSubcommand(llvm::StringRef arg, llvm::raw_ostream& errors)
-      -> bool {
-    if (arg == Subcommand.name) {
-      subcommand_ = Subcommand.Enumerator;
-      return true;
-    }
-    if constexpr (sizeof...(Subcommands) > 0) {
-      return ParseArgAsSubcommand<Subcommands...>(arg, errors);
-    }
-
-    // Otherwise, did not match any of the subcommand names.
-    errors << "ERROR: Invalid subcommand '" << arg << "'\n";
-    return false;
-  }
-};
-
-enum NoSubcommands {};
-
-template <>
-class SubcommandImpl<NoSubcommands> {
-  friend class Args;
-};
 
 template <const auto& Option>
 struct ParseOptionImpl {

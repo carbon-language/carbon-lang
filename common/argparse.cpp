@@ -4,9 +4,6 @@
 
 #include "common/argparse.h"
 
-#include "common/check.h"
-#include "llvm/ADT/PointerUnion.h"
-
 namespace Carbon {
 
 void Args::SetOptionDefaultImpl(const Flag& flag, bool& value) {
