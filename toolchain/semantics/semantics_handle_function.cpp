@@ -34,11 +34,14 @@ auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
 auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
                                             ParseTree::Node parse_node)
     -> bool {
-  SemanticsNodeId return_type_id = SemanticsNodeId::Invalid;
+  SemanticsTypeId return_type_id = SemanticsTypeId::Invalid;
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnType) {
     return_type_id =
-        context.node_stack().PopForNodeId(ParseNodeKind::ReturnType);
+        context.node_stack().PopForTypeId(ParseNodeKind::ReturnType);
+  } else {
+    // Canonicalize the empty tuple for the implicit return.
+    context.CanonicalizeType(SemanticsNodeId::BuiltinEmptyTupleType);
   }
   auto param_refs_id =
       context.node_stack().PopForNodeBlockId(ParseNodeKind::ParameterList);

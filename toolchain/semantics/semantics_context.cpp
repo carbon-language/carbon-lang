@@ -33,7 +33,14 @@ SemanticsContext::SemanticsContext(const TokenizedBuffer& tokens,
       params_or_args_stack_("params_or_args_stack_", semantics.node_blocks(),
                             vlog_stream),
       args_type_info_stack_("args_type_info_stack_", semantics.node_blocks(),
-                            vlog_stream) {}
+                            vlog_stream) {
+  // Inserts the "Invalid" and "Type" types as "used types" so that
+  // canonicalization can skip them. We don't emit either for lowering.
+  canonical_types_.insert(
+      {SemanticsNodeId::BuiltinInvalidType, SemanticsTypeId::InvalidType});
+  canonical_types_.insert(
+      {SemanticsNodeId::BuiltinTypeType, SemanticsTypeId::TypeType});
+}
 
 auto SemanticsContext::TODO(ParseTree::Node parse_node, std::string label)
     -> bool {
@@ -92,7 +99,7 @@ auto SemanticsContext::AddNameToLookupImpl(SemanticsStringId name_id,
 }
 
 auto SemanticsContext::BindName(ParseTree::Node name_node,
-                                SemanticsNodeId type_id,
+                                SemanticsTypeId type_id,
                                 SemanticsNodeId target_id)
     -> SemanticsStringId {
   CARBON_CHECK(parse_tree_->node_kind(name_node) == ParseNodeKind::DeclaredName)
@@ -202,8 +209,8 @@ auto SemanticsContext::ImplicitAsForArgs(
                         size_t, std::string, std::string);
       diagnostic->Note(
           param_parse_node, CallArgTypeMismatch, i,
-          semantics_->StringifyNode(semantics_->GetNode(value_id).type_id()),
-          semantics_->StringifyNode(as_type_id));
+          semantics_->StringifyType(semantics_->GetNode(value_id).type_id()),
+          semantics_->StringifyType(as_type_id));
       return false;
     }
   }
@@ -213,7 +220,7 @@ auto SemanticsContext::ImplicitAsForArgs(
 
 auto SemanticsContext::ImplicitAsRequired(ParseTree::Node parse_node,
                                           SemanticsNodeId value_id,
-                                          SemanticsNodeId as_type_id)
+                                          SemanticsTypeId as_type_id)
     -> SemanticsNodeId {
   SemanticsNodeId output_value_id = value_id;
   if (ImplicitAsImpl(value_id, as_type_id, &output_value_id) ==
@@ -225,15 +232,15 @@ auto SemanticsContext::ImplicitAsRequired(ParseTree::Node parse_node,
     emitter_
         ->Build(
             parse_node, ImplicitAsConversionFailure,
-            semantics_->StringifyNode(semantics_->GetNode(value_id).type_id()),
-            semantics_->StringifyNode(as_type_id))
+            semantics_->StringifyType(semantics_->GetNode(value_id).type_id()),
+            semantics_->StringifyType(as_type_id))
         .Emit();
   }
   return output_value_id;
 }
 
 auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
-                                      SemanticsNodeId as_type_id,
+                                      SemanticsTypeId as_type_id,
                                       SemanticsNodeId* output_value_id)
     -> ImplicitAsKind {
   // Start by making sure both sides are valid. If any part is invalid, the
@@ -242,11 +249,13 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     // If the value is invalid, we can't do much, but do "succeed".
     return ImplicitAsKind::Identical;
   }
-  auto value_type_id = semantics_->GetNode(value_id).type_id();
-  if (value_type_id == SemanticsNodeId::BuiltinInvalidType) {
+  auto value = semantics_->GetNode(value_id);
+  auto value_type_id = value.type_id();
+  if (value_type_id == SemanticsTypeId::InvalidType) {
     return ImplicitAsKind::Identical;
   }
-  if (as_type_id == SemanticsNodeId::BuiltinInvalidType) {
+
+  if (as_type_id == SemanticsTypeId::InvalidType) {
     // Although the target type is invalid, this still changes the value.
     if (output_value_id != nullptr) {
       *output_value_id = SemanticsNodeId::BuiltinInvalidType;
@@ -259,62 +268,26 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     return ImplicitAsKind::Identical;
   }
 
-  // When converting to a Type, there are some automatic conversions that can be
-  // done.
-  if (as_type_id == SemanticsNodeId::BuiltinTypeType) {
-    if (value_id == SemanticsNodeId::BuiltinEmptyTuple) {
+  if (as_type_id == SemanticsTypeId::TypeType) {
+    // TODO: When converting `()` to a type, the result is `() as Type`.
+    // Right now there is no tuple value support.
+
+    // When converting `{}` to a type, the result is `{} as Type`.
+    if (value.kind() == SemanticsNodeKind::StructValue &&
+        value.GetAsStructValue() == SemanticsNodeBlockId::Empty) {
       if (output_value_id != nullptr) {
-        *output_value_id = SemanticsNodeId::BuiltinEmptyTupleType;
-      }
-      return ImplicitAsKind::Compatible;
-    }
-    if (value_id == SemanticsNodeId::BuiltinEmptyStruct) {
-      if (output_value_id != nullptr) {
-        *output_value_id = SemanticsNodeId::BuiltinEmptyStructType;
+        *output_value_id = semantics_->GetType(value_type_id);
       }
       return ImplicitAsKind::Compatible;
     }
   }
 
-  auto value_type = semantics_->GetNode(value_type_id);
-  auto as_type = semantics_->GetNode(as_type_id);
-  if (CanImplicitAsStruct(value_type, as_type)) {
-    // Under the current implementation, struct types are only allowed to
-    // ImplicitAs when they're equivalent. What's really missing is type
-    // consolidation such that this would fall under the above `value_type_id ==
-    // as_type_id` case. In the future, this will need to handle actual
-    // conversions.
-    return ImplicitAsKind::Identical;
-  }
+  // TODO: Handle ImplicitAs for compatible structs and tuples.
 
   if (output_value_id != nullptr) {
     *output_value_id = SemanticsNodeId::BuiltinInvalidType;
   }
   return ImplicitAsKind::Incompatible;
-}
-
-auto SemanticsContext::CanImplicitAsStruct(SemanticsNode value_type,
-                                           SemanticsNode as_type) -> bool {
-  if (value_type.kind() != SemanticsNodeKind::StructType ||
-      as_type.kind() != SemanticsNodeKind::StructType) {
-    return false;
-  }
-  auto value_type_refs = semantics_->GetNodeBlock(value_type.GetAsStructType());
-  auto as_type_refs = semantics_->GetNodeBlock(as_type.GetAsStructType());
-  if (value_type_refs.size() != as_type_refs.size()) {
-    return false;
-  }
-
-  for (int i = 0; i < static_cast<int>(value_type_refs.size()); ++i) {
-    auto value_type_field = semantics_->GetNode(value_type_refs[i]);
-    auto as_type_field = semantics_->GetNode(as_type_refs[i]);
-    if (value_type_field.type_id() != as_type_field.type_id() ||
-        value_type_field.GetAsStructTypeField() !=
-            as_type_field.GetAsStructTypeField()) {
-      return false;
-    }
-  }
-  return true;
 }
 
 auto SemanticsContext::ParamOrArgStart() -> void {
@@ -357,6 +330,50 @@ auto SemanticsContext::ParamOrArgSave(bool for_args) -> void {
   auto& params_or_args =
       semantics_->GetNodeBlock(params_or_args_stack_.PeekForAdd());
   params_or_args.push_back(param_or_arg_id);
+}
+
+auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
+    -> SemanticsTypeId {
+  auto it = canonical_types_.find(node_id);
+  if (it != canonical_types_.end()) {
+    return it->second;
+  }
+
+  auto type_id = semantics_->AddType(node_id);
+  CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
+  return type_id;
+}
+
+auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
+                                              SemanticsNodeBlockId refs_id)
+    -> SemanticsTypeId {
+  // Construct the field structure for lookup.
+  auto refs = semantics_->GetNodeBlock(refs_id);
+  llvm::FoldingSetNodeID canonical_id;
+  for (const auto& ref_id : refs) {
+    auto ref = semantics_->GetNode(ref_id);
+    canonical_id.AddInteger(ref.GetAsStructTypeField().index);
+    canonical_id.AddInteger(ref.type_id().index);
+  }
+
+  // If a struct with matching fields was already created, reuse it.
+  void* insert_pos;
+  auto* node =
+      canonical_struct_types_.FindNodeOrInsertPos(canonical_id, insert_pos);
+  if (node != nullptr) {
+    return node->type_id();
+  }
+
+  // The struct doesn't already exist, so create and store it as canonical.
+  auto node_id = AddNode(SemanticsNode::StructType::Make(
+      parse_node, SemanticsTypeId::TypeType, refs_id));
+  auto type_id = semantics_->AddType(node_id);
+  CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
+  canonical_struct_types_nodes_.push_back(
+      std::make_unique<StructTypeNode>(canonical_id, type_id));
+  canonical_struct_types_.InsertNode(canonical_struct_types_nodes_.back().get(),
+                                     insert_pos);
+  return type_id;
 }
 
 auto SemanticsContext::PrintForStackDump(llvm::raw_ostream& output) const

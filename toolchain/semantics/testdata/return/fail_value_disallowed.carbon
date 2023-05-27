@@ -15,10 +15,14 @@
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeEmptyTupleType,
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+0, arg1: block2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [

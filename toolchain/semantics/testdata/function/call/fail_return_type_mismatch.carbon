@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_refs: block0, return_type: nodeFloatingPointType},
+// CHECK:STDOUT:   {param_refs: block0, return_type: type0},
 // CHECK:STDOUT:   {param_refs: block0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
@@ -18,16 +18,21 @@
 // CHECK:STDOUT:   Run,
 // CHECK:STDOUT:   x,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeFloatingPointType,
+// CHECK:STDOUT:   nodeEmptyTupleType,
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
-// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1, type: nodeFloatingPointType},
+// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+0, arg1: block2},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str1, arg1: callable1},
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+5, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: callable0, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: nodeInvalidType, type: nodeInvalidType},
+// CHECK:STDOUT:   {kind: VarStorage, type: type2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+5, type: type2},
+// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: callable0, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: nodeInvalidType, type: typeInvalidType},
 // CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+4, arg1: block3},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
