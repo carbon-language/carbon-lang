@@ -61,11 +61,11 @@ static auto operator<<(llvm::raw_ostream& out, CompilePhase phase)
 }
 
 constexpr std::tuple CompilePhaseOptionValues = {
-  Args::EnumOptValue<CompilePhase::Tokenize>{.name = "tokenize"},
-  Args::EnumOptValue<CompilePhase::Parse>{.name = "parse"},
-  Args::EnumOptValue<CompilePhase::Syntax>{.name = "syntax"},
-  Args::EnumOptValue<CompilePhase::LLVM>{.name = "llvm"},
-  Args::EnumOptValue<CompilePhase::Object>{.name = "object"},
+    Args::EnumOptValue<CompilePhase::Tokenize>{.name = "tokenize"},
+    Args::EnumOptValue<CompilePhase::Parse>{.name = "parse"},
+    Args::EnumOptValue<CompilePhase::Syntax>{.name = "syntax"},
+    Args::EnumOptValue<CompilePhase::LLVM>{.name = "llvm"},
+    Args::EnumOptValue<CompilePhase::Object>{.name = "object"},
 };
 
 constexpr Args::EnumOpt<CompilePhaseOptionValues> CompilePhaseOption = {
@@ -133,9 +133,9 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   }
 
   DriverSubcommands subcommands = {
-    .output_stream_ = output_stream_,
-    .error_stream_ = error_stream_,
-    .vlog_stream_ = vlog_stream_,
+      .output_stream_ = output_stream_,
+      .error_stream_ = error_stream_,
+      .vlog_stream_ = vlog_stream_,
   };
   switch (parsed_args.subcommand()) {
     case Subcommands::Compile: {

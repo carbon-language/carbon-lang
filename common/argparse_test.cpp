@@ -20,8 +20,8 @@ using ::testing::StrEq;
 
 TEST(ArgParserTest, BasicCommand) {
   constexpr static Args::Command<> BasicCommand = {.name = "command"};
-  auto args =
-      Args::Parser<BasicCommand>::Parse({"a", "b", "c", "--", "--x--"}, llvm::errs());
+  auto args = Args::Parser<BasicCommand>::Parse({"a", "b", "c", "--", "--x--"},
+                                                llvm::errs());
   EXPECT_TRUE(args);
   EXPECT_THAT(args.positional_args(),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c"), StrEq("--x--")));
@@ -67,7 +67,8 @@ TEST(ArgParserTest, ShortNames) {
   constexpr static Args::Command<TestFlag, TestOpt, OtherFlag1, OtherFlag2,
                                  OtherFlag3>
       Command = {.name = "command"};
-  auto args = Args::Parser<Command>::Parse({"a", "-xfyo=test", "b", "c"}, llvm::errs());
+  auto args =
+      Args::Parser<Command>::Parse({"a", "-xfyo=test", "b", "c"}, llvm::errs());
   EXPECT_TRUE(args);
   EXPECT_TRUE(args.TestFlag<TestFlag>());
   EXPECT_TRUE(args.TestFlag<OtherFlag1>());
@@ -80,8 +81,8 @@ TEST(ArgParserTest, ShortNames) {
 
 TEST(ArgParserTest, Overriding) {
   {
-    auto args = Args::Parser<TestCommand>::Parse({"--option=test1", "--option=test2"},
-                                         llvm::errs());
+    auto args = Args::Parser<TestCommand>::Parse(
+        {"--option=test1", "--option=test2"}, llvm::errs());
     EXPECT_TRUE(args);
     EXPECT_THAT(args.GetOption<TestOpt>(), Optional(StrEq("test2")));
   }
