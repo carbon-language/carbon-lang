@@ -138,8 +138,7 @@ class Args {
   struct Subcommand;
 
   template <const auto& CommandT, const auto&... Subcommands>
-  static auto Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
-                    llvm::raw_ostream& errors);
+  class Parser;
 
   // Query whether there are useful parsed arguments to continue executing the
   // program. Only returns true when the parse result is successful and not
@@ -159,6 +158,9 @@ class Args {
   }
 
  protected:
+  template <const auto& CommandT, const auto&... Subcommands>
+  friend class Parser;
+
   enum class OptKind {
     Flag,
     String,
@@ -185,8 +187,6 @@ class Args {
     // have been directly provided via the streams provided to the parser.
     MetaSuccess,
   };
-
-  struct Parser;
 
   ParseResult parse_result_;
 
@@ -484,83 +484,97 @@ struct ArgsImplFromHolderTuple<SubcommandEnumT,
   using ArgsImplT = ArgsImpl<SubcommandEnumT, Options...>;
 };
 
+// Build some utilities to unique the options in the options tuple as
+// different subcommands can share a flag.
+// FIXME: This seems likely to be ... very expensive in terms of compile time,
+// but more efficient approaches seem very complex.
+struct MergeOptionHolders {
+  template <typename... OptionHolderTs>
+  auto operator()(OptionHolderTs... initial_holders) {
+    if constexpr (sizeof...(initial_holders) == 0) {
+      return std::tuple<>{};
+    } else {
+      auto impl = [](auto self, auto holder, auto... holders) {
+        if constexpr (sizeof...(holders) == 0) {
+          return std::tuple<decltype(holder)>{};
+        } else {
+          if constexpr ((std::is_same_v<decltype(holder), decltype(holders)> ||
+                         ...)) {
+            return self(self, holders...);
+          } else {
+            return std::tuple_cat(std::tuple<decltype(holder)>{},
+                                  self(self, holders...));
+          }
+        }
+      };
+      return impl(impl, initial_holders...);
+    }
+  }
+};
+
+// Now use both the enum and the merge tools to collect all the options across
+// subcommands and build the specific implementation type used for our parsed
+// arguments.
+template <typename SubcommandEnum, const auto&... Commands>
+using ArgsImplT = typename Detail::ArgsImplFromHolderTuple<
+    SubcommandEnum,
+    decltype(std::apply(MergeOptionHolders{},
+                        std::tuple_cat(Commands.options...)))>::ArgsImplT;
+
 }  // namespace Detail
 
 template <const auto& ThisCommand, const auto&... Subcommands>
-auto Args::Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
-                 llvm::raw_ostream& errors) {
+class Args::Parser {
+ public:
+  constexpr static bool HasSubcommands = sizeof...(Subcommands) > 0;
+
   // Extract the enum type from the subcommand types, and ensure it is a single
   // type.
   using SubcommandEnum = typename Detail::SubcommandEnum<Subcommands...>::Type;
-  constexpr bool HasSubcommands = sizeof...(Subcommands) > 0;
-  if constexpr (HasSubcommands) {
-    static_assert(
-        (std::is_same_v<SubcommandEnum,
-                        Detail::TypeOfValue<Subcommands.Enumerator>> &&
-         ...),
-        "Must have the same enum type for all subcommands.");
-  }
-
-  // Compile-time enforce that within a single command the same option isn't
-  // repeated. This would eventually be found at runtime, but we can give a
-  // better compile-time error here.
-  auto check_duplicate_options = [](auto option_holders) {
-    if constexpr (std::tuple_size_v < decltype(option_holders) >> 0) {
-      auto impl = [](auto self, auto holder, auto... holders) {
-        if constexpr (sizeof...(holders) > 0) {
-          static_assert(
-              (!std::is_same_v<decltype(holder), decltype(holders)> && ...),
-              "Found a duplicate option within a single command!");
-          self(self, holders...);
-        }
-      };
-      std::apply([impl](auto... holders) { impl(impl, holders...); },
-                 option_holders);
-    }
-  };
-  check_duplicate_options(ThisCommand.options);
-  (check_duplicate_options(Subcommands.options), ...);
-
-  // Build some utilities to unique the options in the options tuple as
-  // different subcommands can share a flag.
-  // FIXME: This seems likely to be ... very expensive in terms of compile time,
-  // but more efficient approaches seem very complex.
-  auto merge_options_impl = [](auto self, auto holder, auto... holders) {
-    if constexpr (sizeof...(holders) == 0) {
-      return std::tuple<decltype(holder)>{};
-    } else {
-      if constexpr ((std::is_same_v<decltype(holder), decltype(holders)> ||
-                     ...)) {
-        return self(self, holders...);
-      } else {
-        return std::tuple_cat(std::tuple<decltype(holder)>{},
-                              self(self, holders...));
-      }
-    }
-  };
-  auto merge_options = [impl = merge_options_impl](auto... holders) {
-    // If we don't have subcommands, there is no need to merge so just return a
-    // tuple directly.
-    if constexpr (!HasSubcommands) {
-      static_cast<void>(impl);
-      return std::tuple<decltype(holders)...>{};
-    } else {
-      if constexpr (sizeof...(holders) == 0) {
-        return std::tuple<>{};
-      } else {
-        return impl(impl, holders...);
-      }
-    }
-  };
+  static_assert((std::is_same_v<SubcommandEnum,
+                                Detail::TypeOfValue<Subcommands.Enumerator>> &&
+                 ...),
+                "Must have the same enum type for all subcommands.");
 
   // Now use both the enum and the merge tools to collect all the options across
   // subcommands and build the specific implementation type used for our parsed
   // arguments.
-  using ArgsT = typename Detail::ArgsImplFromHolderTuple<
-      SubcommandEnum,
-      decltype(std::apply(merge_options,
-                          std::tuple_cat(ThisCommand.options,
-                                         Subcommands.options...)))>::ArgsImplT;
+  using ArgsT = Detail::ArgsImplT<SubcommandEnum, ThisCommand, Subcommands...>;
+
+  static auto Parse(llvm::ArrayRef<llvm::StringRef> raw_args,
+                    llvm::raw_ostream& errors) -> ArgsT;
+
+ private:
+  // Compile time checking for duplicate options within a command.
+  template <typename OptionHoldersT>
+  constexpr static auto TestForDuplicateOptions(OptionHoldersT option_holders)
+      -> bool {
+    if constexpr ((std::tuple_size_v<OptionHoldersT>) > 0) {
+      auto impl = [](auto self, auto holder, auto... holders) {
+        if constexpr (sizeof...(holders) > 0) {
+          return (std::is_same_v<decltype(holder), decltype(holders)> || ...) ||
+                 self(self, holders...);
+        } else {
+          return false;
+        }
+      };
+      return std::apply(
+          [impl](auto... holders) { return impl(impl, holders...); },
+          option_holders);
+    } else {
+      return false;
+    }
+  };
+  static_assert(!TestForDuplicateOptions(ThisCommand.options),
+                "Found a duplicate option within a single command!");
+  static_assert(!(TestForDuplicateOptions(Subcommands.options) || ...),
+                "Found a duplicate option within a single subcommand!");
+};
+
+template <const auto& ThisCommand, const auto&... Subcommands>
+auto Args::Parser<ThisCommand, Subcommands...>::Parse(
+    llvm::ArrayRef<llvm::StringRef> raw_args, llvm::raw_ostream& errors)
+    -> ArgsT {
   ArgsT args;
 
   // Start in the error state to allow early returns whenever a parse error is

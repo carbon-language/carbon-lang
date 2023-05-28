@@ -21,7 +21,7 @@ using ::testing::StrEq;
 TEST(ArgParserTest, BasicCommand) {
   constexpr static Args::Command<> BasicCommand = {.name = "command"};
   auto args =
-      Args::Parse<BasicCommand>({"a", "b", "c", "--", "--x--"}, llvm::errs());
+      Args::Parser<BasicCommand>::Parse({"a", "b", "c", "--", "--x--"}, llvm::errs());
   EXPECT_TRUE(args);
   EXPECT_THAT(args.positional_args(),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c"), StrEq("--x--")));
@@ -42,7 +42,7 @@ constexpr Args::Command<TestFlag, TestOpt> TestCommand = {
 };
 
 TEST(ArgParserTest, GlobalCommand) {
-  auto args = Args::Parse<TestCommand>(
+  auto args = Args::Parser<TestCommand>::Parse(
       {"--flag", "a", "--option=test", "b", "c", "--", "--x--"}, llvm::errs());
   EXPECT_TRUE(args);
   EXPECT_TRUE(args.TestFlag<TestFlag>());
@@ -67,7 +67,7 @@ TEST(ArgParserTest, ShortNames) {
   constexpr static Args::Command<TestFlag, TestOpt, OtherFlag1, OtherFlag2,
                                  OtherFlag3>
       Command = {.name = "command"};
-  auto args = Args::Parse<Command>({"a", "-xfyo=test", "b", "c"}, llvm::errs());
+  auto args = Args::Parser<Command>::Parse({"a", "-xfyo=test", "b", "c"}, llvm::errs());
   EXPECT_TRUE(args);
   EXPECT_TRUE(args.TestFlag<TestFlag>());
   EXPECT_TRUE(args.TestFlag<OtherFlag1>());
@@ -80,19 +80,19 @@ TEST(ArgParserTest, ShortNames) {
 
 TEST(ArgParserTest, Overriding) {
   {
-    auto args = Args::Parse<TestCommand>({"--option=test1", "--option=test2"},
+    auto args = Args::Parser<TestCommand>::Parse({"--option=test1", "--option=test2"},
                                          llvm::errs());
     EXPECT_TRUE(args);
     EXPECT_THAT(args.GetOption<TestOpt>(), Optional(StrEq("test2")));
   }
   {
-    auto args = Args::Parse<TestCommand>(
+    auto args = Args::Parser<TestCommand>::Parse(
         {"--option=test1", "-o=test2", "--option=test3"}, llvm::errs());
     EXPECT_TRUE(args);
     EXPECT_THAT(args.GetOption<TestOpt>(), Optional(StrEq("test3")));
   }
   {
-    auto args = Args::Parse<TestCommand>(
+    auto args = Args::Parser<TestCommand>::Parse(
         {"--option=test1", "--option=test2", "-o=test3"}, llvm::errs());
     EXPECT_TRUE(args);
     EXPECT_THAT(args.GetOption<TestOpt>(), Optional(StrEq("test3")));
@@ -117,7 +117,7 @@ constexpr Args::Subcommand<Subcommands::Sub2, TestSubFlag, TestSubOpt>
 };
 
 TEST(ArgParserTest, GlobalSubcommands) {
-  auto args = Args::Parse<TestCommand, TestSub1, TestSub2>(
+  auto args = Args::Parser<TestCommand, TestSub1, TestSub2>::Parse(
       {"--flag", "sub1", "a", "b", "c", "--", "--x--"}, llvm::errs());
   EXPECT_TRUE(args);
   EXPECT_TRUE(args.TestFlag<TestFlag>());
@@ -130,7 +130,7 @@ TEST(ArgParserTest, GlobalSubcommands) {
 TEST(ArgParserTest, GlobalSubcommands2) {
   // Same opt spelling but in different parts of subcommand. Also repeated
   // opts and a value for the flag.
-  auto args = Args::Parse<TestCommand, TestSub1, TestSub2>(
+  auto args = Args::Parser<TestCommand, TestSub1, TestSub2>::Parse(
       {"--flag", "--option=main", "sub2", "a", "--flag", "--option=sub", "b",
        "c", "--flag=false"},
       llvm::errs());
@@ -167,7 +167,7 @@ constexpr Args::Subcommand<Subcommands::Sub3, TestSubFlag, TestSubOpt,
     TestSub3 = {.name = "sub3"};
 
 TEST(ArgParserTest, GlobalDefaults) {
-  auto args = Args::Parse<TestCommand2, TestSub1, TestSub2, TestSub3>(
+  auto args = Args::Parser<TestCommand2, TestSub1, TestSub2, TestSub3>::Parse(
       {"sub3", "a", "b", "c"}, llvm::errs());
   EXPECT_TRUE(args);
 
@@ -187,7 +187,7 @@ TEST(ArgParserTest, GlobalDefaults) {
 }
 
 TEST(ArgParserTest, DefaultsWithExplictOptions) {
-  auto args = Args::Parse<TestCommand2, TestSub1, TestSub2, TestSub3>(
+  auto args = Args::Parser<TestCommand2, TestSub1, TestSub2, TestSub3>::Parse(
       {"--option2", "sub3", "a", "--option2=other", "b", "--option2", "c"},
       llvm::errs());
   EXPECT_TRUE(args);
@@ -215,7 +215,7 @@ TEST(ArgParserTest, IntOptions) {
                                     SubOptWithDefault>
       Subcommand = {.name = "sub"};
 
-  auto args = Args::Parse<Command, Subcommand>(
+  auto args = Args::Parser<Command, Subcommand>::Parse(
       {"--int-opt=1", "sub", "--int-opt=2", "--int-defaulted-opt=3"},
       llvm::errs());
   EXPECT_TRUE(args);
@@ -256,7 +256,7 @@ TEST(ArgParserTest, EnumOptions) {
   constexpr static Args::Subcommand<Subcommands::Sub1, SubOpt> Subcommand = {
       .name = "sub",
   };
-  auto args = Args::Parse<Command, Subcommand>(
+  auto args = Args::Parser<Command, Subcommand>::Parse(
       {"--enum-option1=val1", "sub", "--enum-option1=val2"}, llvm::errs());
 
   EXPECT_TRUE(args);
@@ -273,7 +273,7 @@ TEST(ArgParserTest, StringListOption) {
   constexpr static Args::Subcommand<Subcommands::Sub1, SubOpt> Subcommand = {
       .name = "sub"};
 
-  auto args = Args::Parse<Command, Subcommand>(
+  auto args = Args::Parser<Command, Subcommand>::Parse(
       {"--strings1=a", "--strings1=b", "sub", "--strings1=a", "--strings1=b",
        "--strings1=c"},
       llvm::errs());
@@ -299,7 +299,7 @@ TEST(ArgParserTest, StringListOptionDefaults) {
   constexpr static Args::Subcommand<Subcommands::Sub1, SubOpt> Subcommand = {
       .name = "sub"};
 
-  auto args = Args::Parse<Command, Subcommand>({"sub"}, llvm::errs());
+  auto args = Args::Parser<Command, Subcommand>::Parse({"sub"}, llvm::errs());
   EXPECT_TRUE(args);
   EXPECT_THAT(args.GetOption<Opt>(),
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c")));

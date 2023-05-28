@@ -40,15 +40,12 @@ class Driver {
   auto RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
  private:
-  enum class Subcommands {
-    Compile,
-  };
-
   llvm::raw_ostream& output_stream_;
   llvm::raw_ostream& error_stream_;
   llvm::raw_ostream* vlog_stream_ = nullptr;
 
-  auto RunCompileSubcommand(SubcommandArgs<Subcommands> args) -> bool;
+  template <typename ArgsT>
+  auto RunCompileSubcommand(const ArgsT& args) -> bool;
 };
 
 }  // namespace Carbon
