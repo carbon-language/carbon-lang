@@ -89,10 +89,10 @@ Carbon [source files](source_files.md) have a `.carbon` extension, such as
 
 For programs that fit into a single source file, no syntax is required to
 introduce the file. A very simple Carbon program can consist of a single file
-containing only a `Main` function:
+containing only a `Run` function:
 
 ```
-fn Main() -> i32 {
+fn Run() -> i32 {
   return 6 * 9;
 }
 ```
@@ -126,7 +126,7 @@ fn ColorName(c: Color) -> String {
 // Make the "Colors" library visible here.
 import library "Colors";
 
-fn Main() {
+fn Run() {
   Print(ColorName(Color.Red));
 }
 ```
@@ -148,7 +148,7 @@ for code to be extracted out from the API file, while only being callable from
 other files within the library, including both API and implementation files.
 
 A source file that does not specify a library is implicitly within the default
-library. This is the library in which a Carbon `Main` function should reside.
+library. This is the library in which a Carbon `Run` function should reside.
 
 ### Packages
 
@@ -177,7 +177,7 @@ package Geometry impl;
 However, as a package adds more files, it will probably want to separate out
 into multiple libraries. These work exactly like the libraries described above.
 In fact, if no package is specified for a source file, it is implicitly part of
-the "main package". For example, an API file adding the library `Shapes` to the
+the `Main` package. For example, an API file adding the library `Shapes` to the
 `Geometry` package, or `Geometry//Shapes` in
 [shorthand](#shorthand-notation-for-libraries-in-packages), would start with:
 
@@ -219,7 +219,8 @@ by using:
 import library default;
 ```
 
-This is only permitted within a named package, and not within the main package.
+This is not permitted within the `Main` package, because the default library of
+the `Main` package has no `api` file.
 
 As code becomes more complex, and users pull in more code, it may also be
 helpful to add
@@ -341,11 +342,11 @@ For example:
 library "PrimeGenerator" impl;
 ```
 
-If the `package` portion is omitted, the file is implicitly part of the main
-package, which does not have an identifier name. If the `library` portion is
+If the `package` portion is omitted, the file is implicitly part of the `Main`
+package, whose name cannot be written explicitly. If the `library` portion is
 omitted, the file is implicitly part of the default library, which does not have
 an identifier name. If neither a `package` directive nor a `library` directive
-is provided, the file is an `impl` file for the default library in the main
+is provided, the file is an `impl` file for the default library in the `Main`
 package. That library implicitly has an empty `api` file.
 
 As a consequence, every file is in exactly one library, which is always part of
@@ -370,10 +371,10 @@ text. `PACKAGE//default` will refer to the name of the library used when no
 `library` argument is specified, although `PACKAGE` may also be used in
 situations where it is unambiguous that it still refers to the default library.
 
-The name `Main` is reserved as a package name and cannot appear within source
-code. When needed to disambiguate, `Main` can be used as a package name in
-shorthand notation. For example, `Main//default` is the library that is expected
-to contain a Carbon `Main` function.
+The package name `Main` is always used implicitly and cannot appear as a package
+name within source code, but still appears in shorthand notation. For example,
+`Main//default` is the library that is expected to contain a Carbon `Run`
+function.
 
 It's recommended that libraries use a single `/` for separators where desired,
 in order to distinguish between the `//` of the package and `/` separating
@@ -593,7 +594,7 @@ automatically import the `api`, so a self-import should never be required.
 #### Imports from the current package
 
 An import without a package name imports the public names from the given library
-of the same package. It is not valid to import the default library of the main
+of the same package. It is not valid to import the default library of the `Main`
 package, because that library always has an empty `api`.
 
 Entities defined in the API of the current library and in imported libraries in
@@ -931,7 +932,11 @@ should be part of a larger testing plan.
     -   [Remove the `library` keyword from `package` and `import`](/proposals/p0107.md#remove-the-library-keyword-from-package-and-import)
     -   [Rename package concept](/proposals/p0107.md#rename-package-concept)
     -   [No association between the file system path and library/namespace](/proposals/p0107.md#no-association-between-the-file-system-path-and-librarynamespace)
-    -   [Give the main package an identifier name](/proposals/p2550.md#give-the-main-package-an-identifier-name)
+    -   [Require the use of the identifier `Main` in package declarations](/proposals/p2550.md#require-the-use-of-the-identifier-main-in-package-declarations)
+    -   [Permit the use of the identifier `Main` in package declarations](/proposals/p2550.md#permit-the-use-of-the-identifier-main-in-package-declarations)
+    -   [Make the main package be unnamed](/proposals/p2550.md#make-the-main-package-be-unnamed)
+    -   [Use a different name for the main package](/proposals/p2550.md#use-a-different-name-for-the-main-package)
+    -   [Use a different name for the entry point](/proposals/p2550.md#use-a-different-name-for-the-entry-point)
     -   [Distinguish file scope from package scope](/proposals/p2550.md#distinguish-file-scope-from-package-scope)
 -   Libraries
     -   [Allow exporting namespaces](/proposals/p0107.md#allow-exporting-namespaces)

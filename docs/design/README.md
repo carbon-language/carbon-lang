@@ -2123,21 +2123,21 @@ package Geometry library "Shapes" api;
 
 Parts of this declaration may be omitted:
 
--   If the package keyword is not specified, as in `library "Main" api;`, the
-    file contributes to the main package. No other package may import from the
-    main package.
+-   If the package keyword is not specified, as in `library "Widgets" api;`, the
+    file contributes to the `Main` package. No other package may import from the
+    `Main` package, and it cannot be named explicitly.
 
 -   If the library keyword is not specified, as in `package Geometry api;`, this
     file contributes to the default library.
 
 -   If both keywords are omitted, the package declaration must be omitted
     entirely. In this case, the file is an `impl` file belonging to the default
-    library of the main package, which implicitly has an empty `api` file. This
-    library is used to define the entry point for the program, and tests and
-    smaller examples may choose to reside entirely within this library. No other
-    library can import this library even from within the default package.
+    library of the `Main` package, which implicitly has an empty `api` file.
+    This library is used to define the entry point for the program, and tests
+    and smaller examples may choose to reside entirely within this library. No
+    other library can import this library even from within the default package.
 
-If the default library of the main package contains a function named `Main`,
+If the default library of the `Main` package contains a function named `Run`,
 that function is the program entry point. Otherwise, the program's entry point
 may be defined in another language, such as by defining a C++ `main` function.
 
@@ -2174,6 +2174,9 @@ The syntax `import PackageName ...` introduces the name `PackageName` as a
 to import libraries of the current package. Importing additional libraries from
 that package makes additional members of `PackageName` visible.
 
+It is an error to specify the package name `Main`. Libraries in the `Main`
+package can only be imported from within that package.
+
 Libraries from the current package are imported by omitting the package name.
 
 ```carbon
@@ -2187,7 +2190,7 @@ given library to the top-level scope of the current file as
 [namespaces](#namespaces).
 
 An `import` declaration is not permitted to omit both the package name and the
-library. As a special case, for packages other than the main package, the
+library. As a special case, for packages other than the `Main` package, the
 default library can be imported with the syntax `import library default;`:
 
 ```carbon
