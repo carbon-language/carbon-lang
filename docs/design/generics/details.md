@@ -847,8 +847,8 @@ declare the aspects of a type-of-type directly.
 ```
 constraint VectorLegoFish {
   // Interface implementation requirements
-  impl as Vector;
-  impl as LegoFish;
+  require Self impls Vector;
+  require Self impls LegoFish;
   // Names
   alias Scale = Vector.Scale;
   alias VAdd = Vector.Add;
@@ -863,9 +863,9 @@ adding any of the names:
 ```
 constraint DrawVectorLegoFish {
   // The same as requiring both `Vector` and `LegoFish`.
-  impl as VectorLegoFish;
+  require Self impls VectorLegoFish;
   // A regular interface requirement. No syntactic difference.
-  impl as Drawable;
+  require Self impls Drawable;
 }
 ```
 
@@ -993,11 +993,11 @@ interface Printable { fn Print[self: Self](); }
 interface Renderable { fn Draw[self: Self](); }
 
 constraint PrintAndRender {
-  impl as Printable;
-  impl as Renderable;
+  require Self impls Printable;
+  require Self impls Renderable;
 }
 constraint JustPrint {
-  impl as Printable;
+  require Self impls Printable;
 }
 
 fn PrintIt[T2:! JustPrint](x2: T2) {
@@ -1031,8 +1031,8 @@ interface Renderable {
 
 // `Printable & Renderable` is syntactic sugar for this type-of-type:
 constraint {
-  impl as Printable;
-  impl as Renderable;
+  require Self impls Printable;
+  require Self impls Renderable;
   alias Print = Printable.Print;
   alias Center = Renderable.Center;
   alias Draw = Renderable.Draw;
@@ -1073,8 +1073,8 @@ interface EndOfGame {
 }
 // `Renderable & EndOfGame` is syntactic sugar for this type-of-type:
 constraint {
-  impl as Renderable;
-  impl as EndOfGame;
+  require Self impls Renderable;
+  require Self impls EndOfGame;
   alias Center = Renderable.Center;
   // Open question: `forbidden`, `invalid`, or something else?
   forbidden Draw
@@ -1089,8 +1089,8 @@ or by defining a named constraint explicitly and renaming the methods:
 
 ```
 constraint RenderableAndEndOfGame {
-  impl as Renderable;
-  impl as EndOfGame;
+  require Self impls Renderable;
+  require Self impls EndOfGame;
   alias Center = Renderable.Center;
   alias RenderableDraw = Renderable.Draw;
   alias TieGame = EndOfGame.Draw;
@@ -1132,15 +1132,15 @@ and `B [&] A` has the names of `B`.
 ```
 // `Printable [&] Renderable` is syntactic sugar for this type-of-type:
 constraint {
-  impl as Printable;
-  impl as Renderable;
+  require Self impls Printable;
+  require Self impls Renderable;
   alias Print = Printable.Print;
 }
 
 // `Renderable [&] EndOfGame` is syntactic sugar for this type-of-type:
 constraint {
-  impl as Renderable;
-  impl as EndOfGame;
+  require Self impls Renderable;
+  require Self impls EndOfGame;
   alias Center = Renderable.Center;
   alias Draw = Renderable.Draw;
 }
@@ -1180,7 +1180,7 @@ interface Equatable { fn Equals[self: Self](rhs: Self) -> bool; }
 
 interface Iterable {
   fn Advance[addr self: Self*]() -> bool;
-  impl as Equatable;
+  require Self impls Equatable;
 }
 
 def DoAdvanceAndEquals[T:! Iterable](x: T) {
@@ -1206,7 +1206,7 @@ declarations:
 ```
 interface Hashable {
   fn Hash[self: Self]() -> u64;
-  impl as Equatable;
+  require Self impls Equatable;
   alias Equals = Equatable.Equals;
 }
 
@@ -1260,7 +1260,7 @@ interface Hashable {
 }
 // is equivalent to the definition of Hashable from before:
 // interface Hashable {
-//   impl as Equatable;
+//   require Self impls Equatable;
 //   alias Equals = Equatable.Equals;
 //   fn Hash[self: Self]() -> u64;
 // }
@@ -1343,9 +1343,9 @@ This definition of `Combined` is equivalent to requiring both the `Media` and
 ```
 // Equivalent
 constraint Combined {
-  impl as Media;
+  require Self impls Media;
   alias Play = Media.Play;
-  impl as Job;
+  require Self impls Job;
   alias Run = Job.Run;
 }
 ```
@@ -1395,9 +1395,9 @@ equivalent to:
 
 ```
 interface MovieCodec {
-  impl as Media;
+  require Self impls Media;
   alias Play = Media.Play;
-  impl as Job;
+  require Self impls Job;
   alias Run = Job.Run;
 
   fn Load[addr self: Self*](filename: String);
@@ -1848,8 +1848,9 @@ class IntWrapper {
 use to the adapter instead:
 
 ```
-adapter ComparableFromDifferenceFn
-    (T:! type, Difference:! fnty(T, T)->i32) for T {
+class ComparableFromDifferenceFn
+    (T:! type, Difference:! fnty(T, T)->i32) {
+  adapt T;
   impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
       return Difference(self, rhs) < 0;
@@ -2391,8 +2392,8 @@ interface twice:
 class Bijection(FromType:! type, ToType:! type) {
   impl as Map(FromType, ToType) { ... }
 }
-adapter ReverseLookup(FromType:! type, ToType:! type)
-    for Bijection(FromType, ToType) {
+class ReverseLookup(FromType:! type, ToType:! type) {
+  adapt Bijection(FromType, ToType);
   impl as Map(ToType, FromType) { ... }
 }
 ```
@@ -3487,10 +3488,10 @@ And then to package this functionality as an implementation of `Comparable`, we
 combine `CompatibleWith` with [type adaptation](#adapting-types):
 
 ```
-adapter ThenCompare(
+class ThenCompare(
       T:! type,
-      CompareList:! List(CompatibleWith(T) & Comparable))
-    for T {
+      CompareList:! List(CompatibleWith(T) & Comparable)) {
+  adapt T;
   impl as Comparable {
     fn Compare[self: Self](rhs: Self) -> CompareResult {
       for (let U:! auto in CompareList) {
@@ -3552,7 +3553,7 @@ Example:
 // In the Carbon standard library
 interface DefaultConstructible {
   // Types must be sized to be default constructible.
-  impl as Sized;
+  require Self impls Sized;
   fn Default() -> Self;
 }
 
@@ -4906,7 +4907,7 @@ interface TotalOrder {
   fn TotalLess[self: Self](right: Self) -> bool;
   // ❌ Illegal: May not provide definition
   //             for required interface.
-  impl as PartialOrder {
+  require Self impls PartialOrder {
     fn PartialLess[self: Self](right: Self) -> bool {
       return self.TotalLess(right);
     }
@@ -4920,7 +4921,7 @@ The workaround for this restriction is to use a
 ```
 interface TotalOrder {
   fn TotalLess[self: Self](right: Self) -> bool;
-  impl as PartialOrder;
+  require Self impls PartialOrder;
 }
 
 external impl forall [T:! TotalOrder] T as PartialOrder {
@@ -5004,7 +5005,7 @@ as in:
 
 ```
 interface Iterable {
-  impl as Equatable;
+  require Self impls Equatable;
   // ...
 }
 ```
@@ -5012,12 +5013,12 @@ interface Iterable {
 This states that the type implementing the interface `Iterable`, which in this
 context is called `Self`, must also implement the interface `Equatable`. As is
 done with [conditional conformance](#conditional-conformance), we allow another
-type to be specified between `impl` and `as` to say some type other than `Self`
-must implement an interface. For example,
+type to be specified between `require` and `impls` to say some type other than
+`Self` must implement an interface. For example,
 
 ```
 interface IntLike {
-  impl i32 as As(Self);
+  require i32 impls As(Self);
   // ...
 }
 ```
@@ -5027,7 +5028,7 @@ Similarly,
 
 ```
 interface CommonTypeWith(T:! type) {
-  impl T as CommonTypeWith(Self);
+  require T impls CommonTypeWith(Self);
   // ...
 }
 ```
@@ -5035,43 +5036,30 @@ interface CommonTypeWith(T:! type) {
 says that if `Self` implements `CommonTypeWith(T)`, then `T` must implement
 `CommonTypeWith(Self)`.
 
-The previous description of `impl as` in an interface definition matches the
-behavior of using a default of `Self` when the type between `impl` and `as` is
-omitted. So the previous definition of `interface Iterable` is equivalent to:
+An `require`...`impls` constraint in an `interface`, or `constraint`, definition
+must still use `Self` in some way. It can be an argument to either the type or
+interface. For example:
 
-```
-interface Iterable {
-  // ...
-  impl Self as Equatable;
-  // Equivalent to: impl as Equatable;
-}
-```
-
-An `impl`...`as` constraint in an `interface`, or `constraint`, definition must
-still use `Self` in some way. It can be the implicit `Self` when nothing is
-specified between `impl` and `as`, or it can be an argument to either the type
-or interface. For example:
-
--   ✅ Allowed: `impl as Equatable`
--   ✅ Allowed: `impl Self as Equatable`
--   ✅ Allowed: `impl Vector(Self) as Equatable`
--   ✅ Allowed: `impl i32 as CommonTypeWith(Self)`
--   ✅ Allowed: `impl Self as CommonTypeWith(Self)`
--   ❌ Error: `impl i32 as Equatable`
--   ❌ Error: `impl T as Equatable` where `T` is some parameter to the interface
+-   ✅ Allowed: `require Self impls Equatable`
+-   ✅ Allowed: `require Vector(Self) impls Equatable`
+-   ✅ Allowed: `require i32 impls CommonTypeWith(Self)`
+-   ✅ Allowed: `require Self impls CommonTypeWith(Self)`
+-   ❌ Error: `require i32 impls Equatable`
+-   ❌ Error: `require T impls Equatable` where `T` is some parameter to the
+    interface
 
 This restriction allows the Carbon compiler to know where to look for facts
-about a type. If `impl i32 as Equatable` could appear in any `interface`
+about a type. If `require i32 impls Equatable` could appear in any `interface`
 definition, that implies having to search all of them when considering what
 interfaces `i32` implements. This creates a coherence problem, since then the
 set of facts true for a type would depend on which interfaces have been
 imported.
 
-When implementing an interface with an `impl as` requirement, that requirement
-must be satisfied by an implementation in an imported library, an implementation
-somewhere in the same file, or a constraint in the impl declaration.
-Implementing the requiring interface is a promise that the requirement will be
-implemented. This is like a
+When implementing an interface with an `require`...`impls` requirement, that
+requirement must be satisfied by an implementation in an imported library, an
+implementation somewhere in the same file, or a constraint in the impl
+declaration. Implementing the requiring interface is a promise that the
+requirement will be implemented. This is like a
 [forward declaration of an impl](#declaring-implementations) except that the
 definition can be broader instead of being required to match exactly.
 
@@ -5133,7 +5121,7 @@ interface A(T:! type) {
   let Result:! type;
 }
 interface B(T:! type) {
-  impl as A(T) where .Result == i32;
+  require Self impls A(T) where .Result == i32;
 }
 ```
 
@@ -5169,9 +5157,9 @@ type implements an interface, as in this example:
 
 ```
 interface A { }
-interface B { impl as A; }
-interface C { impl as B; }
-interface D { impl as C; }
+interface B { require Self impls A; }
+interface C { require Self impls B; }
+interface D { require Self impls C; }
 
 fn RequiresA[T:! A](x: T);
 fn RequiresC[T:! C](x: T);
@@ -5324,8 +5312,9 @@ interface ComparableWith(RHS:! type) {
   fn Compare[self: Self](right: RHS) -> CompareResult;
 }
 
-adapter ReverseComparison
-    (T:! type, U:! ComparableWith(RHS)) for T {
+class ReverseComparison
+    (T:! type, U:! ComparableWith(RHS)) {
+  adapt T;
   impl as ComparableWith(U) {
     fn Compare[self: Self](right: RHS) -> CompareResult {
       return ReverseCompareResult(right.Compare(self));

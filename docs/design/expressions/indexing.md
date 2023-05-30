@@ -55,7 +55,7 @@ interface IndexWith(SubscriptType:! type) {
 }
 
 interface IndirectIndexWith(SubscriptType:! type) {
-  impl as IndexWith(SubscriptType);
+  require Self impls IndexWith(SubscriptType);
   fn Addr[self: Self](subscript: SubscriptType) -> ElementType*;
 }
 ```

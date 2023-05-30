@@ -355,7 +355,7 @@ interface Equatable {
 
 // `Iterable` requires that `Equatable` is implemented.
 interface Iterable {
-  impl as Equatable;
+  require Self impls Equatable;
   fn Advance[addr self: Self*]();
 }
 ```
@@ -373,7 +373,7 @@ interface Hashable {
 }
 // `Hashable` is equivalent to:
 interface Hashable {
-  impl as Equatable;
+  require Self impls Equatable;
   alias IsEqual = Equatable.IsEqual;
   fn Hash[self: Self]() -> u64;
 }
@@ -439,8 +439,8 @@ applications and capabilities not covered here.
 
 ```
 constraint Combined {
-  impl as Renderable;
-  impl as EndOfGame;
+  require Self impls Renderable;
+  require Self impls EndOfGame;
   alias Draw_Renderable = Renderable.Draw;
   alias Draw_EndOfGame = EndOfGame.Draw;
   alias SetWinner = EndOfGame.SetWinner;
