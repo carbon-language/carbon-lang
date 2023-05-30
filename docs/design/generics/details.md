@@ -1569,15 +1569,18 @@ interface Comparable {
 class Song {
   impl as Printable { fn Print[self: Self]() { ... } }
 }
-adapter SongByTitle for Song {
+class SongByTitle {
+  adapt Song;
   impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool { ... }
   }
 }
-adapter FormattedSong for Song {
+class FormattedSong {
+  adapt Song;
   impl as Printable { fn Print[self: Self]() { ... } }
 }
-adapter FormattedSongByTitle for Song {
+class FormattedSongByTitle {
+  adapt Song;
   impl as Printable = FormattedSong;
   impl as Comparable = SongByTitle;
 }
@@ -1605,7 +1608,8 @@ Inside an adapter, the `Self` type matches the adapter. Members of the original
 type may be accessed either by a cast:
 
 ```
-adapter SongByTitle for Song {
+class SongByTitle {
+  adapt Song;
   impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
       return (self as Song).Title() < (rhs as Song).Title();
@@ -1617,7 +1621,8 @@ adapter SongByTitle for Song {
 or using a qualified member access expression:
 
 ```
-adapter SongByTitle for Song {
+class SongByTitle {
+  adapt Song;
   impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
       return self.(Song.Title)() < rhs.(Song.Title)();
@@ -1670,11 +1675,13 @@ can convert between two different arguments to a parameterized type. Consider
 two adapters of `Song` that implement `Hashable`:
 
 ```
-adapter PlayableSong for Song {
+class PlayableSong {
+  adapt Song;
   impl as Hashable = Song;
   impl as Media { ... }
 }
-adapter SongHashedByTitle for Song {
+class SongHashedByTitle {
+  adapt Song;
   impl as Hashable { ... }
 }
 ```
@@ -1818,7 +1825,8 @@ another interface `Difference`:
 interface Difference {
   fn Sub[self: Self](rhs: Self) -> i32;
 }
-adapter ComparableFromDifference(T:! Difference) for T {
+class ComparableFromDifference(T:! Difference) {
+  adapt T;
   impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
       return (self as T).Sub(rhs) < 0;
@@ -1919,7 +1927,8 @@ avoids having to [qualify](terminology.md#qualified-member-access-expression)
 each call to methods in the interface.
 
 ```
-adapter DrawInWindow for Window {
+class DrawInWindow {
+  adapt Window;
   impl as DrawingContext = Window;
 }
 fn Render(w: Window) {
@@ -3442,8 +3451,8 @@ Used as:
 
 ```
 class Song { ... }
-adapter SongByArtist for Song { impl as Comparable { ... } }
-adapter SongByTitle for Song { impl as Comparable { ... } }
+class SongByArtist { adapt Song; impl as Comparable { ... } }
+class SongByTitle { adapt Song; impl as Comparable { ... } }
 var s1: Song = ...;
 var s2: Song = ...;
 assert(CombinedLess(s1, s2, SongByArtist, SongByTitle) == True);
