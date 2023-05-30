@@ -394,23 +394,6 @@ import DateTime;
 struct DateTime { ... }
 ```
 
-If necessary, this can be worked around by re-exporting the package with a
-different name:
-
-```
-library "Helper";
-
-import DateTime;
-
-alias RenamedDateTime = DateTime;
-```
-
-```
-import library "Helper";
-
-struct DateTime { ... }
-```
-
 Note that [imported name conflicts](#package-and-library-name-conflicts) are
 handled differently.
 
