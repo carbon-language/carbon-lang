@@ -52,8 +52,8 @@ TEST(ArgParserTest, GlobalCommand) {
 }
 
 TEST(ArgParserTest, EmptyPositional) {
-  auto args = Args::Parser<TestCommand>::Parse({"a", "", "c", "--", "", "--x--"},
-                                                llvm::errs());
+  auto args = Args::Parser<TestCommand>::Parse(
+      {"a", "", "c", "--", "", "--x--"}, llvm::errs());
   EXPECT_TRUE(args);
   EXPECT_THAT(args.positional_args(),
               ElementsAre(StrEq("a"), StrEq(""), StrEq("c"), StrEq(""),

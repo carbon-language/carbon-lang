@@ -59,7 +59,8 @@ def add_substitutions():
         f"{run_carbon} compile --phase=syntax --dump-semantics-ir %s | {filecheck_strict}",
     )
     add_substitution(
-        "carbon-run-tokens", f"{run_carbon} compile --phase=tokenize --dump-tokens %s | {filecheck_strict}"
+        "carbon-run-tokens",
+        f"{run_carbon} compile --phase=tokenize --dump-tokens %s | {filecheck_strict}",
     )
     add_substitution(
         "explorer-run",
