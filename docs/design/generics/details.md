@@ -4774,20 +4774,20 @@ instead include that requirement in the body of the interface.
 interface CommonType(T:! type) {
   let Result:! type;
   // Instead add the requirement inside the definition.
-  impl T as CommonType(Self);
+  require T impls CommonType(Self);
 }
 ```
 
 Note however that `CommonType` is still incomplete inside its definition, so no
-constraints on members of `CommonType` are allowed, and that this `impl T as`
-declaration
+constraints on members of `CommonType` are allowed, and that this
+`require T impls` declaration
 [must involve `Self`](#interface-requiring-other-interfaces-revisited).
 
 ```
 interface CommonType(T:! type) {
   let Result:! type;
   // ❌ Illegal: `CommonType` is incomplete
-  impl T as CommonType(Self) where .Result == Result;
+  require T impls CommonType(Self) where .Result == Result;
 }
 ```
 
@@ -4802,7 +4802,7 @@ interface CommonType(T:! type) {
   let Result:! type;
   // ✅ Allowed: `CommonTypeResult` is incomplete, but
   //             no members are accessed.
-  impl T as CommonTypeResult(Self, Result);
+  require T impls CommonTypeResult(Self, Result);
 }
 
 constraint CommonTypeResult(T:! type, R:! type) {
