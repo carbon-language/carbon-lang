@@ -503,11 +503,13 @@ In this example, we have multiple ways of sorting a collection of `Song` values.
 ```
 class Song { ... }
 
-adapter SongByArtist extends Song {
+class SongByArtist {
+  extend adapt Song;
   impl as Comparable { ... }
 }
 
-adapter SongByTitle extends Song {
+class SongByTitle {
+  extend adapt Song;
   impl as Comparable { ... }
 }
 ```

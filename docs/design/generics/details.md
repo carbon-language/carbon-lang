@@ -1696,8 +1696,8 @@ of a `HashMap` implementation rely on the hashing function staying the same.
 Frequently we expect that the adapter type will want to preserve most or all of
 the API of the original type. The two most common cases expected are adding and
 replacing an interface implementation. Users would indicate that an adapter
-starts from the original type's existing API by using the `extends` keyword
-instead of `for`:
+starts from the original type's existing API by using the `extend` keyword
+before `adapt`:
 
 ```
 class Song {
@@ -1705,7 +1705,9 @@ class Song {
   impl as Printable { ... }
 }
 
-adapter SongByArtist extends Song {
+class SongByArtist {
+  extend adapt Song;
+
   // Add an implementation of a new interface
   impl as Comparable { ... }
 
@@ -1721,16 +1723,19 @@ The resulting type `SongByArtist` would:
 -   implement `Hashable`, but differently than `Song`, and
 -   implement `Printable`, inherited from `Song`.
 
-Unlike the similar `class B { extend base: A; }` notation, `adapter B extends A`
-is permitted even if `A` is a final class. Also, there is no implicit conversion
-from `B` to `A`, matching `adapter`...`for` but unlike class extension.
+Unlike the similar `class B { extend base: A; }` notation,
+`class B { extend adapt A; }` is permitted even if `A` is a final class. Also,
+there is no implicit conversion from `B` to `A`, matching `adapter`...`for` but
+unlike class extension.
 
 To avoid or resolve name conflicts between interfaces, an `impl` may be declared
 [`external`](#external-impl). The names in that interface may then be pulled in
 individually or renamed using `alias` declarations.
 
 ```
-adapter SongRenderToPrintDriver extends Song {
+class SongRenderToPrintDriver {
+  extend adapt Song;
+
   // Add a new `Print()` member function.
   fn Print[self: Self]() { ... }
 
@@ -1755,21 +1760,25 @@ implementation for `CompareLib.Comparable` for type `SongLib.Song`. A user that
 wants to pass a value of type `SongLib.Song` to `CompareLib.Sort` has to define
 an adapter that provides an implementation of `CompareLib.Comparable` for
 `SongLib.Song`. This adapter will probably use the
-[`extends` facility of adapters](#extending-adapter) to preserve the
+[`extend` facility of adapters](#extending-adapter) to preserve the
 `SongLib.Song` API.
 
 ```
 import CompareLib;
 import SongLib;
 
-adapter Song extends SongLib.Song {
+class Song {
+  extend adapt SongLib.Song;
   impl as CompareLib.Comparable { ... }
 }
 // Or, to keep the names from CompareLib.Comparable out of Song's API:
-adapter Song extends SongLib.Song { }
+class Song {
+  extend adapt SongLib.Song;
+}
 external impl Song as CompareLib.Comparable { ... }
 // Or, equivalently:
-adapter Song extends SongLib.Song {
+class Song {
+  extend adapt SongLib.Song;
   external impl as CompareLib.Comparable { ... }
 }
 ```
@@ -1868,7 +1877,9 @@ class Complex64 {
 
 // Private
 
-adapter ByReal extends Complex64 {
+class ByReal {
+  extend adapt Complex64;
+
   // Complex numbers are not generally comparable,
   // but this comparison function is useful for some
   // method implementations.
