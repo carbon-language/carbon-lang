@@ -51,6 +51,15 @@ TEST(ArgParserTest, GlobalCommand) {
               ElementsAre(StrEq("a"), StrEq("b"), StrEq("c"), StrEq("--x--")));
 }
 
+TEST(ArgParserTest, EmptyPositional) {
+  auto args = Args::Parser<TestCommand>::Parse({"a", "", "c", "--", "", "--x--"},
+                                                llvm::errs());
+  EXPECT_TRUE(args);
+  EXPECT_THAT(args.positional_args(),
+              ElementsAre(StrEq("a"), StrEq(""), StrEq("c"), StrEq(""),
+                          StrEq("--x--")));
+}
+
 TEST(ArgParserTest, ShortNames) {
   constexpr static Args::Flag OtherFlag1 = {
       .name = "other-flag1",

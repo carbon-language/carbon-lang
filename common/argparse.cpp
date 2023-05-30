@@ -114,7 +114,7 @@ auto Args::ParseOneArg(
     llvm::function_ref<bool(unsigned char c,
                             std::optional<llvm::StringRef> value)>
         parse_short_option) -> bool {
-  if (arg[0] != '-' || arg.size() <= 1) {
+  if (arg.size() <= 1 || arg[0] != '-') {
     if (parse_subcommand) {
       return parse_subcommand(arg);
     }

@@ -23,8 +23,8 @@ class LoweringFileTest : public FileTestBase {
   auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
       -> bool override {
     Driver driver(stdout, stderr);
-    return driver.RunFullCommand(
-        {"dump", "llvm-ir", path().filename().string()});
+    return driver.RunCommand({"compile", "--phase=llvm", "--dump-llvm-ir",
+                              path().filename().string()});
   }
 };
 

@@ -23,8 +23,8 @@ class ParserFileTest : public FileTestBase {
   auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
       -> bool override {
     Driver driver(stdout, stderr);
-    return driver.RunFullCommand(
-        {"dump", "parse-tree", path().filename().string()});
+    return driver.RunCommand({"compile", "--phase=parse", "--dump-parse-tree",
+                              path().filename().string()});
   }
 };
 
