@@ -360,7 +360,7 @@ interface Iterable {
 }
 ```
 
-The `extends` keyword is used to [extend](terminology.md#extending-an-interface)
+The `extend` keyword is used to [extend](terminology.md#extending-an-interface)
 another interface. If interface `Derived` extends interface `Base`, `Base`'s
 interface is both required and all its methods are included in `Derived`'s
 interface.
@@ -368,7 +368,7 @@ interface.
 ```
 // `Hashable` extends `Equatable`.
 interface Hashable {
-  extends Equatable;
+  extend Equatable;
   fn Hash[self: Self]() -> u64;
 }
 // `Hashable` is equivalent to:

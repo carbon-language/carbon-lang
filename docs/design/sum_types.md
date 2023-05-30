@@ -145,7 +145,7 @@ class Optional(T:! type) {
 
   external impl as Match {
     interface Continuation {
-      extends Match.BaseContinuation;
+      extend Match.BaseContinuation;
       fn Some[addr self: Self*](value: T) -> ReturnType;
       fn None[addr self: Self*]() -> ReturnType;
     }

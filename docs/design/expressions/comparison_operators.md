@@ -260,7 +260,7 @@ interface EqWith(U:! type) {
   }
 }
 constraint Eq {
-  extends EqWith(Self);
+  extend EqWith(Self);
 }
 ```
 
@@ -371,7 +371,7 @@ interface OrderedWith(U:! type) {
   }
 }
 constraint Ordered {
-  extends OrderedWith(Self);
+  extend OrderedWith(Self);
 }
 
 // Ordering.Less < Ordering.Equivalent < Ordering.Greater.

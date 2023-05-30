@@ -27,7 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Combining interfaces by anding type-of-types](#combining-interfaces-by-anding-type-of-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
-        -   [`extends` and `impl` with named constraints](#extends-and-impl-with-named-constraints)
+        -   [`extend` and `impl` with named constraints](#extend-and-impl-with-named-constraints)
         -   [Diamond dependency issue](#diamond-dependency-issue)
     -   [Use case: overload resolution](#use-case-overload-resolution)
 -   [Adapting types](#adapting-types)
@@ -877,7 +877,7 @@ whenever an interface may be. This includes all of these
 
 -   A type may `impl` a named constraint to say that it implements all of the
     requirements of the named constraint, as
-    [described below](#extends-and-impl-with-named-constraints).
+    [described below](#extend-and-impl-with-named-constraints).
 -   A named constraint may be used as a namespace name in
     [a qualified name](#qualified-member-names-and-compound-member-access). For
     example, `VectorLegoFish.VAdd` refers to the same name as `Vector.Add`.
@@ -1255,7 +1255,7 @@ We expect this concept to be common enough to warrant dedicated syntax:
 interface Equatable { fn Equals[self: Self](rhs: Self) -> bool; }
 
 interface Hashable {
-  extends Equatable;
+  extend Equatable;
   fn Hash[self: Self]() -> u64;
 }
 // is equivalent to the definition of Hashable from before:
@@ -1286,7 +1286,7 @@ Examples:
 -   Swift protocols, such as
     [Collection](https://developer.apple.com/documentation/swift/collection).
 
-To write an interface extending multiple interfaces, use multiple `extends`
+To write an interface extending multiple interfaces, use multiple `extend`
 declarations. For example, the
 [`BinaryInteger` protocol in Swift](https://developer.apple.com/documentation/swift/binaryinteger)
 inherits from `CustomStringConvertible`, `Hashable`, `Numeric`, and `Stridable`.
@@ -1296,12 +1296,12 @@ Carbon:
 
 ```
 interface SetAlgebra {
-  extends Equatable;
-  extends ExpressibleByArrayLiteral;
+  extend Equatable;
+  extend ExpressibleByArrayLiteral;
 }
 ```
 
-**Alternative considered:** The `extends` declarations are in the body of the
+**Alternative considered:** The `extend` declarations are in the body of the
 `interface` definition instead of the header so we can use
 [associated types (defined below)](#associated-types) also defined in the body
 in parameters or constraints of the interface being extended.
@@ -1314,13 +1314,13 @@ interface ConvertibleTo(T:! type) { ... }
 // A type can only implement `PreferredConversion` once.
 interface PreferredConversion {
   let AssociatedType:! type;
-  extends ConvertibleTo(AssociatedType);
+  extend ConvertibleTo(AssociatedType);
 }
 ```
 
-#### `extends` and `impl` with named constraints
+#### `extend` and `impl` with named constraints
 
-The `extends` declaration makes sense with the same meaning inside a
+The `extend` declaration makes sense with the same meaning inside a
 [`constraint`](#named-constraints) definition, and so is also supported.
 
 ```
@@ -1332,8 +1332,8 @@ interface Job {
 }
 
 constraint Combined {
-  extends Media;
-  extends Job;
+  extend Media;
+  extend Job;
 }
 ```
 
@@ -1384,7 +1384,7 @@ Conversely, an `interface` can extend a `constraint`:
 
 ```
 interface MovieCodec {
-  extends Combined;
+  extend Combined;
 
   fn Load[addr self: Self*](filename: String);
 }
@@ -1416,13 +1416,13 @@ interface Graph {
 }
 
 interface IncidenceGraph {
-  extends Graph;
+  extend Graph;
   fn OutEdges[addr self: Self*](u: VertexDescriptor)
     -> (EdgeIterator, EdgeIterator);
 }
 
 interface EdgeListGraph {
-  extends Graph;
+  extend Graph;
   fn Edges[addr self: Self*]() -> (EdgeIterator, EdgeIterator);
 }
 ```
@@ -1524,11 +1524,11 @@ interface ForwardIntIterator {
   fn Get[self: Self]() -> i32;
 }
 interface BidirectionalIntIterator {
-  extends ForwardIntIterator;
+  extend ForwardIntIterator;
   fn Back[addr self: Self*]();
 }
 interface RandomAccessIntIterator {
-  extends BidirectionalIntIterator;
+  extend BidirectionalIntIterator;
   fn Skip[addr self: Self*](offset: i32);
   fn Difference[self: Self](rhs: Self) -> i32;
 }
@@ -2539,7 +2539,7 @@ To name such a constraint, you may use a `let` or a `constraint` declaration:
 ```
 let Point2DInterface:! auto = NSpacePoint where .N = 2;
 constraint Point2DInterface {
-  extends NSpacePoint where .N = 2;
+  extend NSpacePoint where .N = 2;
 }
 ```
 
@@ -2587,7 +2587,7 @@ To name these sorts of constraints, we could use `let` declarations or
 ```
 let IntStack:! auto = Stack where .ElementType = i32;
 constraint IntStack {
-  extends Stack where .ElementType = i32;
+  extend Stack where .ElementType = i32;
 }
 ```
 
@@ -2643,7 +2643,7 @@ This kind of constraint can be named:
 let EqualPair:! auto =
     PairInterface where .Left == .Right;
 constraint EqualPair {
-  extends PairInterface where .Left == .Right;
+  extend PairInterface where .Left == .Right;
 }
 ```
 
@@ -2737,7 +2737,7 @@ interface ContainerInterface {
   ...
 }
 interface RandomAccessIterator {
-  extends IteratorInterface;
+  extend IteratorInterface;
   ...
 }
 ```
@@ -2761,7 +2761,7 @@ let RandomAccessContainer:! auto =
     ContainerInterface where .IteratorType impls RandomAccessIterator;
 // or
 constraint RandomAccessContainer {
-  extends ContainerInterface
+  extend ContainerInterface
       where .IteratorType impls RandomAccessIterator;
 }
 
@@ -2801,7 +2801,7 @@ to encode the return type:
 
 ```
 interface HasAbs {
-  extends Numeric;
+  extend Numeric;
   let MagnitudeType:! Numeric;
   fn Abs[self: Self]() -> MagnitudeType;
 }
@@ -2856,12 +2856,12 @@ These recursive constraints can be named:
 ```
 let RealAbs:! auto = HasAbs where .MagnitudeType == .Self;
 constraint RealAbs {
-  extends HasAbs where .MagnitudeType == Self;
+  extend HasAbs where .MagnitudeType == Self;
 }
 let ContainerIsSlice:! auto =
     Container where .SliceType == .Self;
 constraint ContainerIsSlice {
-  extends Container where .SliceType == Self;
+  extend Container where .SliceType == Self;
 }
 ```
 
@@ -4484,7 +4484,7 @@ An interface or named constraint may be forward declared subject to these rules:
 -   Only the first declaration may have an access-control keyword.
 -   An incomplete interface or named constraint may be used as constraints in
     declarations of types, functions, interfaces, or named constraints. This
-    includes an `impl as` or `extends` declaration inside an interface or named
+    includes an `impl as` or `extend` declaration inside an interface or named
     constraint, but excludes specifying the values for associated constants
     because that would involve name lookup into the incomplete constraint.
 -   An attempt to define the body of a generic function using an incomplete
@@ -4531,7 +4531,7 @@ An incomplete `C` cannot be used in the following contexts:
 complete to be extended, as in:
 
 ```
-interface I { extends C; }
+interface I { extend C; }
 ```
 
 There are three different approaches being considered:
@@ -4623,7 +4623,7 @@ expressions match:
     the same parameters, or are the same type parameter.
 -   Interfaces match if they have the same name after name and alias resolution
     and the same parameters. Note that a named constraint that is equivalent to
-    an interface, as in `constraint Equivalent { extends MyInterface; }`, is not
+    an interface, as in `constraint Equivalent { extend MyInterface; }`, is not
     considered to match.
 
 For implementations to agree:
@@ -4754,10 +4754,10 @@ interface Node {
 // refer to members of the interface, so it is
 // now legal to define the named constraints.
 constraint EdgeFor(N:! Node) {
-  extends Edge where .NodeType == N;
+  extend Edge where .NodeType == N;
 }
 constraint NodeFor(E:! Edge) {
-  extends Node where .EdgeType == E;
+  extend Node where .EdgeType == E;
 }
 ```
 
@@ -4805,7 +4805,7 @@ interface CommonType(T:! type) {
 }
 
 constraint CommonTypeResult(T:! type, R:! type) {
-  extends CommonType(T) where .Result == R;
+  extend CommonType(T) where .Result == R;
 }
 ```
 
@@ -4881,7 +4881,7 @@ is, so `Add()` is equivalent to the constraint:
 ```
 // Equivalent to Add()
 constraint AddDefault {
-  extends Add(Self);
+  extend Add(Self);
 }
 ```
 
