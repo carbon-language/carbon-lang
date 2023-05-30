@@ -21,8 +21,8 @@ auto LoweringHandleCrossReference(LoweringContext& /*context*/,
 auto LoweringHandleAssign(LoweringContext& context, SemanticsNodeId /*node_id*/,
                           SemanticsNode node) -> void {
   auto [storage_id, value_id] = node.GetAsAssign();
-  context.builder().CreateStore(context.GetNodeLoaded(value_id),
-                                context.GetNode(storage_id));
+  context.builder().CreateStore(context.GetLocalLoaded(value_id),
+                                context.GetLocal(storage_id));
 }
 
 auto LoweringHandleBinaryOperatorAdd(LoweringContext& /*context*/,
@@ -49,11 +49,11 @@ auto LoweringHandleCall(LoweringContext& context, SemanticsNodeId node_id,
   auto* function = context.GetCallable(callable_id);
   std::vector<llvm::Value*> args;
   for (auto ref_id : context.semantics_ir().GetNodeBlock(refs_id)) {
-    args.push_back(context.GetNodeLoaded(ref_id));
+    args.push_back(context.GetLocalLoaded(ref_id));
   }
   auto* value =
       context.builder().CreateCall(function, args, function->getName());
-  context.SetNode(node_id, value);
+  context.SetLocal(node_id, value);
 }
 
 auto LoweringHandleCodeBlock(LoweringContext& /*context*/,
@@ -121,7 +121,7 @@ auto LoweringHandleIntegerLiteral(LoweringContext& context,
   // TODO: This won't offer correct semantics, but seems close enough for now.
   llvm::Value* v =
       llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getSExtValue());
-  context.SetNode(node_id, v);
+  context.SetLocal(node_id, v);
 }
 
 auto LoweringHandleRealLiteral(LoweringContext& context,
@@ -134,8 +134,8 @@ auto LoweringHandleRealLiteral(LoweringContext& context,
       real.mantissa.getSExtValue() *
       std::pow((real.is_decimal ? 10 : 2), real.exponent.getSExtValue());
   llvm::APFloat llvm_val(val);
-  context.SetNode(node_id, llvm::ConstantFP::get(
-                               context.builder().getDoubleTy(), llvm_val));
+  context.SetLocal(node_id, llvm::ConstantFP::get(
+                                context.builder().getDoubleTy(), llvm_val));
 }
 
 auto LoweringHandleReturn(LoweringContext& context, SemanticsNodeId /*node_id*/,
@@ -147,7 +147,7 @@ auto LoweringHandleReturnExpression(LoweringContext& context,
                                     SemanticsNodeId /*node_id*/,
                                     SemanticsNode node) -> void {
   SemanticsNodeId expr_id = node.GetAsReturnExpression();
-  context.builder().CreateRet(context.GetNodeLoaded(expr_id));
+  context.builder().CreateRet(context.GetLocalLoaded(expr_id));
 }
 
 auto LoweringHandleStringLiteral(LoweringContext& /*context*/,
@@ -174,8 +174,8 @@ auto LoweringHandleStructMemberAccess(LoweringContext& context,
           .GetAsStructTypeField());
 
   auto* gep = context.builder().CreateStructGEP(
-      llvm_type, context.GetNode(struct_id), member_index.index, member_name);
-  context.SetNode(node_id, gep);
+      llvm_type, context.GetLocal(struct_id), member_index.index, member_name);
+  context.SetLocal(node_id, gep);
 }
 
 auto LoweringHandleStructType(LoweringContext& /*context*/,
@@ -196,7 +196,7 @@ auto LoweringHandleStructValue(LoweringContext& context,
   auto* llvm_type = context.GetType(node.type_id());
   auto* alloca = context.builder().CreateAlloca(
       llvm_type, /*ArraySize=*/nullptr, "StructLiteralValue");
-  context.SetNode(node_id, alloca);
+  context.SetLocal(node_id, alloca);
 
   auto refs = context.semantics_ir().GetNodeBlock(node.GetAsStructValue());
   // Get type information for member names.
@@ -209,14 +209,14 @@ auto LoweringHandleStructValue(LoweringContext& context,
         context.semantics_ir().GetNode(type_refs[i]).GetAsStructTypeField());
     auto* gep =
         context.builder().CreateStructGEP(llvm_type, alloca, i, member_name);
-    context.builder().CreateStore(context.GetNode(refs[i]), gep);
+    context.builder().CreateStore(context.GetLocal(refs[i]), gep);
   }
 }
 
 auto LoweringHandleStubReference(LoweringContext& context,
                                  SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  context.SetNode(node_id, context.GetNode(node.GetAsStubReference()));
+  context.SetLocal(node_id, context.GetLocal(node.GetAsStubReference()));
 }
 
 auto LoweringHandleVarStorage(LoweringContext& context, SemanticsNodeId node_id,
@@ -229,7 +229,7 @@ auto LoweringHandleVarStorage(LoweringContext& context, SemanticsNodeId node_id,
   // storage?
   auto* alloca = context.builder().CreateAlloca(context.GetType(node.type_id()),
                                                 /*ArraySize=*/nullptr, "var");
-  context.SetNode(node_id, alloca);
+  context.SetLocal(node_id, alloca);
 }
 
 }  // namespace Carbon

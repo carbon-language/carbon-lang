@@ -19,7 +19,6 @@ LoweringContext::LoweringContext(llvm::LLVMContext& llvm_context,
       builder_(llvm_context),
       semantics_ir_(&semantics_ir),
       vlog_stream_(vlog_stream),
-      nodes_(semantics_ir_->nodes_size(), nullptr),
       callables_(semantics_ir_->callables_size(), nullptr) {
   CARBON_CHECK(!semantics_ir.has_errors())
       << "Generating LLVM IR from invalid SemanticsIR is unsupported.";
@@ -58,6 +57,8 @@ auto LoweringContext::LowerBlock(SemanticsNodeBlockId block_id) -> void {
 #include "toolchain/semantics/semantics_node_kind.def"
     }
   }
+
+  locals_.clear();
 }
 
 auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
@@ -102,8 +103,8 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
   }
 }
 
-auto LoweringContext::GetNodeLoaded(SemanticsNodeId node_id) -> llvm::Value* {
-  auto* value = GetNode(node_id);
+auto LoweringContext::GetLocalLoaded(SemanticsNodeId node_id) -> llvm::Value* {
+  auto* value = GetLocal(node_id);
   if (llvm::isa<llvm::AllocaInst, llvm::GetElementPtrInst>(value)) {
     auto* load_type = GetType(semantics_ir().GetNode(node_id).type_id());
     return builder().CreateLoad(load_type, value);
