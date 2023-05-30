@@ -35,7 +35,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Pattern matching in local variables](#pattern-matching-in-local-variables)
 -   [Open questions](#open-questions)
     -   [Slice or array nested value pattern matching](#slice-or-array-nested-value-pattern-matching)
-    -   [Generic/template pattern matching](#generictemplate-pattern-matching)
     -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
 -   [Alternatives considered](#alternatives-considered-5)
 -   [References](#references)
@@ -44,12 +43,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-The most prominent mechanism to manipulate and work with types in Carbon is
-pattern matching. This may seem like a deviation from C++, but in fact this is
-largely about building a clear, coherent model for a fundamental part of C++:
-overload resolution.
-
-We refer to the value being matched by a pattern as the _scrutinee_.
+A _pattern_ is an expression-like syntax that describes the structure of some
+value. The pattern may contain unknowns, so it can potentially match multiple
+values, and those unknowns may have names, in which case they are called
+_bindings_. When a pattern is executed by giving it a value called the
+_scrutinee_, it determines whether the scrutinee matches the pattern, and if so,
+determines the values of the bindings.
 
 ## Pattern Syntax and Semantics
 
@@ -734,11 +733,6 @@ a local variable named `p` which is then returned.
 
 An open question is how to effectively fit a "slice" or "array" pattern into
 nested value pattern matching, or whether we shouldn't do so.
-
-### Generic/template pattern matching
-
-An open question is going beyond a simple "type" to things that support generics
-and/or templates.
 
 ### Pattern matching as function overload resolution
 
