@@ -188,7 +188,7 @@ fn F(n: i32) {
 ```
 
 As specified in [#1084](/proposals/p1084.md), function redeclarations may
-replace named bindings with wildcards but may not use different names.
+replace binding names with `_`s but may not use different names.
 
 ```carbon
 fn G(n: i32);
@@ -216,7 +216,9 @@ fn J(unused n: i32);
 A `:!` can be used in place of `:` for a binding that is usable at compile time.
 
 -   _generic-pattern_ ::= `unused`? `template`? _identifier_ `:!` _expression_
+-   _generic-pattern_ ::= `template`? _identifier_ `:!` _expression_
 -   _generic-pattern_ ::= `template`? `_` `:!` _expression_
+-   _generic-pattern_ ::= `unused` `template`? _identifier_ `:!` _expression_
 -   _proper-pattern_ ::= _generic-pattern_
 
 ```carbon
