@@ -1724,9 +1724,16 @@ Classes may only extend a single class. Carbon only supports single inheritance,
 and will use mixins instead of multiple inheritance.
 
 ```carbon
-base class MiddleDerived extends MyBaseClass { ... }
-class FinalDerived extends MiddleDerived { ... }
-// ❌ Forbidden: class Illegal extends FinalDerived { ... }
+base class MiddleDerived {
+  extend base: MyBaseClass;
+  ...
+}
+class FinalDerived {
+  extend base: MiddleDerived;
+  ...
+}
+// ❌ Forbidden: class Illegal { extend base: FinalDerived; ... }
+// may not extend `FinalDerived` since not declared `base` or `abstract`.
 ```
 
 A base class may define
@@ -1761,7 +1768,8 @@ For purposes of construction, a derived class acts like its first field is
 called `base` with the type of its immediate base class.
 
 ```carbon
-class MyDerivedType extends MyBaseType {
+class MyDerivedType {
+  extend base: MyBaseType;
   fn Make() -> MyDerivedType {
     return {.base = MyBaseType.Make(), .derived_field = 7};
   }
@@ -1785,7 +1793,8 @@ abstract class AbstractClass {
 // ❌ Error: can't instantiate abstract class
 var abc: AbstractClass = ...;
 
-class DerivedFromAbstract extends AbstractClass {
+class DerivedFromAbstract {
+  extend base: AbstractClass;
   fn Make() -> Self {
     // AbstractClass.Make() returns a
     // `partial AbstractClass` that can be used as

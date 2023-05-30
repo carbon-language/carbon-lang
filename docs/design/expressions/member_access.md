@@ -480,7 +480,8 @@ base class WidgetBase {
   }
 }
 
-class TriangleWidget extends WidgetBase {
+class TriangleWidget {
+  extend base: WidgetBase;
   external impl as Renderable;
 }
 fn DrawTriangle(t: TriangleWidget) {
