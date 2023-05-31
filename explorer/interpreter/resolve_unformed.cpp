@@ -125,9 +125,9 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::SimpleMemberAccessExpression:
     case ExpressionKind::CompoundMemberAccessExpression:
     case ExpressionKind::BaseAccessExpression:
-      CARBON_RETURN_IF_ERROR(ResolveUnformed(
-          &cast<MemberAccessExpression>(*expression).object(), flow_facts,
-          FlowFacts::ActionType::Check));
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&cast<MemberAccessExpression>(*expression).object(),
+                          flow_facts, FlowFacts::ActionType::Check));
       break;
     case ExpressionKind::BuiltinConvertExpression:
       CARBON_RETURN_IF_ERROR(ResolveUnformed(
