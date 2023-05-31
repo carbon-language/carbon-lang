@@ -64,8 +64,12 @@ static auto SplitOutput(llvm::StringRef output)
 // Runs a test and compares output. This keeps output split by line so that
 // issues are a little easier to identify by the different line.
 auto FileTestBase::TestBody() -> void {
+  const char* src_dir = getenv("TEST_SRCDIR");
+  CARBON_CHECK(src_dir);
+  std::string test_file = path().lexically_relative(
+      std::filesystem::path(src_dir).append("carbon"));
   llvm::errs() << "\nTo test this file alone, run:\n  bazel test "
-               << *subset_target << " --test_arg=" << path() << "\n\n";
+               << *subset_target << " --test_arg=" << test_file << "\n\n";
 
   // Load expected output.
   std::vector<testing::Matcher<std::string>> expected_stdout;
