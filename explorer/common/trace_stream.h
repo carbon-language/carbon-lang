@@ -8,6 +8,7 @@
 #include <optional>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 #include "common/check.h"
 #include "common/ostream.h"
