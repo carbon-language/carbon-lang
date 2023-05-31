@@ -5890,3 +5890,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#2347: What can be done with an incomplete interface](https://github.com/carbon-language/carbon-lang/pull/2347)
 -   [#2376: Constraints must use `Self`](https://github.com/carbon-language/carbon-lang/pull/2376)
 -   [#2483: Replace keyword `is` with `impls`](https://github.com/carbon-language/carbon-lang/pull/2483)
+-   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760).

@@ -2263,3 +2263,4 @@ the type of `U.x`."
 -   [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
 -   [#2287: Allow unqualified name lookup for class members](https://github.com/carbon-language/carbon-lang/pull/2287)
+-   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
