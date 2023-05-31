@@ -2278,7 +2278,6 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   switch (decl.kind()) {
     case DeclarationKind::VariableDeclaration: {
       const auto& var_decl = cast<VariableDeclaration>(decl);
-      const auto* var_type = &var_decl.binding().static_type();
       if (var_decl.has_initializer()) {
         if (act.pos() == 0) {
           return todo_.Spawn(
@@ -2291,22 +2290,6 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
           todo_.Initialize(&var_decl.binding(), v);
           return todo_.FinishAction();
         }
-      } else if (var_type->kind() == Value::Kind::StaticArrayType) {
-        const auto& array = cast<StaticArrayType>(var_type);
-        CARBON_CHECK(array->has_size());
-        const auto& element_type = array->element_type();
-        const auto size = array->size();
-
-        std::vector<Nonnull<const Value*>> elements;
-        elements.reserve(size);
-        for (size_t i = 0; i < size; i++) {
-          elements.push_back(arena_->New<UninitializedValue>(&element_type));
-        }
-
-        Nonnull<const Value*> v =
-            arena_->New<TupleValueBase>(Value::Kind::TupleValue, elements);
-        todo_.Initialize(&var_decl.binding(), v);
-        return todo_.FinishAction();
       } else {
         Nonnull<const Value*> v =
             arena_->New<UninitializedValue>(&var_decl.binding().value());

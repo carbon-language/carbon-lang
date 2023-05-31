@@ -3,14 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: 100
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 var my_array : [i32; 1];
 
 fn Main() -> i32 {
+  // CHECK:STDERR: RUNTIME ERROR: fail_store_to_uninitialized_global_array.carbon:[[@LINE+1]]: undefined behavior: store to subobject of uninitialized value Uninit<Placeholder<my_array>>
   my_array[0] = 100;
   Print("{0}", my_array[0]);
   return 0;
