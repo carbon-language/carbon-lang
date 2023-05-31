@@ -85,6 +85,12 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
           ResolveUnformed(&call.argument(), flow_facts, action));
       break;
     }
+    case ExpressionKind::IntrinsicExpression: {
+      const auto& intrin = cast<IntrinsicExpression>(*expression);
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&intrin.args(), flow_facts, action));
+      break;
+    }
     case ExpressionKind::TupleLiteral:
       for (Nonnull<const Expression*> field :
            cast<TupleLiteral>(*expression).fields()) {
@@ -117,8 +123,10 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
       }
       break;
     case ExpressionKind::SimpleMemberAccessExpression:
+    case ExpressionKind::CompoundMemberAccessExpression:
+    case ExpressionKind::BaseAccessExpression:
       CARBON_RETURN_IF_ERROR(ResolveUnformed(
-          &cast<SimpleMemberAccessExpression>(*expression).object(), flow_facts,
+          &cast<MemberAccessExpression>(*expression).object(), flow_facts,
           FlowFacts::ActionType::Check));
       break;
     case ExpressionKind::BuiltinConvertExpression:
@@ -126,6 +134,20 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
           cast<BuiltinConvertExpression>(*expression).source_expression(),
           flow_facts, FlowFacts::ActionType::Check));
       break;
+    case ExpressionKind::IndexExpression:
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          &cast<IndexExpression>(*expression).object(), flow_facts, action));
+      break;
+    case ExpressionKind::IfExpression: {
+      const auto& if_exp = cast<IfExpression>(*expression);
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(&if_exp.condition(), flow_facts,
+                                             FlowFacts::ActionType::Check));
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&if_exp.then_expression(), flow_facts, action));
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&if_exp.else_expression(), flow_facts, action));
+      break;
+    }
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::BoolLiteral:
@@ -135,13 +157,8 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::ValueLiteral:
-    case ExpressionKind::IndexExpression:
-    case ExpressionKind::CompoundMemberAccessExpression:
-    case ExpressionKind::BaseAccessExpression:
-    case ExpressionKind::IfExpression:
     case ExpressionKind::WhereExpression:
     case ExpressionKind::StructTypeLiteral:
-    case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::ArrayTypeLiteral:
