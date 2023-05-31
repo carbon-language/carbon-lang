@@ -60,7 +60,7 @@ interface Widget {
 class Cog {
   var size: i32;
   fn Make(size: i32) -> Self;
-  impl as Widgets.Widget;
+  extend impl as Widgets.Widget;
 }
 
 fn GrowSomeCogs() {
@@ -170,7 +170,7 @@ class Point {
   var x: i32;
   var y: i32;
   // Internal impl injects the name `Print` into class `Point`.
-  impl as Printable;
+  extend impl as Printable;
 }
 
 fn PrintPointTwice() {
@@ -311,7 +311,7 @@ interface Addable {
 }
 
 class Integer {
-  impl as Addable {
+  extend impl as Addable {
     // #3
     fn Add[self: Self](other: Self) -> Self;
     // #4, generated from default implementation for #2.
@@ -372,7 +372,7 @@ interface I {
   let N:! i32;
 }
 class C {
-  impl as I where .N = 5 {
+  extend impl as I where .N = 5 {
     // #2
     fn F[self: C]() {}
   }

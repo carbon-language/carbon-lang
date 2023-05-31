@@ -2676,7 +2676,7 @@ sufficient.
 class Circle {
   var radius: f32;
 
-  impl as Printable {
+  extend impl as Printable {
     fn Print[self: Self]() {
       Carbon.Print("Circle with radius: {0}", self.radius);
     }
@@ -2782,14 +2782,14 @@ values for the `ElementType` member of the interface using a `where` clause:
 
 ```carbon
 class IntStack {
-  impl as StackInterface where .ElementType = i32 {
+  extend impl as StackInterface where .ElementType = i32 {
     fn Push[addr self: Self*](value: i32);
     // ...
   }
 }
 
 class FruitStack {
-  impl as StackInterface where .ElementType = Fruit {
+  extend impl as StackInterface where .ElementType = Fruit {
     fn Push[addr self: Self*](value: Fruit);
     // ...
   }

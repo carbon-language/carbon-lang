@@ -170,7 +170,7 @@ look, if it were written in Carbon:
 
 ```carbon
 class __MatchStatementImpl {
-  impl as Match(Optional.MatchContinuation) where .ReturnType = () {
+  extend impl as Match(Optional.MatchContinuation) where .ReturnType = () {
     fn Some(the_value: i32) {
       Print(the_value);
     }

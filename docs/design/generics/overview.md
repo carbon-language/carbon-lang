@@ -207,7 +207,7 @@ class Song {
   // Implementing `Printable` for `Song` inside the definition of `Song`
   // without the keyword `external` means all names of `Printable`, such
   // as `F`, are included as a part of the `Song` API.
-  impl as Printable {
+  extend impl as Printable {
     // Could use `Self` in place of `Song` here.
     fn Print[self: Song]() { ... }
   }
@@ -385,7 +385,7 @@ methods in the implementation of the derived interface.
 ```
 class Key {
   // ...
-  impl as Hashable {
+  extend impl as Hashable {
     fn IsEqual[self: Key](rhs: Key) -> bool { ... }
     fn Hash[self: Key]() -> u64 { ... }
   }
@@ -472,7 +472,7 @@ For example: If there were a class `CDCover` defined this way:
 
 ```
 class CDCover  {
-  impl as Printable {
+  extend impl as Printable {
     ...
   }
 }
@@ -505,12 +505,12 @@ class Song { ... }
 
 class SongByArtist {
   extend adapt Song;
-  impl as Comparable { ... }
+  extend impl as Comparable { ... }
 }
 
 class SongByTitle {
   extend adapt Song;
-  impl as Comparable { ... }
+  extend impl as Comparable { ... }
 }
 ```
 
@@ -612,7 +612,7 @@ of associated types (and other associated constants).
 
 ```
 class Vector(T:! Movable) {
-  impl as Stack where .ElementType = T { ... }
+  extend impl as Stack where .ElementType = T { ... }
 }
 ```
 

@@ -258,7 +258,7 @@ An impl may be defined inline inside the type definition:
 class Point {
   var x: f64;
   var y: f64;
-  impl as Vector {
+  extend impl as Vector {
     // In this scope, the `Self` keyword is an
     // alias for `Point`.
     fn Add[self: Self](b: Self) -> Self {
@@ -304,11 +304,11 @@ To implement more than one interface when defining a type, simply include an
 class Point {
   var x: f64;
   var y: f64;
-  impl as Vector {
+  extend impl as Vector {
     fn Add[self: Self](b: Self) -> Self { ... }
     fn Scale[self: Self](v: f64) -> Self { ... }
   }
-  impl as Drawable {
+  extend impl as Drawable {
     fn Draw[self: Self]() { ... }
   }
 }
@@ -321,10 +321,10 @@ below).
 
 ```
 class GameBoard {
-  impl as Drawable {
+  extend impl as Drawable {
     fn Draw[self: Self]() { ... }
   }
-  impl as EndOfGame {
+  extend impl as EndOfGame {
     // ❌ Error: `GameBoard` has two methods named
     // `Draw` with the same signature.
     fn Draw[self: Self]() { ... }
@@ -341,11 +341,11 @@ experience.
 ```
 class Player {
   var name: String;
-  impl as Icon {
+  extend impl as Icon {
     fn Name[self: Self]() -> String { return self.name; }
     // ...
   }
-  impl as GameUnit {
+  extend impl as GameUnit {
     // Possible syntax options for defining
     // `GameUnit.Name` as the same as `Icon.Name`:
     alias Name = Icon.Name;
@@ -945,7 +945,7 @@ Then a type implementing `I` would have `impl as I` with definitions for `X`,
 ```
 class ImplementsI {
   // ...
-  impl as I {
+  extend impl as I {
     X { ... }
     Y { ... }
     Z { ... }
@@ -1046,10 +1046,10 @@ fn PrintThenDraw[T:! Printable & Renderable](x: T) {
 
 class Sprite {
   // ...
-  impl as Printable {
+  extend impl as Printable {
     fn Print[self: Self]() { ... }
   }
-  impl as Renderable {
+  extend impl as Renderable {
     fn Center[self: Self]() -> (i32, i32) { ... }
     fn Draw[self: Self]() { ... }
   }
@@ -1192,8 +1192,8 @@ def DoAdvanceAndEquals[T:! Iterable](x: T) {
 }
 
 class Iota {
-  impl as Iterable { fn Advance[self: Self]() { ... } }
-  impl as Equatable { fn Equals[self: Self](rhs: Self) -> bool { ... } }
+  extend impl as Iterable { fn Advance[self: Self]() { ... } }
+  extend impl as Equatable { fn Equals[self: Self](rhs: Self) -> bool { ... } }
 }
 var x: Iota;
 DoAdvanceAndEquals(x);
@@ -1231,7 +1231,7 @@ as well. In the case of `Hashable` above, this includes all the members of
 
 ```
 class Song {
-  impl as Hashable {
+  extend impl as Hashable {
     fn Hash[self: Self]() -> u64 { ... }
     fn Equals[self: Self](rhs: Self) -> bool { ... }
   }
@@ -1356,7 +1356,7 @@ constraint:
 
 ```
 class Song {
-  impl as Combined {
+  extend impl as Combined {
     fn Play[self: Self]() { ... }
     fn Run[self: Self]() { ... }
   }
@@ -1367,10 +1367,10 @@ This is equivalent to implementing the required interfaces directly:
 
 ```
 class Song {
-  impl as Media {
+  extend impl as Media {
     fn Play[self: Self]() { ... }
   }
-  impl as Job {
+  extend impl as Job {
     fn Run[self: Self]() { ... }
   }
 }
@@ -1433,8 +1433,8 @@ interface.
 
 ```
 class MyEdgeListIncidenceGraph {
-  impl as IncidenceGraph { ... }
-  impl as EdgeListGraph { ... }
+  extend impl as IncidenceGraph { ... }
+  extend impl as EdgeListGraph { ... }
 }
 ```
 
@@ -1447,13 +1447,13 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 
     ```
     class MyEdgeListIncidenceGraph {
-      impl as IncidenceGraph {
+      extend impl as IncidenceGraph {
         fn Source[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn Target[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn OutEdges[addr self: Self*](u: VertexDescriptor)
             -> (EdgeIterator, EdgeIterator) { ... }
       }
-      impl as EdgeListGraph {
+      extend impl as EdgeListGraph {
         fn Edges[addr self: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
       }
     }
@@ -1464,12 +1464,12 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 
     ```
     class MyEdgeListIncidenceGraph {
-      impl as IncidenceGraph {
+      extend impl as IncidenceGraph {
         fn Source[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn OutEdges[addr self: Self*](u: VertexDescriptor)
             -> (EdgeIterator, EdgeIterator) { ... }
       }
-      impl as EdgeListGraph {
+      extend impl as EdgeListGraph {
         fn Target[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn Edges[addr self: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
       }
@@ -1480,12 +1480,12 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 
     ```
     class MyEdgeListIncidenceGraph {
-      impl as Graph {
+      extend impl as Graph {
         fn Source[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn Target[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
       }
-      impl as IncidenceGraph { ... }
-      impl as EdgeListGraph { ... }
+      extend impl as IncidenceGraph { ... }
+      extend impl as EdgeListGraph { ... }
     }
     ```
 
@@ -1493,8 +1493,8 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 
     ```
     class MyEdgeListIncidenceGraph {
-      impl as IncidenceGraph { ... }
-      impl as EdgeListGraph { ... }
+      extend impl as IncidenceGraph { ... }
+      extend impl as EdgeListGraph { ... }
     }
     external impl MyEdgeListIncidenceGraph as Graph {
       fn Source[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
@@ -1567,22 +1567,22 @@ interface Comparable {
   fn Less[self: Self](rhs: Self) -> bool;
 }
 class Song {
-  impl as Printable { fn Print[self: Self]() { ... } }
+  extend impl as Printable { fn Print[self: Self]() { ... } }
 }
 class SongByTitle {
   adapt Song;
-  impl as Comparable {
+  extend impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool { ... }
   }
 }
 class FormattedSong {
   adapt Song;
-  impl as Printable { fn Print[self: Self]() { ... } }
+  extend impl as Printable { fn Print[self: Self]() { ... } }
 }
 class FormattedSongByTitle {
   adapt Song;
-  impl as Printable = FormattedSong;
-  impl as Comparable = SongByTitle;
+  extend impl as Printable = FormattedSong;
+  extend impl as Comparable = SongByTitle;
 }
 ```
 
@@ -1610,7 +1610,7 @@ type may be accessed either by a cast:
 ```
 class SongByTitle {
   adapt Song;
-  impl as Comparable {
+  extend impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
       return (self as Song).Title() < (rhs as Song).Title();
     }
@@ -1623,7 +1623,7 @@ or using a qualified member access expression:
 ```
 class SongByTitle {
   adapt Song;
-  impl as Comparable {
+  extend impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
       return self.(Song.Title)() < rhs.(Song.Title)();
     }
@@ -1660,7 +1660,7 @@ A user of this type will provide specific values for the key and value types:
 
 ```
 class Song {
-  impl as Hashable { ... }
+  extend impl as Hashable { ... }
   // ...
 }
 
@@ -1677,12 +1677,12 @@ two adapters of `Song` that implement `Hashable`:
 ```
 class PlayableSong {
   adapt Song;
-  impl as Hashable = Song;
-  impl as Media { ... }
+  extend impl as Hashable = Song;
+  extend impl as Media { ... }
 }
 class SongHashedByTitle {
   adapt Song;
-  impl as Hashable { ... }
+  extend impl as Hashable { ... }
 }
 ```
 
@@ -1708,19 +1708,19 @@ before `adapt`:
 
 ```
 class Song {
-  impl as Hashable { ... }
-  impl as Printable { ... }
+  extend impl as Hashable { ... }
+  extend impl as Printable { ... }
 }
 
 class SongByArtist {
   extend adapt Song;
 
   // Add an implementation of a new interface
-  impl as Comparable { ... }
+  extend impl as Comparable { ... }
 
   // Replace an existing implementation of an interface
   // with an alternative.
-  impl as Hashable { ... }
+  extend impl as Hashable { ... }
 }
 ```
 
@@ -1776,7 +1776,7 @@ import SongLib;
 
 class Song {
   extend adapt SongLib.Song;
-  impl as CompareLib.Comparable { ... }
+  extend impl as CompareLib.Comparable { ... }
 }
 // Or, to keep the names from CompareLib.Comparable out of Song's API:
 class Song {
@@ -1827,7 +1827,7 @@ interface Difference {
 }
 class ComparableFromDifference(T:! Difference) {
   adapt T;
-  impl as Comparable {
+  extend impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
       return (self as T).Sub(rhs) < 0;
     }
@@ -1835,12 +1835,12 @@ class ComparableFromDifference(T:! Difference) {
 }
 class IntWrapper {
   var x: i32;
-  impl as Difference {
+  extend impl as Difference {
     fn Sub[self: Self](rhs: Self) -> i32 {
       return left.x - right.x;
     }
   }
-  impl as Comparable = ComparableFromDifferenceFn(IntWrapper);
+  extend impl as Comparable = ComparableFromDifferenceFn(IntWrapper);
 }
 ```
 
@@ -1851,7 +1851,7 @@ use to the adapter instead:
 class ComparableFromDifferenceFn
     (T:! type, Difference:! fnty(T, T)->i32) {
   adapt T;
-  impl as Comparable {
+  extend impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
       return Difference(self, rhs) < 0;
     }
@@ -1862,7 +1862,7 @@ class IntWrapper {
   fn Difference(left: Self, right: Self) {
     return left.x - right.x;
   }
-  impl as Comparable =
+  extend impl as Comparable =
       ComparableFromDifferenceFn(IntWrapper, Difference);
 }
 ```
@@ -1892,7 +1892,7 @@ class ByReal {
   // Complex numbers are not generally comparable,
   // but this comparison function is useful for some
   // method implementations.
-  impl as Comparable {
+  extend impl as Comparable {
     fn Less[self: Self](that: Self) -> bool {
       return self.Real() < that.Real();
     }
@@ -1930,7 +1930,7 @@ each call to methods in the interface.
 ```
 class DrawInWindow {
   adapt Window;
-  impl as DrawingContext = Window;
+  extend impl as DrawingContext = Window;
 }
 fn Render(w: Window) {
   let d: DrawInWindow = w as DrawInWindow;
@@ -1980,7 +1980,7 @@ a [`where` clause](#where-constraints). For example, implementations of
 
 ```
 class Point2D {
-  impl as NSpacePoint where .N = 2 {
+  extend impl as NSpacePoint where .N = 2 {
     fn Get[addr self: Self*](i: i32) -> f64 { ... }
     fn Set[addr self: Self*](i: i32, value: f64) { ... }
     fn SetAll[addr self: Self*](value: Array(f64, 2)) { ... }
@@ -1988,7 +1988,7 @@ class Point2D {
 }
 
 class Point3D {
-  impl as NSpacePoint where .N = 3 {
+  extend impl as NSpacePoint where .N = 3 {
     fn Get[addr self: Self*](i: i32) -> f64 { ... }
     fn Set[addr self: Self*](i: i32, value: f64) { ... }
     fn SetAll[addr self: Self*](value: Array(f64, 3)) { ... }
@@ -2047,7 +2047,7 @@ interface DeserializeFromString {
 class MySerializableType {
   var i: i32;
 
-  impl as DeserializeFromString {
+  extend impl as DeserializeFromString {
     fn Deserialize(serialized: String) -> Self {
       return (.i = StringToInt(serialized));
     }
@@ -2104,7 +2104,7 @@ class DynamicArray(T:! type) {
   fn Remove[addr self: Self*](pos: IteratorType);
 
   // Set the associated type `ElementType` to `T`.
-  impl as StackAssociatedType where .ElementType = T {
+  extend impl as StackAssociatedType where .ElementType = T {
     fn Push[addr self: Self*](value: ElementType) {
       self->Insert(self->End(), value);
     }
@@ -2184,9 +2184,9 @@ interface Container {
 
 class DynamicArray(T:! type) {
   ...
-  impl as Container {
+  extend impl as Container {
     class IteratorType {
-      impl Iterator { ... }
+      extend impl as Iterator { ... }
     }
     ...
   }
@@ -2264,7 +2264,7 @@ considered different interfaces, with distinct implementations.
 class Produce {
   var fruit: DynamicArray(Fruit);
   var veggie: DynamicArray(Veggie);
-  impl as StackParameterized(Fruit) {
+  extend impl as StackParameterized(Fruit) {
     fn Push[addr self: Self*](value: Fruit) {
       self->fruit.Push(value);
     }
@@ -2275,7 +2275,7 @@ class Produce {
       return self->fruit.IsEmpty();
     }
   }
-  impl as StackParameterized(Veggie) {
+  extend impl as StackParameterized(Veggie) {
     fn Push[addr self: Self*](value: Veggie) {
       self->veggie.Push(value);
     }
@@ -2339,9 +2339,9 @@ class Complex {
   var imag: f64;
   // Can implement this interface more than once
   // as long as it has different arguments.
-  impl as EquatableWith(f64) { ... }
+  extend impl as EquatableWith(f64) { ... }
   // Same as: impl as EquatableWith(Complex) { ... }
-  impl as EquatableWith(Self) { ... }
+  extend impl as EquatableWith(Self) { ... }
 }
 ```
 
@@ -2376,8 +2376,8 @@ interface Map(FromType:! type, ToType:! type) {
   fn Map[addr self: Self*](needle: FromType) -> Optional(ToType);
 }
 class Bijection(FromType:! type, ToType:! type) {
-  impl as Map(FromType, ToType) { ... }
-  impl as Map(ToType, FromType) { ... }
+  extend impl as Map(FromType, ToType) { ... }
+  extend impl as Map(ToType, FromType) { ... }
 }
 // ❌ Error: Bijection has twodifferent impl definitions of
 // interface Map(String, String)
@@ -2390,11 +2390,11 @@ interface twice:
 
 ```
 class Bijection(FromType:! type, ToType:! type) {
-  impl as Map(FromType, ToType) { ... }
+  extend impl as Map(FromType, ToType) { ... }
 }
 class ReverseLookup(FromType:! type, ToType:! type) {
   adapt Bijection(FromType, ToType);
-  impl as Map(ToType, FromType) { ... }
+  extend impl as Map(ToType, FromType) { ... }
 }
 ```
 
@@ -3492,7 +3492,7 @@ class ThenCompare(
       T:! type,
       CompareList:! List(CompatibleWith(T) & Comparable)) {
   adapt T;
-  impl as Comparable {
+  extend impl as Comparable {
     fn Compare[self: Self](rhs: Self) -> CompareResult {
       for (let U:! auto in CompareList) {
         var result: CompareResult = (self as U).Compare(rhs as U);
@@ -3559,7 +3559,7 @@ interface DefaultConstructible {
 
 // Classes are "sized" by default.
 class Name {
-  impl as DefaultConstructible {
+  extend impl as DefaultConstructible {
     fn Default() -> Self { ... }
   }
   ...
@@ -3722,7 +3722,7 @@ lexically in the class' scope:
 
 ```
 class Vector(T:! type) {
-  impl as Iterable where .ElementType = T {
+  extend impl as Iterable where .ElementType = T {
     ...
   }
 }
@@ -3730,9 +3730,12 @@ class Vector(T:! type) {
 
 This is equivalent to naming the type between `impl` and `as`:
 
+**FIXME:** This form is no longer allowed with `extend` as of
+[#2760](https://github.com/carbon-language/carbon-lang/pull/2760).
+
 ```
 class Vector(T:! type) {
-  impl Vector(T) as Iterable where .ElementType = T {
+  extend impl Vector(T) as Iterable where .ElementType = T {
     ...
   }
 }
@@ -3754,8 +3757,8 @@ implemented:
 
 ```
 class HashMap(Key:! Hashable, Value:! type) {
-  impl as Has(Key) { ... }
-  impl as Contains(HashSet(Key)) { ... }
+  extend impl as Has(Key) { ... }
+  extend impl as Contains(HashSet(Key)) { ... }
 }
 ```
 
@@ -3809,6 +3812,9 @@ external impl forall [T:! Printable] Vector(T) as Printable {
 To include these `impl` definitions inline in a `class` definition, include a
 `forall` clause with a more-specific type between the `impl` and `as` keywords.
 
+**FIXME:** This is no longer allowed due to
+[#2760](https://github.com/carbon-language/carbon-lang/pull/2760).
+
 ```
 class Array(T:! type, template N:! i64) {
   impl forall [P:! Printable] Array(P, N) as Printable { ... }
@@ -3840,6 +3846,9 @@ external impl forall [T:! type] Pair(T, T) as Foo(T) { ... }
 
 You may also define the `impl` inline, in which case it can be internal:
 
+**FIXME:** This is no longer allowed due to
+[#2760](https://github.com/carbon-language/carbon-lang/pull/2760).
+
 ```
 class Pair(T:! type, U:! type) {
   impl Pair(T, T) as Foo(T) { ... }
@@ -3867,6 +3876,9 @@ class X(T:! type) {
 
 However, the same interface may be implemented multiple times as long as there
 is no overlap in the conditions:
+
+**FIXME:** This is no longer allowed due to
+[#2760](https://github.com/carbon-language/carbon-lang/pull/2760).
 
 ```
 class X(T:! type) {
@@ -4520,7 +4532,7 @@ An incomplete `C` cannot be used in the following contexts:
 
 -   ❌ `T:! C` ... `T.X`
 -   ❌ `T:! C where `...
--   ❌ `class `...` { impl as C; }`
+-   ❌ `class `...` { extend impl as C; }`
     -   The names of `C` are added to the class, and so those names need to be
         known.
 -   ❌ `T:! C` ... `T impls A` where `A` is an interface or named constraint
@@ -4693,18 +4705,20 @@ class MyClass {
   // Note: allowed even though `MyClass` is incomplete.
   // Note: allowed but not required to repeat `where`
   // clause.
-  impl as Interface3 where .T3 = f32 { }
+  extend impl as Interface3 where .T3 = f32 { }
 
   // Redeclaration of previously declared internal impl.
   // Every internal implementation must be declared in
   // the class definition.
-  impl as Interface4 where _;
+  extend impl as Interface4 where _;
 
   // Forward declaration of external implementation.
   external impl MyClass as Interface5 where .T5 = u64;
+  // or: external impl as Interface5 where .T5 = u64;
 
   // Forward declaration of internal implementation.
-  impl MyClass as Interface6 where .T6 = u8;
+  extend impl as Interface6 where .T6 = u8;
+  // Not: extend impl MyClass as Interface6 where .T6 = u8;
 }
 
 // It would be legal to move the following definitions
@@ -4956,7 +4970,7 @@ interface TotalOrder {
 }
 
 class String {
-  impl as TotalOrder {
+  extend impl as TotalOrder {
     fn TotalLess[self: Self](right: Self) -> bool { ... }
     // ❌ Illegal: May not provide definition of final
     //             method `TotalGreater`.
@@ -5315,7 +5329,7 @@ interface ComparableWith(RHS:! type) {
 class ReverseComparison
     (T:! type, U:! ComparableWith(RHS)) {
   adapt T;
-  impl as ComparableWith(U) {
+  extend impl as ComparableWith(U) {
     fn Compare[self: Self](right: RHS) -> CompareResult {
       return ReverseCompareResult(right.Compare(self));
     }
@@ -5603,8 +5617,8 @@ class HashMap(
   private var buckets: Vector((KeyType, ValueType));
 
   // Parameters may be used in interfaces implemented.
-  impl as Container where .ElementType = (KeyType, ValueType);
-  impl as ComparableWith(HashMap(KeyType, ValueType));
+  extend impl as Container where .ElementType = (KeyType, ValueType);
+  extend impl as ComparableWith(HashMap(KeyType, ValueType));
 }
 ```
 
