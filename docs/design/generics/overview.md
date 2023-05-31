@@ -205,7 +205,7 @@ class Song {
   // ...
 
   // Implementing `Printable` for `Song` inside the definition of `Song`
-  // without the keyword `external` means all names of `Printable`, such
+  // with the keyword `extend` means all names of `Printable`, such
   // as `F`, are included as a part of the `Song` API.
   extend impl as Printable {
     // Could use `Self` in place of `Song` here.
@@ -214,8 +214,8 @@ class Song {
 }
 
 // Implement `Comparable` for `Song` without changing the API of `Song`
-// using an `external impl` declaration. This may be defined in either
-// the library defining `Song` or `Comparable`.
+// using an `impl` declaration without `extend`. This may be defined in
+// either the library defining `Song` or `Comparable`.
 impl Song as Comparable {
   // Could use either `Self` or `Song` here.
   fn Less[self: Self](rhs: Self) -> bool { ... }
@@ -223,10 +223,10 @@ impl Song as Comparable {
 ```
 
 Implementations may be defined within the class definition itself or
-out-of-line. Implementations may optionally start with the `external` keyword to
-say the members of the interface are not members of the class. Out-of-line
-implementations must be external. External implementations may be defined in the
-library defining either the class or the interface.
+out-of-line. Implementations may optionally start with the `extend` keyword to
+say the members of the interface are also members of the class, which may only
+be used in class scope. Otherwise, implementations may be defined in the library
+defining either the class or the interface.
 
 #### Accessing members of interfaces
 
