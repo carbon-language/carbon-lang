@@ -27,11 +27,13 @@ auto RunWithExtraStackHelper(llvm::function_ref<void()> fn) -> void;
 // create the current thread.
 //
 // Usage:
-//   return RunWithExtraStack<ReturnType>([&]() -> ReturnType {
+//   return RunWithExtraStack([&]() -> ReturnType {
 //         <function body>
 //       });
-template <typename ReturnType>
-auto RunWithExtraStack(llvm::function_ref<ReturnType()> fn) -> ReturnType {
+template <typename Fn>
+auto RunWithExtraStack(Fn fn) -> decltype(fn()) {
+  using ReturnType = decltype(fn());
+  static_assert(!std::is_reference_v<ReturnType>);
   if (Internal::IsStackSpaceNearlyExhausted()) {
     std::optional<ReturnType> result;
     Internal::RunWithExtraStackHelper([&] { result = fn(); });
