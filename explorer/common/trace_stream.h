@@ -50,7 +50,8 @@ class TraceStream {
     return stream_.has_value() &&
            current_code_context_ != CodeContext::Prelude &&
            (allowed_phases_.count(current_phase_) > 0 ||
-            allowed_phases_.count(ProgramPhase::All) > 0);
+            allowed_phases_.count(ProgramPhase::All) > 0 ||
+            current_phase_ == ProgramPhase::Other);
   }
 
   // Sets the trace stream. This should only be called from the main.

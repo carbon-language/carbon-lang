@@ -24,8 +24,7 @@ static auto PrintTimingOnExit(TraceStream* trace_stream, const char* label,
   auto end = std::chrono::steady_clock::now();
   auto duration = end - *cursor;
   *cursor = end;
-
-  return llvm::make_scope_exit([=]() {
+  auto exit_scope_function = llvm::make_scope_exit([=]() {
     if (trace_stream->is_enabled()) {
       *trace_stream << "Time elapsed in " << label << ": "
                     << std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -34,6 +33,8 @@ static auto PrintTimingOnExit(TraceStream* trace_stream, const char* label,
                     << "ms\n";
     }
   });
+  trace_stream->set_current_phase(ProgramPhase::Other);
+  return exit_scope_function;
 }
 
 static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
@@ -44,6 +45,14 @@ static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
   return RunWithExtraStack<ErrorOr<int>>([&]() -> ErrorOr<int> {
     Arena arena;
     auto cursor = std::chrono::steady_clock::now();
+
+    auto print_trace_timing_heading = llvm::make_scope_exit([=]() {
+      trace_stream->set_current_phase(ProgramPhase::Timing);
+      if (trace_stream->is_enabled()) {
+        *trace_stream << "********** printing timing **********\n";
+      }
+      trace_stream->set_current_phase(ProgramPhase::Other);
+    });
 
     ErrorOr<AST> parse_result = parse(&arena);
     auto print_parse_time = PrintTimingOnExit(trace_stream, "Parse", &cursor);
@@ -75,6 +84,7 @@ static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
     if (!exec_result.ok()) {
       return ErrorBuilder() << "RUNTIME ERROR: " << exec_result.error();
     }
+    trace_stream->set_current_phase(ProgramPhase::Other);
     return exec_result;
   });
 }

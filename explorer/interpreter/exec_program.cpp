@@ -30,6 +30,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
       *trace_stream << *ast.declarations[i];
     }
   }
+
   SourceLocation source_loc("<Main()>", 0);
   ast.main_call = arena->New<CallExpression>(
       source_loc, arena->New<IdentifierExpression>(source_loc, "Main"),
@@ -61,7 +62,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
   }
   CARBON_RETURN_IF_ERROR(ResolveUnformed(ast));
 
-  trace_stream->set_current_phase(ProgramPhase::SourceProgram);
+  trace_stream->set_current_phase(ProgramPhase::Declarations);
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** printing declarations **********\n";
     for (int i = ast.num_prelude_declarations;
@@ -69,6 +70,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
       *trace_stream << *ast.declarations[i];
     }
   }
+  trace_stream->set_current_phase(ProgramPhase::Other);
   return ast;
 }
 
