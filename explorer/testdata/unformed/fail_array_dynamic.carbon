@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: 100
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var my_array : [i32; 1];
-  my_array[0] = 100;
-  Print("{0}", my_array[0]);
-  return 0;
+  var v: [i32; 2];
+  if (0 == 1) {
+    v = (1, 2);
+  }
+  // CHECK:STDERR: RUNTIME ERROR: fail_array_dynamic.carbon:[[@LINE+1]]: undefined behavior: access to uninitialized value Uninit<Placeholder<v>>
+  return v[0];
 }

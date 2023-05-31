@@ -2134,18 +2134,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         if (definition.has_init()) {
           CARBON_ASSIGN_OR_RETURN(
               v, Convert(act.results()[0], dest_type, stmt.source_loc()));
-        } else if (dest_type->kind() == Value::Kind::StaticArrayType) {
-          const auto& array = cast<StaticArrayType>(dest_type);
-          CARBON_CHECK(array->has_size());
-          const auto& element_type = array->element_type();
-          const auto size = array->size();
-
-          std::vector<Nonnull<const Value*>> elements;
-          elements.reserve(size);
-          for (size_t i = 0; i < size; i++) {
-            elements.push_back(arena_->New<UninitializedValue>(&element_type));
-          }
-          v = arena_->New<TupleValueBase>(Value::Kind::TupleValue, elements);
         } else {
           v = arena_->New<UninitializedValue>(p);
         }

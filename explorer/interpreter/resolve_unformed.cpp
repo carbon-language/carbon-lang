@@ -135,8 +135,12 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
           flow_facts, FlowFacts::ActionType::Check));
       break;
     case ExpressionKind::IndexExpression:
-      CARBON_RETURN_IF_ERROR(ResolveUnformed(
-          &cast<IndexExpression>(*expression).object(), flow_facts, action));
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&cast<IndexExpression>(*expression).object(),
+                          flow_facts, FlowFacts::ActionType::Check));
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&cast<IndexExpression>(*expression).offset(),
+                          flow_facts, FlowFacts::ActionType::Check));
       break;
     case ExpressionKind::IfExpression: {
       const auto& if_exp = cast<IfExpression>(*expression);
