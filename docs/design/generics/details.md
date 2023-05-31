@@ -198,11 +198,11 @@ somewhere else as long as Carbon can be guaranteed to see the definition when
 needed. For more on this, see
 [the implementing interfaces section](#implementing-interfaces) below.
 
-Unless the implementation of `ConvertibleToString` for `Song` is defined as
-`external`, every member of `ConvertibleToString` is also a member of `Song`.
-This includes members of `ConvertibleToString` that are not explicitly named in
-the `impl` definition but have defaults. Whether the implementation is defined
-as [internal](terminology.md#internal-impl) or
+When the implementation of `ConvertibleToString` for `Song` is defined as
+internal, every member of `ConvertibleToString` is also a member of `Song`. This
+includes members of `ConvertibleToString` that are not explicitly named in the
+`impl` definition but have defaults. Whether the implementation is defined as
+[internal](terminology.md#internal-impl) or
 [external](terminology.md#external-impl), you may access the `ToString` function
 for a `Song` value `s` by a writing function call
 [using a qualified member access expression](terminology.md#qualified-member-access-expression),
@@ -316,8 +316,8 @@ class Point {
 
 In this case, all the functions `Add`, `Scale`, and `Draw` end up a part of the
 API for `Point`. This means you can't implement two interfaces that have a name
-in common (unless you use an `external impl` for one or both, as described
-below).
+in common (unless you use an `impl` without `extend` for one or both, as
+described below).
 
 ```
 class GameBoard {
@@ -358,8 +358,8 @@ class Player {
 ### External impl
 
 Interfaces may also be implemented for a type
-[externally](terminology.md#external-impl), by using the `external impl`
-construct. An external impl does not add the interface's methods to the type.
+[externally](terminology.md#external-impl), by using `impl` without `extend`. An
+external impl does not add the interface's methods to the type.
 
 ```
 class Point2 {
@@ -383,8 +383,8 @@ var a: Point2 = {.x = 1.0, .y = 2.0};
 // ❌ Error: a.Add(a.Scale(2.0));
 ```
 
-An external impl may be defined out-of-line, by including the name of the
-existing type before `as`, which is otherwise optional:
+An external impl may include the name of the existing type before `as`, which is
+required to define it out-of-line:
 
 ```
 class Point3 {
@@ -409,19 +409,19 @@ var a: Point3 = {.x = 1.0, .y = 2.0};
 ```
 
 **References:** The external interface implementation syntax was decided in
-[proposal #553](https://github.com/carbon-language/carbon-lang/pull/553). In
-particular, see
-[the alternatives considered](/proposals/p0553.md#interface-implementation-syntax).
+[proposal #553](https://github.com/carbon-language/carbon-lang/pull/553), and
+then replaced in
+[proposal #2760](https://github.com/carbon-language/carbon-lang/pull/2760).
 
-The `external impl` statement is allowed to be defined in a different library
+An external `impl` declaration is allowed to be defined in a different library
 from `Point3`, restricted by [the coherence/orphan rules](#impl-lookup) that
 ensure that the implementation of an interface can't change based on imports. In
-particular, the `external impl` statement is allowed in the library defining the
+particular, the `impl` declaration is allowed in the library defining the
 interface (`Vector` in this case) in addition to the library that defines the
 type (`Point3` here). This (at least partially) addresses
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
-Carbon requires `impl` declarations in a different library to be `external` so
+Carbon requires `impl` declarations in a different library to be external so
 that the API of `Point3` doesn't change based on what is imported. It would be
 particularly bad if two different libraries implemented interfaces with
 conflicting names that both affected the API of a single type. As a consequence
@@ -430,11 +430,11 @@ available by [simple member access](terminology.md#simple-member-access)) of a
 type in the definition of that type. The only thing that may be in another
 library is an `impl` of an interface.
 
-You might also use `external impl` to implement an interface for a type to avoid
-cluttering the API of that type, for example to avoid a name collision. A syntax
-for reusing method implementations allows us to do this selectively when needed.
-In this case, the `external impl` may be declared lexically inside the class
-scope.
+You might also use an external `impl` to implement an interface for a type to
+avoid cluttering the API of that type, for example to avoid a name collision. A
+syntax for reusing method implementations allows us to do this selectively when
+needed. In this case, the external `impl` may be declared lexically inside the
+class scope.
 
 ```
 class Point4a {
@@ -512,7 +512,7 @@ though:
 implementation.
 [Swift's syntax](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID277)
 does this as an "extension" of the original type. In Rust, all implementations
-are external as in
+are out-of-line as in
 [this example](https://doc.rust-lang.org/rust-by-example/trait.html). Unlike
 Swift and Rust, we don't allow a type's API to be modified outside its
 definition. So in Carbon a type's API is consistent no matter what is imported,
@@ -523,8 +523,8 @@ unlike Swift and Rust.
 Given a value of type `Point3` and an interface `Vector` implemented for that
 type, you can access the methods from that interface using a
 [qualified member access expression](terminology.md#qualified-member-access-expression)
-whether or not the implementation is done externally with an `external impl`
-declaration. The qualified member access expression writes the member's
+whether or not the implementation is done externally with an `impl` declaration
+without `extend`. The qualified member access expression writes the member's
 _qualified name_ in the parentheses of the
 [compound member access syntax](/docs/design/expressions/member_access.md):
 
@@ -1507,9 +1507,9 @@ missing method definition by the end of the file. This doesn't delay other
 aspects of semantic checking, which will just assume that these methods will
 eventually be provided.
 
-**Open question:** We could require that the `external impl` of the required
-interface be declared lexically in the class scope in this case. That would
-allow earlier detection of missing definitions.
+**Open question:** We could require that the `impl` of the required interface be
+declared lexically in the class scope in this case. That would allow earlier
+detection of missing definitions.
 
 ### Use case: overload resolution
 
@@ -1736,7 +1736,7 @@ there is no implicit conversion from `B` to `A`, matching `adapter`...`for` but
 unlike class extension.
 
 To avoid or resolve name conflicts between interfaces, an `impl` may be declared
-[`external`](#external-impl). The names in that interface may then be pulled in
+[external](#external-impl). The names in that interface may then be pulled in
 individually or renamed using `alias` declarations.
 
 ```
@@ -4041,7 +4041,7 @@ parameters are replaced the declarations are normalized as follows:
 -   For impl declarations lexically inline in a class definition, the type is
     added between the `impl` and `as` keywords if the type is left out.
 -   Pointer types `T*` are replaced with `Ptr(T)`.
--   The `external` keyword is removed, if present.
+-   The `extend` keyword is removed, if present.
 -   The `forall` clause introducing type parameters is removed, if present.
 -   Any `where` clauses that are setting associated constants or types are
     removed.
@@ -4357,8 +4357,8 @@ class Optional(T:! type) {
   }
 }
 
-// ❌ Illegal: external impl Ptr(i32) as Deref { ... }
-// ❌ Illegal: external impl Optional(i32) as Deref { ... }
+// ❌ Illegal: impl Ptr(i32) as Deref { ... }
+// ❌ Illegal: impl Optional(i32) as Deref { ... }
 ```
 
 This prevents any higher-priority impl that overlaps a final impl from being
@@ -4530,7 +4530,7 @@ be used in the following contexts:
 -   ✅ `T:! A & C` ... `T impls C`
     -   This includes constructs requiring `T impls C` such as `T as C` or
         `U:! C = T`.
--   ✅ `external impl `...` as C;`
+-   ✅ `impl `...` as C;`
     -   Checking that all associated constants of `C` are correctly assigned
         values will be delayed until `C` is complete.
 
@@ -4544,7 +4544,7 @@ An incomplete `C` cannot be used in the following contexts:
 -   ❌ `T:! C` ... `T impls A` where `A` is an interface or named constraint
     different from `C`
     -   Need to see the definition of `C` to see if it implies `A`.
--   ❌ `external impl` ... `as C {` ... `}`
+-   ❌ `impl` ... `as C {` ... `}`
 
 **Future work:** It is currently undecided whether an interface needs to be
 complete to be extended, as in:
@@ -4569,7 +4569,7 @@ There are three different approaches being considered:
 
 The declaration of an interface implementation consists of:
 
--   optional modifier keywords `final`, `external`,
+-   optional modifier keyword `final`,
 -   the keyword introducer `impl`,
 -   an optional deduced parameter list in square brackets `[`...`]`,
 -   a type, including an optional parameter pattern,
@@ -4579,6 +4579,9 @@ The declaration of an interface implementation consists of:
     [`where` clause](#where-constraints) assigning
     [associated constants](#associated-constants) and
     [associated types](#associated-types).
+
+**Note:** The `extend` keyword, when present, is not part of the declaration. It
+is only present for internal `impl` declarations in class scope.
 
 An implementation of an interface for a type may be forward declared subject to
 these rules:
@@ -4647,8 +4650,8 @@ expressions match:
 
 For implementations to agree:
 
--   The presence of modifier keywords such as `external` before `impl` must
-    match between a forward declaration and definition.
+-   The presence of the modifier keyword `final` before `impl` must match
+    between a forward declaration and definition.
 -   If either declaration includes a `where` clause, they must both include one.
     If neither uses `where _`, they must match in that they produce the
     associated constants with the same values considered separately.
@@ -4669,7 +4672,7 @@ class MyClass;
 
 // ❌ Illegal: Can't declare implementation of incomplete
 //             interface.
-// external impl MyClass as Interface1;
+// impl MyClass as Interface1;
 
 // Definition of interfaces that were previously declared
 interface Interface1 {
@@ -4720,7 +4723,7 @@ class MyClass {
 
   // Forward declaration of external implementation.
   impl MyClass as Interface5 where .T5 = u64;
-  // or: external impl as Interface5 where .T5 = u64;
+  // or: impl as Interface5 where .T5 = u64;
 
   // Forward declaration of internal implementation.
   extend impl as Interface6 where .T6 = u8;
@@ -5890,4 +5893,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#2347: What can be done with an incomplete interface](https://github.com/carbon-language/carbon-lang/pull/2347)
 -   [#2376: Constraints must use `Self`](https://github.com/carbon-language/carbon-lang/pull/2376)
 -   [#2483: Replace keyword `is` with `impls`](https://github.com/carbon-language/carbon-lang/pull/2483)
--   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760).
+-   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
