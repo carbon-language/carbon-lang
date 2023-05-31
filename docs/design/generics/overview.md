@@ -216,7 +216,7 @@ class Song {
 // Implement `Comparable` for `Song` without changing the API of `Song`
 // using an `external impl` declaration. This may be defined in either
 // the library defining `Song` or `Comparable`.
-external impl Song as Comparable {
+impl Song as Comparable {
   // Could use either `Self` or `Song` here.
   fn Less[self: Self](rhs: Self) -> bool { ... }
 }
@@ -651,7 +651,7 @@ supports any type implicitly convertible to a specified type, using `like`:
 // Support multiplying values of type `Distance` with
 // values of type `f64` or any type implicitly
 // convertible to `f64`.
-external impl Distance as MultipliableWith(like f64) ...
+impl Distance as MultipliableWith(like f64) ...
 ```
 
 ## Future work

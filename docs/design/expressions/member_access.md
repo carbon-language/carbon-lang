@@ -165,7 +165,7 @@ For example:
 interface Printable {
   fn Print[self: Self]();
 }
-external impl i32 as Printable;
+impl i32 as Printable;
 class Point {
   var x: i32;
   var y: i32;
@@ -242,7 +242,7 @@ class Cowboy { fn Draw[self: Self](); }
 interface Renderable {
   fn Draw[self: Self]();
 }
-external impl Cowboy as Renderable { fn Draw[self: Self](); }
+impl Cowboy as Renderable { fn Draw[self: Self](); }
 fn DrawDirect(c: Cowboy) { c.Draw(); }
 fn DrawGeneric[T:! Renderable](c: T) { c.Draw(); }
 fn DrawTemplate[template T:! Renderable](c: T) { c.Draw(); }
@@ -257,7 +257,7 @@ fn Draw(c: Cowboy) {
 }
 
 class RoundWidget {
-  external impl as Renderable {
+  impl as Renderable {
     fn Draw[self: Self]();
   }
   alias Draw = Renderable.Draw;
@@ -265,7 +265,7 @@ class RoundWidget {
 
 class SquareWidget {
   fn Draw[self: Self]() {}
-  external impl as Renderable {
+  impl as Renderable {
     alias Draw = Self.Draw;
   }
 }
@@ -417,7 +417,7 @@ interface Renderable {
 }
 
 class RoundWidget {
-  external impl as Renderable {
+  impl as Renderable {
     // #2
     fn Draw[self: Self]();
   }
@@ -428,7 +428,7 @@ class RoundWidget {
 class SquareWidget {
   // #3
   fn Draw[self: Self]() {}
-  external impl as Renderable {
+  impl as Renderable {
     alias Draw = Self.Draw;
   }
 }
@@ -482,7 +482,7 @@ base class WidgetBase {
 
 class TriangleWidget {
   extend base: WidgetBase;
-  external impl as Renderable;
+  impl as Renderable;
 }
 fn DrawTriangle(t: TriangleWidget) {
   // ✅ OK: name `Draw` resolves to `Draw` member of `WidgetBase`, which
@@ -583,7 +583,7 @@ always used for lookup.
 interface Printable {
   fn Print[self: Self]();
 }
-external impl i32 as Printable {
+impl i32 as Printable {
   fn Print[self: Self]();
 }
 fn MemberAccess(n: i32) {
@@ -622,7 +622,7 @@ class A {
 interface B {
   fn F();
 }
-external impl A as B;
+impl A as B;
 
 fn Use(a: A) {
   // Calls member `F` of class `A.B`.

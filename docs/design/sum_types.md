@@ -143,7 +143,7 @@ class Optional(T:! type) {
   private var has_value: bool;
   private var value: T;
 
-  external impl as Match {
+  impl as Match {
     interface Continuation {
       extend Match.BaseContinuation;
       fn Some[addr self: Self*](value: T) -> ReturnType;

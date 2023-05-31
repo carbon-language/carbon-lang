@@ -74,7 +74,7 @@ implement `IndirectIndexWith(I)`:
 `IndirectIndexWith` provides a blanket `final impl` for `IndexWith`:
 
 ```
-final external impl forall
+final impl forall
     [SubscriptType:! type, T:! IndirectIndexWith(SubscriptType)]
     T as IndexWith(SubscriptType) {
   let ElementType:! type = T.(IndirectIndexWith(SubscriptType)).ElementType;
@@ -96,7 +96,7 @@ An array type could implement subscripting like so:
 
 ```
 class Array(template T:! type) {
-  external impl as IndexWith(like i64) {
+  impl as IndexWith(like i64) {
     let ElementType:! type = T;
     fn At[self: Self](subscript: i64) -> T;
     fn Addr[addr self: Self*](subscript: i64) -> T*;
@@ -108,7 +108,7 @@ And a type such as `std::span` could look like this:
 
 ```
 class Span(T:! type) {
-  external impl as IndirectIndexWith(like i64) {
+  impl as IndirectIndexWith(like i64) {
     let ElementType:! type = T;
     fn Addr[self: Self](subscript: i64) -> T*;
   }
