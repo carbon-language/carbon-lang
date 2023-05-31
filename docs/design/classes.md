@@ -2252,6 +2252,12 @@ the type of `U.x`."
 
     -   [No unqualified lookup when defining outside a scope](/proposals/p2287.md#no-unqualified-lookup-when-defining-outside-a-scope)
 
+-   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
+<!-- FIXME: Include once 2760 is merged.
+    -   [Use `extends` instead of `extend`](/proposals/p2760.md#use-extends-instead-of-extend)
+    -   [List base class in class declaration](/proposals/p2760.md#list-base-class-in-class-declaration)
+-->
+
 ## References
 
 -   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
