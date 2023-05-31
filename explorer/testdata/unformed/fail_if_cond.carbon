@@ -3,15 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: 100
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-var my_array : [i32; 1];
-
 fn Main() -> i32 {
-  my_array[0] = 100;
-  Print("{0}", my_array[0]);
-  return 0;
+  var v: bool;
+  // CHECK:STDERR: COMPILATION ERROR: fail_if_cond.carbon:[[@LINE+1]]: use of uninitialized variable v
+  return if v then 1 else 2;
 }

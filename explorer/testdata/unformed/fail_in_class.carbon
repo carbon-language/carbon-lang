@@ -4,11 +4,16 @@
 //
 // AUTOUPDATE
 
-package ExplorerTest impl;
+package ExplorerTest api;
+
+class C {
+  fn F() -> i32 {
+    var n: i32;
+    // CHECK:STDERR: COMPILATION ERROR: fail_in_class.carbon:[[@LINE+1]]: use of uninitialized variable n
+    return n;
+  }
+}
 
 fn Main() -> i32 {
-  var my_array : [i32; 1];
-  // CHECK:STDERR: COMPILATION ERROR: fail_print_uninitalized_array_element.carbon:[[@LINE+1]]: use of uninitialized variable my_array
-  Print("{0}", my_array[0]);
-  return 0;
+  return C.F();
 }
