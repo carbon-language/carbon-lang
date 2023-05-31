@@ -3722,28 +3722,25 @@ lexically in the class' scope:
 
 ```
 class Vector(T:! type) {
-  extend impl as Iterable where .ElementType = T {
+  impl as Iterable where .ElementType = T {
     ...
   }
 }
 ```
 
-This is equivalent to naming the type between `impl` and `as`:
-
-**FIXME:** This form is no longer allowed with `extend` as of
-[#2760](https://github.com/carbon-language/carbon-lang/pull/2760).
+This is equivalent to naming the type between `impl` and `as`, though this form
+is not allowed after `extend`:
 
 ```
 class Vector(T:! type) {
-  extend impl Vector(T) as Iterable where .ElementType = T {
+  impl Vector(T) as Iterable where .ElementType = T {
     ...
   }
 }
 ```
 
-An impl may be declared [external](#external-impl) by adding an `external`
-keyword before `impl`. External impl declarations may also be out-of-line, but
-all parameters must be declared in a `forall` clause:
+An out-of-line `impl` declaration must declare all parameters in a `forall`
+clause:
 
 ```
 impl forall [T:! type] Vector(T) as Iterable
@@ -3787,8 +3784,8 @@ interface when its element type satisfies the same interface:
     if the element type is comparable.
 -   A container is copyable if its elements are.
 
-To do this with an [out-of-line `impl`](#external-impl), specify a more-specific
-`Self` type to the left of the `as` in the declaration:
+This may be done with an [external `impl`](#external-impl) by specifying a
+more-specific `Self` type to the left of the `as` in the declaration:
 
 ```
 interface Printable {
@@ -3797,7 +3794,7 @@ interface Printable {
 class Vector(T:! type) { ... }
 
 // By saying "T:! Printable" instead of "T:! type" here,
-// we constrain T to be Printable for this impl.
+// we constrain `T` to be `Printable` for this impl.
 impl forall [T:! Printable] Vector(T) as Printable {
   fn Print[self: Self]() {
     for (let a: T in self) {
@@ -3809,27 +3806,58 @@ impl forall [T:! Printable] Vector(T) as Printable {
 }
 ```
 
-To include these `impl` definitions inline in a `class` definition, include a
-`forall` clause with a more-specific type between the `impl` and `as` keywords.
-
-**FIXME:** This is no longer allowed due to
-[#2760](https://github.com/carbon-language/carbon-lang/pull/2760).
+Note that no `forall` clause or type may be specified when declaring an `impl`
+with the `extend` keyword:
 
 ```
 class Array(T:! type, template N:! i64) {
+  // ❌ Illegal: nothing allowed before `as` after `extend impl`:
+  extend impl forall [P:! Printable] Array(P, N) as Printable { ... }
+}
+```
+
+**Note:** This was changed in
+[proposal #2760](https://github.com/carbon-language/carbon-lang/pull/2760).
+
+Instead, the class can declare aliases to members of the interface. Those
+aliases will only be usable when the type implements the interface.
+
+```
+class Array(T:! type, template N:! i64) {
+  alias Print = Printable.Print;
+}
+impl forall [P:! Printable] Array(P, N) as Printable { ... }
+
+impl String as Printable { ... }
+var can_print: Array(String, 2) = ("Hello ", "world");
+// ✅ Allowed: `can_print.Print` resolves to
+// `can_print.(Printable.Print)`, which exists as long as
+// `Array(String, 2) impls Printable`, which exists since
+// `String impls Printable`.
+can_print.Print();
+
+var no_print: Array(Unprintable, 2) = ...;
+// ❌ Illegal: `no_print.Print` resolves to
+// `no_print.(Printable.Print)`, but there is no
+// implementation of `Printable` for `Array(Unprintable, 2)`
+// as long as `Unprintable` doesn't implement `Printable`.
+no_print.Print();
+```
+
+It is still legal to declare or define an external impl lexically with the class
+scope, as in:
+
+```
+class Array(T:! type, template N:! i64) {
+  // ✅ Allowed: external impl defined in class scope may use `forall`
+  // and/or specify a type.
   impl forall [P:! Printable] Array(P, N) as Printable { ... }
 }
 ```
 
-All internal `impl` declarations in the body of a `class` definition must be for
-the class being defined. It is an error to declare `impl i32 as Printable`
-inside `class Array`.
-
-It is legal to add the keyword `external` before the `impl` keyword to switch to
-an external impl defined lexically within the class scope. Inside the scope,
-both `P` and `T` refer to the same type, but `P` has the type-of-type of
-`Printable` and so has a `Print` member. The relationship between `T` and `P` is
-as if there was a `where P == T` clause.
+Inside the scope of this `impl` definition, both `P` and `T` refer to the same
+type, but `P` has the type-of-type of `Printable` and so has a `Print` member.
+The relationship between `T` and `P` is as if there was a `where P == T` clause.
 
 **TODO:** Need to resolve whether the `T` name can be reused, or if we require
 that you need to use new names, like `P`, when creating new type variables.
@@ -3844,10 +3872,7 @@ class Pair(T:! type, U:! type) { ... }
 impl forall [T:! type] Pair(T, T) as Foo(T) { ... }
 ```
 
-You may also define the `impl` inline, in which case it can be internal:
-
-**FIXME:** This is no longer allowed due to
-[#2760](https://github.com/carbon-language/carbon-lang/pull/2760).
+You may also define the `impl` inline:
 
 ```
 class Pair(T:! type, U:! type) {
@@ -3855,47 +3880,27 @@ class Pair(T:! type, U:! type) {
 }
 ```
 
-**Clarification:** Method lookup will look at all internal implementations,
-whether or not the conditions on those implementations hold for the `Self` type.
-If the conditions don't hold, then the call will be rejected because `Self` has
-the wrong type, just like any other argument/parameter type mismatch. This means
-types may not implement two different interfaces internally if they share a
-member name, even if their conditions are mutually exclusive:
+**Clarification:** The same interface may be implemented multiple times as long
+as there is no overlap in the conditions:
 
 ```
 class X(T:! type) {
-  impl X(i32) as Foo {
-    fn F[self: Self]();
-  }
-  impl X(i64) as Bar {
-    // ❌ Illegal: name conflict between `Foo.F` and `Bar.F`
-    fn F[self: Self](n: i64);
-  }
+  // ✅ Allowed: `X(T).F` consistently means `X(T).(Foo.F)`
+  // even though that may have different definitions for
+  // different values of `T`.
+  alias F = Foo.F;
 }
-```
-
-However, the same interface may be implemented multiple times as long as there
-is no overlap in the conditions:
-
-**FIXME:** This is no longer allowed due to
-[#2760](https://github.com/carbon-language/carbon-lang/pull/2760).
-
-```
-class X(T:! type) {
-  impl X(i32) as Foo {
-    fn F[self: Self]();
-  }
-  impl X(i64) as Foo {
-    // ✅ Allowed: `X(T).F` consistently means `X(T).(Foo.F)`
-    fn F[self: Self]();
-  }
+impl X(i32) as Foo {
+  fn F[self: Self]() { DoOneThing(); }
+}
+impl X(i64) as Foo {
+  fn F[self: Self]() { DoADifferentThing(); }
 }
 ```
 
 This allows a type to express that it implements an interface for a list of
-types, possibly with different implementations.
-
-In general, `X(T).F` can only mean one thing, regardless of `T`.
+types, possibly with different implementations. However, in general, `X(T).F`
+can only mean one thing, regardless of `T`.
 
 **Comparison with other languages:**
 [Swift supports conditional conformance](https://github.com/apple/swift-evolution/blob/master/proposals/0143-conditional-conformances.md),
