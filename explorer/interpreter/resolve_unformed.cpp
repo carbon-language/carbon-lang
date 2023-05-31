@@ -73,7 +73,7 @@ struct PendingResolveUnformedStep {
   Nonnull<const Expression*> expression;
   FlowFacts::ActionType action;
 };
-}
+}  // namespace
 
 // Resolve the formed/unformed state of an expression, and enqueue any
 // subexpressions to be checked, in reverse evaluation order.
@@ -114,6 +114,9 @@ static auto ResolveOneUnformedExpression(
         // When a variable is taken address of, defer the unformed check to
         // runtime. A more sound analysis can be implemented when a points-to
         // analysis is available.
+        // TODO: This isn't enough to permit &x.y or &x[i] when x is
+        // uninitialized, because x.y and x[i] both require x to be
+        // initialized.
         queue.push_back(
             {opt_exp.arguments().front(), FlowFacts::ActionType::Form});
       } else {
@@ -141,12 +144,12 @@ static auto ResolveOneUnformedExpression(
           {cast<BuiltinConvertExpression>(*expression).source_expression(),
            FlowFacts::ActionType::Check});
       break;
-    case ExpressionKind::IndexExpression:
-      queue.push_back({&cast<IndexExpression>(*expression).offset(),
-                       FlowFacts::ActionType::Check});
-      queue.push_back({&cast<IndexExpression>(*expression).object(),
-                       FlowFacts::ActionType::Check});
+    case ExpressionKind::IndexExpression: {
+      const auto& index_exp = cast<IndexExpression>(*expression);
+      queue.push_back({&index_exp.offset(), FlowFacts::ActionType::Check});
+      queue.push_back({&index_exp.object(), FlowFacts::ActionType::Check});
       break;
+    }
     case ExpressionKind::IfExpression: {
       const auto& if_exp = cast<IfExpression>(*expression);
       queue.push_back({&if_exp.else_expression(), action});
