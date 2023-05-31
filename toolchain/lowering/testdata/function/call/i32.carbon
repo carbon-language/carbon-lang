@@ -10,7 +10,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Echo(i32 %a) {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 1
+// CHECK:STDOUT:   ret i32 %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %EmptyTupleType @Main() {
@@ -19,13 +19,9 @@
 // CHECK:STDOUT:   %Echo = call i32 @Echo(i32 1)
 // CHECK:STDOUT:   store i32 %Echo, ptr %var, align 4
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 1, 2, 0 }
 
 fn Echo(a: i32) -> i32 {
-  // TODO: `return a;` requires the parameter to be in name lookup.
-  return 1;
+  return a;
 }
 
 fn Main() {

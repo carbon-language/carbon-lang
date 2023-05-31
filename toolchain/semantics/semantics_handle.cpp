@@ -404,8 +404,8 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
   CARBON_CHECK(!context.return_scope_stack().empty());
   const auto& fn_node =
       context.semantics_ir().GetNode(context.return_scope_stack().back());
-  const auto callable = context.semantics_ir().GetCallable(
-      fn_node.GetAsFunctionDeclaration().second);
+  const auto callable =
+      context.semantics_ir().GetFunction(fn_node.GetAsFunctionDeclaration());
 
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnStatementStart) {

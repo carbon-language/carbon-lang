@@ -185,7 +185,7 @@ auto SemanticsContext::ImplicitAsForArgs(
   if (arg_refs.size() != param_refs.size()) {
     CARBON_CHECK(diagnostic != nullptr) << "Should have validated first";
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Note,
-                      "Callable cannot be used: Received {0} argument(s), but "
+                      "Function cannot be used: Received {0} argument(s), but "
                       "require {1} argument(s).",
                       int, int);
     diagnostic->Note(param_parse_node, CallArgCountMismatch, arg_refs.size(),
@@ -204,7 +204,7 @@ auto SemanticsContext::ImplicitAsForArgs(
         ImplicitAsKind::Incompatible) {
       CARBON_CHECK(diagnostic != nullptr) << "Should have validated first";
       CARBON_DIAGNOSTIC(CallArgTypeMismatch, Note,
-                        "Callable cannot be used: Cannot implicityly convert "
+                        "Function cannot be used: Cannot implicityly convert "
                         "argument {0} from `{1}` to `{2}`.",
                         size_t, std::string, std::string);
       diagnostic->Note(param_parse_node, CallArgTypeMismatch, i,
