@@ -3872,7 +3872,8 @@ class Pair(T:! type, U:! type) { ... }
 impl forall [T:! type] Pair(T, T) as Foo(T) { ... }
 ```
 
-You may also define the `impl` inline:
+You may also define the `impl` inline, but it may not be combined with the
+`extend` keyword:
 
 ```
 class Pair(T:! type, U:! type) {
