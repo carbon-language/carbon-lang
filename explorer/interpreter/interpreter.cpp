@@ -1596,10 +1596,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               *print_stream_ << llvm::formatv(format_string);
               break;
             case 1: {
-              if ((*args[1]).kind() == Value::Kind::UninitializedValue) {
-                return ProgramError(exp.source_loc())
-                       << "Printing uninitialized value";
-              }
               *print_stream_ << llvm::formatv(format_string,
                                               cast<IntValue>(*args[1]).value());
               break;
