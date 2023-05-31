@@ -68,8 +68,19 @@ static auto ResolveUnformed(Nonnull<const Statement*> statement,
 static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
     -> ErrorOr<Success>;
 
-static auto ResolveUnformed(Nonnull<const Expression*> expression,
-                            FlowFacts& flow_facts, FlowFacts::ActionType action)
+namespace {
+struct PendingResolveUnformedStep {
+  Nonnull<const Expression*> expression;
+  FlowFacts::ActionType action;
+};
+}
+
+// Resolve the formed/unformed state of an expression, and enqueue any
+// subexpressions to be checked, in reverse evaluation order.
+static auto ResolveOneUnformedExpression(
+    Nonnull<const Expression*> expression, FlowFacts& flow_facts,
+    FlowFacts::ActionType action,
+    llvm::SmallVectorImpl<PendingResolveUnformedStep>& queue)
     -> ErrorOr<Success> {
   switch (expression->kind()) {
     case ExpressionKind::IdentifierExpression: {
@@ -81,20 +92,18 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     }
     case ExpressionKind::CallExpression: {
       const auto& call = cast<CallExpression>(*expression);
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&call.argument(), flow_facts, action));
+      queue.push_back({&call.argument(), action});
       break;
     }
     case ExpressionKind::IntrinsicExpression: {
       const auto& intrin = cast<IntrinsicExpression>(*expression);
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&intrin.args(), flow_facts, action));
+      queue.push_back({&intrin.args(), action});
       break;
     }
     case ExpressionKind::TupleLiteral:
       for (Nonnull<const Expression*> field :
-           cast<TupleLiteral>(*expression).fields()) {
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(field, flow_facts, action));
+           llvm::reverse(cast<TupleLiteral>(*expression).fields())) {
+        queue.push_back({field, action});
       }
       break;
     case ExpressionKind::OperatorExpression: {
@@ -102,54 +111,47 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
       if (opt_exp.op() == Operator::AddressOf) {
         CARBON_CHECK(opt_exp.arguments().size() == 1)
             << "OperatorExpression with op & can only have 1 argument";
-        CARBON_RETURN_IF_ERROR(
-            // When a variable is taken address of, defer the unformed check to
-            // runtime. A more sound analysis can be implemented when a
-            // points-to analysis is available.
-            ResolveUnformed(opt_exp.arguments().front(), flow_facts,
-                            FlowFacts::ActionType::Form));
+        // When a variable is taken address of, defer the unformed check to
+        // runtime. A more sound analysis can be implemented when a points-to
+        // analysis is available.
+        queue.push_back(
+            {opt_exp.arguments().front(), FlowFacts::ActionType::Form});
       } else {
-        for (Nonnull<const Expression*> operand : opt_exp.arguments()) {
-          CARBON_RETURN_IF_ERROR(ResolveUnformed(operand, flow_facts, action));
+        for (Nonnull<const Expression*> operand :
+             llvm::reverse(opt_exp.arguments())) {
+          queue.push_back({operand, action});
         }
       }
       break;
     }
     case ExpressionKind::StructLiteral:
       for (const FieldInitializer& init :
-           cast<StructLiteral>(*expression).fields()) {
-        CARBON_RETURN_IF_ERROR(ResolveUnformed(&init.expression(), flow_facts,
-                                               FlowFacts::ActionType::Check));
+           llvm::reverse(cast<StructLiteral>(*expression).fields())) {
+        queue.push_back({&init.expression(), FlowFacts::ActionType::Check});
       }
       break;
     case ExpressionKind::SimpleMemberAccessExpression:
     case ExpressionKind::CompoundMemberAccessExpression:
     case ExpressionKind::BaseAccessExpression:
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&cast<MemberAccessExpression>(*expression).object(),
-                          flow_facts, FlowFacts::ActionType::Check));
+      queue.push_back({&cast<MemberAccessExpression>(*expression).object(),
+                       FlowFacts::ActionType::Check});
       break;
     case ExpressionKind::BuiltinConvertExpression:
-      CARBON_RETURN_IF_ERROR(ResolveUnformed(
-          cast<BuiltinConvertExpression>(*expression).source_expression(),
-          flow_facts, FlowFacts::ActionType::Check));
+      queue.push_back(
+          {cast<BuiltinConvertExpression>(*expression).source_expression(),
+           FlowFacts::ActionType::Check});
       break;
     case ExpressionKind::IndexExpression:
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&cast<IndexExpression>(*expression).object(),
-                          flow_facts, FlowFacts::ActionType::Check));
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&cast<IndexExpression>(*expression).offset(),
-                          flow_facts, FlowFacts::ActionType::Check));
+      queue.push_back({&cast<IndexExpression>(*expression).offset(),
+                       FlowFacts::ActionType::Check});
+      queue.push_back({&cast<IndexExpression>(*expression).object(),
+                       FlowFacts::ActionType::Check});
       break;
     case ExpressionKind::IfExpression: {
       const auto& if_exp = cast<IfExpression>(*expression);
-      CARBON_RETURN_IF_ERROR(ResolveUnformed(&if_exp.condition(), flow_facts,
-                                             FlowFacts::ActionType::Check));
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&if_exp.then_expression(), flow_facts, action));
-      CARBON_RETURN_IF_ERROR(
-          ResolveUnformed(&if_exp.else_expression(), flow_facts, action));
+      queue.push_back({&if_exp.else_expression(), action});
+      queue.push_back({&if_exp.then_expression(), action});
+      queue.push_back({&if_exp.condition(), FlowFacts::ActionType::Check});
       break;
     }
     case ExpressionKind::DotSelfExpression:
@@ -167,6 +169,22 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::ArrayTypeLiteral:
       break;
+  }
+  return Success();
+}
+
+static auto ResolveUnformed(Nonnull<const Expression*> expression,
+                            FlowFacts& flow_facts, FlowFacts::ActionType action)
+    -> ErrorOr<Success> {
+  // We visit subexpressions in evaluation order, by performing a reverse
+  // postorder traversal here and enqueueing subexpressions in reverse order in
+  // ResolveOneUnformedExpression.
+  llvm::SmallVector<PendingResolveUnformedStep, 32> queue;
+  queue.push_back({expression, action});
+  while (!queue.empty()) {
+    auto [expr, act] = queue.pop_back_val();
+    CARBON_RETURN_IF_ERROR(
+        ResolveOneUnformedExpression(expr, flow_facts, act, queue));
   }
   return Success();
 }
