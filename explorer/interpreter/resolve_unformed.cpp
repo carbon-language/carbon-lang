@@ -179,8 +179,8 @@ static auto ResolveOneUnformedExpression(
 static auto ResolveUnformed(Nonnull<const Expression*> expression,
                             FlowFacts& flow_facts, FlowFacts::ActionType action)
     -> ErrorOr<Success> {
-  // We visit subexpressions in evaluation order, by performing a reverse
-  // postorder traversal here and enqueueing subexpressions in reverse order in
+  // We visit subexpressions in evaluation order, by performing a LIFO
+  // traversal here and enqueueing subexpressions in reverse order in
   // ResolveOneUnformedExpression.
   llvm::SmallVector<PendingResolveUnformedStep, 32> queue;
   queue.push_back({expression, action});
