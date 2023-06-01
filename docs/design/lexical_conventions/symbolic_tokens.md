@@ -93,6 +93,10 @@ source file:
 | `:!`            | Generic binding                                                                                            |
 | `;`             | Statement separator                                                                                        |
 
+TODO: The assignment operators in
+[#2511](https://github.com/carbon-language/carbon-lang/pull/2511) are still to
+be added.
+
 ## Alternatives considered
 
 -   [Proposal: p0601](/proposals/p0601.md#alternatives-considered)
