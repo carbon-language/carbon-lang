@@ -75,7 +75,9 @@ auto SemanticsContext::AddNodeAndPush(ParseTree::Node parse_node,
 auto SemanticsContext::AddNameToLookup(ParseTree::Node name_node,
                                        SemanticsStringId name_id,
                                        SemanticsNodeId target_id) -> void {
-  if (!AddNameToLookupImpl(name_id, target_id)) {
+  if (current_scope().names.insert(name_id).second) {
+    name_lookup_[name_id].push_back(target_id);
+  } else {
     CARBON_DIAGNOSTIC(NameRedefined, Error, "Redefining {0} in the same scope.",
                       llvm::StringRef);
     CARBON_DIAGNOSTIC(PreviousDefinition, Note, "Previous definition is here.");
@@ -86,49 +88,6 @@ auto SemanticsContext::AddNameToLookup(ParseTree::Node name_node,
         .Note(prev_def.parse_node(), PreviousDefinition)
         .Emit();
   }
-}
-
-auto SemanticsContext::AddNameToLookupImpl(SemanticsStringId name_id,
-                                           SemanticsNodeId target_id) -> bool {
-  if (current_scope().names.insert(name_id).second) {
-    name_lookup_[name_id].push_back(target_id);
-    return true;
-  } else {
-    return false;
-  }
-}
-
-auto SemanticsContext::BindName(ParseTree::Node name_node,
-                                SemanticsTypeId type_id,
-                                SemanticsNodeId target_id)
-    -> SemanticsStringId {
-  CARBON_CHECK(parse_tree_->node_kind(name_node) == ParseNodeKind::DeclaredName)
-      << parse_tree_->node_kind(name_node);
-  auto name_str = parse_tree_->GetNodeText(name_node);
-  auto name_id = semantics_ir_->AddString(name_str);
-
-  AddNode(
-      SemanticsNode::BindName::Make(name_node, type_id, name_id, target_id));
-  AddNameToLookup(name_node, name_id, target_id);
-  return name_id;
-}
-
-auto SemanticsContext::TempRemoveLatestNameFromLookup() -> SemanticsNodeId {
-  // Save the storage ID.
-  auto it = name_lookup_.find(
-      node_stack_.Peek<SemanticsStringId>(ParseNodeKind::PatternBinding));
-  CARBON_CHECK(it != name_lookup_.end());
-  CARBON_CHECK(!it->second.empty());
-  auto storage_id = it->second.back();
-
-  // Pop the name from lookup.
-  if (it->second.size() == 1) {
-    // Erase names that no longer resolve.
-    name_lookup_.erase(it);
-  } else {
-    it->second.pop_back();
-  }
-  return storage_id;
 }
 
 auto SemanticsContext::LookupName(ParseTree::Node parse_node,

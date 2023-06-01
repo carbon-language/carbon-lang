@@ -372,20 +372,19 @@ auto SemanticsHandlePatternBinding(SemanticsContext& context,
   auto cast_type_id = context.ExpressionAsType(type_node, parsed_type_id);
 
   // Get the name.
-  auto name_node = context.node_stack().PopForSoloParseNode();
+  auto name_node =
+      context.node_stack().PopForSoloParseNode(ParseNodeKind::DeclaredName);
+  auto name_str = context.parse_tree().GetNodeText(name_node);
+  auto name_id = context.semantics_ir().AddString(name_str);
 
   // Allocate storage, linked to the name for error locations.
   auto storage_id =
       context.AddNode(SemanticsNode::VarStorage::Make(name_node, cast_type_id));
 
   // Bind the name to storage.
-  auto name_id = context.BindName(name_node, cast_type_id, storage_id);
-
-  // If this node's result is used, it'll be for either the name or the
-  // storage address. The storage address can be found through the name, so we
-  // push the name.
-  context.node_stack().Push(parse_node, name_id);
-
+  context.AddNodeAndPush(parse_node,
+                         SemanticsNode::BindName::Make(name_node, cast_type_id,
+                                                       name_id, storage_id));
   return true;
 }
 
@@ -495,22 +494,28 @@ auto SemanticsHandleTupleLiteralComma(SemanticsContext& context,
 
 auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
                                         ParseTree::Node parse_node) -> bool {
-  auto [last_parse_node, last_node_id] =
-      context.node_stack().PopWithParseNode<SemanticsNodeId>();
-
-  if (context.parse_tree().node_kind(last_parse_node) !=
-      ParseNodeKind::PatternBinding) {
-    auto storage_id = context.node_stack().Pop<SemanticsNodeId>(
+  // Handle the optional initializer.
+  auto expr_node_id = SemanticsNodeId::Invalid;
+  bool has_init =
+      context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
+      ParseNodeKind::PatternBinding;
+  if (has_init) {
+    expr_node_id = context.node_stack().Pop<SemanticsNodeId>();
+    context.node_stack().PopAndDiscardSoloParseNode(
         ParseNodeKind::VariableInitializer);
+  }
 
-    auto binding = context.node_stack().PopWithParseNode<SemanticsStringId>(
-        ParseNodeKind::PatternBinding);
+  // Get the storage and add it to name lookup.
+  auto binding_id =
+      context.node_stack().Pop<SemanticsNodeId>(ParseNodeKind::PatternBinding);
+  auto binding = context.semantics_ir().GetNode(binding_id);
+  auto [name_id, storage_id] = binding.GetAsBindName();
+  context.AddNameToLookup(binding.parse_node(), name_id, storage_id);
 
-    // Restore the name now that the initializer is complete.
-    context.ReaddNameToLookup(binding.second, storage_id);
-
+  // If there was an initializer, assign it to storage.
+  if (has_init) {
     auto cast_value_id = context.ImplicitAsRequired(
-        parse_node, last_node_id,
+        parse_node, expr_node_id,
         context.semantics_ir().GetNode(storage_id).type_id());
     context.AddNode(SemanticsNode::Assign::Make(
         parse_node, context.semantics_ir().GetNode(cast_value_id).type_id(),
@@ -533,8 +538,8 @@ auto SemanticsHandleVariableIntroducer(SemanticsContext& context,
 
 auto SemanticsHandleVariableInitializer(SemanticsContext& context,
                                         ParseTree::Node parse_node) -> bool {
-  auto storage_id = context.TempRemoveLatestNameFromLookup();
-  context.node_stack().Push(parse_node, storage_id);
+  // No action, just a bracketing node.
+  context.node_stack().Push(parse_node);
   return true;
 }
 
