@@ -25,20 +25,21 @@ class LoweringContext {
   // the main execution loop.
   auto Run() -> std::unique_ptr<llvm::Module>;
 
-  // Returns a value for the given node.
-  auto GetNode(SemanticsNodeId node_id) -> llvm::Value* {
-    CARBON_CHECK(nodes_[node_id.index]) << node_id;
-    return nodes_[node_id.index];
+  // Returns a local (versus global) value for the given node.
+  auto GetLocal(SemanticsNodeId node_id) -> llvm::Value* {
+    auto it = locals_.find(node_id);
+    CARBON_CHECK(it != locals_.end()) << "Missing local: " << node_id;
+    return it->second;
   }
 
-  // Returns a value for the given node in loaded state. Loads will only be
-  // inserted on an as-needed basis.
-  auto GetNodeLoaded(SemanticsNodeId node_id) -> llvm::Value*;
+  // Returns a local (versus global) value for the given node in loaded state.
+  // Loads will only be inserted on an as-needed basis.
+  auto GetLocalLoaded(SemanticsNodeId node_id) -> llvm::Value*;
 
   // Sets the value for the given node.
-  auto SetNode(SemanticsNodeId node_id, llvm::Value* value) {
-    CARBON_CHECK(!nodes_[node_id.index]) << node_id;
-    nodes_[node_id.index] = value;
+  auto SetLocal(SemanticsNodeId node_id, llvm::Value* value) {
+    bool added = locals_.insert({node_id, value}).second;
+    CARBON_CHECK(added) << "Duplicate local insert: " << node_id;
   }
 
   // Gets a callable's function.
@@ -92,12 +93,10 @@ class LoweringContext {
   llvm::SmallVector<std::pair<llvm::BasicBlock*, SemanticsNodeBlockId>>
       todo_blocks_;
 
-  // Maps nodes in SemanticsIR to a lowered value. This will have one entry per
-  // node, and will be non-null when lowered. It's expected to be sparse during
-  // execution because while expressions will have entries, statements won't.
-  // TODO: This is transitioning to only track global and local values, rather
-  // than one large map for all nodes.
-  llvm::SmallVector<llvm::Value*> nodes_;
+  // Maps a function's SemanticsIR nodes to lowered values.
+  // TODO: Handle nested scopes. Right now this is just cleared at the end of
+  // every block.
+  llvm::DenseMap<SemanticsNodeId, llvm::Value*> locals_;
 
   // Maps callables to lowered functions. Semantics treats callables as the
   // canonical form of a function, so lowering needs to do the same.
