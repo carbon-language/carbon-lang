@@ -112,7 +112,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
     -> void {
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
 
-  PrintList(out, "callables", callables_);
+  PrintList(out, "functions", functions_);
   PrintList(out, "integer_literals", integer_literals_);
   PrintList(out, "real_literals", real_literals_);
   PrintList(out, "strings", strings_);
@@ -203,7 +203,6 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::CodeBlock:
       case SemanticsNodeKind::CrossReference:
       case SemanticsNodeKind::FunctionDeclaration:
-      case SemanticsNodeKind::FunctionDefinition:
       case SemanticsNodeKind::IntegerLiteral:
       case SemanticsNodeKind::RealLiteral:
       case SemanticsNodeKind::Return:

@@ -12,20 +12,29 @@
 
 namespace Carbon {
 
-// A callable object.
-struct SemanticsCallable {
+// A function.
+struct SemanticsFunction {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{param_refs: " << param_refs_id;
+    out << "{name: " << name_id << ", "
+        << "param_refs: " << param_refs_id;
     if (return_type_id.is_valid()) {
       out << ", return_type: " << return_type_id;
+    }
+    if (body_id.is_valid()) {
+      out << ", body: " << body_id;
     }
     out << "}";
   }
 
+  // The function name.
+  SemanticsStringId name_id;
   // A block containing a single reference node per parameter.
   SemanticsNodeBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
   SemanticsTypeId return_type_id;
+  // The body. This will be invalid for declarations which don't have a visible
+  // definition.
+  SemanticsNodeBlockId body_id;
 };
 
 struct SemanticsRealLiteral {
@@ -66,15 +75,20 @@ class SemanticsIR {
   auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
 
   // Adds a callable, returning an ID to reference it.
-  auto AddCallable(SemanticsCallable callable) -> SemanticsCallableId {
-    SemanticsCallableId id(callables_.size());
-    callables_.push_back(callable);
+  auto AddFunction(SemanticsFunction function) -> SemanticsFunctionId {
+    SemanticsFunctionId id(functions_.size());
+    functions_.push_back(function);
     return id;
   }
 
   // Returns the requested callable.
-  auto GetCallable(SemanticsCallableId callable_id) const -> SemanticsCallable {
-    return callables_[callable_id.index];
+  auto GetFunction(SemanticsFunctionId function_id) const -> SemanticsFunction {
+    return functions_[function_id.index];
+  }
+
+  // Returns the requested callable.
+  auto GetFunction(SemanticsFunctionId function_id) -> SemanticsFunction& {
+    return functions_[function_id.index];
   }
 
   // Adds an integer literal, returning an ID to reference it.
@@ -194,7 +208,7 @@ class SemanticsIR {
   // Produces a string version of a type.
   auto StringifyType(SemanticsTypeId type_id) -> std::string;
 
-  auto callables_size() const -> int { return callables_.size(); }
+  auto functions_size() const -> int { return functions_.size(); }
   auto nodes_size() const -> int { return nodes_.size(); }
 
   auto types() const -> const llvm::SmallVector<SemanticsNodeId>& {
@@ -227,7 +241,7 @@ class SemanticsIR {
   bool has_errors_ = false;
 
   // Storage for callable objects.
-  llvm::SmallVector<SemanticsCallable> callables_;
+  llvm::SmallVector<SemanticsFunction> functions_;
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references

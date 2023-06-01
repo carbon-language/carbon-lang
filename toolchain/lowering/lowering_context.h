@@ -43,15 +43,9 @@ class LoweringContext {
   }
 
   // Gets a callable's function.
-  auto GetCallable(SemanticsCallableId callable_id) -> llvm::Function* {
-    CARBON_CHECK(callables_[callable_id.index] != nullptr) << callable_id;
-    return callables_[callable_id.index];
-  }
-
-  // Sets a callable's function.
-  auto SetCallable(SemanticsCallableId callable_id, llvm::Function* function) {
-    CARBON_CHECK(callables_[callable_id.index] == nullptr) << callable_id;
-    callables_[callable_id.index] = function;
+  auto GetFunction(SemanticsFunctionId function_id) -> llvm::Function* {
+    CARBON_CHECK(functions_[function_id.index] != nullptr) << function_id;
+    return functions_[function_id.index];
   }
 
   // Returns a lowered type for the given type_id.
@@ -65,14 +59,16 @@ class LoweringContext {
   auto llvm_module() -> llvm::Module& { return *llvm_module_; }
   auto builder() -> llvm::IRBuilder<>& { return builder_; }
   auto semantics_ir() -> const SemanticsIR& { return *semantics_ir_; }
-  auto todo_blocks() -> llvm::SmallVector<
-      std::pair<llvm::BasicBlock*, SemanticsNodeBlockId>>& {
-    return todo_blocks_;
-  }
 
  private:
-  // Runs lowering for a block.
-  auto LowerBlock(SemanticsNodeBlockId block_id) -> void;
+  // Builds the declaration for the given function, which should then be cached
+  // by the caller.
+  auto BuildFunctionDeclaration(SemanticsFunctionId function_id)
+      -> llvm::Function*;
+
+  // Builds the definition for the given function. If the function is only a
+  // declaration with no definition, does nothing.
+  auto BuildFunctionDefinition(SemanticsFunctionId function_id) -> void;
 
   // Builds the type for the given node, which should then be cached by the
   // caller.
@@ -89,10 +85,6 @@ class LoweringContext {
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;
 
-  // Blocks which we've observed and need to lower.
-  llvm::SmallVector<std::pair<llvm::BasicBlock*, SemanticsNodeBlockId>>
-      todo_blocks_;
-
   // Maps a function's SemanticsIR nodes to lowered values.
   // TODO: Handle nested scopes. Right now this is just cleared at the end of
   // every block.
@@ -100,7 +92,7 @@ class LoweringContext {
 
   // Maps callables to lowered functions. Semantics treats callables as the
   // canonical form of a function, so lowering needs to do the same.
-  llvm::SmallVector<llvm::Function*> callables_;
+  llvm::SmallVector<llvm::Function*> functions_;
 
   // Provides lowered versions of types.
   llvm::SmallVector<llvm::Type*> types_;

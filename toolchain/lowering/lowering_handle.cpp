@@ -45,8 +45,8 @@ auto LoweringHandleBuiltin(LoweringContext& /*context*/,
 
 auto LoweringHandleCall(LoweringContext& context, SemanticsNodeId node_id,
                         SemanticsNode node) -> void {
-  auto [refs_id, callable_id] = node.GetAsCall();
-  auto* function = context.GetCallable(callable_id);
+  auto [refs_id, function_id] = node.GetAsCall();
+  auto* function = context.GetFunction(function_id);
   std::vector<llvm::Value*> args;
   for (auto ref_id : context.semantics_ir().GetNodeBlock(refs_id)) {
     args.push_back(context.GetLocalLoaded(ref_id));
@@ -62,55 +62,13 @@ auto LoweringHandleCodeBlock(LoweringContext& /*context*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleFunctionDeclaration(LoweringContext& context,
+auto LoweringHandleFunctionDeclaration(LoweringContext& /*context*/,
                                        SemanticsNodeId /*node_id*/,
                                        SemanticsNode node) -> void {
-  auto [name_id, callable_id] = node.GetAsFunctionDeclaration();
-  auto callable = context.semantics_ir().GetCallable(callable_id);
-
-  // TODO: Lower type information for the arguments prior to building args.
-  auto param_refs = context.semantics_ir().GetNodeBlock(callable.param_refs_id);
-  llvm::SmallVector<llvm::Type*> args;
-  args.resize_for_overwrite(param_refs.size());
-  for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
-    args[i] = context.GetType(
-        context.semantics_ir().GetNode(param_refs[i]).type_id());
-  }
-
-  llvm::Type* return_type =
-      context.GetType(callable.return_type_id.is_valid()
-                          ? callable.return_type_id
-                          : context.semantics_ir().empty_tuple_type_id());
-  llvm::FunctionType* function_type =
-      llvm::FunctionType::get(return_type, args, /*isVarArg=*/false);
-  auto* function = llvm::Function::Create(
-      function_type, llvm::Function::ExternalLinkage,
-      context.semantics_ir().GetString(name_id), context.llvm_module());
-  context.SetCallable(callable_id, function);
-
-  // Set parameter names.
-  for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
-    auto [param_name_id, _] =
-        context.semantics_ir().GetNode(param_refs[i]).GetAsBindName();
-    function->getArg(i)->setName(
-        context.semantics_ir().GetString(param_name_id));
-  }
-}
-
-auto LoweringHandleFunctionDefinition(LoweringContext& context,
-                                      SemanticsNodeId /*node_id*/,
-                                      SemanticsNode node) -> void {
-  auto [declaration_id, body_block_id] = node.GetAsFunctionDefinition();
-  auto [name_id, callable_id] =
-      context.semantics_ir().GetNode(declaration_id).GetAsFunctionDeclaration();
-
-  llvm::Function* function = context.llvm_module().getFunction(
-      context.semantics_ir().GetString(name_id));
-
-  // Create a new basic block to start insertion into.
-  llvm::BasicBlock* body =
-      llvm::BasicBlock::Create(context.llvm_context(), "entry", function);
-  context.todo_blocks().push_back({body, body_block_id});
+  CARBON_FATAL()
+      << "Should not be encountered. If that changes, we may want to change "
+         "higher-level logic to skip them rather than calling this. "
+      << node;
 }
 
 auto LoweringHandleIntegerLiteral(LoweringContext& context,

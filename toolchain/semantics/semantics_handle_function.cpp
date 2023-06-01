@@ -12,21 +12,22 @@ auto SemanticsHandleFunctionDeclaration(SemanticsContext& context,
 }
 
 auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
-                                       ParseTree::Node parse_node) -> bool {
+                                       ParseTree::Node /*parse_node*/) -> bool {
   // Merges code block children up under the FunctionDefinitionStart.
   while (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
          ParseNodeKind::FunctionDefinitionStart) {
     context.node_stack().PopAndIgnore();
   }
-  auto decl_id = context.node_stack().Pop<SemanticsNodeId>(
+  auto function_id = context.node_stack().Pop<SemanticsFunctionId>(
       ParseNodeKind::FunctionDefinitionStart);
 
   context.return_scope_stack().pop_back();
   context.PopScope();
-  auto block_id = context.node_block_stack().Pop();
-  context.AddNode(
-      SemanticsNode::FunctionDefinition::Make(parse_node, decl_id, block_id));
-  context.node_stack().Push(parse_node);
+  auto body_id = context.node_block_stack().Pop();
+  auto& function = context.semantics_ir().GetFunction(function_id);
+  CARBON_CHECK(!function.body_id.is_valid())
+      << "Already have function body: " << function.body_id;
+  function.body_id = body_id;
 
   return true;
 }
@@ -53,10 +54,15 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
   auto name_str = context.parse_tree().GetNodeText(name_node);
   auto name_id = context.semantics_ir().AddString(name_str);
 
-  auto callable_id = context.semantics_ir().AddCallable(
-      {.param_refs_id = param_refs_id, .return_type_id = return_type_id});
+  // Add the callable, but with an invalid body for now. The body ID is only
+  // finalized on function completion.
+  auto function_id = context.semantics_ir().AddFunction(
+      {.name_id = name_id,
+       .param_refs_id = param_refs_id,
+       .return_type_id = return_type_id,
+       .body_id = SemanticsNodeBlockId::Invalid});
   auto decl_id = context.AddNode(
-      SemanticsNode::FunctionDeclaration::Make(fn_node, name_id, callable_id));
+      SemanticsNode::FunctionDeclaration::Make(fn_node, function_id));
   context.AddNameToLookup(name_node, name_id, decl_id);
 
   context.node_block_stack().Push();
@@ -64,10 +70,10 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
   for (auto ref_id : context.semantics_ir().GetNodeBlock(param_refs_id)) {
     auto ref = context.semantics_ir().GetNode(ref_id);
     auto [name_id, target_id] = ref.GetAsBindName();
-    context.AddNameToLookupIgnoreConflicts(name_id, target_id);
+    context.AddNameToLookup(ref.parse_node(), name_id, target_id);
   }
   context.return_scope_stack().push_back(decl_id);
-  context.node_stack().Push(parse_node, decl_id);
+  context.node_stack().Push(parse_node, function_id);
 
   return true;
 }

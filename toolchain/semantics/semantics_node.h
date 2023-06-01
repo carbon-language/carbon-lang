@@ -50,11 +50,11 @@ constexpr SemanticsNodeId SemanticsNodeId::Invalid =
       SemanticsNodeId(SemanticsBuiltinKind::Name.AsInt());
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
-// The ID of a callable, such as a function.
-struct SemanticsCallableId : public IndexBase {
+// The ID of a function.
+struct SemanticsFunctionId : public IndexBase {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "callable";
+    out << "function";
     IndexBase::Print(out);
   }
 };
@@ -280,7 +280,7 @@ class SemanticsNode {
 
   using Call =
       Factory<SemanticsNodeKind::Call, SemanticsNodeBlockId /*refs_id*/,
-              SemanticsCallableId /*callable_id*/>;
+              SemanticsFunctionId /*function_id*/>;
 
   using CodeBlock = FactoryNoType<SemanticsNodeKind::CodeBlock,
                                   SemanticsNodeBlockId /*node_block_id*/>;
@@ -303,13 +303,7 @@ class SemanticsNode {
 
   using FunctionDeclaration =
       FactoryNoType<SemanticsNodeKind::FunctionDeclaration,
-                    SemanticsStringId /*name_id*/,
-                    SemanticsCallableId /*signature_id*/>;
-
-  using FunctionDefinition =
-      FactoryNoType<SemanticsNodeKind::FunctionDefinition,
-                    SemanticsNodeId /*decl_id*/,
-                    SemanticsNodeBlockId /*node_block_id*/>;
+                    SemanticsFunctionId /*function_id*/>;
 
   using IntegerLiteral = Factory<SemanticsNodeKind::IntegerLiteral,
                                  SemanticsIntegerLiteralId /*integer_id*/>;

@@ -139,6 +139,8 @@ class SemanticsNodeStack {
     explicit Entry(ParseTree::Node parse_node,
                    SemanticsNodeBlockId node_block_id)
         : parse_node(parse_node), node_block_id(node_block_id) {}
+    explicit Entry(ParseTree::Node parse_node, SemanticsFunctionId function_id)
+        : parse_node(parse_node), function_id(function_id) {}
     explicit Entry(ParseTree::Node parse_node, SemanticsStringId name_id)
         : parse_node(parse_node), name_id(name_id) {}
     explicit Entry(ParseTree::Node parse_node, SemanticsTypeId type_id)
@@ -152,6 +154,9 @@ class SemanticsNodeStack {
       }
       if constexpr (std::is_same<T, SemanticsNodeBlockId>()) {
         return node_block_id;
+      }
+      if constexpr (std::is_same<T, SemanticsFunctionId>()) {
+        return function_id;
       }
       if constexpr (std::is_same<T, SemanticsStringId>()) {
         return name_id;
@@ -172,6 +177,7 @@ class SemanticsNodeStack {
     union {
       SemanticsNodeId node_id;
       SemanticsNodeBlockId node_block_id;
+      SemanticsFunctionId function_id;
       SemanticsStringId name_id;
       SemanticsTypeId type_id;
     };
@@ -183,6 +189,8 @@ class SemanticsNodeStack {
     static_assert(std::is_standard_layout_v<SemanticsNodeId>,
                   "Need standard layout for type punning");
     static_assert(std::is_standard_layout_v<SemanticsNodeBlockId>,
+                  "Need standard layout for type punning");
+    static_assert(std::is_standard_layout_v<SemanticsFunctionId>,
                   "Need standard layout for type punning");
     static_assert(std::is_standard_layout_v<SemanticsStringId>,
                   "Need standard layout for type punning");
