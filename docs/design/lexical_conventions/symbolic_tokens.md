@@ -52,11 +52,8 @@ operator, without creating ambiguity.
 
 ## Details
 
-Symbolic tokens are intended to be used for widely-recognized operators, such as
-the mathematical operators `+`, `*`, `<`, and so on. Those used as operators
-would generally be expected to also be meaningful for some user-defined types,
-and should be candidates for being made overloadable once we support operator
-overloading.
+Symbolic tokens are used for widely-recognized operators, these should be
+meaningful and should be overloadable.
 
 ### Symbolic token list
 
