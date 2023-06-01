@@ -116,7 +116,7 @@ auto SemanticsContext::BindName(ParseTree::Node name_node,
 auto SemanticsContext::TempRemoveLatestNameFromLookup() -> SemanticsNodeId {
   // Save the storage ID.
   auto it = name_lookup_.find(
-      node_stack_.PeekForNameId(ParseNodeKind::PatternBinding));
+      node_stack_.Peek<SemanticsStringId>(ParseNodeKind::PatternBinding));
   CARBON_CHECK(it != name_lookup_.end());
   CARBON_CHECK(!it->second.empty());
   auto storage_id = it->second.back();
@@ -312,7 +312,7 @@ auto SemanticsContext::ParamOrArgSave(bool for_args) -> void {
     // For an argument, we add a stub reference to the expression on the top of
     // the stack. There may not be anything on the IR prior to this.
     auto [entry_parse_node, entry_node_id] =
-        node_stack_.PopForParseNodeAndNodeId();
+        node_stack_.PopWithParseNode<SemanticsNodeId>();
     param_or_arg_id = AddNode(SemanticsNode::StubReference::Make(
         entry_parse_node, semantics_ir_->GetNode(entry_node_id).type_id(),
         entry_node_id));

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/semantics/semantics_context.h"
+#include "toolchain/semantics/semantics_node.h"
 
 namespace Carbon {
 
@@ -70,10 +71,10 @@ auto SemanticsHandleDesignatedName(SemanticsContext& context,
 
 auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
                                          ParseTree::Node parse_node) -> bool {
-  auto [_, name_id] = context.node_stack().PopForParseNodeAndNameId(
+  auto name_id = context.node_stack().Pop<SemanticsStringId>(
       ParseNodeKind::DesignatedName);
 
-  auto base_id = context.node_stack().PopForNodeId();
+  auto base_id = context.node_stack().Pop<SemanticsNodeId>();
   auto base = context.semantics_ir().GetNode(base_id);
   auto base_type = context.semantics_ir().GetNode(
       context.semantics_ir().GetType(base.type_id()));
@@ -189,8 +190,8 @@ auto SemanticsHandleIfStatementElse(SemanticsContext& context,
 
 auto SemanticsHandleInfixOperator(SemanticsContext& context,
                                   ParseTree::Node parse_node) -> bool {
-  auto rhs_id = context.node_stack().PopForNodeId();
-  auto lhs_id = context.node_stack().PopForNodeId();
+  auto rhs_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto lhs_id = context.node_stack().Pop<SemanticsNodeId>();
 
   // TODO: This should search for a compatible interface. For now, it's a very
   // trivial check of validity on the operation.
@@ -367,7 +368,7 @@ auto SemanticsHandleParenExpressionOrTupleLiteralStart(
 auto SemanticsHandlePatternBinding(SemanticsContext& context,
                                    ParseTree::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
-      context.node_stack().PopForParseNodeAndNodeId();
+      context.node_stack().PopWithParseNode<SemanticsNodeId>();
   auto cast_type_id = context.ExpressionAsType(type_node, parsed_type_id);
 
   // Get the name.
@@ -423,7 +424,7 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
 
     context.AddNodeAndPush(parse_node, SemanticsNode::Return::Make(parse_node));
   } else {
-    auto arg = context.node_stack().PopForNodeId();
+    auto arg = context.node_stack().Pop<SemanticsNodeId>();
     context.node_stack().PopAndDiscardSoloParseNode(
         ParseNodeKind::ReturnStatementStart);
 
@@ -461,7 +462,7 @@ auto SemanticsHandleReturnType(SemanticsContext& context,
                                ParseTree::Node parse_node) -> bool {
   // Propagate the type expression.
   auto [type_parse_node, type_node_id] =
-      context.node_stack().PopForParseNodeAndNodeId();
+      context.node_stack().PopWithParseNode<SemanticsNodeId>();
   auto cast_node_id = context.ExpressionAsType(type_parse_node, type_node_id);
   context.node_stack().Push(parse_node, cast_node_id);
   return true;
@@ -495,14 +496,14 @@ auto SemanticsHandleTupleLiteralComma(SemanticsContext& context,
 auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
                                         ParseTree::Node parse_node) -> bool {
   auto [last_parse_node, last_node_id] =
-      context.node_stack().PopForParseNodeAndNodeId();
+      context.node_stack().PopWithParseNode<SemanticsNodeId>();
 
   if (context.parse_tree().node_kind(last_parse_node) !=
       ParseNodeKind::PatternBinding) {
-    auto storage_id =
-        context.node_stack().PopForNodeId(ParseNodeKind::VariableInitializer);
+    auto storage_id = context.node_stack().Pop<SemanticsNodeId>(
+        ParseNodeKind::VariableInitializer);
 
-    auto binding = context.node_stack().PopForParseNodeAndNameId(
+    auto binding = context.node_stack().PopWithParseNode<SemanticsStringId>(
         ParseNodeKind::PatternBinding);
 
     // Restore the name now that the initializer is complete.

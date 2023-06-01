@@ -18,8 +18,8 @@ auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
          ParseNodeKind::FunctionDefinitionStart) {
     context.node_stack().PopAndIgnore();
   }
-  auto decl_id =
-      context.node_stack().PopForNodeId(ParseNodeKind::FunctionDefinitionStart);
+  auto decl_id = context.node_stack().Pop<SemanticsNodeId>(
+      ParseNodeKind::FunctionDefinitionStart);
 
   context.return_scope_stack().pop_back();
   context.PopScope();
@@ -38,13 +38,13 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnType) {
     return_type_id =
-        context.node_stack().PopForTypeId(ParseNodeKind::ReturnType);
+        context.node_stack().Pop<SemanticsTypeId>(ParseNodeKind::ReturnType);
   } else {
     // Canonicalize the empty tuple for the implicit return.
     context.CanonicalizeType(SemanticsNodeId::BuiltinEmptyTupleType);
   }
-  auto param_refs_id =
-      context.node_stack().PopForNodeBlockId(ParseNodeKind::ParameterList);
+  auto param_refs_id = context.node_stack().Pop<SemanticsNodeBlockId>(
+      ParseNodeKind::ParameterList);
   auto name_node =
       context.node_stack().PopForSoloParseNode(ParseNodeKind::DeclaredName);
   auto fn_node = context.node_stack().PopForSoloParseNode(
