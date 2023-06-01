@@ -1732,8 +1732,8 @@ The resulting type `SongByArtist` would:
 
 Unlike the similar `class B { extend base: A; }` notation,
 `class B { extend adapt A; }` is permitted even if `A` is a final class. Also,
-there is no implicit conversion from `B` to `A`, matching `adapter`...`for` but
-unlike class extension.
+there is no implicit conversion from `B` to `A`, matching `adapt` without
+`extend` but unlike class extension.
 
 To avoid or resolve name conflicts between interfaces, an `impl` may be declared
 [external](#external-impl). The names in that interface may then be pulled in
