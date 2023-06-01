@@ -4342,7 +4342,13 @@ fn F[T:! type](x: T) {
 
 **Alternatives considered:**
 
--   FIXME
+-   [Allow interfaces with member functions to compare equal](/proposals/p2868.md#allow-interfaces-with-member-functions-to-compare-equal)
+-   Mark associated constants as `final` instead of an `impl` declaration, in
+    proposals
+    [#983](/proposals/p0983.md#final-associated-constants-instead-of-final-impls)
+    and
+    [#2868](/proposals/p2868.md#mark-associated-constants-as-final-instead-of-an-impl-declaration)
+-   [Prioritize a `final impl` over a more specific `impl` on the overlap](/proposals/p2868.md#prioritize-a-final-impl-over-a-more-specific-impl-on-the-overlap)
 
 #### Libraries that can contain a `final` impl
 
