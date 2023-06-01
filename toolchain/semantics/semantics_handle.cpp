@@ -75,7 +75,8 @@ auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
 
   auto base_id = context.node_stack().PopForNodeId();
   auto base = context.semantics().GetNode(base_id);
-  auto base_type = context.semantics().GetNode(base.type_id());
+  auto base_type =
+      context.semantics().GetNode(context.semantics().GetType(base.type_id()));
 
   switch (base_type.kind()) {
     case SemanticsNodeKind::StructType: {
@@ -95,7 +96,7 @@ auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
                         "Type `{0}` does not have a member `{1}`.", std::string,
                         llvm::StringRef);
       context.emitter().Emit(parse_node, DesignatorExpressionNameNotFound,
-                             context.semantics().StringifyNode(base.type_id()),
+                             context.semantics().StringifyType(base.type_id()),
                              context.semantics().GetString(name_id));
       break;
     }
@@ -104,7 +105,7 @@ auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
                         "Type `{0}` does not support designator expressions.",
                         std::string);
       context.emitter().Emit(parse_node, DesignatorExpressionUnsupported,
-                             context.semantics().StringifyNode(base.type_id()));
+                             context.semantics().StringifyType(base.type_id()));
       break;
     }
   }
@@ -223,7 +224,11 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
       auto id = context.semantics().AddIntegerLiteral(
           context.tokens().GetIntegerLiteral(token));
       context.AddNodeAndPush(
-          parse_node, SemanticsNode::IntegerLiteral::Make(parse_node, id));
+          parse_node,
+          SemanticsNode::IntegerLiteral::Make(
+              parse_node,
+              context.CanonicalizeType(SemanticsNodeId::BuiltinIntegerType),
+              id));
       break;
     }
     case TokenKind::RealLiteral: {
@@ -233,14 +238,22 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
            .exponent = token_value.Exponent(),
            .is_decimal = token_value.IsDecimal()});
       context.AddNodeAndPush(parse_node,
-                             SemanticsNode::RealLiteral::Make(parse_node, id));
+                             SemanticsNode::RealLiteral::Make(
+                                 parse_node,
+                                 context.CanonicalizeType(
+                                     SemanticsNodeId::BuiltinFloatingPointType),
+                                 id));
       break;
     }
     case TokenKind::StringLiteral: {
       auto id = context.semantics().AddString(
           context.tokens().GetStringLiteral(token));
       context.AddNodeAndPush(
-          parse_node, SemanticsNode::StringLiteral::Make(parse_node, id));
+          parse_node,
+          SemanticsNode::StringLiteral::Make(
+              parse_node,
+              context.CanonicalizeType(SemanticsNodeId::BuiltinStringType),
+              id));
       break;
     }
     case TokenKind::IntegerTypeLiteral: {
@@ -352,8 +365,7 @@ auto SemanticsHandlePatternBinding(SemanticsContext& context,
                                    ParseTree::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
       context.node_stack().PopForParseNodeAndNodeId();
-  SemanticsNodeId cast_type_id = context.ImplicitAsRequired(
-      type_node, parsed_type_id, SemanticsNodeId::BuiltinTypeType);
+  auto cast_type_id = context.ExpressionAsType(type_node, parsed_type_id);
 
   // Get the name.
   auto name_node = context.node_stack().PopForSoloParseNode();
@@ -402,7 +414,7 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
                         "Must return a {0}.", std::string);
       context.emitter()
           .Build(parse_node, ReturnStatementMissingExpression,
-                 context.semantics().StringifyNode(callable.return_type_id))
+                 context.semantics().StringifyType(callable.return_type_id))
           .Emit();
     }
 
@@ -447,8 +459,7 @@ auto SemanticsHandleReturnType(SemanticsContext& context,
   // Propagate the type expression.
   auto [type_parse_node, type_node_id] =
       context.node_stack().PopForParseNodeAndNodeId();
-  auto cast_node_id = context.ImplicitAsRequired(
-      type_parse_node, type_node_id, SemanticsNodeId::BuiltinTypeType);
+  auto cast_node_id = context.ExpressionAsType(type_parse_node, type_node_id);
   context.node_stack().Push(parse_node, cast_node_id);
   return true;
 }

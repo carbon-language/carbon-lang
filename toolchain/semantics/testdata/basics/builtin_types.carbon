@@ -18,19 +18,24 @@
 // CHECK:STDOUT:   test_str,
 // CHECK:STDOUT:   Test,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT:   nodeFloatingPointType,
+// CHECK:STDOUT:   nodeStringType,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+2, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+4, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+6, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeStringType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+8, type: nodeStringType},
-// CHECK:STDOUT:   {kind: StringLiteral, arg0: str3, type: nodeStringType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+8, arg1: node+10, type: nodeStringType},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+2, type: type0},
+// CHECK:STDOUT:   {kind: VarStorage, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+4, type: type1},
+// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+6, type: type1},
+// CHECK:STDOUT:   {kind: VarStorage, type: type2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+8, type: type2},
+// CHECK:STDOUT:   {kind: StringLiteral, arg0: str3, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+8, arg1: node+10, type: type2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

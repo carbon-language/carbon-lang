@@ -219,6 +219,7 @@ cc_library(
         "resolve_unformed.h",
     ],
     deps = [
+        ":stack_space",
         "//common:check",
         "//explorer/ast",
         "//explorer/ast:static_scope",

@@ -25,8 +25,7 @@ struct SemanticsCallable {
   // A block containing a single reference node per parameter.
   SemanticsNodeBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
-  // The IR corresponding to the return type will be in a node block.
-  SemanticsNodeId return_type_id;
+  SemanticsTypeId return_type_id;
 };
 
 struct SemanticsRealLiteral {
@@ -160,11 +159,51 @@ class SemanticsIR {
     return std::nullopt;
   }
 
-  // Produces a string version of a node.
-  auto StringifyNode(SemanticsNodeId node_id) -> std::string;
+  // Adds a type, returning an ID to reference it.
+  auto AddType(SemanticsNodeId node_id) -> SemanticsTypeId {
+    SemanticsTypeId type_id(types_.size());
+    types_.push_back(node_id);
+    if (node_id == SemanticsNodeId::BuiltinEmptyTupleType) {
+      CARBON_CHECK(!empty_tuple_type_id_.is_valid());
+      empty_tuple_type_id_ = type_id;
+    }
+    return type_id;
+  }
+
+  // Gets the node ID for a type. This doesn't handle TypeType or InvalidType in
+  // order to avoid a check; callers that need that should use
+  // GetTypeAllowBuiltinTypes.
+  auto GetType(SemanticsTypeId type_id) const -> SemanticsNodeId {
+    // Double-check it's not called with TypeType or InvalidType.
+    CARBON_CHECK(type_id.index >= 0)
+        << "Invalid argument for GetType: " << type_id;
+    return types_[type_id.index];
+  }
+
+  auto GetTypeAllowBuiltinTypes(SemanticsTypeId type_id) const
+      -> SemanticsNodeId {
+    if (type_id == SemanticsTypeId::TypeType) {
+      return SemanticsNodeId::BuiltinTypeType;
+    } else if (type_id == SemanticsTypeId::InvalidType) {
+      return SemanticsNodeId::BuiltinInvalidType;
+    } else {
+      return GetType(type_id);
+    }
+  }
+
+  // Produces a string version of a type.
+  auto StringifyType(SemanticsTypeId type_id) -> std::string;
 
   auto callables_size() const -> int { return callables_.size(); }
   auto nodes_size() const -> int { return nodes_.size(); }
+
+  auto types() const -> const llvm::SmallVector<SemanticsNodeId>& {
+    return types_;
+  }
+
+  auto empty_tuple_type_id() const -> SemanticsTypeId {
+    return empty_tuple_type_id_;
+  }
 
   // The node blocks, for direct mutation.
   auto node_blocks() -> llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>>& {
@@ -205,6 +244,14 @@ class SemanticsIR {
   // string_to_id_ provides a mapping to identify strings.
   llvm::StringMap<SemanticsStringId> string_to_id_;
   llvm::SmallVector<llvm::StringRef> strings_;
+
+  // Nodes which correspond to in-use types. Stored separately for easy access
+  // by lowering.
+  llvm::SmallVector<SemanticsNodeId> types_;
+
+  // The type of the empty tuple. This is special-cased due to its use in
+  // implicit function returns.
+  SemanticsTypeId empty_tuple_type_id_ = SemanticsTypeId::Invalid;
 
   // All nodes. The first entries will always be cross-references to builtins,
   // at indices matching SemanticsBuiltinKind ordering.

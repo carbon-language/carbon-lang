@@ -17,9 +17,15 @@ auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
   SemanticsIR semantics(/*builtin_ir=*/nullptr);
   semantics.nodes_.reserve(SemanticsBuiltinKind::ValidCount);
 
-#define CARBON_SEMANTICS_BUILTIN_KIND(Name, Type, ...)     \
-  semantics.nodes_.push_back(SemanticsNode::Builtin::Make( \
-      SemanticsBuiltinKind::Name, SemanticsNodeId::Builtin##Type));
+  // InvalidType uses a self-referential type so that it's not accidentally
+  // treated as a normal type. Every other builtin is a type, including the
+  // self-referential TypeType.
+#define CARBON_SEMANTICS_BUILTIN_KIND(Name, ...)                      \
+  semantics.nodes_.push_back(SemanticsNode::Builtin::Make(            \
+      SemanticsBuiltinKind::Name,                                     \
+      SemanticsBuiltinKind::Name == SemanticsBuiltinKind::InvalidType \
+          ? SemanticsTypeId::InvalidType                              \
+          : SemanticsTypeId::TypeType));
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
   CARBON_CHECK(semantics.node_blocks_.size() == 1)
@@ -109,6 +115,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
   PrintList(out, "integer_literals", integer_literals_);
   PrintList(out, "real_literals", real_literals_);
   PrintList(out, "strings", strings_);
+  PrintList(out, "types", types_);
 
   out << "nodes: [\n";
   for (int i = include_builtins ? 0 : SemanticsBuiltinKind::ValidCount;
@@ -134,7 +141,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
   out << "]\n";
 }
 
-auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
+auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
@@ -144,7 +151,8 @@ auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
     // The index into node_id to print. Not used by all types.
     int index = 0;
   };
-  llvm::SmallVector<Step> steps = {{.node_id = node_id}};
+  llvm::SmallVector<Step> steps = {
+      {.node_id = GetTypeAllowBuiltinTypes(type_id)}};
 
   while (!steps.empty()) {
     auto step = steps.pop_back_val();
@@ -165,7 +173,10 @@ auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
     switch (node.kind()) {
       case SemanticsNodeKind::StructType: {
         auto refs = GetNodeBlock(node.GetAsStructType());
-        if (step.index == 0) {
+        if (refs.empty()) {
+          out << "{} as Type";
+          break;
+        } else if (step.index == 0) {
           out << "{";
         } else if (step.index < static_cast<int>(refs.size())) {
           out << ", ";
@@ -180,7 +191,7 @@ auto SemanticsIR::StringifyNode(SemanticsNodeId node_id) -> std::string {
       }
       case SemanticsNodeKind::StructTypeField: {
         out << "." << GetString(node.GetAsStructTypeField()) << ": ";
-        steps.push_back({.node_id = node.type_id()});
+        steps.push_back({.node_id = GetTypeAllowBuiltinTypes(node.type_id())});
         break;
       }
       case SemanticsNodeKind::Assign:
