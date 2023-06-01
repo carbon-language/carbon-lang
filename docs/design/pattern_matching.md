@@ -170,7 +170,11 @@ fn H(n: i32) {
 #### Unused bindings
 
 A syntax like a binding but with `_` in place of an identifier, or `unused`
-before the name, can be used to ignore part of a value.
+before the name, can be used to ignore part of a value. Names that are qualified
+with the `unused` keyword are visible for name lookup but uses are invalid,
+including when they cause ambiguous name lookup errors. If attempted to be used,
+a compiler error will be shown to the user, instructing them to either remove
+the `unused` qualifier or remove the use.
 
 -   _binding-pattern_ ::= `_` `:` _expression_
 -   _binding-pattern_ ::= `unused` _identifier_ `:` _expression_
