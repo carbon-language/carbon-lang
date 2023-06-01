@@ -25,42 +25,35 @@ class LoweringContext {
   // the main execution loop.
   auto Run() -> std::unique_ptr<llvm::Module>;
 
-  auto HasLoweredNode(SemanticsNodeId node_id) -> bool {
-    return lowered_nodes_[node_id.index];
+  // Returns a value for the given node.
+  auto GetNode(SemanticsNodeId node_id) -> llvm::Value* {
+    CARBON_CHECK(nodes_[node_id.index]) << node_id;
+    return nodes_[node_id.index];
+  }
+
+  // Sets the value for the given node.
+  auto SetNode(SemanticsNodeId node_id, llvm::Value* value) {
+    CARBON_CHECK(!nodes_[node_id.index]) << node_id;
+    nodes_[node_id.index] = value;
+  }
+
+  // Gets a callable's function.
+  auto GetCallable(SemanticsCallableId callable_id) -> llvm::Function* {
+    CARBON_CHECK(callables_[callable_id.index] != nullptr) << callable_id;
+    return callables_[callable_id.index];
+  }
+
+  // Sets a callable's function.
+  auto SetCallable(SemanticsCallableId callable_id, llvm::Function* function) {
+    CARBON_CHECK(callables_[callable_id.index] == nullptr) << callable_id;
+    callables_[callable_id.index] = function;
   }
 
   // Returns a lowered type for the given type_id.
   auto GetType(SemanticsTypeId type_id) -> llvm::Type* {
     // Neither TypeType nor InvalidType should be passed in.
     CARBON_CHECK(type_id.index >= 0) << type_id;
-    return lowered_types_[type_id.index];
-  }
-
-  // Returns a value for the given node.
-  auto GetLoweredNodeAsValue(SemanticsNodeId node_id) -> llvm::Value* {
-    CARBON_CHECK(lowered_nodes_[node_id.index]) << node_id;
-    return lowered_nodes_[node_id.index];
-  }
-
-  // Sets the value for the given node.
-  auto SetLoweredNodeAsValue(SemanticsNodeId node_id, llvm::Value* value) {
-    CARBON_CHECK(!lowered_nodes_[node_id.index]) << node_id;
-    lowered_nodes_[node_id.index] = value;
-  }
-
-  // Gets a callable's function.
-  auto GetLoweredCallable(SemanticsCallableId callable_id) -> llvm::Function* {
-    CARBON_CHECK(lowered_callables_[callable_id.index] != nullptr)
-        << callable_id;
-    return lowered_callables_[callable_id.index];
-  }
-
-  // Sets a callable's function.
-  auto SetLoweredCallable(SemanticsCallableId callable_id,
-                          llvm::Function* function) {
-    CARBON_CHECK(lowered_callables_[callable_id.index] == nullptr)
-        << callable_id;
-    lowered_callables_[callable_id.index] = function;
+    return types_[type_id.index];
   }
 
   auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
@@ -78,7 +71,7 @@ class LoweringContext {
 
   // Builds the type for the given node, which should then be cached by the
   // caller.
-  auto BuildLoweredNodeAsType(SemanticsNodeId node_id) -> llvm::Type*;
+  auto BuildType(SemanticsNodeId node_id) -> llvm::Type*;
 
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
@@ -100,14 +93,14 @@ class LoweringContext {
   // execution because while expressions will have entries, statements won't.
   // TODO: This is transitioning to only track global and local values, rather
   // than one large map for all nodes.
-  llvm::SmallVector<llvm::Value*> lowered_nodes_;
+  llvm::SmallVector<llvm::Value*> nodes_;
 
   // Maps callables to lowered functions. Semantics treats callables as the
   // canonical form of a function, so lowering needs to do the same.
-  llvm::SmallVector<llvm::Function*> lowered_callables_;
+  llvm::SmallVector<llvm::Function*> callables_;
 
   // Provides lowered versions of types.
-  llvm::SmallVector<llvm::Type*> lowered_types_;
+  llvm::SmallVector<llvm::Type*> types_;
 };
 
 // Declare handlers for each SemanticsIR node.
