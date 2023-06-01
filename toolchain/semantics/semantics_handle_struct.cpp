@@ -53,10 +53,10 @@ auto SemanticsHandleStructFieldValue(SemanticsContext& context,
 
   // Store the name for the type.
   auto type_block_id = context.args_type_info_stack().PeekForAdd();
-  context.semantics().AddNode(
+  context.semantics_ir().AddNode(
       type_block_id,
       SemanticsNode::StructTypeField::Make(
-          parse_node, context.semantics().GetNode(value_node_id).type_id(),
+          parse_node, context.semantics_ir().GetNode(value_node_id).type_id(),
           name_id));
 
   // Push the value back on the stack as an argument.
@@ -109,7 +109,8 @@ auto SemanticsHandleStructTypeLiteral(SemanticsContext& context,
       << "{} is handled by StructLiteral.";
 
   auto type_id = context.CanonicalizeStructType(parse_node, refs_id);
-  context.node_stack().Push(parse_node, context.semantics().GetType(type_id));
+  context.node_stack().Push(parse_node,
+                            context.semantics_ir().GetType(type_id));
   return true;
 }
 

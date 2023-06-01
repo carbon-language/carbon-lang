@@ -51,9 +51,9 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
       ParseNodeKind::FunctionIntroducer);
 
   auto name_str = context.parse_tree().GetNodeText(name_node);
-  auto name_id = context.semantics().AddString(name_str);
+  auto name_id = context.semantics_ir().AddString(name_str);
 
-  auto callable_id = context.semantics().AddCallable(
+  auto callable_id = context.semantics_ir().AddCallable(
       {.param_refs_id = param_refs_id, .return_type_id = return_type_id});
   auto decl_id = context.AddNode(
       SemanticsNode::FunctionDeclaration::Make(fn_node, name_id, callable_id));
@@ -61,8 +61,8 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
 
   context.node_block_stack().Push();
   context.PushScope();
-  for (auto ref_id : context.semantics().GetNodeBlock(param_refs_id)) {
-    auto ref = context.semantics().GetNode(ref_id);
+  for (auto ref_id : context.semantics_ir().GetNodeBlock(param_refs_id)) {
+    auto ref = context.semantics_ir().GetNode(ref_id);
     auto [name_id, target_id] = ref.GetAsBindName();
     context.AddNameToLookupIgnoreConflicts(name_id, target_id);
   }

@@ -15,7 +15,7 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
   auto [call_expr_parse_node, name_id] =
       context.node_stack().PopForParseNodeAndNodeId(
           ParseNodeKind::CallExpressionStart);
-  auto name_node = context.semantics().GetNode(name_id);
+  auto name_node = context.semantics_ir().GetNode(name_id);
   if (name_node.kind() != SemanticsNodeKind::FunctionDeclaration) {
     // TODO: Work on error.
     context.TODO(parse_node, "Not a callable name");
@@ -24,7 +24,7 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
   }
 
   auto [_, callable_id] = name_node.GetAsFunctionDeclaration();
-  auto callable = context.semantics().GetCallable(callable_id);
+  auto callable = context.semantics_ir().GetCallable(callable_id);
 
   CARBON_DIAGNOSTIC(NoMatchingCall, Error, "No matching callable was found.");
   auto diagnostic =
