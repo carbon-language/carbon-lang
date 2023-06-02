@@ -14,27 +14,27 @@
 namespace Carbon {
 
 auto SemanticsIR::MakeBuiltinIR() -> SemanticsIR {
-  SemanticsIR semantics(/*builtin_ir=*/nullptr);
-  semantics.nodes_.reserve(SemanticsBuiltinKind::ValidCount);
+  SemanticsIR semantics_ir(/*builtin_ir=*/nullptr);
+  semantics_ir.nodes_.reserve(SemanticsBuiltinKind::ValidCount);
 
   // InvalidType uses a self-referential type so that it's not accidentally
   // treated as a normal type. Every other builtin is a type, including the
   // self-referential TypeType.
 #define CARBON_SEMANTICS_BUILTIN_KIND(Name, ...)                      \
-  semantics.nodes_.push_back(SemanticsNode::Builtin::Make(            \
+  semantics_ir.nodes_.push_back(SemanticsNode::Builtin::Make(         \
       SemanticsBuiltinKind::Name,                                     \
       SemanticsBuiltinKind::Name == SemanticsBuiltinKind::InvalidType \
           ? SemanticsTypeId::InvalidType                              \
           : SemanticsTypeId::TypeType));
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
-  CARBON_CHECK(semantics.node_blocks_.size() == 1)
+  CARBON_CHECK(semantics_ir.node_blocks_.size() == 1)
       << "BuildBuiltins should only have the empty block, actual: "
-      << semantics.node_blocks_.size();
-  CARBON_CHECK(semantics.nodes_.size() == SemanticsBuiltinKind::ValidCount)
+      << semantics_ir.node_blocks_.size();
+  CARBON_CHECK(semantics_ir.nodes_.size() == SemanticsBuiltinKind::ValidCount)
       << "BuildBuiltins should produce " << SemanticsBuiltinKind::ValidCount
-      << " nodes, actual: " << semantics.nodes_.size();
-  return semantics;
+      << " nodes, actual: " << semantics_ir.nodes_.size();
+  return semantics_ir;
 }
 
 auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
@@ -43,16 +43,16 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
                                     DiagnosticConsumer& consumer,
                                     llvm::raw_ostream* vlog_stream)
     -> SemanticsIR {
-  SemanticsIR semantics(&builtin_ir);
+  SemanticsIR semantics_ir(&builtin_ir);
 
   // Copy builtins over.
-  semantics.nodes_.resize_for_overwrite(SemanticsBuiltinKind::ValidCount);
+  semantics_ir.nodes_.resize_for_overwrite(SemanticsBuiltinKind::ValidCount);
   static constexpr auto BuiltinIR = SemanticsCrossReferenceIRId(0);
   for (int i = 0; i < SemanticsBuiltinKind::ValidCount; ++i) {
     // We can reuse the type node ID because the offsets of cross-references
     // will be the same in this IR.
     auto type = builtin_ir.nodes_[i].type_id();
-    semantics.nodes_[i] = SemanticsNode::CrossReference::Make(
+    semantics_ir.nodes_[i] = SemanticsNode::CrossReference::Make(
         type, BuiltinIR, SemanticsNodeId(i));
   }
 
@@ -60,7 +60,8 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
   ErrorTrackingDiagnosticConsumer err_tracker(consumer);
   DiagnosticEmitter<ParseTree::Node> emitter(translator, err_tracker);
 
-  SemanticsContext context(tokens, emitter, parse_tree, semantics, vlog_stream);
+  SemanticsContext context(tokens, emitter, parse_tree, semantics_ir,
+                           vlog_stream);
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
@@ -75,8 +76,8 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
 #define CARBON_PARSE_NODE_KIND(Name)                   \
   case ParseNodeKind::Name: {                          \
     if (!SemanticsHandle##Name(context, parse_node)) { \
-      semantics.has_errors_ = true;                    \
-      return semantics;                                \
+      semantics_ir.has_errors_ = true;                 \
+      return semantics_ir;                             \
     }                                                  \
     break;                                             \
   }
@@ -85,13 +86,13 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
   }
 
   // Pop information for the file-level scope.
-  semantics.top_node_block_id_ = context.node_block_stack().Pop();
+  semantics_ir.top_node_block_id_ = context.node_block_stack().Pop();
   context.PopScope();
 
   context.VerifyOnFinish();
 
-  semantics.has_errors_ = err_tracker.seen_error();
-  return semantics;
+  semantics_ir.has_errors_ = err_tracker.seen_error();
+  return semantics_ir;
 }
 
 static constexpr int Indent = 2;
@@ -111,7 +112,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
     -> void {
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
 
-  PrintList(out, "callables", callables_);
+  PrintList(out, "functions", functions_);
   PrintList(out, "integer_literals", integer_literals_);
   PrintList(out, "real_literals", real_literals_);
   PrintList(out, "strings", strings_);
@@ -202,7 +203,6 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::CodeBlock:
       case SemanticsNodeKind::CrossReference:
       case SemanticsNodeKind::FunctionDeclaration:
-      case SemanticsNodeKind::FunctionDefinition:
       case SemanticsNodeKind::IntegerLiteral:
       case SemanticsNodeKind::RealLiteral:
       case SemanticsNodeKind::Return:

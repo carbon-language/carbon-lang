@@ -43,28 +43,6 @@ class SemanticsContext {
   auto AddNameToLookup(ParseTree::Node name_node, SemanticsStringId name_id,
                        SemanticsNodeId target_id) -> void;
 
-  // Adds a name to name lookup. Ignores any name conflicts; the caller should
-  // ensure they were previously diagnosed by AddNameToLookup.
-  auto AddNameToLookupIgnoreConflicts(SemanticsStringId name_id,
-                                      SemanticsNodeId target_id) -> void {
-    AddNameToLookupImpl(name_id, target_id);
-  }
-
-  // Binds a DeclaredName to a target node with the given type.
-  auto BindName(ParseTree::Node name_node, SemanticsTypeId type_id,
-                SemanticsNodeId target_id) -> SemanticsStringId;
-
-  // Temporarily remove name lookup entries added by the `var`. These will be
-  // restored by `VariableDeclaration` using `ReaddNameToLookup`.
-  auto TempRemoveLatestNameFromLookup() -> SemanticsNodeId;
-
-  // Re-adds a name to name lookup. This is typically done through BindName, but
-  // can also be used to restore removed names.
-  auto ReaddNameToLookup(SemanticsStringId name_id, SemanticsNodeId storage_id)
-      -> void {
-    name_lookup_[name_id].push_back(storage_id);
-  }
-
   // Lookup up a name, returning the referenced node.
   auto LookupName(ParseTree::Node parse_node, llvm::StringRef name)
       -> SemanticsNodeId;
@@ -145,7 +123,7 @@ class SemanticsContext {
 
   auto parse_tree() -> const ParseTree& { return *parse_tree_; }
 
-  auto semantics() -> SemanticsIR& { return *semantics_; }
+  auto semantics_ir() -> SemanticsIR& { return *semantics_ir_; }
 
   auto node_stack() -> SemanticsNodeStack& { return node_stack_; }
 
@@ -194,10 +172,6 @@ class SemanticsContext {
     // TODO: This likely needs to track things which need to be destructed.
   };
 
-  // Adds a name to lookup. Returns false on a name conflict.
-  auto AddNameToLookupImpl(SemanticsStringId name_id, SemanticsNodeId target_id)
-      -> bool;
-
   // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
   // result type. The result will be the node to use to replace `value`.
   //
@@ -221,7 +195,7 @@ class SemanticsContext {
   const ParseTree* parse_tree_;
 
   // The SemanticsIR being added to.
-  SemanticsIR* semantics_;
+  SemanticsIR* semantics_ir_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
