@@ -52,9 +52,6 @@ operator, without creating ambiguity.
 
 ## Details
 
-Symbolic tokens are used for widely-recognized operators, these should be
-meaningful and should be overloadable.
-
 ### Symbolic token list
 
 The following is the initial list of symbolic tokens recognized in a Carbon
