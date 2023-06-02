@@ -129,7 +129,7 @@ source file:
 -   Proposal
     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
 -   Proposal
-    [#1191: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1191)
+    [#1191: Bitwise operators](https://github.com/carbon-language/carbon-lang/pull/1191)
 -   Proposal
     [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
 -   Proposal
