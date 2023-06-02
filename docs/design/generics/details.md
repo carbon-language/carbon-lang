@@ -4323,13 +4323,32 @@ class Optional(T:! type) {
 ```
 
 This prevents any higher-priority impl that overlaps a final impl from being
-defined unless it agrees with the `final` impl on the overlap. Since we do not
-require the compiler to compare the definitions of functions, agreement is only
-possible for interfaces without any function members.
+defined unless it agrees with the `final` impl on the overlap. Overlap is
+computed between two non-`template` `impl` declaration by
+[unifying](<https://en.wikipedia.org/wiki/Unification_(computer_science)>) the
+corresponding parts. For example, the intersection of these two declarations
 
-Further, if the Carbon compiler sees a matching `final` impl, it can assume it
-won't be specialized so it can use the assignments of the associated types in
-that impl definition.
+```carbon
+final impl forall [T:! type]
+    T as CommonTypeWith(T)
+    where .Result = T {}
+
+impl forall [V:! type, U:! CommonTypeWith(V)]
+    Vec(U) as CommonTypeWith(Vec(V))
+    where .Result = Vec(U.Result) {}
+```
+
+is found by unifying `T` with `Vec(U)` and `CommonTypeWith(T)` with
+`CommonTypeWith(Vec(V))`. In this case, the intersection is when `T == Vec(U)`
+and `U == V`. For templated `impl` declarations, overlap and agreement is
+delayed until the template is instantiated with concrete types.
+
+Since we do not require the compiler to compare the definitions of functions,
+agreement is only possible for interfaces without any function members.
+
+If the Carbon compiler sees a matching `final` impl, it can assume it won't be
+specialized so it can use the assignments of the associated types in that impl
+definition.
 
 ```
 fn F[T:! type](x: T) {
