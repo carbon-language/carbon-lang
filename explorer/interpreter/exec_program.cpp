@@ -70,7 +70,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
       *trace_stream << *ast.declarations[i];
     }
   }
-  trace_stream->set_current_phase(ProgramPhase::Other);
+  trace_stream->set_current_phase(ProgramPhase::Unknown);
   return ast;
 }
 

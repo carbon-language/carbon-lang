@@ -5,9 +5,9 @@
 #ifndef CARBON_EXPLORER_COMMON_TRACE_STREAM_H_
 #define CARBON_EXPLORER_COMMON_TRACE_STREAM_H_
 
+#include <bitset>
 #include <optional>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 #include "common/check.h"
@@ -16,9 +16,11 @@
 
 namespace Carbon {
 
-// This enum class's members can be used to indicate the current phase.
-enum class ProgramPhase {
-  Other,
+// Enumerates the phases of the program. These are used to control which phases
+// are traced.
+// Also used for allowed_phases_ bitset.
+enum ProgramPhase {
+  Unknown,
   SourceProgram,
   NameResolution,
   ControlFlowResolution,
@@ -30,8 +32,6 @@ enum class ProgramPhase {
   All
 };
 
-// This enum class defines the context in which code is being added to the trace
-// output.
 enum class CodeContext { Main, Prelude, Import };
 
 // Encapsulates the trace stream so that we can cleanly disable tracing while
@@ -50,9 +50,8 @@ class TraceStream {
   auto is_enabled() const -> bool {
     return stream_.has_value() &&
            current_code_context_ != CodeContext::Prelude &&
-           (allowed_phases_.count(current_phase_) > 0 ||
-            allowed_phases_.count(ProgramPhase::All) > 0 ||
-            current_phase_ == ProgramPhase::Other);
+           (allowed_phases_[current_phase_] ||
+            allowed_phases_[ProgramPhase::All]);
   }
 
   // Sets the trace stream. This should only be called from the main.
@@ -68,20 +67,22 @@ class TraceStream {
     current_code_context_ = current_code_context;
   }
 
-  auto set_allowed_phases(std::vector<ProgramPhase> allowed_phases) {
-    if (allowed_phases.empty()) {
-      allowed_phases_.insert(ProgramPhase::Execution);
+  auto set_allowed_phases(std::vector<ProgramPhase> allowed_phases_list) {
+    if (!allowed_phases_[ProgramPhase::Unknown]) {
+      allowed_phases_.set(ProgramPhase::Unknown);
+    }
+    if (allowed_phases_list.empty()) {
+      allowed_phases_.set(ProgramPhase::Execution);
     } else {
-      for (auto phase : allowed_phases) {
-        allowed_phases_.insert(phase);
+      for (auto phase : allowed_phases_list) {
+        allowed_phases_.set(phase);
       }
     }
   }
 
   // Returns the internal stream. Requires is_enabled.
   auto stream() const -> llvm::raw_ostream& {
-    CARBON_CHECK(is_enabled());
-    CARBON_CHECK(stream_.has_value());
+    CARBON_CHECK(is_enabled() && stream_.has_value());
     return **stream_;
   }
 
@@ -94,16 +95,15 @@ class TraceStream {
   // Outputs a trace message. Requires is_enabled.
   template <typename T>
   auto operator<<(T&& message) const -> llvm::raw_ostream& {
-    if (is_enabled()) {
-      **stream_ << message;
-    }
+    CARBON_CHECK(is_enabled());
+    **stream_ << message;
     return **stream_;
   }
 
  private:
   std::optional<Nonnull<llvm::raw_ostream*>> stream_;
-  ProgramPhase current_phase_ = ProgramPhase::Other;
-  std::unordered_set<ProgramPhase> allowed_phases_ = {ProgramPhase::Other};
+  ProgramPhase current_phase_ = ProgramPhase::Unknown;
+  std::bitset<16> allowed_phases_;
   CodeContext current_code_context_ = CodeContext::Main;
 };
 
