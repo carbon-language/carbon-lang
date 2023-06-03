@@ -53,9 +53,9 @@ void RuntimeScope::Bind(ValueNodeView value_node, Address address) {
   CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
 }
 
-void RuntimeScope::BindFromInitializingExpr(ValueNodeView value_node,
-                                            Address address) {
-  Bind(value_node, address);
+void RuntimeScope::BindAllocationToScope(Address address) {
+  CARBON_CHECK(address.element_path_.IsEmpty())
+      << "Cannot extend lifetime of a specific sub-element";
   allocations_.push_back(address.allocation_);
 }
 
@@ -66,16 +66,6 @@ void RuntimeScope::BindValue(ValueNodeView value_node,
   auto [it, success] = locals_.insert({value_node, value});
   CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
 }
-
-// auto RuntimeScope::AllocateForInitializingExpression(
-//     ValueNodeView value_node, Nonnull<const UninitializedValue*> value)
-//     -> Nonnull<const LocationValue*> {
-//   Initialize(value_node, value);
-//   const auto location = Get(value_node);
-//   CARBON_CHECK(location && (*location)->kind() == Value::Kind::LocationValue)
-//       << "Unexpected allocation error";
-//   return nullptr;cast<const LocationValue>(*location);
-// }
 
 auto RuntimeScope::Initialize(ValueNodeView value_node,
                               Nonnull<const Value*> value)

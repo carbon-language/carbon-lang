@@ -332,8 +332,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
             } else /* ExpressionCategory::Initializing */ {
               CARBON_CHECK(v_location)
                   << "Missing location from initializing expression";
-              (*bindings)->BindFromInitializingExpr(*value_node,
-                                                    (*v_location)->address());
+              (*bindings)->BindAllocationToScope((*v_location)->address());
+              (*bindings)->Bind(*value_node, (*v_location)->address());
             }
             break;
           case ExpressionCategory::Value:
@@ -344,8 +344,10 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
               // TODO: Extend let bindings lifetime to encompass this value
               (*bindings)->BindValue(*value_node, v);
             } else /* ExpressionCategory::Initializing */ {
-              CARBON_FATAL() << "Canard au vin du fromage du pain";
-              (*bindings)->Initialize(*value_node, v);
+              CARBON_CHECK(v_location)
+                  << "Missing location from initializing expression";
+              (*bindings)->BindAllocationToScope((*v_location)->address());
+              (*bindings)->BindValue(*value_node, v);
             }
             break;
           case ExpressionCategory::Initializing:

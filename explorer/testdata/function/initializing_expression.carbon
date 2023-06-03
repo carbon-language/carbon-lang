@@ -44,13 +44,18 @@ fn returned_var_class() -> A {
 }
 
 fn Main() -> i32 {
+  Print("No returned value");
+  no_returned_value();
+  heap.PrintAllocations();
+
+  // Reference expressions from Initializing expression
+  Print("Reference expressions from Initializing expression");
   var n1: i32 = returned_expr();
   Print("n1 = {0}", n1);
 
   var a1: A = returned_expr_class();
   Print("a1.data = {0}", a1.data);
 
-  no_returned_value();
 
   var n2: i32 = returned_var();
   Print("n2 = {0}", n2);
@@ -59,7 +64,22 @@ fn Main() -> i32 {
   Print("a2.data = {0}", a2.data);
 
   heap.PrintAllocations();
-  // TODO: let
 
+  // Value expressions from Initializing expression
+  Print("Value expressions from Initializing expression");
+
+  let ln1: i32 = returned_expr();
+  Print("ln1 = {0}", ln1);
+
+  let la1: A = returned_expr_class();
+  Print("la1.data = {0}", la1.data);
+
+  let ln2: i32 = returned_var();
+  Print("ln2 = {0}", ln2);
+
+  let la2: A = returned_var_class();
+  Print("la2.data = {0}", la2.data);
+
+  heap.PrintAllocations();
   return 0;
 }

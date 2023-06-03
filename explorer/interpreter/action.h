@@ -48,12 +48,6 @@ class RuntimeScope {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // Allocates storage for `value_node` in preparation for initialization with
-  // an initializing expression.
-  // [[nodiscard]] auto AllocateForInitializingExpression(
-  //     ValueNodeView value_node, Nonnull<const UninitializedValue*> value)
-  //     -> Nonnull<const LocationValue*>;
-
   // Allocates storage for `value_node` in `heap`, and initializes it with
   // `value`.
   // TODO: Done for a var binding if a category conversion is needed (i.e. not
@@ -61,12 +55,12 @@ class RuntimeScope {
   auto Initialize(ValueNodeView value_node, Nonnull<const Value*> value)
       -> Nonnull<const LocationValue*>;
 
-  // Bind a node to the result of an initializing expression.
-  void BindFromInitializingExpr(ValueNodeView value_node, Address address);
+  // Bind allocation lifetime to scope. Should only be called with unowned
+  // allocations to avoid a double free.
+  void BindAllocationToScope(Address address);
 
   // Binds location `address` of a reference value to `value_node` without
   // allocating local storage.
-  // FIXME: Probably not needed anymore, as this means binding a reference value
   void Bind(ValueNodeView value_node, Address address);
 
   // Binds unlocated `value` to `value_node` without allocating local storage.
