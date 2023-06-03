@@ -15,17 +15,16 @@
 namespace Carbon {
 
 // TODO: How to cleanly pass on location past a block???
-auto ActionStack::CaptureInitializingLocation() const
-    -> std::optional<Address> {
+auto ActionStack::CaptureInitializingLocation() const -> ErrorOr<Address> {
   for (const std::unique_ptr<Action>& action : todo_) {
     if (auto& scope = action->scope()) {
       if (auto storage = (*scope).initialized_storage()) {
         (*scope).capture_initialized_storage();
-        return storage;
+        return *storage;
       }
     }
   }
-  return std::nullopt;
+  return Error("No initializing location to capture");
 }
 
 void ActionStack::Print(llvm::raw_ostream& out) const {

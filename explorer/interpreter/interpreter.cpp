@@ -2276,14 +2276,25 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           v = arena_->New<UninitializedValue>(p);
         }
 
-        BindingMap generic_args;
-        // TODO: Pattern match for expression categories
         RuntimeScope matches(&heap_);
-        CARBON_CHECK(PatternMatch(p, v, v_location, stmt.source_loc(), &matches,
-                                  generic_args, trace_stream_, this->arena_,
-                                  expr_category))
-            << stmt.source_loc()
-            << ": internal error in variable definition, match failed";
+        if (definition.is_returned()) {
+          CARBON_CHECK(p->kind() == Value::Kind::BindingPlaceholderValue);
+          const auto value_node =
+              cast<BindingPlaceholderValue>(*p).value_node();
+          CARBON_CHECK(value_node);
+          CARBON_ASSIGN_OR_RETURN(const auto location,
+                                  todo_.CaptureInitializingLocation());
+          matches.Bind(*value_node, location);
+          CARBON_RETURN_IF_ERROR(heap_.Write(location, v, stmt.source_loc()));
+        } else {
+          BindingMap generic_args;
+          // TODO: Pattern match for expression categories
+          CARBON_CHECK(PatternMatch(p, v, v_location, stmt.source_loc(),
+                                    &matches, generic_args, trace_stream_,
+                                    this->arena_, expr_category))
+              << stmt.source_loc()
+              << ": internal error in variable definition, match failed";
+        }
         todo_.MergeScope(std::move(matches));
         return todo_.FinishAction();
       }
@@ -2403,13 +2414,13 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             Nonnull<const Value*> return_value,
             Convert(act.results()[0], &function.return_term().static_type(),
                     stmt.source_loc()));
-        auto storage = todo_.CaptureInitializingLocation();
-        CARBON_CHECK(storage) << "No storage available to return expression";
+        CARBON_ASSIGN_OR_RETURN(const auto storage,
+                                todo_.CaptureInitializingLocation());
         // Write to initialized storage location.
         CARBON_RETURN_IF_ERROR(
-            heap_.Write(*storage, return_value, stmt.source_loc()));
+            heap_.Write(storage, return_value, stmt.source_loc()));
         return todo_.UnwindPast(*function.body(),
-                                arena_->New<LocationValue>(*storage));
+                                arena_->New<LocationValue>(storage));
       }
   }
 }
