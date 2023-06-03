@@ -17,6 +17,7 @@
 #include "explorer/ast/element.h"
 #include "explorer/ast/element_path.h"
 #include "explorer/ast/statement.h"
+#include "explorer/ast/storage.h"
 #include "explorer/common/nonnull.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"

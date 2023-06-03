@@ -5,6 +5,7 @@
 #ifndef CARBON_EXPLORER_AST_DECLARATION_H_
 #define CARBON_EXPLORER_AST_DECLARATION_H_
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -19,6 +20,7 @@
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/return_term.h"
 #include "explorer/ast/statement.h"
+#include "explorer/ast/storage.h"
 #include "explorer/ast/value_node.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
@@ -216,6 +218,7 @@ class CallableDeclaration : public Declaration {
   CallableDeclaration(AstNodeKind kind, SourceLocation loc,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
                       std::optional<Nonnull<Pattern*>> self_pattern,
+                      std::optional<Nonnull<Storage*>> init_storage,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body,
@@ -223,6 +226,7 @@ class CallableDeclaration : public Declaration {
       : Declaration(kind, loc),
         deduced_parameters_(std::move(deduced_params)),
         self_pattern_(self_pattern),
+        init_storage_(init_storage),
         param_pattern_(param_pattern),
         return_term_(return_term),
         body_(body),
@@ -233,6 +237,7 @@ class CallableDeclaration : public Declaration {
       : Declaration(context, other),
         deduced_parameters_(context.Clone(other.deduced_parameters_)),
         self_pattern_(context.Clone(other.self_pattern_)),
+        init_storage_(context.Clone(other.init_storage_)),
         param_pattern_(context.Clone(other.param_pattern_)),
         return_term_(context.Clone(other.return_term_)),
         body_(context.Clone(other.body_)),
@@ -257,6 +262,15 @@ class CallableDeclaration : public Declaration {
   auto body() -> std::optional<Nonnull<Block*>> { return body_; }
   auto virt_override() const -> VirtualOverride { return virt_override_; }
 
+  auto initialization_storage() const -> const Storage& {
+    CARBON_CHECK(init_storage_) << "initialization_storage() has no value";
+    return **init_storage_;
+  }
+  auto initialization_storage() -> Storage& {
+    CARBON_CHECK(init_storage_) << "initialization_storage() has no value";
+    return **init_storage_;
+  }
+
   auto expression_category() const -> ExpressionCategory {
     return ExpressionCategory::Value;
   }
@@ -266,6 +280,7 @@ class CallableDeclaration : public Declaration {
  private:
   std::vector<Nonnull<GenericBinding*>> deduced_parameters_;
   std::optional<Nonnull<Pattern*>> self_pattern_;
+  std::optional<Nonnull<Storage*>> init_storage_;
   Nonnull<TuplePattern*> param_pattern_;
   ReturnTerm return_term_;
   std::optional<Nonnull<Block*>> body_;
@@ -289,13 +304,15 @@ class FunctionDeclaration : public CallableDeclaration {
   FunctionDeclaration(SourceLocation source_loc, DeclaredName name,
                       std::vector<Nonnull<GenericBinding*>> deduced_params,
                       std::optional<Nonnull<Pattern*>> self_pattern,
+                      Nonnull<Storage*> init_storage,
                       Nonnull<TuplePattern*> param_pattern,
                       ReturnTerm return_term,
                       std::optional<Nonnull<Block*>> body,
                       VirtualOverride virt_override)
       : CallableDeclaration(AstNodeKind::FunctionDeclaration, source_loc,
                             std::move(deduced_params), self_pattern,
-                            param_pattern, return_term, body, virt_override),
+                            init_storage, param_pattern, return_term, body,
+                            virt_override),
         name_(std::move(name)) {}
 
   explicit FunctionDeclaration(CloneContext& context,
@@ -334,7 +351,8 @@ class DestructorDeclaration : public CallableDeclaration {
                         VirtualOverride virt_override)
       : CallableDeclaration(AstNodeKind::DestructorDeclaration, source_loc,
                             std::move(deduced_params), self_pattern,
-                            param_pattern, return_term, body, virt_override) {}
+                            std::nullopt, param_pattern, return_term, body,
+                            virt_override) {}
 
   explicit DestructorDeclaration(CloneContext& context,
                                  const DestructorDeclaration& other)

@@ -26,6 +26,7 @@ using llvm::cast;
 using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
 using llvm::isa;
+using std::optional;
 
 auto StructValue::FindField(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {

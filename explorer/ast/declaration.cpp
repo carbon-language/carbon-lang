@@ -4,6 +4,7 @@
 
 #include "explorer/ast/declaration.h"
 
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/value.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -379,13 +380,12 @@ auto FunctionDeclaration::Create(Nonnull<Arena*> arena,
                                  std::optional<Nonnull<Block*>> body,
                                  VirtualOverride virt_override)
     -> ErrorOr<Nonnull<FunctionDeclaration*>> {
-  DeducedParameters split_params;
-  CARBON_ASSIGN_OR_RETURN(split_params,
+  CARBON_ASSIGN_OR_RETURN(DeducedParameters split_params,
                           SplitDeducedParameters(source_loc, deduced_params));
   return arena->New<FunctionDeclaration>(
       source_loc, std::move(name), std::move(split_params.resolved_params),
-      split_params.self_pattern, param_pattern, return_term, body,
-      virt_override);
+      split_params.self_pattern, arena->New<Storage>(source_loc), param_pattern,
+      return_term, body, virt_override);
 }
 
 void CallableDeclaration::PrintDepth(int depth, llvm::raw_ostream& out) const {

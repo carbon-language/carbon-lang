@@ -731,6 +731,9 @@ class Heap {
   fn Delete[T:! type, self: Self](p : T*) {
     __intrinsic_delete(p);
   }
+  fn PrintAllocations[self: Self]() {
+    __intrinsic_print_allocs();
+  }
 }
 
 var heap: Heap = {};

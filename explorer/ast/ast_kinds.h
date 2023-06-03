@@ -52,6 +52,7 @@
   CARBON_Declaration_KINDS(ABSTRACT, FINAL) ABSTRACT(Declaration) \
   FINAL(ImplBinding)                                              \
   FINAL(AlternativeSignature)                                     \
+  FINAL(Storage)                                                  \
   CARBON_Statement_KINDS(ABSTRACT, FINAL) ABSTRACT(Statement)     \
   CARBON_Expression_KINDS(ABSTRACT, FINAL) ABSTRACT(Expression)   \
   CARBON_WhereClause_KINDS(ABSTRACT, FINAL) ABSTRACT(WhereClause)

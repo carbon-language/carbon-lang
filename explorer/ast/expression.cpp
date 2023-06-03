@@ -31,6 +31,7 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
       {{"print", Intrinsic::Print},
        {"new", Intrinsic::Alloc},
        {"delete", Intrinsic::Dealloc},
+       {"print_allocs", Intrinsic::PrintAllocs},
        {"rand", Intrinsic::Rand},
        {"implicit_as", Intrinsic::ImplicitAs},
        {"implicit_as_convert", Intrinsic::ImplicitAsConvert},
@@ -62,6 +63,8 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_new";
     case IntrinsicExpression::Intrinsic::Dealloc:
       return "__intrinsic_delete";
+    case IntrinsicExpression::Intrinsic::PrintAllocs:
+      return "__intrinsic_print_allocs";
     case IntrinsicExpression::Intrinsic::Rand:
       return "__intrinsic_rand";
     case IntrinsicExpression::Intrinsic::ImplicitAs:
