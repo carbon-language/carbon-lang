@@ -19,7 +19,8 @@
 namespace Carbon {
 
 auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
-                    Nonnull<TraceStream*> trace_stream) -> ErrorOr<AST> {
+                    Nonnull<TraceStream*> trace_stream,
+                    Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<AST> {
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** source program **********\n";
     for (int i = ast.num_prelude_declarations;
@@ -46,7 +47,8 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** type checking **********\n";
   }
-  CARBON_RETURN_IF_ERROR(TypeChecker(arena, trace_stream).TypeCheck(ast));
+  CARBON_RETURN_IF_ERROR(
+      TypeChecker(arena, trace_stream, print_stream).TypeCheck(ast));
 
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** resolving unformed variables **********\n";
@@ -64,11 +66,12 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
 }
 
 auto ExecProgram(Nonnull<Arena*> arena, AST ast,
-                 Nonnull<TraceStream*> trace_stream) -> ErrorOr<int> {
+                 Nonnull<TraceStream*> trace_stream,
+                 Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int> {
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** starting execution **********\n";
   }
-  return InterpProgram(ast, arena, trace_stream);
+  return InterpProgram(ast, arena, trace_stream, print_stream);
 }
 
 }  // namespace Carbon

@@ -7,6 +7,7 @@
 #include <llvm/Support/raw_ostream.h>
 
 #include <iterator>
+#include <limits>
 #include <map>
 #include <memory>
 #include <optional>
@@ -27,7 +28,6 @@
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/action_stack.h"
 #include "explorer/interpreter/stack.h"
-#include "explorer/interpreter/stack_fragment.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -40,7 +40,10 @@ using llvm::isa;
 
 namespace Carbon {
 
-static std::mt19937 generator(12);
+// Limits for various overflow conditions.
+static constexpr int64_t MaxTodoSize = 1e3;
+static constexpr int64_t MaxStepsTaken = 1e6;
+static constexpr int64_t MaxArenaAllocated = 1e9;
 
 // Constructs an ActionStack suitable for the specified phase.
 static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
@@ -61,14 +64,14 @@ class Interpreter {
   // traces if `trace` is true. `phase` indicates whether it executes at
   // compile time or run time.
   Interpreter(Phase phase, Nonnull<Arena*> arena,
-              Nonnull<TraceStream*> trace_stream)
+              Nonnull<TraceStream*> trace_stream,
+              Nonnull<llvm::raw_ostream*> print_stream)
       : arena_(arena),
         heap_(arena),
         todo_(MakeTodo(phase, &heap_)),
         trace_stream_(trace_stream),
+        print_stream_(print_stream),
         phase_(phase) {}
-
-  ~Interpreter();
 
   // Runs all the steps of `action`.
   // It's not safe to call `RunAllSteps()` or `result()` after an error.
@@ -181,21 +184,17 @@ class Interpreter {
   Heap heap_;
   ActionStack todo_;
 
-  // The underlying states of continuation values. All StackFragments created
-  // during execution are tracked here, in order to safely deallocate the
-  // contents of any non-completed continuations at the end of execution.
-  std::vector<Nonnull<StackFragment*>> stack_fragments_;
-
   Nonnull<TraceStream*> trace_stream_;
-  Phase phase_;
-};
 
-Interpreter::~Interpreter() {
-  // Clean up any remaining suspended continuations.
-  for (Nonnull<StackFragment*> fragment : stack_fragments_) {
-    fragment->Clear();
-  }
-}
+  // The stream for the Print intrinsic.
+  Nonnull<llvm::raw_ostream*> print_stream_;
+
+  Phase phase_;
+
+  // The number of steps taken by the interpreter. Used for infinite loop
+  // detection.
+  int64_t steps_taken_ = 0;
+};
 
 //
 // State Operations
@@ -413,6 +412,20 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       // `auto` matches any type, without binding any new names. We rely
       // on the typechecker to ensure that `v` is a type.
       return true;
+    case Value::Kind::StaticArrayType: {
+      switch (v->kind()) {
+        case Value::Kind::TupleType:
+        case Value::Kind::TupleValue: {
+          return true;
+        }
+        case Value::Kind::StaticArrayType: {
+          const auto& v_arr = cast<StaticArrayType>(*v);
+          return v_arr.has_size();
+        }
+        default:
+          return false;
+      }
+    }
     default:
       return ValueEqual(p, v, std::nullopt);
   }
@@ -546,7 +559,6 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
     case ExpressionKind::FunctionTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::ValueLiteral:
@@ -772,11 +784,9 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::StringType:
     case Value::Kind::StringValue:
     case Value::Kind::TypeOfMixinPseudoType:
@@ -841,6 +851,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
           break;
         case Value::Kind::StaticArrayType: {
           const auto& array_type = cast<StaticArrayType>(*destination_type);
+          CARBON_CHECK(array_type.has_size());
           destination_element_types.resize(array_type.size(),
                                            &array_type.element_type());
           break;
@@ -975,9 +986,15 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
 
   // TODO: move this logic into PatternMatch, and call it here.
   const auto* p = &method.self_pattern().value();
-  const auto& placeholder = cast<BindingPlaceholderValue>(*p);
-  if (placeholder.value_node().has_value()) {
-    method_scope.Bind(*placeholder.value_node(), receiver);
+  const auto* placeholder = dyn_cast<BindingPlaceholderValue>(p);
+  if (!placeholder) {
+    // TODO: Fix this, probably merging logic with CallFunction.
+    // https://github.com/carbon-language/carbon-lang/issues/2802
+    return ProgramError(fun->source_loc())
+           << "destructors currently don't support `addr self` bindings";
+  }
+  if (placeholder->value_node().has_value()) {
+    method_scope.Bind(*placeholder->value_node(), receiver);
   }
   CARBON_CHECK(method.body().has_value())
       << "Calling a method that's missing a body";
@@ -991,10 +1008,6 @@ auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
                                ImplWitnessMap&& witnesses) -> ErrorOr<Success> {
-  constexpr int StackSizeLimit = 1000;
-  if (todo_.Count() > StackSizeLimit) {
-    return ProgramError(call.source_loc()) << "stack overflow";
-  }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "calling function: " << *fun << "\n";
   }
@@ -1006,7 +1019,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
     }
     case Value::Kind::FunctionValue:
     case Value::Kind::BoundMethodValue: {
-      const auto* func_val = dyn_cast<FunctionOrMethodValue>(fun);
+      const auto* func_val = cast<FunctionOrMethodValue>(fun);
 
       const FunctionDeclaration& function = func_val->declaration();
       if (!function.body().has_value()) {
@@ -1112,6 +1125,66 @@ auto Interpreter::CallFunction(const CallExpression& call,
       return ProgramError(call.source_loc())
              << "in call, expected a function, not " << *fun;
   }
+}
+
+// Returns true if the format string is okay to pass to formatv. This only
+// supports `{{` and `{N}` as special syntax.
+static auto ValidateFormatString(SourceLocation source_loc,
+                                 const char* format_string, int num_args)
+    -> ErrorOr<Success> {
+  const char* cursor = format_string;
+  while (true) {
+    switch (*cursor) {
+      case '\0':
+        // End of string.
+        return Success();
+      case '{':
+        // `{` is a special character.
+        ++cursor;
+        switch (*cursor) {
+          case '\0':
+            return ProgramError(source_loc)
+                   << "`{` must be followed by a second `{` or index in `"
+                   << format_string << "`";
+          case '{':
+            // Escaped `{`.
+            ++cursor;
+            break;
+          case '}':
+            return ProgramError(source_loc)
+                   << "Invalid `{}` in `" << format_string << "`";
+          default:
+            int index = 0;
+            while (*cursor != '}') {
+              if (*cursor == '\0') {
+                return ProgramError(source_loc)
+                       << "Index incomplete in `" << format_string << "`";
+              }
+              if (*cursor < '0' || *cursor > '9') {
+                return ProgramError(source_loc)
+                       << "Non-numeric character in index at offset "
+                       << cursor - format_string << " in `" << format_string
+                       << "`";
+              }
+              index = (10 * index) + (*cursor - '0');
+              if (index >= num_args) {
+                return ProgramError(source_loc)
+                       << "Index invalid with argument count of " << num_args
+                       << " at offset " << cursor - format_string << " in `"
+                       << format_string << "`";
+              }
+              ++cursor;
+            }
+            // Move past the `}`.
+            ++cursor;
+        }
+        break;
+      default:
+        // Arbitrary text.
+        ++cursor;
+    }
+  }
+  llvm_unreachable("Loop returns directly");
 }
 
 auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
@@ -1545,19 +1618,23 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               Convert(args[0], arena_->New<StringType>(), exp.source_loc()));
           const char* format_string =
               cast<StringValue>(*format_string_value).value().c_str();
-          switch (args.size()) {
-            case 1:
-              llvm::outs() << llvm::formatv(format_string);
+          int num_format_args = args.size() - 1;
+          CARBON_RETURN_IF_ERROR(ValidateFormatString(
+              intrinsic.source_loc(), format_string, num_format_args));
+          switch (num_format_args) {
+            case 0:
+              *print_stream_ << llvm::formatv(format_string);
               break;
-            case 2:
-              llvm::outs() << llvm::formatv(format_string,
-                                            cast<IntValue>(*args[1]).value());
+            case 1: {
+              *print_stream_ << llvm::formatv(format_string,
+                                              cast<IntValue>(*args[1]).value());
               break;
+            }
             default:
-              CARBON_FATAL() << "Unexpected arg count: " << args.size();
+              CARBON_FATAL() << "Too many format args: " << num_format_args;
           }
           // Implicit newline; currently no way to disable it.
-          llvm::outs() << "\n";
+          *print_stream_ << "\n";
           return todo_.FinishAction(TupleValue::Empty());
         }
         case IntrinsicExpression::Intrinsic::Assert: {
@@ -1623,12 +1700,24 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         }
         case IntrinsicExpression::Intrinsic::Rand: {
           CARBON_CHECK(args.size() == 2);
-          const auto& low = cast<IntValue>(*args[0]).value();
-          const auto& high = cast<IntValue>(*args[1]).value();
-          CARBON_CHECK(high > low);
+          const int64_t low = cast<IntValue>(*args[0]).value();
+          const int64_t high = cast<IntValue>(*args[1]).value();
+          if (low >= high) {
+            return ProgramError(exp.source_loc())
+                   << "Rand inputs must be ordered for a non-empty range: "
+                   << low << " must be less than " << high;
+          }
+          // Use 64-bit to handle large ranges where `high - low` might exceed
+          // int32_t maximums.
+          static std::mt19937_64 generator(12);
+          const int64_t range = high - low;
           // We avoid using std::uniform_int_distribution because it's not
           // reproducible across builds/platforms.
-          int r = (generator() % (high - low)) + low;
+          int64_t r = (generator() % range) + low;
+          CARBON_CHECK(r >= std::numeric_limits<int32_t>::min() &&
+                       r <= std::numeric_limits<int32_t>::max())
+              << "Non-int32 result: " << r;
+          CARBON_CHECK(r >= low && r <= high) << "Out-of-range result: " << r;
           return todo_.FinishAction(arena_->New<IntValue>(r));
         }
         case IntrinsicExpression::Intrinsic::ImplicitAs: {
@@ -1765,10 +1854,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::TypeTypeLiteral: {
       CARBON_CHECK(act.pos() == 0);
       return todo_.FinishAction(arena_->New<TypeType>());
-    }
-    case ExpressionKind::ContinuationTypeLiteral: {
-      CARBON_CHECK(act.pos() == 0);
-      return todo_.FinishAction(arena_->New<ContinuationType>());
     }
     case ExpressionKind::StringLiteral:
       CARBON_CHECK(act.pos() == 0);
@@ -2202,34 +2287,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                     stmt.source_loc()));
         return todo_.UnwindPast(*function.body(), return_value);
       }
-    case StatementKind::Continuation: {
-      CARBON_CHECK(act.pos() == 0);
-      const auto& continuation = cast<Continuation>(stmt);
-      // Create a continuation object by creating a frame similar the
-      // way one is created in a function call.
-      auto* fragment = arena_->New<StackFragment>();
-      stack_fragments_.push_back(fragment);
-      todo_.InitializeFragment(*fragment, &continuation.body());
-      // Bind the continuation object to the continuation variable
-      todo_.Initialize(&cast<Continuation>(stmt),
-                       arena_->New<ContinuationValue>(fragment));
-      return todo_.FinishAction();
-    }
-    case StatementKind::Run: {
-      const auto& run = cast<Run>(stmt);
-      if (act.pos() == 0) {
-        // Evaluate the argument of the run statement.
-        return todo_.Spawn(std::make_unique<ExpressionAction>(&run.argument()));
-      } else if (act.pos() == 1) {
-        // Push the continuation onto the current stack.
-        return todo_.Resume(cast<const ContinuationValue>(act.results()[0]));
-      } else {
-        return todo_.FinishAction();
-      }
-    }
-    case StatementKind::Await:
-      CARBON_CHECK(act.pos() == 0);
-      return todo_.Suspend();
   }
 }
 
@@ -2392,6 +2449,20 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
 
 // State transition.
 auto Interpreter::Step() -> ErrorOr<Success> {
+  // Check for various overflow conditions before stepping.
+  if (todo_.size() > MaxTodoSize) {
+    return ProgramError(SourceLocation("overflow", 1))
+           << "stack overflow: too many interpreter actions on stack";
+  }
+  if (++steps_taken_ > MaxStepsTaken) {
+    return ProgramError(SourceLocation("overflow", 1))
+           << "possible infinite loop: too many interpreter steps executed";
+  }
+  if (arena_->allocated() > MaxArenaAllocated) {
+    return ProgramError(SourceLocation("overflow", 1))
+           << "out of memory: exceeded arena allocation limit";
+  }
+
   Action& act = todo_.CurrentAction();
   switch (act.kind()) {
     case Action::Kind::LocationAction:
@@ -2432,7 +2503,7 @@ auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     TraceState();
   }
   todo_.Start(std::move(action));
-  while (!todo_.IsEmpty()) {
+  while (!todo_.empty()) {
     CARBON_RETURN_IF_ERROR(Step());
     if (trace_stream_->is_enabled()) {
       TraceState();
@@ -2442,8 +2513,9 @@ auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
 }
 
 auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
-                   Nonnull<TraceStream*> trace_stream) -> ErrorOr<int> {
-  Interpreter interpreter(Phase::RunTime, arena, trace_stream);
+                   Nonnull<TraceStream*> trace_stream,
+                   Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int> {
+  Interpreter interpreter(Phase::RunTime, arena, trace_stream, print_stream);
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** initializing globals **********\n";
   }
@@ -2464,9 +2536,11 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
 }
 
 auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
-               Nonnull<TraceStream*> trace_stream)
+               Nonnull<TraceStream*> trace_stream,
+               Nonnull<llvm::raw_ostream*> print_stream)
     -> ErrorOr<Nonnull<const Value*>> {
-  Interpreter interpreter(Phase::CompileTime, arena, trace_stream);
+  Interpreter interpreter(Phase::CompileTime, arena, trace_stream,
+                          print_stream);
   CARBON_RETURN_IF_ERROR(
       interpreter.RunAllSteps(std::make_unique<ExpressionAction>(e)));
   return interpreter.result();

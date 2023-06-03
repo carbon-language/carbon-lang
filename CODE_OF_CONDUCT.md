@@ -34,7 +34,7 @@ that we ask all community members to adhere to:
 -   be considerate,
 -   be kind,
 -   be careful in the words that we choose,
--   when we disagree, we try to understand why, and
+-   when we disagree, try to understand why, and
 -   recognize when progress has stopped, and take a step back.
 
 This list isn't exhaustive. Rather, take it in the spirit in which it’s intended

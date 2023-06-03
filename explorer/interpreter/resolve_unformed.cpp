@@ -11,6 +11,7 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/common/nonnull.h"
+#include "explorer/interpreter/stack_space.h"
 
 using llvm::cast;
 
@@ -54,22 +55,35 @@ auto FlowFacts::TakeAction(Nonnull<const AstNode*> node, ActionType action,
   return Success();
 }
 
-// Traverses the sub-AST rooted at the given node, resolving the formed/unformed
-// states of local variables within it and updating the flow facts.
-static auto ResolveUnformed(Nonnull<const Expression*> expression,
-                            FlowFacts& flow_facts, FlowFacts::ActionType action)
+static auto ResolveUnformedImpl(Nonnull<const Expression*> expression,
+                                FlowFacts& flow_facts,
+                                FlowFacts::ActionType action)
     -> ErrorOr<Success>;
-static auto ResolveUnformed(Nonnull<const Pattern*> pattern,
-                            FlowFacts& flow_facts, FlowFacts::ActionType action)
+static auto ResolveUnformedImpl(Nonnull<const Pattern*> pattern,
+                                FlowFacts& flow_facts,
+                                FlowFacts::ActionType action)
     -> ErrorOr<Success>;
-static auto ResolveUnformed(Nonnull<const Statement*> statement,
-                            FlowFacts& flow_facts, FlowFacts::ActionType action)
+static auto ResolveUnformedImpl(Nonnull<const Statement*> statement,
+                                FlowFacts& flow_facts,
+                                FlowFacts::ActionType action)
     -> ErrorOr<Success>;
-static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
+static auto ResolveUnformedImpl(Nonnull<const Expression*> expression,
+                                FlowFacts& flow_facts,
+                                FlowFacts::ActionType action)
     -> ErrorOr<Success>;
 
-static auto ResolveUnformed(Nonnull<const Expression*> expression,
-                            FlowFacts& flow_facts, FlowFacts::ActionType action)
+// Traverses the sub-AST rooted at the given node, resolving the formed/unformed
+// states of local variables within it and updating the flow facts.
+template <typename T>
+static auto ResolveUnformed(Nonnull<const T*> expression, FlowFacts& flow_facts,
+                            FlowFacts::ActionType action) -> ErrorOr<Success> {
+  return RunWithExtraStack(
+      [&] { return ResolveUnformedImpl(expression, flow_facts, action); });
+}
+
+static auto ResolveUnformedImpl(Nonnull<const Expression*> expression,
+                                FlowFacts& flow_facts,
+                                FlowFacts::ActionType action)
     -> ErrorOr<Success> {
   switch (expression->kind()) {
     case ExpressionKind::IdentifierExpression: {
@@ -83,6 +97,12 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
       const auto& call = cast<CallExpression>(*expression);
       CARBON_RETURN_IF_ERROR(
           ResolveUnformed(&call.argument(), flow_facts, action));
+      break;
+    }
+    case ExpressionKind::IntrinsicExpression: {
+      const auto& intrin = cast<IntrinsicExpression>(*expression);
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&intrin.args(), flow_facts, action));
       break;
     }
     case ExpressionKind::TupleLiteral:
@@ -100,6 +120,9 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
             // When a variable is taken address of, defer the unformed check to
             // runtime. A more sound analysis can be implemented when a
             // points-to analysis is available.
+            // TODO: This isn't enough to permit &x.y or &x[i] when x is
+            // uninitialized, because x.y and x[i] both require x to be
+            // initialized.
             ResolveUnformed(opt_exp.arguments().front(), flow_facts,
                             FlowFacts::ActionType::Form));
       } else {
@@ -117,15 +140,35 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
       }
       break;
     case ExpressionKind::SimpleMemberAccessExpression:
-      CARBON_RETURN_IF_ERROR(ResolveUnformed(
-          &cast<SimpleMemberAccessExpression>(*expression).object(), flow_facts,
-          FlowFacts::ActionType::Check));
+    case ExpressionKind::CompoundMemberAccessExpression:
+    case ExpressionKind::BaseAccessExpression:
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&cast<MemberAccessExpression>(*expression).object(),
+                          flow_facts, FlowFacts::ActionType::Check));
       break;
     case ExpressionKind::BuiltinConvertExpression:
       CARBON_RETURN_IF_ERROR(ResolveUnformed(
           cast<BuiltinConvertExpression>(*expression).source_expression(),
           flow_facts, FlowFacts::ActionType::Check));
       break;
+    case ExpressionKind::IndexExpression:
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&cast<IndexExpression>(*expression).object(),
+                          flow_facts, FlowFacts::ActionType::Check));
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&cast<IndexExpression>(*expression).offset(),
+                          flow_facts, FlowFacts::ActionType::Check));
+      break;
+    case ExpressionKind::IfExpression: {
+      const auto& if_exp = cast<IfExpression>(*expression);
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(&if_exp.condition(), flow_facts,
+                                             FlowFacts::ActionType::Check));
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&if_exp.then_expression(), flow_facts, action));
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&if_exp.else_expression(), flow_facts, action));
+      break;
+    }
     case ExpressionKind::DotSelfExpression:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::BoolLiteral:
@@ -134,15 +177,9 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::ValueLiteral:
-    case ExpressionKind::IndexExpression:
-    case ExpressionKind::CompoundMemberAccessExpression:
-    case ExpressionKind::BaseAccessExpression:
-    case ExpressionKind::IfExpression:
     case ExpressionKind::WhereExpression:
     case ExpressionKind::StructTypeLiteral:
-    case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::UnimplementedExpression:
     case ExpressionKind::FunctionTypeLiteral:
     case ExpressionKind::ArrayTypeLiteral:
@@ -151,8 +188,9 @@ static auto ResolveUnformed(Nonnull<const Expression*> expression,
   return Success();
 }
 
-static auto ResolveUnformed(Nonnull<const Pattern*> pattern,
-                            FlowFacts& flow_facts, FlowFacts::ActionType action)
+static auto ResolveUnformedImpl(Nonnull<const Pattern*> pattern,
+                                FlowFacts& flow_facts,
+                                FlowFacts::ActionType action)
     -> ErrorOr<Success> {
   switch (pattern->kind()) {
     case PatternKind::BindingPattern: {
@@ -179,8 +217,9 @@ static auto ResolveUnformed(Nonnull<const Pattern*> pattern,
   return Success();
 }
 
-static auto ResolveUnformed(Nonnull<const Statement*> statement,
-                            FlowFacts& flow_facts, FlowFacts::ActionType action)
+static auto ResolveUnformedImpl(Nonnull<const Statement*> statement,
+                                FlowFacts& flow_facts,
+                                FlowFacts::ActionType action)
     -> ErrorOr<Success> {
   switch (statement->kind()) {
     case StatementKind::Block: {
@@ -281,16 +320,34 @@ static auto ResolveUnformed(Nonnull<const Statement*> statement,
       }
       break;
     }
+    case StatementKind::For: {
+      const auto& for_stmt = cast<For>(*statement);
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(
+          &for_stmt.loop_target(), flow_facts, FlowFacts::ActionType::Check));
+      CARBON_RETURN_IF_ERROR(
+          ResolveUnformed(&for_stmt.body(), flow_facts, action));
+      break;
+    }
     case StatementKind::Break:
     case StatementKind::Continue:
-    case StatementKind::Continuation:
-    case StatementKind::Run:
-    case StatementKind::Await:
-    case StatementKind::For:
       // do nothing
       break;
   }
   return Success();
+}
+
+static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
+    -> ErrorOr<Success>;
+
+static auto ResolveUnformed(
+    llvm::ArrayRef<Nonnull<const Declaration*>> declarations)
+    -> ErrorOr<Success> {
+  return RunWithExtraStack([declarations]() -> ErrorOr<Success> {
+    for (Nonnull<const Declaration*> declaration : declarations) {
+      CARBON_RETURN_IF_ERROR(ResolveUnformed(declaration));
+    }
+    return Success();
+  });
 }
 
 static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
@@ -310,12 +367,7 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
       break;
     }
     case DeclarationKind::NamespaceDeclaration:
-    case DeclarationKind::ClassDeclaration:
     case DeclarationKind::MixDeclaration:
-    case DeclarationKind::MixinDeclaration:
-    case DeclarationKind::InterfaceDeclaration:
-    case DeclarationKind::ConstraintDeclaration:
-    case DeclarationKind::ImplDeclaration:
     case DeclarationKind::MatchFirstDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::VariableDeclaration:
@@ -326,6 +378,16 @@ static auto ResolveUnformed(Nonnull<const Declaration*> declaration)
     case DeclarationKind::AliasDeclaration:
       // do nothing
       break;
+    case DeclarationKind::ClassDeclaration:
+      return ResolveUnformed(cast<ClassDeclaration>(declaration)->members());
+    case DeclarationKind::MixinDeclaration:
+      return ResolveUnformed(cast<MixinDeclaration>(declaration)->members());
+    case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ConstraintDeclaration:
+      return ResolveUnformed(
+          cast<ConstraintTypeDeclaration>(declaration)->members());
+    case DeclarationKind::ImplDeclaration:
+      return ResolveUnformed(cast<ImplDeclaration>(declaration)->members());
   }
   return Success();
 }

@@ -3,12 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: calls: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_ir: block0, param_refs: block0},
+// CHECK:STDOUT: functions: [
+// CHECK:STDOUT:   {name: str1, param_refs: block0, body: block2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -20,16 +17,19 @@
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT:   y,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT:   nodeEmptyTupleType,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+2, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str1, arg1: callable0},
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+5, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+4, arg1: block2},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+2, type: type0},
+// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+5, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+0, type: type0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -40,7 +40,6 @@
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,

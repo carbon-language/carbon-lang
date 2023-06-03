@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // This doesn't test trace ouptut because it's too slow.
-// NOAUTOUPDATE
-// RUN: %{explorer-run}
+// AUTOUPDATE
 // CHECK:STDOUT: String list length is: 7
 // CHECK:STDOUT: This is a String Entry 4
 // CHECK:STDOUT: Value 1337

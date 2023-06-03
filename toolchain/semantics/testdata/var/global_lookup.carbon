@@ -3,11 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-semantics}
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: calls: [
-// CHECK:STDOUT: ]
-// CHECK:STDOUT: callables: [
+// CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -18,14 +15,17 @@
 // CHECK:STDOUT:   x,
 // CHECK:STDOUT:   y,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+2, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+4, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+0, type: nodeIntegerType},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+2, type: type0},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+4, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+0, type: type0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

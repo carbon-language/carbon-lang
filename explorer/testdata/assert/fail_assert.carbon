@@ -3,14 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "HALLO WELT"
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  Assert(true, "HALLO WELT");
   Assert(false, "HALLO WELT");
   return 0;
 }

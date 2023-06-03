@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
@@ -17,7 +16,7 @@
 // CHECK:STDOUT:     {kind: 'CodeBlock', text: '}', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'IfStatement', text: 'if', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:       {kind: 'InvalidExpression', text: ')', has_error: yes},
+// CHECK:STDOUT:       {kind: 'InvalidParse', text: ')', has_error: yes},
 // CHECK:STDOUT:     {kind: 'IfCondition', text: ')', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'CodeBlockStart', text: '{'},
 // CHECK:STDOUT:     {kind: 'CodeBlock', text: '}', subtree_size: 2},
@@ -32,7 +31,7 @@
 // CHECK:STDOUT:       {kind: 'NameReference', text: 'd'},
 // CHECK:STDOUT:     {kind: 'IfCondition', text: ')', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'CodeBlockStart', text: '}', has_error: yes},
-// CHECK:STDOUT:       {kind: 'InvalidExpression', text: '}', has_error: yes},
+// CHECK:STDOUT:       {kind: 'InvalidParse', text: '}', has_error: yes},
 // CHECK:STDOUT:     {kind: 'CodeBlock', text: '}', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:   {kind: 'IfStatement', text: 'if', subtree_size: 7},
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 31},
@@ -40,13 +39,13 @@
 // CHECK:STDOUT: ]
 
 fn F() {
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+1]]:6: Expected `(` after `if`.
+  // CHECK:STDERR: fail_errors.carbon:[[@LINE+1]]:6: Expected `(` after `if`.
   if a {}
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+1]]:7: Expected expression.
+  // CHECK:STDERR: fail_errors.carbon:[[@LINE+1]]:7: Expected expression.
   if () {}
-  // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+1]]:9: Unexpected tokens before `)`.
+  // CHECK:STDERR: fail_errors.carbon:[[@LINE+1]]:9: Unexpected tokens before `)`.
   if (b c) {}
   if (d)
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+2]]:1: Expected braced code block.
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/if/fail_errors.carbon:[[@LINE+1]]:1: Expected expression.
+// CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:1: Expected braced code block.
+// CHECK:STDERR: fail_errors.carbon:[[@LINE+1]]:1: Expected expression.
 }

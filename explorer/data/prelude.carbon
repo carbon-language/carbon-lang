@@ -689,9 +689,8 @@ class Optional(T:! type) {
       }
     }
     Assert(false, "Attempted to unwrap empty Optional");
-    // TODO: Drop uninitialized variable & return when we can flag unreachable paths.
-    var y: T;
-    return y;
+    // TODO: Drop return when we can flag unreachable paths.
+    return self.Get();
   }
 
   var element: OptionalElement(T);

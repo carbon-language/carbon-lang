@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: c.Foo(): 1
 // CHECK:STDOUT: d.Foo(): 2
 // CHECK:STDOUT: e.Foo(): 3

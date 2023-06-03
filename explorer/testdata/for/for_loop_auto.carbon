@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: HALLO WELT 0
 // CHECK:STDOUT: HALLO WELT 1
 // CHECK:STDOUT: HALLO WELT 2

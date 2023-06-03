@@ -4,15 +4,16 @@
 
 #include "toolchain/lowering/lower_to_llvm.h"
 
-#include "toolchain/lowering/lowering.h"
+#include "toolchain/lowering/lowering_context.h"
 
 namespace Carbon {
 
 auto LowerToLLVM(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
-                 const SemanticsIR& semantics_ir)
+                 const SemanticsIR& semantics_ir,
+                 llvm::raw_ostream* vlog_stream)
     -> std::unique_ptr<llvm::Module> {
-  Lowering lowering(llvm_context, module_name, semantics_ir);
-  return lowering.Run();
+  LoweringContext context(llvm_context, module_name, semantics_ir, vlog_stream);
+  return context.Run();
 }
 
 }  // namespace Carbon

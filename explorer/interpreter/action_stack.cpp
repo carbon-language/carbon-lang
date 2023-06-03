@@ -21,7 +21,7 @@ void ActionStack::Print(llvm::raw_ostream& out) const {
 
 void ActionStack::Start(std::unique_ptr<Action> action) {
   result_ = std::nullopt;
-  CARBON_CHECK(todo_.IsEmpty());
+  CARBON_CHECK(todo_.empty());
   todo_.Push(std::move(action));
 }
 
@@ -93,23 +93,6 @@ void ActionStack::MergeScope(RuntimeScope scope) {
     return;
   }
   CARBON_FATAL() << "No current scope";
-}
-
-void ActionStack::InitializeFragment(StackFragment& fragment,
-                                     Nonnull<const Statement*> body) {
-  std::vector<Nonnull<const RuntimeScope*>> scopes;
-  for (const std::unique_ptr<Action>& action : todo_) {
-    if (action->scope().has_value()) {
-      scopes.push_back(&*action->scope());
-    }
-  }
-  // We don't capture globals_ or constants_ because they're global.
-
-  std::vector<std::unique_ptr<Action>> reversed_todo;
-  reversed_todo.push_back(std::make_unique<StatementAction>(body));
-  reversed_todo.push_back(
-      std::make_unique<ScopeAction>(RuntimeScope::Capture(scopes)));
-  fragment.StoreReversed(std::move(reversed_todo));
 }
 
 namespace {
@@ -268,37 +251,9 @@ auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
   return Success();
 }
 
-auto ActionStack::Resume(Nonnull<const ContinuationValue*> continuation)
-    -> ErrorOr<Success> {
-  Action& action = *todo_.Top();
-  action.set_pos(action.pos() + 1);
-  static_cast<StackFragment&>(continuation->representation()).RestoreTo(todo_);
-  return Success();
-}
-
-static auto IsRunAction(const Action& action) -> bool {
-  const auto* statement = llvm::dyn_cast<StatementAction>(&action);
-  return statement != nullptr && llvm::isa<Run>(statement->statement());
-}
-
-auto ActionStack::Suspend() -> ErrorOr<Success> {
-  // Pause the current continuation
-  todo_.Pop();
-  std::vector<std::unique_ptr<Action>> paused;
-  while (!IsRunAction(*todo_.Top())) {
-    paused.push_back(todo_.Pop());
-  }
-  const auto& continuation =
-      llvm::cast<const ContinuationValue>(*todo_.Top()->results()[0]);
-  // Update the continuation with the paused stack.
-  static_cast<StackFragment&>(continuation.representation())
-      .StoreReversed(std::move(paused));
-  return Success();
-}
-
 void ActionStack::PopScopes(
     std::stack<std::unique_ptr<Action>>& cleanup_stack) {
-  while (!todo_.IsEmpty() && llvm::isa<ScopeAction>(*todo_.Top())) {
+  while (!todo_.empty() && llvm::isa<ScopeAction>(*todo_.Top())) {
     auto act = todo_.Pop();
     if (act->scope()) {
       cleanup_stack.push(std::move(act));
@@ -307,7 +262,7 @@ void ActionStack::PopScopes(
 }
 
 void ActionStack::SetResult(Nonnull<const Value*> result) {
-  if (todo_.IsEmpty()) {
+  if (todo_.empty()) {
     result_ = result;
   } else {
     todo_.Top()->AddResult(result);

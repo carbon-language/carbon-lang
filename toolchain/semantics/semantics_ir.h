@@ -10,41 +10,31 @@
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_node.h"
 
-namespace Carbon::Testing {
-class SemanticsIRForTest;
-}  // namespace Carbon::Testing
-
 namespace Carbon {
 
-// A call.
-struct SemanticsCall {
+// A function.
+struct SemanticsFunction {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{arg_ir: " << arg_ir_id << ", arg_refs: " << arg_refs_id << "}";
-  }
-
-  // The full IR for arguments.
-  SemanticsNodeBlockId arg_ir_id;
-  // A block containing a single reference node per argument.
-  SemanticsNodeBlockId arg_refs_id;
-};
-
-// A callable object.
-struct SemanticsCallable {
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{param_ir: " << param_ir_id << ", param_refs: " << param_refs_id;
+    out << "{name: " << name_id << ", "
+        << "param_refs: " << param_refs_id;
     if (return_type_id.is_valid()) {
       out << ", return_type: " << return_type_id;
+    }
+    if (body_id.is_valid()) {
+      out << ", body: " << body_id;
     }
     out << "}";
   }
 
-  // The full IR for parameters.
-  SemanticsNodeBlockId param_ir_id;
+  // The function name.
+  SemanticsStringId name_id;
   // A block containing a single reference node per parameter.
   SemanticsNodeBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
-  // The IR corresponding to the return type will be in a node block.
-  SemanticsNodeId return_type_id;
+  SemanticsTypeId return_type_id;
+  // The body. This will be invalid for declarations which don't have a visible
+  // definition.
+  SemanticsNodeBlockId body_id;
 };
 
 struct SemanticsRealLiteral {
@@ -84,15 +74,44 @@ class SemanticsIR {
   }
   auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
 
+  // Adds a callable, returning an ID to reference it.
+  auto AddFunction(SemanticsFunction function) -> SemanticsFunctionId {
+    SemanticsFunctionId id(functions_.size());
+    functions_.push_back(function);
+    return id;
+  }
+
   // Returns the requested callable.
-  auto GetCallable(SemanticsCallableId callable_id) const -> SemanticsCallable {
-    return callables_[callable_id.index];
+  auto GetFunction(SemanticsFunctionId function_id) const -> SemanticsFunction {
+    return functions_[function_id.index];
+  }
+
+  // Returns the requested callable.
+  auto GetFunction(SemanticsFunctionId function_id) -> SemanticsFunction& {
+    return functions_[function_id.index];
+  }
+
+  // Adds an integer literal, returning an ID to reference it.
+  auto AddIntegerLiteral(llvm::APInt integer_literal)
+      -> SemanticsIntegerLiteralId {
+    SemanticsIntegerLiteralId id(integer_literals_.size());
+    integer_literals_.push_back(integer_literal);
+    return id;
   }
 
   // Returns the requested integer literal.
   auto GetIntegerLiteral(SemanticsIntegerLiteralId int_id) const
       -> const llvm::APInt& {
     return integer_literals_[int_id.index];
+  }
+
+  // Adds a node to a specified block, returning an ID to reference the node.
+  auto AddNode(SemanticsNodeBlockId block_id, SemanticsNode node)
+      -> SemanticsNodeId {
+    SemanticsNodeId node_id(nodes_.size());
+    nodes_.push_back(node);
+    node_blocks_[block_id.index].push_back(node_id);
+    return node_id;
   }
 
   // Returns the requested node.
@@ -106,74 +125,7 @@ class SemanticsIR {
     return node_blocks_[block_id.index];
   }
 
-  // Returns the requested real literal.
-  auto GetRealLiteral(SemanticsRealLiteralId int_id) const
-      -> const SemanticsRealLiteral& {
-    return real_literals_[int_id.index];
-  }
-
-  // Returns the requested string.
-  auto GetString(SemanticsStringId string_id) const -> llvm::StringRef {
-    return strings_[string_id.index];
-  }
-
-  auto nodes_size() const -> int { return nodes_.size(); }
-
-  auto top_node_block_id() const -> SemanticsNodeBlockId {
-    return top_node_block_id_;
-  }
-
-  // Returns true if there were errors creating the semantics IR.
-  auto has_errors() const -> bool { return has_errors_; }
-
- private:
-  friend class SemanticsParseTreeHandler;
-
-  explicit SemanticsIR(const SemanticsIR* builtin_ir)
-      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {
-    // For SemanticsNodeBlockId::Empty.
-    node_blocks_.resize(1);
-  }
-
-  // Adds a call, returning an ID to reference it.
-  auto AddCall(SemanticsCall call) -> SemanticsCallId {
-    SemanticsCallId id(calls_.size());
-    calls_.push_back(call);
-    return id;
-  }
-
-  // Adds a callable, returning an ID to reference it.
-  auto AddCallable(SemanticsCallable callable) -> SemanticsCallableId {
-    SemanticsCallableId id(callables_.size());
-    callables_.push_back(callable);
-    return id;
-  }
-
-  // Adds an integer literal, returning an ID to reference it.
-  auto AddIntegerLiteral(llvm::APInt integer_literal)
-      -> SemanticsIntegerLiteralId {
-    SemanticsIntegerLiteralId id(integer_literals_.size());
-    integer_literals_.push_back(integer_literal);
-    return id;
-  }
-
-  // Adds a node to a specified block, returning an ID to reference the node.
-  auto AddNode(SemanticsNodeBlockId block_id, SemanticsNode node)
-      -> SemanticsNodeId {
-    SemanticsNodeId node_id(nodes_.size());
-    nodes_.push_back(node);
-    node_blocks_[block_id.index].push_back(node_id);
-    return node_id;
-  }
-
-  // Adds an empty new node block, returning an ID to reference it and add
-  // items.
-  auto AddNodeBlock() -> SemanticsNodeBlockId {
-    SemanticsNodeBlockId id(node_blocks_.size());
-    node_blocks_.resize(node_blocks_.size() + 1);
-    return id;
-  }
-
+  // Returns the requested node block.
   auto GetNodeBlock(SemanticsNodeBlockId block_id)
       -> llvm::SmallVector<SemanticsNodeId>& {
     return node_blocks_[block_id.index];
@@ -185,6 +137,12 @@ class SemanticsIR {
     SemanticsRealLiteralId id(real_literals_.size());
     real_literals_.push_back(real_literal);
     return id;
+  }
+
+  // Returns the requested real literal.
+  auto GetRealLiteral(SemanticsRealLiteralId int_id) const
+      -> const SemanticsRealLiteral& {
+    return real_literals_[int_id.index];
   }
 
   // Adds an string, returning an ID to reference it.
@@ -201,6 +159,11 @@ class SemanticsIR {
     return id;
   }
 
+  // Returns the requested string.
+  auto GetString(SemanticsStringId string_id) const -> llvm::StringRef {
+    return strings_[string_id.index];
+  }
+
   // Returns an ID for the string if it's previously been stored.
   auto GetStringID(llvm::StringRef str) -> std::optional<SemanticsStringId> {
     auto str_find = string_to_id_.find(str);
@@ -210,20 +173,75 @@ class SemanticsIR {
     return std::nullopt;
   }
 
-  // Produces a string version of a node.
-  auto StringifyNode(SemanticsNodeId node_id) -> std::string;
+  // Adds a type, returning an ID to reference it.
+  auto AddType(SemanticsNodeId node_id) -> SemanticsTypeId {
+    SemanticsTypeId type_id(types_.size());
+    types_.push_back(node_id);
+    if (node_id == SemanticsNodeId::BuiltinEmptyTupleType) {
+      CARBON_CHECK(!empty_tuple_type_id_.is_valid());
+      empty_tuple_type_id_ = type_id;
+    }
+    return type_id;
+  }
 
-  // Implements StringifyNode using streaming.
-  auto StringifyNodeImpl(llvm::raw_ostream& out, SemanticsNodeId node_id)
-      -> void;
+  // Gets the node ID for a type. This doesn't handle TypeType or InvalidType in
+  // order to avoid a check; callers that need that should use
+  // GetTypeAllowBuiltinTypes.
+  auto GetType(SemanticsTypeId type_id) const -> SemanticsNodeId {
+    // Double-check it's not called with TypeType or InvalidType.
+    CARBON_CHECK(type_id.index >= 0)
+        << "Invalid argument for GetType: " << type_id;
+    return types_[type_id.index];
+  }
+
+  auto GetTypeAllowBuiltinTypes(SemanticsTypeId type_id) const
+      -> SemanticsNodeId {
+    if (type_id == SemanticsTypeId::TypeType) {
+      return SemanticsNodeId::BuiltinTypeType;
+    } else if (type_id == SemanticsTypeId::InvalidType) {
+      return SemanticsNodeId::BuiltinInvalidType;
+    } else {
+      return GetType(type_id);
+    }
+  }
+
+  // Produces a string version of a type.
+  auto StringifyType(SemanticsTypeId type_id) -> std::string;
+
+  auto functions_size() const -> int { return functions_.size(); }
+  auto nodes_size() const -> int { return nodes_.size(); }
+
+  auto types() const -> const llvm::SmallVector<SemanticsNodeId>& {
+    return types_;
+  }
+
+  auto empty_tuple_type_id() const -> SemanticsTypeId {
+    return empty_tuple_type_id_;
+  }
+
+  // The node blocks, for direct mutation.
+  auto node_blocks() -> llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>>& {
+    return node_blocks_;
+  }
+
+  auto top_node_block_id() const -> SemanticsNodeBlockId {
+    return top_node_block_id_;
+  }
+
+  // Returns true if there were errors creating the semantics IR.
+  auto has_errors() const -> bool { return has_errors_; }
+
+ private:
+  explicit SemanticsIR(const SemanticsIR* builtin_ir)
+      : cross_reference_irs_({builtin_ir == nullptr ? this : builtin_ir}) {
+    // For SemanticsNodeBlockId::Empty.
+    node_blocks_.resize(1);
+  }
 
   bool has_errors_ = false;
 
-  // Storage for call objects.
-  llvm::SmallVector<SemanticsCall> calls_;
-
   // Storage for callable objects.
-  llvm::SmallVector<SemanticsCallable> callables_;
+  llvm::SmallVector<SemanticsFunction> functions_;
 
   // Related IRs. There will always be at least 2 entries, the builtin IR (used
   // for references of builtins) followed by the current IR (used for references
@@ -240,6 +258,14 @@ class SemanticsIR {
   // string_to_id_ provides a mapping to identify strings.
   llvm::StringMap<SemanticsStringId> string_to_id_;
   llvm::SmallVector<llvm::StringRef> strings_;
+
+  // Nodes which correspond to in-use types. Stored separately for easy access
+  // by lowering.
+  llvm::SmallVector<SemanticsNodeId> types_;
+
+  // The type of the empty tuple. This is special-cased due to its use in
+  // implicit function returns.
+  SemanticsTypeId empty_tuple_type_id_ = SemanticsTypeId::Invalid;
 
   // All nodes. The first entries will always be cross-references to builtins,
   // at indices matching SemanticsBuiltinKind ordering.

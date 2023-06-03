@@ -11,6 +11,7 @@
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/statement.h"
 #include "explorer/ast/static_scope.h"
+#include "explorer/interpreter/stack_space.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
@@ -73,20 +74,33 @@ class NameResolver {
   // such as a namespace.
   auto ResolveNames(Expression& expression, const StaticScope& enclosing_scope)
       -> ErrorOr<std::optional<ValueNodeView>>;
+  // For RunWithExtraStack.
+  auto ResolveNamesImpl(Expression& expression,
+                        const StaticScope& enclosing_scope)
+      -> ErrorOr<std::optional<ValueNodeView>>;
 
   // Resolve all names within the given where clause by looking them up in the
   // enclosing scope.
   auto ResolveNames(WhereClause& clause, const StaticScope& enclosing_scope)
+      -> ErrorOr<Success>;
+  // For RunWithExtraStack.
+  auto ResolveNamesImpl(WhereClause& clause, const StaticScope& enclosing_scope)
       -> ErrorOr<Success>;
 
   // Resolve all names within the given pattern, extending the given scope with
   // any introduced names.
   auto ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
       -> ErrorOr<Success>;
+  // For RunWithExtraStack.
+  auto ResolveNamesImpl(Pattern& pattern, StaticScope& enclosing_scope)
+      -> ErrorOr<Success>;
 
   // Resolve all names within the given statement, extending the given scope
   // with any names introduced by declaration statements.
   auto ResolveNames(Statement& statement, StaticScope& enclosing_scope)
+      -> ErrorOr<Success>;
+  // For RunWithExtraStack.
+  auto ResolveNamesImpl(Statement& statement, StaticScope& enclosing_scope)
       -> ErrorOr<Success>;
 
   // Resolve all names within the given declaration, extending the given scope
@@ -94,6 +108,9 @@ class NameResolver {
   // present.
   auto ResolveNames(Declaration& declaration, StaticScope& enclosing_scope,
                     ResolveFunctionBodies bodies) -> ErrorOr<Success>;
+  // For RunWithExtraStack.
+  auto ResolveNamesImpl(Declaration& declaration, StaticScope& enclosing_scope,
+                        ResolveFunctionBodies bodies) -> ErrorOr<Success>;
 
   auto ResolveMemberNames(llvm::ArrayRef<Nonnull<Declaration*>> members,
                           StaticScope& scope, ResolveFunctionBodies bodies)
@@ -259,6 +276,13 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
 auto NameResolver::ResolveNames(Expression& expression,
                                 const StaticScope& enclosing_scope)
     -> ErrorOr<std::optional<ValueNodeView>> {
+  return RunWithExtraStack(
+      [&]() { return ResolveNamesImpl(expression, enclosing_scope); });
+}
+
+auto NameResolver::ResolveNamesImpl(Expression& expression,
+                                    const StaticScope& enclosing_scope)
+    -> ErrorOr<std::optional<ValueNodeView>> {
   switch (expression.kind()) {
     case ExpressionKind::CallExpression: {
       auto& call = cast<CallExpression>(expression);
@@ -275,15 +299,26 @@ auto NameResolver::ResolveNames(Expression& expression,
       break;
     }
     case ExpressionKind::SimpleMemberAccessExpression: {
+      // If the left-hand side of the `.` is a namespace or alias to namespace,
+      // resolve the name.
       auto& access = cast<SimpleMemberAccessExpression>(expression);
       CARBON_ASSIGN_OR_RETURN(std::optional<ValueNodeView> scope,
                               ResolveNames(access.object(), enclosing_scope));
+      if (!scope) {
+        break;
+      }
 
-      // If the left-hand side of the `.` is a namespace, resolve the name.
-      // TODO: Look through aliases.
-      if (scope && isa<NamespaceDeclaration>(scope->base())) {
-        auto ns_it =
-            namespace_scopes_.find(&cast<NamespaceDeclaration>(scope->base()));
+      Nonnull<const AstNode*> base = &scope->base();
+      // recursively resolve aliases.
+      while (const auto* alias = dyn_cast<AliasDeclaration>(base)) {
+        if (auto resolved = alias->resolved_declaration()) {
+          base = *resolved;
+        } else {
+          break;
+        }
+      }
+      if (const auto* namespace_decl = dyn_cast<NamespaceDeclaration>(base)) {
+        auto ns_it = namespace_scopes_.find(namespace_decl);
         CARBON_CHECK(ns_it != namespace_scopes_.end())
             << "name resolved to undeclared namespace";
         CARBON_ASSIGN_OR_RETURN(
@@ -320,19 +355,32 @@ auto NameResolver::ResolveNames(Expression& expression,
         CARBON_RETURN_IF_ERROR(ResolveNames(*field, enclosing_scope));
       }
       break;
-    case ExpressionKind::StructLiteral:
+    case ExpressionKind::StructLiteral: {
+      std::set<std::string_view> member_names;
       for (FieldInitializer& init : cast<StructLiteral>(expression).fields()) {
         CARBON_RETURN_IF_ERROR(
             ResolveNames(init.expression(), enclosing_scope));
+        if (!member_names.insert(init.name()).second) {
+          return ProgramError(init.expression().source_loc())
+                 << "Duplicate name `" << init.name() << "` in struct literal";
+        }
       }
       break;
-    case ExpressionKind::StructTypeLiteral:
+    }
+    case ExpressionKind::StructTypeLiteral: {
+      std::set<std::string_view> member_names;
       for (FieldInitializer& init :
            cast<StructTypeLiteral>(expression).fields()) {
         CARBON_RETURN_IF_ERROR(
             ResolveNames(init.expression(), enclosing_scope));
+        if (!member_names.insert(init.name()).second) {
+          return ProgramError(init.expression().source_loc())
+                 << "Duplicate name `" << init.name()
+                 << "` in struct type literal";
+        }
       }
       break;
+    }
     case ExpressionKind::IdentifierExpression: {
       auto& identifier = cast<IdentifierExpression>(expression);
       CARBON_ASSIGN_OR_RETURN(
@@ -388,14 +436,15 @@ auto NameResolver::ResolveNames(Expression& expression,
       auto& array_literal = cast<ArrayTypeLiteral>(expression);
       CARBON_RETURN_IF_ERROR(ResolveNames(
           array_literal.element_type_expression(), enclosing_scope));
-      CARBON_RETURN_IF_ERROR(
-          ResolveNames(array_literal.size_expression(), enclosing_scope));
+      if (array_literal.has_size_expression()) {
+        CARBON_RETURN_IF_ERROR(
+            ResolveNames(array_literal.size_expression(), enclosing_scope));
+      }
       break;
     }
     case ExpressionKind::BoolTypeLiteral:
     case ExpressionKind::BoolLiteral:
     case ExpressionKind::IntTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::IntLiteral:
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
@@ -413,6 +462,13 @@ auto NameResolver::ResolveNames(Expression& expression,
 
 auto NameResolver::ResolveNames(WhereClause& clause,
                                 const StaticScope& enclosing_scope)
+    -> ErrorOr<Success> {
+  return RunWithExtraStack(
+      [&]() { return ResolveNamesImpl(clause, enclosing_scope); });
+}
+
+auto NameResolver::ResolveNamesImpl(WhereClause& clause,
+                                    const StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
   switch (clause.kind()) {
     case WhereClauseKind::ImplsWhereClause: {
@@ -442,6 +498,13 @@ auto NameResolver::ResolveNames(WhereClause& clause,
 }
 
 auto NameResolver::ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
+    -> ErrorOr<Success> {
+  return RunWithExtraStack(
+      [&]() { return ResolveNamesImpl(pattern, enclosing_scope); });
+}
+
+auto NameResolver::ResolveNamesImpl(Pattern& pattern,
+                                    StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
   switch (pattern.kind()) {
     case PatternKind::BindingPattern: {
@@ -497,6 +560,13 @@ auto NameResolver::ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
 auto NameResolver::ResolveNames(Statement& statement,
                                 StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
+  return RunWithExtraStack(
+      [&]() { return ResolveNamesImpl(statement, enclosing_scope); });
+}
+
+auto NameResolver::ResolveNamesImpl(Statement& statement,
+                                    StaticScope& enclosing_scope)
+    -> ErrorOr<Success> {
   switch (statement.kind()) {
     case StatementKind::ExpressionStatement:
       CARBON_RETURN_IF_ERROR(ResolveNames(
@@ -534,9 +604,8 @@ auto NameResolver::ResolveNames(Statement& statement,
           ResolveNames(if_stmt.condition(), enclosing_scope));
       CARBON_RETURN_IF_ERROR(
           ResolveNames(if_stmt.then_block(), enclosing_scope));
-      if (if_stmt.else_block().has_value()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveNames(**if_stmt.else_block(), enclosing_scope));
+      if (auto else_block = if_stmt.else_block()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**else_block, enclosing_scope));
       }
       break;
     }
@@ -602,22 +671,6 @@ auto NameResolver::ResolveNames(Statement& statement,
       }
       break;
     }
-    case StatementKind::Continuation: {
-      auto& continuation = cast<Continuation>(statement);
-      CARBON_RETURN_IF_ERROR(
-          enclosing_scope.Add(continuation.name(), &continuation,
-                              StaticScope::NameStatus::DeclaredButNotUsable));
-      StaticScope continuation_scope(&enclosing_scope);
-      CARBON_RETURN_IF_ERROR(ResolveNames(cast<Continuation>(statement).body(),
-                                          continuation_scope));
-      enclosing_scope.MarkUsable(continuation.name());
-      break;
-    }
-    case StatementKind::Run:
-      CARBON_RETURN_IF_ERROR(
-          ResolveNames(cast<Run>(statement).argument(), enclosing_scope));
-      break;
-    case StatementKind::Await:
     case StatementKind::Break:
     case StatementKind::Continue:
       break;
@@ -650,6 +703,14 @@ auto NameResolver::ResolveNames(Declaration& declaration,
                                 StaticScope& enclosing_scope,
                                 ResolveFunctionBodies bodies)
     -> ErrorOr<Success> {
+  return RunWithExtraStack(
+      [&]() { return ResolveNamesImpl(declaration, enclosing_scope, bodies); });
+}
+
+auto NameResolver::ResolveNamesImpl(Declaration& declaration,
+                                    StaticScope& enclosing_scope,
+                                    ResolveFunctionBodies bodies)
+    -> ErrorOr<Success> {
   switch (declaration.kind()) {
     case DeclarationKind::NamespaceDeclaration: {
       auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
@@ -666,8 +727,8 @@ auto NameResolver::ResolveNames(Declaration& declaration,
                               ResolveQualifier(iface.name(), enclosing_scope));
       StaticScope iface_scope(scope);
       scope->MarkDeclared(iface.name().inner_name());
-      if (iface.params().has_value()) {
-        CARBON_RETURN_IF_ERROR(ResolveNames(**iface.params(), iface_scope));
+      if (auto params = iface.params()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**params, iface_scope));
       }
       scope->MarkUsable(iface.name().inner_name());
       // Don't resolve names in the type of the self binding. The
@@ -727,14 +788,14 @@ auto NameResolver::ResolveNames(Declaration& declaration,
       }
       CARBON_RETURN_IF_ERROR(
           ResolveNames(function.param_pattern(), function_scope));
-      if (function.return_term().type_expression().has_value()) {
-        CARBON_RETURN_IF_ERROR(ResolveNames(
-            **function.return_term().type_expression(), function_scope));
+      if (auto return_type_expr = function.return_term().type_expression()) {
+        CARBON_RETURN_IF_ERROR(
+            ResolveNames(**return_type_expr, function_scope));
       }
       scope->MarkUsable(name.inner_name());
-      if (function.body().has_value() &&
-          bodies != ResolveFunctionBodies::Skip) {
-        CARBON_RETURN_IF_ERROR(ResolveNames(**function.body(), function_scope));
+      if (auto body = function.body();
+          body.has_value() && bodies != ResolveFunctionBodies::Skip) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**body, function_scope));
       }
       break;
     }
@@ -745,13 +806,11 @@ auto NameResolver::ResolveNames(Declaration& declaration,
           ResolveQualifier(class_decl.name(), enclosing_scope));
       StaticScope class_scope(scope);
       scope->MarkDeclared(class_decl.name().inner_name());
-      if (class_decl.base_expr().has_value()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveNames(**class_decl.base_expr(), class_scope));
+      if (auto base_expr = class_decl.base_expr()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**base_expr, class_scope));
       }
-      if (class_decl.type_params().has_value()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveNames(**class_decl.type_params(), class_scope));
+      if (auto type_params = class_decl.type_params()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**type_params, class_scope));
       }
       scope->MarkUsable(class_decl.name().inner_name());
       CARBON_RETURN_IF_ERROR(AddExposedNames(*class_decl.self(), class_scope));
@@ -766,9 +825,8 @@ auto NameResolver::ResolveNames(Declaration& declaration,
           ResolveQualifier(mixin_decl.name(), enclosing_scope));
       StaticScope mixin_scope(scope);
       scope->MarkDeclared(mixin_decl.name().inner_name());
-      if (mixin_decl.params().has_value()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveNames(**mixin_decl.params(), mixin_scope));
+      if (auto params = mixin_decl.params()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**params, mixin_scope));
       }
       scope->MarkUsable(mixin_decl.name().inner_name());
       CARBON_RETURN_IF_ERROR(mixin_scope.Add("Self", mixin_decl.self()));
@@ -787,9 +845,8 @@ auto NameResolver::ResolveNames(Declaration& declaration,
                               ResolveQualifier(choice.name(), enclosing_scope));
       StaticScope choice_scope(scope);
       scope->MarkDeclared(choice.name().inner_name());
-      if (choice.type_params().has_value()) {
-        CARBON_RETURN_IF_ERROR(
-            ResolveNames(**choice.type_params(), choice_scope));
+      if (auto type_params = choice.type_params()) {
+        CARBON_RETURN_IF_ERROR(ResolveNames(**type_params, choice_scope));
       }
       // Alternative names are never used unqualified, so we don't need to
       // add the alternatives to a scope, or introduce a new scope; we only
@@ -846,7 +903,17 @@ auto NameResolver::ResolveNames(Declaration& declaration,
       CARBON_ASSIGN_OR_RETURN(Nonnull<StaticScope*> scope,
                               ResolveQualifier(alias.name(), enclosing_scope));
       scope->MarkDeclared(alias.name().inner_name());
-      CARBON_RETURN_IF_ERROR(ResolveNames(alias.target(), *scope));
+      CARBON_ASSIGN_OR_RETURN(auto target,
+                              ResolveNames(alias.target(), *scope));
+      if (target && isa<Declaration>(target->base())) {
+        if (auto resolved_declaration = alias.resolved_declaration()) {
+          // Skip if the declaration is already resolved in a previous name
+          // resolution phase.
+          CARBON_CHECK(*resolved_declaration == &target->base());
+        } else {
+          alias.set_resolved_declaration(&cast<Declaration>(target->base()));
+        }
+      }
       scope->MarkUsable(alias.name().inner_name());
       break;
     }
@@ -855,20 +922,22 @@ auto NameResolver::ResolveNames(Declaration& declaration,
 }
 
 auto ResolveNames(AST& ast) -> ErrorOr<Success> {
-  NameResolver resolver;
+  return RunWithExtraStack([&]() -> ErrorOr<Success> {
+    NameResolver resolver;
 
-  StaticScope file_scope;
-  for (auto* declaration : ast.declarations) {
-    CARBON_RETURN_IF_ERROR(resolver.AddExposedNames(
-        *declaration, file_scope, /*allow_qualified_names=*/true));
-  }
-  for (auto* declaration : ast.declarations) {
-    CARBON_RETURN_IF_ERROR(resolver.ResolveNames(
-        *declaration, file_scope,
-        NameResolver::ResolveFunctionBodies::AfterDeclarations));
-  }
-  CARBON_RETURN_IF_ERROR(resolver.ResolveNames(**ast.main_call, file_scope));
-  return Success();
+    StaticScope file_scope;
+    for (auto* declaration : ast.declarations) {
+      CARBON_RETURN_IF_ERROR(resolver.AddExposedNames(
+          *declaration, file_scope, /*allow_qualified_names=*/true));
+    }
+    for (auto* declaration : ast.declarations) {
+      CARBON_RETURN_IF_ERROR(resolver.ResolveNames(
+          *declaration, file_scope,
+          NameResolver::ResolveFunctionBodies::AfterDeclarations));
+    }
+    CARBON_RETURN_IF_ERROR(resolver.ResolveNames(**ast.main_call, file_scope));
+    return Success();
+  });
 }
 
 }  // namespace Carbon

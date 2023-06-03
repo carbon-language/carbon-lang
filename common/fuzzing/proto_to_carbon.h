@@ -5,6 +5,7 @@
 #ifndef CARBON_COMMON_FUZZING_PROTO_TO_CARBON_H_
 #define CARBON_COMMON_FUZZING_PROTO_TO_CARBON_H_
 
+#include "common/error.h"
 #include "common/fuzzing/carbon.pb.h"
 
 namespace Carbon {
@@ -14,8 +15,12 @@ namespace Carbon {
 // buffer is invalid (like a variable declaration with an empty `name` field).
 // This is done to reduce the number of inputs the fuzzer framework generates
 // when trying to produce lexically valid source.
-auto ProtoToCarbon(const Fuzzing::CompilationUnit& compilation_unit)
+auto ProtoToCarbon(const Fuzzing::Carbon& proto, bool maybe_add_main)
     -> std::string;
+
+// Parses the textproto into a proto object.
+auto ParseCarbonTextProto(const std::string& contents)
+    -> ErrorOr<Fuzzing::Carbon>;
 
 }  // namespace Carbon
 

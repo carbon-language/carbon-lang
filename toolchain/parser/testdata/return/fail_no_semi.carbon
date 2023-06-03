@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
@@ -11,7 +10,7 @@
 // CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:     {kind: 'InvalidExpression', text: '}', has_error: yes},
+// CHECK:STDOUT:     {kind: 'InvalidParse', text: '}', has_error: yes},
 // CHECK:STDOUT:   {kind: 'ReturnStatement', text: 'return', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
@@ -19,6 +18,6 @@
 
 fn F() {
   return
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/return/fail_no_semi.carbon:[[@LINE+2]]:1: Expected expression.
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/return/fail_no_semi.carbon:[[@LINE+1]]:1: Expected `;` after `return`.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+2]]:1: Expected expression.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+1]]:1: Expected `;` after `return`.
 }

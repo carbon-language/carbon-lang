@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
+load("//bazel/sh_run:rules.bzl", "glob_sh_run")
+load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -227,4 +229,26 @@ cc_fuzz_test(
         "//toolchain/diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
     ],
+)
+
+file_test(
+    name = "lexer_file_test",
+    srcs = ["lexer_file_test.cpp"],
+    tests = glob(["testdata/**/*.carbon"]),
+    deps = [
+        "//testing/file_test:file_test_base",
+        "//toolchain/driver",
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+glob_sh_run(
+    args = [
+        "$(location //toolchain/driver:carbon)",
+        "dump",
+        "tokens",
+    ],
+    data = ["//toolchain/driver:carbon"],
+    file_exts = ["carbon"],
 )

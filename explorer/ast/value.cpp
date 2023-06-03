@@ -98,9 +98,6 @@ struct NestedValueVisitor {
     return true;
   }
   auto Visit(const VTable&) -> bool { return true; }
-  auto Visit(Nonnull<const ContinuationValue::Representation*>) -> bool {
-    return true;
-  }
 
   llvm::function_ref<bool(const Value*)> callback;
 };
@@ -498,9 +495,13 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::TupleValue: {
       out << "(";
       llvm::ListSeparator sep;
-      for (Nonnull<const Value*> element :
-           cast<TupleValueBase>(*this).elements()) {
+      const auto elements = cast<TupleValueBase>(*this).elements();
+      for (Nonnull<const Value*> element : elements) {
         out << sep << *element;
+      }
+      // Print trailing comma for single element tuples: (i32,).
+      if (elements.size() == 1) {
+        out << ",";
       }
       out << ")";
       break;
@@ -577,9 +578,6 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     case Value::Kind::AutoType:
       out << "auto";
-      break;
-    case Value::Kind::ContinuationType:
-      out << "Continuation";
       break;
     case Value::Kind::PointerType:
       out << cast<PointerType>(*this).pointee_type() << "*";
@@ -756,10 +754,6 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "." << *GetName(assoc.constant()) << ")";
       break;
     }
-    case Value::Kind::ContinuationValue: {
-      out << cast<ContinuationValue>(*this).representation();
-      break;
-    }
     case Value::Kind::StringType:
       out << "String";
       break;
@@ -790,8 +784,11 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::StaticArrayType: {
       const auto& array_type = cast<StaticArrayType>(*this);
-      out << "[" << array_type.element_type() << "; " << array_type.size()
-          << "]";
+      out << "[" << array_type.element_type() << ";";
+      if (array_type.has_size()) {
+        out << " " << array_type.size();
+      }
+      out << "]";
       break;
     }
   }
@@ -954,7 +951,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     }
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
       return true;
@@ -982,7 +978,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::LocationValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -1118,7 +1113,6 @@ auto ValueStructurallyEqual(
     case Value::Kind::ConstraintWitness:
     case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfMixinPseudoType:
@@ -1131,7 +1125,6 @@ auto ValueStructurallyEqual(
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
     case Value::Kind::UninitializedValue:
