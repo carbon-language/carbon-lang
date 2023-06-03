@@ -38,6 +38,11 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
                  SourceLocation source_loc) -> ErrorOr<Success> {
   CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
   if (states_[a.allocation_.index_] == ValueState::Uninitialized) {
+    if (!a.element_path_.IsEmpty()) {
+      return ProgramError(source_loc)
+             << "undefined behavior: store to subobject of uninitialized value "
+             << *values_[a.allocation_.index_];
+    }
     states_[a.allocation_.index_] = ValueState::Alive;
   }
   CARBON_ASSIGN_OR_RETURN(values_[a.allocation_.index_],

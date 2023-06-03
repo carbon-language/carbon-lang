@@ -25,60 +25,54 @@ class LoweringContext {
   // the main execution loop.
   auto Run() -> std::unique_ptr<llvm::Module>;
 
-  auto HasLoweredNode(SemanticsNodeId node_id) -> bool {
-    return lowered_nodes_[node_id.index];
+  // Returns a local (versus global) value for the given node.
+  auto GetLocal(SemanticsNodeId node_id) -> llvm::Value* {
+    auto it = locals_.find(node_id);
+    CARBON_CHECK(it != locals_.end()) << "Missing local: " << node_id;
+    return it->second;
+  }
+
+  // Returns a local (versus global) value for the given node in loaded state.
+  // Loads will only be inserted on an as-needed basis.
+  auto GetLocalLoaded(SemanticsNodeId node_id) -> llvm::Value*;
+
+  // Sets the value for the given node.
+  auto SetLocal(SemanticsNodeId node_id, llvm::Value* value) {
+    bool added = locals_.insert({node_id, value}).second;
+    CARBON_CHECK(added) << "Duplicate local insert: " << node_id;
+  }
+
+  // Gets a callable's function.
+  auto GetFunction(SemanticsFunctionId function_id) -> llvm::Function* {
+    CARBON_CHECK(functions_[function_id.index] != nullptr) << function_id;
+    return functions_[function_id.index];
   }
 
   // Returns a lowered type for the given type_id.
   auto GetType(SemanticsTypeId type_id) -> llvm::Type* {
     // Neither TypeType nor InvalidType should be passed in.
     CARBON_CHECK(type_id.index >= 0) << type_id;
-    return lowered_types_[type_id.index];
-  }
-
-  // Returns a value for the given node.
-  auto GetLoweredNodeAsValue(SemanticsNodeId node_id) -> llvm::Value* {
-    CARBON_CHECK(lowered_nodes_[node_id.index]) << node_id;
-    return lowered_nodes_[node_id.index];
-  }
-
-  // Sets the value for the given node.
-  auto SetLoweredNodeAsValue(SemanticsNodeId node_id, llvm::Value* value) {
-    CARBON_CHECK(!lowered_nodes_[node_id.index]) << node_id;
-    lowered_nodes_[node_id.index] = value;
-  }
-
-  // Gets a callable's function.
-  auto GetLoweredCallable(SemanticsCallableId callable_id) -> llvm::Function* {
-    CARBON_CHECK(lowered_callables_[callable_id.index] != nullptr)
-        << callable_id;
-    return lowered_callables_[callable_id.index];
-  }
-
-  // Sets a callable's function.
-  auto SetLoweredCallable(SemanticsCallableId callable_id,
-                          llvm::Function* function) {
-    CARBON_CHECK(lowered_callables_[callable_id.index] == nullptr)
-        << callable_id;
-    lowered_callables_[callable_id.index] = function;
+    return types_[type_id.index];
   }
 
   auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
   auto llvm_module() -> llvm::Module& { return *llvm_module_; }
   auto builder() -> llvm::IRBuilder<>& { return builder_; }
   auto semantics_ir() -> const SemanticsIR& { return *semantics_ir_; }
-  auto todo_blocks() -> llvm::SmallVector<
-      std::pair<llvm::BasicBlock*, SemanticsNodeBlockId>>& {
-    return todo_blocks_;
-  }
 
  private:
-  // Runs lowering for a block.
-  auto LowerBlock(SemanticsNodeBlockId block_id) -> void;
+  // Builds the declaration for the given function, which should then be cached
+  // by the caller.
+  auto BuildFunctionDeclaration(SemanticsFunctionId function_id)
+      -> llvm::Function*;
+
+  // Builds the definition for the given function. If the function is only a
+  // declaration with no definition, does nothing.
+  auto BuildFunctionDefinition(SemanticsFunctionId function_id) -> void;
 
   // Builds the type for the given node, which should then be cached by the
   // caller.
-  auto BuildLoweredNodeAsType(SemanticsNodeId node_id) -> llvm::Type*;
+  auto BuildType(SemanticsNodeId node_id) -> llvm::Type*;
 
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
@@ -91,23 +85,17 @@ class LoweringContext {
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;
 
-  // Blocks which we've observed and need to lower.
-  llvm::SmallVector<std::pair<llvm::BasicBlock*, SemanticsNodeBlockId>>
-      todo_blocks_;
-
-  // Maps nodes in SemanticsIR to a lowered value. This will have one entry per
-  // node, and will be non-null when lowered. It's expected to be sparse during
-  // execution because while expressions will have entries, statements won't.
-  // TODO: This is transitioning to only track global and local values, rather
-  // than one large map for all nodes.
-  llvm::SmallVector<llvm::Value*> lowered_nodes_;
+  // Maps a function's SemanticsIR nodes to lowered values.
+  // TODO: Handle nested scopes. Right now this is just cleared at the end of
+  // every block.
+  llvm::DenseMap<SemanticsNodeId, llvm::Value*> locals_;
 
   // Maps callables to lowered functions. Semantics treats callables as the
   // canonical form of a function, so lowering needs to do the same.
-  llvm::SmallVector<llvm::Function*> lowered_callables_;
+  llvm::SmallVector<llvm::Function*> functions_;
 
   // Provides lowered versions of types.
-  llvm::SmallVector<llvm::Type*> lowered_types_;
+  llvm::SmallVector<llvm::Type*> types_;
 };
 
 // Declare handlers for each SemanticsIR node.

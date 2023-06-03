@@ -4264,20 +4264,20 @@ generic function call, such as using an operator:
 // Interface defining the behavior of the prefix-* operator
 interface Deref {
   let Result:! type;
-  fn DoDeref[self: Self]() -> Result;
+  fn Op[self: Self]() -> Result;
 }
 
 // Types implementing `Deref`
 class Ptr(T:! type) {
   ...
   external impl as Deref where .Result = T {
-    fn DoDeref[self: Self]() -> Result { ... }
+    fn Op[self: Self]() -> Result { ... }
   }
 }
 class Optional(T:! type) {
   ...
   external impl as Deref where .Result = T {
-    fn DoDeref[self: Self]() -> Result { ... }
+    fn Op[self: Self]() -> Result { ... }
   }
 }
 
@@ -4288,7 +4288,7 @@ fn F[T:! type](x: T) {
 
 The concern is the possibility of specializing `Optional(T) as Deref` or
 `Ptr(T) as Deref` for a more specific `T` means that the compiler can't assume
-anything about the return type of `Deref.DoDeref` calls. This means `F` would in
+anything about the return type of `Deref.Op` calls. This means `F` would in
 practice have to add a constraint, which is both verbose and exposes what should
 be implementation details:
 
@@ -4307,14 +4307,14 @@ class Ptr(T:! type) {
   ...
   // Note: added `final`
   final external impl as Deref where .Result = T {
-    fn DoDeref[self: Self]() -> Result { ... }
+    fn Op[self: Self]() -> Result { ... }
   }
 }
 class Optional(T:! type) {
   ...
   // Note: added `final`
   final external impl as Deref where .Result = T {
-    fn DoDeref[self: Self]() -> Result { ... }
+    fn Op[self: Self]() -> Result { ... }
   }
 }
 
@@ -4323,9 +4323,32 @@ class Optional(T:! type) {
 ```
 
 This prevents any higher-priority impl that overlaps a final impl from being
-defined. Further, if the Carbon compiler sees a matching final impl, it can
-assume it won't be specialized so it can use the assignments of the associated
-types in that impl definition.
+defined unless it agrees with the `final` impl on the overlap. Overlap is
+computed between two non-`template` `impl` declaration by
+[unifying](<https://en.wikipedia.org/wiki/Unification_(computer_science)>) the
+corresponding parts. For example, the intersection of these two declarations
+
+```carbon
+final impl forall [T:! type]
+    T as CommonTypeWith(T)
+    where .Result = T {}
+
+impl forall [V:! type, U:! CommonTypeWith(V)]
+    Vec(U) as CommonTypeWith(Vec(V))
+    where .Result = Vec(U.Result) {}
+```
+
+is found by unifying `T` with `Vec(U)` and `CommonTypeWith(T)` with
+`CommonTypeWith(Vec(V))`. In this case, the intersection is when `T == Vec(U)`
+and `U == V`. For templated `impl` declarations, overlap and agreement is
+delayed until the template is instantiated with concrete types.
+
+Since we do not require the compiler to compare the definitions of functions,
+agreement is only possible for interfaces without any function members.
+
+If the Carbon compiler sees a matching `final` impl, it can assume it won't be
+specialized so it can use the assignments of the associated types in that impl
+definition.
 
 ```
 fn F[T:! type](x: T) {
@@ -4335,6 +4358,16 @@ fn F[T:! type](x: T) {
   // *o has type `T`
 }
 ```
+
+**Alternatives considered:**
+
+-   [Allow interfaces with member functions to compare equal](/proposals/p2868.md#allow-interfaces-with-member-functions-to-compare-equal)
+-   Mark associated constants as `final` instead of an `impl` declaration, in
+    proposals
+    [#983](/proposals/p0983.md#final-associated-constants-instead-of-final-impls)
+    and
+    [#2868](/proposals/p2868.md#mark-associated-constants-as-final-instead-of-an-impl-declaration)
+-   [Prioritize a `final impl` over a more specific `impl` on the overlap](/proposals/p2868.md#prioritize-a-final-impl-over-a-more-specific-impl-on-the-overlap)
 
 #### Libraries that can contain a `final` impl
 

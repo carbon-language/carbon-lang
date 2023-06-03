@@ -42,7 +42,7 @@ static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
                                   Nonnull<TraceStream*> trace_stream,
                                   Nonnull<llvm::raw_ostream*> print_stream)
     -> ErrorOr<int> {
-  return RunWithExtraStack<ErrorOr<int>>([&]() -> ErrorOr<int> {
+  return RunWithExtraStack([&]() -> ErrorOr<int> {
     Arena arena;
     auto cursor = std::chrono::steady_clock::now();
 

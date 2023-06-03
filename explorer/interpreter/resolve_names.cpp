@@ -276,7 +276,7 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
 auto NameResolver::ResolveNames(Expression& expression,
                                 const StaticScope& enclosing_scope)
     -> ErrorOr<std::optional<ValueNodeView>> {
-  return RunWithExtraStack<ErrorOr<std::optional<ValueNodeView>>>(
+  return RunWithExtraStack(
       [&]() { return ResolveNamesImpl(expression, enclosing_scope); });
 }
 
@@ -463,7 +463,7 @@ auto NameResolver::ResolveNamesImpl(Expression& expression,
 auto NameResolver::ResolveNames(WhereClause& clause,
                                 const StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
-  return RunWithExtraStack<ErrorOr<Success>>(
+  return RunWithExtraStack(
       [&]() { return ResolveNamesImpl(clause, enclosing_scope); });
 }
 
@@ -499,7 +499,7 @@ auto NameResolver::ResolveNamesImpl(WhereClause& clause,
 
 auto NameResolver::ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
-  return RunWithExtraStack<ErrorOr<Success>>(
+  return RunWithExtraStack(
       [&]() { return ResolveNamesImpl(pattern, enclosing_scope); });
 }
 
@@ -560,7 +560,7 @@ auto NameResolver::ResolveNamesImpl(Pattern& pattern,
 auto NameResolver::ResolveNames(Statement& statement,
                                 StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
-  return RunWithExtraStack<ErrorOr<Success>>(
+  return RunWithExtraStack(
       [&]() { return ResolveNamesImpl(statement, enclosing_scope); });
 }
 
@@ -703,7 +703,7 @@ auto NameResolver::ResolveNames(Declaration& declaration,
                                 StaticScope& enclosing_scope,
                                 ResolveFunctionBodies bodies)
     -> ErrorOr<Success> {
-  return RunWithExtraStack<ErrorOr<Success>>(
+  return RunWithExtraStack(
       [&]() { return ResolveNamesImpl(declaration, enclosing_scope, bodies); });
 }
 
@@ -922,7 +922,7 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
 }
 
 auto ResolveNames(AST& ast) -> ErrorOr<Success> {
-  return RunWithExtraStack<ErrorOr<Success>>([&]() -> ErrorOr<Success> {
+  return RunWithExtraStack([&]() -> ErrorOr<Success> {
     NameResolver resolver;
 
     StaticScope file_scope;
