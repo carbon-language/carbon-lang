@@ -21,6 +21,7 @@
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/pattern.h"
 #include "explorer/ast/value.h"
 #include "explorer/ast/value_transform.h"
 #include "explorer/common/arena.h"
@@ -911,9 +912,9 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
   BindingMap binding_args;
   if (has_arguments) {
     TupleValue args(interface.arguments);
-    if (!PatternMatch(&iface_decl->params().value()->value(), &args, source_loc,
-                      std::nullopt, binding_args, trace_stream_,
-                      this->arena_)) {
+    if (!PatternMatch(&iface_decl->params().value()->value(), &args,
+                      std::nullopt, source_loc, std::nullopt, binding_args,
+                      trace_stream_, this->arena_)) {
       return bad_builtin();
     }
   }
@@ -3583,7 +3584,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               Nonnull<const Value*> return_type,
               Substitute(call.bindings(), &fun_t.return_type()));
           call.set_static_type(return_type);
-          call.set_expression_category(ExpressionCategory::Value);
+          call.set_expression_category(ExpressionCategory::Initializing);
           return Success();
         }
         case Value::Kind::TypeOfParameterizedEntityName: {
@@ -3616,6 +3617,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                   ChoiceDeclaration>(param_name.declaration()))
               << "unknown type of ParameterizedEntityName for " << param_name;
           call.set_static_type(arena_->New<TypeType>());
+          // TODO: Initializing expression??
           call.set_expression_category(ExpressionCategory::Value);
           return Success();
         }
@@ -3682,7 +3684,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                 &args[1]->static_type(), impl_scope));
           }
           e->set_static_type(TupleType::Empty());
-          e->set_expression_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Initializing);
           return Success();
         case IntrinsicExpression::Intrinsic::Assert: {
           if (args.size() != 2) {
@@ -3696,7 +3698,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               e->source_loc(), "__intrinsic_assert argument 1",
               arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(TupleType::Empty());
-          e->set_expression_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Initializing);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::Alloc: {
@@ -3706,7 +3708,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           }
           const auto* arg_type = &args[0]->static_type();
           e->set_static_type(arena_->New<PointerType>(arg_type));
-          e->set_expression_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Initializing);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::Dealloc: {
@@ -3718,7 +3720,16 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", arg_type));
           e->set_static_type(TupleType::Empty());
-          e->set_expression_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Initializing);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::PrintAllocs: {
+          if (!args.empty()) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_print_allocs takes no arguments";
+          }
+          e->set_static_type(TupleType::Empty());
+          e->set_expression_category(ExpressionCategory::Initializing);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::Rand: {
@@ -3735,7 +3746,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               &args[1]->static_type(), impl_scope));
 
           e->set_static_type(arena_->New<IntType>());
-          e->set_expression_category(ExpressionCategory::Value);
+          e->set_expression_category(ExpressionCategory::Initializing);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::ImplicitAs: {
@@ -3745,6 +3756,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           }
           CARBON_RETURN_IF_ERROR(TypeCheckTypeExp(args[0], impl_scope));
           e->set_static_type(arena_->New<TypeType>());
+          // TODO: Is this an initializing expression?
           e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
@@ -3758,6 +3770,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           // TODO: Check that the type of args[0] implicitly converts to
           // args[1].
           e->set_static_type(result);
+          // TODO: Is this an initializing expression?
           e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
@@ -3773,6 +3786,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               e->source_loc(), "__intrinsic_int_eq argument 2",
               arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<BoolType>());
+          // TODO: Is this an initializing expression?
           e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
@@ -3788,6 +3802,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               e->source_loc(), "__intrinsic_int_compare argument 2",
               arena_->New<IntType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<IntType>());
+          // TODO: Is this an initializing expression?
           e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
@@ -3803,6 +3818,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               e->source_loc(), "__intrinsic_str_eq argument 2",
               arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<BoolType>());
+          // TODO: Is this an initializing expression?
           e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
@@ -3818,6 +3834,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               e->source_loc(), "__intrinsic_str_compare argument 2",
               arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<IntType>());
+          // TODO: Is this an initializing expression?
           e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
@@ -3830,6 +3847,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               e->source_loc(), "complement argument", arena_->New<IntType>(),
               &args[0]->static_type(), impl_scope));
           e->set_static_type(arena_->New<IntType>());
+          // TODO: Is this an initializing expression?
           e->set_expression_category(ExpressionCategory::Value);
           return Success();
         case IntrinsicExpression::Intrinsic::IntBitAnd:
@@ -3848,6 +3866,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               e->source_loc(), "argument 2", arena_->New<IntType>(),
               &args[1]->static_type(), impl_scope));
           e->set_static_type(arena_->New<IntType>());
+          // TODO: Is this an initializing expression?
           e->set_expression_category(ExpressionCategory::Value);
           return Success();
       }
@@ -4276,9 +4295,9 @@ auto TypeChecker::TypeCheckPattern(
         // this level rather than on the overall initializer.
         if (!IsNonDeduceableType(type)) {
           BindingMap generic_args;
-          if (!PatternMatch(type, *expected, binding.type().source_loc(),
-                            std::nullopt, generic_args, trace_stream_,
-                            this->arena_)) {
+          if (!PatternMatch(type, *expected, std::nullopt,
+                            binding.type().source_loc(), std::nullopt,
+                            generic_args, trace_stream_, this->arena_)) {
             return ProgramError(binding.type().source_loc())
                    << "type pattern '" << *type
                    << "' does not match actual type '" << **expected << "'";
@@ -4636,6 +4655,7 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
       // Type-check the initializer before we inspect the type of the variable
       // so we can use its type to deduce parts of the type of the binding.
       if (var.has_init()) {
+        // TODO: Prepare for initializing expression and location passing
         CARBON_RETURN_IF_ERROR(TypeCheckExp(&var.init(), impl_scope));
         CARBON_RETURN_IF_ERROR(ExpectNonPlaceholderType(
             var.init().source_loc(), &var.init().static_type()));
@@ -4654,6 +4674,22 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
             ImplicitlyConvert("initializer of variable", impl_scope,
                               &var.init(), &var.pattern().static_type()));
         var.set_init(converted_init);
+
+        if (var.init().expression_category() ==
+            ExpressionCategory::Initializing) {
+          // TODO: Shouldn't be CallExpression only
+          // if (var.init().kind() == ExpressionKind::CallExpression) {
+          //   auto& call = cast<CallExpression>(var.init());
+          //   call.if (const auto* placeholder =
+          //                dyn_cast<BindingPlaceholderValue>(
+          //                    &var.pattern().value());
+          //            placeholder) {
+          //     // TODO: Can placeholder be null? Can value_node be null?
+          //     // TODO: Don't bind if no return value
+          //     CARBON_CHECK(placeholder->value_node()) << "uh oh";
+          //     call.set_initialized_location(*placeholder->value_node());
+          //   }
+        }
       }
       return Success();
     }
@@ -4935,7 +4971,10 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
     default:
       CARBON_FATAL() << "f is not a callable declaration";
   }
-
+  if (!f->return_term().is_omitted()) {
+    f->initialization_storage().set_static_type(
+        &f->return_term().static_type());
+  }
   if (name == "Main") {
     if (!f->return_term().type_expression().has_value()) {
       return ProgramError(f->return_term().source_loc())

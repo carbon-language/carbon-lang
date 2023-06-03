@@ -4,6 +4,8 @@
 
 #include "explorer/interpreter/action_stack.h"
 
+#include <optional>
+
 #include "common/error.h"
 #include "explorer/interpreter/action.h"
 #include "llvm/ADT/StringExtras.h"
@@ -11,6 +13,20 @@
 #include "llvm/Support/Error.h"
 
 namespace Carbon {
+
+// TODO: How to cleanly pass on location past a block???
+auto ActionStack::CaptureInitializingLocation() const
+    -> std::optional<Address> {
+  for (const std::unique_ptr<Action>& action : todo_) {
+    if (auto& scope = action->scope()) {
+      if (auto storage = (*scope).initialized_storage()) {
+        (*scope).capture_initialized_storage();
+        return storage;
+      }
+    }
+  }
+  return std::nullopt;
+}
 
 void ActionStack::Print(llvm::raw_ostream& out) const {
   llvm::ListSeparator sep(" ## ");

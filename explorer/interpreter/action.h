@@ -7,10 +7,13 @@
 
 #include <list>
 #include <map>
+#include <optional>
 #include <tuple>
 #include <vector>
 
+#include "common/check.h"
 #include "common/ostream.h"
+#include "explorer/ast/address.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/statement.h"
@@ -45,34 +48,75 @@ class RuntimeScope {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // Binds `value` as the value of `value_node`.
-  void Bind(ValueNodeView value_node, Nonnull<const Value*> value);
+  // Allocates storage for `value_node` in preparation for initialization with
+  // an initializing expression.
+  // [[nodiscard]] auto AllocateForInitializingExpression(
+  //     ValueNodeView value_node, Nonnull<const UninitializedValue*> value)
+  //     -> Nonnull<const LocationValue*>;
 
   // Allocates storage for `value_node` in `heap`, and initializes it with
   // `value`.
-  // TODO: Update existing callers to use Bind instead, where appropriate.
-  void Initialize(ValueNodeView value_node, Nonnull<const Value*> value);
+  // TODO: Done for a var binding if a category conversion is needed (i.e. not
+  // an initializing expression)
+  auto Initialize(ValueNodeView value_node, Nonnull<const Value*> value)
+      -> Nonnull<const LocationValue*>;
+
+  // Bind a node to the result of an initializing expression.
+  void BindFromInitializingExpr(ValueNodeView value_node, Address address);
+
+  // Binds location `address` of a reference value to `value_node` without
+  // allocating local storage.
+  // FIXME: Probably not needed anymore, as this means binding a reference value
+  void Bind(ValueNodeView value_node, Address address);
+
+  // Binds unlocated `value` to `value_node` without allocating local storage.
+  // LET BINDING
+  void BindValue(ValueNodeView value_node, Nonnull<const Value*> value);
 
   // Transfers the names and allocations from `other` into *this. The two
   // scopes must not define the same name, and must be backed by the same Heap.
   void Merge(RuntimeScope other);
 
-  // Returns the local storage for value_node, if it has storage local to
-  // this scope.
+  // Given node `value_node`:
+  // - returns its `LocationValue*` if bound to a reference expression in this
+  // scope,
+  // - returns a `Value*` if bound to a value expression in this scope,
+  // - returns `nullptr` if not bound.
   auto Get(ValueNodeView value_node) const
-      -> std::optional<Nonnull<const LocationValue*>>;
+      -> std::optional<Nonnull<const Value*>>;
 
-  // Returns the local values in created order
+  // Return the address of `value_node` if present in this scope.
+  // auto GetAddress(ValueNodeView value_node) const -> std::optional<Address>;
+
+  // Returns the local values with allocation in created order
   auto allocations() const -> const std::vector<AllocationId>& {
     return allocations_;
   }
 
+  void set_initialized_storage(Address address) {
+    CARBON_CHECK(!initialized_storage_.has_value())
+        << "Initialized storage already set";
+    initialized_storage_ = address;
+    initialized_storage_available_ = true;
+  }
+
+  auto initialized_storage() const -> std::optional<Address> {
+    return initialized_storage_;
+  }
+
+  void capture_initialized_storage() {
+    CARBON_CHECK(initialized_storage_available_);
+    initialized_storage_available_ = false;
+  }
+
  private:
-  llvm::MapVector<ValueNodeView, Nonnull<const LocationValue*>,
+  llvm::MapVector<ValueNodeView, Nonnull<const Value*>,
                   std::map<ValueNodeView, unsigned>>
       locals_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
+  std::optional<Address> initialized_storage_;
+  bool initialized_storage_available_ = false;
 };
 
 // An Action represents the current state of a self-contained computation,

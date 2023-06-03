@@ -10,8 +10,10 @@
 #include <utility>
 #include <vector>
 
+#include "common/check.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/arena.h"
 #include "explorer/interpreter/stack.h"
 #include "llvm/ADT/StringExtras.h"
@@ -44,32 +46,48 @@ void RuntimeScope::Print(llvm::raw_ostream& out) const {
   out << "}";
 }
 
-void RuntimeScope::Bind(ValueNodeView value_node, Nonnull<const Value*> value) {
+void RuntimeScope::Bind(ValueNodeView value_node, Address address) {
   CARBON_CHECK(!value_node.constant_value().has_value());
-  CARBON_CHECK(value->kind() != Value::Kind::LocationValue);
-  auto allocation_id = heap_->GetAllocationId(value);
-  if (!allocation_id) {
-    auto id = heap_->AllocateValue(value);
-    auto [it, success] = locals_.insert(
-        {value_node, heap_->arena().New<LocationValue>(Address(id))});
-    CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
-  } else {
-    auto [it, success] = locals_.insert(
-        {value_node,
-         heap_->arena().New<LocationValue>(Address(*allocation_id))});
-    CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
-  }
+  auto [it, success] =
+      locals_.insert({value_node, heap_->arena().New<LocationValue>(address)});
+  CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
 }
 
-void RuntimeScope::Initialize(ValueNodeView value_node,
-                              Nonnull<const Value*> value) {
+void RuntimeScope::BindFromInitializingExpr(ValueNodeView value_node,
+                                            Address address) {
+  Bind(value_node, address);
+  allocations_.push_back(address.allocation_);
+}
+
+void RuntimeScope::BindValue(ValueNodeView value_node,
+                             Nonnull<const Value*> value) {
+  CARBON_CHECK(!value_node.constant_value().has_value());
+  CARBON_CHECK(value->kind() != Value::Kind::LocationValue);
+  auto [it, success] = locals_.insert({value_node, value});
+  CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
+}
+
+// auto RuntimeScope::AllocateForInitializingExpression(
+//     ValueNodeView value_node, Nonnull<const UninitializedValue*> value)
+//     -> Nonnull<const LocationValue*> {
+//   Initialize(value_node, value);
+//   const auto location = Get(value_node);
+//   CARBON_CHECK(location && (*location)->kind() == Value::Kind::LocationValue)
+//       << "Unexpected allocation error";
+//   return nullptr;cast<const LocationValue>(*location);
+// }
+
+auto RuntimeScope::Initialize(ValueNodeView value_node,
+                              Nonnull<const Value*> value)
+    -> Nonnull<const LocationValue*> {
   CARBON_CHECK(!value_node.constant_value().has_value());
   CARBON_CHECK(value->kind() != Value::Kind::LocationValue);
   allocations_.push_back(heap_->AllocateValue(value));
-  auto [it, success] = locals_.insert(
-      {value_node,
-       heap_->arena().New<LocationValue>(Address(allocations_.back()))});
+  const auto* location =
+      heap_->arena().New<LocationValue>(Address(allocations_.back()));
+  auto [it, success] = locals_.insert({value_node, location});
   CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
+  return location;
 }
 
 void RuntimeScope::Merge(RuntimeScope other) {
@@ -82,10 +100,15 @@ void RuntimeScope::Merge(RuntimeScope other) {
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
                       other.allocations_.end());
   other.allocations_.clear();
+  if (const auto init_storage = other.initialized_storage()) {
+    CARBON_CHECK(!initialized_storage_);
+    initialized_storage_ = *init_storage;
+    initialized_storage_available_ = other.initialized_storage_available_;
+  }
 }
 
 auto RuntimeScope::Get(ValueNodeView value_node) const
-    -> std::optional<Nonnull<const LocationValue*>> {
+    -> std::optional<Nonnull<const Value*>> {
   auto it = locals_.find(value_node);
   if (it != locals_.end()) {
     return it->second;
@@ -93,6 +116,16 @@ auto RuntimeScope::Get(ValueNodeView value_node) const
     return std::nullopt;
   }
 }
+
+// auto RuntimeScope::GetAddress(ValueNodeView value_node) const
+//     -> std::optional<Address> {
+//   auto it = locals_.find(value_node);
+//   if (it != locals_.end()) {
+//     return cast<LocationValue>(it->first).address();
+//   } else {
+//     return std::nullopt;
+//   }
+// }
 
 auto RuntimeScope::Capture(
     const std::vector<Nonnull<const RuntimeScope*>>& scopes) -> RuntimeScope {

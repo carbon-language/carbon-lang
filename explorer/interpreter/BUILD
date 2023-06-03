@@ -114,6 +114,7 @@ cc_library(
         "//common:error",
         "//common:ostream",
         "//explorer/ast",
+        "//explorer/ast:expression_category",
         "//explorer/common:arena",
         "//explorer/common:error_builders",
         "//explorer/common:source_location",

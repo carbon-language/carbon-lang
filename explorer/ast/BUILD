@@ -17,6 +17,7 @@ cc_library(
         "impl_binding.cpp",
         "pattern.cpp",
         "statement.cpp",
+        "storage.cpp",
         "value.cpp",
     ],
     hdrs = [
@@ -35,6 +36,7 @@ cc_library(
         "pattern.h",
         "return_term.h",
         "statement.h",
+        "storage.h",
         "value.h",
         "value_node.h",
         "value_transform.h",

@@ -86,6 +86,7 @@ class Address {
   // the Heap, so its implementation details are tied to the implementation
   // details of the Heap.
   friend class Heap;
+  friend class RuntimeScope;
 
   AllocationId allocation_;
   ElementPath element_path_;
