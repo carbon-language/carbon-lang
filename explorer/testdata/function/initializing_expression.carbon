@@ -11,9 +11,24 @@ package ExplorerTest api;
 
 class A {
   destructor[self: Self] {
-    Print("A destructor");
+    Print("a{0} destroyed", self.data);
   }
   var data: i32;
+}
+
+fn returned_expr() -> i32 {
+  var c: i32 = 1;
+  return c;
+}
+
+fn returned_expr_class() -> A {
+  var a: A = {.data = 0};
+  a.data = 1;
+  return a;
+}
+
+fn no_returned_value() {
+  return;
 }
 
 fn returned_var() -> i32 {
@@ -22,40 +37,29 @@ fn returned_var() -> i32 {
   return var;
 }
 
-fn returned_expr() -> i32 {
-  var c: i32 = 5;
-  return c;
-}
-
-fn returned_expr_a() -> A {
-  var a: A = {.data = 6};
-  return a;
-}
-
-fn no_returned_value() {
-  return;
+fn returned_var_class() -> A {
+  returned var a: A = {.data = 1};
+  a.data = 2;
+  return var;
 }
 
 fn Main() -> i32 {
-  // var x: i32 = returned_var();
-  // Print("x = {}", x);
-  // Print("====================================");
-  // heap.PrintAllocations();
-  // Print("====================================");
-  var y: i32 = returned_expr();
-  Print("y = {0}", y);
+  var n1: i32 = returned_expr();
+  Print("n1 = {0}", n1);
 
-  var a: A = returned_expr_a();
-  Print("a = {0}", a.data);
+  var a1: A = returned_expr_class();
+  Print("a1.data = {0}", a1.data);
 
-  Print("====================================");
+  no_returned_value();
+
+  var n2: i32 = returned_var();
+  Print("n2 = {0}", n2);
+
+  var a2: A = returned_var_class();
+  Print("a2.data = {0}", a2.data);
+
   heap.PrintAllocations();
-  Print("====================================");
-  // no_returned_value();
+  // TODO: let
 
-  // heap.PrintAllocations();
-
-  // let y: i32 = f();
-  // Print("y = {}", y);
   return 0;
 }

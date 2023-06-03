@@ -107,7 +107,7 @@ class ActionStack {
   void Pop() { todo_.Pop(); }
 
   // Advances the current action one step.
-  auto CaptureInitializingLocation() const -> std::optional<Address>;
+  auto CaptureInitializingLocation() const -> ErrorOr<Address>;
 
   auto size() const -> int { return todo_.size(); }
 
