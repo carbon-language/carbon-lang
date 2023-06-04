@@ -64,7 +64,6 @@ class RuntimeScope {
   void Bind(ValueNodeView value_node, Address address);
 
   // Binds unlocated `value` to `value_node` without allocating local storage.
-  // LET BINDING
   void BindValue(ValueNodeView value_node, Nonnull<const Value*> value);
 
   // Transfers the names and allocations from `other` into *this. The two
@@ -78,9 +77,6 @@ class RuntimeScope {
   // - returns `nullptr` if not bound.
   auto Get(ValueNodeView value_node) const
       -> std::optional<Nonnull<const Value*>>;
-
-  // Return the address of `value_node` if present in this scope.
-  // auto GetAddress(ValueNodeView value_node) const -> std::optional<Address>;
 
   // Returns the local values with allocation in created order
   auto allocations() const -> const std::vector<AllocationId>& {

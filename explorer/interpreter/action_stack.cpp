@@ -4,8 +4,6 @@
 
 #include "explorer/interpreter/action_stack.h"
 
-#include <optional>
-
 #include "common/error.h"
 #include "explorer/interpreter/action.h"
 #include "llvm/ADT/StringExtras.h"

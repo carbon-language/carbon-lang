@@ -4,7 +4,6 @@
 
 #include "explorer/ast/declaration.h"
 
-#include "explorer/ast/expression_category.h"
 #include "explorer/ast/value.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"

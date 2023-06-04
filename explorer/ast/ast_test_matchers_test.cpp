@@ -101,7 +101,6 @@ TEST(MatchesReturnTest, BasicUsage) {
 TEST(MatchesFunctionDeclarationTest, BasicUsage) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
-  auto auto_pattern = AutoPattern(DummyLoc);
   auto storage = Storage(DummyLoc);
   FunctionDeclaration decl(
       DummyLoc, DeclaredName(DummyLoc, "Foo"), {}, std::nullopt, &storage,
@@ -152,7 +151,6 @@ TEST(MatchesUnimplementedExpressionTest, BasicUsage) {
 TEST(ASTDeclarationsTest, BasicUsage) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
-  auto auto_pattern = AutoPattern(DummyLoc);
   auto storage = Storage(DummyLoc);
   FunctionDeclaration decl(
       DummyLoc, DeclaredName(DummyLoc, "Foo"), {}, std::nullopt, &storage,

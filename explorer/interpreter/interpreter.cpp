@@ -1126,10 +1126,8 @@ auto Interpreter::CallFunction(const CallExpression& call,
       // TODO: Allocate as needed
       // if (call.expression_category() == ExpressionCategory::Initializing &&
       //    !function.return_term().is_omitted()*/) {
-      CARBON_CHECK(call.expression_category() ==
-                   ExpressionCategory::Initializing)
-          << "Call expression must be an InitializingExpresison";
-      if (support_initializing_expr) {
+      if (call.expression_category() == ExpressionCategory::Initializing &&
+          support_initializing_expr) {
         const auto allocation_id = heap_.AllocateValue(
             arena_->New<UninitializedValue>(&call.static_type()));
         (*todo_.CurrentAction().scope())
@@ -1281,7 +1279,7 @@ auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
 }
 
 auto Interpreter::StepExp() -> ErrorOr<Success> {
-  Action& act = todo_.CurrentAction();
+  auto& act = cast<ExpressionAction>(todo_.CurrentAction());
   const Expression& exp = cast<ExpressionAction>(act).expression();
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- step exp " << exp << " ." << act.pos() << "."
@@ -1427,11 +1425,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             } else {
               aggregate = act.results()[0];
             }
-            const std::optional<Address> addr =
-                act.results()[0]->kind() == Value::Kind::LocationValue
-                    ? std::optional{cast<LocationValue>(act.results()[0])
-                                        ->address()}
-                    : std::nullopt;
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> member_value,
                 aggregate->GetElement(arena_, ElementPath(member),
@@ -1645,9 +1638,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             ++i;
           }
         }
-        return CallFunction(
-            call, act.results()[0], act.results()[1], std::move(witnesses),
-            cast<ExpressionAction>(act).support_initializing_expr());
+        return CallFunction(call, act.results()[0], act.results()[1],
+                            std::move(witnesses),
+                            act.support_initializing_expr());
       } else if (act.pos() == 3 + static_cast<int>(num_witnesses)) {
         if (act.results().size() < 3 + num_witnesses) {
           // Control fell through without explicit return.
@@ -2231,37 +2224,30 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         if (definition.has_init()) {
           // Value returned is a location, read it first.
           if (definition.init().expression_category() ==
-              ExpressionCategory::Initializing) {
-            Nonnull<const Value*> returned_value;
-            CARBON_CHECK(act.results()[0]->kind() ==
-                         Value::Kind::LocationValue);
+                  ExpressionCategory::Initializing &&
+              act.results()[0]->kind() == Value::Kind::LocationValue) {
             v_location = cast<LocationValue>(act.results()[0]);
             // Bind even if a conversion is necessary.
             scope.BindAllocationToScope((*v_location)->address());
             CARBON_ASSIGN_OR_RETURN(
-                returned_value,
+                Nonnull<const Value*> returned_value,
                 heap_.Read((*v_location)->address(), definition.source_loc()));
             CARBON_ASSIGN_OR_RETURN(
                 v, Convert(returned_value, dest_type, stmt.source_loc()));
             if (v != returned_value) {
+              // If a conversion happened, adjust the expression category.
               expr_category = ExpressionCategory::Value;
             }
           } else {
+            if (definition.init().expression_category() ==
+                ExpressionCategory::Initializing) {
+              // TODO: Either update the category before, or capture dangling
+              // location
+            }
+            expr_category = ExpressionCategory::Value;
             CARBON_ASSIGN_OR_RETURN(
                 v, Convert(act.results()[0], dest_type, stmt.source_loc()));
           }
-        } else if (dest_type->kind() == Value::Kind::StaticArrayType) {
-          const auto& array = cast<StaticArrayType>(dest_type);
-          CARBON_CHECK(array->has_size());
-          const auto& element_type = array->element_type();
-          const auto size = array->size();
-
-          std::vector<Nonnull<const Value*>> elements;
-          elements.reserve(size);
-          for (size_t i = 0; i < size; i++) {
-            elements.push_back(arena_->New<UninitializedValue>(&element_type));
-          }
-          v = arena_->New<TupleValueBase>(Value::Kind::TupleValue, elements);
         } else {
           v = arena_->New<UninitializedValue>(p);
         }
@@ -2367,7 +2353,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         return todo_.FinishAction();
       }
     case StatementKind::ReturnVar: {
-      // Returned var already allocated storage.
       const auto& ret_var = cast<ReturnVar>(stmt);
       const ValueNodeView& value_node = ret_var.value_node();
       if (trace_stream_->is_enabled()) {
@@ -2409,11 +2394,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           // Write to initialized storage location.
           CARBON_RETURN_IF_ERROR(
               heap_.Write(storage, return_value, stmt.source_loc()));
-          return todo_.UnwindPast(*function.body(),
-                                  arena_->New<LocationValue>(storage));
-        } else {
-          return todo_.UnwindPast(*function.body(), return_value);
         }
+        return todo_.UnwindPast(*function.body(), return_value);
       }
   }
 }
@@ -2643,7 +2625,6 @@ auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
   return Success();
 }
 
-// #include "heap.h"
 auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
                    Nonnull<TraceStream*> trace_stream,
                    Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int> {

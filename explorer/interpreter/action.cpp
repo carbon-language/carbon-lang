@@ -107,16 +107,6 @@ auto RuntimeScope::Get(ValueNodeView value_node) const
   }
 }
 
-// auto RuntimeScope::GetAddress(ValueNodeView value_node) const
-//     -> std::optional<Address> {
-//   auto it = locals_.find(value_node);
-//   if (it != locals_.end()) {
-//     return cast<LocationValue>(it->first).address();
-//   } else {
-//     return std::nullopt;
-//   }
-// }
-
 auto RuntimeScope::Capture(
     const std::vector<Nonnull<const RuntimeScope*>>& scopes) -> RuntimeScope {
   CARBON_CHECK(!scopes.empty());

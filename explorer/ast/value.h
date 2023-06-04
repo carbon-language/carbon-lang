@@ -651,19 +651,21 @@ class FunctionType : public Value {
 
   FunctionType(Nonnull<const Value*> parameters,
                Nonnull<const Value*> return_type)
-      : FunctionType(parameters, {}, return_type, {}, {}) {}
+      : FunctionType(parameters, {}, return_type, {}, {}, false) {}
 
   FunctionType(Nonnull<const Value*> parameters,
                std::vector<GenericParameter> generic_parameters,
                Nonnull<const Value*> return_type,
                std::vector<Nonnull<const GenericBinding*>> deduced_bindings,
-               std::vector<Nonnull<const ImplBinding*>> impl_bindings)
+               std::vector<Nonnull<const ImplBinding*>> impl_bindings,
+               bool is_initializing)
       : Value(Kind::FunctionType),
         parameters_(parameters),
         generic_parameters_(std::move(generic_parameters)),
         return_type_(return_type),
         deduced_bindings_(std::move(deduced_bindings)),
-        impl_bindings_(std::move(impl_bindings)) {}
+        impl_bindings_(std::move(impl_bindings)),
+        is_initializing_(is_initializing) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
@@ -672,7 +674,7 @@ class FunctionType : public Value {
   template <typename F>
   auto Decompose(F f) const {
     return f(parameters_, generic_parameters_, return_type_, deduced_bindings_,
-             impl_bindings_);
+             impl_bindings_, is_initializing_);
   }
 
   // The type of the function parameter tuple.
@@ -695,12 +697,15 @@ class FunctionType : public Value {
     return impl_bindings_;
   }
 
+  auto is_initializing() const -> bool { return is_initializing_; }
+
  private:
   Nonnull<const Value*> parameters_;
   std::vector<GenericParameter> generic_parameters_;
   Nonnull<const Value*> return_type_;
   std::vector<Nonnull<const GenericBinding*>> deduced_bindings_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
+  bool is_initializing_;
 };
 
 // A pointer type.
