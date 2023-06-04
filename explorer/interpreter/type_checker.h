@@ -565,6 +565,10 @@ class TypeChecker {
   auto InterpExp(Nonnull<const Expression*> e)
       -> ErrorOr<Nonnull<const Value*>>;
 
+  // Deduces concrete type for 'type' based on 'expected'
+  auto Deduce(Nonnull<const Value*> type, Nonnull<const Value*> expected)
+      -> Nonnull<const Value*>;
+
   Nonnull<Arena*> arena_;
   Builtins builtins_;
 

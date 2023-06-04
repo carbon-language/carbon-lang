@@ -4104,8 +4104,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
       auto& array_literal = cast<ArrayTypeLiteral>(*e);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> element_type,
-          TypeCheckTypeExp(&array_literal.element_type_expression(),
-                           impl_scope));
+          TypeCheckTypeExp(&array_literal.element_type_expression(), impl_scope,
+                           false));
       std::optional<size_t> array_size;
       if (array_literal.has_size_expression()) {
         CARBON_RETURN_IF_ERROR(
@@ -4331,14 +4331,7 @@ auto TypeChecker::TypeCheckPattern(
                    << "' does not match actual type '" << **expected << "'";
           }
 
-          if (type->kind() == Value::Kind::StaticArrayType) {
-            const auto& arr = cast<StaticArrayType>(*type);
-            CARBON_CHECK(!arr.has_size());
-            const size_t size = GetSize(*expected);
-            type = arena_->New<StaticArrayType>(&arr.element_type(), size);
-          } else {
-            type = *expected;
-          }
+          type = Deduce(type, *expected);
         }
       } else {
         CARBON_RETURN_IF_ERROR(ExpectResolvedBindingType(binding, type));
@@ -6622,6 +6615,30 @@ auto TypeChecker::InstantiateImplDeclaration(
 auto TypeChecker::InterpExp(Nonnull<const Expression*> e)
     -> ErrorOr<Nonnull<const Value*>> {
   return Carbon::InterpExp(e, arena_, trace_stream_, print_stream_);
+}
+
+auto TypeChecker::Deduce(Nonnull<const Value*> type,
+                         Nonnull<const Value*> expected)
+    -> Nonnull<const Value*> {
+  if (type->kind() == Value::Kind::StaticArrayType) {
+    const auto& arr = cast<StaticArrayType>(*type);
+    const size_t size = arr.has_size() ? arr.size() : GetSize(expected);
+    if (!IsNonDeduceableType(&arr.element_type())) {
+      CARBON_CHECK(expected->kind() == Value::Kind::StaticArrayType ||
+                   expected->kind() == Value::Kind::TupleType);
+
+      Nonnull<const Value*> expected_elem_type =
+          expected->kind() == Value::Kind::StaticArrayType
+              ? &cast<StaticArrayType>(expected)->element_type()
+              : cast<TupleType>(expected)->elements()[0];
+      return arena_->New<StaticArrayType>(
+          Deduce(&arr.element_type(), expected_elem_type), size);
+    } else {
+      return arena_->New<StaticArrayType>(&arr.element_type(), size);
+    }
+  }
+
+  return expected;
 }
 
 }  // namespace Carbon

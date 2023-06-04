@@ -8,6 +8,7 @@
 #include "explorer/base/arena.h"
 #include "explorer/base/trace_stream.h"
 #include "explorer/interpreter/action.h"
+#include "explorer/interpreter/type_utils.h"
 #include "llvm/Support/Casting.h"
 
 using llvm::cast;
@@ -202,14 +203,37 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
       // on the typechecker to ensure that `v.value()` is a type.
       return true;
     case Value::Kind::StaticArrayType: {
+      const auto& p_arr = cast<StaticArrayType>(*p);
       switch (v.value()->kind()) {
         case Value::Kind::TupleType:
         case Value::Kind::TupleValue: {
+          const auto& v_tup = cast<TupleValueBase>(*v.value());
+          if (v_tup.elements().empty()) {
+            return !TypeIsDeduceable(&p_arr.element_type());
+          }
+
+          const size_t deduced_size = GetSize(v_tup.elements()[0]);
+          for (const auto& tup_elem : v_tup.elements()) {
+            if (!PatternMatch(&p_arr.element_type(), make_expr_result(tup_elem),
+                              source_loc, bindings, generic_args, trace_stream,
+                              arena)) {
+              return false;
+            }
+
+            if (deduced_size != GetSize(tup_elem)) {
+              return false;
+            }
+          }  // for
           return true;
         }
         case Value::Kind::StaticArrayType: {
           const auto& v_arr = cast<StaticArrayType>(*v.value());
-          return v_arr.has_size();
+          if (!v_arr.has_size()) {
+            return false;
+          }
+          return PatternMatch(
+              &p_arr.element_type(), make_expr_result(&v_arr.element_type()),
+              source_loc, bindings, generic_args, trace_stream, arena);
         }
         default:
           return false;
