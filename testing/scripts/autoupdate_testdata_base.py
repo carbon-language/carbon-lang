@@ -500,7 +500,7 @@ def main() -> None:
         tests = {test.relative_to(root) for test in parsed_args.tests}
     else:
         print(
-            "HINT: run `autoupdate_lit_testdata.py.py f1 f2 ...` "
+            "HINT: run `autoupdate_lit_testdata.py f1 f2 ...` "
             "to update specific tests"
         )
         tests = get_tests(parsed_args.testdata)
