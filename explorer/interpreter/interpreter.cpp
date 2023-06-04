@@ -2214,16 +2214,13 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     }
     case StatementKind::VariableDefinition: {
       const auto& definition = cast<VariableDefinition>(stmt);
-      const auto* dest_type = &definition.pattern().static_type();
-      Nonnull<const Value*> p = &definition.pattern().value();
-      CARBON_CHECK(p->kind() == Value::Kind::BindingPlaceholderValue);
-      const auto value_node = *cast<BindingPlaceholderValue>(p)->value_node();
       if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &definition.init(), /*support_initializing_expr =*/true));
       } else {
+        const auto* dest_type = &definition.pattern().static_type();
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
         Nonnull<const Value*> p = &definition.pattern().value();
