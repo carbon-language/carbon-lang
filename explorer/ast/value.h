@@ -258,6 +258,31 @@ class LocationValue : public Value {
   Address value_;
 };
 
+// The result of an initializing expression.
+class InitializingValue : public Value {
+ public:
+  explicit InitializingValue(Nonnull<const Value*> value, Address address)
+      : Value(Kind::InitializingValue),
+        value_(value),
+        address_(std::move(address)) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::InitializingValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(value_, address_);
+  }
+
+  auto value() const -> Nonnull<const Value*> { return value_; }
+  auto address() const -> const Address& { return address_; }
+
+ private:
+  Nonnull<const Value*> value_;
+  Address address_;
+};
+
 // A pointer value
 class PointerValue : public Value {
  public:

@@ -174,8 +174,8 @@ class Interpreter {
   // Call the function `fun` with the given `arg` and the `witnesses`
   // for the function's impl bindings.
   auto CallFunction(const CallExpression& call, Nonnull<const Value*> fun,
-                    Nonnull<const Value*> arg, ImplWitnessMap&& witnesses)
-      -> ErrorOr<Success>;
+                    Nonnull<const Value*> arg, ImplWitnessMap&& witnesses,
+                    bool support_initializing_expr) -> ErrorOr<Success>;
 
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
                       Nonnull<const Value*> receiver) -> ErrorOr<Success>;
@@ -814,6 +814,7 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::InitializingValue:
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
@@ -1039,7 +1040,9 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
 auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
-                               ImplWitnessMap&& witnesses) -> ErrorOr<Success> {
+                               ImplWitnessMap&& witnesses,
+                               bool support_initializing_expr)
+    -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "calling function: " << *fun << "\n";
   }
@@ -1128,13 +1131,14 @@ auto Interpreter::CallFunction(const CallExpression& call,
       CARBON_CHECK(call.expression_category() ==
                    ExpressionCategory::Initializing)
           << "Call expression must be an InitializingExpresison";
-      const auto allocation_id = heap_.AllocateValue(
-          arena_->New<UninitializedValue>(&call.static_type()));
-      (*todo_.CurrentAction().scope())
-          .set_initialized_storage(Address(allocation_id));
-      // } else {
-      //   CARBON_FATAL() << "Not possible rn.";
-      // }
+      if (support_initializing_expr) {
+        const auto allocation_id = heap_.AllocateValue(
+            arena_->New<UninitializedValue>(&call.static_type()));
+        (*todo_.CurrentAction().scope())
+            .set_initialized_storage(Address(allocation_id));
+      } else {
+        (*todo_.CurrentAction().scope()).disable_initialized_storage();
+      }
 
       // Bind the arguments to the parameters.
       CARBON_CHECK(PatternMatch(&function.param_pattern().value(),
@@ -1643,32 +1647,19 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             ++i;
           }
         }
-        return CallFunction(call, act.results()[0], act.results()[1],
-                            std::move(witnesses));
+        return CallFunction(
+            call, act.results()[0], act.results()[1], std::move(witnesses),
+            cast<ExpressionAction>(act).support_initializing_expr());
       } else if (act.pos() == 3 + static_cast<int>(num_witnesses)) {
         if (act.results().size() < 3 + num_witnesses) {
           // Control fell through without explicit return.
           return todo_.FinishAction(TupleValue::Empty());
-        } else {
-          // const auto* return_value =
-          //     act.results()[2 + static_cast<int>(num_witnesses)];
-
-          // if (const auto init_node = call.initialized_location()) {
-          //   // TODO: Initialize location and return
-          //   const auto init_location = act.scope()->Get(*init_node);
-          //   if (init_location) {
-          //     CARBON_CHECK(init_location);
-          //     CARBON_CHECK((*init_location)->kind() ==
-          //                  Value::Kind::LocationValue);
-          //     CARBON_RETURN_IF_ERROR(
-          //         heap_.Write(cast<LocationValue>(*init_location)->address(),
-          //                     return_value, exp.source_loc()));
-          //   }
-          // }
-          // TODO: Else, return value
-          CARBON_CHECK(act.scope()->initialized_storage());
+        } else if (act.scope()->initialized_storage()) {
           return todo_.FinishAction(
               arena_->New<LocationValue>(*act.scope()->initialized_storage()));
+        } else {
+          return todo_.FinishAction(
+              act.results()[2 + static_cast<int>(num_witnesses)]);
         }
       } else {
         CARBON_FATAL() << "in StepExp with Call pos " << act.pos();
@@ -2230,8 +2221,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&definition.init()));
+        return todo_.Spawn(std::make_unique<ExpressionAction>(
+            &definition.init(), /*support_initializing_expr =*/true));
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
@@ -2279,7 +2270,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         }
 
         RuntimeScope matches(&heap_);
-        if (definition.is_returned()) {
+        if (definition.is_returned() && todo_.HasInitializingLocation()) {
           CARBON_CHECK(p->kind() == Value::Kind::BindingPlaceholderValue);
           const auto value_node =
               cast<BindingPlaceholderValue>(*p).value_node();
@@ -2416,13 +2407,17 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             Nonnull<const Value*> return_value,
             Convert(act.results()[0], &function.return_term().static_type(),
                     stmt.source_loc()));
-        CARBON_ASSIGN_OR_RETURN(const auto storage,
-                                todo_.CaptureInitializingLocation());
-        // Write to initialized storage location.
-        CARBON_RETURN_IF_ERROR(
-            heap_.Write(storage, return_value, stmt.source_loc()));
-        return todo_.UnwindPast(*function.body(),
-                                arena_->New<LocationValue>(storage));
+        if (todo_.HasInitializingLocation()) {
+          CARBON_ASSIGN_OR_RETURN(const auto storage,
+                                  todo_.CaptureInitializingLocation());
+          // Write to initialized storage location.
+          CARBON_RETURN_IF_ERROR(
+              heap_.Write(storage, return_value, stmt.source_loc()));
+          return todo_.UnwindPast(*function.body(),
+                                  arena_->New<LocationValue>(storage));
+        } else {
+          return todo_.UnwindPast(*function.body(), return_value);
+        }
       }
   }
 }
@@ -2673,12 +2668,7 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
   CARBON_RETURN_IF_ERROR(interpreter.RunAllSteps(
       std::make_unique<ExpressionAction>(*ast.main_call)));
 
-  CARBON_ASSIGN_OR_RETURN(
-      const Value* returned,
-      interpreter.heap().Read(
-          cast<LocationValue>(*interpreter.result()).address(),
-          (*ast.main_call)->source_loc()));
-  return cast<IntValue>(*returned).value();
+  return cast<IntValue>(*interpreter.result()).value();
 }
 
 auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,

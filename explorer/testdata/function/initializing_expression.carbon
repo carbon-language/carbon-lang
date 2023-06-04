@@ -56,7 +56,6 @@ fn Main() -> i32 {
   var a1: A = returned_expr_class();
   Print("a1.data = {0}", a1.data);
 
-
   var n2: i32 = returned_var();
   Print("n2 = {0}", n2);
 

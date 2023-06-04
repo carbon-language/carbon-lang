@@ -87,20 +87,38 @@ class RuntimeScope {
     return allocations_;
   }
 
+  // TODO: Group in a struct/class?
   void set_initialized_storage(Address address) {
     CARBON_CHECK(!initialized_storage_.has_value())
         << "Initialized storage already set";
     initialized_storage_ = address;
+    support_initialized_storage_ = true;
     initialized_storage_available_ = true;
+  }
+
+  auto support_initialized_storage() const -> bool {
+    return support_initialized_storage_;
+  }
+
+  auto initialized_storage_available() const -> bool {
+    return initialized_storage_available_;
+  }
+
+  void disable_initialized_storage() {
+    CARBON_CHECK(!initialized_storage_.has_value())
+        << "Initialized storage already set";
+    support_initialized_storage_ = true;
+    initialized_storage_available_ = false;
   }
 
   auto initialized_storage() const -> std::optional<Address> {
     return initialized_storage_;
   }
 
-  void capture_initialized_storage() {
+  auto capture_initialized_storage() -> Address& {
     CARBON_CHECK(initialized_storage_available_);
     initialized_storage_available_ = false;
+    return *initialized_storage_;
   }
 
  private:
@@ -111,6 +129,7 @@ class RuntimeScope {
   Nonnull<HeapAllocationInterface*> heap_;
   std::optional<Address> initialized_storage_;
   bool initialized_storage_available_ = false;
+  bool support_initialized_storage_ = false;
 };
 
 // An Action represents the current state of a self-contained computation,
@@ -222,8 +241,11 @@ class LocationAction : public Action {
 // An Action which implements evaluation of an Expression to produce a `Value*`.
 class ExpressionAction : public Action {
  public:
-  explicit ExpressionAction(Nonnull<const Expression*> expression)
-      : Action(Kind::ExpressionAction), expression_(expression) {}
+  explicit ExpressionAction(Nonnull<const Expression*> expression,
+                            bool support_initializing_expr = false)
+      : Action(Kind::ExpressionAction),
+        expression_(expression),
+        support_initializing_expr_(support_initializing_expr) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::ExpressionAction;
@@ -232,8 +254,13 @@ class ExpressionAction : public Action {
   // The Expression this Action evaluates.
   auto expression() const -> const Expression& { return *expression_; }
 
+  auto support_initializing_expr() const -> bool {
+    return support_initializing_expr_;
+  }
+
  private:
   Nonnull<const Expression*> expression_;
+  bool support_initializing_expr_;
 };
 
 // An Action which implements the Instantiation of Type. The result is expressed
