@@ -102,11 +102,9 @@ TEST(MatchesFunctionDeclarationTest, BasicUsage) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
   auto auto_pattern = AutoPattern(DummyLoc);
-  auto init_pattern =
-      BindingPattern(DummyLoc, "initialized location", &auto_pattern,
-                     ExpressionCategory::Reference);
+  auto storage = Storage(DummyLoc);
   FunctionDeclaration decl(
-      DummyLoc, DeclaredName(DummyLoc, "Foo"), {}, std::nullopt, &init_pattern,
+      DummyLoc, DeclaredName(DummyLoc, "Foo"), {}, std::nullopt, &storage,
       &params, ReturnTerm::Omitted(DummyLoc), &body, VirtualOverride::None);
 
   EXPECT_THAT(decl, MatchesFunctionDeclaration());
@@ -120,7 +118,7 @@ TEST(MatchesFunctionDeclarationTest, BasicUsage) {
               Not(MatchesFunctionDeclaration().WithBody(MatchesLiteral(0))));
 
   FunctionDeclaration forward_decl(DummyLoc, DeclaredName(DummyLoc, "Foo"), {},
-                                   std::nullopt, &init_pattern, &params,
+                                   std::nullopt, &storage, &params,
                                    ReturnTerm::Omitted(DummyLoc), std::nullopt,
                                    VirtualOverride::None);
   EXPECT_THAT(forward_decl, MatchesFunctionDeclaration().WithName("Foo"));
@@ -155,11 +153,9 @@ TEST(ASTDeclarationsTest, BasicUsage) {
   TuplePattern params(DummyLoc, {});
   Block body(DummyLoc, {});
   auto auto_pattern = AutoPattern(DummyLoc);
-  auto init_pattern =
-      BindingPattern(DummyLoc, "initialized location", &auto_pattern,
-                     ExpressionCategory::Reference);
+  auto storage = Storage(DummyLoc);
   FunctionDeclaration decl(
-      DummyLoc, DeclaredName(DummyLoc, "Foo"), {}, std::nullopt, &init_pattern,
+      DummyLoc, DeclaredName(DummyLoc, "Foo"), {}, std::nullopt, &storage,
       &params, ReturnTerm::Omitted(DummyLoc), &body, VirtualOverride::None);
   AST ast = {.declarations = {&decl}};
 
