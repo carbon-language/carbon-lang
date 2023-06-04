@@ -133,12 +133,12 @@ Please refer to
 
 ## Trace Program Execution
 
-When tracing is turned on (using the `--trace_file=...` option), `explorer`
-prints the state of the program and each step that is performed during
-execution.
+When tracing is turned on (using the `--trace_file=...` option or `.verbose`
+file extension), `explorer` prints the state of the program and each step that
+is performed during execution.
 
-Printing directly to the standard output is supported by passing `-` in place of
-a filepath (`--trace_file=-`).
+Printing directly to the standard output using the `--trace_file` option is
+supported by passing `-` in place of a filepath (`--trace_file=-`).
 
 ### State of the Program
 
