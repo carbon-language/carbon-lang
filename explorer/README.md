@@ -88,10 +88,8 @@ recreate the original value.
 The [`testdata/`](testdata/) subdirectory includes some example programs with
 expected output.
 
-These tests make use of LLVM's
-[lit](https://llvm.org/docs/CommandGuide/lit.html) and
-[FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html). Tests have
-boilerplate at the top:
+These tests make use of [GoogleTest](https://github.com/google/googletest) with
+Bazel's `cc_test` rules. Tests have boilerplate at the top:
 
 ```carbon
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -99,37 +97,34 @@ boilerplate at the top:
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
-// CHECK:result: 0
+// CHECK:STDOUT: result: 7
 
 package ExplorerTest api;
+
+fn Main() -> i32 {
+  return (1 + 2) + 4;
+}
 ```
 
 To explain this boilerplate:
 
 -   The standard copyright is expected.
--   The `AUTOUPDATE` line indicates that `RUN` and `CHECK` lines will be
-    automatically inserted immediately below by the `./lit_autoupdate.py`
-    script.
--   The `RUN` lines indicate two commands for `lit` to execute using the file:
-    one without trace and debug output, one with.
-    -   `RUN:` will be followed by the `not` command when failure is expected.
-        In particular, `RUN: not explorer ...`.
-    -   The full command is in `lit.cfg.py`; it will run explorer and pass
-        results to
-        [`FileCheck`](https://llvm.org/docs/CommandGuide/FileCheck.html).
--   The `CHECK` lines indicate expected output, verified by `FileCheck`.
-    -   Where a `CHECK` line contains text like `{{.*}}`, the double curly
-        braces indicate a contained regular expression.
+-   The `AUTOUPDATE` line indicates that `CHECK` lines matching the output will
+    be automatically inserted immediately below by the
+    `./autoupdate_testdata.py` script.
+-   The `CHECK` lines indicate expected output.
 -   The `package` is required in all test files, per normal Carbon syntax rules.
 
 ### Useful commands
 
--   `./lit_autodupate.py` -- Updates expected output.
+-   `./autoupdate_testdata.py.py` -- Updates expected output.
     -   This can be combined with `git diff` to see changes in output.
 -   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
+-   `bazel test //explorer:file_test.subset --test_arg=explorer/testdata/DIR/FILE.carbon`
+    -- Runs a specific test.
 -   `bazel run testdata/DIR/FILE.carbon.run` -- Runs explorer on the file.
+-   `bazel run testdata/DIR/FILE.carbon.verbose` -- Runs explorer on the file
+    with tracing enabled.
 
 ### Updating fuzzer logic after making AST changes
 
@@ -141,6 +136,9 @@ Please refer to
 When tracing is turned on (using the `--trace_file=...` option), `explorer`
 prints the state of the program and each step that is performed during
 execution.
+
+Printing directly to the standard output is supported by passing `-` in place of
+a filepath (`--trace_file=-`).
 
 ### State of the Program
 
