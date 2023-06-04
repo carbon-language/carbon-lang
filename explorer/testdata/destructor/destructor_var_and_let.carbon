@@ -3,51 +3,50 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: VarDeclaration
 // CHECK:STDOUT: DESTRUCTOR CALLED
 // CHECK:STDOUT: VarDeclaration - end
-// CHECK-EMPTY:
+// CHECK:STDOUT:
 // CHECK:STDOUT: LetDeclaration
 // CHECK:STDOUT: LetDeclaration - end
-// CHECK-EMPTY:
+// CHECK:STDOUT:
 // CHECK:STDOUT: VarAndLetDeclaration
 // CHECK:STDOUT: DESTRUCTOR CALLED
 // CHECK:STDOUT: VarAndLetDeclaration - end
-// CHECK-EMPTY:
+// CHECK:STDOUT:
 // CHECK:STDOUT: LetParamVarDeclaration-Passing LValue
 // CHECK:STDOUT: DESTRUCTOR CALLED
 // CHECK:STDOUT: LetParamVarDeclaration-Passing LValue - end
-// CHECK-EMPTY:
+// CHECK:STDOUT:
 // CHECK:STDOUT: LetParamLetDeclaration-Passing LValue
 // CHECK:STDOUT: LetParamLetDeclaration-Passing LValue - end
-// CHECK-EMPTY:
+// CHECK:STDOUT:
 // CHECK:STDOUT: LetParamVarDeclaration-Passing RValue
 // CHECK:STDOUT: DESTRUCTOR CALLED
 // CHECK:STDOUT: LetParamVarDeclaration-Passing RValue - end
-// CHECK-EMPTY:
+// CHECK:STDOUT:
 // CHECK:STDOUT: LetParamLetDeclaration-Passing RValue
 // CHECK:STDOUT: LetParamLetDeclaration-Passing RValue - end
-// CHECK-EMPTY:
+// CHECK:STDOUT:
 // CHECK:STDOUT: VarParamVarDeclaration-Passing RValue
 // CHECK:STDOUT: DESTRUCTOR CALLED
 // CHECK:STDOUT: DESTRUCTOR CALLED
 // CHECK:STDOUT: VarParamVarDeclaration-Passing RValue - end
-// CHECK-EMPTY:
+// CHECK:STDOUT:
 // CHECK:STDOUT: VarParamLetDeclaration-Passing RValue
 // CHECK:STDOUT: DESTRUCTOR CALLED
 // CHECK:STDOUT: VarParamLetDeclaration-Passing RValue - end
-// CHECK-EMPTY:
+// CHECK:STDOUT:
 // CHECK:STDOUT: VarBindingInitializingCall
 // CHECK:STDOUT: DESTRUCTOR CALLED
 // CHECK:STDOUT: DESTRUCTOR CALLED
 // CHECK:STDOUT: VarBindingInitializingCall - end
-// CHECK-EMPTY:
+// CHECK:STDOUT:
 // CHECK:STDOUT: LetBindingInitializingCall
 // CHECK:STDOUT: DESTRUCTOR CALLED
+// CHECK:STDOUT: DESTRUCTOR CALLED
 // CHECK:STDOUT: LetBindingInitializingCall - end
-// CHECK-EMPTY:
+// CHECK:STDOUT:
 // CHECK:STDOUT: DESTRUCTOR CALLED
 // CHECK:STDOUT: DESTRUCTOR CALLED
 // CHECK:STDOUT: result: 0

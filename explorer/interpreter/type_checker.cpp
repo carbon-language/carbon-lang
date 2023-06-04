@@ -3690,7 +3690,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                 &args[1]->static_type(), impl_scope));
           }
           e->set_static_type(TupleType::Empty());
-          e->set_expression_category(ExpressionCategory::Initializing);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         case IntrinsicExpression::Intrinsic::Assert: {
           if (args.size() != 2) {
@@ -3704,7 +3704,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               e->source_loc(), "__intrinsic_assert argument 1",
               arena_->New<StringType>(), &args[1]->static_type(), impl_scope));
           e->set_static_type(TupleType::Empty());
-          e->set_expression_category(ExpressionCategory::Initializing);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::Alloc: {
@@ -3714,7 +3714,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           }
           const auto* arg_type = &args[0]->static_type();
           e->set_static_type(arena_->New<PointerType>(arg_type));
-          e->set_expression_category(ExpressionCategory::Initializing);
+          // TODO: Make initializing.
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::Dealloc: {
@@ -3726,7 +3727,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", arg_type));
           e->set_static_type(TupleType::Empty());
-          e->set_expression_category(ExpressionCategory::Initializing);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::PrintAllocs: {
@@ -3735,7 +3736,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                    << "__intrinsic_print_allocs takes no arguments";
           }
           e->set_static_type(TupleType::Empty());
-          e->set_expression_category(ExpressionCategory::Initializing);
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::Rand: {
@@ -3752,7 +3753,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               &args[1]->static_type(), impl_scope));
 
           e->set_static_type(arena_->New<IntType>());
-          e->set_expression_category(ExpressionCategory::Initializing);
+          // TODO: Make initializing.
+          e->set_expression_category(ExpressionCategory::Value);
           return Success();
         }
         case IntrinsicExpression::Intrinsic::ImplicitAs: {

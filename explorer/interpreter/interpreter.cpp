@@ -332,7 +332,6 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
             } else /* ExpressionCategory::Initializing */ {
               CARBON_CHECK(v_location)
                   << "Missing location from initializing expression";
-              (*bindings)->BindAllocationToScope((*v_location)->address());
               (*bindings)->Bind(*value_node, (*v_location)->address());
             }
             break;
@@ -346,7 +345,6 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
             } else /* ExpressionCategory::Initializing */ {
               CARBON_CHECK(v_location)
                   << "Missing location from initializing expression";
-              (*bindings)->BindAllocationToScope((*v_location)->address());
               (*bindings)->BindValue(*value_node, v);
             }
             break;
@@ -2229,15 +2227,17 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         ExpressionCategory expr_category =
             definition.has_init() ? definition.init().expression_category()
                                   : ExpressionCategory::Value;
+        RuntimeScope scope(&heap_);
         if (definition.has_init()) {
           // Value returned is a location, read it first.
           if (definition.init().expression_category() ==
               ExpressionCategory::Initializing) {
             Nonnull<const Value*> returned_value;
-            // TODO: Add Location/AllocId to scope for later cleanup
             CARBON_CHECK(act.results()[0]->kind() ==
                          Value::Kind::LocationValue);
             v_location = cast<LocationValue>(act.results()[0]);
+            // Bind even if a conversion is necessary.
+            scope.BindAllocationToScope((*v_location)->address());
             CARBON_ASSIGN_OR_RETURN(
                 returned_value,
                 heap_.Read((*v_location)->address(), definition.source_loc()));
@@ -2266,7 +2266,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           v = arena_->New<UninitializedValue>(p);
         }
 
-        RuntimeScope matches(&heap_);
         if (definition.is_returned() && todo_.HasInitializingLocation()) {
           CARBON_CHECK(p->kind() == Value::Kind::BindingPlaceholderValue);
           const auto value_node =
@@ -2274,18 +2273,18 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           CARBON_CHECK(value_node);
           CARBON_ASSIGN_OR_RETURN(const auto location,
                                   todo_.CaptureInitializingLocation());
-          matches.Bind(*value_node, location);
+          scope.Bind(*value_node, location);
           CARBON_RETURN_IF_ERROR(heap_.Write(location, v, stmt.source_loc()));
         } else {
           BindingMap generic_args;
           // TODO: Pattern match for expression categories
-          CARBON_CHECK(PatternMatch(p, v, v_location, stmt.source_loc(),
-                                    &matches, generic_args, trace_stream_,
-                                    this->arena_, expr_category))
+          CARBON_CHECK(PatternMatch(p, v, v_location, stmt.source_loc(), &scope,
+                                    generic_args, trace_stream_, this->arena_,
+                                    expr_category))
               << stmt.source_loc()
               << ": internal error in variable definition, match failed";
         }
-        todo_.MergeScope(std::move(matches));
+        todo_.MergeScope(std::move(scope));
         return todo_.FinishAction();
       }
     }

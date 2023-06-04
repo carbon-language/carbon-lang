@@ -4,7 +4,6 @@
 //
 // AUTOUPDATE
 // CHECK:STDOUT: Allocate A
-// CHECK:STDOUT: DESTRUCTOR A
 // CHECK:STDOUT: Delete A
 // CHECK:STDOUT: DESTRUCTOR A
 // CHECK:STDOUT: Return
@@ -28,7 +27,6 @@ fn Main() -> i32 {
 
   Print("Delete A");
   heap.Delete(pa);
-
   Print("Return");
   return 0;
 }

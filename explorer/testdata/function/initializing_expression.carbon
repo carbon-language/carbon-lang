@@ -3,8 +3,26 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
+// CHECK:STDOUT: No returned value
+// CHECK:STDOUT: 0: Heap{}
+// CHECK:STDOUT: Reference expressions from Initializing expression
+// CHECK:STDOUT: n1 = 1
+// CHECK:STDOUT: a1 destroyed
+// CHECK:STDOUT: a1.data = 1
+// CHECK:STDOUT: n2 = 3
+// CHECK:STDOUT: a2.data = 2
+// CHECK:STDOUT: 0: Heap{}, 1: 1, 2: !!1, 3: A{.data = 1}, 4: !!A{.data = 1}, 5: 3, 6: A{.data = 2}
+// CHECK:STDOUT: Value expressions from Initializing expression
+// CHECK:STDOUT: ln1 = 1
+// CHECK:STDOUT: a1 destroyed
+// CHECK:STDOUT: la1.data = 1
+// CHECK:STDOUT: ln2 = 3
+// CHECK:STDOUT: la2.data = 2
+// CHECK:STDOUT: 0: Heap{}, 1: 1, 2: !!1, 3: A{.data = 1}, 4: !!A{.data = 1}, 5: 3, 6: A{.data = 2}, 7: 1, 8: !!1, 9: A{.data = 1}, 10: !!A{.data = 1}, 11: 3, 12: A{.data = 2}
+// CHECK:STDOUT: a2 destroyed
+// CHECK:STDOUT: a1 destroyed
+// CHECK:STDOUT: a2 destroyed
+// CHECK:STDOUT: a1 destroyed
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
