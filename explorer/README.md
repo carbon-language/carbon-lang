@@ -113,6 +113,8 @@ To explain this boilerplate:
     be automatically inserted immediately below by the
     `./autoupdate_testdata.py` script.
 -   The `CHECK` lines indicate expected output.
+    -   Where a `CHECK` line contains text like `{{.*}}`, the double curly
+        braces indicate a contained regular expression.
 -   The `package` is required in all test files, per normal Carbon syntax rules.
 
 ### Useful commands
