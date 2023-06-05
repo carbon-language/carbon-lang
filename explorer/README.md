@@ -146,6 +146,7 @@ without trace and debug output, one with.
 
 -   `./autoupdate_testdata.py` -- Updates expected output.
     -   This can be combined with `git diff` to see changes in output.
+-   `autoupdate_lit_testdata.py` -- Updates lit tests expected output.
 -   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
 -   `bazel test //explorer:file_test.subset --test_arg=explorer/testdata/DIR/FILE.carbon`
     -- Runs a specific test.
