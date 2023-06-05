@@ -12,33 +12,6 @@
 
 namespace Carbon {
 
-// TODO: How to cleanly pass on location past a block???
-auto ActionStack::HasInitializingLocation() const -> bool {
-  for (const std::unique_ptr<Action>& action : todo_) {
-    if (auto& scope = action->scope();
-        scope && (*scope).support_initialized_storage()) {
-      return (*scope).initialized_storage_available();
-    }
-  }
-  return false;
-}
-
-// TODO: How to cleanly pass on location past a block???
-auto ActionStack::CaptureInitializingLocation() const -> ErrorOr<Address> {
-  for (const std::unique_ptr<Action>& action : todo_) {
-    if (auto& scope = action->scope();
-        scope && (*scope).support_initialized_storage()) {
-      if ((*scope).initialized_storage_available()) {
-        auto storage = (*scope).capture_initialized_storage();
-        return storage;
-      } else {
-        break;
-      }
-    }
-  }
-  return Error("No initializing location to capture");
-}
-
 void ActionStack::Print(llvm::raw_ostream& out) const {
   llvm::ListSeparator sep(" ## ");
   for (const std::unique_ptr<Action>& action : todo_) {

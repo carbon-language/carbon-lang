@@ -23,6 +23,7 @@
 #include "explorer/ast/element.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/expression_category.h"
+#include "explorer/ast/statement.h"
 #include "explorer/ast/value.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
@@ -175,7 +176,8 @@ class Interpreter {
   // for the function's impl bindings.
   auto CallFunction(const CallExpression& call, Nonnull<const Value*> fun,
                     Nonnull<const Value*> arg, ImplWitnessMap&& witnesses,
-                    bool support_initializing_expr) -> ErrorOr<Success>;
+                    std::optional<AllocationId> location_received)
+      -> ErrorOr<Success>;
 
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
                       Nonnull<const Value*> receiver) -> ErrorOr<Success>;
@@ -297,26 +299,13 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
 }
 
 auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
-                  std::optional<Nonnull<const LocationValue*>> v_location,
-                  SourceLocation source_loc,
+                  std::optional<Address> v_location, SourceLocation source_loc,
                   std::optional<Nonnull<RuntimeScope*>> bindings,
                   BindingMap& generic_args, Nonnull<TraceStream*> trace_stream,
                   Nonnull<Arena*> arena, ExpressionCategory cat) -> bool {
   if (trace_stream->is_enabled()) {
-    llvm::StringRef expr_cat;
-    switch (cat) {
-      case ExpressionCategory::Value:
-        expr_cat = "ValueExpression";
-        break;
-      case ExpressionCategory::Reference:
-        expr_cat = "ReferenceExpression";
-        break;
-      case ExpressionCategory::Initializing:
-        expr_cat = "InitializingExpression";
-        break;
-    }
-    *trace_stream << "match pattern " << *p << "\nfrom a " << expr_cat
-                  << " with value " << *v << "\n";
+    *trace_stream << "match pattern " << *p << "\nfrom a "
+                  << ExprCategoryToString(cat) << " with value " << *v << "\n";
   }
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
@@ -332,7 +321,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
             } else /* ExpressionCategory::Initializing */ {
               CARBON_CHECK(v_location)
                   << "Missing location from initializing expression";
-              (*bindings)->Bind(*value_node, (*v_location)->address());
+              (*bindings)->Bind(*value_node, *v_location);
             }
             break;
           case ExpressionCategory::Value:
@@ -1039,7 +1028,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
                                ImplWitnessMap&& witnesses,
-                               bool support_initializing_expr)
+                               std::optional<AllocationId> location_received)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "calling function: " << *fun << "\n";
@@ -1122,26 +1111,13 @@ auto Interpreter::CallFunction(const CallExpression& call,
         }
       }
 
-      // Allocate storage for initializing expression.
-      // TODO: Allocate as needed
-      // if (call.expression_category() == ExpressionCategory::Initializing &&
-      //    !function.return_term().is_omitted()*/) {
-      if (call.expression_category() == ExpressionCategory::Initializing &&
-          support_initializing_expr) {
-        const auto allocation_id = heap_.AllocateValue(
-            arena_->New<UninitializedValue>(&call.static_type()));
-        (*todo_.CurrentAction().scope())
-            .set_initialized_storage(Address(allocation_id));
-      } else {
-        (*todo_.CurrentAction().scope()).disable_initialized_storage();
-      }
-
       // Bind the arguments to the parameters.
       CARBON_CHECK(PatternMatch(&function.param_pattern().value(),
                                 converted_args, std::nullopt, call.source_loc(),
                                 &function_scope, generic_args, trace_stream_,
                                 this->arena_));
-      return todo_.Spawn(std::make_unique<StatementAction>(*function.body()),
+      return todo_.Spawn(std::make_unique<StatementAction>(*function.body(),
+                                                           location_received),
                          std::move(function_scope));
     }
     case Value::Kind::ParameterizedEntityName: {
@@ -1639,15 +1615,11 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           }
         }
         return CallFunction(call, act.results()[0], act.results()[1],
-                            std::move(witnesses),
-                            act.support_initializing_expr());
+                            std::move(witnesses), act.location_received());
       } else if (act.pos() == 3 + static_cast<int>(num_witnesses)) {
         if (act.results().size() < 3 + num_witnesses) {
           // Control fell through without explicit return.
           return todo_.FinishAction(TupleValue::Empty());
-        } else if (act.scope()->initialized_storage()) {
-          return todo_.FinishAction(
-              arena_->New<LocationValue>(*act.scope()->initialized_storage()));
         } else {
           return todo_.FinishAction(
               act.results()[2 + static_cast<int>(num_witnesses)]);
@@ -2053,7 +2025,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
 }
 
 auto Interpreter::StepStmt() -> ErrorOr<Success> {
-  Action& act = todo_.CurrentAction();
+  auto& act = cast<StatementAction>(todo_.CurrentAction());
   const Statement& stmt = cast<StatementAction>(act).statement();
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- step stmt ";
@@ -2200,73 +2172,92 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       }
       // Process the next statement in the block. The position will be
       // incremented as part of Spawn.
-      return todo_.Spawn(
-          std::make_unique<StatementAction>(block.statements()[act.pos()]));
+      return todo_.Spawn(std::make_unique<StatementAction>(
+          block.statements()[act.pos()], act.location_received()));
     }
     case StatementKind::VariableDefinition: {
       const auto& definition = cast<VariableDefinition>(stmt);
       if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
+        if (definition.init().expression_category() ==
+            ExpressionCategory::Initializing) {
+          // TODO: Handle forwarding initializing expression allocation
+          // Allocate storage for initializing expression.
+          const auto allocation_id =
+              heap_.AllocateValue(arena_->New<UninitializedValue>(
+                  &definition.init().static_type()));
+          act.set_location_created(allocation_id);
+        }
         return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &definition.init(), /*support_initializing_expr =*/true));
+            &definition.init(), act.location_created()));
       } else {
         const auto* dest_type = &definition.pattern().static_type();
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
         Nonnull<const Value*> p = &definition.pattern().value();
-        Nonnull<const Value*> v;
-        std::optional<Nonnull<const LocationValue*>> v_location;
+        std::optional<Nonnull<const Value*>> v;
+        std::optional<Address> v_location;
         ExpressionCategory expr_category =
             definition.has_init() ? definition.init().expression_category()
                                   : ExpressionCategory::Value;
         RuntimeScope scope(&heap_);
         if (definition.has_init()) {
           // Value returned is a location, read it first.
-          if (definition.init().expression_category() ==
-                  ExpressionCategory::Initializing &&
-              act.results()[0]->kind() == Value::Kind::LocationValue) {
-            v_location = cast<LocationValue>(act.results()[0]);
+          if (const auto location = act.location_created()) {
+            // CHECK if initialized
             // Bind even if a conversion is necessary.
-            scope.BindAllocationToScope((*v_location)->address());
-            CARBON_ASSIGN_OR_RETURN(
-                Nonnull<const Value*> returned_value,
-                heap_.Read((*v_location)->address(), definition.source_loc()));
-            CARBON_ASSIGN_OR_RETURN(
-                v, Convert(returned_value, dest_type, stmt.source_loc()));
-            if (v != returned_value) {
-              // If a conversion happened, adjust the expression category.
-              expr_category = ExpressionCategory::Value;
+            // TODO: Bind before, or after.
+            const auto address = Address(*location);
+            if (heap_.IsInitialized(*location)) {
+              scope.BindAllocationToScope(Address(*location));
+              CARBON_ASSIGN_OR_RETURN(
+                  v, heap_.Read(address, definition.source_loc()));
+              CARBON_CHECK(*v == act.results()[0]);
+              CARBON_ASSIGN_OR_RETURN(
+                  v, Convert(act.results()[0], dest_type, stmt.source_loc()));
+              if (v == act.results()[0]) {
+                v_location = address;
+              } else {
+                // If a conversion happened, fall back to a ValueExpression.
+                expr_category = ExpressionCategory::Value;
+              }
+            } else {
+              heap_.Discard(*location);
             }
-          } else {
-            if (definition.init().expression_category() ==
-                ExpressionCategory::Initializing) {
-              // TODO: Either update the category before, or capture dangling
-              // location
-            }
+          }
+          // If initializing expression location was unused, fall back to a
+          // ValueExpression.
+          if (!v.has_value()) {
             expr_category = ExpressionCategory::Value;
             CARBON_ASSIGN_OR_RETURN(
                 v, Convert(act.results()[0], dest_type, stmt.source_loc()));
           }
+          CARBON_CHECK(v.has_value());
+          CARBON_CHECK((*v)->kind() != Value::Kind::UninitializedValue)
+              << "The value should be initialized at this stage.";
         } else {
           v = arena_->New<UninitializedValue>(p);
         }
 
-        if (definition.is_returned() && todo_.HasInitializingLocation()) {
+        // If it is a Returned var, bind returned var to location provided to
+        // initializing expression, if any.
+        if (definition.is_returned() && act.location_received()) {
           CARBON_CHECK(p->kind() == Value::Kind::BindingPlaceholderValue);
           const auto value_node =
               cast<BindingPlaceholderValue>(*p).value_node();
           CARBON_CHECK(value_node);
-          CARBON_ASSIGN_OR_RETURN(const auto location,
-                                  todo_.CaptureInitializingLocation());
-          scope.Bind(*value_node, location);
-          CARBON_RETURN_IF_ERROR(heap_.Write(location, v, stmt.source_loc()));
+          // TODO: Handle allocation forwarding for initializing expression.
+          const auto location = *act.location_received();
+          scope.Bind(*value_node, Address(location));
+          CARBON_RETURN_IF_ERROR(
+              heap_.Write(Address(location), *v, stmt.source_loc()));
         } else {
           BindingMap generic_args;
           // TODO: Pattern match for expression categories
-          CARBON_CHECK(PatternMatch(p, v, v_location, stmt.source_loc(), &scope,
-                                    generic_args, trace_stream_, this->arena_,
-                                    expr_category))
+          CARBON_CHECK(PatternMatch(p, *v, v_location, stmt.source_loc(),
+                                    &scope, generic_args, trace_stream_,
+                                    this->arena_, expr_category))
               << stmt.source_loc()
               << ": internal error in variable definition, match failed";
         }
@@ -2388,12 +2379,10 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             Nonnull<const Value*> return_value,
             Convert(act.results()[0], &function.return_term().static_type(),
                     stmt.source_loc()));
-        if (todo_.HasInitializingLocation()) {
-          CARBON_ASSIGN_OR_RETURN(const auto storage,
-                                  todo_.CaptureInitializingLocation());
-          // Write to initialized storage location.
+        // Write to initialized storage location, if any.
+        if (const auto location = act.location_received()) {
           CARBON_RETURN_IF_ERROR(
-              heap_.Write(storage, return_value, stmt.source_loc()));
+              heap_.Write(Address(*location), return_value, stmt.source_loc()));
         }
         return todo_.UnwindPast(*function.body(), return_value);
       }
@@ -2541,6 +2530,10 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   if (act.pos() < cleanup.allocations_count() * 2) {
     const size_t alloc_index = cleanup.allocations_count() - act.pos() / 2 - 1;
     auto allocation = act.scope()->allocations()[alloc_index];
+    if (heap_.IsDiscarded(allocation)) {
+      // Initializing expressions can generate discarded allocations.
+      return todo_.RunAgain();
+    }
     if (act.pos() % 2 == 0) {
       auto* location = arena_->New<LocationValue>(Address(allocation));
       auto value =

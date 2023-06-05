@@ -78,6 +78,7 @@ cc_library(
     deps = [
         ":action",
         ":heap_allocation_interface",
+        "//common:check",
         "//common:ostream",
         "//explorer/ast",
         "//explorer/common:error_builders",

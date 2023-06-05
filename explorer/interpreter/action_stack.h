@@ -106,10 +106,6 @@ class ActionStack {
 
   void Pop() { todo_.Pop(); }
 
-  // Returns a initialization location, if available
-  auto HasInitializingLocation() const -> bool;
-  auto CaptureInitializingLocation() const -> ErrorOr<Address>;
-
   auto size() const -> int { return todo_.size(); }
 
  private:

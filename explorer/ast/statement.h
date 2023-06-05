@@ -5,10 +5,12 @@
 #ifndef CARBON_EXPLORER_AST_STATEMENT_H_
 #define CARBON_EXPLORER_AST_STATEMENT_H_
 
+#include <optional>
 #include <utility>
 #include <vector>
 
 #include "common/ostream.h"
+#include "explorer/ast/address.h"
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/clone_context.h"
 #include "explorer/ast/expression.h"

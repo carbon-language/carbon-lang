@@ -21,6 +21,7 @@ class Heap : public HeapAllocationInterface {
  public:
   enum class ValueState {
     Uninitialized,
+    Discarded,
     Alive,
     Dead,
   };
@@ -44,6 +45,13 @@ class Heap : public HeapAllocationInterface {
   // Put the given value on the heap and mark its state.
   // Mark UninitializedValue as uninitialized and other values as alive.
   auto AllocateValue(Nonnull<const Value*> v) -> AllocationId override;
+
+  // Returns whether the given allocation was initialized.
+  auto IsInitialized(AllocationId allocation) const -> bool;
+  // Returns whether the given allocation is discarded.
+  auto IsDiscarded(AllocationId allocation) const -> bool;
+
+  void Discard(AllocationId allocation);
 
   // Marks this allocation, and all of its sub-objects, as dead.
   void Deallocate(AllocationId allocation) override;

@@ -1243,4 +1243,15 @@ auto NominalClassType::InheritsClass(Nonnull<const Value*> other) const
   return false;
 }
 
+auto ExprCategoryToString(ExpressionCategory cat) -> llvm::StringRef {
+  switch (cat) {
+    case ExpressionCategory::Value:
+      return "ValueExpression";
+    case ExpressionCategory::Reference:
+      return "ReferenceExpression";
+    case ExpressionCategory::Initializing:
+      return "InitializingExpression";
+  }
+}
+
 }  // namespace Carbon

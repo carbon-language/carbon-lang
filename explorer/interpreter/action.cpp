@@ -90,11 +90,6 @@ void RuntimeScope::Merge(RuntimeScope other) {
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
                       other.allocations_.end());
   other.allocations_.clear();
-  if (const auto init_storage = other.initialized_storage()) {
-    CARBON_CHECK(!initialized_storage_);
-    initialized_storage_ = *init_storage;
-    initialized_storage_available_ = other.initialized_storage_available_;
-  }
 }
 
 auto RuntimeScope::Get(ValueNodeView value_node) const

@@ -4,6 +4,7 @@
 
 #include "explorer/interpreter/heap.h"
 
+#include "common/check.h"
 #include "explorer/ast/value.h"
 #include "explorer/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
@@ -69,6 +70,19 @@ auto Heap::CheckInit(AllocationId allocation, SourceLocation source_loc) const
            << *values_[allocation.index_];
   }
   return Success();
+}
+
+auto Heap::IsInitialized(AllocationId allocation) const -> bool {
+  return states_[allocation.index_] != ValueState::Uninitialized;
+}
+
+auto Heap::IsDiscarded(AllocationId allocation) const -> bool {
+  return states_[allocation.index_] == ValueState::Discarded;
+}
+
+void Heap::Discard(AllocationId allocation) {
+  CARBON_CHECK(states_[allocation.index_] == ValueState::Uninitialized);
+  states_[allocation.index_] = ValueState::Discarded;
 }
 
 void Heap::Deallocate(AllocationId allocation) {
