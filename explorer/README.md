@@ -117,9 +117,34 @@ To explain this boilerplate:
         braces indicate a contained regular expression.
 -   The `package` is required in all test files, per normal Carbon syntax rules.
 
+### lit tests
+
+The [`lit_testdata/`](lit_testdata/) subdirectory includes other example
+programs.
+
+These tests make use of LLVM's
+[lit](https://llvm.org/docs/CommandGuide/lit.html) and
+[FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html).
+
+They share most of their header with those in `testdata`, with an additional
+`RUN` rule:
+
+```
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+```
+
+The `RUN` lines indicate two commands for `lit` to execute using the file: one
+without trace and debug output, one with.
+
+-   `RUN:` will be followed by the `not` command when failure is expected. In
+    particular, `RUN: not %{explorer-run}`.
+-   The full command is in `lit.cfg.py`; it will run explorer and pass results
+    to [`FileCheck`](https://llvm.org/docs/CommandGuide/FileCheck.html).
+
 ### Useful commands
 
--   `./autoupdate_testdata.py.py` -- Updates expected output.
+-   `./autoupdate_testdata.py` -- Updates expected output.
     -   This can be combined with `git diff` to see changes in output.
 -   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
 -   `bazel test //explorer:file_test.subset --test_arg=explorer/testdata/DIR/FILE.carbon`
@@ -136,8 +161,8 @@ Please refer to
 ## Trace Program Execution
 
 When tracing is turned on (using the `--trace_file=...` option or `.verbose`
-file extension), `explorer` prints the state of the program and each step that
-is performed during execution.
+target), `explorer` prints the state of the program and each step that is
+performed during execution.
 
 Printing directly to the standard output using the `--trace_file` option is
 supported by passing `-` in place of a filepath (`--trace_file=-`).

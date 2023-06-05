@@ -30,7 +30,7 @@ namespace Carbon::Testing {
 // ...` and `// CHECK:STDERR: ...` respectively. `[[@LINE+offset]` and
 // `{{regex}}` syntaxes should also work.
 //
-// `autoupdate_lit_testdata.py` automatically constructs compatible lines.
+// `autoupdate_testdata.py` automatically constructs compatible lines.
 class FileTestBase : public testing::Test {
  public:
   explicit FileTestBase(const std::filesystem::path& path);
