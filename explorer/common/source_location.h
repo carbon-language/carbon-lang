@@ -26,7 +26,7 @@ class SourceLocation {
   constexpr SourceLocation(const char* filename, int line_num)
       : filename_(filename), line_num_(line_num) {}
   SourceLocation(Nonnull<const std::string*> filename, int line_num)
-      : filename_(filename->c_str()), line_num_(line_num) {}
+      : filename_(*filename), line_num_(line_num) {}
 
   SourceLocation(const SourceLocation&) = default;
   SourceLocation(SourceLocation&&) = default;
