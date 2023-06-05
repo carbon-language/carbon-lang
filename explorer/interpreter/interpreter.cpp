@@ -201,9 +201,7 @@ class Interpreter {
 //
 
 void Interpreter::TraceState() {
-  if(trace_stream_->is_enabled() && (!todo_.empty() || !heap_.values().empty())) {
-    *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
-  }
+  *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
 }
 
 auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
