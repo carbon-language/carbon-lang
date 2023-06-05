@@ -59,6 +59,8 @@ class Heap : public HeapAllocationInterface {
 
   auto arena() const -> Arena& override { return *arena_; }
 
+  auto values() const -> std::vector<Nonnull<const Value*>> { return values_; }
+
  private:
   // Signal an error if the allocation is no longer alive.
   auto CheckAlive(AllocationId allocation, SourceLocation source_loc) const
