@@ -32,9 +32,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 typechecking, we will assume that all statically-sized array types have a size,
 although that size may be a symbolic value rather than a constant.
 
-An array can be initialized from a tuple, so long as the tuple has the right
-number of elements, and all element types are convertible to the array element
-type. We do not support deducing the element type of an array, as in
+A tuple of `N` elements of type `T` can be implicitly converted to `[T; N]`, and
+an array of type `[T; N]` can be implicitly converted to a tuple of `N` elements
+of type `T`. These conversions are combined transitively with the implicit
+conversions among tuples, and implicit conversions from tuples of types to tuple
+types. As a result, if `T` is a type of types, `[T; N]` is usable as a tuple
+type.
+
+We do not support deducing the element type of an array, as in
 `fn F[T:! type](array: [T;]);`, because there is no way to deduce the type of an
 array of size 0, and the variadic use cases we are focusing on do not give the
 caller a way to bypass deduction with an explicit cast.
