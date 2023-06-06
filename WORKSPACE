@@ -163,7 +163,7 @@ http_archive(
 
 load("@rules_m4//m4:m4.bzl", "m4_register_toolchains")
 
-m4_register_toolchains(version = "1.4.18")
+m4_register_toolchains(version = "1.4.18", extra_copts = ["-w"])
 
 rules_flex_version = "0.2.1"
 
@@ -175,7 +175,7 @@ http_archive(
 
 load("@rules_flex//flex:flex.bzl", "flex_register_toolchains")
 
-flex_register_toolchains(version = "2.6.4")
+flex_register_toolchains(version = "2.6.4", extra_copts = ["-w"])
 
 rules_bison_version = "0.2.2"
 
@@ -187,7 +187,7 @@ http_archive(
 
 load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 
-bison_register_toolchains(version = "3.3.2")
+bison_register_toolchains(version = "3.3.2", extra_copts = ["-w"])
 
 ###############################################################################
 # Protocol buffers - for structured fuzzer testing.
