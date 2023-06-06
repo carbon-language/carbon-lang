@@ -72,6 +72,17 @@ auto Heap::CheckInit(AllocationId allocation, SourceLocation source_loc) const
   return Success();
 }
 
+void Heap::Deallocate(AllocationId allocation) {
+  if (states_[allocation.index_] != ValueState::Dead) {
+    states_[allocation.index_] = ValueState::Dead;
+  } else {
+    CARBON_FATAL() << "deallocating an already dead value: "
+                   << *values_[allocation.index_];
+  }
+}
+
+void Heap::Deallocate(const Address& a) { Deallocate(a.allocation_); }
+
 auto Heap::IsInitialized(AllocationId allocation) const -> bool {
   return states_[allocation.index_] != ValueState::Uninitialized;
 }
@@ -84,17 +95,6 @@ void Heap::Discard(AllocationId allocation) {
   CARBON_CHECK(states_[allocation.index_] == ValueState::Uninitialized);
   states_[allocation.index_] = ValueState::Discarded;
 }
-
-void Heap::Deallocate(AllocationId allocation) {
-  if (states_[allocation.index_] != ValueState::Dead) {
-    states_[allocation.index_] = ValueState::Dead;
-  } else {
-    CARBON_FATAL() << "deallocating an already dead value: "
-                   << *values_[allocation.index_];
-  }
-}
-
-void Heap::Deallocate(const Address& a) { Deallocate(a.allocation_); }
 
 void Heap::Print(llvm::raw_ostream& out) const {
   llvm::ListSeparator sep;

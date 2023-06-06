@@ -90,7 +90,6 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
-    case Value::Kind::InitializingValue:
     case Value::Kind::BoolValue:
     case Value::Kind::TupleValue:
     case Value::Kind::StructValue:
@@ -151,7 +150,6 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
-    case Value::Kind::InitializingValue:
     case Value::Kind::BoolValue:
     case Value::Kind::TupleValue:
     case Value::Kind::StructValue:
@@ -221,7 +219,6 @@ static auto ExpectCompleteType(SourceLocation source_loc,
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
-    case Value::Kind::InitializingValue:
     case Value::Kind::BoolValue:
     case Value::Kind::StructValue:
     case Value::Kind::TupleValue:
@@ -334,7 +331,6 @@ static auto TypeIsDeduceable(Nonnull<const Value*> type) -> bool {
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
-    case Value::Kind::InitializingValue:
     case Value::Kind::BoolValue:
     case Value::Kind::TupleValue:
     case Value::Kind::StructValue:
@@ -1317,7 +1313,6 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
-    case Value::Kind::InitializingValue:
     case Value::Kind::StructValue:
     case Value::Kind::TupleValue:
     case Value::Kind::NominalClassValue:
@@ -4956,10 +4951,7 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
     default:
       CARBON_FATAL() << "f is not a callable declaration";
   }
-  if (!f->return_term().is_omitted()) {
-    f->initialization_storage().set_static_type(
-        &f->return_term().static_type());
-  }
+
   if (name == "Main") {
     if (!f->return_term().type_expression().has_value()) {
       return ProgramError(f->return_term().source_loc())
@@ -5969,7 +5961,6 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
-    case Value::Kind::InitializingValue:
     case Value::Kind::BoolValue:
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:

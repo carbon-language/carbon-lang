@@ -16,8 +16,8 @@
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/element_path.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/statement.h"
-#include "explorer/ast/storage.h"
 #include "explorer/common/nonnull.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
@@ -94,6 +94,24 @@ class Value {
 
  private:
   const Kind kind_;
+};
+
+// Contains the result of the evaluation of an expression, including a value,
+// the original expression category, and an optional address if available.
+class ExpressionResult {
+ public:
+  ExpressionResult(Nonnull<Value*> v, std::optional<Address> address,
+                   ExpressionCategory cat)
+      : value_(v), address_(std::move(address)), expr_cat_(cat) {}
+
+  auto value() const -> Nonnull<Value*> { return value_; }
+  auto address() const -> std::optional<Address> { return address_; }
+  auto expression_category() const -> ExpressionCategory { return expr_cat_; }
+
+ private:
+  Nonnull<Value*> value_;
+  std::optional<Address> address_;
+  ExpressionCategory expr_cat_;
 };
 
 // Returns whether the fully-resolved kind that this value will eventually have
@@ -256,31 +274,6 @@ class LocationValue : public Value {
 
  private:
   Address value_;
-};
-
-// The result of an initializing expression.
-class InitializingValue : public Value {
- public:
-  explicit InitializingValue(Nonnull<const Value*> value, Address address)
-      : Value(Kind::InitializingValue),
-        value_(value),
-        address_(std::move(address)) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::InitializingValue;
-  }
-
-  template <typename F>
-  auto Decompose(F f) const {
-    return f(value_, address_);
-  }
-
-  auto value() const -> Nonnull<const Value*> { return value_; }
-  auto address() const -> const Address& { return address_; }
-
- private:
-  Nonnull<const Value*> value_;
-  Address address_;
 };
 
 // A pointer value
@@ -651,7 +644,8 @@ class FunctionType : public Value {
 
   FunctionType(Nonnull<const Value*> parameters,
                Nonnull<const Value*> return_type)
-      : FunctionType(parameters, {}, return_type, {}, {}, false) {}
+      : FunctionType(parameters, {}, return_type, {}, {},
+                     /*is_initializing=*/false) {}
 
   FunctionType(Nonnull<const Value*> parameters,
                std::vector<GenericParameter> generic_parameters,

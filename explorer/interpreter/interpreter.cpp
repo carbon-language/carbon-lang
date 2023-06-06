@@ -18,7 +18,6 @@
 
 #include "common/check.h"
 #include "common/error.h"
-#include "explorer/ast/ast_rtti.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/expression.h"
@@ -85,8 +84,6 @@ class Interpreter {
   // RunAllSteps call. Cannot be called if `action` was an action that doesn't
   // produce results.
   auto result() const -> Nonnull<const Value*> { return todo_.result(); }
-
-  auto heap() const -> const Heap& { return heap_; }
 
  private:
   auto Step() -> ErrorOr<Success>;
@@ -302,10 +299,12 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                   std::optional<Address> v_location, SourceLocation source_loc,
                   std::optional<Nonnull<RuntimeScope*>> bindings,
                   BindingMap& generic_args, Nonnull<TraceStream*> trace_stream,
-                  Nonnull<Arena*> arena, ExpressionCategory cat) -> bool {
+                  Nonnull<Arena*> arena, ExpressionCategory v_cat /*=::Value*/)
+    -> bool {
   if (trace_stream->is_enabled()) {
     *trace_stream << "match pattern " << *p << "\nfrom a "
-                  << ExprCategoryToString(cat) << " with value " << *v << "\n";
+                  << ExprCategoryToString(v_cat) << " with value " << *v
+                  << "\n";
   }
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
@@ -314,8 +313,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
       if (const auto value_node = placeholder.value_node()) {
         switch (value_node->expression_category()) {
           case ExpressionCategory::Reference:
-            if (cat == ExpressionCategory::Value ||
-                cat == ExpressionCategory::Reference) {
+            if (v_cat == ExpressionCategory::Value ||
+                v_cat == ExpressionCategory::Reference) {
               // TODO: For var bindings, use initializing expression, or copy
               (*bindings)->Initialize(*value_node, v);
             } else /* ExpressionCategory::Initializing */ {
@@ -325,8 +324,8 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
             }
             break;
           case ExpressionCategory::Value:
-            if (cat == ExpressionCategory::Value ||
-                cat == ExpressionCategory::Reference) {
+            if (v_cat == ExpressionCategory::Value ||
+                v_cat == ExpressionCategory::Reference) {
               // TODO: For let bindings, initialize from value, or convert and
               // pin lifetime if different expression category
               // TODO: Extend let bindings lifetime to encompass this value
@@ -801,7 +800,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::LocationValue:
-    case Value::Kind::InitializingValue:
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
@@ -1007,7 +1005,6 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
     return ProgramError(fun->source_loc())
            << "destructors currently don't support `addr self` bindings";
   }
-  // Bind to a new pattern?
   if (auto& value_node = placeholder->value_node()) {
     if (value_node->expression_category() == ExpressionCategory::Value) {
       method_scope.BindValue(*placeholder->value_node(), receiver);
@@ -2180,68 +2177,57 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
-        if (definition.init().expression_category() ==
-            ExpressionCategory::Initializing) {
+        if (definition.init().kind() == ExpressionKind::CallExpression &&
+            definition.init().expression_category() ==
+                ExpressionCategory::Initializing) {
           // TODO: Handle forwarding initializing expression allocation
           // Allocate storage for initializing expression.
           const auto allocation_id =
               heap_.AllocateValue(arena_->New<UninitializedValue>(
                   &definition.init().static_type()));
           act.set_location_created(allocation_id);
+          RuntimeScope scope(&heap_);
+          scope.BindAllocationToScope(Address(allocation_id));
+          todo_.MergeScope(std::move(scope));
         }
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &definition.init(), act.location_created()));
       } else {
-        const auto* dest_type = &definition.pattern().static_type();
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
         Nonnull<const Value*> p = &definition.pattern().value();
-        std::optional<Nonnull<const Value*>> v;
+        Nonnull<const Value*> v;
         std::optional<Address> v_location;
         ExpressionCategory expr_category =
             definition.has_init() ? definition.init().expression_category()
                                   : ExpressionCategory::Value;
-        RuntimeScope scope(&heap_);
         if (definition.has_init()) {
-          // Value returned is a location, read it first.
-          if (const auto location = act.location_created()) {
-            // CHECK if initialized
+          const auto init_location = act.location_created();
+          if (init_location && heap_.IsInitialized(*init_location)) {
             // Bind even if a conversion is necessary.
             // TODO: Bind before, or after.
-            const auto address = Address(*location);
-            if (heap_.IsInitialized(*location)) {
-              scope.BindAllocationToScope(Address(*location));
-              CARBON_ASSIGN_OR_RETURN(
-                  v, heap_.Read(address, definition.source_loc()));
-              CARBON_CHECK(*v == act.results()[0]);
-              CARBON_ASSIGN_OR_RETURN(
-                  v, Convert(act.results()[0], dest_type, stmt.source_loc()));
-              if (v == act.results()[0]) {
-                v_location = address;
-              } else {
-                // If a conversion happened, fall back to a ValueExpression.
-                expr_category = ExpressionCategory::Value;
-              }
-            } else {
-              heap_.Discard(*location);
+            const auto address = Address(*init_location);
+            CARBON_ASSIGN_OR_RETURN(
+                v, heap_.Read(address, definition.source_loc()));
+            CARBON_CHECK(v == act.results()[0]);
+            v_location = address;
+          } else {
+            if (init_location) {
+              // Location provided to initializing expression was unused
+              heap_.Discard(*init_location);
             }
-          }
-          // If initializing expression location was unused, fall back to a
-          // ValueExpression.
-          if (!v.has_value()) {
             expr_category = ExpressionCategory::Value;
+            const auto* dest_type = &definition.pattern().static_type();
             CARBON_ASSIGN_OR_RETURN(
                 v, Convert(act.results()[0], dest_type, stmt.source_loc()));
           }
-          CARBON_CHECK(v.has_value());
-          CARBON_CHECK((*v)->kind() != Value::Kind::UninitializedValue)
-              << "The value should be initialized at this stage.";
         } else {
           v = arena_->New<UninitializedValue>(p);
         }
 
         // If it is a Returned var, bind returned var to location provided to
         // initializing expression, if any.
+        RuntimeScope scope(&heap_);
         if (definition.is_returned() && act.location_received()) {
           CARBON_CHECK(p->kind() == Value::Kind::BindingPlaceholderValue);
           const auto value_node =
@@ -2251,13 +2237,12 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           const auto location = *act.location_received();
           scope.Bind(*value_node, Address(location));
           CARBON_RETURN_IF_ERROR(
-              heap_.Write(Address(location), *v, stmt.source_loc()));
+              heap_.Write(Address(location), v, stmt.source_loc()));
         } else {
           BindingMap generic_args;
-          // TODO: Pattern match for expression categories
-          CARBON_CHECK(PatternMatch(p, *v, v_location, stmt.source_loc(),
-                                    &scope, generic_args, trace_stream_,
-                                    this->arena_, expr_category))
+          CARBON_CHECK(PatternMatch(p, v, v_location, stmt.source_loc(), &scope,
+                                    generic_args, trace_stream_, this->arena_,
+                                    expr_category))
               << stmt.source_loc()
               << ": internal error in variable definition, match failed";
         }

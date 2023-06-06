@@ -46,16 +46,16 @@ class Heap : public HeapAllocationInterface {
   // Mark UninitializedValue as uninitialized and other values as alive.
   auto AllocateValue(Nonnull<const Value*> v) -> AllocationId override;
 
-  // Returns whether the given allocation was initialized.
-  auto IsInitialized(AllocationId allocation) const -> bool;
-  // Returns whether the given allocation is discarded.
-  auto IsDiscarded(AllocationId allocation) const -> bool;
-
-  void Discard(AllocationId allocation);
-
   // Marks this allocation, and all of its sub-objects, as dead.
   void Deallocate(AllocationId allocation) override;
   void Deallocate(const Address& a);
+
+  // Marks this allocation, and all its sub-objects, as discarded.
+  void Discard(AllocationId allocation);
+  // Returns whether the given allocation was unused and discarded.
+  auto IsDiscarded(AllocationId allocation) const -> bool;
+  // Returns whether the given allocation was initialized.
+  auto IsInitialized(AllocationId allocation) const -> bool;
 
   // Print all the values on the heap to the stream `out`.
   void Print(llvm::raw_ostream& out) const;

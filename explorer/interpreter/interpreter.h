@@ -47,10 +47,10 @@ auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
 // TODO: consider moving this to a separate header.
 [[nodiscard]] auto PatternMatch(
     Nonnull<const Value*> p, Nonnull<const Value*> v,
-    std::optional<Address> location, SourceLocation source_loc,
+    std::optional<Address> v_location, SourceLocation source_loc,
     std::optional<Nonnull<RuntimeScope*>> bindings, BindingMap& generic_args,
     Nonnull<TraceStream*> trace_stream, Nonnull<Arena*> arena,
-    ExpressionCategory cat = ExpressionCategory::Value) -> bool;
+    ExpressionCategory v_cat = ExpressionCategory::Value) -> bool;
 
 }  // namespace Carbon
 

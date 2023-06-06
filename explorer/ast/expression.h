@@ -756,20 +756,10 @@ class CallExpression : public Expression {
   // Can only be called by type-checking, if a conversion was required.
   void set_argument(Nonnull<Expression*> argument) { argument_ = argument; }
 
-  // TODO
-  void set_initialized_location(ValueNodeView value_node) {
-    initialized_location_ = value_node;
-  }
-  // TODO
-  auto initialized_location() const -> std::optional<ValueNodeView> {
-    return initialized_location_;
-  }
-
  private:
   Nonnull<Expression*> function_;
   Nonnull<Expression*> argument_;
   Bindings bindings_;
-  std::optional<ValueNodeView> initialized_location_;
 };
 
 class FunctionTypeLiteral : public ConstantValueLiteral {

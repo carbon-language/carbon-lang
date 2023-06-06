@@ -27,6 +27,7 @@ fn Main() -> i32 {
 
   Print("Delete A");
   heap.Delete(pa);
+
   Print("Return");
   return 0;
 }
