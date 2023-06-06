@@ -454,27 +454,17 @@ static auto ExpectResolvedBindingType(const BindingPattern& binding,
 }
 
 // Returns whether the given value is template-dependent, that is, if it
-// depends on any template paramaeter.
-static auto IsTemplateDependent(Nonnull<const Value*> value) -> bool {
-  // A VariableType is template dependent if it names a template binding.
-  if (const auto* var_type = dyn_cast<VariableType>(value)) {
-    return var_type->binding().binding_kind() ==
-           GenericBinding::BindingKind::Template;
-  }
-
-  static constexpr auto is_dependent_value = [](auto&& x) -> bool {
-    if constexpr (std::is_convertible_v<decltype(x), const Value*>) {
-      return IsTemplateDependent(x);
-    }
-    return false;
-  };
-
-  // Any other value is template dependent if any part of it is.
-  return value->Visit<bool>([](auto* derived_value) {
-    return derived_value->Decompose([](auto&&... parts) {
-      return (is_dependent_value(decltype(parts)(parts)) || ...);
-    });
-  });
+// depends on any template parameter.
+static auto DependsOnTemplateParameter(Nonnull<const Value*> value) -> bool {
+  bool mentions_no_template_parameters =
+      VisitNestedValues(value, [](Nonnull<const Value*> nested) -> bool {
+        if (const auto* var_type = dyn_cast<VariableType>(nested)) {
+          return var_type->binding().binding_kind() !=
+                 GenericBinding::BindingKind::Template;
+        }
+        return true;
+      });
+  return !mentions_no_template_parameters;
 }
 
 // Returns whether all template parameters in `bindings` are saturated: that
@@ -483,7 +473,7 @@ static auto IsTemplateDependent(Nonnull<const Value*> value) -> bool {
 static auto IsTemplateSaturated(const Bindings& bindings) -> bool {
   for (auto [binding, value] : bindings.args()) {
     if (binding->binding_kind() == GenericBinding::BindingKind::Template &&
-        IsTemplateDependent(value)) {
+        DependsOnTemplateParameter(value)) {
       return false;
     }
   }
@@ -6407,6 +6397,12 @@ auto TypeChecker::InstantiateImplDeclaration(
     }
   }
 
+  // TODO: Make this method non-const and remove the const-cast here. The
+  // requirement to perform template instantiation unfortunately means that a
+  // lot of type-checking stops being free of side-effects, so this means
+  // removing `const` throughout most of the type-checker.
+  auto* type_checker = const_cast<TypeChecker*>(this);
+
   // TODO: It's probably not correct to use the top-level impl scope here. It's
   // not obvious what we should use, though -- which impls are in scope in
   // template instantiation?
@@ -6414,11 +6410,34 @@ auto TypeChecker::InstantiateImplDeclaration(
       << "can't perform template instantiation with no top-level scope";
   ImplScope scope(*top_level_impl_scope_);
 
-  // TODO: Remove the const-cast here. The requirement to perform template
-  // instantiation unfortunately means that a lot of type-checking stops being
-  // free of side-effects, so this means removing `const` throughout most of
-  // the type-checker.
-  auto* type_checker = const_cast<TypeChecker*>(this);
+  // Bring all impls from any checked generic bindings in the template
+  // arguments into scope.
+  //
+  // TODO: There shouldn't be any checked generic bindings in the template
+  // arguments by the time we come to perform an instantiation, but in order
+  // for that to work, we need to defer instantiating templates until we know
+  // the values of checked generic parameters, such as by performing
+  // monomorphization for checked generics, which explorer doesn't yet do. See
+  // #2153 for the plan here.
+  //
+  // As a workaround for the lack of support for #2153, we can instantiate
+  // templates with the argument equal to a generic parameter. When we do so,
+  // the constraints on that generic parameter need to be in scope in the
+  // instantiation. This is imperfect: it misses constraints on the binding
+  // that come from anywhere other than its type.
+  for (auto [param, value] : bindings->args()) {
+    if (param->binding_kind() != GenericBinding::BindingKind::Template) {
+      continue;
+    }
+    VisitNestedValues(value, [&](Nonnull<const Value*> nested) -> bool {
+      if (auto* var_type = dyn_cast<VariableType>(nested)) {
+        if (auto impl_binding = var_type->binding().impl_binding()) {
+          type_checker->BringImplBindingIntoScope(*impl_binding, scope);
+        }
+      }
+      return true;
+    });
+  }
 
   // Type-check the new impl.
   //
