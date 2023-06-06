@@ -163,6 +163,8 @@ http_archive(
 
 load("@rules_m4//m4:m4.bzl", "m4_register_toolchains")
 
+# When building M4, disable all compiler warnings as we can't realistically fix
+# them anyways.
 m4_register_toolchains(version = "1.4.18", extra_copts = ["-w"])
 
 rules_flex_version = "0.2.1"
@@ -175,6 +177,8 @@ http_archive(
 
 load("@rules_flex//flex:flex.bzl", "flex_register_toolchains")
 
+# When building Flex, disable all compiler warnings as we can't realistically
+# fix them anyways.
 flex_register_toolchains(version = "2.6.4", extra_copts = ["-w"])
 
 rules_bison_version = "0.2.2"
@@ -187,6 +191,8 @@ http_archive(
 
 load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 
+# When building Bison, disable all compiler warnings as we can't realistically
+# fix them anyways.
 bison_register_toolchains(version = "3.3.2", extra_copts = ["-w"])
 
 ###############################################################################
