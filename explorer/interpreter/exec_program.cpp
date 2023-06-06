@@ -7,6 +7,7 @@
 #include <variant>
 
 #include "common/check.h"
+#include "common/error.h"
 #include "common/ostream.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/trace_stream.h"
@@ -77,11 +78,18 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
 auto ExecProgram(Nonnull<Arena*> arena, AST ast,
                  Nonnull<TraceStream*> trace_stream,
                  Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int> {
+  trace_stream->set_current_phase(ProgramPhase::Execution);
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** starting execution **********\n";
   }
-  trace_stream->set_current_phase(ProgramPhase::Execution);
-  return InterpProgram(ast, arena, trace_stream, print_stream);
+  CARBON_ASSIGN_OR_RETURN(
+      auto interpreter_result,
+      InterpProgram(ast, arena, trace_stream, print_stream));
+  if (trace_stream->is_enabled()) {
+    *trace_stream << "interpreter result: " << interpreter_result << "\n";
+  }
+  trace_stream->set_current_phase(ProgramPhase::Unknown);
+  return interpreter_result;
 }
 
 }  // namespace Carbon

@@ -39,10 +39,12 @@
 // NO-EXEC-NOT:STDOUT: ********** initializing globals **********
 // NO-EXEC-NOT:STDOUT: ********** calling main function **********
 // NO-EXEC-NOT:STDOUT: --- step exp Main() .0. (<Main()>:0) --->
+// NO-EXEC-NOT:STDOUT: interpreter result: 0
 //        EXEC:STDOUT: ********** starting execution **********
 //        EXEC:STDOUT: ********** initializing globals **********
 //        EXEC:STDOUT: ********** calling main function **********
 //        EXEC:STDOUT: --- step exp Main() .0. (<Main()>:0) --->
+//        EXEC:STDOUT: interpreter result: 0
 // NO-TIMING-NOT:STDOUT: ********** printing timing **********
 //        TIMING:STDOUT: ********** printing timing **********
 // NO-TIMING-NOT:STDOUT: Time elapsed in ExecProgram: {{[0-9]+}}ms

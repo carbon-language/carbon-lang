@@ -19,7 +19,7 @@ namespace Carbon {
 // Enumerates the phases of the program. These are used to control which phases
 // are traced.
 // Also used for allowed_phases_ bitset.
-enum ProgramPhase {
+enum class ProgramPhase {
   Unknown,
   SourceProgram,
   NameResolution,
@@ -29,7 +29,8 @@ enum ProgramPhase {
   Declarations,
   Execution,
   Timing,
-  All
+  All,
+  Last = All
 };
 
 enum class CodeContext { Main, Prelude, Import };
@@ -47,11 +48,12 @@ enum class CodeContext { Main, Prelude, Import };
 class TraceStream {
  public:
   // Returns true if tracing is currently enabled.
+  // TODO: use current source location for file context based filtering instead
+  // of just checking if current code context is Prelude.
   auto is_enabled() const -> bool {
     return stream_.has_value() &&
            current_code_context_ != CodeContext::Prelude &&
-           (allowed_phases_[current_phase_] ||
-            allowed_phases_[ProgramPhase::All]);
+           allowed_phases_[static_cast<int>(current_phase_)];
   }
 
   // Sets the trace stream. This should only be called from the main.
@@ -68,14 +70,15 @@ class TraceStream {
   }
 
   auto set_allowed_phases(std::vector<ProgramPhase> allowed_phases_list) {
-    if (!allowed_phases_[ProgramPhase::Unknown]) {
-      allowed_phases_.set(ProgramPhase::Unknown);
-    }
     if (allowed_phases_list.empty()) {
-      allowed_phases_.set(ProgramPhase::Execution);
+      allowed_phases_.set(static_cast<int>(ProgramPhase::Execution));
     } else {
       for (auto phase : allowed_phases_list) {
-        allowed_phases_.set(phase);
+        if (phase == ProgramPhase::All) {
+          allowed_phases_.set();
+        } else {
+          allowed_phases_.set(static_cast<int>(phase));
+        }
       }
     }
   }
@@ -103,7 +106,7 @@ class TraceStream {
  private:
   std::optional<Nonnull<llvm::raw_ostream*>> stream_;
   ProgramPhase current_phase_ = ProgramPhase::Unknown;
-  std::bitset<16> allowed_phases_;
+  std::bitset<static_cast<int>(ProgramPhase::Last) + 1> allowed_phases_;
   CodeContext current_code_context_ = CodeContext::Main;
 };
 

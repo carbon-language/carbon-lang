@@ -113,11 +113,6 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   if (result.ok()) {
     // Print the return code to stdout.
     llvm::outs() << "result: " << *result << "\n";
-
-    // When there's a dedicated trace file, print the return code to it too.
-    if (scoped_trace_stream) {
-      trace_stream << "result: " << *result << "\n";
-    }
     return EXIT_SUCCESS;
   } else {
     llvm::errs() << result.error() << "\n";
