@@ -559,12 +559,8 @@ auto TypeChecker::IsImplicitlyConvertible(
   // to the actual destination type. We'll catch any problems when we actually
   // come to perform the conversion.
   if (isa<TupleType>(source) && IsTypeOfType(destination)) {
-    if (allow_user_defined_conversions) {
-      return IsBuiltinConversion(source, arena_->New<TypeType>(), impl_scope);
-    } else {
-      const auto& source_elts = cast<TupleType>(source)->elements();
-      return std::all_of(source_elts.begin(), source_elts.end(), IsTypeOfType);
-    }
+    return IsBuiltinConversion(source, arena_->New<TypeType>(), impl_scope,
+                               allow_user_defined_conversions);
   }
   if (IsTypeOfType(source) && IsTypeOfType(destination)) {
     return true;
@@ -573,7 +569,8 @@ auto TypeChecker::IsImplicitlyConvertible(
   // If we're not supposed to look for a user-defined conversion, check for
   // builtin conversions, which are normally found by impl lookup.
   if (!allow_user_defined_conversions) {
-    return IsBuiltinConversion(source, destination, impl_scope);
+    return IsBuiltinConversion(source, destination, impl_scope,
+                               allow_user_defined_conversions);
   }
 
   // We didn't find a builtin implicit conversion. Check if a user-defined one
@@ -592,7 +589,8 @@ auto TypeChecker::IsImplicitlyConvertible(
 
 auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
                                       Nonnull<const Value*> destination,
-                                      const ImplScope& impl_scope) const
+                                      const ImplScope& impl_scope,
+                                      bool allow_user_defined_conversions) const
     -> ErrorOr<bool> {
   switch (source->kind()) {
     case Value::Kind::StructType:
@@ -620,7 +618,7 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
                 IsImplicitlyConvertible(
                     source_field->value, destination_field.value,
                     impl_scope,
-                    /*allow_user_defined_conversions=*/true));
+                    allow_user_defined_conversions));
             if (!convertible) {
               return false;
             }
@@ -635,7 +633,7 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
               bool convertible,
               IsImplicitlyConvertible(
                   source, arena_->New<StructType>(field_types), impl_scope,
-                  /*allow_user_defined_conversions=*/false));
+                  allow_user_defined_conversions));
           if (convertible) {
             return true;
           }
@@ -669,7 +667,7 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
                 bool convertible,
                 IsImplicitlyConvertible(
                     source_tuple.elements()[i], destination_tuple.elements()[i],
-                    impl_scope, /*allow_user_defined_conversions=*/true));
+                    impl_scope, allow_user_defined_conversions));
             if (!convertible) {
               all_ok = false;
               break;
@@ -779,8 +777,8 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
   Nonnull<const Value*> source_type = &source->static_type();
 
   // Build a simple conversion that the interpreter can perform directly.
-  auto simple_conversion = [&] {
-    auto* result = arena_->New<BuiltinConvertExpression>(source);
+  auto make_builtin_conversion = [&] (Nonnull<Expression*> from) {
+    auto* result = arena_->New<BuiltinConvertExpression>(from);
     result->set_static_type(destination);
     result->set_expression_category(ExpressionCategory::Value);
     return result;
@@ -843,19 +841,17 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
               auto field_types,
               FieldTypesWithBase(cast<NominalClassType>(*destination)));
           CARBON_ASSIGN_OR_RETURN(
-              bool convertible,
-              IsImplicitlyConvertible(
-                  source_type, arena_->New<StructType>(field_types), impl_scope,
-                  allow_user_defined_conversions));
-          if (convertible) {
-            return simple_conversion();
-          }
-          break;
+              Nonnull<Expression*> result,
+              ImplicitlyConvert("implicit conversion", impl_scope, source,
+                                arena_->New<StructType>(field_types)));
+          CARBON_RETURN_IF_ERROR(TypeCheckExp(result, impl_scope));
+          // Perform a builtin conversion from struct to class.
+          return make_builtin_conversion(result);
         }
         case Value::Kind::TypeType:
           // A value of empty struct type implicitly converts to type `type`.
           if (cast<StructType>(*source_type).fields().empty()) {
-            return simple_conversion();
+            return make_builtin_conversion(source);
           }
           break;
         default:
@@ -906,7 +902,8 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
             }
           }
           if (all_ok) {
-            return simple_conversion();
+            // Perform a builtin conversion from tuple to array.
+            return make_builtin_conversion(source);
           }
           break;
         }
@@ -925,7 +922,7 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
           }
           // The conversion from (type, type, ..., type) to type can be
           // performed directly by the interpreter.
-          return simple_conversion();
+          return make_builtin_conversion(source);
         }
         default:
           break;
@@ -978,7 +975,8 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
     auto* type_type = arena_->New<TypeType>();
     CARBON_ASSIGN_OR_RETURN(
         bool convertible,
-        IsBuiltinConversion(source_type, type_type, impl_scope));
+        IsBuiltinConversion(source_type, type_type, impl_scope,
+                            /*allow_user_defined_conversions=*/true));
     if (convertible) {
       CARBON_ASSIGN_OR_RETURN(
           source, BuildBuiltinConversion(source, type_type, impl_scope));
@@ -1087,7 +1085,8 @@ auto TypeChecker::IsIntrinsicConstraintSatisfied(
       CARBON_ASSIGN_OR_RETURN(
           bool convertible,
           IsBuiltinConversion(constraint.type, constraint.arguments[0],
-                              impl_scope));
+                              impl_scope,
+                              /*allow_user_defined_conversions=*/true));
       if (trace_stream_->is_enabled()) {
         *trace_stream_ << constraint << " evaluated to " << convertible << "\n";
       }
