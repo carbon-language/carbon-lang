@@ -689,7 +689,7 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
                 bool convertible,
                 IsImplicitlyConvertible(
                     source_element, &destination_array.element_type(),
-                    impl_scope, /*allow_user_defined_conversions=*/false));
+                    impl_scope, allow_user_defined_conversions));
             if (!convertible) {
               all_ok = false;
               break;
@@ -775,6 +775,11 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
     -> ErrorOr<Nonnull<Expression*>> {
   Nonnull<const Value*> source_type = &source->static_type();
 
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "building builtin conversion from " << *source_type
+                   << " to " << *destination << "\n";
+  }
+
   // Build a simple conversion that the interpreter can perform directly.
   auto make_builtin_conversion = [&] (Nonnull<Expression*> from) {
     auto* result = arena_->New<BuiltinConvertExpression>(from);
@@ -841,7 +846,6 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
               Nonnull<Expression*> result,
               ImplicitlyConvert("implicit conversion", impl_scope, source,
                                 arena_->New<StructType>(field_types)));
-          CARBON_RETURN_IF_ERROR(TypeCheckExp(result, impl_scope));
           // Perform a builtin conversion from struct to class.
           return make_builtin_conversion(result);
         }
@@ -883,29 +887,26 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
         }
         case Value::Kind::StaticArrayType: {
           const auto& destination_array = cast<StaticArrayType>(*destination);
-          if (destination_array.size() != source_tuple.elements().size()) {
-            break;
-          }
-          bool all_ok = true;
-          for (Nonnull<const Value*> source_element : source_tuple.elements()) {
+          // First, convert each tuple element to the array element type if
+          // necessary.
+          if (!std::all_of(source_tuple.elements().begin(),
+                           source_tuple.elements().end(),
+                           [&](Nonnull<const Value*> element_type) {
+                             return TypeEqual(element_type,
+                                              &destination_array.element_type(),
+                                              std::nullopt);
+                           })) {
+            auto* destination_tuple_type = arena_->New<TupleType>(std::vector(
+                destination_array.size(), &destination_array.element_type()));
             CARBON_ASSIGN_OR_RETURN(
-                bool convertible,
-                IsImplicitlyConvertible(
-                    source_element, &destination_array.element_type(),
-                    impl_scope, /*allow_user_defined_conversions*/false));
-            if (!convertible) {
-              all_ok = false;
-              break;
-            }
+                source, BuildBuiltinConversion(source, destination_tuple_type,
+                                               impl_scope));
           }
-          if (all_ok) {
-            // Perform a builtin conversion from tuple to array.
-            return make_builtin_conversion(source);
-          }
-          break;
+          // Perform a builtin conversion from tuple to array.
+          return make_builtin_conversion(source);
         }
         case Value::Kind::TypeType: {
-          // First, convert to (type, type, ..., type) if necessary.
+          // First, convert each tuple element to 'type' if necessary.
           if (!std::all_of(source_tuple.elements().begin(),
                            source_tuple.elements().end(),
                            [](Nonnull<const Value*> element_type) {
@@ -917,8 +918,7 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
                 source, BuildBuiltinConversion(source, destination_tuple_type,
                                                impl_scope));
           }
-          // The conversion from (type, type, ..., type) to type can be
-          // performed directly by the interpreter.
+          // Perform a builtin conversion from tuple of types to type.
           return make_builtin_conversion(source);
         }
         default:
