@@ -8,6 +8,7 @@
 #include <fstream>
 
 #include "common/check.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/InitLLVM.h"
 
@@ -22,12 +23,7 @@ static std::filesystem::path* orig_working_dir = nullptr;
 
 using ::testing::Eq;
 
-FileTestBase::FileTestBase(const std::filesystem::path& path) : path_(&path) {
-  // Run from the file's parent directory.
-  std::error_code ec;
-  std::filesystem::current_path(path.parent_path(), ec);
-  CARBON_CHECK(!ec) << ec.message();
-}
+FileTestBase::FileTestBase(const std::filesystem::path& path) : path_(&path) {}
 
 FileTestBase::~FileTestBase() {
   // Restore the original working directory.
@@ -37,7 +33,8 @@ FileTestBase::~FileTestBase() {
 }
 
 void FileTestBase::RegisterTests(
-    const char* fixture_label, const std::vector<std::filesystem::path>& paths,
+    const char* fixture_label,
+    const llvm::SmallVector<std::filesystem::path>& paths,
     std::function<FileTestBase*(const std::filesystem::path&)> factory) {
   // Use RegisterTest instead of INSTANTIATE_TEST_CASE_P because of ordering
   // issues between container initialization and test instantiation by
@@ -52,13 +49,13 @@ void FileTestBase::RegisterTests(
 
 // Splits outputs to string_view because gtest handles string_view by default.
 static auto SplitOutput(llvm::StringRef output)
-    -> std::vector<std::string_view> {
+    -> llvm::SmallVector<std::string_view> {
   if (output.empty()) {
     return {};
   }
   llvm::SmallVector<llvm::StringRef> lines;
   llvm::StringRef(output).split(lines, "\n");
-  return std::vector<std::string_view>(lines.begin(), lines.end());
+  return llvm::SmallVector<std::string_view>(lines.begin(), lines.end());
 }
 
 // Runs a test and compares output. This keeps output split by line so that
@@ -71,15 +68,86 @@ auto FileTestBase::TestBody() -> void {
   llvm::errs() << "\nTo test this file alone, run:\n  bazel test "
                << *subset_target << " --test_arg=" << test_file << "\n\n";
 
+  SetTmpAsWorkingDir();
+
   // Load expected output.
-  std::vector<testing::Matcher<std::string>> expected_stdout;
-  std::vector<testing::Matcher<std::string>> expected_stderr;
+  llvm::SmallVector<std::string> test_files;
+  auto cleanup_test_files = llvm::make_scope_exit([&]() {
+    // Remove all the created files. Even if no files are split, there will be a
+    // symlink to remove.
+    for (const auto& file : test_files) {
+      std::filesystem::remove(file);
+    }
+  });
+  llvm::SmallVector<testing::Matcher<std::string>> expected_stdout;
+  llvm::SmallVector<testing::Matcher<std::string>> expected_stderr;
+  ProcessTestFile(test_files, expected_stdout, expected_stderr);
+  if (HasFailure()) {
+    return;
+  }
+
+  // Capture trace streaming, but only when in debug mode.
+  std::string stdout;
+  std::string stderr;
+  llvm::raw_string_ostream stdout_ostream(stdout);
+  llvm::raw_string_ostream stderr_ostream(stderr);
+  bool run_succeeded = RunWithFiles(test_files, stdout_ostream, stderr_ostream);
+  if (HasFailure()) {
+    return;
+  }
+  EXPECT_THAT(!llvm::StringRef(path().filename()).starts_with("fail_"),
+              Eq(run_succeeded))
+      << "Tests should be prefixed with `fail_` if and only if running them "
+         "is expected to fail.";
+
+  // Check results.
+  EXPECT_THAT(SplitOutput(stdout), ElementsAreArray(expected_stdout));
+  EXPECT_THAT(SplitOutput(stderr), ElementsAreArray(expected_stderr));
+}
+
+auto FileTestBase::SetTmpAsWorkingDir() -> void {
+  char* tmpdir = getenv("TEST_TMPDIR");
+  CARBON_CHECK(tmpdir);
+
+  // Run from the tmpdir.
+  std::error_code ec;
+  std::filesystem::current_path(tmpdir, ec);
+  CARBON_CHECK(!ec) << ec.message();
+}
+
+auto FileTestBase::ProcessTestFile(
+    llvm::SmallVector<std::string>& test_files,
+    llvm::SmallVector<testing::Matcher<std::string>>& expected_stdout,
+    llvm::SmallVector<testing::Matcher<std::string>>& expected_stderr) -> void {
   std::ifstream file_content(path());
+  std::ofstream split_file;
+  bool found_content_pre_split = false;
   int line_index = 0;
   std::string line_str;
   while (std::getline(file_content, line_str)) {
-    ++line_index;
     llvm::StringRef line = line_str;
+    if (line.consume_front("// ---")) {
+      ASSERT_FALSE(found_content_pre_split)
+          << "When using split files, there must be no content before the "
+             "first split file.";
+      test_files.push_back(line.trim().str());
+      const auto& test_file = test_files.back();
+      ASSERT_FALSE(std::filesystem::path(test_file).has_parent_path())
+          << "Only filenames are supported, not subdirectories: " << test_file;
+      if (split_file.is_open()) {
+        split_file.close();
+      }
+      split_file.open(test_file);
+      ASSERT_TRUE(split_file.is_open()) << "Failed to open " << test_file;
+      line_index = 0;
+      continue;
+    } else if (split_file.is_open()) {
+      split_file << line_str << "\n";
+    } else if (!line.starts_with("//") && !line.trim().empty()) {
+      found_content_pre_split = true;
+    }
+    ++line_index;
+
     line = line.ltrim();
     if (!line.consume_front("// CHECK")) {
       continue;
@@ -93,6 +161,16 @@ auto FileTestBase::TestBody() -> void {
     }
   }
 
+  if (test_files.empty()) {
+    // Symlink the main test file and provide it in test_files.
+    test_files.push_back(path().filename());
+    std::error_code ec;
+    std::filesystem::create_symlink(path(), path().filename(), ec);
+    CARBON_CHECK(!ec) << ec.message();
+  } else {
+    split_file.close();
+  }
+
   // Assume there is always a suffix `\n` in output.
   if (!expected_stdout.empty()) {
     expected_stdout.push_back(testing::StrEq(""));
@@ -100,24 +178,6 @@ auto FileTestBase::TestBody() -> void {
   if (!expected_stderr.empty()) {
     expected_stderr.push_back(testing::StrEq(""));
   }
-
-  // Capture trace streaming, but only when in debug mode.
-  std::string stdout;
-  std::string stderr;
-  llvm::raw_string_ostream stdout_ostream(stdout);
-  llvm::raw_string_ostream stderr_ostream(stderr);
-  bool run_succeeded = RunOverFile(stdout_ostream, stderr_ostream);
-  if (HasFailure()) {
-    return;
-  }
-  EXPECT_THAT(!llvm::StringRef(path().filename()).starts_with("fail_"),
-              Eq(run_succeeded))
-      << "Tests should be prefixed with `fail_` if and only if running them "
-         "is expected to fail.";
-
-  // Check results.
-  EXPECT_THAT(SplitOutput(stdout), ElementsAreArray(expected_stdout));
-  EXPECT_THAT(SplitOutput(stderr), ElementsAreArray(expected_stderr));
 }
 
 auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
@@ -245,7 +305,7 @@ auto main(int argc, char** argv) -> int {
   Carbon::Testing::base_dir_len = base_dir.size();
 
   // Register tests based on their absolute path.
-  std::vector<std::filesystem::path> paths;
+  llvm::SmallVector<std::filesystem::path> paths;
   for (int i = 1; i < argc; ++i) {
     auto path = std::filesystem::absolute(argv[i], ec);
     CARBON_CHECK(!ec) << argv[i] << ": " << ec.message();
