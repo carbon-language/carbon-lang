@@ -21,7 +21,7 @@ cc_library(
 file_test(
     name = "file_test_base_test",
     srcs = ["file_test_base_test.cpp"],
-    tests = ["example.carbon"],
+    tests = glob(["testdata/**"]),
     deps = [
         ":file_test_base",
         "@com_google_googletest//:gtest",

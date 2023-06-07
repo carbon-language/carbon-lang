@@ -32,8 +32,15 @@ class ParseAndExecuteTestFile : public FileTestBase {
     }
   }
 
-  auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
+  auto RunWithFiles(const llvm::SmallVector<std::string>& test_files,
+                    llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
       -> bool override {
+    if (test_files.size() != 1) {
+      ADD_FAILURE() << "Only 1 file is supported: " << test_files.size()
+                    << " provided";
+      return false;
+    }
+
     // Capture trace streaming, but only when in debug mode.
     TraceStream trace_stream;
     std::string trace_stream_str;
@@ -75,8 +82,8 @@ class ParseAndExecuteTestFile : public FileTestBase {
 
 }  // namespace
 
-extern auto RegisterFileTests(const std::vector<std::filesystem::path>& paths)
-    -> void {
+extern auto RegisterFileTests(
+    const llvm::SmallVector<std::filesystem::path>& paths) -> void {
   ParseAndExecuteTestFile::RegisterTests(
       "ParseAndExecuteTestFile", paths, [=](const std::filesystem::path& path) {
         return new ParseAndExecuteTestFile(path, /*trace=*/false);

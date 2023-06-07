@@ -20,17 +20,21 @@ class LoweringFileTest : public FileTestBase {
   explicit LoweringFileTest(const std::filesystem::path& path)
       : FileTestBase(path) {}
 
-  auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
+  auto RunWithFiles(const llvm::SmallVector<std::string>& test_files,
+                    llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
       -> bool override {
+    llvm::SmallVector<llvm::StringRef> args({"dump", "llvm-ir"});
+    for (const auto& file : test_files) {
+      args.push_back(file);
+    }
     Driver driver(stdout, stderr);
-    return driver.RunFullCommand(
-        {"dump", "llvm-ir", path().filename().string()});
+    return driver.RunFullCommand(args);
   }
 };
 
 }  // namespace
 
-auto RegisterFileTests(const std::vector<std::filesystem::path>& paths)
+auto RegisterFileTests(const llvm::SmallVector<std::filesystem::path>& paths)
     -> void {
   LoweringFileTest::RegisterTests("LoweringFileTest", paths,
                                   [=](const std::filesystem::path& path) {
