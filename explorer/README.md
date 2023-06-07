@@ -142,6 +142,26 @@ When tracing is turned on (using the `--trace_file=...` option), `explorer`
 prints the state of the program and each step that is performed during
 execution.
 
+To customize the trace output and include specific information, you can use the
+following compiler options along with `--trace_file=...` option:
+
+-   `-trace_source_program`: Include trace output for the source program phase.
+-   `-trace_name_resolution`: Include trace output for the name resolution
+    phase.
+-   `-trace_control_flow_resolution`: Include trace output for the control flow
+    resolution phase.
+-   `-trace_type_checking`: Include trace output for the type checking phase.
+-   `-trace_unformed_variables_resolution`: Include trace output for the
+    unformed variables resolution phase.
+-   `-trace_declarations`: Include trace output for printing declarations.
+-   `-trace_execution`: Include trace output for program execution.
+-   `-trace_timing`: Include timing logs indicating the time taken by each
+    phase.
+-   `-trace_all`: Include trace output for all phases.
+
+By default, only execution trace will be added to the trace output. You can use
+combination of these options to include trace of multiple program phases.
+
 ### State of the Program
 
 The state of the program is printed in the following format, which consists of
