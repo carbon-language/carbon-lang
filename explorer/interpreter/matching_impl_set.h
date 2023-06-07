@@ -36,6 +36,7 @@ class MatchingImplSet {
  private:
   class LeafCollector;
   enum class Label : int;
+  using Signature = llvm::DenseMap<Label, int>;
 
  public:
   // An RAII type that tracks an impl match that we're currently performing.
@@ -69,7 +70,7 @@ class MatchingImplSet {
     // The interface that is being matched against the impl.
     Nonnull<const Value*> interface_;
     // The number of times each label appears in the type or interface.
-    llvm::DenseMap<Label, int> signature_;
+    Signature signature_;
   };
 
  private:
