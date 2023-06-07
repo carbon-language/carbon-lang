@@ -506,40 +506,6 @@ static auto FindField(llvm::ArrayRef<NamedValue> fields,
   return *it;
 }
 
-auto TypeChecker::FieldTypesImplicitlyConvertible(
-    llvm::ArrayRef<NamedValue> source_fields,
-    llvm::ArrayRef<NamedValue> destination_fields,
-    const ImplScope& impl_scope) const -> ErrorOr<bool> {
-  // TODO: If default fields are implemented, the
-  // code must be adapted to skip them.
-  // Ensure every field name exists in the destination.
-  for (const auto& dest_field : destination_fields) {
-    if (!FindField(source_fields, dest_field.name)) {
-      return false;
-    }
-  }
-  for (const auto& source_field : source_fields) {
-    std::optional<NamedValue> destination_field =
-        FindField(destination_fields, source_field.name);
-    if (!destination_field.has_value()) {
-      return false;
-    }
-    CARBON_ASSIGN_OR_RETURN(
-        bool convertible,
-        IsImplicitlyConvertible(source_field.value,
-                                destination_field.value().value, impl_scope,
-                                // TODO: We don't have a way to perform
-                                // user-defined conversions of a struct field
-                                // yet, because we can't write a suitable impl
-                                // for ImplicitAs.
-                                /*allow_user_defined_conversions=*/false));
-    if (!convertible) {
-      return false;
-    }
-  }
-  return true;
-}
-
 auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
     -> ErrorOr<std::vector<NamedValue>> {
   std::vector<NamedValue> field_types;
@@ -632,15 +598,34 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
     case Value::Kind::StructType:
       switch (destination->kind()) {
         case Value::Kind::StructType: {
-          CARBON_ASSIGN_OR_RETURN(
-              bool fields_convertible,
-              FieldTypesImplicitlyConvertible(
-                  cast<StructType>(*source).fields(),
-                  cast<StructType>(*destination).fields(), impl_scope));
-          if (fields_convertible) {
-            return true;
+          llvm::ArrayRef<NamedValue> source_fields =
+              cast<StructType>(*source).fields();
+          llvm::ArrayRef<NamedValue> destination_fields =
+              cast<StructType>(*destination).fields();
+          // Ensure every source field exists in the destination type.
+          for (const auto& source_field : source_fields) {
+            if (!FindField(destination_fields, source_field.name)) {
+              return false;
+            }
           }
-          break;
+          // Ensure every destination field is initialized.
+          for (const auto& destination_field : destination_fields) {
+            std::optional<NamedValue> source_field =
+                FindField(source_fields, destination_field.name);
+            if (!source_field.has_value()) {
+              return false;
+            }
+            CARBON_ASSIGN_OR_RETURN(
+                bool convertible,
+                IsImplicitlyConvertible(
+                    source_field->value, destination_field.value,
+                    impl_scope,
+                    /*allow_user_defined_conversions=*/true));
+            if (!convertible) {
+              return false;
+            }
+          }
+          return true;
         }
         case Value::Kind::NominalClassType: {
           CARBON_ASSIGN_OR_RETURN(
@@ -791,6 +776,8 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
                                          Nonnull<const Value*> destination,
                                          const ImplScope& impl_scope)
     -> ErrorOr<Nonnull<Expression*>> {
+  Nonnull<const Value*> source_type = &source->static_type();
+
   // Build a simple conversion that the interpreter can perform directly.
   auto simple_conversion = [&] {
     auto* result = arena_->New<BuiltinConvertExpression>(source);
@@ -798,22 +785,58 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
     result->set_expression_category(ExpressionCategory::Value);
     return result;
   };
+
+  // Report that the conversion was not possible. This error should only be
+  // visible if __builtin_implicit_as_convert is called directly.
+  auto conversion_failed = [&] {
+    return ProgramError(source->source_loc())
+           << "no builtin conversion from " << *source_type << " to "
+           << *destination << " is known";
+  };
+
+  // Note that the conversion expression that we build may evaluate `source`
+  // more than once. This is OK because the __builtin_implicit_as_convert
+  // intrinsic is only intended to be called from within the prelude's impl of
+  // ImplicitAs, where `source` has no side effects.
+
   // TODO: Remove this once we no longer need it.
   const bool allow_user_defined_conversions = false;
-  Nonnull<const Value*> source_type = &source->static_type();
   switch (source_type->kind()) {
     case Value::Kind::StructType:
       switch (destination->kind()) {
         case Value::Kind::StructType: {
-          CARBON_ASSIGN_OR_RETURN(
-              bool fields_convertible,
-              FieldTypesImplicitlyConvertible(
-                  cast<StructType>(*source_type).fields(),
-                  cast<StructType>(*destination).fields(), impl_scope));
-          if (fields_convertible) {
-            return simple_conversion();
+          llvm::ArrayRef<NamedValue> source_fields =
+              cast<StructType>(*source_type).fields();
+          llvm::ArrayRef<NamedValue> destination_fields =
+              cast<StructType>(*destination).fields();
+          // Ensure every source field exists in the destination type.
+          for (const auto& source_field : source_fields) {
+            if (!FindField(destination_fields, source_field.name)) {
+              return conversion_failed();
+            }
           }
-          break;
+          // Initialize every destination field.
+          std::vector<FieldInitializer> result_fields;
+          for (const auto& destination_field : destination_fields) {
+            std::optional<NamedValue> source_field =
+                FindField(source_fields, destination_field.name);
+            if (!source_field.has_value()) {
+              return conversion_failed();
+            }
+            auto* elem = arena_->New<SimpleMemberAccessExpression>(
+                source->source_loc(), source, source_field->name);
+            CARBON_RETURN_IF_ERROR(TypeCheckExp(elem, impl_scope));
+            CARBON_ASSIGN_OR_RETURN(
+                Nonnull<Expression*> converted,
+                ImplicitlyConvert("implicit conversion", impl_scope, elem,
+                                  destination_field.value));
+            result_fields.push_back(
+                FieldInitializer(destination_field.name, converted));
+          }
+          auto* result = arena_->New<StructLiteral>(source->source_loc(),
+                                                    std::move(result_fields));
+          CARBON_RETURN_IF_ERROR(TypeCheckExp(result, impl_scope));
+          return result;
         }
         case Value::Kind::NominalClassType: {
           CARBON_ASSIGN_OR_RETURN(
@@ -850,9 +873,6 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
           }
           std::vector<Nonnull<Expression*>> converted_elements;
           for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
-            // Note, it's OK to evaluate `source` more than once here, because
-            // this intrinsic is only intended to be called from within the
-            // prelude's impl of ImplicitAs, where `source` has no side effects.
             auto* elem = arena_->New<IndexExpression>(
                 source->source_loc(), source,
                 arena_->New<IntLiteral>(source->source_loc(), i));
@@ -932,11 +952,7 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
       break;
   }
 
-  // This should only be visible if people directly call
-  // __builtin_implicit_as_convert.
-  return ProgramError(source->source_loc())
-         << "no builtin conversion from " << *source_type << " to "
-         << *destination << " is known";
+  return conversion_failed();
 }
 
 auto TypeChecker::ImplicitlyConvert(std::string_view context,

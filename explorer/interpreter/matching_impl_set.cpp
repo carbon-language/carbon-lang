@@ -125,7 +125,8 @@ MatchingImplSet::Match::~Match() {
 auto MatchingImplSet::Match::DiagnosePotentialCycle(SourceLocation source_loc)
     -> ErrorOr<Success> {
   for (auto* match : parent_->matches_) {
-    if (match != this && match->impl_ == impl_) {
+    if (match != this && match->impl_ == impl_ &&
+        match->signature_.size() <= signature_.size()) {
       // Whether all labels appear a greater or equal number of times in this
       // match than in `match`.
       bool all_greater_or_equal = true;
@@ -133,6 +134,7 @@ auto MatchingImplSet::Match::DiagnosePotentialCycle(SourceLocation source_loc)
       // `match`.
       bool any_greater = false;
 
+      // Check if the inner match has any labels with a higher count.
       for (auto [key, value] : signature_) {
         int other_value = match->signature_.lookup(key);
         if (value < other_value) {
@@ -141,6 +143,18 @@ auto MatchingImplSet::Match::DiagnosePotentialCycle(SourceLocation source_loc)
         }
         if (value > other_value) {
           any_greater = true;
+        }
+      }
+
+      // Check if the outer match has any labels that the inner match doesn't
+      // have at all.
+      if (all_greater_or_equal) {
+        for (auto [key, other_value] : match->signature_) {
+          CARBON_CHECK(other_value > 0) << "signature has count of 0 for label";
+          if (!signature_.count(key)) {
+            all_greater_or_equal = false;
+            break;
+          }
         }
       }
 
