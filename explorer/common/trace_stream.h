@@ -16,21 +16,20 @@
 
 namespace Carbon {
 
-// Enumerates the phases of the program. These are used to control which phases
-// are traced.
-// Also used for allowed_phases_ bitset.
+// Enumerates the phases of the program used for tracing and controlling which
+// program phases are included for tracing.
 enum class ProgramPhase {
-  Unknown,
-  SourceProgram,
-  NameResolution,
-  ControlFlowResolution,
-  TypeChecking,
-  UnformedVariableResolution,
-  Declarations,
-  Execution,
-  Timing,
-  All,
-  Last = All
+  Unknown,                     // Represents an unknown program phase.
+  SourceProgram,               // Phase for the source program.
+  NameResolution,              // Phase for name resolution.
+  ControlFlowResolution,       // Phase for control flow resolution.
+  TypeChecking,                // Phase for type checking.
+  UnformedVariableResolution,  // Phase for unformed variables resolution.
+  Declarations,                // Phase for printing declarations.
+  Execution,                   // Phase for program execution.
+  Timing,                      // Phase for timing logs.
+  All,                         // Represents all program phases.
+  Last = All                   // Last program phase indicator.
 };
 
 // Encapsulates the trace stream so that we can cleanly disable tracing while
@@ -42,7 +41,6 @@ enum class ProgramPhase {
 // is fully treated as a separate file, we should be able to take a different
 // approach where the caller explicitly toggles tracing when switching file
 // contexts.
-
 class TraceStream {
  public:
   // Returns true if tracing is currently enabled.
