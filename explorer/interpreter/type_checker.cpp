@@ -6026,11 +6026,11 @@ auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
 
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "Omitting prelude type checking traces...\n";
-    trace_stream_->set_current_code_context(CodeContext::Prelude);
+    trace_stream_->set_in_prelude(true);
   }
   for (int i = 0; i < static_cast<int>(ast.declarations.size()); ++i) {
     if (i == ast.num_prelude_declarations) {
-      trace_stream_->set_current_code_context(CodeContext::Main);
+      trace_stream_->set_in_prelude(false);
       if (trace_stream_->is_enabled()) {
         *trace_stream_ << "Finished prelude, resuming traces...\n";
       }

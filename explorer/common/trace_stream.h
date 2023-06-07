@@ -33,8 +33,6 @@ enum class ProgramPhase {
   Last = All
 };
 
-enum class CodeContext { Main, Prelude, Import };
-
 // Encapsulates the trace stream so that we can cleanly disable tracing while
 // the prelude is being processed. The prelude is expected to take a
 // disproprotionate amount of time to log, so we try to avoid it.
@@ -51,10 +49,12 @@ class TraceStream {
   // TODO: use current source location for file context based filtering instead
   // of just checking if current code context is Prelude.
   auto is_enabled() const -> bool {
-    return stream_.has_value() &&
-           current_code_context_ != CodeContext::Prelude &&
+    return stream_.has_value() && !in_prelude_ &&
            allowed_phases_[static_cast<int>(current_phase_)];
   }
+
+  // Sets whether the prelude is being skipped.
+  auto set_in_prelude(bool in_prelude) -> void { in_prelude_ = in_prelude; }
 
   // Sets the trace stream. This should only be called from the main.
   auto set_stream(Nonnull<llvm::raw_ostream*> stream) -> void {
@@ -63,10 +63,6 @@ class TraceStream {
 
   auto set_current_phase(ProgramPhase current_phase) -> void {
     current_phase_ = current_phase;
-  }
-
-  auto set_current_code_context(CodeContext current_code_context) -> void {
-    current_code_context_ = current_code_context;
   }
 
   auto set_allowed_phases(std::vector<ProgramPhase> allowed_phases_list) {
@@ -91,10 +87,6 @@ class TraceStream {
 
   auto current_phase() const -> ProgramPhase { return current_phase_; }
 
-  auto current_code_context() const -> CodeContext {
-    return current_code_context_;
-  }
-
   // Outputs a trace message. Requires is_enabled.
   template <typename T>
   auto operator<<(T&& message) const -> llvm::raw_ostream& {
@@ -104,10 +96,10 @@ class TraceStream {
   }
 
  private:
+  bool in_prelude_ = false;
   std::optional<Nonnull<llvm::raw_ostream*>> stream_;
   ProgramPhase current_phase_ = ProgramPhase::Unknown;
   std::bitset<static_cast<int>(ProgramPhase::Last) + 1> allowed_phases_;
-  CodeContext current_code_context_ = CodeContext::Main;
 };
 
 }  // namespace Carbon
