@@ -10,15 +10,17 @@ package ExplorerTest api;
 
 interface I { fn F[self: Self](); }
 
-fn I_F[T:! I](x: T) { x.F(); }
+fn CheckTimplsI[T:! I](x: T) { x.F(); }
 
 interface J { fn F[self: Self](); }
 
 impl forall [template T:! I] T as J {
-  fn F[self: Self]() { I_F(self); }
+  fn F[self: Self]() { CheckTimplsI(self); }
 }
 
-fn J_F[T:! I](x: T) { x.(J.F)(); }
+// Ensure that the instantiated `impl T as J` is type-checked in an impl scope
+// where `T impls I` is available, so that its call to `CheckTimplsI` is valid.
+fn UseTemplatedImplFromGeneric[T:! I](x: T) { x.(J.F)(); }
 
 impl i32 as I {
   fn F[self: i32]() {
@@ -27,6 +29,6 @@ impl i32 as I {
 }
 
 fn Main() -> i32 {
-  J_F(1);
+  UseTemplatedImplFromGeneric(1);
   return 0;
 }
