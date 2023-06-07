@@ -706,9 +706,8 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
           for (Nonnull<const Value*> source_element : source_tuple.elements()) {
             CARBON_ASSIGN_OR_RETURN(
                 bool convertible,
-                IsImplicitlyConvertible(
-                    source_element, destination, impl_scope,
-                    /*allow_user_defined_conversions=*/false));
+                IsImplicitlyConvertible(source_element, destination, impl_scope,
+                                        allow_user_defined_conversions));
             if (!convertible) {
               all_types = false;
               break;
@@ -797,8 +796,6 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
   // intrinsic is only intended to be called from within the prelude's impl of
   // ImplicitAs, where `source` has no side effects.
 
-  // TODO: Remove this once we no longer need it.
-  const bool allow_user_defined_conversions = false;
   switch (source_type->kind()) {
     case Value::Kind::StructType:
       switch (destination->kind()) {
@@ -895,7 +892,7 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
                 bool convertible,
                 IsImplicitlyConvertible(
                     source_element, &destination_array.element_type(),
-                    impl_scope, allow_user_defined_conversions));
+                    impl_scope, /*allow_user_defined_conversions*/false));
             if (!convertible) {
               all_ok = false;
               break;
