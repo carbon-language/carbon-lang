@@ -615,10 +615,9 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
             }
             CARBON_ASSIGN_OR_RETURN(
                 bool convertible,
-                IsImplicitlyConvertible(
-                    source_field->value, destination_field.value,
-                    impl_scope,
-                    allow_user_defined_conversions));
+                IsImplicitlyConvertible(source_field->value,
+                                        destination_field.value, impl_scope,
+                                        allow_user_defined_conversions));
             if (!convertible) {
               return false;
             }
@@ -781,7 +780,7 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
   }
 
   // Build a simple conversion that the interpreter can perform directly.
-  auto make_builtin_conversion = [&] (Nonnull<Expression*> from) {
+  auto make_builtin_conversion = [&](Nonnull<Expression*> from) {
     auto* result = arena_->New<BuiltinConvertExpression>(from);
     result->set_static_type(destination);
     result->set_expression_category(ExpressionCategory::Value);
