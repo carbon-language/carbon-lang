@@ -47,6 +47,7 @@ class ParseAndExecuteTestFile : public FileTestBase {
     llvm::raw_string_ostream trace_stream_ostream(trace_stream_str);
     if (trace_) {
       trace_stream.set_stream(&trace_stream_ostream);
+      trace_stream.set_allowed_phases({ProgramPhase::All});
     }
 
     // Set the location of the prelude.
