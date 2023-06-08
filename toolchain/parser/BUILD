@@ -121,9 +121,7 @@ file_test(
     srcs = ["parse_tree_file_test.cpp"],
     tests = glob(["testdata/**/*.carbon"]),
     deps = [
-        "//testing/file_test:file_test_base",
-        "//toolchain/driver",
-        "@com_google_googletest//:gtest",
+        "//toolchain/driver:driver_file_test_base",
         "@llvm-project//llvm:Support",
     ],
 )

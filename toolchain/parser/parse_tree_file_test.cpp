@@ -2,33 +2,27 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include <filesystem>
+#include <string>
 
-#include <vector>
-
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/raw_ostream.h"
-#include "testing/file_test/file_test_base.h"
-#include "toolchain/driver/driver.h"
+#include "toolchain/driver/driver_file_test_base.h"
 
 namespace Carbon::Testing {
 namespace {
 
-class ParserFileTest : public FileTestBase {
+class ParseTreeFileTest : public DriverFileTestBase {
  public:
-  explicit ParserFileTest(const std::filesystem::path& path)
-      : FileTestBase(path) {}
+  using DriverFileTestBase::DriverFileTestBase;
 
-  auto RunWithFiles(const llvm::SmallVector<std::string>& test_files,
-                    llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
-      -> bool override {
+  auto MakeArgs(const llvm::SmallVector<std::string>& test_files)
+      -> llvm::SmallVector<llvm::StringRef> override {
     llvm::SmallVector<llvm::StringRef> args({"dump", "parse-tree"});
     for (const auto& file : test_files) {
       args.push_back(file);
     }
-    Driver driver(stdout, stderr);
-    return driver.RunFullCommand(args);
+    return args;
   }
 };
 
@@ -36,10 +30,8 @@ class ParserFileTest : public FileTestBase {
 
 auto RegisterFileTests(const llvm::SmallVector<std::filesystem::path>& paths)
     -> void {
-  ParserFileTest::RegisterTests("ParserFileTest", paths,
-                                [](const std::filesystem::path& path) {
-                                  return new ParserFileTest(path);
-                                });
+  ParseTreeFileTest::RegisterTests<ParseTreeFileTest>("ParseTreeFileTest",
+                                                      paths);
 }
 
 }  // namespace Carbon::Testing
