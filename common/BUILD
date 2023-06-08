@@ -122,6 +122,7 @@ cc_test(
         ":metaprogramming",
         "//common:gtest_main",
         "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 
