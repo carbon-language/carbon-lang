@@ -78,7 +78,7 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
               ProgramPhase::Timing, "trace_timing",
               "Include timing logs for each phase, indicating the time taken."),
           clEnumValN(ProgramPhase::All, "trace_all",
-                     "Include trace output for All phases.")));
+                     "Include trace output for all phases.")));
 
   // Use the executable path as a base for the relative prelude path.
   std::string exe =
