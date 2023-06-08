@@ -242,6 +242,29 @@ CARBON_PARSER_STATE(ExpressionLoopForBinary)
 //   1. ExpressionLoop
 CARBON_PARSER_STATE(ExpressionLoopForPrefix)
 
+// Completes an IfExpression.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE(ExpressionIfFinish)
+
+// Handles the `then` token in an `if` expression.
+//
+// If `Then`:
+//   1. Expression
+//   2. ExpressionElse
+// Else:
+//  (state done)
+CARBON_PARSER_STATE(ExpressionThen)
+
+// Handles the `else` token in an `if` expression.
+//
+// If `Else`:
+//   1. Expression
+// Else:
+//  (state done)
+CARBON_PARSER_STATE(ExpressionElse)
+
 // Handles the `;` for an expression statement, which is different from most
 // keyword statements.
 //

@@ -398,6 +398,21 @@ auto SemanticsHandlePrefixOperator(SemanticsContext& context,
   return context.TODO(parse_node, "HandlePrefixOperator");
 }
 
+auto SemanticsHandleIfExpression(SemanticsContext& context,
+                                 ParseTree::Node parse_node) -> bool {
+  return context.TODO(parse_node, "HandleIfExpression");
+}
+
+auto SemanticsHandleIfExpressionThen(SemanticsContext& context,
+                                     ParseTree::Node parse_node) -> bool {
+  return context.TODO(parse_node, "HandleIfExpressionThen");
+}
+
+auto SemanticsHandleIfExpressionElse(SemanticsContext& context,
+                                     ParseTree::Node parse_node) -> bool {
+  return context.TODO(parse_node, "HandleIfExpressionElse");
+}
+
 auto SemanticsHandleReturnStatement(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
