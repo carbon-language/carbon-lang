@@ -85,14 +85,14 @@ class ParseAndExecuteTestFile : public FileTestBase {
 extern auto RegisterFileTests(
     const llvm::SmallVector<std::filesystem::path>& paths) -> void {
   ParseAndExecuteTestFile::RegisterTests(
-      "ParseAndExecuteTestFile", paths, [=](const std::filesystem::path& path) {
+      "ParseAndExecuteTestFile", paths, [](const std::filesystem::path& path) {
         return new ParseAndExecuteTestFile(path, /*trace=*/false);
       });
-  ParseAndExecuteTestFile::RegisterTests(
-      "ParseAndExecuteTestFile.trace", paths,
-      [=](const std::filesystem::path& path) {
-        return new ParseAndExecuteTestFile(path, /*trace=*/true);
-      });
+  ParseAndExecuteTestFile::RegisterTests("ParseAndExecuteTestFile.trace", paths,
+                                         [](const std::filesystem::path& path) {
+                                           return new ParseAndExecuteTestFile(
+                                               path, /*trace=*/true);
+                                         });
 }
 
 }  // namespace Carbon::Testing

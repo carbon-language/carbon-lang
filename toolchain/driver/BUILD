@@ -53,6 +53,17 @@ cc_fuzz_test(
     ],
 )
 
+cc_library(
+    name = "driver_file_test_base",
+    testonly = 1,
+    hdrs = ["driver_file_test_base.h"],
+    deps = [
+        ":driver",
+        "//testing/file_test:file_test_base",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_binary(
     name = "carbon",
     srcs = ["driver_main.cpp"],

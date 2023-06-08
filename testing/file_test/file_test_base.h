@@ -38,10 +38,20 @@ class FileTestBase : public testing::Test {
   ~FileTestBase() override;
 
   // Used by children to register tests with gtest.
-  static void RegisterTests(
+  static auto RegisterTests(
       const char* fixture_label,
       const llvm::SmallVector<std::filesystem::path>& paths,
-      std::function<FileTestBase*(const std::filesystem::path&)> factory);
+      std::function<FileTestBase*(const std::filesystem::path&)> factory)
+      -> void;
+
+  template <typename FileTestChildT>
+  static auto RegisterTests(
+      const char* fixture_label,
+      const llvm::SmallVector<std::filesystem::path>& paths) -> void {
+    RegisterTests(fixture_label, paths, [](const std::filesystem::path& path) {
+      return new FileTestChildT(path);
+    });
+  }
 
   // Implemented by children to run the test. Called by the TestBody
   // implementation, which will validate stdout and stderr. The return value

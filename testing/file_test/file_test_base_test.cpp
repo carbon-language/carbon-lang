@@ -72,10 +72,7 @@ class FileTestBaseTest : public FileTestBase {
 
 auto RegisterFileTests(const llvm::SmallVector<std::filesystem::path>& paths)
     -> void {
-  FileTestBaseTest::RegisterTests("FileTestBaseTest", paths,
-                                  [](const std::filesystem::path& path) {
-                                    return new FileTestBaseTest(path);
-                                  });
+  FileTestBaseTest::RegisterTests<FileTestBaseTest>("FileTestBaseTest", paths);
 }
 
 }  // namespace Carbon::Testing
