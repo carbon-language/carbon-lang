@@ -115,6 +115,16 @@ cc_library(
     hdrs = ["metaprogramming.h"],
 )
 
+cc_test(
+    name = "metaprogramming_test",
+    srcs = ["metaprogramming_test.cpp"],
+    deps = [
+        ":metaprogramming",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 cc_library(
     name = "ostream",
     hdrs = ["ostream.h"],
