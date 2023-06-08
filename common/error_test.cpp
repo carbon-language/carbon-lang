@@ -102,8 +102,7 @@ TEST(ErrorTest, ErrorBuilderOperatorImplicitCast) {
   ASSERT_FALSE(result1.ok());
   EXPECT_EQ(result1.error().message(), "msg");
 
-  auto result2 =
-      static_cast<Error>(ErrorBuilder("TestFunc") << "msg");
+  auto result2 = static_cast<Error>(ErrorBuilder("TestFunc") << "msg");
   std::string result2_output;
   llvm::raw_string_ostream oss(result2_output);
   result2.Print(oss);
