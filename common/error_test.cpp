@@ -97,5 +97,18 @@ TEST(ErrorTest, AssignOrReturnHasErrorInExpected) {
   EXPECT_EQ(result.error().message(), "error");
 }
 
+TEST(ErrorTest, ErrorBuilderOperatorImplicitCast) {
+  ErrorOr<int> result1 = ErrorBuilder() << "msg";
+  ASSERT_FALSE(result1.ok());
+  EXPECT_EQ(result1.error().message(), "msg");
+
+  auto result2 =
+      static_cast<Error>(ErrorBuilder("TestFunc") << "msg");
+  std::string result2_output;
+  llvm::raw_string_ostream oss(result2_output);
+  result2.Print(oss);
+  EXPECT_EQ(oss.str(), "TestFunc: msg");
+}
+
 }  // namespace
 }  // namespace Carbon::Testing
