@@ -36,26 +36,25 @@
 // NO-DECLS-NOT:STDOUT: interface TestInterface {
 //        DECLS:STDOUT: interface TestInterface {
 // NO-EXEC-NOT:STDOUT: ********** starting execution **********
-// NO-EXEC-NOT:STDOUT: ********** initializing globals **********
-// NO-EXEC-NOT:STDOUT: ********** calling main function **********
-// NO-EXEC-NOT:STDOUT: --- step exp Main() .0. (<Main()>:0) --->
-// NO-EXEC-NOT:STDOUT: interpreter result: 0
 //        EXEC:STDOUT: ********** starting execution **********
+// NO-EXEC-NOT:STDOUT: ********** initializing globals **********
 //        EXEC:STDOUT: ********** initializing globals **********
+// NO-EXEC-NOT:STDOUT: ********** calling main function **********
 //        EXEC:STDOUT: ********** calling main function **********
+// NO-EXEC-NOT:STDOUT: --- step exp Main() .0. (<Main()>:0) --->
 //        EXEC:STDOUT: --- step exp Main() .0. (<Main()>:0) --->
+// NO-EXEC-NOT:STDOUT: interpreter result: 0
 //        EXEC:STDOUT: interpreter result: 0
 // NO-TIMING-NOT:STDOUT: ********** printing timing **********
 //        TIMING:STDOUT: ********** printing timing **********
 // NO-TIMING-NOT:STDOUT: Time elapsed in ExecProgram: {{[0-9]+}}ms
-// NO-TIMING-NOT:STDOUT: Time elapsed in AnalyzeProgram: {{[0-9]+}}ms
-// NO-TIMING-NOT:STDOUT: Time elapsed in AddPrelude: {{[0-9]+}}ms
-// NO-TIMING-NOT:STDOUT: Time elapsed in Parse: {{[0-9]+}}ms
 //        TIMING:STDOUT: Time elapsed in ExecProgram: {{[0-9]+}}ms
+// NO-TIMING-NOT:STDOUT: Time elapsed in AnalyzeProgram: {{[0-9]+}}ms
 //        TIMING:STDOUT: Time elapsed in AnalyzeProgram: {{[0-9]+}}ms
+// NO-TIMING-NOT:STDOUT: Time elapsed in AddPrelude: {{[0-9]+}}ms
 //        TIMING:STDOUT: Time elapsed in AddPrelude: {{[0-9]+}}ms
+// NO-TIMING-NOT:STDOUT: Time elapsed in Parse: {{[0-9]+}}ms
 //        TIMING:STDOUT: Time elapsed in Parse: {{[0-9]+}}ms
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
