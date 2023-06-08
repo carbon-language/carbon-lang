@@ -16,12 +16,10 @@ class SemanticsFileTest : public DriverFileTestBase {
  public:
   using DriverFileTestBase::DriverFileTestBase;
 
-  auto MakeArgs(const llvm::SmallVector<std::string>& test_files)
+  auto MakeArgs(const llvm::SmallVector<llvm::StringRef>& test_files)
       -> llvm::SmallVector<llvm::StringRef> override {
     llvm::SmallVector<llvm::StringRef> args({"dump", "semantics-ir"});
-    for (const auto& file : test_files) {
-      args.push_back(file);
-    }
+    args.insert(args.end(), test_files.begin(), test_files.end());
     return args;
   }
 };

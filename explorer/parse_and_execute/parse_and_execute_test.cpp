@@ -31,7 +31,10 @@ TEST(ParseAndExecuteTest, Recursion) {
         ;
     }
   )";
-  auto err = ParseAndExecute("explorer/data/prelude.carbon", source);
+  TraceStream trace_stream;
+  auto err =
+      ParseAndExecute("explorer/data/prelude.carbon", "test.carbon", source,
+                      /*parser_debug=*/false, &trace_stream, &llvm::nulls());
   ASSERT_FALSE(err.ok());
   EXPECT_THAT(err.error().message(),
               Eq("RUNTIME ERROR: overflow:1: stack overflow: too many "
