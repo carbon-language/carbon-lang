@@ -296,7 +296,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                   std::optional<Nonnull<RuntimeScope*>> bindings,
                   BindingMap& generic_args, Nonnull<TraceStream*> trace_stream,
                   Nonnull<Arena*> arena) -> bool {
-  if (trace_stream->is_enabled()) {
+  if (trace_stream->is_enabled(source_loc)) {
     *trace_stream << "match pattern " << *p << "\nwith value " << *v << "\n";
   }
   switch (p->kind()) {
@@ -434,7 +434,7 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
 auto Interpreter::StepLocation() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<LocationAction>(act).expression();
-  if (trace_stream_->is_enabled()) {
+  if (trace_stream_->is_enabled(exp.source_loc())) {
     *trace_stream_ << "--- step location " << exp << " ." << act.pos() << "."
                    << " (" << exp.source_loc() << ") --->\n";
   }
@@ -981,7 +981,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
                                ImplWitnessMap&& witnesses) -> ErrorOr<Success> {
-  if (trace_stream_->is_enabled()) {
+  if (trace_stream_->is_enabled(call.source_loc())) {
     *trace_stream_ << "calling function: " << *fun << "\n";
   }
   switch (fun->kind()) {
@@ -1202,7 +1202,7 @@ auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
-  if (trace_stream_->is_enabled()) {
+  if (trace_stream_->is_enabled(exp.source_loc())) {
     *trace_stream_ << "--- step exp " << exp << " ." << act.pos() << "."
                    << " (" << exp.source_loc() << ") --->\n";
   }
@@ -1966,7 +1966,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
 auto Interpreter::StepStmt() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Statement& stmt = cast<StatementAction>(act).statement();
-  if (trace_stream_->is_enabled()) {
+  if (trace_stream_->is_enabled(stmt.source_loc())) {
     *trace_stream_ << "--- step stmt ";
     stmt.PrintDepth(1, trace_stream_->stream());
     *trace_stream_ << " ." << act.pos() << ". "
@@ -2224,7 +2224,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     case StatementKind::ReturnVar: {
       const auto& ret_var = cast<ReturnVar>(stmt);
       const ValueNodeView& value_node = ret_var.value_node();
-      if (trace_stream_->is_enabled()) {
+      if (trace_stream_->is_enabled(stmt.source_loc())) {
         *trace_stream_ << "--- step returned var "
                        << cast<BindingPattern>(value_node.base()).name() << " ."
                        << act.pos() << "."
@@ -2265,7 +2265,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
 auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Declaration& decl = cast<DeclarationAction>(act).declaration();
-  if (trace_stream_->is_enabled()) {
+  if (trace_stream_->is_enabled(decl.source_loc())) {
     *trace_stream_ << "--- step decl ";
     decl.PrintID(trace_stream_->stream());
     *trace_stream_ << " ." << act.pos() << ". "
