@@ -209,6 +209,7 @@ cc_test(
         ":tokenized_buffer",
         ":tokenized_buffer_test_helpers",
         "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",

@@ -55,6 +55,7 @@ cc_test(
         ":enum_base",
         ":enum_base_test_def",
         "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -75,6 +76,7 @@ cc_test(
     deps = [
         ":error",
         "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -156,6 +158,7 @@ cc_test(
     deps = [
         ":vlog",
         "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "@com_google_googletest//:gtest",
     ],
 )

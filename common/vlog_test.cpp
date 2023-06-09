@@ -7,6 +7,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "testing/util/test_raw_ostream.h"
+
 namespace Carbon::Testing {
 namespace {
 
@@ -16,7 +18,7 @@ using ::testing::StrEq;
 // Helper class with a vlog_stream_ member for CARBON_VLOG.
 class VLogger {
  public:
-  explicit VLogger(bool enable) : buffer_(buffer_str_) {
+  explicit VLogger(bool enable) {
     if (enable) {
       vlog_stream_ = &buffer_;
     }
@@ -24,11 +26,10 @@ class VLogger {
 
   void VLog() { CARBON_VLOG() << "Test\n"; }
 
-  auto buffer() -> llvm::StringRef { return buffer_str_; }
+  auto TakeStr() -> std::string { return buffer_.TakeStr(); }
 
  private:
-  std::string buffer_str_;
-  llvm::raw_string_ostream buffer_;
+  TestRawOstream buffer_;
 
   llvm::raw_ostream* vlog_stream_ = nullptr;
 };
@@ -36,13 +37,13 @@ class VLogger {
 TEST(VLogTest, Enabled) {
   VLogger vlog(/*enable=*/true);
   vlog.VLog();
-  EXPECT_THAT(vlog.buffer(), StrEq("Test\n"));
+  EXPECT_THAT(vlog.TakeStr(), StrEq("Test\n"));
 }
 
 TEST(VLogTest, Disabled) {
   VLogger vlog(/*enable=*/false);
   vlog.VLog();
-  EXPECT_THAT(vlog.buffer(), IsEmpty());
+  EXPECT_THAT(vlog.TakeStr(), IsEmpty());
 }
 
 }  // namespace

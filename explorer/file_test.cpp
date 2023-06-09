@@ -4,6 +4,7 @@
 
 #include "explorer/parse_and_execute/parse_and_execute.h"
 #include "testing/file_test/file_test_base.h"
+#include "testing/util/test_raw_ostream.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -43,8 +44,7 @@ class ParseAndExecuteTestFile : public FileTestBase {
 
     // Capture trace streaming, but only when in debug mode.
     TraceStream trace_stream;
-    std::string trace_stream_str;
-    llvm::raw_string_ostream trace_stream_ostream(trace_stream_str);
+    TestRawOstream trace_stream_ostream;
     if (trace_) {
       trace_stream.set_stream(&trace_stream_ostream);
       trace_stream.set_allowed_phases({ProgramPhase::All});
@@ -69,7 +69,7 @@ class ParseAndExecuteTestFile : public FileTestBase {
     }
 
     if (trace_) {
-      EXPECT_FALSE(trace_stream_str.empty())
+      EXPECT_FALSE(trace_stream_ostream.TakeStr().empty())
           << "Tracing should always do something";
     }
 
