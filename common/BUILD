@@ -13,6 +13,29 @@ cc_library(
 )
 
 cc_library(
+    name = "argparse",
+    srcs = ["argparse.cpp"],
+    hdrs = ["argparse.h"],
+    deps = [
+        ":check",
+        ":ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "argparse_test",
+    srcs = ["argparse_test.cpp"],
+    deps = [
+        ":argparse",
+        "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "check",
     srcs = [
         "check_internal.cpp",

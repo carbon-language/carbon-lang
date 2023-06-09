@@ -7,6 +7,7 @@
 
 #include <cstdint>
 
+#include "common/argparse.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Debug.h"
@@ -37,38 +38,20 @@ class Driver {
   // Returns true if the operation succeeds. If the operation fails, returns
   // false and any information about the failure is printed to the registered
   // error stream (stderr by default).
-  auto RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
-
-  // Subcommand that prints available help text to the error stream.
-  //
-  // Optionally one positional parameter may be provided to select a particular
-  // subcommand or detailed section of help to print.
-  //
-  // Returns true if appropriate help text was found and printed. If an invalid
-  // positional parameter (or flag) is provided, returns false.
-  auto RunHelpSubcommand(DiagnosticConsumer& consumer,
-                         llvm::ArrayRef<llvm::StringRef> args) -> bool;
-
-  // Subcommand that dumps internal compilation information for the provided
-  // source file.
-  //
-  // Requires exactly one positional parameter to designate the source file to
-  // read. May be `-` to read from stdin.
-  //
-  // Returns true if the operation succeeds. If the operation fails, this
-  // returns false and any information about the failure is printed to the
-  // registered error stream (stderr by default).
-  auto RunDumpSubcommand(DiagnosticConsumer& consumer,
-                         llvm::ArrayRef<llvm::StringRef> args) -> bool;
+  auto RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
  private:
-  auto ReportExtraArgs(llvm::StringRef subcommand_text,
-                       llvm::ArrayRef<llvm::StringRef> args) -> void;
+  struct Options;
+  struct CompileOptions;
+
+  auto ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)
+      -> Args::ParseResult;
+  auto Compile(const CompileOptions& options) -> bool;
 
   llvm::vfs::FileSystem& fs_;
   llvm::raw_pwrite_stream& output_stream_;
   llvm::raw_pwrite_stream& error_stream_;
-  llvm::raw_ostream* vlog_stream_ = nullptr;
+  llvm::raw_pwrite_stream* vlog_stream_ = nullptr;
 };
 
 }  // namespace Carbon

@@ -13,6 +13,7 @@ cc_library(
     hdrs = ["driver.h"],
     textual_hdrs = ["flags.def"],
     deps = [
+        "//common:argparse",
         "//common:vlog",
         "//toolchain/codegen",
         "//toolchain/diagnostics:diagnostic_emitter",
@@ -24,6 +25,7 @@ cc_library(
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TargetParser",
     ],
 )
 

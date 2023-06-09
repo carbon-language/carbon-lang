@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{carbon} dump semantics-ir --include_builtins %s | \
-// RUN:   %{FileCheck-strict}
+// RUN: %{carbon} compile --phase=syntax --dump-semantics-ir \
+// RUN:   --builtin-semantics-ir %s | %{FileCheck-strict}
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
