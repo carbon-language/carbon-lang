@@ -53,6 +53,7 @@ cc_library(
     name = "trace_stream",
     hdrs = ["trace_stream.h"],
     deps = [
+        ":source_location",
         "//common:check",
         "//common:ostream",
         "//explorer/common:nonnull",

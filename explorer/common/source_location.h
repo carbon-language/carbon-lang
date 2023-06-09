@@ -37,6 +37,8 @@ class SourceLocation {
     return filename_ == other.filename_ && line_num_ == other.line_num_;
   }
 
+  auto filename() const -> std::string_view { return filename_; }
+
   void Print(llvm::raw_ostream& out) const {
     out << filename_ << ":" << line_num_;
   }

@@ -13,6 +13,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/common/nonnull.h"
+#include "explorer/common/source_location.h"
 
 namespace Carbon {
 
@@ -32,6 +33,10 @@ enum class ProgramPhase {
   Last = All                   // Last program phase indicator.
 };
 
+// Enumerates the contexts for different types of files, used for tracing and
+// controlling for which file contexts tracing should be enabled
+enum class FileContext { Unknown, Main, Prelude, Import, All, Last = All };
+
 // Encapsulates the trace stream so that we can cleanly disable tracing while
 // the prelude is being processed. The prelude is expected to take a
 // disproprotionate amount of time to log, so we try to avoid it.
@@ -43,12 +48,33 @@ enum class ProgramPhase {
 // contexts.
 class TraceStream {
  public:
+  explicit TraceStream() { set_allowed_file_contexts({FileContext::Unknown}); }
+
   // Returns true if tracing is currently enabled.
   // TODO: use current source location for file context based filtering instead
   // of just checking if current code context is Prelude.
-  auto is_enabled() const -> bool {
+  auto is_enabled(std::optional<SourceLocation> source_location =
+                      std::nullopt) const -> bool {
+    // This function gets the file context by using filename from source
+    // location
+    // TODO: implement a way to differentiate between the main file and imports
+    // based upon source location / filename
+    auto file_context = [=]() -> FileContext {
+      if (source_location) {
+        auto filename =
+            llvm::StringRef(source_location->filename()).rsplit("/").second;
+        if (filename == "prelude.carbon") {
+          return FileContext::Prelude;
+        } else {
+          return FileContext::Main;
+        }
+      } else {
+        return FileContext::Unknown;
+      }
+    };
     return stream_.has_value() && !in_prelude_ &&
-           allowed_phases_[static_cast<int>(current_phase_)];
+           allowed_phases_[static_cast<int>(current_phase_)] &&
+           allowed_file_contexts_[static_cast<int>(file_context())];
   }
 
   // Sets whether the prelude is being skipped.
@@ -77,6 +103,21 @@ class TraceStream {
     }
   }
 
+  auto set_allowed_file_contexts(std::vector<FileContext> contexts_list)
+      -> void {
+    if (contexts_list.empty()) {
+      allowed_phases_.set(static_cast<int>(FileContext::Main));
+    } else {
+      for (auto context : contexts_list) {
+        if (context == FileContext::All) {
+          allowed_file_contexts_.set();
+        } else {
+          allowed_file_contexts_.set(static_cast<int>(context));
+        }
+      }
+    }
+  }
+
   // Returns the internal stream. Requires is_enabled.
   auto stream() const -> llvm::raw_ostream& {
     CARBON_CHECK(is_enabled() && stream_.has_value());
@@ -95,9 +136,10 @@ class TraceStream {
 
  private:
   bool in_prelude_ = false;
-  std::optional<Nonnull<llvm::raw_ostream*>> stream_;
   ProgramPhase current_phase_ = ProgramPhase::Unknown;
+  std::optional<Nonnull<llvm::raw_ostream*>> stream_;
   std::bitset<static_cast<int>(ProgramPhase::Last) + 1> allowed_phases_;
+  std::bitset<static_cast<int>(FileContext::Last) + 1> allowed_file_contexts_;
 };
 
 }  // namespace Carbon
