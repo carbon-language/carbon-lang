@@ -37,6 +37,18 @@ auto LoweringHandleBindName(LoweringContext& /*context*/,
   // Probably need to do something here, but not necessary for now.
 }
 
+auto LoweringHandleBranch(LoweringContext& /*context*/,
+                          SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
+auto LoweringHandleBranchIf(LoweringContext& /*context*/,
+                            SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
 auto LoweringHandleBuiltin(LoweringContext& /*context*/,
                            SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
@@ -80,6 +92,12 @@ auto LoweringHandleIntegerLiteral(LoweringContext& context,
   llvm::Value* v =
       llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getSExtValue());
   context.SetLocal(node_id, v);
+}
+
+auto LoweringHandlePhi(LoweringContext& /*context*/,
+                       SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
 auto LoweringHandleRealLiteral(LoweringContext& context,

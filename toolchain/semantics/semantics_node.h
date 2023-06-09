@@ -278,6 +278,13 @@ class SemanticsNode {
     }
   };
 
+  using Branch = FactoryNoType<SemanticsNodeKind::Branch,
+                               SemanticsNodeBlockId /*target_id*/>;
+
+  using BranchIf = FactoryNoType<SemanticsNodeKind::BranchIf,
+                                 SemanticsNodeBlockId /*target_id*/,
+                                 SemanticsNodeId /*cond_id*/>;
+
   using Call =
       Factory<SemanticsNodeKind::Call, SemanticsNodeBlockId /*refs_id*/,
               SemanticsFunctionId /*function_id*/>;
@@ -307,6 +314,11 @@ class SemanticsNode {
 
   using IntegerLiteral = Factory<SemanticsNodeKind::IntegerLiteral,
                                  SemanticsIntegerLiteralId /*integer_id*/>;
+
+  // The node block for a Phi node is a sequence of alternating block IDs and
+  // value IDs describing the value of the Phi node for each predecessor block
+  // of the current block.
+  using Phi = Factory<SemanticsNodeKind::Phi, SemanticsNodeBlockId /*phi_id*/>;
 
   using RealLiteral = Factory<SemanticsNodeKind::RealLiteral,
                               SemanticsRealLiteralId /*real_id*/>;
