@@ -22,9 +22,15 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   if (size > 100000) {
     return 0;
   }
-
-  auto source = SourceBuffer::CreateFromText(
-      llvm::StringRef(reinterpret_cast<const char*>(data), size));
+  static constexpr llvm::StringLiteral TestFileName = "test.carbon";
+  llvm::vfs::InMemoryFileSystem fs;
+  llvm::StringRef data_ref(reinterpret_cast<const char*>(data), size);
+  CARBON_CHECK(fs.addFile(
+      TestFileName, /*ModificationTime=*/0,
+      llvm::MemoryBuffer::getMemBuffer(data_ref, /*BufferName=*/TestFileName,
+                                       /*RequiresNullTerminator=*/false)));
+  llvm::errs() << "made\n";
+  auto source = SourceBuffer::CreateFromFile(fs, TestFileName);
 
   // Lex the input.
   auto tokens = TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());

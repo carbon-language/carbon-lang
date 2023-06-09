@@ -21,18 +21,21 @@ using ::testing::ElementsAre;
 
 class ParseTreeTest : public ::testing::Test {
  protected:
-  auto GetSourceBuffer(llvm::Twine t) -> SourceBuffer& {
+  auto GetSourceBuffer(llvm::StringRef t) -> SourceBuffer& {
+    CARBON_CHECK(fs.addFile("test.carbon", /*ModificationTime=*/0,
+                            llvm::MemoryBuffer::getMemBuffer(t)));
     source_storage.push_front(
-        std::move(*SourceBuffer::CreateFromText(t.str())));
+        std::move(*SourceBuffer::CreateFromFile(fs, "test.carbon")));
     return source_storage.front();
   }
 
-  auto GetTokenizedBuffer(llvm::Twine t) -> TokenizedBuffer& {
+  auto GetTokenizedBuffer(llvm::StringRef t) -> TokenizedBuffer& {
     token_storage.push_front(
         TokenizedBuffer::Lex(GetSourceBuffer(t), consumer));
     return token_storage.front();
   }
 
+  llvm::vfs::InMemoryFileSystem fs;
   std::forward_list<SourceBuffer> source_storage;
   std::forward_list<TokenizedBuffer> token_storage;
   DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();

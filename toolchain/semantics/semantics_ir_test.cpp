@@ -12,6 +12,7 @@
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/source/source_buffer.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -27,8 +28,11 @@ using ::testing::Pair;
 
 TEST(SemanticsIRTest, YAML) {
   DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
-  llvm::Expected<SourceBuffer> source =
-      SourceBuffer::CreateFromText("var x: i32 = 0;");
+  llvm::vfs::InMemoryFileSystem fs;
+  CARBON_CHECK(fs.addFile("test.carbon", /*ModificationTime=*/0,
+                          llvm::MemoryBuffer::getMemBuffer("var x: i32 = 0;")));
+  ErrorOr<SourceBuffer> source =
+      SourceBuffer::CreateFromFile(fs, "test.carbon");
   TokenizedBuffer tokens = TokenizedBuffer::Lex(*source, consumer);
   ParseTree parse_tree =
       ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
