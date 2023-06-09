@@ -8,7 +8,6 @@
 #include <fstream>
 
 #include "common/check.h"
-#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/InitLLVM.h"
 
@@ -18,19 +17,8 @@ namespace Carbon::Testing {
 static int base_dir_len = 0;
 // The name of the `.subset` target.
 static std::string* subset_target = nullptr;
-// The original working directory for restoration after each test.
-static std::filesystem::path* orig_working_dir = nullptr;
 
 using ::testing::Eq;
-
-FileTestBase::FileTestBase(const std::filesystem::path& path) : path_(&path) {}
-
-FileTestBase::~FileTestBase() {
-  // Restore the original working directory.
-  std::error_code ec;
-  std::filesystem::current_path(*orig_working_dir, ec);
-  CARBON_CHECK(!ec) << ec.message();
-}
 
 void FileTestBase::RegisterTests(
     const char* fixture_label,
@@ -45,6 +33,15 @@ void FileTestBase::RegisterTests(
                           test_name.c_str(), __FILE__, __LINE__,
                           [=]() { return factory(path); });
   }
+}
+
+// Reads a file to string.
+static auto ReadFile(std::filesystem::path path) -> std::string {
+  std::ifstream proto_file(path);
+  std::stringstream buffer;
+  buffer << proto_file.rdbuf();
+  proto_file.close();
+  return buffer.str();
 }
 
 // Splits outputs to string_view because gtest handles string_view by default.
@@ -68,20 +65,14 @@ auto FileTestBase::TestBody() -> void {
   llvm::errs() << "\nTo test this file alone, run:\n  bazel test "
                << *subset_target << " --test_arg=" << test_file << "\n\n";
 
-  SetTmpAsWorkingDir();
+  // Store the file so that test_files can use references to content.
+  std::string test_content = ReadFile(path());
 
   // Load expected output.
-  llvm::SmallVector<std::string> test_files;
-  auto cleanup_test_files = llvm::make_scope_exit([&]() {
-    // Remove all the created files. Even if no files are split, there will be a
-    // symlink to remove.
-    for (const auto& file : test_files) {
-      std::filesystem::remove(file);
-    }
-  });
+  llvm::SmallVector<TestFile> test_files;
   llvm::SmallVector<testing::Matcher<std::string>> expected_stdout;
   llvm::SmallVector<testing::Matcher<std::string>> expected_stderr;
-  ProcessTestFile(test_files, expected_stdout, expected_stderr);
+  ProcessTestFile(test_content, test_files, expected_stdout, expected_stderr);
   if (HasFailure()) {
     return;
   }
@@ -105,70 +96,66 @@ auto FileTestBase::TestBody() -> void {
   EXPECT_THAT(SplitOutput(stderr), ElementsAreArray(expected_stderr));
 }
 
-auto FileTestBase::SetTmpAsWorkingDir() -> void {
-  char* tmpdir = getenv("TEST_TMPDIR");
-  CARBON_CHECK(tmpdir);
-
-  // Run from the tmpdir.
-  std::error_code ec;
-  std::filesystem::current_path(tmpdir, ec);
-  CARBON_CHECK(!ec) << ec.message();
-}
-
 auto FileTestBase::ProcessTestFile(
-    llvm::SmallVector<std::string>& test_files,
+    llvm::StringRef file_content, llvm::SmallVector<TestFile>& test_files,
     llvm::SmallVector<testing::Matcher<std::string>>& expected_stdout,
     llvm::SmallVector<testing::Matcher<std::string>>& expected_stderr) -> void {
-  std::ifstream file_content(path());
-  std::ofstream split_file;
+  llvm::StringRef cursor = file_content;
   bool found_content_pre_split = false;
   int line_index = 0;
-  std::string line_str;
-  while (std::getline(file_content, line_str)) {
-    llvm::StringRef line = line_str;
-    if (line.consume_front("// ---")) {
-      ASSERT_FALSE(found_content_pre_split)
-          << "When using split files, there must be no content before the "
-             "first split file.";
-      test_files.push_back(line.trim().str());
-      const auto& test_file = test_files.back();
-      ASSERT_FALSE(std::filesystem::path(test_file).has_parent_path())
-          << "Only filenames are supported, not subdirectories: " << test_file;
-      if (split_file.is_open()) {
-        split_file.close();
+  llvm::StringRef current_file_name;
+  const char* current_file_start = nullptr;
+  while (!cursor.empty()) {
+    auto [line, next_cursor] = cursor.split("\n");
+    cursor = next_cursor;
+
+    static constexpr llvm::StringLiteral SplitPrefix = "// ---";
+    if (line.consume_front(SplitPrefix)) {
+      // On a file split, add the previous file, then start a new one.
+      if (current_file_start) {
+        test_files.push_back(TestFile(
+            current_file_name.str(),
+            llvm::StringRef(
+                current_file_start,
+                line.begin() - current_file_start - SplitPrefix.size())));
+      } else {
+        // For the first split, we make sure there was no content prior.
+        ASSERT_FALSE(found_content_pre_split)
+            << "When using split files, there must be no content before the "
+               "first split file.";
       }
-      split_file.open(test_file);
-      ASSERT_TRUE(split_file.is_open()) << "Failed to open " << test_file;
+      current_file_name = line.trim();
+      current_file_start = cursor.begin();
       line_index = 0;
       continue;
-    } else if (split_file.is_open()) {
-      split_file << line_str << "\n";
-    } else if (!line.starts_with("//") && !line.trim().empty()) {
+    } else if (!current_file_start && !line.starts_with("//") &&
+               !line.trim().empty()) {
       found_content_pre_split = true;
     }
     ++line_index;
 
-    line = line.ltrim();
-    if (!line.consume_front("// CHECK")) {
+    // Process expectations when found.
+    auto line_trimmed = line.ltrim();
+    if (!line_trimmed.consume_front("// CHECK")) {
       continue;
     }
-    if (line.consume_front(":STDOUT:")) {
-      expected_stdout.push_back(TransformExpectation(line_index, line));
-    } else if (line.consume_front(":STDERR:")) {
-      expected_stderr.push_back(TransformExpectation(line_index, line));
+    if (line_trimmed.consume_front(":STDOUT:")) {
+      expected_stdout.push_back(TransformExpectation(line_index, line_trimmed));
+    } else if (line_trimmed.consume_front(":STDERR:")) {
+      expected_stderr.push_back(TransformExpectation(line_index, line_trimmed));
     } else {
-      FAIL() << "Unexpected CHECK in input: " << line_str;
+      FAIL() << "Unexpected CHECK in input: " << line.str();
     }
   }
 
-  if (test_files.empty()) {
-    // Symlink the main test file and provide it in test_files.
-    test_files.push_back(path().filename());
-    std::error_code ec;
-    std::filesystem::create_symlink(path(), path().filename(), ec);
-    CARBON_CHECK(!ec) << ec.message();
+  if (current_file_start) {
+    test_files.push_back(
+        TestFile(current_file_name.str(),
+                 llvm::StringRef(current_file_start,
+                                 file_content.end() - current_file_start)));
   } else {
-    split_file.close();
+    // If no file splitting happened, use the main file as the test file.
+    test_files.push_back(TestFile(path().filename().string(), file_content));
   }
 
   // Assume there is always a suffix `\n` in output.
@@ -288,20 +275,15 @@ auto main(int argc, char** argv) -> int {
   }
   Carbon::Testing::subset_target = &subset_target_storage;
 
-  // Save the working directory for later restoration.
-  std::error_code ec;
-  std::filesystem::path orig_working_dir_storage =
-      std::filesystem::current_path(ec);
-  CARBON_CHECK(!ec) << ec.message();
-  Carbon::Testing::orig_working_dir = &orig_working_dir_storage;
-
   // Configure the base directory for test names.
   llvm::StringRef target_dir = target;
+  std::error_code ec;
+  std::filesystem::path working_dir = std::filesystem::current_path(ec);
+  CARBON_CHECK(!ec) << ec.message();
   // Leaves one slash.
   CARBON_CHECK(target_dir.consume_front("/"));
   target_dir = target_dir.substr(0, target_dir.rfind(":"));
-  std::string base_dir =
-      orig_working_dir_storage.string() + target_dir.str() + "/";
+  std::string base_dir = working_dir.string() + target_dir.str() + "/";
   Carbon::Testing::base_dir_len = base_dir.size();
 
   // Register tests based on their absolute path.
