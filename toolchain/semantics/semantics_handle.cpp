@@ -178,6 +178,21 @@ auto SemanticsHandleIfConditionStart(SemanticsContext& context,
   return context.TODO(parse_node, "HandleIfConditionStart");
 }
 
+auto SemanticsHandleIfExpression(SemanticsContext& context,
+                                 ParseTree::Node parse_node) -> bool {
+  return context.TODO(parse_node, "HandleIfExpression");
+}
+
+auto SemanticsHandleIfExpressionElse(SemanticsContext& context,
+                                     ParseTree::Node parse_node) -> bool {
+  return context.TODO(parse_node, "HandleIfExpressionElse");
+}
+
+auto SemanticsHandleIfExpressionThen(SemanticsContext& context,
+                                     ParseTree::Node parse_node) -> bool {
+  return context.TODO(parse_node, "HandleIfExpressionThen");
+}
+
 auto SemanticsHandleIfStatement(SemanticsContext& context,
                                 ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleIfStatement");
@@ -396,21 +411,6 @@ auto SemanticsHandlePostfixOperator(SemanticsContext& context,
 auto SemanticsHandlePrefixOperator(SemanticsContext& context,
                                    ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandlePrefixOperator");
-}
-
-auto SemanticsHandleIfExpression(SemanticsContext& context,
-                                 ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleIfExpression");
-}
-
-auto SemanticsHandleIfExpressionThen(SemanticsContext& context,
-                                     ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleIfExpressionThen");
-}
-
-auto SemanticsHandleIfExpressionElse(SemanticsContext& context,
-                                     ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleIfExpressionElse");
 }
 
 auto SemanticsHandleReturnStatement(SemanticsContext& context,

@@ -181,7 +181,11 @@ CARBON_PARSER_STATE_VARIANTS2(Designator, Expression, Struct)
 
 // Handles processing of an expression.
 //
-// If valid prefix operator:
+// If `If`:
+//   1. Expression
+//   2. ExpressionThen
+//   3. ExpressionIfFinish
+// Else if valid prefix operator:
 //   1. Expression
 //   2. ExpressionLoopForPrefix
 // Else:
