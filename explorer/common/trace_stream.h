@@ -16,6 +16,8 @@
 
 namespace Carbon {
 
+class TraceStream;
+
 // Enumerates the phases of the program used for tracing and controlling which
 // program phases are included for tracing.
 enum class ProgramPhase {
@@ -98,6 +100,35 @@ class TraceStream {
   std::optional<Nonnull<llvm::raw_ostream*>> stream_;
   ProgramPhase current_phase_ = ProgramPhase::Unknown;
   std::bitset<static_cast<int>(ProgramPhase::Last) + 1> allowed_phases_;
+};
+
+// This is a RAII class to set the current program phase, destructor invocation
+// restores the previous phase
+class SetProgramPhase {
+ public:
+  explicit SetProgramPhase(TraceStream& trace_stream,
+                           ProgramPhase program_phase)
+      : trace_stream_(trace_stream) {
+    previous_phases_.push_back(trace_stream.current_phase());
+    trace_stream.set_current_phase(program_phase);
+  }
+
+  // This can be used for cases when current phase is set multiple times within
+  // the same scope
+  auto update_phase(ProgramPhase program_phase) -> void {
+    previous_phases_.push_back(trace_stream_.current_phase());
+    trace_stream_.set_current_phase(program_phase);
+  }
+
+  ~SetProgramPhase() {
+    if (!previous_phases_.empty()) {
+      trace_stream_.set_current_phase(previous_phases_.front());
+    }
+  }
+
+ private:
+  TraceStream& trace_stream_;
+  std::vector<ProgramPhase> previous_phases_;
 };
 
 }  // namespace Carbon
