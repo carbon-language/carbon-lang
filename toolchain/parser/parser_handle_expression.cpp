@@ -209,15 +209,8 @@ auto ParserHandleExpressionLoopForPrefix(ParserContext& context) -> void {
   context.PushState(state);
 }
 
-auto ParserHandleExpressionIfFinish(ParserContext& context) -> void {
-  auto state = context.PopState();
-
-  context.AddNode(ParseNodeKind::IfExpression, state.token, state.subtree_start,
-                  state.has_error);
-}
-
 auto ParserHandleExpressionThen(ParserContext& context) -> void {
-  context.PopAndDiscardState();
+  auto state = context.PopState();
 
   if (context.ConsumeAndAddLeafNodeIf(TokenKind::Then,
                                       ParseNodeKind::IfExpressionThen)) {
@@ -227,7 +220,9 @@ auto ParserHandleExpressionThen(ParserContext& context) -> void {
     // TODO: Include the location of the `if` token.
     CARBON_DIAGNOSTIC(ExpectedThenAfterIf, Error,
                       "Expected `then` after `if` condition.");
-    context.emitter().Emit(*context.position(), ExpectedThenAfterIf);
+    if (!state.has_error) {
+      context.emitter().Emit(*context.position(), ExpectedThenAfterIf);
+    }
     // Add placeholders for `then expression else expression`.
     for (int i = 0; i != 4; ++i) {
       context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
@@ -238,7 +233,7 @@ auto ParserHandleExpressionThen(ParserContext& context) -> void {
 }
 
 auto ParserHandleExpressionElse(ParserContext& context) -> void {
-  context.PopAndDiscardState();
+  auto state = context.PopState();
 
   if (context.ConsumeAndAddLeafNodeIf(TokenKind::Else,
                                       ParseNodeKind::IfExpressionElse)) {
@@ -247,7 +242,9 @@ auto ParserHandleExpressionElse(ParserContext& context) -> void {
     // TODO: Include the location of the `if` token.
     CARBON_DIAGNOSTIC(ExpectedElseAfterIf, Error,
                       "Expected `else` after `if ... then ...`.");
-    context.emitter().Emit(*context.position(), ExpectedElseAfterIf);
+    if (!state.has_error) {
+      context.emitter().Emit(*context.position(), ExpectedElseAfterIf);
+    }
     // Add placeholders for `else expression`.
     for (int i = 0; i != 2; ++i) {
       context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
@@ -255,6 +252,13 @@ auto ParserHandleExpressionElse(ParserContext& context) -> void {
     }
     context.ReturnErrorOnState();
   }
+}
+
+auto ParserHandleExpressionIfFinish(ParserContext& context) -> void {
+  auto state = context.PopState();
+
+  context.AddNode(ParseNodeKind::IfExpression, state.token, state.subtree_start,
+                  state.has_error);
 }
 
 auto ParserHandleExpressionStatementFinish(ParserContext& context) -> void {

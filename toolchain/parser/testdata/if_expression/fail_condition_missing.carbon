@@ -26,7 +26,6 @@
 // CHECK:STDOUT: ]
 
 fn F() {
-  // CHECK:STDERR: fail_condition_missing.carbon:[[@LINE+2]]:18: Expected expression.
-  // CHECK:STDERR: fail_condition_missing.carbon:[[@LINE+1]]:18: Expected `then` after `if` condition.
+  // CHECK:STDERR: fail_condition_missing.carbon:[[@LINE+1]]:18: Expected expression.
   var n: i32 = if;
 }
