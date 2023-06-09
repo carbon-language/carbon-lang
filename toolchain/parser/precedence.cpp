@@ -37,6 +37,8 @@ enum PrecedenceLevel : int8_t {
   Relational,
   LogicalAnd,
   LogicalOr,
+  // Conditional.
+  If,
   // Assignment.
   SimpleAssignment,
   CompoundAssignment,
@@ -62,11 +64,11 @@ struct OperatorPriorityTable {
     MarkHigherThan({TypePostfix}, {Type});
     MarkHigherThan(
         {Modulo, Additive, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift, Type},
-        {SimpleAssignment, CompoundAssignment, Relational});
+        {Relational});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
-    MarkHigherThan(
-        {SimpleAssignment, CompoundAssignment, LogicalAnd, LogicalOr},
-        {Lowest});
+    MarkHigherThan({LogicalAnd, LogicalOr}, {If});
+    MarkHigherThan({If}, {SimpleAssignment, CompoundAssignment});
+    MarkHigherThan({SimpleAssignment, CompoundAssignment}, {Lowest});
 
     // Compute the transitive closure of the above relationships: if we parse
     // `a $ b @ c` as `(a $ b) @ c` and parse `b @ c % d` as `(b @ c) % d`,
@@ -137,7 +139,7 @@ struct OperatorPriorityTable {
     // Ambiguous would mean it's an error. LeftFirst is meaningless. For now we
     // allow all prefix operators to be repeated.
     for (PrecedenceLevel prefix :
-         {TermPrefix, NumericPrefix, BitwisePrefix, LogicalPrefix}) {
+         {TermPrefix, NumericPrefix, BitwisePrefix, LogicalPrefix, If}) {
       table[prefix][prefix] = OperatorPriority::RightFirst;
     }
 
@@ -209,6 +211,9 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
 
     case TokenKind::Tilde:
       return PrecedenceGroup(BitwisePrefix);
+
+    case TokenKind::If:
+      return PrecedenceGroup(If);
 
     default:
       return std::nullopt;

@@ -27,9 +27,15 @@ auto ParserHandleExpression(ParserContext& context) -> void {
       context.DiagnoseOperatorFixity(ParserContext::OperatorFixity::Prefix);
     }
 
-    context.PushStateForExpressionLoop(ParserState::ExpressionLoopForPrefix,
-                                       state.ambient_precedence,
-                                       *operator_precedence);
+    if (context.PositionIs(TokenKind::If)) {
+      context.PushState(ParserState::ExpressionIfFinish);
+      context.PushState(ParserState::ExpressionThen);
+    } else {
+      context.PushStateForExpressionLoop(ParserState::ExpressionLoopForPrefix,
+                                         state.ambient_precedence,
+                                         *operator_precedence);
+    }
+
     ++context.position();
     context.PushStateForExpression(*operator_precedence);
   } else {
@@ -201,6 +207,58 @@ auto ParserHandleExpressionLoopForPrefix(ParserContext& context) -> void {
   state.state = ParserState::ExpressionLoop;
   state.has_error = false;
   context.PushState(state);
+}
+
+auto ParserHandleExpressionThen(ParserContext& context) -> void {
+  auto state = context.PopState();
+
+  if (context.ConsumeAndAddLeafNodeIf(TokenKind::Then,
+                                      ParseNodeKind::IfExpressionThen)) {
+    context.PushState(ParserState::ExpressionElse);
+    context.PushStateForExpression(*PrecedenceGroup::ForLeading(TokenKind::If));
+  } else {
+    // TODO: Include the location of the `if` token.
+    CARBON_DIAGNOSTIC(ExpectedThenAfterIf, Error,
+                      "Expected `then` after `if` condition.");
+    if (!state.has_error) {
+      context.emitter().Emit(*context.position(), ExpectedThenAfterIf);
+    }
+    // Add placeholders for `then expression else expression`.
+    for (int i = 0; i != 4; ++i) {
+      context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
+                          /*has_error=*/true);
+    }
+    context.ReturnErrorOnState();
+  }
+}
+
+auto ParserHandleExpressionElse(ParserContext& context) -> void {
+  auto state = context.PopState();
+
+  if (context.ConsumeAndAddLeafNodeIf(TokenKind::Else,
+                                      ParseNodeKind::IfExpressionElse)) {
+    context.PushStateForExpression(*PrecedenceGroup::ForLeading(TokenKind::If));
+  } else {
+    // TODO: Include the location of the `if` token.
+    CARBON_DIAGNOSTIC(ExpectedElseAfterIf, Error,
+                      "Expected `else` after `if ... then ...`.");
+    if (!state.has_error) {
+      context.emitter().Emit(*context.position(), ExpectedElseAfterIf);
+    }
+    // Add placeholders for `else expression`.
+    for (int i = 0; i != 2; ++i) {
+      context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
+                          /*has_error=*/true);
+    }
+    context.ReturnErrorOnState();
+  }
+}
+
+auto ParserHandleExpressionIfFinish(ParserContext& context) -> void {
+  auto state = context.PopState();
+
+  context.AddNode(ParseNodeKind::IfExpression, state.token, state.subtree_start,
+                  state.has_error);
 }
 
 auto ParserHandleExpressionStatementFinish(ParserContext& context) -> void {
