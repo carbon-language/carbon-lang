@@ -6618,8 +6618,8 @@ auto TypeChecker::InstantiateImplDeclaration(
   // arguments by the time we come to perform an instantiation, but in order
   // for that to work, we need to defer instantiating templates until we know
   // the values of checked generic parameters, such as by performing
-  // monomorphization for checked generics, which explorer doesn't yet do. See
-  // #2153 for the plan here.
+  // monomorphization for checked generics (see #2153 for details). However,
+  // explorer doesn't yet support that.
   //
   // As a workaround for the lack of support for #2153, we can instantiate
   // templates with the argument equal to a generic parameter. When we do so,

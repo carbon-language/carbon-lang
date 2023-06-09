@@ -39,7 +39,9 @@ auto ParseAndExecuteProto(const Fuzzing::Carbon& carbon) -> ErrorOr<int> {
   CARBON_CHECK(prelude_path.ok()) << prelude_path.error();
 
   const std::string source = ProtoToCarbon(carbon, /*maybe_add_main=*/true);
-  return ParseAndExecute(*prelude_path, source);
+  TraceStream trace_stream;
+  return ParseAndExecute(*prelude_path, "fuzzer.carbon", source,
+                         /*parser_debug=*/false, &trace_stream, &llvm::nulls());
 }
 
 }  // namespace Carbon::Testing

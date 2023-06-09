@@ -14,6 +14,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon::Testing {
@@ -34,19 +35,44 @@ namespace Carbon::Testing {
 // `autoupdate_testdata.py` automatically constructs compatible lines.
 class FileTestBase : public testing::Test {
  public:
-  explicit FileTestBase(const std::filesystem::path& path);
-  ~FileTestBase() override;
+  struct TestFile {
+    explicit TestFile(std::string filename, llvm::StringRef content)
+        : filename(std::move(filename)), content(content) {}
+
+    friend void PrintTo(const TestFile& f, std::ostream* os) {
+      // Print content escaped.
+      llvm::raw_os_ostream os_wrap(*os);
+      os_wrap << "TestFile(" << f.filename << ", \"";
+      os_wrap.write_escaped(f.content);
+      os_wrap << "\")";
+    }
+
+    std::string filename;
+    llvm::StringRef content;
+  };
+
+  explicit FileTestBase(const std::filesystem::path& path) : path_(&path) {}
 
   // Used by children to register tests with gtest.
-  static void RegisterTests(
+  static auto RegisterTests(
       const char* fixture_label,
       const llvm::SmallVector<std::filesystem::path>& paths,
-      std::function<FileTestBase*(const std::filesystem::path&)> factory);
+      std::function<FileTestBase*(const std::filesystem::path&)> factory)
+      -> void;
+
+  template <typename FileTestChildT>
+  static auto RegisterTests(
+      const char* fixture_label,
+      const llvm::SmallVector<std::filesystem::path>& paths) -> void {
+    RegisterTests(fixture_label, paths, [](const std::filesystem::path& path) {
+      return new FileTestChildT(path);
+    });
+  }
 
   // Implemented by children to run the test. Called by the TestBody
   // implementation, which will validate stdout and stderr. The return value
   // should be false when "fail_" is in the filename.
-  virtual auto RunWithFiles(const llvm::SmallVector<std::string>& test_files,
+  virtual auto RunWithFiles(const llvm::SmallVector<TestFile>& test_files,
                             llvm::raw_ostream& stdout,
                             llvm::raw_ostream& stderr) -> bool = 0;
 
@@ -58,12 +84,9 @@ class FileTestBase : public testing::Test {
   auto path() -> const std::filesystem::path& { return *path_; };
 
  private:
-  // Sets TEST_TMPDIR as the working directory.
-  auto SetTmpAsWorkingDir() -> void;
-
   // Processes the test input, producing test files and expected output.
   auto ProcessTestFile(
-      llvm::SmallVector<std::string>& test_files,
+      llvm::StringRef file_content, llvm::SmallVector<TestFile>& test_files,
       llvm::SmallVector<testing::Matcher<std::string>>& expected_stdout,
       llvm::SmallVector<testing::Matcher<std::string>>& expected_stderr)
       -> void;

@@ -123,8 +123,8 @@ auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
     -> bool;
 
 // Call the given `visitor` on all values nested within the given value,
-// including `value` itself. Aborts and returns `false` if `visitor` returns
-// `false`, otherwise returns `true`.
+// including `value` itself, in a preorder traversal. Aborts and returns
+// `false` if `visitor` returns `false`, otherwise returns `true`.
 auto VisitNestedValues(Nonnull<const Value*> value,
                        llvm::function_ref<bool(const Value*)> visitor) -> bool;
 
