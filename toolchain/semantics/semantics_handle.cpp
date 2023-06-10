@@ -260,6 +260,10 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
               id));
       break;
     }
+    case TokenKind::Bool: {
+      context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinBoolType);
+      break;
+    }
     case TokenKind::IntegerTypeLiteral: {
       auto text = context.tokens().GetTokenText(token);
       if (text != "i32") {

@@ -76,21 +76,15 @@ auto SemanticsHandleIfExpression(SemanticsContext& context,
   // Add branches from the end of the `then` and `else` blocks to the
   // resumption block.
   context.semantics_ir().AddNode(
-      then_end_block, SemanticsNode::Branch::Make(then_node, resume_block));
+      then_end_block,
+      SemanticsNode::BranchWithArg::Make(then_node, resume_block, then_value));
   context.semantics_ir().AddNode(
-      else_end_block, SemanticsNode::Branch::Make(else_node, resume_block));
+      else_end_block,
+      SemanticsNode::BranchWithArg::Make(else_node, resume_block, else_value));
 
-  // Create a phi node to select the value.
-  context.node_block_stack().Push();
-  context.AddNode(SemanticsNode::CodeBlock::Make(then_node, then_end_block));
-  context.AddNode(
-      SemanticsNode::StubReference::Make(then_node, result_type, then_value));
-  context.AddNode(SemanticsNode::CodeBlock::Make(else_node, else_end_block));
-  context.AddNode(
-      SemanticsNode::StubReference::Make(else_node, result_type, else_value));
-  auto phi_id = context.node_block_stack().Pop();
+  // Obtain the value in the resumption block and push it.
   context.AddNodeAndPush(
-      parse_node, SemanticsNode::Phi::Make(parse_node, result_type, phi_id));
+      parse_node, SemanticsNode::BlockArg::Make(parse_node, result_type));
   return true;
 }
 

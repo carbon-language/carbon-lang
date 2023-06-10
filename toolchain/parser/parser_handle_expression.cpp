@@ -64,6 +64,7 @@ auto ParserHandleExpressionInPostfix(ParserContext& context) -> void {
     case TokenKind::IntegerLiteral:
     case TokenKind::RealLiteral:
     case TokenKind::StringLiteral:
+    case TokenKind::Bool:
     case TokenKind::IntegerTypeLiteral:
     case TokenKind::UnsignedIntegerTypeLiteral:
     case TokenKind::FloatingPointTypeLiteral:
