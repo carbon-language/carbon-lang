@@ -48,6 +48,23 @@
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Foo
+// CHECK:STDOUT:   FunctionDeclaration @Bar
+// CHECK:STDOUT:   FunctionDeclaration @Baz
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bar() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Baz() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Foo() {}
 fn Bar() {}

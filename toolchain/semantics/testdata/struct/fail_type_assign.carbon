@@ -46,6 +46,14 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   StructTypeField i32, "a"
+// CHECK:STDOUT:   %7: type = StructType {%6}
+// CHECK:STDOUT:   %8: {.a: i32} = VarStorage
+// CHECK:STDOUT:   BindName {.a: i32}, "x", %8
+// CHECK:STDOUT:   StructTypeField i32, "a"
+// CHECK:STDOUT:   Assign <error>, %8, %1
+// CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_type_assign.carbon:[[@LINE+3]]:29: Cannot implicitly convert from `type` to `{.a: i32}`.
 // CHECK:STDERR: var x: {.a: i32} = {.a: i32};

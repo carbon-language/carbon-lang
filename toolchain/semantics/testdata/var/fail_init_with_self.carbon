@@ -40,6 +40,16 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT:   %7: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "x", %7
+// CHECK:STDOUT:   Assign <error>, %7, %1
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Main() {
   // CHECK:STDERR: fail_init_with_self.carbon:[[@LINE+3]]:16: Name `x` not found

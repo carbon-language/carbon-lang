@@ -43,6 +43,17 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @F
+// CHECK:STDOUT:   FunctionDeclaration @G
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT:   %8: type = TupleType {}
+// CHECK:STDOUT:   %9: () as type = Call {}, @F
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn F();
 

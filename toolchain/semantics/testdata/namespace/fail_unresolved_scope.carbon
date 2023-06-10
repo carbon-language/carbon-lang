@@ -33,6 +33,13 @@
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration invalid
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn invalid() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+3]]:4: Name `Foo` not found
 // CHECK:STDERR: fn Foo.Baz() {

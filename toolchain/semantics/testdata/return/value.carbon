@@ -36,6 +36,14 @@
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> i32 {
+// CHECK:STDOUT:   %7: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   ReturnExpression i32, %7
+// CHECK:STDOUT: }
 
 fn Main() -> i32 {
   return 0;

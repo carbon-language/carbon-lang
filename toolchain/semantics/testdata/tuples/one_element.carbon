@@ -75,6 +75,23 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %6: type = StubReference %3
+// CHECK:STDOUT:   %7: type = TupleType {type}
+// CHECK:STDOUT:   %8: (type,) as type = TupleValue {%6}
+// CHECK:STDOUT:   %9: type = TupleType {i32}
+// CHECK:STDOUT:   %10: (i32,) as type = VarStorage
+// CHECK:STDOUT:   BindName (i32,) as type, "x", %10
+// CHECK:STDOUT:   %12: i32 = IntegerLiteral 4
+// CHECK:STDOUT:   %13: i32 = StubReference %12
+// CHECK:STDOUT:   %14: (i32,) as type = TupleValue {%13}
+// CHECK:STDOUT:   Assign (i32,) as type, %10, %14
+// CHECK:STDOUT:   %16: type = StubReference %3
+// CHECK:STDOUT:   %17: (type,) as type = TupleValue {%16}
+// CHECK:STDOUT:   %18: (i32,) as type = VarStorage
+// CHECK:STDOUT:   BindName (i32,) as type, "y", %18
+// CHECK:STDOUT:   Assign (i32,) as type, %18, %10
+// CHECK:STDOUT: }
 
 var x: (i32,) = (4,);
 var y: (i32,) = x;

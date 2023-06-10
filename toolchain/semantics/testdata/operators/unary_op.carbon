@@ -45,6 +45,14 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Not
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Not(%b: bool) -> bool {
+// CHECK:STDOUT:   %9: bool = UnaryOperatorNot %6
+// CHECK:STDOUT:   ReturnExpression bool, %9
+// CHECK:STDOUT: }
 
 fn Not(b: bool) -> bool {
   return not b;

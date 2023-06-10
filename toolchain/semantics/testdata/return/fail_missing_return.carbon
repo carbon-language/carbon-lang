@@ -31,6 +31,12 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> i32 {
+// CHECK:STDOUT: }
 
 fn Main() -> i32 {
 // CHECK:STDERR: fail_missing_return.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.

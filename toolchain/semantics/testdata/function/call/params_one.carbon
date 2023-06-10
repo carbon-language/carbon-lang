@@ -66,6 +66,22 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Foo
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo(%a: i32) {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT:   %11: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %12: i32 = StubReference %11
+// CHECK:STDOUT:   %13: type = TupleType {}
+// CHECK:STDOUT:   %14: () as type = Call {%12}, @Foo
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Foo(a: i32) {}
 

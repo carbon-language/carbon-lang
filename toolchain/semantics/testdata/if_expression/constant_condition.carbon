@@ -108,6 +108,46 @@
 // CHECK:STDOUT:     node+25,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @A
+// CHECK:STDOUT:   FunctionDeclaration @B
+// CHECK:STDOUT:   FunctionDeclaration @F
+// CHECK:STDOUT:   FunctionDeclaration @G
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A() -> i32 {
+// CHECK:STDOUT:   %7: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   ReturnExpression i32, %7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B() -> i32 {
+// CHECK:STDOUT:   %10: i32 = IntegerLiteral 2
+// CHECK:STDOUT:   ReturnExpression i32, %10
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> i32 {
+// CHECK:STDOUT:   %13: bool = BoolLiteral true
+// CHECK:STDOUT:   BranchIf {%16, %18}, %13
+// CHECK:STDOUT:   Branch {%17, %19}
+// CHECK:STDOUT:   %16: i32 = Call {}, @A
+// CHECK:STDOUT:   BranchWithArg {%20, %21}, %16
+// CHECK:STDOUT:   %17: i32 = Call {}, @B
+// CHECK:STDOUT:   BranchWithArg {%20, %21}, %17
+// CHECK:STDOUT:   %20: i32 = BlockArg {%20, %21}
+// CHECK:STDOUT:   ReturnExpression i32, %20
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() -> i32 {
+// CHECK:STDOUT:   %23: bool = BoolLiteral false
+// CHECK:STDOUT:   BranchIf {%26, %28}, %23
+// CHECK:STDOUT:   Branch {%27, %29}
+// CHECK:STDOUT:   %26: i32 = Call {}, @A
+// CHECK:STDOUT:   BranchWithArg {%30, %31}, %26
+// CHECK:STDOUT:   %27: i32 = Call {}, @B
+// CHECK:STDOUT:   BranchWithArg {%30, %31}, %27
+// CHECK:STDOUT:   %30: i32 = BlockArg {%30, %31}
+// CHECK:STDOUT:   ReturnExpression i32, %30
+// CHECK:STDOUT: }
 
 fn A() -> i32 { return 1; }
 fn B() -> i32 { return 2; }

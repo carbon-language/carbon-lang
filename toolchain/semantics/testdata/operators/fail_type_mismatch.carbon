@@ -42,6 +42,16 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> i32 {
+// CHECK:STDOUT:   %7: i32 = IntegerLiteral 12
+// CHECK:STDOUT:   %8: f64 = RealLiteral 34e-1
+// CHECK:STDOUT:   %9: <error> = BinaryOperatorAdd %1, %8
+// CHECK:STDOUT:   ReturnExpression <error>, %9
+// CHECK:STDOUT: }
 
 fn Main() -> i32 {
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:13: Cannot implicitly convert from `i32` to `f64`.

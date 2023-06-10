@@ -38,6 +38,13 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %6: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "x", %6
+// CHECK:STDOUT:   %8: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "y", %8
+// CHECK:STDOUT:   Assign <error>, %8, %1
+// CHECK:STDOUT: }
 
 var x: i32;
 // CHECK:STDERR: fail_qualifier_unsupported.carbon:[[@LINE+3]]:15: Type `i32` does not support qualified expressions.

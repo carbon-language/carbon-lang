@@ -56,6 +56,24 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @MakeImplicitEmptyTuple
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MakeImplicitEmptyTuple() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT:   %9: type = TupleType {}
+// CHECK:STDOUT:   %10: () as type = TupleValue {}
+// CHECK:STDOUT:   %11: () as type = VarStorage
+// CHECK:STDOUT:   BindName () as type, "b", %11
+// CHECK:STDOUT:   %13: () as type = Call {}, @MakeImplicitEmptyTuple
+// CHECK:STDOUT:   Assign () as type, %11, %13
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn MakeImplicitEmptyTuple() {
 }

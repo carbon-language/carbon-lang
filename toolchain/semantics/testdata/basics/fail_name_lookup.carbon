@@ -33,6 +33,13 @@
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Main() {
   // CHECK:STDERR: fail_name_lookup.carbon:[[@LINE+3]]:3: Name `x` not found

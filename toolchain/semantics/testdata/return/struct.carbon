@@ -56,6 +56,18 @@
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   StructTypeField i32, "a"
+// CHECK:STDOUT:   %7: type = StructType {%6}
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> {.a: i32} {
+// CHECK:STDOUT:   %9: i32 = IntegerLiteral 3
+// CHECK:STDOUT:   %11: i32 = StubReference %9
+// CHECK:STDOUT:   %12: {.a: i32} = StructValue {%11}
+// CHECK:STDOUT:   ReturnExpression {.a: i32}, %12
+// CHECK:STDOUT: }
 
 fn Main() -> {.a: i32} {
   return {.a = 3};

@@ -86,6 +86,32 @@
 // CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @A
+// CHECK:STDOUT:   FunctionDeclaration @B
+// CHECK:STDOUT:   FunctionDeclaration @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A() -> i32 {
+// CHECK:STDOUT:   %7: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   ReturnExpression i32, %7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B() -> i32 {
+// CHECK:STDOUT:   %10: i32 = IntegerLiteral 2
+// CHECK:STDOUT:   ReturnExpression i32, %10
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%b: bool) -> i32 {
+// CHECK:STDOUT:   BranchIf {%17, %19}, %12
+// CHECK:STDOUT:   Branch {%18, %20}
+// CHECK:STDOUT:   %17: i32 = Call {}, @A
+// CHECK:STDOUT:   BranchWithArg {%21, %22}, %17
+// CHECK:STDOUT:   %18: i32 = Call {}, @B
+// CHECK:STDOUT:   BranchWithArg {%21, %22}, %18
+// CHECK:STDOUT:   %21: i32 = BlockArg {%21, %22}
+// CHECK:STDOUT:   ReturnExpression i32, %21
+// CHECK:STDOUT: }
 
 fn A() -> i32 { return 1; }
 fn B() -> i32 { return 2; }

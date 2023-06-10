@@ -42,6 +42,13 @@
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Main() {
   return;

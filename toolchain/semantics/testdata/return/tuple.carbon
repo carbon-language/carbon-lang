@@ -73,6 +73,23 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %6: type = StubReference %3
+// CHECK:STDOUT:   %7: type = StubReference %3
+// CHECK:STDOUT:   %8: type = TupleType {type, type}
+// CHECK:STDOUT:   %9: (type, type) as type = TupleValue {%6, %7}
+// CHECK:STDOUT:   %10: type = TupleType {i32, i32}
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> (i32, i32) as type {
+// CHECK:STDOUT:   %12: i32 = IntegerLiteral 15
+// CHECK:STDOUT:   %13: i32 = StubReference %12
+// CHECK:STDOUT:   %14: i32 = IntegerLiteral 35
+// CHECK:STDOUT:   %15: i32 = StubReference %14
+// CHECK:STDOUT:   %16: (i32, i32) as type = TupleValue {%13, %15}
+// CHECK:STDOUT:   ReturnExpression (i32, i32) as type, %16
+// CHECK:STDOUT: }
 
 
 fn Main() -> (i32, i32) {

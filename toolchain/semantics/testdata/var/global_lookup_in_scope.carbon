@@ -50,6 +50,20 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %6: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "x", %6
+// CHECK:STDOUT:   %8: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   Assign i32, %6, %8
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT:   %11: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "y", %11
+// CHECK:STDOUT:   Assign i32, %11, %6
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 var x: i32 = 0;
 

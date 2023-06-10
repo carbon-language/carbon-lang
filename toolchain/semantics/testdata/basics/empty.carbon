@@ -22,3 +22,5 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT: }

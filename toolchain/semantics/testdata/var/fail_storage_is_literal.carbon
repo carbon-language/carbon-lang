@@ -46,6 +46,18 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT:   %7: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %8: <error> = VarStorage
+// CHECK:STDOUT:   BindName <error>, "x", %8
+// CHECK:STDOUT:   %10: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   Assign <error>, %8, %1
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Main() {
   // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: Cannot implicitly convert from `i32` to `type`.

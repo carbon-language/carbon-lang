@@ -48,6 +48,13 @@
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Bar
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bar(%a: i32, %a: i32) {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+6]]:16: Duplicate name being declared in the same scope.
 // CHECK:STDERR: fn Bar(a: i32, a: i32) {}

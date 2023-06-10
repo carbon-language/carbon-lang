@@ -68,6 +68,24 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Echo
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {
+// CHECK:STDOUT:   ReturnExpression i32, %6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT:   %11: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "b", %11
+// CHECK:STDOUT:   %13: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %14: i32 = StubReference %13
+// CHECK:STDOUT:   %15: i32 = Call {%14}, @Echo
+// CHECK:STDOUT:   Assign i32, %11, %15
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Echo(a: i32) -> i32 {
   return a;

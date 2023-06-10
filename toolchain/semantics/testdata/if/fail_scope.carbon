@@ -65,6 +65,20 @@
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @VarScope
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @VarScope(%b: bool) -> i32 {
+// CHECK:STDOUT:   BranchIf {%11, %12, %13, %14, %15}, %6
+// CHECK:STDOUT:   Branch {%17}
+// CHECK:STDOUT:   %11: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "n", %11
+// CHECK:STDOUT:   %13: i32 = IntegerLiteral 2
+// CHECK:STDOUT:   Assign i32, %11, %13
+// CHECK:STDOUT:   ReturnExpression i32, %11
+// CHECK:STDOUT:   ReturnExpression <error>, %1
+// CHECK:STDOUT: }
 
 fn VarScope(b: bool) -> i32 {
   if (b) {

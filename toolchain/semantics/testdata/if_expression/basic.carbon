@@ -76,6 +76,20 @@
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {
+// CHECK:STDOUT:   BranchIf {%15, %17}, %6
+// CHECK:STDOUT:   Branch {%16, %18}
+// CHECK:STDOUT:   %15: i32 = BinaryOperatorAdd %8, %10
+// CHECK:STDOUT:   BranchWithArg {%19, %20}, %15
+// CHECK:STDOUT:   %16: i32 = BinaryOperatorAdd %10, %8
+// CHECK:STDOUT:   BranchWithArg {%19, %20}, %16
+// CHECK:STDOUT:   %19: i32 = BlockArg {%19, %20}
+// CHECK:STDOUT:   ReturnExpression i32, %19
+// CHECK:STDOUT: }
 
 fn F(b: bool, n: i32, m: i32) -> i32 {
   return if b then n + m else m + n;

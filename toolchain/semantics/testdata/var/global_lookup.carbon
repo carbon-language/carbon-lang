@@ -42,6 +42,15 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %6: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "x", %6
+// CHECK:STDOUT:   %8: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   Assign i32, %6, %8
+// CHECK:STDOUT:   %10: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "y", %10
+// CHECK:STDOUT:   Assign i32, %10, %6
+// CHECK:STDOUT: }
 
 var x: i32 = 0;
 var y: i32 = x;

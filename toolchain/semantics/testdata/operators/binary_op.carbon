@@ -41,6 +41,16 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> i32 {
+// CHECK:STDOUT:   %7: i32 = IntegerLiteral 12
+// CHECK:STDOUT:   %8: i32 = IntegerLiteral 34
+// CHECK:STDOUT:   %9: i32 = BinaryOperatorAdd %7, %8
+// CHECK:STDOUT:   ReturnExpression i32, %9
+// CHECK:STDOUT: }
 
 fn Main() -> i32 {
   return 12 + 34;

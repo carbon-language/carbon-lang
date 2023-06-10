@@ -42,6 +42,14 @@
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %6: type = TupleType {}
+// CHECK:STDOUT:   %7: () as type = TupleValue {}
+// CHECK:STDOUT:   %8: () as type = VarStorage
+// CHECK:STDOUT:   BindName () as type, "x", %8
+// CHECK:STDOUT:   %10: i32 = IntegerLiteral 66
+// CHECK:STDOUT:   Assign <error>, %8, %1
+// CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:17: Cannot implicitly convert from `i32` to `() as type`.
 // CHECK:STDERR: var x: () = (66);

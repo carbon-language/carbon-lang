@@ -47,6 +47,18 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %6: type = StructType {}
+// CHECK:STDOUT:   %7: {} as Type = StructValue {}
+// CHECK:STDOUT:   %8: {} as Type = VarStorage
+// CHECK:STDOUT:   BindName {} as Type, "x", %8
+// CHECK:STDOUT:   %10: {} as Type = StructValue {}
+// CHECK:STDOUT:   Assign {} as Type, %8, %10
+// CHECK:STDOUT:   %12: {} as Type = StructValue {}
+// CHECK:STDOUT:   %13: {} as Type = VarStorage
+// CHECK:STDOUT:   BindName {} as Type, "y", %13
+// CHECK:STDOUT:   Assign {} as Type, %13, %8
+// CHECK:STDOUT: }
 
 var x: {} = {};
 var y: {} = x;

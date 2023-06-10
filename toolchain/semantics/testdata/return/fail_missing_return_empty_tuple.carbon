@@ -37,6 +37,14 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %6: type = TupleType {}
+// CHECK:STDOUT:   %7: () as type = TupleValue {}
+// CHECK:STDOUT:   FunctionDeclaration @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> () as type {
+// CHECK:STDOUT: }
 
 fn F() -> () {
 // CHECK:STDERR: fail_missing_return_empty_tuple.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.

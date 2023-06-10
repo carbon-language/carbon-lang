@@ -60,6 +60,18 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @If
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @If(%b: bool) -> i32 {
+// CHECK:STDOUT:   BranchIf {%11, %12}, %6
+// CHECK:STDOUT:   Branch {%13, %14}
+// CHECK:STDOUT:   %11: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   ReturnExpression i32, %11
+// CHECK:STDOUT:   %13: i32 = IntegerLiteral 2
+// CHECK:STDOUT:   ReturnExpression i32, %13
+// CHECK:STDOUT: }
 
 fn If(b: bool) -> i32 {
   if (b) {

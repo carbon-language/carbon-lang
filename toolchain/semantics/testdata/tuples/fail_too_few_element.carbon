@@ -72,6 +72,20 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %6: type = StubReference %3
+// CHECK:STDOUT:   %7: type = StubReference %3
+// CHECK:STDOUT:   %8: type = TupleType {type, type}
+// CHECK:STDOUT:   %9: (type, type) as type = TupleValue {%6, %7}
+// CHECK:STDOUT:   %10: type = TupleType {i32, i32}
+// CHECK:STDOUT:   %11: (i32, i32) as type = VarStorage
+// CHECK:STDOUT:   BindName (i32, i32) as type, "x", %11
+// CHECK:STDOUT:   %13: i32 = IntegerLiteral 2
+// CHECK:STDOUT:   %14: i32 = StubReference %13
+// CHECK:STDOUT:   %15: type = TupleType {i32}
+// CHECK:STDOUT:   %16: (i32,) as type = TupleValue {%14}
+// CHECK:STDOUT:   Assign <error>, %11, %1
+// CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_too_few_element.carbon:[[@LINE+3]]:26: Cannot implicitly convert from `(i32,) as type` to `(i32, i32) as type`.
 // CHECK:STDERR: var x: (i32, i32) = (2, );

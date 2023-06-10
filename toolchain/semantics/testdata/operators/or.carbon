@@ -73,6 +73,33 @@
 // CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @F
+// CHECK:STDOUT:   FunctionDeclaration @G
+// CHECK:STDOUT:   FunctionDeclaration @Or
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> bool {
+// CHECK:STDOUT:   %7: bool = BoolLiteral true
+// CHECK:STDOUT:   ReturnExpression bool, %7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() -> bool {
+// CHECK:STDOUT:   %10: bool = BoolLiteral true
+// CHECK:STDOUT:   ReturnExpression bool, %10
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Or() -> bool {
+// CHECK:STDOUT:   %13: bool = Call {}, @F
+// CHECK:STDOUT:   %14: bool = UnaryOperatorNot %13
+// CHECK:STDOUT:   %15: bool = BoolLiteral true
+// CHECK:STDOUT:   BranchIf {%18, %19}, %14
+// CHECK:STDOUT:   BranchWithArg {%20, %21}, %15
+// CHECK:STDOUT:   %18: bool = Call {}, @G
+// CHECK:STDOUT:   BranchWithArg {%20, %21}, %18
+// CHECK:STDOUT:   %20: bool = BlockArg {%20, %21}
+// CHECK:STDOUT:   ReturnExpression bool, %20
+// CHECK:STDOUT: }
 
 fn F() -> bool { return true; }
 fn G() -> bool { return true; }

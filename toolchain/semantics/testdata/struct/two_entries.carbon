@@ -82,6 +82,24 @@
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   StructTypeField i32, "a"
+// CHECK:STDOUT:   StructTypeField i32, "b"
+// CHECK:STDOUT:   %8: type = StructType {%6, %7}
+// CHECK:STDOUT:   %9: {.a: i32, .b: i32} = VarStorage
+// CHECK:STDOUT:   BindName {.a: i32, .b: i32}, "x", %9
+// CHECK:STDOUT:   %11: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %13: i32 = StubReference %11
+// CHECK:STDOUT:   %14: i32 = IntegerLiteral 2
+// CHECK:STDOUT:   %16: i32 = StubReference %14
+// CHECK:STDOUT:   %17: {.a: i32, .b: i32} = StructValue {%13, %16}
+// CHECK:STDOUT:   Assign {.a: i32, .b: i32}, %9, %17
+// CHECK:STDOUT:   StructTypeField i32, "a"
+// CHECK:STDOUT:   StructTypeField i32, "b"
+// CHECK:STDOUT:   %21: {.a: i32, .b: i32} = VarStorage
+// CHECK:STDOUT:   BindName {.a: i32, .b: i32}, "y", %21
+// CHECK:STDOUT:   Assign {.a: i32, .b: i32}, %21, %9
+// CHECK:STDOUT: }
 
 var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
 var y: {.a: i32, .b: i32} = x;

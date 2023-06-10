@@ -60,6 +60,20 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Run
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run(%a: i32) {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT:   %11: f64 = RealLiteral 10e-1
+// CHECK:STDOUT:   %12: f64 = StubReference %11
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Run(a: i32) {}
 

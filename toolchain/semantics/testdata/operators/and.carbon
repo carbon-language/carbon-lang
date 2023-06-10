@@ -71,6 +71,32 @@
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @F
+// CHECK:STDOUT:   FunctionDeclaration @G
+// CHECK:STDOUT:   FunctionDeclaration @And
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> bool {
+// CHECK:STDOUT:   %7: bool = BoolLiteral true
+// CHECK:STDOUT:   ReturnExpression bool, %7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() -> bool {
+// CHECK:STDOUT:   %10: bool = BoolLiteral true
+// CHECK:STDOUT:   ReturnExpression bool, %10
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @And() -> bool {
+// CHECK:STDOUT:   %13: bool = Call {}, @F
+// CHECK:STDOUT:   %14: bool = BoolLiteral false
+// CHECK:STDOUT:   BranchIf {%17, %18}, %13
+// CHECK:STDOUT:   BranchWithArg {%19, %20}, %14
+// CHECK:STDOUT:   %17: bool = Call {}, @G
+// CHECK:STDOUT:   BranchWithArg {%19, %20}, %17
+// CHECK:STDOUT:   %19: bool = BlockArg {%19, %20}
+// CHECK:STDOUT:   ReturnExpression bool, %19
+// CHECK:STDOUT: }
 
 fn F() -> bool { return true; }
 fn G() -> bool { return true; }

@@ -64,6 +64,14 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%b: bool) -> i32 {
+// CHECK:STDOUT:   %9: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   ReturnExpression i32, %9
+// CHECK:STDOUT: }
 
 fn F(b: bool) -> i32 {
   return 0;

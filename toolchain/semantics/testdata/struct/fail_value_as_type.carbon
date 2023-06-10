@@ -48,6 +48,14 @@
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %6: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %8: i32 = StubReference %6
+// CHECK:STDOUT:   %9: type = StructType {%7}
+// CHECK:STDOUT:   %10: {.a: i32} = StructValue {%8}
+// CHECK:STDOUT:   %11: <error> = VarStorage
+// CHECK:STDOUT:   BindName <error>, "x", %11
+// CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:15: Cannot implicitly convert from `{.a: i32}` to `type`.
 // CHECK:STDERR: var x: {.a = 1};

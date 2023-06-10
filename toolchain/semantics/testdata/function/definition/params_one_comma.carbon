@@ -43,5 +43,12 @@
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Foo
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo(%a: i32) {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Foo(a: i32,) {}

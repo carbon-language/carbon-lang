@@ -6,7 +6,7 @@
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str1, param_refs: block0, body: {block2}}},
-// CHECK:STDOUT:   {name: str7, param_refs: block0, body: {block3}}},
+// CHECK:STDOUT:   {name: str<invalid>, param_refs: block0, body: {block3}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -42,6 +42,19 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   Namespace name_scope0
+// CHECK:STDOUT:   FunctionDeclaration @Baz
+// CHECK:STDOUT:   FunctionDeclaration invalid
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Baz() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn invalid() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 namespace Foo;
 

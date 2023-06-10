@@ -95,6 +95,20 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "semantics_ir_formatter",
+    srcs = [
+        "semantics_ir_formatter.cpp",
+    ],
+    hdrs = [
+        "semantics_ir_formatter.h",
+    ],
+    deps = [
+        ":semantics_ir",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
     name = "semantics_ir_test",
     size = "small",

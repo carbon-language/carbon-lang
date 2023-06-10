@@ -45,6 +45,18 @@
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT:   %10: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "y", %10
+// CHECK:STDOUT:   Assign <error>, %10, %1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT:   %7: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "x", %7
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Main() {
   var x: i32;

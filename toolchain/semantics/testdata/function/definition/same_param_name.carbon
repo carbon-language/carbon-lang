@@ -60,6 +60,18 @@
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Foo
+// CHECK:STDOUT:   FunctionDeclaration @Bar
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo(%a: i32) {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bar(%a: i32) {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Foo(a: i32) {}
 fn Bar(a: i32) {}

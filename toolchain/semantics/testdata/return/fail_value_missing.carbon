@@ -33,6 +33,13 @@
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> i32 {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Main() -> i32 {
   // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+3]]:9: Must return a i32.

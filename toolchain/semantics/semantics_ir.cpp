@@ -5,6 +5,9 @@
 #include "toolchain/semantics/semantics_ir.h"
 
 #include "common/check.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/common/pretty_stack_trace_function.h"
 #include "toolchain/parser/parse_tree_node_location_translator.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
@@ -245,7 +248,7 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
   }
 }
 
-auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
+auto SemanticsIR::StringifyType(SemanticsTypeId type_id) const -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 

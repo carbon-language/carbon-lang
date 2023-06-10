@@ -17,6 +17,17 @@ CARBON_DEFINE_RAW_ENUM_CLASS(SemanticsNodeKind, uint8_t) {
 #include "toolchain/semantics/semantics_node_kind.def"
 };
 
+// The meaning of the `type` field for a semantics node.
+enum class SemanticsTypeFieldKind {
+  // The `type` field is unused.
+  Unused,
+  // The `type` field is the type that the node produces. This will be the type
+  // field kind for every expression node.
+  Type,
+  // The `type` field is a type argument to the node.
+  Argument,
+};
+
 // Whether a node is a terminator or part of the terminator sequence. The nodes
 // in a block appear in the order NotTerminator, then TerminatorSequence, then
 // Terminator, which is also the numerical order of these values.
@@ -36,6 +47,9 @@ class SemanticsNodeKind : public CARBON_ENUM_BASE(SemanticsNodeKind) {
 #include "toolchain/semantics/semantics_node_kind.def"
 
   using EnumBase::Create;
+
+  /// Returns the meaning of the `type` field for this node kind.
+  [[nodiscard]] auto type_field_kind() const -> SemanticsTypeFieldKind;
 
   // Returns whether this node kind is a code block terminator, such as an
   // unconditional branch instruction, or part of the termination sequence,

@@ -52,6 +52,21 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT:   %7: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "x", %7
+// CHECK:STDOUT:   %9: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   Assign i32, %7, %9
+// CHECK:STDOUT:   %11: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "x", %11
+// CHECK:STDOUT:   %13: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   Assign i32, %11, %13
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 
 fn Main() {

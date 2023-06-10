@@ -68,6 +68,22 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %10: () as type = TupleValue {}
+// CHECK:STDOUT:   FunctionDeclaration @Echo
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Echo(%a: () as type) -> () as type {
+// CHECK:STDOUT:   ReturnExpression () as type, %8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT:   %14: () as type = TupleValue {}
+// CHECK:STDOUT:   %15: () as type = StubReference %14
+// CHECK:STDOUT:   %16: () as type = Call {%15}, @Echo
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Echo(a: ()) -> () {
   return a;

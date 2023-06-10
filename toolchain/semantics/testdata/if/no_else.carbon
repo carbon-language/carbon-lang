@@ -78,6 +78,29 @@
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @F
+// CHECK:STDOUT:   FunctionDeclaration @G
+// CHECK:STDOUT:   FunctionDeclaration @If
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @If(%b: bool) {
+// CHECK:STDOUT:   BranchIf {%15, %16, %17}, %10
+// CHECK:STDOUT:   Branch {%18, %19}
+// CHECK:STDOUT:   %15: type = TupleType {}
+// CHECK:STDOUT:   %16: () as type = Call {}, @F
+// CHECK:STDOUT:   Branch {%18, %19}
+// CHECK:STDOUT:   %18: () as type = Call {}, @G
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn F() {}
 fn G() {}

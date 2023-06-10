@@ -84,6 +84,26 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   StructTypeField f64, "a"
+// CHECK:STDOUT:   StructTypeField i32, "b"
+// CHECK:STDOUT:   %8: type = StructType {%6, %7}
+// CHECK:STDOUT:   %9: {.a: f64, .b: i32} = VarStorage
+// CHECK:STDOUT:   BindName {.a: f64, .b: i32}, "x", %9
+// CHECK:STDOUT:   %11: f64 = RealLiteral 0e-1
+// CHECK:STDOUT:   %13: f64 = StubReference %11
+// CHECK:STDOUT:   %14: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %16: i32 = StubReference %14
+// CHECK:STDOUT:   %17: {.a: f64, .b: i32} = StructValue {%13, %16}
+// CHECK:STDOUT:   Assign {.a: f64, .b: i32}, %9, %17
+// CHECK:STDOUT:   %19: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "y", %19
+// CHECK:STDOUT:   StructMemberAccess i32, %9, member1
+// CHECK:STDOUT:   Assign i32, %19, %21
+// CHECK:STDOUT:   %23: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "z", %23
+// CHECK:STDOUT:   Assign i32, %23, %19
+// CHECK:STDOUT: }
 
 var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
 var y: i32 = x.b;

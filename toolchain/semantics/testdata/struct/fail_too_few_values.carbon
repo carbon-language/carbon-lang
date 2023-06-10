@@ -62,6 +62,18 @@
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   StructTypeField i32, "a"
+// CHECK:STDOUT:   StructTypeField i32, "b"
+// CHECK:STDOUT:   %8: type = StructType {%6, %7}
+// CHECK:STDOUT:   %9: {.a: i32, .b: i32} = VarStorage
+// CHECK:STDOUT:   BindName {.a: i32, .b: i32}, "x", %9
+// CHECK:STDOUT:   %11: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %13: i32 = StubReference %11
+// CHECK:STDOUT:   %14: type = StructType {%12}
+// CHECK:STDOUT:   %15: {.a: i32} = StructValue {%13}
+// CHECK:STDOUT:   Assign <error>, %9, %1
+// CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+3]]:37: Cannot implicitly convert from `{.a: i32}` to `{.a: i32, .b: i32}`.
 // CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};

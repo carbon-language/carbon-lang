@@ -54,6 +54,23 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Foo
+// CHECK:STDOUT:   FunctionDeclaration @Run
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo() -> f64 {
+// CHECK:STDOUT:   %7: f64 = RealLiteral 10e-1
+// CHECK:STDOUT:   ReturnExpression f64, %7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run() {
+// CHECK:STDOUT:   %10: i32 = VarStorage
+// CHECK:STDOUT:   BindName i32, "x", %10
+// CHECK:STDOUT:   %12: f64 = Call {}, @Foo
+// CHECK:STDOUT:   Assign <error>, %10, %1
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Foo() -> f64 { return 1.0; }
 

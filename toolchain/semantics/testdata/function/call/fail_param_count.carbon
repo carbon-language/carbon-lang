@@ -126,6 +126,40 @@
 // CHECK:STDOUT:     node+24,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   FunctionDeclaration @Run0
+// CHECK:STDOUT:   FunctionDeclaration @Run1
+// CHECK:STDOUT:   FunctionDeclaration @Run2
+// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run0() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run1(%a: i32) {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run2(%a: i32, %b: i32) {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT:   %19: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %20: i32 = StubReference %19
+// CHECK:STDOUT:   %21: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   %22: i32 = StubReference %21
+// CHECK:STDOUT:   %23: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %24: i32 = StubReference %23
+// CHECK:STDOUT:   %25: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   %26: i32 = StubReference %25
+// CHECK:STDOUT:   %27: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %28: i32 = StubReference %27
+// CHECK:STDOUT:   %29: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   %30: i32 = StubReference %29
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 fn Run0() {}
 fn Run1(a: i32) {}

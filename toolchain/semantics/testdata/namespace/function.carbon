@@ -57,6 +57,26 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   Namespace name_scope0
+// CHECK:STDOUT:   FunctionDeclaration @Baz
+// CHECK:STDOUT:   FunctionDeclaration @Baz
+// CHECK:STDOUT:   FunctionDeclaration @Bar
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Baz() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Baz() {
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bar() {
+// CHECK:STDOUT:   %12: type = TupleType {}
+// CHECK:STDOUT:   %13: () as type = Call {}, @Baz
+// CHECK:STDOUT:   Return
+// CHECK:STDOUT: }
 
 namespace Foo;
 
