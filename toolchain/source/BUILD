@@ -9,7 +9,7 @@ cc_library(
     srcs = ["source_buffer.cpp"],
     hdrs = ["source_buffer.h"],
     deps = [
-        "//common:check",
+        "//common:error",
         "@llvm-project//llvm:Support",
     ],
 )

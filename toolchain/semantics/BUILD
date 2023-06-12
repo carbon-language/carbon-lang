@@ -109,6 +109,7 @@ cc_test(
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/source:source_buffer",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

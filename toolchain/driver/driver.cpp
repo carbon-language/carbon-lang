@@ -10,8 +10,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/Support/Error.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
@@ -168,15 +166,11 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
 
   CARBON_VLOG() << "*** SourceBuffer::CreateFromFile ***\n";
-  auto source = SourceBuffer::CreateFromFile(input_file_name);
+  auto source = SourceBuffer::CreateFromFile(fs_, input_file_name);
   CARBON_VLOG() << "*** SourceBuffer::CreateFromFile done ***\n";
-  if (!source) {
-    error_stream_ << "ERROR: Unable to open input source file: ";
-    llvm::handleAllErrors(source.takeError(),
-                          [&](const llvm::ErrorInfoBase& ei) {
-                            ei.log(error_stream_);
-                            error_stream_ << "\n";
-                          });
+  if (!source.ok()) {
+    error_stream_ << "ERROR: Unable to open input source file: "
+                  << source.error();
     return false;
   }
 
