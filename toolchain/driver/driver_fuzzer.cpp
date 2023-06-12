@@ -66,10 +66,10 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
     size -= arg_length;
   }
 
-  auto fs = llvm::vfs::getRealFileSystem();
+  llvm::vfs::InMemoryFileSystem fs;
   std::string error_text;
   llvm::raw_string_ostream error_stream(error_text);
-  Driver d(*fs, llvm::nulls(), error_stream);
+  Driver d(fs, llvm::nulls(), error_stream);
   if (!d.RunFullCommand(args)) {
     error_stream.flush();
     if (error_text.find("ERROR:") == std::string::npos) {

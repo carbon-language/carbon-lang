@@ -26,7 +26,8 @@ auto SourceBuffer::CreateFromFile(llvm::vfs::FileSystem& fs,
   }
   auto size = status->getSize();
   if (size >= std::numeric_limits<int32_t>::max()) {
-    return Error(llvm::formatv("`{0}` is over the 2GiB input limit.", filename));
+    return Error(
+        llvm::formatv("`{0}` is over the 2GiB input limit.", filename));
   }
 
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
