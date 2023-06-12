@@ -32,12 +32,12 @@ using ::testing::StrEq;
 class LexerTest : public ::testing::Test {
  protected:
   auto GetSourceBuffer(llvm::StringRef text) -> SourceBuffer& {
-    std::string filename = llvm::formatv("test{0}.carbon", ++file_index);
-    CARBON_CHECK(fs.addFile(filename, /*ModificationTime=*/0,
-                            llvm::MemoryBuffer::getMemBuffer(text)));
-    source_storage.push_front(
-        std::move(*SourceBuffer::CreateFromFile(fs, filename)));
-    return source_storage.front();
+    std::string filename = llvm::formatv("test{0}.carbon", ++file_index_);
+    CARBON_CHECK(fs_.addFile(filename, /*ModificationTime=*/0,
+                             llvm::MemoryBuffer::getMemBuffer(text)));
+    source_storage_.push_front(
+        std::move(*SourceBuffer::CreateFromFile(fs_, filename)));
+    return source_storage_.front();
   }
 
   auto Lex(llvm::StringRef text,
@@ -46,9 +46,9 @@ class LexerTest : public ::testing::Test {
     return TokenizedBuffer::Lex(GetSourceBuffer(text), consumer);
   }
 
-  llvm::vfs::InMemoryFileSystem fs;
-  int file_index = 0;
-  std::forward_list<SourceBuffer> source_storage;
+  llvm::vfs::InMemoryFileSystem fs_;
+  int file_index_ = 0;
+  std::forward_list<SourceBuffer> source_storage_;
 };
 
 TEST_F(LexerTest, HandlesEmptyBuffer) {
