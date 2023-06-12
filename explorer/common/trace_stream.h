@@ -29,6 +29,7 @@ enum class ProgramPhase {
   Declarations,                // Phase for printing declarations.
   Execution,                   // Phase for program execution.
   Timing,                      // Phase for timing logs.
+  State,                       // Phase for tracing state.
   All,                         // Represents all program phases.
   Last = All                   // Last program phase indicator.
 };
@@ -60,7 +61,7 @@ class TraceStream {
     // TODO: implement a way to differentiate between the main file and imports
     // based upon source location / filename
     auto file_context = [=]() -> FileContext {
-      if (source_location) {
+      if (source_location.has_value()) {
         auto filename =
             llvm::StringRef(source_location->filename()).rsplit("/").second;
         if (filename == "prelude.carbon") {

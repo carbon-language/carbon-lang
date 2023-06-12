@@ -77,6 +77,8 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
           clEnumValN(
               ProgramPhase::Timing, "trace_timing",
               "Include timing logs for each phase, indicating the time taken."),
+          clEnumValN(ProgramPhase::State, "trace_state",
+                     "Include logs for state (stack and memory)"),
           clEnumValN(ProgramPhase::All, "trace_all",
                      "Include trace output for all phases.")));
 
@@ -115,6 +117,7 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   if (!trace_file_name.empty()) {
     // Adding allowed phases in the trace_stream
     trace_stream.set_allowed_phases(allowed_program_phases);
+    trace_stream.set_allowed_file_contexts(allowed_file_contexts);
     if (trace_file_name == "-") {
       trace_stream.set_stream(&llvm::outs());
     } else {

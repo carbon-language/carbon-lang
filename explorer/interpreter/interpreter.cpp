@@ -163,7 +163,8 @@ class Interpreter {
 
   // Instantiate a witness by replacing all type variables and impl binding
   // references that occur within it by the current values of those variables.
-  auto InstantiateWitness(Nonnull<const Witness*> witness)
+  auto InstantiateWitness(Nonnull<const Witness*> witness,
+                          std::optional<SourceLocation> source_loc)
       -> ErrorOr<Nonnull<const Witness*>>;
 
   // Call the function `fun` with the given `arg` and the `witnesses`
@@ -175,7 +176,7 @@ class Interpreter {
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
                       Nonnull<const Value*> receiver) -> ErrorOr<Success>;
 
-  void TraceState();
+  void TraceState(std::optional<SourceLocation> source_loc);
 
   auto phase() const -> Phase { return phase_; }
 
@@ -200,8 +201,13 @@ class Interpreter {
 // State Operations
 //
 
-void Interpreter::TraceState() {
-  *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
+void Interpreter::TraceState(std::optional<SourceLocation> source_loc) {
+  auto program_phase = trace_stream_->current_phase();
+  trace_stream_->set_current_phase(ProgramPhase::State);
+  if (trace_stream_->is_enabled(source_loc)) {
+    *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
+  }
+  trace_stream_->set_current_phase(program_phase);
 }
 
 auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
@@ -576,10 +582,9 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
 
 auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     -> ErrorOr<Nonnull<const Value*>> {
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- recursive eval\n";
-    TraceState();
-  }
+  auto act_source_loc = action->source_loc();
+  TraceState(act_source_loc);
+
   todo_.BeginRecursiveAction();
   CARBON_RETURN_IF_ERROR(todo_.Spawn(std::move(action)));
   // Note that the only `RecursiveAction` we can encounter here is our own --
@@ -587,9 +592,7 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
   // action is finished and popped off the queue before returning to us.
   while (!isa<RecursiveAction>(todo_.CurrentAction())) {
     CARBON_RETURN_IF_ERROR(Step());
-    if (trace_stream_->is_enabled()) {
-      TraceState();
-    }
+    TraceState(act_source_loc);
   }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- recursive eval done\n";
@@ -607,7 +610,7 @@ auto Interpreter::EvalAssociatedConstant(
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> interface,
                           InstantiateType(&assoc->interface(), source_loc));
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
-                          InstantiateWitness(&assoc->witness()));
+                          InstantiateWitness(&assoc->witness(), source_loc));
 
   const auto* impl_witness = dyn_cast<ImplWitness>(witness);
   if (!impl_witness) {
@@ -699,8 +702,8 @@ auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
 
   ImplWitnessMap witnesses = bindings->witnesses();
   for (auto& [bind, witness] : witnesses) {
-    CARBON_ASSIGN_OR_RETURN(witness,
-                            InstantiateWitness(cast<Witness>(witness)));
+    CARBON_ASSIGN_OR_RETURN(
+        witness, InstantiateWitness(cast<Witness>(witness), source_loc));
   }
 
   if (args == bindings->args() && witnesses == bindings->witnesses()) {
@@ -709,11 +712,12 @@ auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
   return arena_->New<Bindings>(std::move(args), std::move(witnesses));
 }
 
-auto Interpreter::InstantiateWitness(Nonnull<const Witness*> witness)
+auto Interpreter::InstantiateWitness(Nonnull<const Witness*> witness,
+                                     std::optional<SourceLocation> source_loc)
     -> ErrorOr<Nonnull<const Witness*>> {
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<const Value*> value,
-      EvalRecursively(std::make_unique<WitnessAction>(witness)));
+      EvalRecursively(std::make_unique<WitnessAction>(witness, source_loc)));
   return cast<Witness>(value);
 }
 
@@ -1304,8 +1308,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             // Next, if we're accessing an interface member, evaluate the `impl`
             // expression to find the corresponding witness.
             if (impl_has_value) {
-              return todo_.Spawn(
-                  std::make_unique<WitnessAction>(access.impl().value()));
+              return todo_.Spawn(std::make_unique<WitnessAction>(
+                  access.impl().value(), access.source_loc()));
             } else {
               return todo_.RunAgain();
             }
@@ -1402,8 +1406,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             if (impl_has_value) {
               // Next, if we're accessing an interface member, evaluate the
               // `impl` expression to find the corresponding witness.
-              return todo_.Spawn(
-                  std::make_unique<WitnessAction>(access.impl().value()));
+              return todo_.Spawn(std::make_unique<WitnessAction>(
+                  access.impl().value(), access.source_loc()));
             } else {
               return todo_.RunAgain();
             }
@@ -1546,8 +1550,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                  act.pos() < 2 + static_cast<int>(num_witnesses)) {
         auto iter = call.witnesses().begin();
         std::advance(iter, act.pos() - 2);
-        return todo_.Spawn(
-            std::make_unique<WitnessAction>(cast<Witness>(iter->second)));
+        return todo_.Spawn(std::make_unique<WitnessAction>(
+            cast<Witness>(iter->second), call.source_loc()));
       } else if (act.pos() == 2 + static_cast<int>(num_witnesses)) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
@@ -1900,7 +1904,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
 auto Interpreter::StepWitness() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Witness* witness = cast<WitnessAction>(act).witness();
-  if (trace_stream_->is_enabled()) {
+  if (trace_stream_->is_enabled(act.source_loc())) {
     *trace_stream_ << "--- step witness " << *witness << " ." << act.pos()
                    << ". --->\n";
   }
@@ -1923,8 +1927,8 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
       llvm::ArrayRef<Nonnull<const Witness*>> witnesses =
           cast<ConstraintWitness>(witness)->witnesses();
       if (act.pos() < static_cast<int>(witnesses.size())) {
-        return todo_.Spawn(
-            std::make_unique<WitnessAction>(witnesses[act.pos()]));
+        return todo_.Spawn(std::make_unique<WitnessAction>(witnesses[act.pos()],
+                                                           std::nullopt));
       }
       std::vector<Nonnull<const Witness*>> new_witnesses;
       new_witnesses.reserve(witnesses.size());
@@ -1939,7 +1943,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
       const auto* constraint_impl = cast<ConstraintImplWitness>(witness);
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<WitnessAction>(
-            constraint_impl->constraint_witness()));
+            constraint_impl->constraint_witness(), std::nullopt));
       }
       return todo_.FinishAction(ConstraintImplWitness::Make(
           arena_, cast<Witness>(act.results()[0]), constraint_impl->index()));
@@ -2471,15 +2475,12 @@ auto Interpreter::Step() -> ErrorOr<Success> {
 
 auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     -> ErrorOr<Success> {
-  if (trace_stream_->is_enabled()) {
-    TraceState();
-  }
+  auto act_source_loc = action->source_loc();
+  TraceState(act_source_loc);
   todo_.Start(std::move(action));
   while (!todo_.empty()) {
     CARBON_RETURN_IF_ERROR(Step());
-    if (trace_stream_->is_enabled()) {
-      TraceState();
-    }
+    TraceState(act_source_loc);
   }
   return Success();
 }

@@ -150,15 +150,19 @@ class Action {
     scope_ = std::move(scope);
   }
 
+  auto source_loc() -> std::optional<SourceLocation> { return source_loc_; }
+
  protected:
   // Constructs an Action. `kind` must be the enumerator corresponding to the
   // most-derived type being constructed.
-  explicit Action(Kind kind) : kind_(kind) {}
+  explicit Action(std::optional<SourceLocation> source_loc, Kind kind)
+      : source_loc_(source_loc), kind_(kind) {}
 
  private:
   int pos_ = 0;
   std::vector<Nonnull<const Value*>> results_;
   std::optional<RuntimeScope> scope_;
+  std::optional<SourceLocation> source_loc_;
 
   const Kind kind_;
 };
@@ -168,7 +172,8 @@ class Action {
 class LocationAction : public Action {
  public:
   explicit LocationAction(Nonnull<const Expression*> expression)
-      : Action(Kind::LocationAction), expression_(expression) {}
+      : Action(expression->source_loc(), Kind::LocationAction),
+        expression_(expression) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::LocationAction;
@@ -185,7 +190,8 @@ class LocationAction : public Action {
 class ExpressionAction : public Action {
  public:
   explicit ExpressionAction(Nonnull<const Expression*> expression)
-      : Action(Kind::ExpressionAction), expression_(expression) {}
+      : Action(expression->source_loc(), Kind::ExpressionAction),
+        expression_(expression) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::ExpressionAction;
@@ -204,7 +210,7 @@ class TypeInstantiationAction : public Action {
  public:
   explicit TypeInstantiationAction(Nonnull<const Value*> type,
                                    SourceLocation source_loc)
-      : Action(Kind::TypeInstantiationAction),
+      : Action(source_loc, Kind::TypeInstantiationAction),
         type_(type),
         source_loc_(source_loc) {}
 
@@ -224,8 +230,9 @@ class TypeInstantiationAction : public Action {
 // local context.
 class WitnessAction : public Action {
  public:
-  explicit WitnessAction(Nonnull<const Witness*> witness)
-      : Action(Kind::WitnessAction), witness_(witness) {}
+  explicit WitnessAction(Nonnull<const Witness*> witness,
+                         std::optional<SourceLocation> source_loc)
+      : Action(source_loc, Kind::WitnessAction), witness_(witness) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::WitnessAction;
@@ -243,7 +250,8 @@ class WitnessAction : public Action {
 class StatementAction : public Action {
  public:
   explicit StatementAction(Nonnull<const Statement*> statement)
-      : Action(Kind::StatementAction), statement_(statement) {}
+      : Action(statement->source_loc(), Kind::StatementAction),
+        statement_(statement) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::StatementAction;
@@ -261,7 +269,8 @@ class StatementAction : public Action {
 class DeclarationAction : public Action {
  public:
   explicit DeclarationAction(Nonnull<const Declaration*> declaration)
-      : Action(Kind::DeclarationAction), declaration_(declaration) {}
+      : Action(declaration->source_loc(), Kind::DeclarationAction),
+        declaration_(declaration) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::DeclarationAction;
@@ -278,7 +287,7 @@ class DeclarationAction : public Action {
 class CleanUpAction : public Action {
  public:
   explicit CleanUpAction(RuntimeScope scope)
-      : Action(Kind::CleanUpAction),
+      : Action(std::nullopt, Kind::CleanUpAction),
         allocations_count_(scope.allocations().size()) {
     StartScope(std::move(scope));
   }
@@ -305,7 +314,9 @@ class DestroyAction : public Action {
   //           and the value is the member of the class
   explicit DestroyAction(Nonnull<const LocationValue*> location,
                          Nonnull<const Value*> value)
-      : Action(Kind::DestroyAction), location_(location), value_(value) {}
+      : Action(std::nullopt, Kind::DestroyAction),
+        location_(location),
+        value_(value) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::DestroyAction;
@@ -326,7 +337,8 @@ class DestroyAction : public Action {
 // with AST nodes.
 class ScopeAction : public Action {
  public:
-  explicit ScopeAction(RuntimeScope scope) : Action(Kind::ScopeAction) {
+  explicit ScopeAction(RuntimeScope scope)
+      : Action(std::nullopt, Kind::ScopeAction) {
     StartScope(std::move(scope));
   }
 
@@ -345,7 +357,7 @@ class ScopeAction : public Action {
 // Should be avoided where possible.
 class RecursiveAction : public Action {
  public:
-  explicit RecursiveAction() : Action(Kind::RecursiveAction) {}
+  explicit RecursiveAction() : Action(std::nullopt, Kind::RecursiveAction) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::RecursiveAction;
