@@ -29,7 +29,6 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
       TestFileName, /*ModificationTime=*/0,
       llvm::MemoryBuffer::getMemBuffer(data_ref, /*BufferName=*/TestFileName,
                                        /*RequiresNullTerminator=*/false)));
-  llvm::errs() << "made\n";
   auto source = SourceBuffer::CreateFromFile(fs, TestFileName);
 
   // Lex the input.

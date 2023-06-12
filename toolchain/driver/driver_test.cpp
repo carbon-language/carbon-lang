@@ -21,7 +21,7 @@ using ::testing::ElementsAre;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
 
-static constexpr llvm::StringLiteral TestFileName = "test_file.txt";
+static constexpr llvm::StringLiteral TestFileName = "test_file.carbon";
 
 class DriverTest : public testing::Test {
  protected:
