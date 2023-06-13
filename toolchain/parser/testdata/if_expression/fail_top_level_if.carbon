@@ -10,7 +10,7 @@
 // CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'IfConditionStart', text: 'if', has_error: yes},
-// CHECK:STDOUT:       {kind: 'NameReference', text: 'true'},
+// CHECK:STDOUT:       {kind: 'Literal', text: 'true'},
 // CHECK:STDOUT:     {kind: 'IfCondition', text: 'if', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'CodeBlockStart', text: 'then', has_error: yes},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: 'then', has_error: yes},

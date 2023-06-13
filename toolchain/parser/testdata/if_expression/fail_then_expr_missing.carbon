@@ -14,7 +14,7 @@
 // CHECK:STDOUT:       {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:     {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'NameReference', text: 'true'},
+// CHECK:STDOUT:         {kind: 'Literal', text: 'true'},
 // CHECK:STDOUT:       {kind: 'IfExpressionIf', text: 'if', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: ';', has_error: yes},
 // CHECK:STDOUT:       {kind: 'IfExpressionThen', text: 'then', has_error: yes, subtree_size: 2},

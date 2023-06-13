@@ -141,6 +141,10 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
     case SemanticsBuiltinKind::IntegerType.AsInt():
       // TODO: Handle different sizes.
       return builder_.getInt32Ty();
+    case SemanticsBuiltinKind::BoolType.AsInt():
+      // TODO: We may want to have different representations for `bool` storage
+      // (`i8`) versus for `bool` values (`i1`).
+      return builder_.getInt1Ty();
   }
 
   auto node = semantics_ir_->GetNode(node_id);

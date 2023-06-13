@@ -43,6 +43,14 @@ auto LoweringHandleBlockArg(LoweringContext& /*context*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
+auto LoweringHandleBoolLiteral(LoweringContext& context,
+                               SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  llvm::Value* v = llvm::ConstantInt::get(context.builder().getInt1Ty(),
+                                          node.GetAsBoolLiteral().index);
+  context.SetLocal(node_id, v);
+}
+
 auto LoweringHandleBranch(LoweringContext& /*context*/,
                           SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
