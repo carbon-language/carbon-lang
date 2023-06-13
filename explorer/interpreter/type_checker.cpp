@@ -530,7 +530,7 @@ auto TypeChecker::FieldTypesWithBase(const NominalClassType& class_type) const
     -> ErrorOr<std::vector<NamedValue>> {
   CARBON_ASSIGN_OR_RETURN(auto fields, FieldTypes(class_type));
   if (const auto base_type = class_type.base()) {
-    CARBON_ASSIGN_OR_RETURN(auto base_fields,
+    CARBON_ASSIGN_OR_RETURN(std::vector<NamedValue> base_fields,
                             FieldTypesWithBase(*base_type.value()));
     fields.emplace_back(NamedValue{std::string(NominalClassValue::BaseField),
                                    base_type.value()});
@@ -626,7 +626,7 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
         }
         case Value::Kind::NominalClassType: {
           CARBON_ASSIGN_OR_RETURN(
-              auto field_types,
+              std::vector<NamedValue> field_types,
               FieldTypesWithBase(cast<NominalClassType>(*destination)));
           CARBON_ASSIGN_OR_RETURN(
               bool convertible,
@@ -839,7 +839,7 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
         }
         case Value::Kind::NominalClassType: {
           CARBON_ASSIGN_OR_RETURN(
-              auto field_types,
+              std::vector<NamedValue> field_types,
               FieldTypesWithBase(cast<NominalClassType>(*destination)));
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<Expression*> result,
@@ -853,11 +853,11 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
           if (cast<StructType>(*source_type).fields().empty()) {
             return make_builtin_conversion(source);
           }
-          break;
+          return conversion_failed();
         default:
-          break;
+          return conversion_failed();
       }
-      break;
+      return conversion_failed();
     case Value::Kind::TupleType: {
       const auto& source_tuple = cast<TupleType>(*source_type);
       switch (destination->kind()) {
@@ -865,7 +865,7 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
           const auto& destination_tuple = cast<TupleType>(*destination);
           if (source_tuple.elements().size() !=
               destination_tuple.elements().size()) {
-            break;
+            return conversion_failed();
           }
           std::vector<Nonnull<Expression*>> converted_elements;
           for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
@@ -921,31 +921,31 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
           return make_builtin_conversion(source);
         }
         default:
-          break;
+          return conversion_failed();
       }
-      break;
+      return conversion_failed();
     }
     case Value::Kind::PointerType: {
       if (destination->kind() != Value::Kind::PointerType) {
-        break;
+        return conversion_failed();
       }
       const auto* src_ptr = cast<PointerType>(source_type);
       const auto* dest_ptr = cast<PointerType>(destination);
       if (src_ptr->pointee_type().kind() != Value::Kind::NominalClassType ||
           dest_ptr->pointee_type().kind() != Value::Kind::NominalClassType) {
-        break;
+        return conversion_failed();
       }
       const auto& src_class = cast<NominalClassType>(src_ptr->pointee_type());
       if (src_class.InheritsClass(&dest_ptr->pointee_type())) {
         return BuildSubtypeConversion(source, src_ptr, dest_ptr);
       }
-      break;
+      return conversion_failed();
     }
     default:
-      break;
+      return conversion_failed();
   }
 
-  return conversion_failed();
+  CARBON_FATAL() << "unreachable";
 }
 
 auto TypeChecker::ImplicitlyConvert(std::string_view context,

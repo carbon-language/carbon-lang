@@ -5,8 +5,8 @@
 // AUTOUPDATE
 // CHECK:STDOUT: 1: 1
 // CHECK:STDOUT: 2: 2
-// CHECK:STDOUT: 3: 1
-// CHECK:STDOUT: 4: 2
+// CHECK:STDOUT: 3: 3
+// CHECK:STDOUT: 4: 4
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
@@ -27,7 +27,7 @@ fn Main() -> i32 {
   Print("2: {0}", arr1[1]);
 
   var arr2: [A; 2] = (3, 4 as A);
-  Print("3: {0}", arr1[0]);
-  Print("4: {0}", arr1[1]);
+  Print("3: {0}", arr2[0].n);
+  Print("4: {0}", arr2[1].n);
   return 0;
 }
