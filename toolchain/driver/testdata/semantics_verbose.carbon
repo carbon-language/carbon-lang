@@ -6,7 +6,7 @@
 //
 // Only checks a couple statements in order to minimize manual update churn.
 // CHECK:STDERR: Node Push 0: FunctionIntroducer -> <none>
-// CHECK:STDERR: AddNode block2: {kind: Return}
+// CHECK:STDERR: AddNode block{{[0-9]+}}: {kind: FunctionDeclaration, arg0: function{{[0-9]+}}}
 
 fn Foo() {
   return;
