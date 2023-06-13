@@ -43,8 +43,7 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   llvm::errs().tie(&llvm::outs());
 
   cl::opt<std::string> input_file_name(cl::Positional, cl::desc("<input file>"),
-                                       cl::Required, cl::value_desc("filename"),
-                                       cl::init("input.carbon"));
+                                       cl::Required);
   cl::opt<bool> parser_debug("parser_debug",
                              cl::desc("Enable debug output from the parser"));
 
