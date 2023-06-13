@@ -199,6 +199,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BindName:
       case SemanticsNodeKind::BlockArg:
+      case SemanticsNodeKind::BoolLiteral:
       case SemanticsNodeKind::Branch:
       case SemanticsNodeKind::BranchIf:
       case SemanticsNodeKind::BranchWithArg:

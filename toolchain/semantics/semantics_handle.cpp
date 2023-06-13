@@ -224,6 +224,17 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
                             ParseTree::Node parse_node) -> bool {
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
+    case TokenKind::False:
+    case TokenKind::True: {
+      context.AddNodeAndPush(
+          parse_node,
+          SemanticsNode::BoolLiteral::Make(
+              parse_node,
+              context.CanonicalizeType(SemanticsNodeId::BuiltinBoolType),
+              token_kind == TokenKind::True ? SemanticsBoolLiteralId(1)
+                                            : SemanticsBoolLiteralId(0)));
+      break;
+    }
     case TokenKind::IntegerLiteral: {
       auto id = context.semantics_ir().AddIntegerLiteral(
           context.tokens().GetIntegerLiteral(token));

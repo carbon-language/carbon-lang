@@ -61,6 +61,8 @@ auto ParserHandleExpressionInPostfix(ParserContext& context) -> void {
       context.PushState(state);
       break;
     }
+    case TokenKind::False:
+    case TokenKind::True:
     case TokenKind::IntegerLiteral:
     case TokenKind::RealLiteral:
     case TokenKind::StringLiteral:
