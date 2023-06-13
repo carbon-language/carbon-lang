@@ -128,7 +128,7 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
     llvm::outs() << "result: " << *result << "\n";
     return EXIT_SUCCESS;
   } else {
-    llvm::errs() << "Execution error: " << result.error() << "\n";
+    llvm::errs() << result.error() << "\n";
     return EXIT_FAILURE;
   }
 }
