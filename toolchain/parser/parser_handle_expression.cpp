@@ -266,6 +266,7 @@ auto ParserHandleIfExpressionFinishElse(ParserContext& context) -> void {
   // Propagate the location of `else`.
   auto if_state = context.PopState();
   if_state.token = else_state.token;
+  if_state.has_error |= else_state.has_error;
   context.PushState(if_state);
 }
 
