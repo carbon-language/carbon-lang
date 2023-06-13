@@ -109,26 +109,21 @@ class SetProgramPhase {
   explicit SetProgramPhase(TraceStream& trace_stream,
                            ProgramPhase program_phase)
       : trace_stream_(trace_stream) {
-    previous_phases_.push_back(trace_stream.current_phase());
+    initial_phase_ = trace_stream.current_phase();
     trace_stream.set_current_phase(program_phase);
   }
 
   // This can be used for cases when current phase is set multiple times within
   // the same scope
   auto update_phase(ProgramPhase program_phase) -> void {
-    previous_phases_.push_back(trace_stream_.current_phase());
     trace_stream_.set_current_phase(program_phase);
   }
 
-  ~SetProgramPhase() {
-    if (!previous_phases_.empty()) {
-      trace_stream_.set_current_phase(previous_phases_.front());
-    }
-  }
+  ~SetProgramPhase() { trace_stream_.set_current_phase(initial_phase_); }
 
  private:
   TraceStream& trace_stream_;
-  std::vector<ProgramPhase> previous_phases_;
+  ProgramPhase initial_phase_;
 };
 
 }  // namespace Carbon
