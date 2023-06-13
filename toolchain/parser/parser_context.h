@@ -238,6 +238,9 @@ class ParserContext {
         << "Excessive stack size: likely infinite loop";
   }
 
+  // Obtain mutable access to the current state without popping it.
+  auto PeekState() -> StateStackEntry& { return state_stack_.back(); }
+
   // Returns the current declaration context according to state_stack_.
   // This is expected to be called in cases which are close to a context.
   // Although it looks like it could be O(n) for state_stack_'s depth, valid

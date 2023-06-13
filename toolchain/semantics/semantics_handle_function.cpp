@@ -18,7 +18,7 @@ auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
          ParseNodeKind::FunctionDefinitionStart) {
     context.node_stack().PopAndIgnore();
   }
-  context.node_stack().PopAndIgnore();
+  context.node_stack().PopAndDiscardId(ParseNodeKind::FunctionDefinitionStart);
   context.return_scope_stack().pop_back();
   context.PopScope();
   context.node_block_stack().Pop();

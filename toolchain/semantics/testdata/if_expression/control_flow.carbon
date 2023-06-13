@@ -35,12 +35,12 @@
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+6, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block8, arg1: node+6},
+// CHECK:STDOUT:   {kind: Branch, arg0: block7},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
-// CHECK:STDOUT:   {kind: BranchIf, arg0: block7, arg1: node+6},
-// CHECK:STDOUT:   {kind: Branch, arg0: block8},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+9},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+10},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+11},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+12},
 // CHECK:STDOUT:   {kind: BlockArg, type: type0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+15, type: type0},
 // CHECK:STDOUT: ]
@@ -68,16 +68,16 @@
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+11,
-// CHECK:STDOUT:     node+12,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+9,
-// CHECK:STDOUT:     node+13,
+// CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+15,
