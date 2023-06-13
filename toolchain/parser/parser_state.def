@@ -268,12 +268,10 @@ CARBON_PARSER_STATE(IfExpressionFinishThen)
 // Completes the second alternative in an `if` expression.
 //
 // Always:
-//  (this state and outer IfExpressionFinish done)
+//  (state done)
 CARBON_PARSER_STATE(IfExpressionFinishElse)
 
-// Completes an IfExpression. Only handled for an erroneous `if` expression.
-// For valid `if` expressions, this state is popped when handling
-// `IfExpressionFinishElse`.
+// Completes an IfExpression.
 //
 // Always:
 //   (state done)

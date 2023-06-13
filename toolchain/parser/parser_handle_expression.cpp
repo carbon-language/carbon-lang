@@ -262,17 +262,14 @@ auto ParserHandleIfExpressionFinishThen(ParserContext& context) -> void {
 
 auto ParserHandleIfExpressionFinishElse(ParserContext& context) -> void {
   auto else_state = context.PopState();
-  auto if_state = context.PopState();
 
-  context.AddNode(ParseNodeKind::IfExpressionElse, else_state.token,
-                  if_state.subtree_start,
-                  else_state.has_error || if_state.has_error);
+  // Propagate the location of `else`.
+  auto if_state = context.PopState();
+  if_state.token = else_state.token;
+  context.PushState(if_state);
 }
 
 auto ParserHandleIfExpressionFinish(ParserContext& context) -> void {
-  // Note that we only get here after a parse error. For a valid parse we will
-  // pop the `IfExpressionFinish` state when handling the
-  // `IfExpressionFinishElse` state.
   auto state = context.PopState();
 
   context.AddNode(ParseNodeKind::IfExpressionElse, state.token,
