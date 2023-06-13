@@ -176,7 +176,7 @@ class Interpreter {
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
                       Nonnull<const Value*> receiver) -> ErrorOr<Success>;
 
-  void TraceState(std::optional<SourceLocation> source_loc);
+  void TraceState();
 
   auto phase() const -> Phase { return phase_; }
 
@@ -201,13 +201,8 @@ class Interpreter {
 // State Operations
 //
 
-void Interpreter::TraceState(std::optional<SourceLocation> source_loc) {
-  auto program_phase = trace_stream_->current_phase();
-  trace_stream_->set_current_phase(ProgramPhase::State);
-  if (trace_stream_->is_enabled(source_loc)) {
-    *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
-  }
-  trace_stream_->set_current_phase(program_phase);
+void Interpreter::TraceState() {
+  *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
 }
 
 auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
@@ -582,8 +577,13 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
 
 auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     -> ErrorOr<Nonnull<const Value*>> {
-  auto act_source_loc = action->source_loc();
-  TraceState(act_source_loc);
+  const auto act_source_loc = action->source_loc();
+  if (trace_stream_->is_enabled(act_source_loc)) {
+    *trace_stream_ << "--- recursive eval for `";
+    action->Print(trace_stream_->stream());
+    *trace_stream_ << "` --->\n";
+    TraceState();
+  }
 
   todo_.BeginRecursiveAction();
   CARBON_RETURN_IF_ERROR(todo_.Spawn(std::move(action)));
@@ -592,9 +592,11 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
   // action is finished and popped off the queue before returning to us.
   while (!isa<RecursiveAction>(todo_.CurrentAction())) {
     CARBON_RETURN_IF_ERROR(Step());
-    TraceState(act_source_loc);
+    if (trace_stream_->is_enabled(act_source_loc)) {
+      TraceState();
+    }
   }
-  if (trace_stream_->is_enabled()) {
+  if (trace_stream_->is_enabled(act_source_loc)) {
     *trace_stream_ << "--- recursive eval done\n";
   }
   Nonnull<const Value*> result =
@@ -2476,11 +2478,18 @@ auto Interpreter::Step() -> ErrorOr<Success> {
 auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     -> ErrorOr<Success> {
   auto act_source_loc = action->source_loc();
-  TraceState(act_source_loc);
+  if (trace_stream_->is_enabled(act_source_loc)) {
+    *trace_stream_ << "--- running all steps for `";
+    action->Print(trace_stream_->stream());
+    *trace_stream_ << "` --->\n";
+    TraceState();
+  }
   todo_.Start(std::move(action));
   while (!todo_.empty()) {
     CARBON_RETURN_IF_ERROR(Step());
-    TraceState(act_source_loc);
+    if (trace_stream_->is_enabled(act_source_loc)) {
+      TraceState();
+    }
   }
   return Success();
 }

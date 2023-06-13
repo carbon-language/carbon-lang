@@ -77,8 +77,6 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
           clEnumValN(
               ProgramPhase::Timing, "trace_timing",
               "Include timing logs for each phase, indicating the time taken."),
-          clEnumValN(ProgramPhase::State, "trace_state",
-                     "Include logs for state (stack and memory)"),
           clEnumValN(ProgramPhase::All, "trace_all",
                      "Include trace output for all phases.")));
 

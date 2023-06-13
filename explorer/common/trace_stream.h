@@ -29,7 +29,6 @@ enum class ProgramPhase {
   Declarations,                // Phase for printing declarations.
   Execution,                   // Phase for program execution.
   Timing,                      // Phase for timing logs.
-  State,                       // Phase for tracing state.
   All,                         // Represents all program phases.
   Last = All                   // Last program phase indicator.
 };
