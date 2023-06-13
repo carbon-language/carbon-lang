@@ -183,8 +183,8 @@ CARBON_PARSER_STATE_VARIANTS2(Designator, Expression, Struct)
 //
 // If `If`:
 //   1. Expression
-//   2. ExpressionThen
-//   3. ExpressionIfFinish
+//   2. IfExpressionCondition
+//   3. IfExpressionFinish
 // Else if valid prefix operator:
 //   1. Expression
 //   2. ExpressionLoopForPrefix
@@ -246,28 +246,36 @@ CARBON_PARSER_STATE(ExpressionLoopForBinary)
 //   1. ExpressionLoop
 CARBON_PARSER_STATE(ExpressionLoopForPrefix)
 
+// Completes the condition of an `if` expression and handles the `then` token.
+//
+// If `Then`:
+//   1. Expression
+//   2. IfExpressionFinishThen
+// Else:
+//  (state done)
+CARBON_PARSER_STATE(IfExpressionFinishCondition)
+
+// Completes the first alternative in an `if` expression and handles the `else`
+// token.
+//
+// If `Else`:
+//   1. Expression
+//   2. IfExpressionFinishElse
+// Else:
+//  (state done)
+CARBON_PARSER_STATE(IfExpressionFinishThen)
+
+// Completes the second alternative in an `if` expression.
+//
+// Always:
+//  (state done)
+CARBON_PARSER_STATE(IfExpressionFinishElse)
+
 // Completes an IfExpression.
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE(ExpressionIfFinish)
-
-// Handles the `then` token in an `if` expression.
-//
-// If `Then`:
-//   1. Expression
-//   2. ExpressionElse
-// Else:
-//  (state done)
-CARBON_PARSER_STATE(ExpressionThen)
-
-// Handles the `else` token in an `if` expression.
-//
-// If `Else`:
-//   1. Expression
-// Else:
-//  (state done)
-CARBON_PARSER_STATE(ExpressionElse)
+CARBON_PARSER_STATE(IfExpressionFinish)
 
 // Handles the `;` for an expression statement, which is different from most
 // keyword statements.

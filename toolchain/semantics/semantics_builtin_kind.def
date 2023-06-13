@@ -50,6 +50,9 @@ CARBON_SEMANTICS_BUILTIN_KIND(InvalidType, "<unknown>")
 // Keeping distinct placeholders can help find usages for later fixes.
 // -----------------------------------------------------------------------------
 
+// The type of bool literals and branch conditions, bool.
+CARBON_SEMANTICS_BUILTIN_KIND(BoolType, "bool")
+
 // The type of integer values and integer literals, currently always i32.
 CARBON_SEMANTICS_BUILTIN_KIND(IntegerType, "i32")
 

@@ -37,6 +37,30 @@ auto LoweringHandleBindName(LoweringContext& /*context*/,
   // Probably need to do something here, but not necessary for now.
 }
 
+auto LoweringHandleBlockArg(LoweringContext& /*context*/,
+                            SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
+auto LoweringHandleBranch(LoweringContext& /*context*/,
+                          SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
+auto LoweringHandleBranchIf(LoweringContext& /*context*/,
+                            SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
+auto LoweringHandleBranchWithArg(LoweringContext& /*context*/,
+                                 SemanticsNodeId /*node_id*/,
+                                 SemanticsNode node) -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
 auto LoweringHandleBuiltin(LoweringContext& /*context*/,
                            SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {

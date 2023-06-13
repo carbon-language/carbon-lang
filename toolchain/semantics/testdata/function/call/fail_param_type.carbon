@@ -5,8 +5,8 @@
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str1, param_refs: block2, body: block0},
-// CHECK:STDOUT:   {name: str2, param_refs: block0, body: block4},
+// CHECK:STDOUT:   {name: str1, param_refs: block2, body: block4},
+// CHECK:STDOUT:   {name: str2, param_refs: block0, body: block5},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -44,6 +44,8 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+4,

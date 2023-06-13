@@ -178,21 +178,6 @@ auto SemanticsHandleIfConditionStart(SemanticsContext& context,
   return context.TODO(parse_node, "HandleIfConditionStart");
 }
 
-auto SemanticsHandleIfExpression(SemanticsContext& context,
-                                 ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleIfExpression");
-}
-
-auto SemanticsHandleIfExpressionElse(SemanticsContext& context,
-                                     ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleIfExpressionElse");
-}
-
-auto SemanticsHandleIfExpressionThen(SemanticsContext& context,
-                                     ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleIfExpressionThen");
-}
-
 auto SemanticsHandleIfStatement(SemanticsContext& context,
                                 ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleIfStatement");
@@ -273,6 +258,10 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
               parse_node,
               context.CanonicalizeType(SemanticsNodeId::BuiltinStringType),
               id));
+      break;
+    }
+    case TokenKind::Bool: {
+      context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinBoolType);
       break;
     }
     case TokenKind::IntegerTypeLiteral: {

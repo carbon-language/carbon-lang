@@ -198,6 +198,10 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BindName:
+      case SemanticsNodeKind::BlockArg:
+      case SemanticsNodeKind::Branch:
+      case SemanticsNodeKind::BranchIf:
+      case SemanticsNodeKind::BranchWithArg:
       case SemanticsNodeKind::Builtin:
       case SemanticsNodeKind::Call:
       case SemanticsNodeKind::CodeBlock:

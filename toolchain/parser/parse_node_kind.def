@@ -260,15 +260,15 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(InfixOperator, 2)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PostfixOperator, 1)
 
 // `if` expression + `then` + `else`:
-//   _external_: expression
+//     _external_: expression
+//   IfExpressionIf
+//     _external_: expression
 //   IfExpressionThen
 //   _external_: expression
-//   IfExpressionElse
-//   _external_: expression
-// IfExpression
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpression, 5)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionThen, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionElse, 0)
+// IfExpressionElse
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionIf, 1)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionThen, 1)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionElse, 3)
 
 // Struct literals, such as `{.a = 0}`:
 //   StructLiteralOrStructTypeLiteralStart

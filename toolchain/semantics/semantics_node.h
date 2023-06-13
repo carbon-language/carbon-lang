@@ -262,6 +262,19 @@ class SemanticsNode {
                                           SemanticsStringId /*name_id*/,
                                           SemanticsNodeId /*node_id*/>;
 
+  using BlockArg = Factory<SemanticsNodeKind::BlockArg>;
+
+  using Branch = FactoryNoType<SemanticsNodeKind::Branch,
+                               SemanticsNodeBlockId /*target_id*/>;
+
+  using BranchIf = FactoryNoType<SemanticsNodeKind::BranchIf,
+                                 SemanticsNodeBlockId /*target_id*/,
+                                 SemanticsNodeId /*cond_id*/>;
+
+  using BranchWithArg = FactoryNoType<SemanticsNodeKind::BranchWithArg,
+                                      SemanticsNodeBlockId /*target_id*/,
+                                      SemanticsNodeId /*arg*/>;
+
   class Builtin {
    public:
     static auto Make(SemanticsBuiltinKind builtin_kind, SemanticsTypeId type_id)

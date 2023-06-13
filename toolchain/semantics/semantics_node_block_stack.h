@@ -27,6 +27,12 @@ class SemanticsNodeBlockStack {
   // order to support lazy allocation.
   auto Push() -> void;
 
+  // Allocates and pushes a new node block.
+  auto PushForAdd() -> SemanticsNodeBlockId {
+    Push();
+    return PeekForAdd();
+  }
+
   // Peeks at the top node block. This does not trigger lazy allocation, so the
   // returned node block may be invalid.
   auto Peek() -> SemanticsNodeBlockId { return stack_.back(); }
