@@ -243,12 +243,8 @@ auto ParserHandleIfExpressionFinishThen(ParserContext& context) -> void {
                   state.subtree_start, state.has_error);
 
   if (context.PositionIs(TokenKind::Else)) {
-    // Update the location of the `IfExpressionFinish` state to refer to the
-    // `else` token.
-    auto& if_finish_state = context.PeekState();
-    CARBON_CHECK(if_finish_state.state == ParserState::IfExpressionFinish);
-    if_finish_state.token = context.ConsumeChecked(TokenKind::Else);
-
+    context.PushState(ParserState::IfExpressionFinishElse);
+    context.ConsumeChecked(TokenKind::Else);
     context.PushStateForExpression(*PrecedenceGroup::ForLeading(TokenKind::If));
   } else {
     // TODO: Include the location of the `if` token.
@@ -264,7 +260,19 @@ auto ParserHandleIfExpressionFinishThen(ParserContext& context) -> void {
   }
 }
 
+auto ParserHandleIfExpressionFinishElse(ParserContext& context) -> void {
+  auto else_state = context.PopState();
+  auto if_state = context.PopState();
+
+  context.AddNode(ParseNodeKind::IfExpressionElse, else_state.token,
+                  if_state.subtree_start,
+                  else_state.has_error || if_state.has_error);
+}
+
 auto ParserHandleIfExpressionFinish(ParserContext& context) -> void {
+  // Note that we only get here after a parse error. For a valid parse we will
+  // pop the `IfExpressionFinish` state when handling the
+  // `IfExpressionFinishElse` state.
   auto state = context.PopState();
 
   context.AddNode(ParseNodeKind::IfExpressionElse, state.token,

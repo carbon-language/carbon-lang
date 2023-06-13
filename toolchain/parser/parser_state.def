@@ -250,7 +250,7 @@ CARBON_PARSER_STATE(ExpressionLoopForPrefix)
 //
 // If `Then`:
 //   1. Expression
-//   2. IfExpressionThen
+//   2. IfExpressionFinishThen
 // Else:
 //  (state done)
 CARBON_PARSER_STATE(IfExpressionFinishCondition)
@@ -260,11 +260,20 @@ CARBON_PARSER_STATE(IfExpressionFinishCondition)
 //
 // If `Else`:
 //   1. Expression
+//   2. IfExpressionFinishElse
 // Else:
 //  (state done)
 CARBON_PARSER_STATE(IfExpressionFinishThen)
 
-// Completes an IfExpression.
+// Completes the second alternative in an `if` expression.
+//
+// Always:
+//  (this state and outer IfExpressionFinish done)
+CARBON_PARSER_STATE(IfExpressionFinishElse)
+
+// Completes an IfExpression. Only handled for an erroneous `if` expression.
+// For valid `if` expressions, this state is popped when handling
+// `IfExpressionFinishElse`.
 //
 // Always:
 //   (state done)
