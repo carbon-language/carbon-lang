@@ -108,8 +108,7 @@ class SetProgramPhase {
  public:
   explicit SetProgramPhase(TraceStream& trace_stream,
                            ProgramPhase program_phase)
-      : trace_stream_(trace_stream) {
-    initial_phase_ = trace_stream.current_phase();
+      : trace_stream_(trace_stream), initial_phase_(trace_stream.current_phase()) {
     trace_stream.set_current_phase(program_phase);
   }
 
