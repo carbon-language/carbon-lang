@@ -68,17 +68,19 @@ struct SemanticsCrossReferenceIRId : public IndexBase {
   }
 };
 
-// The ID of a boolean value.
-struct SemanticsBoolLiteralId : public IndexBase {
+// A boolean value.
+struct SemanticsBoolValue : public IndexBase {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    if (index == 0) {
-      out << "false";
-    } else if (index == 1) {
-      out << "true";
-    } else {
-      out << "int";
-      IndexBase::Print(out);
+    switch (index) {
+      case 0:
+        out << "false";
+        break;
+      case 1:
+        out << "true";
+        break;
+      default:
+        CARBON_FATAL() << "Invalid bool value " << index;
     }
   }
 };
@@ -279,8 +281,8 @@ class SemanticsNode {
 
   using BlockArg = Factory<SemanticsNodeKind::BlockArg>;
 
-  using BoolLiteral = Factory<SemanticsNodeKind::BoolLiteral,
-                              SemanticsBoolLiteralId /*value_id*/>;
+  using BoolLiteral =
+      Factory<SemanticsNodeKind::BoolLiteral, SemanticsBoolValue /*value*/>;
 
   using Branch = FactoryNoType<SemanticsNodeKind::Branch,
                                SemanticsNodeBlockId /*target_id*/>;

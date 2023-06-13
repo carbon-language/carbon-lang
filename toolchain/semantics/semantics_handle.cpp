@@ -231,8 +231,8 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
           SemanticsNode::BoolLiteral::Make(
               parse_node,
               context.CanonicalizeType(SemanticsNodeId::BuiltinBoolType),
-              token_kind == TokenKind::True ? SemanticsBoolLiteralId(1)
-                                            : SemanticsBoolLiteralId(0)));
+              token_kind == TokenKind::True ? SemanticsBoolValue(1)
+                                            : SemanticsBoolValue(0)));
       break;
     }
     case TokenKind::IntegerLiteral: {
