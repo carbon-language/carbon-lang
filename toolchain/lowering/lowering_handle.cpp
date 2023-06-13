@@ -148,6 +148,12 @@ auto LoweringHandleIntegerLiteral(LoweringFunctionContext& context,
   context.SetLocal(node_id, v);
 }
 
+auto LoweringHandleNamespace(LoweringFunctionContext& /*context*/,
+                             SemanticsNodeId /*node_id*/,
+                             SemanticsNode /*node*/) -> void {
+  // No action to take.
+}
+
 auto LoweringHandleRealLiteral(LoweringFunctionContext& context,
                                SemanticsNodeId node_id, SemanticsNode node)
     -> void {

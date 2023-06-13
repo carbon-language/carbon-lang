@@ -23,13 +23,44 @@ auto SemanticsHandleDeducedParameterListStart(SemanticsContext& context,
   return context.TODO(parse_node, "HandleDeducedParameterListStart");
 }
 
-auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
+auto SemanticsHandleQualifiedDeclaration(SemanticsContext& context,
                                          ParseTree::Node parse_node) -> bool {
+  // The child parse nodes are in reverse order versus how they need to be
+  // applied.
+  auto [parse_node2, node_or_name_id2] =
+      context.node_stack().PopWithParseNode<SemanticsNodeId>();
+  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
+      ParseNodeKind::QualifiedDeclaration) {
+    // QualifiedDeclarations have already been applied.
+    context.node_stack().PopAndDiscardSoloParseNode(
+        ParseNodeKind::QualifiedDeclaration);
+  } else {
+    auto [parse_node1, node_or_name_id1] =
+        context.node_stack().PopWithParseNode<SemanticsNodeId>();
+    context.ApplyDeclarationNameQualifier(parse_node1, node_or_name_id1);
+  }
+  context.ApplyDeclarationNameQualifier(parse_node2, node_or_name_id2);
+
+  context.node_stack().Push(parse_node);
+  return true;
+}
+
+auto SemanticsHandleQualifiedExpression(SemanticsContext& context,
+                                        ParseTree::Node parse_node) -> bool {
   auto name_id =
       context.node_stack().Pop<SemanticsStringId>(ParseNodeKind::Name);
 
   auto base_id = context.node_stack().Pop<SemanticsNodeId>();
   auto base = context.semantics_ir().GetNode(base_id);
+  if (base.kind() == SemanticsNodeKind::Namespace) {
+    // For a namespace, just resolve the name.
+    auto node_id =
+        context.LookupName(parse_node, name_id, base.GetAsNamespace(),
+                           /*print_diagnostics=*/true);
+    context.node_stack().Push(parse_node, node_id);
+    return true;
+  }
+
   auto base_type = context.semantics_ir().GetNode(
       context.semantics_ir().GetType(base.type_id()));
 
@@ -48,21 +79,21 @@ auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
           return true;
         }
       }
-      CARBON_DIAGNOSTIC(DesignatorExpressionNameNotFound, Error,
+      CARBON_DIAGNOSTIC(QualifiedExpressionNameNotFound, Error,
                         "Type `{0}` does not have a member `{1}`.", std::string,
                         llvm::StringRef);
       context.emitter().Emit(
-          parse_node, DesignatorExpressionNameNotFound,
+          parse_node, QualifiedExpressionNameNotFound,
           context.semantics_ir().StringifyType(base.type_id()),
           context.semantics_ir().GetString(name_id));
       break;
     }
     default: {
-      CARBON_DIAGNOSTIC(DesignatorExpressionUnsupported, Error,
-                        "Type `{0}` does not support designator expressions.",
+      CARBON_DIAGNOSTIC(QualifiedExpressionUnsupported, Error,
+                        "Type `{0}` does not support qualified expressions.",
                         std::string);
       context.emitter().Emit(
-          parse_node, DesignatorExpressionUnsupported,
+          parse_node, QualifiedExpressionUnsupported,
           context.semantics_ir().StringifyType(base.type_id()));
       break;
     }
@@ -244,8 +275,12 @@ auto SemanticsHandleName(SemanticsContext& context, ParseTree::Node parse_node)
 
 auto SemanticsHandleNameExpression(SemanticsContext& context,
                                    ParseTree::Node parse_node) -> bool {
-  auto name = context.parse_tree().GetNodeText(parse_node);
-  context.node_stack().Push(parse_node, context.LookupName(parse_node, name));
+  auto name_str = context.parse_tree().GetNodeText(parse_node);
+  auto name_id = context.semantics_ir().AddString(name_str);
+  context.node_stack().Push(
+      parse_node,
+      context.LookupName(parse_node, name_id, SemanticsNameScopeId::Invalid,
+                         /*print_diagnostics=*/true));
   return true;
 }
 

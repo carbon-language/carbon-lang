@@ -4,11 +4,11 @@
 //
 // AUTOUPDATE
 // CHECK:STDOUT: [
-// CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:   {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:   {kind: 'InvalidParse', text: ';'},
-// CHECK:STDOUT: {kind: 'FunctionDeclaration', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT: {kind: 'Namespace', text: ';', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_only_fn_and_semi.carbon:[[@LINE+1]]:3: `fn` introducer should be followed by a name.
-fn;
+// CHECK:STDERR: fail_no_name.carbon:[[@LINE+1]]:10: `namespace` introducer should be followed by a name.
+namespace;

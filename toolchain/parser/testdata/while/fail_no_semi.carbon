@@ -39,11 +39,11 @@ fn F() {
   while (a) {
     if (b) {
       break
-    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+1]]:5: Expected `;` after `break`.
+    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+1]]:5: `break` statements must end with a `;`.
     }
     if (c) {
       continue
-    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+1]]:5: Expected `;` after `continue`.
+    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+1]]:5: `continue` statements must end with a `;`.
     }
   }
 }

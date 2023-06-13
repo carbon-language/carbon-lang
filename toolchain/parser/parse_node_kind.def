@@ -68,6 +68,13 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageImpl, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PackageLibrary, 1)
 CARBON_PARSE_NODE_KIND_BRACKET(PackageDirective, PackageIntroducer)
 
+// `namespace`:
+//   NamespaceStart
+//   _external_: Identifier or QualifiedDeclaration
+// Namespace
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamespaceStart, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Namespace, 2)
+
 // A code block:
 //   CodeBlockStart
 //   _external_: statements
@@ -77,7 +84,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart)
 
 // `fn`:
 //     FunctionIntroducer
-//     Name
+//     _external_: Identifier or QualifiedDeclaration
 //     _external_: ParameterList
 //       _external_: type expression
 //     ReturnType
@@ -233,11 +240,20 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpressionStart, 1)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpressionComma, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(CallExpression, CallExpressionStart)
 
-// A designator expression, such as `a.b`:
+// A qualified declaration, such as `a.b`:
+//   _external_: Identifier or QualifiedDeclaration
+//   _external_: Identifier
+// QualifiedDeclaration
+//
+// TODO: This will eventually more general expressions, for example with
+// `GenericType(type_args).ChildType(child_type_args).Name`.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedDeclaration, 2)
+
+// A qualified expression, such as `a.b` or `GetObject().(Interface.member)`:
 //   _external_: lhs expression
-//   _external_: Name
-// DesignatorExpression
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(DesignatorExpression, 2)
+//   _external_: rhs expression
+// QualifiedExpression
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedExpression, 2)
 
 // A literal.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Literal, 0)
@@ -312,7 +328,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
 
 // `class`:
 //     ClassIntroducer
-//     Name
+//     _external_: Identifier or QualifiedDeclaration
 //   ClassDefinitionStart
 //   _external_: declarations
 // ClassDefinition
@@ -327,7 +343,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDeclaration, ClassIntroducer)
 
 // `interface`:
 //     InterfaceIntroducer
-//     Name
+//     _external_: Identifier or QualifiedDeclaration
 //   InterfaceDefinitionStart
 //   _external_: declarations
 // InterfaceDefinition
@@ -342,7 +358,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDeclaration, InterfaceIntroducer)
 
 // `constraint`:
 //     NamedConstraintIntroducer
-//     Name
+//     _external_: Identifier or QualifiedDeclaration
 //   NamedConstraintDefinitionStart
 //   _external_: declarations
 // NamedConstraintDefinition

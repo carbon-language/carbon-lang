@@ -101,6 +101,21 @@ struct SemanticsIntegerLiteralId : public IndexBase {
   }
 };
 
+// The ID of a name scope.
+struct SemanticsNameScopeId : public IndexBase {
+  // An explicitly invalid ID.
+  static const SemanticsNameScopeId Invalid;
+
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "name_scope";
+    IndexBase::Print(out);
+  }
+};
+
+constexpr SemanticsNameScopeId SemanticsNameScopeId::Invalid =
+    SemanticsNameScopeId(SemanticsNameScopeId::InvalidIndex);
+
 // The ID of a node block.
 struct SemanticsNodeBlockId : public IndexBase {
   // All SemanticsIR instances must provide the 0th node block as empty.
@@ -354,6 +369,9 @@ class SemanticsNode {
 
   using IntegerLiteral = Factory<SemanticsNodeKind::IntegerLiteral,
                                  SemanticsIntegerLiteralId /*integer_id*/>;
+
+  using Namespace = FactoryNoType<SemanticsNodeKind::Namespace,
+                                  SemanticsNameScopeId /*name_scope_id*/>;
 
   using RealLiteral = Factory<SemanticsNodeKind::RealLiteral,
                               SemanticsRealLiteralId /*real_id*/>;

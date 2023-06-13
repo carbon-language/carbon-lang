@@ -60,9 +60,9 @@ static auto ParserHandleStatementKeywordFinish(ParserContext& context,
 
   auto semi = context.ConsumeIf(TokenKind::Semi);
   if (!semi) {
-    CARBON_DIAGNOSTIC(ExpectedSemiAfter, Error, "Expected `;` after `{0}`.",
-                      TokenKind);
-    context.emitter().Emit(*context.position(), ExpectedSemiAfter,
+    CARBON_DIAGNOSTIC(ExpectedStatementSemi, Error,
+                      "`{0}` statements must end with a `;`.", TokenKind);
+    context.emitter().Emit(*context.position(), ExpectedStatementSemi,
                            context.tokens().GetKind(state.token));
     state.has_error = true;
     // Recover to the next semicolon if possible, otherwise indicate the

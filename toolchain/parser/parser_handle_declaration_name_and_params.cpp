@@ -7,18 +7,70 @@
 namespace Carbon {
 
 // Handles DeclarationNameAndParamsAs(Optional|Required).
-static auto ParserHandleDeclarationNameAndParams(ParserContext& context,
-                                                 bool params_required) -> void {
+static auto ParserHandleDeclarationNameAndParams(
+    ParserContext& context, std::optional<ParserState> after_name) -> void {
   auto state = context.PopState();
 
-  if (!context.ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
-                                       ParseNodeKind::Name)) {
+  // TODO: Should handle designated names.
+  if (auto identifier = context.ConsumeIf(TokenKind::Identifier)) {
+    state.state = *after_name;
+    context.PushState(state);
+
+    if (context.PositionIs(TokenKind::Period)) {
+      context.AddLeafNode(ParseNodeKind::Name, *identifier);
+      state.state = ParserState::DesignatorOrQualifierAsDeclaration;
+      context.PushState(state);
+    } else {
+      context.AddLeafNode(ParseNodeKind::Name, *identifier);
+    }
+  } else {
     CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
                       "`{0}` introducer should be followed by a name.",
                       TokenKind);
     context.emitter().Emit(*context.position(), ExpectedDeclarationName,
                            context.tokens().GetKind(state.token));
     context.ReturnErrorOnState();
+    context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position());
+  }
+}
+
+auto ParserHandleDeclarationNameAndParamsAsNone(ParserContext& context)
+    -> void {
+  ParserHandleDeclarationNameAndParams(
+      context, ParserState::DeclarationNameAndParamsAfterNameAsNone);
+}
+
+auto ParserHandleDeclarationNameAndParamsAsOptional(ParserContext& context)
+    -> void {
+  ParserHandleDeclarationNameAndParams(
+      context, ParserState::DeclarationNameAndParamsAfterNameAsOptional);
+}
+
+auto ParserHandleDeclarationNameAndParamsAsRequired(ParserContext& context)
+    -> void {
+  ParserHandleDeclarationNameAndParams(
+      context, ParserState::DeclarationNameAndParamsAfterNameAsRequired);
+}
+
+enum class Params {
+  None,
+  Optional,
+  Required,
+};
+
+static auto ParserHandleDeclarationNameAndParamsAfterName(
+    ParserContext& context, Params params) -> void {
+  auto state = context.PopState();
+
+  if (context.PositionIs(TokenKind::Period)) {
+    // Continue designator processing.
+    context.PushState(state);
+    state.state = ParserState::DesignatorOrQualifierAsDeclaration;
+    context.PushState(state);
+    return;
+  }
+
+  if (params == Params::None) {
     return;
   }
 
@@ -27,7 +79,7 @@ static auto ParserHandleDeclarationNameAndParams(ParserContext& context,
     context.PushState(ParserState::ParameterListAsDeduced);
   } else if (context.PositionIs(TokenKind::OpenParen)) {
     context.PushState(ParserState::ParameterListAsRegular);
-  } else if (params_required) {
+  } else if (params == Params::Required) {
     CARBON_DIAGNOSTIC(ParametersRequiredByIntroducer, Error,
                       "`{0}` requires a `(` for parameters.", TokenKind);
     context.emitter().Emit(*context.position(), ParametersRequiredByIntroducer,
@@ -36,14 +88,19 @@ static auto ParserHandleDeclarationNameAndParams(ParserContext& context,
   }
 }
 
-auto ParserHandleDeclarationNameAndParamsAsOptional(ParserContext& context)
+auto ParserHandleDeclarationNameAndParamsAfterNameAsNone(ParserContext& context)
     -> void {
-  ParserHandleDeclarationNameAndParams(context, /*params_required=*/false);
+  ParserHandleDeclarationNameAndParamsAfterName(context, Params::None);
 }
 
-auto ParserHandleDeclarationNameAndParamsAsRequired(ParserContext& context)
-    -> void {
-  ParserHandleDeclarationNameAndParams(context, /*params_required=*/true);
+auto ParserHandleDeclarationNameAndParamsAfterNameAsOptional(
+    ParserContext& context) -> void {
+  ParserHandleDeclarationNameAndParamsAfterName(context, Params::Optional);
+}
+
+auto ParserHandleDeclarationNameAndParamsAfterNameAsRequired(
+    ParserContext& context) -> void {
+  ParserHandleDeclarationNameAndParamsAfterName(context, Params::Required);
 }
 
 auto ParserHandleDeclarationNameAndParamsAfterDeduced(ParserContext& context)

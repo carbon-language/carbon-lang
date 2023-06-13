@@ -38,7 +38,7 @@
 // CHECK:STDOUT:       {kind: 'ReturnStatementStart', text: 'return'},
 // CHECK:STDOUT:         {kind: 'SelfValueName', text: 'self'},
 // CHECK:STDOUT:         {kind: 'Name', text: 'x'},
-// CHECK:STDOUT:       {kind: 'DesignatorExpression', text: '.', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'QualifiedExpression', text: '.', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'ReturnStatement', text: ';', subtree_size: 5},
 // CHECK:STDOUT:   {kind: 'FunctionDefinition', text: '}', subtree_size: 18},
 // CHECK:STDOUT: {kind: 'ClassDefinition', text: '}', subtree_size: 38},

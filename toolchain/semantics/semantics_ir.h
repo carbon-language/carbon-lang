@@ -113,6 +113,27 @@ class SemanticsIR {
     return integer_literals_[int_id.index];
   }
 
+  // Adds a name scope, returning an ID to reference it.
+  auto AddNameScope() -> SemanticsNameScopeId {
+    SemanticsNameScopeId name_scopes_id(name_scopes_.size());
+    name_scopes_.resize(name_scopes_id.index + 1);
+    return name_scopes_id;
+  }
+
+  // Adds an entry to a name scope. Returns true on success, false on
+  // duplicates.
+  auto AddNameScopeEntry(SemanticsNameScopeId scope_id,
+                         SemanticsStringId name_id, SemanticsNodeId target_id)
+      -> bool {
+    return name_scopes_[scope_id.index].insert({name_id, target_id}).second;
+  }
+
+  // Returns the requested name scope.
+  auto GetNameScope(SemanticsNameScopeId scope_id)
+      -> const llvm::DenseMap<SemanticsStringId, SemanticsNodeId>& {
+    return name_scopes_[scope_id.index];
+  }
+
   // Adds a node to a specified block, returning an ID to reference the node.
   auto AddNode(SemanticsNodeBlockId block_id, SemanticsNode node)
       -> SemanticsNodeId {
@@ -269,6 +290,10 @@ class SemanticsIR {
 
   // Storage for integer literals.
   llvm::SmallVector<llvm::APInt> integer_literals_;
+
+  // Storage for name scopes.
+  llvm::SmallVector<llvm::DenseMap<SemanticsStringId, SemanticsNodeId>>
+      name_scopes_;
 
   // Storage for real literals.
   llvm::SmallVector<SemanticsRealLiteral> real_literals_;
