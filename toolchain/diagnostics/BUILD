@@ -21,7 +21,7 @@ cc_test(
     deps = [
         ":diagnostic_emitter",
         ":mocks",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -66,7 +66,7 @@ cc_test(
         ":diagnostic_emitter",
         ":mocks",
         ":sorting_diagnostic_consumer",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

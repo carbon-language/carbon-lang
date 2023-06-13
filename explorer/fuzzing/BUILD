@@ -79,8 +79,8 @@ cc_test(
     ],
     deps = [
         ":fuzzer_util",
-        "//common:gtest_main",
         "//common/fuzzing:proto_to_carbon_lib",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",

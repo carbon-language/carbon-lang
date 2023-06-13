@@ -32,8 +32,8 @@ cc_test(
     srcs = ["driver_test.cpp"],
     deps = [
         ":driver",
-        "//common:gtest_main",
-        "//common:test_raw_ostream",
+        "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
