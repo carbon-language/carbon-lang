@@ -5,6 +5,7 @@
 workspace(name = "carbon")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
 skylib_version = "1.3.0"
 
@@ -112,7 +113,7 @@ http_archive(
 
 # We pin to specific upstream commits and try to track top-of-tree reasonably
 # closely rather than pinning to a specific release.
-llvm_version = "219ba2fb7b0ae89101f3c81a47fe4fc4aa80dea4"
+llvm_version = "0258a53521cfedf5cb80c2b1d4a66c942615de74"
 
 http_archive(
     name = "llvm-raw",
@@ -123,7 +124,7 @@ http_archive(
         "@carbon//bazel/patches/llvm:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
         "@carbon//bazel/patches/llvm:0003_Modernize_py_binary_rule_for_lit.patch",
     ],
-    sha256 = "8b2fa8ae3e434577b4fdd1e91b8990b0651776bd78cf4fbf9b709dcdcdbfbd21",
+    sha256 = "e9f298730072bca14d4db5a786ed7d11962654d3895c27c47ee8130b77cb5f18",
     strip_prefix = "llvm-project-{0}".format(llvm_version),
     urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_version)],
 )
@@ -132,22 +133,35 @@ load("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure")
 
 llvm_configure(
     name = "llvm-project",
-    repo_mapping = {"@llvm_zlib": "@zlib"},
     targets = [
         "AArch64",
         "X86",
     ],
 )
 
-load("@llvm-raw//utils/bazel:terminfo.bzl", "llvm_terminfo_system")
+# Dependencies copied from
+# https://github.com/llvm/llvm-project/blob/main/utils/bazel/WORKSPACE.
+maybe(
+    http_archive,
+    name = "llvm_zlib",
+    build_file = "@llvm-raw//utils/bazel/third_party_build:zlib-ng.BUILD",
+    sha256 = "e36bb346c00472a1f9ff2a0a4643e590a254be6379da7cddd9daeb9a7f296731",
+    strip_prefix = "zlib-ng-2.0.7",
+    urls = [
+        "https://github.com/zlib-ng/zlib-ng/archive/refs/tags/2.0.7.zip",
+    ],
+)
 
-# We require successful detection and use of a system terminfo library.
-llvm_terminfo_system(name = "llvm_terminfo")
-
-load("@llvm-raw//utils/bazel:zlib.bzl", "llvm_zlib_system")
-
-# We require successful detection and use of a system zlib library.
-llvm_zlib_system(name = "zlib")
+maybe(
+    http_archive,
+    name = "llvm_zstd",
+    build_file = "@llvm-raw//utils/bazel/third_party_build:zstd.BUILD",
+    sha256 = "7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0",
+    strip_prefix = "zstd-1.5.2",
+    urls = [
+        "https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz",
+    ],
+)
 
 ###############################################################################
 # Flex/Bison rules
