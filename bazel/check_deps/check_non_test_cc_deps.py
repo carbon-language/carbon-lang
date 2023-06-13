@@ -56,7 +56,7 @@ for dep in deps:
 
         # The rest of LLVM, LLD, and Clang themselves are safe to depend on.
         continue
-    if repo in ("@llvm_terminfo", "@llvm_zlib", "@zlib"):
+    if repo in ("@llvm_terminfo", "@llvm_zlib", "@llvm_zstd"):
         # These are stubs wrapping system libraries for LLVM. They aren't
         # distributed and so should be fine.
         continue
