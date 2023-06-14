@@ -193,21 +193,45 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
   auto rhs_id = context.node_stack().Pop<SemanticsNodeId>();
   auto lhs_id = context.node_stack().Pop<SemanticsNodeId>();
 
-  // TODO: This should search for a compatible interface. For now, it's a very
-  // trivial check of validity on the operation.
-  lhs_id = context.ImplicitAsRequired(
-      parse_node, lhs_id, context.semantics_ir().GetNode(rhs_id).type_id());
-
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case TokenKind::Plus:
+      // TODO: This should search for a compatible interface. For now, it's a
+      // very trivial check of validity on the operation.
+      lhs_id = context.ImplicitAsRequired(
+          parse_node, lhs_id, context.semantics_ir().GetNode(rhs_id).type_id());
+
       context.AddNodeAndPush(
           parse_node,
           SemanticsNode::BinaryOperatorAdd::Make(
               parse_node, context.semantics_ir().GetNode(lhs_id).type_id(),
               lhs_id, rhs_id));
       break;
+
+    case TokenKind::And:
+    case TokenKind::Or: {
+      // The first operand is wrapped in a ShortCircuitOperand, which we
+      // already handled by creating a RHS block and a resumption block, which
+      // are the current block and its enclosing block.
+      rhs_id = context.ImplicitAsBool(parse_node, rhs_id);
+
+      // When the second operand is evaluated, the result of `and` and `or` is
+      // its value.
+      auto rhs_block_id = context.node_block_stack().PopForAdd();
+      auto resume_block_id = context.node_block_stack().PeekForAdd();
+      context.AddNodeToBlock(rhs_block_id,
+                             SemanticsNode::BranchWithArg::Make(
+                                 parse_node, resume_block_id, rhs_id));
+
+      // Collect the result from either the first or second operand.
+      context.AddNodeAndPush(
+          parse_node,
+          SemanticsNode::BlockArg::Make(
+              parse_node, context.semantics_ir().GetNode(rhs_id).type_id()));
+      break;
+    }
+
     default:
       return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
   }
@@ -231,8 +255,8 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
           SemanticsNode::BoolLiteral::Make(
               parse_node,
               context.CanonicalizeType(SemanticsNodeId::BuiltinBoolType),
-              token_kind == TokenKind::True ? SemanticsBoolValue(1)
-                                            : SemanticsBoolValue(0)));
+              token_kind == TokenKind::True ? SemanticsBoolValue::True
+                                            : SemanticsBoolValue::False));
       break;
     }
     case TokenKind::IntegerLiteral: {
@@ -410,7 +434,25 @@ auto SemanticsHandlePostfixOperator(SemanticsContext& context,
 
 auto SemanticsHandlePrefixOperator(SemanticsContext& context,
                                    ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandlePrefixOperator");
+  auto value_id = context.node_stack().Pop<SemanticsNodeId>();
+
+  // Figure out the operator for the token.
+  auto token = context.parse_tree().node_token(parse_node);
+  switch (auto token_kind = context.tokens().GetKind(token)) {
+    case TokenKind::Not:
+      value_id = context.ImplicitAsBool(parse_node, value_id);
+      context.AddNodeAndPush(
+          parse_node,
+          SemanticsNode::UnaryOperatorNot::Make(
+              parse_node, context.semantics_ir().GetNode(value_id).type_id(),
+              value_id));
+      break;
+
+    default:
+      return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
+  }
+
+  return true;
 }
 
 auto SemanticsHandleReturnStatement(SemanticsContext& context,
@@ -490,6 +532,53 @@ auto SemanticsHandleSelfTypeIdentifier(SemanticsContext& context,
 auto SemanticsHandleSelfValueIdentifier(SemanticsContext& context,
                                         ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleSelfValueIdentifier");
+}
+
+auto SemanticsHandleShortCircuitOperand(SemanticsContext& context,
+                                        ParseTree::Node parse_node) -> bool {
+  // Convert the condition to `bool`.
+  auto cond_value_id = context.node_stack().Pop<SemanticsNodeId>();
+  cond_value_id = context.ImplicitAsBool(parse_node, cond_value_id);
+  auto bool_type_id = context.semantics_ir().GetNode(cond_value_id).type_id();
+
+  // Compute the branch value: the condition for `and`, inverted for `or`.
+  auto token = context.parse_tree().node_token(parse_node);
+  SemanticsNodeId branch_value_id = SemanticsNodeId::Invalid;
+  auto short_circuit_result_id = SemanticsNodeId::Invalid;
+  switch (auto token_kind = context.tokens().GetKind(token)) {
+    case TokenKind::And:
+      branch_value_id = cond_value_id;
+      short_circuit_result_id =
+          context.AddNode(SemanticsNode::BoolLiteral::Make(
+              parse_node, bool_type_id, SemanticsBoolValue::False));
+      break;
+
+    case TokenKind::Or:
+      branch_value_id = context.AddNode(SemanticsNode::UnaryOperatorNot::Make(
+          parse_node, bool_type_id, cond_value_id));
+      short_circuit_result_id =
+          context.AddNode(SemanticsNode::BoolLiteral::Make(
+              parse_node, bool_type_id, SemanticsBoolValue::True));
+      break;
+
+    default:
+      CARBON_FATAL() << "Unexpected short-circuiting operator " << parse_node;
+  }
+
+  // Create a block for the right-hand side and for the continuation.
+  auto lhs_block_id = context.node_block_stack().PopForAdd();
+  auto end_block_id = context.node_block_stack().PushForAdd();
+  auto rhs_block_id = context.node_block_stack().PushForAdd();
+  context.AddNodeToBlock(
+      lhs_block_id,
+      SemanticsNode::BranchIf::Make(parse_node, rhs_block_id, branch_value_id));
+  context.AddNodeToBlock(
+      lhs_block_id, SemanticsNode::BranchWithArg::Make(
+                        parse_node, end_block_id, short_circuit_result_id));
+
+  // Put the condition back on the stack for SemanticsHandleInfixOperator.
+  context.node_stack().Push(parse_node, cond_value_id);
+  return true;
 }
 
 auto SemanticsHandleTemplate(SemanticsContext& context,

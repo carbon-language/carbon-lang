@@ -13,9 +13,7 @@ auto SemanticsHandleIfExpressionIf(SemanticsContext& context,
   context.node_stack().Push(if_node);
 
   // Convert the condition to `bool`.
-  cond_value_id = context.ImplicitAsRequired(
-      if_node, cond_value_id,
-      context.CanonicalizeType(SemanticsNodeId::BuiltinBoolType));
+  cond_value_id = context.ImplicitAsBool(if_node, cond_value_id);
 
   // Stop emitting the current block. We'll add some branch instructions to it
   // later, but we don't want it on the stack any more.

@@ -216,6 +216,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::StructMemberAccess:
       case SemanticsNodeKind::StructValue:
       case SemanticsNodeKind::StubReference:
+      case SemanticsNodeKind::UnaryOperatorNot:
       case SemanticsNodeKind::VarStorage:
         // We don't need to handle stringification for nodes that don't show up
         // in errors, but make it clear what's going on so that it's clearer

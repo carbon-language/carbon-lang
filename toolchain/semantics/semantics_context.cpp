@@ -202,6 +202,13 @@ auto SemanticsContext::ImplicitAsRequired(ParseTree::Node parse_node,
   return output_value_id;
 }
 
+auto SemanticsContext::ImplicitAsBool(ParseTree::Node parse_node,
+                                      SemanticsNodeId value_id)
+    -> SemanticsNodeId {
+  return ImplicitAsRequired(parse_node, value_id,
+                            CanonicalizeType(SemanticsNodeId::BuiltinBoolType));
+}
+
 auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
                                       SemanticsTypeId as_type_id,
                                       SemanticsNodeId* output_value_id)
