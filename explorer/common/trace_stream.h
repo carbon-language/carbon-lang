@@ -108,7 +108,7 @@ class TraceStream {
   auto set_allowed_file_contexts(std::vector<FileContext> contexts_list)
       -> void {
     if (contexts_list.empty()) {
-      allowed_phases_.set(static_cast<int>(FileContext::Main));
+      allowed_file_contexts_.set(static_cast<int>(FileContext::Main));
     } else {
       for (auto context : contexts_list) {
         if (context == FileContext::All) {
@@ -119,6 +119,8 @@ class TraceStream {
       }
     }
   }
+
+  auto allowed_phases() { return allowed_phases_; }
 
   // Returns the internal stream. Requires is_enabled.
   auto stream() const -> llvm::raw_ostream& {
