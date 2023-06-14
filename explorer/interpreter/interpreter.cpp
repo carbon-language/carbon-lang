@@ -784,7 +784,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
-    case Value::Kind::VariableType:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
@@ -889,6 +888,34 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         new_elements.push_back(val);
       }
       return arena_->New<TupleValue>(std::move(new_elements));
+    }
+    case Value::Kind::VariableType: {
+      std::optional<Nonnull<const Value*>> source_type;
+      // While type-checking a `where` expression, we can evaluate a reference
+      // to its self binding before we know its type. In this case, the self
+      // binding is always a type.
+      //
+      // TODO: Add a conversion kind to BuiltinConvertExpression so that we
+      // don't need to look at the types and reconstruct what kind of
+      // conversion is being performed from here.
+      if (cast<VariableType>(value)->binding().is_type_checked()) {
+        CARBON_ASSIGN_OR_RETURN(
+            source_type,
+            InstantiateType(&cast<VariableType>(value)->binding().static_type(),
+                            source_loc));
+      }
+      if (isa<TypeType, ConstraintType, NamedConstraintType, InterfaceType>(
+              destination_type) &&
+          (!source_type ||
+           isa<TypeType, ConstraintType, NamedConstraintType, InterfaceType>(
+               *source_type))) {
+        // No further conversions are required.
+        return value;
+      }
+      // We need to convert this, and we don't know how because we don't have
+      // the value yet.
+      return ProgramError(source_loc)
+             << "value of generic binding " << *value << " is not known";
     }
     case Value::Kind::AssociatedConstant: {
       CARBON_ASSIGN_OR_RETURN(
@@ -1575,6 +1602,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::IntrinsicExpression: {
       const auto& intrinsic = cast<IntrinsicExpression>(exp);
+      if (auto rewrite = intrinsic.rewritten_form()) {
+        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+      }
       if (act.pos() == 0) {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&intrinsic.args()));
@@ -1722,10 +1752,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.FinishAction(result);
         }
         case IntrinsicExpression::Intrinsic::ImplicitAsConvert: {
-          CARBON_CHECK(args.size() == 2);
-          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> result,
-                                  Convert(args[0], args[1], exp.source_loc()));
-          return todo_.FinishAction(result);
+          CARBON_FATAL()
+              << "__intrinsic_implicit_as_convert should have been rewritten";
         }
         case IntrinsicExpression::Intrinsic::IntEq: {
           CARBON_CHECK(args.size() == 2);

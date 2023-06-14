@@ -3,14 +3,23 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: 1: 1
+// CHECK:STDOUT: 2: 2
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-fn F() {}
+class A {
+  impl as ImplicitAs(type) {
+    fn Convert[self: Self]() -> type { return i32; }
+  }
+}
+
+fn MakePair() -> (A, A) { return ({}, {}); }
 
 fn Main() -> i32 {
-  // This should probably fail, but at least validate that it doesn't crash.
-  __intrinsic_implicit_as_convert(F, i32);
+  let b: MakePair() = (1, 2);
+  Print("1: {0}", b[0]);
+  Print("2: {0}", b[1]);
   return 0;
 }

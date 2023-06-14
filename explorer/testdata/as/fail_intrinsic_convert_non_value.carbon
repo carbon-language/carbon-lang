@@ -6,12 +6,11 @@
 
 package ExplorerTest api;
 
-// CHECK:STDERR: COMPILATION ERROR: fail_type_tuple_as_type.carbon:[[@LINE+1]]: value of generic binding T is not known
-fn F[T:! ((), ())](x: T) -> () {
-  return x[0];
-}
+fn F() {}
 
 fn Main() -> i32 {
-  F(((), ()));
+  // Validate that this doesn't crash.
+  // CHECK:STDERR: COMPILATION ERROR: fail_intrinsic_convert_non_value.carbon:[[@LINE+1]]: no builtin conversion from fn () -> () to i32 is known
+  __intrinsic_implicit_as_convert(F, i32);
   return 0;
 }
