@@ -2,48 +2,49 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/lowering/lowering_context.h"
+#include "toolchain/lowering/lowering_function_context.h"
 
 namespace Carbon {
 
-auto LoweringHandleInvalid(LoweringContext& /*context*/,
+auto LoweringHandleInvalid(LoweringFunctionContext& /*context*/,
                            SemanticsNodeId /*node_id*/, SemanticsNode /*node*/)
     -> void {
   llvm_unreachable("never in actual IR");
 }
 
-auto LoweringHandleCrossReference(LoweringContext& /*context*/,
+auto LoweringHandleCrossReference(LoweringFunctionContext& /*context*/,
                                   SemanticsNodeId /*node_id*/,
                                   SemanticsNode node) -> void {
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleAssign(LoweringContext& context, SemanticsNodeId /*node_id*/,
-                          SemanticsNode node) -> void {
+auto LoweringHandleAssign(LoweringFunctionContext& context,
+                          SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
   auto [storage_id, value_id] = node.GetAsAssign();
   context.builder().CreateStore(context.GetLocalLoaded(value_id),
                                 context.GetLocal(storage_id));
 }
 
-auto LoweringHandleBinaryOperatorAdd(LoweringContext& /*context*/,
+auto LoweringHandleBinaryOperatorAdd(LoweringFunctionContext& /*context*/,
                                      SemanticsNodeId /*node_id*/,
                                      SemanticsNode node) -> void {
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleBindName(LoweringContext& /*context*/,
+auto LoweringHandleBindName(LoweringFunctionContext& /*context*/,
                             SemanticsNodeId /*node_id*/, SemanticsNode /*node*/)
     -> void {
   // Probably need to do something here, but not necessary for now.
 }
 
-auto LoweringHandleBlockArg(LoweringContext& /*context*/,
+auto LoweringHandleBlockArg(LoweringFunctionContext& /*context*/,
                             SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleBoolLiteral(LoweringContext& context,
+auto LoweringHandleBoolLiteral(LoweringFunctionContext& context,
                                SemanticsNodeId node_id, SemanticsNode node)
     -> void {
   llvm::Value* v = llvm::ConstantInt::get(context.builder().getInt1Ty(),
@@ -51,32 +52,32 @@ auto LoweringHandleBoolLiteral(LoweringContext& context,
   context.SetLocal(node_id, v);
 }
 
-auto LoweringHandleBranch(LoweringContext& /*context*/,
+auto LoweringHandleBranch(LoweringFunctionContext& /*context*/,
                           SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleBranchIf(LoweringContext& /*context*/,
+auto LoweringHandleBranchIf(LoweringFunctionContext& /*context*/,
                             SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleBranchWithArg(LoweringContext& /*context*/,
+auto LoweringHandleBranchWithArg(LoweringFunctionContext& /*context*/,
                                  SemanticsNodeId /*node_id*/,
                                  SemanticsNode node) -> void {
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleBuiltin(LoweringContext& /*context*/,
+auto LoweringHandleBuiltin(LoweringFunctionContext& /*context*/,
                            SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleCall(LoweringContext& context, SemanticsNodeId node_id,
-                        SemanticsNode node) -> void {
+auto LoweringHandleCall(LoweringFunctionContext& context,
+                        SemanticsNodeId node_id, SemanticsNode node) -> void {
   auto [refs_id, function_id] = node.GetAsCall();
   auto* function = context.GetFunction(function_id);
   std::vector<llvm::Value*> args;
@@ -88,13 +89,13 @@ auto LoweringHandleCall(LoweringContext& context, SemanticsNodeId node_id,
   context.SetLocal(node_id, value);
 }
 
-auto LoweringHandleCodeBlock(LoweringContext& /*context*/,
+auto LoweringHandleCodeBlock(LoweringFunctionContext& /*context*/,
                              SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleFunctionDeclaration(LoweringContext& /*context*/,
+auto LoweringHandleFunctionDeclaration(LoweringFunctionContext& /*context*/,
                                        SemanticsNodeId /*node_id*/,
                                        SemanticsNode node) -> void {
   CARBON_FATAL()
@@ -103,7 +104,7 @@ auto LoweringHandleFunctionDeclaration(LoweringContext& /*context*/,
       << node;
 }
 
-auto LoweringHandleIntegerLiteral(LoweringContext& context,
+auto LoweringHandleIntegerLiteral(LoweringFunctionContext& context,
                                   SemanticsNodeId node_id, SemanticsNode node)
     -> void {
   llvm::APInt i =
@@ -114,7 +115,7 @@ auto LoweringHandleIntegerLiteral(LoweringContext& context,
   context.SetLocal(node_id, v);
 }
 
-auto LoweringHandleRealLiteral(LoweringContext& context,
+auto LoweringHandleRealLiteral(LoweringFunctionContext& context,
                                SemanticsNodeId node_id, SemanticsNode node)
     -> void {
   SemanticsRealLiteral real =
@@ -128,25 +129,26 @@ auto LoweringHandleRealLiteral(LoweringContext& context,
                                 context.builder().getDoubleTy(), llvm_val));
 }
 
-auto LoweringHandleReturn(LoweringContext& context, SemanticsNodeId /*node_id*/,
-                          SemanticsNode /*node*/) -> void {
+auto LoweringHandleReturn(LoweringFunctionContext& context,
+                          SemanticsNodeId /*node_id*/, SemanticsNode /*node*/)
+    -> void {
   context.builder().CreateRetVoid();
 }
 
-auto LoweringHandleReturnExpression(LoweringContext& context,
+auto LoweringHandleReturnExpression(LoweringFunctionContext& context,
                                     SemanticsNodeId /*node_id*/,
                                     SemanticsNode node) -> void {
   SemanticsNodeId expr_id = node.GetAsReturnExpression();
   context.builder().CreateRet(context.GetLocalLoaded(expr_id));
 }
 
-auto LoweringHandleStringLiteral(LoweringContext& /*context*/,
+auto LoweringHandleStringLiteral(LoweringFunctionContext& /*context*/,
                                  SemanticsNodeId /*node_id*/,
                                  SemanticsNode node) -> void {
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleStructMemberAccess(LoweringContext& context,
+auto LoweringHandleStructMemberAccess(LoweringFunctionContext& context,
                                       SemanticsNodeId node_id,
                                       SemanticsNode node) -> void {
   auto [struct_id, member_index] = node.GetAsStructMemberAccess();
@@ -168,19 +170,19 @@ auto LoweringHandleStructMemberAccess(LoweringContext& context,
   context.SetLocal(node_id, gep);
 }
 
-auto LoweringHandleStructType(LoweringContext& /*context*/,
+auto LoweringHandleStructType(LoweringFunctionContext& /*context*/,
                               SemanticsNodeId /*node_id*/,
                               SemanticsNode /*node*/) -> void {
   // No action to take.
 }
 
-auto LoweringHandleStructTypeField(LoweringContext& /*context*/,
+auto LoweringHandleStructTypeField(LoweringFunctionContext& /*context*/,
                                    SemanticsNodeId /*node_id*/,
                                    SemanticsNode /*node*/) -> void {
   // No action to take.
 }
 
-auto LoweringHandleStructValue(LoweringContext& context,
+auto LoweringHandleStructValue(LoweringFunctionContext& context,
                                SemanticsNodeId node_id, SemanticsNode node)
     -> void {
   auto* llvm_type = context.GetType(node.type_id());
@@ -203,21 +205,22 @@ auto LoweringHandleStructValue(LoweringContext& context,
   }
 }
 
-auto LoweringHandleStubReference(LoweringContext& context,
+auto LoweringHandleStubReference(LoweringFunctionContext& context,
                                  SemanticsNodeId node_id, SemanticsNode node)
     -> void {
   context.SetLocal(node_id, context.GetLocal(node.GetAsStubReference()));
 }
 
-auto LoweringHandleUnaryOperatorNot(LoweringContext& context,
+auto LoweringHandleUnaryOperatorNot(LoweringFunctionContext& context,
                                     SemanticsNodeId node_id, SemanticsNode node)
     -> void {
   context.SetLocal(node_id, context.builder().CreateNot(context.GetLocal(
                                 node.GetAsUnaryOperatorNot())));
 }
 
-auto LoweringHandleVarStorage(LoweringContext& context, SemanticsNodeId node_id,
-                              SemanticsNode node) -> void {
+auto LoweringHandleVarStorage(LoweringFunctionContext& context,
+                              SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
   // TODO: This should provide a name, not just `var`. Also, LLVM requires
   // globals to have a name. Do we want to generate a name, which would need to
   // be consistent across translation units, or use the given name, which
