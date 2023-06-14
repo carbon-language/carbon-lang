@@ -313,6 +313,11 @@ auto ParserContext::IsTrailingOperatorInfix() -> bool {
 }
 
 auto ParserContext::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
+  if (!PositionKind().is_symbol()) {
+    // Whitespace-based fixity rules only apply to symbolic operators.
+    return;
+  }
+
   if (fixity == OperatorFixity::Infix) {
     // Infix operators must satisfy the infix operator rules.
     if (!IsLexicallyValidInfixOperator()) {
@@ -331,8 +336,7 @@ auto ParserContext::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
 
     // Whitespace is not permitted between a symbolic pre/postfix operator and
     // its operand.
-    if (PositionKind().is_symbol() &&
-        (prefix ? tokens().HasTrailingWhitespace(*position_)
+    if ((prefix ? tokens().HasTrailingWhitespace(*position_)
                 : tokens().HasLeadingWhitespace(*position_))) {
       CARBON_DIAGNOSTIC(UnaryOperatorHasWhitespace, Error,
                         "Whitespace is not allowed {0} this unary operator.",
@@ -340,9 +344,8 @@ auto ParserContext::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
       emitter_->Emit(
           *position_, UnaryOperatorHasWhitespace,
           prefix ? RelativeLocation::After : RelativeLocation::Before);
-    }
-    // Pre/postfix operators must not satisfy the infix operator rules.
-    if (IsLexicallyValidInfixOperator()) {
+    } else if (IsLexicallyValidInfixOperator()) {
+      // Pre/postfix operators must not satisfy the infix operator rules.
       CARBON_DIAGNOSTIC(UnaryOperatorRequiresWhitespace, Error,
                         "Whitespace is required {0} this unary operator.",
                         RelativeLocation);

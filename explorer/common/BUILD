@@ -27,7 +27,7 @@ cc_test(
     deps = [
         ":error_builders",
         ":source_location",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -57,5 +57,15 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//explorer/common:nonnull",
+    ],
+)
+
+cc_test(
+    name = "set_program_phase_raii_test",
+    srcs = ["set_program_phase_raii_test.cpp"],
+    deps = [
+        ":trace_stream",
+        "//common:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )

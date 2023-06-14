@@ -106,8 +106,8 @@ class Pattern : public AstNode {
 };
 
 // Call the given `visitor` on all patterns nested within the given pattern,
-// including `pattern` itself. Aborts and returns `false` if `visitor` returns
-// `false`, otherwise returns `true`.
+// including `pattern` itself, in a preorder traversal. Aborts and returns
+// `false` if `visitor` returns `false`, otherwise returns `true`.
 auto VisitNestedPatterns(const Pattern& pattern,
                          llvm::function_ref<bool(const Pattern&)> visitor)
     -> bool;

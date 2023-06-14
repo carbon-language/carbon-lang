@@ -12,7 +12,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/common/yaml_test_helpers.h"
@@ -31,19 +30,24 @@ using ::testing::StrEq;
 
 class LexerTest : public ::testing::Test {
  protected:
-  auto GetSourceBuffer(llvm::Twine text) -> SourceBuffer& {
-    source_storage.push_back(
-        std::move(*SourceBuffer::CreateFromText(text.str())));
-    return source_storage.back();
+  auto GetSourceBuffer(llvm::StringRef text) -> SourceBuffer& {
+    std::string filename = llvm::formatv("test{0}.carbon", ++file_index);
+    CARBON_CHECK(fs.addFile(filename, /*ModificationTime=*/0,
+                            llvm::MemoryBuffer::getMemBuffer(text)));
+    source_storage.push_front(
+        std::move(*SourceBuffer::CreateFromFile(fs, filename)));
+    return source_storage.front();
   }
 
-  auto Lex(llvm::Twine text,
+  auto Lex(llvm::StringRef text,
            DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer())
       -> TokenizedBuffer {
     return TokenizedBuffer::Lex(GetSourceBuffer(text), consumer);
   }
 
-  llvm::SmallVector<SourceBuffer, 16> source_storage;
+  llvm::vfs::InMemoryFileSystem fs;
+  int file_index = 0;
+  std::forward_list<SourceBuffer> source_storage;
 };
 
 TEST_F(LexerTest, HandlesEmptyBuffer) {

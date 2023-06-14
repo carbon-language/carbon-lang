@@ -173,7 +173,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ForIn, VariableIntroducer)
 CARBON_PARSE_NODE_KIND_BRACKET(ForHeader, ForHeaderStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ForStatement, 2)
 
-// `if` + `else`:
+// `if` statement + `else`:
 //     IfConditionStart
 //     _external_: expression
 //   IfCondition
@@ -258,6 +258,17 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(InfixOperator, 2)
 //   _external_: expression
 // PostfixOperator
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(PostfixOperator, 1)
+
+// `if` expression + `then` + `else`:
+//     _external_: expression
+//   IfExpressionIf
+//     _external_: expression
+//   IfExpressionThen
+//   _external_: expression
+// IfExpressionElse
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionIf, 1)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionThen, 1)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionElse, 3)
 
 // Struct literals, such as `{.a = 0}`:
 //   StructLiteralOrStructTypeLiteralStart

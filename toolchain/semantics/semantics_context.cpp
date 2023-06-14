@@ -61,7 +61,11 @@ auto SemanticsContext::VerifyOnFinish() -> void {
 }
 
 auto SemanticsContext::AddNode(SemanticsNode node) -> SemanticsNodeId {
-  auto block = node_block_stack_.PeekForAdd();
+  return AddNodeToBlock(node_block_stack_.PeekForAdd(), node);
+}
+
+auto SemanticsContext::AddNodeToBlock(SemanticsNodeBlockId block,
+                                      SemanticsNode node) -> SemanticsNodeId {
   CARBON_VLOG() << "AddNode " << block << ": " << node << "\n";
   return semantics_ir_->AddNode(block, node);
 }

@@ -28,7 +28,7 @@ cc_test(
     srcs = ["parse_and_execute_test.cpp"],
     deps = [
         ":parse_and_execute",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )

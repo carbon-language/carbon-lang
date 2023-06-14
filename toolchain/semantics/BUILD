@@ -104,11 +104,9 @@ cc_test(
     size = "small",
     srcs = ["semantics_ir_test.cpp"],
     deps = [
-        ":semantics_ir",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "//toolchain/common:yaml_test_helpers",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/driver",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

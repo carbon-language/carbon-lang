@@ -2,16 +2,16 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/semantics/semantics_ir.h"
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <forward_list>
+#include <string>
 
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/VirtualFileSystem.h"
+#include "llvm/Support/raw_ostream.h"
 #include "toolchain/common/yaml_test_helpers.h"
-#include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -26,20 +26,13 @@ using ::testing::MatchesRegex;
 using ::testing::Pair;
 
 TEST(SemanticsIRTest, YAML) {
-  DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
-  llvm::Expected<SourceBuffer> source =
-      SourceBuffer::CreateFromText("var x: i32 = 0;");
-  TokenizedBuffer tokens = TokenizedBuffer::Lex(*source, consumer);
-  ParseTree parse_tree =
-      ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
-  SemanticsIR builtin_ir = SemanticsIR::MakeBuiltinIR();
-  SemanticsIR semantics_ir = SemanticsIR::MakeFromParseTree(
-      builtin_ir, tokens, parse_tree, consumer, /*vlog_stream=*/nullptr);
-
+  llvm::vfs::InMemoryFileSystem fs;
+  CARBON_CHECK(fs.addFile("test.carbon", /*ModificationTime=*/0,
+                          llvm::MemoryBuffer::getMemBuffer("var x: i32 = 0;")));
   std::string print_output;
   llvm::raw_string_ostream print_stream(print_output);
-  semantics_ir.Print(print_stream);
-  print_stream.flush();
+  Driver d(fs, print_stream, llvm::errs());
+  d.RunFullCommand({"dump", "semantics-ir", "test.carbon"});
 
   // Matches the ID of a node. The numbers may change because of builtin
   // cross-references, so this code is only doing loose structural checks.

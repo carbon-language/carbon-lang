@@ -29,7 +29,7 @@ cc_test(
     srcs = ["check_test.cpp"],
     deps = [
         ":check",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -54,7 +54,7 @@ cc_test(
     deps = [
         ":enum_base",
         ":enum_base_test_def",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -74,24 +74,8 @@ cc_test(
     srcs = ["error_test.cpp"],
     deps = [
         ":error",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
-    ],
-)
-
-# This does extra initialization on top of googletest's gtest_main in order to
-# provide stack traces on unexpected exits, because we normally rely on LLVM
-# code for that.
-#
-# This replaces "@com_google_googletest//:gtest_main";
-# "@com_google_googletest//:gtest" should still be used directly.
-cc_library(
-    name = "gtest_main",
-    testonly = 1,
-    srcs = ["gtest_main.cpp"],
-    deps = [
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -105,7 +89,7 @@ cc_test(
     srcs = ["indirect_value_test.cpp"],
     deps = [
         ":indirect_value",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -120,7 +104,7 @@ cc_test(
     srcs = ["metaprogramming_test.cpp"],
     deps = [
         ":metaprogramming",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -151,29 +135,9 @@ cc_test(
     srcs = ["string_helpers_test.cpp"],
     deps = [
         ":string_helpers",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "test_raw_ostream",
-    testonly = 1,
-    hdrs = ["test_raw_ostream.h"],
-    deps = [
-        ":ostream",
-        "@com_google_googletest//:gtest",
-    ],
-)
-
-cc_test(
-    name = "test_raw_ostream_test",
-    srcs = ["test_raw_ostream_test.cpp"],
-    deps = [
-        ":test_raw_ostream",
-        "//common:gtest_main",
-        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -191,7 +155,7 @@ cc_test(
     srcs = ["vlog_test.cpp"],
     deps = [
         ":vlog",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )

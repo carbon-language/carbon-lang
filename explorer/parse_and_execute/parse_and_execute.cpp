@@ -8,6 +8,7 @@
 
 #include "common/check.h"
 #include "common/error.h"
+#include "explorer/common/trace_stream.h"
 #include "explorer/interpreter/exec_program.h"
 #include "explorer/interpreter/stack_space.h"
 #include "explorer/syntax/parse.h"
@@ -24,21 +25,20 @@ static auto PrintTimingOnExit(TraceStream* trace_stream, const char* label,
   auto duration = end - *cursor;
   *cursor = end;
   auto exit_scope_function = llvm::make_scope_exit([=]() {
-    trace_stream->set_current_phase(ProgramPhase::Timing);
+    SetProgramPhase set_program_phase(*trace_stream, ProgramPhase::Timing);
     if (trace_stream->is_enabled()) {
       *trace_stream << "Time elapsed in " << label << ": "
                     << std::chrono::duration_cast<std::chrono::milliseconds>(
                            duration)
                            .count()
                     << "ms\n";
-      trace_stream->set_current_phase(ProgramPhase::Unknown);
     }
   });
   return exit_scope_function;
 }
 
 static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
-                                  const std::string& prelude_path,
+                                  std::string_view prelude_path,
                                   Nonnull<TraceStream*> trace_stream,
                                   Nonnull<llvm::raw_ostream*> print_stream)
     -> ErrorOr<int> {
@@ -67,7 +67,6 @@ static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
     }
 
     // Run the program.
-    trace_stream->set_current_phase(ProgramPhase::Execution);
     ErrorOr<int> exec_result =
         ExecProgram(&arena, *analyze_result, trace_stream, print_stream);
     auto print_exec_time =
@@ -76,22 +75,20 @@ static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
     if (!exec_result.ok()) {
       return ErrorBuilder() << "RUNTIME ERROR: " << exec_result.error();
     }
-    trace_stream->set_current_phase(ProgramPhase::Unknown);
 
     auto print_trace_timing_heading = llvm::make_scope_exit([=]() {
-      trace_stream->set_current_phase(ProgramPhase::Timing);
+      SetProgramPhase set_prog_phase(*trace_stream, ProgramPhase::Timing);
       if (trace_stream->is_enabled()) {
         *trace_stream << "********** printing timing **********\n";
       }
-      trace_stream->set_current_phase(ProgramPhase::Unknown);
     });
 
     return exec_result;
   });
 }
 
-auto ParseAndExecuteFile(const std::string& prelude_path,
-                         const std::string& input_file_name, bool parser_debug,
+auto ParseAndExecuteFile(std::string_view prelude_path,
+                         std::string_view input_file_name, bool parser_debug,
                          Nonnull<TraceStream*> trace_stream,
                          Nonnull<llvm::raw_ostream*> print_stream)
     -> ErrorOr<int> {
@@ -101,15 +98,15 @@ auto ParseAndExecuteFile(const std::string& prelude_path,
   return ParseAndExecuteHelper(parse, prelude_path, trace_stream, print_stream);
 }
 
-auto ParseAndExecute(const std::string& prelude_path, const std::string& source)
-    -> ErrorOr<int> {
+auto ParseAndExecute(std::string_view prelude_path,
+                     std::string_view input_file_name,
+                     std::string_view file_contents, bool parser_debug,
+                     Nonnull<TraceStream*> trace_stream,
+                     Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int> {
   auto parse = [&](Arena* arena) {
-    return ParseFromString(arena, "test.carbon", source,
-                           /*parser_debug=*/false);
+    return ParseFromString(arena, input_file_name, file_contents, parser_debug);
   };
-  TraceStream trace_stream;
-  return ParseAndExecuteHelper(parse, prelude_path, &trace_stream,
-                               &llvm::nulls());
+  return ParseAndExecuteHelper(parse, prelude_path, trace_stream, print_stream);
 }
 
 }  // namespace Carbon

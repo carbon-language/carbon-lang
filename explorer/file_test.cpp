@@ -32,7 +32,7 @@ class ParseAndExecuteTestFile : public FileTestBase {
     }
   }
 
-  auto RunWithFiles(const llvm::SmallVector<std::string>& test_files,
+  auto RunWithFiles(const llvm::SmallVector<TestFile>& test_files,
                     llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
       -> bool override {
     if (test_files.size() != 1) {
@@ -58,9 +58,9 @@ class ParseAndExecuteTestFile : public FileTestBase {
 
     // Run the parse. Parser debug output is always off because it's difficult
     // to redirect.
-    auto result =
-        ParseAndExecuteFile(prelude_path, path().filename().string(),
-                            /*parser_debug=*/false, &trace_stream, &stdout);
+    auto result = ParseAndExecute(
+        prelude_path, test_files[0].filename, test_files[0].content,
+        /*parser_debug=*/false, &trace_stream, &stdout);
     // This mirrors printing currently done by main.cpp.
     if (result.ok()) {
       stdout << "result: " << *result << "\n";
