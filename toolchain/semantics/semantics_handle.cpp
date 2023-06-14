@@ -228,7 +228,8 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
       context.AddNodeAndPush(
           parse_node,
           SemanticsNode::BlockArg::Make(
-              parse_node, context.semantics_ir().GetNode(rhs_id).type_id()));
+              parse_node, context.semantics_ir().GetNode(rhs_id).type_id(),
+              resume_block_id));
       break;
     }
 

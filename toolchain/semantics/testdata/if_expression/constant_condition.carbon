@@ -41,7 +41,7 @@
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block7, arg1: node+10},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block7, arg1: node+11},
-// CHECK:STDOUT:   {kind: BlockArg, type: type0},
+// CHECK:STDOUT:   {kind: BlockArg, arg0: block7, type: type0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+14, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function3},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: false, type: type1},
@@ -51,7 +51,7 @@
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block11, arg1: node+20},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block11, arg1: node+21},
-// CHECK:STDOUT:   {kind: BlockArg, type: type0},
+// CHECK:STDOUT:   {kind: BlockArg, arg0: block11, type: type0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+24, type: type0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [

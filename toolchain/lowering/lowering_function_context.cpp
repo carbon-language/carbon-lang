@@ -14,11 +14,39 @@ LoweringFunctionContext::LoweringFunctionContext(
     LoweringContext& lowering_context, llvm::Function* function)
     : lowering_context_(&lowering_context),
       function_(function),
-      builder_(lowering_context.llvm_context()) {
-  builder_.SetInsertPoint(
-      llvm::BasicBlock::Create(llvm_context(), "entry", function_));
+      builder_(lowering_context.llvm_context()) {}
+
+auto LoweringFunctionContext::GetBlock(SemanticsNodeBlockId block_id)
+    -> llvm::BasicBlock* {
+  llvm::BasicBlock*& entry = blocks_[block_id];
+  if (!entry) {
+    entry = llvm::BasicBlock::Create(llvm_context(), "", function_);
+  }
+  return entry;
 }
 
+auto LoweringFunctionContext::GetBlockArg(SemanticsNodeBlockId block_id,
+                                          SemanticsTypeId type_id)
+    -> llvm::PHINode* {
+  llvm::BasicBlock* block = GetBlock(block_id);
+
+  // Find the existing phi, if any.
+  auto phis = block->phis();
+  if (!phis.empty()) {
+    return &*phis.begin();
+  }
+
+  // The number of predecessor slots to reserve.
+  unsigned NumReservedPredecessors = 2;
+  auto* phi = llvm::PHINode::Create(GetType(type_id), NumReservedPredecessors);
+  phi->insertInto(block, block->begin());
+  return phi;
+}
+
+auto LoweringFunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
+  synthetic_block_ = llvm::BasicBlock::Create(llvm_context(), "", function_);
+  return *synthetic_block_;
+}
 auto LoweringFunctionContext::GetLocalLoaded(SemanticsNodeId node_id)
     -> llvm::Value* {
   auto* value = GetLocal(node_id);

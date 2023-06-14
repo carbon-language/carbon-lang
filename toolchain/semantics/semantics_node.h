@@ -285,7 +285,8 @@ class SemanticsNode {
                                           SemanticsStringId /*name_id*/,
                                           SemanticsNodeId /*node_id*/>;
 
-  using BlockArg = Factory<SemanticsNodeKind::BlockArg>;
+  using BlockArg =
+      Factory<SemanticsNodeKind::BlockArg, SemanticsNodeBlockId /*block_id*/>;
 
   using BoolLiteral =
       Factory<SemanticsNodeKind::BoolLiteral, SemanticsBoolValue /*value*/>;
@@ -449,6 +450,9 @@ struct SemanticsIdMapInfo {
 }  // namespace Carbon
 
 // Support use of Id types as DenseMap/DenseSet keys.
+template <>
+struct llvm::DenseMapInfo<Carbon::SemanticsNodeBlockId>
+    : public Carbon::SemanticsIdMapInfo<Carbon::SemanticsNodeBlockId> {};
 template <>
 struct llvm::DenseMapInfo<Carbon::SemanticsNodeId>
     : public Carbon::SemanticsIdMapInfo<Carbon::SemanticsNodeId> {};

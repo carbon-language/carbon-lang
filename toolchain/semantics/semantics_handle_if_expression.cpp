@@ -68,7 +68,8 @@ auto SemanticsHandleIfExpressionElse(SemanticsContext& context,
 
   // Obtain the value in the resumption block and push it.
   context.AddNodeAndPush(
-      if_node, SemanticsNode::BlockArg::Make(if_node, result_type_id));
+      if_node,
+      SemanticsNode::BlockArg::Make(if_node, result_type_id, resume_block_id));
   return true;
 }
 
