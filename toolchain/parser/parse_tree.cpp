@@ -314,8 +314,9 @@ auto ParseTree::Verify() const -> ErrorOr<Success> {
                           tokens_->expected_parse_tree_size()) {
     return Error(
         llvm::formatv("ParseTree has {0} nodes and no errors, but "
-                      "TokenizedBuffer has {1} tokens.",
-                      node_impls_.size(), tokens_->size()));
+                      "TokenizedBuffer expected {1} nodes for {2} tokens.",
+                      node_impls_.size(), tokens_->expected_parse_tree_size(),
+                      tokens_->size()));
   }
   return Success();
 }

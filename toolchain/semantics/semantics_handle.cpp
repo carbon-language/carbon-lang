@@ -211,12 +211,20 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
 
     case TokenKind::And:
     case TokenKind::Or: {
-      auto rhs_block_id = context.node_block_stack().PopForAdd();
+      // The first operand is wrapped in a ShortCircuitOperand, which we
+      // already handled by creating a RHS block and a resumption block, which
+      // are the current block and its enclosing block.
       rhs_id = context.ImplicitAsBool(parse_node, rhs_id);
-      context.AddNodeToBlock(
-          rhs_block_id,
-          SemanticsNode::BranchWithArg::Make(
-              parse_node, context.node_block_stack().PeekForAdd(), rhs_id));
+
+      // When the second operand is evaluated, the result of `and` and `or` is
+      // its value.
+      auto rhs_block_id = context.node_block_stack().PopForAdd();
+      auto resume_block_id = context.node_block_stack().PeekForAdd();
+      context.AddNodeToBlock(rhs_block_id,
+                             SemanticsNode::BranchWithArg::Make(
+                                 parse_node, resume_block_id, rhs_id));
+
+      // Collect the result from either the first or second operand.
       context.AddNodeAndPush(
           parse_node,
           SemanticsNode::BlockArg::Make(
@@ -247,8 +255,8 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
           SemanticsNode::BoolLiteral::Make(
               parse_node,
               context.CanonicalizeType(SemanticsNodeId::BuiltinBoolType),
-              token_kind == TokenKind::True ? SemanticsBoolValue(1)
-                                            : SemanticsBoolValue(0)));
+              token_kind == TokenKind::True ? SemanticsBoolValue::True
+                                            : SemanticsBoolValue::False));
       break;
     }
     case TokenKind::IntegerLiteral: {
@@ -531,19 +539,26 @@ auto SemanticsHandleShortCircuitOperand(SemanticsContext& context,
   // Convert the condition to `bool`.
   auto cond_value_id = context.node_stack().Pop<SemanticsNodeId>();
   cond_value_id = context.ImplicitAsBool(parse_node, cond_value_id);
+  auto bool_type_id = context.semantics_ir().GetNode(cond_value_id).type_id();
 
   // Compute the branch value: the condition for `and`, inverted for `or`.
   auto token = context.parse_tree().node_token(parse_node);
   SemanticsNodeId branch_value_id = SemanticsNodeId::Invalid;
+  auto short_circuit_result_id = SemanticsNodeId::Invalid;
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case TokenKind::And:
       branch_value_id = cond_value_id;
+      short_circuit_result_id =
+          context.AddNode(SemanticsNode::BoolLiteral::Make(
+              parse_node, bool_type_id, SemanticsBoolValue::False));
       break;
 
     case TokenKind::Or:
       branch_value_id = context.AddNode(SemanticsNode::UnaryOperatorNot::Make(
-          parse_node, context.semantics_ir().GetNode(cond_value_id).type_id(),
-          cond_value_id));
+          parse_node, bool_type_id, cond_value_id));
+      short_circuit_result_id =
+          context.AddNode(SemanticsNode::BoolLiteral::Make(
+              parse_node, bool_type_id, SemanticsBoolValue::True));
       break;
 
     default:
@@ -558,8 +573,8 @@ auto SemanticsHandleShortCircuitOperand(SemanticsContext& context,
       lhs_block_id,
       SemanticsNode::BranchIf::Make(parse_node, rhs_block_id, branch_value_id));
   context.AddNodeToBlock(
-      lhs_block_id, SemanticsNode::BranchWithArg::Make(parse_node, end_block_id,
-                                                       cond_value_id));
+      lhs_block_id, SemanticsNode::BranchWithArg::Make(
+                        parse_node, end_block_id, short_circuit_result_id));
 
   // Put the condition back on the stack for SemanticsHandleInfixOperator.
   context.node_stack().Push(parse_node, cond_value_id);

@@ -70,6 +70,9 @@ struct SemanticsCrossReferenceIRId : public IndexBase {
 
 // A boolean value.
 struct SemanticsBoolValue : public IndexBase {
+  static const SemanticsBoolValue False;
+  static const SemanticsBoolValue True;
+
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     switch (index) {
@@ -84,6 +87,9 @@ struct SemanticsBoolValue : public IndexBase {
     }
   }
 };
+
+constexpr SemanticsBoolValue SemanticsBoolValue::False = SemanticsBoolValue(0);
+constexpr SemanticsBoolValue SemanticsBoolValue::True = SemanticsBoolValue(1);
 
 // The ID of an integer literal.
 struct SemanticsIntegerLiteralId : public IndexBase {
