@@ -105,6 +105,7 @@ cc_test(
     srcs = ["semantics_ir_test.cpp"],
     deps = [
         "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/driver",
         "@com_google_googletest//:gtest",

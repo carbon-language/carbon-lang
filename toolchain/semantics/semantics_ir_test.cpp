@@ -10,6 +10,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
+#include "testing/util/test_raw_ostream.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/driver/driver.h"
 
@@ -29,8 +30,7 @@ TEST(SemanticsIRTest, YAML) {
   llvm::vfs::InMemoryFileSystem fs;
   CARBON_CHECK(fs.addFile("test.carbon", /*ModificationTime=*/0,
                           llvm::MemoryBuffer::getMemBuffer("var x: i32 = 0;")));
-  std::string print_output;
-  llvm::raw_string_ostream print_stream(print_output);
+  TestRawOstream print_stream;
   Driver d(fs, print_stream, llvm::errs());
   d.RunFullCommand({"dump", "semantics-ir", "test.carbon"});
 
@@ -41,7 +41,7 @@ TEST(SemanticsIRTest, YAML) {
   auto type_id = Yaml::Scalar(MatchesRegex(R"(type\d+)"));
 
   EXPECT_THAT(
-      Yaml::Value::FromText(print_output),
+      Yaml::Value::FromText(print_stream.TakeStr()),
       ElementsAre(Yaml::Mapping(ElementsAre(
           Pair("cross_reference_irs_size", "1"),
           Pair("functions", Yaml::Sequence(IsEmpty())),

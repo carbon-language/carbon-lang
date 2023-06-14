@@ -63,6 +63,7 @@ cc_test(
         ":parse_tree",
         "//common:ostream",
         "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",

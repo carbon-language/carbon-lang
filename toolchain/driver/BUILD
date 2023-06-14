@@ -49,6 +49,7 @@ cc_fuzz_test(
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
         ":driver",
+        "//testing/util:test_raw_ostream",
         "@llvm-project//llvm:Support",
     ],
 )
