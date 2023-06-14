@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Geometry'},
+// CHECK:STDOUT:   {kind: 'Identifier', text: 'Geometry'},
 // CHECK:STDOUT:   {kind: 'PackageApi', text: 'api'},
 // CHECK:STDOUT: {kind: 'PackageDirective', text: 'package', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},

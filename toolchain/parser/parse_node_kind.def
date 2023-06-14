@@ -50,11 +50,11 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParse, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDeclaration, 0)
 
 // A name.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(DeclaredName, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Identifier, 0)
 
 // `package`:
 //   PackageIntroducer
-//   _external_: DeclaredName
+//   _external_: Identifier
 //     _external_: Literal
 //   PackageLibrary
 //   PackageApi or PackageImpl
@@ -74,7 +74,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart)
 
 // `fn`:
 //     FunctionIntroducer
-//     DeclaredName
+//     Identifier
 //     _external_: ParameterList
 //       _external_: type expression
 //     ReturnType
@@ -106,7 +106,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ParameterList, ParameterListStart)
 CARBON_PARSE_NODE_KIND_BRACKET(DeducedParameterList, DeducedParameterListStart)
 
 // A pattern binding, such as `name: Type`:
-//   DeclaredName
+//   Identifier
 //   _external_: type expression
 // [Generic]PatternBinding
 //
@@ -231,10 +231,9 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpressionComma, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(CallExpression, CallExpressionStart)
 
 // A designator expression, such as `a.b`:
-//   _external_: DesignatedName or lhs expression
-//   _external_: DesignatedName
+//   _external_: lhs expression
+//   _external_: Identifier
 // DesignatorExpression
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(DesignatedName, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(DesignatorExpression, 2)
 
 // A literal.
@@ -279,7 +278,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionElse, 3)
 
 // Struct literals, such as `{.a = 0}`:
 //   StructLiteralOrStructTypeLiteralStart
-//       _external_: DesignatedName
+//       _external_: Identifier
 //     StructFieldDesignator
 //     _external_: expression
 //   StructFieldValue
@@ -287,7 +286,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionElse, 3)
 // StructLiteral
 //
 // Struct type literals, such as `{.a: i32}`:
-//       _external_: DesignatedName
+//       _external_: Identifier
 //     StructFieldDesignator
 //     _external_: type expression
 //   StructFieldType
@@ -313,7 +312,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
 
 // `class`:
 //     ClassIntroducer
-//     DeclaredName
+//     Identifier
 //   ClassDefinitionStart
 //   _external_: declarations
 // ClassDefinition
@@ -328,7 +327,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDeclaration, ClassIntroducer)
 
 // `interface`:
 //     InterfaceIntroducer
-//     DeclaredName
+//     Identifier
 //   InterfaceDefinitionStart
 //   _external_: declarations
 // InterfaceDefinition
@@ -343,7 +342,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDeclaration, InterfaceIntroducer)
 
 // `constraint`:
 //     NamedConstraintIntroducer
-//     DeclaredName
+//     Identifier
 //   NamedConstraintDefinitionStart
 //   _external_: declarations
 // NamedConstraintDefinition

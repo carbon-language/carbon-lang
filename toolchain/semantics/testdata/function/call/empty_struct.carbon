@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str1, param_refs: block2, return_type: type0, body: block4},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type0, body: block4},
 // CHECK:STDOUT:   {name: str2, param_refs: block0, body: block5},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
@@ -13,8 +13,8 @@
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
-// CHECK:STDOUT:   a,
 // CHECK:STDOUT:   Echo,
+// CHECK:STDOUT:   a,
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
@@ -25,7 +25,7 @@
 // CHECK:STDOUT:   {kind: StructType, arg0: block0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+2, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: type0},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+2, type: type0},

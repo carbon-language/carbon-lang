@@ -5,9 +5,9 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
+// CHECK:STDOUT:     {kind: 'Identifier', text: 'F'},
 // CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'DeclaredName', text: 'b'},
+// CHECK:STDOUT:         {kind: 'Identifier', text: 'b'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'bool'},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 5},

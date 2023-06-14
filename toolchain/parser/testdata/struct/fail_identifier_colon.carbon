@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'x'},
+// CHECK:STDOUT:     {kind: 'Identifier', text: 'x'},
 // CHECK:STDOUT:       {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
 // CHECK:STDOUT:       {kind: 'StructFieldUnknown', text: 'a', has_error: yes},
 // CHECK:STDOUT:     {kind: 'StructLiteral', text: '}', subtree_size: 3},

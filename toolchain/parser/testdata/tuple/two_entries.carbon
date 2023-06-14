@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'x'},
+// CHECK:STDOUT:     {kind: 'Identifier', text: 'x'},
 // CHECK:STDOUT:       {kind: 'ParenExpressionOrTupleLiteralStart', text: '('},
 // CHECK:STDOUT:       {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'TupleLiteralComma', text: ','},

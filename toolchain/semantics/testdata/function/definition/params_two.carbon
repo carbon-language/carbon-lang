@@ -5,16 +5,16 @@
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str2, param_refs: block2, body: block4},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, body: block4},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
+// CHECK:STDOUT:   Foo,
 // CHECK:STDOUT:   a,
 // CHECK:STDOUT:   b,
-// CHECK:STDOUT:   Foo,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
@@ -22,9 +22,9 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+0, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+2, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [

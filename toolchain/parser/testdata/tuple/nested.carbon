@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'y'},
+// CHECK:STDOUT:     {kind: 'Identifier', text: 'y'},
 // CHECK:STDOUT:       {kind: 'ParenExpressionOrTupleLiteralStart', text: '('},
 // CHECK:STDOUT:         {kind: 'ParenExpressionOrTupleLiteralStart', text: '('},
 // CHECK:STDOUT:       {kind: 'TupleLiteral', text: ')', subtree_size: 2},

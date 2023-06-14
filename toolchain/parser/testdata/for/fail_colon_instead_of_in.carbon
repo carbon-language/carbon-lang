@@ -5,13 +5,13 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'foo'},
+// CHECK:STDOUT:     {kind: 'Identifier', text: 'foo'},
 // CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ForHeaderStart', text: '('},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'DeclaredName', text: 'x'},
+// CHECK:STDOUT:           {kind: 'Identifier', text: 'x'},
 // CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ForIn', text: ':', has_error: yes, subtree_size: 5},
