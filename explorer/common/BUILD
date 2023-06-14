@@ -64,7 +64,7 @@ cc_test(
     srcs = ["set_program_phase_raii_test.cpp"],
     deps = [
         ":trace_stream",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
