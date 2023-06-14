@@ -5,6 +5,7 @@
 #include "toolchain/lowering/lowering_context.h"
 
 #include "common/vlog.h"
+#include "toolchain/lowering/lowering_function_context.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node_kind.h"
 
@@ -16,13 +17,13 @@ LoweringContext::LoweringContext(llvm::LLVMContext& llvm_context,
                                  llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
-      builder_(llvm_context),
       semantics_ir_(&semantics_ir),
       vlog_stream_(vlog_stream) {
   CARBON_CHECK(!semantics_ir.has_errors())
       << "Generating LLVM IR from invalid SemanticsIR is unsupported.";
 }
 
+// TODO: Move this to lower_to_llvm.cpp.
 auto LoweringContext::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_) << "Run can only be called once.";
 
@@ -90,38 +91,30 @@ auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
     // Function is probably defined in another file; not an error.
     return;
   }
-  auto* llvm_function = GetFunction(function_id);
 
-  // Create a new basic block to start insertion into.
-  builder_.SetInsertPoint(llvm::BasicBlock::Create(llvm_context(), "entry",
-                                                   GetFunction(function_id)));
-  CARBON_CHECK(locals_.empty());
+  llvm::Function* llvm_function = GetFunction(function_id);
+  LoweringFunctionContext function_lowering(*this, llvm_function);
 
   // Add parameters to locals.
   auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
   for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
     auto param_storage =
         semantics_ir().GetNode(param_refs[i]).GetAsBindName().second;
-    CARBON_CHECK(
-        locals_.insert({param_storage, llvm_function->getArg(i)}).second)
-        << "Duplicate param: " << param_refs[i];
+    function_lowering.SetLocal(param_storage, llvm_function->getArg(i));
   }
 
-  CARBON_VLOG() << "Lowering " << body_id << "\n";
-  for (const auto& node_id : semantics_ir_->GetNodeBlock(body_id)) {
-    auto node = semantics_ir_->GetNode(node_id);
+  CARBON_VLOG() << "Lowering " << function.body_id << "\n";
+  for (const auto& node_id : semantics_ir().GetNodeBlock(function.body_id)) {
+    auto node = semantics_ir().GetNode(node_id);
     CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
     switch (node.kind()) {
-#define CARBON_SEMANTICS_NODE_KIND(Name)        \
-  case SemanticsNodeKind::Name:                 \
-    LoweringHandle##Name(*this, node_id, node); \
+#define CARBON_SEMANTICS_NODE_KIND(Name)                    \
+  case SemanticsNodeKind::Name:                             \
+    LoweringHandle##Name(function_lowering, node_id, node); \
     break;
 #include "toolchain/semantics/semantics_node_kind.def"
     }
   }
-
-  // Clear locals.
-  locals_.clear();
 }
 
 auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
@@ -137,14 +130,14 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
           SemanticsBuiltinKind::FromInt(node_id.index).name());
     case SemanticsBuiltinKind::FloatingPointType.AsInt():
       // TODO: Handle different sizes.
-      return builder_.getDoubleTy();
+      return llvm::Type::getDoubleTy(*llvm_context_);
     case SemanticsBuiltinKind::IntegerType.AsInt():
       // TODO: Handle different sizes.
-      return builder_.getInt32Ty();
+      return llvm::Type::getInt32Ty(*llvm_context_);
     case SemanticsBuiltinKind::BoolType.AsInt():
       // TODO: We may want to have different representations for `bool` storage
       // (`i8`) versus for `bool` values (`i1`).
-      return builder_.getInt1Ty();
+      return llvm::Type::getInt1Ty(*llvm_context_);
   }
 
   auto node = semantics_ir_->GetNode(node_id);
@@ -167,17 +160,6 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
     default: {
       CARBON_FATAL() << "Cannot use node as type: " << node_id;
     }
-  }
-}
-
-auto LoweringContext::GetLocalLoaded(SemanticsNodeId node_id) -> llvm::Value* {
-  auto* value = GetLocal(node_id);
-  if (llvm::isa<llvm::AllocaInst, llvm::GetElementPtrInst>(value)) {
-    auto* load_type = GetType(semantics_ir().GetNode(node_id).type_id());
-    return builder().CreateLoad(load_type, value);
-  } else {
-    // No load is needed.
-    return value;
   }
 }
 
