@@ -209,6 +209,13 @@ auto LoweringHandleStubReference(LoweringContext& context,
   context.SetLocal(node_id, context.GetLocal(node.GetAsStubReference()));
 }
 
+auto LoweringHandleUnaryOperatorNot(LoweringContext& context,
+                                    SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  context.SetLocal(node_id, context.builder().CreateNot(context.GetLocal(
+                                node.GetAsUnaryOperatorNot())));
+}
+
 auto LoweringHandleVarStorage(LoweringContext& context, SemanticsNodeId node_id,
                               SemanticsNode node) -> void {
   // TODO: This should provide a name, not just `var`. Also, LLVM requires

@@ -44,6 +44,13 @@ class SemanticsNodeBlockStack {
   // SemanticsNodeBlockId::Empty is returned if one wasn't allocated.
   auto Pop() -> SemanticsNodeBlockId;
 
+  // Pops the top node block, ensuring that it is lazily allocated if it's
+  // empty. For use when more nodes will be added to the block later.
+  auto PopForAdd() -> SemanticsNodeBlockId {
+    PeekForAdd();
+    return Pop();
+  }
+
   // Prints the stack for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 

@@ -76,6 +76,10 @@ class SemanticsContext {
   auto ImplicitAsRequired(ParseTree::Node parse_node, SemanticsNodeId value_id,
                           SemanticsTypeId as_type_id) -> SemanticsNodeId;
 
+  // Runs ImplicitAsRequired for a conversion to `bool`.
+  auto ImplicitAsBool(ParseTree::Node parse_node, SemanticsNodeId value_id)
+      -> SemanticsNodeId;
+
   // Canonicalizes a type which is tracked as a single node.
   // TODO: This should eventually return a type ID.
   auto CanonicalizeType(SemanticsNodeId node_id) -> SemanticsTypeId;

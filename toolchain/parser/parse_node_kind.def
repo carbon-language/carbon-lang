@@ -254,6 +254,13 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(PrefixOperator, 1)
 // InfixOperator
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(InfixOperator, 2)
 
+// The first operand of a short-circuiting infix operator:
+//     _external_: expression
+//   ShortCircuitOperand
+//   _external_: expression
+// _external_: InfixOperator
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(ShortCircuitOperand, 1)
+
 // A postfix operator:
 //   _external_: expression
 // PostfixOperator

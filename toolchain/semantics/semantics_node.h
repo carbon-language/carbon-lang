@@ -368,6 +368,9 @@ class SemanticsNode {
   using StubReference =
       Factory<SemanticsNodeKind::StubReference, SemanticsNodeId /*node_id*/>;
 
+  using UnaryOperatorNot = Factory<SemanticsNodeKind::UnaryOperatorNot,
+                                   SemanticsNodeId /*operand_id*/>;
+
   using VarStorage = Factory<SemanticsNodeKind::VarStorage>;
 
   SemanticsNode()
