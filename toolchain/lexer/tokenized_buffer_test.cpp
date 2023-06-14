@@ -14,6 +14,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
+#include "testing/util/test_raw_ostream.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
@@ -1103,12 +1104,10 @@ TEST_F(LexerTest, PrintingAsYaml) {
   // Test that we can parse this into YAML and verify line and indent data.
   auto buffer = Lex("\n ;\n\n\n; ;\n\n\n\n\n\n\n\n\n\n\n");
   ASSERT_FALSE(buffer.has_errors());
-  std::string print_output;
-  llvm::raw_string_ostream print_stream(print_output);
+  TestRawOstream print_stream;
   buffer.Print(print_stream);
-  print_stream.flush();
 
-  EXPECT_THAT(Yaml::Value::FromText(print_output),
+  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()),
               ElementsAre(Yaml::SequenceValue{
                   Yaml::MappingValue{{"index", "0"},
                                      {"kind", "Semi"},

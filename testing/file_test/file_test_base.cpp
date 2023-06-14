@@ -10,6 +10,7 @@
 #include "common/check.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/InitLLVM.h"
+#include "testing/util/test_raw_ostream.h"
 
 namespace Carbon::Testing {
 
@@ -78,11 +79,9 @@ auto FileTestBase::TestBody() -> void {
   }
 
   // Capture trace streaming, but only when in debug mode.
-  std::string stdout;
-  std::string stderr;
-  llvm::raw_string_ostream stdout_ostream(stdout);
-  llvm::raw_string_ostream stderr_ostream(stderr);
-  bool run_succeeded = RunWithFiles(test_files, stdout_ostream, stderr_ostream);
+  TestRawOstream stdout;
+  TestRawOstream stderr;
+  bool run_succeeded = RunWithFiles(test_files, stdout, stderr);
   if (HasFailure()) {
     return;
   }
@@ -92,8 +91,8 @@ auto FileTestBase::TestBody() -> void {
          "is expected to fail.";
 
   // Check results.
-  EXPECT_THAT(SplitOutput(stdout), ElementsAreArray(expected_stdout));
-  EXPECT_THAT(SplitOutput(stderr), ElementsAreArray(expected_stderr));
+  EXPECT_THAT(SplitOutput(stdout.TakeStr()), ElementsAreArray(expected_stdout));
+  EXPECT_THAT(SplitOutput(stderr.TakeStr()), ElementsAreArray(expected_stderr));
 }
 
 auto FileTestBase::ProcessTestFile(

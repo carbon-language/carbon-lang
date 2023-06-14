@@ -9,6 +9,7 @@
 
 #include <forward_list>
 
+#include "testing/util/test_raw_ostream.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
@@ -51,10 +52,8 @@ TEST_F(ParseTreeTest, PrintPostorderAsYAML) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
   ParseTree tree = ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
-  std::string print_output;
-  llvm::raw_string_ostream print_stream(print_output);
+  TestRawOstream print_stream;
   tree.Print(print_stream);
-  print_stream.flush();
 
   auto file = Yaml::SequenceValue{
       Yaml::MappingValue{{"kind", "FunctionIntroducer"}, {"text", "fn"}},
@@ -68,17 +67,15 @@ TEST_F(ParseTreeTest, PrintPostorderAsYAML) {
       Yaml::MappingValue{{"kind", "FileEnd"}, {"text", ""}},
   };
 
-  EXPECT_THAT(Yaml::Value::FromText(print_output), ElementsAre(file));
+  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), ElementsAre(file));
 }
 
 TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
   ParseTree tree = ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
-  std::string print_output;
-  llvm::raw_string_ostream print_stream(print_output);
+  TestRawOstream print_stream;
   tree.Print(print_stream, /*preorder=*/true);
-  print_stream.flush();
 
   auto parameter_list = Yaml::SequenceValue{
       Yaml::MappingValue{
@@ -107,7 +104,7 @@ TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
           {"node_index", "5"}, {"kind", "FileEnd"}, {"text", ""}},
   };
 
-  EXPECT_THAT(Yaml::Value::FromText(print_output), ElementsAre(file));
+  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), ElementsAre(file));
 }
 
 TEST_F(ParseTreeTest, HighRecursion) {

@@ -48,6 +48,7 @@ cc_test(
         "//common/fuzzing:carbon_cc_proto",
         "//common/fuzzing:proto_to_carbon_lib",
         "//explorer/syntax",
+        "//testing/util:test_raw_ostream",
         "@com_google_googletest//:gtest",
         "@com_google_protobuf//:protobuf_headers",
     ],
