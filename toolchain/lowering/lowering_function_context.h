@@ -19,11 +19,7 @@ namespace Carbon {
 class LoweringFunctionContext {
  public:
   explicit LoweringFunctionContext(LoweringContext& lowering_context,
-                                   llvm::Function* function,
-                                   llvm::raw_ostream* vlog_stream);
-
-  // Lowers the given function to LLVM IR. Should only be called once.
-  auto BuildFunctionDefinition(const SemanticsFunction& function) -> void;
+                                   llvm::Function* function);
 
   // Returns a local (versus global) value for the given node.
   auto GetLocal(SemanticsNodeId node_id) -> llvm::Value* {
@@ -52,7 +48,6 @@ class LoweringFunctionContext {
     return lowering_context_->GetType(type_id);
   }
 
-  auto lowering_context() -> LoweringContext& { return *lowering_context_; }
   auto llvm_context() -> llvm::LLVMContext& {
     return lowering_context_->llvm_context();
   }
@@ -72,9 +67,6 @@ class LoweringFunctionContext {
   llvm::Function* function_;
 
   llvm::IRBuilder<> builder_;
-
-  // The optional vlog stream.
-  llvm::raw_ostream* vlog_stream_;
 
   // Maps a function's SemanticsIR nodes to lowered values.
   // TODO: Handle nested scopes. Right now this is just cleared at the end of

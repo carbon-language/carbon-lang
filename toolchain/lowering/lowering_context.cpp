@@ -23,6 +23,7 @@ LoweringContext::LoweringContext(llvm::LLVMContext& llvm_context,
       << "Generating LLVM IR from invalid SemanticsIR is unsupported.";
 }
 
+// TODO: Move this to lower_to_llvm.cpp.
 auto LoweringContext::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_) << "Run can only be called once.";
 
@@ -91,9 +92,29 @@ auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
     return;
   }
 
-  LoweringFunctionContext function_lowering(*this, GetFunction(function_id),
-                                            vlog_stream_);
-  function_lowering.BuildFunctionDefinition(function);
+  llvm::Function* llvm_function = GetFunction(function_id);
+  LoweringFunctionContext function_lowering(*this, llvm_function);
+
+  // Add parameters to locals.
+  auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+  for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
+    auto param_storage =
+        semantics_ir().GetNode(param_refs[i]).GetAsBindName().second;
+    function_lowering.SetLocal(param_storage, llvm_function->getArg(i));
+  }
+
+  CARBON_VLOG() << "Lowering " << function.body_id << "\n";
+  for (const auto& node_id : semantics_ir().GetNodeBlock(function.body_id)) {
+    auto node = semantics_ir().GetNode(node_id);
+    CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
+    switch (node.kind()) {
+#define CARBON_SEMANTICS_NODE_KIND(Name)                    \
+  case SemanticsNodeKind::Name:                             \
+    LoweringHandle##Name(function_lowering, node_id, node); \
+    break;
+#include "toolchain/semantics/semantics_node_kind.def"
+    }
+  }
 }
 
 auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
