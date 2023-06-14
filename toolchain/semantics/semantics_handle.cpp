@@ -396,12 +396,17 @@ auto SemanticsHandleParameterListStart(SemanticsContext& context,
 
 auto SemanticsHandleParenExpression(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleParenExpression");
+  auto value_id = context.node_stack().Pop<SemanticsNodeId>();
+  context.node_stack().PopAndDiscardSoloParseNode(
+      ParseNodeKind::ParenExpressionOrTupleLiteralStart);
+  context.node_stack().Push(parse_node, value_id);
+  return true;
 }
 
 auto SemanticsHandleParenExpressionOrTupleLiteralStart(
     SemanticsContext& context, ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleParenExpressionOrTupleLiteralStart");
+  context.node_stack().Push(parse_node);
+  return true;
 }
 
 auto SemanticsHandlePatternBinding(SemanticsContext& context,
