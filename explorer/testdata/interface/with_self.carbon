@@ -16,8 +16,8 @@ interface Vector {
 class Point {
   var x: i32;
   var y: i32;
-  // Allowed: `Self` means `Point` here.
-  extend impl Self as Vector {
+  // Allowed without `extend`: `Self` means `Point` here.
+  impl Self as Vector {
     fn Zero() -> Self {
       return {.x = 0, .y = 0};
     }

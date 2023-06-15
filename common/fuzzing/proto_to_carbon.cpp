@@ -942,10 +942,13 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
           out << sep;
           GenericBindingToCarbon(p, out);
         }
-        out << "]";
+        out << "] ";
       }
-      ExpressionToCarbon(impl.impl_type(), out);
-      out << " as ";
+      if (impl.kind() != Fuzzing::ImplDeclaration::InternalImpl) {
+        ExpressionToCarbon(impl.impl_type(), out);
+        out << " ";
+      }
+      out << "as ";
       ExpressionToCarbon(impl.interface(), out);
       out << " {\n";
       for (const auto& member : impl.members()) {

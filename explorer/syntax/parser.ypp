@@ -97,8 +97,8 @@
 %token <std::string> sized_type_literal
 %token <std::string> string_literal
 %type <std::string> designator
-%type <ImplKind> impl_kind_intro
 %type <Nonnull<Expression*>> impl_type
+%type <Nonnull<Expression*>> no_impl_type
 %type <std::pair<LibraryName, bool>> package_directive
 %type <LibraryName> import_directive
 %type <std::vector<LibraryName>> import_directives
@@ -115,6 +115,7 @@
 %type <Nonnull<MixDeclaration*>> mix_declaration
 %type <Nonnull<AliasDeclaration*>> alias_declaration
 %type <Nonnull<ImplDeclaration*>> impl_declaration
+%type <Nonnull<ImplDeclaration*>> extend_impl_declaration
 %type <Nonnull<MatchFirstDeclaration*>> match_first_declaration
 %type <std::vector<Nonnull<ImplDeclaration*>>> match_first_declaration_list
 %type <std::vector<Nonnull<Declaration*>>> declaration_list
@@ -1465,12 +1466,13 @@ declaration:
     { $$ = $[alias_declaration]; }
 ;
 impl_declaration:
-  impl_kind_intro impl_deduced_params impl_type AS type_or_where_expression
+  IMPL impl_deduced_params impl_type AS type_or_where_expression
   LEFT_CURLY_BRACE impl_body RIGHT_CURLY_BRACE
     {
       ErrorOr<ImplDeclaration*> impl = ImplDeclaration::Create(
-          arena, context.source_loc(), $[impl_kind_intro], $[impl_type],
-          $[type_or_where_expression], $[impl_deduced_params], $[impl_body]);
+          arena, context.source_loc(), Carbon::ImplKind::ExternalImpl,
+          $[impl_type], $[type_or_where_expression], $[impl_deduced_params],
+          $[impl_body]);
       if (impl.ok()) {
         $$ = *impl;
       } else {
@@ -1478,16 +1480,29 @@ impl_declaration:
         YYERROR;
       }
     }
-impl_kind_intro:
-  EXTEND IMPL
-    { $$ = Carbon::ImplKind::InternalImpl; }
-| IMPL // External
-    { $$ = Carbon::ImplKind::ExternalImpl; }
+;
+extend_impl_declaration:
+  EXTEND IMPL no_impl_type AS type_or_where_expression
+  LEFT_CURLY_BRACE impl_body RIGHT_CURLY_BRACE
+    {
+      ErrorOr<ImplDeclaration*> impl = ImplDeclaration::Create(
+          arena, context.source_loc(), Carbon::ImplKind::InternalImpl,
+          $[no_impl_type], $[type_or_where_expression], {}, $[impl_body]);
+      if (impl.ok()) {
+        $$ = *impl;
+      } else {
+        context.RecordSyntaxError(std::move(impl).error());
+        YYERROR;
+      }
+    }
 ;
 impl_type:
   // Self
     { $$ = arena->New<IdentifierExpression>(context.source_loc(), "Self"); }
 | type_expression
+;
+no_impl_type:
+    { $$ = arena->New<IdentifierExpression>(context.source_loc(), "Self"); }
 ;
 match_first_declaration:
   MATCH_FIRST LEFT_CURLY_BRACE match_first_declaration_list RIGHT_CURLY_BRACE
@@ -1564,6 +1579,11 @@ class_body:
     {
       $$ = std::move($[accumulated_class_body]);
       $$.push_back(Nonnull<Declaration*>($[extend_base_declaration]));
+    }
+| class_body[accumulated_class_body] extend_impl_declaration
+    {
+      $$ = std::move($[accumulated_class_body]);
+      $$.push_back(Nonnull<Declaration*>($[extend_impl_declaration]));
     }
 ;
 // EXPERIMENTAL MIXIN FEATURE

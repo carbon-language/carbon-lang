@@ -169,7 +169,10 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
         }
         out << "] ";
       }
-      out << *impl_decl.impl_type() << " as " << impl_decl.interface();
+      if (impl_decl.kind() != ImplKind::InternalImpl) {
+        out << *impl_decl.impl_type() << " ";
+      }
+      out << "as " << impl_decl.interface();
       break;
     }
     case DeclarationKind::MatchFirstDeclaration:
