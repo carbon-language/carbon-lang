@@ -1613,6 +1613,10 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       const auto& args = cast<TupleValue>(*act.results()[0]).elements();
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print: {
+          if (phase_ != Phase::RunTime) {
+            return ProgramError(exp.source_loc())
+                   << "Print called before run time";
+          }
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> format_string_value,
               Convert(args[0], arena_->New<StringType>(), exp.source_loc()));
