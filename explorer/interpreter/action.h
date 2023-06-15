@@ -50,8 +50,6 @@ class RuntimeScope {
 
   // Allocates storage for `value_node` in `heap`, and initializes it with
   // `value`.
-  // TODO: Done for a var binding if a category conversion is needed (i.e. not
-  // an initializing expression)
   auto Initialize(ValueNodeView value_node, Nonnull<const Value*> value)
       -> Nonnull<const LocationValue*>;
 
@@ -64,6 +62,8 @@ class RuntimeScope {
   void Bind(ValueNodeView value_node, Address address);
 
   // Binds unlocated `value` to `value_node` without allocating local storage.
+  // TODO: BindValue should pin the lifetime of `value` and make sure it isn't
+  // mutated.
   void BindValue(ValueNodeView value_node, Nonnull<const Value*> value);
 
   // Transfers the names and allocations from `other` into *this. The two
