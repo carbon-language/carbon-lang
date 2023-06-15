@@ -13,7 +13,7 @@ interface Iface {
 fn F[T:! Iface where .T == i32](x: T) {}
 
 class Class {
-  impl as Iface where .T = i32 {}
+  extend impl as Iface where .T = i32 {}
 }
 
 // OK, constraint on `F` rewritten to `T:! Iface where U == i32`, which we can

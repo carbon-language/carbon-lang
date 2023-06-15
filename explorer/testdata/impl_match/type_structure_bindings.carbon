@@ -18,25 +18,25 @@ package ExplorerTest api;
 class A(T:! type, U:! type) {}
 interface B(T:! type, U:! type) { fn F(); }
 
-external impl forall [T:! type] A(T, i32) as B(i32, i32) {
+impl forall [T:! type] A(T, i32) as B(i32, i32) {
   fn F() { Print("1"); }
 }
-external impl forall [T:! type] A(i32, T) as B(i32, i32) {
+impl forall [T:! type] A(i32, T) as B(i32, i32) {
   fn F() { Print("2"); }
 }
 // Intentionally out of order so that explorer can't get the right answer by
 // chance, by just picking the first or last matching impl.
-external impl forall [T:! type] A(i32, i32) as B(i32, T) {
+impl forall [T:! type] A(i32, i32) as B(i32, T) {
   fn F() { Print("4"); }
 }
-external impl forall [T:! type] A(i32, i32) as B(T, i32) {
+impl forall [T:! type] A(i32, i32) as B(T, i32) {
   fn F() { Print("3"); }
 }
 
-external impl forall [T:! type, U:! type] A(T, i32*) as B(i32*, U) {
+impl forall [T:! type, U:! type] A(T, i32*) as B(i32*, U) {
   fn F() { Print("5"); }
 }
-external impl forall [T:! type, U:! type] A(i32*, T) as B(U, i32*) {
+impl forall [T:! type, U:! type] A(i32*, T) as B(U, i32*) {
   fn F() { Print("6"); }
 }
 

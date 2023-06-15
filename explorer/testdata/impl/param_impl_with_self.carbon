@@ -17,12 +17,12 @@ class Point(T:! Number) {
   var y: T;
 }
 
-external impl i32 as Number {
+impl i32 as Number {
   fn Zero() -> i32 { return 0; }
   fn Add[self: i32](other: i32) -> i32 { return self + other; }
 }
 
-external impl forall [U:! Number] Point(U) as Number {
+impl forall [U:! Number] Point(U) as Number {
   // Allowed: `Self` means `Point(U)` here.
   fn Zero() -> Self { return {.x = U.Zero(), .y = U.Zero() }; }
   fn Add[self: Self](other: Self) -> Self {

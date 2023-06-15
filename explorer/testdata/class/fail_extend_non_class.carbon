@@ -6,11 +6,11 @@
 
 package ExplorerTest api;
 
-interface A {}
-
-interface B {
-  // CHECK:STDERR: COMPILATION ERROR: fail_impl_as_not_type.carbon:[[@LINE+1]]: type error in type expression: 'i32' is not implicitly convertible to 'type'
-  impl 5 as A;
+class C {
+  // CHECK:STDERR: COMPILATION ERROR: fail_extend_non_class.carbon:[[@LINE+1]]: type error in type expression: 'i32' is not implicitly convertible to 'type'
+  extend base: 3;
+  var x: i32;
+  var y: i32;
 }
 
 fn Main() -> i32 {

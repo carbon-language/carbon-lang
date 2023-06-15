@@ -9,7 +9,7 @@ package ExplorerTest api;
 
 class TypeLike {
   var v: type;
-  impl as ImplicitAs(type) {
+  extend impl as ImplicitAs(type) {
     fn Convert[self: Self]() -> type { return i32; }
   }
 }

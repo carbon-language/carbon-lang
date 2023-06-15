@@ -7,8 +7,8 @@
 package ExplorerTest api;
 
 interface Vector {
-  // CHECK:STDERR: COMPILATION ERROR: fail_extends_not_constraint.carbon:[[@LINE+1]]: expected a constraint in extends declaration, found i32
-  extends i32;
+  // CHECK:STDERR: COMPILATION ERROR: fail_require_not_constraint.carbon:[[@LINE+1]]: expected a constraint in require declaration, found i32
+  require Self impls i32;
 }
 
 fn Main() -> i32 {

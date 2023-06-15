@@ -137,7 +137,7 @@ compilation_unit {
         name: "Constraint"
       }
       members {
-        interface_extends {
+        interface_extend {
           base {
             identifier {
               name: "Iface"

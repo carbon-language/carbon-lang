@@ -16,7 +16,7 @@ interface A {
   fn F();
 }
 
-external impl i32 as A {
+impl i32 as A {
   // CHECK:STDERR: SYNTAX ERROR: fail_mix_in_impl.carbon:[[@LINE+1]]: syntax error, unexpected MIX
   __mix Operations;
   fn F() {}

@@ -17,16 +17,16 @@ interface Maker(T:! type) {
 }
 
 constraint IndirectMaker(T:! type) {
-  extends Maker(T*);
+  extend Maker(T*);
 }
 
 constraint MoreIndirectMaker {
-  extends IndirectMaker(i32);
+  extend IndirectMaker(i32);
 }
 
 class PointerFactory {
   var p: i32*;
-  external impl as Maker(i32*) {
+  impl as Maker(i32*) {
     fn Make[self: Self]() -> i32* { return self.p; }
   }
 }

@@ -14,10 +14,10 @@ interface B {
 }
 alias C = A & B;
 class X {
-  impl as A {
+  extend impl as A {
     fn F[self: Self]() -> i32 { return 10 * self.n; }
   }
-  impl as B {
+  extend impl as B {
     fn G(o: Self) -> i32 { return o.n; }
   }
   var n: i32;

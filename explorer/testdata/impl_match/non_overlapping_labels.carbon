@@ -18,7 +18,7 @@ interface Iface {
   fn F();
 }
 
-external impl forall [T:! HasType where .Self.AssocType impls Iface] T as Iface {
+impl forall [T:! HasType where .Self.AssocType impls Iface] T as Iface {
   fn F() {
     Print("T as Iface");
     T.AssocType.(Iface.F)();
@@ -26,17 +26,17 @@ external impl forall [T:! HasType where .Self.AssocType impls Iface] T as Iface 
 }
 
 class A {
-  impl as Iface {
+  extend impl as Iface {
     fn F() { Print("A as Iface"); }
   }
 }
 
 class B {
-  impl as HasType where .AssocType = A {}
+  extend impl as HasType where .AssocType = A {}
 }
 
 class C {
-  impl as HasType where .AssocType = B {}
+  extend impl as HasType where .AssocType = B {}
 }
 
 fn Main() -> i32 {

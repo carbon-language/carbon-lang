@@ -19,7 +19,7 @@ fn Use[T:! Frob](x: T) -> T.Result {
 
 class AlmostI32 {
   var val: i32;
-  impl as ImplicitAs(i32) {
+  extend impl as ImplicitAs(i32) {
     fn Convert[self: Self]() -> i32 { return self.val; }
   }
 }

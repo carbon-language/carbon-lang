@@ -21,7 +21,8 @@ base class A{
     }
 }
 
-class B extends A {
+class B {
+  extend base: A;
     fn Create() -> Self{
         return {.base={}};
     }

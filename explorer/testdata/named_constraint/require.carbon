@@ -13,18 +13,18 @@ interface MyHashable {
 }
 
 constraint HashToIntConvertible {
-  impl as MyHashable;
-  impl Self.(MyHashable.Result) as ImplicitAs(i32);
+  require Self impls MyHashable;
+  require Self.(MyHashable.Result) impls ImplicitAs(i32);
 }
 
 class MyHashValue {
-  external impl as ImplicitAs(i32) {
+  impl as ImplicitAs(i32) {
     fn Convert[self: Self]() -> i32 { return 4; }
   }
 }
 
 class Widget {
-  external impl as MyHashable where .Result = MyHashValue {
+  impl as MyHashable where .Result = MyHashValue {
     fn Hash[self: Self]() -> MyHashValue { return {}; }
   }
 }

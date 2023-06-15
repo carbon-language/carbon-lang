@@ -10,9 +10,10 @@ class C {
   fn F() {}
 }
 
-class D extends C {
+class D {
+  // CHECK:STDERR: COMPILATION ERROR: fail_extend_final_class.carbon:[[@LINE+1]]: Base class `C` is `final` and cannot be inherited. Add the `base` or `abstract` class prefix to `C` to allow it to be inherited
+  extend base: C;
   fn G() {}
-// CHECK:STDERR: COMPILATION ERROR: fail_extends_final_class.carbon:[[@LINE+1]]: Base class `C` is `final` and cannot be inherited. Add the `base` or `abstract` class prefix to `C` to allow it to be inherited
 }
 
 fn Main() -> i32 {

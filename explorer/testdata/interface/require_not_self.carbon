@@ -8,7 +8,7 @@
 package ExplorerTest api;
 
 interface ConvertsFromInt {
-  impl i32 as ImplicitAs(Self);
+  require i32 impls ImplicitAs(Self);
 }
 
 fn ConvertIntTo(T:! ConvertsFromInt, n: i32) -> T {
@@ -18,10 +18,10 @@ fn ConvertIntTo(T:! ConvertsFromInt, n: i32) -> T {
 class IntHolder {
   var n: i32;
 }
-external impl i32 as ImplicitAs(IntHolder) {
+impl i32 as ImplicitAs(IntHolder) {
   fn Convert[self: Self]() -> IntHolder { return {.n = self}; }
 }
-external impl IntHolder as ConvertsFromInt {}
+impl IntHolder as ConvertsFromInt {}
 
 fn Main() -> i32 {
   return ConvertIntTo(IntHolder, 5).n;

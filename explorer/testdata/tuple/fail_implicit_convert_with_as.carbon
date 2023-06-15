@@ -13,7 +13,7 @@ class B {
   var b: i32;
 }
 
-external impl A as As(B) {
+impl A as As(B) {
   fn Convert[self: Self]() -> B { return {.b = self.a}; }
 }
 

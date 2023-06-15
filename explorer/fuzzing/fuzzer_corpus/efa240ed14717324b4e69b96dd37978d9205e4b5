@@ -28,7 +28,7 @@ compilation_unit {
         name: "Extension"
       }
       members {
-        interface_extends {
+        interface_extend {
           base {
             identifier {
               name: "Base"

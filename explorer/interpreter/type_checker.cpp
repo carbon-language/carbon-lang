@@ -5189,29 +5189,55 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
 
   ImplScope class_scope(scope_info.innermost_scope);
 
+  // Find base class declaration, if any. Verify that is before any data member
+  // declarations, and there is at most one.
   std::optional<Nonnull<const NominalClassType*>> base_class;
-  if (class_decl->base_expr().has_value()) {
-    Nonnull<Expression*> base_class_expr = *class_decl->base_expr();
-    CARBON_ASSIGN_OR_RETURN(const auto base_type,
-                            TypeCheckTypeExp(base_class_expr, class_scope));
-    if (base_type->kind() != Value::Kind::NominalClassType) {
-      return ProgramError(class_decl->source_loc())
-             << "Unsupported base class type for class `" << class_decl->name()
-             << "`. Only simple classes are currently supported as base "
-                "class.";
-    }
+  bool after_data_member = false;
+  for (Nonnull<Declaration*> m : class_decl->members()) {
+    switch (m->kind()) {
+      case DeclarationKind::VariableDeclaration:
+      case DeclarationKind::MixDeclaration: {
+        after_data_member = true;
+        break;
+      }
+      case DeclarationKind::ExtendBaseDeclaration: {
+        if (after_data_member) {
+          return ProgramError(m->source_loc())
+                 << "`extend base:` declaration must not be after `var` or "
+                    "`mix` declarations in a class.";
+        }
+        if (base_class.has_value()) {
+          return ProgramError(m->source_loc())
+                 << "At most one `extend base:` declaration in a class.";
+        }
+        Nonnull<Expression*> base_class_expr =
+            cast<ExtendBaseDeclaration>(*m).base_class();
+        CARBON_ASSIGN_OR_RETURN(const auto base_type,
+                                TypeCheckTypeExp(base_class_expr, class_scope));
+        if (base_type->kind() != Value::Kind::NominalClassType) {
+          return ProgramError(m->source_loc())
+                 << "Unsupported base class type for class `"
+                 << class_decl->name()
+                 << "`. Only simple classes are currently supported as base "
+                    "class.";
+        }
 
-    base_class = cast<NominalClassType>(base_type);
-    if (base_class.value()->declaration().extensibility() ==
-        ClassExtensibility::None) {
-      return ProgramError(class_decl->source_loc())
-             << "Base class `" << base_class.value()->declaration().name()
-             << "` is `final` and cannot be inherited. Add the `base` or "
-                "`abstract` class prefix to `"
-             << base_class.value()->declaration().name()
-             << "` to allow it to be inherited";
+        base_class = cast<NominalClassType>(base_type);
+        if (base_class.value()->declaration().extensibility() ==
+            ClassExtensibility::None) {
+          return ProgramError(m->source_loc())
+                 << "Base class `" << base_class.value()->declaration().name()
+                 << "` is `final` and cannot be inherited. Add the `base` or "
+                    "`abstract` class prefix to `"
+                 << base_class.value()->declaration().name()
+                 << "` to allow it to be inherited";
+        }
+        class_decl->set_base_type(base_class);
+        break;
+      }
+      default:
+        break;
     }
-    class_decl->set_base_type(base_class);
   }
 
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
@@ -5592,16 +5618,16 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
     // TODO: This should probably live in `DeclareDeclaration`, but it needs
     // to update state that's not available from there.
     switch (m->kind()) {
-      case DeclarationKind::InterfaceExtendsDeclaration: {
-        // For an `extends C;` declaration, add `Self impls C` to our
+      case DeclarationKind::InterfaceExtendDeclaration: {
+        // For an `extend C;` declaration, add `Self impls C` to our
         // constraint.
-        auto* extends = cast<InterfaceExtendsDeclaration>(m);
+        auto* extend = cast<InterfaceExtendDeclaration>(m);
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> base,
-            TypeCheckTypeExp(extends->base(), constraint_scope));
+            TypeCheckTypeExp(extend->base(), constraint_scope));
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const ConstraintType*> constraint_type,
-            ConvertToConstraintType(m->source_loc(), "extends declaration",
+            ConvertToConstraintType(m->source_loc(), "extend declaration",
                                     base));
         CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
             *this, constraint_type, builder.GetSelfType(),
@@ -5610,18 +5636,19 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
         break;
       }
 
-      case DeclarationKind::InterfaceImplDeclaration: {
-        // For an `impl X as Y;` declaration, add `X impls Y` to our constraint.
-        auto* impl = cast<InterfaceImplDeclaration>(m);
+      case DeclarationKind::InterfaceRequireDeclaration: {
+        // For an `require X impls Y;` declaration, add `X impls Y` to our
+        // constraint.
+        auto* require = cast<InterfaceRequireDeclaration>(m);
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> impl_type,
-            TypeCheckTypeExp(impl->impl_type(), constraint_scope));
+            TypeCheckTypeExp(require->impl_type(), constraint_scope));
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> constraint,
-            TypeCheckTypeExp(impl->constraint(), constraint_scope));
+            TypeCheckTypeExp(require->constraint(), constraint_scope));
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const ConstraintType*> constraint_type,
-            ConvertToConstraintType(m->source_loc(), "impl as declaration",
+            ConvertToConstraintType(m->source_loc(), "require declaration",
                                     constraint));
         CARBON_RETURN_IF_ERROR(
             builder.AddAndSubstitute(*this, constraint_type, impl_type,
@@ -5762,7 +5789,8 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
                << "implementation doesn't provide a concrete value for "
                << *iface_type << "." << assoc->binding().name();
       }
-    } else if (isa<InterfaceImplDeclaration, InterfaceExtendsDeclaration>(m)) {
+    } else if (isa<InterfaceRequireDeclaration, InterfaceExtendDeclaration>(
+                   m)) {
       // These get translated into constraints so there's nothing we need to
       // check here.
     } else {
@@ -6310,8 +6338,8 @@ auto TypeChecker::TypeCheckDeclaration(
       }
       break;
     }
-    case DeclarationKind::InterfaceExtendsDeclaration:
-    case DeclarationKind::InterfaceImplDeclaration:
+    case DeclarationKind::InterfaceExtendDeclaration:
+    case DeclarationKind::InterfaceRequireDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration: {
       // Checked in DeclareConstraintTypeDeclaration.
       break;
@@ -6320,6 +6348,10 @@ auto TypeChecker::TypeCheckDeclaration(
       CARBON_FATAL() << "Unreachable TypeChecker `Self` declaration";
     }
     case DeclarationKind::AliasDeclaration: {
+      break;
+    }
+    case DeclarationKind::ExtendBaseDeclaration: {
+      // Checked in TypeCheckClassDeclaration.
       break;
     }
   }
@@ -6373,6 +6405,10 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       CARBON_RETURN_IF_ERROR(DeclareClassDeclaration(&class_decl, scope_info));
       break;
     }
+    case DeclarationKind::ExtendBaseDeclaration: {
+      // Handled in DeclareClassDeclaration.
+      break;
+    }
     case DeclarationKind::MixinDeclaration: {
       auto& mixin_decl = cast<MixinDeclaration>(*d);
       CARBON_RETURN_IF_ERROR(DeclareMixinDeclaration(&mixin_decl, scope_info));
@@ -6423,8 +6459,8 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       break;
     }
 
-    case DeclarationKind::InterfaceExtendsDeclaration:
-    case DeclarationKind::InterfaceImplDeclaration:
+    case DeclarationKind::InterfaceExtendDeclaration:
+    case DeclarationKind::InterfaceRequireDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration: {
       // The semantic effects are handled by DeclareConstraintTypeDeclaration.
       break;

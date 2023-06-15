@@ -47,7 +47,7 @@ compilation_unit {
         name: "IndirectMaker"
       }
       members {
-        interface_extends {
+        interface_extend {
           base {
             call {
               function {
@@ -81,7 +81,7 @@ compilation_unit {
         name: "MoreIndirectMaker"
       }
       members {
-        interface_extends {
+        interface_extend {
           base {
             call {
               function {

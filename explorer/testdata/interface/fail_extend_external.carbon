@@ -3,17 +3,18 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 5
 
 package ExplorerTest api;
 
-class A { var n: i32; }
+class IntHolder {
+  var n: i32;
+}
 
-impl A as As(i32) {
+// CHECK:STDERR: SYNTAX ERROR: fail_extend_external.carbon:[[@LINE+1]]: syntax error, unexpected EXTEND, expecting END_OF_FILE
+extend impl IntHolder as ImplicitAs(i32) {
   fn Convert[self: Self]() -> i32 { return self.n; }
 }
 
 fn Main() -> i32 {
-  var a: A = {.n = 5};
-  return a as i32;
+  return ({.n = 5} as IntHolder).(ImplicitAs(i32).Convert)();
 }

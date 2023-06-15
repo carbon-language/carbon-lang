@@ -3,18 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: -6
 
 package ExplorerTest api;
 
-class A { var n: i32; }
-
-impl A as BitComplement where .Result = A {
-  fn Op[self: Self]() -> A { return {.n = ^self.n}; }
+interface Vector {
+  // CHECK:STDERR: COMPILATION ERROR: fail_extend_not_constraint.carbon:[[@LINE+1]]: expected a constraint in extend declaration, found i32
+  extend i32;
 }
 
 fn Main() -> i32 {
-  var a: A = {.n = 5};
-  a = ^a;
-  return a.n;
+  return 0;
 }

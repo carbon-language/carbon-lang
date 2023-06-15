@@ -13,7 +13,7 @@ interface I {
 }
 class A {
   var n: i32;
-  impl as I {
+  extend impl as I {
     fn F() -> i32 { return 1; }
     fn M[self: Self]() -> i32 { return 2; }
   }

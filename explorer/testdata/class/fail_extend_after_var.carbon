@@ -3,18 +3,18 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: -6
 
 package ExplorerTest api;
 
-class A { var n: i32; }
+base class C {
+}
 
-impl A as BitComplement where .Result = A {
-  fn Op[self: Self]() -> A { return {.n = ^self.n}; }
+class E {
+  var x: i32;
+  // CHECK:STDERR: COMPILATION ERROR: fail_extend_after_var.carbon:[[@LINE+1]]: `extend base:` declaration must not be after `var` or `mix` declarations in a class.
+  extend base: C;
 }
 
 fn Main() -> i32 {
-  var a: A = {.n = 5};
-  a = ^a;
-  return a.n;
+  return 0;
 }

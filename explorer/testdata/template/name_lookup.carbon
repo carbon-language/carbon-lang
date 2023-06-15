@@ -43,14 +43,14 @@ class MemberF {
 }
 
 class ImplF {}
-external impl ImplF as HasF {
+impl ImplF as HasF {
   fn F[self: Self]() { Print("ImplF.(HasF.F)"); }
 }
 
 class BothFs {
   fn F[self: Self]() { Print("BothFs.F"); }
 }
-external impl BothFs as HasF {
+impl BothFs as HasF {
   fn F[self: Self]() { Print("BothFs.(HasF.F)"); }
 }
 

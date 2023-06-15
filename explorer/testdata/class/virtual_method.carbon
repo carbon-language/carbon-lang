@@ -22,7 +22,8 @@ base class C {
   }
 }
 
-class D extends C {
+class D {
+  extend base: C;
   impl fn Foo[self: Self]() -> i32 {
     return 3;
   }

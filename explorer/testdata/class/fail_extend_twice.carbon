@@ -6,9 +6,16 @@
 
 package ExplorerTest api;
 
-interface Vector {
-  // CHECK:STDERR: COMPILATION ERROR: fail_impl_as_not_constraint.carbon:[[@LINE+1]]: expected a constraint in impl as declaration, found i32
-  impl Self as i32;
+base class C {
+}
+
+base class D {
+}
+
+class E {
+  extend base: C;
+  // CHECK:STDERR: COMPILATION ERROR: fail_extend_twice.carbon:[[@LINE+1]]: At most one `extend base:` declaration in a class.
+  extend base: D;
 }
 
 fn Main() -> i32 {

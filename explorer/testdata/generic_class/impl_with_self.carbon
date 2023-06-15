@@ -18,7 +18,7 @@ class Point(T:! type) {
   var y: T;
 }
 
-external impl Point(i32) as Vector {
+impl Point(i32) as Vector {
   // Allowed: `Self` means `Point(i32)` here.
   fn Zero() -> Self {
     return {.x = 0, .y = 0};

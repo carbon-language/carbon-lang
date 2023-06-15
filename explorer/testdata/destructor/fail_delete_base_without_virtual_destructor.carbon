@@ -9,14 +9,15 @@ package ExplorerTest api;
 
 
 base class A{
-    destructor[self: Self]{}
+  destructor[self: Self]{}
 }
 
-class B extends A {
-    fn Create() -> Self {
-        return {.base={}};
-    }
-    destructor[self: Self]{}
+class B {
+  extend base: A;
+  fn Create() -> Self {
+    return {.base={}};
+  }
+  destructor[self: Self]{}
 }
 
 fn Main() -> i32 {
