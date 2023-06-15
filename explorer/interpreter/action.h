@@ -202,11 +202,10 @@ class ExpressionAction : public Action {
  public:
   explicit ExpressionAction(
       Nonnull<const Expression*> expression,
-      std::optional<AllocationId> location_received =
-          std::nullopt /* TODO: Remove if design confirmed*/)
+      std::optional<AllocationId> initialized_location = std::nullopt)
       : Action(Kind::ExpressionAction),
         expression_(expression),
-        location_received_(location_received) {}
+        location_received_(initialized_location) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::ExpressionAction;

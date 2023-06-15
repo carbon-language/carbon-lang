@@ -3586,11 +3586,9 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               Nonnull<const Value*> return_type,
               Substitute(call.bindings(), &fun_t.return_type()));
           call.set_static_type(return_type);
-          // TODO: Find right logic here.
           call.set_expression_category(fun_t.is_initializing()
                                            ? ExpressionCategory::Initializing
                                            : ExpressionCategory::Value);
-          // }
           return Success();
         }
         case Value::Kind::TypeOfParameterizedEntityName: {

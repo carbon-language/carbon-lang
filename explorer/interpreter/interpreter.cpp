@@ -295,6 +295,45 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
   return arena_->New<StructValue>(std::move(elements));
 }
 
+static auto InitializePlaceholderValue(
+    const ValueNodeView& value_node, ExpressionResult v,
+    std::optional<Nonnull<RuntimeScope*>> bindings) {
+  switch (value_node.expression_category()) {
+    case ExpressionCategory::Reference:
+      if (v.expression_category() == ExpressionCategory::Value ||
+          v.expression_category() == ExpressionCategory::Reference) {
+        // Build by copying from value or reference expression
+        (*bindings)->Initialize(value_node, v.value());
+      } else /* ExpressionCategory::Initializing */ {
+        // Location initialized by initializing expression, bind node to
+        // address.
+        CARBON_CHECK(v.address())
+            << "Missing location from initializing expression";
+        (*bindings)->Bind(value_node, *v.address());
+      }
+      break;
+    case ExpressionCategory::Value:
+      if (v.expression_category() == ExpressionCategory::Value) {
+        // TODO: Extend value lifetime to encompass this value
+        (*bindings)->Initialize(value_node, v.value());
+      } else if (v.expression_category() == ExpressionCategory::Reference) {
+        // TODO: Prevent mutation, error on mutation, or copy
+        // Bind the reference expression value directly.
+        (*bindings)->BindValue(value_node, v.value());
+      } else /* ExpressionCategory::Initializing */ {
+        // Location initialized by initializing expression, bind node to
+        // address.
+        CARBON_CHECK(v.address())
+            << "Missing location from initializing expression";
+        (*bindings)->Bind(value_node, *v.address());
+      }
+      break;
+    case ExpressionCategory::Initializing:
+      CARBON_FATAL() << "Cannot pattern match an initializing expression";
+      break;
+  }
+}
+
 auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
                   SourceLocation source_loc,
                   std::optional<Nonnull<RuntimeScope*>> bindings,
@@ -309,36 +348,8 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
     case Value::Kind::BindingPlaceholderValue: {
       CARBON_CHECK(bindings.has_value());
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
-      if (const auto value_node = placeholder.value_node()) {
-        switch (value_node->expression_category()) {
-          case ExpressionCategory::Reference:
-            if (v.expression_category() == ExpressionCategory::Value ||
-                v.expression_category() == ExpressionCategory::Reference) {
-              // TODO: For var bindings, use initializing expression, or copy
-              (*bindings)->Initialize(*value_node, v.value());
-            } else /* ExpressionCategory::Initializing */ {
-              CARBON_CHECK(v.address())
-                  << "Missing location from initializing expression";
-              (*bindings)->Bind(*value_node, *v.address());
-            }
-            break;
-          case ExpressionCategory::Value:
-            if (v.expression_category() == ExpressionCategory::Value ||
-                v.expression_category() == ExpressionCategory::Reference) {
-              // TODO: For let bindings, initialize from value, or convert and
-              // pin lifetime if different expression category
-              // TODO: Extend let bindings lifetime to encompass this value
-              (*bindings)->BindValue(*value_node, v.value());
-            } else /* ExpressionCategory::Initializing */ {
-              CARBON_CHECK(v.address())
-                  << "Missing location from initializing expression";
-              (*bindings)->BindValue(*value_node, v.value());
-            }
-            break;
-          case ExpressionCategory::Initializing:
-            CARBON_FATAL() << "Cannot pattern match an initializing expression";
-            break;
-        }
+      if (placeholder.value_node().has_value()) {
+        InitializePlaceholderValue(*placeholder.value_node(), v, bindings);
       }
       return true;
     }
@@ -2187,7 +2198,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         if (definition.init().kind() == ExpressionKind::CallExpression &&
             definition.init().expression_category() ==
                 ExpressionCategory::Initializing) {
-          // TODO: Handle forwarding initializing expression allocation
+          // TODO: Handle forwarding allocation to nested initializing
+          // expressions.
           // Allocate storage for initializing expression.
           const auto allocation_id =
               heap_.AllocateValue(arena_->New<UninitializedValue>(
@@ -2210,9 +2222,11 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                                   : ExpressionCategory::Value;
         if (definition.has_init()) {
           const auto init_location = act.location_created();
-          if (init_location && heap_.IsInitialized(*init_location)) {
+          if (expr_category == ExpressionCategory::Reference) {
+            v = act.results()[0];
+          } else if (expr_category == ExpressionCategory::Initializing &&
+                     init_location && heap_.IsInitialized(*init_location)) {
             // Bind even if a conversion is necessary.
-            // TODO: Bind before, or after.
             const auto address = Address(*init_location);
             CARBON_ASSIGN_OR_RETURN(
                 v, heap_.Read(address, definition.source_loc()));
@@ -2220,7 +2234,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             v_location = address;
           } else {
             if (init_location) {
-              // Location provided to initializing expression was unused
+              // Location provided to initializing expression was unused.
               heap_.Discard(*init_location);
             }
             expr_category = ExpressionCategory::Value;
@@ -2232,7 +2246,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           v = arena_->New<UninitializedValue>(p);
         }
 
-        // If it is a Returned var, bind returned var to location provided to
+        // If declaring a returned var, bind name to the location provided to
         // initializing expression, if any.
         RuntimeScope scope(&heap_);
         if (definition.is_returned() && act.location_received()) {
@@ -2271,7 +2285,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       const auto& assign = cast<Assign>(stmt);
       if (auto rewrite = assign.rewritten_form()) {
         if (act.pos() == 0) {
-          // TODO: Copy, bind value, or convert and pin lifetime
           return todo_.Spawn(std::make_unique<ExpressionAction>(*rewrite));
         } else {
           return todo_.FinishAction();

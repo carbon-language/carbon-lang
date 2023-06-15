@@ -3,100 +3,90 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: 0: Heap{}
 // CHECK:STDOUT: No returned value
 // CHECK:STDOUT: 0: Heap{}
 // CHECK:STDOUT: Reference expressions from Initializing expression
-// CHECK:STDOUT: n1 = 1
 // CHECK:STDOUT: a1 destroyed
-// CHECK:STDOUT: a1.data = 1
-// CHECK:STDOUT: n2 = 3
-// CHECK:STDOUT: a2.data = 2
-// CHECK:STDOUT: 0: Heap{}, 1: 1, 2: !!1, 3: A{.data = 1}, 4: !!A{.data = 1}, 5: 3, 6: A{.data = 2}
+// CHECK:STDOUT: a2 destroyed
+// CHECK:STDOUT: a1 destroyed
+// CHECK:STDOUT: 0: Heap{}, 1: !!1, 2: !!1, 3: !!A{.index = 1}, 4: !!A{.index = 1}, 5: !!3, 6: !!A{.index = 2}
 // CHECK:STDOUT: Value expressions from Initializing expression
-// CHECK:STDOUT: ln1 = 1
-// CHECK:STDOUT: a1 destroyed
-// CHECK:STDOUT: la1.data = 1
-// CHECK:STDOUT: ln2 = 3
-// CHECK:STDOUT: la2.data = 2
-// CHECK:STDOUT: 0: Heap{}, 1: 1, 2: !!1, 3: A{.data = 1}, 4: !!A{.data = 1}, 5: 3, 6: A{.data = 2}, 7: 1, 8: !!1, 9: A{.data = 1}, 10: !!A{.data = 1}, 11: 3, 12: A{.data = 2}
-// CHECK:STDOUT: a2 destroyed
 // CHECK:STDOUT: a1 destroyed
 // CHECK:STDOUT: a2 destroyed
 // CHECK:STDOUT: a1 destroyed
+// CHECK:STDOUT: 0: Heap{}, 1: !!1, 2: !!1, 3: !!A{.index = 1}, 4: !!A{.index = 1}, 5: !!3, 6: !!A{.index = 2}, 7: !!1, 8: !!1, 9: !!A{.index = 1}, 10: !!A{.index = 1}, 11: !!3, 12: !!A{.index = 2}
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 class A {
   destructor[self: Self] {
-    Print("a{0} destroyed", self.data);
+    Print("a{0} destroyed", self.index);
   }
-  var data: i32;
+  var index: i32;
 }
 
-fn returned_expr() -> i32 {
+fn CallWithNoReturn() {
+  return;
+}
+
+fn CallWithReturnExpression() -> i32 {
   var c: i32 = 1;
   return c;
 }
 
-fn returned_expr_class() -> A {
-  var a: A = {.data = 0};
-  a.data = 1;
+fn CallWithReturnExpressionClass() -> A {
+  var a: A = {.index = 0};
+  a.index = 1;
   return a;
 }
 
-fn no_returned_value() {
-  return;
-}
-
-fn returned_var() -> i32 {
+fn CallWithReturnedVar() -> i32 {
   returned var c: i32 = 0;
   c = 3;
   return var;
 }
 
-fn returned_var_class() -> A {
-  returned var a: A = {.data = 1};
-  a.data = 2;
+fn CallWithReturnedVarClass() -> A {
+  returned var a: A = {.index = 1};
+  a.index = 2;
   return var;
 }
 
-fn Main() -> i32 {
+fn TestNoReturn() {
   Print("No returned value");
-  no_returned_value();
-  heap.PrintAllocations();
+  CallWithNoReturn();
+}
 
+fn TestInitializeReferenceExpr() {
   // Reference expressions from Initializing expression
   Print("Reference expressions from Initializing expression");
-  var n1: i32 = returned_expr();
-  Print("n1 = {0}", n1);
+  var vn1: i32 = CallWithReturnExpression();
+  var va1: A = CallWithReturnExpressionClass();
+  var vn2: i32 = CallWithReturnedVar();
+  var va2: A = CallWithReturnedVarClass();
+}
 
-  var a1: A = returned_expr_class();
-  Print("a1.data = {0}", a1.data);
-
-  var n2: i32 = returned_var();
-  Print("n2 = {0}", n2);
-
-  var a2: A = returned_var_class();
-  Print("a2.data = {0}", a2.data);
-
-  heap.PrintAllocations();
-
+fn TestInitializeValueExpr() {
   // Value expressions from Initializing expression
   Print("Value expressions from Initializing expression");
+  let ln1: i32 = CallWithReturnExpression();
+  let la1: A = CallWithReturnExpressionClass();
+  let ln2: i32 = CallWithReturnedVar();
+  let la2: A = CallWithReturnedVarClass();
+}
 
-  let ln1: i32 = returned_expr();
-  Print("ln1 = {0}", ln1);
+fn Main() -> i32 {
+  heap.PrintAllocations();
 
-  let la1: A = returned_expr_class();
-  Print("la1.data = {0}", la1.data);
+  TestNoReturn();
+  heap.PrintAllocations();
 
-  let ln2: i32 = returned_var();
-  Print("ln2 = {0}", ln2);
+  TestInitializeReferenceExpr();
+  heap.PrintAllocations();
 
-  let la2: A = returned_var_class();
-  Print("la2.data = {0}", la2.data);
-
+  TestInitializeValueExpr();
   heap.PrintAllocations();
   return 0;
 }
