@@ -55,7 +55,7 @@ class RuntimeScope {
 
   // Bind allocation lifetime to scope. Should only be called with unowned
   // allocations to avoid a double free.
-  void BindAllocationToScope(Address address);
+  void BindLifetimeToScope(Address address);
 
   // Binds location `address` of a reference value to `value_node` without
   // allocating local storage.
@@ -269,8 +269,7 @@ class WitnessAction : public Action {
 class StatementAction : public Action {
  public:
   explicit StatementAction(Nonnull<const Statement*> statement,
-                           std::optional<AllocationId> location_received =
-                               std::nullopt /* Remove if design confirmed*/)
+                           std::optional<AllocationId> location_received)
       : Action(Kind::StatementAction),
         statement_(statement),
         location_received_(location_received) {}

@@ -704,7 +704,7 @@ class FunctionType : public Value {
   auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
     return impl_bindings_;
   }
-
+  // Return whether the function type is an initializing expression or not.
   auto is_initializing() const -> bool { return is_initializing_; }
 
  private:

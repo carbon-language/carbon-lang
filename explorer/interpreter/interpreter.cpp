@@ -1033,7 +1033,7 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
   CARBON_CHECK(method.body().has_value())
       << "Calling a method that's missing a body";
 
-  auto act = std::make_unique<StatementAction>(*method.body());
+  auto act = std::make_unique<StatementAction>(*method.body(), std::nullopt);
   return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
                      std::move(method_scope));
 }
@@ -1095,11 +1095,6 @@ auto Interpreter::CallFunction(const CallExpression& call,
       // we resolve the self type and parameter type.
       todo_.CurrentAction().StartScope(std::move(binding_scope));
 
-      CARBON_ASSIGN_OR_RETURN(
-          Nonnull<const Value*> converted_args,
-          Convert(arg, &function.param_pattern().static_type(),
-                  call.source_loc()));
-
       RuntimeScope function_scope(&heap_);
       BindingMap generic_args;
 
@@ -1124,6 +1119,13 @@ auto Interpreter::CallFunction(const CallExpression& call,
               this->arena_));
         }
       }
+
+      // TODO: Preserve expression category to allow appropriate binding in
+      // `PatternMatch`.
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> converted_args,
+          Convert(arg, &function.param_pattern().static_type(),
+                  call.source_loc()));
 
       // Bind the arguments to the parameters.
       CARBON_CHECK(PatternMatch(&function.param_pattern().value(),
@@ -2075,7 +2077,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           // Ensure we don't process any more clauses.
           act.set_pos(match_stmt.clauses().size() + 1);
           todo_.MergeScope(std::move(matches));
-          return todo_.Spawn(std::make_unique<StatementAction>(&c.statement()));
+          return todo_.Spawn(
+              std::make_unique<StatementAction>(&c.statement(), std::nullopt));
         } else {
           return todo_.RunAgain();
         }
@@ -2106,8 +2109,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                          source_array->elements()[start_index]);
         act.ReplaceResult(CurrentIndexPosInResult,
                           arena_->New<IntValue>(start_index + 1));
-        return todo_.Spawn(
-            std::make_unique<StatementAction>(&cast<For>(stmt).body()));
+        return todo_.Spawn(std::make_unique<StatementAction>(
+            &cast<For>(stmt).body(), std::nullopt));
       }
       if (act.pos() >= 2) {
         auto current_index =
@@ -2130,8 +2133,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
 
           act.ReplaceResult(CurrentIndexPosInResult,
                             arena_->New<IntValue>(current_index + 1));
-          return todo_.Spawn(
-              std::make_unique<StatementAction>(&cast<For>(stmt).body()));
+          return todo_.Spawn(std::make_unique<StatementAction>(
+              &cast<For>(stmt).body(), std::nullopt));
         }
       }
       return todo_.FinishAction();
@@ -2154,8 +2157,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         if (cast<BoolValue>(*condition).value()) {
           //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
           // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
-          return todo_.Spawn(
-              std::make_unique<StatementAction>(&cast<While>(stmt).body()));
+          return todo_.Spawn(std::make_unique<StatementAction>(
+              &cast<While>(stmt).body(), std::nullopt));
         } else {
           //    { {false :: (while ([]) s) :: C, E, F} :: S, H}
           // -> { { C, E, F } :: S, H}
@@ -2206,7 +2209,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                   &definition.init().static_type()));
           act.set_location_created(allocation_id);
           RuntimeScope scope(&heap_);
-          scope.BindAllocationToScope(Address(allocation_id));
+          scope.BindLifetimeToScope(Address(allocation_id));
           todo_.MergeScope(std::move(scope));
         }
         return todo_.Spawn(std::make_unique<ExpressionAction>(
@@ -2223,6 +2226,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         if (definition.has_init()) {
           const auto init_location = act.location_created();
           if (expr_category == ExpressionCategory::Reference) {
+            // TODO: Retrieve address of reference expression
             v = act.results()[0];
           } else if (expr_category == ExpressionCategory::Initializing &&
                      init_location && heap_.IsInitialized(*init_location)) {
@@ -2234,7 +2238,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             v_location = address;
           } else {
             if (init_location) {
-              // Location provided to initializing expression was unused.
+              // Location provided to initializing expression wasn't used.
               heap_.Discard(*init_location);
             }
             expr_category = ExpressionCategory::Value;
@@ -2259,7 +2263,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           scope.Bind(*value_node, Address(location));
           CARBON_RETURN_IF_ERROR(
               heap_.Write(Address(location), v, stmt.source_loc()));
-        } else {
+        } else /* Not a returned var */ {
           BindingMap generic_args;
           CARBON_CHECK(
               PatternMatch(p, ExpressionResult(v, v_location, expr_category),
@@ -2335,14 +2339,14 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
           //      S, H}
           // -> { { then_stmt :: C, E, F } :: S, H}
-          return todo_.Spawn(
-              std::make_unique<StatementAction>(&cast<If>(stmt).then_block()));
+          return todo_.Spawn(std::make_unique<StatementAction>(
+              &cast<If>(stmt).then_block(), std::nullopt));
         } else if (cast<If>(stmt).else_block()) {
           //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
           //      S, H}
           // -> { { else_stmt :: C, E, F } :: S, H}
-          return todo_.Spawn(
-              std::make_unique<StatementAction>(*cast<If>(stmt).else_block()));
+          return todo_.Spawn(std::make_unique<StatementAction>(
+              *cast<If>(stmt).else_block(), std::nullopt));
         } else {
           return todo_.FinishAction();
         }

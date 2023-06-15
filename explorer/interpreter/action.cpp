@@ -53,7 +53,7 @@ void RuntimeScope::Bind(ValueNodeView value_node, Address address) {
   CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
 }
 
-void RuntimeScope::BindAllocationToScope(Address address) {
+void RuntimeScope::BindLifetimeToScope(Address address) {
   CARBON_CHECK(address.element_path_.IsEmpty())
       << "Cannot extend lifetime of a specific sub-element";
   allocations_.push_back(address.allocation_);
