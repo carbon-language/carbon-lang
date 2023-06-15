@@ -418,11 +418,6 @@ class ClassDeclaration : public Declaration {
     return ExpressionCategory::Value;
   }
 
-  // FIXME:
-  // auto base_expr() const -> std::optional<Nonnull<Expression*>> {
-  //   return base_expr_;
-  // }
-
   // Returns the original base type, before instantiation & substitutions
   // Use `NominalClassType::base()` to get the instantiated type.
   auto base_type() const -> std::optional<Nonnull<const NominalClassType*>> {
