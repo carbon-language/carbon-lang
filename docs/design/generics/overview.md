@@ -225,8 +225,8 @@ impl Song as Comparable {
 Implementations may be defined within the class definition itself or
 out-of-line. Implementations may optionally start with the `extend` keyword to
 say the members of the interface are also members of the class, which may only
-be used in a class scope. Otherwise, implementations may be defined in the library
-defining either the class or the interface.
+be used in a class scope. Otherwise, implementations may be defined in the
+library defining either the class or the interface.
 
 #### Accessing members of interfaces
 
