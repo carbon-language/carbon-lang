@@ -25,19 +25,14 @@ class LoweringFunctionContext {
                                    llvm::Function* function);
 
   // Returns a basic block corresponding to the start of the given semantics
-  // block.
+  // block, and enqueues it for emission.
   auto GetBlock(SemanticsNodeBlockId block_id) -> llvm::BasicBlock*;
 
   // If we have not yet allocated a `BasicBlock` for this `block_id`, set it to
-  // `block`. Returns whether we set the block.
+  // `block`, and enqueue `block_id` for emission. Returns whether we set the
+  // block.
   auto TryToReuseBlock(SemanticsNodeBlockId block_id, llvm::BasicBlock* block)
-      -> bool {
-    bool was_set = blocks_.insert({block_id, block}).second;
-    if (was_set && block == synthetic_block_) {
-      synthetic_block_.reset();
-    }
-    return was_set;
-  }
+      -> bool;
 
   // Returns a phi node corresponding to the block argument of the given basic
   // block.
@@ -78,8 +73,8 @@ class LoweringFunctionContext {
   auto CreateSyntheticBlock() -> llvm::BasicBlock*;
 
   // Determine whether block_ is the most-recently-created synthetic block.
-  auto IsCurrentSyntheticBlock(llvm::BasicBlock* block_) -> bool {
-    return synthetic_block_ == block_;
+  auto IsCurrentSyntheticBlock(llvm::BasicBlock* block) -> bool {
+    return synthetic_block_ == block;
   }
 
   auto llvm_context() -> llvm::LLVMContext& {
@@ -88,7 +83,6 @@ class LoweringFunctionContext {
   auto llvm_module() -> llvm::Module& {
     return lowering_context_->llvm_module();
   }
-  auto function() -> llvm::Function& { return *function_; }
   auto builder() -> llvm::IRBuilder<>& { return builder_; }
   auto block_worklist() -> LoweringBlockWorklist& { return block_worklist_; }
   auto semantics_ir() -> const SemanticsIR& {
@@ -110,8 +104,9 @@ class LoweringFunctionContext {
   // Maps a function's SemanticsIR blocks to lowered blocks.
   llvm::DenseMap<SemanticsNodeBlockId, llvm::BasicBlock*> blocks_;
 
-  // The synthetic block we most recently created.
-  std::optional<llvm::BasicBlock*> synthetic_block_ = std::nullopt;
+  // The synthetic block we most recently created. May be null if there is no
+  // such block.
+  llvm::BasicBlock* synthetic_block_ = nullptr;
 
   // Maps a function's SemanticsIR nodes to lowered values.
   // TODO: Handle nested scopes. Right now this is just cleared at the end of

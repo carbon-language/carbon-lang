@@ -57,7 +57,6 @@ auto LoweringHandleBranch(LoweringFunctionContext& context,
                           SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
   SemanticsNodeBlockId target_block_id = node.GetAsBranch();
-  context.block_worklist().Push(target_block_id);
 
   // Opportunistically avoid creating a BasicBlock that contains just a branch.
   llvm::BasicBlock* block = context.builder().GetInsertBlock();
@@ -74,7 +73,6 @@ auto LoweringHandleBranchIf(LoweringFunctionContext& context,
                             SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
   auto [target_block_id, cond_id] = node.GetAsBranchIf();
-  context.block_worklist().Push(target_block_id);
   llvm::Value* cond = context.GetLocalLoaded(cond_id);
   llvm::BasicBlock* then_block = context.GetBlock(target_block_id);
   llvm::BasicBlock* else_block = context.CreateSyntheticBlock();
@@ -89,7 +87,6 @@ auto LoweringHandleBranchWithArg(LoweringFunctionContext& context,
   llvm::Value* arg = context.GetLocalLoaded(arg_id);
   SemanticsTypeId arg_type_id =
       context.semantics_ir().GetNode(arg_id).type_id();
-  context.block_worklist().Push(target_block_id);
 
   // Opportunistically avoid creating a BasicBlock that contains just a branch.
   // We only do this for a block that we know will only have a single

@@ -103,9 +103,10 @@ auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
     function_lowering.SetLocal(param_storage, llvm_function->getArg(i));
   }
 
-  function_lowering.block_worklist().Push(function.body_id);
+  // Add the entry block to the worklist.
+  function_lowering.GetBlock(function.body_id);
 
-  while (!function_lowering.block_worklist().Empty()) {
+  while (!function_lowering.block_worklist().empty()) {
     SemanticsNodeBlockId block = function_lowering.block_worklist().Pop();
     CARBON_VLOG() << "Lowering " << block << "\n";
     function_lowering.builder().SetInsertPoint(

@@ -21,8 +21,21 @@ auto LoweringFunctionContext::GetBlock(SemanticsNodeBlockId block_id)
   llvm::BasicBlock*& entry = blocks_[block_id];
   if (!entry) {
     entry = llvm::BasicBlock::Create(llvm_context(), "", function_);
+    block_worklist().Push(block_id);
   }
   return entry;
+}
+
+auto LoweringFunctionContext::TryToReuseBlock(SemanticsNodeBlockId block_id,
+                                              llvm::BasicBlock* block) -> bool {
+  if (!blocks_.insert({block_id, block}).second) {
+    return false;
+  }
+  block_worklist().Push(block_id);
+  if (block == synthetic_block_) {
+    synthetic_block_ = nullptr;
+  }
+  return true;
 }
 
 auto LoweringFunctionContext::GetBlockArg(SemanticsNodeBlockId block_id,
@@ -33,7 +46,9 @@ auto LoweringFunctionContext::GetBlockArg(SemanticsNodeBlockId block_id,
   // Find the existing phi, if any.
   auto phis = block->phis();
   if (!phis.empty()) {
-    CARBON_CHECK(phis.size() == 1) << "Expected at most one phi, found " << phis.size();
+    CARBON_CHECK(std::next(phis.begin()) == phis.end())
+        << "Expected at most one phi, found "
+        << std::distance(phis.begin(), phis.end());
     return &*phis.begin();
   }
 
@@ -46,7 +61,7 @@ auto LoweringFunctionContext::GetBlockArg(SemanticsNodeBlockId block_id,
 
 auto LoweringFunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
   synthetic_block_ = llvm::BasicBlock::Create(llvm_context(), "", function_);
-  return *synthetic_block_;
+  return synthetic_block_;
 }
 
 auto LoweringFunctionContext::GetLocalLoaded(SemanticsNodeId node_id)
