@@ -83,8 +83,8 @@ bazel-bin/explorer/fuzzing/explorer_fuzzer.full_corpus
 
 ## Investigating a crash
 
-Typically it's going to be easiest to run explorer on it directly. You can do
-this with:
+Typically it's going to be easiest to run explorer on the problematic carbon
+program directly. You can do this with:
 
 ```bash
 # Convert a specific fuzzer test to a source file
