@@ -11,8 +11,8 @@ base class C {
 
 class E {
   var x: i32;
+  // CHECK:STDERR: COMPILATION ERROR: fail_extend_after_var.carbon:[[@LINE+1]]: `extend base:` declaration must not be after `var` or `mix` declarations in a class.
   extend base: C;
-// CHECK:STDERR: COMPILATION ERROR: fail_extend_after_var.carbon:[[@LINE+1]]: `extend base:` declaration must not be after `var` or `mix` declarations in a class.
 }
 
 fn Main() -> i32 {

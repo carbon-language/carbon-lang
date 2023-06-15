@@ -5001,12 +5001,12 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
       }
       case DeclarationKind::ExtendBaseDeclaration: {
         if (after_data_member) {
-          return ProgramError(class_decl->source_loc())
+          return ProgramError(m->source_loc())
                  << "`extend base:` declaration must not be after `var` or "
                     "`mix` declarations in a class.";
         }
         if (base_class.has_value()) {
-          return ProgramError(class_decl->source_loc())
+          return ProgramError(m->source_loc())
                  << "At most one `extend base:` declaration in a class.";
         }
         Nonnull<Expression*> base_class_expr =
@@ -5014,7 +5014,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
         CARBON_ASSIGN_OR_RETURN(const auto base_type,
                                 TypeCheckTypeExp(base_class_expr, class_scope));
         if (base_type->kind() != Value::Kind::NominalClassType) {
-          return ProgramError(class_decl->source_loc())
+          return ProgramError(m->source_loc())
                  << "Unsupported base class type for class `"
                  << class_decl->name()
                  << "`. Only simple classes are currently supported as base "
@@ -5024,7 +5024,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
         base_class = cast<NominalClassType>(base_type);
         if (base_class.value()->declaration().extensibility() ==
             ClassExtensibility::None) {
-          return ProgramError(class_decl->source_loc())
+          return ProgramError(m->source_loc())
                  << "Base class `" << base_class.value()->declaration().name()
                  << "` is `final` and cannot be inherited. Add the `base` or "
                     "`abstract` class prefix to `"

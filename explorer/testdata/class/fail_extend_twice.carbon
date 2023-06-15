@@ -14,8 +14,8 @@ base class D {
 
 class E {
   extend base: C;
+  // CHECK:STDERR: COMPILATION ERROR: fail_extend_twice.carbon:[[@LINE+1]]: At most one `extend base:` declaration in a class.
   extend base: D;
-// CHECK:STDERR: COMPILATION ERROR: fail_extend_twice.carbon:[[@LINE+1]]: At most one `extend base:` declaration in a class.
 }
 
 fn Main() -> i32 {
