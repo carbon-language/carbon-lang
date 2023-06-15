@@ -33,11 +33,12 @@ auto LoweringFunctionContext::GetBlockArg(SemanticsNodeBlockId block_id,
   // Find the existing phi, if any.
   auto phis = block->phis();
   if (!phis.empty()) {
+    CARBON_CHECK(phis.size() == 1) << "Expected at most one phi, found " << phis.size();
     return &*phis.begin();
   }
 
   // The number of predecessor slots to reserve.
-  unsigned NumReservedPredecessors = 2;
+  static constexpr unsigned NumReservedPredecessors = 2;
   auto* phi = llvm::PHINode::Create(GetType(type_id), NumReservedPredecessors);
   phi->insertInto(block, block->begin());
   return phi;
@@ -47,6 +48,7 @@ auto LoweringFunctionContext::CreateSyntheticBlock() -> llvm::BasicBlock* {
   synthetic_block_ = llvm::BasicBlock::Create(llvm_context(), "", function_);
   return *synthetic_block_;
 }
+
 auto LoweringFunctionContext::GetLocalLoaded(SemanticsNodeId node_id)
     -> llvm::Value* {
   auto* value = GetLocal(node_id);
