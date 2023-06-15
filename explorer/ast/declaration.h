@@ -825,7 +825,7 @@ class InterfaceExtendDeclaration : public Declaration {
   Nonnull<Expression*> base_;
 };
 
-// An `require ... impls` declaration in an interface.
+// A `require ... impls` declaration in an interface.
 class InterfaceRequireDeclaration : public Declaration {
  public:
   InterfaceRequireDeclaration(SourceLocation source_loc,
