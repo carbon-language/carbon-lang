@@ -7,6 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <forward_list>
 #include <iterator>
 
 #include "llvm/ADT/ArrayRef.h"
