@@ -145,19 +145,10 @@ any member of the conduct team directly.
 
 ## Conduct team
 
-At present, the [Carbon leads](docs/project/evolution.md#carbon-leads-1) will
-serve as the conduct team. We expect to establish a dedicated conduct team if
-and when the project grows, along with more communication systems for reports.
-
 The conduct team can be emailed at conduct@carbon-lang.dev, and currently has
 the following members:
 
--   Chandler Carruth (@chandlerc on Discord and
-    [GitHub](https://github.com/chandlerc))
--   Kate Gregory (@KateGregory on Discord and
-    [GitHub](https://github.com/KateGregory))
--   Richard Smith (@zygoloid on Discord and
-    [GitHub](https://github.com/zygoloid))
+-   TBA
 
 If the composition of the code of conduct team changes, reports will not be
 shared with new members without the permission of the reporter.
@@ -256,9 +247,6 @@ incident. If that’s the case, the identities of anyone involved will remain
 confidential unless instructed otherwise by those individuals.
 
 ### Appealing
-
-**Note:** The process described in this section will become available when we
-have a dedicated conduct team that's separate from the Carbon leads.
 
 Only permanent resolutions, such as bans, or requests for public actions may be
 appealed. To appeal a decision of the conduct team, contact the
