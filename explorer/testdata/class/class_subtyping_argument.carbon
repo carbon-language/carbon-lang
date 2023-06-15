@@ -15,11 +15,13 @@ base class C {
   var val: i32;
 }
 
-base class D extends C {
+base class D {
+  extend base: C;
   var val: i32;
 }
 
-class E extends D {
+class E {
+  extend base: D;
   var val: i32;
 }
 

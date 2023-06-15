@@ -801,6 +801,14 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       break;
     }
 
+    case Fuzzing::Declaration::kExtendBase: {
+      const auto& extend_base_declaration = declaration.extend_base();
+      out << "  extend base: ";
+      ExpressionToCarbon(extend_base_declaration.base_class(), out);
+      out << ";\n";
+      break;
+    }
+
     // EXPERIMENTAL MIXIN FEATURE
     case Fuzzing::Declaration::kMixin: {
       const auto& mixin_declaration = declaration.mixin();
@@ -877,19 +885,19 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
       break;
     }
 
-    case Fuzzing::Declaration::kInterfaceExtends: {
-      const auto& extends = declaration.interface_extends();
-      out << "extends ";
-      ExpressionToCarbon(extends.base(), out);
+    case Fuzzing::Declaration::kInterfaceExtend: {
+      const auto& extend = declaration.interface_extend();
+      out << "extend ";
+      ExpressionToCarbon(extend.base(), out);
       out << ";";
       break;
     }
 
-    case Fuzzing::Declaration::kInterfaceImpl: {
-      const auto& impl = declaration.interface_impl();
-      out << "impl ";
+    case Fuzzing::Declaration::kInterfaceRequire: {
+      const auto& impl = declaration.interface_require();
+      out << "require ";
       ExpressionToCarbon(impl.impl_type(), out);
-      out << " as ";
+      out << " impls ";
       ExpressionToCarbon(impl.constraint(), out);
       out << ";";
       break;
@@ -923,8 +931,8 @@ static auto DeclarationToCarbon(const Fuzzing::Declaration& declaration,
 
     case Fuzzing::Declaration::kImpl: {
       const auto& impl = declaration.impl();
-      if (impl.kind() == Fuzzing::ImplDeclaration::ExternalImpl) {
-        out << "external ";
+      if (impl.kind() == Fuzzing::ImplDeclaration::InternalImpl) {
+        out << "extend ";
       }
       out << "impl ";
       if (!impl.deduced_parameters().empty()) {

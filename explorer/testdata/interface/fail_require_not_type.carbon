@@ -9,8 +9,8 @@ package ExplorerTest api;
 interface A {}
 
 interface B {
-  // CHECK:STDERR: COMPILATION ERROR: fail_impl_as_not_type.carbon:[[@LINE+1]]: type error in type expression: 'i32' is not implicitly convertible to 'type'
-  impl 5 as A;
+  // CHECK:STDERR: COMPILATION ERROR: fail_require_not_type.carbon:[[@LINE+1]]: type error in type expression: 'i32' is not implicitly convertible to 'type'
+  require 5 impls A;
 }
 
 fn Main() -> i32 {

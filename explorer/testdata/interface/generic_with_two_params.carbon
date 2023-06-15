@@ -15,7 +15,7 @@ interface Vector {
 class Point1 {
   var x: i32;
   var y: i32;
-  impl Point1 as Vector {
+  extend impl Point1 as Vector {
     fn Add[self: Point1](b: Point1) -> Point1 {
       return {.x = self.x + b.x, .y = self.y + b.y};
     }
@@ -28,7 +28,7 @@ class Point1 {
 class Point2 {
   var x: i32;
   var y: i32;
-  impl Point2 as Vector {
+  extend impl Point2 as Vector {
     fn Add[self: Point2](b: Point2) -> Point2 {
       return {.x = self.x + b.x + 1, .y = self.y + b.y + 1};
     }

@@ -47,7 +47,7 @@ compilation_unit {
         name: "Banana"
       }
       members {
-        interface_extends {
+        interface_extend {
           base {
             call {
               function {

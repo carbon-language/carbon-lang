@@ -19,19 +19,19 @@ interface B(T:! type) {
 // Note: this match_first has no effect, because it only orders impls with the
 // same type structure.
 __match_first {
-  external impl forall [T:! type] A(T) as B(i32) {
+  impl forall [T:! type] A(T) as B(i32) {
     fn F() {
       Print("A(T) as B(i32)");
     }
   }
-  external impl forall [T:! type] A(i32) as B(T) {
+  impl forall [T:! type] A(i32) as B(T) {
     fn F() {
       Print("A(i32) as B(T)");
     }
   }
 }
 
-external impl forall [T:! type, U:! type] A(T) as B(U) {
+impl forall [T:! type, U:! type] A(T) as B(U) {
   fn F() {
     Print("A(T) as B(U)");
   }

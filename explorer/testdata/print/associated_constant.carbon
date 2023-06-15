@@ -13,8 +13,8 @@ interface HasName {
     let Name:! String;
 }
 
-external impl i32 as HasName where .Name = "i32" {}
-external impl String as HasName where .Name = "String" {}
+impl i32 as HasName where .Name = "i32" {}
+impl String as HasName where .Name = "String" {}
 
 fn Main() -> i32 {
     Print(i32.(HasName.Name));

@@ -375,14 +375,12 @@ class ClassDeclaration : public Declaration {
                    Nonnull<SelfDeclaration*> self_decl,
                    ClassExtensibility extensibility,
                    std::optional<Nonnull<TuplePattern*>> type_params,
-                   std::optional<Nonnull<Expression*>> base,
                    std::vector<Nonnull<Declaration*>> members)
       : Declaration(AstNodeKind::ClassDeclaration, source_loc),
         name_(std::move(name)),
         extensibility_(extensibility),
         self_decl_(self_decl),
         type_params_(type_params),
-        base_expr_(base),
         members_(std::move(members)) {}
 
   explicit ClassDeclaration(CloneContext& context,
@@ -420,9 +418,10 @@ class ClassDeclaration : public Declaration {
     return ExpressionCategory::Value;
   }
 
-  auto base_expr() const -> std::optional<Nonnull<Expression*>> {
-    return base_expr_;
-  }
+  // FIXME:
+  // auto base_expr() const -> std::optional<Nonnull<Expression*>> {
+  //   return base_expr_;
+  // }
 
   // Returns the original base type, before instantiation & substitutions
   // Use `NominalClassType::base()` to get the instantiated type.
@@ -439,7 +438,6 @@ class ClassDeclaration : public Declaration {
   ClassExtensibility extensibility_;
   Nonnull<SelfDeclaration*> self_decl_;
   std::optional<Nonnull<TuplePattern*>> type_params_;
-  std::optional<Nonnull<Expression*>> base_expr_;
   std::vector<Nonnull<Declaration*>> members_;
   std::optional<Nonnull<const NominalClassType*>> base_type_;
 };
@@ -518,6 +516,27 @@ class MixDeclaration : public Declaration {
  private:
   std::optional<Nonnull<Expression*>> mixin_;
   std::optional<Nonnull<const MixinPseudoType*>> mixin_value_;
+};
+
+class ExtendBaseDeclaration : public Declaration {
+ public:
+  ExtendBaseDeclaration(SourceLocation source_loc,
+                        Nonnull<Expression*> base_class)
+      : Declaration(AstNodeKind::ExtendBaseDeclaration, source_loc),
+        base_class_(base_class) {}
+
+  explicit ExtendBaseDeclaration(CloneContext& context,
+                                 const ExtendBaseDeclaration& other);
+
+  static auto classof(const AstNode* node) -> bool {
+    return InheritsFromExtendBaseDeclaration(node->kind());
+  }
+
+  auto base_class() const -> Nonnull<const Expression*> { return base_class_; }
+  auto base_class() -> Nonnull<Expression*> { return base_class_; }
+
+ private:
+  Nonnull<Expression*> base_class_;
 };
 
 class AlternativeSignature : public AstNode {
@@ -789,19 +808,19 @@ class ConstraintDeclaration : public ConstraintTypeDeclaration {
 };
 
 // An `extends` declaration in an interface.
-class InterfaceExtendsDeclaration : public Declaration {
+class InterfaceExtendDeclaration : public Declaration {
  public:
-  InterfaceExtendsDeclaration(SourceLocation source_loc,
-                              Nonnull<Expression*> base)
-      : Declaration(AstNodeKind::InterfaceExtendsDeclaration, source_loc),
+  InterfaceExtendDeclaration(SourceLocation source_loc,
+                             Nonnull<Expression*> base)
+      : Declaration(AstNodeKind::InterfaceExtendDeclaration, source_loc),
         base_(base) {}
 
-  explicit InterfaceExtendsDeclaration(CloneContext& context,
-                                       const InterfaceExtendsDeclaration& other)
+  explicit InterfaceExtendDeclaration(CloneContext& context,
+                                      const InterfaceExtendDeclaration& other)
       : Declaration(context, other), base_(context.Clone(other.base_)) {}
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromInterfaceExtendsDeclaration(node->kind());
+    return InheritsFromInterfaceExtendDeclaration(node->kind());
   }
 
   auto base() const -> const Expression* { return base_; }
@@ -811,24 +830,24 @@ class InterfaceExtendsDeclaration : public Declaration {
   Nonnull<Expression*> base_;
 };
 
-// An `impl ... as` declaration in an interface.
-class InterfaceImplDeclaration : public Declaration {
+// An `require ... impls` declaration in an interface.
+class InterfaceRequireDeclaration : public Declaration {
  public:
-  InterfaceImplDeclaration(SourceLocation source_loc,
-                           Nonnull<Expression*> impl_type,
-                           Nonnull<Expression*> constraint)
-      : Declaration(AstNodeKind::InterfaceImplDeclaration, source_loc),
+  InterfaceRequireDeclaration(SourceLocation source_loc,
+                              Nonnull<Expression*> impl_type,
+                              Nonnull<Expression*> constraint)
+      : Declaration(AstNodeKind::InterfaceRequireDeclaration, source_loc),
         impl_type_(impl_type),
         constraint_(constraint) {}
 
-  explicit InterfaceImplDeclaration(CloneContext& context,
-                                    const InterfaceImplDeclaration& other)
+  explicit InterfaceRequireDeclaration(CloneContext& context,
+                                       const InterfaceRequireDeclaration& other)
       : Declaration(context, other),
         impl_type_(context.Clone(other.impl_type_)),
         constraint_(context.Clone(other.constraint_)) {}
 
   static auto classof(const AstNode* node) -> bool {
-    return InheritsFromInterfaceImplDeclaration(node->kind());
+    return InheritsFromInterfaceRequireDeclaration(node->kind());
   }
 
   auto impl_type() const -> const Expression* { return impl_type_; }

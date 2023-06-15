@@ -756,18 +756,20 @@ static auto DeclarationToProto(const Declaration& declaration)
       break;
     }
 
-    case DeclarationKind::InterfaceExtendsDeclaration: {
-      const auto& extends = cast<InterfaceExtendsDeclaration>(declaration);
-      auto* extends_proto = declaration_proto.mutable_interface_extends();
-      *extends_proto->mutable_base() = ExpressionToProto(*extends.base());
+    case DeclarationKind::InterfaceExtendDeclaration: {
+      const auto& extend = cast<InterfaceExtendDeclaration>(declaration);
+      auto* extend_proto = declaration_proto.mutable_interface_extend();
+      *extend_proto->mutable_base() = ExpressionToProto(*extend.base());
       break;
     }
 
-    case DeclarationKind::InterfaceImplDeclaration: {
-      const auto& impl = cast<InterfaceImplDeclaration>(declaration);
-      auto* impl_proto = declaration_proto.mutable_interface_impl();
-      *impl_proto->mutable_impl_type() = ExpressionToProto(*impl.impl_type());
-      *impl_proto->mutable_constraint() = ExpressionToProto(*impl.constraint());
+    case DeclarationKind::InterfaceRequireDeclaration: {
+      const auto& require = cast<InterfaceRequireDeclaration>(declaration);
+      auto* require_proto = declaration_proto.mutable_interface_require();
+      *require_proto->mutable_impl_type() =
+          ExpressionToProto(*require.impl_type());
+      *require_proto->mutable_constraint() =
+          ExpressionToProto(*require.constraint());
       break;
     }
 
@@ -839,6 +841,14 @@ static auto DeclarationToProto(const Declaration& declaration)
       auto* alias_proto = declaration_proto.mutable_alias();
       *alias_proto->mutable_name() = DeclaredNameToProto(alias.name());
       *alias_proto->mutable_target() = ExpressionToProto(alias.target());
+      break;
+    }
+
+    case DeclarationKind::ExtendBaseDeclaration: {
+      const auto& extend_base = cast<ExtendBaseDeclaration>(declaration);
+      auto* extend_base_proto = declaration_proto.mutable_extend_base();
+      *extend_base_proto->mutable_base_class() =
+          ExpressionToProto(*extend_base.base_class());
       break;
     }
   }

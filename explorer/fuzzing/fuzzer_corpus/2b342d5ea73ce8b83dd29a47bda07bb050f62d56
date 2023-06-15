@@ -74,7 +74,7 @@ compilation_unit {
         name: "MyAdd"
       }
       members {
-        interface_extends {
+        interface_extend {
           base {
             where {
               base {

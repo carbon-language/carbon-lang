@@ -25,7 +25,7 @@ fn F3[T:! A where .T == i32, U:! A where .T == i32](x: T.T) -> U.T {
   return x;
 }
 
-external impl i32 as A where .T == i32 {}
+impl i32 as A where .T == i32 {}
 
 fn Main() -> i32 {
   return F3(0);

@@ -2302,13 +2302,14 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration:
-    case DeclarationKind::InterfaceExtendsDeclaration:
-    case DeclarationKind::InterfaceImplDeclaration:
+    case DeclarationKind::InterfaceExtendDeclaration:
+    case DeclarationKind::InterfaceRequireDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::MatchFirstDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:
+    case DeclarationKind::ExtendBaseDeclaration:
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }

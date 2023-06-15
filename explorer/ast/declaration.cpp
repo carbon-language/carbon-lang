@@ -108,8 +108,8 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       break;
     }
 
-    case DeclarationKind::InterfaceExtendsDeclaration:
-    case DeclarationKind::InterfaceImplDeclaration:
+    case DeclarationKind::InterfaceExtendDeclaration:
+    case DeclarationKind::InterfaceRequireDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration: {
       PrintID(out);
       out << ";\n";
@@ -125,6 +125,12 @@ void Declaration::Print(llvm::raw_ostream& out) const {
       const auto& alias = cast<AliasDeclaration>(*this);
       PrintID(out);
       out << " = " << alias.target() << ";\n";
+      break;
+    }
+
+    case DeclarationKind::ExtendBaseDeclaration: {
+      PrintID(out);
+      out << ";\n";
       break;
     }
   }
@@ -149,9 +155,9 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       const auto& impl_decl = cast<ImplDeclaration>(*this);
       switch (impl_decl.kind()) {
         case ImplKind::InternalImpl:
+          out << "extend ";
           break;
         case ImplKind::ExternalImpl:
-          out << "external ";
           break;
       }
       out << "impl ";
@@ -204,15 +210,15 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
       break;
     }
 
-    case DeclarationKind::InterfaceExtendsDeclaration: {
-      const auto& extends = cast<InterfaceExtendsDeclaration>(*this);
-      out << "extends " << *extends.base();
+    case DeclarationKind::InterfaceExtendDeclaration: {
+      const auto& extend = cast<InterfaceExtendDeclaration>(*this);
+      out << "extend " << *extend.base();
       break;
     }
 
-    case DeclarationKind::InterfaceImplDeclaration: {
-      const auto& impl = cast<InterfaceImplDeclaration>(*this);
-      out << "impl " << *impl.impl_type() << " as " << *impl.constraint();
+    case DeclarationKind::InterfaceRequireDeclaration: {
+      const auto& impl = cast<InterfaceRequireDeclaration>(*this);
+      out << "require " << *impl.impl_type() << " impls " << *impl.constraint();
       break;
     }
 
@@ -230,6 +236,12 @@ void Declaration::PrintID(llvm::raw_ostream& out) const {
     case DeclarationKind::AliasDeclaration: {
       const auto& alias = cast<AliasDeclaration>(*this);
       out << "alias " << alias.name();
+      break;
+    }
+
+    case DeclarationKind::ExtendBaseDeclaration: {
+      const auto& extend = cast<ExtendBaseDeclaration>(*this);
+      out << "extend base: " << *extend.base_class();
       break;
     }
   }
@@ -268,8 +280,8 @@ auto GetName(const Declaration& declaration)
       return cast<VariableDeclaration>(declaration).binding().name();
     case DeclarationKind::AssociatedConstantDeclaration:
       return cast<AssociatedConstantDeclaration>(declaration).binding().name();
-    case DeclarationKind::InterfaceExtendsDeclaration:
-    case DeclarationKind::InterfaceImplDeclaration:
+    case DeclarationKind::InterfaceExtendDeclaration:
+    case DeclarationKind::InterfaceRequireDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::MatchFirstDeclaration:
       return std::nullopt;
@@ -277,6 +289,9 @@ auto GetName(const Declaration& declaration)
       return SelfDeclaration::name();
     case DeclarationKind::AliasDeclaration: {
       return cast<AliasDeclaration>(declaration).name().inner_name();
+    }
+    case DeclarationKind::ExtendBaseDeclaration: {
+      return "extend base";
     }
   }
 }
@@ -417,9 +432,13 @@ ClassDeclaration::ClassDeclaration(CloneContext& context,
       extensibility_(other.extensibility_),
       self_decl_(context.Clone(other.self_decl_)),
       type_params_(context.Clone(other.type_params_)),
-      base_expr_(context.Clone(other.base_expr_)),
       members_(context.Clone(other.members_)),
       base_type_(context.Clone(other.base_type_)) {}
+
+ExtendBaseDeclaration::ExtendBaseDeclaration(CloneContext& context,
+                                             const ExtendBaseDeclaration& other)
+    : Declaration(context, other),
+      base_class_(context.Clone(other.base_class_)) {}
 
 ConstraintTypeDeclaration::ConstraintTypeDeclaration(
     CloneContext& context, const ConstraintTypeDeclaration& other)

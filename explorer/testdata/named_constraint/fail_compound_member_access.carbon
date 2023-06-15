@@ -12,10 +12,10 @@ interface MyAddWith(T:! type) {
 }
 
 constraint MyAdd {
-  extends MyAddWith(Self) where .Result = Self;
+  extend MyAddWith(Self) where .Result = Self;
 }
 
-external impl i32 as MyAdd {
+impl i32 as MyAdd {
   fn Op[self: i32](other: i32) -> i32 { return self + other; }
 }
 

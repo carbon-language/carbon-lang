@@ -24,7 +24,7 @@ interface B {
 }
 
 class C(T:! type) {
-  impl as A & B where .TA = i32 and .TB = i32 {
+  extend impl as A & B where .TA = i32 and .TB = i32 {
     fn FA() -> i32 {
       Print("(C(T) as A).FA()");
       // OK, know that TA is i32 here.
@@ -44,7 +44,7 @@ class C(T:! type) {
   }
 }
 
-external impl C(i32) as A where .TA = (i32, i32) {
+impl C(i32) as A where .TA = (i32, i32) {
   fn FA() -> (i32, i32) {
     Print("(C(i32) as A).FA()");
     return (6, 7);

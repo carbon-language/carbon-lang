@@ -9,7 +9,7 @@ compilation_unit {
         name: "Vector"
       }
       members {
-        interface_extends {
+        interface_extend {
           base {
             int_type_literal {
             }

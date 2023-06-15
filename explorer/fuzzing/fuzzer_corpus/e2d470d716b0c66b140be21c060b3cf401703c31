@@ -83,7 +83,7 @@ compilation_unit {
         name: "Traversible"
       }
       members {
-        interface_extends {
+        interface_extend {
           base {
             identifier {
               name: "Runnable"
@@ -92,7 +92,7 @@ compilation_unit {
         }
       }
       members {
-        interface_extends {
+        interface_extend {
           base {
             identifier {
               name: "Walkable"

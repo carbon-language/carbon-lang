@@ -13,7 +13,7 @@ interface Apple(T:! type) {
 }
 
 interface Banana {
-  extends Apple(i32);
+  require Self impls Apple(i32);
   fn G[self: Self]();
 }
 
@@ -21,14 +21,20 @@ class Carrot {
   var n: i32;
 }
 
-// This impl also provides an `impl Carrot as Apple(i32)`.
-external impl Carrot as Banana {
+impl Carrot as Apple(i32) {
   fn F[self: Self]() -> i32 { return self.n; }
+}
+
+impl Carrot as Banana {
   fn G[self: Self]() { Print("Carrot.G"); }
+}
+
+fn H[T:! Banana](x: T) -> i32 {
+  x.G();
+  return x.(Apple(i32).F)();
 }
 
 fn Main() -> i32 {
   var c: Carrot = {.n = 5};
-  c.(Banana.G)();
-  return c.(Apple(i32).F)();
+  return H(c);
 }

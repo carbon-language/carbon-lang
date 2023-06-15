@@ -6,9 +6,14 @@
 
 package ExplorerTest api;
 
-interface Vector {
-  // CHECK:STDERR: COMPILATION ERROR: fail_extends_not_constraint.carbon:[[@LINE+1]]: expected a constraint in extends declaration, found i32
-  extends i32;
+class C {
+  fn F() {}
+}
+
+class D {
+  extend base: C;
+  fn G() {}
+// CHECK:STDERR: COMPILATION ERROR: fail_extend_final_class.carbon:[[@LINE+1]]: Base class `C` is `final` and cannot be inherited. Add the `base` or `abstract` class prefix to `C` to allow it to be inherited
 }
 
 fn Main() -> i32 {

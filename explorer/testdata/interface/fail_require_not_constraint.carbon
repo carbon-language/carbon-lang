@@ -7,8 +7,8 @@
 package ExplorerTest api;
 
 interface Vector {
-  // CHECK:STDERR: COMPILATION ERROR: fail_impl_as_not_constraint.carbon:[[@LINE+1]]: expected a constraint in impl as declaration, found i32
-  impl Self as i32;
+  // CHECK:STDERR: COMPILATION ERROR: fail_require_not_constraint.carbon:[[@LINE+1]]: expected a constraint in require declaration, found i32
+  require Self impls i32;
 }
 
 fn Main() -> i32 {

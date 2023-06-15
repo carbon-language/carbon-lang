@@ -7,12 +7,10 @@
 package ExplorerTest api;
 
 class C {
-  fn F() {}
-}
-
-class D extends C {
-  fn G() {}
-// CHECK:STDERR: COMPILATION ERROR: fail_extends_final_class.carbon:[[@LINE+1]]: Base class `C` is `final` and cannot be inherited. Add the `base` or `abstract` class prefix to `C` to allow it to be inherited
+  // CHECK:STDERR: COMPILATION ERROR: fail_extend_non_class.carbon:[[@LINE+1]]: type error in type expression: 'i32' is not implicitly convertible to 'type'
+  extend base: 3;
+  var x: i32;
+  var y: i32;
 }
 
 fn Main() -> i32 {

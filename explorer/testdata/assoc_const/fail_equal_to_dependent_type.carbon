@@ -22,7 +22,7 @@ fn H[V:! Iface](x: V) {
 }
 
 class Class {
-  impl as Iface where .T = i32 {}
+  extend impl as Iface where .T = i32 {}
 }
 
 fn Main() -> i32 {
