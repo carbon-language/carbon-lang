@@ -1,0 +1,6 @@
+src/*
+!src/scanner.c
+Cargo.toml
+package.json
+binding.gyp
+bindings
