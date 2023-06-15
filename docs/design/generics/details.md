@@ -316,8 +316,8 @@ class Point {
 
 In this case, all the functions `Add`, `Scale`, and `Draw` end up a part of the
 API for `Point`. This means you can't implement two interfaces that have a name
-in common (unless you use an `impl` without `extend` for one or both, as
-described below).
+in common (unless you use an `impl` without `extend` for one or both, for
+an [external impl](#external-impl)).
 
 ```
 class GameBoard {
@@ -523,8 +523,7 @@ unlike Swift and Rust.
 Given a value of type `Point3` and an interface `Vector` implemented for that
 type, you can access the methods from that interface using a
 [qualified member access expression](terminology.md#qualified-member-access-expression)
-whether or not the implementation is done externally with an `impl` declaration
-without `extend`. The qualified member access expression writes the member's
+whether or not the implementation is done with an [external `impl` declaration](#external-impl). The qualified member access expression writes the member's
 _qualified name_ in the parentheses of the
 [compound member access syntax](/docs/design/expressions/member_access.md):
 
@@ -3785,7 +3784,7 @@ interface when its element type satisfies the same interface:
 -   A container is copyable if its elements are.
 
 This may be done with an [external `impl`](#external-impl) by specifying a
-more-specific `Self` type to the left of the `as` in the declaration:
+more specific `Self` type to the left of the `as` in the declaration:
 
 ```
 interface Printable {
@@ -3844,7 +3843,7 @@ var no_print: Array(Unprintable, 2) = ...;
 no_print.Print();
 ```
 
-It is still legal to declare or define an external impl lexically with the class
+It is still legal to declare or define an external impl lexically inside the class
 scope, as in:
 
 ```
