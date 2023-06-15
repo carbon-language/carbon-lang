@@ -4,9 +4,9 @@
 //
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_refs: block2},
-// CHECK:STDOUT:   {param_refs: block0},
+// CHECK:STDOUT: functions: [
+// CHECK:STDOUT:   {name: str3, param_refs: block2, body: block4},
+// CHECK:STDOUT:   {name: str4, param_refs: block0, body: block5},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,
@@ -36,23 +36,21 @@
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+4, type: type0},
-// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str3, arg1: callable0},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+6, arg1: block0},
-// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str4, arg1: callable1},
+// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
+// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+9, arg1: node+10, type: type0},
+// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+8, arg1: node+9, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type0},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+11, arg1: node+12, type: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+13, type: type0},
+// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+10, arg1: node+11, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+12, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int3, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int4, type: type0},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+15, arg1: node+16, type: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+17, type: type0},
+// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+14, arg1: node+15, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+16, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int5, type: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+19, type: type0},
-// CHECK:STDOUT:   {kind: Call, arg0: block5, arg1: callable0},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+8, arg1: block4},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+18, type: type0},
+// CHECK:STDOUT:   {kind: Call, arg0: block6, arg1: function0},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -73,10 +71,11 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
-// CHECK:STDOUT:     node+8,
-// CHECK:STDOUT:     node+22,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
@@ -89,12 +88,11 @@
 // CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:     node+20,
-// CHECK:STDOUT:     node+21,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+14,
-// CHECK:STDOUT:     node+18,
-// CHECK:STDOUT:     node+20,
+// CHECK:STDOUT:     node+13,
+// CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

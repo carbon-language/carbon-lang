@@ -12,9 +12,9 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
+#include "testing/util/test_raw_ostream.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
@@ -31,19 +31,24 @@ using ::testing::StrEq;
 
 class LexerTest : public ::testing::Test {
  protected:
-  auto GetSourceBuffer(llvm::Twine text) -> SourceBuffer& {
-    source_storage.push_back(
-        std::move(*SourceBuffer::CreateFromText(text.str())));
-    return source_storage.back();
+  auto GetSourceBuffer(llvm::StringRef text) -> SourceBuffer& {
+    std::string filename = llvm::formatv("test{0}.carbon", ++file_index_);
+    CARBON_CHECK(fs_.addFile(filename, /*ModificationTime=*/0,
+                             llvm::MemoryBuffer::getMemBuffer(text)));
+    source_storage_.push_front(
+        std::move(*SourceBuffer::CreateFromFile(fs_, filename)));
+    return source_storage_.front();
   }
 
-  auto Lex(llvm::Twine text,
+  auto Lex(llvm::StringRef text,
            DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer())
       -> TokenizedBuffer {
     return TokenizedBuffer::Lex(GetSourceBuffer(text), consumer);
   }
 
-  llvm::SmallVector<SourceBuffer, 16> source_storage;
+  llvm::vfs::InMemoryFileSystem fs_;
+  int file_index_ = 0;
+  std::forward_list<SourceBuffer> source_storage_;
 };
 
 TEST_F(LexerTest, HandlesEmptyBuffer) {
@@ -990,121 +995,14 @@ TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Lex("\b", consumer);
 }
 
-auto GetAndDropLine(llvm::StringRef& text) -> std::string {
-  auto newline_offset = text.find_first_of('\n');
-  llvm::StringRef line = text.slice(0, newline_offset);
-
-  if (newline_offset != llvm::StringRef::npos) {
-    text = text.substr(newline_offset + 1);
-  } else {
-    text = "";
-  }
-
-  return line.str();
-}
-
-TEST_F(LexerTest, PrintingInteger) {
-  auto buffer = Lex("123");
-  ASSERT_FALSE(buffer.has_errors());
-  std::string print_storage;
-  llvm::raw_string_ostream print_stream(print_storage);
-  buffer.Print(print_stream);
-  llvm::StringRef print = print_stream.str();
-  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("{ index: 0, kind: 'IntegerLiteral', line: 1, "
-                    "column: 1, indent: 1, spelling: '123', value: `123`, "
-                    "has_trailing_space: true },"));
-  EXPECT_THAT(GetAndDropLine(print), HasSubstr("'EndOfFile'"));
-  EXPECT_THAT(GetAndDropLine(print), StrEq("]"));
-  EXPECT_TRUE(print.empty()) << print;
-}
-
-TEST_F(LexerTest, PrintingReal) {
-  auto buffer = Lex("2.5");
-  ASSERT_FALSE(buffer.has_errors());
-  std::string print_storage;
-  llvm::raw_string_ostream print_stream(print_storage);
-  buffer.Print(print_stream);
-  llvm::StringRef print = print_stream.str();
-  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
-  EXPECT_THAT(
-      GetAndDropLine(print),
-      StrEq("{ index: 0, kind: 'RealLiteral', line: 1, column: 1, indent: "
-            "1, spelling: '2.5', value: `25*10^-1`, has_trailing_space: true "
-            "},"));
-  EXPECT_THAT(GetAndDropLine(print), HasSubstr("'EndOfFile'"));
-  EXPECT_THAT(GetAndDropLine(print), StrEq("]"));
-  EXPECT_TRUE(print.empty()) << print;
-}
-
-TEST_F(LexerTest, PrintingPadding) {
-  // Test kind padding.
-  auto buffer = Lex("(;foo;)");
-  ASSERT_FALSE(buffer.has_errors());
-  std::string print_storage;
-  llvm::raw_string_ostream print_stream(print_storage);
-  buffer.Print(print_stream);
-  llvm::StringRef print = print_stream.str();
-  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("{ index: 0, kind:  'OpenParen', line: 1, column: "
-                    "1, indent: 1, spelling: '(', closing_token: 4 },"));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("{ index: 1, kind:       'Semi', line: 1, column: "
-                    "2, indent: 1, spelling: ';' },"));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("{ index: 2, kind: 'Identifier', line: 1, column: "
-                    "3, indent: 1, spelling: 'foo', identifier: 0 },"));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("{ index: 3, kind:       'Semi', line: 1, column: "
-                    "6, indent: 1, spelling: ';' },"));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("{ index: 4, kind: 'CloseParen', line: 1, column: "
-                    "7, indent: 1, spelling: ')', opening_token: 0, "
-                    "has_trailing_space: true },"));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("{ index: 5, kind:  'EndOfFile', line: 1, column: "
-                    "8, indent: 1, spelling: '' },"));
-  EXPECT_THAT(GetAndDropLine(print), StrEq("]"));
-  EXPECT_TRUE(print.empty()) << print;
-}
-
-TEST_F(LexerTest, PrintingPaddingDigits) {
-  // Test digit padding with max values of 9, 10, and 11.
-  auto buffer = Lex(";\n\n\n\n\n\n\n\n\n\n        ;;");
-  ASSERT_FALSE(buffer.has_errors());
-  std::string print_storage;
-  llvm::raw_string_ostream print_stream(print_storage);
-  buffer.Print(print_stream);
-  llvm::StringRef print = print_stream.str();
-  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("{ index: 0, kind:      'Semi', line:  1, column:  1, "
-                    "indent: 1, spelling: ';', has_trailing_space: true },"));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("{ index: 1, kind:      'Semi', line: 11, column:  9, "
-                    "indent: 9, spelling: ';' },"));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("{ index: 2, kind:      'Semi', line: 11, column: 10, "
-                    "indent: 9, spelling: ';', has_trailing_space: true },"));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("{ index: 3, kind: 'EndOfFile', line: 11, column: 11, "
-                    "indent: 9, spelling: '' },"));
-  EXPECT_THAT(GetAndDropLine(print), StrEq("]"));
-  EXPECT_TRUE(print.empty()) << print;
-}
-
 TEST_F(LexerTest, PrintingAsYaml) {
   // Test that we can parse this into YAML and verify line and indent data.
   auto buffer = Lex("\n ;\n\n\n; ;\n\n\n\n\n\n\n\n\n\n\n");
   ASSERT_FALSE(buffer.has_errors());
-  std::string print_output;
-  llvm::raw_string_ostream print_stream(print_output);
+  TestRawOstream print_stream;
   buffer.Print(print_stream);
-  print_stream.flush();
 
-  EXPECT_THAT(Yaml::Value::FromText(print_output),
+  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()),
               ElementsAre(Yaml::SequenceValue{
                   Yaml::MappingValue{{"index", "0"},
                                      {"kind", "Semi"},
@@ -1133,20 +1031,6 @@ TEST_F(LexerTest, PrintingAsYaml) {
                                      {"column", "1"},
                                      {"indent", "1"},
                                      {"spelling", ""}}}));
-}
-
-TEST_F(LexerTest, PrintToken) {
-  auto buffer = Lex("0x9");
-  ASSERT_FALSE(buffer.has_errors());
-  std::string print_output;
-  llvm::raw_string_ostream print_stream(print_output);
-  buffer.Print(print_stream);
-  llvm::StringRef print = print_stream.str();
-  EXPECT_THAT(GetAndDropLine(print), StrEq("["));
-  EXPECT_THAT(GetAndDropLine(print),
-              StrEq("{ index: 0, kind: 'IntegerLiteral', line: 1, "
-                    "column: 1, indent: 1, spelling: '0x9', value: `9`, "
-                    "has_trailing_space: true },"));
 }
 
 }  // namespace

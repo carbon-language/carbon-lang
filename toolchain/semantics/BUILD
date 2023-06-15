@@ -104,11 +104,10 @@ cc_test(
     size = "small",
     srcs = ["semantics_ir_test.cpp"],
     deps = [
-        ":semantics_ir",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "//toolchain/common:yaml_test_helpers",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/driver",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -119,9 +118,7 @@ file_test(
     srcs = ["semantics_file_test.cpp"],
     tests = glob(["testdata/**/*.carbon"]),
     deps = [
-        "//testing/file_test:file_test_base",
-        "//toolchain/driver",
-        "@com_google_googletest//:gtest",
+        "//toolchain/driver:driver_file_test_base",
         "@llvm-project//llvm:Support",
     ],
 )

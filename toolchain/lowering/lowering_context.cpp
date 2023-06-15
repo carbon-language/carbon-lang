@@ -5,6 +5,7 @@
 #include "toolchain/lowering/lowering_context.h"
 
 #include "common/vlog.h"
+#include "toolchain/lowering/lowering_function_context.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node_kind.h"
 
@@ -16,52 +17,107 @@ LoweringContext::LoweringContext(llvm::LLVMContext& llvm_context,
                                  llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
-      builder_(llvm_context),
       semantics_ir_(&semantics_ir),
-      vlog_stream_(vlog_stream),
-      lowered_nodes_(semantics_ir_->nodes_size(), nullptr),
-      lowered_callables_(semantics_ir_->callables_size(), nullptr) {
+      vlog_stream_(vlog_stream) {
   CARBON_CHECK(!semantics_ir.has_errors())
       << "Generating LLVM IR from invalid SemanticsIR is unsupported.";
-
-  auto types = semantics_ir_->types();
-  lowered_types_.resize_for_overwrite(types.size());
-  for (int i = 0; i < static_cast<int>(types.size()); ++i) {
-    lowered_types_[i] = BuildLoweredNodeAsType(types[i]);
-  }
 }
 
+// TODO: Move this to lower_to_llvm.cpp.
 auto LoweringContext::Run() -> std::unique_ptr<llvm::Module> {
   CARBON_CHECK(llvm_module_) << "Run can only be called once.";
 
-  LowerBlock(semantics_ir_->top_node_block_id());
-
-  while (!todo_blocks_.empty()) {
-    auto [llvm_block, block_id] = todo_blocks_.pop_back_val();
-    builder_.SetInsertPoint(llvm_block);
-    LowerBlock(block_id);
+  // Lower types.
+  auto types = semantics_ir_->types();
+  types_.resize_for_overwrite(types.size());
+  for (int i = 0; i < static_cast<int>(types.size()); ++i) {
+    types_[i] = BuildType(types[i]);
   }
+
+  // Lower function declarations.
+  functions_.resize_for_overwrite(semantics_ir_->functions_size());
+  for (int i = 0; i < semantics_ir_->functions_size(); ++i) {
+    functions_[i] = BuildFunctionDeclaration(SemanticsFunctionId(i));
+  }
+
+  // TODO: Lower global variable declarations.
+
+  // Lower function definitions.
+  for (int i = 0; i < semantics_ir_->functions_size(); ++i) {
+    BuildFunctionDefinition(SemanticsFunctionId(i));
+  }
+
+  // TODO: Lower global variable initializers.
 
   return std::move(llvm_module_);
 }
 
-auto LoweringContext::LowerBlock(SemanticsNodeBlockId block_id) -> void {
-  CARBON_VLOG() << "Lowering block " << block_id << "\n";
-  for (const auto& node_id : semantics_ir_->GetNodeBlock(block_id)) {
-    auto node = semantics_ir_->GetNode(node_id);
-    CARBON_VLOG() << "Lowering node" << node_id << ": " << node << "\n";
+auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
+    -> llvm::Function* {
+  auto function = semantics_ir().GetFunction(function_id);
+
+  // TODO: Lower type information for the arguments prior to building args.
+  auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+  llvm::SmallVector<llvm::Type*> args;
+  args.resize_for_overwrite(param_refs.size());
+  for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
+    args[i] = GetType(semantics_ir().GetNode(param_refs[i]).type_id());
+  }
+
+  llvm::Type* return_type = GetType(function.return_type_id.is_valid()
+                                        ? function.return_type_id
+                                        : semantics_ir().empty_tuple_type_id());
+  llvm::FunctionType* function_type =
+      llvm::FunctionType::get(return_type, args, /*isVarArg=*/false);
+  auto* llvm_function = llvm::Function::Create(
+      function_type, llvm::Function::ExternalLinkage,
+      semantics_ir().GetString(function.name_id), llvm_module());
+
+  // Set parameter names.
+  for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
+    auto [param_name_id, _] =
+        semantics_ir().GetNode(param_refs[i]).GetAsBindName();
+    llvm_function->getArg(i)->setName(semantics_ir().GetString(param_name_id));
+  }
+
+  return llvm_function;
+}
+
+auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
+    -> void {
+  auto function = semantics_ir().GetFunction(function_id);
+  auto body_id = function.body_id;
+  if (!body_id.is_valid()) {
+    // Function is probably defined in another file; not an error.
+    return;
+  }
+
+  llvm::Function* llvm_function = GetFunction(function_id);
+  LoweringFunctionContext function_lowering(*this, llvm_function);
+
+  // Add parameters to locals.
+  auto param_refs = semantics_ir().GetNodeBlock(function.param_refs_id);
+  for (int i = 0; i < static_cast<int>(param_refs.size()); ++i) {
+    auto param_storage =
+        semantics_ir().GetNode(param_refs[i]).GetAsBindName().second;
+    function_lowering.SetLocal(param_storage, llvm_function->getArg(i));
+  }
+
+  CARBON_VLOG() << "Lowering " << function.body_id << "\n";
+  for (const auto& node_id : semantics_ir().GetNodeBlock(function.body_id)) {
+    auto node = semantics_ir().GetNode(node_id);
+    CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
     switch (node.kind()) {
-#define CARBON_SEMANTICS_NODE_KIND(Name)        \
-  case SemanticsNodeKind::Name:                 \
-    LoweringHandle##Name(*this, node_id, node); \
+#define CARBON_SEMANTICS_NODE_KIND(Name)                    \
+  case SemanticsNodeKind::Name:                             \
+    LoweringHandle##Name(function_lowering, node_id, node); \
     break;
 #include "toolchain/semantics/semantics_node_kind.def"
     }
   }
 }
 
-auto LoweringContext::BuildLoweredNodeAsType(SemanticsNodeId node_id)
-    -> llvm::Type* {
+auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
   switch (node_id.index) {
     case SemanticsBuiltinKind::EmptyTupleType.AsInt():
       // Represent empty types as empty structs.
@@ -74,10 +130,14 @@ auto LoweringContext::BuildLoweredNodeAsType(SemanticsNodeId node_id)
           SemanticsBuiltinKind::FromInt(node_id.index).name());
     case SemanticsBuiltinKind::FloatingPointType.AsInt():
       // TODO: Handle different sizes.
-      return builder_.getDoubleTy();
+      return llvm::Type::getDoubleTy(*llvm_context_);
     case SemanticsBuiltinKind::IntegerType.AsInt():
       // TODO: Handle different sizes.
-      return builder_.getInt32Ty();
+      return llvm::Type::getInt32Ty(*llvm_context_);
+    case SemanticsBuiltinKind::BoolType.AsInt():
+      // TODO: We may want to have different representations for `bool` storage
+      // (`i8`) versus for `bool` values (`i1`).
+      return llvm::Type::getInt1Ty(*llvm_context_);
   }
 
   auto node = semantics_ir_->GetNode(node_id);

@@ -10,6 +10,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "testing/util/test_raw_ostream.h"
 #include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {
@@ -66,13 +67,11 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
     size -= arg_length;
   }
 
-  std::string error_text;
-  llvm::raw_string_ostream error_stream(error_text);
-  llvm::raw_null_ostream output_stream;
-  Driver d(output_stream, error_stream);
+  llvm::vfs::InMemoryFileSystem fs;
+  TestRawOstream error_stream;
+  Driver d(fs, llvm::nulls(), error_stream);
   if (!d.RunFullCommand(args)) {
-    error_stream.flush();
-    if (error_text.find("ERROR:") == std::string::npos) {
+    if (error_stream.TakeStr().find("ERROR:") == std::string::npos) {
       llvm::errs() << "No error message on a failure!\n";
       return 1;
     }

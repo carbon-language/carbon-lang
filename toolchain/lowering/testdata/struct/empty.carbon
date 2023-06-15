@@ -13,10 +13,12 @@
 // CHECK:STDOUT:   %StructLiteralValue = alloca %StructLiteralType, align 8
 // CHECK:STDOUT:   %var = alloca %StructLiteralType, align 8
 // CHECK:STDOUT:   %StructLiteralValue1 = alloca %StructLiteralType, align 8
-// CHECK:STDOUT:   store ptr %StructLiteralValue1, ptr %var, align 8
+// CHECK:STDOUT:   %0 = load %StructLiteralType, ptr %StructLiteralValue1, align 1
+// CHECK:STDOUT:   store %StructLiteralType %0, ptr %var, align 1
 // CHECK:STDOUT:   %StructLiteralValue2 = alloca %StructLiteralType, align 8
 // CHECK:STDOUT:   %var3 = alloca %StructLiteralType, align 8
-// CHECK:STDOUT:   store ptr %var, ptr %var3, align 8
+// CHECK:STDOUT:   %1 = load %StructLiteralType, ptr %var, align 1
+// CHECK:STDOUT:   store %StructLiteralType %1, ptr %var3, align 1
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
 

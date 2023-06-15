@@ -61,10 +61,7 @@ def add_substitutions():
     add_substitution(
         "carbon-run-tokens", f"{run_carbon} dump tokens %s | {filecheck_strict}"
     )
-    add_substitution(
-        "explorer-run",
-        f"{run_explorer} | {filecheck_strict}",
-    )
+    add_substitution("explorer-run", f"{run_explorer}")
     add_substitution(
         "explorer-run-trace",
         f"{run_explorer} --parser_debug --trace_file=- | "

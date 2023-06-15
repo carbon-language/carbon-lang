@@ -3,14 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-fn F() {}
-
 fn Main() -> i32 {
-  // This should probably fail, but at least validate that it doesn't crash.
-  __intrinsic_implicit_as_convert(F, i32);
-  return 0;
+  var v: bool;
+  // CHECK:STDERR: COMPILATION ERROR: fail_if_cond.carbon:[[@LINE+1]]: use of uninitialized variable v
+  return if v then 1 else 2;
 }

@@ -50,11 +50,11 @@ constexpr SemanticsNodeId SemanticsNodeId::Invalid =
       SemanticsNodeId(SemanticsBuiltinKind::Name.AsInt());
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
-// The ID of a callable, such as a function.
-struct SemanticsCallableId : public IndexBase {
+// The ID of a function.
+struct SemanticsFunctionId : public IndexBase {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "callable";
+    out << "function";
     IndexBase::Print(out);
   }
 };
@@ -67,6 +67,29 @@ struct SemanticsCrossReferenceIRId : public IndexBase {
     IndexBase::Print(out);
   }
 };
+
+// A boolean value.
+struct SemanticsBoolValue : public IndexBase {
+  static const SemanticsBoolValue False;
+  static const SemanticsBoolValue True;
+
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    switch (index) {
+      case 0:
+        out << "false";
+        break;
+      case 1:
+        out << "true";
+        break;
+      default:
+        CARBON_FATAL() << "Invalid bool value " << index;
+    }
+  }
+};
+
+constexpr SemanticsBoolValue SemanticsBoolValue::False = SemanticsBoolValue(0);
+constexpr SemanticsBoolValue SemanticsBoolValue::True = SemanticsBoolValue(1);
 
 // The ID of an integer literal.
 struct SemanticsIntegerLiteralId : public IndexBase {
@@ -262,6 +285,22 @@ class SemanticsNode {
                                           SemanticsStringId /*name_id*/,
                                           SemanticsNodeId /*node_id*/>;
 
+  using BlockArg = Factory<SemanticsNodeKind::BlockArg>;
+
+  using BoolLiteral =
+      Factory<SemanticsNodeKind::BoolLiteral, SemanticsBoolValue /*value*/>;
+
+  using Branch = FactoryNoType<SemanticsNodeKind::Branch,
+                               SemanticsNodeBlockId /*target_id*/>;
+
+  using BranchIf = FactoryNoType<SemanticsNodeKind::BranchIf,
+                                 SemanticsNodeBlockId /*target_id*/,
+                                 SemanticsNodeId /*cond_id*/>;
+
+  using BranchWithArg = FactoryNoType<SemanticsNodeKind::BranchWithArg,
+                                      SemanticsNodeBlockId /*target_id*/,
+                                      SemanticsNodeId /*arg*/>;
+
   class Builtin {
    public:
     static auto Make(SemanticsBuiltinKind builtin_kind, SemanticsTypeId type_id)
@@ -280,7 +319,7 @@ class SemanticsNode {
 
   using Call =
       Factory<SemanticsNodeKind::Call, SemanticsNodeBlockId /*refs_id*/,
-              SemanticsCallableId /*callable_id*/>;
+              SemanticsFunctionId /*function_id*/>;
 
   using CodeBlock = FactoryNoType<SemanticsNodeKind::CodeBlock,
                                   SemanticsNodeBlockId /*node_block_id*/>;
@@ -303,13 +342,7 @@ class SemanticsNode {
 
   using FunctionDeclaration =
       FactoryNoType<SemanticsNodeKind::FunctionDeclaration,
-                    SemanticsStringId /*name_id*/,
-                    SemanticsCallableId /*signature_id*/>;
-
-  using FunctionDefinition =
-      FactoryNoType<SemanticsNodeKind::FunctionDefinition,
-                    SemanticsNodeId /*decl_id*/,
-                    SemanticsNodeBlockId /*node_block_id*/>;
+                    SemanticsFunctionId /*function_id*/>;
 
   using IntegerLiteral = Factory<SemanticsNodeKind::IntegerLiteral,
                                  SemanticsIntegerLiteralId /*integer_id*/>;
@@ -340,6 +373,9 @@ class SemanticsNode {
 
   using StubReference =
       Factory<SemanticsNodeKind::StubReference, SemanticsNodeId /*node_id*/>;
+
+  using UnaryOperatorNot = Factory<SemanticsNodeKind::UnaryOperatorNot,
+                                   SemanticsNodeId /*operand_id*/>;
 
   using VarStorage = Factory<SemanticsNodeKind::VarStorage>;
 

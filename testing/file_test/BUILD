@@ -13,6 +13,7 @@ cc_library(
     hdrs = ["file_test_base.h"],
     deps = [
         "//common:check",
+        "//testing/util:test_raw_ostream",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -21,7 +22,7 @@ cc_library(
 file_test(
     name = "file_test_base_test",
     srcs = ["file_test_base_test.cpp"],
-    tests = ["example.carbon"],
+    tests = glob(["testdata/**"]),
     deps = [
         ":file_test_base",
         "@com_google_googletest//:gtest",

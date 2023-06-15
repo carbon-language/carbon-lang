@@ -4,11 +4,11 @@
 //
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: callables: [
-// CHECK:STDOUT:   {param_refs: block0},
-// CHECK:STDOUT:   {param_refs: block3},
-// CHECK:STDOUT:   {param_refs: block5},
-// CHECK:STDOUT:   {param_refs: block0},
+// CHECK:STDOUT: functions: [
+// CHECK:STDOUT:   {name: str0, param_refs: block0, body: block2},
+// CHECK:STDOUT:   {name: str2, param_refs: block4, body: block5},
+// CHECK:STDOUT:   {name: str4, param_refs: block7, body: block8},
+// CHECK:STDOUT:   {name: str5, param_refs: block0, body: block9},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,
@@ -33,64 +33,65 @@
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str0, arg1: callable0},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+0, arg1: block0},
+// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: type1},
-// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str2, arg1: callable1},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+4, arg1: block0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: type1},
+// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+6, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+4, type: type1},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+8, type: type1},
-// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str4, arg1: callable2},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+10, arg1: block0},
-// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: str5, arg1: callable3},
+// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+6, type: type1},
+// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
+// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function3},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+13, type: type1},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+10, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+15, type: type1},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+12, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+17, type: type1},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+14, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int3, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+19, type: type1},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+16, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int4, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+21, type: type1},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+18, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int5, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+23, type: type1},
-// CHECK:STDOUT:   {kind: FunctionDefinition, arg0: node+12, arg1: block6},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+20, type: type1},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
-// CHECK:STDOUT:     node+12,
-// CHECK:STDOUT:     node+25,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+7,
-// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+15,
@@ -100,23 +101,20 @@
 // CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:     node+20,
 // CHECK:STDOUT:     node+21,
-// CHECK:STDOUT:     node+22,
-// CHECK:STDOUT:     node+23,
-// CHECK:STDOUT:     node+24,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+16,
-// CHECK:STDOUT:     node+18,
+// CHECK:STDOUT:     node+13,
+// CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+20,
-// CHECK:STDOUT:     node+22,
+// CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+24,
+// CHECK:STDOUT:     node+21,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
@@ -126,23 +124,23 @@ fn Run2(a: i32, b: i32) {}
 
 fn Main() {
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-6]]:1: Callable cannot be used: Received 1 argument(s), but require 0 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-6]]:1: Function cannot be used: Received 1 argument(s), but require 0 argument(s).
   Run0(1);
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-9]]:1: Callable cannot be used: Received 2 argument(s), but require 0 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-9]]:1: Function cannot be used: Received 2 argument(s), but require 0 argument(s).
   Run0(0, 1);
 
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-12]]:1: Callable cannot be used: Received 0 argument(s), but require 1 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-12]]:1: Function cannot be used: Received 0 argument(s), but require 1 argument(s).
   Run1();
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-15]]:1: Callable cannot be used: Received 2 argument(s), but require 1 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-15]]:1: Function cannot be used: Received 2 argument(s), but require 1 argument(s).
   Run1(0, 1);
 
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-18]]:1: Callable cannot be used: Received 0 argument(s), but require 2 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-18]]:1: Function cannot be used: Received 0 argument(s), but require 2 argument(s).
   Run2();
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-21]]:1: Callable cannot be used: Received 1 argument(s), but require 2 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-21]]:1: Function cannot be used: Received 1 argument(s), but require 2 argument(s).
   Run2(0);
 }

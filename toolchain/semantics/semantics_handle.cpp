@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/semantics/semantics_context.h"
+#include "toolchain/semantics/semantics_node.h"
 
 namespace Carbon {
 
@@ -62,7 +63,7 @@ auto SemanticsHandleDeducedParameterListStart(SemanticsContext& context,
 auto SemanticsHandleDesignatedName(SemanticsContext& context,
                                    ParseTree::Node parse_node) -> bool {
   auto name_str = context.parse_tree().GetNodeText(parse_node);
-  auto name_id = context.semantics().AddString(name_str);
+  auto name_id = context.semantics_ir().AddString(name_str);
   // The parent is responsible for binding the name.
   context.node_stack().Push(parse_node, name_id);
   return true;
@@ -70,20 +71,21 @@ auto SemanticsHandleDesignatedName(SemanticsContext& context,
 
 auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
                                          ParseTree::Node parse_node) -> bool {
-  auto [_, name_id] = context.node_stack().PopForParseNodeAndNameId(
+  auto name_id = context.node_stack().Pop<SemanticsStringId>(
       ParseNodeKind::DesignatedName);
 
-  auto base_id = context.node_stack().PopForNodeId();
-  auto base = context.semantics().GetNode(base_id);
-  auto base_type =
-      context.semantics().GetNode(context.semantics().GetType(base.type_id()));
+  auto base_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto base = context.semantics_ir().GetNode(base_id);
+  auto base_type = context.semantics_ir().GetNode(
+      context.semantics_ir().GetType(base.type_id()));
 
   switch (base_type.kind()) {
     case SemanticsNodeKind::StructType: {
-      auto refs = context.semantics().GetNodeBlock(base_type.GetAsStructType());
+      auto refs =
+          context.semantics_ir().GetNodeBlock(base_type.GetAsStructType());
       // TODO: Do we need to optimize this with a lookup table for O(1)?
       for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
-        auto ref = context.semantics().GetNode(refs[i]);
+        auto ref = context.semantics_ir().GetNode(refs[i]);
         if (name_id == ref.GetAsStructTypeField()) {
           context.AddNodeAndPush(
               parse_node,
@@ -95,17 +97,19 @@ auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
       CARBON_DIAGNOSTIC(DesignatorExpressionNameNotFound, Error,
                         "Type `{0}` does not have a member `{1}`.", std::string,
                         llvm::StringRef);
-      context.emitter().Emit(parse_node, DesignatorExpressionNameNotFound,
-                             context.semantics().StringifyType(base.type_id()),
-                             context.semantics().GetString(name_id));
+      context.emitter().Emit(
+          parse_node, DesignatorExpressionNameNotFound,
+          context.semantics_ir().StringifyType(base.type_id()),
+          context.semantics_ir().GetString(name_id));
       break;
     }
     default: {
       CARBON_DIAGNOSTIC(DesignatorExpressionUnsupported, Error,
                         "Type `{0}` does not support designator expressions.",
                         std::string);
-      context.emitter().Emit(parse_node, DesignatorExpressionUnsupported,
-                             context.semantics().StringifyType(base.type_id()));
+      context.emitter().Emit(
+          parse_node, DesignatorExpressionUnsupported,
+          context.semantics_ir().StringifyType(base.type_id()));
       break;
     }
   }
@@ -186,24 +190,48 @@ auto SemanticsHandleIfStatementElse(SemanticsContext& context,
 
 auto SemanticsHandleInfixOperator(SemanticsContext& context,
                                   ParseTree::Node parse_node) -> bool {
-  auto rhs_id = context.node_stack().PopForNodeId();
-  auto lhs_id = context.node_stack().PopForNodeId();
-
-  // TODO: This should search for a compatible interface. For now, it's a very
-  // trivial check of validity on the operation.
-  lhs_id = context.ImplicitAsRequired(
-      parse_node, lhs_id, context.semantics().GetNode(rhs_id).type_id());
+  auto rhs_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto lhs_id = context.node_stack().Pop<SemanticsNodeId>();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
     case TokenKind::Plus:
+      // TODO: This should search for a compatible interface. For now, it's a
+      // very trivial check of validity on the operation.
+      lhs_id = context.ImplicitAsRequired(
+          parse_node, lhs_id, context.semantics_ir().GetNode(rhs_id).type_id());
+
       context.AddNodeAndPush(
           parse_node,
           SemanticsNode::BinaryOperatorAdd::Make(
-              parse_node, context.semantics().GetNode(lhs_id).type_id(), lhs_id,
-              rhs_id));
+              parse_node, context.semantics_ir().GetNode(lhs_id).type_id(),
+              lhs_id, rhs_id));
       break;
+
+    case TokenKind::And:
+    case TokenKind::Or: {
+      // The first operand is wrapped in a ShortCircuitOperand, which we
+      // already handled by creating a RHS block and a resumption block, which
+      // are the current block and its enclosing block.
+      rhs_id = context.ImplicitAsBool(parse_node, rhs_id);
+
+      // When the second operand is evaluated, the result of `and` and `or` is
+      // its value.
+      auto rhs_block_id = context.node_block_stack().PopForAdd();
+      auto resume_block_id = context.node_block_stack().PeekForAdd();
+      context.AddNodeToBlock(rhs_block_id,
+                             SemanticsNode::BranchWithArg::Make(
+                                 parse_node, resume_block_id, rhs_id));
+
+      // Collect the result from either the first or second operand.
+      context.AddNodeAndPush(
+          parse_node,
+          SemanticsNode::BlockArg::Make(
+              parse_node, context.semantics_ir().GetNode(rhs_id).type_id()));
+      break;
+    }
+
     default:
       return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
   }
@@ -220,8 +248,19 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
                             ParseTree::Node parse_node) -> bool {
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
+    case TokenKind::False:
+    case TokenKind::True: {
+      context.AddNodeAndPush(
+          parse_node,
+          SemanticsNode::BoolLiteral::Make(
+              parse_node,
+              context.CanonicalizeType(SemanticsNodeId::BuiltinBoolType),
+              token_kind == TokenKind::True ? SemanticsBoolValue::True
+                                            : SemanticsBoolValue::False));
+      break;
+    }
     case TokenKind::IntegerLiteral: {
-      auto id = context.semantics().AddIntegerLiteral(
+      auto id = context.semantics_ir().AddIntegerLiteral(
           context.tokens().GetIntegerLiteral(token));
       context.AddNodeAndPush(
           parse_node,
@@ -233,7 +272,7 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
     }
     case TokenKind::RealLiteral: {
       auto token_value = context.tokens().GetRealLiteral(token);
-      auto id = context.semantics().AddRealLiteral(
+      auto id = context.semantics_ir().AddRealLiteral(
           {.mantissa = token_value.Mantissa(),
            .exponent = token_value.Exponent(),
            .is_decimal = token_value.IsDecimal()});
@@ -246,7 +285,7 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
       break;
     }
     case TokenKind::StringLiteral: {
-      auto id = context.semantics().AddString(
+      auto id = context.semantics_ir().AddString(
           context.tokens().GetStringLiteral(token));
       context.AddNodeAndPush(
           parse_node,
@@ -254,6 +293,10 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
               parse_node,
               context.CanonicalizeType(SemanticsNodeId::BuiltinStringType),
               id));
+      break;
+    }
+    case TokenKind::Bool: {
+      context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinBoolType);
       break;
     }
     case TokenKind::IntegerTypeLiteral: {
@@ -353,35 +396,39 @@ auto SemanticsHandleParameterListStart(SemanticsContext& context,
 
 auto SemanticsHandleParenExpression(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleParenExpression");
+  auto value_id = context.node_stack().Pop<SemanticsNodeId>();
+  context.node_stack().PopAndDiscardSoloParseNode(
+      ParseNodeKind::ParenExpressionOrTupleLiteralStart);
+  context.node_stack().Push(parse_node, value_id);
+  return true;
 }
 
 auto SemanticsHandleParenExpressionOrTupleLiteralStart(
     SemanticsContext& context, ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleParenExpressionOrTupleLiteralStart");
+  context.node_stack().Push(parse_node);
+  return true;
 }
 
 auto SemanticsHandlePatternBinding(SemanticsContext& context,
                                    ParseTree::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
-      context.node_stack().PopForParseNodeAndNodeId();
+      context.node_stack().PopWithParseNode<SemanticsNodeId>();
   auto cast_type_id = context.ExpressionAsType(type_node, parsed_type_id);
 
   // Get the name.
-  auto name_node = context.node_stack().PopForSoloParseNode();
+  auto name_node =
+      context.node_stack().PopForSoloParseNode(ParseNodeKind::DeclaredName);
+  auto name_str = context.parse_tree().GetNodeText(name_node);
+  auto name_id = context.semantics_ir().AddString(name_str);
 
   // Allocate storage, linked to the name for error locations.
   auto storage_id =
       context.AddNode(SemanticsNode::VarStorage::Make(name_node, cast_type_id));
 
   // Bind the name to storage.
-  auto name_id = context.BindName(name_node, cast_type_id, storage_id);
-
-  // If this node's result is used, it'll be for either the name or the
-  // storage address. The storage address can be found through the name, so we
-  // push the name.
-  context.node_stack().Push(parse_node, name_id);
-
+  context.AddNodeAndPush(parse_node,
+                         SemanticsNode::BindName::Make(name_node, cast_type_id,
+                                                       name_id, storage_id));
   return true;
 }
 
@@ -392,16 +439,34 @@ auto SemanticsHandlePostfixOperator(SemanticsContext& context,
 
 auto SemanticsHandlePrefixOperator(SemanticsContext& context,
                                    ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandlePrefixOperator");
+  auto value_id = context.node_stack().Pop<SemanticsNodeId>();
+
+  // Figure out the operator for the token.
+  auto token = context.parse_tree().node_token(parse_node);
+  switch (auto token_kind = context.tokens().GetKind(token)) {
+    case TokenKind::Not:
+      value_id = context.ImplicitAsBool(parse_node, value_id);
+      context.AddNodeAndPush(
+          parse_node,
+          SemanticsNode::UnaryOperatorNot::Make(
+              parse_node, context.semantics_ir().GetNode(value_id).type_id(),
+              value_id));
+      break;
+
+    default:
+      return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
+  }
+
+  return true;
 }
 
 auto SemanticsHandleReturnStatement(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
   CARBON_CHECK(!context.return_scope_stack().empty());
   const auto& fn_node =
-      context.semantics().GetNode(context.return_scope_stack().back());
-  const auto callable = context.semantics().GetCallable(
-      fn_node.GetAsFunctionDeclaration().second);
+      context.semantics_ir().GetNode(context.return_scope_stack().back());
+  const auto callable =
+      context.semantics_ir().GetFunction(fn_node.GetAsFunctionDeclaration());
 
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnStatementStart) {
@@ -414,13 +479,13 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
                         "Must return a {0}.", std::string);
       context.emitter()
           .Build(parse_node, ReturnStatementMissingExpression,
-                 context.semantics().StringifyType(callable.return_type_id))
+                 context.semantics_ir().StringifyType(callable.return_type_id))
           .Emit();
     }
 
     context.AddNodeAndPush(parse_node, SemanticsNode::Return::Make(parse_node));
   } else {
-    auto arg = context.node_stack().PopForNodeId();
+    auto arg = context.node_stack().Pop<SemanticsNodeId>();
     context.node_stack().PopAndDiscardSoloParseNode(
         ParseNodeKind::ReturnStatementStart);
 
@@ -442,7 +507,7 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
     context.AddNodeAndPush(
         parse_node,
         SemanticsNode::ReturnExpression::Make(
-            parse_node, context.semantics().GetNode(arg).type_id(), arg));
+            parse_node, context.semantics_ir().GetNode(arg).type_id(), arg));
   }
   return true;
 }
@@ -458,7 +523,7 @@ auto SemanticsHandleReturnType(SemanticsContext& context,
                                ParseTree::Node parse_node) -> bool {
   // Propagate the type expression.
   auto [type_parse_node, type_node_id] =
-      context.node_stack().PopForParseNodeAndNodeId();
+      context.node_stack().PopWithParseNode<SemanticsNodeId>();
   auto cast_node_id = context.ExpressionAsType(type_parse_node, type_node_id);
   context.node_stack().Push(parse_node, cast_node_id);
   return true;
@@ -472,6 +537,53 @@ auto SemanticsHandleSelfTypeIdentifier(SemanticsContext& context,
 auto SemanticsHandleSelfValueIdentifier(SemanticsContext& context,
                                         ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleSelfValueIdentifier");
+}
+
+auto SemanticsHandleShortCircuitOperand(SemanticsContext& context,
+                                        ParseTree::Node parse_node) -> bool {
+  // Convert the condition to `bool`.
+  auto cond_value_id = context.node_stack().Pop<SemanticsNodeId>();
+  cond_value_id = context.ImplicitAsBool(parse_node, cond_value_id);
+  auto bool_type_id = context.semantics_ir().GetNode(cond_value_id).type_id();
+
+  // Compute the branch value: the condition for `and`, inverted for `or`.
+  auto token = context.parse_tree().node_token(parse_node);
+  SemanticsNodeId branch_value_id = SemanticsNodeId::Invalid;
+  auto short_circuit_result_id = SemanticsNodeId::Invalid;
+  switch (auto token_kind = context.tokens().GetKind(token)) {
+    case TokenKind::And:
+      branch_value_id = cond_value_id;
+      short_circuit_result_id =
+          context.AddNode(SemanticsNode::BoolLiteral::Make(
+              parse_node, bool_type_id, SemanticsBoolValue::False));
+      break;
+
+    case TokenKind::Or:
+      branch_value_id = context.AddNode(SemanticsNode::UnaryOperatorNot::Make(
+          parse_node, bool_type_id, cond_value_id));
+      short_circuit_result_id =
+          context.AddNode(SemanticsNode::BoolLiteral::Make(
+              parse_node, bool_type_id, SemanticsBoolValue::True));
+      break;
+
+    default:
+      CARBON_FATAL() << "Unexpected short-circuiting operator " << parse_node;
+  }
+
+  // Create a block for the right-hand side and for the continuation.
+  auto lhs_block_id = context.node_block_stack().PopForAdd();
+  auto end_block_id = context.node_block_stack().PushForAdd();
+  auto rhs_block_id = context.node_block_stack().PushForAdd();
+  context.AddNodeToBlock(
+      lhs_block_id,
+      SemanticsNode::BranchIf::Make(parse_node, rhs_block_id, branch_value_id));
+  context.AddNodeToBlock(
+      lhs_block_id, SemanticsNode::BranchWithArg::Make(
+                        parse_node, end_block_id, short_circuit_result_id));
+
+  // Put the condition back on the stack for SemanticsHandleInfixOperator.
+  context.node_stack().Push(parse_node, cond_value_id);
+  return true;
 }
 
 auto SemanticsHandleTemplate(SemanticsContext& context,
@@ -491,25 +603,31 @@ auto SemanticsHandleTupleLiteralComma(SemanticsContext& context,
 
 auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
                                         ParseTree::Node parse_node) -> bool {
-  auto [last_parse_node, last_node_id] =
-      context.node_stack().PopForParseNodeAndNodeId();
+  // Handle the optional initializer.
+  auto expr_node_id = SemanticsNodeId::Invalid;
+  bool has_init =
+      context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
+      ParseNodeKind::PatternBinding;
+  if (has_init) {
+    expr_node_id = context.node_stack().Pop<SemanticsNodeId>();
+    context.node_stack().PopAndDiscardSoloParseNode(
+        ParseNodeKind::VariableInitializer);
+  }
 
-  if (context.parse_tree().node_kind(last_parse_node) !=
-      ParseNodeKind::PatternBinding) {
-    auto storage_id =
-        context.node_stack().PopForNodeId(ParseNodeKind::VariableInitializer);
+  // Get the storage and add it to name lookup.
+  auto binding_id =
+      context.node_stack().Pop<SemanticsNodeId>(ParseNodeKind::PatternBinding);
+  auto binding = context.semantics_ir().GetNode(binding_id);
+  auto [name_id, storage_id] = binding.GetAsBindName();
+  context.AddNameToLookup(binding.parse_node(), name_id, storage_id);
 
-    auto binding = context.node_stack().PopForParseNodeAndNameId(
-        ParseNodeKind::PatternBinding);
-
-    // Restore the name now that the initializer is complete.
-    context.ReaddNameToLookup(binding.second, storage_id);
-
+  // If there was an initializer, assign it to storage.
+  if (has_init) {
     auto cast_value_id = context.ImplicitAsRequired(
-        parse_node, last_node_id,
-        context.semantics().GetNode(storage_id).type_id());
+        parse_node, expr_node_id,
+        context.semantics_ir().GetNode(storage_id).type_id());
     context.AddNode(SemanticsNode::Assign::Make(
-        parse_node, context.semantics().GetNode(cast_value_id).type_id(),
+        parse_node, context.semantics_ir().GetNode(cast_value_id).type_id(),
         storage_id, cast_value_id));
   }
 
@@ -529,8 +647,8 @@ auto SemanticsHandleVariableIntroducer(SemanticsContext& context,
 
 auto SemanticsHandleVariableInitializer(SemanticsContext& context,
                                         ParseTree::Node parse_node) -> bool {
-  auto storage_id = context.TempRemoveLatestNameFromLookup();
-  context.node_stack().Push(parse_node, storage_id);
+  // No action, just a bracketing node.
+  context.node_stack().Push(parse_node);
   return true;
 }
 

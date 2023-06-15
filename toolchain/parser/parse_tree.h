@@ -209,7 +209,7 @@ class ParseTree {
   // be used to actually parse the tokens into a tree.
   explicit ParseTree(TokenizedBuffer& tokens_arg) : tokens_(&tokens_arg) {
     // If the tree is valid, there will be one node per token, so reserve once.
-    node_impls_.reserve(tokens_->size());
+    node_impls_.reserve(tokens_->expected_parse_tree_size());
   }
 
   // Prints a single node for Print(). Returns true when preorder and there are

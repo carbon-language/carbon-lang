@@ -23,9 +23,13 @@ cc_library(
     name = "lowering_context",
     srcs = [
         "lowering_context.cpp",
+        "lowering_function_context.cpp",
         "lowering_handle.cpp",
     ],
-    hdrs = ["lowering_context.h"],
+    hdrs = [
+        "lowering_context.h",
+        "lowering_function_context.h",
+    ],
     deps = [
         "//common:check",
         "//common:vlog",
@@ -42,9 +46,7 @@ file_test(
     srcs = ["lowering_file_test.cpp"],
     tests = glob(["testdata/**/*.carbon"]),
     deps = [
-        "//testing/file_test:file_test_base",
-        "//toolchain/driver",
-        "@com_google_googletest//:gtest",
+        "//toolchain/driver:driver_file_test_base",
         "@llvm-project//llvm:Support",
     ],
 )
