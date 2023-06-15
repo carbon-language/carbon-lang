@@ -83,11 +83,13 @@ bazel-bin/explorer/fuzzing/explorer_fuzzer.full_corpus
 
 ## Investigating a crash
 
-Typically it's going to be easiest to run explorer on directly. You can do this
-with:
+Typically it's going to be easiest to run explorer on it directly. You can do
+this with:
 
-````bash
-# Convert the crash to a source file.
+```bash
+# Convert a specific fuzzer test to a source file
+bazel run //common/fuzzing:proto_to_carbon -- explorer/fuzzing/fuzzer_corpus/abcd1234 > crash.carbon
+# Or convert the crash to a source file.
 bazel run //common/fuzzing:proto_to_carbon -- /tmp/crash.textproto > crash.carbon
 
 # Run explorer on the crash.
@@ -98,7 +100,7 @@ It's also possible to run the fuzzer on a single input:
 
 ```bash
 bazel-bin/explorer/fuzzing/explorer_fuzzer.full_corpus /tmp/crash.textproto
-````
+```
 
 ## Generating new fuzzer corpus entries
 
