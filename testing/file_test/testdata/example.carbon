@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include <iostream>
-#include <fstream>
 
 // Output Validation
 // -----------------
@@ -37,24 +36,6 @@ int main() {
     // Call function F{{.+}}z
     F{{.+}}z();
 
-    // Check for content before the first split file
-    std::ifstream file("testing/file_test/file_test_base.cpp");
-    std::string line;
-    bool found_content_pre_split = false;
-
-    // Iterate over the lines until the first split file is found
-    while (std::getline(file, line)) {
-        if (!line.empty()) {
-            found_content_pre_split = true;
-            break;
-        }
-    }
-
-    // Output the result
-    std::cout << "Value of: found_content_pre_split" << std::endl;
-    std::cout << "  Actual: " << found_content_pre_split << std::endl;
-    std::cout << "Expected: " << (!found_content_pre_split) << std::endl;
-    
     return 0;
 }
 
