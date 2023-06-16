@@ -1959,7 +1959,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
           cast<ConstraintWitness>(witness)->witnesses();
       if (act.pos() < static_cast<int>(witnesses.size())) {
         return todo_.Spawn(std::make_unique<WitnessAction>(witnesses[act.pos()],
-                                                           std::nullopt));
+                                                           act.source_loc()));
       }
       std::vector<Nonnull<const Witness*>> new_witnesses;
       new_witnesses.reserve(witnesses.size());
@@ -1974,7 +1974,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
       const auto* constraint_impl = cast<ConstraintImplWitness>(witness);
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<WitnessAction>(
-            constraint_impl->constraint_witness(), std::nullopt));
+            constraint_impl->constraint_witness(), act.source_loc()));
       }
       return todo_.FinishAction(ConstraintImplWitness::Make(
           arena_, cast<Witness>(act.results()[0]), constraint_impl->index()));
