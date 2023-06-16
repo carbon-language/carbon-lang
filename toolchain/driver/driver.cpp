@@ -11,6 +11,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Format.h"
+#include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -116,6 +117,7 @@ enum class DumpMode {
   ParseTree,
   SemanticsIR,
   LLVMIR,
+  ObjectCode,
   Unknown
 };
 
@@ -131,6 +133,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                        .Case("parse-tree", DumpMode::ParseTree)
                        .Case("semantics-ir", DumpMode::SemanticsIR)
                        .Case("llvm-ir", DumpMode::LLVMIR)
+                       .Case("object-code", DumpMode::ObjectCode)
                        .Default(DumpMode::Unknown);
   if (dump_mode == DumpMode::Unknown) {
     error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, "
@@ -222,7 +225,9 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   llvm::LLVMContext llvm_context;
   const std::unique_ptr<llvm::Module> module =
       LowerToLLVM(llvm_context, input_file_name, semantics_ir, vlog_stream_);
+
   CARBON_VLOG() << "*** LowerToLLVM done ***\n";
+
   if (dump_mode == DumpMode::LLVMIR) {
     consumer.Flush();
     module->print(output_stream_, /*AAW=*/nullptr,
@@ -234,6 +239,12 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     module->print(*vlog_stream_, /*AAW=*/nullptr,
                   /*ShouldPreserveUseListOrder=*/false,
                   /*IsForDebug=*/true);
+  }
+
+  if (dump_mode == DumpMode::ObjectCode) {
+    CodeGen code_gen = CodeGen();
+    code_gen.generate_obj_file_from_module(*module);
+    return !has_errors;
   }
 
   llvm_unreachable("should handle all dump modes");
