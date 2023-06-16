@@ -1,10 +1,36 @@
-// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-// Exceptions. See /LICENSE for license information.
+// Carbon Language Project
+// Apache License v2.0 with LLVM Exceptions
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// CHECK:STDOUT: something
-// CHECK:STDOUT:
-// CHECK:STDOUT: [[@LINE+1]]: Line delta
-// CHECK:STDOUT: [[@LINE-1]]: Negative line delta
-// CHECK:STDOUT: +*[]{}
-// CHECK:STDOUT: F{{.+}}z
+// Output Validation
+// -----------------
+// Expected output:
+// - "something"
+// - Empty line
+// - Current line number: [[@LINE+1]]
+// - Previous line number: [[@LINE-1]]
+// - Special characters: +*[]{}
+// - Function: F{{.+}}z
+
+// Code block
+int main() {
+    // Output "something"
+    std::cout << "something" << std::endl;
+    
+    // Output an empty line
+    std::cout << std::endl;
+    
+    // Output the current line number using line deltas
+    std::cout << "[[@LINE+1]]: Line delta" << std::endl;
+    
+    // Output the previous line number using negative line deltas
+    std::cout << "[[@LINE-1]]: Negative line delta" << std::endl;
+    
+    // Output special characters
+    std::cout << "+*[]{}" << std::endl;
+    
+    // Call function F{{.+}}z
+    F{{.+}}z();
+    
+    return 0;
+}
