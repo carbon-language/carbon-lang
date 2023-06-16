@@ -27,6 +27,7 @@ cc_library(
         "lowering_handle.cpp",
     ],
     hdrs = [
+        "lowering_block_worklist.h",
         "lowering_context.h",
         "lowering_function_context.h",
     ],

@@ -5,9 +5,12 @@
 #ifndef CARBON_TOOLCHAIN_LOWERING_LOWERING_FUNCTION_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWERING_LOWERING_FUNCTION_CONTEXT_H_
 
+#include <optional>
+
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "toolchain/lowering/lowering_block_worklist.h"
 #include "toolchain/lowering/lowering_context.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
@@ -20,6 +23,21 @@ class LoweringFunctionContext {
  public:
   explicit LoweringFunctionContext(LoweringContext& lowering_context,
                                    llvm::Function* function);
+
+  // Returns a basic block corresponding to the start of the given semantics
+  // block, and enqueues it for emission.
+  auto GetBlock(SemanticsNodeBlockId block_id) -> llvm::BasicBlock*;
+
+  // If we have not yet allocated a `BasicBlock` for this `block_id`, set it to
+  // `block`, and enqueue `block_id` for emission. Returns whether we set the
+  // block.
+  auto TryToReuseBlock(SemanticsNodeBlockId block_id, llvm::BasicBlock* block)
+      -> bool;
+
+  // Returns a phi node corresponding to the block argument of the given basic
+  // block.
+  auto GetBlockArg(SemanticsNodeBlockId block_id, SemanticsTypeId type_id)
+      -> llvm::PHINode*;
 
   // Returns a local (versus global) value for the given node.
   auto GetLocal(SemanticsNodeId node_id) -> llvm::Value* {
@@ -48,6 +66,17 @@ class LoweringFunctionContext {
     return lowering_context_->GetType(type_id);
   }
 
+  // Create a synthetic block that corresponds to no SemanticsNodeBlockId. Such
+  // a block should only ever have a single predecessor, and is used when we
+  // need multiple `llvm::BasicBlock`s to model the linear control flow in a
+  // single SemanticsIR block.
+  auto CreateSyntheticBlock() -> llvm::BasicBlock*;
+
+  // Determine whether block is the most recently created synthetic block.
+  auto IsCurrentSyntheticBlock(llvm::BasicBlock* block) -> bool {
+    return synthetic_block_ == block;
+  }
+
   auto llvm_context() -> llvm::LLVMContext& {
     return lowering_context_->llvm_context();
   }
@@ -55,6 +84,7 @@ class LoweringFunctionContext {
     return lowering_context_->llvm_module();
   }
   auto builder() -> llvm::IRBuilder<>& { return builder_; }
+  auto block_worklist() -> LoweringBlockWorklist& { return block_worklist_; }
   auto semantics_ir() -> const SemanticsIR& {
     return lowering_context_->semantics_ir();
   }
@@ -67,6 +97,16 @@ class LoweringFunctionContext {
   llvm::Function* function_;
 
   llvm::IRBuilder<> builder_;
+
+  // A worklist for blocks we need to lower.
+  LoweringBlockWorklist block_worklist_;
+
+  // Maps a function's SemanticsIR blocks to lowered blocks.
+  llvm::DenseMap<SemanticsNodeBlockId, llvm::BasicBlock*> blocks_;
+
+  // The synthetic block we most recently created. May be null if there is no
+  // such block.
+  llvm::BasicBlock* synthetic_block_ = nullptr;
 
   // Maps a function's SemanticsIR nodes to lowered values.
   // TODO: Handle nested scopes. Right now this is just cleared at the end of
