@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT/utils/treesitter"
 
-tree-sitter generate --no-bindings
+./build.sh
 
 FILES=$(find "$ROOT/toolchain/parser/testdata" -not -name "fail_*" -name "*.carbon" -type f -print)
 FILES_FAIL=$(find "$ROOT/toolchain/parser/testdata" -name "fail_*.carbon" -type f -print)
