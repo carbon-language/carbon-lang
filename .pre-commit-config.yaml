@@ -1,214 +1,68 @@
-default_language_version:
-  python: python3
-
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: fbd4b8d3b3f17b97af32e46dbd6c2a1970e33e95 # Latest revision
+  - repo: local
     hooks:
+      - id: check-clang-format
+        name: Check clang-format
+        entry: scripts/check_clang_format.py
+        language: python
+        files: \.(cpp|h|star)$
+        exclude: \.star.gold$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0  # Update to the latest available revision
+    hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+      - id: check-xml
+      - id: debug-statements
+      - id: check-byte-order-marker
+      - id: check-symlinks
       - id: check-added-large-files
       - id: check-case-conflict
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
-      - id: check-symlinks
-        exclude: ^bazel-execroot$
-      - id: check-yaml
+      - id: check-sqlite-timestamps
+      - id: check-terraform
+      - id: check-useless-excludes
       - id: detect-private-key
-      - id: end-of-file-fixer
-        exclude: '^(.*/fuzzer_corpus/.*|.*\.svg)$'
-      - id: mixed-line-ending
-        args: ['--fix=lf']
-        exclude: '^(.*/fuzzer_corpus/.*|.*\.svg)$'
+      - id: check-yaml-toml
       - id: trailing-whitespace
-        exclude: '^(.*/fuzzer_corpus/.*|.*/testdata/.*\.golden|.*\.svg)$'
-
-  - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: 693f8f3f1d066947789f47819b44e8c1a18f3087 # Latest revision
-    hooks:
-      - id: check-google-doc-style
-      - id: markdown-toc
-
-  - repo: local
-    hooks:
-      - id: fix-cc-deps
-        name: Fix missing C++ deps
-        entry: scripts/fix_cc_deps.py
-        language: python
-        files: ^.*/(BUILD|[^/]+\.(h|cpp))$
-        pass_filenames: false
+      - id: check-docstring-first
+      - id: forbid-new-submodules
+      - id: requirements-txt-fixer
+      - id: check-toml
+      - id: check-shell-script
+      - id: check-xml-and-templating
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-merge-conflict
+      - id: check-sqlite-timestamps
+      - id: check-terraform
+      - id: check-useless-excludes
+      - id: detect-private-key
+      - id: check-yaml-toml
+      - id: trailing-whitespace
+      - id: check-docstring-first
+      - id: forbid-new-submodules
+      - id: requirements-txt-fixer
+      - id: check-toml
+      - id: check-shell-script
+      - id: check-xml-and-templating
+      - id: end-of-file-fixer
+        exclude: '^(third_party|protobuf)/'
 
   - repo: https://github.com/psf/black
-    rev: 3e7bcdecfdd4da35fb5d28263f3f26e28dd5383a # Latest revision
+    rev: 21.12b0  # Update to the latest available revision
     hooks:
       - id: black
 
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: 9d8e46c771a5e3d09d20dbd2b4004d8d6da184ad # Latest revision
-    hooks:
-      - id: prettier
-
-  - repo: local
-    hooks:
-      - id: buildifier
-        name: Bazel buildifier
-        entry: scripts/run_buildifier.py
-        args: ['-r', '.']
-        language: python
-        files: |
-          (?x)^(
-            .*BUILD.*|
-            .*WORKSPACE.*|
-            .*\.bzl
-          )$
-      - id: clang-format
-        name: clang-format
-        entry: clang-format
-        types_or: [c++, proto]
-        language: python
-        args: ['-i']
-        additional_dependencies: ['clang-format==16.0.0']
-      - id: explorer-format-grammar
-        name: Format the explorer grammar file
-        entry: explorer/syntax/format_grammar.py
-        language: python
-        files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
-        pass_filenames: false
-        additional_dependencies: ['clang-format==16.0.0']
-
-  - repo: local
-    hooks:
-      - id: check-header-guards
-        name: Check header guards
-        entry: scripts/check_header_guards.py
-        language: python
-        files: ^.*\.h$
-      - id: check-sha-filenames
-        name: Check fuzzer SHA filenames
-        entry: scripts/check_sha_filenames.py
-        language: python
-        files: ^.*/fuzzer_corpus/.*$
-      - id: check-toolchain-diagnostics
-        name: Check toolchain diagnostics
-        entry: toolchain/diagnostics/check_diagnostics.py
-        language: python
-        files: |
-          (?x)^(
-              toolchain/.*\.cpp|
-              toolchain/.*\.h|
-              toolchain/diagnostics/check_diagnostics\.py|
-              toolchain/diagnostics/diagnostic_kind\.def
-          )$
-        pass_filenames: false
-
-  - repo: local
-    hooks:
-      - id: forbid-llvm-googletest
-        name: Checks for deps on LLVM's version of GoogleTest
-        entry: scripts/forbid_llvm_googletest.py
-        language: python
-        files: ^.*/BUILD$
-        pass_filenames: false
-
-  - repo: https://github.com/PyCQA/flake8
-    rev: c838a5e98878f17889cfce311e1406d252f87ec5 # Latest revision
+  - repo: https://github.com/ambv/flake8
+    rev: 4.0.1  # Update to the latest available revision
     hooks:
       - id: flake8
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: e731db9437464399b95a45fe42e78962249e9e94 # Latest revision
-    hooks:
-      - id: mypy
-        args:
-          - --config-file=setup.cfg
-        additional_dependencies:
-          - gql >= 2.0.0, < 3.0.0
-          - PyGitHub
-        exclude: |
-          (?x)^(
-              proposals/(?!scripts/).*|
-              .*/lit\.cfg\.py|
-              .*_test\.py
-          )$
-
-  - repo: https://github.com/codespell-project/codespell
-    rev: 4de404df4c3225f1b3afdb017b2471e84bda322b # Latest revision
-    hooks:
-      - id: codespell
-        args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
-        exclude: |
-          (?x)^(
-              .*/testdata/.*|
-              .*/fuzzer_corpus/.*
-          )$
-
-  - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: 693f8f3f1d066947789f47819b44e8c1a18f3087 # Latest revision
-    hooks:
-      - id: check-copyright
-        args:
-          - --copyright
-          - |+
-            Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-            Exceptions. See /LICENSE for license information.
-            SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-          - --custom_format
-          - '\.(carbon|proto|ypp)$'
-          - ''
-          - '// '
-          - ''
-          - --custom_format
-          - '\.(l|lpp|y)$'
-          - '/*'
-          - ''
-          - '*/'
-          - --custom_format
-          - '\.(plist)$'
-          - '<!--'
-          - ''
-          - '\-->'
-          - --custom_format
-          - '\.vim$'
-          - ''
-          - '" '
-          - ''
-        exclude: |
-          (?x)^(
-              .bazelversion|
-              .github/pull_request_template.md|
-              compile_flags.txt|
-              third_party/.*|
-              buildifier/.*\.star|
-              zephyr/.*\.star|
-              .*\.scm\.star|
-              toolchain/version_generator/.*|
-              toolchain/diagnostics/diagnostic_kind.def|
-              toolchain/diagnostics/check_diagnostics.py
-          )$
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: fbd4b8d3b3f17b97af32e46dbd6c2a1970e33e95 # Latest revision
-    hooks:
-      - id: check-byte-order-marker
-      - id: check-merge-conflict
-      - id: check-xml
-      - id: debug-statements
-        exclude: tests/.*
-      - id: end-of-file-fixer
-        exclude: |
-          (?x)^(
-              .*/fuzzer_corpus/.*|
-              .*/testdata/.*\.golden|
-              .*/_.*\.star|
-              .*/_.*\.star\.gold|
-              .*/zig-cache/.*
-          )$
-      - id: mixed-line-ending
-      - id: name-tests-test
-      - id: requirements-txt-fixer
-      - id: sort-simple-json
-      - id: sort-xml
-      - id: trailing-whitespace
-
-  - repo: https://github.com/ambv/black
-    rev: 20.8b1 # Latest revision
-    hooks:
-      - id: black
