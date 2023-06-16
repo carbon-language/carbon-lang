@@ -579,10 +579,6 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     -> ErrorOr<Nonnull<const Value*>> {
   const auto act_source_loc = action->source_loc();
   if (trace_stream_->is_enabled(act_source_loc)) {
-    *trace_stream_ << "--- recursive eval for `" << action->kind_string()
-                   << "` `";
-    action->Print(trace_stream_->stream());
-    *trace_stream_ << "` --->\n";
     TraceState();
   }
 
@@ -2480,10 +2476,6 @@ auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     -> ErrorOr<Success> {
   auto act_source_loc = action->source_loc();
   if (trace_stream_->is_enabled(act_source_loc)) {
-    *trace_stream_ << "--- running all steps for `" << action->kind_string()
-                   << "` `";
-    action->Print(trace_stream_->stream());
-    *trace_stream_ << "` --->\n";
     TraceState();
   }
   todo_.Start(std::move(action));
