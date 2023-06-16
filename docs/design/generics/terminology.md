@@ -347,9 +347,9 @@ instead of associated entity.
 
 ## Impl: Implementation of an interface
 
-An _impl_ is an implementation of an interface for a specific type. It is the
-place where the function bodies are defined, values for associated types, etc.
-are given. Implementations are needed for
+An _impl_ is an implementation of an interface for a specific type, called the
+_implementing type_. It is the place where the function bodies are defined,
+values for associated types, etc. are given. Implementations are needed for
 [nominal interfaces](#nominal-interfaces);
 [structural interfaces](#structural-interfaces) and
 [named constraints](#named-constraints) define conformance implicitly instead of

@@ -246,11 +246,11 @@ definitions for all the functions (and other members) declared in the interface.
 Carbon interfaces are ["nominal"](terminology.md#nominal-interfaces), which
 means that types explicitly describe how they implement interfaces. An
 ["impl"](terminology.md#impl-implementation-of-an-interface) defines how one
-interface is implemented for a type. Every associated entity is given a
-definition. Different types satisfying `Vector` can have different definitions
-for `Add` and `Scale`, so we say their definitions are _associated_ with what
-type is implementing `Vector`. The `impl` defines what is associated with the
-type for that interface.
+interface is implemented for a type, called the _implementing type_. Every
+associated entity is given a definition. Different types satisfying `Vector` can
+have different definitions for `Add` and `Scale`, so we say their definitions
+are _associated_ with what type is implementing `Vector`. The `impl` defines
+what is associated with the implementing type for that interface.
 
 An impl may be defined inline inside the type definition:
 
@@ -271,7 +271,8 @@ class Point {
 }
 ```
 
-Interfaces that are implemented inline contribute to the type's API:
+Interfaces that are implemented inline with the `extend` keyword contribute to
+the type's API:
 
 ```
 var p1: Point = {.x = 1.0, .y = 2.0};
@@ -383,8 +384,8 @@ var a: Point2 = {.x = 1.0, .y = 2.0};
 // ❌ Error: a.Add(a.Scale(2.0));
 ```
 
-An external impl may include the name of the existing type before `as`, which is
-required to define it out-of-line:
+An external impl may include the name of the implementing type before `as`,
+which is required to define it out-of-line:
 
 ```
 class Point3 {
@@ -3728,8 +3729,8 @@ class Vector(T:! type) {
 }
 ```
 
-This is equivalent to naming the type between `impl` and `as`, though this form
-is not allowed after `extend`:
+This is equivalent to naming the implementing type between `impl` and `as`,
+though this form is not allowed after `extend`:
 
 ```
 class Vector(T:! type) {
@@ -3785,7 +3786,7 @@ interface when its element type satisfies the same interface:
 -   A container is copyable if its elements are.
 
 This may be done with an [external `impl`](#external-impl) by specifying a more
-specific type to the left of the `as` in the declaration:
+specific implementing type to the left of the `as` in the declaration:
 
 ```
 interface Printable {
