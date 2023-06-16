@@ -17,7 +17,7 @@ class Point {
 }
 
 // CHECK:STDERR: COMPILATION ERROR: fail_external_impl_self.carbon:[[@LINE+1]]: could not resolve 'Self'
-external impl Self as Vector {
+impl Self as Vector {
   fn Add[self: Point](b: Point) -> Point {
     return {.x = self.x + b.x, .y = self.y + b.y};
   }

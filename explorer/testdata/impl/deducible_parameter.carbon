@@ -14,7 +14,7 @@ interface B {
 
 class C(T:! type) {}
 
-external impl forall [T:! type] C(T) as A(T) & B {
+impl forall [T:! type] C(T) as A(T) & B {
   fn F() -> i32 { return 1; }
 }
 

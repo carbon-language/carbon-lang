@@ -17,10 +17,10 @@ package ExplorerTest api;
 
 class A { var n: i32; }
 
-external impl A as Inc {
+impl A as Inc {
   fn Op[addr self: Self*]() { ++self->n; }
 }
-external impl A as Dec {
+impl A as Dec {
   fn Op[addr self: Self*]() { --self->n; }
 }
 

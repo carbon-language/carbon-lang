@@ -9,15 +9,13 @@
 // CHECK:STDOUT: %EmptyTupleType = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %EmptyTupleType @DoNothing(i32 %a) {
-// CHECK:STDOUT: entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %EmptyTupleType @Main() {
-// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %var = alloca i32, align 4
 // CHECK:STDOUT:   store i32 0, ptr %var, align 4
-// CHECK:STDOUT:   %0 = load i32, ptr %var, align 4
-// CHECK:STDOUT:   %DoNothing = call %EmptyTupleType @DoNothing(i32 %0)
+// CHECK:STDOUT:   %1 = load i32, ptr %var, align 4
+// CHECK:STDOUT:   %DoNothing = call %EmptyTupleType @DoNothing(i32 %1)
 // CHECK:STDOUT: }
 
 fn DoNothing(a: i32) {}

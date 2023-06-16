@@ -9,7 +9,7 @@ package ExplorerTest api;
 
 class A { var n: i32; }
 
-external impl A as ImplicitAs(i32) {
+impl A as ImplicitAs(i32) {
   fn Convert[self: Self]() -> i32 { return self.n; }
 }
 

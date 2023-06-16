@@ -19,14 +19,16 @@ base class C {
   }
 }
 
-base class D extends C {
+base class D {
+  extend base: C;
   var value_d: i32;
   impl fn Foo[self: Self]() -> i32 {
     return self.value_d;
   }
 }
 
-class E extends D {
+class E {
+  extend base: D;
   var value_e: i32;
   impl fn Foo[self: Self]() -> i32 {
     return self.value_e;

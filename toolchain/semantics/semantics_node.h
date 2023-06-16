@@ -70,6 +70,9 @@ struct SemanticsCrossReferenceIRId : public IndexBase {
 
 // A boolean value.
 struct SemanticsBoolValue : public IndexBase {
+  static const SemanticsBoolValue False;
+  static const SemanticsBoolValue True;
+
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
     switch (index) {
@@ -84,6 +87,9 @@ struct SemanticsBoolValue : public IndexBase {
     }
   }
 };
+
+constexpr SemanticsBoolValue SemanticsBoolValue::False = SemanticsBoolValue(0);
+constexpr SemanticsBoolValue SemanticsBoolValue::True = SemanticsBoolValue(1);
 
 // The ID of an integer literal.
 struct SemanticsIntegerLiteralId : public IndexBase {
@@ -279,7 +285,8 @@ class SemanticsNode {
                                           SemanticsStringId /*name_id*/,
                                           SemanticsNodeId /*node_id*/>;
 
-  using BlockArg = Factory<SemanticsNodeKind::BlockArg>;
+  using BlockArg =
+      Factory<SemanticsNodeKind::BlockArg, SemanticsNodeBlockId /*block_id*/>;
 
   using BoolLiteral =
       Factory<SemanticsNodeKind::BoolLiteral, SemanticsBoolValue /*value*/>;
@@ -368,6 +375,9 @@ class SemanticsNode {
   using StubReference =
       Factory<SemanticsNodeKind::StubReference, SemanticsNodeId /*node_id*/>;
 
+  using UnaryOperatorNot = Factory<SemanticsNodeKind::UnaryOperatorNot,
+                                   SemanticsNodeId /*operand_id*/>;
+
   using VarStorage = Factory<SemanticsNodeKind::VarStorage>;
 
   SemanticsNode()
@@ -440,6 +450,9 @@ struct SemanticsIdMapInfo {
 }  // namespace Carbon
 
 // Support use of Id types as DenseMap/DenseSet keys.
+template <>
+struct llvm::DenseMapInfo<Carbon::SemanticsNodeBlockId>
+    : public Carbon::SemanticsIdMapInfo<Carbon::SemanticsNodeBlockId> {};
 template <>
 struct llvm::DenseMapInfo<Carbon::SemanticsNodeId>
     : public Carbon::SemanticsIdMapInfo<Carbon::SemanticsNodeId> {};

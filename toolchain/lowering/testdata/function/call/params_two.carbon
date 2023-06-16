@@ -9,11 +9,9 @@
 // CHECK:STDOUT: %EmptyTupleType = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %EmptyTupleType @Foo(i32 %a, i32 %b) {
-// CHECK:STDOUT: entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %EmptyTupleType @Main() {
-// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Foo = call %EmptyTupleType @Foo(i32 1, i32 2)
 // CHECK:STDOUT: }
 

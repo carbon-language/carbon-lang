@@ -13,7 +13,8 @@ abstract class C {
   var a: i32;
 }
 
-class D extends C {
+class D {
+  extend base: C;
   var b: i32;
 }
 

@@ -140,8 +140,9 @@ auto ParserHandleExpressionInPostfixLoop(ParserContext& context) -> void {
 auto ParserHandleExpressionLoop(ParserContext& context) -> void {
   auto state = context.PopState();
 
+  auto operator_kind = context.PositionKind();
   auto trailing_operator = PrecedenceGroup::ForTrailing(
-      context.PositionKind(), context.IsTrailingOperatorInfix());
+      operator_kind, context.IsTrailingOperatorInfix());
   if (!trailing_operator) {
     if (state.has_error) {
       context.ReturnErrorOnState();
@@ -181,6 +182,13 @@ auto ParserHandleExpressionLoop(ParserContext& context) -> void {
   state.lhs_precedence = operator_precedence;
 
   if (is_binary) {
+    if (operator_kind == TokenKind::And || operator_kind == TokenKind::Or) {
+      // For `and` and `or`, wrap the first operand in a virtual parse tree
+      // node so that semantics can insert control flow here.
+      context.AddNode(ParseNodeKind::ShortCircuitOperand, state.token,
+                      state.subtree_start, state.has_error);
+    }
+
     state.state = ParserState::ExpressionLoopForBinary;
     context.PushState(state);
     context.PushStateForExpression(operator_precedence);

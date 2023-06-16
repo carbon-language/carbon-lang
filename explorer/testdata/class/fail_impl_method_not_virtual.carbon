@@ -12,7 +12,8 @@ base class C {
   }
 }
 
-class D extends C {
+class D {
+  extend base: C;
   impl fn Foo[self:Self]() -> i32 {
     return 1;
   // CHECK:STDERR: COMPILATION ERROR: fail_impl_method_not_virtual.carbon:[[@LINE+1]]: Error declaring `Foo`: cannot override a method that is not declared `abstract` or `virtual` in base class.

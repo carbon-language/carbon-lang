@@ -37,6 +37,7 @@ in Unicode Normalization Form C (NFC).
 The following words are interpreted as keywords:
 
 -   `abstract`
+-   `adapt`
 -   `addr`
 -   `alias`
 -   `and`
@@ -51,8 +52,7 @@ The following words are interpreted as keywords:
 -   `continue`
 -   `default`
 -   `else`
--   `extends`
--   `external`
+-   `extend`
 -   `final`
 -   `fn`
 -   `for`
@@ -77,6 +77,7 @@ The following words are interpreted as keywords:
 -   `partial`
 -   `private`
 -   `protected`
+-   `require`
 -   `return`
 -   `returned`
 -   `Self`

@@ -21,6 +21,9 @@
 //   - CARBON_KEYWORD_TOKEN(Name, Spelling)
 //     Defines a keyword which has the provided spelling, such as `if`.
 //     Spellings must be unique.
+//   - CARBON_TOKEN_WITH_VIRTUAL_NODE(Token)
+//     Wrapped around one of the abokve _TOKEN macros, indicates that this
+//     token has one additional virtual node in the parse tree.
 //
 // This tree represents the subset relationship between these macros, where if a
 // specific x-macro isn't defined, it'll fall back to the parent macro.
@@ -31,6 +34,10 @@
 
 #ifndef CARBON_SYMBOL_TOKEN
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) CARBON_TOKEN(Name)
+#endif
+
+#ifndef CARBON_TOKEN_WITH_VIRTUAL_NODE
+#define CARBON_TOKEN_WITH_VIRTUAL_NODE(Name) Name
 #endif
 
 // Note that symbols need to be ordered from longest to shortest to effectively
@@ -116,7 +123,8 @@ CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseSquareBracket, "]", OpenSquareBracket)
 CARBON_KEYWORD_TOKEN(Abstract,            "abstract")
 CARBON_KEYWORD_TOKEN(Addr,                "addr")
 CARBON_KEYWORD_TOKEN(Alias,               "alias")
-CARBON_KEYWORD_TOKEN(And,                 "and")
+CARBON_TOKEN_WITH_VIRTUAL_NODE(
+  CARBON_KEYWORD_TOKEN(And,               "and"))
 CARBON_KEYWORD_TOKEN(Api,                 "api")
 CARBON_KEYWORD_TOKEN(As,                  "as")
 CARBON_KEYWORD_TOKEN(Auto,                "auto")
@@ -149,7 +157,8 @@ CARBON_KEYWORD_TOKEN(Match,               "match")
 CARBON_KEYWORD_TOKEN(Namespace,           "namespace")
 CARBON_KEYWORD_TOKEN(Not,                 "not")
 CARBON_KEYWORD_TOKEN(Observe,             "observe")
-CARBON_KEYWORD_TOKEN(Or,                  "or")
+CARBON_TOKEN_WITH_VIRTUAL_NODE(
+  CARBON_KEYWORD_TOKEN(Or,                "or"))
 CARBON_KEYWORD_TOKEN(Override,            "override")
 CARBON_KEYWORD_TOKEN(Package,             "package")
 CARBON_KEYWORD_TOKEN(Partial,             "partial")
@@ -186,3 +195,4 @@ CARBON_TOKEN(Error)
 CARBON_TOKEN(EndOfFile)
 
 #undef CARBON_TOKEN
+#undef CARBON_TOKEN_WITH_VIRTUAL_NODE
