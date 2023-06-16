@@ -13,11 +13,6 @@ auto SemanticsHandleFunctionDeclaration(SemanticsContext& context,
 
 auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
                                        ParseTree::Node /*parse_node*/) -> bool {
-  // Merges code block children up under the FunctionDefinitionStart.
-  while (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
-         ParseNodeKind::FunctionDefinitionStart) {
-    context.node_stack().PopAndIgnore();
-  }
   context.node_stack().PopAndDiscardId(ParseNodeKind::FunctionDefinitionStart);
   context.return_scope_stack().pop_back();
   context.PopScope();
