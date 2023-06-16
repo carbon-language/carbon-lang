@@ -3785,7 +3785,7 @@ interface when its element type satisfies the same interface:
 -   A container is copyable if its elements are.
 
 This may be done with an [external `impl`](#external-impl) by specifying a more
-specific `Self` type to the left of the `as` in the declaration:
+specific type to the left of the `as` in the declaration:
 
 ```
 interface Printable {
@@ -3850,7 +3850,7 @@ class scope, as in:
 ```
 class Array(T:! type, template N:! i64) {
   // ✅ Allowed: external impl defined in class scope may use `forall`
-  // and/or specify a type.
+  // and may specify a type.
   impl forall [P:! Printable] Array(P, N) as Printable { ... }
 }
 ```
@@ -3872,8 +3872,8 @@ class Pair(T:! type, U:! type) { ... }
 impl forall [T:! type] Pair(T, T) as Foo(T) { ... }
 ```
 
-You may also define the `impl` inline, but it may not be combined with the
-`extend` keyword:
+As before, you may also define the `impl` inline, but it may not be combined
+with the `extend` keyword:
 
 ```
 class Pair(T:! type, U:! type) {
