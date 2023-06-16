@@ -12,25 +12,29 @@ function repeat_sep(thing, sep) {
   return optional(seq(thing, repeat(seq(sep, thing))));
 }
 
-// TODO: very arbitrary, need to be correct
+// follows toolchain/parser/precedence.cpp
 const PREC = {
-  paren: 17,
-  if_expr: 16,
-  where: 15,
-  call: 14,
-  postfix: 13,
-  unary: 12,
-  cast: 11,
-  multiplicative: 10,
-  additive: 9,
-  shift: 8,
-  bitand: 7,
-  bitxor: 6,
-  bitor: 5,
-  comparative: 4,
-  and: 3,
-  or: 2,
-  assign: 0,
+  TermPrefix: 12,
+  TermPostfix: 12, // not in toolchain
+  NumericPrefix: 11,
+  NumericPostfix: 11,
+  Modulo: 9,
+  Multiplicative: 10,
+  Additive: 8,
+  BitwisePrefix: 7,
+  BitwiseAnd: 6,
+  BitwiseOr: 6,
+  BitwiseXor: 6,
+  BitShift: 6,
+  TypePostfix: 5,
+  LogicalPrefix: 4,
+  Relational: 3,
+  LogicalAnd: 2,
+  LogicalOr: 2,
+  Where: 1,
+  If: 1,
+  SimpleAssignment: 0,
+  CompoundAssignment: 0,
 };
 
 module.exports = grammar({
@@ -43,12 +47,7 @@ module.exports = grammar({
   extras: ($) => [/\s/, $.comment],
 
   // NOTE: must match the order in src/scanner.c, the names don't matter
-  externals: ($) => [
-    $.binary_star,
-    $.prefix_star,
-    $.postfix_star,
-    $.unary_star,
-  ],
+  externals: ($) => [$.binary_star, $.prefix_star, $.postfix_star],
 
   rules: {
     source_file: ($) =>
@@ -133,28 +132,40 @@ module.exports = grammar({
         seq($._binding_lhs, ':!', $._expression),
         seq('template', $._binding_lhs, ':!', $._expression),
         $.paren_pattern,
-        // TODO: where is this used
-        // seq(
-        //   $.postfix_expression, $.tuple_pattern,
-        // ),
         seq('var', $._non_expression_pattern)
       ),
     pattern: ($) => choice($._non_expression_pattern, $._expression),
 
-    unary_expression: ($) =>
-      prec(PREC.unary, seq(choice('-', 'not', '^'), $._expression)),
+    unary_prefix_expression: ($) => {
+      const table = [
+        [PREC.NumericPrefix, '-'],
+        [PREC.NumericPrefix, '--'],
+        [PREC.NumericPrefix, '++'],
+        [PREC.BitwisePrefix, '~'],
+        [PREC.LogicalPrefix, 'not'],
+      ];
+
+      return choice(
+        ...table.map(([precedence, operator]) =>
+          prec(
+            precedence,
+            seq(field('operator', operator), field('value', $._expression))
+          )
+        )
+      );
+    },
 
     binary_expression: ($) => {
       const table = [
-        [PREC.and, 'and'],
-        [PREC.or, 'or'],
-        [PREC.bitand, '&'],
-        [PREC.bitor, '|'],
-        [PREC.bitxor, '^'],
-        [PREC.comparative, choice('==', '!=', '<', '<=', '>', '>=')],
-        [PREC.shift, choice('<<', '>>')],
-        [PREC.additive, choice('+', '-')],
-        [PREC.multiplicative, choice($.binary_star, '/', '%')],
+        [PREC.LogicalAnd, 'and'],
+        [PREC.LogicalOr, 'or'],
+        [PREC.BitwiseAnd, '&'],
+        [PREC.BitwiseOr, '|'],
+        [PREC.BitwiseXor, '^'],
+        [PREC.BitShift, choice('<<', '>>')],
+        [PREC.Relational, choice('==', '!=', '<', '<=', '>', '>=')],
+        [PREC.Additive, choice('+', '-')],
+        [PREC.Multiplicative, choice($.binary_star, '/', '%')],
       ];
 
       return choice(
@@ -171,18 +182,17 @@ module.exports = grammar({
       );
     },
 
-    as_expression: ($) =>
-      prec.left(PREC.cast, seq($._expression, 'as', $._expression)),
+    as_expression: ($) => prec.left(seq($._expression, 'as', $._expression)),
 
-    ref_expression: ($) => prec.right(PREC.unary, seq('&', $._expression)),
+    ref_expression: ($) => prec.right(PREC.TermPrefix, seq('&', $._expression)),
     deref_expression: ($) =>
-      prec.right(PREC.unary, seq($.prefix_star, $._expression)),
+      prec.right(PREC.TermPrefix, seq($.prefix_star, $._expression)),
     fn_type_expression: ($) =>
       prec.left(seq('fn', $.tuple, '->', $._expression)),
 
     if_expression: ($) =>
       prec(
-        PREC.if_expr,
+        PREC.If,
         seq('if', $._expression, 'then', $._expression, 'else', $._expression)
       ),
 
@@ -191,14 +201,16 @@ module.exports = grammar({
     tuple: ($) => $.paren_expression,
 
     index_expression: ($) =>
-      prec(PREC.postfix, seq($._expression, '[', $._expression, ']')),
+      prec(PREC.TermPostfix, seq($._expression, '[', $._expression, ']')),
     designator: ($) => seq('.', choice('base', $.ident)),
     postfix_expression: ($) =>
       prec(
-        PREC.postfix,
+        PREC.TermPostfix,
         seq(
           $._expression,
           choice(
+            '++',
+            '--',
             $.designator,
             seq('->', $.ident),
             seq(choice('.', '->'), '(', $._expression, ')')
@@ -206,17 +218,20 @@ module.exports = grammar({
         )
       ),
     where_clause: ($) =>
-      choice(
-        seq($._expression, '==', $._expression),
-        seq($._expression, 'impls', $._expression),
-        seq($.designator, '=', $._expression),
-        prec.left(seq($.where_clause, choice('or', 'and'), $.where_clause))
+      prec(
+        PREC.Where,
+        choice(
+          seq($._expression, '==', $._expression),
+          seq($._expression, 'impls', $._expression),
+          seq($.designator, '=', $._expression),
+          prec.left(seq($.where_clause, choice('or', 'and'), $.where_clause))
+        )
       ),
     where_expression: ($) =>
-      prec(PREC.where, seq($._expression, 'where', $.where_clause)),
-    call_expression: ($) => prec(PREC.call, seq($._expression, $.tuple)),
+      prec.left(PREC.TermPostfix, seq($._expression, 'where', $.where_clause)),
+    call_expression: ($) => prec(PREC.TermPostfix, seq($._expression, $.tuple)),
     pointer_expression: ($) =>
-      prec(PREC.postfix, seq($._expression, $.postfix_star)),
+      prec(PREC.TypePostfix, seq($._expression, $.postfix_star)),
     _expression: ($) =>
       choice(
         $.ident,
@@ -231,7 +246,7 @@ module.exports = grammar({
         $.array_literal,
         $.if_expression,
         $.binary_expression,
-        $.unary_expression,
+        $.unary_prefix_expression,
         $.as_expression,
         $.paren_expression,
         $.postfix_expression,
@@ -253,11 +268,7 @@ module.exports = grammar({
     clause_list: ($) => seq($.clause_list, $.clause),
 
     assign_statement: ($) =>
-      choice(
-        seq($._expression, $._assign_operator, $._expression, ';'),
-        seq('++', $._expression, ';'),
-        seq('--', $._expression, ';')
-      ),
+      seq($._expression, $._assign_operator, $._expression, ';'),
 
     _assign_operator: ($) =>
       choice('=', '+=', '/=', '*=', '%=', '-=', '&=', '|=', '^=', '<<=', '>>='),

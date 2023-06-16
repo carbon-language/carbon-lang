@@ -8,7 +8,6 @@ enum TokenType {
   BINARY_STAR,
   PREFIX_STAR,
   POSTFIX_STAR,
-  UNARY_STAR,
 };
 
 // our scanner is stateless
@@ -26,7 +25,6 @@ void tree_sitter_carbon_external_scanner_deserialize(void* /* payload */,
 void tree_sitter_carbon_external_scanner_destroy(void* /* payload */) {}
 
 static bool is_operand_start(char c) {
-  // TODO: do we need more?
   return c == '(' || c == '[' || c == '{' || c == '\"' || c == '_' ||
          (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
          (c >= '0' && c <= '9');
@@ -50,7 +48,7 @@ bool tree_sitter_carbon_external_scanner_scan(void* /* payload */,
 
     lexer->advance(lexer, /* skip= */ false);
     if (is_whitespace(lexer->lookahead) && whitespace) {
-      lexer->result_symbol = BINARY_STAR;  // does it ever happen?
+      lexer->result_symbol = BINARY_STAR;
     } else {
       lexer->result_symbol = PREFIX_STAR;
     }
