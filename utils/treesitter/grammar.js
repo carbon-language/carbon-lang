@@ -1,6 +1,8 @@
-// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-// Exceptions. See /LICENSE for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+/*
+ * Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+ * Exceptions. See /LICENSE for license information.
+ * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+ */
 
 function repeat_sep1(thing, sep) {
   return seq(thing, repeat(seq(sep, thing)));
