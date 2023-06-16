@@ -1,12 +1,6 @@
 // Carbon Language Project
 // Apache License v2.0 with LLVM Exceptions
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-// Exceptions. See /LICENSE for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-
-// Your existing code goes here
-
 
 #include <iostream>
 
@@ -50,3 +44,9 @@ void F{{.+}}z() {
     // Function implementation goes here
     std::cout << "Function: F{{.+}}z" << std::endl;
 }
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+// Your existing code goes here
+
