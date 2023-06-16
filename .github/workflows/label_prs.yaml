@@ -1,20 +1,23 @@
-# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-# Exceptions. See /LICENSE for license information.
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+---yaml
+version: '3'
 
 name: 'Auto label PRs'
+
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, ready_for_review]
 
 jobs:
   assign_reviewer:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
       - id: filter
         uses: dorny/paths-filter@v2
         with:
-          filters: |
+          filters: &filters
             documentation:
               - '*.md'
               - 'docs/**'
@@ -35,7 +38,6 @@ jobs:
         run: |
           gh pr edit "${PR}" --add-label "documentation"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
 
       - id: explorer
@@ -43,15 +45,13 @@ jobs:
         run: |
           gh pr edit "${PR}" --add-label "explorer"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
 
       - id: infrastructure
-        if: steps.filter.outputs.docs == 'true'
+        if: steps.filter.outputs.infrastructure == 'true'
         run: |
           gh pr edit "${PR}" --add-label "infrastructure"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
 
       - id: toolchain
@@ -59,5 +59,4 @@ jobs:
         run: |
           gh pr edit "${PR}" --add-label "toolchain"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
