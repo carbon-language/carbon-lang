@@ -72,7 +72,7 @@ class LoweringFunctionContext {
   // single SemanticsIR block.
   auto CreateSyntheticBlock() -> llvm::BasicBlock*;
 
-  // Determine whether block is the most-recently-created synthetic block.
+  // Determine whether block is the most recently created synthetic block.
   auto IsCurrentSyntheticBlock(llvm::BasicBlock* block) -> bool {
     return synthetic_block_ == block;
   }
