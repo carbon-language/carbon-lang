@@ -61,7 +61,31 @@ module.exports = grammar({
     integer_literal: ($) => /[0-9]+/,
     float_literal: ($) => /[0-9\.]+/,
     sized_type_literal: ($) => /[iuf][1-9][0-9]*/,
-    string_literal: ($) => /"[^"]*"/, // TODO
+    _string_content: ($) => token.immediate(/[^\\"]+/),
+    escape_sequence: ($) =>
+      token.immediate(
+        seq(
+          '\\',
+          choice(
+            'n',
+            't',
+            'r',
+            "'",
+            '"',
+            '\\',
+            '0',
+            /x[0-9A-F]{2}/,
+            /u\{[0-9A-F]+\}/
+          )
+        )
+      ),
+    // TODO: multiline string
+    string_literal: ($) =>
+      seq(
+        '"',
+        repeat(choice($._string_content, $.escape_sequence)),
+        token.immediate('"')
+      ),
     array_literal: ($) =>
       seq(
         '[',

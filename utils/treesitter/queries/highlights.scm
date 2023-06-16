@@ -2,6 +2,7 @@
 (builtin_type) @type.builtin
 (sized_type_literal) @type.builtin
 (bool_literal) @constant.builtin
+(escape_sequence) @constant.character.escape
 (string_literal) @string
 (integer_literal) @constant.builtin
 (float_literal) @constant.builtin
