@@ -1,5 +1,6 @@
----yaml
-version: '3'
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 name: 'Auto label PRs'
 
@@ -14,10 +15,14 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - id: filter
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Filter files
+        id: filter
         uses: dorny/paths-filter@v2
         with:
-          filters: &filters
+          filters: |
             documentation:
               - '*.md'
               - 'docs/**'
@@ -33,30 +38,22 @@ jobs:
             toolchain:
               - 'toolchain/**'
 
-      - id: documentation
+      - name: Add label - documentation
         if: steps.filter.outputs.docs == 'true'
         run: |
-          gh pr edit "${PR}" --add-label "documentation"
-        env:
-          PR: ${{ github.event.pull_request.html_url }}
+          gh pr edit "${{ github.event.pull_request.html_url }}" --add-label "documentation"
 
-      - id: explorer
+      - name: Add label - explorer
         if: steps.filter.outputs.explorer == 'true'
         run: |
-          gh pr edit "${PR}" --add-label "explorer"
-        env:
-          PR: ${{ github.event.pull_request.html_url }}
+          gh pr edit "${{ github.event.pull_request.html_url }}" --add-label "explorer"
 
-      - id: infrastructure
+      - name: Add label - infrastructure
         if: steps.filter.outputs.infrastructure == 'true'
         run: |
-          gh pr edit "${PR}" --add-label "infrastructure"
-        env:
-          PR: ${{ github.event.pull_request.html_url }}
+          gh pr edit "${{ github.event.pull_request.html_url }}" --add-label "infrastructure"
 
-      - id: toolchain
+      - name: Add label - toolchain
         if: steps.filter.outputs.toolchain == 'true'
         run: |
-          gh pr edit "${PR}" --add-label "toolchain"
-        env:
-          PR: ${{ github.event.pull_request.html_url }}
+          gh pr edit "${{ github.event.pull_request.html_url }}" --add-label "toolchain"
