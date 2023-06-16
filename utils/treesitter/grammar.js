@@ -47,7 +47,7 @@ module.exports = grammar({
   extras: ($) => [/\s/, $.comment],
 
   // NOTE: must match the order in src/scanner.c, the names don't matter
-  externals: ($) => [$.binary_star, $.prefix_star, $.postfix_star],
+  externals: ($) => [$.binary_star, $.postfix_star],
 
   rules: {
     source_file: ($) =>
@@ -186,7 +186,7 @@ module.exports = grammar({
 
     ref_expression: ($) => prec.right(PREC.TermPrefix, seq('&', $._expression)),
     deref_expression: ($) =>
-      prec.right(PREC.TermPrefix, seq($.prefix_star, $._expression)),
+      prec.right(PREC.TermPrefix, seq('*', $._expression)),
     fn_type_expression: ($) =>
       prec.left(seq('fn', $.tuple, '->', $._expression)),
 
