@@ -576,8 +576,11 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
 
 auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     -> ErrorOr<Nonnull<const Value*>> {
+  auto action_kind = action->kind_string();
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- recursive eval\n";
+    *trace_stream_ << "--- recursive eval for '" << action_kind << "'\n'''\n";
+    action->Print(trace_stream_->stream());
+    *trace_stream_ << "\n''' ---> \n";
     TraceState();
   }
   todo_.BeginRecursiveAction();
@@ -592,7 +595,8 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     }
   }
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- recursive eval done\n";
+    *trace_stream_ << "--- finished recursive eval for '" << action_kind
+                   << "'\n";
   }
   Nonnull<const Value*> result =
       cast<RecursiveAction>(todo_.CurrentAction()).results()[0];
@@ -2505,6 +2509,10 @@ auto Interpreter::Step() -> ErrorOr<Success> {
 auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- running all steps for '" << action->kind_string()
+                   << "'\n'''\n";
+    action->Print(trace_stream_->stream());
+    *trace_stream_ << "\n''' ---> \n";
     TraceState();
   }
   todo_.Start(std::move(action));
