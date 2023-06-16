@@ -1,18 +1,9 @@
-# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-# Exceptions. See /LICENSE for license information.
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-
-# Update versions with:
-#   pre-commit autoupdate --freeze && pre-commit run -a
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
-
 default_language_version:
-  python: python3 # Defaults to python2, so override it.
+  python: python3
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: f71fa2c1f9cf5cb705f73dffe4b21f7c61470ba9 # frozen: v4.4.0
+    rev: fbd4b8d3b3f17b97af32e46dbd6c2a1970e33e95 # Latest revision
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -29,11 +20,13 @@ repos:
         exclude: '^(.*/fuzzer_corpus/.*|.*\.svg)$'
       - id: trailing-whitespace
         exclude: '^(.*/fuzzer_corpus/.*|.*/testdata/.*\.golden|.*\.svg)$'
+
   - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: e006c8ab09f96ec32ba728b488ea5d17e1f8f6c0 # frozen: v1.2.4
+    rev: 693f8f3f1d066947789f47819b44e8c1a18f3087 # Latest revision
     hooks:
       - id: check-google-doc-style
       - id: markdown-toc
+
   - repo: local
     hooks:
       - id: fix-cc-deps
@@ -43,15 +36,16 @@ repos:
         files: ^.*/(BUILD|[^/]+\.(h|cpp))$
         pass_filenames: false
 
-  # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: b0d1fba7ac3be53c71fb0d3211d911e629f8aecb # frozen: 23.1.0
+    rev: 3e7bcdecfdd4da35fb5d28263f3f26e28dd5383a # Latest revision
     hooks:
       - id: black
+
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: cafd5506f18eea191804850dacc0a4264772d59d # frozen: v3.0.0-alpha.4
+    rev: 9d8e46c771a5e3d09d20dbd2b4004d8d6da184ad # Latest revision
     hooks:
       - id: prettier
+
   - repo: local
     hooks:
       - id: buildifier
@@ -83,14 +77,11 @@ repos:
   - repo: local
     hooks:
       - id: check-header-guards
-        # This should run after clang-format, which may reformat a guard.
         name: Check header guards
         entry: scripts/check_header_guards.py
         language: python
         files: ^.*\.h$
       - id: check-sha-filenames
-        # This may rename files, so it's deliberately between formatters and
-        # linters.
         name: Check fuzzer SHA filenames
         entry: scripts/check_sha_filenames.py
         language: python
@@ -108,7 +99,6 @@ repos:
           )$
         pass_filenames: false
 
-  # Run linters last, as formatters and other checks may fix issues.
   - repo: local
     hooks:
       - id: forbid-llvm-googletest
@@ -117,47 +107,41 @@ repos:
         language: python
         files: ^.*/BUILD$
         pass_filenames: false
+
   - repo: https://github.com/PyCQA/flake8
-    rev: c838a5e98878f17889cfce311e1406d252f87ec5 # frozen: 6.0.0
+    rev: c838a5e98878f17889cfce311e1406d252f87ec5 # Latest revision
     hooks:
       - id: flake8
+
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: '0b037c2b59aa62dc3be3287d175295f1a5547eb9' # frozen: v0.991
+    rev: e731db9437464399b95a45fe42e78962249e9e94 # Latest revision
     hooks:
       - id: mypy
-        # Use setup.cfg to match the command line.
         args:
           - --config-file=setup.cfg
-        # This should match the requirements added in the WORKSPACE pip_install.
         additional_dependencies:
           - gql >= 2.0.0, < 3.0.0
           - PyGitHub
-        # Exclusions are:
-        # - p#### scripts because they're not tested or maintained.
-        # - lit.cfg.py because it has multiple copies, breaking mypy.
-        # - Unit tests because they sometimes violate typing, such as by
-        #   assigning a mock to a function.
         exclude: |
           (?x)^(
               proposals/(?!scripts/).*|
               .*/lit\.cfg\.py|
               .*_test\.py
           )$
+
   - repo: https://github.com/codespell-project/codespell
-    rev: 055cb2a9bc1e98a9800a352c53c38a50faf62dc3 # frozen: v2.2.2
+    rev: 4de404df4c3225f1b3afdb017b2471e84bda322b # Latest revision
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
-        # Test data may contain intentional misspellings, as well as short,
-        # meaningless identifiers that codespell incorrectly identifies as
-        # typos but that we would want to detect in other contexts.
         exclude: |
           (?x)^(
               .*/testdata/.*|
               .*/fuzzer_corpus/.*
           )$
+
   - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: e006c8ab09f96ec32ba728b488ea5d17e1f8f6c0 # frozen: v1.2.4
+    rev: 693f8f3f1d066947789f47819b44e8c1a18f3087 # Latest revision
     hooks:
       - id: check-copyright
         args:
@@ -192,17 +176,39 @@ repos:
               .github/pull_request_template.md|
               compile_flags.txt|
               third_party/.*|
-              .*\.def|
-              .*\.svg|
-              .*/fuzzer_corpus/.*|
-              .*/testdata/.*\.golden
+              buildifier/.*\.star|
+              zephyr/.*\.star|
+              .*\.scm\.star|
+              toolchain/version_generator/.*|
+              toolchain/diagnostics/diagnostic_kind.def|
+              toolchain/diagnostics/check_diagnostics.py
           )$
-      - id: check-links
 
-# This excludes third-party code, and patches to third-party code.
-exclude: |
-  (?x)^(
-      bazel/patches/.*\.patch|
-      third_party/examples/.*/carbon/.*|
-      third_party/llvm-project/.*|
-  )$
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: fbd4b8d3b3f17b97af32e46dbd6c2a1970e33e95 # Latest revision
+    hooks:
+      - id: check-byte-order-marker
+      - id: check-merge-conflict
+      - id: check-xml
+      - id: debug-statements
+        exclude: tests/.*
+      - id: end-of-file-fixer
+        exclude: |
+          (?x)^(
+              .*/fuzzer_corpus/.*|
+              .*/testdata/.*\.golden|
+              .*/_.*\.star|
+              .*/_.*\.star\.gold|
+              .*/zig-cache/.*
+          )$
+      - id: mixed-line-ending
+      - id: name-tests-test
+      - id: requirements-txt-fixer
+      - id: sort-simple-json
+      - id: sort-xml
+      - id: trailing-whitespace
+
+  - repo: https://github.com/ambv/black
+    rev: 20.8b1 # Latest revision
+    hooks:
+      - id: black
