@@ -75,8 +75,8 @@ cc_test(
     name = "set_file_context_raii_test",
     srcs = ["set_file_context_raii_test.cpp"],
     deps = [
-        ":trace_stream",
         ":source_location",
+        ":trace_stream",
         "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
