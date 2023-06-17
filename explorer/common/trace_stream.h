@@ -52,28 +52,27 @@ class TraceStream {
  public:
   explicit TraceStream() { set_allowed_file_contexts({FileContext::Unknown}); }
 
+  // This method gets the file context by using filename from source location
+  // TODO: implement a way to differentiate between the main file and imports
+  // based upon source location / filename
+  auto file_context() const -> FileContext {
+    if (source_loc_.has_value()) {
+      auto filename =
+          llvm::StringRef(source_loc_->filename()).rsplit("/").second;
+      if (filename == "prelude.carbon") {
+        return FileContext::Prelude;
+      } else {
+        return FileContext::Main;
+      }
+    } else {
+      return FileContext::Unknown;
+    }
+  };
+
   // Returns true if tracing is currently enabled.
   // TODO: use current source location for file context based filtering instead
   // of just checking if current code context is Prelude.
-  auto is_enabled(std::optional<SourceLocation> source_location =
-                      std::nullopt) const -> bool {
-    // This function gets the file context by using filename from source
-    // location
-    // TODO: implement a way to differentiate between the main file and imports
-    // based upon source location / filename
-    auto file_context = [=]() -> FileContext {
-      if (source_location.has_value()) {
-        auto filename =
-            llvm::StringRef(source_location->filename()).rsplit("/").second;
-        if (filename == "prelude.carbon") {
-          return FileContext::Prelude;
-        } else {
-          return FileContext::Main;
-        }
-      } else {
-        return FileContext::Unknown;
-      }
-    };
+  auto is_enabled() const -> bool {
     return stream_.has_value() && !in_prelude_ &&
            allowed_phases_[static_cast<int>(current_phase_)] &&
            allowed_file_contexts_[static_cast<int>(file_context())];
@@ -120,6 +119,12 @@ class TraceStream {
     }
   }
 
+  auto set_source_loc(std::optional<SourceLocation> source_loc) {
+    source_loc_ = source_loc;
+  }
+
+  auto source_loc() -> std::optional<SourceLocation> { return source_loc_; }
+
   auto allowed_phases() { return allowed_phases_; }
 
   // Returns the internal stream. Requires is_enabled.
@@ -141,6 +146,7 @@ class TraceStream {
  private:
   bool in_prelude_ = false;
   ProgramPhase current_phase_ = ProgramPhase::Unknown;
+  std::optional<SourceLocation> source_loc_ = std::nullopt;
   std::optional<Nonnull<llvm::raw_ostream*>> stream_;
   std::bitset<static_cast<int>(ProgramPhase::Last) + 1> allowed_phases_;
   std::bitset<static_cast<int>(FileContext::Last) + 1> allowed_file_contexts_;
@@ -168,6 +174,30 @@ class SetProgramPhase {
  private:
   TraceStream& trace_stream_;
   ProgramPhase initial_phase_;
+};
+
+// This is a RAII class to set the source location in trace stream, destructor
+// invocation restores the initial source location
+class SetFileContext {
+ public:
+  explicit SetFileContext(TraceStream& trace_stream,
+                          std::optional<SourceLocation> source_loc)
+      : trace_stream_(trace_stream),
+        initial_source_loc_(trace_stream.source_loc()) {
+    trace_stream_.set_source_loc(source_loc);
+  }
+
+  // This can be used for cases when source location needs to be updated
+  // multiple times within the same scope
+  auto update_source_loc(std::optional<SourceLocation> source_loc) {
+    trace_stream_.set_source_loc(source_loc);
+  }
+
+  ~SetFileContext() { trace_stream_.set_source_loc(initial_source_loc_); }
+
+ private:
+  TraceStream& trace_stream_;
+  std::optional<SourceLocation> initial_source_loc_;
 };
 
 }  // namespace Carbon
