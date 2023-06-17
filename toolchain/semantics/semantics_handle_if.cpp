@@ -45,6 +45,8 @@ auto SemanticsHandleIfStatementElse(SemanticsContext& context,
 
 auto SemanticsHandleIfStatement(SemanticsContext& context,
                                 ParseTree::Node parse_node) -> bool {
+  // Either the then or else block, depending on whether there's an `else` node
+  // on the top of the node stack.
   auto sub_block_id = context.node_block_stack().PopForAdd();
 
   switch (auto kind = context.parse_tree().node_kind(
