@@ -7,9 +7,8 @@
 
 namespace Carbon {
 
-auto SemanticsHandleIfConditionStart(SemanticsContext& context,
-                                     ParseTree::Node parse_node) -> bool {
-  context.node_stack().Push(parse_node);
+auto SemanticsHandleIfConditionStart(SemanticsContext& /*context*/,
+                                     ParseTree::Node /*parse_node*/) -> bool {
   return true;
 }
 
@@ -32,11 +31,15 @@ auto SemanticsHandleIfCondition(SemanticsContext& context,
       SemanticsNode::BranchIf::Make(parse_node, then_block_id, cond_value_id));
   context.AddNodeToBlock(
       if_block_id, SemanticsNode::Branch::Make(parse_node, else_block_id));
+
+  context.node_stack().Push(parse_node);
   return true;
 }
 
 auto SemanticsHandleIfStatementElse(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
+  context.node_stack().PopAndDiscardSoloParseNode(ParseNodeKind::IfCondition);
+
   // Switch to emitting the else block.
   auto then_block_id = context.node_block_stack().PopForAdd();
   context.node_stack().Push(parse_node, then_block_id);
@@ -51,8 +54,10 @@ auto SemanticsHandleIfStatement(SemanticsContext& context,
 
   switch (auto kind = context.parse_tree().node_kind(
               context.node_stack().PeekParseNode())) {
-    case ParseNodeKind::IfConditionStart: {
+    case ParseNodeKind::IfCondition: {
       // Branch from then block to else block.
+      context.node_stack().PopAndDiscardSoloParseNode(
+          ParseNodeKind::IfCondition);
       context.AddNodeToBlock(
           sub_block_id,
           SemanticsNode::Branch::Make(parse_node,
@@ -77,8 +82,6 @@ auto SemanticsHandleIfStatement(SemanticsContext& context,
     }
   }
 
-  context.node_stack().PopAndDiscardSoloParseNode(
-      ParseNodeKind::IfConditionStart);
   return true;
 }
 
