@@ -121,32 +121,6 @@ class Action {
   // object.
   auto kind() const -> Kind { return kind_; }
 
-  auto kind_string() -> std::string_view {
-    auto kind = kind_;
-    switch (kind) {
-      case Kind::LocationAction:
-        return "location action";
-      case Kind::ExpressionAction:
-        return "expression action";
-      case Kind::WitnessAction:
-        return "witness action";
-      case Kind::StatementAction:
-        return "statement action";
-      case Kind::DeclarationAction:
-        return "declaration action";
-      case Kind::ScopeAction:
-        return "scope action";
-      case Kind::RecursiveAction:
-        return "recursive action";
-      case Kind::CleanUpAction:
-        return "cleanup action";
-      case Kind::DestroyAction:
-        return "destroy action";
-      case Kind::TypeInstantiationAction:
-        return "type instantiation action";
-    }
-  }
-
   // The position or state of the action. Starts at 0 and is typically
   // incremented after each step.
   auto pos() const -> int { return pos_; }
