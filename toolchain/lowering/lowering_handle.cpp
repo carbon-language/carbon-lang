@@ -128,12 +128,6 @@ auto LoweringHandleCall(LoweringFunctionContext& context,
   context.SetLocal(node_id, value);
 }
 
-auto LoweringHandleCodeBlock(LoweringFunctionContext& /*context*/,
-                             SemanticsNodeId /*node_id*/, SemanticsNode node)
-    -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
-}
-
 auto LoweringHandleFunctionDeclaration(LoweringFunctionContext& /*context*/,
                                        SemanticsNodeId /*node_id*/,
                                        SemanticsNode node) -> void {

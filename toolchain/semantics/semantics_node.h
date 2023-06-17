@@ -322,9 +322,6 @@ class SemanticsNode {
       Factory<SemanticsNodeKind::Call, SemanticsNodeBlockId /*refs_id*/,
               SemanticsFunctionId /*function_id*/>;
 
-  using CodeBlock = FactoryNoType<SemanticsNodeKind::CodeBlock,
-                                  SemanticsNodeBlockId /*node_block_id*/>;
-
   class CrossReference
       : public FactoryBase<SemanticsNodeKind::CrossReference,
                            SemanticsCrossReferenceIRId /*ir_id*/,
