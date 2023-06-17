@@ -7,21 +7,22 @@
 // CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}
 // CHECK:STDOUT:
 // CHECK:STDOUT: Initialize c1 from reference expression
-// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}
+// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}, 3: C{.id = 1}
 // CHECK:STDOUT:
 // CHECK:STDOUT: Initialize c2 from value expression
-// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}, 3: C{.id = 2}
+// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}, 3: C{.id = 1}, 4: C{.id = 2}
 // CHECK:STDOUT:
 // CHECK:STDOUT: Initialize c3 from initializing expression (return <expr>)
 // CHECK:STDOUT: c3 destroyed
-// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}, 3: C{.id = 2}, 4: C{.id = 3}, 5: !!3, 6: !!C{.id = 3}
+// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}, 3: C{.id = 1}, 4: C{.id = 2}, 5: C{.id = 3}, 6: !!3, 7: !!C{.id = 3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: Initialize c4 from initializing expression (returned var)
-// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}, 3: C{.id = 2}, 4: C{.id = 3}, 5: !!3, 6: !!C{.id = 3}, 7: C{.id = 4}, 8: !!4
+// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}, 3: C{.id = 1}, 4: C{.id = 2}, 5: C{.id = 3}, 6: !!3, 7: !!C{.id = 3}, 8: C{.id = 4}, 9: !!4
 // CHECK:STDOUT:
 // CHECK:STDOUT: c4 destroyed
 // CHECK:STDOUT: c3 destroyed
 // CHECK:STDOUT: c2 destroyed
+// CHECK:STDOUT: c1 destroyed
 // CHECK:STDOUT: c2 destroyed
 // CHECK:STDOUT: c1 destroyed
 // CHECK:STDOUT: result: 0

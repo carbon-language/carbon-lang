@@ -2225,11 +2225,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                                   : ExpressionCategory::Value;
         if (definition.has_init()) {
           const auto init_location = act.location_created();
-          if (expr_category == ExpressionCategory::Reference) {
-            // TODO: Retrieve address of reference expression
-            v = act.results()[0];
-          } else if (expr_category == ExpressionCategory::Initializing &&
-                     init_location && heap_.IsInitialized(*init_location)) {
+          if (expr_category == ExpressionCategory::Initializing &&
+              init_location && heap_.IsInitialized(*init_location)) {
             // Bind even if a conversion is necessary.
             const auto address = Address(*init_location);
             CARBON_ASSIGN_OR_RETURN(
@@ -2237,6 +2234,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             CARBON_CHECK(v == act.results()[0]);
             v_location = address;
           } else {
+            // TODO: Prevent copies for Value expressions from Reference
+            // expression, once able to prevent mutations.
             if (init_location) {
               // Location provided to initializing expression wasn't used.
               heap_.Discard(*init_location);
