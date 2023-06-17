@@ -85,13 +85,13 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
                "output"),
       cl::values(
           clEnumValN(
-              FileContext::Main, "file_main",
+              FileContext::Main, "trace_file_main",
               "Include trace output for file containing the main function"),
-          clEnumValN(FileContext::Prelude, "file_prelude",
+          clEnumValN(FileContext::Prelude, "trace_file_prelude",
                      "Include trace output for prelude"),
-          clEnumValN(FileContext::Import, "file_import",
+          clEnumValN(FileContext::Import, "trace_file_import",
                      "Include trace output for imports"),
-          clEnumValN(FileContext::All, "file_all",
+          clEnumValN(FileContext::All, "trace_file_all",
                      "Include trace output for all files")));
 
   // Use the executable path as a base for the relative prelude path.
