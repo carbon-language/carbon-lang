@@ -9,14 +9,14 @@ namespace Carbon {
 
 auto SemanticsHandleCodeBlockStart(SemanticsContext& context,
                                    ParseTree::Node parse_node) -> bool {
-  // TODO: Enter a new scope.
   context.node_stack().Push(parse_node);
+  context.PushScope();
   return true;
 }
 
 auto SemanticsHandleCodeBlock(SemanticsContext& context,
                               ParseTree::Node /*parse_node*/) -> bool {
-  // TODO: Leave the scope.
+  context.PopScope();
   context.node_stack().PopForSoloParseNode(ParseNodeKind::CodeBlockStart);
   return true;
 }
