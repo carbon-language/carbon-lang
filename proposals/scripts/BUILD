@@ -5,13 +5,13 @@
 py_binary(
     name = "new_proposal",
     srcs = ["new_proposal.py"],
-    python_version = "PY3",
+    python_version = "PY37",  # Update to the desired Python version
 )
 
 py_test(
     name = "new_proposal_test",
     srcs = ["new_proposal_test.py"],
     data = ["template.md"],
-    python_version = "PY3",
+    python_version = "PY37",  # Update to the desired Python version
     deps = [":new_proposal"],
 )
