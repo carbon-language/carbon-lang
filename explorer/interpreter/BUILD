@@ -118,6 +118,7 @@ cc_library(
         ":action_stack",
         ":heap",
         ":stack",
+        ":type_utils",
         "//common:check",
         "//common:error",
         "//common:ostream",
@@ -207,6 +208,7 @@ cc_library(
         ":pattern_analysis",
         ":stack_space",
         ":type_structure",
+        ":type_utils",
         "//common:check",
         "//common:enum_base",
         "//common:error",
@@ -265,6 +267,25 @@ cc_library(
         "//explorer/ast",
         "//explorer/ast:expression_category",
         "//explorer/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "type_utils",
+    srcs = [
+        "type_utils.cpp",
+    ],
+    hdrs = [
+        "type_utils.h",
+    ],
+    deps = [
+        ":action",
+        "//explorer/ast",
+        "//explorer/common:arena",
+        "//explorer/common:nonnull",
+        "//explorer/common:source_location",
+        "//explorer/common:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
