@@ -6,6 +6,7 @@
 #define CARBON_EXPLORER_AST_VALUE_TRANSFORM_H_
 
 #include "common/error.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/value.h"
 
 namespace Carbon {
@@ -237,6 +238,8 @@ class ValueTransform : public TransformBase<Derived, ResultUnwrapper> {
   }
 
   auto operator()(Address addr) -> Address { return addr; }
+
+  auto operator()(ExpressionCategory cat) -> ExpressionCategory { return cat; }
 
   auto operator()(ValueNodeView value_node) -> ValueNodeView {
     return value_node;

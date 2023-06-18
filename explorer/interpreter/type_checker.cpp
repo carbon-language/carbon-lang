@@ -90,6 +90,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ExpressionValue:
     case Value::Kind::BoolValue:
     case Value::Kind::TupleValue:
     case Value::Kind::StructValue:
@@ -150,6 +151,7 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ExpressionValue:
     case Value::Kind::BoolValue:
     case Value::Kind::TupleValue:
     case Value::Kind::StructValue:
@@ -219,6 +221,7 @@ static auto ExpectCompleteType(SourceLocation source_loc,
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ExpressionValue:
     case Value::Kind::BoolValue:
     case Value::Kind::StructValue:
     case Value::Kind::TupleValue:
@@ -331,6 +334,7 @@ static auto TypeIsDeduceable(Nonnull<const Value*> type) -> bool {
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ExpressionValue:
     case Value::Kind::BoolValue:
     case Value::Kind::TupleValue:
     case Value::Kind::StructValue:
@@ -1518,6 +1522,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ExpressionValue:
     case Value::Kind::StructValue:
     case Value::Kind::TupleValue:
     case Value::Kind::NominalClassValue:
@@ -6178,6 +6183,7 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ExpressionValue:
     case Value::Kind::BoolValue:
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:

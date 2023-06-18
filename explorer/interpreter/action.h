@@ -107,6 +107,7 @@ class Action {
   enum class Kind {
     LocationAction,
     ExpressionAction,
+    ExpressionCategoryAction,
     WitnessAction,
     StatementAction,
     DeclarationAction,
@@ -208,6 +209,33 @@ class ExpressionAction : public Action {
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::ExpressionAction;
+  }
+
+  // The Expression this Action evaluates.
+  auto expression() const -> const Expression& { return *expression_; }
+
+  // The location provided for the initializing expression, if any.
+  auto location_received() const -> std::optional<AllocationId> {
+    return location_received_;
+  }
+
+ private:
+  Nonnull<const Expression*> expression_;
+  std::optional<AllocationId> location_received_;
+};
+
+// An Action which implements evaluation of an Expression to produce a `Value*`.
+class ExpressionCategoryAction : public Action {
+ public:
+  explicit ExpressionCategoryAction(
+      Nonnull<const Expression*> expression,
+      std::optional<AllocationId> initialized_location = std::nullopt)
+      : Action(Kind::ExpressionCategoryAction),
+        expression_(expression),
+        location_received_(initialized_location) {}
+
+  static auto classof(const Action* action) -> bool {
+    return action->kind() == Kind::ExpressionCategoryAction;
   }
 
   // The Expression this Action evaluates.

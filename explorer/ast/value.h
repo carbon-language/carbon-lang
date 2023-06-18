@@ -96,38 +96,6 @@ class Value {
   const Kind kind_;
 };
 
-// Contains the result of the evaluation of an expression, including a value,
-// the original expression category, and an optional address if available.
-class ExpressionResult {
- public:
-  static auto Value(Nonnull<const Carbon::Value*> v) -> ExpressionResult {
-    return ExpressionResult(v, std::nullopt, ExpressionCategory::Value);
-  }
-  static auto Reference(Nonnull<const Carbon::Value*> v, Address address)
-      -> ExpressionResult {
-    return ExpressionResult(v, std::move(address),
-                            ExpressionCategory::Reference);
-  }
-  static auto Initializing(Nonnull<const Carbon::Value*> v, Address address)
-      -> ExpressionResult {
-    return ExpressionResult(v, std::move(address),
-                            ExpressionCategory::Initializing);
-  }
-
-  ExpressionResult(Nonnull<const Carbon::Value*> v,
-                   std::optional<Address> address, ExpressionCategory cat)
-      : value_(v), address_(std::move(address)), expr_cat_(cat) {}
-
-  auto value() const -> Nonnull<const Carbon::Value*> { return value_; }
-  auto address() const -> const std::optional<Address>& { return address_; }
-  auto expression_category() const -> ExpressionCategory { return expr_cat_; }
-
- private:
-  Nonnull<const Carbon::Value*> value_;
-  std::optional<Address> address_;
-  ExpressionCategory expr_cat_;
-};
-
 // Returns whether the fully-resolved kind that this value will eventually have
 // is currently unknown, because it depends on a generic parameter.
 inline auto IsValueKindDependent(Nonnull<const Value*> type) -> bool {
@@ -294,6 +262,72 @@ class LocationValue : public Value {
 
  private:
   Address value_;
+};
+
+// Contains the result of the evaluation of an expression, including a value,
+// the original expression category, and an optional address if available.
+class ExpressionResult {
+ public:
+  static auto Value(Nonnull<const Carbon::Value*> v) -> ExpressionResult {
+    return ExpressionResult(v, std::nullopt, ExpressionCategory::Value);
+  }
+  static auto Reference(Nonnull<const Carbon::Value*> v, Address address)
+      -> ExpressionResult {
+    return ExpressionResult(v, std::move(address),
+                            ExpressionCategory::Reference);
+  }
+  static auto Initializing(Nonnull<const Carbon::Value*> v, Address address)
+      -> ExpressionResult {
+    return ExpressionResult(v, std::move(address),
+                            ExpressionCategory::Initializing);
+  }
+
+  ExpressionResult(Nonnull<const Carbon::Value*> v,
+                   std::optional<Address> address, ExpressionCategory cat)
+      : value_(v), address_(std::move(address)), expr_cat_(cat) {}
+
+  auto value() const -> Nonnull<const Carbon::Value*> { return value_; }
+  auto address() const -> const std::optional<Address>& { return address_; }
+  auto expression_category() const -> ExpressionCategory { return expr_cat_; }
+
+ private:
+  Nonnull<const Carbon::Value*> value_;
+  std::optional<Address> address_;
+  ExpressionCategory expr_cat_;
+};
+
+// Contains the result of the evaluation of an expression, including a value,
+// the original expression category, and an optional address if available.
+class ExpressionValue : public Value {
+ public:
+  explicit ExpressionValue(ExpressionResult expr_result)
+      : Value(Kind::ExpressionValue), expr_result_(std::move(expr_result)) {}
+  explicit ExpressionValue(Nonnull<const Value*> value)
+      : ExpressionValue(ExpressionResult::Value(value)) {}
+  ExpressionValue(Nonnull<const Value*> value, std::optional<Address> address,
+                  ExpressionCategory cat)
+      : ExpressionValue(ExpressionResult(value, std::move(address), cat)) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::ExpressionValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(expr_result_.value(), expr_result_.address(),
+             expr_result_.expression_category());
+  }
+
+  auto value() const -> Nonnull<const Value*> { return expr_result_.value(); }
+  auto address() const -> std::optional<Address> {
+    return expr_result_.address();
+  }
+  auto expression_category() const -> ExpressionCategory {
+    return expr_result_.expression_category();
+  }
+
+ private:
+  ExpressionResult expr_result_;
 };
 
 // A pointer value

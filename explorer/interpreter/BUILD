@@ -254,6 +254,7 @@ cc_library(
     deps = [
         "//common:ostream",
         "//explorer/ast",
+        "//explorer/ast:expression_category",
         "//explorer/common:nonnull",
         "@llvm-project//llvm:Support",
     ],
