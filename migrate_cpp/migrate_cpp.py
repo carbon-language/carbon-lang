@@ -1,11 +1,3 @@
-"""Migrates C++ code to Carbon."""
-
-__copyright__ = """
-Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-Exceptions. See /LICENSE for license information.
-SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-"""
-
 import argparse
 import glob
 import os
@@ -18,27 +10,21 @@ _H_EXTS = {".h", ".hpp"}
 _CPP_EXTS = {".c", ".cc", ".cpp", ".cxx"}
 
 
-class _Workflow:
-    _parsed_args: argparse.Namespace
-    _data_dir: str
-    _cpp_files: Optional[List[str]]
-
+class Workflow:
     def __init__(self) -> None:
         """Parses command-line arguments and flags."""
+        self._parsed_args = self._parse_arguments()
+        self._data_dir = os.path.dirname(sys.argv[0])
+        self._cpp_files = None
+
+    def _parse_arguments(self) -> argparse.Namespace:
         parser = argparse.ArgumentParser(description=__doc__)
         parser.add_argument(
             "dir",
             type=str,
             help="A directory containing C++ files to migrate to Carbon.",
         )
-        parsed_args = parser.parse_args()
-        self._parsed_args = parsed_args
-
-        self._data_dir = os.path.dirname(sys.argv[0])
-
-        # Validate arguments.
-        if not os.path.isdir(parsed_args.dir):
-            sys.exit("%r must point to a directory." % parsed_args.dir)
+        return parser.parse_args()
 
     def run(self) -> None:
         """Runs the migration workflow."""
@@ -59,7 +45,7 @@ class _Workflow:
     @staticmethod
     def _print_header(header: str) -> None:
         print("*" * 79)
-        print("* %-75s *" % header)
+        print(f"* {header:^75s} *")
         print("*" * 79)
 
     def _gather_files(self) -> None:
@@ -72,11 +58,10 @@ class _Workflow:
         cpp_files = [f for f in all_files if os.path.splitext(f)[1] in exts]
         if not cpp_files:
             sys.exit(
-                "%r doesn't contain any C++ files to convert."
-                % self._parsed_args.dir
+                f"{self._parsed_args.dir!r} doesn't contain any C++ files to convert."
             )
         self._cpp_files = sorted(cpp_files)
-        print("%d files found." % len(self._cpp_files))
+        print(f"{len(self._cpp_files)} files found.")
 
     def _clang_tidy(self) -> None:
         """Runs clang-tidy to fix C++ files in a directory."""
@@ -109,10 +94,9 @@ class _Workflow:
                 os.rename(f, parts[0] + ".impl.carbon")
                 impl_renames += 1
         print(
-            "Renaming resulted in %d API files and %d impl files."
-            % (api_renames, impl_renames)
+            f"Renaming resulted in {api_renames} API files and {impl_renames} impl files."
         )
 
 
 if __name__ == "__main__":
-    _Workflow().run()
+    Workflow().run()
