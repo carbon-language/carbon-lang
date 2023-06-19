@@ -27,6 +27,7 @@
 #include "explorer/common/error_builders.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
+#include "explorer/common/trace_stream.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
@@ -1007,6 +1008,7 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
         ConvertToConstraintType(source->source_loc(), "implicit conversion",
                                 destination));
     destination = destination_constraint;
+
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << "converting type " << *converted_value
                      << " to constraint " << *destination_constraint << " for "
@@ -2934,8 +2936,7 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   return RunWithExtraStack([&]() { return TypeCheckExpImpl(e, impl_scope); });
-}
-
+};
 // NOLINTNEXTLINE(readability-function-size)
 auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                                    const ImplScope& impl_scope)
@@ -6238,23 +6239,15 @@ auto TypeChecker::DeclareAliasDeclaration(Nonnull<AliasDeclaration*> alias,
 auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   ImplScope impl_scope;
   ScopeInfo top_level_scope_info = ScopeInfo::ForNonClassScope(&impl_scope);
+  SetFileContext set_file_ctx(*trace_stream_, std::nullopt);
 
   // Track that `impl_scope` is the top-level `ImplScope`.
   llvm::SaveAndRestore<decltype(top_level_impl_scope_)>
       set_top_level_impl_scope(top_level_impl_scope_, &impl_scope);
 
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "Omitting prelude type checking traces...\n";
-    trace_stream_->set_in_prelude(true);
-  }
   for (int i = 0; i < static_cast<int>(ast.declarations.size()); ++i) {
-    if (i == ast.num_prelude_declarations) {
-      trace_stream_->set_in_prelude(false);
-      if (trace_stream_->is_enabled()) {
-        *trace_stream_ << "Finished prelude, resuming traces...\n";
-      }
-    }
     auto* declaration = ast.declarations[i];
+    set_file_ctx.update_source_loc(declaration->source_loc());
     CARBON_RETURN_IF_ERROR(
         DeclareDeclaration(declaration, top_level_scope_info));
     CARBON_RETURN_IF_ERROR(

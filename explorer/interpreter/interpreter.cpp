@@ -298,7 +298,6 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
                   std::optional<Nonnull<RuntimeScope*>> bindings,
                   BindingMap& generic_args, Nonnull<TraceStream*> trace_stream,
                   Nonnull<Arena*> arena) -> bool {
-  SetFileContext set_file_ctx(*trace_stream, source_loc);
   if (trace_stream->is_enabled()) {
     *trace_stream << "match pattern " << *p << "\nwith value " << *v << "\n";
   }
@@ -437,7 +436,6 @@ auto PatternMatch(Nonnull<const Value*> p, Nonnull<const Value*> v,
 auto Interpreter::StepLocation() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<LocationAction>(act).expression();
-  SetFileContext set_file_ctx(*trace_stream_, exp.source_loc());
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- step location " << exp << " ." << act.pos() << "."
                    << " (" << exp.source_loc() << ") --->\n";
@@ -580,8 +578,6 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
 
 auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     -> ErrorOr<Nonnull<const Value*>> {
-  SetFileContext set_file_ctx(*trace_stream_, action->source_loc());
-
   if (trace_stream_->is_enabled()) {
     TraceState();
   }
@@ -1015,7 +1011,6 @@ auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
                                ImplWitnessMap&& witnesses) -> ErrorOr<Success> {
-  SetFileContext set_file_ctx(*trace_stream_, call.source_loc());
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "calling function: " << *fun << "\n";
   }
@@ -1237,7 +1232,6 @@ auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<ExpressionAction>(act).expression();
-  SetFileContext set_file_ctx(*trace_stream_, exp.source_loc());
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- step exp " << exp << " ." << act.pos() << "."
                    << " (" << exp.source_loc() << ") --->\n";
@@ -1941,7 +1935,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
 auto Interpreter::StepWitness() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Witness* witness = cast<WitnessAction>(act).witness();
-  SetFileContext set_file_ctx(*trace_stream_, act.source_loc());
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- step witness " << *witness << " ." << act.pos()
                    << ". --->\n";
@@ -2008,7 +2001,6 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
 auto Interpreter::StepStmt() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Statement& stmt = cast<StatementAction>(act).statement();
-  SetFileContext set_file_ctx(*trace_stream_, stmt.source_loc());
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- step stmt ";
     stmt.PrintDepth(1, trace_stream_->stream());
@@ -2267,7 +2259,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     case StatementKind::ReturnVar: {
       const auto& ret_var = cast<ReturnVar>(stmt);
       const ValueNodeView& value_node = ret_var.value_node();
-      SetFileContext set_file_ctx(*trace_stream_, stmt.source_loc());
       if (trace_stream_->is_enabled()) {
         *trace_stream_ << "--- step returned var "
                        << cast<BindingPattern>(value_node.base()).name() << " ."
@@ -2309,7 +2300,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
 auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Declaration& decl = cast<DeclarationAction>(act).declaration();
-  SetFileContext set_file_ctx(*trace_stream_, act.source_loc());
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- step decl ";
     decl.PrintID(trace_stream_->stream());
@@ -2517,8 +2507,6 @@ auto Interpreter::Step() -> ErrorOr<Success> {
 
 auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     -> ErrorOr<Success> {
-  SetFileContext set_file_ctx(*trace_stream_, action->source_loc());
-
   if (trace_stream_->is_enabled()) {
     TraceState();
   }
@@ -2540,7 +2528,10 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
     *trace_stream << "********** initializing globals **********\n";
   }
 
+  SetFileContext set_file_ctx(*trace_stream,
+                              ast.declarations.front()->source_loc());
   for (Nonnull<Declaration*> declaration : ast.declarations) {
+    set_file_ctx.update_source_loc(declaration->source_loc());
     CARBON_RETURN_IF_ERROR(interpreter.RunAllSteps(
         std::make_unique<DeclarationAction>(declaration)));
   }
@@ -2549,6 +2540,8 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
     *trace_stream << "********** calling main function **********\n";
   }
 
+  CARBON_CHECK(ast.main_call);
+  set_file_ctx.update_source_loc(ast.main_call.value()->source_loc());
   CARBON_RETURN_IF_ERROR(interpreter.RunAllSteps(
       std::make_unique<ExpressionAction>(*ast.main_call)));
 
