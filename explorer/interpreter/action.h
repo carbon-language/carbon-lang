@@ -228,10 +228,11 @@ class ExpressionAction : public Action {
 class ExpressionCategoryAction : public Action {
  public:
   explicit ExpressionCategoryAction(
-      Nonnull<const Expression*> expression,
+      Nonnull<const Expression*> expression, bool preserve_nested_categories,
       std::optional<AllocationId> initialized_location = std::nullopt)
       : Action(Kind::ExpressionCategoryAction),
         expression_(expression),
+        preserve_nested_categories_(preserve_nested_categories),
         location_received_(initialized_location) {}
 
   static auto classof(const Action* action) -> bool {
@@ -241,6 +242,11 @@ class ExpressionCategoryAction : public Action {
   // The Expression this Action evaluates.
   auto expression() const -> const Expression& { return *expression_; }
 
+  /// Returns whether sub-actions should preserve expression categories.
+  auto preserve_nested_categories() const -> bool {
+    return preserve_nested_categories_;
+  }
+
   // The location provided for the initializing expression, if any.
   auto location_received() const -> std::optional<AllocationId> {
     return location_received_;
@@ -248,6 +254,7 @@ class ExpressionCategoryAction : public Action {
 
  private:
   Nonnull<const Expression*> expression_;
+  bool preserve_nested_categories_;
   std::optional<AllocationId> location_received_;
 };
 

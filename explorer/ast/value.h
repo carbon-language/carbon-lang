@@ -325,6 +325,7 @@ class ExpressionValue : public Value {
   auto expression_category() const -> ExpressionCategory {
     return expr_result_.expression_category();
   }
+  auto expression_result() const -> ExpressionResult { return expr_result_; }
 
  private:
   ExpressionResult expr_result_;

@@ -172,7 +172,8 @@ class Interpreter {
   // Call the function `fun` with the given `arg` and the `witnesses`
   // for the function's impl bindings.
   auto CallFunction(const CallExpression& call, Nonnull<const Value*> fun,
-                    Nonnull<const Value*> arg, ImplWitnessMap&& witnesses,
+                    Nonnull<const ExpressionValue*> arg,
+                    ImplWitnessMap&& witnesses,
                     std::optional<AllocationId> location_received)
       -> ErrorOr<Success>;
 
@@ -345,6 +346,17 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
                   << ExpressionCategoryToString(v.expression_category())
                   << " expression with value " << *v.value() << "\n";
   }
+  if (v.value()->kind() == Value::Kind::ExpressionValue) {
+    const auto* expr_value = cast<ExpressionValue>(v.value());
+    return PatternMatch(p, expr_value->expression_result(), source_loc,
+                        bindings, generic_args, trace_stream, arena);
+  }
+  const auto expr_result = [](Nonnull<const Value*> v) -> ExpressionResult {
+    if (v->kind() == Value::Kind::ExpressionValue) {
+      return cast<ExpressionValue>(v)->expression_result();
+    }
+    return ExpressionResult::Value(v);
+  };
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
       CARBON_CHECK(bindings.has_value());
@@ -378,9 +390,8 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
           CARBON_CHECK(p_tup.elements().size() == v_tup.elements().size());
           for (size_t i = 0; i < p_tup.elements().size(); ++i) {
             if (!PatternMatch(p_tup.elements()[i],
-                              ExpressionResult::Value(v_tup.elements()[i]),
-                              source_loc, bindings, generic_args, trace_stream,
-                              arena)) {
+                              expr_result(v_tup.elements()[i]), source_loc,
+                              bindings, generic_args, trace_stream, arena)) {
               return false;
             }
           }  // for
@@ -818,7 +829,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::DestructorValue:
     case Value::Kind::BoundMethodValue:
     case Value::Kind::LocationValue:
-    case Value::Kind::ExpressionValue:
     case Value::Kind::BoolValue:
     case Value::Kind::NominalClassValue:
     case Value::Kind::AlternativeValue:
@@ -1031,6 +1041,17 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       // parameterized types for pointers in function call parameters.
       return value;
     }
+    case Value::Kind::ExpressionValue: {
+      const auto* expr = cast<ExpressionValue>(value);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> converted,
+          Convert(expr->value(), destination_type, source_loc));
+      if (converted == expr->value()) {
+        return value;
+      } else {
+        return arena_->New<ExpressionValue>(converted);
+      }
+    }
   }
 }
 
@@ -1069,7 +1090,7 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
 
 auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
-                               Nonnull<const Value*> arg,
+                               Nonnull<const ExpressionValue*> arg,
                                ImplWitnessMap&& witnesses,
                                std::optional<AllocationId> location_received)
     -> ErrorOr<Success> {
@@ -1079,9 +1100,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
   switch (fun->kind()) {
     case Value::Kind::AlternativeConstructorValue: {
       const auto& alt = cast<AlternativeConstructorValue>(*fun);
-      return todo_.FinishAction(
-          arena_->New<ExpressionValue>(arena_->New<AlternativeValue>(
-              &alt.choice(), &alt.alternative(), cast<TupleValue>(arg))));
+      return todo_.FinishAction(arena_->New<ExpressionValue>(
+          arena_->New<AlternativeValue>(&alt.choice(), &alt.alternative(),
+                                        cast<TupleValue>(arg->value()))));
     }
     case Value::Kind::FunctionValue:
     case Value::Kind::BoundMethodValue: {
@@ -1157,11 +1178,13 @@ auto Interpreter::CallFunction(const CallExpression& call,
           Convert(arg, &function.param_pattern().static_type(),
                   call.source_loc()));
 
+      CARBON_CHECK(converted_args->kind() == Value::Kind::ExpressionValue);
       // Bind the arguments to the parameters.
-      CARBON_CHECK(PatternMatch(&function.param_pattern().value(),
-                                ExpressionResult::Value(converted_args),
-                                call.source_loc(), &function_scope,
-                                generic_args, trace_stream_, this->arena_));
+      CARBON_CHECK(PatternMatch(
+          &function.param_pattern().value(),
+          cast<ExpressionValue>(converted_args)->expression_result(),
+          call.source_loc(), &function_scope, generic_args, trace_stream_,
+          this->arena_));
       return todo_.Spawn(std::make_unique<StatementAction>(*function.body(),
                                                            location_received),
                          std::move(function_scope));
@@ -1309,7 +1332,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
   auto& act = cast<ExpressionAction>(todo_.CurrentAction());
   if (act.pos() == 0) {
     return todo_.Spawn(std::make_unique<ExpressionCategoryAction>(
-        &act.expression(), act.location_received()));
+        &act.expression(), /*preserve_nested_categories=*/false,
+        act.location_received()));
   } else {
     CARBON_CHECK(act.results().size() == 1);
     if (const auto* expr_result = dyn_cast<ExpressionValue>(act.results()[0])) {
@@ -1357,8 +1381,13 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            cast<TupleLiteral>(exp).fields()[act.pos()]));
+        const auto* field = cast<TupleLiteral>(exp).fields()[act.pos()];
+        if (act.preserve_nested_categories()) {
+          return todo_.Spawn(
+              std::make_unique<ExpressionCategoryAction>(field, false));
+        } else {
+          return todo_.Spawn(std::make_unique<ExpressionAction>(field));
+        }
       } else {
         return todo_.FinishAction(arena_->New<ExpressionValue>(
             arena_->New<TupleValue>(act.results())));
@@ -1608,7 +1637,7 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
         CARBON_ASSIGN_OR_RETURN(
             value, heap_.Read(location->address(), exp.source_loc()));
         return todo_.FinishAction(arena_->New<ExpressionValue>(
-            value, location->address(), ExpressionCategory::Reference));
+            value, location->address(), ident.expression_category()));
       } else {
         return todo_.FinishAction(arena_->New<ExpressionValue>(value));
       }
@@ -1673,8 +1702,11 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
       } else if (act.pos() == 1) {
         //    { { v :: [](e) :: C, E, F} :: S, H}
         // -> { { e :: v([]) :: C, E, F} :: S, H}
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&call.argument()));
+        bool preserve_nested_categories =
+            (act.results()[0]->kind() !=
+             Value::Kind::AlternativeConstructorValue);
+        return todo_.Spawn(std::make_unique<ExpressionCategoryAction>(
+            &call.argument(), preserve_nested_categories));
       } else if (num_witnesses > 0 &&
                  act.pos() < 2 + static_cast<int>(num_witnesses)) {
         auto iter = call.witnesses().begin();
@@ -1692,7 +1724,8 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
             ++i;
           }
         }
-        return CallFunction(call, act.results()[0], act.results()[1],
+        return CallFunction(call, act.results()[0],
+                            cast<ExpressionValue>(act.results()[1]),
                             std::move(witnesses), act.location_received());
       } else if (act.pos() == 3 + static_cast<int>(num_witnesses)) {
         if (act.results().size() < 3 + num_witnesses) {
