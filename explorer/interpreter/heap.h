@@ -23,6 +23,7 @@ class Heap : public HeapAllocationInterface {
     Uninitialized,
     Discarded,
     Alive,
+    AlivePinned,
     Dead,
   };
 
@@ -35,20 +36,22 @@ class Heap : public HeapAllocationInterface {
   // Returns the value at the given address in the heap after
   // checking that it is alive.
   auto Read(const Address& a, SourceLocation source_loc) const
-      -> ErrorOr<Nonnull<const Value*>>;
+      -> ErrorOr<Nonnull<const Value*>> override;
 
   // Writes the given value at the address in the heap after
   // checking that the address is alive.
   auto Write(const Address& a, Nonnull<const Value*> v,
-             SourceLocation source_loc) -> ErrorOr<Success>;
+             SourceLocation source_loc) -> ErrorOr<Success> override;
 
   // Put the given value on the heap and mark its state.
   // Mark UninitializedValue as uninitialized and other values as alive.
   auto AllocateValue(Nonnull<const Value*> v) -> AllocationId override;
 
   // Marks this allocation, and all of its sub-objects, as dead.
-  void Deallocate(AllocationId allocation) override;
-  void Deallocate(const Address& a);
+  auto Deallocate(AllocationId allocation, SourceLocation source_loc)
+      -> ErrorOr<Success> override;
+  auto Deallocate(const Address& a, SourceLocation source_loc)
+      -> ErrorOr<Success>;
 
   // Marks this allocation, and all its sub-objects, as discarded.
   void Discard(AllocationId allocation);
@@ -73,9 +76,15 @@ class Heap : public HeapAllocationInterface {
   auto CheckInit(AllocationId allocation, SourceLocation source_loc) const
       -> ErrorOr<Success>;
 
+  // Signal an error if the allocation is not writable, typically because it was
+  // pinned by a value.
+  auto CheckWritable(AllocationId allocation, SourceLocation source_loc) const
+      -> ErrorOr<Success>;
+
   Nonnull<Arena*> arena_;
   std::vector<Nonnull<const Value*>> values_;
   std::vector<ValueState> states_;
+  llvm::DenseMap<size_t, int16_t> pinned_allocations_;
 };
 
 }  // namespace Carbon

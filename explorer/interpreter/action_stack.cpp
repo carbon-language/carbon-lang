@@ -49,15 +49,15 @@ auto ActionStack::ValueOfNode(ValueNodeView value_node,
     // with that node. This will help keep unwanted dynamic-scoping behavior
     // from sneaking in.
     if (action->scope().has_value()) {
-      std::optional<Nonnull<const Value*>> result =
-          action->scope()->Get(value_node);
+      CARBON_ASSIGN_OR_RETURN(auto result,
+                              action->scope()->Get(value_node, source_loc));
       if (result.has_value()) {
         return *result;
       }
     }
   }
   if (globals_.has_value()) {
-    std::optional<Nonnull<const Value*>> result = globals_->Get(value_node);
+    CARBON_ASSIGN_OR_RETURN(auto result, globals_->Get(value_node, source_loc));
     if (result.has_value()) {
       return *result;
     }

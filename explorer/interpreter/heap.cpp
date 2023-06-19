@@ -5,8 +5,10 @@
 #include "explorer/interpreter/heap.h"
 
 #include "common/check.h"
+#include "common/error.h"
 #include "explorer/ast/value.h"
 #include "explorer/common/error_builders.h"
+#include "explorer/common/source_location.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Error.h"
 
@@ -38,13 +40,14 @@ auto Heap::Read(const Address& a, SourceLocation source_loc) const
 auto Heap::Write(const Address& a, Nonnull<const Value*> v,
                  SourceLocation source_loc) -> ErrorOr<Success> {
   CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
+  CARBON_RETURN_IF_ERROR(this->CheckWritable(a.allocation_, source_loc));
   if (states_[a.allocation_.index_] == ValueState::Uninitialized) {
     if (!a.element_path_.IsEmpty()) {
       return ProgramError(source_loc)
              << "undefined behavior: store to subobject of uninitialized value "
              << *values_[a.allocation_.index_];
     }
-    states_[a.allocation_.index_] = ValueState::Alive;
+    states_[a.allocation_.index_] = ValueState::Alive;  // a
   }
   CARBON_ASSIGN_OR_RETURN(values_[a.allocation_.index_],
                           values_[a.allocation_.index_]->SetField(
@@ -54,8 +57,8 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
 
 auto Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) const
     -> ErrorOr<Success> {
-  if (states_[allocation.index_] == ValueState::Dead ||
-      states_[allocation.index_] == ValueState::Discarded) {
+  const auto state = states_[allocation.index_];
+  if (state == ValueState::Dead || state == ValueState::Discarded) {
     return ProgramError(source_loc)
            << "undefined behavior: access to dead or discarded value "
            << *values_[allocation.index_];
@@ -73,16 +76,31 @@ auto Heap::CheckInit(AllocationId allocation, SourceLocation source_loc) const
   return Success();
 }
 
-void Heap::Deallocate(AllocationId allocation) {
+auto Heap::CheckWritable(AllocationId allocation,
+                         SourceLocation source_loc) const -> ErrorOr<Success> {
+  if (states_[allocation.index_] == ValueState::AlivePinned) {
+    return ProgramError(source_loc)
+           << "unable to mutate pinned value " << *values_[allocation.index_];
+  }
+  return Success();  // a
+}
+
+auto Heap::Deallocate(AllocationId allocation, SourceLocation source_loc)
+    -> ErrorOr<Success> {
+  CARBON_RETURN_IF_ERROR(this->CheckWritable(allocation, source_loc));
   if (states_[allocation.index_] != ValueState::Dead) {
     states_[allocation.index_] = ValueState::Dead;
   } else {
     CARBON_FATAL() << "deallocating an already dead value: "
                    << *values_[allocation.index_];
   }
+  return Success();
 }
 
-void Heap::Deallocate(const Address& a) { Deallocate(a.allocation_); }
+auto Heap::Deallocate(const Address& a, SourceLocation loc)
+    -> ErrorOr<Success> {
+  return Deallocate(a.allocation_, loc);
+}
 
 auto Heap::is_initialized(AllocationId allocation) const -> bool {
   return states_[allocation.index_] != ValueState::Uninitialized;

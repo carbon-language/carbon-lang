@@ -18,6 +18,7 @@
 
 #include "common/check.h"
 #include "common/error.h"
+#include "explorer/ast/address.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/expression.h"
@@ -298,7 +299,7 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
 
 static auto InitializePlaceholderValue(
     const ValueNodeView& value_node, ExpressionResult v,
-    std::optional<Nonnull<RuntimeScope*>> bindings) {
+    SourceLocation source_loc, std::optional<Nonnull<RuntimeScope*>> bindings) {
   switch (value_node.expression_category()) {
     case ExpressionCategory::Reference:
       if (v.expression_category() == ExpressionCategory::Value ||
@@ -321,7 +322,11 @@ static auto InitializePlaceholderValue(
       } else if (v.expression_category() == ExpressionCategory::Reference) {
         // TODO: Prevent mutation, error on mutation, or copy
         // Bind the reference expression value directly.
-        (*bindings)->BindValue(value_node, v.value());
+        CARBON_CHECK(v.address())
+            << "Missing location from reference expression";
+        CARBON_CHECK(
+            (*bindings)->BindAndPin(value_node, *v.address(), source_loc).ok())
+            << "Failed to bind and pin value";
       } else {
         // Location initialized by initializing expression, bind node to
         // address.
@@ -362,7 +367,8 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
       CARBON_CHECK(bindings.has_value());
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       if (placeholder.value_node().has_value()) {
-        InitializePlaceholderValue(*placeholder.value_node(), v, bindings);
+        InitializePlaceholderValue(*placeholder.value_node(), v, source_loc,
+                                   bindings);
       }
       return true;
     }
@@ -1406,7 +1412,9 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
       if (auto rewrite = access.rewritten_form()) {
-        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+        return todo_.ReplaceWith(std::make_unique<ExpressionCategoryAction>(
+            *rewrite, act.preserve_nested_categories(),
+            act.location_received()));
       }
       if (act.pos() == 0) {
         // First, evaluate the first operand.
@@ -1661,7 +1669,9 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
     case ExpressionKind::OperatorExpression: {
       const auto& op = cast<OperatorExpression>(exp);
       if (auto rewrite = op.rewritten_form()) {
-        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+        return todo_.ReplaceWith(std::make_unique<ExpressionCategoryAction>(
+            *rewrite, act.preserve_nested_categories(),
+            act.location_received()));
       }
       if (act.pos() != static_cast<int>(op.arguments().size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
@@ -1743,7 +1753,9 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
     case ExpressionKind::IntrinsicExpression: {
       const auto& intrinsic = cast<IntrinsicExpression>(exp);
       if (auto rewrite = intrinsic.rewritten_form()) {
-        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+        return todo_.ReplaceWith(std::make_unique<ExpressionCategoryAction>(
+            *rewrite, act.preserve_nested_categories(),
+            act.location_received()));
       }
       if (act.pos() == 0) {
         return todo_.Spawn(
@@ -1832,7 +1844,8 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
               return todo_.Spawn(std::make_unique<DestroyAction>(
                   arena_->New<LocationValue>(obj_addr), child_class_value));
             } else {
-              heap_.Deallocate(obj_addr);
+              CARBON_RETURN_IF_ERROR(
+                  heap_.Deallocate(obj_addr, exp.source_loc()));
               return todo_.FinishAction(
                   arena_->New<ExpressionValue>(TupleValue::Empty()));
             }
@@ -1841,7 +1854,8 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
               return todo_.Spawn(std::make_unique<DestroyAction>(
                   arena_->New<LocationValue>(ptr->address()), pointee));
             } else {
-              heap_.Deallocate(ptr->address());
+              CARBON_RETURN_IF_ERROR(
+                  heap_.Deallocate(ptr->address(), exp.source_loc()));
               return todo_.FinishAction(
                   arena_->New<ExpressionValue>(TupleValue::Empty()));
             }
@@ -2060,12 +2074,15 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
     case ExpressionKind::WhereExpression: {
       auto rewrite = cast<WhereExpression>(exp).rewritten_form();
       CARBON_CHECK(rewrite) << "where expression should be rewritten";
-      return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+      return todo_.ReplaceWith(std::make_unique<ExpressionCategoryAction>(
+          *rewrite, act.preserve_nested_categories(), act.location_received()));
     }
     case ExpressionKind::BuiltinConvertExpression: {
       const auto& convert_expr = cast<BuiltinConvertExpression>(exp);
       if (auto rewrite = convert_expr.rewritten_form()) {
-        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+        return todo_.ReplaceWith(std::make_unique<ExpressionCategoryAction>(
+            *rewrite, act.preserve_nested_categories(),
+            act.location_received()));
       }
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<ExpressionAction>(
@@ -2330,8 +2347,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           scope.BindLifetimeToScope(Address(allocation_id));
           todo_.MergeScope(std::move(scope));
         }
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &definition.init(), init_location));
+        return todo_.Spawn(std::make_unique<ExpressionCategoryAction>(
+            &definition.init(), /*preserve_nested_categories=*/false,
+            init_location));
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
@@ -2342,12 +2360,21 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             definition.has_init() ? definition.init().expression_category()
                                   : ExpressionCategory::Value;
         if (definition.has_init()) {
-          if (has_initializing_expr && init_location &&
-              heap_.is_initialized(*init_location)) {
+          CARBON_CHECK(act.results()[0]->kind() ==
+                       Value::Kind::ExpressionValue);
+          const auto init_expr_result =
+              cast<ExpressionValue>(*act.results()[0]).expression_result();
+          const auto init_location = act.location_created();
+          if (expr_category == ExpressionCategory::Reference) {
+            v = init_expr_result.value();
+            v_location = init_expr_result.address();
+          } else if (has_initializing_expr && init_location &&
+                     heap_.is_initialized(*init_location)) {
+            // Bind even if a conversion is necessary.
             const auto address = Address(*init_location);
             CARBON_ASSIGN_OR_RETURN(
                 v, heap_.Read(address, definition.source_loc()));
-            CARBON_CHECK(v == act.results()[0]);
+            CARBON_CHECK(v == init_expr_result.value());
             v_location = address;
           } else {
             // TODO: Prevent copies for Value expressions from Reference
@@ -2358,8 +2385,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             }
             expr_category = ExpressionCategory::Value;
             const auto* dest_type = &definition.pattern().static_type();
-            CARBON_ASSIGN_OR_RETURN(
-                v, Convert(act.results()[0], dest_type, stmt.source_loc()));
+            CARBON_ASSIGN_OR_RETURN(v, Convert(init_expr_result.value(),
+                                               dest_type, stmt.source_loc()));
           }
         } else {
           v = arena_->New<UninitializedValue>(p);
@@ -2649,6 +2676,7 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   const Action& act = todo_.CurrentAction();
   const auto& cleanup = cast<CleanUpAction>(act);
+  SourceLocation source_loc("destructor", 1);
   if (act.pos() < cleanup.allocations_count() * 2) {
     const size_t alloc_index = cleanup.allocations_count() - act.pos() / 2 - 1;
     auto allocation = act.scope()->allocations()[alloc_index];
@@ -2658,8 +2686,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
     }
     if (act.pos() % 2 == 0) {
       auto* location = arena_->New<LocationValue>(Address(allocation));
-      auto value =
-          heap_.Read(location->address(), SourceLocation("destructor", 1));
+      auto value = heap_.Read(location->address(), source_loc);
       // Step over uninitialized values.
       if (value.ok()) {
         return todo_.Spawn(std::make_unique<DestroyAction>(location, *value));
@@ -2667,7 +2694,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
         return todo_.RunAgain();
       }
     } else {
-      heap_.Deallocate(allocation);
+      CARBON_RETURN_IF_ERROR(heap_.Deallocate(allocation, source_loc));
       return todo_.RunAgain();
     }
   }
