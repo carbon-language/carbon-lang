@@ -16,5 +16,7 @@ class CodeGen {
   llvm::raw_ostream& output = llvm::outs();
   void GenerateObjCodeFromModule(llvm::Module& module);
 };
+
 }  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_CODEGEN_CODEGEN_H_
