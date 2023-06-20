@@ -9,14 +9,12 @@ cc_library(
     srcs = ["codegen.cpp"],
     hdrs = ["codegen.h"],
     deps = [
-        "@llvm-project//llvm:AArch64AsmParser",
-        "@llvm-project//llvm:AArch64CodeGen",
+        "@llvm-project//llvm:AllTargetsAsmParsers",
+        "@llvm-project//llvm:AllTargetsCodeGens",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:MC",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:Target",
         "@llvm-project//llvm:TargetParser",
-        "@llvm-project//llvm:X86AsmParser",
-        "@llvm-project//llvm:X86CodeGen",
     ],
 )
