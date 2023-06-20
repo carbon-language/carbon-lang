@@ -242,8 +242,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
 
   if (dump_mode == DumpMode::ObjectCode) {
-    CodeGen code_gen = CodeGen();
-    code_gen.GenerateObjCodeFromModule(*module);
+    Carbon::PrintDisassemblyFromModule(*module);
     return !has_errors;
   }
 

@@ -16,7 +16,7 @@
 
 namespace Carbon {
 
-void CodeGen::GenerateObjCodeFromModule(llvm::Module& module) {
+void PrintDisassemblyFromModule(llvm::Module& module) {
   // Initialize the target registry etc.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
@@ -38,21 +38,14 @@ void CodeGen::GenerateObjCodeFromModule(llvm::Module& module) {
   const auto* features = "";
 
   llvm::TargetOptions target_opts;
-  auto reloc_model = std::optional<llvm::Reloc::Model>();
+  std::optional<llvm::Reloc::Model> reloc_model =
+      std::optional<llvm::Reloc::Model>();
   auto* target_machine = target->createTargetMachine(
       target_triple, cpu, features, target_opts, reloc_model);
   module.setDataLayout(target_machine->createDataLayout());
   module.setTargetTriple(target_triple);
 
-  // const auto* file_name = "objfile.o";
-  // std::error_code ec;
-  // llvm::raw_fd_ostream dest(file_name, ec, llvm::sys::fs::OF_None);
   llvm::raw_fd_ostream dest(fileno(stdout), false);
-
-  // if (ec) {
-  //   output << "Could not open file: " << ec.message();
-  //   return;
-  // }
 
   llvm::legacy::PassManager pass;
   auto file_type = llvm::CGFT_AssemblyFile;  // llvm::CGFT_ObjectFile;
