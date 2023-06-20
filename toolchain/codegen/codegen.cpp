@@ -4,6 +4,8 @@
 
 #include "toolchain/codegen/codegen.h"
 
+#include <cstdio>
+
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/FileSystem.h"
@@ -13,7 +15,8 @@
 #include "llvm/TargetParser/Host.h"
 
 namespace Carbon {
-void CodeGen::generate_obj_file_from_module(llvm::Module& module) {
+
+void CodeGen::GenerateObjCodeFromModule(llvm::Module& module) {
   // Initialize the target registry etc.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
@@ -41,17 +44,18 @@ void CodeGen::generate_obj_file_from_module(llvm::Module& module) {
   module.setDataLayout(target_machine->createDataLayout());
   module.setTargetTriple(target_triple);
 
-  const auto* filename = "objfile.o";
-  std::error_code ec;
-  llvm::raw_fd_ostream dest(filename, ec, llvm::sys::fs::OF_None);
+  // const auto* file_name = "objfile.o";
+  // std::error_code ec;
+  // llvm::raw_fd_ostream dest(file_name, ec, llvm::sys::fs::OF_None);
+  llvm::raw_fd_ostream dest(fileno(stdout), false);
 
-  if (ec) {
-    output << "Could not open file: " << ec.message();
-    return;
-  }
+  // if (ec) {
+  //   output << "Could not open file: " << ec.message();
+  //   return;
+  // }
 
   llvm::legacy::PassManager pass;
-  auto file_type = llvm::CGFT_ObjectFile;
+  auto file_type = llvm::CGFT_AssemblyFile;  // llvm::CGFT_ObjectFile;
 
   if (target_machine->addPassesToEmitFile(pass, dest, nullptr, file_type)) {
     output << "Could not write to object file\n";
