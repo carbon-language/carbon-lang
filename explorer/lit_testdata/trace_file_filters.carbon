@@ -7,9 +7,9 @@
 // filter flags output.
 //
 // NOAUTOUPDATE
-// RUN: %{explorer-run} --parser_debug --trace_file=- -trace_all -trace_file_main | %{FileCheck-allow-unmatched} --check-prefixes=MAIN
-// RUN: %{explorer-run} --parser_debug --trace_file=- -trace_all -trace_file_prelude | %{FileCheck-allow-unmatched} --check-prefixes=NO-MAIN,PRELUDE
-// RUN: %{explorer-run} --parser_debug --trace_file=- -trace_all -trace_file_all | %{FileCheck-allow-unmatched} --check-prefixes=MAIN,PRELUDE
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_all -trace_file_main | %{FileCheck-allow-unmatched} --check-prefixes=MAIN,NO-PRELUDE
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_all -trace_file_prelude | %{FileCheck-allow-unmatched} --check-prefixes=NO-MAIN,PRELUDE
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_all -trace_file_all | %{FileCheck-allow-unmatched} --check-prefixes=MAIN,PRELUDE
 // NO-PRELUDE-NOT:STDOUT: ** declaring interface As
 //        PRELUDE:STDOUT: ** declaring interface As
 // NO-MAIN-NOT:STDOUT: ** declaring function Main
@@ -26,4 +26,3 @@ interface TestInterface {}
 fn Main() -> i32 {
   return 0;
 }
-

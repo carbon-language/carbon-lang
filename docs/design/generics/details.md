@@ -27,7 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Combining interfaces by anding type-of-types](#combining-interfaces-by-anding-type-of-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
-        -   [`extends` and `impl` with named constraints](#extends-and-impl-with-named-constraints)
+        -   [`extend` and `impl` with named constraints](#extend-and-impl-with-named-constraints)
         -   [Diamond dependency issue](#diamond-dependency-issue)
     -   [Use case: overload resolution](#use-case-overload-resolution)
 -   [Adapting types](#adapting-types)
@@ -198,11 +198,11 @@ somewhere else as long as Carbon can be guaranteed to see the definition when
 needed. For more on this, see
 [the implementing interfaces section](#implementing-interfaces) below.
 
-Unless the implementation of `ConvertibleToString` for `Song` is defined as
-`external`, every member of `ConvertibleToString` is also a member of `Song`.
-This includes members of `ConvertibleToString` that are not explicitly named in
-the `impl` definition but have defaults. Whether the implementation is defined
-as [internal](terminology.md#internal-impl) or
+When the implementation of `ConvertibleToString` for `Song` is defined as
+internal, every member of `ConvertibleToString` is also a member of `Song`. This
+includes members of `ConvertibleToString` that are not explicitly named in the
+`impl` definition but have defaults. Whether the implementation is defined as
+[internal](terminology.md#internal-impl) or
 [external](terminology.md#external-impl), you may access the `ToString` function
 for a `Song` value `s` by a writing function call
 [using a qualified member access expression](terminology.md#qualified-member-access-expression),
@@ -246,11 +246,11 @@ definitions for all the functions (and other members) declared in the interface.
 Carbon interfaces are ["nominal"](terminology.md#nominal-interfaces), which
 means that types explicitly describe how they implement interfaces. An
 ["impl"](terminology.md#impl-implementation-of-an-interface) defines how one
-interface is implemented for a type. Every associated entity is given a
-definition. Different types satisfying `Vector` can have different definitions
-for `Add` and `Scale`, so we say their definitions are _associated_ with what
-type is implementing `Vector`. The `impl` defines what is associated with the
-type for that interface.
+interface is implemented for a type, called the _implementing type_. Every
+associated entity is given a definition. Different types satisfying `Vector` can
+have different definitions for `Add` and `Scale`, so we say their definitions
+are _associated_ with what type is implementing `Vector`. The `impl` defines
+what is associated with the implementing type for that interface.
 
 An impl may be defined inline inside the type definition:
 
@@ -258,7 +258,7 @@ An impl may be defined inline inside the type definition:
 class Point {
   var x: f64;
   var y: f64;
-  impl as Vector {
+  extend impl as Vector {
     // In this scope, the `Self` keyword is an
     // alias for `Point`.
     fn Add[self: Self](b: Self) -> Self {
@@ -271,7 +271,8 @@ class Point {
 }
 ```
 
-Interfaces that are implemented inline contribute to the type's API:
+Interfaces that are implemented inline with the `extend` keyword contribute to
+the type's API:
 
 ```
 var p1: Point = {.x = 1.0, .y = 2.0};
@@ -304,11 +305,11 @@ To implement more than one interface when defining a type, simply include an
 class Point {
   var x: f64;
   var y: f64;
-  impl as Vector {
+  extend impl as Vector {
     fn Add[self: Self](b: Self) -> Self { ... }
     fn Scale[self: Self](v: f64) -> Self { ... }
   }
-  impl as Drawable {
+  extend impl as Drawable {
     fn Draw[self: Self]() { ... }
   }
 }
@@ -316,15 +317,15 @@ class Point {
 
 In this case, all the functions `Add`, `Scale`, and `Draw` end up a part of the
 API for `Point`. This means you can't implement two interfaces that have a name
-in common (unless you use an `external impl` for one or both, as described
-below).
+in common (unless you use an `impl` without `extend` for one or both, for an
+[external impl](#external-impl)).
 
 ```
 class GameBoard {
-  impl as Drawable {
+  extend impl as Drawable {
     fn Draw[self: Self]() { ... }
   }
-  impl as EndOfGame {
+  extend impl as EndOfGame {
     // ❌ Error: `GameBoard` has two methods named
     // `Draw` with the same signature.
     fn Draw[self: Self]() { ... }
@@ -341,11 +342,11 @@ experience.
 ```
 class Player {
   var name: String;
-  impl as Icon {
+  extend impl as Icon {
     fn Name[self: Self]() -> String { return self.name; }
     // ...
   }
-  impl as GameUnit {
+  extend impl as GameUnit {
     // Possible syntax options for defining
     // `GameUnit.Name` as the same as `Icon.Name`:
     alias Name = Icon.Name;
@@ -358,15 +359,15 @@ class Player {
 ### External impl
 
 Interfaces may also be implemented for a type
-[externally](terminology.md#external-impl), by using the `external impl`
-construct. An external impl does not add the interface's methods to the type.
+[externally](terminology.md#external-impl), by using `impl` without `extend`. An
+external impl does not add the interface's methods to the type.
 
 ```
 class Point2 {
   var x: f64;
   var y: f64;
 
-  external impl as Vector {
+  impl as Vector {
     // In this scope, the `Self` keyword is an
     // alias for `Point2`.
     fn Add[self: Self](b: Self) -> Self {
@@ -383,8 +384,8 @@ var a: Point2 = {.x = 1.0, .y = 2.0};
 // ❌ Error: a.Add(a.Scale(2.0));
 ```
 
-An external impl may be defined out-of-line, by including the name of the
-existing type before `as`, which is otherwise optional:
+An external impl may include the name of the implementing type before `as`,
+which is required to define it out-of-line:
 
 ```
 class Point3 {
@@ -392,7 +393,7 @@ class Point3 {
   var y: f64;
 }
 
-external impl Point3 as Vector {
+impl Point3 as Vector {
   // In this scope, the `Self` keyword is an
   // alias for `Point3`.
   fn Add[self: Self](b: Self) -> Self {
@@ -409,19 +410,19 @@ var a: Point3 = {.x = 1.0, .y = 2.0};
 ```
 
 **References:** The external interface implementation syntax was decided in
-[proposal #553](https://github.com/carbon-language/carbon-lang/pull/553). In
-particular, see
-[the alternatives considered](/proposals/p0553.md#interface-implementation-syntax).
+[proposal #553](https://github.com/carbon-language/carbon-lang/pull/553), and
+then replaced in
+[proposal #2760](https://github.com/carbon-language/carbon-lang/pull/2760).
 
-The `external impl` statement is allowed to be defined in a different library
+An external `impl` declaration is allowed to be defined in a different library
 from `Point3`, restricted by [the coherence/orphan rules](#impl-lookup) that
 ensure that the implementation of an interface can't change based on imports. In
-particular, the `external impl` statement is allowed in the library defining the
+particular, the `impl` declaration is allowed in the library defining the
 interface (`Vector` in this case) in addition to the library that defines the
 type (`Point3` here). This (at least partially) addresses
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
-Carbon requires `impl` declarations in a different library to be `external` so
+Carbon requires `impl` declarations in a different library to be external so
 that the API of `Point3` doesn't change based on what is imported. It would be
 particularly bad if two different libraries implemented interfaces with
 conflicting names that both affected the API of a single type. As a consequence
@@ -430,11 +431,11 @@ available by [simple member access](terminology.md#simple-member-access)) of a
 type in the definition of that type. The only thing that may be in another
 library is an `impl` of an interface.
 
-You might also use `external impl` to implement an interface for a type to avoid
-cluttering the API of that type, for example to avoid a name collision. A syntax
-for reusing method implementations allows us to do this selectively when needed.
-In this case, the `external impl` may be declared lexically inside the class
-scope.
+You might also use an external `impl` to implement an interface for a type to
+avoid cluttering the API of that type, for example to avoid a name collision. A
+syntax for reusing method implementations allows us to do this selectively when
+needed. In this case, the external `impl` may be declared lexically inside the
+class scope.
 
 ```
 class Point4a {
@@ -443,7 +444,7 @@ class Point4a {
   fn Add[self: Self](b: Self) -> Self {
     return {.x = self.x + b.x, .y = self.y + b.y};
   }
-  external impl as Vector {
+  impl as Vector {
     alias Add = Point4a.Add;  // Syntax TBD
     fn Scale[self: Self](v: f64) -> Self {
       return {.x = self.x * v, .y = self.y * v};
@@ -456,7 +457,7 @@ class Point4a {
 class Point4b {
   var x: f64;
   var y: f64;
-  external impl as Vector {
+  impl as Vector {
     fn Add[self: Self](b: Self) -> Self {
       return {.x = self.x + b.x, .y = self.y + b.y};
     }
@@ -477,7 +478,7 @@ class Point4c {
   }
 }
 
-external impl Point4c as Vector {
+impl Point4c as Vector {
   alias Add = Point4c.Add;  // Syntax TBD
   fn Scale[self: Self](v: f64) -> Self {
     return {.x = self.x * v, .y = self.y * v};
@@ -512,7 +513,7 @@ though:
 implementation.
 [Swift's syntax](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID277)
 does this as an "extension" of the original type. In Rust, all implementations
-are external as in
+are out-of-line as in
 [this example](https://doc.rust-lang.org/rust-by-example/trait.html). Unlike
 Swift and Rust, we don't allow a type's API to be modified outside its
 definition. So in Carbon a type's API is consistent no matter what is imported,
@@ -523,9 +524,9 @@ unlike Swift and Rust.
 Given a value of type `Point3` and an interface `Vector` implemented for that
 type, you can access the methods from that interface using a
 [qualified member access expression](terminology.md#qualified-member-access-expression)
-whether or not the implementation is done externally with an `external impl`
-declaration. The qualified member access expression writes the member's
-_qualified name_ in the parentheses of the
+whether or not the implementation is done with an
+[external `impl` declaration](#external-impl). The qualified member access
+expression writes the member's _qualified name_ in the parentheses of the
 [compound member access syntax](/docs/design/expressions/member_access.md):
 
 ```
@@ -548,7 +549,7 @@ interface Drawable {
   fn Draw[self: Self]();
 }
 
-external impl Points.Point3 as Drawable { ... }
+impl Points.Point3 as Drawable { ... }
 ```
 
 You could access `Draw` with a qualified name:
@@ -695,7 +696,7 @@ implementing `Vector`, and a function that takes a `GeneralPoint` and calls
 
 ```
 class GeneralPoint(C:! Numeric) {
-  external impl as Vector { ... }
+  impl as Vector { ... }
   fn Get[self: Self](i: i32) -> C;
 }
 
@@ -847,8 +848,8 @@ declare the aspects of a type-of-type directly.
 ```
 constraint VectorLegoFish {
   // Interface implementation requirements
-  impl as Vector;
-  impl as LegoFish;
+  require Self impls Vector;
+  require Self impls LegoFish;
   // Names
   alias Scale = Vector.Scale;
   alias VAdd = Vector.Add;
@@ -863,9 +864,9 @@ adding any of the names:
 ```
 constraint DrawVectorLegoFish {
   // The same as requiring both `Vector` and `LegoFish`.
-  impl as VectorLegoFish;
+  require Self impls VectorLegoFish;
   // A regular interface requirement. No syntactic difference.
-  impl as Drawable;
+  require Self impls Drawable;
 }
 ```
 
@@ -877,7 +878,7 @@ whenever an interface may be. This includes all of these
 
 -   A type may `impl` a named constraint to say that it implements all of the
     requirements of the named constraint, as
-    [described below](#extends-and-impl-with-named-constraints).
+    [described below](#extend-and-impl-with-named-constraints).
 -   A named constraint may be used as a namespace name in
     [a qualified name](#qualified-member-names-and-compound-member-access). For
     example, `VectorLegoFish.VAdd` refers to the same name as `Vector.Add`.
@@ -945,7 +946,7 @@ Then a type implementing `I` would have `impl as I` with definitions for `X`,
 ```
 class ImplementsI {
   // ...
-  impl as I {
+  extend impl as I {
     X { ... }
     Y { ... }
     Z { ... }
@@ -993,11 +994,11 @@ interface Printable { fn Print[self: Self](); }
 interface Renderable { fn Draw[self: Self](); }
 
 constraint PrintAndRender {
-  impl as Printable;
-  impl as Renderable;
+  require Self impls Printable;
+  require Self impls Renderable;
 }
 constraint JustPrint {
-  impl as Printable;
+  require Self impls Printable;
 }
 
 fn PrintIt[T2:! JustPrint](x2: T2) {
@@ -1031,8 +1032,8 @@ interface Renderable {
 
 // `Printable & Renderable` is syntactic sugar for this type-of-type:
 constraint {
-  impl as Printable;
-  impl as Renderable;
+  require Self impls Printable;
+  require Self impls Renderable;
   alias Print = Printable.Print;
   alias Center = Renderable.Center;
   alias Draw = Renderable.Draw;
@@ -1046,10 +1047,10 @@ fn PrintThenDraw[T:! Printable & Renderable](x: T) {
 
 class Sprite {
   // ...
-  impl as Printable {
+  extend impl as Printable {
     fn Print[self: Self]() { ... }
   }
-  impl as Renderable {
+  extend impl as Renderable {
     fn Center[self: Self]() -> (i32, i32) { ... }
     fn Draw[self: Self]() { ... }
   }
@@ -1073,8 +1074,8 @@ interface EndOfGame {
 }
 // `Renderable & EndOfGame` is syntactic sugar for this type-of-type:
 constraint {
-  impl as Renderable;
-  impl as EndOfGame;
+  require Self impls Renderable;
+  require Self impls EndOfGame;
   alias Center = Renderable.Center;
   // Open question: `forbidden`, `invalid`, or something else?
   forbidden Draw
@@ -1089,8 +1090,8 @@ or by defining a named constraint explicitly and renaming the methods:
 
 ```
 constraint RenderableAndEndOfGame {
-  impl as Renderable;
-  impl as EndOfGame;
+  require Self impls Renderable;
+  require Self impls EndOfGame;
   alias Center = Renderable.Center;
   alias RenderableDraw = Renderable.Draw;
   alias TieGame = EndOfGame.Draw;
@@ -1132,15 +1133,15 @@ and `B [&] A` has the names of `B`.
 ```
 // `Printable [&] Renderable` is syntactic sugar for this type-of-type:
 constraint {
-  impl as Printable;
-  impl as Renderable;
+  require Self impls Printable;
+  require Self impls Renderable;
   alias Print = Printable.Print;
 }
 
 // `Renderable [&] EndOfGame` is syntactic sugar for this type-of-type:
 constraint {
-  impl as Renderable;
-  impl as EndOfGame;
+  require Self impls Renderable;
+  require Self impls EndOfGame;
   alias Center = Renderable.Center;
   alias Draw = Renderable.Draw;
 }
@@ -1180,7 +1181,7 @@ interface Equatable { fn Equals[self: Self](rhs: Self) -> bool; }
 
 interface Iterable {
   fn Advance[addr self: Self*]() -> bool;
-  impl as Equatable;
+  require Self impls Equatable;
 }
 
 def DoAdvanceAndEquals[T:! Iterable](x: T) {
@@ -1192,8 +1193,8 @@ def DoAdvanceAndEquals[T:! Iterable](x: T) {
 }
 
 class Iota {
-  impl as Iterable { fn Advance[self: Self]() { ... } }
-  impl as Equatable { fn Equals[self: Self](rhs: Self) -> bool { ... } }
+  extend impl as Iterable { fn Advance[self: Self]() { ... } }
+  extend impl as Equatable { fn Equals[self: Self](rhs: Self) -> bool { ... } }
 }
 var x: Iota;
 DoAdvanceAndEquals(x);
@@ -1206,7 +1207,7 @@ declarations:
 ```
 interface Hashable {
   fn Hash[self: Self]() -> u64;
-  impl as Equatable;
+  require Self impls Equatable;
   alias Equals = Equatable.Equals;
 }
 
@@ -1231,7 +1232,7 @@ as well. In the case of `Hashable` above, this includes all the members of
 
 ```
 class Song {
-  impl as Hashable {
+  extend impl as Hashable {
     fn Hash[self: Self]() -> u64 { ... }
     fn Equals[self: Self](rhs: Self) -> bool { ... }
   }
@@ -1255,12 +1256,12 @@ We expect this concept to be common enough to warrant dedicated syntax:
 interface Equatable { fn Equals[self: Self](rhs: Self) -> bool; }
 
 interface Hashable {
-  extends Equatable;
+  extend Equatable;
   fn Hash[self: Self]() -> u64;
 }
 // is equivalent to the definition of Hashable from before:
 // interface Hashable {
-//   impl as Equatable;
+//   require Self impls Equatable;
 //   alias Equals = Equatable.Equals;
 //   fn Hash[self: Self]() -> u64;
 // }
@@ -1286,7 +1287,7 @@ Examples:
 -   Swift protocols, such as
     [Collection](https://developer.apple.com/documentation/swift/collection).
 
-To write an interface extending multiple interfaces, use multiple `extends`
+To write an interface extending multiple interfaces, use multiple `extend`
 declarations. For example, the
 [`BinaryInteger` protocol in Swift](https://developer.apple.com/documentation/swift/binaryinteger)
 inherits from `CustomStringConvertible`, `Hashable`, `Numeric`, and `Stridable`.
@@ -1296,12 +1297,12 @@ Carbon:
 
 ```
 interface SetAlgebra {
-  extends Equatable;
-  extends ExpressibleByArrayLiteral;
+  extend Equatable;
+  extend ExpressibleByArrayLiteral;
 }
 ```
 
-**Alternative considered:** The `extends` declarations are in the body of the
+**Alternative considered:** The `extend` declarations are in the body of the
 `interface` definition instead of the header so we can use
 [associated types (defined below)](#associated-types) also defined in the body
 in parameters or constraints of the interface being extended.
@@ -1314,13 +1315,13 @@ interface ConvertibleTo(T:! type) { ... }
 // A type can only implement `PreferredConversion` once.
 interface PreferredConversion {
   let AssociatedType:! type;
-  extends ConvertibleTo(AssociatedType);
+  extend ConvertibleTo(AssociatedType);
 }
 ```
 
-#### `extends` and `impl` with named constraints
+#### `extend` and `impl` with named constraints
 
-The `extends` declaration makes sense with the same meaning inside a
+The `extend` declaration makes sense with the same meaning inside a
 [`constraint`](#named-constraints) definition, and so is also supported.
 
 ```
@@ -1332,8 +1333,8 @@ interface Job {
 }
 
 constraint Combined {
-  extends Media;
-  extends Job;
+  extend Media;
+  extend Job;
 }
 ```
 
@@ -1343,9 +1344,9 @@ This definition of `Combined` is equivalent to requiring both the `Media` and
 ```
 // Equivalent
 constraint Combined {
-  impl as Media;
+  require Self impls Media;
   alias Play = Media.Play;
-  impl as Job;
+  require Self impls Job;
   alias Run = Job.Run;
 }
 ```
@@ -1356,7 +1357,7 @@ constraint:
 
 ```
 class Song {
-  impl as Combined {
+  extend impl as Combined {
     fn Play[self: Self]() { ... }
     fn Run[self: Self]() { ... }
   }
@@ -1367,10 +1368,10 @@ This is equivalent to implementing the required interfaces directly:
 
 ```
 class Song {
-  impl as Media {
+  extend impl as Media {
     fn Play[self: Self]() { ... }
   }
-  impl as Job {
+  extend impl as Job {
     fn Run[self: Self]() { ... }
   }
 }
@@ -1384,7 +1385,7 @@ Conversely, an `interface` can extend a `constraint`:
 
 ```
 interface MovieCodec {
-  extends Combined;
+  extend Combined;
 
   fn Load[addr self: Self*](filename: String);
 }
@@ -1395,9 +1396,9 @@ equivalent to:
 
 ```
 interface MovieCodec {
-  impl as Media;
+  require Self impls Media;
   alias Play = Media.Play;
-  impl as Job;
+  require Self impls Job;
   alias Run = Job.Run;
 
   fn Load[addr self: Self*](filename: String);
@@ -1416,13 +1417,13 @@ interface Graph {
 }
 
 interface IncidenceGraph {
-  extends Graph;
+  extend Graph;
   fn OutEdges[addr self: Self*](u: VertexDescriptor)
     -> (EdgeIterator, EdgeIterator);
 }
 
 interface EdgeListGraph {
-  extends Graph;
+  extend Graph;
   fn Edges[addr self: Self*]() -> (EdgeIterator, EdgeIterator);
 }
 ```
@@ -1433,8 +1434,8 @@ interface.
 
 ```
 class MyEdgeListIncidenceGraph {
-  impl as IncidenceGraph { ... }
-  impl as EdgeListGraph { ... }
+  extend impl as IncidenceGraph { ... }
+  extend impl as EdgeListGraph { ... }
 }
 ```
 
@@ -1447,13 +1448,13 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 
     ```
     class MyEdgeListIncidenceGraph {
-      impl as IncidenceGraph {
+      extend impl as IncidenceGraph {
         fn Source[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn Target[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn OutEdges[addr self: Self*](u: VertexDescriptor)
             -> (EdgeIterator, EdgeIterator) { ... }
       }
-      impl as EdgeListGraph {
+      extend impl as EdgeListGraph {
         fn Edges[addr self: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
       }
     }
@@ -1464,12 +1465,12 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 
     ```
     class MyEdgeListIncidenceGraph {
-      impl as IncidenceGraph {
+      extend impl as IncidenceGraph {
         fn Source[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn OutEdges[addr self: Self*](u: VertexDescriptor)
             -> (EdgeIterator, EdgeIterator) { ... }
       }
-      impl as EdgeListGraph {
+      extend impl as EdgeListGraph {
         fn Target[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn Edges[addr self: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
       }
@@ -1480,12 +1481,12 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 
     ```
     class MyEdgeListIncidenceGraph {
-      impl as Graph {
+      extend impl as Graph {
         fn Source[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn Target[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
       }
-      impl as IncidenceGraph { ... }
-      impl as EdgeListGraph { ... }
+      extend impl as IncidenceGraph { ... }
+      extend impl as EdgeListGraph { ... }
     }
     ```
 
@@ -1493,10 +1494,10 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 
     ```
     class MyEdgeListIncidenceGraph {
-      impl as IncidenceGraph { ... }
-      impl as EdgeListGraph { ... }
+      extend impl as IncidenceGraph { ... }
+      extend impl as EdgeListGraph { ... }
     }
-    external impl MyEdgeListIncidenceGraph as Graph {
+    impl MyEdgeListIncidenceGraph as Graph {
       fn Source[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
       fn Target[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
     }
@@ -1507,9 +1508,9 @@ missing method definition by the end of the file. This doesn't delay other
 aspects of semantic checking, which will just assume that these methods will
 eventually be provided.
 
-**Open question:** We could require that the `external impl` of the required
-interface be declared lexically in the class scope in this case. That would
-allow earlier detection of missing definitions.
+**Open question:** We could require that the `impl` of the required interface be
+declared lexically in the class scope in this case. That would allow earlier
+detection of missing definitions.
 
 ### Use case: overload resolution
 
@@ -1524,11 +1525,11 @@ interface ForwardIntIterator {
   fn Get[self: Self]() -> i32;
 }
 interface BidirectionalIntIterator {
-  extends ForwardIntIterator;
+  extend ForwardIntIterator;
   fn Back[addr self: Self*]();
 }
 interface RandomAccessIntIterator {
-  extends BidirectionalIntIterator;
+  extend BidirectionalIntIterator;
   fn Skip[addr self: Self*](offset: i32);
   fn Difference[self: Self](rhs: Self) -> i32;
 }
@@ -1567,19 +1568,22 @@ interface Comparable {
   fn Less[self: Self](rhs: Self) -> bool;
 }
 class Song {
-  impl as Printable { fn Print[self: Self]() { ... } }
+  extend impl as Printable { fn Print[self: Self]() { ... } }
 }
-adapter SongByTitle for Song {
-  impl as Comparable {
+class SongByTitle {
+  adapt Song;
+  extend impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool { ... }
   }
 }
-adapter FormattedSong for Song {
-  impl as Printable { fn Print[self: Self]() { ... } }
+class FormattedSong {
+  adapt Song;
+  extend impl as Printable { fn Print[self: Self]() { ... } }
 }
-adapter FormattedSongByTitle for Song {
-  impl as Printable = FormattedSong;
-  impl as Comparable = SongByTitle;
+class FormattedSongByTitle {
+  adapt Song;
+  extend impl as Printable = FormattedSong;
+  extend impl as Comparable = SongByTitle;
 }
 ```
 
@@ -1605,8 +1609,9 @@ Inside an adapter, the `Self` type matches the adapter. Members of the original
 type may be accessed either by a cast:
 
 ```
-adapter SongByTitle for Song {
-  impl as Comparable {
+class SongByTitle {
+  adapt Song;
+  extend impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
       return (self as Song).Title() < (rhs as Song).Title();
     }
@@ -1617,8 +1622,9 @@ adapter SongByTitle for Song {
 or using a qualified member access expression:
 
 ```
-adapter SongByTitle for Song {
-  impl as Comparable {
+class SongByTitle {
+  adapt Song;
+  extend impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
       return self.(Song.Title)() < rhs.(Song.Title)();
     }
@@ -1655,7 +1661,7 @@ A user of this type will provide specific values for the key and value types:
 
 ```
 class Song {
-  impl as Hashable { ... }
+  extend impl as Hashable { ... }
   // ...
 }
 
@@ -1670,12 +1676,14 @@ can convert between two different arguments to a parameterized type. Consider
 two adapters of `Song` that implement `Hashable`:
 
 ```
-adapter PlayableSong for Song {
-  impl as Hashable = Song;
-  impl as Media { ... }
+class PlayableSong {
+  adapt Song;
+  extend impl as Hashable = Song;
+  extend impl as Media { ... }
 }
-adapter SongHashedByTitle for Song {
-  impl as Hashable { ... }
+class SongHashedByTitle {
+  adapt Song;
+  extend impl as Hashable { ... }
 }
 ```
 
@@ -1696,22 +1704,24 @@ of a `HashMap` implementation rely on the hashing function staying the same.
 Frequently we expect that the adapter type will want to preserve most or all of
 the API of the original type. The two most common cases expected are adding and
 replacing an interface implementation. Users would indicate that an adapter
-starts from the original type's existing API by using the `extends` keyword
-instead of `for`:
+starts from the original type's existing API by using the `extend` keyword
+before `adapt`:
 
 ```
 class Song {
-  impl as Hashable { ... }
-  impl as Printable { ... }
+  extend impl as Hashable { ... }
+  extend impl as Printable { ... }
 }
 
-adapter SongByArtist extends Song {
+class SongByArtist {
+  extend adapt Song;
+
   // Add an implementation of a new interface
-  impl as Comparable { ... }
+  extend impl as Comparable { ... }
 
   // Replace an existing implementation of an interface
   // with an alternative.
-  impl as Hashable { ... }
+  extend impl as Hashable { ... }
 }
 ```
 
@@ -1721,22 +1731,25 @@ The resulting type `SongByArtist` would:
 -   implement `Hashable`, but differently than `Song`, and
 -   implement `Printable`, inherited from `Song`.
 
-Unlike the similar `class B extends A` notation, `adapter B extends A` is
-permitted even if `A` is a final class. Also, there is no implicit conversion
-from `B` to `A`, matching `adapter`...`for` but unlike class extension.
+Unlike the similar `class B { extend base: A; }` notation,
+`class B { extend adapt A; }` is permitted even if `A` is a final class. Also,
+there is no implicit conversion from `B` to `A`, matching `adapt` without
+`extend` but unlike class extension.
 
 To avoid or resolve name conflicts between interfaces, an `impl` may be declared
-[`external`](#external-impl). The names in that interface may then be pulled in
+[external](#external-impl). The names in that interface may then be pulled in
 individually or renamed using `alias` declarations.
 
 ```
-adapter SongRenderToPrintDriver extends Song {
+class SongRenderToPrintDriver {
+  extend adapt Song;
+
   // Add a new `Print()` member function.
   fn Print[self: Self]() { ... }
 
   // Avoid name conflict with new `Print` function by making
   // the implementation of the `Printable` interface external.
-  external impl as Printable = Song;
+  impl as Printable = Song;
 
   // Make the `Print` function from `Printable` available
   // under the name `PrintToScreen`.
@@ -1755,22 +1768,26 @@ implementation for `CompareLib.Comparable` for type `SongLib.Song`. A user that
 wants to pass a value of type `SongLib.Song` to `CompareLib.Sort` has to define
 an adapter that provides an implementation of `CompareLib.Comparable` for
 `SongLib.Song`. This adapter will probably use the
-[`extends` facility of adapters](#extending-adapter) to preserve the
+[`extend` facility of adapters](#extending-adapter) to preserve the
 `SongLib.Song` API.
 
 ```
 import CompareLib;
 import SongLib;
 
-adapter Song extends SongLib.Song {
-  impl as CompareLib.Comparable { ... }
+class Song {
+  extend adapt SongLib.Song;
+  extend impl as CompareLib.Comparable { ... }
 }
 // Or, to keep the names from CompareLib.Comparable out of Song's API:
-adapter Song extends SongLib.Song { }
-external impl Song as CompareLib.Comparable { ... }
+class Song {
+  extend adapt SongLib.Song;
+}
+impl Song as CompareLib.Comparable { ... }
 // Or, equivalently:
-adapter Song extends SongLib.Song {
-  external impl as CompareLib.Comparable { ... }
+class Song {
+  extend adapt SongLib.Song;
+  impl as CompareLib.Comparable { ... }
 }
 ```
 
@@ -1809,8 +1826,9 @@ another interface `Difference`:
 interface Difference {
   fn Sub[self: Self](rhs: Self) -> i32;
 }
-adapter ComparableFromDifference(T:! Difference) for T {
-  impl as Comparable {
+class ComparableFromDifference(T:! Difference) {
+  adapt T;
+  extend impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
       return (self as T).Sub(rhs) < 0;
     }
@@ -1818,12 +1836,12 @@ adapter ComparableFromDifference(T:! Difference) for T {
 }
 class IntWrapper {
   var x: i32;
-  impl as Difference {
+  extend impl as Difference {
     fn Sub[self: Self](rhs: Self) -> i32 {
       return left.x - right.x;
     }
   }
-  impl as Comparable = ComparableFromDifferenceFn(IntWrapper);
+  extend impl as Comparable = ComparableFromDifferenceFn(IntWrapper);
 }
 ```
 
@@ -1831,9 +1849,10 @@ class IntWrapper {
 use to the adapter instead:
 
 ```
-adapter ComparableFromDifferenceFn
-    (T:! type, Difference:! fnty(T, T)->i32) for T {
-  impl as Comparable {
+class ComparableFromDifferenceFn
+    (T:! type, Difference:! fnty(T, T)->i32) {
+  adapt T;
+  extend impl as Comparable {
     fn Less[self: Self](rhs: Self) -> bool {
       return Difference(self, rhs) < 0;
     }
@@ -1844,7 +1863,7 @@ class IntWrapper {
   fn Difference(left: Self, right: Self) {
     return left.x - right.x;
   }
-  impl as Comparable =
+  extend impl as Comparable =
       ComparableFromDifferenceFn(IntWrapper, Difference);
 }
 ```
@@ -1868,11 +1887,13 @@ class Complex64 {
 
 // Private
 
-adapter ByReal extends Complex64 {
+class ByReal {
+  extend adapt Complex64;
+
   // Complex numbers are not generally comparable,
   // but this comparison function is useful for some
   // method implementations.
-  impl as Comparable {
+  extend impl as Comparable {
     fn Less[self: Self](that: Self) -> bool {
       return self.Real() < that.Real();
     }
@@ -1899,7 +1920,7 @@ interface DrawingContext {
   fn DrawLine[self: Self](...);
   ...
 }
-external impl Window as DrawingContext { ... }
+impl Window as DrawingContext { ... }
 ```
 
 An adapter can make that much more convenient by making a compatible type where
@@ -1908,8 +1929,9 @@ avoids having to [qualify](terminology.md#qualified-member-access-expression)
 each call to methods in the interface.
 
 ```
-adapter DrawInWindow for Window {
-  impl as DrawingContext = Window;
+class DrawInWindow {
+  adapt Window;
+  extend impl as DrawingContext = Window;
 }
 fn Render(w: Window) {
   let d: DrawInWindow = w as DrawInWindow;
@@ -1959,7 +1981,7 @@ a [`where` clause](#where-constraints). For example, implementations of
 
 ```
 class Point2D {
-  impl as NSpacePoint where .N = 2 {
+  extend impl as NSpacePoint where .N = 2 {
     fn Get[addr self: Self*](i: i32) -> f64 { ... }
     fn Set[addr self: Self*](i: i32, value: f64) { ... }
     fn SetAll[addr self: Self*](value: Array(f64, 2)) { ... }
@@ -1967,7 +1989,7 @@ class Point2D {
 }
 
 class Point3D {
-  impl as NSpacePoint where .N = 3 {
+  extend impl as NSpacePoint where .N = 3 {
     fn Get[addr self: Self*](i: i32) -> f64 { ... }
     fn Set[addr self: Self*](i: i32, value: f64) { ... }
     fn SetAll[addr self: Self*](value: Array(f64, 3)) { ... }
@@ -2026,7 +2048,7 @@ interface DeserializeFromString {
 class MySerializableType {
   var i: i32;
 
-  impl as DeserializeFromString {
+  extend impl as DeserializeFromString {
     fn Deserialize(serialized: String) -> Self {
       return (.i = StringToInt(serialized));
     }
@@ -2083,7 +2105,7 @@ class DynamicArray(T:! type) {
   fn Remove[addr self: Self*](pos: IteratorType);
 
   // Set the associated type `ElementType` to `T`.
-  impl as StackAssociatedType where .ElementType = T {
+  extend impl as StackAssociatedType where .ElementType = T {
     fn Push[addr self: Self*](value: ElementType) {
       self->Insert(self->End(), value);
     }
@@ -2107,7 +2129,7 @@ shorthand for the type being implemented, including in the `where` clause
 specifying the values of associated types, as in:
 
 ```
-external impl VeryLongTypeName as Add
+impl VeryLongTypeName as Add
     // `Self` here means `VeryLongTypeName`
     where .Result == Self {
   ...
@@ -2163,9 +2185,9 @@ interface Container {
 
 class DynamicArray(T:! type) {
   ...
-  impl as Container {
+  extend impl as Container {
     class IteratorType {
-      impl Iterator { ... }
+      extend impl as Iterator { ... }
     }
     ...
   }
@@ -2243,7 +2265,7 @@ considered different interfaces, with distinct implementations.
 class Produce {
   var fruit: DynamicArray(Fruit);
   var veggie: DynamicArray(Veggie);
-  impl as StackParameterized(Fruit) {
+  extend impl as StackParameterized(Fruit) {
     fn Push[addr self: Self*](value: Fruit) {
       self->fruit.Push(value);
     }
@@ -2254,7 +2276,7 @@ class Produce {
       return self->fruit.IsEmpty();
     }
   }
-  impl as StackParameterized(Veggie) {
+  extend impl as StackParameterized(Veggie) {
     fn Push[addr self: Self*](value: Veggie) {
       self->veggie.Push(value);
     }
@@ -2318,9 +2340,9 @@ class Complex {
   var imag: f64;
   // Can implement this interface more than once
   // as long as it has different arguments.
-  impl as EquatableWith(f64) { ... }
+  extend impl as EquatableWith(f64) { ... }
   // Same as: impl as EquatableWith(Complex) { ... }
-  impl as EquatableWith(Self) { ... }
+  extend impl as EquatableWith(Self) { ... }
 }
 ```
 
@@ -2355,8 +2377,8 @@ interface Map(FromType:! type, ToType:! type) {
   fn Map[addr self: Self*](needle: FromType) -> Optional(ToType);
 }
 class Bijection(FromType:! type, ToType:! type) {
-  impl as Map(FromType, ToType) { ... }
-  impl as Map(ToType, FromType) { ... }
+  extend impl as Map(FromType, ToType) { ... }
+  extend impl as Map(ToType, FromType) { ... }
 }
 // ❌ Error: Bijection has twodifferent impl definitions of
 // interface Map(String, String)
@@ -2369,11 +2391,11 @@ interface twice:
 
 ```
 class Bijection(FromType:! type, ToType:! type) {
-  impl as Map(FromType, ToType) { ... }
+  extend impl as Map(FromType, ToType) { ... }
 }
-adapter ReverseLookup(FromType:! type, ToType:! type)
-    for Bijection(FromType, ToType) {
-  impl as Map(ToType, FromType) { ... }
+class ReverseLookup(FromType:! type, ToType:! type) {
+  adapt Bijection(FromType, ToType);
+  extend impl as Map(ToType, FromType) { ... }
 }
 ```
 
@@ -2519,7 +2541,7 @@ To name such a constraint, you may use a `let` or a `constraint` declaration:
 ```
 let Point2DInterface:! auto = NSpacePoint where .N = 2;
 constraint Point2DInterface {
-  extends NSpacePoint where .N = 2;
+  extend NSpacePoint where .N = 2;
 }
 ```
 
@@ -2567,7 +2589,7 @@ To name these sorts of constraints, we could use `let` declarations or
 ```
 let IntStack:! auto = Stack where .ElementType = i32;
 constraint IntStack {
-  extends Stack where .ElementType = i32;
+  extend Stack where .ElementType = i32;
 }
 ```
 
@@ -2623,7 +2645,7 @@ This kind of constraint can be named:
 let EqualPair:! auto =
     PairInterface where .Left == .Right;
 constraint EqualPair {
-  extends PairInterface where .Left == .Right;
+  extend PairInterface where .Left == .Right;
 }
 ```
 
@@ -2717,7 +2739,7 @@ interface ContainerInterface {
   ...
 }
 interface RandomAccessIterator {
-  extends IteratorInterface;
+  extend IteratorInterface;
   ...
 }
 ```
@@ -2741,7 +2763,7 @@ let RandomAccessContainer:! auto =
     ContainerInterface where .IteratorType impls RandomAccessIterator;
 // or
 constraint RandomAccessContainer {
-  extends ContainerInterface
+  extend ContainerInterface
       where .IteratorType impls RandomAccessIterator;
 }
 
@@ -2781,7 +2803,7 @@ to encode the return type:
 
 ```
 interface HasAbs {
-  extends Numeric;
+  extend Numeric;
   let MagnitudeType:! Numeric;
   fn Abs[self: Self]() -> MagnitudeType;
 }
@@ -2836,12 +2858,12 @@ These recursive constraints can be named:
 ```
 let RealAbs:! auto = HasAbs where .MagnitudeType == .Self;
 constraint RealAbs {
-  extends HasAbs where .MagnitudeType == Self;
+  extend HasAbs where .MagnitudeType == Self;
 }
 let ContainerIsSlice:! auto =
     Container where .SliceType == .Self;
 constraint ContainerIsSlice {
-  extends Container where .SliceType == Self;
+  extend Container where .SliceType == Self;
 }
 ```
 
@@ -2882,7 +2904,7 @@ addition the function needs the result to implement a specific interface.
 class Vector(T:! type) { ... }
 
 // Parameterized type implements interface only for some arguments.
-external impl Vector(String) as Printable { ... }
+impl Vector(String) as Printable { ... }
 
 // Constraint: `T` such that `Vector(T)` implements `Printable`
 fn PrintThree
@@ -2944,11 +2966,11 @@ This includes `where` clauses used in an `impl` declaration:
 
 ```
 // ❌ Error: `where T impls B` does not use `.Self` or a designator
-external impl forall [T:! type] T as A where T impls B {}
+impl forall [T:! type] T as A where T impls B {}
 // ✅ Allowed
-external impl forall [T:! type where .Self impls B] T as A {}
+impl forall [T:! type where .Self impls B] T as A {}
 // ✅ Allowed
-external impl forall [T:! B] T as A {}
+impl forall [T:! B] T as A {}
 ```
 
 This clarifies the meaning of the `where` clause and reduces the number of
@@ -3431,8 +3453,8 @@ Used as:
 
 ```
 class Song { ... }
-adapter SongByArtist for Song { impl as Comparable { ... } }
-adapter SongByTitle for Song { impl as Comparable { ... } }
+class SongByArtist { adapt Song; impl as Comparable { ... } }
+class SongByTitle { adapt Song; impl as Comparable { ... } }
 var s1: Song = ...;
 var s2: Song = ...;
 assert(CombinedLess(s1, s2, SongByArtist, SongByTitle) == True);
@@ -3467,11 +3489,11 @@ And then to package this functionality as an implementation of `Comparable`, we
 combine `CompatibleWith` with [type adaptation](#adapting-types):
 
 ```
-adapter ThenCompare(
+class ThenCompare(
       T:! type,
-      CompareList:! List(CompatibleWith(T) & Comparable))
-    for T {
-  impl as Comparable {
+      CompareList:! List(CompatibleWith(T) & Comparable)) {
+  adapt T;
+  extend impl as Comparable {
     fn Compare[self: Self](rhs: Self) -> CompareResult {
       for (let U:! auto in CompareList) {
         var result: CompareResult = (self as U).Compare(rhs as U);
@@ -3532,13 +3554,13 @@ Example:
 // In the Carbon standard library
 interface DefaultConstructible {
   // Types must be sized to be default constructible.
-  impl as Sized;
+  require Self impls Sized;
   fn Default() -> Self;
 }
 
 // Classes are "sized" by default.
 class Name {
-  impl as DefaultConstructible {
+  extend impl as DefaultConstructible {
     fn Default() -> Self { ... }
   }
   ...
@@ -3707,7 +3729,8 @@ class Vector(T:! type) {
 }
 ```
 
-This is equivalent to naming the type between `impl` and `as`:
+This is equivalent to naming the implementing type between `impl` and `as`,
+though this form is not allowed after `extend`:
 
 ```
 class Vector(T:! type) {
@@ -3717,12 +3740,11 @@ class Vector(T:! type) {
 }
 ```
 
-An impl may be declared [external](#external-impl) by adding an `external`
-keyword before `impl`. External impl declarations may also be out-of-line, but
-all parameters must be declared in a `forall` clause:
+An out-of-line `impl` declaration must declare all parameters in a `forall`
+clause:
 
 ```
-external impl forall [T:! type] Vector(T) as Iterable
+impl forall [T:! type] Vector(T) as Iterable
     where .ElementType = T {
   ...
 }
@@ -3733,8 +3755,8 @@ implemented:
 
 ```
 class HashMap(Key:! Hashable, Value:! type) {
-  impl as Has(Key) { ... }
-  impl as Contains(HashSet(Key)) { ... }
+  extend impl as Has(Key) { ... }
+  extend impl as Contains(HashSet(Key)) { ... }
 }
 ```
 
@@ -3742,9 +3764,9 @@ or externally out-of-line:
 
 ```
 class HashMap(Key:! Hashable, Value:! type) { ... }
-external impl forall [Key:! Hashable, Value:! type]
+impl forall [Key:! Hashable, Value:! type]
     HashMap(Key, Value) as Has(Key) { ... }
-external impl forall [Key:! Hashable, Value:! type]
+impl forall [Key:! Hashable, Value:! type]
     HashMap(Key, Value) as Contains(HashSet(Key)) { ... }
 ```
 
@@ -3763,8 +3785,8 @@ interface when its element type satisfies the same interface:
     if the element type is comparable.
 -   A container is copyable if its elements are.
 
-To do this with an [out-of-line `impl`](#external-impl), specify a more-specific
-`Self` type to the left of the `as` in the declaration:
+This may be done with an [external `impl`](#external-impl) by specifying a more
+specific implementing type to the left of the `as` in the declaration:
 
 ```
 interface Printable {
@@ -3773,8 +3795,8 @@ interface Printable {
 class Vector(T:! type) { ... }
 
 // By saying "T:! Printable" instead of "T:! type" here,
-// we constrain T to be Printable for this impl.
-external impl forall [T:! Printable] Vector(T) as Printable {
+// we constrain `T` to be `Printable` for this impl.
+impl forall [T:! Printable] Vector(T) as Printable {
   fn Print[self: Self]() {
     for (let a: T in self) {
       // Can call `Print` on `a` since the constraint
@@ -3785,24 +3807,58 @@ external impl forall [T:! Printable] Vector(T) as Printable {
 }
 ```
 
-To include these `impl` definitions inline in a `class` definition, include a
-`forall` clause with a more-specific type between the `impl` and `as` keywords.
+Note that no `forall` clause or type may be specified when declaring an `impl`
+with the `extend` keyword:
 
 ```
 class Array(T:! type, template N:! i64) {
+  // ❌ Illegal: nothing allowed before `as` after `extend impl`:
+  extend impl forall [P:! Printable] Array(P, N) as Printable { ... }
+}
+```
+
+**Note:** This was changed in
+[proposal #2760](https://github.com/carbon-language/carbon-lang/pull/2760).
+
+Instead, the class can declare aliases to members of the interface. Those
+aliases will only be usable when the type implements the interface.
+
+```
+class Array(T:! type, template N:! i64) {
+  alias Print = Printable.Print;
+}
+impl forall [P:! Printable] Array(P, N) as Printable { ... }
+
+impl String as Printable { ... }
+var can_print: Array(String, 2) = ("Hello ", "world");
+// ✅ Allowed: `can_print.Print` resolves to
+// `can_print.(Printable.Print)`, which exists as long as
+// `Array(String, 2) impls Printable`, which exists since
+// `String impls Printable`.
+can_print.Print();
+
+var no_print: Array(Unprintable, 2) = ...;
+// ❌ Illegal: `no_print.Print` resolves to
+// `no_print.(Printable.Print)`, but there is no
+// implementation of `Printable` for `Array(Unprintable, 2)`
+// as long as `Unprintable` doesn't implement `Printable`.
+no_print.Print();
+```
+
+It is still legal to declare or define an external impl lexically inside the
+class scope, as in:
+
+```
+class Array(T:! type, template N:! i64) {
+  // ✅ Allowed: external impl defined in class scope may use `forall`
+  // and may specify a type.
   impl forall [P:! Printable] Array(P, N) as Printable { ... }
 }
 ```
 
-All internal `impl` declarations in the body of a `class` definition must be for
-the class being defined. It is an error to declare `impl i32 as Printable`
-inside `class Array`.
-
-It is legal to add the keyword `external` before the `impl` keyword to switch to
-an external impl defined lexically within the class scope. Inside the scope,
-both `P` and `T` refer to the same type, but `P` has the type-of-type of
-`Printable` and so has a `Print` member. The relationship between `T` and `P` is
-as if there was a `where P == T` clause.
+Inside the scope of this `impl` definition, both `P` and `T` refer to the same
+type, but `P` has the type-of-type of `Printable` and so has a `Print` member.
+The relationship between `T` and `P` is as if there was a `where P == T` clause.
 
 **TODO:** Need to resolve whether the `T` name can be reused, or if we require
 that you need to use new names, like `P`, when creating new type variables.
@@ -3814,10 +3870,11 @@ equal.
 ```
 interface Foo(T:! type) { ... }
 class Pair(T:! type, U:! type) { ... }
-external impl forall [T:! type] Pair(T, T) as Foo(T) { ... }
+impl forall [T:! type] Pair(T, T) as Foo(T) { ... }
 ```
 
-You may also define the `impl` inline, in which case it can be internal:
+As before, you may also define the `impl` inline, but it may not be combined
+with the `extend` keyword:
 
 ```
 class Pair(T:! type, U:! type) {
@@ -3825,44 +3882,27 @@ class Pair(T:! type, U:! type) {
 }
 ```
 
-**Clarification:** Method lookup will look at all internal implementations,
-whether or not the conditions on those implementations hold for the `Self` type.
-If the conditions don't hold, then the call will be rejected because `Self` has
-the wrong type, just like any other argument/parameter type mismatch. This means
-types may not implement two different interfaces internally if they share a
-member name, even if their conditions are mutually exclusive:
+**Clarification:** The same interface may be implemented multiple times as long
+as there is no overlap in the conditions:
 
 ```
 class X(T:! type) {
-  impl X(i32) as Foo {
-    fn F[self: Self]();
-  }
-  impl X(i64) as Bar {
-    // ❌ Illegal: name conflict between `Foo.F` and `Bar.F`
-    fn F[self: Self](n: i64);
-  }
+  // ✅ Allowed: `X(T).F` consistently means `X(T).(Foo.F)`
+  // even though that may have different definitions for
+  // different values of `T`.
+  alias F = Foo.F;
 }
-```
-
-However, the same interface may be implemented multiple times as long as there
-is no overlap in the conditions:
-
-```
-class X(T:! type) {
-  impl X(i32) as Foo {
-    fn F[self: Self]();
-  }
-  impl X(i64) as Foo {
-    // ✅ Allowed: `X(T).F` consistently means `X(T).(Foo.F)`
-    fn F[self: Self]();
-  }
+impl X(i32) as Foo {
+  fn F[self: Self]() { DoOneThing(); }
+}
+impl X(i64) as Foo {
+  fn F[self: Self]() { DoADifferentThing(); }
 }
 ```
 
 This allows a type to express that it implements an interface for a list of
-types, possibly with different implementations.
-
-In general, `X(T).F` can only mean one thing, regardless of `T`.
+types, possibly with different implementations. However, in general, `X(T).F`
+can only mean one thing, regardless of `T`.
 
 **Comparison with other languages:**
 [Swift supports conditional conformance](https://github.com/apple/swift-evolution/blob/master/proposals/0143-conditional-conformances.md),
@@ -3901,13 +3941,13 @@ than one root type, so the `impl` declaration will use a type variable for the
     `PartiallyOrdered`.
 
     ```
-    external impl forall [T:! Ordered] T as PartiallyOrdered { ... }
+    impl forall [T:! Ordered] T as PartiallyOrdered { ... }
     ```
 
 -   `T` implements `CommonType(T)` for all `T`
 
     ```
-    external impl forall [T:! type] T as CommonType(T)
+    impl forall [T:! type] T as CommonType(T)
         where .Result = T { }
     ```
 
@@ -3939,10 +3979,10 @@ add the `i32` to the `BigInt` value.
 
 ```
 class BigInt {
-  external impl forall [T:! ImplicitAs(i32)] as AddTo(T) { ... }
+  impl forall [T:! ImplicitAs(i32)] as AddTo(T) { ... }
 }
 // Or out-of-line:
-external impl forall [T:! ImplicitAs(i32)] BigInt as AddTo(T) { ... }
+impl forall [T:! ImplicitAs(i32)] BigInt as AddTo(T) { ... }
 ```
 
 Wildcard impl declarations must always be [external](#external-impl), to avoid
@@ -3955,7 +3995,7 @@ example, if `T` implements `As(U)`, then this implements `As(Optional(U))` for
 `Optional(T)`:
 
 ```
-external impl forall [U:! type, T:! As(U)]
+impl forall [U:! type, T:! As(U)]
   Optional(T) as As(Optional(U)) { ... }
 ```
 
@@ -4002,7 +4042,7 @@ parameters are replaced the declarations are normalized as follows:
 -   For impl declarations lexically inline in a class definition, the type is
     added between the `impl` and `as` keywords if the type is left out.
 -   Pointer types `T*` are replaced with `Ptr(T)`.
--   The `external` keyword is removed, if present.
+-   The `extend` keyword is removed, if present.
 -   The `forall` clause introducing type parameters is removed, if present.
 -   Any `where` clauses that are setting associated constants or types are
     removed.
@@ -4130,7 +4170,7 @@ impl forall [T:! type, U:! ComparableTo(T)] U as ComparableTo(Optional(T));
 `ComparableWith(T)`.
 
 ```
-external impl forall [U:! type, T:! ComparableWith(U)]
+impl forall [U:! type, T:! ComparableWith(U)]
     U as ComparableWith(T);
 ```
 
@@ -4270,13 +4310,13 @@ interface Deref {
 // Types implementing `Deref`
 class Ptr(T:! type) {
   ...
-  external impl as Deref where .Result = T {
+  impl as Deref where .Result = T {
     fn Op[self: Self]() -> Result { ... }
   }
 }
 class Optional(T:! type) {
   ...
-  external impl as Deref where .Result = T {
+  impl as Deref where .Result = T {
     fn Op[self: Self]() -> Result { ... }
   }
 }
@@ -4306,20 +4346,20 @@ To mark an impl as not able to be specialized, prefix it with the keyword
 class Ptr(T:! type) {
   ...
   // Note: added `final`
-  final external impl as Deref where .Result = T {
+  final impl as Deref where .Result = T {
     fn Op[self: Self]() -> Result { ... }
   }
 }
 class Optional(T:! type) {
   ...
   // Note: added `final`
-  final external impl as Deref where .Result = T {
+  final impl as Deref where .Result = T {
     fn Op[self: Self]() -> Result { ... }
   }
 }
 
-// ❌ Illegal: external impl Ptr(i32) as Deref { ... }
-// ❌ Illegal: external impl Optional(i32) as Deref { ... }
+// ❌ Illegal: impl Ptr(i32) as Deref { ... }
+// ❌ Illegal: impl Optional(i32) as Deref { ... }
 ```
 
 This prevents any higher-priority impl that overlaps a final impl from being
@@ -4497,7 +4537,7 @@ An interface or named constraint may be forward declared subject to these rules:
 -   Only the first declaration may have an access-control keyword.
 -   An incomplete interface or named constraint may be used as constraints in
     declarations of types, functions, interfaces, or named constraints. This
-    includes an `impl as` or `extends` declaration inside an interface or named
+    includes an `impl as` or `extend` declaration inside an interface or named
     constraint, but excludes specifying the values for associated constants
     because that would involve name lookup into the incomplete constraint.
 -   An attempt to define the body of a generic function using an incomplete
@@ -4524,7 +4564,7 @@ be used in the following contexts:
 -   ✅ `T:! A & C` ... `T impls C`
     -   This includes constructs requiring `T impls C` such as `T as C` or
         `U:! C = T`.
--   ✅ `external impl `...` as C;`
+-   ✅ `impl `...` as C;`
     -   Checking that all associated constants of `C` are correctly assigned
         values will be delayed until `C` is complete.
 
@@ -4532,19 +4572,19 @@ An incomplete `C` cannot be used in the following contexts:
 
 -   ❌ `T:! C` ... `T.X`
 -   ❌ `T:! C where `...
--   ❌ `class `...` { impl as C; }`
+-   ❌ `class `...` { extend impl as C; }`
     -   The names of `C` are added to the class, and so those names need to be
         known.
 -   ❌ `T:! C` ... `T impls A` where `A` is an interface or named constraint
     different from `C`
     -   Need to see the definition of `C` to see if it implies `A`.
--   ❌ `external impl` ... `as C {` ... `}`
+-   ❌ `impl` ... `as C {` ... `}`
 
 **Future work:** It is currently undecided whether an interface needs to be
 complete to be extended, as in:
 
 ```
-interface I { extends C; }
+interface I { extend C; }
 ```
 
 There are three different approaches being considered:
@@ -4563,7 +4603,7 @@ There are three different approaches being considered:
 
 The declaration of an interface implementation consists of:
 
--   optional modifier keywords `final`, `external`,
+-   optional modifier keyword `final`,
 -   the keyword introducer `impl`,
 -   an optional deduced parameter list in square brackets `[`...`]`,
 -   a type, including an optional parameter pattern,
@@ -4573,6 +4613,9 @@ The declaration of an interface implementation consists of:
     [`where` clause](#where-constraints) assigning
     [associated constants](#associated-constants) and
     [associated types](#associated-types).
+
+**Note:** The `extend` keyword, when present, is not part of the declaration. It
+is only present for internal `impl` declarations in class scope.
 
 An implementation of an interface for a type may be forward declared subject to
 these rules:
@@ -4629,20 +4672,20 @@ expressions match:
     declaration.
 -   `Self` is rewritten to its meaning in the scope it is used. In a class
     scope, this should match the type name and optional parameter expression
-    after `class`. So in `class MyClass extends MyBase { ... }`, `Self` is
-    rewritten to `MyClass`. In `class Vector(T:! Movable) { ... }`, `Self` is
-    rewritten to `Vector(T:! Movable)`.
+    after `class`. So in `class MyClass { ... }`, `Self` is rewritten to
+    `MyClass`. In `class Vector(T:! Movable) { ... }`, `Self` is rewritten to
+    `Vector(T:! Movable)`.
 -   Types match if they have the same name after name and alias resolution and
     the same parameters, or are the same type parameter.
 -   Interfaces match if they have the same name after name and alias resolution
     and the same parameters. Note that a named constraint that is equivalent to
-    an interface, as in `constraint Equivalent { extends MyInterface; }`, is not
+    an interface, as in `constraint Equivalent { extend MyInterface; }`, is not
     considered to match.
 
 For implementations to agree:
 
--   The presence of modifier keywords such as `external` before `impl` must
-    match between a forward declaration and definition.
+-   The presence of the modifier keyword `final` before `impl` must match
+    between a forward declaration and definition.
 -   If either declaration includes a `where` clause, they must both include one.
     If neither uses `where _`, they must match in that they produce the
     associated constants with the same values considered separately.
@@ -4663,7 +4706,7 @@ class MyClass;
 
 // ❌ Illegal: Can't declare implementation of incomplete
 //             interface.
-// external impl MyClass as Interface1;
+// impl MyClass as Interface1;
 
 // Definition of interfaces that were previously declared
 interface Interface1 {
@@ -4680,8 +4723,8 @@ interface Interface4 {
 }
 
 // Forward declaration of external implementations
-external impl MyClass as Interface1 where .T1 = i32;
-external impl MyClass as Interface2 where .T2 = bool;
+impl MyClass as Interface1 where .T1 = i32;
+impl MyClass as Interface2 where .T2 = bool;
 
 // Forward declaration of an internal implementation
 impl MyClass as Interface3 where .T3 = f32;
@@ -4699,24 +4742,26 @@ class MyClass {
   // Definition of previously declared external impl.
   // Note: no need to repeat assignments to associated
   // constants.
-  external impl as Interface1 where _ { }
+  impl as Interface1 where _ { }
 
   // Definition of previously declared internal impl.
   // Note: allowed even though `MyClass` is incomplete.
   // Note: allowed but not required to repeat `where`
   // clause.
-  impl as Interface3 where .T3 = f32 { }
+  extend impl as Interface3 where .T3 = f32 { }
 
   // Redeclaration of previously declared internal impl.
   // Every internal implementation must be declared in
   // the class definition.
-  impl as Interface4 where _;
+  extend impl as Interface4 where _;
 
   // Forward declaration of external implementation.
-  external impl MyClass as Interface5 where .T5 = u64;
+  impl MyClass as Interface5 where .T5 = u64;
+  // or: impl as Interface5 where .T5 = u64;
 
   // Forward declaration of internal implementation.
-  impl MyClass as Interface6 where .T6 = u8;
+  extend impl as Interface6 where .T6 = u8;
+  // Not: extend impl MyClass as Interface6 where .T6 = u8;
 }
 
 // It would be legal to move the following definitions
@@ -4725,8 +4770,8 @@ class MyClass {
 
 // Definition of implementations previously declared
 // external.
-external impl MyClass as Interface2 where _ { }
-external impl MyClass as Interface5 where _ { }
+impl MyClass as Interface2 where _ { }
+impl MyClass as Interface5 where _ { }
 
 // Definition of implementations previously declared
 // internal.
@@ -4767,10 +4812,10 @@ interface Node {
 // refer to members of the interface, so it is
 // now legal to define the named constraints.
 constraint EdgeFor(N:! Node) {
-  extends Edge where .NodeType == N;
+  extend Edge where .NodeType == N;
 }
 constraint NodeFor(E:! Edge) {
-  extends Node where .EdgeType == E;
+  extend Node where .EdgeType == E;
 }
 ```
 
@@ -4786,20 +4831,20 @@ instead include that requirement in the body of the interface.
 interface CommonType(T:! type) {
   let Result:! type;
   // Instead add the requirement inside the definition.
-  impl T as CommonType(Self);
+  require T impls CommonType(Self);
 }
 ```
 
 Note however that `CommonType` is still incomplete inside its definition, so no
-constraints on members of `CommonType` are allowed, and that this `impl T as`
-declaration
+constraints on members of `CommonType` are allowed, and that this
+`require T impls` declaration
 [must involve `Self`](#interface-requiring-other-interfaces-revisited).
 
 ```
 interface CommonType(T:! type) {
   let Result:! type;
   // ❌ Illegal: `CommonType` is incomplete
-  impl T as CommonType(Self) where .Result == Result;
+  require T impls CommonType(Self) where .Result == Result;
 }
 ```
 
@@ -4814,11 +4859,11 @@ interface CommonType(T:! type) {
   let Result:! type;
   // ✅ Allowed: `CommonTypeResult` is incomplete, but
   //             no members are accessed.
-  impl T as CommonTypeResult(Self, Result);
+  require T impls CommonTypeResult(Self, Result);
 }
 
 constraint CommonTypeResult(T:! type, R:! type) {
-  extends CommonType(T) where .Result == R;
+  extend CommonType(T) where .Result == R;
 }
 ```
 
@@ -4894,7 +4939,7 @@ is, so `Add()` is equivalent to the constraint:
 ```
 // Equivalent to Add()
 constraint AddDefault {
-  extends Add(Self);
+  extend Add(Self);
 }
 ```
 
@@ -4919,7 +4964,7 @@ interface TotalOrder {
   fn TotalLess[self: Self](right: Self) -> bool;
   // ❌ Illegal: May not provide definition
   //             for required interface.
-  impl as PartialOrder {
+  require Self impls PartialOrder {
     fn PartialLess[self: Self](right: Self) -> bool {
       return self.TotalLess(right);
     }
@@ -4933,10 +4978,10 @@ The workaround for this restriction is to use a
 ```
 interface TotalOrder {
   fn TotalLess[self: Self](right: Self) -> bool;
-  impl as PartialOrder;
+  require Self impls PartialOrder;
 }
 
-external impl forall [T:! TotalOrder] T as PartialOrder {
+impl forall [T:! TotalOrder] T as PartialOrder {
   fn PartialLess[self: Self](right: Self) -> bool {
     return self.TotalLess(right);
   }
@@ -4968,7 +5013,7 @@ interface TotalOrder {
 }
 
 class String {
-  impl as TotalOrder {
+  extend impl as TotalOrder {
     fn TotalLess[self: Self](right: Self) -> bool { ... }
     // ❌ Illegal: May not provide definition of final
     //             method `TotalGreater`.
@@ -5017,7 +5062,7 @@ as in:
 
 ```
 interface Iterable {
-  impl as Equatable;
+  require Self impls Equatable;
   // ...
 }
 ```
@@ -5025,12 +5070,12 @@ interface Iterable {
 This states that the type implementing the interface `Iterable`, which in this
 context is called `Self`, must also implement the interface `Equatable`. As is
 done with [conditional conformance](#conditional-conformance), we allow another
-type to be specified between `impl` and `as` to say some type other than `Self`
-must implement an interface. For example,
+type to be specified between `require` and `impls` to say some type other than
+`Self` must implement an interface. For example,
 
 ```
 interface IntLike {
-  impl i32 as As(Self);
+  require i32 impls As(Self);
   // ...
 }
 ```
@@ -5040,7 +5085,7 @@ Similarly,
 
 ```
 interface CommonTypeWith(T:! type) {
-  impl T as CommonTypeWith(Self);
+  require T impls CommonTypeWith(Self);
   // ...
 }
 ```
@@ -5048,50 +5093,37 @@ interface CommonTypeWith(T:! type) {
 says that if `Self` implements `CommonTypeWith(T)`, then `T` must implement
 `CommonTypeWith(Self)`.
 
-The previous description of `impl as` in an interface definition matches the
-behavior of using a default of `Self` when the type between `impl` and `as` is
-omitted. So the previous definition of `interface Iterable` is equivalent to:
+An `require`...`impls` constraint in an `interface`, or `constraint`, definition
+must still use `Self` in some way. It can be an argument to either the type or
+interface. For example:
 
-```
-interface Iterable {
-  // ...
-  impl Self as Equatable;
-  // Equivalent to: impl as Equatable;
-}
-```
-
-An `impl`...`as` constraint in an `interface`, or `constraint`, definition must
-still use `Self` in some way. It can be the implicit `Self` when nothing is
-specified between `impl` and `as`, or it can be an argument to either the type
-or interface. For example:
-
--   ✅ Allowed: `impl as Equatable`
--   ✅ Allowed: `impl Self as Equatable`
--   ✅ Allowed: `impl Vector(Self) as Equatable`
--   ✅ Allowed: `impl i32 as CommonTypeWith(Self)`
--   ✅ Allowed: `impl Self as CommonTypeWith(Self)`
--   ❌ Error: `impl i32 as Equatable`
--   ❌ Error: `impl T as Equatable` where `T` is some parameter to the interface
+-   ✅ Allowed: `require Self impls Equatable`
+-   ✅ Allowed: `require Vector(Self) impls Equatable`
+-   ✅ Allowed: `require i32 impls CommonTypeWith(Self)`
+-   ✅ Allowed: `require Self impls CommonTypeWith(Self)`
+-   ❌ Error: `require i32 impls Equatable`
+-   ❌ Error: `require T impls Equatable` where `T` is some parameter to the
+    interface
 
 This restriction allows the Carbon compiler to know where to look for facts
-about a type. If `impl i32 as Equatable` could appear in any `interface`
+about a type. If `require i32 impls Equatable` could appear in any `interface`
 definition, that implies having to search all of them when considering what
 interfaces `i32` implements. This creates a coherence problem, since then the
 set of facts true for a type would depend on which interfaces have been
 imported.
 
-When implementing an interface with an `impl as` requirement, that requirement
-must be satisfied by an implementation in an imported library, an implementation
-somewhere in the same file, or a constraint in the impl declaration.
-Implementing the requiring interface is a promise that the requirement will be
-implemented. This is like a
+When implementing an interface with an `require`...`impls` requirement, that
+requirement must be satisfied by an implementation in an imported library, an
+implementation somewhere in the same file, or a constraint in the impl
+declaration. Implementing the requiring interface is a promise that the
+requirement will be implemented. This is like a
 [forward declaration of an impl](#declaring-implementations) except that the
 definition can be broader instead of being required to match exactly.
 
 ```
 // `Iterable` requires `Equatable`, so there must be some
 // impl of `Equatable` for `Vector(i32)` in this file.
-external impl Vector(i32) as Iterable { ... }
+impl Vector(i32) as Iterable { ... }
 
 fn RequiresEquatable[T:! Equatable](x: T) { ... }
 fn ProcessVector(v: Vector(i32)) {
@@ -5102,7 +5134,7 @@ fn ProcessVector(v: Vector(i32)) {
 
 // Satisfies the requirement that `Vector(i32)` must
 // implement `Equatable` since `i32` impls `Equatable`.
-external impl forall [T:! Equatable] Vector(T) as Equatable { ... }
+impl forall [T:! Equatable] Vector(T) as Equatable { ... }
 ```
 
 In some cases, the interface's requirement can be trivially satisfied by the
@@ -5121,7 +5153,7 @@ class Foo(T:! type) {}
 // This is allowed because we know that an `impl Foo(T) as Equatable`
 // will exist for all types `T` for which this impl is used, even
 // though there's neither an imported impl nor an impl in this file.
-external impl forall [T:! type where Foo(T) impls Equatable]
+impl forall [T:! type where Foo(T) impls Equatable]
     Foo(T) as Iterable {}
 ```
 
@@ -5130,7 +5162,7 @@ already satisfy the requirement of implementing `Iterable`:
 
 ```
 class Bar {}
-external impl Foo(Bar) as Equatable {}
+impl Foo(Bar) as Equatable {}
 // Gives `Foo(Bar) impls Iterable` using the blanket impl of
 // `Iterable` for `Foo(T)`.
 ```
@@ -5146,7 +5178,7 @@ interface A(T:! type) {
   let Result:! type;
 }
 interface B(T:! type) {
-  impl as A(T) where .Result == i32;
+  require Self impls A(T) where .Result == i32;
 }
 ```
 
@@ -5182,9 +5214,9 @@ type implements an interface, as in this example:
 
 ```
 interface A { }
-interface B { impl as A; }
-interface C { impl as B; }
-interface D { impl as C; }
+interface B { require Self impls A; }
+interface C { require Self impls B; }
+interface D { require Self impls C; }
 
 fn RequiresA[T:! A](x: T);
 fn RequiresC[T:! C](x: T);
@@ -5337,17 +5369,18 @@ interface ComparableWith(RHS:! type) {
   fn Compare[self: Self](right: RHS) -> CompareResult;
 }
 
-adapter ReverseComparison
-    (T:! type, U:! ComparableWith(RHS)) for T {
-  impl as ComparableWith(U) {
+class ReverseComparison
+    (T:! type, U:! ComparableWith(RHS)) {
+  adapt T;
+  extend impl as ComparableWith(U) {
     fn Compare[self: Self](right: RHS) -> CompareResult {
       return ReverseCompareResult(right.Compare(self));
     }
   }
 }
 
-external impl SongByTitle as ComparableWith(SongTitle);
-external impl SongTitle as ComparableWith(SongByTitle)
+impl SongByTitle as ComparableWith(SongTitle);
+impl SongTitle as ComparableWith(SongByTitle)
     = ReverseComparison(SongTitle, SongByTitle);
 ```
 
@@ -5365,20 +5398,20 @@ interface IntLike {
 }
 
 class EvenInt { ... }
-external impl EvenInt as IntLike;
-external impl EvenInt as ComparableWith(EvenInt);
+impl EvenInt as IntLike;
+impl EvenInt as ComparableWith(EvenInt);
 // Allow `EvenInt` to be compared with anything that
 // implements `IntLike`, in either order.
-external impl forall [T:! IntLike] EvenInt as ComparableWith(T);
-external impl forall [T:! IntLike] T as ComparableWith(EvenInt);
+impl forall [T:! IntLike] EvenInt as ComparableWith(T);
+impl forall [T:! IntLike] T as ComparableWith(EvenInt);
 
 class PositiveInt { ... }
-external impl PositiveInt as IntLike;
-external impl PositiveInt as ComparableWith(PositiveInt);
+impl PositiveInt as IntLike;
+impl PositiveInt as ComparableWith(PositiveInt);
 // Allow `PositiveInt` to be compared with anything that
 // implements `IntLike`, in either order.
-external impl forall [T:! IntLike] PositiveInt as ComparableWith(T);
-external impl forall [T:! IntLike] T as ComparableWith(PositiveInt);
+impl forall [T:! IntLike] PositiveInt as ComparableWith(T);
+impl forall [T:! IntLike] T as ComparableWith(PositiveInt);
 ```
 
 Then it will favor selecting the implementation based on the type of the
@@ -5405,7 +5438,7 @@ class Meters {
   fn Scale[self: Self](s: f64) -> Self;
 }
 // "Implementation One"
-external impl Meters as MultipliableWith(f64)
+impl Meters as MultipliableWith(f64)
     where .Result = Meters {
   fn Multiply[self: Self](other: f64) -> Result {
     return self.Scale(other);
@@ -5434,7 +5467,7 @@ conversion. The implementation is for types that implement the
 
 ```
 // "Implementation Two"
-external impl forall [T:! ImplicitAs(f64)]
+impl forall [T:! ImplicitAs(f64)]
     Meters as MultipliableWith(T) where .Result = Meters {
   fn Multiply[self: Self](other: T) -> Result {
     // Carbon will implicitly convert `other` from type
@@ -5458,7 +5491,7 @@ of a forward declaration or definition, in a place of a type.
 ```
 // Notice `f64` has been replaced by `like f64`
 // compared to "implementation one" above.
-external impl Meters as MultipliableWith(like f64)
+impl Meters as MultipliableWith(like f64)
     where .Result = Meters {
   fn Multiply[self: Self](other: f64) -> Result {
     return self.Scale(other);
@@ -5482,7 +5515,7 @@ main impl, which will trigger implicit conversions according to
 In this example, there are two uses of `like`, producing three implementations
 
 ```
-external impl like Meters as MultipliableWith(like f64)
+impl like Meters as MultipliableWith(like f64)
     where .Result = Meters {
   fn Multiply[self: Self](other: f64) -> Result {
     return self.Scale(other);
@@ -5493,7 +5526,7 @@ external impl like Meters as MultipliableWith(like f64)
 is equivalent to "implementation one", "implementation two", and:
 
 ```
-external impl forall [T:! ImplicitAs(Meters)]
+impl forall [T:! ImplicitAs(Meters)]
     T as MultipliableWith(f64) where .Result = Meters {
   fn Multiply[self: Self](other: f64) -> Result {
     // Will implicitly convert `self` to `Meters` in order to
@@ -5507,7 +5540,7 @@ external impl forall [T:! ImplicitAs(Meters)]
 definitions.
 
 ```
-external impl like Meters as MultipliableWith(like f64)
+impl like Meters as MultipliableWith(like f64)
     where .Result = Meters;
 }
 ```
@@ -5517,17 +5550,17 @@ is equivalent to:
 ```
 // All `like`s removed. Same as the declaration part of
 // "implementation one", without the body of the definition.
-external impl Meters as MultipliableWith(f64)
+impl Meters as MultipliableWith(f64)
     where .Result = Meters;
 
 // First `like` replaced with a wildcard.
-external impl forall [T:! ImplicitAs(Meters)]
+impl forall [T:! ImplicitAs(Meters)]
     T as MultipliableWith(f64) where .Result = Meters;
 
 // Second `like` replaced with a wildcard. Same as the
 // declaration part of "implementation two", without the
 // body of the definition.
-external impl forall [T:! ImplicitAs(f64)]
+impl forall [T:! ImplicitAs(f64)]
     Meters as MultipliableWith(T) where .Result = Meters;
 ```
 
@@ -5543,15 +5576,15 @@ same way to match.
 The `like` operator may be nested, as in:
 
 ```
-external impl like Vector(like String) as Printable;
+impl like Vector(like String) as Printable;
 ```
 
 Which will generate implementations with declarations:
 
 ```
-external impl Vector(String) as Printable;
-external impl forall [T:! ImplicitAs(Vector(String))] T as Printable;
-external impl forall [T:! ImplicitAs(String)] Vector(T) as Printable;
+impl Vector(String) as Printable;
+impl forall [T:! ImplicitAs(Vector(String))] T as Printable;
+impl forall [T:! ImplicitAs(String)] Vector(T) as Printable;
 ```
 
 The generated implementations must be legal or the `like` is illegal. For
@@ -5567,7 +5600,7 @@ use of `like` is illegal:
 //             `Vector(T:! ImplicitAs(String))`
 //             to `Vector(String)` for `self`
 //             parameter of `Printable.Print`.
-external impl Vector(like String) as Printable;
+impl Vector(like String) as Printable;
 ```
 
 Since the additional implementation definitions are generated eagerly, these
@@ -5579,31 +5612,31 @@ parameters must be able to be determined due to being repeated outside of the
 
 ```
 // ✅ Allowed: no parameters
-external impl like Meters as Printable;
+impl like Meters as Printable;
 
 // ❌ Illegal: No other way to determine `T`
-external impl forall [T:! IntLike] like T as Printable;
+impl forall [T:! IntLike] like T as Printable;
 
 // ❌ Illegal: `T` being used in a `where` clause
 //             is insufficient.
-external impl forall [T:! IntLike] like T
+impl forall [T:! IntLike] like T
     as MultipliableWith(i64) where .Result = T;
 
 // ❌ Illegal: `like` can't be used in a `where`
 //             clause.
-external impl Meters as MultipliableWith(f64)
+impl Meters as MultipliableWith(f64)
     where .Result = like Meters;
 
 // ✅ Allowed: `T` can be determined by another
 //             part of the query.
-external impl forall [T:! IntLike] like T
+impl forall [T:! IntLike] like T
     as MultipliableWith(T) where .Result = T;
-external impl forall [T:! IntLike] T
+impl forall [T:! IntLike] T
     as MultipliableWith(like T) where .Result = T;
 
 // ✅ Allowed: Only one `like` used at a time, so this
 //             is equivalent to the above two examples.
-external impl forall [T:! IntLike] like T
+impl forall [T:! IntLike] like T
     as MultipliableWith(like T) where .Result = T;
 ```
 
@@ -5627,8 +5660,8 @@ class HashMap(
   private var buckets: Vector((KeyType, ValueType));
 
   // Parameters may be used in interfaces implemented.
-  impl as Container where .ElementType = (KeyType, ValueType);
-  impl as ComparableWith(HashMap(KeyType, ValueType));
+  extend impl as Container where .ElementType = (KeyType, ValueType);
+  extend impl as ComparableWith(HashMap(KeyType, ValueType));
 }
 ```
 
@@ -5707,12 +5740,12 @@ patterns:
 
 ```
 // Specialization for pointers, using nullptr == None
-final external impl forall [T:! type] T* as OptionalStorage
+final impl forall [T:! type] T* as OptionalStorage
     where .Storage = Array(Byte, sizeof(T*)) {
   ...
 }
 // Specialization for type `bool`.
-final external impl bool as OptionalStorage
+final impl bool as OptionalStorage
     where .Storage = Byte {
   ...
 }
@@ -5894,3 +5927,4 @@ parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
 -   [#2347: What can be done with an incomplete interface](https://github.com/carbon-language/carbon-lang/pull/2347)
 -   [#2376: Constraints must use `Self`](https://github.com/carbon-language/carbon-lang/pull/2376)
 -   [#2483: Replace keyword `is` with `impls`](https://github.com/carbon-language/carbon-lang/pull/2483)
+-   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)

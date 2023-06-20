@@ -83,9 +83,9 @@ match (my_opt) {
 have limited flexibility. There is no way to control the representation of a
 `choice` type, or define methods or other members for it (although you can
 extend it to implement interfaces, using an
-[`external impl`](generics/overview.md#implementing-interfaces) or
-[`adapter`](generics/overview.md#adapting-types)). However, a `class` type can
-be extended to behave like a sum type. This is much more verbose than a `choice`
+[external `impl`](generics/overview.md#implementing-interfaces) or
+[adapter](generics/overview.md#adapting-types)). However, a `class` type can be
+extended to behave like a sum type. This is much more verbose than a `choice`
 declaration, but gives the author full control over the representation and class
 members.
 
@@ -143,9 +143,9 @@ class Optional(T:! type) {
   private var has_value: bool;
   private var value: T;
 
-  external impl as Match {
+  impl as Match {
     interface Continuation {
-      extends Match.BaseContinuation;
+      extend Match.BaseContinuation;
       fn Some[addr self: Self*](value: T) -> ReturnType;
       fn None[addr self: Self*]() -> ReturnType;
     }
@@ -170,7 +170,7 @@ look, if it were written in Carbon:
 
 ```carbon
 class __MatchStatementImpl {
-  impl as Match(Optional.MatchContinuation) where .ReturnType = () {
+  extend impl as Match(Optional.MatchContinuation) where .ReturnType = () {
     fn Some(the_value: i32) {
       Print(the_value);
     }

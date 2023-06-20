@@ -22,16 +22,6 @@ auto SemanticsHandleBreakStatementStart(SemanticsContext& context,
   return context.TODO(parse_node, "HandleBreakStatementStart");
 }
 
-auto SemanticsHandleCodeBlock(SemanticsContext& context,
-                              ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleCodeBlock");
-}
-
-auto SemanticsHandleCodeBlockStart(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleCodeBlockStart");
-}
-
 auto SemanticsHandleContinueStatement(SemanticsContext& context,
                                       ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleContinueStatement");
@@ -119,21 +109,19 @@ auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleEmptyDeclaration(SemanticsContext& context,
-                                     ParseTree::Node parse_node) -> bool {
-  // Empty declarations have no actions associated, but we still balance the
-  // tree.
-  context.node_stack().Push(parse_node);
+auto SemanticsHandleEmptyDeclaration(SemanticsContext& /*context*/,
+                                     ParseTree::Node /*parse_node*/) -> bool {
+  // Empty declarations have no actions associated.
   return true;
 }
 
 auto SemanticsHandleExpressionStatement(SemanticsContext& context,
-                                        ParseTree::Node parse_node) -> bool {
+                                        ParseTree::Node /*parse_node*/)
+    -> bool {
   // Pop the expression without investigating its contents.
   // TODO: This will probably eventually need to do some "do not discard"
   // analysis.
   context.node_stack().PopAndDiscardId();
-  context.node_stack().Push(parse_node);
   return true;
 }
 
@@ -166,26 +154,6 @@ auto SemanticsHandleForStatement(SemanticsContext& context,
 auto SemanticsHandleGenericPatternBinding(SemanticsContext& context,
                                           ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "GenericPatternBinding");
-}
-
-auto SemanticsHandleIfCondition(SemanticsContext& context,
-                                ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleIfCondition");
-}
-
-auto SemanticsHandleIfConditionStart(SemanticsContext& context,
-                                     ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleIfConditionStart");
-}
-
-auto SemanticsHandleIfStatement(SemanticsContext& context,
-                                ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleIfStatement");
-}
-
-auto SemanticsHandleIfStatementElse(SemanticsContext& context,
-                                    ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleIfStatementElse");
 }
 
 auto SemanticsHandleInfixOperator(SemanticsContext& context,
@@ -484,7 +452,7 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
           .Emit();
     }
 
-    context.AddNodeAndPush(parse_node, SemanticsNode::Return::Make(parse_node));
+    context.AddNode(SemanticsNode::Return::Make(parse_node));
   } else {
     auto arg = context.node_stack().Pop<SemanticsNodeId>();
     context.node_stack().PopAndDiscardSoloParseNode(
@@ -505,10 +473,8 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
           context.ImplicitAsRequired(parse_node, arg, callable.return_type_id);
     }
 
-    context.AddNodeAndPush(
-        parse_node,
-        SemanticsNode::ReturnExpression::Make(
-            parse_node, context.semantics_ir().GetNode(arg).type_id(), arg));
+    context.AddNode(SemanticsNode::ReturnExpression::Make(
+        parse_node, context.semantics_ir().GetNode(arg).type_id(), arg));
   }
   return true;
 }
@@ -634,7 +600,6 @@ auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
 
   context.node_stack().PopAndDiscardSoloParseNode(
       ParseNodeKind::VariableIntroducer);
-  context.node_stack().Push(parse_node);
 
   return true;
 }

@@ -205,7 +205,7 @@ interface AddWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Add {
-  extends AddWith(Self) where .Result = Self;
+  extend AddWith(Self) where .Result = Self;
 }
 ```
 
@@ -216,7 +216,7 @@ interface SubWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Sub {
-  extends SubWith(Self) where .Result = Self;
+  extend SubWith(Self) where .Result = Self;
 }
 ```
 
@@ -227,7 +227,7 @@ interface MulWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Mul {
-  extends MulWith(Self) where .Result = Self;
+  extend MulWith(Self) where .Result = Self;
 }
 ```
 
@@ -238,7 +238,7 @@ interface DivWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Div {
-  extends DivWith(Self) where .Result = Self;
+  extend DivWith(Self) where .Result = Self;
 }
 ```
 
@@ -249,7 +249,7 @@ interface ModWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Mod {
-  extends ModWith(Self) where .Result = Self;
+  extend ModWith(Self) where .Result = Self;
 }
 ```
 
