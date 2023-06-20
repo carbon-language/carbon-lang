@@ -61,8 +61,9 @@ cc_test(
     deps = [
         ":parse_node_kind",
         ":parse_tree",
-        "//common:gtest_main",
         "//common:ostream",
+        "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
@@ -110,7 +111,7 @@ cc_test(
     srcs = ["precedence_test.cpp"],
     deps = [
         ":precedence",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "//toolchain/lexer:token_kind",
         "@com_google_googletest//:gtest",
     ],
@@ -121,9 +122,7 @@ file_test(
     srcs = ["parse_tree_file_test.cpp"],
     tests = glob(["testdata/**/*.carbon"]),
     deps = [
-        "//testing/file_test:file_test_base",
-        "//toolchain/driver",
-        "@com_google_googletest//:gtest",
+        "//toolchain/driver:driver_file_test_base",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -50,11 +50,11 @@ constexpr SemanticsNodeId SemanticsNodeId::Invalid =
       SemanticsNodeId(SemanticsBuiltinKind::Name.AsInt());
 #include "toolchain/semantics/semantics_builtin_kind.def"
 
-// The ID of a callable, such as a function.
-struct SemanticsCallableId : public IndexBase {
+// The ID of a function.
+struct SemanticsFunctionId : public IndexBase {
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "callable";
+    out << "function";
     IndexBase::Print(out);
   }
 };
@@ -67,6 +67,29 @@ struct SemanticsCrossReferenceIRId : public IndexBase {
     IndexBase::Print(out);
   }
 };
+
+// A boolean value.
+struct SemanticsBoolValue : public IndexBase {
+  static const SemanticsBoolValue False;
+  static const SemanticsBoolValue True;
+
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    switch (index) {
+      case 0:
+        out << "false";
+        break;
+      case 1:
+        out << "true";
+        break;
+      default:
+        CARBON_FATAL() << "Invalid bool value " << index;
+    }
+  }
+};
+
+constexpr SemanticsBoolValue SemanticsBoolValue::False = SemanticsBoolValue(0);
+constexpr SemanticsBoolValue SemanticsBoolValue::True = SemanticsBoolValue(1);
 
 // The ID of an integer literal.
 struct SemanticsIntegerLiteralId : public IndexBase {
@@ -115,6 +138,37 @@ struct SemanticsStringId : public IndexBase {
   }
 };
 
+// The ID of a node block.
+struct SemanticsTypeId : public IndexBase {
+  // The builtin TypeType.
+  static const SemanticsTypeId TypeType;
+
+  // The builtin InvalidType.
+  static const SemanticsTypeId InvalidType;
+
+  // An explicitly invalid ID.
+  static const SemanticsTypeId Invalid;
+
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "type";
+    if (index == TypeType.index) {
+      out << "TypeType";
+    } else if (index == InvalidType.index) {
+      out << "InvalidType";
+    } else {
+      IndexBase::Print(out);
+    }
+  }
+};
+
+constexpr SemanticsTypeId SemanticsTypeId::TypeType =
+    SemanticsTypeId(SemanticsTypeId::InvalidIndex - 2);
+constexpr SemanticsTypeId SemanticsTypeId::InvalidType =
+    SemanticsTypeId(SemanticsTypeId::InvalidIndex - 1);
+constexpr SemanticsTypeId SemanticsTypeId::Invalid =
+    SemanticsTypeId(SemanticsTypeId::InvalidIndex);
+
 // An index for member access.
 struct SemanticsMemberIndex : public IndexBase {
   using IndexBase::IndexBase;
@@ -160,7 +214,7 @@ class SemanticsNode {
   template <KindTemplateEnum Kind, typename... ArgTypes>
   class FactoryBase {
    protected:
-    static auto Make(ParseTree::Node parse_node, SemanticsNodeId type_id,
+    static auto Make(ParseTree::Node parse_node, SemanticsTypeId type_id,
                      ArgTypes... arg_ids) -> SemanticsNode {
       return SemanticsNode(parse_node, SemanticsNodeKind::Create(Kind), type_id,
                            arg_ids.index...);
@@ -199,12 +253,12 @@ class SemanticsNode {
   };
 
   // Provides Get along with a Make that assumes a non-changing type.
-  template <KindTemplateEnum Kind, int32_t TypeIndex, typename... ArgTypes>
-  class FactoryPreTyped : public FactoryBase<Kind, ArgTypes...> {
+  template <KindTemplateEnum Kind, typename... ArgTypes>
+  class FactoryNoType : public FactoryBase<Kind, ArgTypes...> {
    public:
     static auto Make(ParseTree::Node parse_node, ArgTypes... args) {
-      SemanticsNodeId type_id(TypeIndex);
-      return FactoryBase<Kind, ArgTypes...>::Make(parse_node, type_id, args...);
+      return FactoryBase<Kind, ArgTypes...>::Make(
+          parse_node, SemanticsTypeId::Invalid, args...);
     }
     using FactoryBase<Kind, ArgTypes...>::Get;
   };
@@ -231,9 +285,26 @@ class SemanticsNode {
                                           SemanticsStringId /*name_id*/,
                                           SemanticsNodeId /*node_id*/>;
 
+  using BlockArg =
+      Factory<SemanticsNodeKind::BlockArg, SemanticsNodeBlockId /*block_id*/>;
+
+  using BoolLiteral =
+      Factory<SemanticsNodeKind::BoolLiteral, SemanticsBoolValue /*value*/>;
+
+  using Branch = FactoryNoType<SemanticsNodeKind::Branch,
+                               SemanticsNodeBlockId /*target_id*/>;
+
+  using BranchIf = FactoryNoType<SemanticsNodeKind::BranchIf,
+                                 SemanticsNodeBlockId /*target_id*/,
+                                 SemanticsNodeId /*cond_id*/>;
+
+  using BranchWithArg = FactoryNoType<SemanticsNodeKind::BranchWithArg,
+                                      SemanticsNodeBlockId /*target_id*/,
+                                      SemanticsNodeId /*arg*/>;
+
   class Builtin {
    public:
-    static auto Make(SemanticsBuiltinKind builtin_kind, SemanticsNodeId type_id)
+    static auto Make(SemanticsBuiltinKind builtin_kind, SemanticsTypeId type_id)
         -> SemanticsNode {
       // Builtins won't have a ParseTree node associated, so we provide the
       // default invalid one.
@@ -249,18 +320,14 @@ class SemanticsNode {
 
   using Call =
       Factory<SemanticsNodeKind::Call, SemanticsNodeBlockId /*refs_id*/,
-              SemanticsCallableId /*callable_id*/>;
-
-  using CodeBlock = FactoryPreTyped<SemanticsNodeKind::CodeBlock,
-                                    SemanticsNodeId::InvalidIndex,
-                                    SemanticsNodeBlockId /*node_block_id*/>;
+              SemanticsFunctionId /*function_id*/>;
 
   class CrossReference
       : public FactoryBase<SemanticsNodeKind::CrossReference,
                            SemanticsCrossReferenceIRId /*ir_id*/,
                            SemanticsNodeId /*node_id*/> {
    public:
-    static auto Make(SemanticsNodeId type_id, SemanticsCrossReferenceIRId ir_id,
+    static auto Make(SemanticsTypeId type_id, SemanticsCrossReferenceIRId ir_id,
                      SemanticsNodeId node_id) -> SemanticsNode {
       // A node's parse tree node must refer to a node in the current parse
       // tree. This cannot use the cross-referenced node's parse tree node
@@ -271,42 +338,30 @@ class SemanticsNode {
     using FactoryBase::Get;
   };
 
-  using FunctionDeclaration = FactoryPreTyped<
-      SemanticsNodeKind::FunctionDeclaration, SemanticsNodeId::InvalidIndex,
-      SemanticsStringId /*name_id*/, SemanticsCallableId /*signature_id*/>;
+  using FunctionDeclaration =
+      FactoryNoType<SemanticsNodeKind::FunctionDeclaration,
+                    SemanticsFunctionId /*function_id*/>;
 
-  using FunctionDefinition = FactoryPreTyped<
-      SemanticsNodeKind::FunctionDefinition, SemanticsNodeId::InvalidIndex,
-      SemanticsNodeId /*decl_id*/, SemanticsNodeBlockId /*node_block_id*/>;
+  using IntegerLiteral = Factory<SemanticsNodeKind::IntegerLiteral,
+                                 SemanticsIntegerLiteralId /*integer_id*/>;
 
-  using IntegerLiteral =
-      FactoryPreTyped<SemanticsNodeKind::IntegerLiteral,
-                      SemanticsBuiltinKind::IntegerType.AsInt(),
-                      SemanticsIntegerLiteralId /*integer_id*/>;
+  using RealLiteral = Factory<SemanticsNodeKind::RealLiteral,
+                              SemanticsRealLiteralId /*real_id*/>;
 
-  using RealLiteral =
-      FactoryPreTyped<SemanticsNodeKind::RealLiteral,
-                      SemanticsBuiltinKind::FloatingPointType.AsInt(),
-                      SemanticsRealLiteralId /*real_id*/>;
-
-  using Return =
-      FactoryPreTyped<SemanticsNodeKind::Return, SemanticsNodeId::InvalidIndex>;
+  using Return = FactoryNoType<SemanticsNodeKind::Return>;
 
   using ReturnExpression =
       Factory<SemanticsNodeKind::ReturnExpression, SemanticsNodeId /*expr_id*/>;
 
-  using StringLiteral =
-      FactoryPreTyped<SemanticsNodeKind::StringLiteral,
-                      SemanticsBuiltinKind::StringType.AsInt(),
-                      SemanticsStringId /*string_id*/>;
+  using StringLiteral = Factory<SemanticsNodeKind::StringLiteral,
+                                SemanticsStringId /*string_id*/>;
 
   using StructMemberAccess = Factory<SemanticsNodeKind::StructMemberAccess,
                                      SemanticsNodeId /*struct_id*/,
                                      SemanticsMemberIndex /*ref_index*/>;
 
-  using StructType = FactoryPreTyped<SemanticsNodeKind::StructType,
-                                     SemanticsBuiltinKind::TypeType.AsInt(),
-                                     SemanticsNodeBlockId /*refs_id*/>;
+  using StructType =
+      Factory<SemanticsNodeKind::StructType, SemanticsNodeBlockId /*refs_id*/>;
 
   using StructTypeField = Factory<SemanticsNodeKind::StructTypeField,
                                   SemanticsStringId /*name_id*/>;
@@ -317,11 +372,14 @@ class SemanticsNode {
   using StubReference =
       Factory<SemanticsNodeKind::StubReference, SemanticsNodeId /*node_id*/>;
 
+  using UnaryOperatorNot = Factory<SemanticsNodeKind::UnaryOperatorNot,
+                                   SemanticsNodeId /*operand_id*/>;
+
   using VarStorage = Factory<SemanticsNodeKind::VarStorage>;
 
   SemanticsNode()
       : SemanticsNode(ParseTree::Node::Invalid, SemanticsNodeKind::Invalid,
-                      SemanticsNodeId::Invalid) {}
+                      SemanticsTypeId::Invalid) {}
 
   // Provide `node.GetAsKind()` as an instance method for all kinds, essentially
   // an alias for`SemanticsNode::Kind::Get(node)`.
@@ -331,7 +389,7 @@ class SemanticsNode {
 
   auto parse_node() const -> ParseTree::Node { return parse_node_; }
   auto kind() const -> SemanticsNodeKind { return kind_; }
-  auto type_id() const -> SemanticsNodeId { return type_id_; }
+  auto type_id() const -> SemanticsTypeId { return type_id_; }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
@@ -341,7 +399,7 @@ class SemanticsNode {
   friend struct SemanticsNodeForBuiltin;
 
   explicit SemanticsNode(ParseTree::Node parse_node, SemanticsNodeKind kind,
-                         SemanticsNodeId type_id,
+                         SemanticsTypeId type_id,
                          int32_t arg0 = SemanticsNodeId::InvalidIndex,
                          int32_t arg1 = SemanticsNodeId::InvalidIndex)
       : parse_node_(parse_node),
@@ -352,7 +410,7 @@ class SemanticsNode {
 
   ParseTree::Node parse_node_;
   SemanticsNodeKind kind_;
-  SemanticsNodeId type_id_;
+  SemanticsTypeId type_id_;
 
   // Use GetAsKind to access arg0 and arg1.
   int32_t arg0_;
@@ -365,6 +423,38 @@ class SemanticsNode {
 // may be worth investigating further.
 static_assert(sizeof(SemanticsNode) == 20, "Unexpected SemanticsNode size");
 
+// Provides base support for use of Id types as DenseMap/DenseSet keys.
+// Instantiated below.
+template <typename Id>
+struct SemanticsIdMapInfo {
+  static inline auto getEmptyKey() -> Id {
+    return Id(llvm::DenseMapInfo<int32_t>::getEmptyKey());
+  }
+
+  static inline auto getTombstoneKey() -> Id {
+    return Id(llvm::DenseMapInfo<int32_t>::getTombstoneKey());
+  }
+
+  static auto getHashValue(const Id& val) -> unsigned {
+    return llvm::DenseMapInfo<int32_t>::getHashValue(val.index);
+  }
+
+  static auto isEqual(const Id& lhs, const Id& rhs) -> bool {
+    return lhs == rhs;
+  }
+};
+
 }  // namespace Carbon
+
+// Support use of Id types as DenseMap/DenseSet keys.
+template <>
+struct llvm::DenseMapInfo<Carbon::SemanticsNodeBlockId>
+    : public Carbon::SemanticsIdMapInfo<Carbon::SemanticsNodeBlockId> {};
+template <>
+struct llvm::DenseMapInfo<Carbon::SemanticsNodeId>
+    : public Carbon::SemanticsIdMapInfo<Carbon::SemanticsNodeId> {};
+template <>
+struct llvm::DenseMapInfo<Carbon::SemanticsStringId>
+    : public Carbon::SemanticsIdMapInfo<Carbon::SemanticsStringId> {};
 
 #endif  // CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_NODE_H_

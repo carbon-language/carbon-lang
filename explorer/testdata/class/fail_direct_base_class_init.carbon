@@ -10,7 +10,8 @@ base class A {
   var a: i32;
 }
 
-class B extends A {
+class B {
+  extend base: A;
   var b: i32;
 }
 

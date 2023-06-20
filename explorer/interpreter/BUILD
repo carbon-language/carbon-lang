@@ -63,6 +63,7 @@ cc_library(
         ":resolve_unformed",
         ":type_checker",
         "//common:check",
+        "//common:error",
         "//common:ostream",
         "//explorer/ast",
         "//explorer/common:arena",
@@ -219,6 +220,7 @@ cc_library(
         "resolve_unformed.h",
     ],
     deps = [
+        ":stack_space",
         "//common:check",
         "//explorer/ast",
         "//explorer/ast:static_scope",

@@ -6,6 +6,8 @@
 
 #include <gtest/gtest.h>
 
+#include "testing/util/test_raw_ostream.h"
+
 namespace Carbon::Testing {
 namespace {
 
@@ -95,6 +97,19 @@ TEST(ErrorTest, AssignOrReturnHasErrorInExpected) {
   }();
   ASSERT_FALSE(result.ok());
   EXPECT_EQ(result.error().message(), "error");
+}
+
+TEST(ErrorTest, ErrorBuilderOperatorImplicitCast) {
+  ErrorOr<int> result = ErrorBuilder() << "msg";
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ(result.error().message(), "msg");
+}
+
+TEST(ErrorTest, StreamError) {
+  Error result = ErrorBuilder("TestFunc") << "msg";
+  TestRawOstream result_stream;
+  result_stream << result;
+  EXPECT_EQ(result_stream.TakeStr(), "TestFunc: msg");
 }
 
 }  // namespace

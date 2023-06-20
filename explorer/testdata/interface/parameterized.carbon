@@ -16,7 +16,7 @@ interface Vector(Scalar:! type) {
 class Point {
   var x: i32;
   var y: i32;
-  impl Point as Vector(i32) {
+  extend impl as Vector(i32) {
     fn Zero() -> Point {
       return {.x = 0, .y = 0};
     }

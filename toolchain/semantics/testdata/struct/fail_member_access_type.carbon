@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
-// CHECK:STDOUT: callables: [
+// CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -17,20 +17,24 @@
 // CHECK:STDOUT:   y,
 // CHECK:STDOUT:   b,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: types: [
+// CHECK:STDOUT:   nodeFloatingPointType,
+// CHECK:STDOUT:   node+1,
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: StructType, arg0: block2, type: nodeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, type: node+1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: node+1},
-// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+4, type: nodeFloatingPointType},
-// CHECK:STDOUT:   {kind: StructType, arg0: block3, type: nodeTypeType},
-// CHECK:STDOUT:   {kind: StructValue, arg0: block4, type: node+7},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+8, type: node+7},
-// CHECK:STDOUT:   {kind: VarStorage, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+10, type: nodeIntegerType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+10, arg1: nodeInvalidType, type: nodeInvalidType},
+// CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: type0},
+// CHECK:STDOUT:   {kind: StructType, arg0: block2, type: typeTypeType},
+// CHECK:STDOUT:   {kind: VarStorage, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: type1},
+// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type0},
+// CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+4, type: type0},
+// CHECK:STDOUT:   {kind: StructValue, arg0: block4, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+7, type: type1},
+// CHECK:STDOUT:   {kind: VarStorage, type: type2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+9, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+9, arg1: nodeInvalidType, type: typeInvalidType},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -47,7 +51,6 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
-// CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,

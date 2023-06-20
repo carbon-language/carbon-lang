@@ -60,6 +60,10 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
   // Otherwise returns an empty string.
   [[nodiscard]] auto fixed_spelling() const -> llvm::StringRef;
 
+  // Get the expected number of parse tree nodes that will be created for this
+  // token.
+  [[nodiscard]] auto expected_parse_tree_size() const -> int;
+
   // Test whether this token kind is in the provided list.
   [[nodiscard]] auto IsOneOf(std::initializer_list<TokenKind> kinds) const
       -> bool {

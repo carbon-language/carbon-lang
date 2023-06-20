@@ -784,7 +784,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
     case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::ChoiceType:
-    case Value::Kind::VariableType:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
@@ -889,6 +888,34 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
         new_elements.push_back(val);
       }
       return arena_->New<TupleValue>(std::move(new_elements));
+    }
+    case Value::Kind::VariableType: {
+      std::optional<Nonnull<const Value*>> source_type;
+      // While type-checking a `where` expression, we can evaluate a reference
+      // to its self binding before we know its type. In this case, the self
+      // binding is always a type.
+      //
+      // TODO: Add a conversion kind to BuiltinConvertExpression so that we
+      // don't need to look at the types and reconstruct what kind of
+      // conversion is being performed from here.
+      if (cast<VariableType>(value)->binding().is_type_checked()) {
+        CARBON_ASSIGN_OR_RETURN(
+            source_type,
+            InstantiateType(&cast<VariableType>(value)->binding().static_type(),
+                            source_loc));
+      }
+      if (isa<TypeType, ConstraintType, NamedConstraintType, InterfaceType>(
+              destination_type) &&
+          (!source_type ||
+           isa<TypeType, ConstraintType, NamedConstraintType, InterfaceType>(
+               *source_type))) {
+        // No further conversions are required.
+        return value;
+      }
+      // We need to convert this, and we don't know how because we don't have
+      // the value yet.
+      return ProgramError(source_loc)
+             << "value of generic binding " << *value << " is not known";
     }
     case Value::Kind::AssociatedConstant: {
       CARBON_ASSIGN_OR_RETURN(
@@ -1575,6 +1602,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::IntrinsicExpression: {
       const auto& intrinsic = cast<IntrinsicExpression>(exp);
+      if (auto rewrite = intrinsic.rewritten_form()) {
+        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+      }
       if (act.pos() == 0) {
         return todo_.Spawn(
             std::make_unique<ExpressionAction>(&intrinsic.args()));
@@ -1583,6 +1613,10 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       const auto& args = cast<TupleValue>(*act.results()[0]).elements();
       switch (cast<IntrinsicExpression>(exp).intrinsic()) {
         case IntrinsicExpression::Intrinsic::Print: {
+          if (phase_ != Phase::RunTime) {
+            return ProgramError(exp.source_loc())
+                   << "Print called before run time";
+          }
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> format_string_value,
               Convert(args[0], arena_->New<StringType>(), exp.source_loc()));
@@ -1596,10 +1630,6 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               *print_stream_ << llvm::formatv(format_string);
               break;
             case 1: {
-              if ((*args[1]).kind() == Value::Kind::UninitializedValue) {
-                return ProgramError(exp.source_loc())
-                       << "Printing uninitialized value";
-              }
               *print_stream_ << llvm::formatv(format_string,
                                               cast<IntValue>(*args[1]).value());
               break;
@@ -1726,10 +1756,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.FinishAction(result);
         }
         case IntrinsicExpression::Intrinsic::ImplicitAsConvert: {
-          CARBON_CHECK(args.size() == 2);
-          CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> result,
-                                  Convert(args[0], args[1], exp.source_loc()));
-          return todo_.FinishAction(result);
+          CARBON_FATAL()
+              << "__intrinsic_implicit_as_convert should have been rewritten";
         }
         case IntrinsicExpression::Intrinsic::IntEq: {
           CARBON_CHECK(args.size() == 2);
@@ -2134,18 +2162,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         if (definition.has_init()) {
           CARBON_ASSIGN_OR_RETURN(
               v, Convert(act.results()[0], dest_type, stmt.source_loc()));
-        } else if (dest_type->kind() == Value::Kind::StaticArrayType) {
-          const auto& array = cast<StaticArrayType>(dest_type);
-          CARBON_CHECK(array->has_size());
-          const auto& element_type = array->element_type();
-          const auto size = array->size();
-
-          std::vector<Nonnull<const Value*>> elements;
-          elements.reserve(size);
-          for (size_t i = 0; i < size; i++) {
-            elements.push_back(arena_->New<UninitializedValue>(&element_type));
-          }
-          v = arena_->New<TupleValueBase>(Value::Kind::TupleValue, elements);
         } else {
           v = arena_->New<UninitializedValue>(p);
         }
@@ -2290,7 +2306,6 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   switch (decl.kind()) {
     case DeclarationKind::VariableDeclaration: {
       const auto& var_decl = cast<VariableDeclaration>(decl);
-      const auto* var_type = &var_decl.binding().static_type();
       if (var_decl.has_initializer()) {
         if (act.pos() == 0) {
           return todo_.Spawn(
@@ -2303,22 +2318,6 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
           todo_.Initialize(&var_decl.binding(), v);
           return todo_.FinishAction();
         }
-      } else if (var_type->kind() == Value::Kind::StaticArrayType) {
-        const auto& array = cast<StaticArrayType>(var_type);
-        CARBON_CHECK(array->has_size());
-        const auto& element_type = array->element_type();
-        const auto size = array->size();
-
-        std::vector<Nonnull<const Value*>> elements;
-        elements.reserve(size);
-        for (size_t i = 0; i < size; i++) {
-          elements.push_back(arena_->New<UninitializedValue>(&element_type));
-        }
-
-        Nonnull<const Value*> v =
-            arena_->New<TupleValueBase>(Value::Kind::TupleValue, elements);
-        todo_.Initialize(&var_decl.binding(), v);
-        return todo_.FinishAction();
       } else {
         Nonnull<const Value*> v =
             arena_->New<UninitializedValue>(&var_decl.binding().value());
@@ -2335,13 +2334,14 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::InterfaceDeclaration:
     case DeclarationKind::ConstraintDeclaration:
-    case DeclarationKind::InterfaceExtendsDeclaration:
-    case DeclarationKind::InterfaceImplDeclaration:
+    case DeclarationKind::InterfaceExtendDeclaration:
+    case DeclarationKind::InterfaceRequireDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::MatchFirstDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:
+    case DeclarationKind::ExtendBaseDeclaration:
       // These declarations have no run-time effects.
       return todo_.FinishAction();
   }

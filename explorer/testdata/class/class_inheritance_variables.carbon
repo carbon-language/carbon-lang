@@ -15,7 +15,8 @@ base class C {
   var var_c: i32;
 }
 
-class D extends C {
+class D {
+  extend base: C;
   var var_d: i32;
 }
 

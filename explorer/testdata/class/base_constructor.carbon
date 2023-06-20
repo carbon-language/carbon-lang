@@ -16,7 +16,8 @@ base class A {
   var value_a: i32;
 }
 
-class B extends A {
+class B {
+  extend base: A;
   fn Create() -> Self {
     return {.base = A.Create(), .value_b = 2};
   }

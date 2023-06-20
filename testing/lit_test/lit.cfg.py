@@ -46,30 +46,7 @@ def add_substitutions():
     )
 
     add_substitution("carbon", f"{run_carbon}")
-    add_substitution(
-        "carbon-run-lowering",
-        f"{run_carbon} dump llvm-ir %s | {filecheck_strict}",
-    )
-    add_substitution(
-        "carbon-run-parser",
-        f"{run_carbon} dump parse-tree %s | {filecheck_strict}",
-    )
-    add_substitution(
-        "carbon-run-semantics",
-        f"{run_carbon} dump semantics-ir %s | {filecheck_strict}",
-    )
-    add_substitution(
-        "carbon-run-tokens", f"{run_carbon} dump tokens %s | {filecheck_strict}"
-    )
-    add_substitution(
-        "explorer-run",
-        f"{run_explorer} | {filecheck_strict}",
-    )
-    add_substitution(
-        "explorer-run-trace",
-        f"{run_explorer} --parser_debug --trace_file=- | "
-        f"{filecheck_allow_unmatched}",
-    )
+    add_substitution("explorer", f"{run_explorer}")
     add_substitution("FileCheck-allow-unmatched", filecheck_allow_unmatched)
     add_substitution("FileCheck-strict", filecheck_strict)
     add_substitution("not", tools["not"])

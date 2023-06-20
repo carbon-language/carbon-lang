@@ -27,12 +27,13 @@ auto SemanticsHandleStructFieldDesignator(SemanticsContext& context,
 
 auto SemanticsHandleStructFieldType(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
-  auto [type_node, type_id] = context.node_stack().PopForParseNodeAndNodeId();
-  SemanticsNodeId cast_type_id = context.ImplicitAsRequired(
-      type_node, type_id, SemanticsNodeId::BuiltinTypeType);
+  auto [type_node, type_id] =
+      context.node_stack().PopWithParseNode<SemanticsNodeId>();
+  SemanticsTypeId cast_type_id = context.ExpressionAsType(type_node, type_id);
 
-  auto [name_node, name_id] = context.node_stack().PopForParseNodeAndNameId(
-      ParseNodeKind::DesignatedName);
+  auto [name_node, name_id] =
+      context.node_stack().PopWithParseNode<SemanticsStringId>(
+          ParseNodeKind::DesignatedName);
 
   context.AddNode(
       SemanticsNode::StructTypeField::Make(name_node, cast_type_id, name_id));
@@ -48,16 +49,16 @@ auto SemanticsHandleStructFieldUnknown(SemanticsContext& context,
 auto SemanticsHandleStructFieldValue(SemanticsContext& context,
                                      ParseTree::Node parse_node) -> bool {
   auto [value_parse_node, value_node_id] =
-      context.node_stack().PopForParseNodeAndNodeId();
-  auto [_, name_id] = context.node_stack().PopForParseNodeAndNameId(
+      context.node_stack().PopWithParseNode<SemanticsNodeId>();
+  auto name_id = context.node_stack().Pop<SemanticsStringId>(
       ParseNodeKind::DesignatedName);
 
   // Store the name for the type.
   auto type_block_id = context.args_type_info_stack().PeekForAdd();
-  context.semantics().AddNode(
+  context.semantics_ir().AddNode(
       type_block_id,
       SemanticsNode::StructTypeField::Make(
-          parse_node, context.semantics().GetNode(value_node_id).type_id(),
+          parse_node, context.semantics_ir().GetNode(value_node_id).type_id(),
           name_id));
 
   // Push the value back on the stack as an argument.
@@ -75,16 +76,7 @@ auto SemanticsHandleStructLiteral(SemanticsContext& context,
       ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
   auto type_block_id = context.args_type_info_stack().Pop();
 
-  // Special-case `{}`.
-  if (refs_id == SemanticsNodeBlockId::Empty) {
-    context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinEmptyStruct);
-    return true;
-  }
-
-  // Construct a type for the literal.
-  auto refs = context.semantics().GetNodeBlock(refs_id);
-  auto type_id = context.AddNode(
-      SemanticsNode::StructType::Make(parse_node, type_block_id));
+  auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
 
   auto value_id = context.AddNode(
       SemanticsNode::StructValue::Make(parse_node, type_id, refs_id));
@@ -118,9 +110,9 @@ auto SemanticsHandleStructTypeLiteral(SemanticsContext& context,
   CARBON_CHECK(refs_id != SemanticsNodeBlockId::Empty)
       << "{} is handled by StructLiteral.";
 
-  auto type_id =
-      context.AddNode(SemanticsNode::StructType::Make(parse_node, refs_id));
-  context.node_stack().Push(parse_node, type_id);
+  auto type_id = context.CanonicalizeStructType(parse_node, refs_id);
+  context.node_stack().Push(parse_node,
+                            context.semantics_ir().GetType(type_id));
   return true;
 }
 

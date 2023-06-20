@@ -32,6 +32,7 @@ namespace path = llvm::sys::path;
 auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
                   llvm::StringRef relative_prelude_path) -> int {
   llvm::setBugReportMsg(
+
       "Please report issues to "
       "https://github.com/carbon-language/carbon-lang/issues and include the "
       "crash backtrace.\n");
@@ -48,6 +49,36 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   cl::opt<std::string> trace_file_name(
       "trace_file",
       cl::desc("Output file for tracing; set to `-` to output to stdout."));
+
+  cl::list<ProgramPhase> allowed_program_phases(
+      cl::desc("Select the program phases to include in the output. By "
+               "default, only the execution trace will be added to the trace "
+               "output. Use a combination of the following flags to include "
+               "outputs for multiple phases:"),
+      cl::values(
+          clEnumValN(ProgramPhase::SourceProgram, "trace_source_program",
+                     "Include trace output for the Source Program phase."),
+          clEnumValN(ProgramPhase::NameResolution, "trace_name_resolution",
+                     "Include trace output for the Name Resolution phase."),
+          clEnumValN(
+              ProgramPhase::ControlFlowResolution,
+              "trace_control_flow_resolution",
+              "Include trace output for the Control Flow Resolution phase."),
+          clEnumValN(ProgramPhase::TypeChecking, "trace_type_checking",
+                     "Include trace output for the Type Checking phase."),
+          clEnumValN(ProgramPhase::UnformedVariableResolution,
+                     "trace_unformed_variables_resolution",
+                     "Include trace output for the Unformed Variables "
+                     "Resolution phase."),
+          clEnumValN(ProgramPhase::Declarations, "trace_declarations",
+                     "Include trace output for printing Declarations."),
+          clEnumValN(ProgramPhase::Execution, "trace_execution",
+                     "Include trace output for Program Execution."),
+          clEnumValN(
+              ProgramPhase::Timing, "trace_timing",
+              "Include timing logs for each phase, indicating the time taken."),
+          clEnumValN(ProgramPhase::All, "trace_all",
+                     "Include trace output for all phases.")));
 
   // Use the executable path as a base for the relative prelude path.
   std::string exe =
@@ -66,7 +97,10 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   // Set up a stream for trace output.
   std::unique_ptr<llvm::raw_ostream> scoped_trace_stream;
   TraceStream trace_stream;
+
   if (!trace_file_name.empty()) {
+    // Adding allowed phases in the trace_stream
+    trace_stream.set_allowed_phases(allowed_program_phases);
     if (trace_file_name == "-") {
       trace_stream.set_stream(&llvm::outs());
     } else {
@@ -87,11 +121,6 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   if (result.ok()) {
     // Print the return code to stdout.
     llvm::outs() << "result: " << *result << "\n";
-
-    // When there's a dedicated trace file, print the return code to it too.
-    if (scoped_trace_stream) {
-      trace_stream << "result: " << *result << "\n";
-    }
     return EXIT_SUCCESS;
   } else {
     llvm::errs() << result.error() << "\n";

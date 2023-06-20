@@ -19,7 +19,7 @@ class Point(T:! type) {
 }
 
 // Can implement `Vector` for just `Point(i32)`, not all `Point(T)`.
-external impl Point(i32) as Vector {
+impl Point(i32) as Vector {
   fn Zero() -> Point(i32) {
     return {.x = 0, .y = 0};
   }

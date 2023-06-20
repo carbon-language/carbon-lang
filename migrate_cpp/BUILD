@@ -47,7 +47,7 @@ cc_test(
     srcs = ["rewriter_test.cpp"],
     deps = [
         ":rewriter",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//clang:ast",
         "@llvm-project//clang:frontend",

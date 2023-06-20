@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
@@ -34,6 +35,10 @@ class SemanticsContext {
   // Adds a node to the current block, returning the produced ID.
   auto AddNode(SemanticsNode node) -> SemanticsNodeId;
 
+  // Adds a node to the given block, returning the produced ID.
+  auto AddNodeToBlock(SemanticsNodeBlockId block, SemanticsNode node)
+      -> SemanticsNodeId;
+
   // Pushes a parse tree node onto the stack, storing the SemanticsNode as the
   // result.
   auto AddNodeAndPush(ParseTree::Node parse_node, SemanticsNode node) -> void;
@@ -41,28 +46,6 @@ class SemanticsContext {
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
   auto AddNameToLookup(ParseTree::Node name_node, SemanticsStringId name_id,
                        SemanticsNodeId target_id) -> void;
-
-  // Adds a name to name lookup. Ignores any name conflicts; the caller should
-  // ensure they were previously diagnosed by AddNameToLookup.
-  auto AddNameToLookupIgnoreConflicts(SemanticsStringId name_id,
-                                      SemanticsNodeId target_id) -> void {
-    AddNameToLookupImpl(name_id, target_id);
-  }
-
-  // Binds a DeclaredName to a target node with the given type.
-  auto BindName(ParseTree::Node name_node, SemanticsNodeId type_id,
-                SemanticsNodeId target_id) -> SemanticsStringId;
-
-  // Temporarily remove name lookup entries added by the `var`. These will be
-  // restored by `VariableDeclaration` using `ReaddNameToLookup`.
-  auto TempRemoveLatestNameFromLookup() -> SemanticsNodeId;
-
-  // Re-adds a name to name lookup. This is typically done through BindName, but
-  // can also be used to restore removed names.
-  auto ReaddNameToLookup(SemanticsStringId name_id, SemanticsNodeId storage_id)
-      -> void {
-    name_lookup_[name_id].push_back(storage_id);
-  }
 
   // Lookup up a name, returning the referenced node.
   auto LookupName(ParseTree::Node parse_node, llvm::StringRef name)
@@ -91,7 +74,33 @@ class SemanticsContext {
   // updated `value_id`. Prints a diagnostic and returns an InvalidType if
   // unsupported.
   auto ImplicitAsRequired(ParseTree::Node parse_node, SemanticsNodeId value_id,
-                          SemanticsNodeId as_type_id) -> SemanticsNodeId;
+                          SemanticsTypeId as_type_id) -> SemanticsNodeId;
+
+  // Runs ImplicitAsRequired for a conversion to `bool`.
+  auto ImplicitAsBool(ParseTree::Node parse_node, SemanticsNodeId value_id)
+      -> SemanticsNodeId;
+
+  // Canonicalizes a type which is tracked as a single node.
+  // TODO: This should eventually return a type ID.
+  auto CanonicalizeType(SemanticsNodeId node_id) -> SemanticsTypeId;
+
+  // Handles canonicalization of struct types. This may create a new struct type
+  // when it has a new structure, or reference an existing struct type when it
+  // duplicates a prior type.
+  //
+  // Individual struct type fields aren't canonicalized because they may have
+  // name conflicts or other diagnostics during creation, which can use the
+  // parse node.
+  auto CanonicalizeStructType(ParseTree::Node parse_node,
+                              SemanticsNodeBlockId refs_id) -> SemanticsTypeId;
+
+  // Converts an expression for use as a type.
+  // TODO: This should eventually return a type ID.
+  auto ExpressionAsType(ParseTree::Node parse_node, SemanticsNodeId value_id)
+      -> SemanticsTypeId {
+    return CanonicalizeType(
+        ImplicitAsRequired(parse_node, value_id, SemanticsTypeId::TypeType));
+  }
 
   // Starts handling parameters or arguments.
   auto ParamOrArgStart() -> void;
@@ -122,7 +131,7 @@ class SemanticsContext {
 
   auto parse_tree() -> const ParseTree& { return *parse_tree_; }
 
-  auto semantics() -> SemanticsIR& { return *semantics_; }
+  auto semantics_ir() -> SemanticsIR& { return *semantics_ir_; }
 
   auto node_stack() -> SemanticsNodeStack& { return node_stack_; }
 
@@ -149,37 +158,27 @@ class SemanticsContext {
     Compatible,
   };
 
-  // Provides DenseMapInfo for SemanticsStringId.
-  struct SemanticsStringIdMapInfo {
-    static inline auto getEmptyKey() -> SemanticsStringId {
-      return SemanticsStringId(llvm::DenseMapInfo<int32_t>::getEmptyKey());
-    }
-    static inline auto getTombstoneKey() -> SemanticsStringId {
-      return SemanticsStringId(llvm::DenseMapInfo<int32_t>::getTombstoneKey());
-    }
+  // A FoldingSet node for a struct type.
+  class StructTypeNode : public llvm::FastFoldingSetNode {
+   public:
+    explicit StructTypeNode(const llvm::FoldingSetNodeID& node_id,
+                            SemanticsTypeId type_id)
+        : llvm::FastFoldingSetNode(node_id), type_id_(type_id) {}
 
-    static auto getHashValue(const SemanticsStringId& val) -> unsigned {
-      return llvm::DenseMapInfo<int32_t>::getHashValue(val.index);
-    }
+    auto type_id() -> SemanticsTypeId { return type_id_; }
 
-    static auto isEqual(const SemanticsStringId& lhs,
-                        const SemanticsStringId& rhs) -> bool {
-      return lhs == rhs;
-    }
+   private:
+    SemanticsTypeId type_id_;
   };
 
   // An entry in scope_stack_.
   struct ScopeStackEntry {
     // Names which are registered with name_lookup_, and will need to be
     // deregistered when the scope ends.
-    llvm::DenseSet<SemanticsStringId, SemanticsStringIdMapInfo> names;
+    llvm::DenseSet<SemanticsStringId> names;
 
     // TODO: This likely needs to track things which need to be destructed.
   };
-
-  // Adds a name to lookup. Returns false on a name conflict.
-  auto AddNameToLookupImpl(SemanticsStringId name_id, SemanticsNodeId target_id)
-      -> bool;
 
   // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
   // result type. The result will be the node to use to replace `value`.
@@ -189,13 +188,8 @@ class SemanticsContext {
   //
   // If `output_value_id` is not null, then it will be set if there is a need to
   // cast.
-  auto ImplicitAsImpl(SemanticsNodeId value_id, SemanticsNodeId as_type_id,
+  auto ImplicitAsImpl(SemanticsNodeId value_id, SemanticsTypeId as_type_id,
                       SemanticsNodeId* output_value_id) -> ImplicitAsKind;
-
-  // Returns true if the ImplicitAs can use struct conversion.
-  // TODO: This currently only supports struct types that precisely match.
-  auto CanImplicitAsStruct(SemanticsNode value_type, SemanticsNode as_type)
-      -> bool;
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
 
@@ -209,7 +203,7 @@ class SemanticsContext {
   const ParseTree* parse_tree_;
 
   // The SemanticsIR being added to.
-  SemanticsIR* semantics_;
+  SemanticsIR* semantics_ir_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
@@ -245,9 +239,21 @@ class SemanticsContext {
   // reference.
   //
   // Names which no longer have lookup results are erased.
-  llvm::DenseMap<SemanticsStringId, llvm::SmallVector<SemanticsNodeId>,
-                 SemanticsStringIdMapInfo>
+  llvm::DenseMap<SemanticsStringId, llvm::SmallVector<SemanticsNodeId>>
       name_lookup_;
+
+  // Tracks types which have been used, so that they aren't repeatedly added to
+  // SemanticsIR.
+  llvm::DenseMap<SemanticsNodeId, SemanticsTypeId> canonical_types_;
+
+  // Tracks struct type literals which have been defined, so that they aren't
+  // repeatedly redefined.
+  llvm::FoldingSet<StructTypeNode> canonical_struct_types_;
+
+  // Storage for the nodes in canonical_struct_types_. This stores in pointers
+  // so that canonical_struct_types_ can have stable pointers.
+  llvm::SmallVector<std::unique_ptr<StructTypeNode>>
+      canonical_struct_types_nodes_;
 };
 
 // Parse node handlers. Returns false for unrecoverable errors.

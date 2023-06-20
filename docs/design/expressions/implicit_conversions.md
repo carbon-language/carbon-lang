@@ -172,8 +172,8 @@ to `Base**` because that would allow storing a `Derived2*` into a `Derived*`:
 
 ```
 abstract class Base {}
-class Derived extends Base {}
-class Derived2 extends Base {}
+class Derived { extend base: Base; }
+class Derived2 { extend base: Base; }
 var d2: Derived2 = {};
 var p: Derived*;
 var q: Derived2* = &d2;
@@ -208,7 +208,7 @@ extends
 
 ```
 interface ImplicitAs(Dest:! type) {
-  extends As(Dest);
+  extend As(Dest);
   // Inherited from As(Dest):
   // fn Convert[self: Self]() -> Dest;
 }

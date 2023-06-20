@@ -14,8 +14,8 @@ fn F(T:! Iface where .N == 5) {}
 
 class Good {}
 class Bad {}
-external impl Good as Iface where .N = 5 {}
-external impl Bad as Iface where .N = 4 {}
+impl Good as Iface where .N = 5 {}
+impl Bad as Iface where .N = 4 {}
 
 fn Main() -> i32 {
   F(Good);

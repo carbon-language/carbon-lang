@@ -25,10 +25,12 @@ A _lexical element_ is one of the following:
 -   a maximal sequence of [whitespace](whitespace.md) characters
 -   a [word](words.md)
 -   a literal:
+
     -   a [numeric literal](numeric_literals.md)
     -   a [string literal](string_literals.md)
+
 -   a [comment](comments.md)
--   TODO: operators ...
+-   a [symbolic token](symbolic_tokens.md)
 
 The sequence of lexical elements is formed by repeatedly removing the longest
 initial sequence of characters that forms a valid lexical element.
