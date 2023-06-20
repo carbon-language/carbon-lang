@@ -5236,6 +5236,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                  << "`. Only simple classes are currently supported as base "
                     "class.";
         }
+        CARBON_RETURN_IF_ERROR(ExpectCompleteType(base_class_expr->source_loc(),
+                                                  "base class declaration",
+                                                  base_type));
 
         base_class = cast<NominalClassType>(base_type);
         if (base_class.value()->declaration().extensibility() ==
