@@ -18,6 +18,8 @@
 //        PRELUDE:STDOUT: interface As {
 // NO-MAIN-NOT:STDOUT: fn Main ()-> i32 {
 //        MAIN:STDOUT: fn Main ()-> i32 {
+// NO-MAIN-NOT:STDOUT: --- step exp Main() .0. (<Main()>:0) --->
+//        MAIN:STDOUT: --- step exp Main() .0. (<Main()>:0) --->
 
 package ExplorerTest api;
 
