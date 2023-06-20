@@ -9,7 +9,6 @@
 // CHECK:STDOUT: %EmptyTupleType = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %EmptyTupleType @Main() {
-// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

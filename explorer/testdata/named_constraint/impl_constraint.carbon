@@ -16,11 +16,11 @@ interface Walkable {
 }
 
 constraint Traversible {
-  extends Runnable;
-  extends Walkable;
+  extend Runnable;
+  extend Walkable;
 }
 
-external impl i32 as Traversible {
+impl i32 as Traversible {
   fn Run[self: i32]() -> i32 {
     return 10 * self;
   }

@@ -5,10 +5,10 @@
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, body: block0},
-// CHECK:STDOUT:   {name: str2, param_refs: block3, body: block0},
-// CHECK:STDOUT:   {name: str4, param_refs: block5, body: block0},
-// CHECK:STDOUT:   {name: str5, param_refs: block0, body: block6},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, body: block2},
+// CHECK:STDOUT:   {name: str2, param_refs: block4, body: block5},
+// CHECK:STDOUT:   {name: str4, param_refs: block7, body: block8},
+// CHECK:STDOUT:   {name: str5, param_refs: block0, body: block9},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,
@@ -66,11 +66,15 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+4,
@@ -81,6 +85,8 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+10,

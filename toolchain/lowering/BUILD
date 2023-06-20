@@ -23,9 +23,14 @@ cc_library(
     name = "lowering_context",
     srcs = [
         "lowering_context.cpp",
+        "lowering_function_context.cpp",
         "lowering_handle.cpp",
     ],
-    hdrs = ["lowering_context.h"],
+    hdrs = [
+        "lowering_block_worklist.h",
+        "lowering_context.h",
+        "lowering_function_context.h",
+    ],
     deps = [
         "//common:check",
         "//common:vlog",

@@ -9,7 +9,7 @@ package ExplorerTest api;
 
 class ConvertTo(T:! type) {
   var v: T;
-  impl as ImplicitAs(T) {
+  extend impl as ImplicitAs(T) {
     fn Convert[self: Self]() -> T { return self.v; }
   }
 }

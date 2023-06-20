@@ -7,22 +7,19 @@
 #include <gtest/gtest.h>
 
 #include "explorer/common/source_location.h"
+#include "testing/util/test_raw_ostream.h"
 
 namespace Carbon::Testing {
 namespace {
-
-auto ToString(const Error& err) -> std::string {
-  std::string result;
-  llvm::raw_string_ostream out(result);
-  err.Print(out);
-  return result;
-}
 
 TEST(ErrorBuildersTest, ProgramError) {
   Error err = ProgramError(SourceLocation("x", 1)) << "test";
   EXPECT_EQ(err.location(), "x:1");
   EXPECT_EQ(err.message(), "test");
-  EXPECT_EQ(ToString(err), "x:1: test");
+
+  TestRawOstream out;
+  out << err;
+  EXPECT_EQ(out.TakeStr(), "x:1: test");
 }
 
 }  // namespace

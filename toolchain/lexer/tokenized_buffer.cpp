@@ -876,6 +876,7 @@ auto TokenizedBuffer::GetTokenInfo(Token token) const -> const TokenInfo& {
 
 auto TokenizedBuffer::AddToken(TokenInfo info) -> Token {
   token_infos_.push_back(info);
+  expected_parse_tree_size_ += info.kind.expected_parse_tree_size();
   return Token(static_cast<int>(token_infos_.size()) - 1);
 }
 

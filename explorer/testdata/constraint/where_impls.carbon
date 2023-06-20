@@ -13,7 +13,7 @@ interface Base {
 }
 
 interface Extension {
-  extends Base;
+  extend Base;
 }
 
 fn F[T:! type where .Self impls Extension](x: T) {

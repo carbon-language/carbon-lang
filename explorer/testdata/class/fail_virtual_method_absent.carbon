@@ -8,7 +8,8 @@ package ExplorerTest api;
 
 base class A {}
 
-class B extends A {
+class B {
+  extend base: A;
   virtual fn Foo[self: Self]() -> i32 { return 0; }
 }
 

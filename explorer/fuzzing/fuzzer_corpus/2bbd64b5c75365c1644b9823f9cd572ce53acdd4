@@ -1,0 +1,354 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name {
+        name: "Apple"
+      }
+      members {
+        function {
+          name {
+            name: "F"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "T"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
+      name {
+        name: "Banana"
+      }
+      members {
+        interface_extend {
+          base {
+            call {
+              function {
+                identifier {
+                  name: "Apple"
+                }
+              }
+              argument {
+                tuple_literal {
+                  fields {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name {
+            name: "G"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Omitted
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "Carrot"
+      }
+      members {
+        variable {
+          binding {
+            name: "n"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        identifier {
+          name: "Carrot"
+        }
+      }
+      interface {
+        identifier {
+          name: "Banana"
+        }
+      }
+      members {
+        function {
+          name {
+            name: "F"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  simple_member_access {
+                    field: "n"
+                    object {
+                      identifier {
+                        name: "self"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name {
+            name: "G"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Omitted
+          }
+          body {
+            statements {
+              expression_statement {
+                expression {
+                  call {
+                    function {
+                      identifier {
+                        name: "Print"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          string_literal {
+                            value: "Carrot.G"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "c"
+                type {
+                  expression_pattern {
+                    expression {
+                      identifier {
+                        name: "Carrot"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              struct_literal {
+                fields {
+                  name: "n"
+                  expression {
+                    int_literal {
+                      value: 5
+                    }
+                  }
+                }
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          expression_statement {
+            expression {
+              call {
+                function {
+                  compound_member_access {
+                    object {
+                      identifier {
+                        name: "c"
+                      }
+                    }
+                    path {
+                      simple_member_access {
+                        field: "G"
+                        object {
+                          identifier {
+                            name: "Banana"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              call {
+                function {
+                  compound_member_access {
+                    object {
+                      identifier {
+                        name: "c"
+                      }
+                    }
+                    path {
+                      simple_member_access {
+                        field: "F"
+                        object {
+                          call {
+                            function {
+                              identifier {
+                                name: "Apple"
+                              }
+                            }
+                            argument {
+                              tuple_literal {
+                                fields {
+                                  int_type_literal {
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                argument {
+                  tuple_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -27,6 +27,12 @@ class SemanticsNodeBlockStack {
   // order to support lazy allocation.
   auto Push() -> void;
 
+  // Allocates and pushes a new node block.
+  auto PushForAdd() -> SemanticsNodeBlockId {
+    Push();
+    return PeekForAdd();
+  }
+
   // Peeks at the top node block. This does not trigger lazy allocation, so the
   // returned node block may be invalid.
   auto Peek() -> SemanticsNodeBlockId { return stack_.back(); }
@@ -37,6 +43,13 @@ class SemanticsNodeBlockStack {
   // Pops the top node block. This will always return a valid node block;
   // SemanticsNodeBlockId::Empty is returned if one wasn't allocated.
   auto Pop() -> SemanticsNodeBlockId;
+
+  // Pops the top node block, ensuring that it is lazily allocated if it's
+  // empty. For use when more nodes will be added to the block later.
+  auto PopForAdd() -> SemanticsNodeBlockId {
+    PeekForAdd();
+    return Pop();
+  }
 
   // Prints the stack for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;

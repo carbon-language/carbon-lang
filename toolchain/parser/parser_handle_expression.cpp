@@ -28,8 +28,8 @@ auto ParserHandleExpression(ParserContext& context) -> void {
     }
 
     if (context.PositionIs(TokenKind::If)) {
-      context.PushState(ParserState::ExpressionIfFinish);
-      context.PushState(ParserState::ExpressionThen);
+      context.PushState(ParserState::IfExpressionFinish);
+      context.PushState(ParserState::IfExpressionFinishCondition);
     } else {
       context.PushStateForExpressionLoop(ParserState::ExpressionLoopForPrefix,
                                          state.ambient_precedence,
@@ -61,9 +61,12 @@ auto ParserHandleExpressionInPostfix(ParserContext& context) -> void {
       context.PushState(state);
       break;
     }
+    case TokenKind::False:
+    case TokenKind::True:
     case TokenKind::IntegerLiteral:
     case TokenKind::RealLiteral:
     case TokenKind::StringLiteral:
+    case TokenKind::Bool:
     case TokenKind::IntegerTypeLiteral:
     case TokenKind::UnsignedIntegerTypeLiteral:
     case TokenKind::FloatingPointTypeLiteral:
@@ -137,8 +140,9 @@ auto ParserHandleExpressionInPostfixLoop(ParserContext& context) -> void {
 auto ParserHandleExpressionLoop(ParserContext& context) -> void {
   auto state = context.PopState();
 
+  auto operator_kind = context.PositionKind();
   auto trailing_operator = PrecedenceGroup::ForTrailing(
-      context.PositionKind(), context.IsTrailingOperatorInfix());
+      operator_kind, context.IsTrailingOperatorInfix());
   if (!trailing_operator) {
     if (state.has_error) {
       context.ReturnErrorOnState();
@@ -178,6 +182,13 @@ auto ParserHandleExpressionLoop(ParserContext& context) -> void {
   state.lhs_precedence = operator_precedence;
 
   if (is_binary) {
+    if (operator_kind == TokenKind::And || operator_kind == TokenKind::Or) {
+      // For `and` and `or`, wrap the first operand in a virtual parse tree
+      // node so that semantics can insert control flow here.
+      context.AddNode(ParseNodeKind::ShortCircuitOperand, state.token,
+                      state.subtree_start, state.has_error);
+    }
+
     state.state = ParserState::ExpressionLoopForBinary;
     context.PushState(state);
     context.PushStateForExpression(operator_precedence);
@@ -209,12 +220,15 @@ auto ParserHandleExpressionLoopForPrefix(ParserContext& context) -> void {
   context.PushState(state);
 }
 
-auto ParserHandleExpressionThen(ParserContext& context) -> void {
+auto ParserHandleIfExpressionFinishCondition(ParserContext& context) -> void {
   auto state = context.PopState();
 
-  if (context.ConsumeAndAddLeafNodeIf(TokenKind::Then,
-                                      ParseNodeKind::IfExpressionThen)) {
-    context.PushState(ParserState::ExpressionElse);
+  context.AddNode(ParseNodeKind::IfExpressionIf, state.token,
+                  state.subtree_start, state.has_error);
+
+  if (context.PositionIs(TokenKind::Then)) {
+    context.PushState(ParserState::IfExpressionFinishThen);
+    context.ConsumeChecked(TokenKind::Then);
     context.PushStateForExpression(*PrecedenceGroup::ForLeading(TokenKind::If));
   } else {
     // TODO: Include the location of the `if` token.
@@ -223,20 +237,24 @@ auto ParserHandleExpressionThen(ParserContext& context) -> void {
     if (!state.has_error) {
       context.emitter().Emit(*context.position(), ExpectedThenAfterIf);
     }
-    // Add placeholders for `then expression else expression`.
-    for (int i = 0; i != 4; ++i) {
-      context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
-                          /*has_error=*/true);
-    }
+    // Add placeholders for `IfExpressionThen` and final `Expression`.
+    context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
+                        /*has_error=*/true);
+    context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
+                        /*has_error=*/true);
     context.ReturnErrorOnState();
   }
 }
 
-auto ParserHandleExpressionElse(ParserContext& context) -> void {
+auto ParserHandleIfExpressionFinishThen(ParserContext& context) -> void {
   auto state = context.PopState();
 
-  if (context.ConsumeAndAddLeafNodeIf(TokenKind::Else,
-                                      ParseNodeKind::IfExpressionElse)) {
+  context.AddNode(ParseNodeKind::IfExpressionThen, state.token,
+                  state.subtree_start, state.has_error);
+
+  if (context.PositionIs(TokenKind::Else)) {
+    context.PushState(ParserState::IfExpressionFinishElse);
+    context.ConsumeChecked(TokenKind::Else);
     context.PushStateForExpression(*PrecedenceGroup::ForLeading(TokenKind::If));
   } else {
     // TODO: Include the location of the `if` token.
@@ -245,20 +263,28 @@ auto ParserHandleExpressionElse(ParserContext& context) -> void {
     if (!state.has_error) {
       context.emitter().Emit(*context.position(), ExpectedElseAfterIf);
     }
-    // Add placeholders for `else expression`.
-    for (int i = 0; i != 2; ++i) {
-      context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
-                          /*has_error=*/true);
-    }
+    // Add placeholder for the final `Expression`.
+    context.AddLeafNode(ParseNodeKind::InvalidParse, *context.position(),
+                        /*has_error=*/true);
     context.ReturnErrorOnState();
   }
 }
 
-auto ParserHandleExpressionIfFinish(ParserContext& context) -> void {
+auto ParserHandleIfExpressionFinishElse(ParserContext& context) -> void {
+  auto else_state = context.PopState();
+
+  // Propagate the location of `else`.
+  auto if_state = context.PopState();
+  if_state.token = else_state.token;
+  if_state.has_error |= else_state.has_error;
+  context.PushState(if_state);
+}
+
+auto ParserHandleIfExpressionFinish(ParserContext& context) -> void {
   auto state = context.PopState();
 
-  context.AddNode(ParseNodeKind::IfExpression, state.token, state.subtree_start,
-                  state.has_error);
+  context.AddNode(ParseNodeKind::IfExpressionElse, state.token,
+                  state.subtree_start, state.has_error);
 }
 
 auto ParserHandleExpressionStatementFinish(ParserContext& context) -> void {

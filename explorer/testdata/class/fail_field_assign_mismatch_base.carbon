@@ -11,7 +11,8 @@ base class Point {
   var y: i32;
 }
 
-class Point3D extends Point {
+class Point3D {
+  extend base: Point;
   var z: i32;
 }
 

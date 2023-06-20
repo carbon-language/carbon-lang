@@ -11,7 +11,7 @@ interface HasAssoc {
   let Assoc:! type;
 }
 class X {
-  external impl as HasAssoc where .Assoc = i32 {}
+  impl as HasAssoc where .Assoc = i32 {}
 }
 
 alias WithoutRewrite = HasAssoc where .Assoc == i32;

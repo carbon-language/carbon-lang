@@ -60,7 +60,7 @@ interface Widget {
 class Cog {
   var size: i32;
   fn Make(size: i32) -> Self;
-  impl as Widgets.Widget;
+  extend impl as Widgets.Widget;
 }
 
 fn GrowSomeCogs() {
@@ -165,12 +165,12 @@ For example:
 interface Printable {
   fn Print[self: Self]();
 }
-external impl i32 as Printable;
+impl i32 as Printable;
 class Point {
   var x: i32;
   var y: i32;
   // Internal impl injects the name `Print` into class `Point`.
-  impl as Printable;
+  extend impl as Printable;
 }
 
 fn PrintPointTwice() {
@@ -242,7 +242,7 @@ class Cowboy { fn Draw[self: Self](); }
 interface Renderable {
   fn Draw[self: Self]();
 }
-external impl Cowboy as Renderable { fn Draw[self: Self](); }
+impl Cowboy as Renderable { fn Draw[self: Self](); }
 fn DrawDirect(c: Cowboy) { c.Draw(); }
 fn DrawGeneric[T:! Renderable](c: T) { c.Draw(); }
 fn DrawTemplate[template T:! Renderable](c: T) { c.Draw(); }
@@ -257,7 +257,7 @@ fn Draw(c: Cowboy) {
 }
 
 class RoundWidget {
-  external impl as Renderable {
+  impl as Renderable {
     fn Draw[self: Self]();
   }
   alias Draw = Renderable.Draw;
@@ -265,7 +265,7 @@ class RoundWidget {
 
 class SquareWidget {
   fn Draw[self: Self]() {}
-  external impl as Renderable {
+  impl as Renderable {
     alias Draw = Self.Draw;
   }
 }
@@ -311,7 +311,7 @@ interface Addable {
 }
 
 class Integer {
-  impl as Addable {
+  extend impl as Addable {
     // #3
     fn Add[self: Self](other: Self) -> Self;
     // #4, generated from default implementation for #2.
@@ -372,7 +372,7 @@ interface I {
   let N:! i32;
 }
 class C {
-  impl as I where .N = 5 {
+  extend impl as I where .N = 5 {
     // #2
     fn F[self: C]() {}
   }
@@ -417,7 +417,7 @@ interface Renderable {
 }
 
 class RoundWidget {
-  external impl as Renderable {
+  impl as Renderable {
     // #2
     fn Draw[self: Self]();
   }
@@ -428,7 +428,7 @@ class RoundWidget {
 class SquareWidget {
   // #3
   fn Draw[self: Self]() {}
-  external impl as Renderable {
+  impl as Renderable {
     alias Draw = Self.Draw;
   }
 }
@@ -480,8 +480,9 @@ base class WidgetBase {
   }
 }
 
-class TriangleWidget extends WidgetBase {
-  external impl as Renderable;
+class TriangleWidget {
+  extend base: WidgetBase;
+  impl as Renderable;
 }
 fn DrawTriangle(t: TriangleWidget) {
   // ✅ OK: name `Draw` resolves to `Draw` member of `WidgetBase`, which
@@ -582,7 +583,7 @@ always used for lookup.
 interface Printable {
   fn Print[self: Self]();
 }
-external impl i32 as Printable {
+impl i32 as Printable {
   fn Print[self: Self]();
 }
 fn MemberAccess(n: i32) {
@@ -621,7 +622,7 @@ class A {
 interface B {
   fn F();
 }
-external impl A as B;
+impl A as B;
 
 fn Use(a: A) {
   // Calls member `F` of class `A.B`.

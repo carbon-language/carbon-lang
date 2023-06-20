@@ -13,6 +13,7 @@ cc_library(
     hdrs = ["file_test_base.h"],
     deps = [
         "//common:check",
+        "//testing/util:test_raw_ostream",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

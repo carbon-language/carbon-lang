@@ -72,7 +72,7 @@ fn DoFirst(
 }
 
 class C {
-  impl as ManyTypes where
+  extend impl as ManyTypes where
       .T3 = (.T4, .T4, .T4) and
       .T1 = (.T2, .T2, .T2) and
       .T4 = (.T5, .T5, .T5) and

@@ -52,7 +52,7 @@ cc_test(
         ":carbon_cc_proto",
         ":proto_to_carbon_lib",
         "//common:error",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )

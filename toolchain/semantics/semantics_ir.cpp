@@ -198,9 +198,13 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BindName:
+      case SemanticsNodeKind::BlockArg:
+      case SemanticsNodeKind::BoolLiteral:
+      case SemanticsNodeKind::Branch:
+      case SemanticsNodeKind::BranchIf:
+      case SemanticsNodeKind::BranchWithArg:
       case SemanticsNodeKind::Builtin:
       case SemanticsNodeKind::Call:
-      case SemanticsNodeKind::CodeBlock:
       case SemanticsNodeKind::CrossReference:
       case SemanticsNodeKind::FunctionDeclaration:
       case SemanticsNodeKind::IntegerLiteral:
@@ -211,6 +215,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::StructMemberAccess:
       case SemanticsNodeKind::StructValue:
       case SemanticsNodeKind::StubReference:
+      case SemanticsNodeKind::UnaryOperatorNot:
       case SemanticsNodeKind::VarStorage:
         // We don't need to handle stringification for nodes that don't show up
         // in errors, but make it clear what's going on so that it's clearer

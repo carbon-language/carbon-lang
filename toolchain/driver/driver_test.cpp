@@ -7,10 +7,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "common/test_raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/SourceMgr.h"
+#include "testing/util/test_raw_ostream.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
@@ -21,15 +21,15 @@ using ::testing::ElementsAre;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
 
-static constexpr llvm::StringLiteral TestFileName = "test_file.carbon";
-
 class DriverTest : public testing::Test {
  protected:
   DriverTest() : driver_(fs_, test_output_stream_, test_error_stream_) {}
 
-  auto CreateTestFile(llvm::StringRef text) -> void {
+  auto CreateTestFile(llvm::StringRef text) -> llvm::StringRef {
+    static constexpr llvm::StringLiteral TestFileName = "test_file.carbon";
     fs_.addFile(TestFileName, /*ModificationTime=*/0,
                 llvm::MemoryBuffer::getMemBuffer(text));
+    return TestFileName;
   }
 
   llvm::vfs::InMemoryFileSystem fs_;
@@ -82,9 +82,9 @@ TEST_F(DriverTest, HelpErrors) {
 }
 
 TEST_F(DriverTest, DumpTokens) {
-  CreateTestFile("Hello World");
-  EXPECT_TRUE(driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
-                                        {"tokens", TestFileName}));
+  auto file = CreateTestFile("Hello World");
+  EXPECT_TRUE(
+      driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"tokens", file}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   auto tokenized_text = test_output_stream_.TakeStr();
 
@@ -114,7 +114,7 @@ TEST_F(DriverTest, DumpTokens) {
                                      {"spelling", ""}}}));
 
   // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver_.RunFullCommand({"dump", "tokens", TestFileName}));
+  EXPECT_TRUE(driver_.RunFullCommand({"dump", "tokens", file}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(tokenized_text));
 }
@@ -141,15 +141,15 @@ TEST_F(DriverTest, DumpErrors) {
 }
 
 TEST_F(DriverTest, DumpParseTree) {
-  CreateTestFile("var v: Int = 42;");
+  auto file = CreateTestFile("var v: Int = 42;");
   EXPECT_TRUE(driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
-                                        {"parse-tree", TestFileName}));
+                                        {"parse-tree", file}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Verify there is output without examining it.
   EXPECT_FALSE(test_output_stream_.TakeStr().empty());
 
   // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver_.RunFullCommand({"dump", "parse-tree", TestFileName}));
+  EXPECT_TRUE(driver_.RunFullCommand({"dump", "parse-tree", file}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Verify there is output without examining it.
   EXPECT_FALSE(test_output_stream_.TakeStr().empty());
