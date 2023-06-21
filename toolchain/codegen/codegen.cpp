@@ -16,7 +16,8 @@
 
 namespace Carbon {
 
-void PrintDisassemblyFromModule(llvm::Module& module) {
+void PrintAssemblyFromModule(llvm::Module& module) {
+  llvm::raw_ostream& error_stream = llvm::errs();
   // Initialize the target registry etc.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
@@ -30,7 +31,7 @@ void PrintDisassemblyFromModule(llvm::Module& module) {
   const auto* target = llvm::TargetRegistry::lookupTarget(target_triple, error);
 
   if (!target) {
-    // output << error;
+    error_stream << error;
     return;
   }
 
@@ -45,18 +46,16 @@ void PrintDisassemblyFromModule(llvm::Module& module) {
   module.setDataLayout(target_machine->createDataLayout());
   module.setTargetTriple(target_triple);
 
-  llvm::raw_fd_ostream dest(fileno(stdout), false);
-
   llvm::legacy::PassManager pass;
   auto file_type = llvm::CGFT_AssemblyFile;  // llvm::CGFT_ObjectFile;
 
-  if (target_machine->addPassesToEmitFile(pass, dest, nullptr, file_type)) {
-    // output << "Could not write to object file\n";
+  if (target_machine->addPassesToEmitFile(pass, llvm::outs(), nullptr,
+                                          file_type)) {
+    error_stream << "Nothing to write to object file\n";
     return;
   }
 
   pass.run(module);
-  dest.flush();
   delete target_machine;
 }
 }  // namespace Carbon

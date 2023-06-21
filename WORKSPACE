@@ -116,7 +116,6 @@ http_archive(
 
 llvm_version = "0258a53521cfedf5cb80c2b1d4a66c942615de74"
 
-
 http_archive(
     name = "llvm-raw",
     build_file_content = "# empty",

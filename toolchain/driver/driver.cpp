@@ -117,7 +117,7 @@ enum class DumpMode {
   ParseTree,
   SemanticsIR,
   LLVMIR,
-  DisAssembly,
+  Assembly,
   Unknown
 };
 
@@ -133,11 +133,11 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                        .Case("parse-tree", DumpMode::ParseTree)
                        .Case("semantics-ir", DumpMode::SemanticsIR)
                        .Case("llvm-ir", DumpMode::LLVMIR)
-                       .Case("dis-assembly", DumpMode::DisAssembly)
+                       .Case("assembly", DumpMode::Assembly)
                        .Default(DumpMode::Unknown);
   if (dump_mode == DumpMode::Unknown) {
     error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, "
-                     "semantics-ir, llvm-ir or dis-assembly.\n";
+                     "semantics-ir, llvm-ir or assembly.\n";
     return false;
   }
   args = args.drop_front();
@@ -241,8 +241,8 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                   /*IsForDebug=*/true);
   }
 
-  if (dump_mode == DumpMode::DisAssembly) {
-    Carbon::PrintDisassemblyFromModule(*module);
+  if (dump_mode == DumpMode::Assembly) {
+    Carbon::PrintAssemblyFromModule(*module);
     return !has_errors;
   }
 
