@@ -12,4 +12,5 @@
 namespace Carbon {
 void PrintAssemblyFromModule(llvm::Module& module);
 }  // namespace Carbon
+
 #endif  // CARBON_TOOLCHAIN_CODEGEN_CODEGEN_H_
