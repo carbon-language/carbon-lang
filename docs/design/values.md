@@ -127,9 +127,9 @@ Value bindings require the matched expression to be a _value expression_,
 converting it into one as necessary.
 
 A _variable pattern_ can be introduced with the `var` keyword to create an
-object with storage when match.d Every binding pattern name introduced within a
+object with storage when matched. Every binding pattern name introduced within a
 variable pattern is called a _variable binding_ and forms a
-[_reference expression_](#reference-expressions) to an object within the
+[_durable reference expression_](#durable-reference-expressions) to an object within the
 variable pattern's storage when used. Variable patterns require their matched
 expression to be an _initializing expression_ and provide their storage to it to
 be initialized.
@@ -139,10 +139,11 @@ fn MutateThing(ptr: i64*);
 
 fn Example() {
   // Both `1` and `2` here start as value expressions. That is a match for `1`.
+  let x: i64 = 1;
   // For `2`, the variable binding requires it to be converted to an
   // initializing expression by using the value `2` to initialize the provided
   // variable storage that `y` will refer to.
-  let (x: i64, var y: i64) = (1, 2);
+  var y: i64 = 2;
 
   // Allowed to take the address and mutate `y` as it is a durable reference
   // expression.
@@ -374,7 +375,7 @@ reference expression.
 When using a custom representation type in this way, no fields are accessible
 through a value expression. Instead, only methods can be called using member
 access, as they simply bind the value expression to the `self` parameter.
-However, one important method can be called -- `.(ImplicitAs(T).Convert()`. This
+However, one important method can be called -- `.(ImplicitAs(T).Convert)()`. This
 implicitly converting a value expression for the type into its custom
 representation type. The customization of the representation above causes the
 class to have a builtin `impl as ImplicitAs(T)` which converts to the
@@ -503,7 +504,7 @@ fn F(s_value: S) {
   s_value.ValueMemberFunction();
 
   // This requires an unsafe marker in the syntax.
-  s_value.unsafe MutableMemberFunction();
+  s_value.unsafe AddrMemberFunction();
 }
 ```
 
@@ -542,9 +543,9 @@ return statements interact with expressions, values, objects, and storage
 
 The last path that requires forming an initializing expression in Carbon is when
 attempting to convert a non-reference expression into an ephemeral reference
-expression, where temporary storage is materialized and provided to an
-initializing expression. The resulting object can then form the ephemeral
-reference expression.
+expression: the expression is first converted to an initializing expression if necessary,
+and then temporary storage is materialized to act as its output, and as the referent
+of the resulting ephemeral reference expression.
 
 ### Function calls and returns
 
@@ -574,9 +575,9 @@ stage and initialized exactly once.
 #### Deferred initialization from values and references
 
 Carbon also makes the evaluation of returning function calls and return
-statements are tightly linked in order to enable more efficiency improvements.
+statements tightly linked in order to enable more efficiency improvements.
 It allows the actual initialization performed by the `return` statement with its
-expression can be deferred from within the body of the function to the caller
+expression to be deferred from within the body of the function to the caller
 initializer expression if it can simply propagate a value or reference
 expression to the caller that is guaranteed to be alive and available to the
 caller.
@@ -632,7 +633,7 @@ where that initialization is not necessary.
 This also allows the return's storage to be matched into a local `returned var`
 variable declaration within a function body, which can then be initialized and
 used just like any other `var` declaration. The storage used for the declaration
-is exactly that provided to a call to the function For example:
+is exactly that provided to a call to the function. For example:
 
 ```carbon
 fn CreateMyObject2() -> MyType {
@@ -815,7 +816,7 @@ class TaggedPtr(T:! Type) {
   var ptr: T*;
 }
 external impl [T:! Type] TaggedPtr(T) as Pointer {
-  let ValueT:$ T;
+  let ValueT:! T;
   fn Dereference[self: Self]() -> T* { return self.ptr; }
 }
 
@@ -833,7 +834,7 @@ pointers as a no-op:
 
 ```carbon
 impl [T:! Type] T* as Pointer {
-  let ValueT:$ Type = T;
+  let ValueT:! Type = T;
   fn Dereference[self: Self]() -> T* { return self; }
 }
 ```

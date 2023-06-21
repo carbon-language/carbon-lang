@@ -32,7 +32,7 @@ interface the type implements:
 
 -   If subscripting a value expression produces a value expression, as with an
     array, the type should implement `IndexWith`.
--   If subscripting an value expression produces a durable reference expression,
+-   If subscripting a value expression produces a durable reference expression,
     as with C++'s `std::span`, the type should implement `IndirectIndexWith`.
 
 `IndirectIndexWith` is a subtype of `IndexWith`, and subscript expressions are
