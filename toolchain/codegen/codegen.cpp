@@ -17,9 +17,8 @@
 namespace Carbon {
 
 void PrintAssemblyFromModule(llvm::Module& module,
-                             llvm::StringRef target_triple) {
-  llvm::raw_ostream& error_stream = llvm::errs();
-
+                             llvm::StringRef target_triple,
+                             llvm::raw_ostream& error_stream) {
   // Initialize the target registry etc.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
@@ -41,14 +40,13 @@ void PrintAssemblyFromModule(llvm::Module& module,
     return;
   }
 
-  const auto* cpu = "generic";
-  const auto* features = "";
+  constexpr llvm::StringLiteral CPU = "generic";
+  constexpr llvm::StringLiteral Features = "";
 
   llvm::TargetOptions target_opts;
-  std::optional<llvm::Reloc::Model> reloc_model =
-      std::optional<llvm::Reloc::Model>();
+  std::optional<llvm::Reloc::Model> reloc_model;
   auto* target_machine = target->createTargetMachine(
-      target_triple, cpu, features, target_opts, reloc_model);
+      target_triple, CPU, Features, target_opts, reloc_model);
   module.setDataLayout(target_machine->createDataLayout());
   module.setTargetTriple(target_triple);
 

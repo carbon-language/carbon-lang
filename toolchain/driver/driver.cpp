@@ -137,7 +137,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                        .Default(DumpMode::Unknown);
   if (dump_mode == DumpMode::Unknown) {
     error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, "
-                     "semantics-ir, llvm-ir or assembly.\n";
+                     "semantics-ir, llvm-ir, or assembly.\n";
     return false;
   }
   args = args.drop_front();
@@ -249,7 +249,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
 
   if (dump_mode == DumpMode::Assembly) {
-    Carbon::PrintAssemblyFromModule(*module, target_triple);
+    Carbon::PrintAssemblyFromModule(*module, target_triple, error_stream_);
     return !has_errors;
   }
 

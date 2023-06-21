@@ -22,17 +22,8 @@ cc_library(
         "//toolchain/parser:parse_tree",
         "//toolchain/semantics:semantics_ir",
         "//toolchain/source:source_buffer",
-        "@llvm-project//clang:driver",
-        "@llvm-project//clang:frontend",
-        "@llvm-project//llvm:AArch64AsmParser",
-        "@llvm-project//llvm:AArch64CodeGen",
         "@llvm-project//llvm:Core",
-        "@llvm-project//llvm:MC",
         "@llvm-project//llvm:Support",
-        "@llvm-project//llvm:Target",
-        "@llvm-project//llvm:TargetParser",
-        "@llvm-project//llvm:X86AsmParser",
-        "@llvm-project//llvm:X86CodeGen",
     ],
 )
 
