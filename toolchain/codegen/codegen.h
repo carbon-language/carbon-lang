@@ -11,7 +11,8 @@
 
 namespace Carbon {
 // Prints the assembly to stdout for the given llvm module.
-void PrintAssemblyFromModule(llvm::Module& module);
+void PrintAssemblyFromModule(llvm::Module& module,
+                             llvm::StringRef target_triple);
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_CODEGEN_CODEGEN_H_

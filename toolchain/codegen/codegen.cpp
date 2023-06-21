@@ -16,8 +16,10 @@
 
 namespace Carbon {
 
-void PrintAssemblyFromModule(llvm::Module& module) {
+void PrintAssemblyFromModule(llvm::Module& module,
+                             llvm::StringRef target_triple) {
   llvm::raw_ostream& error_stream = llvm::errs();
+
   // Initialize the target registry etc.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
@@ -25,10 +27,12 @@ void PrintAssemblyFromModule(llvm::Module& module) {
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllAsmPrinters();
 
-  auto target_triple = llvm::sys::getDefaultTargetTriple();
-
   std::string error;
-  const auto* target = llvm::TargetRegistry::lookupTarget(target_triple, error);
+  llvm::StringRef triple = target_triple;
+  if (target_triple.empty()) {
+    triple = "x86_64-unknown-linux-gnu";
+  }
+  const auto* target = llvm::TargetRegistry::lookupTarget(triple, error);
 
   if (!target) {
     error_stream << error;

@@ -156,6 +156,13 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     semantics_ir_include_builtins = true;
   }
 
+  llvm::StringRef target_triple;
+  if (dump_mode == DumpMode::Assembly && !args.empty() &&
+      args.front().starts_with("--target_triple=")) {
+    target_triple = args.front().split("=").second;
+    args = args.drop_front();
+  }
+
   if (args.empty()) {
     error_stream_ << "ERROR: No input file specified.\n";
     return false;
@@ -242,7 +249,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
 
   if (dump_mode == DumpMode::Assembly) {
-    Carbon::PrintAssemblyFromModule(*module);
+    Carbon::PrintAssemblyFromModule(*module, target_triple);
     return !has_errors;
   }
 
