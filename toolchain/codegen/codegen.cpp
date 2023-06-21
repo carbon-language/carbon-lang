@@ -28,9 +28,9 @@ void PrintAssemblyFromModule(llvm::Module& module,
   llvm::InitializeAllAsmPrinters();
 
   std::string error;
-  llvm::StringRef triple = target_triple;
-  if (target_triple.empty()) {
-    triple = "x86_64-unknown-linux-gnu";
+  auto triple = llvm::sys::getDefaultTargetTriple();
+  if (!target_triple.empty()) {
+    triple = target_triple;
   }
   const auto* target = llvm::TargetRegistry::lookupTarget(triple, error);
 
