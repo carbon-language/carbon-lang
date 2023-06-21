@@ -28,9 +28,11 @@ void PrintAssemblyFromModule(llvm::Module& module,
   llvm::InitializeAllAsmPrinters();
 
   std::string error;
-  auto triple = llvm::sys::getDefaultTargetTriple();
-  if (!target_triple.empty()) {
-    triple = target_triple;
+  llvm::StringRef triple = target_triple;
+  std::string host_triple;
+  if (target_triple.empty()) {
+    host_triple = llvm::sys::getDefaultTargetTriple();
+    triple = host_triple;
   }
   const auto* target = llvm::TargetRegistry::lookupTarget(triple, error);
 
