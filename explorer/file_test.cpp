@@ -19,6 +19,10 @@ class ParseAndExecuteTestFile : public FileTestBase {
     std::string path_str = path().string();
     llvm::StringRef path_ref = path_str;
 
+    if (path_ref.find("/trace/") != llvm::StringRef::npos) {
+      is_trace_test = true;
+    }
+
     if (trace_) {
       if (path_ref.find("/limits/") != llvm::StringRef::npos) {
         GTEST_SKIP()
@@ -32,7 +36,7 @@ class ParseAndExecuteTestFile : public FileTestBase {
         GTEST_SKIP() << "Expensive test to trace";
       }
     } else {
-      if (path_ref.find("/trace/") != llvm::StringRef::npos) {
+      if (is_trace_test) {
         GTEST_SKIP() << "`trace` tests only check for trace output.";
         is_trace_test = true;
       }

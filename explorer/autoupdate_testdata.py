@@ -25,6 +25,16 @@ def main() -> None:
         "--tool=explorer",
         "--testdata=explorer/testdata",
     ] + sys.argv[1:]
+    subprocess.call(args)
+
+    args = [
+        str(autoupdate_py),
+        # Flags to configure for explorer testing.
+        "--tool=explorer",
+        "--testdata=explorer/testdata/trace",
+        "--autoupdate_arg=--trace_file=-",
+        "--autoupdate_arg=-trace_all",
+    ] + sys.argv[1:]
     exit(subprocess.call(args))
 
 
