@@ -271,3 +271,28 @@ local_repository(
     name = "woff2_carbon",
     path = "third_party/examples/woff2/carbon",
 )
+
+###############################################################################
+# Treesitter rules
+###############################################################################
+
+http_archive(
+    name = "build_bazel_rules_nodejs",
+    sha256 = "4e1a5633267a0ca1d550cced2919dd4148575c0bafd47608b88aea79c41b5ca3",
+    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/4.2.0/rules_nodejs-4.2.0.tar.gz"],
+)
+
+load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories")
+node_repositories(
+    node_version = "10.19.0",
+)
+
+http_archive(
+    name = "rules_tree_sitter",
+    urls = ["https://github.com/elliottt/rules_tree_sitter/archive/8e248d1ea054b0d5ecdd71de3dccfe421354491f.tar.gz"],
+    sha256 = "7d7fbf982ce3ba74eabaa0bd7cee8d6f7fd651e25e2acfae177051c29174f04c",
+    strip_prefix = "rules_tree_sitter-8e248d1ea054b0d5ecdd71de3dccfe421354491f",
+)
+
+load("@rules_tree_sitter//tree_sitter:tree_sitter.bzl", "tree_sitter_register_toolchains")
+tree_sitter_register_toolchains()
