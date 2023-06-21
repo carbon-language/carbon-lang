@@ -22,14 +22,12 @@
 #include "explorer/ast/element.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/expression_category.h"
-#include "explorer/ast/statement.h"
 #include "explorer/ast/value.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/common/source_location.h"
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/action_stack.h"
-#include "explorer/interpreter/heap.h"
 #include "explorer/interpreter/stack.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
@@ -1273,7 +1271,7 @@ auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
 
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   auto& act = cast<ExpressionAction>(todo_.CurrentAction());
-  const Expression& exp = cast<ExpressionAction>(act).expression();
+  const Expression& exp = act.expression();
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- step exp " << exp << " ." << act.pos() << "."
                    << " (" << exp.source_loc() << ") --->\n";
@@ -2043,7 +2041,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
 
 auto Interpreter::StepStmt() -> ErrorOr<Success> {
   auto& act = cast<StatementAction>(todo_.CurrentAction());
-  const Statement& stmt = cast<StatementAction>(act).statement();
+  const Statement& stmt = act.statement();
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- step stmt ";
     stmt.PrintDepth(1, trace_stream_->stream());
@@ -2227,7 +2225,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           const auto init_location = act.location_created();
           if (expr_category == ExpressionCategory::Initializing &&
               init_location && heap_.IsInitialized(*init_location)) {
-            // Bind even if a conversion is necessary.
             const auto address = Address(*init_location);
             CARBON_ASSIGN_OR_RETURN(
                 v, heap_.Read(address, definition.source_loc()));
@@ -2237,7 +2234,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             // TODO: Prevent copies for Value expressions from Reference
             // expression, once able to prevent mutations.
             if (init_location) {
-              // Location provided to initializing expression wasn't used.
+              // Location provided to initializing expression was not used.
               heap_.Discard(*init_location);
             }
             expr_category = ExpressionCategory::Value;
@@ -2258,11 +2255,10 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
               cast<BindingPlaceholderValue>(*p).value_node();
           CARBON_CHECK(value_node);
           // TODO: Handle allocation forwarding for initializing expression.
-          const auto location = *act.location_received();
-          scope.Bind(*value_node, Address(location));
-          CARBON_RETURN_IF_ERROR(
-              heap_.Write(Address(location), v, stmt.source_loc()));
-        } else /* Not a returned var */ {
+          const auto address = Address(*act.location_received());
+          scope.Bind(*value_node, address);
+          CARBON_RETURN_IF_ERROR(heap_.Write(address, v, stmt.source_loc()));
+        } else /* not a returned var */ {
           BindingMap generic_args;
           CARBON_CHECK(
               PatternMatch(p, ExpressionResult(v, v_location, expr_category),
@@ -2411,9 +2407,6 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
     case DeclarationKind::VariableDeclaration: {
       const auto& var_decl = cast<VariableDeclaration>(decl);
       if (var_decl.has_initializer()) {
-        // TODO: Var binding: Initialize and pass to initializing expression
-        // first
-        // TODO: Let binding: Initialize from value, or convert and pin
         if (act.pos() == 0) {
           return todo_.Spawn(
               std::make_unique<ExpressionAction>(&var_decl.initializer()));

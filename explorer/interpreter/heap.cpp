@@ -54,9 +54,10 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
 
 auto Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) const
     -> ErrorOr<Success> {
-  if (states_[allocation.index_] == ValueState::Dead) {
+  if (states_[allocation.index_] == ValueState::Dead ||
+      states_[allocation.index_] == ValueState::Discarded) {
     return ProgramError(source_loc)
-           << "undefined behavior: access to dead value "
+           << "undefined behavior: access to dead or discarded value "
            << *values_[allocation.index_];
   }
   return Success();

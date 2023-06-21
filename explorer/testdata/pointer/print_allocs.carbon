@@ -3,12 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: 0: Heap{}, 1: 1, 2: 2
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  var p: i32* = heap.New(5);
-  heap.Delete(p);
-  // CHECK:STDERR: RUNTIME ERROR: fail_use_after_free.carbon:[[@LINE+1]]: undefined behavior: access to dead or discarded value 5
-  return *p;
+  var a: i32 = 1;
+  var b: i32 = 2;
+  heap.PrintAllocations();
+  return 0;
 }
