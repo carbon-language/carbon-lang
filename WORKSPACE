@@ -113,8 +113,7 @@ http_archive(
 
 # We pin to specific upstream commits and try to track top-of-tree reasonably
 # closely rather than pinning to a specific release.
-
-llvm_version = "0258a53521cfedf5cb80c2b1d4a66c942615de74"
+llvm_version = "c5f6a287499a816cba5585708999e2c8b134290f"
 
 http_archive(
     name = "llvm-raw",
@@ -125,7 +124,7 @@ http_archive(
         "@carbon//bazel/patches/llvm:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
         "@carbon//bazel/patches/llvm:0003_Modernize_py_binary_rule_for_lit.patch",
     ],
-    sha256 = "e9f298730072bca14d4db5a786ed7d11962654d3895c27c47ee8130b77cb5f18",
+    sha256 = "03a8eb4b243846ee037d700b048ec48a87eeef480cb129ab56aa7e0537172b98",
     strip_prefix = "llvm-project-{0}".format(llvm_version),
     urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_version)],
 )
