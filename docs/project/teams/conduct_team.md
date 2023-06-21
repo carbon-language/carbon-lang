@@ -17,9 +17,13 @@ be used for questions, concerns, or reports of specific conduct issues.
 
 The current members of this list are:
 
--   TBA
+-   Allison Poppe (@acpoppe on Discord and GitHub)
+-   Céline Dedaj (@celineausberlin on Discord and GitHub)
+-   Christopher Di Bella (@cjdb on Discord and GitHub)
+-   Lexi Bromfield (@lexinadia on Discord and @lexi-nadia on GitHub)
+-   flysand (@flysand on Discord and @flysand7 on GitHub)
 
-For more details, please see the
+For more details on reporting conduct to the team, please see the
 [reporting conduct](/CODE_OF_CONDUCT.md#reporting-conduct) documentation.
 
 ## Team structure and updates
@@ -35,4 +39,5 @@ these goals, and when trained and ready, the team will directly update this
 documentation and add them to the respective infrastructure.
 
 The Conduct Team is typically recruited from among our active moderators -- if
-you are interested, reach out to any of the moderators to get involved.
+you are interested, reaching out to any of the moderators about helping with
+moderation is a good first step.

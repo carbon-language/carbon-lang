@@ -148,7 +148,11 @@ any member of the conduct team directly.
 The conduct team can be emailed at conduct@carbon-lang.dev, and currently has
 the following members:
 
--   TBA
+-   Allison Poppe (@acpoppe on Discord and GitHub)
+-   Céline Dedaj (@celineausberlin on Discord and GitHub)
+-   Christopher Di Bella (@cjdb on Discord and GitHub)
+-   Lexi Bromfield (@lexinadia on Discord and @lexi-nadia on GitHub)
+-   flysand (@flysand on Discord and @flysand7 on GitHub)
 
 More details about the team and its management are on the
 [conduct team page](/docs/project/teams/conduct_team.md).
