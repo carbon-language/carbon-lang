@@ -10,7 +10,7 @@
 #include "llvm/IR/Module.h"
 
 namespace Carbon {
-llvm::raw_ostream& output = llvm::outs();
+// llvm::raw_ostream& output = llvm::outs();
 void PrintDisassemblyFromModule(llvm::Module& module);
 }  // namespace Carbon
 #endif  // CARBON_TOOLCHAIN_CODEGEN_CODEGEN_H_

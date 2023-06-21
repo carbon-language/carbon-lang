@@ -30,7 +30,7 @@ void PrintDisassemblyFromModule(llvm::Module& module) {
   const auto* target = llvm::TargetRegistry::lookupTarget(target_triple, error);
 
   if (!target) {
-    output << error;
+    // output << error;
     return;
   }
 
@@ -51,7 +51,7 @@ void PrintDisassemblyFromModule(llvm::Module& module) {
   auto file_type = llvm::CGFT_AssemblyFile;  // llvm::CGFT_ObjectFile;
 
   if (target_machine->addPassesToEmitFile(pass, dest, nullptr, file_type)) {
-    output << "Could not write to object file\n";
+    // output << "Could not write to object file\n";
     return;
   }
 
