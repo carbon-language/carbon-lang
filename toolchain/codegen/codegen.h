@@ -10,6 +10,7 @@
 #include "llvm/IR/Module.h"
 
 namespace Carbon {
+// Prints the assembly to stdout for the given llvm module.
 void PrintAssemblyFromModule(llvm::Module& module);
 }  // namespace Carbon
 

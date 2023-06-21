@@ -46,8 +46,12 @@ void PrintAssemblyFromModule(llvm::Module& module) {
   module.setDataLayout(target_machine->createDataLayout());
   module.setTargetTriple(target_triple);
 
+  // Using the legacy PM to generate the assembly since the new PM
+  // does not work with this yet.
+  // FIXME: make the new PM work with the codegen pipeline.
+
   llvm::legacy::PassManager pass;
-  auto file_type = llvm::CGFT_AssemblyFile;  // llvm::CGFT_ObjectFile;
+  auto file_type = llvm::CGFT_AssemblyFile;
 
   if (target_machine->addPassesToEmitFile(pass, llvm::outs(), nullptr,
                                           file_type)) {
