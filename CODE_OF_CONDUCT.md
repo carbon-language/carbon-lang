@@ -150,8 +150,8 @@ the following members:
 
 -   TBA
 
-If the composition of the code of conduct team changes, reports will not be
-shared with new members without the permission of the reporter.
+More details about the team and its management are on the
+[conduct team page](/docs/project/teams/conduct_team.md).
 
 ### Reporting conduct
 
@@ -169,7 +169,8 @@ several ways, including:
     conduct@carbon-lang.dev. Bear in mind that
     [responses may take time](#what-happens-after-contacting-the-conduct-team).
 
-**All reports will be kept confidential.**
+**All reports will be kept confidential**, and are only used by the conduct team
+to address conduct issues and keep the Carbon community safe and inclusive.
 
 Please send reports concerning a member of the conduct team directly to other
 members of the conduct team. This allows discussion of the complaint to more
