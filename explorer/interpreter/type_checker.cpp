@@ -6216,7 +6216,6 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:
     case Value::Kind::MixinPseudoType:
-    case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::AlternativeValue:
     case Value::Kind::TupleValue:
     case Value::Kind::ImplWitness:
@@ -6230,11 +6229,11 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
-      CARBON_FATAL() << "type of alias target is not a type";
+      CARBON_FATAL() << "type of alias target is not a type: " << *type;
 
     case Value::Kind::AutoType:
     case Value::Kind::VariableType:
-      CARBON_FATAL() << "pattern type in alias target";
+      CARBON_FATAL() << "pattern type in alias target: " << *type;
 
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -6246,6 +6245,7 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::ChoiceType:
     case Value::Kind::StringType:
     case Value::Kind::AssociatedConstant:
+    case Value::Kind::TypeOfMixinPseudoType:
       return false;
 
     case Value::Kind::FunctionType:
