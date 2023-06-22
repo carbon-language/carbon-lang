@@ -7,8 +7,7 @@
 (bool_literal) @constant.builtin
 (escape_sequence) @constant.character.escape
 (string_literal) @string
-(integer_literal) @constant.builtin
-(float_literal) @constant.builtin
+(numeric_literal) @constant.builtin
 (numeric_type_literal) @type.builtin
 
 ; function declaration or call expression => function
