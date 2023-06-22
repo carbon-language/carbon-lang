@@ -39,6 +39,7 @@ const PREC = {
 
 module.exports = grammar({
   name: 'carbon',
+  word: ($) => $.ident,
 
   conflicts: ($) => [
     [$.paren_pattern, $.paren_expression],
