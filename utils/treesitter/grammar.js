@@ -47,7 +47,7 @@ module.exports = grammar({
   ],
   extras: ($) => [/\s/, $.comment],
 
-  // NOTE: must match the order in src/scanner.c, the names don't matter
+  // NOTE: must match the order in src/scanner.c, names are not used for matching
   externals: ($) => [$.binary_star, $.postfix_star],
 
   rules: {
