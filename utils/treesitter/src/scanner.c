@@ -23,10 +23,19 @@ void tree_sitter_carbon_external_scanner_deserialize(void* /* payload */,
 
 void tree_sitter_carbon_external_scanner_destroy(void* /* payload */) {}
 
-static bool is_operand_start(char c) {
-  return c == '(' || c == '[' || c == '{' || c == '\"' || c == '_' ||
-         (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-         (c >= '0' && c <= '9');
+// https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/lexical_conventions/symbolic_tokens.md#overview
+// > the token after the operator must be an identifier, a literal, or any kind of opening bracket (for example, (, [, or {).
+static bool token_allowed_after_binary_operator(char c) {
+  return
+      // identifier
+      c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+      // string literal
+      c == '\"' ||
+      // TODO: character literal
+      // number literal
+      (c >= '0' && c <= '9') ||
+      // opening bracket
+      c == '(' || c == '[' || c == '{';
 }
 
 static bool is_whitespace(char c) { return c == ' ' || c == '\n'; }
@@ -52,7 +61,7 @@ bool tree_sitter_carbon_external_scanner_scan(void* /* payload */,
   if (is_whitespace(lexer->lookahead) && whitespace) {
     // foo * bar
     lexer->result_symbol = BINARY_STAR;
-  } else if (!whitespace && is_operand_start(lexer->lookahead)) {
+  } else if (!whitespace && token_allowed_after_binary_operator(lexer->lookahead)) {
     // foo*bar or foo*(bar)
     lexer->result_symbol = BINARY_STAR;
   } else {
