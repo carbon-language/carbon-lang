@@ -2,7 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <numeric>
 #include <string>
@@ -69,7 +71,9 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
 
   llvm::vfs::InMemoryFileSystem fs;
   TestRawOstream error_stream;
-  Driver d(fs, llvm::nulls(), error_stream);
+  std::error_code ec;
+  auto dest = llvm::raw_null_ostream();
+  Driver d(fs, dest, error_stream);
   if (!d.RunFullCommand(args)) {
     if (error_stream.TakeStr().find("ERROR:") == std::string::npos) {
       llvm::errs() << "No error message on a failure!\n";

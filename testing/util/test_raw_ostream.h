@@ -14,9 +14,9 @@
 namespace Carbon::Testing {
 
 // A raw_ostream that makes it easy to repeatedly check streamed output.
-class TestRawOstream : public llvm::raw_string_ostream {
+class TestRawOstream : public llvm::raw_svector_ostream {
  public:
-  explicit TestRawOstream() : llvm::raw_string_ostream(buffer_) {}
+  explicit TestRawOstream() : llvm::raw_svector_ostream(buffer_) {}
 
   ~TestRawOstream() override {
     if (!buffer_.empty()) {
@@ -27,13 +27,13 @@ class TestRawOstream : public llvm::raw_string_ostream {
   // Flushes the stream and returns the contents so far, clearing the stream
   // back to empty.
   auto TakeStr() -> std::string {
-    std::string result = std::move(buffer_);
+    std::string result(buffer_.begin(), buffer_.end());
     buffer_.clear();
     return result;
   }
 
  private:
-  std::string buffer_;
+  llvm::SmallVector<char> buffer_;
 };
 
 }  // namespace Carbon::Testing
