@@ -50,25 +50,25 @@ fn FromReferenceExpression() {
   var c1_var: C = {.id = 1};
   Print("Initialize c1 from reference expression");
   var c1: C = c1_var;
-  heap.PrintAllocations();
+  heap.PrintAllocs();
 }
 
 fn FromValueExpression() {
   let c2_let: C = {.id = 2};
   Print("Initialize c2 from value expression");
   var c2: C = c2_let;
-  heap.PrintAllocations();
+  heap.PrintAllocs();
 }
 
 fn FromInitializingExpression() {
   Print("Initialize c3 from initializing expression (return <expr>)");
   var c3: C = CallWithReturnExpression(3);
-  heap.PrintAllocations();
+  heap.PrintAllocs();
   Print("");
 
   Print("Initialize c4 from initializing expression (returned var)");
   var c4: C = CallWithReturnedVar(4);
-  heap.PrintAllocations();
+  heap.PrintAllocs();
 }
 
 fn Main() -> i32 {

@@ -20,7 +20,7 @@ enum class ExpressionCategory {
   Initializing,
 };
 
-auto ExprCategoryToString(ExpressionCategory cat) -> llvm::StringRef;
+auto ExpressionCategoryToString(ExpressionCategory cat) -> llvm::StringRef;
 
 }  // namespace Carbon
 

@@ -53,27 +53,27 @@ fn Main() -> i32 {
   Print("Setup");
   var c1_var: C = {.id = 1};
   let c2_let: C = {.id = 2};
-  heap.PrintAllocations();
+  heap.PrintAllocs();
   Print("");
 
   Print("Initialize c1 from reference expression");
   let c1: C = c1_var;
-  heap.PrintAllocations();
+  heap.PrintAllocs();
   Print("");
 
   Print("Initialize c2 from value expression");
   let c2: C = c2_let;
-  heap.PrintAllocations();
+  heap.PrintAllocs();
   Print("");
 
   Print("Initialize c3 from initializing expression (return <expr>)");
   let c3: C = CallWithReturnExpression(3);
-  heap.PrintAllocations();
+  heap.PrintAllocs();
   Print("");
 
   Print("Initialize c4 from initializing expression (returned var)");
   let c4: C = CallWithReturnedVar(4);
-  heap.PrintAllocations();
+  heap.PrintAllocs();
   Print("");
   return 0;
 }

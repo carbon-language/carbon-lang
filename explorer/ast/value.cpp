@@ -1237,14 +1237,14 @@ auto NominalClassType::InheritsClass(Nonnull<const Value*> other) const
   return false;
 }
 
-auto ExprCategoryToString(ExpressionCategory cat) -> llvm::StringRef {
+auto ExpressionCategoryToString(ExpressionCategory cat) -> llvm::StringRef {
   switch (cat) {
     case ExpressionCategory::Value:
-      return "ValueExpression";
+      return "value";
     case ExpressionCategory::Reference:
-      return "ReferenceExpression";
+      return "reference";
     case ExpressionCategory::Initializing:
-      return "InitializingExpression";
+      return "initializing";
   }
 }
 

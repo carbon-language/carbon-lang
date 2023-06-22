@@ -30,25 +30,23 @@ class C {
   var id: i32;
 }
 
-fn CallWithValueExpressionBinding(var c: C) {
-  return;
-}
+fn CallWithValueExpressionBinding(var c: C) {}
 
 fn Main() -> i32 {
   Print("Setup");
   var c1_var: C = {.id = 1};
   let c2_let: C = {.id = 2};
-  heap.PrintAllocations();
+  heap.PrintAllocs();
   Print("");
 
   Print("Bind from c1 reference expression");
   CallWithValueExpressionBinding(c1_var);
-  heap.PrintAllocations();
+  heap.PrintAllocs();
   Print("");
 
   Print("Bind from c2 value expression");
   CallWithValueExpressionBinding(c2_let);
-  heap.PrintAllocations();
+  heap.PrintAllocs();
   Print("");
   return 0;
 }

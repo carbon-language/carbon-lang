@@ -312,7 +312,8 @@ static auto InitializePlaceholderValue(
       break;
     case ExpressionCategory::Value:
       if (v.expression_category() == ExpressionCategory::Value) {
-        // TODO: Extend value lifetime to encompass this value.
+        // TODO: Ensure value expressions of temporaries are registered as
+        // allocation to allow us to reference it without the need for a copy.
         (*bindings)->Initialize(value_node, v.value());
       } else if (v.expression_category() == ExpressionCategory::Reference) {
         // TODO: Prevent mutation, error on mutation, or copy
@@ -338,9 +339,9 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
                   BindingMap& generic_args, Nonnull<TraceStream*> trace_stream,
                   Nonnull<Arena*> arena) -> bool {
   if (trace_stream->is_enabled()) {
-    *trace_stream << "match pattern " << *p << "\nfrom a "
-                  << ExprCategoryToString(v.expression_category())
-                  << " with value " << *v.value() << "\n";
+    *trace_stream << "match pattern " << *p << "\nfrom "
+                  << ExpressionCategoryToString(v.expression_category())
+                  << "expression with value " << *v.value() << "\n";
   }
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
@@ -1024,7 +1025,8 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
     if (value_node->expression_category() == ExpressionCategory::Value) {
       method_scope.BindValue(*placeholder->value_node(), receiver);
     } else {
-      CARBON_FATAL() << "TODO: [self addr: Self*] destructors not implemented yet";
+      CARBON_FATAL()
+          << "TODO: [self addr: Self*] destructors not implemented yet";
     }
   }
   CARBON_CHECK(method.body().has_value())
@@ -2223,7 +2225,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         if (definition.has_init()) {
           const auto init_location = act.location_created();
           if (expr_category == ExpressionCategory::Initializing &&
-              init_location && heap_.IsInitialized(*init_location)) {
+              init_location && heap_.is_initialized(*init_location)) {
             const auto address = Address(*init_location);
             CARBON_ASSIGN_OR_RETURN(
                 v, heap_.Read(address, definition.source_loc()));
@@ -2531,7 +2533,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   if (act.pos() < cleanup.allocations_count() * 2) {
     const size_t alloc_index = cleanup.allocations_count() - act.pos() / 2 - 1;
     auto allocation = act.scope()->allocations()[alloc_index];
-    if (heap_.IsDiscarded(allocation)) {
+    if (heap_.is_discarded(allocation)) {
       // Initializing expressions can generate discarded allocations.
       return todo_.RunAgain();
     }

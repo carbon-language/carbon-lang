@@ -84,11 +84,11 @@ void Heap::Deallocate(AllocationId allocation) {
 
 void Heap::Deallocate(const Address& a) { Deallocate(a.allocation_); }
 
-auto Heap::IsInitialized(AllocationId allocation) const -> bool {
+auto Heap::is_initialized(AllocationId allocation) const -> bool {
   return states_[allocation.index_] != ValueState::Uninitialized;
 }
 
-auto Heap::IsDiscarded(AllocationId allocation) const -> bool {
+auto Heap::is_discarded(AllocationId allocation) const -> bool {
   return states_[allocation.index_] == ValueState::Discarded;
 }
 

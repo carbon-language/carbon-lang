@@ -53,9 +53,9 @@ class Heap : public HeapAllocationInterface {
   // Marks this allocation, and all its sub-objects, as discarded.
   void Discard(AllocationId allocation);
   // Returns whether the given allocation was unused and discarded.
-  auto IsDiscarded(AllocationId allocation) const -> bool;
+  auto is_discarded(AllocationId allocation) const -> bool;
   // Returns whether the given allocation was initialized.
-  auto IsInitialized(AllocationId allocation) const -> bool;
+  auto is_initialized(AllocationId allocation) const -> bool;
 
   // Print all the values on the heap to the stream `out`.
   void Print(llvm::raw_ostream& out) const;

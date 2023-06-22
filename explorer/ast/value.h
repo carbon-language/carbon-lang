@@ -100,10 +100,6 @@ class Value {
 // the original expression category, and an optional address if available.
 class ExpressionResult {
  public:
-  ExpressionResult(Nonnull<const Value*> v, std::optional<Address> address,
-                   ExpressionCategory cat)
-      : value_(v), address_(std::move(address)), expr_cat_(cat) {}
-
   static auto Value(Nonnull<const Carbon::Value*> v) -> ExpressionResult {
     return ExpressionResult(v, std::nullopt, ExpressionCategory::Value);
   }
@@ -118,8 +114,12 @@ class ExpressionResult {
                             ExpressionCategory::Initializing);
   }
 
+  ExpressionResult(Nonnull<const Carbon::Value*> v,
+                   std::optional<Address> address, ExpressionCategory cat)
+      : value_(v), address_(std::move(address)), expr_cat_(cat) {}
+
   auto value() const -> Nonnull<const Carbon::Value*> { return value_; }
-  auto address() const -> std::optional<Address> { return address_; }
+  auto address() const -> const std::optional<Address>& { return address_; }
   auto expression_category() const -> ExpressionCategory { return expr_cat_; }
 
  private:
