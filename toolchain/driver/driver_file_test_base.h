@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_DRIVER_DRIVER_FILE_TEST_BASE_H_
 #define CARBON_TOOLCHAIN_DRIVER_DRIVER_FILE_TEST_BASE_H_
 
+#include <cstdio>
 #include <fstream>
 
 #include "llvm/ADT/ScopeExit.h"
@@ -24,8 +25,8 @@ class DriverFileTestBase : public FileTestBase {
   using FileTestBase::FileTestBase;
 
   auto RunWithFiles(const llvm::SmallVector<TestFile>& test_files,
-                    llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
-      -> bool override {
+                    llvm::raw_pwrite_stream& stdout,
+                    llvm::raw_pwrite_stream& stderr) -> bool override {
     // Prepare a list of filenames for MakeArgs. Also create the files
     // in-memory.
     llvm::SmallVector<llvm::StringRef> test_file_names;
@@ -40,7 +41,7 @@ class DriverFileTestBase : public FileTestBase {
       }
     }
 
-    Driver driver(fs, llvm::outs(), llvm::errs());
+    Driver driver(fs, stdout, stderr);
     return driver.RunFullCommand(MakeArgs(test_file_names));
   }
 
