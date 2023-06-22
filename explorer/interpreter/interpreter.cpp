@@ -28,6 +28,7 @@
 #include "explorer/common/trace_stream.h"
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/action_stack.h"
+#include "explorer/interpreter/pattern_match.h"
 #include "explorer/interpreter/stack.h"
 #include "explorer/interpreter/type_utils.h"
 #include "llvm/ADT/APInt.h"
@@ -296,46 +297,6 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
   }
 
   return arena_->New<StructValue>(std::move(elements));
-}
-
-static auto InitializePlaceholderValue(const ValueNodeView& value_node,
-                                       ExpressionResult v,
-                                       Nonnull<RuntimeScope*> bindings) {
-  switch (value_node.expression_category()) {
-    case ExpressionCategory::Reference:
-      if (v.expression_category() == ExpressionCategory::Value ||
-          v.expression_category() == ExpressionCategory::Reference) {
-        // Build by copying from value or reference expression.
-        bindings->Initialize(value_node, v.value());
-      } else {
-        // Location initialized by initializing expression, bind node to
-        // address.
-        CARBON_CHECK(v.address())
-            << "Missing location from initializing expression";
-        bindings->Bind(value_node, *v.address());
-      }
-      break;
-    case ExpressionCategory::Value:
-      if (v.expression_category() == ExpressionCategory::Value) {
-        // We assume values are strictly nested for now.
-        bindings->BindValue(value_node, v.value());
-      } else if (v.expression_category() == ExpressionCategory::Reference) {
-        // Bind the reference expression value directly.
-        CARBON_CHECK(v.address())
-            << "Missing location from reference expression";
-        bindings->BindAndPin(value_node, *v.address());
-      } else {
-        // Location initialized by initializing expression, bind node to
-        // address.
-        CARBON_CHECK(v.address())
-            << "Missing location from initializing expression";
-        bindings->Bind(value_node, *v.address());
-      }
-      break;
-    case ExpressionCategory::Initializing:
-      CARBON_FATAL() << "Cannot pattern match an initializing expression";
-      break;
-  }
 }
 
 auto Interpreter::StepLocation() -> ErrorOr<Success> {

@@ -32,6 +32,7 @@
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
+#include "explorer/interpreter/pattern_match.h"
 #include "explorer/interpreter/type_structure.h"
 #include "explorer/interpreter/type_utils.h"
 #include "llvm/ADT/DenseSet.h"

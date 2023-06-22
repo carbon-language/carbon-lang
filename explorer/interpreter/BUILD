@@ -117,6 +117,7 @@ cc_library(
         ":action",
         ":action_stack",
         ":heap",
+        ":pattern_match",
         ":stack",
         ":type_utils",
         "//common:check",
@@ -206,6 +207,7 @@ cc_library(
         ":dictionary",
         ":interpreter",
         ":pattern_analysis",
+        ":pattern_match",
         ":stack_space",
         ":type_structure",
         ":type_utils",
@@ -278,6 +280,21 @@ cc_library(
     ],
     hdrs = [
         "type_utils.h",
+    ],
+    deps = [
+        "//explorer/ast",
+        "//explorer/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "pattern_match",
+    srcs = [
+        "pattern_match.cpp",
+    ],
+    hdrs = [
+        "pattern_match.h",
     ],
     deps = [
         ":action",
