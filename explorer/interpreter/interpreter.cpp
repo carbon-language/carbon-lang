@@ -341,7 +341,7 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
   if (trace_stream->is_enabled()) {
     *trace_stream << "match pattern " << *p << "\nfrom "
                   << ExpressionCategoryToString(v.expression_category())
-                  << "expression with value " << *v.value() << "\n";
+                  << " expression with value " << *v.value() << "\n";
   }
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {

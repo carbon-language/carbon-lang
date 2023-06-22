@@ -3,28 +3,33 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: Setup
-// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}
-// CHECK:STDOUT:
 // CHECK:STDOUT: Initialize c1 from reference expression
-// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}, 3: C{.id = 1}
+// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 1}
+// CHECK:STDOUT: End of scope
+// CHECK:STDOUT: c1 destroyed
+// CHECK:STDOUT: c1 destroyed
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}
 // CHECK:STDOUT:
 // CHECK:STDOUT: Initialize c2 from value expression
-// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}, 3: C{.id = 1}, 4: C{.id = 2}
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: C{.id = 2}, 4: C{.id = 2}
+// CHECK:STDOUT: End of scope
+// CHECK:STDOUT: c2 destroyed
+// CHECK:STDOUT: c2 destroyed
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: !!C{.id = 2}, 4: !!C{.id = 2}
 // CHECK:STDOUT:
 // CHECK:STDOUT: Initialize c3 from initializing expression (return <expr>)
 // CHECK:STDOUT: c3 destroyed
-// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}, 3: C{.id = 1}, 4: C{.id = 2}, 5: C{.id = 3}, 6: !!3, 7: !!C{.id = 3}
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: !!C{.id = 2}, 4: !!C{.id = 2}, 5: C{.id = 3}, 6: !!3, 7: !!C{.id = 3}
+// CHECK:STDOUT: End of scope
+// CHECK:STDOUT: c3 destroyed
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: !!C{.id = 2}, 4: !!C{.id = 2}, 5: !!C{.id = 3}, 6: !!3, 7: !!C{.id = 3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: Initialize c4 from initializing expression (returned var)
-// CHECK:STDOUT: 0: Heap{}, 1: C{.id = 1}, 2: C{.id = 2}, 3: C{.id = 1}, 4: C{.id = 2}, 5: C{.id = 3}, 6: !!3, 7: !!C{.id = 3}, 8: C{.id = 4}, 9: !!4
-// CHECK:STDOUT:
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: !!C{.id = 2}, 4: !!C{.id = 2}, 5: !!C{.id = 3}, 6: !!3, 7: !!C{.id = 3}, 8: C{.id = 4}, 9: !!4
+// CHECK:STDOUT: End of scope
 // CHECK:STDOUT: c4 destroyed
-// CHECK:STDOUT: c3 destroyed
-// CHECK:STDOUT: c2 destroyed
-// CHECK:STDOUT: c1 destroyed
-// CHECK:STDOUT: c2 destroyed
-// CHECK:STDOUT: c1 destroyed
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: !!C{.id = 2}, 4: !!C{.id = 2}, 5: !!C{.id = 3}, 6: !!3, 7: !!C{.id = 3}, 8: !!C{.id = 4}, 9: !!4
+// CHECK:STDOUT:
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
@@ -49,30 +54,50 @@ fn CallWithReturnedVar(id: i32) -> C {
   return var;
 }
 
-fn Main() -> i32 {
-  Print("Setup");
+fn FromReferenceExpression() {
   var c1_var: C = {.id = 1};
-  let c2_let: C = {.id = 2};
-  heap.PrintAllocs();
-  Print("");
-
   Print("Initialize c1 from reference expression");
   let c1: C = c1_var;
   heap.PrintAllocs();
-  Print("");
+  Print("End of scope");
+}
 
+fn FromValueExpression() {
+  let c2_let: C = {.id = 2};
   Print("Initialize c2 from value expression");
   let c2: C = c2_let;
   heap.PrintAllocs();
-  Print("");
+  Print("End of scope");
+}
 
+fn FromInitializingExpression_ReturnExpr() {
   Print("Initialize c3 from initializing expression (return <expr>)");
   let c3: C = CallWithReturnExpression(3);
   heap.PrintAllocs();
-  Print("");
+  Print("End of scope");
+}
 
+fn FromInitializingExpression_ReturnedVar() {
   Print("Initialize c4 from initializing expression (returned var)");
   let c4: C = CallWithReturnedVar(4);
+  heap.PrintAllocs();
+  Print("End of scope");
+}
+
+fn Main() -> i32 {
+  FromReferenceExpression();
+  heap.PrintAllocs();
+  Print("");
+
+  FromValueExpression();
+  heap.PrintAllocs();
+  Print("");
+
+  FromInitializingExpression_ReturnExpr();
+  heap.PrintAllocs();
+  Print("");
+
+  FromInitializingExpression_ReturnedVar();
   heap.PrintAllocs();
   Print("");
   return 0;
