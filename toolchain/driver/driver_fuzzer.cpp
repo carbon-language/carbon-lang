@@ -72,7 +72,7 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   llvm::vfs::InMemoryFileSystem fs;
   TestRawOstream error_stream;
   std::error_code ec;
-  auto dest = llvm::raw_null_ostream();
+  llvm::raw_null_ostream dest;
   Driver d(fs, dest, error_stream);
   if (!d.RunFullCommand(args)) {
     if (error_stream.TakeStr().find("ERROR:") == std::string::npos) {

@@ -10,6 +10,7 @@
 #include <string>
 
 #include "common/ostream.h"
+#include "llvm/ADT/SmallString.h"
 
 namespace Carbon::Testing {
 
@@ -27,13 +28,13 @@ class TestRawOstream : public llvm::raw_svector_ostream {
   // Flushes the stream and returns the contents so far, clearing the stream
   // back to empty.
   auto TakeStr() -> std::string {
-    std::string result(buffer_.begin(), buffer_.end());
+    std::string result = buffer_.str().str();
     buffer_.clear();
     return result;
   }
 
  private:
-  llvm::SmallVector<char> buffer_;
+  llvm::SmallString<16> buffer_;
 };
 
 }  // namespace Carbon::Testing

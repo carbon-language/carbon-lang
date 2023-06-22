@@ -40,7 +40,7 @@ class DriverFileTestBase : public FileTestBase {
       }
     }
 
-    Driver driver(fs, stdout, stderr);
+    Driver driver(fs, llvm::outs(), llvm::errs());
     return driver.RunFullCommand(MakeArgs(test_file_names));
   }
 
