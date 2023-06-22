@@ -8,8 +8,9 @@ function repeat_sep1(thing, sep) {
   return seq(thing, repeat(seq(sep, thing)));
 }
 
-function repeat_sep(thing, sep) {
-  return optional(seq(thing, repeat(seq(sep, thing))));
+function comma_sep(thing) {
+  // trailing comma only allowed if there is atleast one element
+  return optional(seq(repeat_sep1(thing, ','), ','));
 }
 
 // follows toolchain/parser/precedence.cpp
@@ -132,16 +133,11 @@ module.exports = grammar({
         ']'
       ),
     struct_literal: ($) =>
-      seq(
-        '{',
-        repeat_sep(seq($.designator, '=', $._expression), ','),
-        optional(','),
-        '}'
-      ),
+      seq('{', comma_sep(seq($.designator, '=', $._expression)), '}'),
     struct_type_literal: ($) =>
       seq(
         '{',
-        repeat_sep(seq($.designator, ':', $._expression), ','),
+        comma_sep(seq($.designator, ':', $._expression)),
         optional(','),
         '}'
       ),
@@ -159,7 +155,7 @@ module.exports = grammar({
 
     _binding_lhs: ($) => seq(optional('addr'), choice($.ident, '_')),
     paren_pattern: ($) =>
-      seq('(', repeat_sep($._non_expression_pattern, ','), optional(','), ')'),
+      seq('(', comma_sep($._non_expression_pattern, ','), ')'),
     _non_expression_pattern: ($) =>
       choice(
         'auto',
@@ -231,8 +227,7 @@ module.exports = grammar({
         seq('if', $._expression, 'then', $._expression, 'else', $._expression)
       ),
 
-    paren_expression: ($) =>
-      seq('(', repeat_sep($._expression, ','), optional(','), ')'),
+    paren_expression: ($) => seq('(', comma_sep($._expression), ')'),
     tuple: ($) => $.paren_expression,
 
     index_expression: ($) =>
@@ -365,8 +360,7 @@ module.exports = grammar({
         $.generic_binding,
         seq(optional('addr'), $.ident, ':', $._expression)
       ),
-    deduced_params: ($) =>
-      seq('[', repeat_sep($.deduced_param, ','), optional(','), ']'),
+    deduced_params: ($) => seq('[', comma_sep($.deduced_param), ']'),
 
     tuple_pattern: ($) => $.paren_pattern,
     return_type: ($) => seq('->', choice('auto', $._expression)),
