@@ -3107,11 +3107,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                   // Remove `self` from type since now bound.
                   auto* function_type = cast<FunctionType>(field_type);
                   access.set_static_type(arena_->New<FunctionType>(
-                      std::nullopt, &function_type->parameters(),
-                      function_type->generic_parameters(),
-                      &function_type->return_type(),
-                      function_type->deduced_bindings(),
-                      function_type->impl_bindings()));
+                      FunctionType::ExceptSelf{}, *function_type));
                 }
                 access.set_expression_category(ExpressionCategory::Value);
                 break;
@@ -3193,11 +3189,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               // Remove `self` from type since now bound.
               auto* function_type = cast<FunctionType>(inst_member_type);
               access.set_static_type(arena_->New<FunctionType>(
-                  std::nullopt, &function_type->parameters(),
-                  function_type->generic_parameters(),
-                  &function_type->return_type(),
-                  function_type->deduced_bindings(),
-                  function_type->impl_bindings()));
+                  FunctionType::ExceptSelf{}, *function_type));
             }
           } else {
             access.set_static_type(inst_member_type);
@@ -3503,9 +3495,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                                 Substitute(bindings_for_member(), member_type));
         auto* function_type = cast<FunctionType>(member_type);
         access.set_static_type(arena_->New<FunctionType>(
-            std::nullopt, &function_type->parameters(),
-            function_type->generic_parameters(), &function_type->return_type(),
-            function_type->deduced_bindings(), function_type->impl_bindings()));
+            FunctionType::ExceptSelf{}, *function_type));
         return Success();
       };
 

@@ -661,6 +661,12 @@ class FunctionType : public Value {
         deduced_bindings_(std::move(deduced_bindings)),
         impl_bindings_(std::move(impl_bindings)) {}
 
+  struct ExceptSelf {};
+  FunctionType(ExceptSelf, const FunctionType& clone)
+      : FunctionType(std::nullopt, clone.parameters_, clone.generic_parameters_,
+                     clone.return_type_, clone.deduced_bindings_,
+                     clone.impl_bindings_) {}
+
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
   }
