@@ -2261,10 +2261,11 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           CARBON_RETURN_IF_ERROR(heap_.Write(address, v, stmt.source_loc()));
         } else /* not a returned var */ {
           BindingMap generic_args;
-          CARBON_CHECK(
+          bool matched =
               PatternMatch(p, ExpressionResult(v, v_location, expr_category),
                            stmt.source_loc(), &scope, generic_args,
-                           trace_stream_, this->arena_))
+                           trace_stream_, this->arena_);
+          CARBON_CHECK(matched)
               << stmt.source_loc()
               << ": internal error in variable definition, match failed";
         }
