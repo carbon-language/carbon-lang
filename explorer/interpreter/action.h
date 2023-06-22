@@ -70,15 +70,14 @@ class RuntimeScope {
   // scopes must not define the same name, and must be backed by the same Heap.
   void Merge(RuntimeScope other);
 
-  // Given node `value_node`:
-  // - returns its `LocationValue*` if bound to a reference expression in this
-  // scope,
-  // - returns a `Value*` if bound to a value expression in this scope,
-  // - returns `nullptr` if not bound.
+  // Given node `value_node`, returns:
+  // - its `LocationValue*` if bound to a reference expression in this scope,
+  // - a `Value*` if bound to a value expression in this scope, or
+  // - `nullptr` if not bound.
   auto Get(ValueNodeView value_node) const
       -> std::optional<Nonnull<const Value*>>;
 
-  // Returns the local values with allocation in created order
+  // Returns the local values with allocation in created order.
   auto allocations() const -> const std::vector<AllocationId>& {
     return allocations_;
   }

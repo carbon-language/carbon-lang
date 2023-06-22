@@ -300,9 +300,9 @@ static auto InitializePlaceholderValue(
     case ExpressionCategory::Reference:
       if (v.expression_category() == ExpressionCategory::Value ||
           v.expression_category() == ExpressionCategory::Reference) {
-        // Build by copying from value or reference expression
+        // Build by copying from value or reference expression.
         (*bindings)->Initialize(value_node, v.value());
-      } else /* ExpressionCategory::Initializing */ {
+      } else {
         // Location initialized by initializing expression, bind node to
         // address.
         CARBON_CHECK(v.address())
@@ -312,13 +312,13 @@ static auto InitializePlaceholderValue(
       break;
     case ExpressionCategory::Value:
       if (v.expression_category() == ExpressionCategory::Value) {
-        // TODO: Extend value lifetime to encompass this value
+        // TODO: Extend value lifetime to encompass this value.
         (*bindings)->Initialize(value_node, v.value());
       } else if (v.expression_category() == ExpressionCategory::Reference) {
         // TODO: Prevent mutation, error on mutation, or copy
         // Bind the reference expression value directly.
         (*bindings)->BindValue(value_node, v.value());
-      } else /* ExpressionCategory::Initializing */ {
+      } else {
         // Location initialized by initializing expression, bind node to
         // address.
         CARBON_CHECK(v.address())
@@ -1024,8 +1024,7 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
     if (value_node->expression_category() == ExpressionCategory::Value) {
       method_scope.BindValue(*placeholder->value_node(), receiver);
     } else {
-      // TODO: [self addr: Self*] destructors not implemented yet.
-      CARBON_FATAL() << "[self addr: Self*] destructors not implemented yet";
+      CARBON_FATAL() << "TODO: [self addr: Self*] destructors not implemented yet";
     }
   }
   CARBON_CHECK(method.body().has_value())
