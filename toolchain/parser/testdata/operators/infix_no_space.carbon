@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'n'},
+// CHECK:STDOUT:     {kind: 'Identifier', text: 'n'},
 // CHECK:STDOUT:     {kind: 'Literal', text: 'i8'},
 // CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},

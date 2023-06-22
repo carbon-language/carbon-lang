@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:   {kind: 'DeclaredName', text: 'foo'},
+// CHECK:STDOUT:   {kind: 'Identifier', text: 'foo'},
 // CHECK:STDOUT:     {kind: 'DeducedParameterListStart', text: '['},
 // CHECK:STDOUT:   {kind: 'DeducedParameterList', text: ']', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'ParameterListStart', text: '('},

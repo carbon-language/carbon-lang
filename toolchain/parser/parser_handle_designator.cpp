@@ -14,17 +14,17 @@ auto ParserHandleDesignator(ParserContext& context, bool as_struct) -> void {
   auto dot = context.ConsumeChecked(TokenKind::Period);
 
   if (!context.ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
-                                       ParseNodeKind::DesignatedName)) {
+                                       ParseNodeKind::Identifier)) {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDot, Error,
                       "Expected identifier after `.`.");
     context.emitter().Emit(*context.position(), ExpectedIdentifierAfterDot);
     // If we see a keyword, assume it was intended to be the designated name.
     // TODO: Should keywords be valid in designators?
     if (context.PositionKind().is_keyword()) {
-      context.AddLeafNode(ParseNodeKind::DesignatedName, context.Consume(),
+      context.AddLeafNode(ParseNodeKind::Identifier, context.Consume(),
                           /*has_error=*/true);
     } else {
-      context.AddLeafNode(ParseNodeKind::DesignatedName, *context.position(),
+      context.AddLeafNode(ParseNodeKind::Identifier, *context.position(),
                           /*has_error=*/true);
       // Indicate the error to the parent state so that it can avoid producing
       // more errors.

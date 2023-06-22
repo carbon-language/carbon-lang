@@ -7,7 +7,7 @@
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, body: block2},
 // CHECK:STDOUT:   {name: str1, param_refs: block0, body: block3},
-// CHECK:STDOUT:   {name: str3, param_refs: block5, body: block6},
+// CHECK:STDOUT:   {name: str2, param_refs: block5, body: block6},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -16,8 +16,8 @@
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   F,
 // CHECK:STDOUT:   G,
-// CHECK:STDOUT:   b,
 // CHECK:STDOUT:   If,
+// CHECK:STDOUT:   b,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeEmptyTupleType,
@@ -27,7 +27,7 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+2, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+2, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block8, arg1: node+2},
 // CHECK:STDOUT:   {kind: Branch, arg0: block7},

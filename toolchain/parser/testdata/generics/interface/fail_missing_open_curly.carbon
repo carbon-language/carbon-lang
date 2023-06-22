@@ -5,10 +5,10 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Bar'},
+// CHECK:STDOUT:   {kind: 'Identifier', text: 'Bar'},
 // CHECK:STDOUT: {kind: 'InterfaceDeclaration', text: 'interface', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:   {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Foo'},
+// CHECK:STDOUT:   {kind: 'Identifier', text: 'Foo'},
 // CHECK:STDOUT: {kind: 'InterfaceDeclaration', text: 'interface', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
