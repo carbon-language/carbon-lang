@@ -585,12 +585,19 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*this);
       out << "fn ";
-      if (!fn_type.deduced_bindings().empty()) {
+      if (!fn_type.deduced_bindings().empty() || fn_type.is_unbound_method()) {
         out << "[";
         llvm::ListSeparator sep;
         for (Nonnull<const GenericBinding*> deduced :
              fn_type.deduced_bindings()) {
           out << sep << *deduced;
+        }
+        if (fn_type.is_unbound_method()) {
+          if (fn_type.addr_self()) {
+            out << sep << "addr self: " << fn_type.self_type() << "*";
+          } else {
+            out << sep << "self: " << fn_type.self_type();
+          }
         }
         out << "]";
       }
@@ -844,6 +851,17 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::FunctionType: {
       const auto& fn1 = cast<FunctionType>(*t1);
       const auto& fn2 = cast<FunctionType>(*t2);
+      // Verify `self` parameters match
+      if (fn1.is_unbound_method() != fn2.is_unbound_method()) {
+        return false;
+      }
+      if (fn1.is_unbound_method()) {
+        if (fn1.addr_self() != fn2.addr_self() ||
+            !TypeEqual(&fn1.self_type(), &fn2.self_type(), equality_ctx)) {
+          return false;
+        }
+      }
+      // Verify parameters and return types match
       return TypeEqual(&fn1.parameters(), &fn2.parameters(), equality_ctx) &&
              TypeEqual(&fn1.return_type(), &fn2.return_type(), equality_ctx);
     }

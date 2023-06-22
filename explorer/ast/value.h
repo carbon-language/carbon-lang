@@ -629,16 +629,32 @@ class FunctionType : public Value {
     Nonnull<const GenericBinding*> binding;
   };
 
-  FunctionType(Nonnull<const Value*> parameters,
-               Nonnull<const Value*> return_type)
-      : FunctionType(parameters, {}, return_type, {}, {}) {}
+  // For methods with unbound `self` parameters.
+  struct MethodSelf {
+    template <typename F>
+    auto Decompose(F f) const {
+      return f(addr_self, self_type);
+    }
 
-  FunctionType(Nonnull<const Value*> parameters,
+    // True if `self` parameter uses an `addr` pattern.
+    bool addr_self;
+    // Type of `self` parameter.
+    const Value* self_type;
+  };
+
+  FunctionType(std::optional<MethodSelf> method_self,
+               Nonnull<const Value*> parameters,
+               Nonnull<const Value*> return_type)
+      : FunctionType(method_self, parameters, {}, return_type, {}, {}) {}
+
+  FunctionType(std::optional<MethodSelf> method_self,
+               Nonnull<const Value*> parameters,
                std::vector<GenericParameter> generic_parameters,
                Nonnull<const Value*> return_type,
                std::vector<Nonnull<const GenericBinding*>> deduced_bindings,
                std::vector<Nonnull<const ImplBinding*>> impl_bindings)
       : Value(Kind::FunctionType),
+        method_self_(method_self),
         parameters_(parameters),
         generic_parameters_(std::move(generic_parameters)),
         return_type_(return_type),
@@ -651,8 +667,8 @@ class FunctionType : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(parameters_, generic_parameters_, return_type_, deduced_bindings_,
-             impl_bindings_);
+    return f(method_self_, parameters_, generic_parameters_, return_type_,
+             deduced_bindings_, impl_bindings_);
   }
 
   // The type of the function parameter tuple.
@@ -675,7 +691,15 @@ class FunctionType : public Value {
     return impl_bindings_;
   }
 
+  auto method_self() const -> std::optional<MethodSelf> { return method_self_; }
+  // Returns true if function has an unbound `self` receiver parameter.
+  auto is_unbound_method() const -> bool { return method_self_.has_value(); }
+  // Only valid if is_unbound_method() returns true.
+  auto addr_self() const -> bool { return method_self_->addr_self; }
+  auto self_type() const -> const Value& { return *method_self_->self_type; }
+
  private:
+  std::optional<MethodSelf> method_self_;
   Nonnull<const Value*> parameters_;
   std::vector<GenericParameter> generic_parameters_;
   Nonnull<const Value*> return_type_;
