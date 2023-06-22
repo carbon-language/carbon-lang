@@ -60,8 +60,42 @@ module.exports = grammar({
     comment: ($) => token(seq('//', /.*/)),
     ident: ($) => /[A-Za-z_][A-Za-z0-9_]*/,
     bool_literal: ($) => choice('true', 'false'),
-    integer_literal: ($) => /[0-9]+/,
-    float_literal: ($) => /[0-9\.]+/,
+    numeric_literal: ($) => {
+      // using variables because token.immediate and token don't allow rules inside.
+      // https://github.com/tree-sitter/tree-sitter/issues/449
+      const decimal_integer_literal = choice('0', /[1-9](_?[0-9])*/);
+      const hex_digits = /[0-9A-F](_?[0-9A-F])*/;
+      const binary_integer_literal = /0b[01](_?[01])*/;
+      const hex_integer_literal = seq('0x', token.immediate(hex_digits));
+
+      const decimal_real_number_literal = seq(
+        decimal_integer_literal,
+        token.immediate(/\.[0-9](_?[0-9])*/),
+        optional(
+          seq(
+            token.immediate(/e[+-]?/),
+            token.immediate(decimal_integer_literal)
+          )
+        )
+      );
+
+      const hex_real_number_literal = seq(
+        hex_integer_literal,
+        token.immediate(/\.[0-9A-F]+/),
+        optional(seq(token.immediate(/p[+-]?/), token.immediate(hex_digits)))
+      );
+
+      return token(
+        choice(
+          decimal_integer_literal,
+          binary_integer_literal,
+          hex_integer_literal,
+          decimal_real_number_literal,
+          hex_real_number_literal
+        )
+      );
+    },
+
     // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p2015.md#syntax
     numeric_type_literal: ($) => /[iuf][1-9][0-9]*/,
     _string_content: ($) => token.immediate(/[^\\"]+/),
@@ -112,14 +146,13 @@ module.exports = grammar({
         '}'
       ),
 
-    builtin_type: ($) => choice('Self', 'String', 'bool', 'type', 'i32'),
+    builtin_type: ($) => choice('Self', 'String', 'bool', 'type'),
     literal: ($) =>
       choice(
         $.bool_literal,
-        $.integer_literal,
-	$.numeric_type_literal,
+        $.numeric_literal,
+        $.numeric_type_literal,
         $.string_literal,
-        $.float_literal,
         $.struct_literal,
         $.struct_type_literal
       ),
