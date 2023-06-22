@@ -35,8 +35,8 @@ class FileTestBaseTest : public FileTestBase {
   }
 
   auto RunWithFiles(const llvm::SmallVector<TestFile>& test_files,
-                    llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
-      -> bool override {
+                    llvm::raw_pwrite_stream& stdout,
+                    llvm::raw_pwrite_stream& stderr) -> bool override {
     auto filename = path().filename();
     if (filename == "example.carbon") {
       EXPECT_THAT(test_files, ElementsAre(HasFilename("example.carbon")));
