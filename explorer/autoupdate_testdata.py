@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import subprocess
 import sys
+import glob
 from pathlib import Path
 
 
@@ -19,11 +20,15 @@ def main() -> None:
     autoupdate_py = this_py.parent.parent.joinpath(
         "testing", "scripts", "autoupdate_testdata_base.py"
     )
+    # Get all subdirectories within "explorer/testdata" except "trace"
+    subdirectories = [
+        dir for dir in glob.glob("explorer/testdata/*/") if "trace" not in dir
+    ]
     args = [
         str(autoupdate_py),
         # Flags to configure for explorer testing.
         "--tool=explorer",
-        "--testdata=explorer/testdata",
+        "--testdata=" + ",".join(subdirectories),
     ] + sys.argv[1:]
     subprocess.call(args)
 
