@@ -129,20 +129,21 @@ converting it into one as necessary.
 A _variable pattern_ can be introduced with the `var` keyword to create an
 object with storage when matched. Every binding pattern name introduced within a
 variable pattern is called a _variable binding_ and forms a
-[_durable reference expression_](#durable-reference-expressions) to an object within the
-variable pattern's storage when used. Variable patterns require their matched
-expression to be an _initializing expression_ and provide their storage to it to
-be initialized.
+[_durable reference expression_](#durable-reference-expressions) to an object
+within the variable pattern's storage when used. Variable patterns require their
+matched expression to be an _initializing expression_ and provide their storage
+to it to be initialized.
 
 ```carbon
 fn MutateThing(ptr: i64*);
 
 fn Example() {
-  // Both `1` and `2` here start as value expressions. That is a match for `1`.
+  // `1` starts as a value expression, and the `let` binds a name to it.
   let x: i64 = 1;
-  // For `2`, the variable binding requires it to be converted to an
-  // initializing expression by using the value `2` to initialize the provided
-  // variable storage that `y` will refer to.
+
+  // `2` also starts as a value expression, but the variable binding requires it
+  // to be converted to an initializing expression by using the value `2` to
+  // initialize the provided variable storage that `y` will refer to.
   var y: i64 = 2;
 
   // Allowed to take the address and mutate `y` as it is a durable reference
@@ -163,15 +164,36 @@ patterns in other contexts. The `var` introducer works exactly the same as
 introducing the pattern in some other context with `var` -- there's just no need
 for the outer `let`.
 
--   `let` _identifier_`:` _< expression |_ `auto` _>_ `=` _value_`;`
--   `var` _identifier_`:` _< expression |_ `auto` _> [_ `=` _value ]_`;`
+-   `let` _identifier_`:` _( expression |_ `auto` _)_ `=` _value_`;`
+-   `var` _identifier_`:` _( expression |_ `auto` _) [_ `=` _value ]_`;`
 
 These are just simple examples of binding patterns used directly in local
 declarations. Local `let` and `var` declarations build on Carbon's general
-[pattern matching](/docs/design/pattern_matching.md) design, with `var`
-declarations implicitly starting off within a `var` pattern while `let`
-declarations introduce patterns that work the same as function parameters and
-others with bindings that produce values by default.
+[pattern matching](/docs/design/pattern_matching.md) design. `var` declarations
+implicitly start off within a `var` pattern. `let` declarations introduce
+patterns that bind values by default, the same as function parameters and most
+other pattern contexts.
+
+The general pattern matching model also allows nesting `var` sub-patterns within
+a larger pattern that defaults to matching values. For example, we can combine
+the two local declarations above into one destructuring declaration with an
+inner `var` pattern here:
+
+```carbon
+fn DestructuringExample() {
+  // Both `1` and `2` start as value expressions. The `x` binding directly
+  // matches `1`. For `2`, the variable binding requires it to be converted to
+  // an initializing expression by using the value `2` to initialize the
+  // provided variable storage that `y` will refer to.
+  let (x: i64, var y: i64) = (1, 2);
+
+  // Just like above, we can take the address and mutate `y`:
+  MutateThing(&y);
+
+  // ❌ And this remains an error:
+  MutateThing(&x);
+}
+```
 
 ### Consuming function parameters
 
@@ -233,7 +255,8 @@ Carbon:
 -   Dereferenced [pointers](#pointers): `*p`
 -   Names of subobjects through member access to some other durable reference
     expression: `x.member` or `p->member`
--   [Indexing](/docs/design/expressions/indexing.md): `array[i]`
+-   [Indexing](/docs/design/expressions/indexing.md) some other durable
+    reference expression: `array[i]`
 
 There is no way to convert another category of expression into a durable
 reference expression, they always directly refer to some declared variable
@@ -353,8 +376,14 @@ by either accessing a copy of the object in the non-pointer case or a pointer to
 the original object in the pointer case. A representation of `const Self`
 requires copying to be valid for the type. This provides the builtin
 functionality but allows explicitly controlling which representation should be
-used. If no customization is provided, the implementation will select one based
-on a set of heuristics.
+used.
+
+If no customization is provided, the implementation will select one based on a
+set of heuristics. Some examples:
+
+-   Non-copyable types and polymorphic types would use a `const Self*`.
+-   Small objects that are trivially copied in a machine register would use
+    `const Self`.
 
 When a custom type is provided, it must not be `Self` (or the other two cases).
 The type provided will be used on function call boundaries and as the
@@ -375,8 +404,8 @@ reference expression.
 When using a custom representation type in this way, no fields are accessible
 through a value expression. Instead, only methods can be called using member
 access, as they simply bind the value expression to the `self` parameter.
-However, one important method can be called -- `.(ImplicitAs(T).Convert)()`. This
-implicitly converting a value expression for the type into its custom
+However, one important method can be called -- `.(ImplicitAs(T).Convert)()`.
+This implicitly converting a value expression for the type into its custom
 representation type. The customization of the representation above causes the
 class to have a builtin `impl as ImplicitAs(T)` which converts to the
 representation type as a no-op, exposing the object created by the
@@ -387,6 +416,13 @@ Here is a more complete example of code using these features:
 
 ```carbon
 class StringView {
+  private var data_ptr: Char*;
+  private var size: i64;
+
+  fn Create(data_ptr: Char*, size: i64) -> StringView {
+    return {.data_ptr = data_ptr, .size = size};
+  }
+
   // A typical readonly view of a string API...
   fn ExampleMethod[self: Self]() { ... }
 }
@@ -397,6 +433,17 @@ class String {
 
   private var data_ptr: Char*;
   private var size: i64;
+
+  private var capacity: i64;
+
+  impl as ReferenceImplicitAs(StringView) {
+    fn Op[addr self: const Self*]() -> StringView {
+      // Because this is called on the String object prior to it becoming
+      // a value, we can access an SSO buffer or other interior pointers
+      // of `self`.
+      return StringView::Create(self->data_ptr, self->size);
+    }
+  }
 
   // We can directly declare methods that take `self` as a `StringView` which
   // will cause the caller to implicitly convert value expressions to
@@ -413,13 +460,11 @@ class String {
     (self as StringView).ExampleMethod();
   }
 
-  impl as ReferenceImplicitAs(StringView) {
-    fn Op[addr self: const Self*]() -> StringView {
-      // Because this is called on the String object prior to it becoming
-      // a value, we can access an SSO buffer or other interior pointers
-      // of `self`.
-      return StringView::Create(self->data_ptr, self->size);
-    }
+  // Note that even though the `Self` type is `const` qualified here, this
+  // cannot be called on a `String` value! That would require us to convert to a
+  // `StringView` that does not track the extra data member.
+  fn Capacity[addr self: const Self*]() -> i64 {
+    return self->capacity;
   }
 }
 ```
@@ -430,8 +475,16 @@ and `impl` search occur for the same type regardless of the expression category.
 But once a particular method or function is selected, an implicit conversion can
 occur from the original type to the representation type as part of the parameter
 or receiver type. In fact, this conversion is the _only_ operation that can
-occur for a customized representation type, wherever it is necessary as
-implemented.
+occur for a value whose type has a customized value representation.
+
+The example above also demonstrates the fundamental tradeoff made by customizing
+the value representation of a type in this way. While it provides a great deal
+of control, it may result in some surprising limitations. Above, a method that
+is classically available on a C++ `const std::string&` like querying the
+capacity cannot be implemented with the customized value representation because
+it loses access to this additional state. Carbon allows type authors to make an
+explicit choice about whether they want to work with a restricted API and
+leverage a custom value representation or not.
 
 ### Polymorphic types
 
@@ -543,9 +596,9 @@ return statements interact with expressions, values, objects, and storage
 
 The last path that requires forming an initializing expression in Carbon is when
 attempting to convert a non-reference expression into an ephemeral reference
-expression: the expression is first converted to an initializing expression if necessary,
-and then temporary storage is materialized to act as its output, and as the referent
-of the resulting ephemeral reference expression.
+expression: the expression is first converted to an initializing expression if
+necessary, and then temporary storage is materialized to act as its output, and
+as the referent of the resulting ephemeral reference expression.
 
 ### Function calls and returns
 
@@ -575,8 +628,8 @@ stage and initialized exactly once.
 #### Deferred initialization from values and references
 
 Carbon also makes the evaluation of returning function calls and return
-statements tightly linked in order to enable more efficiency improvements.
-It allows the actual initialization performed by the `return` statement with its
+statements tightly linked in order to enable more efficiency improvements. It
+allows the actual initialization performed by the `return` statement with its
 expression to be deferred from within the body of the function to the caller
 initializer expression if it can simply propagate a value or reference
 expression to the caller that is guaranteed to be alive and available to the
@@ -599,13 +652,15 @@ fn F(p1: Point, p2: Point) {
 The call to `SelectSecond` must provide storage for a `Point` that can be
 initialized. However, Carbon allows an implementation of the actual
 `SelectSecond` function to not initialize this storage when it reaches
-`return second`. Because the expression `second` is a value expression which is
-necessarily valid in the caller, Carbon allows an implementation that simply
-communicates that this value expression is the return expression and _if
-necessary_ should initialize the temporary storage. This in turn allows the
-caller `F` to recognize that the value expression (`p1` in the caller) is
-already valid to pass as the argument to `UsePoint` without initializing the
-temporary storage from it and reading it back out of that storage.
+`return second`. The expression `second` is a name bound to the call's argument
+value expression, and that value expression is necessarily valid in the caller.
+Carbon in this case allows the implementation to merely communicate that the
+returned expression is a name bound to a specific value expression argument to
+the call, and the caller _if necessary_ should initialize the temporary storage.
+This in turn allows the caller `F` to recognize that the value expression
+argument (`p1`) is already valid to pass as the argument to `UsePoint` without
+initializing the temporary storage from it and reading it back out of that
+storage.
 
 None of this impacts the type system and so an implementation can freely select
 specific strategies here based on concrete types without harming generic code.
@@ -684,7 +739,7 @@ fn MaybeReturnedVar() -> Point {
 
 Pointers in Carbon are the primary mechanism for _indirect access_ to storage
 containing some value. Dereferencing a pointer is one of the primary ways to
-form a [_reference expression_](#reference-expressions).
+form a [_durable reference expression_](#durable-reference-expressions).
 
 Carbon pointers are heavily restricted compared to C++ pointers -- they cannot
 be null and they cannot be indexed or have pointer arithmetic performed on them.
