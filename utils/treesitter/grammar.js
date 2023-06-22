@@ -62,7 +62,8 @@ module.exports = grammar({
     bool_literal: ($) => choice('true', 'false'),
     integer_literal: ($) => /[0-9]+/,
     float_literal: ($) => /[0-9\.]+/,
-    sized_type_literal: ($) => /[iuf][1-9][0-9]*/,
+    // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p2015.md#syntax
+    numeric_type_literal: ($) => /[iuf][1-9][0-9]*/,
     _string_content: ($) => token.immediate(/[^\\"]+/),
     escape_sequence: ($) =>
       token.immediate(
@@ -116,8 +117,8 @@ module.exports = grammar({
       choice(
         $.bool_literal,
         $.integer_literal,
+	$.numeric_type_literal,
         $.string_literal,
-        $.sized_type_literal,
         $.float_literal,
         $.struct_literal,
         $.struct_type_literal
