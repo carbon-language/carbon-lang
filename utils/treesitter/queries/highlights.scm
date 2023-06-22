@@ -44,30 +44,27 @@
 "->" @punctuation
 
 [
-  "and"
-  "or"
-  "&"
-  "|"
-  "^"
+  "+"
+  "-"
+  (binary_star)
+  "/"
+  "%"
   "=="
   "!="
   "<"
   "<="
   ">"
   ">="
+  "not"
+  "and"
+  "or"
+  "|"
+  "&"
+  "^"
   ">>"
   "<<"
-  "+"
-  "-"
-  (binary_star)
   (prefix_star)
   (postfix_star)
-  "/"
-  "%"
-  "not"
-  "-"
-  "+"
-  "&"
   "++"
   "--"
 ] @operator
