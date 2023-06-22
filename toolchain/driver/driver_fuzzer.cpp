@@ -2,9 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <cstring>
 #include <numeric>
 #include <string>
