@@ -9,11 +9,11 @@ function repeat_sep1(thing, sep) {
 }
 
 function comma_sep(thing) {
-  // trailing comma only allowed if there is atleast one element
+  // Trailing comma is only allowed if there is atleast one element.
   return optional(seq(repeat_sep1(thing, ','), optional(',')));
 }
 
-// based on toolchain/parser/precedence.cpp
+// This is based on toolchain/parser/precedence.cpp
 const PREC = {
   TermPrefix: 11,
   TermPostfix: 11,
@@ -45,7 +45,7 @@ module.exports = grammar({
   ],
   extras: ($) => [/\s/, $.comment],
 
-  // NOTE: must match the order in src/scanner.c, names are not used for matching
+  // NOTE: This must match the order in src/scanner.c, names are not used for matching.
   externals: ($) => [$.binary_star, $.postfix_star],
 
   rules: {
@@ -67,7 +67,7 @@ module.exports = grammar({
     ident: ($) => /[A-Za-z_][A-Za-z0-9_]*/,
     bool_literal: ($) => choice('true', 'false'),
     numeric_literal: ($) => {
-      // using variables because token.immediate and token don't allow rules inside.
+      // This is using variables because rules are not allowed in token.immediate and token.
       // https://github.com/tree-sitter/tree-sitter/issues/449
       const decimal_integer_literal = choice('0', /[1-9](_?[0-9])*/);
       const hex_digits = /[0-9A-F](_?[0-9A-F])*/;
@@ -411,8 +411,10 @@ module.exports = grammar({
         optional(seq('extends', $._expression)),
         choice(';', $.class_body)
       ),
+    empty_declaration: ($) => ';',
     declaration: ($) =>
       choice(
+        $.empty_declaration,
         $.namespace_declaration,
         $.var_declaration,
         $.let_declaration,
@@ -420,8 +422,7 @@ module.exports = grammar({
         $.alias_declaration,
         $.interface_declaration,
         $.constraint_declaration,
-        $.class_declaration,
-        ';' // empty declaration
+        $.class_declaration
       ),
   },
 });
