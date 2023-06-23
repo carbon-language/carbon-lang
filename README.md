@@ -102,52 +102,40 @@ Ayrıca, özellikle aşağıdakiler dahil olmak üzere Carbon için _açık olma
     (ABI)
 -   Geriye ve ileriye dönük mükemmel uyumluluk
 Bizim detaylı [hedeflerimiz](/docs/project/goals.md) belgesi bu fikirleri somutlaştırır ve karbon projesi ve dili için hedeflerimize daha derin bir bakış sağlar.
+
 ## Proje durumu
 
-Carbon Language is currently an experimental project. There is no working
-compiler or toolchain. You can see the demo interpreter for Carbon on
-[compiler-explorer.com](http://carbon.compiler-explorer.com/).
+Carbon Dili şu anda deneysel bir proje olarak geliştirilmektedir.Çalışan bir derleyici veya araç takımı mevcut değildir. Carbon için demo yorumlayıcıyı [compiler-explorer.com](http://carbon.compiler-explorer.com/) adresinde görebilirsiniz.
 
-We want to better understand whether we can build a language that meets our
-successor language criteria, and whether the resulting language can gather a
-critical mass of interest within the larger C++ industry and community.
 
-Currently, we have fleshed out several core aspects of both Carbon the project
-and the language:
+Amacımız, halefi bir dil kriterlerini karşılayan bir dil oluşturabileceğimizi ve elde edilen dilin C++ endüstrisi ve topluluğunda yeterli ilgiyi toplayabileceğini daha iyi anlamaktır.
 
--   The strategy of the Carbon Language and project.
--   An open-source project structure, governance model, and evolution process.
--   Critical and foundational aspects of the language design informed by our
-    experience with C++ and the most difficult challenges we anticipate. This
-    includes designs for:
-    -   Generics
-    -   Class types
-    -   Inheritance
-    -   Operator overloading
-    -   Lexical and syntactic structure
-    -   Code organization and modular structure
--   A prototype interpreter demo that can both run isolated examples and gives a
-    detailed analysis of the specific semantic model and abstract machine of
-    Carbon. We call this the [Carbon Explorer](/explorer/).
+Şu anda, Carbon Projesi ve diliyle ilgili birçok temel bileşen üzerinde çalışıyoruz:
 
-If you're interested in contributing, we would love help
-[completing the 0.1 language designs](/docs/project/roadmap.md#complete-design-coverage-of-the-01-languages-necessary-features),
-and
-[completing the Carbon Explorer implementation of this design](/docs/project/roadmap.md#complete-01-language-implementation-coverage-in-the-carbon-explorer).
-We are also currently working to get more broad feedback and participation from
-the C++ community. Beyond that, we plan to prioritize C++ interoperability and a
-realistic toolchain that implements the 0.1 language and can be used to evaluate
-Carbon in more detail.
+-   Carbon Dil ve proje stratejisi.
+-   Açık kaynak proje yapısı, yönetim modeli ve gelişim süreci.
+-   C++ deneyimimizden ve öngördüğümüz en zorlu zorluklardan bilgilendirilen dil tasarımının kritik ve temel yönleri. Bu, aşağıdaki tasarımları içerir:
+    -   Generic (Jenerik) tipler
+    -   Sınıf tipleri
+    -   Kalıtım
+    -   Operatör aşırı yükleme
+    -   Leksik ve sentaktik yapı
+    -   Kod düzeni ve modüler yapı
+-   Carbon'un semantik modelini ve soyut makinesini ayrıntılı bir şekilde analiz edebilen bir prototip yorumlayıcı demo. Buna [Carbon Explorer](/explorer/) diyoruz.
 
-You can see our [full roadmap](/docs/project/roadmap.md) for more details.
+Eğer katkıda bulunmak isterseniz,
+[0.1 dil tasarımlarının tamamlanmasına](/docs/project/roadmap.md#complete-design-coverage-of-the-01-languages-necessary-features)
+ve
+[Carbon Explorer'daki bu tasarımın uygulanmasını tamamlamaya](/docs/project/roadmap.md#complete-01-language-implementation-coverage-in-the-carbon-explorer) yardımcı olmak istiyoruz.
+Ayrıca, C++ topluluğundan daha geniş bir geri bildirim ve katılım elde etmek için çalışıyoruz. Bunun ötesinde, C++ ile uyumluluk ve 0.1 dilini uygulayan gerçek bir araç takımını önceliklendirmeyi planlıyoruz.
+
+Daha fazla bilgi için bizim [yol haritamıza](/docs/project/roadmap.md) bakabilirsiniz.
 
 ## Karbon ve C++
 
-If you're already a C++ developer, Carbon should have a gentle learning curve.
-It is built out of a consistent set of language constructs that should feel
-familiar and be easy to read and understand.
+C++ geliştiricisi iseniz, Carbon'un öğrenme eğrisi yumuşak olmalıdır. Aşina olunan ve okunması ve anlaşılması kolay olması gereken tutarlı bir dil yapısı kullanılmıştır.
 
-C++ code like this:
+Aşağıdaki C++ kodu:
 
 <a href="docs/images/snippets.md#c">
 <!--
@@ -158,7 +146,7 @@ https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
      alt="A snippet of C++ code. Follow the link to read it.">
 </a>
 
-corresponds to this Carbon code:
+aşağıdaki Carbon koduna karşılık gelir:
 
 <a href="docs/images/snippets.md#carbon">
 <!--
@@ -169,9 +157,9 @@ https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
      alt="A snippet of converted Carbon code. Follow the link to read it.">
 </a>
 
-You can call Carbon from C++ without overhead and the other way around. This
-means you migrate a single C++ library to Carbon within an application, or write
-new Carbon on top of your existing C++ investment. For example:
+Carbon'u C++ ile birlikte çağırabilirsiniz ve aynı şekilde C++'dan Carbon'a çağrı yapabilirsiniz. Bu, bir uygulama içinde tek bir C++ kütüphanesini Carbon'a taşıyabileceğiniz veya mevcut C++ yatırımınızın üzerine yeni Carbon kodu yazabileceğiniz anlamına gelir.
+
+Aşağıdaki örnekte gösterildiği gibi:
 
 <a href="docs/images/snippets.md#mixed">
 <!--
@@ -182,76 +170,47 @@ https://drive.google.com/drive/folders/1QrBXiy_X74YsOueeC0IYlgyolWIhvusB
      alt="A snippet of mixed Carbon and C++ code. Follow the link to read it.">
 </a>
 
-Read more about
-[C++ interop in Carbon](/docs/design/interoperability/philosophy_and_goals.md).
+[C++ ile Carbon arasındaki etkileşimi ](/docs/design/interoperability/philosophy_and_goals.md) daha fazla okuyabilirsiniz.
 
-Beyond interoperability between Carbon and C++, we're also planning to support
-migration tools that will mechanically translate idiomatic C++ code into Carbon
-code to help you switch an existing C++ codebase to Carbon.
+Carbon ve C++ arasındaki etkileşimin yanı sıra, mevcut C++ kod tabanını Carbon'a geçirmenize yardımcı olmak için geleneksel araçlar da sağlamayı planlıyoruz.
 
 ## Jenerik
 
-Carbon provides a
-**[modern generics system](/docs/design/generics/overview.md#what-are-generics)**
-with checked definitions, while still **supporting opt-in
-[templates](/docs/design/templates.md) for seamless C++ interop**. Checked
-generics provide several advantages compared to C++ templates:
+Carbon, kontrol edilen tanımlamaları destekleyen bir
+**[modern jenerik sistem](/docs/design/generics/overview.md#what-are-generics)**
+ sunar ve aynı zamanda
+[C++ uyumluluğu için isteğe bağlı şablonları](/docs/design/templates.md) destekler. Kontrol edilen jenerik tanımlamaları, C++ şablonlarına kıyasla birçok avantaj sağlar:
 
--   **Generic definitions are fully type-checked**, removing the need to
-    instantiate to check for errors and giving greater confidence in code.
-    -   Avoids the compile-time cost of re-checking the definition for every
+-   **Jenerik tanımlamaları tamamen tür denetlenir**,  hataları kontrol etmek için örnekleştirme yapma gereksinimini ortadan kaldırır ve kod konusunda daha fazla güven sağlar.
+    -   Her örnekleme için tanımı yeniden denetleme için derleme zamanı maliyetini önler.
         instantiation.
-    -   When using a definition-checked generic, usage error messages are
-        clearer, directly showing which requirements are not met.
--   **Enables automatic, opt-in type erasure and dynamic dispatch** without a
-    separate implementation. This can reduce the binary size and enables
-    constructs like heterogeneous containers.
--   **Strong, checked interfaces** mean fewer accidental dependencies on
-    implementation details and a clearer contract for consumers.
+    -   Tanım denetimi yapılan bir jenerik kullanırken, hata mesajları daha net olur ve hangi gereksinimlerin karşılanmadığını doğrudan gösterir.
+-   Ayrı bir uygulama gerektirmeden **otomatik, isteğe bağlı tip silme ve dinamik göndermeyi **destekler. Bu, ikili dosya boyutunu azaltabilir ve heterojen konteynerler gibi yapıları mümkün kılar.
+-   **Güçlü, denetlenen arabirimler** , uygulama ayrıntılarına yanlışlıkla bağımlılıkları azaltır ve tüketiciye daha net bir sözleşme sunar.
 
-Without sacrificing these advantages, **Carbon generics support
-specialization**, ensuring it can fully address performance-critical use cases
-of C++ templates. For more details about Carbon's generics, see their
-[design](/docs/design/generics).
+Bu avantajları feda etmeden, **Carbon jenerikleri özelleştirmeyi**, edestekler, böylece performans açısından kritik öneme sahip C++ şablonlarının gereksinimlerini tam olarak karşılayabilir. Carbon'un jenerikler hakkında daha fazla ayrıntıyı
+[tasarım belgesinde](/docs/design/generics) bulabilirsiniz.
 
-In addition to easy and powerful interop with C++, Carbon templates can be
-constrained and incrementally migrated to checked generics at a fine granularity
-and with a smooth evolutionary path.
+Carbon şablonları, C++ ile kolay ve güçlü bir etkileşim sağladığı gibi, ince granülerlikte kısıtlanabilir ve denetlenen jeneriklere doğru sorunsuz bir evrimsel yol ile göç ettirilebilir.
 
 ## Bellek güvenliği
 
-Safety, and especially
-[memory safety](https://en.wikipedia.org/wiki/Memory_safety), remains a key
-challenge for C++ and something a successor language needs to address. Our
-initial priority and focus is on immediately addressing important, low-hanging
-fruit in the safety space:
+Karbondaki güvenlik, özellikle
+[bellek güvenliği](https://en.wikipedia.org/wiki/Memory_safety)konusu, C++ için önemli bir zorluktur ve halefinin bu konuya çözüm bulması gerekmektedir. İlk önceliğimiz ve odak noktamız, güvenlik alanında önemli ve hızlı bir şekilde ele alınabilecek konulara odaklanmaktır:
 
--   Tracking uninitialized states better, increased enforcement of
-    initialization, and systematically providing hardening against
-    initialization bugs when desired.
--   Designing fundamental APIs and idioms to support dynamic bounds checks in
-    debug and hardened builds.
--   Having a default debug build mode that is both cheaper and more
-    comprehensive than existing C++ build modes even when combined with
-    [Address Sanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer).
-
-Once we can migrate code into Carbon, we will have a simplified language with
-room in the design space to add any necessary annotations or features, and
-infrastructure like [generics](#generics) to support safer design patterns.
-Longer term, we will build on this to introduce **a safe Carbon subset**. This
-will be a large and complex undertaking, and won't be in the 0.1 design.
-Meanwhile, we are closely watching and learning from efforts to add memory safe
-semantics onto C++ such as Rust-inspired
-[lifetime annotations](https://discourse.llvm.org/t/rfc-lifetime-annotations-for-c/61377).
+-   Daha iyi başlatılmamış durumların takibi, başlatmanın zorunlu hale getirilmesi ve başlatma hatalarına karşı sıkı koruma sağlanması.
+-   Hata ayıklama ve güçlendirilmiş yapılar için dinamik sınırların denetimini destekleyen temel API'ların ve yapıların tasarlanması.
+Mevcut C++ derleme modlarıyla bile birleştirildiğinde daha ucuz ve kapsamlı olan bir varsayılan [hata ayıklama](https://github.com/google/sanitizers/wiki/AddressSanitizer).
+ derleme modu sağlama.
+    
+Carbon'a kodu aktarabildiğimizde, basit bir dil olacak ve gerektiğinde gerekli bildirimleri veya özellikleri ekleyebileceğimiz ve daha güvenli tasarım kalıplarını desteklemek için [jenerikler](#generics) gibi altyapıya sahip olacağız. Daha uzun vadede, bu temel üzerine **güvenli bir Carbon alt kümesi** getireceğiz.  Bu, büyük ve karmaşık bir görev olacak ve 0.1 tasarımda olmayacak. Bu arada, C++'a Rust'tan ilham alan bellek güvenli semantikler eklemeye yönelik çabalara dikkatlice bakıyor ve onlardan öğreniyoruz, örneğin [ömürle ilgili bildirimler](https://discourse.llvm.org/t/rfc-lifetime-annotations-for-c/61377).
 
 ## Başlarken
 
-As there is no compiler yet, to try out Carbon, you can use the Carbon explorer
-to interpret Carbon code and print its output. You can try it out immediately at
-[compiler-explorer.com](http://carbon.compiler-explorer.com/).
+Eğer Carbon'u denemek isterseniz, henüz bir derleyici olmadığı için, Carbon gezginini kullanarak Carbon kodunu yorumlayıp çıktısını alabilirsiniz. Carbon gezginini hemen [compiler-explorer.com](http://carbon.compiler-explorer.com/) adresinde deneyebilirsiniz.
 
-To build the Carbon explorer yourself, you'll need to install dependencies
-(Bazel, Clang, libc++), and then you can run:
+
+Carbon gezginini kendiniz oluşturmak için önce bağımlılıkları (Bazel, Clang, libc++) kurmanız gerekecek, ardından şunları çalıştırabilirsiniz:
 
 ```shell
 # Download Carbon's code.
@@ -262,8 +221,8 @@ $ cd carbon-lang
 $ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
-For complete instructions, including installing dependencies, see our
-[contribution tools documentation](/docs/project/contribution_tools.md).
+Daha fazla bilgi ve kaynaklar için Carbon Projesi'nin [resmi web sitesini](/docs/project/contribution_tools.md) ziyaret edebilirsiniz.
+
 
 Karbon projesi hakkında daha fazla şey öğren:
 
@@ -272,59 +231,51 @@ Karbon projesi hakkında daha fazla şey öğren:
 -   [Karbon gezgini](/explorer)
 -   [SSS](/docs/project/faq.md)
 
-## Conference talks
+## Konferans konuşmaları
 
-Past Carbon focused talks from the community:
+Topluluk tarafından gerçekleştirilen geçmiş Carbon odaklı konferans konuşmaları:
 
 ### 2022
 
--   [Carbon Language: An experimental successor to C++](https://www.youtube.com/watch?v=omrY53kbVoA),
+-   [Carbon Language: C++'ın deneysel bir halefi](https://www.youtube.com/watch?v=omrY53kbVoA),
     CppNorth
--   [Carbon Language: Syntax and trade-offs](https://www.youtube.com/watch?v=9Y2ivB8VaIs),
+-   [Carbon Language: Sözdizimi ve takaslar](https://www.youtube.com/watch?v=9Y2ivB8VaIs),
     Core C++
 
 ### 2023
 
--   [Carbon’s Successor Strategy: From C++ interop to memory safety (Slides)](https://chandlerc.blog/slides/2023-cppnow-carbon-strategy/index.html#/),
+-   [Carbon'ın Halef Stratejisi: C++ uyumluluğundan bellek güvenliğine (Sunum)](https://chandlerc.blog/slides/2023-cppnow-carbon-strategy/index.html#/),
     C++Now
--   Definition-Checked Generics
-    [(Part 1, Slides)](https://chandlerc.blog/slides/2023-cppnow-generics-1/#/),
-    [(Part 2, Slides)](https://chandlerc.blog/slides/2023-cppnow-generics-2/#/),
+-   Tanım Doğrulamalı Jenerikler
+    [(Bölüm 1, Sunum)](https://chandlerc.blog/slides/2023-cppnow-generics-1/#/),
+    [(Bölüm 2, Sunum)](https://chandlerc.blog/slides/2023-cppnow-generics-2/#/),
     C++Now
--   [Modernizing Compiler Design for Carbon’s Toolchain (Slides)](https://chandlerc.blog/slides/2023-cppnow-compiler/index.html#/),
+-   [Carbon'un Araç Zinciri için Modernleşen Derleyici Tasarımı (Sunum)](https://chandlerc.blog/slides/2023-cppnow-compiler/index.html#/),
     C++Now
 
-## Join us
+## Bize Katılın
 
-We'd love to have folks join us and contribute to the project. Carbon is
-committed to a welcoming and inclusive environment where everyone can
-contribute.
+Sizi projeye katılmaya ve katkıda bulunmaya davet etmekten mutluluk duyarız. Carbon, herkesin katkıda bulunabileceği hoşgörülü ve kapsayıcı bir ortama bağlıdır.
 
--   Most of Carbon's design discussions occur on
-    [Discord](https://discord.gg/ZjVdShJDAs).
--   Carbon is a
-    [Google Summer of Code 2023 organization](https://summerofcode.withgoogle.com/programs/2023/organizations/carbon-language).
--   To watch for major release announcements, subscribe to our
-    [Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
-    and [star carbon-lang](https://github.com/carbon-language/carbon-lang).
--   See our [code of conduct](CODE_OF_CONDUCT.md) and
-    [contributing guidelines](CONTRIBUTING.md) for information about the Carbon
-    development community.
+-   Carbon'un tasarım tartışmalarının çoğu
+    [Discord](https://discord.gg/ZjVdShJDAs) üzerinde gerçekleşir.
+-   Carbon, [Google Summer of Code 2023 organizasyonu](https://         summerofcode.withgoogle.com/programs/2023/organizations/carbon-language) olarak yer almaktadır.
+-   Önemli sürüm duyurularını takip etmek için
+    [ GitHub'daki Carbon yayın gönderisine](https://github.com/carbon-language/carbon-lang/discussions/1020)
+    ve [carbon-lang'i yıldızlamaya](https://github.com/carbon-language/carbon-lang) abone olun..
+-   Carbon geliştirme topluluğu hakkında daha fazla bilgi için [davranış kurallarımızı](CODE_OF_CONDUCT.md) ve
+    [katkı yapma yönergelerimizi](CONTRIBUTING.md) inceleyin.
 
-### Contributing
+### Katkıda Bulunma
 
-You can also directly:
+Ayrıca doğrudan aşağıdakilere katkıda bulunabilirsiniz:
 
--   [Contribute the language design](CONTRIBUTING.md#contributing-to-the-language-design):
-    feedback on design, new design proposal
--   [Contribute to the language implementation](CONTRIBUTING.md#contributing-to-the-language-implementation)
-    -   [Carbon Explorer](/explorer/): bug report, bug fix, language feature
-        implementation
-    -   [Carbon Toolchain](/toolchain/), and project infrastructure
+-   [Dil tasarımına katkıda bulunma](CONTRIBUTING.md#contributing-to-the-language-design):
+    tasarıma yönelik geri bildirim, yeni tasarım önerileri
+-   [Dil uygulamasına katkıda bulunma](CONTRIBUTING.md#contributing-to-the-language-implementation)
+    -   [Carbon Explorer](/explorer/): hata raporu, hata düzeltmesi, dil özelliği uygulaması
+    -   [Carbon Araç Zinciri](/toolchain/) ve proje altyapısı
 
-You can **check out some
-["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue)**,
-or join the `#contributing-help` channel on
-[Discord](https://discord.gg/ZjVdShJDAs). See our full
-[`CONTRIBUTING`](CONTRIBUTING.md) documentation for more details.
+**GitHub'daki bazı 
+["iyi ilk konuları"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue)**kontrol edebilir veya [Discord](https://discord.gg/ZjVdShJDAs) üzerindeki `#contributing-help` kanalına katılabilirsiniz.Daha fazla ayrıntı için tam [`CONTRIBUTING`](CONTRIBUTING.md) belgelerimize göz atabilirsiniz.
 
