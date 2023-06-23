@@ -131,9 +131,9 @@ and the language:
     Carbon. We call this the [Carbon Explorer](/explorer/).
 
 If you're interested in contributing, we would love help
-[completing the 0.1 language designs](/docs/project/roadmap.md#completing-the-language-design),
+[completing the 0.1 language designs](/docs/project/roadmap.md#complete-design-coverage-of-the-01-languages-necessary-features),
 and
-[completing the Carbon Explorer implementation of this design](/docs/project/roadmap.md#demo-implementation-of-core-features-with-working-examples).
+[completing the Carbon Explorer implementation of this design](/docs/project/roadmap.md#complete-01-language-implementation-coverage-in-the-carbon-explorer).
 We are also currently working to get more broad feedback and participation from
 the C++ community. Beyond that, we plan to prioritize C++ interoperability and a
 realistic toolchain that implements the 0.1 language and can be used to evaluate
@@ -250,17 +250,10 @@ As there is no compiler yet, to try out Carbon, you can use the Carbon explorer
 to interpret Carbon code and print its output. You can try it out immediately at
 [compiler-explorer.com](http://carbon.compiler-explorer.com/).
 
-To build the Carbon explorer yourself, follow these instructions:
+To build the Carbon explorer yourself, you'll need to install dependencies
+(Bazel, Clang, libc++), and then you can run:
 
 ```shell
-# Install bazelisk using Homebrew.
-$ brew install bazelisk
-
-# Install Clang/LLVM using Homebrew.
-# Many Clang/LLVM releases aren't built with options we rely on.
-$ brew install llvm
-$ export PATH="$(brew --prefix llvm)/bin:${PATH}"
-
 # Download Carbon's code.
 $ git clone https://github.com/carbon-language/carbon-lang
 $ cd carbon-lang
@@ -269,9 +262,8 @@ $ cd carbon-lang
 $ bazel run //explorer -- ./explorer/testdata/print/format_only.carbon
 ```
 
-These instructions assume [Homebrew](https://brew.sh/) is installed; see our
-[contribution tools documentation](/docs/project/contribution_tools.md) for more
-extensive tooling instructions.
+For complete instructions, including installing dependencies, see our
+[contribution tools documentation](/docs/project/contribution_tools.md).
 
 Karbon projesi hakkında daha fazla şey öğren:
 
@@ -280,15 +272,59 @@ Karbon projesi hakkında daha fazla şey öğren:
 -   [Karbon gezgini](/explorer)
 -   [SSS](/docs/project/faq.md)
 
-## Bize katıl
+## Conference talks
 
-Karbon, herkesin katkıda bulunabileceği sıcak ve kapsayıcı bir ortama kendini adamıştır.
+Past Carbon focused talks from the community:
 
--   Büyük sürüm duyurularını izlemek için,
-    [GitHub'daki karbon yayın gönderisi](https://github.com/carbon-language/carbon-lang/discussions/1020) abone ol ve
-    [yıldız karbon-dili](https://github.com/carbon-language/carbon-lang).
--   Tasarım tartışmasına katılmak için,
-    [GitHub forumu](https://github.com/carbon-language/carbon-lang/discussions)'a katıl .
--   [Davranış kodu](CODE_OF_CONDUCT.md)'na Göz at ve 
-    Karbon geliştirme topluluğu hakkında bilgi için [katkıda bulunan yönergeler](CONTRIBUTING.md).
--   Karbonu [Discord](https://discord.gg/ZjVdShJDAs)'da tartışıyoruz.
+### 2022
+
+-   [Carbon Language: An experimental successor to C++](https://www.youtube.com/watch?v=omrY53kbVoA),
+    CppNorth
+-   [Carbon Language: Syntax and trade-offs](https://www.youtube.com/watch?v=9Y2ivB8VaIs),
+    Core C++
+
+### 2023
+
+-   [Carbon’s Successor Strategy: From C++ interop to memory safety (Slides)](https://chandlerc.blog/slides/2023-cppnow-carbon-strategy/index.html#/),
+    C++Now
+-   Definition-Checked Generics
+    [(Part 1, Slides)](https://chandlerc.blog/slides/2023-cppnow-generics-1/#/),
+    [(Part 2, Slides)](https://chandlerc.blog/slides/2023-cppnow-generics-2/#/),
+    C++Now
+-   [Modernizing Compiler Design for Carbon’s Toolchain (Slides)](https://chandlerc.blog/slides/2023-cppnow-compiler/index.html#/),
+    C++Now
+
+## Join us
+
+We'd love to have folks join us and contribute to the project. Carbon is
+committed to a welcoming and inclusive environment where everyone can
+contribute.
+
+-   Most of Carbon's design discussions occur on
+    [Discord](https://discord.gg/ZjVdShJDAs).
+-   Carbon is a
+    [Google Summer of Code 2023 organization](https://summerofcode.withgoogle.com/programs/2023/organizations/carbon-language).
+-   To watch for major release announcements, subscribe to our
+    [Carbon release post on GitHub](https://github.com/carbon-language/carbon-lang/discussions/1020)
+    and [star carbon-lang](https://github.com/carbon-language/carbon-lang).
+-   See our [code of conduct](CODE_OF_CONDUCT.md) and
+    [contributing guidelines](CONTRIBUTING.md) for information about the Carbon
+    development community.
+
+### Contributing
+
+You can also directly:
+
+-   [Contribute the language design](CONTRIBUTING.md#contributing-to-the-language-design):
+    feedback on design, new design proposal
+-   [Contribute to the language implementation](CONTRIBUTING.md#contributing-to-the-language-implementation)
+    -   [Carbon Explorer](/explorer/): bug report, bug fix, language feature
+        implementation
+    -   [Carbon Toolchain](/toolchain/), and project infrastructure
+
+You can **check out some
+["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue)**,
+or join the `#contributing-help` channel on
+[Discord](https://discord.gg/ZjVdShJDAs). See our full
+[`CONTRIBUTING`](CONTRIBUTING.md) documentation for more details.
+>>>>>>> pr/2942

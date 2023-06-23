@@ -1,4 +1,4 @@
-# Bidirectional interoperability with C/C++
+# Bidirectional interoperability with C and C++
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM

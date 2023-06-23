@@ -20,7 +20,7 @@ class StringLiteralTest : public ::testing::Test {
   StringLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
 
   auto Lex(llvm::StringRef text) -> LexedStringLiteral {
-    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
+    std::optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
     CARBON_CHECK(result);
     EXPECT_EQ(result->text(), text);
     return *result;
@@ -39,6 +39,13 @@ class StringLiteralTest : public ::testing::Test {
 TEST_F(StringLiteralTest, StringLiteralBounds) {
   llvm::StringLiteral valid[] = {
       R"("")",
+      R"('''
+      ''')",
+      R"('''
+      "foo"
+      ''')",
+
+      // Lex """-delimited block string literals for error recovery.
       R"("""
       """)",
       R"("""
@@ -49,21 +56,21 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
       R"("\"")",
       R"("\\")",
       R"("\\\"")",
-      R"("""
-      \"""
-      """)",
-      R"("""
-      "\""
-      """)",
-      R"("""
-      ""\"
-      """)",
-      R"("""
-      ""\
-      """)",
-      R"(#"""
-      """\#n
-      """#)",
+      R"('''
+      \'''
+      ''')",
+      R"('''
+      '\''
+      ''')",
+      R"('''
+      ''\'
+      ''')",
+      R"('''
+      ''\
+      ''')",
+      R"(#'''
+      '''\#n
+      '''#)",
 
       // Only a matching number of '#'s terminates the string.
       R"(#""#)",
@@ -74,9 +81,9 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
       // Escape sequences likewise require a matching number of '#'s.
       R"(#"\#"#"#)",
       R"(#"\"#)",
-      R"(#"""
-      \#"""#
-      """#)",
+      R"(#'''
+      \#'''#
+      '''#)",
 
       // #"""# does not start a multiline string literal.
       R"(#"""#)",
@@ -85,8 +92,8 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
 
   for (llvm::StringLiteral test : valid) {
     SCOPED_TRACE(test);
-    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
-    EXPECT_TRUE(result.hasValue());
+    std::optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
+    EXPECT_TRUE(result.has_value());
     if (result) {
       EXPECT_EQ(result->text(), test);
     }
@@ -95,16 +102,14 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
   llvm::StringLiteral invalid[] = {
       // clang-format off
       R"(")",
-      R"("""
-      "")",
       R"("\)",
       R"("\")",
       R"("\\)",
       R"("\\\")",
-      R"("""
-      )",
-      R"(#"""
-      """)",
+      "'''\n",
+      "'''\n'",
+      "'''\n''",
+      "#'''\n'''",
       R"(" \
       ")",
       // clang-format on
@@ -112,8 +117,8 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
 
   for (llvm::StringLiteral test : invalid) {
     SCOPED_TRACE(test);
-    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
-    EXPECT_TRUE(result.hasValue());
+    std::optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
+    EXPECT_TRUE(result.has_value());
     if (result) {
       EXPECT_FALSE(result->is_terminated());
     }
@@ -126,41 +131,41 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
       {R"("")", ""},
 
       {R"(
-"""
-"""
+'''
+'''
        )",
        ""},
 
       // Nearly-empty strings.
       {R"(
-"""
+'''
 
-"""
+'''
        )",
        "\n"},
 
       // Lines containing only whitespace are treated as empty even if they
       // contain tabs.
-      {"\"\"\"\n\t  \t\n\"\"\"", "\n"},
+      {"'''\n\t  \t\n'''", "\n"},
 
       // Indent removal.
       {R"(
-       """file type indicator
+       '''file type indicator
           indented contents \
-         """
+         '''
        )",
        " indented contents "},
 
       // Removal of tabs in indent and suffix.
-      {"\"\"\"\n \t  hello \t \n \t \"\"\"", " hello\n"},
+      {"'''\n \t  hello \t \n \t '''", " hello\n"},
 
       {R"(
-    """
+    '''
    hello
   world
 
    end of test
-  """
+  '''
        )",
        " hello\nworld\n\n end of test\n"},
 
@@ -195,14 +200,47 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
        "\\n,\\#n,\n,\\##n,\\###n"},
 
       // Trailing whitespace handling.
-      {"\"\"\"\n  Hello \\\n  World \t \n  Bye!  \\\n  \"\"\"",
+      {"'''\n  Hello \\\n  World \t \n  Bye!  \\\n  '''",
        "Hello World\nBye!  "},
+      {"'''\n\\t\n'''", "\t\n"},
+      {"'''\n\\t \n'''", "\t\n"},
+  };
+
+  for (auto [test, expected] : testcases) {
+    error_tracker.Reset();
+    auto value = Parse(test.trim());
+    EXPECT_FALSE(error_tracker.seen_error()) << "`" << test << "`";
+    EXPECT_EQ(value, expected);
+  }
+}
+
+TEST_F(StringLiteralTest, DoubleQuotedMultiLineLiteral) {
+  // For error recovery, """-delimited literals are lexed, but rejected.
+  std::pair<llvm::StringLiteral, llvm::StringLiteral> testcases[] = {
+      {R"(
+"""
+'''
+"""
+       )",
+       "'''\n"},
+      {R"(
+#"""
+\#tx
+"""#
+       )",
+       "\tx\n"},
+      {R"(
+"""abcxyz
+   hello\
+   """
+       )",
+       "hello"},
   };
 
   for (auto [test, contents] : testcases) {
     error_tracker.Reset();
     auto value = Parse(test.trim());
-    EXPECT_FALSE(error_tracker.seen_error()) << "`" << test << "`";
+    EXPECT_TRUE(error_tracker.seen_error()) << "`" << test << "`";
     EXPECT_EQ(value, contents);
   }
 }
@@ -210,17 +248,17 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
 TEST_F(StringLiteralTest, StringLiteralBadIndent) {
   std::pair<llvm::StringLiteral, llvm::StringLiteral> testcases[] = {
       // Indent doesn't match the last line.
-      {"\"\"\"\n \tx\n  \"\"\"", "x\n"},
-      {"\"\"\"\n x\n  \"\"\"", "x\n"},
-      {"\"\"\"\n  x\n\t\"\"\"", "x\n"},
-      {"\"\"\"\n  ok\n bad\n  \"\"\"", "ok\nbad\n"},
-      {"\"\"\"\n bad\n  ok\n  \"\"\"", "bad\nok\n"},
-      {"\"\"\"\n  escaped,\\\n bad\n  \"\"\"", "escaped,bad\n"},
+      {"'''\n \tx\n  '''", "x\n"},
+      {"'''\n x\n  '''", "x\n"},
+      {"'''\n  x\n\t'''", "x\n"},
+      {"'''\n  ok\n bad\n  '''", "ok\nbad\n"},
+      {"'''\n bad\n  ok\n  '''", "bad\nok\n"},
+      {"'''\n  escaped,\\\n bad\n  '''", "escaped,bad\n"},
 
       // Indent on last line is followed by text.
-      {"\"\"\"\n  x\n  x\"\"\"", "x\nx"},
-      {"\"\"\"\n   x\n  x\"\"\"", " x\nx"},
-      {"\"\"\"\n x\n  x\"\"\"", "x\nx"},
+      {"'''\n  x\n  x'''", "x\nx"},
+      {"'''\n   x\n  x'''", " x\nx"},
+      {"'''\n x\n  x'''", "x\nx"},
   };
 
   for (auto [test, contents] : testcases) {
@@ -293,7 +331,7 @@ TEST_F(StringLiteralTest, TabAtEndOfString) {
 }
 
 TEST_F(StringLiteralTest, TabInBlockString) {
-  auto value = Parse("\"\"\"\nx\ty\n\"\"\"");
+  auto value = Parse("'''\nx\ty\n'''");
   EXPECT_TRUE(error_tracker.seen_error());
   EXPECT_EQ(value, "x\ty\n");
 }

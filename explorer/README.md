@@ -57,60 +57,102 @@ builders in [`error_builders.h`](common/error_builders.h). Errors caused by bugs
 in `explorer` itself should be reported with
 [`CHECK` or `FATAL`](../common/check.h).
 
+### `Decompose` functions
+
+Many of explorer's data structures provide a `Decompose` method, which allows
+simple data types to be generically decomposed into their fields. The
+`Decompose` function for a type takes a function and calls it with the fields of
+that type. For example:
+
+```
+class MyType {
+ public:
+  MyType(Type1 arg1, Type2 arg2) : arg1_(arg1), arg2_(arg2) {}
+
+  template <typename F>
+  auto Decompose(F f) const { return f(arg1_, arg2_); }
+
+ private:
+  Type1 arg1_;
+  Type2 arg2_;
+};
+```
+
+Where possible, a value equivalent to the original value should be created by
+passing the given arguments to the constructor of the type. For example,
+`my_value.Decompose([](auto ...args) { return MyType(args...); })` should
+recreate the original value.
+
 ## Example Programs (Regression Tests)
 
 The [`testdata/`](testdata/) subdirectory includes some example programs with
 expected output.
 
-These tests make use of LLVM's
-[lit](https://llvm.org/docs/CommandGuide/lit.html) and
-[FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html). Tests have
-boilerplate at the top:
+These tests make use of [GoogleTest](https://github.com/google/googletest) with
+Bazel's `cc_test` rules. Tests have boilerplate at the top:
 
 ```carbon
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// AUTOUPDATE
+// CHECK:STDOUT: result: 7
 
 package ExplorerTest api;
+
+fn Main() -> i32 {
+  return (1 + 2) + 4;
+}
 ```
 
 To explain this boilerplate:
 
 -   The standard copyright is expected.
--   The `RUN` lines indicate two commands for `lit` to execute using the file:
-    one without trace and debug output, one with.
-    -   Output is piped to `FileCheck` for verification.
-    -   Setting `-allow-unused-prefixes` to false when processing the ordinary
-        output, and true when handling the trace output, allows us to omit the
-        tracing output from the `CHECK` lines, while ensuring they cover all
-        non-tracing output.
-    -   Setting `-match-full-lines` in both cases indicates that each `CHECK`
-        line must match a complete output line, with no extra characters before
-        or after the `CHECK` pattern.
-    -   `RUN:` will be followed by the `not` command when failure is expected.
-        In particular, `RUN: not explorer ...`.
-    -   `%s` is a
-        [`lit` substitution](https://llvm.org/docs/CommandGuide/lit.html#substitutions)
-        for the path to the given test file.
--   The `AUTOUPDATE` line indicates that `CHECK` lines will be automatically
-    inserted immediately below by the `./update_checks.py` script.
--   The `CHECK` lines indicate expected output, verified by `FileCheck`.
+-   The `AUTOUPDATE` line indicates that `CHECK` lines matching the output will
+    be automatically inserted immediately below by the
+    `./autoupdate_testdata.py` script.
+-   The `CHECK` lines indicate expected output.
     -   Where a `CHECK` line contains text like `{{.*}}`, the double curly
         braces indicate a contained regular expression.
 -   The `package` is required in all test files, per normal Carbon syntax rules.
 
+### lit tests
+
+The [`lit_testdata/`](lit_testdata/) subdirectory includes other example
+programs.
+
+These tests make use of LLVM's
+[lit](https://llvm.org/docs/CommandGuide/lit.html) and
+[FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html).
+
+They share most of their header with those in `testdata`, with an additional
+`RUN` rule:
+
+```
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+```
+
+The `RUN` lines indicate two commands for `lit` to execute using the file: one
+without trace and debug output, one with.
+
+-   `RUN:` will be followed by the `not` command when failure is expected. In
+    particular, `RUN: not %{explorer-run}`.
+-   The full command is in `lit.cfg.py`; it will run explorer and pass results
+    to [`FileCheck`](https://llvm.org/docs/CommandGuide/FileCheck.html).
+
 ### Useful commands
 
--   `./update_checks.py` -- Updates expected output.
+-   `./autoupdate_testdata.py` -- Updates expected output.
+    -   This can be combined with `git diff` to see changes in output.
+-   `autoupdate_lit_testdata.py` -- Updates lit tests expected output.
 -   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
+-   `bazel test //explorer:file_test.subset --test_arg=explorer/testdata/DIR/FILE.carbon`
+    -- Runs a specific test.
+-   `bazel run testdata/DIR/FILE.carbon.run` -- Runs explorer on the file.
+-   `bazel run testdata/DIR/FILE.carbon.verbose` -- Runs explorer on the file
+    with tracing enabled.
 
 ### Updating fuzzer logic after making AST changes
 
@@ -119,9 +161,32 @@ Please refer to
 
 ## Trace Program Execution
 
-When tracing is turned on (using the `--trace_file=...` option), `explorer`
-prints the state of the program and each step that is performed during
-execution.
+When tracing is turned on (using the `--trace_file=...` option or `.verbose`
+target), `explorer` prints the state of the program and each step that is
+performed during execution.
+
+Printing directly to the standard output using the `--trace_file` option is
+supported by passing `-` in place of a filepath (`--trace_file=-`).
+
+To customize the trace output and include specific information, you can use the
+following compiler options along with `--trace_file=...` option:
+
+-   `-trace_source_program`: Include trace output for the source program phase.
+-   `-trace_name_resolution`: Include trace output for the name resolution
+    phase.
+-   `-trace_control_flow_resolution`: Include trace output for the control flow
+    resolution phase.
+-   `-trace_type_checking`: Include trace output for the type checking phase.
+-   `-trace_unformed_variables_resolution`: Include trace output for the
+    unformed variables resolution phase.
+-   `-trace_declarations`: Include trace output for printing declarations.
+-   `-trace_execution`: Include trace output for program execution.
+-   `-trace_timing`: Include timing logs indicating the time taken by each
+    phase.
+-   `-trace_all`: Include trace output for all phases.
+
+By default, only execution trace will be added to the trace output. You can use
+combination of these options to include trace of multiple program phases.
 
 ### State of the Program
 
@@ -172,85 +237,3 @@ Each step of execution is printed in the following format:
 
 Each step of execution can push new actions on the stack, pop actions, increment
 the position number of an action, and add result values to an action.
-
-## Experimental feature: Delimited Continuations
-
-Delimited continuations provide a kind of resumable exception with first-class
-continuations. The point of experimenting with this feature is not to say that
-we want delimited continuations in Carbon, but this represents a place-holder
-for other powerful control-flow features that might eventually be in Carbon,
-such as coroutines, threads, exceptions, etc. As we refactor the executable
-semantics, having this feature in place will keep us honest and prevent us from
-accidentally simplifying the interpreter to the point where it can't handle
-features like this one.
-
-Instead of delimited continuations, we could have instead done regular
-continuations with callcc. However, there seems to be a consensus amongst the
-experts that delimited continuations are better than regular ones.
-
-So what are delimited continuations? Recall that a continuation is a
-representation of what happens next in a computation. In the abstract machine,
-the procedure call stack represents the current continuation. A delimited
-continuation is also about what happens next, but it doesn't go all the way to
-the end of the execution. Instead it represents what happens up until control
-reaches the nearest enclosing `__continuation` statement.
-
-The statement
-
-    __continuation <identifier> <statement>
-
-creates a continuation object from the given statement and binds the
-continuation object to the given identifier. The given statement is not yet
-executed.
-
-The statement
-
-    __run <expression>;
-
-starts or resumes execution of the continuation object that results from the
-given expression.
-
-The statement
-
-    __await;
-
-pauses the current continuation, saving the control state in the continuation
-object. Control is then returned to the statement after the `__run` that
-initiated the current continuation.
-
-These three language features are demonstrated in the following example, where
-we create a continuation and bind it to `k`. We then run the continuation twice.
-The first time increments `x` to `1` and the second time increments `x` to `2`,
-so the expected result of this program is `2`.
-
-```carbon
-fn Main() -> i32 {
-  var x: i32 = 0;
-  __continuation k {
-    x = x + 1;
-    __await;
-    x = x + 1;
-  }
-  __run k;
-  __run k;
-  return x;
-}
-```
-
-Note that the control state of the continuation object bound to `k` mutates as
-the program executes. Upon creation, the control state is at the beginning of
-the continuation. After the first `__run`, the control state is just after the
-`__await`. After the second `__run`, the control state is at the end of the
-continuation.
-
-Continuation variables are currently copyable, but that operation is "shallow":
-the two values are aliases for the same underlying continuation object.
-
-The delimited continuation feature described here is based on the
-`shift`/`reset` style of delimited continuations created by Danvy and Filinsky
-(Abstracting control, ACM Conference on Lisp and Functional Programming, 1990).
-We adapted the feature to operate in a more imperative manner. The
-`__continuation` feature is equivalent to a `reset` followed immediately by a
-`shift` to pause and capture the continuation object. The `__run` feature is
-equivalent to calling the continuation. The `__await` feature is equivalent to a
-`shift` except that it updates the continuation in place.

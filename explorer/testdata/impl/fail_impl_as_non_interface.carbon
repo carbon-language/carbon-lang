@@ -2,16 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
 
 package ExplorerTest api;
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/impl/fail_impl_as_non_interface.carbon:[[@LINE+1]]: expected constraint after `as`, found value of type String
-external impl i32 as String {}
+// CHECK:STDERR: COMPILATION ERROR: fail_impl_as_non_interface.carbon:[[@LINE+1]]: expected a constraint in impl declaration, found String
+impl i32 as String {}
 
 fn Main() -> i32 {
 }

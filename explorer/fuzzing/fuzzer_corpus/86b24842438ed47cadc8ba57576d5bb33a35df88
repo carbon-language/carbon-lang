@@ -1,0 +1,253 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name {
+        name: "ConvertsFromInt"
+      }
+      members {
+        interface_impl {
+          impl_type {
+            int_type_literal {
+            }
+          }
+          constraint {
+            call {
+              function {
+                identifier {
+                  name: "ImplicitAs"
+                }
+              }
+              argument {
+                tuple_literal {
+                  fields {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "ConvertIntTo"
+      }
+      param_pattern {
+        fields {
+          generic_binding {
+            name: "T"
+            type {
+              identifier {
+                name: "ConvertsFromInt"
+              }
+            }
+          }
+        }
+        fields {
+          binding_pattern {
+            name: "n"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return_term {
+        kind: Expression
+        type {
+          identifier {
+            name: "T"
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              identifier {
+                name: "n"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    class_declaration {
+      name {
+        name: "IntHolder"
+      }
+      members {
+        variable {
+          binding {
+            name: "n"
+            type {
+              expression_pattern {
+                expression {
+                  int_type_literal {
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        call {
+          function {
+            identifier {
+              name: "ImplicitAs"
+            }
+          }
+          argument {
+            tuple_literal {
+              fields {
+                identifier {
+                  name: "IntHolder"
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name {
+            name: "Convert"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              identifier {
+                name: "IntHolder"
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  struct_literal {
+                    fields {
+                      name: "n"
+                      expression {
+                        identifier {
+                          name: "self"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        identifier {
+          name: "IntHolder"
+        }
+      }
+      interface {
+        identifier {
+          name: "ConvertsFromInt"
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          return_expression_statement {
+            expression {
+              simple_member_access {
+                field: "n"
+                object {
+                  call {
+                    function {
+                      identifier {
+                        name: "ConvertIntTo"
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                        fields {
+                          identifier {
+                            name: "IntHolder"
+                          }
+                        }
+                        fields {
+                          int_literal {
+                            value: 5
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

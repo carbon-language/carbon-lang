@@ -2,17 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
 
 package ExplorerTest api;
 
 interface Vector {
-  fn Add[me: Self](b: Self) -> Self;
-  fn Scale[me: Self](v: i32) -> Self;
+  fn Add[self: Self](b: Self) -> Self;
+  fn Scale[self: Self](v: i32) -> Self;
 }
 
 class Point {
@@ -20,13 +16,13 @@ class Point {
   var y: i32;
 }
 
-// CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_external_impl_self.carbon:[[@LINE+1]]: could not resolve 'Self'
-external impl Self as Vector {
-  fn Add[me: Point](b: Point) -> Point {
-    return {.x = me.x + b.x, .y = me.y + b.y};
+// CHECK:STDERR: COMPILATION ERROR: fail_external_impl_self.carbon:[[@LINE+1]]: could not resolve 'Self'
+impl Self as Vector {
+  fn Add[self: Point](b: Point) -> Point {
+    return {.x = self.x + b.x, .y = self.y + b.y};
   }
-  fn Scale[me: Point](v: i32) -> Point {
-    return {.x = me.x * v, .y = me.y * v};
+  fn Scale[self: Point](v: i32) -> Point {
+    return {.x = self.x * v, .y = self.y * v};
   }
 }
 

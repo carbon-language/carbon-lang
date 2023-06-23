@@ -37,6 +37,8 @@ enum PrecedenceLevel : int8_t {
   Relational,
   LogicalAnd,
   LogicalOr,
+  // Conditional.
+  If,
   // Assignment.
   SimpleAssignment,
   CompoundAssignment,
@@ -62,11 +64,11 @@ struct OperatorPriorityTable {
     MarkHigherThan({TypePostfix}, {Type});
     MarkHigherThan(
         {Modulo, Additive, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift, Type},
-        {SimpleAssignment, CompoundAssignment, Relational});
+        {Relational});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
-    MarkHigherThan(
-        {SimpleAssignment, CompoundAssignment, LogicalAnd, LogicalOr},
-        {Lowest});
+    MarkHigherThan({LogicalAnd, LogicalOr}, {If});
+    MarkHigherThan({If}, {SimpleAssignment, CompoundAssignment});
+    MarkHigherThan({SimpleAssignment, CompoundAssignment}, {Lowest});
 
     // Compute the transitive closure of the above relationships: if we parse
     // `a $ b @ c` as `(a $ b) @ c` and parse `b @ c % d` as `(b @ c) % d`,
@@ -137,7 +139,7 @@ struct OperatorPriorityTable {
     // Ambiguous would mean it's an error. LeftFirst is meaningless. For now we
     // allow all prefix operators to be repeated.
     for (PrecedenceLevel prefix :
-         {TermPrefix, NumericPrefix, BitwisePrefix, LogicalPrefix}) {
+         {TermPrefix, NumericPrefix, BitwisePrefix, LogicalPrefix, If}) {
       table[prefix][prefix] = OperatorPriority::RightFirst;
     }
 
@@ -194,124 +196,127 @@ auto PrecedenceGroup::ForType() -> PrecedenceGroup {
 }
 
 auto PrecedenceGroup::ForLeading(TokenKind kind)
-    -> llvm::Optional<PrecedenceGroup> {
+    -> std::optional<PrecedenceGroup> {
   switch (kind) {
-    case TokenKind::Star():
+    case TokenKind::Star:
       return PrecedenceGroup(TermPrefix);
 
-    case TokenKind::Not():
+    case TokenKind::Not:
       return PrecedenceGroup(LogicalPrefix);
 
-    case TokenKind::Minus():
-    case TokenKind::MinusMinus():
-    case TokenKind::PlusPlus():
+    case TokenKind::Minus:
+    case TokenKind::MinusMinus:
+    case TokenKind::PlusPlus:
       return PrecedenceGroup(NumericPrefix);
 
-    case TokenKind::Tilde():
+    case TokenKind::Tilde:
       return PrecedenceGroup(BitwisePrefix);
 
+    case TokenKind::If:
+      return PrecedenceGroup(If);
+
     default:
-      return llvm::None;
+      return std::nullopt;
   }
 }
 
 auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
-    -> llvm::Optional<Trailing> {
+    -> std::optional<Trailing> {
   switch (kind) {
     // Assignment operators.
-    case TokenKind::Equal():
+    case TokenKind::Equal:
       return Trailing{.level = SimpleAssignment, .is_binary = true};
-    case TokenKind::PlusEqual():
-    case TokenKind::MinusEqual():
-    case TokenKind::StarEqual():
-    case TokenKind::SlashEqual():
-    case TokenKind::PercentEqual():
-    case TokenKind::AmpEqual():
-    case TokenKind::PipeEqual():
-    case TokenKind::GreaterGreaterEqual():
-    case TokenKind::LessLessEqual():
+    case TokenKind::PlusEqual:
+    case TokenKind::MinusEqual:
+    case TokenKind::StarEqual:
+    case TokenKind::SlashEqual:
+    case TokenKind::PercentEqual:
+    case TokenKind::AmpEqual:
+    case TokenKind::PipeEqual:
+    case TokenKind::GreaterGreaterEqual:
+    case TokenKind::LessLessEqual:
       return Trailing{.level = CompoundAssignment, .is_binary = true};
 
     // Logical operators.
-    case TokenKind::And():
+    case TokenKind::And:
       return Trailing{.level = LogicalAnd, .is_binary = true};
-    case TokenKind::Or():
+    case TokenKind::Or:
       return Trailing{.level = LogicalOr, .is_binary = true};
 
     // Bitwise operators.
-    case TokenKind::Amp():
+    case TokenKind::Amp:
       return Trailing{.level = BitwiseAnd, .is_binary = true};
-    case TokenKind::Pipe():
+    case TokenKind::Pipe:
       return Trailing{.level = BitwiseOr, .is_binary = true};
-    case TokenKind::Xor():
+    case TokenKind::Xor:
       return Trailing{.level = BitwiseXor, .is_binary = true};
-    case TokenKind::GreaterGreater():
-    case TokenKind::LessLess():
+    case TokenKind::GreaterGreater:
+    case TokenKind::LessLess:
       return Trailing{.level = BitShift, .is_binary = true};
 
     // Relational operators.
-    case TokenKind::EqualEqual():
-    case TokenKind::ExclaimEqual():
-    case TokenKind::Less():
-    case TokenKind::LessEqual():
-    case TokenKind::Greater():
-    case TokenKind::GreaterEqual():
-    case TokenKind::LessEqualGreater():
+    case TokenKind::EqualEqual:
+    case TokenKind::ExclaimEqual:
+    case TokenKind::Less:
+    case TokenKind::LessEqual:
+    case TokenKind::Greater:
+    case TokenKind::GreaterEqual:
+    case TokenKind::LessEqualGreater:
       return Trailing{.level = Relational, .is_binary = true};
 
     // Additive operators.
-    case TokenKind::Plus():
-    case TokenKind::Minus():
+    case TokenKind::Plus:
+    case TokenKind::Minus:
       return Trailing{.level = Additive, .is_binary = true};
 
     // Multiplicative operators.
-    case TokenKind::Slash():
+    case TokenKind::Slash:
       return Trailing{.level = Multiplicative, .is_binary = true};
-    case TokenKind::Percent():
+    case TokenKind::Percent:
       return Trailing{.level = Modulo, .is_binary = true};
 
     // `*` could be multiplication or pointer type formation.
-    case TokenKind::Star():
+    case TokenKind::Star:
       return infix ? Trailing{.level = Multiplicative, .is_binary = true}
                    : Trailing{.level = TypePostfix, .is_binary = false};
 
     // Postfix operators.
-    case TokenKind::MinusMinus():
-    case TokenKind::PlusPlus():
+    case TokenKind::MinusMinus:
+    case TokenKind::PlusPlus:
       return Trailing{.level = NumericPostfix, .is_binary = false};
 
     // Prefix-only operators.
-    case TokenKind::Tilde():
-    case TokenKind::Not():
+    case TokenKind::Tilde:
+    case TokenKind::Not:
       break;
 
     // Symbolic tokens that might be operators eventually.
-    case TokenKind::Backslash():
-    case TokenKind::Caret():
-    case TokenKind::CaretEqual():
-    case TokenKind::Comma():
-    case TokenKind::TildeEqual():
-    case TokenKind::Exclaim():
-    case TokenKind::LessGreater():
-    case TokenKind::Question():
-    case TokenKind::Colon():
+    case TokenKind::Backslash:
+    case TokenKind::Caret:
+    case TokenKind::CaretEqual:
+    case TokenKind::Comma:
+    case TokenKind::TildeEqual:
+    case TokenKind::Exclaim:
+    case TokenKind::LessGreater:
+    case TokenKind::Question:
+    case TokenKind::Colon:
       break;
 
     // Symbolic tokens that are intentionally not operators.
-    case TokenKind::At():
-    case TokenKind::LessMinus():
-    case TokenKind::MinusGreater():
-    case TokenKind::EqualGreater():
-    case TokenKind::ColonEqual():
-    case TokenKind::Period():
-    case TokenKind::Semi():
+    case TokenKind::At:
+    case TokenKind::LessMinus:
+    case TokenKind::MinusGreater:
+    case TokenKind::EqualGreater:
+    case TokenKind::ColonEqual:
+    case TokenKind::Period:
+    case TokenKind::Semi:
       break;
 
     default:
       break;
   }
 
-  return llvm::None;
+  return std::nullopt;
 }
 
 auto PrecedenceGroup::GetPriority(PrecedenceGroup left, PrecedenceGroup right)

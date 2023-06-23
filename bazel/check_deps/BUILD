@@ -13,10 +13,10 @@ filegroup(
     data = [
         "//explorer",
         "//installers/local:carbon",
+        "//migrate_cpp:rewriter",
         "//migrate_cpp/cpp_refactoring",
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/driver:carbon",
-        "//toolchain/semantics:semantics_ir_factory",
     ],
 )
 

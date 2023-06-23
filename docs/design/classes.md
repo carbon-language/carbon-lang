@@ -31,13 +31,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Nominal class types](#nominal-class-types)
     -   [Forward declaration](#forward-declaration)
-    -   [Self](#self)
+    -   [`Self`](#self)
     -   [Construction](#construction)
         -   [Assignment](#assignment)
     -   [Member functions](#member-functions)
         -   [Class functions](#class-functions)
         -   [Methods](#methods)
-        -   [Name lookup in member function definitions](#name-lookup-in-member-function-definitions)
+        -   [Deferred member function definitions](#deferred-member-function-definitions)
+        -   [Name lookup in classes](#name-lookup-in-classes)
     -   [Nominal data classes](#nominal-data-classes)
     -   [Member type](#member-type)
     -   [Let](#let)
@@ -46,6 +47,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Virtual methods](#virtual-methods)
             -   [Virtual override keywords](#virtual-override-keywords)
         -   [Subtyping](#subtyping)
+        -   [`Self` refers to the current type](#self-refers-to-the-current-type)
         -   [Constructors](#constructors)
             -   [Partial facet](#partial-facet)
             -   [Usage](#usage)
@@ -74,6 +76,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [No `static` variables](#no-static-variables)
     -   [Computed properties](#computed-properties)
     -   [Interfaces implemented for data classes](#interfaces-implemented-for-data-classes)
+-   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -657,8 +660,9 @@ analogous to equality comparisons:
 Implicit conversion from a struct type to a data class type is allowed when the
 set of field names is the same and implicit conversion is defined between the
 pairs of member types with the same field names. So calling a function
-effectively performs an assignment from each of the caller's arguments to the
-function's parameters, and will be valid when those assignments are all valid.
+effectively performs an initialization of each of the function's parameters from
+the caller's arguments, and will be valid when those initializations are all
+valid.
 
 A data class has an unformed state if all its members do. Treatment of unformed
 state follows proposal
@@ -680,7 +684,6 @@ The declarations for nominal class types will have:
 -   an optional `abstract` or `base` prefix
 -   `class` introducer
 -   the name of the class
--   an optional `extends` followed by the name of the immediate base class
 -   `{`, an open curly brace
 -   a sequence of declarations
 -   `}`, a close curly brace
@@ -708,9 +711,9 @@ determined at compile time.
 To support circular references between class types, we allow
 [forward declaration](https://en.wikipedia.org/wiki/Forward_declaration) of
 types. Forward declarations end with semicolon `;` after the name of the class,
-instead of any `extends` clause and the block of declarations in curly braces
-`{`...`}`. A type that is forward declared is considered incomplete until the
-end of a definition with the same name.
+instead of the block of declarations in curly braces `{`...`}`. A type that is
+forward declared is considered incomplete until the end of a definition with the
+same name.
 
 ```
 // Forward declaration of `GraphNode`.
@@ -730,7 +733,7 @@ class GraphNode {
 **Open question:** What is specifically allowed and forbidden with an incomplete
 type has not yet been decided.
 
-### Self
+### `Self`
 
 A `class` definition may provisionally include references to its own name in
 limited ways. These limitations arise from the type not being complete until the
@@ -743,8 +746,8 @@ class IntListNode {
 }
 ```
 
-An equivalent definition of `IntListNode`, since `Self` is an alias for the
-current type, is:
+An equivalent definition of `IntListNode`, since the `Self` keyword is an alias
+for the current type, is:
 
 ```
 class IntListNode {
@@ -759,6 +762,7 @@ class IntListNode {
 class IntList {
   class IntListNode {
     var data: i32;
+    // `Self` is `IntListNode`, not `IntList`.
     var next: Self*;
   }
   var first: IntListNode*;
@@ -831,7 +835,7 @@ members of the type, while methods can only be called on instances.
 #### Class functions
 
 A class function is like a
-[C++ static member function or method](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>),
+[C++ static member function](https://en.cppreference.com/w/cpp/language/static#Static_member_functions),
 and is declared like a function at file scope. The declaration can include a
 definition of the function body, or that definition can be provided out of line
 after the class definition is finished. A common use is for constructor
@@ -865,25 +869,25 @@ var p2: Point = p1.CreateCentered();
 
 [Method](<https://en.wikipedia.org/wiki/Method_(computer_programming)>)
 declarations are distinguished from [class function](#class-functions)
-declarations by having a `me` parameter in square brackets `[`...`]` before the
-explicit parameter list in parens `(`...`)`. There is no implicit member access
-in methods, so inside the method body members are accessed through the `me`
-parameter. Methods may be written lexically inline or after the class
+declarations by having a `self` parameter in square brackets `[`...`]` before
+the explicit parameter list in parens `(`...`)`. There is no implicit member
+access in methods, so inside the method body members are accessed through the
+`self` parameter. Methods may be written lexically inline or after the class
 declaration.
 
 ```carbon
 class Circle {
-  fn Diameter[me: Self]() -> f32 {
-    return me.radius * 2;
+  fn Diameter[self: Self]() -> f32 {
+    return self.radius * 2;
   }
-  fn Expand[addr me: Self*](distance: f32);
+  fn Expand[addr self: Self*](distance: f32);
 
   var center: Point;
   var radius: f32;
 }
 
-fn Circle.Expand[addr me: Self*](distance: f32) {
-  me->radius += distance;
+fn Circle.Expand[addr self: Self*](distance: f32) {
+  self->radius += distance;
 }
 
 var c: Circle = {.center = Point.Origin(), .radius = 1.5 };
@@ -895,10 +899,10 @@ Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
 -   Methods are called using the dot `.` member syntax, `c.Diameter()` and
     `c.Expand(`...`)`.
 -   `Diameter` computes and returns the diameter of the circle without modifying
-    the `Circle` instance. This is signified using `[me: Self]` in the method
+    the `Circle` instance. This is signified using `[self: Self]` in the method
     declaration.
 -   `c.Expand(`...`)` does modify the value of `c`. This is signified using
-    `[addr me: Self*]` in the method declaration.
+    `[addr self: Self*]` in the method declaration.
 
 The pattern '`addr` _patt_' means "first take the address of the argument, which
 must be an
@@ -907,75 +911,126 @@ then match pattern _patt_ against it".
 
 If the method declaration also includes
 [deduced generic parameters](/docs/design/generics/overview.md#deduced-parameters),
-the `me` parameter must be in the same list in square brackets `[`...`]`. The
-`me` parameter may appear in any position in that list, as long as it appears
+the `self` parameter must be in the same list in square brackets `[`...`]`. The
+`self` parameter may appear in any position in that list, as long as it appears
 after any names needed to describe its type.
 
-#### Name lookup in member function definitions
+#### Deferred member function definitions
 
-When defining a member function lexically inline, we delay type checking of the
-function body until the definition of the current type is complete. This means
-that name lookup _for members of objects_ is also delayed. That means that you
-can reference `me.F()` in a lexically inline method definition even before the
-declaration of `F` in that class definition. However, other names still need to
-be declared before they are used. This includes unqualified names, names within
-namespaces, and names _for members of types_.
+When defining a member function lexically inline, the body is deferred and
+processed as if it appeared immediately after the end of the outermost enclosing
+class, like in C++.
 
-```
+For example, given a class with inline function definitions:
+
+```carbon
 class Point {
-  fn Distance[me: Self]() -> f32 {
-    // ✅ Allowed: `x` and `y` are names for members of an object,
-    // and so lookup is delayed until `type_of(me) == Self` is complete.
-    return Math.Sqrt(me.x * me.x + me.y * me.y);
-  }
-
-  fn CreatePolarInvalid(r: f32, theta: f32) -> Point {
-    // ❌ Forbidden: unqualified name used before declaration.
-    return Create(r * Math.Cos(theta), r * Math.Sin(theta));
-  }
-  fn CreatePolarValid1(r: f32, theta: f32) -> Point {
-    // ❌ Forbidden: `Create` is not yet declared.
-    return Point.Create(r * Math.Cos(theta), r * Math.Sin(theta));
-  }
-  fn CreatePolarValid2(r: f32, theta: f32) -> Point {
-    // ❌ Forbidden: `Create` is not yet declared.
-    return Self.Create(r * Math.Cos(theta), r * Math.Sin(theta));
+  fn Distance[self: Self]() -> f32 {
+    return Math.Sqrt(self.x * self.x + self.y * self.y);
   }
 
   fn Create(x: f32, y: f32) -> Point {
-    // ✅ Allowed: checking that conversion of `{.x: f32, .y: f32}`
-    // to `Point` is delayed until `Point` is complete.
     return {.x = x, .y = y};
   }
 
-  fn CreateXEqualsY(xy: f32) -> Point {
-    // ✅ Allowed: `Create` is declared earlier.
-    return Create(xy, xy);
-  }
+  var x: f32;
+  var y: f32;
+}
+```
 
-  fn CreateXAxis(x: f32) -> Point;
+These are all parsed as if they were defined outside the class scope:
 
-  fn Angle[me: Self]() -> f32;
+```carbon
+class Point {
+  fn Distance[self: Self]() -> f32;
+  fn Create(x: f32, y: f32) -> Point;
 
   var x: f32;
   var y: f32;
 }
 
-fn Point.CreateXAxis(x: f32) -> Point;
-  // ✅ Allowed: `Point` type is complete.
-  // Members of `Point` like `Create` are in scope.
-  return Create(x, 0);
+fn Point.Distance[self: Self]() -> f32 {
+  return Math.Sqrt(self.x * self.x + self.y * self.y);
 }
 
-fn Point.Angle[me: Self]() -> f32 {
-  // ✅ Allowed: `Point` type is complete.
-  // Function is checked immediately.
-  return Math.ATan2(me.y, me.x);
+fn Point.Create(x: f32, y: f32) -> Point {
+  return {.x = x, .y = y};
 }
 ```
 
-**Note:** The details of name lookup are still being decided in issue
-[#472: Open question: Calling functions defined later in the same file](https://github.com/carbon-language/carbon-lang/issues/472).
+#### Name lookup in classes
+
+[Member access](expressions/member_access.md) is an expression; details are
+covered there. Because function definitions are
+[deferred](#deferred-member-function-definitions), name lookup in classes works
+the same regardless of whether a function is inline. The class body forms a
+scope for name lookup, and function definitions can perform unqualified name
+lookup within that scope.
+
+For example:
+
+```carbon
+class Square {
+  fn GetArea[self: Self]() -> f32 {
+    // ✅ OK: performs name lookup on `self`.
+    return self.size * self.size;
+    // ❌ Error: finds `Square.size`, but an instance is required.
+    return size * size;
+    // ❌ Error: an instance is required.
+    return Square.size * Square.size;
+    // ✅ OK: performs instance binding with `self`.
+    return self.(Square.size) * self.(Square.size);
+    // ✅ OK: uses unqualified name lookup to find `Square.size`, then performs
+    // instance binding with `self`.
+    return self.(size) * self.(size);
+  }
+
+  fn GetDoubled[self: Self]() -> Square {
+    // ✅ OK: performs name lookup on `Square` for `Create`.
+    return Square.Create(self.size);
+    // ✅ OK: performs unqualified name lookup within class scope for `Create`.
+    return Create(self.size);
+    // ✅ OK: performs name lookup on `self` for `Create`.
+    return self.Create(self.size);
+  }
+
+  fn Create(size: f32) -> Square;
+
+  var size: f32;
+}
+```
+
+The example's name lookups refer to `Create` and `size` which are defined after
+the example member access; this is valid because of
+[deferred member function definitions](#deferred-member-function-definitions).
+
+However, function signatures must still complete lookup without deferring. For
+example:
+
+```carbon
+class List {
+  // ❌ Error: `Iterator` has not yet been defined.
+  fn Iterate() -> Iterator;
+
+  class Iterator {
+    ...
+  }
+
+  // ✅ OK: The definition of Iterator is now available.
+  fn Iterate() -> Iterator;
+}
+```
+
+An out-of-line function definition's parameters, return type, and body are
+evaluated as if in-scope. For example:
+
+```carbon
+// ✅ OK: The return type performs unqualified name lookup into `List` for
+// `Iterator`.
+fn List.Iterate() -> Iterator {
+  ...
+}
+```
 
 ### Nominal data classes
 
@@ -1029,7 +1084,7 @@ Other type constants can be defined using a `let` declaration:
 ```
 class MyClass {
   let Pi:! f32 = 3.141592653589793;
-  let IndexType:! Type = i32;
+  let IndexType:! type = i32;
 }
 ```
 
@@ -1076,9 +1131,16 @@ base class MyBaseClass { ... }
 A _base class_ may be _extended_ to get a _derived class_:
 
 ```
-base class MiddleDerived extends MyBaseClass { ... }
-class FinalDerived extends MiddleDerived { ... }
-// ❌ Forbidden: class Illegal extends FinalDerived { ... }
+base class MiddleDerived {
+  extend base: MyBaseClass;
+  ...
+}
+class FinalDerived {
+  extend base: MiddleDerived;
+  ...
+}
+// ❌ Forbidden: class Illegal { extend base: FinalDerived; ... }
+// may not extend `FinalDerived` since not declared `base` or `abstract`.
 ```
 
 An _[abstract class](https://en.wikipedia.org/wiki/Abstract_type)_ or _abstract
@@ -1112,7 +1174,7 @@ methods whose implementation may be overridden in a derived class.
 
 Only methods defined in the scope of the class definition may be virtual, not
 any defined in
-[external interface impls](/docs/design/generics/details.md#external-impl).
+[external interface `impl` declarations](/docs/design/generics/details.md#external-impl).
 Interface methods may be implemented using virtual methods when the
 [impl is internal](/docs/design/generics/details.md#implementing-interfaces),
 and calls to those methods by way of the interface will do virtual dispatch just
@@ -1127,7 +1189,7 @@ declaration before `fn`.
 
 ```
 base class MyBaseClass {
-  virtual fn Overridable[me: Self]() -> i32 { return 7; }
+  virtual fn Overridable[self: Self]() -> i32 { return 7; }
 }
 ```
 
@@ -1162,7 +1224,7 @@ There are three virtual override keywords:
     doesn't match the base class. We intentionally use the same keyword here as
     for implementing interfaces, to emphasize that they are similar operations.
 
-| Keyword on<br />method in `C` | Allowed in<br />`abstract class C` | Allowed in<br />`base class C` | Allowed in<br />final `class C` | in `B` where<br />`C extends B`                          | in `D` where<br />`D extends C`                                                  |
+| Keyword on<br />method in `C` | Allowed in<br />`abstract class C` | Allowed in<br />`base class C` | Allowed in<br />final `class C` | in `B` where<br />`C` extends `B`                        | in `D` where<br />`D` extends `C`                                                |
 | ----------------------------- | ---------------------------------- | ------------------------------ | ------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `virtual`                     | ✅                                 | ✅                             | ❌                              | _not present_                                            | `abstract`<br />`impl`<br />_not mentioned_                                      |
 | `abstract`                    | ✅                                 | ❌                             | ❌                              | _not present_<br />`virtual`<br />`abstract`<br />`impl` | `abstract`<br />`impl`<br />_may not be<br />mentioned if<br />`D` is not final_ |
@@ -1196,7 +1258,61 @@ base class Extensible { ... }
 // Can be replaced by:
 
 abstract class ExtensibleBase { ... }
-class ExactlyExtensible extends ExtensibleBase { ... }
+class ExactlyExtensible {
+  extend base: ExtensibleBase;
+  ...
+}
+```
+
+#### `Self` refers to the current type
+
+Note that `Self` in a class definition means "the current type being defined"
+not "the type implementing this method." To implement a method in a derived
+class that uses `Self` in the declaration in the base class, only the type of
+`self` should change:
+
+```
+base class B1 {
+  virtual fn F[self: Self](x: Self) -> Self;
+  // Means exactly the same thing as:
+  //   virtual fn F[self: B1](x: B1) -> B1;
+}
+
+class D1 {
+  extend base: B1;
+  // ❌ Illegal:
+  //   impl fn F[self: Self](x: Self) -> Self;
+  // since that would mean the same thing as:
+  //   impl fn F[self: Self](x: D1) -> D1;
+  // and `D1` is a different type than `B1`.
+
+  // ✅ Allowed: Parameter and return types
+  //  of `F` match declaration in `B1`.
+  impl fn F[self: Self](x: B1) -> B1;
+  // Or: impl fn F[self: D1](x: B1) -> B1;
+}
+```
+
+The exception is when there is a [subtyping relationship](#subtyping) such that
+it would be legal for a caller using the base classes signature to actually be
+calling the derived implementation, as in:
+
+```
+base class B2 {
+  virtual fn Clone[self: Self]() -> Self*;
+  // Means exactly the same thing as:
+  //   virtual fn Clone[self: B2]() -> B2*;
+}
+
+class D2 {
+  extend base: B2;
+  // ✅ Allowed
+  impl fn Clone[self: Self]() -> Self*;
+  // Means the same thing as:
+  //   impl fn Clone[self: D2]() -> D2*;
+  // which is allowed since `D2*` is a
+  // subtype of `B2*`.
+}
 ```
 
 #### Constructors
@@ -1210,12 +1326,13 @@ This means either
 [creating the object in the return statement itself](/proposals/p0257.md#function-returns-and-initialization),
 or in
 [a `returned var` declaration](/proposals/p0257.md#declared-returned-variable).
-As before, instances can be created using by casting a struct value into the
-class type, this time with a `.base` member to initialize the members of the
-immediate base type.
+As before, instances can be created by casting a struct value into the class
+type, this time with a `.base` member to initialize the members of the immediate
+base type.
 
 ```
-class MyDerivedType extends MyBaseType {
+class MyDerivedType {
+  extend base: MyBaseType;
   fn Create() -> MyDerivedType {
     return {.base = MyBaseType.Create(), .derived_field = ...};
   }
@@ -1350,7 +1467,8 @@ abstract class MyAbstractClass {
 }
 
 // Base class returns a partial type
-base class Derived extends MyAbstractClass {
+base class Derived {
+  extend base: MyAbstractClass;
   protected fn Create() -> partial Self {
     return {.base = MyAbstractClass.Create(), .derived_field = ...};
   }
@@ -1362,7 +1480,8 @@ base class MyBaseClass {
 }
 
 // Base class returns a full type
-base class ExtensibleDerived extends MyBaseClass {
+base class ExtensibleDerived {
+  extend base: MyBaseClass;
   fn Create() -> Self {
     return {.base = MyBaseClass.Create(), .derived_field = ...};
   }
@@ -1373,7 +1492,8 @@ base class ExtensibleDerived extends MyBaseClass {
 And final classes will return a type that does not use the partial facet:
 
 ```
-class FinalDerived extends MiddleDerived {
+class FinalDerived {
+  extend base: MiddleDerived;
   fn Create() -> Self {
     return {.base = MiddleDerived.Create(), .derived_field = ...};
   }
@@ -1418,7 +1538,7 @@ the `destructor` keyword:
 
 ```carbon
 class MyClass {
-  destructor [me: Self] { ... }
+  destructor [self: Self] { ... }
 }
 ```
 
@@ -1426,13 +1546,13 @@ or:
 
 ```carbon
 class MyClass {
-  // Can modify `me` in the body.
-  destructor [addr me: Self*] { ... }
+  // Can modify `self` in the body.
+  destructor [addr self: Self*] { ... }
 }
 ```
 
 If a class has no `destructor` declaration, it gets the default destructor,
-which is equivalent to `destructor [me: Self] { }`.
+which is equivalent to `destructor [self: Self] { }`.
 
 The destructor for a class is run before the destructors of its data members.
 The data members are destroyed in reverse order of declaration. Derived classes
@@ -1450,9 +1570,9 @@ Destructors may be declared in class scope and then defined out-of-line:
 
 ```carbon
 class MyClass {
-  destructor [addr me: Self*];
+  destructor [addr self: Self*];
 }
-destructor MyClass [addr me: Self*] { ... }
+destructor MyClass [addr self: Self*] { ... }
 ```
 
 It is illegal to delete an instance of a derived class through a pointer to one
@@ -1464,11 +1584,12 @@ must be `impl`:
 
 ```carbon
 base class MyBaseClass {
-  virtual destructor [addr me: Self*] { ... }
+  virtual destructor [addr self: Self*] { ... }
 }
 
-class MyDerivedClass extends MyBaseClass {
-  impl destructor [addr me: Self*] { ... }
+class MyDerivedClass {
+  extend base: MyBaseClass;
+  impl destructor [addr self: Self*] { ... }
 }
 ```
 
@@ -1518,8 +1639,8 @@ call the `UnsafeDelete` method instead. Note that you may not call
 ```
 interface Allocator {
   // ...
-  fn Delete[T:! Deletable, addr me: Self*](p: T*);
-  fn UnsafeDelete[T:! Destructible, addr me: Self*](p: T*);
+  fn Delete[T:! Deletable, addr self: Self*](p: T*);
+  fn UnsafeDelete[T:! Destructible, addr self: Self*](p: T*);
 }
 ```
 
@@ -1528,7 +1649,8 @@ function expecting a `Deletable` type, use the `UnsafeAllowDelete`
 [type adapter](/docs/design/generics/details.md#adapting-types).
 
 ```
-adapter UnsafeAllowDelete(T:! Concrete) extends T {
+class UnsafeAllowDelete(T:! Concrete) {
+  extend adapt T;
   impl as Deletable {}
 }
 
@@ -1566,7 +1688,7 @@ could potentially fail must be performed before the destructor is called.
 Unhandled failure during a destructor call will abort the program.
 
 **Future work:** Allow or require destructors to be declared as taking
-`[var me: Self]`.
+`[var self: Self]`.
 
 **Alternatives considered:**
 
@@ -1630,7 +1752,7 @@ As in C++, `private` means only accessible to members of the class and any
 
 ```carbon
 class Point {
-  fn Distance[me: Self]() -> f32;
+  fn Distance[self: Self]() -> f32;
   // These are only accessible to members of `Point`.
   private var x: f32;
   private var y: f32;
@@ -1668,15 +1790,16 @@ derived classes, and any [friends](#friends).
 ```
 base class MyBaseClass {
   protected fn HelperClassFunction(x: i32) -> i32;
-  protected fn HelperMethod[me: Self](x: i32) -> i32;
+  protected fn HelperMethod[self: Self](x: i32) -> i32;
   protected var data: i32;
 }
 
-class MyDerivedClass extends MyBaseClass {
-  fn UsesProtected[addr me: Self*]() {
+class MyDerivedClass {
+  extend base: MyBaseClass;
+  fn UsesProtected[addr self: Self*]() {
     // Can access protected members in derived class
     var x: i32 = HelperClassFunction(3);
-    me->data = me->HelperMethod(x);
+    self->data = self->HelperMethod(x);
   }
 }
 ```
@@ -1863,16 +1986,17 @@ There are some opportunities to improve on and simplify the C++ story:
     aren't friends of the base class.
 
 **References:** This was discussed in
-[the open discussion on 2021-07-12](https://docs.google.com/document/d/14vAcURDKeH6LZ_TQCMRGpNJrXSZCACQqDy29YH19XGo/edit#heading=h.40jlsrcgp8mr).
+[the open discussion on 2021-07-12](https://docs.google.com/document/d/1TvHK6HWAcCtnseMpcNsLYrgdtNy9qNrv6EaY9n063ok/edit#heading=h.40jlsrcgp8mr).
 
 #### Interop with C++ inheritance
 
 This design directly supports Carbon classes inheriting from a single C++ class.
 
 ```
-class CarbonClass extends C++.CPlusPlusClass {
+class CarbonClass {
+  extend base: Cpp.CPlusPlusClass;
   fn Create() -> Self {
-    return {.base = C++.CPlusPlusClass(...), .other_fields = ...};
+    return {.base = Cpp.CPlusPlusClass(...), .other_fields = ...};
   }
   ...
 }
@@ -2027,7 +2151,7 @@ interface ConstructWidgetFrom {
   fn Construct(Self) -> Widget;
 }
 
-external impl {.kind: WidgetKind, .size: i32}
+impl {.kind: WidgetKind, .size: i32}
     as ConstructWidgetFrom { ... }
 ```
 
@@ -2049,11 +2173,98 @@ that "`T` is comparable to `U` if they have the same field names in the same
 order, and for every field `x`, the type of `T.x` implements `ComparableTo` for
 the type of `U.x`."
 
+## Alternatives considered
+
+-   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+
+    -   [Require compile-time-proven initialization](/proposals/p0257.md#require-compile-time-proven-initialization)
+    -   [C and C++ uninitialized](/proposals/p0257.md#c-and-c-uninitialized)
+    -   [Allow passing unformed objects to parameters or returning them?](/proposals/p0257.md#allow-passing-unformed-objects-to-parameters-or-returning-them)
+    -   [Allow assigning an unformed object to another unformed object?](/proposals/p0257.md#allow-assigning-an-unformed-object-to-another-unformed-object)
+    -   [Fully destructive move (Rust)](/proposals/p0257.md#fully-destructive-move-rust)
+    -   [Completely non-destructive move (C++)](/proposals/p0257.md#completely-non-destructive-move-c)
+    -   [Named return variable in place of a return type](/proposals/p0257.md#named-return-variable-in-place-of-a-return-type)
+    -   [Allow unformed members](/proposals/p0257.md#allow-unformed-members)
+
+-   [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
+
+    -   [Early proposal #98](https://github.com/carbon-language/carbon-lang/pull/98)
+    -   [Interfaces implemented for anonymous data classes](/proposals/p0561.md#interfaces-implemented-for-anonymous-data-classes)
+    -   [Access control](/proposals/p0561.md#access-control)
+    -   [Introducer for structural data class types](/proposals/p0561.md#introducer-for-structural-data-class-types)
+    -   [Terminology](/proposals/p0561.md#terminology)
+
+-   [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
+
+    -   [Method syntax](/proposals/p0722.md#method-syntax)
+    -   [Marking mutating methods at the call site](/proposals/p0722.md#marking-mutating-methods-at-the-call-site)
+    -   [Differences between functions and methods](/proposals/p0722.md#differences-between-functions-and-methods)
+    -   [Specifying linkage as part of the access modifier](/proposals/p0722.md#specifying-linkage-as-part-of-the-access-modifier)
+    -   [Nominal data class](/proposals/p0722.md#nominal-data-class)
+    -   [Let constants](/proposals/p0722.md#let-constants)
+
+-   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
+
+    -   [Classes are final by default](/proposals/p0777.md#classes-are-final-by-default)
+    -   [Allow keywords to be written when they would have no effect](/proposals/p0777.md#allow-keywords-to-be-written-when-they-would-have-no-effect)
+    -   [Different virtual override keywords](/proposals/p0777.md#different-virtual-override-keywords)
+    -   [Different virtual override keyword placement](/proposals/p0777.md#different-virtual-override-keyword-placement)
+    -   [Final methods](/proposals/p0777.md#final-methods)
+    -   [Constructors](/proposals/p0777.md#constructors)
+    -   [Implicit abstract classes](/proposals/p0777.md#implicit-abstract-classes)
+    -   [No extensible objects with non-virtual destructors](/proposals/p0777.md#no-extensible-objects-with-non-virtual-destructors)
+    -   [Separate "exact" and "or derived" variations on types](/proposals/p0777.md#separate-exact-and-or-derived-variations-on-types)
+    -   [Separate "exact" and "or derived" variations on pointers](/proposals/p0777.md#separate-exact-and-or-derived-variations-on-pointers)
+
+-   [#875: Principle: Information accumulation](https://github.com/carbon-language/carbon-lang/pull/875)
+
+    -   Allow information to be used before it is provided
+        [globally](/proposals/p0875.md#strict-global-consistency),
+        [within a file](/proposals/p0875.md#context-sensitive-local-consistency),
+        or
+        [within a top-level declaration](/proposals/p0875.md#top-down-with-minimally-deferred-type-checking).
+    -   [Do not allow inline method bodies to use members before they are declared](/proposals/p0875.md#strict-top-down)
+    -   [Do not allow separate declaration and definition](/proposals/p0875.md#disallow-separate-declaration-and-definition)
+
+-   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
+
+    -   [Field order is not significant](/proposals/p0981.md#field-order-is-not-significant)
+    -   [Different field orders are incompatible](/proposals/p0981.md#different-field-orders-are-incompatible)
+    -   [Explicit instead of implicit conversions](/proposals/p0981.md#explicit-instead-of-implicit-conversions)
+
+-   [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+
+    -   [Types implement destructor interface](/proposals/p1154.md#types-implement-destructor-interface)
+    -   [Prevent virtual function calls in destructors](/proposals/p1154.md#prevent-virtual-function-calls-in-destructors)
+    -   [Allow functions to act as destructors](/proposals/p1154.md#allow-functions-to-act-as-destructors)
+    -   [Allow private destructors](/proposals/p1154.md#allow-private-destructors)
+    -   [Allow multiple conditional destructors](/proposals/p1154.md#allow-multiple-conditional-destructors)
+    -   [Type-of-type naming](/proposals/p1154.md#type-of-type-naming)
+    -   [Other approaches to extensible classes without vtables](/proposals/p1154.md#other-approaches-to-extensible-classes-without-vtables)
+
+-   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
+
+    -   [`Self` not a keyword](/proposals/p2107.md#self-not-a-keyword)
+    -   [Make `Self` a member of all types](/proposals/p2107.md#make-self-a-member-of-all-types)
+    -   [`where` operator could be associative](/proposals/p2107.md#where-operator-could-be-associative)
+
+-   [#2287: Allow unqualified name lookup for class members](https://github.com/carbon-language/carbon-lang/pull/2287)
+
+    -   [No unqualified lookup when defining outside a scope](/proposals/p2287.md#no-unqualified-lookup-when-defining-outside-a-scope)
+
+-   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
+    -   [Use `extends` instead of `extend`](/proposals/p2760.md#use-extends-instead-of-extend)
+    -   [List base class in class declaration](/proposals/p2760.md#list-base-class-in-class-declaration)
+
 ## References
 
 -   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
--   [#561: Basic classes: use cases, struct literals, struct types, and future wor](https://github.com/carbon-language/carbon-lang/pull/561)
+-   [#561: Basic classes: use cases, struct literals, struct types, and future work](https://github.com/carbon-language/carbon-lang/pull/561)
 -   [#722: Nominal classes and methods](https://github.com/carbon-language/carbon-lang/pull/722)
 -   [#777: Inheritance](https://github.com/carbon-language/carbon-lang/pull/777)
+-   [#875: Principle: Information accumulation](https://github.com/carbon-language/carbon-lang/pull/875)
 -   [#981: Implicit conversions for aggregates](https://github.com/carbon-language/carbon-lang/pull/981)
 -   [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
+-   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
+-   [#2287: Allow unqualified name lookup for class members](https://github.com/carbon-language/carbon-lang/pull/2287)
+-   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)

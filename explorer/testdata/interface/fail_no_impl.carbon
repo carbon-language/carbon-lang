@@ -2,17 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
 
 package ExplorerTest api;
 
 interface Vector {
-  fn Add[me: Self](b: Self) -> Self;
-  fn Scale[me: Self](v: i32) -> Self;
+  fn Add[self: Self](b: Self) -> Self;
+  fn Scale[self: Self](v: i32) -> Self;
 }
 
 class Point {
@@ -27,7 +23,7 @@ fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: i32) -> T {
 fn Main() -> i32 {
   var a: Point = {.x = 0, .y = 0};
   var b: Point = {.x = 2, .y = 3};
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_no_impl.carbon:[[@LINE+1]]: could not find implementation of interface Vector for class Point
+  // CHECK:STDERR: COMPILATION ERROR: fail_no_impl.carbon:[[@LINE+1]]: could not find implementation of interface Vector for class Point
   var p: Point = AddAndScaleGeneric(a, b, 3);
   return p.x - 6;
 }

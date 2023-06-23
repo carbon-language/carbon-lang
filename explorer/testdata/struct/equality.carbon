@@ -2,28 +2,27 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// AUTOUPDATE
+// CHECK:STDOUT: t1 == t2: 1
+// CHECK:STDOUT: t1 != t2: 0
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 // TODO: Implement this with some kind of reflection?
-external impl {.x: i32, .y: i32} as EqWith(Self) {
-  fn Equal[me: Self](other: Self) -> bool {
-    return me.x == other.x and me.y == other.y;
+impl {.x: i32, .y: i32} as EqWith(Self) {
+  fn Equal[self: Self](other: Self) -> bool {
+    return self.x == other.x and self.y == other.y;
+  }
+  fn NotEqual[self: Self](other: Self) -> bool {
+    return self.x != other.x or self.y != other.y;
   }
 }
 
 fn Main() -> i32 {
   var t1: {.x: i32, .y: i32} = {.x = 5, .y = 2};
   var t2: {.x: i32, .y: i32} = {.x = 5, .y = 2};
-  if (t1 == t2) {
-    return 0;
-  } else {
-    return 1;
-  }
+  Print("t1 == t2: {0}", if t1 == t2 then 1 else 0);
+  Print("t1 != t2: {0}", if t1 != t2 then 1 else 0);
+  return 0;
 }

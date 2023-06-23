@@ -19,7 +19,7 @@ namespace {
 // an annotated range.
 class Annotations {
  public:
-  Annotations(llvm::StringRef annotated_source) {
+  explicit Annotations(llvm::StringRef annotated_source) {
     size_t index = annotated_source.find("$[[");
     if (index == llvm::StringRef::npos) {
       source_code_ = std::string(annotated_source);
@@ -39,11 +39,13 @@ class Annotations {
   }
 
   // Returns a view into the unannotated source.
-  llvm::StringRef source() const { return source_code_; }
+  auto source() const -> llvm::StringRef { return source_code_; }
 
   // Returns the offsets in the file representing the annotated range if they
   // exist and `{0, std::numeric_limits<size_t>::max()}` otherwise.
-  std::pair<size_t, size_t> range() const { return std::pair(start_, end_); }
+  auto range() const -> std::pair<size_t, size_t> {
+    return std::pair(start_, end_);
+  }
 
  private:
   std::string source_code_;
@@ -129,6 +131,59 @@ TEST(Rewriter, DeclarationComma) {
   EXPECT_EQ(RewriteText("int const x = 1234, y = 5678;"),
             "let x: i32 = 1234;\n"
             "let y: i32 = 5678;\n");
+}
+
+TEST(Rewriter, FunctionDeclaration) {
+  // Function declarations and definitions returning void.
+  EXPECT_EQ(RewriteText("void f();"), "fn f() -> ();\n");
+  EXPECT_EQ(RewriteText("void f() {}"),
+            "fn f() -> () {\n"
+            "}\n");
+
+  // Function declarations and definitions returning int.
+  EXPECT_EQ(RewriteText("int f();"), "fn f() -> i32;\n");
+  EXPECT_EQ(RewriteText("int f() { return 0; }"),
+            "fn f() -> i32 {\n"
+            "return 0;\n"
+            "}\n");
+
+  // Function declarations and definitions with a single parameter.
+  EXPECT_EQ(RewriteText("int f(bool);"), "fn f(_: bool) -> i32;\n");
+  EXPECT_EQ(RewriteText("int f(bool b);"), "fn f(b: bool) -> i32;\n");
+  EXPECT_EQ(RewriteText("int f(bool) { return 0; }"),
+            "fn f(_: bool) -> i32 {\n"
+            "return 0;\n"
+            "}\n");
+  EXPECT_EQ(RewriteText("int f(bool b) { return 0; }"),
+            "fn f(b: bool) -> i32 {\n"
+            "return 0;\n"
+            "}\n");
+
+  // Function declarations and definitions with a multiple parameters.
+  EXPECT_EQ(RewriteText("int f(bool, int);"),
+            "fn f(_: bool, _: i32) -> i32;\n");
+  EXPECT_EQ(RewriteText("int f(bool b, int n);"),
+            "fn f(b: bool, n: i32) -> i32;\n");
+  EXPECT_EQ(RewriteText("int f(bool, int n) { return 0; }"),
+            "fn f(_: bool, n: i32) -> i32 {\n"
+            "return 0;\n"
+            "}\n");
+  EXPECT_EQ(RewriteText("int f(bool b, int n) { return 0; }"),
+            "fn f(b: bool, n: i32) -> i32 {\n"
+            "return 0;\n"
+            "}\n");
+  EXPECT_EQ(RewriteText("int f(bool b, int n = 3) { return n; }"),
+            "fn f(b: bool, n: i32 = 3) -> i32 {\n"
+            "return n;\n"
+            "}\n");
+
+  // Function declarations with trailing-return syntax.
+  EXPECT_EQ(RewriteText("auto f(bool b, int n = 3) -> int;"),
+            "fn f(b: bool, n: i32 = 3) -> i32;\n");
+  EXPECT_EQ(RewriteText("auto f(bool b, int n = 3) -> int { return n; }"),
+            "fn f(b: bool, n: i32 = 3) -> i32 {\n"
+            "return n;\n"
+            "}\n");
 }
 
 }  // namespace

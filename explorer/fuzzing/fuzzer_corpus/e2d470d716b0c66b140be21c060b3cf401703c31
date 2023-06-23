@@ -1,0 +1,323 @@
+compilation_unit {
+  package_statement {
+    package_name: "ExplorerTest"
+  }
+  is_api: true
+  declarations {
+    interface {
+      name {
+        name: "Runnable"
+      }
+      members {
+        function {
+          name {
+            name: "Run"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    interface {
+      name {
+        name: "Walkable"
+      }
+      members {
+        function {
+          name {
+            name: "Walk"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    identifier {
+                      name: "Self"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    constraint {
+      name {
+        name: "Traversible"
+      }
+      members {
+        interface_extend {
+          base {
+            identifier {
+              name: "Runnable"
+            }
+          }
+        }
+      }
+      members {
+        interface_extend {
+          base {
+            identifier {
+              name: "Walkable"
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    impl {
+      kind: ExternalImpl
+      impl_type {
+        int_type_literal {
+        }
+      }
+      interface {
+        identifier {
+          name: "Traversible"
+        }
+      }
+      members {
+        function {
+          name {
+            name: "Run"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  operator {
+                    op: Mul
+                    arguments {
+                      int_literal {
+                        value: 10
+                      }
+                    }
+                    arguments {
+                      identifier {
+                        name: "self"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      members {
+        function {
+          name {
+            name: "Walk"
+          }
+          self_pattern {
+            binding_pattern {
+              name: "self"
+              type {
+                expression_pattern {
+                  expression {
+                    int_type_literal {
+                    }
+                  }
+                }
+              }
+            }
+          }
+          param_pattern {
+          }
+          return_term {
+            kind: Expression
+            type {
+              int_type_literal {
+              }
+            }
+          }
+          body {
+            statements {
+              return_expression_statement {
+                expression {
+                  operator {
+                    op: Add
+                    arguments {
+                      identifier {
+                        name: "self"
+                      }
+                    }
+                    arguments {
+                      int_literal {
+                        value: 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  declarations {
+    function {
+      name {
+        name: "Main"
+      }
+      param_pattern {
+      }
+      return_term {
+        kind: Expression
+        type {
+          int_type_literal {
+          }
+        }
+      }
+      body {
+        statements {
+          variable_definition {
+            pattern {
+              binding_pattern {
+                name: "n"
+                type {
+                  expression_pattern {
+                    expression {
+                      int_type_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            init {
+              int_literal {
+                value: 1
+              }
+            }
+            is_returned: false
+          }
+        }
+        statements {
+          return_expression_statement {
+            expression {
+              operator {
+                op: Add
+                arguments {
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          identifier {
+                            name: "n"
+                          }
+                        }
+                        path {
+                          simple_member_access {
+                            field: "Run"
+                            object {
+                              identifier {
+                                name: "Runnable"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+                arguments {
+                  call {
+                    function {
+                      compound_member_access {
+                        object {
+                          identifier {
+                            name: "n"
+                          }
+                        }
+                        path {
+                          simple_member_access {
+                            field: "Walk"
+                            object {
+                              identifier {
+                                name: "Walkable"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    argument {
+                      tuple_literal {
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

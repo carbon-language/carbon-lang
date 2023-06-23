@@ -5,8 +5,19 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "bazel_working_dir",
+    hdrs = ["bazel_working_dir.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "check",
-    srcs = ["check_internal.h"],
+    srcs = [
+        "check_internal.cpp",
+        "check_internal.h",
+    ],
     hdrs = ["check.h"],
     deps = [
         "@llvm-project//llvm:Support",
@@ -18,7 +29,33 @@ cc_test(
     srcs = ["check_test.cpp"],
     deps = [
         ":check",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "enum_base",
+    hdrs = ["enum_base.h"],
+    deps = [
+        "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "enum_base_test_def",
+    textual_hdrs = ["enum_base_test.def"],
+)
+
+cc_test(
+    name = "enum_base_test",
+    srcs = ["enum_base_test.cpp"],
+    deps = [
+        ":enum_base",
+        ":enum_base_test_def",
+        "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -38,24 +75,9 @@ cc_test(
     srcs = ["error_test.cpp"],
     deps = [
         ":error",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "@com_google_googletest//:gtest",
-    ],
-)
-
-# This does extra initialization on top of googletest's gtest_main in order to
-# provide stack traces on unexpected exits, because we normally rely on LLVM
-# code for that.
-#
-# This replaces "@com_google_googletest//:gtest_main";
-# "@com_google_googletest//:gtest" should still be used directly.
-cc_library(
-    name = "gtest_main",
-    testonly = 1,
-    srcs = ["gtest_main.cpp"],
-    deps = [
-        "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -69,7 +91,7 @@ cc_test(
     srcs = ["indirect_value_test.cpp"],
     deps = [
         ":indirect_value",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -77,6 +99,17 @@ cc_test(
 cc_library(
     name = "metaprogramming",
     hdrs = ["metaprogramming.h"],
+)
+
+cc_test(
+    name = "metaprogramming_test",
+    srcs = ["metaprogramming_test.cpp"],
+    deps = [
+        ":metaprogramming",
+        "//testing/util:gtest_main",
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_library(
@@ -104,8 +137,28 @@ cc_test(
     srcs = ["string_helpers_test.cpp"],
     deps = [
         ":string_helpers",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "vlog",
+    srcs = ["vlog_internal.h"],
+    hdrs = ["vlog.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "vlog_test",
+    srcs = ["vlog_test.cpp"],
+    deps = [
+        ":vlog",
+        "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
+        "@com_google_googletest//:gtest",
     ],
 )

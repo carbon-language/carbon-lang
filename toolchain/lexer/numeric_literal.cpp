@@ -32,11 +32,11 @@ static auto operator<<(llvm::raw_ostream& out, LexedNumericLiteral::Radix radix)
 }
 
 auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
-    -> llvm::Optional<LexedNumericLiteral> {
+    -> std::optional<LexedNumericLiteral> {
   LexedNumericLiteral result;
 
   if (source_text.empty() || !IsDecimalDigit(source_text.front())) {
-    return llvm::None;
+    return std::nullopt;
   }
 
   bool seen_plus_minus = false;
@@ -196,7 +196,7 @@ auto LexedNumericLiteral::Parser::Check() -> bool {
 //
 // Ignoring '.' is used when parsing a real literal. For example, when
 // parsing 123.456e7, we want to decompose it into an integer mantissa
-// (123456) and an exponent (7 - 3 = 2), and this routine is given the
+// (123456) and an exponent (7 - 3 = 4), and this routine is given the
 // "123.456" to parse as the mantissa.
 static auto ParseInteger(llvm::StringRef digits,
                          LexedNumericLiteral::Radix radix, bool needs_cleaning)
@@ -360,7 +360,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
   // groups of 3 or 4 digits (4 or 5 characters), respectively.
   int stride = (radix == Radix::Decimal ? 4 : 5);
   int remaining_digit_separators = num_digit_separators;
-  auto pos = text.end();
+  const auto* pos = text.end();
   while (pos - text.begin() >= stride) {
     pos -= stride;
     if (*pos != '_') {

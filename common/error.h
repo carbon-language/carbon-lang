@@ -23,35 +23,32 @@ struct Success {};
 class [[nodiscard]] Error {
  public:
   // Represents an error state.
-  explicit Error(llvm::Twine prefix, llvm::Twine location, llvm::Twine message)
-      : prefix_(prefix.str()),
-        location_(location.str()),
-        message_(message.str()) {
+  explicit Error(llvm::Twine location, llvm::Twine message)
+      : location_(location.str()), message_(message.str()) {
     CARBON_CHECK(!message_.empty()) << "Errors must have a message.";
   }
 
-  // Represents an error with no associated prefix or location.
+  // Represents an error with no associated location.
   // TODO: Consider using two different types.
-  explicit Error(llvm::Twine message) : Error("", "", message) {}
+  explicit Error(llvm::Twine message) : Error("", message) {}
 
   Error(Error&& other) noexcept
-      : prefix_(std::move(other.prefix_)),
-        location_(std::move(other.location_)),
+      : location_(std::move(other.location_)),
         message_(std::move(other.message_)) {}
+
+  auto operator=(Error&& other) noexcept -> Error& {
+    location_ = std::move(other.location_);
+    message_ = std::move(other.message_);
+    return *this;
+  }
 
   // Prints the error string.
   void Print(llvm::raw_ostream& out) const {
-    if (!prefix().empty()) {
-      out << prefix() << ": ";
-    }
     if (!location().empty()) {
       out << location() << ": ";
     }
     out << message();
   }
-
-  // Returns the prefix to prepend to the error, such as "ERROR".
-  auto prefix() const -> const std::string& { return prefix_; }
 
   // Returns a string describing the location of the error, such as
   // "file.cc:123".
@@ -61,8 +58,6 @@ class [[nodiscard]] Error {
   auto message() const -> const std::string& { return message_; }
 
  private:
-  // A prefix, indicating the kind of error.
-  std::string prefix_;
   // The location associated with the error.
   std::string location_;
   // The error message.
@@ -83,9 +78,6 @@ class [[nodiscard]] ErrorOr {
   // Implicit for easy construction on returns.
   // NOLINTNEXTLINE(google-explicit-constructor)
   ErrorOr(T val) : val_(std::move(val)) {}
-
-  // Moves held state.
-  ErrorOr(ErrorOr&& other) noexcept : val_(std::move(other.val_)) {}
 
   // Returns true for success.
   auto ok() const -> bool { return std::holds_alternative<T>(val_); }
@@ -130,7 +122,7 @@ class [[nodiscard]] ErrorOr {
   }
 
  private:
-  // Either an error message or
+  // Either an error message or a value.
   std::variant<Error, T> val_;
 };
 
@@ -138,31 +130,35 @@ class [[nodiscard]] ErrorOr {
 // `Error` and `ErrorOr<T>`.
 class ErrorBuilder {
  public:
-  explicit ErrorBuilder(std::string prefix, std::string location)
-      : prefix_(std::move(prefix)),
-        location_(std::move(location)),
+  explicit ErrorBuilder(std::string location = "")
+      : location_(std::move(location)),
         out_(std::make_unique<llvm::raw_string_ostream>(message_)) {}
 
-  explicit ErrorBuilder() : ErrorBuilder("", "") {}
-
-  // Accumulates string message.
+  // Accumulates string message to a temporary `ErrorBuilder`. After streaming,
+  // the builder must be converted to an `Error` or `ErrorOr`.
   template <typename T>
-  [[nodiscard]] auto operator<<(const T& message) -> ErrorBuilder& {
+  [[nodiscard]] auto operator<<(const T& message) && -> ErrorBuilder&& {
+    *out_ << message;
+    return std::move(*this);
+  }
+
+  // Accumulates string message for an lvalue error builder.
+  template <typename T>
+  auto operator<<(const T& message) & -> ErrorBuilder& {
     *out_ << message;
     return *this;
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
-  operator Error() { return Error(prefix_, location_, message_); }
+  operator Error() { return Error(location_, message_); }
 
   template <typename T>
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
   operator ErrorOr<T>() {
-    return Error(prefix_, location_, message_);
+    return Error(location_, message_);
   }
 
  private:
-  std::string prefix_;
   std::string location_;
   std::string message_;
   // Use a pointer to allow move construction.
@@ -175,15 +171,20 @@ class ErrorBuilder {
 #define CARBON_MAKE_UNIQUE_NAME_IMPL(a, b, c) a##b##c
 #define CARBON_MAKE_UNIQUE_NAME(a, b, c) CARBON_MAKE_UNIQUE_NAME_IMPL(a, b, c)
 
+// Macro to prevent a top-level comma from being interpreted as a macro
+// argument separator.
+#define CARBON_PROTECT_COMMAS(...) __VA_ARGS__
+
 #define CARBON_RETURN_IF_ERROR_IMPL(unique_name, expr)                    \
   if (auto unique_name = (expr); /* NOLINT(bugprone-macro-parentheses) */ \
       !(unique_name).ok()) {                                              \
     return std::move(unique_name).error();                                \
   }
 
-#define CARBON_RETURN_IF_ERROR(expr) \
-  CARBON_RETURN_IF_ERROR_IMPL(       \
-      CARBON_MAKE_UNIQUE_NAME(_llvm_error_line, __LINE__, __COUNTER__), expr)
+#define CARBON_RETURN_IF_ERROR(expr)                                    \
+  CARBON_RETURN_IF_ERROR_IMPL(                                          \
+      CARBON_MAKE_UNIQUE_NAME(_llvm_error_line, __LINE__, __COUNTER__), \
+      CARBON_PROTECT_COMMAS(expr))
 
 #define CARBON_ASSIGN_OR_RETURN_IMPL(unique_name, var, expr)          \
   auto unique_name = (expr); /* NOLINT(bugprone-macro-parentheses) */ \
@@ -195,6 +196,6 @@ class ErrorBuilder {
 #define CARBON_ASSIGN_OR_RETURN(var, expr)                                 \
   CARBON_ASSIGN_OR_RETURN_IMPL(                                            \
       CARBON_MAKE_UNIQUE_NAME(_llvm_expected_line, __LINE__, __COUNTER__), \
-      var, expr)
+      CARBON_PROTECT_COMMAS(var), CARBON_PROTECT_COMMAS(expr))
 
 #endif  // CARBON_COMMON_ERROR_H_

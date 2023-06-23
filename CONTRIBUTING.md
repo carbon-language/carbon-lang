@@ -12,11 +12,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Ways to contribute](#ways-to-contribute)
-    -   [Help comment on proposals](#help-comment-on-proposals)
-    -   [Help contribute ideas to Carbon](#help-contribute-ideas-to-carbon)
-    -   [Help implement Carbon's design](#help-implement-carbons-design)
-    -   [Help address bugs](#help-address-bugs)
-    -   [Good first issues](#good-first-issues)
+    -   [Contributing to the language design](#contributing-to-the-language-design)
+        -   [Comment on proposals](#comment-on-proposals)
+        -   [Contribute design ideas to Carbon](#contribute-design-ideas-to-carbon)
+    -   [Contributing to the language implementation](#contributing-to-the-language-implementation)
+        -   [Experiment with Carbon and report issues (no code)](#experiment-with-carbon-and-report-issues-no-code)
+        -   [Review and comment on Pull Requests (no code)](#review-and-comment-on-pull-requests-no-code)
+        -   [Implement Carbon's design](#implement-carbons-design)
+        -   [Triage, analyze or address bugs](#triage-analyze-or-address-bugs)
 -   [How to become a contributor to Carbon](#how-to-become-a-contributor-to-carbon)
     -   [Contributor License Agreements (CLAs)](#contributor-license-agreements-clas)
         -   [Future CLA plans](#future-cla-plans)
@@ -25,6 +28,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Contribution tools](#contribution-tools)
     -   [Contribution guidelines and standards](#contribution-guidelines-and-standards)
         -   [Guidelines and philosophy for contributions](#guidelines-and-philosophy-for-contributions)
+        -   [How to say things](#how-to-say-things)
+            -   [Make your point concisely](#make-your-point-concisely)
 -   [Style](#style)
     -   [Google Docs and Markdown](#google-docs-and-markdown)
     -   [Other files](#other-files)
@@ -41,8 +46,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Thank you for your interest in contributing to Carbon! There are many ways to
 contribute, and we appreciate all of them. If you have questions, please feel
-free to ask on Discord or
-[GitHub](https://github.com/carbon-language/carbon-lang/discussions).
+free to ask on [Discord](https://discord.gg/ZjVdShJDAs) `#contributing-help`
+channel or [GitHub](https://github.com/carbon-language/carbon-lang/discussions).
 
 Everyone who contributes to Carbon is expected to:
 
@@ -58,7 +63,9 @@ information here in our contributing guide, especially the
 
 ## Ways to contribute
 
-### Help comment on proposals
+### Contributing to the language design
+
+#### Comment on proposals
 
 If you're looking for a quick way to contribute, commenting on proposals is a
 way to provide proposal authors with a breadth of feedback. The
@@ -68,10 +75,11 @@ has questions the community is looking for a decision on. The
 will have more mature proposals that are nearing a decision. For more about the
 difference, see the [evolution process](docs/project/evolution.md).
 
-When giving feedback, please keep comments positive and constructive. Our goal
-is to use community discussion to improve proposals and assist authors.
+When giving feedback, please keep comments positive, constructive, and
+[concise](#make-your-point-concisely). Our goal is to use community discussion
+to improve proposals and assist authors.
 
-### Help contribute ideas to Carbon
+#### Contribute design ideas to Carbon
 
 If you have ideas for Carbon, we encourage you to discuss it with the community,
 and potentially prepare a proposal for it. Ultimately, any changes or
@@ -84,23 +92,62 @@ eventually implemented. A good starting point is to read through the
 [evolution process](docs/project/evolution.md). We encourage discussing the idea
 early, before even writing a proposal, and the process explains how to do that.
 
-### Help implement Carbon's design
+### Contributing to the language implementation
 
-Eventually, we will also be working toward a reference implementation of Carbon,
-and are very interested in folks joining in to help us with it.
+#### Experiment with Carbon and report issues (no code)
 
-### Help address bugs
+You can experiment with the current implementation of the Carbon language using
+the [online version](https://carbon.compiler-explorer.com/) of Carbon Explorer.
+The state of the design implementation for Explorer is documented on the
+["Are we explorer yet"](https://github.com/carbon-language/carbon-lang/wiki/Are-we-explorer-yet%3F)
+wiki page.
 
-As Carbon's design and eventually implementation begin to take shape, we'll
-inevitably end up with plenty of bugs. Helping us triage, analyze, and address
-them is always a great way to get involved. See
+If you uncover a bug or implementation problem, you can
+[report an issue on GitHub](https://github.com/carbon-language/carbon-lang/issues/new/choose).
+
+#### Review and comment on Pull Requests (no code)
+
+Helping with
+[pull requests](https://github.com/carbon-language/carbon-lang/pulls) review is
+a good way to provide feedback, while getting a acquainted with the code base.
+
+#### Implement Carbon's design
+
+The implementation of the Carbon language design takes place in two distinct
+locations:
+
+-   the [Carbon Explorer](/explorer/) (see Carbon
+    [Explorer issues](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3Aexplorer)),
+    and
+-   the [Carbon toolchain](/toolchain/) (see Carbon
+    [toolchain issues](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3Atoolchain))
+
+The Carbon Explorer is generally simpler to contribute to, while the toolchain
+implements the compiler and tools needed for the language. **Some issues are
+also marked as
+["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue)**.
+These are intended to be a good place to start contributing.
+
+To pick up a "good first issue", check to make sure there's no in-flight pull
+request on the issue, and then start working on it. We don't assign issues to
+new contributors because some people have different time constraints, and we
+want new contributors to feel welcome to pick the issue up when it may not be
+making progress. Even if someone else merges a fix before you, these issues
+should be a quick and helpful way to start learning how Carbon is built,
+building towards larger contributions.
+
+#### Triage, analyze or address bugs
+
+As Carbon's design and implementation take shape, we'll inevitably encounter
+plenty of bugs. Helping us triage, analyze, and address them is always a great
+way to get involved. See
 [open issues on GitHub](https://github.com/carbon-language/carbon-lang/issues).
 
-### Good first issues
-
-Some issues have been marked as
-["good first issues"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue).
-These are intended to be a good place to start contributing.
+When triaging issues, we typically won't assign issues because we want to be
+confident that contributors who have an issue assigned to them are planning for
+the amount of time it will take, which requires familiarity. Contributors with
+write access are expected to have that familiarity and may assign issues to
+themselves.
 
 ## How to become a contributor to Carbon
 
@@ -168,14 +215,22 @@ When requesting any of the following access, please provide a reason for the
 access. All requests require a
 [signed CLA](#contributor-license-agreements-clas).
 
--   Google Docs/Calendar commenter access:
-    [join group](https://groups.google.com/a/carbon-lang.dev/g/commenters/about)
-    -   Grants commenter access to Carbon Language documents, as well as the
-        ability to view Calendar events.
--   Google Docs/Calendar contributor access:
-    [join group](https://groups.google.com/a/carbon-lang.dev/g/contributors/about)
-    -   Grants edit access to Carbon Language documents, as well as the ability
-        to edit Calendar events.
+-   Google Docs/Calendar access groups:
+    -   **Commenter** access:
+        [join group](https://groups.google.com/a/carbon-lang.dev/g/commenters/about)
+        -   [Google Docs](https://drive.google.com/drive/folders/1aC5JJ5EcI8B7cgVDrLvO7WNw97F0LpS2):
+            Comment on files.
+        -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com):
+            View event details.
+    -   **Contributor** access:
+        [join group](https://groups.google.com/a/carbon-lang.dev/g/contributors/about)
+        -   [Google Docs](https://drive.google.com/drive/folders/1aC5JJ5EcI8B7cgVDrLvO7WNw97F0LpS2):
+            Add, edit, and comment on files.
+        -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com):
+            View and edit event details.
+    -   After you apply to join, please let us know on
+        [#access-requests](https://discord.com/channels/655572317891461132/1006221387574292540);
+        we don't get notifications otherwise.
 -   GitHub Label/project contributor access:
     [ask on #access-requests](https://discord.com/channels/655572317891461132/1006221387574292540)
     -   Don't forget to mention your GitHub username.
@@ -190,7 +245,7 @@ trying to write proposals, both types of contributor access will help.
 Please see our [contribution tool](/docs/project/contribution_tools.md)
 documentation for information on setting up a git client for Carbon development,
 as well as helpful tooling that will ease the contribution process. For example,
-[pre-commit](/docs/project/contribution_tools.md#pre-commit) is used to simplify
+[pre-commit](https://pre-commit.com) is used to simplify
 [code review](/docs/project/code_review.md).
 
 ### Contribution guidelines and standards
@@ -244,6 +299,78 @@ follow the Carbon documentation and coding styles.
     -   Keep in mind that code contribution guidelines are incomplete while we
         start work on Carbon, and may change later.
 
+#### How to say things
+
+-   Treat others with respect.
+-   Recognize that other points of view are valid, and most decisions are about
+    choosing the best set of trade-offs or closest alignment with Carbon's goals
+    since there usually isn't a single best answer. It is important to frame
+    feedback and discussion about someone else's proposal under the assumption
+    that they too have deep experience in the area but may have come to a
+    different conclusion.
+-   Be clear when something is an opinion by using "I" or "me":
+    -   Not as helpful: "`foo` is objectively better word to use"
+    -   More helpful: "I find `bar` confusing since it has this alternate
+        meaning, I think `foo` is clearer."
+-   It can be helpful to define your terms.
+
+When trying to make a point, please employ these strategies to make your
+argument _effective_ and _helpful_:
+
+-   Focus should be on explaining the basis by which others can come to a
+    conclusion. Generally this means connecting a potential solution to the use
+    cases it helps with.
+-   Be specific and concrete, using examples to demonstrate the benefits and
+    disadvantages of the different options
+    -   Minimally helpful: "I like &lt;X>", "Carbon should have feature &lt;Y>"
+    -   More helpful: "I think Carbon should have feature &lt;Z>, it would mean
+        &lt;this example> would be written &lt;like this> instead of &lt;like
+        that>." (Assuming the reader will think the example is representative of
+        an important class of use cases.)
+    -   Very helpful: "If we go with approach &lt;X>, it helps with problem
+        &lt;P> in &lt;this example> of use case &lt;A>. It doesn't help with use
+        case &lt;B>, but that can be better solved by &lt;Y>, as can be seen in
+        &lt;other example>."
+    -   Very helpful: "Yes &lt;X> gives a nice answer in that case, but it has a
+        problem / I don't see how it applies in &lt;this other situation>."
+-   Explain the reasoning by which you can come to your conclusion
+    -   Avoid [fallacies](https://en.wikipedia.org/wiki/List_of_fallacies) like
+        [arguing from authority](https://en.wikipedia.org/wiki/Argument_from_authority)
+    -   Don't expect people to read long works to understand your point
+
+If someone questions or argues with your point, try to directly address the
+points being made. Try not to step backwards or switch to a more general or more
+meta level as that can seem like you're evading the question.
+
+##### Make your point concisely
+
+-   **Asking questions is OK**: Asking questions about a particular discussion
+    is almost always OK. If you're worried the questions might be more about
+    _background_ and might be long enough to get distracting, you can always ask
+    them in some of our dedicated spaces like `#language-questions` on Discord.
+-   **Favor new and relevant information**: When sharing ideas and opinions in
+    community discussions, it is important to do so in a way that both _adds new
+    information_ in some way/shape/form, makes sure that information is
+    _relevant_ to the discussion, and avoids _repetition_. This means reviewing
+    what you write before posting a larger response, and editing it down to just
+    the points you want to make that have not already been made, and any new
+    arguments supporting those points.
+-   **Be inclusive by staying concise**: We need to be mindful that writing many
+    paragraphs of extra text is going to exclude people. Some people can be
+    excluded from consuming the conversation, either because a wall of text is
+    too intimidating to read, or they don't have the time or bandwidth to wade
+    through the extra text to find the new information being conveyed. It can
+    also drown out other contributors
+-   **Prefer upvote to repetition**: One person saying "I don't like this
+    feature" is useful, and that same message with 100 upvotes is extremely
+    useful, but 100 people writing separate messages saying "I don't like this
+    feature" is not. Emoji reactions are available in both Discord and GitHub
+    and should be used for this purpose in both.
+
+It is also okay to do things like ask a question to get clarification about what
+someone has said or to solicit opinions about various options. Just be
+respectful, and don't drown out other discussion.
+
 ## Style
 
 ### Google Docs and Markdown
@@ -251,8 +378,9 @@ follow the Carbon documentation and coding styles.
 Changes to Carbon documentation follow the
 [Google developer documentation style guide](https://developers.google.com/style).
 
-Markdown files should additionally use
-[Prettier](/docs/project/contribution_tools.md#prettier) for formatting.
+Markdown files should additionally use [Prettier](https://prettier.io) for
+formatting, which we automate with
+[pre-commit](/docs/project/contribution_tools.md#main-tools).
 
 Other style points to be aware of are:
 

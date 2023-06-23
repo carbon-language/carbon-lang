@@ -1,0 +1,14 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+// CHECK:STDOUT: [
+// CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:   {kind: 'Identifier', text: 'foo'},
+// CHECK:STDOUT: {kind: 'FunctionDeclaration', text: ';', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT: ]
+
+// CHECK:STDERR: fail_identifier_instead_of_sig.carbon:[[@LINE+1]]:8: `fn` requires a `(` for parameters.
+fn foo bar;

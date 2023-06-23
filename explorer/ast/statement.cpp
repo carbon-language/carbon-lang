@@ -5,6 +5,7 @@
 #include "explorer/ast/statement.h"
 
 #include "common/check.h"
+#include "explorer/ast/declaration.h"
 #include "explorer/common/arena.h"
 #include "llvm/Support/Casting.h"
 
@@ -25,7 +26,7 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       out << "match (" << match.expression() << ") {";
       if (depth < 0 || depth > 1) {
         out << "\n";
-        for (auto& clause : match.clauses()) {
+        for (const auto& clause : match.clauses()) {
           out << "case " << clause.pattern() << " =>\n";
           clause.statement().PrintDepth(depth - 1, out);
           out << "\n";
@@ -72,7 +73,13 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       break;
     case StatementKind::Assign: {
       const auto& assign = cast<Assign>(*this);
-      out << assign.lhs() << " = " << assign.rhs() << ";";
+      out << assign.lhs() << " " << AssignOperatorToString(assign.op()) << " "
+          << assign.rhs() << ";";
+      break;
+    }
+    case StatementKind::IncrementDecrement: {
+      const auto& inc_dec = cast<IncrementDecrement>(*this);
+      out << (inc_dec.is_increment() ? "++" : "--") << inc_dec.argument();
       break;
     }
     case StatementKind::If: {
@@ -116,25 +123,37 @@ void Statement::PrintDepth(int depth, llvm::raw_ostream& out) const {
       }
       break;
     }
-    case StatementKind::Continuation: {
-      const auto& cont = cast<Continuation>(*this);
-      out << "continuation " << cont.name() << " ";
-      if (depth < 0 || depth > 1) {
-        out << "\n";
-      }
-      cont.body().PrintDepth(depth - 1, out);
-      if (depth < 0 || depth > 1) {
-        out << "\n";
-      }
-      break;
-    }
-    case StatementKind::Run:
-      out << "run " << cast<Run>(*this).argument() << ";";
-      break;
-    case StatementKind::Await:
-      out << "await;";
-      break;
   }
 }
+
+auto AssignOperatorToString(AssignOperator op) -> std::string_view {
+  switch (op) {
+    case AssignOperator::Plain:
+      return "=";
+    case AssignOperator::Add:
+      return "+=";
+    case AssignOperator::Div:
+      return "/=";
+    case AssignOperator::Mul:
+      return "*=";
+    case AssignOperator::Mod:
+      return "%=";
+    case AssignOperator::Sub:
+      return "-=";
+    case AssignOperator::And:
+      return "&=";
+    case AssignOperator::Or:
+      return "|=";
+    case AssignOperator::Xor:
+      return "^=";
+    case AssignOperator::ShiftLeft:
+      return "<<=";
+    case AssignOperator::ShiftRight:
+      return ">>=";
+  }
+}
+
+Return::Return(CloneContext& context, const Return& other)
+    : Statement(context, other), function_(context.Remap(other.function_)) {}
 
 }  // namespace Carbon

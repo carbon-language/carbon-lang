@@ -4,8 +4,8 @@
 
 #include "explorer/interpreter/heap.h"
 
+#include "explorer/ast/value.h"
 #include "explorer/common/error_builders.h"
-#include "explorer/interpreter/value.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Error.h"
 
@@ -13,9 +13,9 @@ namespace Carbon {
 
 auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
   // Putting the following two side effects together in this function
-  // ensures that we don't do anything else in between, which is really bad!
-  // Consider whether to include a copy of the input v in this function
-  // or to leave it up to the caller.
+  // ensures that we don't do anything else in between, which would be really
+  // bad! Consider whether to include a copy of the input v in this function or
+  // to leave it up to the caller.
   AllocationId a(values_.size());
   values_.push_back(v);
   if (v->kind() == Carbon::Value::Kind::UninitializedValue) {
@@ -31,25 +31,42 @@ auto Heap::Read(const Address& a, SourceLocation source_loc) const
   CARBON_RETURN_IF_ERROR(this->CheckInit(a.allocation_, source_loc));
   CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
   Nonnull<const Value*> value = values_[a.allocation_.index_];
-  return value->GetMember(arena_, a.field_path_, source_loc, value);
+  return value->GetElement(arena_, a.element_path_, source_loc, value);
 }
 
 auto Heap::Write(const Address& a, Nonnull<const Value*> v,
                  SourceLocation source_loc) -> ErrorOr<Success> {
   CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
   if (states_[a.allocation_.index_] == ValueState::Uninitialized) {
+    if (!a.element_path_.IsEmpty()) {
+      return ProgramError(source_loc)
+             << "undefined behavior: store to subobject of uninitialized value "
+             << *values_[a.allocation_.index_];
+    }
     states_[a.allocation_.index_] = ValueState::Alive;
   }
   CARBON_ASSIGN_OR_RETURN(values_[a.allocation_.index_],
                           values_[a.allocation_.index_]->SetField(
-                              arena_, a.field_path_, v, source_loc));
+                              arena_, a.element_path_, v, source_loc));
   return Success();
+}
+
+auto Heap::GetAllocationId(Nonnull<const Value*> v) const
+    -> std::optional<AllocationId> {
+  auto iter = std::find(values_.begin(), values_.end(), v);
+  if (iter != values_.end()) {
+    auto index = iter - values_.begin();
+    if (states_[index] == ValueState::Alive) {
+      return AllocationId(index);
+    }
+  }
+  return std::nullopt;
 }
 
 auto Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) const
     -> ErrorOr<Success> {
   if (states_[allocation.index_] == ValueState::Dead) {
-    return RuntimeError(source_loc)
+    return ProgramError(source_loc)
            << "undefined behavior: access to dead value "
            << *values_[allocation.index_];
   }
@@ -59,7 +76,7 @@ auto Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) const
 auto Heap::CheckInit(AllocationId allocation, SourceLocation source_loc) const
     -> ErrorOr<Success> {
   if (states_[allocation.index_] == ValueState::Uninitialized) {
-    return RuntimeError(source_loc)
+    return ProgramError(source_loc)
            << "undefined behavior: access to uninitialized value "
            << *values_[allocation.index_];
   }

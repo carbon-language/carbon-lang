@@ -2,10 +2,11 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/testing:lit.bzl", "glob_lit_tests")
+load("//testing/lit_test:rules.bzl", "glob_lit_tests")
 
 glob_lit_tests(
     data = [
+        "//testing/lit_test:merge_output",
         "//toolchain/driver:carbon",
         "@llvm-project//llvm:FileCheck",
         "@llvm-project//llvm:not",

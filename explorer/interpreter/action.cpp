@@ -35,12 +35,6 @@ auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
   return *this;
 }
 
-RuntimeScope::~RuntimeScope() {
-  for (AllocationId allocation : allocations_) {
-    heap_->Deallocate(allocation);
-  }
-}
-
 void RuntimeScope::Print(llvm::raw_ostream& out) const {
   out << "{";
   llvm::ListSeparator sep;
@@ -50,29 +44,48 @@ void RuntimeScope::Print(llvm::raw_ostream& out) const {
   out << "}";
 }
 
+void RuntimeScope::Bind(ValueNodeView value_node, Nonnull<const Value*> value) {
+  CARBON_CHECK(!value_node.constant_value().has_value());
+  CARBON_CHECK(value->kind() != Value::Kind::LocationValue);
+  auto allocation_id = heap_->GetAllocationId(value);
+  if (!allocation_id) {
+    auto id = heap_->AllocateValue(value);
+    auto [it, success] = locals_.insert(
+        {value_node, heap_->arena().New<LocationValue>(Address(id))});
+    CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
+  } else {
+    auto [it, success] = locals_.insert(
+        {value_node,
+         heap_->arena().New<LocationValue>(Address(*allocation_id))});
+    CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
+  }
+}
+
 void RuntimeScope::Initialize(ValueNodeView value_node,
                               Nonnull<const Value*> value) {
   CARBON_CHECK(!value_node.constant_value().has_value());
-  CARBON_CHECK(value->kind() != Value::Kind::LValue);
+  CARBON_CHECK(value->kind() != Value::Kind::LocationValue);
   allocations_.push_back(heap_->AllocateValue(value));
   auto [it, success] = locals_.insert(
-      {value_node, heap_->arena().New<LValue>(Address(allocations_.back()))});
+      {value_node,
+       heap_->arena().New<LocationValue>(Address(allocations_.back()))});
   CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
 }
 
 void RuntimeScope::Merge(RuntimeScope other) {
   CARBON_CHECK(heap_ == other.heap_);
-  locals_.merge(other.locals_);
-  CARBON_CHECK(other.locals_.empty())
-      << "Duplicate definition of " << other.locals_.size()
-      << " names, including " << other.locals_.begin()->first.base();
+  for (auto& element : other.locals_) {
+    CARBON_CHECK(locals_.count(element.first) == 0)
+        << "Duplicate definition of" << element.first;
+    locals_.insert(element);
+  }
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
                       other.allocations_.end());
   other.allocations_.clear();
 }
 
 auto RuntimeScope::Get(ValueNodeView value_node) const
-    -> std::optional<Nonnull<const LValue*>> {
+    -> std::optional<Nonnull<const LocationValue*>> {
   auto it = locals_.find(value_node);
   if (it != locals_.end()) {
     return it->second;
@@ -97,14 +110,14 @@ auto RuntimeScope::Capture(
 
 void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
-    case Action::Kind::LValAction:
-      out << cast<LValAction>(*this).expression() << " ";
+    case Action::Kind::LocationAction:
+      out << cast<LocationAction>(*this).expression() << " ";
       break;
     case Action::Kind::ExpressionAction:
       out << cast<ExpressionAction>(*this).expression() << " ";
       break;
-    case Action::Kind::PatternAction:
-      out << cast<PatternAction>(*this).pattern() << " ";
+    case Action::Kind::WitnessAction:
+      out << *cast<WitnessAction>(*this).witness() << " ";
       break;
     case Action::Kind::StatementAction:
       cast<StatementAction>(*this).statement().PrintDepth(1, out);
@@ -114,23 +127,33 @@ void Action::Print(llvm::raw_ostream& out) const {
       cast<DeclarationAction>(*this).declaration().Print(out);
       out << " ";
       break;
+    case Action::Kind::TypeInstantiationAction:
+      cast<TypeInstantiationAction>(*this).type()->Print(out);
+      out << " ";
+      break;
     case Action::Kind::ScopeAction:
       break;
     case Action::Kind::RecursiveAction:
       out << "recursive";
+      break;
+    case Action::Kind::CleanUpAction:
+      out << "clean up";
+      break;
+    case Action::Kind::DestroyAction:
+      out << "destroy";
       break;
   }
   out << "." << pos_ << ".";
   if (!results_.empty()) {
     out << " [[";
     llvm::ListSeparator sep;
-    for (auto& result : results_) {
+    for (const auto& result : results_) {
       out << sep << *result;
     }
     out << "]]";
   }
-  if (this->scope().has_value()) {
-    out << " " << *this->scope();
+  if (scope_.has_value()) {
+    out << " " << *scope_;
   }
 }
 

@@ -2,11 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
 
 package ExplorerTest api;
 
@@ -15,8 +11,8 @@ class Point {
     return {.x = 0, .y = 0};
   }
 
-  fn SetX[me: Point](x: i32) {
-    // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/let/fail_method_args.carbon:[[@LINE+1]]: Cannot assign to rvalue 'x'
+  fn SetX[self: Point](x: i32) {
+    // CHECK:STDERR: COMPILATION ERROR: fail_method_args.carbon:[[@LINE+1]]: Only a reference expression can be assigned to, but got `x`
     x = 10;
   }
 

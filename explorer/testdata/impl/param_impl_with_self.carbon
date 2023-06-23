@@ -2,18 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// AUTOUPDATE
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 interface Number {
   fn Zero() -> Self;
-  fn Add[me: Self](other: Self) -> Self;
+  fn Add[self: Self](other: Self) -> Self;
 }
 
 class Point(T:! Number) {
@@ -21,16 +17,16 @@ class Point(T:! Number) {
   var y: T;
 }
 
-external impl i32 as Number {
+impl i32 as Number {
   fn Zero() -> i32 { return 0; }
-  fn Add[me: i32](other: i32) -> i32 { return me + other; }
+  fn Add[self: i32](other: i32) -> i32 { return self + other; }
 }
 
-external impl forall [U:! Number] Point(U) as Number {
+impl forall [U:! Number] Point(U) as Number {
   // Allowed: `Self` means `Point(U)` here.
   fn Zero() -> Self { return {.x = U.Zero(), .y = U.Zero() }; }
-  fn Add[me: Self](other: Self) -> Self {
-    return {.x = me.x.Add(other.x), .y = me.y.Add(other.y)};
+  fn Add[self: Self](other: Self) -> Self {
+    return {.x = self.x.Add(other.x), .y = self.y.Add(other.y)};
   }
 }
 

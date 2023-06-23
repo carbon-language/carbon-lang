@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <cstring>
 
-#include "common/check.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
@@ -23,9 +22,14 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   if (size > 100000) {
     return 0;
   }
-
-  auto source = SourceBuffer::CreateFromText(
-      llvm::StringRef(reinterpret_cast<const char*>(data), size));
+  static constexpr llvm::StringLiteral TestFileName = "test.carbon";
+  llvm::vfs::InMemoryFileSystem fs;
+  llvm::StringRef data_ref(reinterpret_cast<const char*>(data), size);
+  CARBON_CHECK(fs.addFile(
+      TestFileName, /*ModificationTime=*/0,
+      llvm::MemoryBuffer::getMemBuffer(data_ref, /*BufferName=*/TestFileName,
+                                       /*RequiresNullTerminator=*/false)));
+  auto source = SourceBuffer::CreateFromFile(fs, TestFileName);
 
   // Lex the input.
   auto tokens = TokenizedBuffer::Lex(*source, NullDiagnosticConsumer());
@@ -35,16 +39,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
 
   // Now parse it into a tree. Note that parsing will (when asserts are enabled)
   // walk the entire tree to verify it so we don't have to do that here.
-  ParseTree tree = ParseTree::Parse(tokens, NullDiagnosticConsumer());
-  if (tree.has_errors()) {
-    return 0;
-  }
-
-  // In the absence of parse errors, we should have exactly as many nodes as
-  // tokens.
-  CARBON_CHECK(tree.size() == tokens.size())
-      << "Unexpected number of tree nodes!";
-
+  ParseTree::Parse(tokens, NullDiagnosticConsumer(), /*vlog_stream=*/nullptr);
   return 0;
 }
 

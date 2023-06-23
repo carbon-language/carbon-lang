@@ -8,6 +8,7 @@
 #include <optional>
 
 #include "explorer/ast/pattern.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
@@ -31,6 +32,8 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
        {"new", Intrinsic::Alloc},
        {"delete", Intrinsic::Dealloc},
        {"rand", Intrinsic::Rand},
+       {"implicit_as", Intrinsic::ImplicitAs},
+       {"implicit_as_convert", Intrinsic::ImplicitAsConvert},
        {"int_eq", Intrinsic::IntEq},
        {"int_compare", Intrinsic::IntCompare},
        {"int_bit_complement", Intrinsic::IntBitComplement},
@@ -40,11 +43,12 @@ auto IntrinsicExpression::FindIntrinsic(std::string_view name,
        {"int_left_shift", Intrinsic::IntLeftShift},
        {"int_right_shift", Intrinsic::IntRightShift},
        {"str_eq", Intrinsic::StrEq},
-       {"str_compare", Intrinsic::StrCompare}});
+       {"str_compare", Intrinsic::StrCompare},
+       {"assert", Intrinsic::Assert}});
   name.remove_prefix(std::strlen("__intrinsic_"));
   auto it = intrinsic_map.find(name);
   if (it == intrinsic_map.end()) {
-    return CompilationError(source_loc) << "Unknown intrinsic '" << name << "'";
+    return ProgramError(source_loc) << "Unknown intrinsic '" << name << "'";
   }
   return it->second;
 }
@@ -60,6 +64,10 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_delete";
     case IntrinsicExpression::Intrinsic::Rand:
       return "__intrinsic_rand";
+    case IntrinsicExpression::Intrinsic::ImplicitAs:
+      return "__intrinsic_implicit_as";
+    case IntrinsicExpression::Intrinsic::ImplicitAsConvert:
+      return "__intrinsic_implicit_as_convert";
     case IntrinsicExpression::Intrinsic::IntEq:
       return "__intrinsic_int_eq";
     case IntrinsicExpression::Intrinsic::IntCompare:
@@ -80,6 +88,8 @@ auto IntrinsicExpression::name() const -> std::string_view {
       return "__intrinsic_str_eq";
     case IntrinsicExpression::Intrinsic::StrCompare:
       return "__intrinsic_str_compare";
+    case IntrinsicExpression::Intrinsic::Assert:
+      return "__intrinsic_assert";
   }
 }
 
@@ -102,7 +112,7 @@ auto TupleExpressionFromParenContents(
 
 Expression::~Expression() = default;
 
-auto ToString(Operator op) -> std::string_view {
+auto OperatorToString(Operator op) -> std::string_view {
   switch (op) {
     case Operator::Add:
       return "+";
@@ -120,6 +130,8 @@ auto ToString(Operator op) -> std::string_view {
       return "<<";
     case Operator::BitShiftRight:
       return ">>";
+    case Operator::Div:
+      return "/";
     case Operator::Neg:
     case Operator::Sub:
       return "-";
@@ -129,6 +141,8 @@ auto ToString(Operator op) -> std::string_view {
       return "*";
     case Operator::Not:
       return "not";
+    case Operator::NotEq:
+      return "!=";
     case Operator::And:
       return "and";
     case Operator::Or:
@@ -174,6 +188,11 @@ void Expression::Print(llvm::raw_ostream& out) const {
       out << access.object() << ".(" << access.path() << ")";
       break;
     }
+    case ExpressionKind::BaseAccessExpression: {
+      const auto& access = cast<BaseAccessExpression>(*this);
+      out << access.object() << ".base";
+      break;
+    }
     case ExpressionKind::TupleLiteral: {
       out << "(";
       llvm::ListSeparator sep;
@@ -199,13 +218,13 @@ void Expression::Print(llvm::raw_ostream& out) const {
       const auto& op = cast<OperatorExpression>(*this);
       switch (op.arguments().size()) {
         case 0:
-          out << ToString(op.op());
+          out << OperatorToString(op.op());
           break;
         case 1:
-          out << ToString(op.op()) << " " << *op.arguments()[0];
+          out << OperatorToString(op.op()) << " " << *op.arguments()[0];
           break;
         case 2:
-          out << *op.arguments()[0] << " " << ToString(op.op()) << " "
+          out << *op.arguments()[0] << " " << OperatorToString(op.op()) << " "
               << *op.arguments()[1];
           break;
         default:
@@ -250,9 +269,10 @@ void Expression::Print(llvm::raw_ostream& out) const {
       }
       break;
     }
-    case ExpressionKind::InstantiateImpl: {
-      const auto& inst_impl = cast<InstantiateImpl>(*this);
-      out << "instantiate " << *inst_impl.generic_impl();
+    case ExpressionKind::BuiltinConvertExpression: {
+      // These don't represent source syntax, so just print the original
+      // expression.
+      out << *cast<BuiltinConvertExpression>(this)->source_expression();
       break;
     }
     case ExpressionKind::UnimplementedExpression: {
@@ -267,8 +287,11 @@ void Expression::Print(llvm::raw_ostream& out) const {
     }
     case ExpressionKind::ArrayTypeLiteral: {
       const auto& array_literal = cast<ArrayTypeLiteral>(*this);
-      out << "[" << array_literal.element_type_expression() << "; "
-          << array_literal.size_expression() << "]";
+      out << "[" << array_literal.element_type_expression() << ";";
+      if (array_literal.has_size_expression()) {
+        out << " " << array_literal.size_expression();
+      }
+      out << "]";
       break;
     }
     case ExpressionKind::IdentifierExpression:
@@ -280,7 +303,6 @@ void Expression::Print(llvm::raw_ostream& out) const {
     case ExpressionKind::StringLiteral:
     case ExpressionKind::StringTypeLiteral:
     case ExpressionKind::TypeTypeLiteral:
-    case ExpressionKind::ContinuationTypeLiteral:
     case ExpressionKind::ValueLiteral:
       PrintID(out);
       break;
@@ -316,52 +338,90 @@ void Expression::PrintID(llvm::raw_ostream& out) const {
       out << "String";
       break;
     case ExpressionKind::TypeTypeLiteral:
-      out << "Type";
+      out << "type";
       break;
-    case ExpressionKind::ContinuationTypeLiteral:
-      out << "Continuation";
-      break;
+    case ExpressionKind::FunctionTypeLiteral:
+    case ExpressionKind::StructLiteral:
+    case ExpressionKind::ArrayTypeLiteral:
     case ExpressionKind::ValueLiteral:
-      // TODO: For layering reasons, we can't print out the value from here.
-      out << "ValueLiteral";
+      out << cast<ConstantValueLiteral>(*this).constant_value();
       break;
     case ExpressionKind::IndexExpression:
     case ExpressionKind::SimpleMemberAccessExpression:
     case ExpressionKind::CompoundMemberAccessExpression:
+    case ExpressionKind::BaseAccessExpression:
     case ExpressionKind::IfExpression:
     case ExpressionKind::WhereExpression:
+    case ExpressionKind::BuiltinConvertExpression:
     case ExpressionKind::TupleLiteral:
-    case ExpressionKind::StructLiteral:
     case ExpressionKind::StructTypeLiteral:
     case ExpressionKind::CallExpression:
     case ExpressionKind::OperatorExpression:
     case ExpressionKind::IntrinsicExpression:
     case ExpressionKind::UnimplementedExpression:
-    case ExpressionKind::FunctionTypeLiteral:
-    case ExpressionKind::ArrayTypeLiteral:
-    case ExpressionKind::InstantiateImpl:
       out << "...";
       break;
   }
 }
 
+DotSelfExpression::DotSelfExpression(CloneContext& context,
+                                     const DotSelfExpression& other)
+    : Expression(context, other),
+      name_(other.name_),
+      self_binding_(context.Remap(other.self_binding_)) {}
+
+MemberAccessExpression::MemberAccessExpression(
+    CloneContext& context, const MemberAccessExpression& other)
+    : Expression(context, other),
+      object_(context.Clone(other.object_)),
+      is_type_access_(other.is_type_access_),
+      is_addr_me_method_(other.is_addr_me_method_),
+      impl_(context.Clone(other.impl_)),
+      constant_value_(context.Clone(other.constant_value_)) {}
+
+SimpleMemberAccessExpression::SimpleMemberAccessExpression(
+    CloneContext& context, const SimpleMemberAccessExpression& other)
+    : RewritableMixin(context, other),
+      member_name_(other.member_name_),
+      member_(context.Clone(other.member_)),
+      found_in_interface_(context.Clone(other.found_in_interface_)),
+      value_node_(context.Clone(other.value_node_)) {}
+
+CompoundMemberAccessExpression::CompoundMemberAccessExpression(
+    CloneContext& context, const CompoundMemberAccessExpression& other)
+    : MemberAccessExpression(context, other),
+      path_(context.Clone(other.path_)),
+      member_(context.Clone(other.member_)) {}
+
 WhereClause::~WhereClause() = default;
 
 void WhereClause::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
-    case WhereClauseKind::IsWhereClause: {
-      auto& clause = cast<IsWhereClause>(*this);
-      out << clause.type() << " is " << clause.constraint();
+    case WhereClauseKind::ImplsWhereClause: {
+      const auto& clause = cast<ImplsWhereClause>(*this);
+      out << clause.type() << " impls " << clause.constraint();
       break;
     }
     case WhereClauseKind::EqualsWhereClause: {
-      auto& clause = cast<EqualsWhereClause>(*this);
+      const auto& clause = cast<EqualsWhereClause>(*this);
       out << clause.lhs() << " == " << clause.rhs();
+      break;
+    }
+    case WhereClauseKind::RewriteWhereClause: {
+      const auto& clause = cast<RewriteWhereClause>(*this);
+      out << "." << clause.member_name() << " = " << clause.replacement();
       break;
     }
   }
 }
 
 void WhereClause::PrintID(llvm::raw_ostream& out) const { out << "..."; }
+
+WhereExpression::WhereExpression(CloneContext& context,
+                                 const WhereExpression& other)
+    : RewritableMixin(context, other),
+      self_binding_(context.Clone(other.self_binding_)),
+      clauses_(context.Clone(other.clauses_)),
+      enclosing_dot_self_(context.Remap(other.enclosing_dot_self_)) {}
 
 }  // namespace Carbon

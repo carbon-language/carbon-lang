@@ -1,0 +1,23 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#include "toolchain/semantics/semantics_node_kind.h"
+
+namespace Carbon {
+
+CARBON_DEFINE_ENUM_CLASS_NAMES(SemanticsNodeKind) = {
+#define CARBON_SEMANTICS_NODE_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
+#include "toolchain/semantics/semantics_node_kind.def"
+};
+
+auto SemanticsNodeKind::is_terminator() const -> bool {
+  static constexpr bool Table[] = {
+#define CARBON_SEMANTICS_NODE_KIND(Name) false,
+#define CARBON_SEMANTICS_TERMINATOR_KIND(Name) true,
+#include "toolchain/semantics/semantics_node_kind.def"
+  };
+  return Table[AsInt()];
+}
+
+}  // namespace Carbon

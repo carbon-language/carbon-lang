@@ -22,6 +22,8 @@ load(
     "clang_bindir",
     "clang_include_dirs_list",
     "clang_resource_dir",
+    "clang_version",
+    "clang_version_for_cache",
     "llvm_bindir",
     "sysroot_dir",
 )
@@ -98,6 +100,7 @@ def _impl(ctx):
     ]
 
     std_compile_flags = ["-std=c++17"]
+
     # libc++ is only used on non-Windows platforms.
     if ctx.attr.target_cpu != "x64_windows":
         std_compile_flags.append("-stdlib=libc++")
@@ -130,8 +133,9 @@ def _impl(ctx):
                             "-Wimplicit-fallthrough",
                             "-Wctad-maybe-unsupported",
                             "-Wnon-virtual-dtor",
-                            # Unfortunately, LLVM isn't clean for this warning.
-                            "-Wno-unused-parameter",
+                            # Don't warn on external code as we can't
+                            # necessarily patch it easily.
+                            "--system-header-prefix=external/",
                             # Compile actions shouldn't link anything.
                             "-c",
                         ],
@@ -190,6 +194,9 @@ def _impl(ctx):
                             "-D__DATE__=\"redacted\"",
                             "-D__TIMESTAMP__=\"redacted\"",
                             "-D__TIME__=\"redacted\"",
+                            # Pass the clang version as a define so that bazel
+                            # caching is more likely to notice version changes.
+                            "-DCLANG_VERSION_FOR_CACHE=\"%s\"" % clang_version_for_cache,
                         ],
                     ),
                     flag_group(
@@ -221,17 +228,6 @@ def _impl(ctx):
                     ACTION_NAMES.cpp_link_nodeps_dynamic_library,
                 ],
                 flag_groups = [flag_group(flags = ["-shared"])],
-            ),
-            flag_set(
-                actions = [
-                    ACTION_NAMES.cpp_link_executable,
-                ],
-                flag_groups = [
-                    flag_group(
-                        flags = ["-pie"],
-                        expand_if_available = "force_pic",
-                    ),
-                ],
             ),
             flag_set(
                 actions = all_link_actions,
@@ -274,19 +270,6 @@ def _impl(ctx):
                     "-O1",
                 ])],
             ),
-            # Use a conditional flag set for enabling the fast instruction
-            # selector to work around an LLVM bug:
-            # https://github.com/llvm/llvm-project/issues/56133
-            flag_set(
-                actions = codegen_compile_actions,
-                flag_groups = [flag_group(flags = [
-                    "-mllvm",
-                    "-fast-isel",
-                ])],
-                with_features = [
-                    with_feature_set(not_features = ["fuzzer"]),
-                ],
-            ),
         ],
     )
     default_optimization_flags = feature(
@@ -304,6 +287,32 @@ def _impl(ctx):
                 actions = codegen_compile_actions,
                 flag_groups = [flag_group(flags = [
                     "-O3",
+                ])],
+            ),
+        ],
+    )
+
+    x86_64_cpu_flags = feature(
+        name = "x86_64_cpu_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-march=x86-64-v2",
+                ])],
+            ),
+        ],
+    )
+
+    aarch64_cpu_flags = feature(
+        name = "aarch64_cpu_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-march=armv8.2-a",
                 ])],
             ),
         ],
@@ -500,12 +509,12 @@ def _impl(ctx):
         )],
     )
 
-    proto_fuzzer = feature(
-        name = "proto-fuzzer",
-        enabled = False,
-        requires = [feature_set(["nonhost"])],
-        implies = ["fuzzer"],
-    )
+    # With clang 14 and lower, we expect it to be built with libc++ debug
+    # support. In later LLVM versions, we expect the assertions define to work.
+    if clang_version and clang_version <= 14:
+        libcpp_debug_flags = ["-D_LIBCPP_DEBUG=1"]
+    else:
+        libcpp_debug_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=1"]
 
     linux_flags_feature = feature(
         name = "linux_flags",
@@ -548,12 +557,71 @@ def _impl(ctx):
             ),
             flag_set(
                 actions = all_compile_actions,
-                flag_groups = [flag_group(flags = [
-                    # Enable libc++'s debug features.
-                    "-D_LIBCPP_DEBUG=1",
-                ])],
+                flag_groups = [flag_group(flags = libcpp_debug_flags)],
                 with_features = [
                     with_feature_set(not_features = ["opt"]),
+                ],
+            ),
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cpp_link_executable,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-pie"],
+                        expand_if_available = "force_pic",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    macos_flags_feature = feature(
+        name = "macos_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cpp_link_executable,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-fpie"],
+                        expand_if_available = "force_pic",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    freebsd_flags_feature = feature(
+        name = "freebsd_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.c_compile,
+                    ACTION_NAMES.cpp_compile,
+                    ACTION_NAMES.cpp_header_parsing,
+                    ACTION_NAMES.cpp_module_compile,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = [
+                            "-DHAVE_MALLCTL",
+                        ],
+                    ),
+                ],
+            ),
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cpp_link_executable,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-fpie"],
+                        expand_if_available = "force_pic",
+                    ),
                 ],
             ),
         ],
@@ -776,7 +844,6 @@ def _impl(ctx):
         asan,
         enable_asan_in_fastbuild,
         fuzzer,
-        proto_fuzzer,
         layering_check,
         module_maps,
         use_module_maps,
@@ -794,9 +861,19 @@ def _impl(ctx):
         # so that might be an example where a feature must be added.
         sysroot = None
     elif ctx.attr.target_cpu in ["darwin", "darwin_arm64"]:
+        features += [macos_flags_feature]
+        sysroot = sysroot_dir
+    elif ctx.attr.target_cpu == "freebsd":
+        features += [freebsd_flags_feature]
         sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")
+
+    # TODO: Need to support non-macOS ARM platforms here.
+    if ctx.attr.target_cpu == "darwin_arm64":
+        features += [aarch64_cpu_flags]
+    else:
+        features += [x86_64_cpu_flags]
 
     # Finally append the libraries to link and any final flags.
     features += [

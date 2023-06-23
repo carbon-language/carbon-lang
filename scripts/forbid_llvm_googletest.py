@@ -38,7 +38,7 @@ def main() -> None:
     args = [
         scripts_utils.locate_bazel(),
         "query",
-        "somepath(//..., @llvm-project//llvm:gtest)",
+        "somepath(//..., @llvm-project//third-party/unittest:gtest)",
     ]
     p = subprocess.run(
         args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8"

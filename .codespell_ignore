@@ -4,10 +4,13 @@
 
 atleast
 circularly
+compiletime
 copyable
 crate
+crossreference
 falsy
+forin
 inout
+parameteras
 pullrequest
 statics
-compiletime

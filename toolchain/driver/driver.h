@@ -10,6 +10,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
@@ -22,14 +23,13 @@ namespace Carbon {
 // with the language.
 class Driver {
  public:
-  // Default constructed driver uses stderr for all error and informational
-  // output.
-  Driver() : output_stream_(llvm::outs()), error_stream_(llvm::errs()) {}
-
   // Constructs a driver with any error or informational output directed to a
   // specified stream.
-  Driver(llvm::raw_ostream& output_stream, llvm::raw_ostream& error_stream)
-      : output_stream_(output_stream), error_stream_(error_stream) {}
+  Driver(llvm::vfs::FileSystem& fs, llvm::raw_pwrite_stream& output_stream,
+         llvm::raw_pwrite_stream& error_stream)
+      : fs_(fs), output_stream_(output_stream), error_stream_(error_stream) {
+    (void)fs_;
+  }
 
   // Parses the given arguments into both a subcommand to select the operation
   // to perform and any arguments to that subcommand.
@@ -49,7 +49,8 @@ class Driver {
   auto RunHelpSubcommand(DiagnosticConsumer& consumer,
                          llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
-  // Subcommand that dumps the token information for the provided source file.
+  // Subcommand that dumps internal compilation information for the provided
+  // source file.
   //
   // Requires exactly one positional parameter to designate the source file to
   // read. May be `-` to read from stdin.
@@ -57,26 +58,17 @@ class Driver {
   // Returns true if the operation succeeds. If the operation fails, this
   // returns false and any information about the failure is printed to the
   // registered error stream (stderr by default).
-  auto RunDumpTokensSubcommand(DiagnosticConsumer& consumer,
-                               llvm::ArrayRef<llvm::StringRef> args) -> bool;
-
-  // Subcommand that dumps the parse tree for the provided source file.
-  //
-  // Requires exactly one positional parameter to designate the source file to
-  // read. May be `-` to read from stdin.
-  //
-  // Returns true if the operation succeeds. If the operation fails, this
-  // returns false and any information about the failure is printed to the
-  // registered error stream (stderr by default).
-  auto RunDumpParseTreeSubcommand(DiagnosticConsumer& consumer,
-                                  llvm::ArrayRef<llvm::StringRef> args) -> bool;
+  auto RunDumpSubcommand(DiagnosticConsumer& consumer,
+                         llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
  private:
   auto ReportExtraArgs(llvm::StringRef subcommand_text,
                        llvm::ArrayRef<llvm::StringRef> args) -> void;
 
-  llvm::raw_ostream& output_stream_;
-  llvm::raw_ostream& error_stream_;
+  llvm::vfs::FileSystem& fs_;
+  llvm::raw_pwrite_stream& output_stream_;
+  llvm::raw_pwrite_stream& error_stream_;
+  llvm::raw_ostream* vlog_stream_ = nullptr;
 };
 
 }  // namespace Carbon

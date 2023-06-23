@@ -67,7 +67,7 @@ this:
 
     ```
     package Container;
-    struct HashSet(Key:! Hashable) { ... }
+    class HashSet(Key:! Hashable) { ... }
     ```
 
 -   A `Song` type is defined in package `SongLib`.
@@ -78,7 +78,7 @@ this:
     package SongHashArtistAndTitle;
     import SongLib;
     impl SongLib.Song as Hashable {
-      fn Hash[me: Self]() -> u64 { ... }
+      fn Hash[self: Self]() -> u64 { ... }
     }
     ```
 
@@ -105,7 +105,7 @@ this:
     package SongHashAppleMusicURL;
     import SongLib;
     impl SongLib.Song as Hashable {
-      fn Hash[me: Self]() -> u64 { ... }
+      fn Hash[self: Self]() -> u64 { ... }
     }
     ```
 

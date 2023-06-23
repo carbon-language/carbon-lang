@@ -2,16 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 3
+// AUTOUPDATE
+// CHECK:STDOUT: result: 3
 
 package Foo api;
 class X {
-  fn F[me: Self](o: Self) -> Self { return {.n = me.n + o.n}; }
+  fn F[self: Self](o: Self) -> Self { return {.n = self.n + o.n}; }
   var n: i32;
 }
 fn Main() -> i32 {

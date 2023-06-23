@@ -2,17 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{not} %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
+// AUTOUPDATE
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
+class Point(T:! type) {
   // The return type should be Point(T). Point by itself is not a type.
-  // CHECK: COMPILATION ERROR: {{.*}}/explorer/testdata/generic_class/fail_return_type_is_type.carbon:[[@LINE+1]]: Expected a type, but got Point
+  // CHECK:STDERR: COMPILATION ERROR: fail_return_type_is_type.carbon:[[@LINE+1]]: 'Point' must be given an argument list
   fn Create(x: T, y: T) -> Point {
     return {.x = x, .y = y};
   }

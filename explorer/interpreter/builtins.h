@@ -9,69 +9,41 @@
 #include <optional>
 #include <string_view>
 
+#include "common/enum_base.h"
 #include "common/error.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
-#include "explorer/interpreter/value.h"
 
 namespace Carbon {
 
+CARBON_DEFINE_RAW_ENUM_CLASS(Builtin, int) {
+#define CARBON_BUILTIN(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
+#include "explorer/interpreter/builtins.def"
+};
+
+class Builtin : public CARBON_ENUM_BASE(Builtin) {
+ public:
+#define CARBON_BUILTIN(Name) CARBON_ENUM_CONSTANT_DECLARATION(Name)
+#include "explorer/interpreter/builtins.def"
+
+  static const int NumBuiltins;
+
+  // Support conversion to and from an int for array indexing.
+  using EnumBase::AsInt;
+  using EnumBase::FromInt;
+};
+
+#define CARBON_BUILTIN(Name) CARBON_ENUM_CONSTANT_DEFINITION(Builtin, Name)
+#include "explorer/interpreter/builtins.def"
+
+constexpr int Builtin::NumBuiltins = Invalid.AsInt();
+
 class Builtins {
  public:
-  explicit Builtins() {}
-
-  enum class Builtin {
-    // Conversions.
-    As,
-    ImplicitAs,
-
-    // Comparison.
-    EqWith,
-    LessWith,
-    LessEqWith,
-    GreaterWith,
-    GreaterEqWith,
-    CompareWith,
-
-    // Arithmetic.
-    Negate,
-    AddWith,
-    SubWith,
-    MulWith,
-    ModWith,
-
-    // Bitwise and shift.
-    BitComplement,
-    BitAndWith,
-    BitOrWith,
-    BitXorWith,
-    LeftShiftWith,
-    RightShiftWith,
-
-    Last = RightShiftWith
-  };
-  // TODO: In C++20, replace with `using enum Builtin;`.
-  static constexpr Builtin As = Builtin::As;
-  static constexpr Builtin ImplicitAs = Builtin::ImplicitAs;
-  static constexpr Builtin EqWith = Builtin::EqWith;
-  static constexpr Builtin LessWith = Builtin::LessWith;
-  static constexpr Builtin LessEqWith = Builtin::LessEqWith;
-  static constexpr Builtin GreaterWith = Builtin::GreaterWith;
-  static constexpr Builtin GreaterEqWith = Builtin::GreaterEqWith;
-  static constexpr Builtin Negate = Builtin::Negate;
-  static constexpr Builtin AddWith = Builtin::AddWith;
-  static constexpr Builtin SubWith = Builtin::SubWith;
-  static constexpr Builtin MulWith = Builtin::MulWith;
-  static constexpr Builtin ModWith = Builtin::ModWith;
-  static constexpr Builtin BitComplement = Builtin::BitComplement;
-  static constexpr Builtin BitAndWith = Builtin::BitAndWith;
-  static constexpr Builtin BitOrWith = Builtin::BitOrWith;
-  static constexpr Builtin BitXorWith = Builtin::BitXorWith;
-  static constexpr Builtin LeftShiftWith = Builtin::LeftShiftWith;
-  static constexpr Builtin RightShiftWith = Builtin::RightShiftWith;
-  static constexpr Builtin CompareWith = Builtin::CompareWith;
+  explicit Builtins() = default;
 
   // Register a declaration that might be a builtin.
   void Register(Nonnull<const Declaration*> decl);
@@ -80,21 +52,9 @@ class Builtins {
   auto Get(SourceLocation source_loc, Builtin builtin) const
       -> ErrorOr<Nonnull<const Declaration*>>;
 
-  // Get the source name of a builtin.
-  static constexpr auto GetName(Builtin builtin) -> std::string_view {
-    return BuiltinNames[static_cast<int>(builtin)];
-  }
-
  private:
-  static constexpr int NumBuiltins = static_cast<int>(Builtin::Last) + 1;
-  static constexpr const char* BuiltinNames[NumBuiltins] = {
-      "As",         "ImplicitAs",    "EqWith",        "LessWith",
-      "LessEqWith", "GreaterWith",   "GreaterEqWith", "CompareWith",
-      "Negate",     "AddWith",       "SubWith",       "MulWith",
-      "ModWith",    "BitComplement", "BitAndWith",    "BitOrWith",
-      "BitXorWith", "LeftShiftWith", "RightShiftWith"};
-
-  std::optional<Nonnull<const Declaration*>> builtins_[NumBuiltins] = {};
+  std::optional<Nonnull<const Declaration*>> builtins_[Builtin::NumBuiltins] =
+      {};
 };
 
 }  // namespace Carbon

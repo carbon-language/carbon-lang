@@ -10,7 +10,8 @@ namespace Carbon {
 
 // Adds the Carbon prelude to `declarations`.
 void AddPrelude(std::string_view prelude_file_name, Nonnull<Arena*> arena,
-                std::vector<Nonnull<Declaration*>>* declarations) {
+                std::vector<Nonnull<Declaration*>>* declarations,
+                int* num_prelude_declarations) {
   ErrorOr<AST> parse_result = Parse(arena, prelude_file_name, false);
   if (!parse_result.ok()) {
     // Try again with tracing, to help diagnose the problem.
@@ -21,6 +22,7 @@ void AddPrelude(std::string_view prelude_file_name, Nonnull<Arena*> arena,
   const auto& prelude = *parse_result;
   declarations->insert(declarations->begin(), prelude.declarations.begin(),
                        prelude.declarations.end());
+  *num_prelude_declarations = prelude.declarations.size();
 }
 
 }  // namespace Carbon

@@ -62,7 +62,7 @@ cc_test(
     deps = [
         ":fn_inserter",
         ":matcher_test_base",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//clang:tooling",
     ],
@@ -84,7 +84,7 @@ cc_test(
     deps = [
         ":for_range",
         ":matcher_test_base",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//clang:tooling",
     ],
@@ -98,6 +98,7 @@ cc_library(
         ":matcher",
         "@llvm-project//clang:ast_matchers",
         "@llvm-project//clang:type_nodes_gen",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -107,7 +108,7 @@ cc_test(
     deps = [
         ":matcher_test_base",
         ":var_decl",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//clang:tooling",
     ],

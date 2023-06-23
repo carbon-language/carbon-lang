@@ -7,11 +7,12 @@
 
 #include <memory>
 #include <optional>
+#include <stack>
 
 #include "common/ostream.h"
 #include "explorer/ast/statement.h"
+#include "explorer/ast/value.h"
 #include "explorer/interpreter/action.h"
-#include "explorer/interpreter/value.h"
 
 namespace Carbon {
 
@@ -32,15 +33,12 @@ class ActionStack {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // TODO: consider unifying with Print.
-  void PrintScopes(llvm::raw_ostream& out) const;
-
   // Starts execution with `action` at the top of the stack. Cannot be called
   // when IsEmpty() is false.
   void Start(std::unique_ptr<Action> action);
 
   // True if the stack is empty.
-  auto IsEmpty() const -> bool { return todo_.IsEmpty(); }
+  auto empty() const -> bool { return todo_.empty(); }
 
   // The Action currently at the top of the stack. This will never be a
   // ScopeAction.
@@ -50,17 +48,12 @@ class ActionStack {
   void Initialize(ValueNodeView value_node, Nonnull<const Value*> value);
 
   // Returns the value bound to `value_node`. If `value_node` is a local
-  // variable, this will be an LValue.
+  // variable, this will be an LocationValue.
   auto ValueOfNode(ValueNodeView value_node, SourceLocation source_loc) const
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Merges `scope` into the innermost scope currently on the stack.
   void MergeScope(RuntimeScope scope);
-
-  // Initializes `fragment` so that, when resumed, it begins execution of
-  // `body`.
-  void InitializeFragment(ContinuationValue::StackFragment& fragment,
-                          Nonnull<const Statement*> body);
 
   // The result produced by the `action` argument of the most recent
   // Start call. Cannot be called if IsEmpty() is false, or if `action`
@@ -87,9 +80,9 @@ class ActionStack {
   auto Spawn(std::unique_ptr<Action> child) -> ErrorOr<Success>;
   auto Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
       -> ErrorOr<Success>;
-  // Replace the current action with another action of the same kind and run it
-  // next.
-  auto ReplaceWith(std::unique_ptr<Action> child) -> ErrorOr<Success>;
+  // Replace the current action with another action that produces the same kind
+  // of result and run it next.
+  auto ReplaceWith(std::unique_ptr<Action> replacement) -> ErrorOr<Success>;
 
   // Start a new recursive action.
   auto BeginRecursiveAction() {
@@ -111,21 +104,32 @@ class ActionStack {
   auto UnwindPast(Nonnull<const Statement*> ast_node,
                   Nonnull<const Value*> result) -> ErrorOr<Success>;
 
-  // Resumes execution of a suspended continuation.
-  auto Resume(Nonnull<const ContinuationValue*> continuation)
-      -> ErrorOr<Success>;
+  void Pop() { todo_.Pop(); }
 
-  // Suspends execution of the currently-executing continuation.
-  auto Suspend() -> ErrorOr<Success>;
+  auto size() const -> int { return todo_.size(); }
 
  private:
   // Pop any ScopeActions from the top of the stack, propagating results as
   // needed, to restore the invariant that todo_.Top() is not a ScopeAction.
-  void PopScopes();
+  // Store the popped scope action into cleanup_stack, so that the destructor
+  // can be called for the variables
+  void PopScopes(std::stack<std::unique_ptr<Action>>& cleanup_stack);
 
   // Set `result` as the result of the Action most recently removed from the
   // stack.
   void SetResult(Nonnull<const Value*> result);
+
+  auto UnwindToWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node)
+      -> std::stack<std::unique_ptr<Action>>;
+
+  auto UnwindPastWithCaptureScopesToDestroy(Nonnull<const Statement*> ast_node)
+      -> std::stack<std::unique_ptr<Action>>;
+
+  // Create CleanUpActions for all actions
+  void PushCleanUpActions(std::stack<std::unique_ptr<Action>> actions);
+
+  // Create and push a CleanUpAction on the stack
+  void PushCleanUpAction(std::unique_ptr<Action> act);
 
   // TODO: consider defining a non-nullable unique_ptr-like type to use here.
   Stack<std::unique_ptr<Action>> todo_;

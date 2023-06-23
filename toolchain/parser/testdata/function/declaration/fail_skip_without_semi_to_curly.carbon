@@ -1,0 +1,18 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+// CHECK:STDOUT: [
+// CHECK:STDOUT: {kind: 'EmptyDeclaration', text: 'struct', has_error: yes},
+// CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:   {kind: 'Identifier', text: 'F'},
+// CHECK:STDOUT:     {kind: 'ParameterListStart', text: '('},
+// CHECK:STDOUT:   {kind: 'ParameterList', text: ')', subtree_size: 2},
+// CHECK:STDOUT: {kind: 'FunctionDeclaration', text: ';', subtree_size: 5},
+// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT: ]
+
+// CHECK:STDERR: fail_skip_without_semi_to_curly.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
+struct X { fn () }
+fn F();

@@ -8,11 +8,11 @@
 #include <vector>
 
 #include "common/ostream.h"
+#include "explorer/ast/address.h"
+#include "explorer/ast/value.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
-#include "explorer/interpreter/address.h"
 #include "explorer/interpreter/heap_allocation_interface.h"
-#include "explorer/interpreter/value.h"
 
 namespace Carbon {
 
@@ -40,6 +40,9 @@ class Heap : public HeapAllocationInterface {
   // checking that the address is alive.
   auto Write(const Address& a, Nonnull<const Value*> v,
              SourceLocation source_loc) -> ErrorOr<Success>;
+
+  auto GetAllocationId(Nonnull<const Value*> v) const
+      -> std::optional<AllocationId> override;
 
   // Put the given value on the heap and mark its state.
   // Mark UninitializedValue as uninitialized and other values as alive.

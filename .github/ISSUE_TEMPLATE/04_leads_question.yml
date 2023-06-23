@@ -1,0 +1,37 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Leads question
+description: >
+  Ask the leads for feedback on an important issue, such as a language design
+  choice.
+labels: [leads question]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        **Attention:** If this is a _question_, please use either [GitHub
+        Discussions](https://github.com/carbon-language/carbon-lang/discussions)
+        or [Discord](https://discord.gg/ZjVdShJDAs).
+  - type: textarea
+    id: summary
+    attributes:
+      label: >
+        Summary of issue:
+      description: >
+        Provide a short, one-paragraph summary of the issue.
+  - type: textarea
+    id: detail
+    attributes:
+      label: >
+        Details:
+      description: >
+        Provide detailed information about the issue. For example, on a language
+        design choice, it can help to provide various options with a summary of
+        trade-offs.
+  - type: textarea
+    id: extras
+    attributes:
+      label: >
+        Any other information that you want to share?

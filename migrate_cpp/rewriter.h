@@ -22,10 +22,14 @@ namespace Carbon {
 namespace Internal {
 
 struct Empty {
-  friend bool operator==(Empty, Empty) { return true; }
+  friend auto operator==(Empty /*unused*/, Empty /*unused*/) -> bool {
+    return true;
+  }
 };
 struct Tombstone {
-  friend bool operator==(Tombstone, Tombstone) { return true; }
+  friend auto operator==(Tombstone /*unused*/, Tombstone /*unused*/) -> bool {
+    return true;
+  }
 };
 
 // Type alias for the variant representing any of the values that can be
@@ -36,16 +40,16 @@ using KeyType =
 // `KeyInfo` is used as a template argument to `llvm::DenseMap` to specify how
 // to equality-compare and hash `KeyType`.
 struct KeyInfo {
-  static bool isEqual(const KeyType& lhs, const KeyType& rhs) {
+  static auto isEqual(const KeyType& lhs, const KeyType& rhs) -> bool {
     return lhs == rhs;
   }
-  static unsigned getHashValue(const KeyType& x) {
+  static auto getHashValue(const KeyType& x) -> unsigned {
     return std::visit(
         [](auto x) -> unsigned {
-          using type = std::decay_t<decltype(x)>;
-          if constexpr (std::is_same_v<type, clang::DynTypedNode>) {
+          using Type = std::decay_t<decltype(x)>;
+          if constexpr (std::is_same_v<Type, clang::DynTypedNode>) {
             return clang::DynTypedNode::DenseMapInfo::getHashValue(x);
-          } else if constexpr (std::is_same_v<type, clang::TypeLoc>) {
+          } else if constexpr (std::is_same_v<Type, clang::TypeLoc>) {
             // TODO: Improve this.
             return reinterpret_cast<uintptr_t>(x.getTypePtr());
           } else {
@@ -55,8 +59,8 @@ struct KeyInfo {
         x);
   }
 
-  static KeyType getEmptyKey() { return Empty{}; }
-  static KeyType getTombstoneKey() { return Tombstone{}; }
+  static auto getEmptyKey() -> KeyType { return Empty{}; }
+  static auto getTombstoneKey() -> KeyType { return Tombstone{}; }
 };
 
 }  // namespace Internal
@@ -104,11 +108,16 @@ class RewriteBuilder : public clang::RecursiveASTVisitor<RewriteBuilder> {
   auto VisitCXXBoolLiteralExpr(clang::CXXBoolLiteralExpr* expr) -> bool;
   auto VisitDeclRefExpr(clang::DeclRefExpr* expr) -> bool;
   auto VisitDeclStmt(clang::DeclStmt* stmt) -> bool;
+  auto VisitImplicitCastExpr(clang::ImplicitCastExpr* expr) -> bool;
   auto VisitIntegerLiteral(clang::IntegerLiteral* expr) -> bool;
+  auto VisitParmVarDecl(clang::ParmVarDecl* decl) -> bool;
   auto VisitPointerTypeLoc(clang::PointerTypeLoc type_loc) -> bool;
+  auto VisitReturnStmt(clang::ReturnStmt* stmt) -> bool;
   auto VisitTranslationUnitDecl(clang::TranslationUnitDecl* decl) -> bool;
   auto VisitUnaryOperator(clang::UnaryOperator* expr) -> bool;
-  auto VisitVarDecl(clang::VarDecl* decl) -> bool;
+
+  auto TraverseFunctionDecl(clang::FunctionDecl* decl) -> bool;
+  auto TraverseVarDecl(clang::VarDecl* decl) -> bool;
 
   auto segments() const -> const SegmentMapType& { return segments_; }
   auto segments() -> SegmentMapType& { return segments_; }
@@ -172,7 +181,7 @@ class MigrationConsumer : public clang::ASTConsumer {
  public:
   explicit MigrationConsumer(std::string& result,
                              std::pair<size_t, size_t> output_range)
-      : result_(result), output_range_(output_range) {}
+      : result_(result), output_range_(std::move(output_range)) {}
 
   auto HandleTranslationUnit(clang::ASTContext& context) -> void override;
 
@@ -194,11 +203,12 @@ class MigrationAction : public clang::ASTFrontendAction {
   // `output_range.second` will be written.
   explicit MigrationAction(std::string& result,
                            std::pair<size_t, size_t> output_range)
-      : result_(result), output_range_(output_range) {}
+      : result_(result), output_range_(std::move(output_range)) {}
 
   // Returns a `std::unique_ptr` to a `clang::MigrationConsumer` which populates
   // the output `result`.
-  auto CreateASTConsumer(clang::CompilerInstance&, llvm::StringRef)
+  auto CreateASTConsumer(clang::CompilerInstance& /*CI*/,
+                         llvm::StringRef /*InFile*/)
       -> std::unique_ptr<clang::ASTConsumer> override {
     return std::make_unique<MigrationConsumer>(result_, output_range_);
   }

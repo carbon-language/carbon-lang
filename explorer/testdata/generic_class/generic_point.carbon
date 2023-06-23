@@ -2,22 +2,18 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{explorer} %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes=false %s
-// RUN: %{explorer} --parser_debug --trace_file=- %s 2>&1 | \
-// RUN:   %{FileCheck} --match-full-lines --allow-unused-prefixes %s
-// AUTOUPDATE: %{explorer} %s
-// CHECK: result: 0
+// AUTOUPDATE
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
-class Point(T:! Type) {
+class Point(T:! type) {
   fn Origin(zero: T) -> Point(T) {
     return {.x = zero, .y = zero};
   }
 
-  fn GetX[me: Point(T)]() -> T {
-    return me.x;
+  fn GetX[self: Point(T)]() -> T {
+    return self.x;
   }
 
   var x: T;

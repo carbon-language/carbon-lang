@@ -18,7 +18,7 @@ namespace Carbon {
 // Aggregate information about a function being analyzed.
 struct FunctionData {
   // The function declaration.
-  Nonnull<FunctionDeclaration*> declaration;
+  Nonnull<CallableDeclaration*> declaration;
 
   // True if the function has a deduced return type, and we've already seen
   // a `return` statement in its body.
@@ -40,14 +40,14 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
     case StatementKind::ReturnVar:
     case StatementKind::ReturnExpression: {
       if (!function.has_value()) {
-        return CompilationError(statement->source_loc())
+        return ProgramError(statement->source_loc())
                << "return is not within a function body";
       }
       const ReturnTerm& function_return =
           (*function)->declaration->return_term();
       if (function_return.is_auto()) {
         if ((*function)->saw_return_in_auto) {
-          return CompilationError(statement->source_loc())
+          return ProgramError(statement->source_loc())
                  << "Only one return is allowed in a function with an `auto` "
                     "return type.";
         }
@@ -57,7 +57,7 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       ret.set_function((*function)->declaration);
       if (statement->kind() == StatementKind::ReturnVar &&
           function_return.is_omitted()) {
-        return CompilationError(statement->source_loc())
+        return ProgramError(statement->source_loc())
                << *statement
                << " should not provide a return value, to match the function's "
                   "signature.";
@@ -65,25 +65,26 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       if (statement->kind() == StatementKind::ReturnExpression) {
         auto& ret_exp = cast<ReturnExpression>(*statement);
         if (ret_exp.is_omitted_expression() != function_return.is_omitted()) {
-          return CompilationError(ret_exp.source_loc())
+          return ProgramError(ret_exp.source_loc())
                  << ret_exp << " should"
                  << (function_return.is_omitted() ? " not" : "")
                  << " provide a return value, to match the function's "
                     "signature.";
         }
       }
+
       return Success();
     }
     case StatementKind::Break:
       if (!loop.has_value()) {
-        return CompilationError(statement->source_loc())
+        return ProgramError(statement->source_loc())
                << "break is not within a loop body";
       }
       cast<Break>(*statement).set_loop(*loop);
       return Success();
     case StatementKind::Continue:
       if (!loop.has_value()) {
-        return CompilationError(statement->source_loc())
+        return ProgramError(statement->source_loc())
                << "continue is not within a loop body";
       }
       cast<Continue>(*statement).set_loop(*loop);
@@ -123,27 +124,23 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       }
       return Success();
     }
-    case StatementKind::Continuation:
-      CARBON_RETURN_IF_ERROR(ResolveControlFlow(
-          &cast<Continuation>(*statement).body(), std::nullopt, std::nullopt));
-      return Success();
     case StatementKind::ExpressionStatement:
     case StatementKind::Assign:
+    case StatementKind::IncrementDecrement:
     case StatementKind::VariableDefinition:
-    case StatementKind::Run:
-    case StatementKind::Await:
       return Success();
   }
 }
 
 auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
   switch (declaration->kind()) {
+    case DeclarationKind::DestructorDeclaration:
     case DeclarationKind::FunctionDeclaration: {
-      auto& function = cast<FunctionDeclaration>(*declaration);
-      if (function.body().has_value()) {
-        FunctionData data = {.declaration = &function};
+      auto& callable = cast<CallableDeclaration>(*declaration);
+      if (callable.body().has_value()) {
+        FunctionData data = {.declaration = &callable};
         CARBON_RETURN_IF_ERROR(
-            ResolveControlFlow(*function.body(), std::nullopt, &data));
+            ResolveControlFlow(*callable.body(), std::nullopt, &data));
       }
       break;
     }
@@ -154,8 +151,16 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
       }
       break;
     }
-    case DeclarationKind::InterfaceDeclaration: {
-      auto& iface_decl = cast<InterfaceDeclaration>(*declaration);
+    case DeclarationKind::MixinDeclaration: {
+      auto& mixin_decl = cast<MixinDeclaration>(*declaration);
+      for (Nonnull<Declaration*> member : mixin_decl.members()) {
+        CARBON_RETURN_IF_ERROR(ResolveControlFlow(member));
+      }
+      break;
+    }
+    case DeclarationKind::InterfaceDeclaration:
+    case DeclarationKind::ConstraintDeclaration: {
+      auto& iface_decl = cast<ConstraintTypeDeclaration>(*declaration);
       for (Nonnull<Declaration*> member : iface_decl.members()) {
         CARBON_RETURN_IF_ERROR(ResolveControlFlow(member));
       }
@@ -168,11 +173,23 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
       }
       break;
     }
+    case DeclarationKind::MatchFirstDeclaration: {
+      auto& match_first_decl = cast<MatchFirstDeclaration>(*declaration);
+      for (Nonnull<Declaration*> impl : match_first_decl.impl_declarations()) {
+        CARBON_RETURN_IF_ERROR(ResolveControlFlow(impl));
+      }
+      break;
+    }
+    case DeclarationKind::NamespaceDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::VariableDeclaration:
+    case DeclarationKind::InterfaceExtendDeclaration:
+    case DeclarationKind::InterfaceRequireDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:
+    case DeclarationKind::MixDeclaration:
+    case DeclarationKind::ExtendBaseDeclaration:
       // do nothing
       break;
   }
@@ -180,7 +197,7 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
 }
 
 auto ResolveControlFlow(AST& ast) -> ErrorOr<Success> {
-  for (auto declaration : ast.declarations) {
+  for (auto* declaration : ast.declarations) {
     CARBON_RETURN_IF_ERROR(ResolveControlFlow(declaration));
   }
   return Success();

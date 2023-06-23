@@ -34,7 +34,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Associated types](#associated-types)
         -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Constraints](#constraints)
-    -   [Parameterized impls](#parameterized-impls)
+    -   [Parameterized impl declarations](#parameterized-impl-declarations)
     -   [Operator overloading](#operator-overloading)
 -   [Future work](#future-work)
 -   [References](#references)
@@ -159,7 +159,7 @@ Example:
 ```
 interface Comparable {
   // `Less` is an associated method.
-  fn Less[me: Self](rhs: Self) -> bool;
+  fn Less[self: Self](rhs: Self) -> bool;
 }
 ```
 
@@ -192,7 +192,7 @@ Consider this interface:
 
 ```
 interface Printable {
-  fn Print[me: Self]();
+  fn Print[self: Self]();
 }
 ```
 
@@ -205,27 +205,27 @@ class Song {
   // ...
 
   // Implementing `Printable` for `Song` inside the definition of `Song`
-  // without the keyword `external` means all names of `Printable`, such
+  // with the keyword `extend` means all names of `Printable`, such
   // as `F`, are included as a part of the `Song` API.
-  impl as Printable {
+  extend impl as Printable {
     // Could use `Self` in place of `Song` here.
-    fn Print[me: Song]() { ... }
+    fn Print[self: Song]() { ... }
   }
 }
 
 // Implement `Comparable` for `Song` without changing the API of `Song`
-// using an `external impl` declaration. This may be defined in either
-// the library defining `Song` or `Comparable`.
-external impl Song as Comparable {
+// using an `impl` declaration without `extend`. This may be defined in
+// either the library defining `Song` or `Comparable`.
+impl Song as Comparable {
   // Could use either `Self` or `Song` here.
-  fn Less[me: Self](rhs: Self) -> bool { ... }
+  fn Less[self: Self](rhs: Self) -> bool { ... }
 }
 ```
 
 Implementations may be defined within the class definition itself or
-out-of-line. Implementations may optionally start with the `external` keyword to
-say the members of the interface are not members of the class. Out-of-line
-implementations must be external. External implementations may be defined in the
+out-of-line. Implementations may optionally start with the `extend` keyword to
+say the members of the interface are also members of the class, which may only
+be used in a class scope. Otherwise, implementations may be defined in the
 library defining either the class or the interface.
 
 #### Accessing members of interfaces
@@ -311,7 +311,7 @@ call site.
 
 ```
 // ERROR: can't determine `U` from explicit parameters
-fn Illegal[T:! Type, U:! Type](x: T) -> U { ... }
+fn Illegal[T:! type, U:! type](x: T) -> U { ... }
 ```
 
 #### Generic type parameters
@@ -350,17 +350,17 @@ Interfaces can require other interfaces be implemented:
 
 ```
 interface Equatable {
-  fn IsEqual[me: Self](rhs: Self) -> bool;
+  fn IsEqual[self: Self](rhs: Self) -> bool;
 }
 
 // `Iterable` requires that `Equatable` is implemented.
 interface Iterable {
-  impl as Equatable;
-  fn Advance[addr me: Self*]();
+  require Self impls Equatable;
+  fn Advance[addr self: Self*]();
 }
 ```
 
-The `extends` keyword is used to [extend](terminology.md#extending-an-interface)
+The `extend` keyword is used to [extend](terminology.md#extending-an-interface)
 another interface. If interface `Derived` extends interface `Base`, `Base`'s
 interface is both required and all its methods are included in `Derived`'s
 interface.
@@ -368,14 +368,14 @@ interface.
 ```
 // `Hashable` extends `Equatable`.
 interface Hashable {
-  extends Equatable;
-  fn Hash[me: Self]() -> u64;
+  extend Equatable;
+  fn Hash[self: Self]() -> u64;
 }
 // `Hashable` is equivalent to:
 interface Hashable {
-  impl as Equatable;
+  require Self impls Equatable;
   alias IsEqual = Equatable.IsEqual;
-  fn Hash[me: Self]() -> u64;
+  fn Hash[self: Self]() -> u64;
 }
 ```
 
@@ -385,9 +385,9 @@ methods in the implementation of the derived interface.
 ```
 class Key {
   // ...
-  impl as Hashable {
-    fn IsEqual[me: Key](rhs: Key) -> bool { ... }
-    fn Hash[me: Key]() -> u64 { ... }
+  extend impl as Hashable {
+    fn IsEqual[self: Key](rhs: Key) -> bool { ... }
+    fn Hash[self: Key]() -> u64 { ... }
   }
   // No need to separately implement `Equatable`.
 }
@@ -403,14 +403,14 @@ It gives you all the names that don't conflict.
 
 ```
 interface Renderable {
-  fn GetCenter[me: Self]() -> (i32, i32);
+  fn GetCenter[self: Self]() -> (i32, i32);
   // Draw the object to the screen
-  fn Draw[me: Self]();
+  fn Draw[self: Self]();
 }
 interface EndOfGame {
-  fn SetWinner[addr me: Self*](player: i32);
+  fn SetWinner[addr self: Self*](player: i32);
   // Indicate the game was a draw
-  fn Draw[addr me: Self*]();
+  fn Draw[addr self: Self*]();
 }
 
 fn F[T:! Renderable & EndOfGame](game_state: T*) -> (i32, i32) {
@@ -439,8 +439,8 @@ applications and capabilities not covered here.
 
 ```
 constraint Combined {
-  impl as Renderable;
-  impl as EndOfGame;
+  require Self impls Renderable;
+  require Self impls EndOfGame;
   alias Draw_Renderable = Renderable.Draw;
   alias Draw_EndOfGame = EndOfGame.Draw;
   alias SetWinner = EndOfGame.SetWinner;
@@ -472,7 +472,7 @@ For example: If there were a class `CDCover` defined this way:
 
 ```
 class CDCover  {
-  impl as Printable {
+  extend impl as Printable {
     ...
   }
 }
@@ -503,12 +503,14 @@ In this example, we have multiple ways of sorting a collection of `Song` values.
 ```
 class Song { ... }
 
-adapter SongByArtist extends Song {
-  impl as Comparable { ... }
+class SongByArtist {
+  extend adapt Song;
+  extend impl as Comparable { ... }
 }
 
-adapter SongByTitle extends Song {
-  impl as Comparable { ... }
+class SongByTitle {
+  extend adapt Song;
+  extend impl as Comparable { ... }
 }
 ```
 
@@ -533,9 +535,9 @@ element types:
 ```
 interface Stack {
   let ElementType:! Movable;
-  fn Push[addr me: Self*](value: ElementType);
-  fn Pop[addr me: Self*]() -> ElementType;
-  fn IsEmpty[addr me: Self*]() -> bool;
+  fn Push[addr self: Self*](value: ElementType);
+  fn Pop[addr self: Self*]() -> ElementType;
+  fn IsEmpty[addr self: Self*]() -> bool;
 }
 ```
 
@@ -560,8 +562,8 @@ those types to be different. An element in a hash map might have type
 `Equatable(Pair(String, i64))`.
 
 ```
-interface Equatable(T:! Type) {
-  fn IsEqual[me: Self](compare_to: T) -> bool;
+interface Equatable(T:! type) {
+  fn IsEqual[self: Self](compare_to: T) -> bool;
 }
 ```
 
@@ -574,13 +576,13 @@ general, unless some other parameter determines `T`.
 ```
 // ✅ This is allowed, since the value of `T` is determined by the
 // `v` parameter.
-fn FindInVector[T:! Type, U:! Equatable(T)](v: Vector(T), needle: U)
+fn FindInVector[T:! type, U:! Equatable(T)](v: Vector(T), needle: U)
     -> Optional(i32);
 
 // ❌ This is forbidden. Since `U` could implement `Equatable`
 // multiple times, there is no way to determine the value for `T`.
 // Contrast with `PeekAtTopOfStack` in the associated type example.
-fn CompileError[T:! Type, U:! Equatable(T)](x: U) -> T;
+fn CompileError[T:! type, U:! Equatable(T)](x: U) -> T;
 ```
 
 ### Constraints
@@ -594,7 +596,7 @@ fn FindFirstPrime[T:! Container where .Element == i32]
   ...
 }
 
-fn PrintContainer[T:! Container where .Element is Printable](c: T) {
+fn PrintContainer[T:! Container where .Element impls Printable](c: T) {
   // The type of the elements of `c` is not known, but we do know
   // that type satisfies the `Printable` interface.
   ...
@@ -610,11 +612,11 @@ of associated types (and other associated constants).
 
 ```
 class Vector(T:! Movable) {
-  impl as Stack where .ElementType = T { ... }
+  extend impl as Stack where .ElementType = T { ... }
 }
 ```
 
-### Parameterized impls
+### Parameterized impl declarations
 
 Implementations can be parameterized to apply to multiple types. Those
 parameters can have constraints to restrict when the implementation applies.
@@ -649,7 +651,7 @@ supports any type implicitly convertible to a specified type, using `like`:
 // Support multiplying values of type `Distance` with
 // values of type `f64` or any type implicitly
 // convertible to `f64`.
-external impl Distance as MultipliableWith(like f64) ...
+impl Distance as MultipliableWith(like f64) ...
 ```
 
 ## Future work
