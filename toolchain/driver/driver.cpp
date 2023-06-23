@@ -11,6 +11,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Format.h"
+#include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -116,6 +117,7 @@ enum class DumpMode {
   ParseTree,
   SemanticsIR,
   LLVMIR,
+  Assembly,
   Unknown
 };
 
@@ -131,10 +133,11 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                        .Case("parse-tree", DumpMode::ParseTree)
                        .Case("semantics-ir", DumpMode::SemanticsIR)
                        .Case("llvm-ir", DumpMode::LLVMIR)
+                       .Case("assembly", DumpMode::Assembly)
                        .Default(DumpMode::Unknown);
   if (dump_mode == DumpMode::Unknown) {
     error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, "
-                     "semantics-ir, or llvm-ir.\n";
+                     "semantics-ir, llvm-ir, or assembly.\n";
     return false;
   }
   args = args.drop_front();
@@ -151,6 +154,13 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
       args.front() == "--include_builtins") {
     args = args.drop_front();
     semantics_ir_include_builtins = true;
+  }
+
+  llvm::StringRef target_triple;
+  if (dump_mode == DumpMode::Assembly && !args.empty() &&
+      args.front().starts_with("--target_triple=")) {
+    target_triple = args.front().split("=").second;
+    args = args.drop_front();
   }
 
   if (args.empty()) {
@@ -234,6 +244,12 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     module->print(*vlog_stream_, /*AAW=*/nullptr,
                   /*ShouldPreserveUseListOrder=*/false,
                   /*IsForDebug=*/true);
+  }
+
+  if (dump_mode == DumpMode::Assembly) {
+    has_errors |= Carbon::PrintAssemblyFromModule(
+        *module, target_triple, error_stream_, output_stream_);
+    return !has_errors;
   }
 
   llvm_unreachable("should handle all dump modes");
