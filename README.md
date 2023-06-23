@@ -327,4 +327,4 @@ You can **check out some
 or join the `#contributing-help` channel on
 [Discord](https://discord.gg/ZjVdShJDAs). See our full
 [`CONTRIBUTING`](CONTRIBUTING.md) documentation for more details.
->>>>>>> pr/2942
+
