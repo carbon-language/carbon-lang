@@ -26,7 +26,7 @@ class Point(T:! Number) {
   var y: T;
 }
 
-external impl i32 as Number {
+impl i32 as Number {
   fn Zero() -> i32 { return 0; }
   fn Add[self: i32](other: i32) -> i32 { return self + other; }
 }

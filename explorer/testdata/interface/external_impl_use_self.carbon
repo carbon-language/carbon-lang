@@ -17,7 +17,7 @@ class Point {
   var y: i32;
 }
 
-external impl Point as Vector {
+impl Point as Vector {
   // Allowed: `Self` means `Point` here.
   fn Add[self: Self](b: Self) -> Self {
     return {.x = self.x + b.x, .y = self.y + b.y};

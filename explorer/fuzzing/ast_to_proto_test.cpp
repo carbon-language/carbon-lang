@@ -16,6 +16,7 @@
 
 #include "common/fuzzing/proto_to_carbon.h"
 #include "explorer/syntax/parse.h"
+#include "testing/util/test_raw_ostream.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -29,14 +30,13 @@ static std::vector<llvm::StringRef>* carbon_files = nullptr;
 
 // Returns a string representation of `ast`.
 auto AstToString(const AST& ast) -> std::string {
-  std::string s;
-  llvm::raw_string_ostream out(s);
+  TestRawOstream out;
   out << "package " << ast.package.package << (ast.is_api ? "api" : "impl")
       << ";\n";
   for (auto* declaration : ast.declarations) {
     out << *declaration << "\n";
   }
-  return s;
+  return out.TakeStr();
 }
 
 // Concatenates message and field names.

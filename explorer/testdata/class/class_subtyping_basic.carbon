@@ -13,7 +13,8 @@ base class C {
   var a: i32;
 }
 
-class D extends C {
+class D {
+  extend base: C;
 }
 
 fn Foo(c: C*) -> i32 {

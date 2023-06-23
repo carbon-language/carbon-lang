@@ -5,6 +5,7 @@
 workspace(name = "carbon")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
 skylib_version = "1.3.0"
 
@@ -112,7 +113,7 @@ http_archive(
 
 # We pin to specific upstream commits and try to track top-of-tree reasonably
 # closely rather than pinning to a specific release.
-llvm_version = "219ba2fb7b0ae89101f3c81a47fe4fc4aa80dea4"
+llvm_version = "c5f6a287499a816cba5585708999e2c8b134290f"
 
 http_archive(
     name = "llvm-raw",
@@ -123,7 +124,7 @@ http_archive(
         "@carbon//bazel/patches/llvm:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
         "@carbon//bazel/patches/llvm:0003_Modernize_py_binary_rule_for_lit.patch",
     ],
-    sha256 = "8b2fa8ae3e434577b4fdd1e91b8990b0651776bd78cf4fbf9b709dcdcdbfbd21",
+    sha256 = "03a8eb4b243846ee037d700b048ec48a87eeef480cb129ab56aa7e0537172b98",
     strip_prefix = "llvm-project-{0}".format(llvm_version),
     urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_version)],
 )
@@ -132,39 +133,46 @@ load("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure")
 
 llvm_configure(
     name = "llvm-project",
-    repo_mapping = {"@llvm_zlib": "@zlib"},
     targets = [
         "AArch64",
         "X86",
     ],
 )
 
-load("@llvm-raw//utils/bazel:terminfo.bzl", "llvm_terminfo_system")
+# Dependencies copied from
+# https://github.com/llvm/llvm-project/blob/main/utils/bazel/WORKSPACE.
+maybe(
+    http_archive,
+    name = "llvm_zlib",
+    build_file = "@llvm-raw//utils/bazel/third_party_build:zlib-ng.BUILD",
+    sha256 = "e36bb346c00472a1f9ff2a0a4643e590a254be6379da7cddd9daeb9a7f296731",
+    strip_prefix = "zlib-ng-2.0.7",
+    urls = [
+        "https://github.com/zlib-ng/zlib-ng/archive/refs/tags/2.0.7.zip",
+    ],
+)
 
-# We require successful detection and use of a system terminfo library.
-llvm_terminfo_system(name = "llvm_terminfo")
-
-load("@llvm-raw//utils/bazel:zlib.bzl", "llvm_zlib_system")
-
-# We require successful detection and use of a system zlib library.
-llvm_zlib_system(name = "zlib")
+maybe(
+    http_archive,
+    name = "llvm_zstd",
+    build_file = "@llvm-raw//utils/bazel/third_party_build:zstd.BUILD",
+    sha256 = "7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0",
+    strip_prefix = "zstd-1.5.2",
+    urls = [
+        "https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz",
+    ],
+)
 
 ###############################################################################
 # Flex/Bison rules
 ###############################################################################
 
-rules_m4_version = "0.2.1"
+rules_m4_version = "0.2.3"
 
 http_archive(
     name = "rules_m4",
-    patch_args = ["-p1"],
-    patches = [
-        # Trying to upstream: https://github.com/jmillikin/rules_m4/pull/15
-        "@carbon//bazel/patches/m4:0001_Support_M4_building_on_FreeBSD.patch",
-    ],
-    sha256 = "eaa674cd84546038ecbcc49cdd346134a20961a41fa1a541e80d8bf4b470c34d",
-    strip_prefix = "rules_m4-{0}".format(rules_m4_version),
-    urls = ["https://github.com/jmillikin/rules_m4/archive/v{0}.tar.gz".format(rules_m4_version)],
+    sha256 = "10ce41f150ccfbfddc9d2394ee680eb984dc8a3dfea613afd013cfb22ea7445c",
+    urls = ["https://github.com/jmillikin/rules_m4/releases/download/v{0}/rules_m4-v{0}.tar.xz".format(rules_m4_version)],
 )
 
 load("@rules_m4//m4:m4.bzl", "m4_register_toolchains")
@@ -173,15 +181,12 @@ load("@rules_m4//m4:m4.bzl", "m4_register_toolchains")
 # them anyways.
 m4_register_toolchains(extra_copts = ["-w"])
 
-# TODO: Can switch to a normal release version when it includes:
-# https://github.com/jmillikin/rules_flex/commit/1f1d9c306c2b4b8be2cb899a3364b84302124e77
-rules_flex_version = "1f1d9c306c2b4b8be2cb899a3364b84302124e77"
+rules_flex_version = "0.2.1"
 
 http_archive(
     name = "rules_flex",
-    sha256 = "a4e99a0a241c8a5aa238e81724ea3529722522c3702fd3aa674add5eb9807002",
-    strip_prefix = "rules_flex-{0}".format(rules_flex_version),
-    urls = ["https://github.com/jmillikin/rules_flex/archive/{0}.tar.gz".format(rules_flex_version)],
+    sha256 = "8929fedc40909d19a4b42548d0785f796c7677dcef8b5d1600b415e5a4a7749f",
+    urls = ["https://github.com/jmillikin/rules_flex/releases/download/v{0}/rules_flex-v{0}.tar.xz".format(rules_flex_version)],
 )
 
 load("@rules_flex//flex:flex.bzl", "flex_register_toolchains")
@@ -190,20 +195,12 @@ load("@rules_flex//flex:flex.bzl", "flex_register_toolchains")
 # fix them anyways.
 flex_register_toolchains(extra_copts = ["-w"])
 
-# TODO: Can switch to a normal release version when it includes:
-# https://github.com/jmillikin/rules_bison/commit/478079b28605a38000eaf83719568d756b3383a0
-rules_bison_version = "478079b28605a38000eaf83719568d756b3383a0"
+rules_bison_version = "0.2.2"
 
 http_archive(
     name = "rules_bison",
-    patch_args = ["-p1"],
-    patches = [
-        # Trying to upstream: https://github.com/jmillikin/rules_bison/pull/13
-        "@carbon//bazel/patches/bison:0001_Support_Bison_building_on_FreeBSD.patch",
-    ],
-    sha256 = "6bc2d382e4ffccd66e60a74521c24722fc8fdfe9af49ff182f79bb5994fa1ba4",
-    strip_prefix = "rules_bison-{0}".format(rules_bison_version),
-    urls = ["https://github.com/jmillikin/rules_bison/archive/{0}.tar.gz".format(rules_bison_version)],
+    sha256 = "2279183430e438b2dc77cacd7b1dbb63438971b2411406570f1ddd920b7c9145",
+    urls = ["https://github.com/jmillikin/rules_bison/releases/download/v{0}/rules_bison-v{0}.tar.xz".format(rules_bison_version)],
 )
 
 load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")

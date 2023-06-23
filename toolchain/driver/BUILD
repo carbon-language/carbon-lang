@@ -32,8 +32,8 @@ cc_test(
     srcs = ["driver_test.cpp"],
     deps = [
         ":driver",
-        "//common:gtest_main",
-        "//common:test_raw_ostream",
+        "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
@@ -49,6 +49,18 @@ cc_fuzz_test(
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
         ":driver",
+        "//testing/util:test_raw_ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "driver_file_test_base",
+    testonly = 1,
+    hdrs = ["driver_file_test_base.h"],
+    deps = [
+        ":driver",
+        "//testing/file_test:file_test_base",
         "@llvm-project//llvm:Support",
     ],
 )

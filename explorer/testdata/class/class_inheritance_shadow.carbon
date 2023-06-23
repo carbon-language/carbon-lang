@@ -20,7 +20,8 @@ base class C {
   var value: i32;
 }
 
-class D extends C {
+class D {
+  extend base: C;
   fn Method1() {
     Print("Class D");
   }

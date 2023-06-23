@@ -50,6 +50,7 @@ file_test(
     deps = [
         "//explorer/parse_and_execute",
         "//testing/file_test:file_test_base",
+        "//testing/util:test_raw_ostream",
     ],
 )
 

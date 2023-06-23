@@ -37,7 +37,7 @@ fn F[
 }
 
 class C {
-  impl as ManyTypes where
+  extend impl as ManyTypes where
     .T0 = i32 and
     .T1 = .T0 and
     .T2 = .T1 and

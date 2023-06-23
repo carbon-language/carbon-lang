@@ -35,6 +35,10 @@ class SemanticsContext {
   // Adds a node to the current block, returning the produced ID.
   auto AddNode(SemanticsNode node) -> SemanticsNodeId;
 
+  // Adds a node to the given block, returning the produced ID.
+  auto AddNodeToBlock(SemanticsNodeBlockId block, SemanticsNode node)
+      -> SemanticsNodeId;
+
   // Pushes a parse tree node onto the stack, storing the SemanticsNode as the
   // result.
   auto AddNodeAndPush(ParseTree::Node parse_node, SemanticsNode node) -> void;
@@ -71,6 +75,10 @@ class SemanticsContext {
   // unsupported.
   auto ImplicitAsRequired(ParseTree::Node parse_node, SemanticsNodeId value_id,
                           SemanticsTypeId as_type_id) -> SemanticsNodeId;
+
+  // Runs ImplicitAsRequired for a conversion to `bool`.
+  auto ImplicitAsBool(ParseTree::Node parse_node, SemanticsNodeId value_id)
+      -> SemanticsNodeId;
 
   // Canonicalizes a type which is tracked as a single node.
   // TODO: This should eventually return a type ID.

@@ -49,7 +49,7 @@ static auto ParserHandlePattern(ParserContext& context,
   // The first item should be an identifier or, for deduced parameters, `self`.
   bool has_name = false;
   if (auto identifier = context.ConsumeIf(TokenKind::Identifier)) {
-    context.AddLeafNode(ParseNodeKind::DeclaredName, *identifier);
+    context.AddLeafNode(ParseNodeKind::Identifier, *identifier);
     has_name = true;
   } else if (pattern_kind == ParserContext::PatternKind::DeducedParameter) {
     if (auto self = context.ConsumeIf(TokenKind::SelfValueIdentifier)) {
@@ -59,7 +59,7 @@ static auto ParserHandlePattern(ParserContext& context,
   }
   if (!has_name) {
     // Add a placeholder for the name.
-    context.AddLeafNode(ParseNodeKind::DeclaredName, *context.position(),
+    context.AddLeafNode(ParseNodeKind::Identifier, *context.position(),
                         /*has_error=*/true);
     on_error();
     return;

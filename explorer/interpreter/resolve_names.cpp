@@ -264,8 +264,9 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
     case DeclarationKind::ImplDeclaration:
     case DeclarationKind::MatchFirstDeclaration:
     case DeclarationKind::MixDeclaration:
-    case DeclarationKind::InterfaceExtendsDeclaration:
-    case DeclarationKind::InterfaceImplDeclaration: {
+    case DeclarationKind::InterfaceExtendDeclaration:
+    case DeclarationKind::InterfaceRequireDeclaration:
+    case DeclarationKind::ExtendBaseDeclaration: {
       // These declarations don't have a name to expose.
       break;
     }
@@ -806,9 +807,6 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
           ResolveQualifier(class_decl.name(), enclosing_scope));
       StaticScope class_scope(scope);
       scope->MarkDeclared(class_decl.name().inner_name());
-      if (auto base_expr = class_decl.base_expr()) {
-        CARBON_RETURN_IF_ERROR(ResolveNames(**base_expr, class_scope));
-      }
       if (auto type_params = class_decl.type_params()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**type_params, class_scope));
       }
@@ -816,6 +814,12 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
       CARBON_RETURN_IF_ERROR(AddExposedNames(*class_decl.self(), class_scope));
       CARBON_RETURN_IF_ERROR(
           ResolveMemberNames(class_decl.members(), class_scope, bodies));
+      break;
+    }
+    case DeclarationKind::ExtendBaseDeclaration: {
+      auto& extend_base_decl = cast<ExtendBaseDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(*extend_base_decl.base_class(), enclosing_scope));
       break;
     }
     case DeclarationKind::MixinDeclaration: {
@@ -874,15 +878,17 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
       }
       break;
     }
-    case DeclarationKind::InterfaceExtendsDeclaration: {
-      auto& extends = cast<InterfaceExtendsDeclaration>(declaration);
+    case DeclarationKind::InterfaceExtendDeclaration: {
+      auto& extends = cast<InterfaceExtendDeclaration>(declaration);
       CARBON_RETURN_IF_ERROR(ResolveNames(*extends.base(), enclosing_scope));
       break;
     }
-    case DeclarationKind::InterfaceImplDeclaration: {
-      auto& impl = cast<InterfaceImplDeclaration>(declaration);
-      CARBON_RETURN_IF_ERROR(ResolveNames(*impl.impl_type(), enclosing_scope));
-      CARBON_RETURN_IF_ERROR(ResolveNames(*impl.constraint(), enclosing_scope));
+    case DeclarationKind::InterfaceRequireDeclaration: {
+      auto& require = cast<InterfaceRequireDeclaration>(declaration);
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(*require.impl_type(), enclosing_scope));
+      CARBON_RETURN_IF_ERROR(
+          ResolveNames(*require.constraint(), enclosing_scope));
       break;
     }
     case DeclarationKind::AssociatedConstantDeclaration: {

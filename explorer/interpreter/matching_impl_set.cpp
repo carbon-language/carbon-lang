@@ -124,42 +124,48 @@ MatchingImplSet::Match::~Match() {
 
 auto MatchingImplSet::Match::DiagnosePotentialCycle(SourceLocation source_loc)
     -> ErrorOr<Success> {
-  for (auto* match : parent_->matches_) {
-    if (match != this && match->impl_ == impl_) {
-      // Whether all labels appear a greater or equal number of times in this
-      // match than in `match`.
-      bool all_greater_or_equal = true;
-      // Whether any label appears strictly more times in this match than in
-      // `match`.
-      bool any_greater = false;
+  // Determine whether any labels in 'a' have a higher count than in 'b'.
+  auto any_labels_with_higher_count = [](const Signature& a,
+                                         const Signature& b) {
+    if (a.size() > b.size()) {
+      // Every label in a signature has a count of at least one.
+      return true;
+    }
+    for (auto [key, a_value] : a) {
+      int b_value = b.lookup(key);
+      if (a_value > b_value) {
+        return true;
+      }
+    }
+    return false;
+  };
 
-      for (auto [key, value] : signature_) {
-        int other_value = match->signature_.lookup(key);
-        if (value < other_value) {
-          all_greater_or_equal = false;
-          break;
-        }
-        if (value > other_value) {
-          any_greater = true;
-        }
+  for (auto* match : parent_->matches_) {
+    if (match != this && match->impl_ == impl_ &&
+        !any_labels_with_higher_count(match->signature_, signature_)) {
+      // No label in the outer match has a higher count than the same label in
+      // the inner match. We might have reached a cycle.
+      if (any_labels_with_higher_count(signature_, match->signature_)) {
+        // The inner match has a higher count for some label. This query is
+        // strictly more complex than the outer one, so reject this potential
+        // cycle.
+        // TODO: Track which label has a higher count, map it back to a string,
+        // and include it in this diagnostic.
+        return ProgramError(source_loc)
+               << "impl matching recursively performed a more complex match "
+                  "using the same impl\n"
+               << "  outer match: " << *match->type_ << " as "
+               << *match->interface_ << "\n"
+               << "  inner match: " << *type_ << " as " << *interface_;
       }
 
-      if (all_greater_or_equal) {
-        if (any_greater) {
-          return ProgramError(source_loc)
-                 << "impl matching recursively performed a more complex match "
-                    "using the same impl\n"
-                 << "  outer match: " << *match->type_ << " as "
-                 << *match->interface_ << "\n"
-                 << "  inner match: " << *type_ << " as " << *interface_;
-        }
-        if (ValueEqual(match->type_, type_, std::nullopt) &&
-            ValueEqual(match->interface_, interface_, std::nullopt)) {
-          return ProgramError(source_loc)
-                 << "impl matching for " << *type_ << " as " << *interface_
-                 << " recursively performed a match for the same type and "
-                    "interface";
-        }
+      if (ValueEqual(match->type_, type_, std::nullopt) &&
+          ValueEqual(match->interface_, interface_, std::nullopt)) {
+        // We hit the same query twice recursively. This is definitely a cycle.
+        return ProgramError(source_loc)
+               << "impl matching for " << *type_ << " as " << *interface_
+               << " recursively performed a match for the same type and "
+                  "interface";
       }
     }
   }

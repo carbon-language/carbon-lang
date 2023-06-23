@@ -5,9 +5,9 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:   {kind: 'DeclaredName', text: 'foo'},
+// CHECK:STDOUT:   {kind: 'Identifier', text: 'foo'},
 // CHECK:STDOUT:     {kind: 'ParameterListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'DeclaredName', text: 'a'},
+// CHECK:STDOUT:         {kind: 'Identifier', text: 'a'},
 // CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 4},

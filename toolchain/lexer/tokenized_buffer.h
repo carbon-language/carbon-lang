@@ -284,6 +284,10 @@ class TokenizedBuffer {
 
   [[nodiscard]] auto size() const -> int { return token_infos_.size(); }
 
+  [[nodiscard]] auto expected_parse_tree_size() const -> int {
+    return expected_parse_tree_size_;
+  }
+
  private:
   // Implementation detail struct implementing the actual lexer logic.
   class Lexer;
@@ -402,6 +406,10 @@ class TokenizedBuffer {
   llvm::SmallVector<std::string, 16> literal_string_storage_;
 
   llvm::DenseMap<llvm::StringRef, Identifier> identifier_map_;
+
+  // The number of parse tree nodes that we expect to be created for the tokens
+  // in this buffer.
+  int expected_parse_tree_size_ = 0;
 
   bool has_errors_ = false;
 };

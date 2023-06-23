@@ -294,7 +294,6 @@ def label_output(label: str, output: str) -> List[str]:
 
 def get_matchable_test_output(
     autoupdate_args: List[str],
-    for_lit: bool,
     extra_check_replacements: List[Tuple[Pattern, Pattern, str]],
     tool: str,
     bazel_runfiles: Pattern,
@@ -323,10 +322,6 @@ def get_matchable_test_output(
         # Escape things that mirror FileCheck special characters.
         line = line.replace("{{", "{{[{][{]}}")
         line = line.replace("[[", "{{[[][[]}}")
-        if for_lit:
-            # `lit` uses full paths to the test file, so use a regex to ignore
-            # paths when used.
-            line = line.replace(test, f"{{{{.*}}}}/{test}")
         line = bazel_runfiles.sub("{{.*}}/", line)
 
         for line_matcher, before, after in extra_check_replacements:
@@ -414,7 +409,6 @@ def update_check(
     # Determine the merged output lines.
     out_lines = get_matchable_test_output(
         parsed_args.autoupdate_args,
-        bool(parsed_args.lit_run),
         parsed_args.extra_check_replacements,
         parsed_args.tool,
         bazel_runfiles,
@@ -500,7 +494,8 @@ def main() -> None:
         tests = {test.relative_to(root) for test in parsed_args.tests}
     else:
         print(
-            "HINT: run `lit_autoupdate.py f1 f2 ...` to update specific tests"
+            "HINT: run `autoupdate_testdata.py f1 f2 ...` "
+            "to update specific tests"
         )
         tests = get_tests(parsed_args.testdata)
 

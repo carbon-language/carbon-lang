@@ -4,6 +4,7 @@
 
 #include "explorer/parse_and_execute/parse_and_execute.h"
 #include "testing/file_test/file_test_base.h"
+#include "testing/util/test_raw_ostream.h"
 
 namespace Carbon::Testing {
 namespace {
@@ -32,14 +33,21 @@ class ParseAndExecuteTestFile : public FileTestBase {
     }
   }
 
-  auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
-      -> bool override {
+  auto RunWithFiles(const llvm::SmallVector<TestFile>& test_files,
+                    llvm::raw_pwrite_stream& stdout,
+                    llvm::raw_pwrite_stream& stderr) -> bool override {
+    if (test_files.size() != 1) {
+      ADD_FAILURE() << "Only 1 file is supported: " << test_files.size()
+                    << " provided";
+      return false;
+    }
+
     // Capture trace streaming, but only when in debug mode.
     TraceStream trace_stream;
-    std::string trace_stream_str;
-    llvm::raw_string_ostream trace_stream_ostream(trace_stream_str);
+    TestRawOstream trace_stream_ostream;
     if (trace_) {
       trace_stream.set_stream(&trace_stream_ostream);
+      trace_stream.set_allowed_phases({ProgramPhase::All});
     }
 
     // Set the location of the prelude.
@@ -50,9 +58,9 @@ class ParseAndExecuteTestFile : public FileTestBase {
 
     // Run the parse. Parser debug output is always off because it's difficult
     // to redirect.
-    auto result =
-        ParseAndExecuteFile(prelude_path, path().filename().string(),
-                            /*parser_debug=*/false, &trace_stream, &stdout);
+    auto result = ParseAndExecute(
+        prelude_path, test_files[0].filename, test_files[0].content,
+        /*parser_debug=*/false, &trace_stream, &stdout);
     // This mirrors printing currently done by main.cpp.
     if (result.ok()) {
       stdout << "result: " << *result << "\n";
@@ -61,7 +69,7 @@ class ParseAndExecuteTestFile : public FileTestBase {
     }
 
     if (trace_) {
-      EXPECT_FALSE(trace_stream_str.empty())
+      EXPECT_FALSE(trace_stream_ostream.TakeStr().empty())
           << "Tracing should always do something";
     }
 
@@ -74,17 +82,17 @@ class ParseAndExecuteTestFile : public FileTestBase {
 
 }  // namespace
 
-extern auto RegisterFileTests(const std::vector<std::filesystem::path>& paths)
-    -> void {
+extern auto RegisterFileTests(
+    const llvm::SmallVector<std::filesystem::path>& paths) -> void {
   ParseAndExecuteTestFile::RegisterTests(
-      "ParseAndExecuteTestFile", paths, [=](const std::filesystem::path& path) {
+      "ParseAndExecuteTestFile", paths, [](const std::filesystem::path& path) {
         return new ParseAndExecuteTestFile(path, /*trace=*/false);
       });
-  ParseAndExecuteTestFile::RegisterTests(
-      "ParseAndExecuteTestFile.trace", paths,
-      [=](const std::filesystem::path& path) {
-        return new ParseAndExecuteTestFile(path, /*trace=*/true);
-      });
+  ParseAndExecuteTestFile::RegisterTests("ParseAndExecuteTestFile.trace", paths,
+                                         [](const std::filesystem::path& path) {
+                                           return new ParseAndExecuteTestFile(
+                                               path, /*trace=*/true);
+                                         });
 }
 
 }  // namespace Carbon::Testing

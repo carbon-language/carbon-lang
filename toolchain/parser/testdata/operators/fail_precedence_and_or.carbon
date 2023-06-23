@@ -5,17 +5,19 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
+// CHECK:STDOUT:     {kind: 'Identifier', text: 'F'},
 // CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'NameReference', text: 'a'},
-// CHECK:STDOUT:         {kind: 'NameReference', text: 'b'},
-// CHECK:STDOUT:       {kind: 'InfixOperator', text: 'and', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'NameReference', text: 'a'},
+// CHECK:STDOUT:           {kind: 'ShortCircuitOperand', text: 'and', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'NameReference', text: 'b'},
+// CHECK:STDOUT:         {kind: 'InfixOperator', text: 'and', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ShortCircuitOperand', text: 'or', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'NameReference', text: 'c'},
-// CHECK:STDOUT:     {kind: 'InfixOperator', text: 'or', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 12},
+// CHECK:STDOUT:     {kind: 'InfixOperator', text: 'or', has_error: yes, subtree_size: 7},
+// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 8},
+// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 

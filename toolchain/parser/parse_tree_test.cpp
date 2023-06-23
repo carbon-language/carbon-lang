@@ -9,6 +9,7 @@
 
 #include <forward_list>
 
+#include "testing/util/test_raw_ostream.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
@@ -21,18 +22,21 @@ using ::testing::ElementsAre;
 
 class ParseTreeTest : public ::testing::Test {
  protected:
-  auto GetSourceBuffer(llvm::Twine t) -> SourceBuffer& {
+  auto GetSourceBuffer(llvm::StringRef t) -> SourceBuffer& {
+    CARBON_CHECK(fs.addFile("test.carbon", /*ModificationTime=*/0,
+                            llvm::MemoryBuffer::getMemBuffer(t)));
     source_storage.push_front(
-        std::move(*SourceBuffer::CreateFromText(t.str())));
+        std::move(*SourceBuffer::CreateFromFile(fs, "test.carbon")));
     return source_storage.front();
   }
 
-  auto GetTokenizedBuffer(llvm::Twine t) -> TokenizedBuffer& {
+  auto GetTokenizedBuffer(llvm::StringRef t) -> TokenizedBuffer& {
     token_storage.push_front(
         TokenizedBuffer::Lex(GetSourceBuffer(t), consumer));
     return token_storage.front();
   }
 
+  llvm::vfs::InMemoryFileSystem fs;
   std::forward_list<SourceBuffer> source_storage;
   std::forward_list<TokenizedBuffer> token_storage;
   DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
@@ -48,14 +52,12 @@ TEST_F(ParseTreeTest, PrintPostorderAsYAML) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
   ParseTree tree = ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
-  std::string print_output;
-  llvm::raw_string_ostream print_stream(print_output);
+  TestRawOstream print_stream;
   tree.Print(print_stream);
-  print_stream.flush();
 
   auto file = Yaml::SequenceValue{
       Yaml::MappingValue{{"kind", "FunctionIntroducer"}, {"text", "fn"}},
-      Yaml::MappingValue{{"kind", "DeclaredName"}, {"text", "F"}},
+      Yaml::MappingValue{{"kind", "Identifier"}, {"text", "F"}},
       Yaml::MappingValue{{"kind", "ParameterListStart"}, {"text", "("}},
       Yaml::MappingValue{
           {"kind", "ParameterList"}, {"text", ")"}, {"subtree_size", "2"}},
@@ -65,17 +67,15 @@ TEST_F(ParseTreeTest, PrintPostorderAsYAML) {
       Yaml::MappingValue{{"kind", "FileEnd"}, {"text", ""}},
   };
 
-  EXPECT_THAT(Yaml::Value::FromText(print_output), ElementsAre(file));
+  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), ElementsAre(file));
 }
 
 TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
   ParseTree tree = ParseTree::Parse(tokens, consumer, /*vlog_stream=*/nullptr);
   EXPECT_FALSE(tree.has_errors());
-  std::string print_output;
-  llvm::raw_string_ostream print_stream(print_output);
+  TestRawOstream print_stream;
   tree.Print(print_stream, /*preorder=*/true);
-  print_stream.flush();
 
   auto parameter_list = Yaml::SequenceValue{
       Yaml::MappingValue{
@@ -86,7 +86,7 @@ TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
       Yaml::MappingValue{
           {"node_index", "0"}, {"kind", "FunctionIntroducer"}, {"text", "fn"}},
       Yaml::MappingValue{
-          {"node_index", "1"}, {"kind", "DeclaredName"}, {"text", "F"}},
+          {"node_index", "1"}, {"kind", "Identifier"}, {"text", "F"}},
       Yaml::MappingValue{{"node_index", "3"},
                          {"kind", "ParameterList"},
                          {"text", ")"},
@@ -104,7 +104,7 @@ TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
           {"node_index", "5"}, {"kind", "FileEnd"}, {"text", ""}},
   };
 
-  EXPECT_THAT(Yaml::Value::FromText(print_output), ElementsAre(file));
+  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), ElementsAre(file));
 }
 
 TEST_F(ParseTreeTest, HighRecursion) {

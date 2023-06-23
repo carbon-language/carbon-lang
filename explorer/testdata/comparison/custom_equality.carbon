@@ -12,7 +12,7 @@ package ExplorerTest api;
 class MyType {
   var value: i32;
 
-  impl as EqWith(Self) {
+  extend impl as EqWith(Self) {
     fn Equal[self: Self](other: Self) -> bool {
       return self.value == other.value;
     }

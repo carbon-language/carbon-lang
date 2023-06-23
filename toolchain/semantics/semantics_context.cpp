@@ -61,7 +61,11 @@ auto SemanticsContext::VerifyOnFinish() -> void {
 }
 
 auto SemanticsContext::AddNode(SemanticsNode node) -> SemanticsNodeId {
-  auto block = node_block_stack_.PeekForAdd();
+  return AddNodeToBlock(node_block_stack_.PeekForAdd(), node);
+}
+
+auto SemanticsContext::AddNodeToBlock(SemanticsNodeBlockId block,
+                                      SemanticsNode node) -> SemanticsNodeId {
   CARBON_VLOG() << "AddNode " << block << ": " << node << "\n";
   return semantics_ir_->AddNode(block, node);
 }
@@ -196,6 +200,13 @@ auto SemanticsContext::ImplicitAsRequired(ParseTree::Node parse_node,
         .Emit();
   }
   return output_value_id;
+}
+
+auto SemanticsContext::ImplicitAsBool(ParseTree::Node parse_node,
+                                      SemanticsNodeId value_id)
+    -> SemanticsNodeId {
+  return ImplicitAsRequired(parse_node, value_id,
+                            CanonicalizeType(SemanticsNodeId::BuiltinBoolType));
 }
 
 auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,

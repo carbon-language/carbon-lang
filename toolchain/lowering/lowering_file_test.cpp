@@ -2,40 +2,33 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include <filesystem>
+#include <string>
 
-#include <vector>
-
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/raw_ostream.h"
-#include "testing/file_test/file_test_base.h"
-#include "toolchain/driver/driver.h"
+#include "toolchain/driver/driver_file_test_base.h"
 
 namespace Carbon::Testing {
 namespace {
 
-class LoweringFileTest : public FileTestBase {
+class LoweringFileTest : public DriverFileTestBase {
  public:
-  explicit LoweringFileTest(const std::filesystem::path& path)
-      : FileTestBase(path) {}
+  using DriverFileTestBase::DriverFileTestBase;
 
-  auto RunOverFile(llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
-      -> bool override {
-    Driver driver(stdout, stderr);
-    return driver.RunFullCommand(
-        {"dump", "llvm-ir", path().filename().string()});
+  auto MakeArgs(const llvm::SmallVector<llvm::StringRef>& test_files)
+      -> llvm::SmallVector<llvm::StringRef> override {
+    llvm::SmallVector<llvm::StringRef> args({"dump", "llvm-ir"});
+    args.insert(args.end(), test_files.begin(), test_files.end());
+    return args;
   }
 };
 
 }  // namespace
 
-auto RegisterFileTests(const std::vector<std::filesystem::path>& paths)
+auto RegisterFileTests(const llvm::SmallVector<std::filesystem::path>& paths)
     -> void {
-  LoweringFileTest::RegisterTests("LoweringFileTest", paths,
-                                  [=](const std::filesystem::path& path) {
-                                    return new LoweringFileTest(path);
-                                  });
+  LoweringFileTest::RegisterTests<LoweringFileTest>("LoweringFileTest", paths);
 }
 
 }  // namespace Carbon::Testing

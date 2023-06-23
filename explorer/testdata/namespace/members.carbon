@@ -17,7 +17,9 @@ base class N.BaseClass {
   __mix Mixin;
 }
 
-class N.DerivedClass extends BaseClass {}
+class N.DerivedClass {
+  extend base: BaseClass;
+}
 
 namespace N.Inner;
 
@@ -30,7 +32,7 @@ interface N.Iface {
 }
 
 constraint N.Constraint {
-  extends Iface;
+  extend Iface;
 }
 
 var v: N.DerivedClass = {.base = {}};

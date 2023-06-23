@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'n'},
+// CHECK:STDOUT:     {kind: 'Identifier', text: 'n'},
 // CHECK:STDOUT:     {kind: 'Literal', text: 'i8'},
 // CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
@@ -15,6 +15,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: recover_prefix_space.carbon:[[@LINE+2]]:13: Whitespace is not allowed after this unary operator.
-// CHECK:STDERR: recover_prefix_space.carbon:[[@LINE+1]]:13: Whitespace is required before this unary operator.
+// CHECK:STDERR: recover_prefix_space.carbon:[[@LINE+1]]:13: Whitespace is not allowed after this unary operator.
 var n: i8 = - n;

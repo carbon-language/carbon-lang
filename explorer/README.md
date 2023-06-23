@@ -88,10 +88,8 @@ recreate the original value.
 The [`testdata/`](testdata/) subdirectory includes some example programs with
 expected output.
 
-These tests make use of LLVM's
-[lit](https://llvm.org/docs/CommandGuide/lit.html) and
-[FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html). Tests have
-boilerplate at the top:
+These tests make use of [GoogleTest](https://github.com/google/googletest) with
+Bazel's `cc_test` rules. Tests have boilerplate at the top:
 
 ```carbon
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -99,37 +97,62 @@ boilerplate at the top:
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
-// CHECK:result: 0
+// CHECK:STDOUT: result: 7
 
 package ExplorerTest api;
+
+fn Main() -> i32 {
+  return (1 + 2) + 4;
+}
 ```
 
 To explain this boilerplate:
 
 -   The standard copyright is expected.
--   The `AUTOUPDATE` line indicates that `RUN` and `CHECK` lines will be
-    automatically inserted immediately below by the `./lit_autoupdate.py`
-    script.
--   The `RUN` lines indicate two commands for `lit` to execute using the file:
-    one without trace and debug output, one with.
-    -   `RUN:` will be followed by the `not` command when failure is expected.
-        In particular, `RUN: not explorer ...`.
-    -   The full command is in `lit.cfg.py`; it will run explorer and pass
-        results to
-        [`FileCheck`](https://llvm.org/docs/CommandGuide/FileCheck.html).
--   The `CHECK` lines indicate expected output, verified by `FileCheck`.
+-   The `AUTOUPDATE` line indicates that `CHECK` lines matching the output will
+    be automatically inserted immediately below by the
+    `./autoupdate_testdata.py` script.
+-   The `CHECK` lines indicate expected output.
     -   Where a `CHECK` line contains text like `{{.*}}`, the double curly
         braces indicate a contained regular expression.
 -   The `package` is required in all test files, per normal Carbon syntax rules.
 
+### lit tests
+
+The [`lit_testdata/`](lit_testdata/) subdirectory includes other example
+programs.
+
+These tests make use of LLVM's
+[lit](https://llvm.org/docs/CommandGuide/lit.html) and
+[FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html).
+
+They share most of their header with those in `testdata`, with an additional
+`RUN` rule:
+
+```
+// RUN: %{explorer-run}
+// RUN: %{explorer-run-trace}
+```
+
+The `RUN` lines indicate two commands for `lit` to execute using the file: one
+without trace and debug output, one with.
+
+-   `RUN:` will be followed by the `not` command when failure is expected. In
+    particular, `RUN: not %{explorer-run}`.
+-   The full command is in `lit.cfg.py`; it will run explorer and pass results
+    to [`FileCheck`](https://llvm.org/docs/CommandGuide/FileCheck.html).
+
 ### Useful commands
 
--   `./lit_autodupate.py` -- Updates expected output.
+-   `./autoupdate_testdata.py` -- Updates expected output.
     -   This can be combined with `git diff` to see changes in output.
+-   `autoupdate_lit_testdata.py` -- Updates lit tests expected output.
 -   `bazel test ... --test_output=errors` -- Runs tests and prints any errors.
+-   `bazel test //explorer:file_test.subset --test_arg=explorer/testdata/DIR/FILE.carbon`
+    -- Runs a specific test.
 -   `bazel run testdata/DIR/FILE.carbon.run` -- Runs explorer on the file.
+-   `bazel run testdata/DIR/FILE.carbon.verbose` -- Runs explorer on the file
+    with tracing enabled.
 
 ### Updating fuzzer logic after making AST changes
 
@@ -138,9 +161,32 @@ Please refer to
 
 ## Trace Program Execution
 
-When tracing is turned on (using the `--trace_file=...` option), `explorer`
-prints the state of the program and each step that is performed during
-execution.
+When tracing is turned on (using the `--trace_file=...` option or `.verbose`
+target), `explorer` prints the state of the program and each step that is
+performed during execution.
+
+Printing directly to the standard output using the `--trace_file` option is
+supported by passing `-` in place of a filepath (`--trace_file=-`).
+
+To customize the trace output and include specific information, you can use the
+following compiler options along with `--trace_file=...` option:
+
+-   `-trace_source_program`: Include trace output for the source program phase.
+-   `-trace_name_resolution`: Include trace output for the name resolution
+    phase.
+-   `-trace_control_flow_resolution`: Include trace output for the control flow
+    resolution phase.
+-   `-trace_type_checking`: Include trace output for the type checking phase.
+-   `-trace_unformed_variables_resolution`: Include trace output for the
+    unformed variables resolution phase.
+-   `-trace_declarations`: Include trace output for printing declarations.
+-   `-trace_execution`: Include trace output for program execution.
+-   `-trace_timing`: Include timing logs indicating the time taken by each
+    phase.
+-   `-trace_all`: Include trace output for all phases.
+
+By default, only execution trace will be added to the trace output. You can use
+combination of these options to include trace of multiple program phases.
 
 ### State of the Program
 

@@ -18,7 +18,8 @@ base class C {
   }
 }
 
-class D extends C {
+class D {
+  extend base: C;
   fn FunctionD(var i: i32) {
     C.FunctionC(i);
     Print("Class D, call {0}", i);

@@ -15,7 +15,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -810,9 +809,8 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
       "{ index: {0}, kind: {1}, line: {2}, column: {3}, indent: {4}, "
       "spelling: '{5}'",
       llvm::format_decimal(token_index, widths.index),
-      llvm::right_justify(
-          (llvm::Twine("'") + token_info.kind.name() + "'").str(),
-          widths.kind + 2),
+      llvm::right_justify(llvm::formatv("'{0}'", token_info.kind.name()).str(),
+                          widths.kind + 2),
       llvm::format_decimal(GetLineNumber(token_info.token_line), widths.line),
       llvm::format_decimal(GetColumnNumber(token), widths.column),
       llvm::format_decimal(GetIndentColumnNumber(token_info.token_line),
@@ -878,6 +876,7 @@ auto TokenizedBuffer::GetTokenInfo(Token token) const -> const TokenInfo& {
 
 auto TokenizedBuffer::AddToken(TokenInfo info) -> Token {
   token_infos_.push_back(info);
+  expected_parse_tree_size_ += info.kind.expected_parse_tree_size();
   return Token(static_cast<int>(token_infos_.size()) - 1);
 }
 

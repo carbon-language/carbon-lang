@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:   {kind: 'DeclaredName', text: 'Geometry'},
+// CHECK:STDOUT:   {kind: 'Identifier', text: 'Geometry'},
 // CHECK:STDOUT:     {kind: 'Literal', text: '"Shapes"'},
 // CHECK:STDOUT:   {kind: 'PackageLibrary', text: 'library', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'PackageApi', text: 'api'},

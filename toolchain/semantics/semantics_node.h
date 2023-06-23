@@ -68,6 +68,29 @@ struct SemanticsCrossReferenceIRId : public IndexBase {
   }
 };
 
+// A boolean value.
+struct SemanticsBoolValue : public IndexBase {
+  static const SemanticsBoolValue False;
+  static const SemanticsBoolValue True;
+
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    switch (index) {
+      case 0:
+        out << "false";
+        break;
+      case 1:
+        out << "true";
+        break;
+      default:
+        CARBON_FATAL() << "Invalid bool value " << index;
+    }
+  }
+};
+
+constexpr SemanticsBoolValue SemanticsBoolValue::False = SemanticsBoolValue(0);
+constexpr SemanticsBoolValue SemanticsBoolValue::True = SemanticsBoolValue(1);
+
 // The ID of an integer literal.
 struct SemanticsIntegerLiteralId : public IndexBase {
   using IndexBase::IndexBase;
@@ -262,6 +285,23 @@ class SemanticsNode {
                                           SemanticsStringId /*name_id*/,
                                           SemanticsNodeId /*node_id*/>;
 
+  using BlockArg =
+      Factory<SemanticsNodeKind::BlockArg, SemanticsNodeBlockId /*block_id*/>;
+
+  using BoolLiteral =
+      Factory<SemanticsNodeKind::BoolLiteral, SemanticsBoolValue /*value*/>;
+
+  using Branch = FactoryNoType<SemanticsNodeKind::Branch,
+                               SemanticsNodeBlockId /*target_id*/>;
+
+  using BranchIf = FactoryNoType<SemanticsNodeKind::BranchIf,
+                                 SemanticsNodeBlockId /*target_id*/,
+                                 SemanticsNodeId /*cond_id*/>;
+
+  using BranchWithArg = FactoryNoType<SemanticsNodeKind::BranchWithArg,
+                                      SemanticsNodeBlockId /*target_id*/,
+                                      SemanticsNodeId /*arg*/>;
+
   class Builtin {
    public:
     static auto Make(SemanticsBuiltinKind builtin_kind, SemanticsTypeId type_id)
@@ -281,9 +321,6 @@ class SemanticsNode {
   using Call =
       Factory<SemanticsNodeKind::Call, SemanticsNodeBlockId /*refs_id*/,
               SemanticsFunctionId /*function_id*/>;
-
-  using CodeBlock = FactoryNoType<SemanticsNodeKind::CodeBlock,
-                                  SemanticsNodeBlockId /*node_block_id*/>;
 
   class CrossReference
       : public FactoryBase<SemanticsNodeKind::CrossReference,
@@ -334,6 +371,9 @@ class SemanticsNode {
 
   using StubReference =
       Factory<SemanticsNodeKind::StubReference, SemanticsNodeId /*node_id*/>;
+
+  using UnaryOperatorNot = Factory<SemanticsNodeKind::UnaryOperatorNot,
+                                   SemanticsNodeId /*operand_id*/>;
 
   using VarStorage = Factory<SemanticsNodeKind::VarStorage>;
 
@@ -407,6 +447,9 @@ struct SemanticsIdMapInfo {
 }  // namespace Carbon
 
 // Support use of Id types as DenseMap/DenseSet keys.
+template <>
+struct llvm::DenseMapInfo<Carbon::SemanticsNodeBlockId>
+    : public Carbon::SemanticsIdMapInfo<Carbon::SemanticsNodeBlockId> {};
 template <>
 struct llvm::DenseMapInfo<Carbon::SemanticsNodeId>
     : public Carbon::SemanticsIdMapInfo<Carbon::SemanticsNodeId> {};
