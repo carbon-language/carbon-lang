@@ -130,6 +130,19 @@ auto SemanticsContext::PopScope() -> void {
   }
 }
 
+// Add the current code block to the enclosing function.
+auto SemanticsContext::AddCurrentCodeBlockToFunction() -> void {
+  CARBON_CHECK(!node_block_stack().empty()) << "no current code block";
+  CARBON_CHECK(!return_scope_stack().empty()) << "no current function";
+
+  auto function_id = semantics_ir()
+                         .GetNode(return_scope_stack().back())
+                         .GetAsFunctionDeclaration();
+  semantics_ir()
+      .GetFunction(function_id)
+      .body_block_ids.push_back(node_block_stack().PeekForAdd());
+}
+
 auto SemanticsContext::ImplicitAsForArgs(
     SemanticsNodeBlockId arg_refs_id, ParseTree::Node param_parse_node,
     SemanticsNodeBlockId param_refs_id,

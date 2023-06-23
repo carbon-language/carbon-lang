@@ -184,6 +184,7 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
       context.AddNodeToBlock(rhs_block_id,
                              SemanticsNode::BranchWithArg::Make(
                                  parse_node, resume_block_id, rhs_id));
+      context.AddCurrentCodeBlockToFunction();
 
       // Collect the result from either the first or second operand.
       context.AddNodeAndPush(
@@ -539,6 +540,7 @@ auto SemanticsHandleShortCircuitOperand(SemanticsContext& context,
   context.AddNodeToBlock(
       lhs_block_id, SemanticsNode::BranchWithArg::Make(
                         parse_node, end_block_id, short_circuit_result_id));
+  context.AddCurrentCodeBlockToFunction();
 
   // Put the condition back on the stack for SemanticsHandleInfixOperator.
   context.node_stack().Push(parse_node, cond_value_id);

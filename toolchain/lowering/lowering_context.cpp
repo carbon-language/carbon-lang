@@ -86,8 +86,8 @@ auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
 auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
     -> void {
   auto function = semantics_ir().GetFunction(function_id);
-  auto body_id = function.body_id;
-  if (!body_id.is_valid()) {
+  const auto& body_block_ids = function.body_block_ids;
+  if (body_block_ids.empty()) {
     // Function is probably defined in another file; not an error.
     return;
   }
@@ -103,15 +103,15 @@ auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
     function_lowering.SetLocal(param_storage, llvm_function->getArg(i));
   }
 
-  // Add the entry block to the worklist.
-  function_lowering.GetBlock(function.body_id);
-
-  while (!function_lowering.block_worklist().empty()) {
-    SemanticsNodeBlockId block = function_lowering.block_worklist().Pop();
-    CARBON_VLOG() << "Lowering " << block << "\n";
-    function_lowering.builder().SetInsertPoint(
-        function_lowering.GetBlock(block));
-    for (const auto& node_id : semantics_ir().GetNodeBlock(block)) {
+  // Lower all blocks.
+  // TODO: Determine the set of reachable blocks, and only lower those ones.
+  for (auto block_id : body_block_ids) {
+    CARBON_VLOG() << "Lowering " << block_id << "\n";
+    auto* llvm_block = function_lowering.GetBlock(block_id);
+    // Keep the LLVM blocks in lexical order.
+    llvm_block->moveBefore(llvm_function->end());
+    function_lowering.builder().SetInsertPoint(llvm_block);
+    for (const auto& node_id : semantics_ir().GetNodeBlock(block_id)) {
       auto node = semantics_ir().GetNode(node_id);
       CARBON_VLOG() << "Lowering " << node_id << ": " << node << "\n";
       switch (node.kind()) {
