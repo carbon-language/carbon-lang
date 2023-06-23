@@ -10,7 +10,7 @@ function repeat_sep1(thing, sep) {
 
 function comma_sep(thing) {
   // trailing comma only allowed if there is atleast one element
-  return optional(seq(repeat_sep1(thing, ','), ','));
+  return optional(seq(repeat_sep1(thing, ','), optional(',')));
 }
 
 // follows toolchain/parser/precedence.cpp
