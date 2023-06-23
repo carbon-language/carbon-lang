@@ -255,7 +255,7 @@ module.exports = grammar({
           seq($._expression, '==', $._expression),
           seq($._expression, 'impls', $._expression),
           seq($.designator, '=', $._expression),
-          prec.left(seq($.where_clause, choice('or', 'and'), $.where_clause))
+          prec.left(seq($.where_clause, 'and', $.where_clause))
         )
       ),
     where_expression: ($) =>
