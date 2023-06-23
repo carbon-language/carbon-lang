@@ -15,12 +15,11 @@ function comma_sep(thing) {
 
 // follows toolchain/parser/precedence.cpp
 const PREC = {
-  TermPrefix: 12,
-  TermPostfix: 12, // not in toolchain
-  NumericPrefix: 11,
-  NumericPostfix: 11,
-  Modulo: 9,
-  Multiplicative: 10,
+  TermPrefix: 11,
+  TermPostfix: 11, // not in toolchain
+  NumericPrefix: 10,
+  NumericPostfix: 10,
+  Multiplicative: 9,
   Additive: 8,
   BitwisePrefix: 7,
   BitwiseAnd: 6,
@@ -32,10 +31,8 @@ const PREC = {
   Relational: 3,
   LogicalAnd: 2,
   LogicalOr: 2,
-  Where: 1,
-  If: 1,
-  SimpleAssignment: 0,
-  CompoundAssignment: 0,
+  WhereClause: 1,
+  IfExpression: 1,
 };
 
 module.exports = grammar({
@@ -226,7 +223,7 @@ module.exports = grammar({
 
     if_expression: ($) =>
       prec(
-        PREC.If,
+        PREC.IfExpression,
         seq('if', $._expression, 'then', $._expression, 'else', $._expression)
       ),
 
@@ -252,7 +249,7 @@ module.exports = grammar({
       ),
     where_clause: ($) =>
       prec(
-        PREC.Where,
+        PREC.WhereClause,
         choice(
           seq($._expression, '==', $._expression),
           seq($._expression, 'impls', $._expression),
