@@ -220,7 +220,7 @@ module.exports = grammar({
     deref_expression: ($) =>
       prec.right(PREC.TermPrefix, seq('*', $._expression)),
     fn_type_expression: ($) =>
-      prec.left(seq('fn', $.tuple, '->', $._expression)),
+      prec.left(seq('__Fn', $.tuple, '->', $._expression)),
 
     if_expression: ($) =>
       prec(
