@@ -19,16 +19,16 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: Initialize c3 from initializing expression (return <expr>)
 // CHECK:STDOUT: c3 destroyed
-// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: !!C{.id = 2}, 4: !!C{.id = 2}, 5: C{.id = 3}, 6: !!3, 7: !!C{.id = 3}
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: !!C{.id = 2}, 4: !!C{.id = 2}, 5: C{.id = 3}, 6: !!3, 7: Uninit<class C>, 8: !!C{.id = 3}
 // CHECK:STDOUT: End of scope
 // CHECK:STDOUT: c3 destroyed
-// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: !!C{.id = 2}, 4: !!C{.id = 2}, 5: !!C{.id = 3}, 6: !!3, 7: !!C{.id = 3}
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: !!C{.id = 2}, 4: !!C{.id = 2}, 5: !!C{.id = 3}, 6: !!3, 7: Uninit<class C>, 8: !!C{.id = 3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: Initialize c4 from initializing expression (returned var)
-// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: !!C{.id = 2}, 4: !!C{.id = 2}, 5: !!C{.id = 3}, 6: !!3, 7: !!C{.id = 3}, 8: C{.id = 4}, 9: !!4
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: !!C{.id = 2}, 4: !!C{.id = 2}, 5: !!C{.id = 3}, 6: !!3, 7: Uninit<class C>, 8: !!C{.id = 3}, 9: C{.id = 4}, 10: !!4
 // CHECK:STDOUT: End of scope
 // CHECK:STDOUT: c4 destroyed
-// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: !!C{.id = 2}, 4: !!C{.id = 2}, 5: !!C{.id = 3}, 6: !!3, 7: !!C{.id = 3}, 8: !!C{.id = 4}, 9: !!4
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{.id = 1}, 2: !!C{.id = 1}, 3: !!C{.id = 2}, 4: !!C{.id = 2}, 5: !!C{.id = 3}, 6: !!3, 7: Uninit<class C>, 8: !!C{.id = 3}, 9: !!C{.id = 4}, 10: !!4
 // CHECK:STDOUT:
 // CHECK:STDOUT: result: 0
 
