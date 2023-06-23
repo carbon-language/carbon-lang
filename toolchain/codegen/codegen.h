@@ -11,6 +11,8 @@
 
 namespace Carbon {
 // Prints the assembly to stdout for the given llvm module.
+// If print fails, this returns false and any information about the failure is
+// printed to the error stream.
 auto PrintAssemblyFromModule(llvm::Module& module,
                              llvm::StringRef target_triple,
                              llvm::raw_pwrite_stream& error_stream,
