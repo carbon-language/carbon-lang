@@ -294,12 +294,15 @@ module.exports = grammar({
         $.where_expression
       ),
 
-    _variable_declaration_inner: ($) => seq($.ident, ':', $._expression),
-    variable_declaration: ($) =>
-      choice(
-        seq('var', $.pattern, optional(seq('=', $._expression)), ';'),
-        seq('let', $.pattern, '=', $._expression, ';')
+    var_declaration: ($) =>
+      seq(
+        'var',
+        $._non_expression_pattern,
+        optional(seq('=', $._expression)),
+        ';'
       ),
+    let_declaration: ($) =>
+      seq('let', $._non_expression_pattern, '=', $._expression, ';'),
 
     assign_statement: ($) =>
       seq($._expression, $._assign_operator, $._expression, ';'),
@@ -313,14 +316,7 @@ module.exports = grammar({
     match_statement: ($) =>
       seq('match', '(', $._expression, ')', '{', repeat($.match_clause), '}'),
 
-    returned_var_statement: ($) =>
-      seq(
-        'returned',
-        'var',
-        $._variable_declaration_inner,
-        optional(seq('=', $._expression)),
-        ';'
-      ),
+    returned_var_statement: ($) => seq('returned', $.var_declaration, ';'),
     while_statement: ($) => seq('while', '(', $._expression, ')', $.block),
     break_statement: ($) => seq('break', ';'),
     continue_statement: ($) => seq('continue', ';'),
@@ -333,8 +329,7 @@ module.exports = grammar({
       seq(
         'for',
         '(',
-        optional(choice('var', 'let')), // not in explorer
-        $._variable_declaration_inner,
+        $._non_expression_pattern,
         'in',
         $._expression,
         ')',
@@ -344,7 +339,8 @@ module.exports = grammar({
       choice(
         seq($._expression, ';'),
         $.assign_statement,
-        $.variable_declaration,
+        $.var_declaration,
+        $.let_declaration,
         $.match_statement,
         $.returned_var_statement,
         $.if_statement,
@@ -425,7 +421,8 @@ module.exports = grammar({
     declaration: ($) =>
       choice(
         $.namespace_declaration,
-        $.variable_declaration,
+        $.var_declaration,
+        $.let_declaration,
         $.function_declaration,
         $.alias_declaration,
         $.interface_declaration,
