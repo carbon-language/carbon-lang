@@ -90,7 +90,7 @@ These conversion steps combine to provide the transitive conversion table:
 |               From: | value                   | reference | initializing     |
 | ------------------: | ----------------------- | --------- | ---------------- |
 |        to **value** | ==                      | read      | temporary + read |
-|    to **reference** | temporary + direct init | ==        | temporary        |
+|    to **reference** | direct init + temporary | ==        | temporary        |
 | to **initializing** | direct init             | copy init | ==               |
 
 Reference expressions formed through temporary materialization are called
