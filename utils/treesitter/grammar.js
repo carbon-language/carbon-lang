@@ -13,10 +13,10 @@ function comma_sep(thing) {
   return optional(seq(repeat_sep1(thing, ','), optional(',')));
 }
 
-// follows toolchain/parser/precedence.cpp
+// based on toolchain/parser/precedence.cpp
 const PREC = {
   TermPrefix: 11,
-  TermPostfix: 11, // not in toolchain
+  TermPostfix: 11,
   NumericPrefix: 10,
   NumericPostfix: 10,
   Multiplicative: 9,
