@@ -37,12 +37,14 @@ const PREC = {
 
 module.exports = grammar({
   name: 'carbon',
+
   word: ($) => $.ident,
 
   conflicts: ($) => [
     [$.paren_pattern, $.paren_expression],
     [$.struct_literal, $.struct_type_literal],
   ],
+
   extras: ($) => [/\s/, $.comment],
 
   // NOTE: This must match the order in src/scanner.c, names are not used for matching.
@@ -57,15 +59,21 @@ module.exports = grammar({
       ),
 
     api_or_impl: ($) => choice('api', 'impl'),
+
     library_path: ($) => seq('library', $.string_literal),
+
     package_directive: ($) =>
       seq('package', $.ident, optional($.library_path), $.api_or_impl, ';'),
+
     import_directive: ($) =>
       seq('import', $.ident, optional($.library_path), ';'),
 
     comment: ($) => token(seq('//', /.*/)),
+
     ident: ($) => /[A-Za-z_][A-Za-z0-9_]*/,
+
     bool_literal: ($) => choice('true', 'false'),
+
     numeric_literal: ($) => {
       // This is using variables because rules are not allowed in token.immediate and token.
       // https://github.com/tree-sitter/tree-sitter/issues/449
@@ -104,7 +112,9 @@ module.exports = grammar({
 
     // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p2015.md#syntax
     numeric_type_literal: ($) => /[iuf][1-9][0-9]*/,
+
     _string_content: ($) => token.immediate(/[^\\"]+/),
+
     escape_sequence: ($) =>
       token.immediate(
         seq(
@@ -122,6 +132,7 @@ module.exports = grammar({
           )
         )
       ),
+
     // TODO: multiline string
     string_literal: ($) =>
       seq(
@@ -129,6 +140,7 @@ module.exports = grammar({
         repeat(choice($._string_content, $.escape_sequence)),
         token.immediate('"')
       ),
+
     array_literal: ($) =>
       seq(
         '[',
@@ -137,12 +149,15 @@ module.exports = grammar({
         optional(field('size', $._expression)),
         ']'
       ),
+
     struct_literal: ($) =>
       seq('{', comma_sep(seq($.designator, '=', $._expression)), '}'),
+
     struct_type_literal: ($) =>
       seq('{', comma_sep(seq($.designator, ':', $._expression)), '}'),
 
     builtin_type: ($) => choice('Self', 'String', 'bool', 'type'),
+
     literal: ($) =>
       choice(
         $.bool_literal,
@@ -154,8 +169,10 @@ module.exports = grammar({
       ),
 
     _binding_lhs: ($) => seq(optional('addr'), choice($.ident, '_')),
+
     paren_pattern: ($) =>
       seq('(', comma_sep($._non_expression_pattern, ','), ')'),
+
     _non_expression_pattern: ($) =>
       choice(
         'auto',
@@ -165,6 +182,7 @@ module.exports = grammar({
         $.paren_pattern,
         seq('var', $._non_expression_pattern)
       ),
+
     pattern: ($) => choice($._non_expression_pattern, $._expression),
 
     unary_prefix_expression: ($) => {
@@ -217,8 +235,10 @@ module.exports = grammar({
     as_expression: ($) => prec.left(seq($._expression, 'as', $._expression)),
 
     ref_expression: ($) => prec.right(PREC.TermPrefix, seq('&', $._expression)),
+
     deref_expression: ($) =>
       prec.right(PREC.TermPrefix, seq('*', $._expression)),
+
     fn_type_expression: ($) =>
       prec.left(seq('__Fn', $.tuple, '->', $._expression)),
 
@@ -229,11 +249,14 @@ module.exports = grammar({
       ),
 
     paren_expression: ($) => seq('(', comma_sep($._expression), ')'),
+
     tuple: ($) => $.paren_expression,
 
     index_expression: ($) =>
       prec(PREC.TermPostfix, seq($._expression, '[', $._expression, ']')),
+
     designator: ($) => seq('.', choice('base', $.ident)),
+
     postfix_expression: ($) =>
       prec(
         PREC.TermPostfix,
@@ -248,6 +271,7 @@ module.exports = grammar({
           )
         )
       ),
+
     where_clause: ($) =>
       prec(
         PREC.WhereClause,
@@ -258,11 +282,15 @@ module.exports = grammar({
           prec.left(seq($.where_clause, 'and', $.where_clause))
         )
       ),
+
     where_expression: ($) =>
       prec.left(PREC.TermPostfix, seq($._expression, 'where', $.where_clause)),
+
     call_expression: ($) => prec(PREC.TermPostfix, seq($._expression, $.tuple)),
+
     pointer_expression: ($) =>
       prec(PREC.TypePostfix, seq($._expression, $.postfix_star)),
+
     _expression: ($) =>
       choice(
         $.ident,
@@ -294,6 +322,7 @@ module.exports = grammar({
         optional(seq('=', $._expression)),
         ';'
       ),
+
     let_declaration: ($) =>
       seq('let', $._non_expression_pattern, '=', $._expression, ';'),
 
@@ -310,14 +339,21 @@ module.exports = grammar({
       seq('match', '(', $._expression, ')', '{', repeat($.match_clause), '}'),
 
     returned_var_statement: ($) => seq('returned', $.var_declaration, ';'),
+
     while_statement: ($) => seq('while', '(', $._expression, ')', $.block),
+
     break_statement: ($) => seq('break', ';'),
+
     continue_statement: ($) => seq('continue', ';'),
+
     return_statement: ($) =>
       seq('return', optional(choice('var', $._expression)), ';'),
+
     if_statement: ($) =>
       seq('if', '(', $._expression, ')', $.block, optional($.else)),
+
     else: ($) => choice(seq('else', $.if_statement), seq('else', $.block)),
+
     for_statement: ($) =>
       seq(
         'for',
@@ -328,6 +364,7 @@ module.exports = grammar({
         ')',
         $.block
       ),
+
     statement: ($) =>
       choice(
         seq($._expression, ';'),
@@ -352,15 +389,19 @@ module.exports = grammar({
 
     generic_binding: ($) =>
       seq(optional('template'), $.ident, ':!', $._expression),
+
     deduced_param: ($) =>
       choice(
         $.generic_binding,
         seq(optional('addr'), $.ident, ':', $._expression)
       ),
+
     deduced_params: ($) => seq('[', comma_sep($.deduced_param), ']'),
 
     tuple_pattern: ($) => $.paren_pattern,
+
     return_type: ($) => seq('->', choice('auto', $._expression)),
+
     function_declaration: ($) =>
       seq(
         optional(choice('abstract', 'virtual', 'impl')),
@@ -371,10 +412,14 @@ module.exports = grammar({
         optional($.return_type),
         choice($.block, ';')
       ),
+
     namespace_declaration: ($) => seq('namespace', $.declared_name, ';'),
+
     alias_declaration: ($) =>
       seq('alias', $.declared_name, '=', $._expression, ';'),
+
     type_params: ($) => $.tuple_pattern,
+
     interface_body_item: ($) =>
       choice(
         $.function_declaration,
@@ -382,7 +427,9 @@ module.exports = grammar({
         seq('extends', $._expression, ';'),
         seq('impl', $._expression, 'as', $._expression, ';')
       ),
+
     interface_body: ($) => seq('{', repeat($.interface_body_item), '}'),
+
     interface_declaration: ($) =>
       seq(
         'interface',
@@ -391,6 +438,7 @@ module.exports = grammar({
         optional($.type_params),
         $.interface_body
       ),
+
     constraint_declaration: ($) =>
       seq(
         'constraint',
@@ -399,8 +447,11 @@ module.exports = grammar({
         optional($.type_params),
         $.interface_body
       ),
+
     class_body_item: ($) => $.declaration,
+
     class_body: ($) => seq('{', repeat($.class_body_item), '}'),
+
     class_declaration: ($) =>
       seq(
         optional(choice('base', 'abstract')),
@@ -411,7 +462,9 @@ module.exports = grammar({
         optional(seq('extends', $._expression)),
         choice(';', $.class_body)
       ),
+
     empty_declaration: ($) => ';',
+
     declaration: ($) =>
       choice(
         $.empty_declaration,
