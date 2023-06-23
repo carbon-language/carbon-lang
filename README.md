@@ -277,5 +277,5 @@ Ayrıca doğrudan aşağıdakilere katkıda bulunabilirsiniz:
     -   [Carbon Araç Zinciri](/toolchain/) ve proje altyapısı
 
 **GitHub'daki bazı 
-["iyi ilk konuları"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue)**kontrol edebilir veya [Discord](https://discord.gg/ZjVdShJDAs) üzerindeki `#contributing-help` kanalına katılabilirsiniz.Daha fazla ayrıntı için tam [`CONTRIBUTING`](CONTRIBUTING.md) belgelerimize göz atabilirsiniz.
+["iyi ilk konuları"](https://github.com/carbon-language/carbon-lang/labels/good%20first%20issue)**kontrol edebilir veya [Discord](https://discord.gg/ZjVdShJDAs) üzerindeki `#contributing-help` kanalına katılabilirsiniz. Daha fazla ayrıntı için tam [`CONTRIBUTING`](CONTRIBUTING.md) belgelerimize göz atabilirsiniz.
 
