@@ -301,18 +301,18 @@ module.exports = grammar({
         seq('let', $.pattern, '=', $._expression, ';')
       ),
 
-    clause: ($) =>
-      seq(choice(seq('case', $.pattern), 'default'), '=>', $.block),
-    clause_list: ($) => seq($.clause_list, $.clause),
-
     assign_statement: ($) =>
       seq($._expression, $._assign_operator, $._expression, ';'),
 
     _assign_operator: ($) =>
       choice('=', '+=', '/=', '*=', '%=', '-=', '&=', '|=', '^=', '<<=', '>>='),
 
+    match_clause: ($) =>
+      seq(choice(seq('case', $.pattern), 'default'), '=>', $.block),
+
     match_statement: ($) =>
-      seq('match', '(', $._expression, ')', '{', $.clause_list, '}'),
+      seq('match', '(', $._expression, ')', '{', repeat($.match_clause), '}'),
+
     returned_var_statement: ($) =>
       seq(
         'returned',
