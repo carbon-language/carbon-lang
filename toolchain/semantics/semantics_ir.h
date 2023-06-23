@@ -69,6 +69,9 @@ class SemanticsIR {
                                 DiagnosticConsumer& consumer,
                                 llvm::raw_ostream* vlog_stream) -> SemanticsIR;
 
+  // Verifies that invariants of the semantics IR hold.
+  auto Verify() const -> ErrorOr<Success>;
+
   // Prints the full IR. Allow omitting builtins so that unrelated changes are
   // less likely to alternate test golden files.
   // TODO: In the future, the things to print may change, for example by adding
