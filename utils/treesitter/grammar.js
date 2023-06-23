@@ -213,6 +213,7 @@ module.exports = grammar({
       );
     },
 
+    // This should be non-associative but conflicts are not allowed in tree-sitter
     as_expression: ($) => prec.left(seq($._expression, 'as', $._expression)),
 
     ref_expression: ($) => prec.right(PREC.TermPrefix, seq('&', $._expression)),
