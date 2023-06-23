@@ -58,6 +58,14 @@ module.exports = grammar({
         repeat($.import_directive),
         repeat($.declaration)
       ),
+
+    api_or_impl: ($) => choice('api', 'impl'),
+    library_path: ($) => seq('library', $.string_literal),
+    package_directive: ($) =>
+      seq('package', $.ident, optional($.library_path), $.api_or_impl, ';'),
+    import_directive: ($) =>
+      seq('import', $.ident, optional($.library_path), ';'),
+
     comment: ($) => token(seq('//', /.*/)),
     ident: ($) => /[A-Za-z_][A-Za-z0-9_]*/,
     bool_literal: ($) => choice('true', 'false'),
@@ -425,12 +433,5 @@ module.exports = grammar({
         $.class_declaration,
         ';' // empty declaration
       ),
-
-    api_or_impl: ($) => choice('api', 'impl'),
-    library_path: ($) => seq('library', $.string_literal),
-    package_directive: ($) =>
-      seq('package', $.ident, optional($.library_path), $.api_or_impl, ';'),
-    import_directive: ($) =>
-      seq('import', $.ident, optional($.library_path), ';'),
   },
 });
