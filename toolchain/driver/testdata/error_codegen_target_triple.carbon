@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN:  %{not} %{carbon} dump assembly --target_triple=x86_687-unknown-linux-gnu %s | %{FileCheck-strict}
-// CHECK:STDERR: {{ERROR:.*}}
+// RUN: %{not} %{carbon} dump assembly --target_triple=x86_687-unknown-linux-gnu %s | %{FileCheck-strict}
+// CHECK:STDERR: ERROR:{{.*}}
 
 fn Main() -> i32 { return 0; }

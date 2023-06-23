@@ -20,7 +20,6 @@ auto PrintAssemblyFromModule(llvm::Module& module,
                              llvm::StringRef target_triple,
                              llvm::raw_pwrite_stream& error_stream,
                              llvm::raw_pwrite_stream& output_stream) -> bool {
-  bool has_errors = false;
   // Initialize the target registry etc.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
@@ -39,7 +38,7 @@ auto PrintAssemblyFromModule(llvm::Module& module,
 
   if (!target) {
     error_stream << "ERROR: " << error << "\n";
-    return !has_errors;
+    return false;
   }
 
   constexpr llvm::StringLiteral CPU = "generic";
@@ -54,7 +53,7 @@ auto PrintAssemblyFromModule(llvm::Module& module,
 
   // Using the legacy PM to generate the assembly since the new PM
   // does not work with this yet.
-  // FIXME: make the new PM work with the codegen pipeline.
+  // TODO: make the new PM work with the codegen pipeline.
 
   llvm::legacy::PassManager pass;
   auto file_type = llvm::CGFT_AssemblyFile;
@@ -62,11 +61,11 @@ auto PrintAssemblyFromModule(llvm::Module& module,
   if (target_machine->addPassesToEmitFile(pass, output_stream, nullptr,
                                           file_type)) {
     error_stream << "Nothing to write to object file\n";
-    return !has_errors;
+    return false;
   }
 
   pass.run(module);
   delete target_machine;
-  return has_errors;
+  return true;
 }
 }  // namespace Carbon

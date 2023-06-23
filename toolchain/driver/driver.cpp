@@ -248,12 +248,8 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
 
   if (dump_mode == DumpMode::Assembly) {
     consumer.Flush();
-    has_errors |= Carbon::PrintAssemblyFromModule(
+    has_errors |= !Carbon::PrintAssemblyFromModule(
         *module, target_triple, error_stream_, output_stream_);
-    if (has_errors) {
-      CARBON_VLOG() << "Unable to dump assembly due to errors.";
-      return false;
-    }
     return !has_errors;
   }
 
