@@ -92,7 +92,46 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
   context.VerifyOnFinish();
 
   semantics_ir.has_errors_ = err_tracker.seen_error();
+
+#ifndef NDEBUG
+  if (auto verify = semantics_ir.Verify(); !verify.ok()) {
+    CARBON_FATAL() << "Built invalid semantics IR: " << verify.error() << "\n"
+                   << semantics_ir;
+  }
+#endif
+
   return semantics_ir;
+}
+
+auto SemanticsIR::Verify() const -> ErrorOr<Success> {
+  // Invariants don't necessarily hold for invalid IR.
+  if (has_errors_) {
+    return Success();
+  }
+
+  // Check that every code block has a terminator sequence that appears at the
+  // end of the block.
+  for (const SemanticsFunction& function : functions_) {
+    for (SemanticsNodeBlockId block_id : function.body_block_ids) {
+      bool found_terminator = false;
+      for (SemanticsNodeId node_id : GetNodeBlock(block_id)) {
+        bool is_terminator = GetNode(node_id).kind().is_terminator();
+        if (found_terminator && !is_terminator) {
+          return Error(llvm::formatv(
+              "Non-terminator node {0} in block {1} follows terminator",
+              node_id, block_id));
+        }
+        found_terminator |= is_terminator;
+      }
+      if (!found_terminator) {
+        return Error(llvm::formatv("No terminator in block {0}", block_id));
+      }
+    }
+  }
+
+  // TODO: Check that a node only references other nodes that are either global
+  // or that dominate it.
+  return Success();
 }
 
 static constexpr int Indent = 2;
