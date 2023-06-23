@@ -68,44 +68,38 @@ There are three expression categories in Carbon:
 -   [_Reference expressions_](#reference-expressions) refer to _objects_ with
     _storage_ where a value may be read or written and the object's address can
     be taken.
-    -   [_Durable reference expressions_](#durable-reference-expressions) are
-        reference expressions which cannot refer to _temporary_ storage, but
-        must refer to some storage that outlives the full expression.
-    -   [_Ephemeral reference expressions_](#ephemeral-reference-expressions)
-        are reference expressions which _can_ refer to temporary storage.
 -   [_Initializing expressions_](#initializing-expressions) which require
     storage to be provided implicitly when evaluating the expression. The
     expression then initializes an object in that storage. These are used to
     model function returns, which can construct the returned value directly in
     the caller's storage.
 
-The general conversions and the semantics implied between these categories are
-below:
+Expressions in one category can be converted to any other category when needed.
+The primitive conversion steps used are:
 
--   An _initializing expression_ can be formed from:
-    -   A _value expression_ by using the value to initialize an object in the
-        provided storage, analogous to
-        [direct initialization](https://en.cppreference.com/w/cpp/language/direct_initialization)
-        in C++.
-    -   A _durable reference expression_ by copying the referenced object into
-        the new storage, analogous to
-        [copy initialization](https://en.cppreference.com/w/cpp/language/copy_initialization)
-        in C++.
--   An _ephemeral reference expression_ can be formed from:
-    -   A _durable reference expression_ trivially.
-    -   An _initializing expression_ by materializing temporary storage for an
-        object that is initialized and then referencing that object.
--   A _durable reference expression_ cannot be produced by converting from
-    another expression category.
--   A _value expression_ can be formed from a _reference expression_ by reading
-    the value from its storage.
+-   A _read_ converts a reference expression into a value expression.
+-   _Direct initialization_ converts a value expression into an initializing
+    expression.
+-   _Copy initialization_ converts a reference expression into an initializing
+    expression.
+-   _Temporary materialization_ converts an initializing expression into a
+    reference expression.
 
-Multiple steps of these conversions can be combined. For example, to produce a
-value expression from an initializing expression, first the initializing
-expression is converted to an ephemeral reference expression by materializing
-temporary storage and initializing an object stored there, and that is then
-turned into the desired value expression by reading the value from that stored
-object.
+These conversion steps combine to provide the transitive conversion table:
+
+|               From: | value                   | reference | initializing     |
+| ------------------: | ----------------------- | --------- | ---------------- |
+|        to **value** | ==                      | read      | temporary + read |
+|    to **reference** | temporary + direct init | ==        | temporary        |
+| to **initializing** | direct init             | copy init | ==               |
+
+Reference expressions formed through temporary materialization are called
+[_ephemeral reference expressions_](#ephemeral-reference-expressions) and have
+restrictions on how they are used. In contrast, reference expressions that refer
+to declared storage are called
+[_durable reference expressions_](#durable-reference-expressions). Beyond the
+restrictions on what is valid, there is no distinction in their behavior or
+semantics.
 
 ## Binding patterns and local variables with `let` and `var`
 
