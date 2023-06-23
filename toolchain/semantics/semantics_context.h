@@ -57,6 +57,9 @@ class SemanticsContext {
   // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
   auto PopScope() -> void;
 
+  // Add the current code block to the enclosing function.
+  auto AddCurrentCodeBlockToFunction() -> void;
+
   // Runs ImplicitAsImpl for a set of arguments and parameters.
   //
   // This will eventually need to support checking against multiple possible

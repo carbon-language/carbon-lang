@@ -21,7 +21,6 @@ auto LoweringFunctionContext::GetBlock(SemanticsNodeBlockId block_id)
   llvm::BasicBlock*& entry = blocks_[block_id];
   if (!entry) {
     entry = llvm::BasicBlock::Create(llvm_context(), "", function_);
-    block_worklist().Push(block_id);
   }
   return entry;
 }
@@ -31,7 +30,6 @@ auto LoweringFunctionContext::TryToReuseBlock(SemanticsNodeBlockId block_id,
   if (!blocks_.insert({block_id, block}).second) {
     return false;
   }
-  block_worklist().Push(block_id);
   if (block == synthetic_block_) {
     synthetic_block_ = nullptr;
   }

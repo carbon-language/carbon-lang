@@ -49,7 +49,7 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
       {.name_id = name_id,
        .param_refs_id = param_refs_id,
        .return_type_id = return_type_id,
-       .body_id = context.node_block_stack().PeekForAdd()});
+       .body_block_ids = {context.node_block_stack().PeekForAdd()}});
   auto decl_id = context.AddNodeToBlock(
       outer_block,
       SemanticsNode::FunctionDeclaration::Make(fn_node, function_id));

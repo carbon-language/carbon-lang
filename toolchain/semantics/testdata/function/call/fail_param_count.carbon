@@ -5,10 +5,10 @@
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, body: block2},
-// CHECK:STDOUT:   {name: str1, param_refs: block4, body: block5},
-// CHECK:STDOUT:   {name: str3, param_refs: block7, body: block8},
-// CHECK:STDOUT:   {name: str5, param_refs: block0, body: block9},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
+// CHECK:STDOUT:   {name: str1, param_refs: block4, body: {block5}}},
+// CHECK:STDOUT:   {name: str3, param_refs: block7, body: {block8}}},
+// CHECK:STDOUT:   {name: str5, param_refs: block0, body: {block9}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,

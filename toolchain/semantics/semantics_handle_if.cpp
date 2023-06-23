@@ -31,6 +31,7 @@ auto SemanticsHandleIfCondition(SemanticsContext& context,
       SemanticsNode::BranchIf::Make(parse_node, then_block_id, cond_value_id));
   context.AddNodeToBlock(
       if_block_id, SemanticsNode::Branch::Make(parse_node, else_block_id));
+  context.AddCurrentCodeBlockToFunction();
 
   context.node_stack().Push(parse_node);
   return true;
@@ -43,6 +44,7 @@ auto SemanticsHandleIfStatementElse(SemanticsContext& context,
   // Switch to emitting the else block.
   auto then_block_id = context.node_block_stack().PopForAdd();
   context.node_stack().Push(parse_node, then_block_id);
+  context.AddCurrentCodeBlockToFunction();
   return true;
 }
 
@@ -82,6 +84,7 @@ auto SemanticsHandleIfStatement(SemanticsContext& context,
     }
   }
 
+  context.AddCurrentCodeBlockToFunction();
   return true;
 }
 
