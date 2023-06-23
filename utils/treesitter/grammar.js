@@ -143,12 +143,7 @@ module.exports = grammar({
     struct_literal: ($) =>
       seq('{', comma_sep(seq($.designator, '=', $._expression)), '}'),
     struct_type_literal: ($) =>
-      seq(
-        '{',
-        comma_sep(seq($.designator, ':', $._expression)),
-        optional(','),
-        '}'
-      ),
+      seq('{', comma_sep(seq($.designator, ':', $._expression)), '}'),
 
     builtin_type: ($) => choice('Self', 'String', 'bool', 'type'),
     literal: ($) =>
