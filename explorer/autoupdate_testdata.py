@@ -23,7 +23,7 @@ def main() -> None:
         str(autoupdate_py),
         # Flags to configure for explorer testing.
         "--tool=explorer",
-        "--testdata=explorer/testdata"
+        "--testdata=explorer/testdata",
     ] + sys.argv[1:]
     exit(subprocess.call(args))
 
