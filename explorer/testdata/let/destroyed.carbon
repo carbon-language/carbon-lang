@@ -3,12 +3,18 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: Destructor
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
+class C {
+  destructor[self: Self] {
+    Print("Destructor");
+  }
+}
+
 fn Main() -> i32 {
-  var p: i32* = heap.New(5);
-  heap.Delete(p);
-  // CHECK:STDERR: RUNTIME ERROR: fail_use_after_free.carbon:[[@LINE+1]]: undefined behavior: access to dead or discarded value 5
-  return *p;
+  let c: C = {};
+  return 0;
 }
