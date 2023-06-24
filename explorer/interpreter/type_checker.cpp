@@ -1207,7 +1207,8 @@ class TypeChecker::ArgumentDeduction {
         deduced_bindings_in_order_(bindings_to_deduce),
         trace_stream_(trace_stream) {
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "performing argument deduction for bindings: ";
+      *trace_stream_ << "performing argument deduction for bindings:"
+                     << (bindings_to_deduce.empty() ? "" : " ");
       llvm::ListSeparator sep;
       for (const auto* binding : bindings_to_deduce) {
         *trace_stream_ << sep << *binding;

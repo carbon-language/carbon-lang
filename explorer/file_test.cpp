@@ -19,7 +19,7 @@ class ParseAndExecuteTestFile : public FileTestBase {
     std::string path_str = path().string();
     llvm::StringRef path_ref = path_str;
 
-    if (path_ref.find("/trace/") != llvm::StringRef::npos) {
+    if (path_ref.find("trace_testdata") != llvm::StringRef::npos) {
       is_trace_test = true;
     }
 
@@ -78,7 +78,9 @@ class ParseAndExecuteTestFile : public FileTestBase {
       stderr << result.error() << "\n";
     }
 
-    if (trace_) {
+    // Skip trace test check as they use stdout stream instead of
+    // trace_stream_ostream
+    if (trace_ && !is_trace_test) {
       EXPECT_FALSE(trace_stream_ostream.TakeStr().empty())
           << "Tracing should always do something";
     }

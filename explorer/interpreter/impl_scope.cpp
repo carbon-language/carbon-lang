@@ -415,7 +415,7 @@ auto ImplScope::TryResolveInterfaceHere(
 
 // TODO: Add indentation when printing the parents.
 void ImplScope::Print(llvm::raw_ostream& out) const {
-  out << "impl declarations: ";
+  out << "impl declarations:" << (impl_facts_.empty() ? "" : " ");
   llvm::ListSeparator sep;
   for (const ImplFact& impl : impl_facts_) {
     out << sep << *(impl.type) << " as " << *(impl.interface);
