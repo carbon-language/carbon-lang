@@ -2226,24 +2226,28 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     }
     case StatementKind::VariableDefinition: {
       const auto& definition = cast<VariableDefinition>(stmt);
+      const bool has_initializing_expr =
+          definition.has_init() &&
+          definition.init().kind() == ExpressionKind::CallExpression &&
+          definition.init().expression_category() ==
+              ExpressionCategory::Initializing;
+      const auto init_location =
+          (act.location_received() && definition.is_returned())
+              ? act.location_received()
+              : act.location_created();
       if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
-        if (definition.init().kind() == ExpressionKind::CallExpression &&
-            definition.init().expression_category() ==
-                ExpressionCategory::Initializing) {
-          if (!(definition.is_returned() && act.location_received())) {
-            // TODO: Handle forwarding allocation to nested initializing
-            // expressions.
-            // Allocate storage for initializing expression.
-            const auto allocation_id =
-                heap_.AllocateValue(arena_->New<UninitializedValue>(
-                    &definition.init().static_type()));
-            act.set_location_created(allocation_id);
-            RuntimeScope scope(&heap_);
-            scope.BindLifetimeToScope(Address(allocation_id));
-            todo_.MergeScope(std::move(scope));
-          }
+        if (has_initializing_expr &&
+            !(definition.is_returned() && init_location)) {
+          // Allocate storage for initializing expression.
+          const auto allocation_id =
+              heap_.AllocateValue(arena_->New<UninitializedValue>(
+                  &definition.init().static_type()));
+          act.set_location_created(allocation_id);
+          RuntimeScope scope(&heap_);
+          scope.BindLifetimeToScope(Address(allocation_id));
+          todo_.MergeScope(std::move(scope));
         }
         return todo_.Spawn(std::make_unique<ExpressionAction>(
             &definition.init(), act.location_received()
@@ -2258,13 +2262,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         ExpressionCategory expr_category =
             definition.has_init() ? definition.init().expression_category()
                                   : ExpressionCategory::Value;
-        const auto init_location =
-            (act.location_received() && definition.is_returned())
-                ? act.location_received()
-                : act.location_created();
         if (definition.has_init()) {
-          if (expr_category == ExpressionCategory::Initializing &&
-              init_location && heap_.is_initialized(*init_location)) {
+          if (has_initializing_expr && init_location &&
+              heap_.is_initialized(*init_location)) {
             const auto address = Address(*init_location);
             CARBON_ASSIGN_OR_RETURN(
                 v, heap_.Read(address, definition.source_loc()));
