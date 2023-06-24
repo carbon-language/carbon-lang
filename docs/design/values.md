@@ -31,7 +31,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Pointers](#pointers)
     -   [Reference types](#reference-types)
     -   [Pointer syntax](#pointer-syntax)
-    -   [Syntax-free dereference and address-of](#syntax-free-dereference-and-address-of)
     -   [Dereferencing customization](#dereferencing-customization)
 -   [`const`-qualified types](#const-qualified-types)
 -   [Lifetime overloading](#lifetime-overloading)
@@ -779,10 +778,17 @@ refer distinctly to the point*er* and the point*ee* when needed. This ends up
 critical for supporting rebinding and so without this property more permutations
 of indirection would likely emerge.
 
-Third, and most controversially, Carbon doesn't provide a straightforward way to
-avoid the syntactic distinction between indirect access and direct access. This
-aspect is covered by our design decision around
-[syntax-free dereference](#syntax-free-dereference-and-address-of).
+Third, Carbon doesn't provide a straightforward way to avoid the syntactic
+distinction between indirect access and direct access.
+
+For a full discussion of the tradeoffs of these design decisions, see the
+alternatives considered section of [P2006]:
+
+[p2006]: /proposals/p2006.md
+
+-   [References in addition to pointers](/proposals/p2006.md#references-in-addition-to-pointers)
+-   [Syntax-free or automatic dereferencing](/proposals/p2006.md#syntax-free-or-automatic-dereferencing)
+-   [Exclusively using references](/proposals/p2006.md#exclusively-using-references)
 
 ### Pointer syntax
 
@@ -939,6 +945,12 @@ pursued based on a real and concrete need, and the minimal extension is adopted.
 
 ## Alternatives considered
 
+-   [Immutable value escape hatch](/proposals/p2006.md#immutable-value-escape-hatch)
+-   [References in addition to pointers](/proposals/p2006.md#references-in-addition-to-pointers)
+-   [Syntax-free or automatic dereferencing](/proposals/p2006.md#syntax-free-or-automatic-dereferencing)
+-   [Exclusively using references](/proposals/p2006.md#exclusively-using-references)
+-   [Alternative pointer syntaxes](/proposals/p2006.md#alternative-pointer-syntaxes)
+-   [Alternative syntaxes for locals](/proposals/p2006.md#alternative-syntaxes-for-locals)
 
 ## References
 
