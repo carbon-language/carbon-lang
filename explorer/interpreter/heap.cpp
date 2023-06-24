@@ -47,7 +47,7 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
              << "undefined behavior: store to subobject of uninitialized value "
              << *values_[a.allocation_.index_];
     }
-    states_[a.allocation_.index_] = ValueState::Alive;  // a
+    states_[a.allocation_.index_] = ValueState::Alive;
   }
   CARBON_ASSIGN_OR_RETURN(values_[a.allocation_.index_],
                           values_[a.allocation_.index_]->SetField(
@@ -82,7 +82,7 @@ auto Heap::CheckWritable(AllocationId allocation,
     return ProgramError(source_loc)
            << "unable to mutate pinned value " << *values_[allocation.index_];
   }
-  return Success();  // a
+  return Success();
 }
 
 auto Heap::Deallocate(AllocationId allocation, SourceLocation source_loc)

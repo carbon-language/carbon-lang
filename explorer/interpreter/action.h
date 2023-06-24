@@ -18,6 +18,7 @@
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/statement.h"
 #include "explorer/ast/value.h"
+#include "explorer/common/source_location.h"
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/heap_allocation_interface.h"
 #include "explorer/interpreter/stack.h"
@@ -232,7 +233,9 @@ class ExpressionAction : public Action {
   std::optional<AllocationId> location_received_;
 };
 
-// An Action which implements evaluation of an Expression to produce a `Value*`.
+// An Action which implements evaluation of an Expression to produce an
+// `ExpressionValue*`. The `preserve_nested_categories` flag can be used to
+// preserve values as `ExpressionValue` in nested values, such as tuples.
 class ExpressionCategoryAction : public Action {
  public:
   explicit ExpressionCategoryAction(
@@ -240,8 +243,8 @@ class ExpressionCategoryAction : public Action {
       std::optional<AllocationId> initialized_location = std::nullopt)
       : Action(Kind::ExpressionCategoryAction),
         expression_(expression),
-        preserve_nested_categories_(preserve_nested_categories),
-        location_received_(initialized_location) {}
+        location_received_(initialized_location),
+        preserve_nested_categories_(preserve_nested_categories) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::ExpressionCategoryAction;
@@ -250,7 +253,8 @@ class ExpressionCategoryAction : public Action {
   // The Expression this Action evaluates.
   auto expression() const -> const Expression& { return *expression_; }
 
-  /// Returns whether sub-actions should preserve expression categories.
+  // Returns whether direct descendent actions should preserve values as
+  // `ExpressionValue*`s.
   auto preserve_nested_categories() const -> bool {
     return preserve_nested_categories_;
   }
@@ -262,8 +266,8 @@ class ExpressionCategoryAction : public Action {
 
  private:
   Nonnull<const Expression*> expression_;
-  bool preserve_nested_categories_;
   std::optional<AllocationId> location_received_;
+  bool preserve_nested_categories_;
 };
 
 // An Action which implements the Instantiation of Type. The result is expressed
@@ -365,13 +369,16 @@ class DeclarationAction : public Action {
 // An Action which implements destroying all local allocations in a scope.
 class CleanUpAction : public Action {
  public:
-  explicit CleanUpAction(RuntimeScope scope)
+  explicit CleanUpAction(RuntimeScope scope, SourceLocation source_loc)
       : Action(Kind::CleanUpAction),
-        allocations_count_(scope.allocations().size()) {
+        allocations_count_(scope.allocations().size()),
+        source_loc_(source_loc) {
     StartScope(std::move(scope));
   }
 
   auto allocations_count() const -> int { return allocations_count_; }
+
+  auto source_loc() const -> SourceLocation { return source_loc_; }
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::CleanUpAction;
@@ -379,6 +386,7 @@ class CleanUpAction : public Action {
 
  private:
   int allocations_count_;
+  SourceLocation source_loc_;
 };
 
 // An Action which implements destroying a single value, including all nested

@@ -324,9 +324,9 @@ static auto InitializePlaceholderValue(
         // Bind the reference expression value directly.
         CARBON_CHECK(v.address())
             << "Missing location from reference expression";
-        CARBON_CHECK(
-            (*bindings)->BindAndPin(value_node, *v.address(), source_loc).ok())
-            << "Failed to bind and pin value";
+        bool ok =
+            (*bindings)->BindAndPin(value_node, *v.address(), source_loc).ok();
+        CARBON_CHECK(ok) << "Failed to bind and pin value";
       } else {
         // Location initialized by initializing expression, bind node to
         // address.
@@ -1170,10 +1170,11 @@ auto Interpreter::CallFunction(const CallExpression& call,
         } else {
           // Mutable self with `[addr self: Self*]`
           CARBON_CHECK(isa<AddrValue>(self_pattern));
-          CARBON_CHECK(PatternMatch(
+          bool success = PatternMatch(
               self_pattern, ExpressionResult::Value(method_val->receiver()),
               call.source_loc(), &function_scope, generic_args, trace_stream_,
-              this->arena_));
+              this->arena_);
+          CARBON_CHECK(success) << "Failed to bind addr self";
         }
       }
 
@@ -1186,11 +1187,12 @@ auto Interpreter::CallFunction(const CallExpression& call,
 
       CARBON_CHECK(converted_args->kind() == Value::Kind::ExpressionValue);
       // Bind the arguments to the parameters.
-      CARBON_CHECK(PatternMatch(
+      bool success = PatternMatch(
           &function.param_pattern().value(),
           cast<ExpressionValue>(converted_args)->expression_result(),
           call.source_loc(), &function_scope, generic_args, trace_stream_,
-          this->arena_));
+          this->arena_);
+      CARBON_CHECK(success) << "Failed to bind arguments to parameters";
       return todo_.Spawn(std::make_unique<StatementAction>(*function.body(),
                                                            location_received),
                          std::move(function_scope));
@@ -1342,11 +1344,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         act.location_received()));
   } else {
     CARBON_CHECK(act.results().size() == 1);
-    if (const auto* expr_result = dyn_cast<ExpressionValue>(act.results()[0])) {
-      return todo_.FinishAction(expr_result->value());
-    } else {
-      return todo_.FinishAction(act.results()[0]);
-    }
+    CARBON_CHECK(act.results()[0]->kind() == Value::Kind::ExpressionValue);
+    // Unwrap the ExpressionCategoryAction to only keep the resulting `Value*`.
+    return todo_.FinishAction(cast<ExpressionValue>(act.results()[0])->value());
   }
 }
 
@@ -2676,7 +2676,6 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   const Action& act = todo_.CurrentAction();
   const auto& cleanup = cast<CleanUpAction>(act);
-  SourceLocation source_loc("destructor", 1);
   if (act.pos() < cleanup.allocations_count() * 2) {
     const size_t alloc_index = cleanup.allocations_count() - act.pos() / 2 - 1;
     auto allocation = act.scope()->allocations()[alloc_index];
@@ -2686,7 +2685,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
     }
     if (act.pos() % 2 == 0) {
       auto* location = arena_->New<LocationValue>(Address(allocation));
-      auto value = heap_.Read(location->address(), source_loc);
+      auto value = heap_.Read(location->address(), cleanup.source_loc());
       // Step over uninitialized values.
       if (value.ok()) {
         return todo_.Spawn(std::make_unique<DestroyAction>(location, *value));
@@ -2694,7 +2693,8 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
         return todo_.RunAgain();
       }
     } else {
-      CARBON_RETURN_IF_ERROR(heap_.Deallocate(allocation, source_loc));
+      CARBON_RETURN_IF_ERROR(
+          heap_.Deallocate(allocation, cleanup.source_loc()));
       return todo_.RunAgain();
     }
   }

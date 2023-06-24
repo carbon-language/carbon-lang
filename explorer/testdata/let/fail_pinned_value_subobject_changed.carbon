@@ -10,11 +10,15 @@ class C {
   var i: i32;
 }
 
+fn Foo(c: C) {
+  Print("{0}", c.i);
+}
+
 fn Main() -> i32 {
-  var a: C = { .i = 1 };
-  let b: C = a;
-  a.i = 2;
-  // CHECK:STDERR: RUNTIME ERROR: fail_pinned_value_changed_class.carbon:[[@LINE+1]]: Value has changed since it was pinned
-  Print("{0}", b.i);
+  var c: C = { .i = 1 };
+  let pinned_c: C = c;
+  c.i = 2;
+  // CHECK:STDERR: RUNTIME ERROR: fail_pinned_value_subobject_changed.carbon:[[@LINE+1]]: Value has changed since it was pinned
+  Foo(pinned_c);
   return 0;
 }
