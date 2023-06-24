@@ -2231,28 +2231,25 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           definition.init().kind() == ExpressionKind::CallExpression &&
           definition.init().expression_category() ==
               ExpressionCategory::Initializing;
-      const auto init_location =
-          (act.location_received() && definition.is_returned())
-              ? act.location_received()
-              : act.location_created();
+      auto init_location = (act.location_received() && definition.is_returned())
+                               ? act.location_received()
+                               : act.location_created();
       if (act.pos() == 0 && definition.has_init()) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
-        if (has_initializing_expr &&
-            !(definition.is_returned() && init_location)) {
+        if (has_initializing_expr && !init_location) {
           // Allocate storage for initializing expression.
           const auto allocation_id =
               heap_.AllocateValue(arena_->New<UninitializedValue>(
                   &definition.init().static_type()));
           act.set_location_created(allocation_id);
+          init_location = allocation_id;
           RuntimeScope scope(&heap_);
           scope.BindLifetimeToScope(Address(allocation_id));
           todo_.MergeScope(std::move(scope));
         }
         return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &definition.init(), act.location_received()
-                                    ? act.location_received()
-                                    : act.location_created()));
+            &definition.init(), init_location));
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
@@ -2268,10 +2265,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             const auto address = Address(*init_location);
             CARBON_ASSIGN_OR_RETURN(
                 v, heap_.Read(address, definition.source_loc()));
-            // CARBON_CHECK(v == act.results()[0]);
-            const auto* dest_type = &definition.pattern().static_type();
-            CARBON_ASSIGN_OR_RETURN(
-                v, Convert(act.results()[0], dest_type, stmt.source_loc()));
+            CARBON_CHECK(v == act.results()[0]);
             v_location = address;
           } else {
             // TODO: Prevent copies for Value expressions from Reference
@@ -2408,8 +2402,11 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             value, heap_.Read(location->address(), ret_var.source_loc()));
       }
       const CallableDeclaration& function = cast<Return>(stmt).function();
-      // TODO: Not needed?
-      return todo_.UnwindPast(*function.body(), value);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> return_value,
+          Convert(value, &function.return_term().static_type(),
+                  stmt.source_loc()));
+      return todo_.UnwindPast(*function.body(), return_value);
     }
     case StatementKind::ReturnExpression:
       if (act.pos() == 0) {
