@@ -2291,7 +2291,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           const auto value_node =
               cast<BindingPlaceholderValue>(*p).value_node();
           CARBON_CHECK(value_node);
-          // TODO: Handle allocation forwarding for initializing expression.
           const auto address = Address(*init_location);
           scope.Bind(*value_node, address);
           CARBON_RETURN_IF_ERROR(heap_.Write(address, v, stmt.source_loc()));
