@@ -802,49 +802,24 @@ This syntax is chosen specifically to remain as similar as possible to C++
 pointer types as they are commonly written in code and are expected to be
 extremely common and a key anchor of syntactic similarity between the languages.
 The different alternatives and tradeoffs for this syntax issue were discussed
-extensively in
-[#523](https://github.com/carbon-language/carbon-lang/issues/523).
+extensively in [#523] and are summarized in the
+[proposal](/proposals/p2006.md#alternative-pointer-syntaxes).
+
+[#523]: https://github.com/carbon-language/carbon-lang/issues/523
 
 Carbon also supports an infix `->` operation, much like C++. However, Carbon
 directly defines this as an exact rewrite to `*` and `.` so that `p->member`
 becomes `(*p).member` for example.
 
-**Future work:** As also covered extensively in
-[#523](https://github.com/carbon-language/carbon-lang/issues/523), one of the
-primary challenges of the C++ syntax is the composition of a prefix dereference
-operation and other postfix or infix operations, especially when chained
-together such as a classic C++ frustrations of mixes of dereference and
-indexing: `(*(*p)[42])[13]`. Where these compositions are sufficiently common to
-create ergonomic problems, the plan is to introduce custom syntax analogous to
-`->` that rewrites down to the grouped dereference. However, nothing beyond `->`
-itself is currently provided. Extending this, including the exact design and
-scope of extension desired, is a future work area.
-
-### Syntax-free dereference and address-of
-
-Carbon does not provide a way to dereference with zero syntax, even on function
-interface boundaries. The presence of a clear level of indirection can be an
-important distinction for readability. It helps surface that an object that may
-appear local to the caller is in fact escaped and referenced externally to some
-degree. However, it can also harm readability by forcing code that doesn't
-_need_ to look different to do so anyway. In the worst case, this can
-potentially interfere with being generic. Currently, Carbon prioritizes making
-the distinction here visible.
-
-It may prove desirable to provide an ergonomic aid to reduce dereferencing
-syntax within function bodies, but this proposal suggests deferring that in
-order to better understand the extent and importance of that use case. If and
-when it is considered, a direction based around a way to bind a name to a
-reference expression in a pattern appears to be a promising technique.
-Alternatively, there are various languages with implicit- or
-automatic-dereference designs that might be considered.
-
-A closely related concern to syntax-free dereference is syntax-free address-of.
-Here, Carbon supports one very narrow form of this: implicitly taking the
-address of the implicit object parameter of member functions. Currently that is
-the only place with such an implicit affordance. It is designed to be
-syntactically sound to extend to other parameters, but currently that is not
-planned.
+**Future work:** As [#523] discusses, one of the primary challenges of the C++
+syntax is the composition of a prefix dereference operation and other postfix or
+infix operations, especially when chained together such as a classic C++
+frustrations of mixes of dereference and indexing: `(*(*p)[42])[13]`. Where
+these compositions are sufficiently common to create ergonomic problems, the
+plan is to introduce custom syntax analogous to `->` that rewrites down to the
+grouped dereference. However, nothing beyond `->` itself is currently provided.
+Extending this, including the exact design and scope of extension desired, is a
+future work area.
 
 ### Dereferencing customization
 
@@ -964,7 +939,6 @@ pursued based on a real and concrete need, and the minimal extension is adopted.
 
 ## Alternatives considered
 
-TODO
 
 ## References
 
