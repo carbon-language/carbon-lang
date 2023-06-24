@@ -108,10 +108,17 @@ struct SemanticsNodeBlockId : public IndexBase {
   // An explicitly invalid ID.
   static const SemanticsNodeBlockId Invalid;
 
+  // An ID for unreachable code.
+  static const SemanticsNodeBlockId Unreachable;
+
   using IndexBase::IndexBase;
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "block";
-    IndexBase::Print(out);
+    if (index == Unreachable.index) {
+      out << "unreachable";
+    } else {
+      out << "block";
+      IndexBase::Print(out);
+    }
   }
 };
 
@@ -119,6 +126,8 @@ constexpr SemanticsNodeBlockId SemanticsNodeBlockId::Empty =
     SemanticsNodeBlockId(0);
 constexpr SemanticsNodeBlockId SemanticsNodeBlockId::Invalid =
     SemanticsNodeBlockId(SemanticsNodeBlockId::InvalidIndex);
+constexpr SemanticsNodeBlockId SemanticsNodeBlockId::Unreachable =
+    SemanticsNodeBlockId(SemanticsNodeBlockId::InvalidIndex - 1);
 
 // The ID of a real literal.
 struct SemanticsRealLiteralId : public IndexBase {

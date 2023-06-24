@@ -95,8 +95,8 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
 
 #ifndef NDEBUG
   if (auto verify = semantics_ir.Verify(); !verify.ok()) {
-    CARBON_FATAL() << "Built invalid semantics IR: " << verify.error() << "\n"
-                   << semantics_ir;
+    CARBON_FATAL() << semantics_ir
+                   << "Built invalid semantics IR: " << verify.error() << "\n";
   }
 #endif
 

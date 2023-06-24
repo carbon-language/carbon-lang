@@ -16,13 +16,9 @@ auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
   auto function_id = context.node_stack().Pop<SemanticsFunctionId>(
       ParseNodeKind::FunctionDefinitionStart);
 
-  // If the final block is unterminated, add an implicit `return;`.
-  auto& last_block_contents = context.semantics_ir().GetNodeBlock(
-      context.node_block_stack().PeekForAdd());
-  if (last_block_contents.empty() || !context.semantics_ir()
-                                          .GetNode(last_block_contents.back())
-                                          .kind()
-                                          .is_terminator()) {
+  // If the `}` of the function is reachable, reject if we need a return value
+  // and otherwise add an implicit `return;`.
+  if (context.CurrentPositionIsReachable()) {
     if (context.semantics_ir()
             .GetFunction(function_id)
             .return_type_id.is_valid()) {

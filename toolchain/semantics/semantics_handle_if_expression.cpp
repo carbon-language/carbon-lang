@@ -12,24 +12,16 @@ auto SemanticsHandleIfExpressionIf(SemanticsContext& context,
 
   context.node_stack().Push(if_node);
 
-  // Convert the condition to `bool`.
+  // Convert the condition to `bool`, and branch on it.
   cond_value_id = context.ImplicitAsBool(if_node, cond_value_id);
+  auto then_block_id =
+      context.AddDominatedBlockAndBranchIf(if_node, cond_value_id);
+  auto else_block_id = context.AddDominatedBlockAndBranch(if_node);
 
-  // Stop emitting the current block. We'll add some branch instructions to it
-  // later, but we don't want it on the stack any more.
-  auto if_block_id = context.node_block_stack().PeekForAdd();
+  // Push the `else` block and `then` block, and start emitting the `then`.
   context.node_block_stack().Pop();
-
-  // Create the resumption block, `else` block, and `then` block, and branches
-  // to them.
-  context.node_block_stack().Push();
-  auto else_block_id = context.node_block_stack().PushForAdd();
-  auto then_block_id = context.node_block_stack().PushForAdd();
-  context.AddNodeToBlock(
-      if_block_id,
-      SemanticsNode::BranchIf::Make(if_node, then_block_id, cond_value_id));
-  context.AddNodeToBlock(if_block_id,
-                         SemanticsNode::Branch::Make(if_node, else_block_id));
+  context.node_block_stack().Push(else_block_id);
+  context.node_block_stack().Push(then_block_id);
   context.AddCurrentCodeBlockToFunction();
   return true;
 }
@@ -59,20 +51,14 @@ auto SemanticsHandleIfExpressionElse(SemanticsContext& context,
       context.ImplicitAsRequired(else_node, else_value_id, result_type_id);
   auto else_end_block_id = context.node_block_stack().Pop();
 
-  // Create branches to the resumption block.
-  auto resume_block_id = context.node_block_stack().PeekForAdd();
-  context.AddNodeToBlock(then_end_block_id,
-                         SemanticsNode::BranchWithArg::Make(
-                             then_node, resume_block_id, then_value_id));
-  context.AddNodeToBlock(else_end_block_id,
-                         SemanticsNode::BranchWithArg::Make(
-                             else_node, resume_block_id, else_value_id));
+  // Create a resumption block and branches to it.
+  auto chosen_value_id = context.AddConvergenceBlockWithArgAndPush(
+      if_node,
+      {{then_end_block_id, then_value_id}, {else_end_block_id, else_value_id}});
   context.AddCurrentCodeBlockToFunction();
 
-  // Obtain the value in the resumption block and push it.
-  context.AddNodeAndPush(
-      if_node,
-      SemanticsNode::BlockArg::Make(if_node, result_type_id, resume_block_id));
+  // Push the result value.
+  context.node_stack().Push(if_node, chosen_value_id);
   return true;
 }
 

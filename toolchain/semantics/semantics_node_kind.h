@@ -23,7 +23,7 @@ class SemanticsNodeKind : public CARBON_ENUM_BASE(SemanticsNodeKind) {
 
   using EnumBase::Create;
 
-  // Determine whether this node kind is a code block terminator, such as a
+  // Returns true if this node kind is a code block terminator, such as a
   // branch instruction. Terminators can only appear in a code block after all
   // other instructions.
   [[nodiscard]] auto is_terminator() const -> bool;

@@ -8,7 +8,7 @@
 // CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
 // CHECK:STDOUT:   {name: str1, param_refs: block0, body: {block3}}},
 // CHECK:STDOUT:   {name: str2, param_refs: block0, body: {block4}}},
-// CHECK:STDOUT:   {name: str3, param_refs: block6, body: {block7, block9, block8, block10}}},
+// CHECK:STDOUT:   {name: str3, param_refs: block6, body: {block7, block8, block9, block10}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -35,8 +35,8 @@
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str4, arg1: node+6, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function3},
-// CHECK:STDOUT:   {kind: BranchIf, arg0: block9, arg1: node+6},
-// CHECK:STDOUT:   {kind: Branch, arg0: block8},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block8, arg1: node+6},
+// CHECK:STDOUT:   {kind: Branch, arg0: block9},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1},
 // CHECK:STDOUT:   {kind: Branch, arg0: block10},
@@ -74,12 +74,12 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+12,
-// CHECK:STDOUT:     node+14,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:     node+13,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+15,

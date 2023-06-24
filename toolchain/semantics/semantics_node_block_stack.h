@@ -23,9 +23,18 @@ class SemanticsNodeBlockStack {
       llvm::raw_ostream* vlog_stream)
       : name_(name), node_blocks_(&node_blocks), vlog_stream_(vlog_stream) {}
 
+  // Adds a node block, but does not push it.
+  auto Add() -> SemanticsNodeBlockId;
+
+  // Pushes an existing node block.
+  auto Push(SemanticsNodeBlockId) -> void;
+
   // Pushes a new node block. It will be invalid unless PeekForAdd is called in
   // order to support lazy allocation.
-  auto Push() -> void;
+  auto Push() -> void { Push(SemanticsNodeBlockId::Invalid); }
+
+  // Pushes a new unreachable code block.
+  auto PushUnreachable() -> void { Push(SemanticsNodeBlockId::Unreachable); }
 
   // Allocates and pushes a new node block.
   auto PushForAdd() -> SemanticsNodeBlockId {
@@ -49,6 +58,11 @@ class SemanticsNodeBlockStack {
   auto PopForAdd() -> SemanticsNodeBlockId {
     PeekForAdd();
     return Pop();
+  }
+
+  // Returns whether the current block is statically reachable.
+  auto CurrentBlockIsReachable() -> bool {
+    return stack_.empty() || stack_.back() != SemanticsNodeBlockId::Unreachable;
   }
 
   // Prints the stack for a stack dump.

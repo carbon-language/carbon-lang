@@ -36,9 +36,9 @@ struct SemanticsFunction {
   SemanticsNodeBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
   SemanticsTypeId return_type_id;
-  // A list of the code blocks in the body of the function, in lexical order.
-  // The first block is the entry block. This will be empty for declarations
-  // that don't have a visible definition.
+  // A list of the statically reachable code blocks in the body of the
+  // function, in lexical order. The first block is the entry block. This will
+  // be empty for declarations that don't have a visible definition.
   llvm::SmallVector<SemanticsNodeBlockId> body_block_ids;
 };
 
@@ -118,7 +118,9 @@ class SemanticsIR {
       -> SemanticsNodeId {
     SemanticsNodeId node_id(nodes_.size());
     nodes_.push_back(node);
-    node_blocks_[block_id.index].push_back(node_id);
+    if (block_id != SemanticsNodeBlockId::Unreachable) {
+      node_blocks_[block_id.index].push_back(node_id);
+    }
     return node_id;
   }
 
@@ -130,12 +132,14 @@ class SemanticsIR {
   // Returns the requested node block.
   auto GetNodeBlock(SemanticsNodeBlockId block_id) const
       -> const llvm::SmallVector<SemanticsNodeId>& {
+    CARBON_CHECK(block_id != SemanticsNodeBlockId::Unreachable);
     return node_blocks_[block_id.index];
   }
 
   // Returns the requested node block.
   auto GetNodeBlock(SemanticsNodeBlockId block_id)
       -> llvm::SmallVector<SemanticsNodeId>& {
+    CARBON_CHECK(block_id != SemanticsNodeBlockId::Unreachable);
     return node_blocks_[block_id.index];
   }
 
