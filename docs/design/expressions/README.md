@@ -195,6 +195,7 @@ rightward arrow. Qualified names appear in the following contexts:
 
 -   [Designators](/docs/design/classes.md#literals): `.` _word_
 -   [Simple member access expressions](member_access.md): _expression_ `.`
+    _word_
 -   [Simple pointer member access expressions](member_access.md): _expression_
     `->` _word_
 
