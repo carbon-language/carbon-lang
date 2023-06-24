@@ -19,14 +19,18 @@ def main() -> None:
     autoupdate_py = this_py.parent.parent.joinpath(
         "testing", "scripts", "autoupdate_testdata_base.py"
     )
+
     args = [
         str(autoupdate_py),
         # Flags to configure for explorer testing.
         "--tool=explorer",
-        "--testdata=explorer/testdata"
+        "--testdata=explorer/trace_testdata",
+        "--autoupdate_arg=--trace_file=-",
+        "--autoupdate_arg=-trace_all",
     ] + sys.argv[1:]
     exit(subprocess.call(args))
 
 
 if __name__ == "__main__":
     main()
+

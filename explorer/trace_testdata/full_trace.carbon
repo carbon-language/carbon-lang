@@ -1278,8 +1278,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: interpreter result: 0
 // CHECK:STDOUT: ********** printing timing **********
 // CHECK:STDOUT: Time elapsed in ExecProgram: 0ms
-// CHECK:STDOUT: Time elapsed in AnalyzeProgram: 4ms
-// CHECK:STDOUT: Time elapsed in AddPrelude: 1ms
+// CHECK:STDOUT: Time elapsed in AnalyzeProgram: 8ms
+// CHECK:STDOUT: Time elapsed in AddPrelude: 2ms
 // CHECK:STDOUT: Time elapsed in Parse: 0ms
 // CHECK:STDOUT: result: 0
 }
