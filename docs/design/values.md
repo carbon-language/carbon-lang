@@ -217,13 +217,16 @@ makes this a use case that requires a special marking on the declaration.
 ## Reference expressions
 
 _Reference expressions_ refer to _objects_ with _storage_ where a value may be
-read or written and the object's address can be taken. There are two
-sub-categories of reference expressions: _durable_ and _ephemeral_.
+read or written and the object's address can be taken.
 
 Calling a [method](/docs/design/classes.md#methods) on a reference expression
 where the method's `self` parameter has an `addr` specifier can always
 implicitly take the address of the referred-to object. This address is passed as
 a [pointer](#pointers) to the `self` parameter for such methods.
+
+There are two sub-categories of reference expressions: _durable_ and
+_ephemeral_. These refine the _lifetime_ of the underlying storage and provide
+safety restrictions reflecting that lifetime.
 
 ### Durable reference expressions
 
@@ -252,26 +255,18 @@ Carbon:
 -   [Indexing](/docs/design/expressions/indexing.md) some other durable
     reference expression: `array[i]`
 
-There is no way to convert another category of expression into a durable
-reference expression, they always directly refer to some declared variable
-binding.
+Durable reference expressions can only be produced _directly_ by one of these
+expressions. They are never produced by converting one of the other expression
+categories into a reference expression.
 
 ### Ephemeral reference expressions
 
-_Ephemeral reference expressions_ still refer to storage, but it may be storage
-materialized for a temporary that will not outlive the full expression. Their
-address can only be taken implicitly as part of a method call.
-
-The only expressions in Carbon that directly require an ephemeral reference are
-method calls where the method is marked with the `addr` specifier. However, they
-are frequently indirectly required to enable converting an initializing
-expression into a value expression.
-
-Ephemeral reference expressions can only be formed by conversion from another
-expression category. In the trivial case, a durable reference expression can be
-used. They can also be formed by materializing temporary storage to provide to
-an initializing expression, and referencing the initialized object in that
-storage.
+We call the reference expressions formed through [temporary materialization]
+_ephemeral reference expressions_. They still refer to an object with storage,
+but it may be storage that will not outlive the full expression. Because the
+storage is only temporary, we impose restrictions on where these reference
+expressions can be used: their address can only be taken implicitly as part of a
+method call whose `self` parameter is marked with the `addr` specifier.
 
 **Future work:** The current design allows directly requiring an ephemeral
 reference for `addr`-methods because this replicates the flexibility in C++ --
@@ -361,7 +356,7 @@ The provided representation type must be one of the following:
 -   `const Self` -- this forces the use of a _copy_ of the object.
 -   `const Self *` -- this forces the use of a [_pointer_](#pointers) to the
     original object.
--   A custom type that is not `Self`.
+-   A custom type that is not `Self`, `const Self`, or a pointer to either.
 
 If the representation is `const Self` or `const Self *`, then the type fields
 will be accessible as [_value expressions_](#value-expressions) using the normal
@@ -379,15 +374,17 @@ set of heuristics. Some examples:
 -   Small objects that are trivially copied in a machine register would use
     `const Self`.
 
-When a custom type is provided, it must not be `Self` (or the other two cases).
-The type provided will be used on function call boundaries and as the
-implementation representation for `let` bindings and other value expressions
-referencing an object of the type. A specifier of `value_rep = T;` will require
-that the type `impls ReferenceImplicitAs(T)` using the following interface:
+When a custom type is provided, it must not be `Self`, `const Self`, or a
+pointer to either. The type provided will be used on function call boundaries
+and as the implementation representation for `let` bindings and other value
+expressions referencing an object of the type. A specifier of `value_rep = T;`
+will require that the type containing that specifier satisfies the constraint
+`impls ReferenceImplicitAs where .T = T` using the following interface:
 
 ```carbon
-interface ReferenceImplicitAs(T:! type) {
-  fn Op[addr self: const Self*]() -> T;
+interface ReferenceImplicitAs {
+  let T:! type;
+  fn Convert[addr self: const Self*]() -> T;
 }
 ```
 
@@ -400,10 +397,11 @@ through a value expression. Instead, only methods can be called using member
 access, as they simply bind the value expression to the `self` parameter.
 However, one important method can be called -- `.(ImplicitAs(T).Convert)()`.
 This implicitly converting a value expression for the type into its custom
-representation type. The customization of the representation above causes the
-class to have a builtin `impl as ImplicitAs(T)` which converts to the
-representation type as a no-op, exposing the object created by the
-`ReferenceImplicitAs` operation, and preserved as a representation of the value
+representation type. The customization of the representation above and
+`impls ReferenceImplicitAs where .T = T` causes the class to have a builtin
+`impl as ImplicitAs(T)` which converts to the representation type as a no-op,
+exposing the object created by calling `ReferenceImplicitAs.Convert` on the
+original reference expression, and preserved as a representation of the value
 expression.
 
 Here is a more complete example of code using these features:
@@ -430,7 +428,7 @@ class String {
 
   private var capacity: i64;
 
-  impl as ReferenceImplicitAs(StringView) {
+  impl as ReferenceImplicitAs where .T = StringView {
     fn Op[addr self: const Self*]() -> StringView {
       // Because this is called on the String object prior to it becoming
       // a value, we can access an SSO buffer or other interior pointers
@@ -479,6 +477,15 @@ capacity cannot be implemented with the customized value representation because
 it loses access to this additional state. Carbon allows type authors to make an
 explicit choice about whether they want to work with a restricted API and
 leverage a custom value representation or not.
+
+**Open question:** Beyond the specific syntax used where we currently have a
+placeholder `value_rep = T;`, we need to explore exactly what the best
+relationship is with the customization point. For example, should this syntax
+immediately forward declare `impl as ReferenceImplicitAs where .T = T`, thereby
+allowing an out-of-line definition of the `Convert` method and `... where _` to
+pick up the associated type from the syntax. Alternatively, the syntactic marker
+might be integrated into the `impl` declaration for `ReferenceImplicitAs`
+itself.
 
 ### Polymorphic types
 
