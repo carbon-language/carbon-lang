@@ -63,7 +63,7 @@ auto RuntimeScope::BindAndPin(ValueNodeView value_node, Address address,
   Bind(value_node, address);
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> pinned_value,
                           heap_->Read(address, source_loc));
-  auto [_, success] = pinned_values_.insert({value_node, pinned_value});
+  bool success = pinned_values_.insert({value_node, pinned_value}).second;
   CARBON_CHECK(success) << "Duplicate pinned node for " << value_node.base();
   return Success();
 }

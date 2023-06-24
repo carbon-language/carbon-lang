@@ -296,8 +296,9 @@ class ExpressionResult {
   ExpressionCategory expr_cat_;
 };
 
-// Contains the result of the evaluation of an expression, including a value,
-// the original expression category, and an optional address if available.
+// Contains the result of the evaluation of an expression, including the
+// returned `Value*` and actual expression category, as well as its `Address`
+// for reference expressions.
 class ExpressionValue : public Value {
  public:
   explicit ExpressionValue(ExpressionResult expr_result)
