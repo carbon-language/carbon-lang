@@ -509,7 +509,7 @@ This is still allowed to create a copy or to move, but it must not _slice_. Even
 if a copy is created, it must be a `Derived` object, even though this may limit
 the available implementation strategies.
 
-### Interop with C++ `const &` and `const` methods.
+### Interop with C++ `const &` and `const` methods
 
 While value expressions cannot have their address taken in Carbon, they should
 be interoperable with C++ `const &`s and C++ `const`-qualified methods. This
@@ -560,6 +560,9 @@ fn F(s_value: S) {
   s_value.unsafe AddrMemberFunction();
 }
 ```
+
+The specific tradeoff here is covered in a proposal
+[alternative](/proposals/p2006.md#value-expression-escape-hatches).
 
 ## Initializing expressions
 
