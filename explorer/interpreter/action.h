@@ -238,7 +238,7 @@ class ExpressionAction : public Action {
 // preserve values as `ExpressionValue` in nested values, such as tuples.
 class ExpressionCategoryAction : public Action {
  public:
-  explicit ExpressionCategoryAction(
+  ExpressionCategoryAction(
       Nonnull<const Expression*> expression, bool preserve_nested_categories,
       std::optional<AllocationId> initialized_location = std::nullopt)
       : Action(Kind::ExpressionCategoryAction),
