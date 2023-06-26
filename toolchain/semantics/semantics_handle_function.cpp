@@ -12,8 +12,25 @@ auto SemanticsHandleFunctionDeclaration(SemanticsContext& context,
 }
 
 auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
-                                       ParseTree::Node /*parse_node*/) -> bool {
-  context.node_stack().PopAndDiscardId(ParseNodeKind::FunctionDefinitionStart);
+                                       ParseTree::Node parse_node) -> bool {
+  auto function_id = context.node_stack().Pop<SemanticsFunctionId>(
+      ParseNodeKind::FunctionDefinitionStart);
+
+  // If the `}` of the function is reachable, reject if we need a return value
+  // and otherwise add an implicit `return;`.
+  if (context.is_current_position_reachable()) {
+    if (context.semantics_ir()
+            .GetFunction(function_id)
+            .return_type_id.is_valid()) {
+      CARBON_DIAGNOSTIC(
+          MissingReturnStatement, Error,
+          "Missing `return` at end of function with declared return type.");
+      context.emitter().Emit(parse_node, MissingReturnStatement);
+    } else {
+      context.AddNode(SemanticsNode::Return::Make(parse_node));
+    }
+  }
+
   context.return_scope_stack().pop_back();
   context.PopScope();
   context.node_block_stack().Pop();

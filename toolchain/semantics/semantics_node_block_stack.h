@@ -8,6 +8,7 @@
 #include <type_traits>
 
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
 
 namespace Carbon {
@@ -17,15 +18,20 @@ namespace Carbon {
 // All pushes and pops will be vlogged.
 class SemanticsNodeBlockStack {
  public:
-  explicit SemanticsNodeBlockStack(
-      llvm::StringLiteral name,
-      llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>>& node_blocks,
-      llvm::raw_ostream* vlog_stream)
-      : name_(name), node_blocks_(&node_blocks), vlog_stream_(vlog_stream) {}
+  explicit SemanticsNodeBlockStack(llvm::StringLiteral name,
+                                   SemanticsIR& semantics_ir,
+                                   llvm::raw_ostream* vlog_stream)
+      : name_(name), semantics_ir_(&semantics_ir), vlog_stream_(vlog_stream) {}
+
+  // Pushes an existing node block.
+  auto Push(SemanticsNodeBlockId id) -> void;
 
   // Pushes a new node block. It will be invalid unless PeekForAdd is called in
   // order to support lazy allocation.
-  auto Push() -> void;
+  auto Push() -> void { Push(SemanticsNodeBlockId::Invalid); }
+
+  // Pushes a new unreachable code block.
+  auto PushUnreachable() -> void { Push(SemanticsNodeBlockId::Unreachable); }
 
   // Allocates and pushes a new node block.
   auto PushForAdd() -> SemanticsNodeBlockId {
@@ -35,7 +41,10 @@ class SemanticsNodeBlockStack {
 
   // Peeks at the top node block. This does not trigger lazy allocation, so the
   // returned node block may be invalid.
-  auto Peek() -> SemanticsNodeBlockId { return stack_.back(); }
+  auto Peek() -> SemanticsNodeBlockId {
+    CARBON_CHECK(!stack_.empty()) << "no current block";
+    return stack_.back();
+  }
 
   // Returns the top node block, allocating one if it's still invalid.
   auto PeekForAdd() -> SemanticsNodeBlockId;
@@ -51,6 +60,11 @@ class SemanticsNodeBlockStack {
     return Pop();
   }
 
+  // Returns whether the current block is statically reachable.
+  auto is_current_block_reachable() -> bool {
+    return Peek() != SemanticsNodeBlockId::Unreachable;
+  }
+
   // Prints the stack for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
 
@@ -61,8 +75,8 @@ class SemanticsNodeBlockStack {
   // A name for debugging.
   llvm::StringLiteral name_;
 
-  // The underlying node block storage on SemanticsIR. Always non-null.
-  llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>>* const node_blocks_;
+  // The underlying SemanticsIR instance. Always non-null.
+  SemanticsIR* semantics_ir_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;

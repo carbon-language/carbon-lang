@@ -7,8 +7,8 @@
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
 // CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type0, body: {block3}}},
-// CHECK:STDOUT:   {name: str2, param_refs: block0, return_type: type0, body: {block4, block6, block5, block7}}},
-// CHECK:STDOUT:   {name: str3, param_refs: block0, return_type: type0, body: {block8, block10, block9, block11}}},
+// CHECK:STDOUT:   {name: str2, param_refs: block0, return_type: type0, body: {block4, block5, block6, block7}}},
+// CHECK:STDOUT:   {name: str3, param_refs: block0, return_type: type0, body: {block8, block9, block10, block11}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,
@@ -35,8 +35,8 @@
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+4, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type1},
-// CHECK:STDOUT:   {kind: BranchIf, arg0: block6, arg1: node+7},
-// CHECK:STDOUT:   {kind: Branch, arg0: block5},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+7},
+// CHECK:STDOUT:   {kind: Branch, arg0: block6},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block7, arg1: node+10},
@@ -45,8 +45,8 @@
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+14, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function3},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: false, type: type1},
-// CHECK:STDOUT:   {kind: BranchIf, arg0: block10, arg1: node+17},
-// CHECK:STDOUT:   {kind: Branch, arg0: block9},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block9, arg1: node+17},
+// CHECK:STDOUT:   {kind: Branch, arg0: block10},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block11, arg1: node+20},
@@ -77,12 +77,12 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+11,
-// CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+14,
@@ -94,12 +94,12 @@
 // CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+21,
-// CHECK:STDOUT:     node+23,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+20,
 // CHECK:STDOUT:     node+22,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+21,
+// CHECK:STDOUT:     node+23,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+24,

@@ -469,6 +469,12 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
     context.AddNode(SemanticsNode::ReturnExpression::Make(
         parse_node, context.semantics_ir().GetNode(arg).type_id(), arg));
   }
+
+  // Switch to a new, unreachable, empty node block. This typically won't
+  // contain any semantics IR, but it can do if there are statements following
+  // the `return` statement.
+  context.node_block_stack().Pop();
+  context.node_block_stack().PushUnreachable();
   return true;
 }
 
@@ -531,15 +537,16 @@ auto SemanticsHandleShortCircuitOperand(SemanticsContext& context,
   }
 
   // Create a block for the right-hand side and for the continuation.
-  auto lhs_block_id = context.node_block_stack().PopForAdd();
-  auto end_block_id = context.node_block_stack().PushForAdd();
-  auto rhs_block_id = context.node_block_stack().PushForAdd();
-  context.AddNodeToBlock(
-      lhs_block_id,
-      SemanticsNode::BranchIf::Make(parse_node, rhs_block_id, branch_value_id));
-  context.AddNodeToBlock(
-      lhs_block_id, SemanticsNode::BranchWithArg::Make(
-                        parse_node, end_block_id, short_circuit_result_id));
+  auto rhs_block_id =
+      context.AddDominatedBlockAndBranchIf(parse_node, branch_value_id);
+  auto end_block_id = context.AddDominatedBlockAndBranchWithArg(
+      parse_node, short_circuit_result_id);
+
+  // Push the resumption and the right-hand side blocks, and start emitting the
+  // right-hand operand.
+  context.node_block_stack().Pop();
+  context.node_block_stack().Push(end_block_id);
+  context.node_block_stack().Push(rhs_block_id);
   context.AddCurrentCodeBlockToFunction();
 
   // Put the condition back on the stack for SemanticsHandleInfixOperator.
