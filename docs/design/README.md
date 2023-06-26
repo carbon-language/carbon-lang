@@ -394,10 +394,10 @@ Some values, such as `()` and `{}`, may even be used as types, but only act like
 types when they are in a type position, like after a `:` in a variable
 declaration or the return type after a `->` in a function declaration. Any
 expression in a type position must be
-[a constants or symbolic value](#expression-categories-and-value-phases) so the
-compiler can resolve whether the value can be used as a type. This also puts
-limits on how much operators can do different things for types. This is good for
-consistency, but is a significant restriction on Carbon's design.
+[a constants or symbolic value](#value-phases) so the compiler can resolve
+whether the value can be used as a type. This also puts limits on how much
+operators can do different things for types. This is good for consistency, but
+is a significant restriction on Carbon's design.
 
 ## Primitive types
 
@@ -654,12 +654,12 @@ Carbon expressions produce values or reference objects. Every expression has a
 [category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
 similar to [C++](https://en.cppreference.com/w/cpp/language/value_category):
 
--   [_Value expressions_](/values.md#value-expressions) produce abstract,
+-   [_Value expressions_](values.md#value-expressions) produce abstract,
     read-only _values_ that cannot be modified or have its address taken.
--   [_Reference expressions_](/values.md#reference-expressions) refer to
+-   [_Reference expressions_](values.md#reference-expressions) refer to
     _objects_ with _storage_ where a value may be read or written and the
     object's address can be taken.
--   [_Initializing expressions_](/values.md#initializing-expressions) which
+-   [_Initializing expressions_](values.md#initializing-expressions) which
     require storage to be provided implicitly when evaluating the expression.
     The expression then initializes an object in that storage. These are used to
     model function returns, which can construct the returned value directly in
@@ -707,7 +707,7 @@ to a runtime value:
 ```mermaid
 graph TD;
     A(constant)-->B(symbolic value)-->C(runtime value);
-    D(l-value)-->C;
+    D(reference expression)-->C;
 ```
 
 Constants convert to symbolic values and to runtime values. Symbolic values will
@@ -983,14 +983,15 @@ binding any name to it.
 Binding patterns default to _`let` bindings_. The `var` keyword is used to make
 it a _`var` binding_.
 
--   The result of a `let` binding is the name is bound to an
-    [r-value](#expression-categories-and-value-phases). This means the value
-    cannot be modified, and its address generally cannot be taken.
--   A `var` binding has dedicated storage, and so the name is an
-    [l-value](#expression-categories-and-value-phases) which can be modified and
-    has a stable address.
+-   The result of a `let` binding is the name is bound to a
+    [value expression](#expression-categories). This means the value cannot be
+    modified, and its address generally cannot be taken.
+-   A `var` binding creates an object with dedicated storage, and so the name
+    can be used as a [reference expression](#expression-categories) which can be
+    modified and has a stable address.
 
-A `let`-binding may be implemented as an alias for the original value (like a
+A `let`-binding may be [implemented](values.md#value-expressions) as an alias
+for the original value (like a
 [`const` reference in C++](<https://en.wikipedia.org/wiki/Reference_(C%2B%2B)>)),
 or it may be copied from the original value (if it is copyable), or it may be
 moved from the original value (if it was a temporary). The Carbon
@@ -1086,9 +1087,9 @@ introduced into the enclosing [scope](#declarations-definitions-and-scopes).
 
 ### Variable `var` declarations
 
-A `var` declaration is similar, except with `var` bindings, so `x` here is an
-[l-value](#expression-categories-and-value-phases) with storage and an address,
-and so may be modified:
+A `var` declaration is similar, except with `var` bindings, so `x` here is a
+[reference expression](#expression-categories) for an object with storage and an
+address, and so may be modified:
 
 ```carbon
 var x: i64 = 42;
@@ -1198,9 +1199,9 @@ declaration. The parameter names in a forward declaration may be omitted using
 
 The bindings in the parameter list default to
 [`let` bindings](#binding-patterns), and so the parameter names are treated as
-[r-values](#expression-categories-and-value-phases). This is appropriate for
-input parameters. This binding will be implemented using a pointer, unless it is
-legal to copy and copying is cheaper.
+[value expressions](#expression-categories). This is appropriate for input
+parameters. This binding will be implemented using a pointer, unless it is legal
+to copy and copying is cheaper.
 
 If the `var` keyword is added before the binding, then the arguments will be
 copied (or moved from a temporary) to new storage, and so can be mutated in the
@@ -1740,8 +1741,8 @@ two methods `Distance` and `Offset`:
     declaration.
 -   `origin.Offset(`...`)` does modify the value of `origin`. This is signified
     using `[addr self: Self*]` in the method declaration. Since calling this
-    method requires taking the address of `origin`, it may only be called on
-    [non-`const`](#const) [l-values](#expression-categories-and-value-phases).
+    method requires taking the [non-`const`](#const) address of `origin`, it may
+    only be called on [reference expressions](#expression-categories).
 -   Methods may be declared lexically inline like `Distance`, or lexically out
     of line like `Offset`.
 
@@ -1925,16 +1926,13 @@ type, use `UnsafeDelete`.
 
 #### `const`
 
-> **Note:** This is provisional, no design for `const` has been through the
-> proposal process yet.
-
 For every type `MyClass`, there is the type `const MyClass` such that:
 
 -   The data representation is the same, so a `MyClass*` value may be implicitly
     converted to a `(const MyClass)*`.
--   A `const MyClass` [l-value](#expression-categories-and-value-phases) may
-    automatically convert to a `MyClass` r-value, the same way that a `MyClass`
-    l-value can.
+-   A `const MyClass` [reference expression](#expression-categories) may
+    automatically convert to a `MyClass` value expression, the same way that a
+    `MyClass` reference expression can.
 -   If member `x` of `MyClass` has type `T`, then member `x` of `const MyClass`
     has type `const T`.
 -   The API of a `const MyClass` is a subset of `MyClass`, excluding all methods
@@ -1953,8 +1951,8 @@ var origin: Point = {.x = 0, .y = 0};
 // `const Point*`:
 let p: const Point* = &origin;
 
-// ✅ Allowed conversion of `const Point` l-value
-// to `Point` r-value.
+// ✅ Allowed conversion of `const Point` reference expression
+// to `Point` value expression.
 let five: f32 = p->Distance(3, 4);
 
 // ❌ Error: mutating method `Offset` excluded
@@ -1965,6 +1963,12 @@ p->Offset(3, 4);
 // excluded from `const i32` API.
 p->x += 2;
 ```
+
+> References:
+>
+> -   [`const`-qualified types](values.md#const-qualified-types)
+> -   Proposal
+>     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
 #### Unformed state
 
@@ -2009,8 +2013,6 @@ value.
 > **Note:** This is provisional. The move operator was discussed but not
 > proposed in accepted proposal
 > [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257).
-> See pending proposal
-> [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006).
 
 #### Mixins
 
@@ -3119,10 +3121,10 @@ The interfaces that correspond to each operator are given by:
 The
 [logical operators can not be overloaded](expressions/logical_operators.md#overloading).
 
-Operators that result in [l-values](#expression-categories-and-value-phases),
-such as dereferencing `*p` and indexing `a[3]`, have interfaces that return the
-address of the value. Carbon automatically dereferences the pointer to get the
-l-value.
+Operators that result in [reference expressions](#expression-categories), such
+as dereferencing `*p` and indexing `a[3]`, have interfaces that return the
+address of the value. Carbon automatically dereferences the pointer to form the
+reference expression.
 
 Operators that can take multiple arguments, such as function calling operator
 `f(4)`, have a [variadic](generics/details.md#variadic-arguments) parameter
