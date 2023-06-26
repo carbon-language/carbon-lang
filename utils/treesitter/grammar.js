@@ -448,10 +448,31 @@ module.exports = grammar({
         $.interface_body
       ),
 
+    impl_body_item: ($) => choice($.function_declaration, $.alias_declaration),
+
+    impl_body: ($) => seq('{', $.impl_body_item, '}'),
+
+    impl_declaration: ($) =>
+      seq(
+        'impl',
+        optional(seq('forall', $.deduced_params)),
+        'as',
+        $._expression,
+        $.impl_body
+      ),
+
+    extend_impl_declaration: ($) =>
+      seq('extend', 'impl', 'as', $._expression, $.impl_body),
+
     extend_base_declaration: ($) =>
       seq('extend', 'base', ':', $._expression, ';'),
 
-    class_body_item: ($) => choice($.declaration, $.extend_base_declaration),
+    class_body_item: ($) =>
+      choice(
+        $.declaration,
+        $.extend_base_declaration,
+        $.extend_impl_declaration
+      ),
 
     class_body: ($) => seq('{', repeat($.class_body_item), '}'),
 
@@ -477,6 +498,7 @@ module.exports = grammar({
         $.alias_declaration,
         $.interface_declaration,
         $.constraint_declaration,
+        $.impl_declaration,
         $.class_declaration
       ),
   },
