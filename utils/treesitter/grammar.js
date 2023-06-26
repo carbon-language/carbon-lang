@@ -424,8 +424,8 @@ module.exports = grammar({
       choice(
         $.function_declaration,
         seq('let', $.generic_binding, ';'),
-        seq('extends', $._expression, ';'),
-        seq('impl', $._expression, 'as', $._expression, ';')
+        seq('extend', $._expression, ';'),
+        seq('require', $._expression, 'impls', $._expression, ';'),
       ),
 
     interface_body: ($) => seq('{', repeat($.interface_body_item), '}'),
