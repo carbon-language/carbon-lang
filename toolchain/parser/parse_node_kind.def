@@ -49,12 +49,15 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(InvalidParse, 0)
 // An empty declaration, such as `;`.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(EmptyDeclaration, 0)
 
-// A name.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(Identifier, 0)
+// A name in a non-expression context, such as a declaration.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(Name, 0)
+
+// A name in an expression context.
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameExpression, 0)
 
 // `package`:
 //   PackageIntroducer
-//   _external_: Identifier
+//   _external_: Name
 //     _external_: Literal
 //   PackageLibrary
 //   PackageApi or PackageImpl
@@ -74,7 +77,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart)
 
 // `fn`:
 //     FunctionIntroducer
-//     Identifier
+//     Name
 //     _external_: ParameterList
 //       _external_: type expression
 //     ReturnType
@@ -106,7 +109,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ParameterList, ParameterListStart)
 CARBON_PARSE_NODE_KIND_BRACKET(DeducedParameterList, DeducedParameterListStart)
 
 // A pattern binding, such as `name: Type`:
-//   Identifier
+//   Name
 //   _external_: type expression
 // [Generic]PatternBinding
 //
@@ -232,15 +235,12 @@ CARBON_PARSE_NODE_KIND_BRACKET(CallExpression, CallExpressionStart)
 
 // A designator expression, such as `a.b`:
 //   _external_: lhs expression
-//   _external_: Identifier
+//   _external_: Name
 // DesignatorExpression
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(DesignatorExpression, 2)
 
 // A literal.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Literal, 0)
-
-// A reference to an identifier.
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(NameReference, 0)
 
 // A prefix operator:
 //   _external_: expression
@@ -278,7 +278,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionElse, 3)
 
 // Struct literals, such as `{.a = 0}`:
 //   StructLiteralOrStructTypeLiteralStart
-//       _external_: Identifier
+//       _external_: Name
 //     StructFieldDesignator
 //     _external_: expression
 //   StructFieldValue
@@ -286,7 +286,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(IfExpressionElse, 3)
 // StructLiteral
 //
 // Struct type literals, such as `{.a: i32}`:
-//       _external_: Identifier
+//       _external_: Name
 //     StructFieldDesignator
 //     _external_: type expression
 //   StructFieldType
@@ -312,7 +312,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
 
 // `class`:
 //     ClassIntroducer
-//     Identifier
+//     Name
 //   ClassDefinitionStart
 //   _external_: declarations
 // ClassDefinition
@@ -327,7 +327,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDeclaration, ClassIntroducer)
 
 // `interface`:
 //     InterfaceIntroducer
-//     Identifier
+//     Name
 //   InterfaceDefinitionStart
 //   _external_: declarations
 // InterfaceDefinition
@@ -342,7 +342,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDeclaration, InterfaceIntroducer)
 
 // `constraint`:
 //     NamedConstraintIntroducer
-//     Identifier
+//     Name
 //   NamedConstraintDefinitionStart
 //   _external_: declarations
 // NamedConstraintDefinition
@@ -360,11 +360,11 @@ CARBON_PARSE_NODE_KIND_BRACKET(NamedConstraintDeclaration,
 
 // The `self` value and `Self` type identifier keywords. Typically of the form
 // `self: Self`:
-//   SelfValueIdentifier
-//   SelfTypeIdentifier
+//   SelfValueName
+//   SelfTypeNameExpression
 // PatternBinding
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueIdentifier, 0)
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeIdentifier, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfValueName, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(SelfTypeNameExpression, 0)
 
 #undef CARBON_PARSE_NODE_KIND
 #undef CARBON_PARSE_NODE_KIND_BRACKET

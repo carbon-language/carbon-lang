@@ -6,12 +6,12 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:     {kind: 'Identifier', text: 'F'},
+// CHECK:STDOUT:     {kind: 'Name', text: 'F'},
 // CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'WhileConditionStart', text: '('},
-// CHECK:STDOUT:       {kind: 'NameReference', text: 'a'},
+// CHECK:STDOUT:       {kind: 'NameExpression', text: 'a'},
 // CHECK:STDOUT:     {kind: 'WhileCondition', text: ')', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'CodeBlockStart', text: 'break', has_error: yes},
 // CHECK:STDOUT:         {kind: 'BreakStatementStart', text: 'break'},
