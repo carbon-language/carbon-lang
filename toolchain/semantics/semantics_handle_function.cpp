@@ -18,7 +18,7 @@ auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
 
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
-  if (context.CurrentPositionIsReachable()) {
+  if (context.is_current_position_reachable()) {
     if (context.semantics_ir()
             .GetFunction(function_id)
             .return_type_id.is_valid()) {

@@ -113,17 +113,24 @@ auto SemanticsIR::Verify() const -> ErrorOr<Success> {
   // end of the block.
   for (const SemanticsFunction& function : functions_) {
     for (SemanticsNodeBlockId block_id : function.body_block_ids) {
-      bool found_terminator = false;
+      SemanticsTerminatorKind prior_kind =
+          SemanticsTerminatorKind::NotTerminator;
       for (SemanticsNodeId node_id : GetNodeBlock(block_id)) {
-        bool is_terminator = GetNode(node_id).kind().is_terminator();
-        if (found_terminator && !is_terminator) {
-          return Error(llvm::formatv(
-              "Non-terminator node {0} in block {1} follows terminator",
-              node_id, block_id));
+        SemanticsTerminatorKind node_kind =
+            GetNode(node_id).kind().terminator_kind();
+        if (prior_kind == SemanticsTerminatorKind::Terminator) {
+          return Error(llvm::formatv("Node {0} in block {1} follows terminator",
+                                     node_id, block_id));
         }
-        found_terminator |= is_terminator;
+        if (prior_kind > node_kind) {
+          return Error(
+              llvm::formatv("Non-terminator node {0} in block {1} follows "
+                            "terminator sequence",
+                            node_id, block_id));
+        }
+        prior_kind = node_kind;
       }
-      if (!found_terminator) {
+      if (prior_kind != SemanticsTerminatorKind::Terminator) {
         return Error(llvm::formatv("No terminator in block {0}", block_id));
       }
     }

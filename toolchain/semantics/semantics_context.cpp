@@ -28,11 +28,9 @@ SemanticsContext::SemanticsContext(const TokenizedBuffer& tokens,
       semantics_ir_(&semantics_ir),
       vlog_stream_(vlog_stream),
       node_stack_(parse_tree, vlog_stream),
-      node_block_stack_("node_block_stack_", semantics_ir.node_blocks(),
-                        vlog_stream),
-      params_or_args_stack_("params_or_args_stack_", semantics_ir.node_blocks(),
-                            vlog_stream),
-      args_type_info_stack_("args_type_info_stack_", semantics_ir.node_blocks(),
+      node_block_stack_("node_block_stack_", semantics_ir, vlog_stream),
+      params_or_args_stack_("params_or_args_stack_", semantics_ir, vlog_stream),
+      args_type_info_stack_("args_type_info_stack_", semantics_ir,
                             vlog_stream) {
   // Inserts the "Invalid" and "Type" types as "used types" so that
   // canonicalization can skip them. We don't emit either for lowering.
@@ -135,10 +133,10 @@ static auto AddDominatedBlockAndBranchImpl(SemanticsContext& context,
                                            ParseTree::Node parse_node,
                                            Args... args)
     -> SemanticsNodeBlockId {
-  if (!context.node_block_stack().CurrentBlockIsReachable()) {
+  if (!context.node_block_stack().is_current_block_reachable()) {
     return SemanticsNodeBlockId::Unreachable;
   }
-  auto block_id = context.node_block_stack().Add();
+  auto block_id = context.semantics_ir().AddBlock();
   context.AddNode(BranchNode::Make(parse_node, block_id, args...));
   return block_id;
 }
@@ -172,7 +170,7 @@ auto SemanticsContext::AddConvergenceBlockAndPush(
   for (SemanticsNodeBlockId block_id : blocks) {
     if (block_id != SemanticsNodeBlockId::Unreachable) {
       if (new_block_id == SemanticsNodeBlockId::Unreachable) {
-        new_block_id = node_block_stack().Add();
+        new_block_id = semantics_ir().AddBlock();
       }
       AddNodeToBlock(block_id,
                      SemanticsNode::Branch::Make(parse_node, new_block_id));
@@ -191,7 +189,7 @@ auto SemanticsContext::AddConvergenceBlockWithArgAndPush(
   for (auto [block_id, arg_id] : blocks_and_args) {
     if (block_id != SemanticsNodeBlockId::Unreachable) {
       if (new_block_id == SemanticsNodeBlockId::Unreachable) {
-        new_block_id = node_block_stack().Add();
+        new_block_id = semantics_ir().AddBlock();
       }
       AddNodeToBlock(block_id, SemanticsNode::BranchWithArg::Make(
                                    parse_node, new_block_id, arg_id));
@@ -211,7 +209,7 @@ auto SemanticsContext::AddCurrentCodeBlockToFunction() -> void {
   CARBON_CHECK(!node_block_stack().empty()) << "no current code block";
   CARBON_CHECK(!return_scope_stack().empty()) << "no current function";
 
-  if (!node_block_stack().CurrentBlockIsReachable()) {
+  if (!node_block_stack().is_current_block_reachable()) {
     // Don't include unreachable blocks in the function.
     return;
   }
@@ -224,18 +222,26 @@ auto SemanticsContext::AddCurrentCodeBlockToFunction() -> void {
       .body_block_ids.push_back(node_block_stack().PeekForAdd());
 }
 
-auto SemanticsContext::CurrentPositionIsReachable() -> bool {
-  if (!node_block_stack().CurrentBlockIsReachable()) {
-    return false;
+auto SemanticsContext::is_current_position_reachable() -> bool {
+  switch (auto block_id = node_block_stack().Peek(); block_id.index) {
+    case SemanticsNodeBlockId::Unreachable.index: {
+      return false;
+    }
+    case SemanticsNodeBlockId::Invalid.index: {
+      return true;
+    }
+    default: {
+      // Our current position is at the end of a real block. That position is
+      // reachable unless the previous instruction is a terminator instruction.
+      const auto& block_contents = semantics_ir().GetNodeBlock(block_id);
+      if (block_contents.empty()) {
+        return true;
+      }
+      const auto& last_node = semantics_ir().GetNode(block_contents.back());
+      return last_node.kind().terminator_kind() !=
+             SemanticsTerminatorKind::Terminator;
+    }
   }
-
-  // Our current position is at the end of the current block. That position is
-  // reachable unless the previous instruction is a terminator instruction.
-  auto& block_contents = semantics_ir().GetNodeBlock(node_block_stack().Peek());
-  if (block_contents.empty()) {
-    return true;
-  }
-  return !semantics_ir().GetNode(block_contents.back()).kind().is_terminator();
 }
 
 auto SemanticsContext::ImplicitAsForArgs(

@@ -97,7 +97,7 @@ class SemanticsContext {
   auto AddCurrentCodeBlockToFunction() -> void;
 
   // Returns whether the current position in the current block is reachable.
-  auto CurrentPositionIsReachable() -> bool;
+  auto is_current_position_reachable() -> bool;
 
   // Runs ImplicitAsImpl for a set of arguments and parameters.
   //

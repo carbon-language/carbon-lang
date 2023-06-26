@@ -11,10 +11,13 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(SemanticsNodeKind) = {
 #include "toolchain/semantics/semantics_node_kind.def"
 };
 
-auto SemanticsNodeKind::is_terminator() const -> bool {
-  static constexpr bool Table[] = {
-#define CARBON_SEMANTICS_NODE_KIND(Name) false,
-#define CARBON_SEMANTICS_TERMINATOR_KIND(Name) true,
+auto SemanticsNodeKind::terminator_kind() const -> SemanticsTerminatorKind {
+  static constexpr SemanticsTerminatorKind Table[] = {
+#define CARBON_SEMANTICS_NODE_KIND(Name) SemanticsTerminatorKind::NotTerminator,
+#define CARBON_SEMANTICS_TERMINATOR_SEQUENCE_KIND(Name) \
+  SemanticsTerminatorKind::TerminatorSequence,
+#define CARBON_SEMANTICS_TERMINATOR_KIND(Name) \
+  SemanticsTerminatorKind::Terminator,
 #include "toolchain/semantics/semantics_node_kind.def"
   };
   return Table[AsInt()];

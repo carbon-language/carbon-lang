@@ -9,6 +9,7 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "toolchain/common/index_base.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_node_kind.h"
