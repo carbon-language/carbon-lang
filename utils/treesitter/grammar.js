@@ -448,7 +448,10 @@ module.exports = grammar({
         $.interface_body
       ),
 
-    class_body_item: ($) => $.declaration,
+    extend_base_declaration: ($) =>
+      seq('extend', 'base', ':', $._expression, ';'),
+
+    class_body_item: ($) => choice($.declaration, $.extend_base_declaration),
 
     class_body: ($) => seq('{', repeat($.class_body_item), '}'),
 
@@ -459,7 +462,6 @@ module.exports = grammar({
         $.declared_name,
         optional($.deduced_params),
         optional($.type_params),
-        optional(seq('extends', $._expression)),
         choice(';', $.class_body)
       ),
 
