@@ -40,6 +40,14 @@ static bool token_allowed_after_binary_operator(char c) {
 
 static bool is_whitespace(char c) { return c == ' ' || c == '\n'; }
 
+// https://tree-sitter.github.io/tree-sitter/creating-parsers#external-scanners
+//
+// > If a token in the externals array is valid at a given position in the
+// > parse, the external scanner will be called first before anything else is
+// > done.
+//
+// > But if the external scanner may return false and in this case Tree-sitter
+// > fallbacks to the internal lexing mechanism.
 bool tree_sitter_carbon_external_scanner_scan(void* /* payload */,
                                               TSLexer* lexer,
                                               const bool* /* valid_symbols */) {
@@ -58,10 +66,12 @@ bool tree_sitter_carbon_external_scanner_scan(void* /* payload */,
   // move to past the *, add * to current token
   lexer->advance(lexer, /* skip= */ false);
 
+  // https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/lexical_conventions/symbolic_tokens.md
   if (is_whitespace(lexer->lookahead) && whitespace) {
     // foo * bar
     lexer->result_symbol = BINARY_STAR;
-  } else if (!whitespace && token_allowed_after_binary_operator(lexer->lookahead)) {
+  } else if (!whitespace &&
+             token_allowed_after_binary_operator(lexer->lookahead)) {
     // foo*bar or foo*(bar)
     lexer->result_symbol = BINARY_STAR;
   } else {
