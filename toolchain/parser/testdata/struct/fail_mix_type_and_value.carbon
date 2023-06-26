@@ -5,14 +5,14 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'Identifier', text: 'x'},
+// CHECK:STDOUT:     {kind: 'Name', text: 'x'},
 // CHECK:STDOUT:       {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:           {kind: 'Identifier', text: 'a'},
+// CHECK:STDOUT:           {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:         {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'StructFieldType', text: ':', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'StructComma', text: ','},
-// CHECK:STDOUT:         {kind: 'Identifier', text: 'b'},
+// CHECK:STDOUT:         {kind: 'Name', text: 'b'},
 // CHECK:STDOUT:       {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'StructFieldUnknown', text: '.', has_error: yes},
 // CHECK:STDOUT:     {kind: 'StructTypeLiteral', text: '}', subtree_size: 10},

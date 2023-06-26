@@ -5,9 +5,9 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:   {kind: 'Identifier', text: 'Foo'},
+// CHECK:STDOUT:   {kind: 'Name', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'DeducedParameterListStart', text: '['},
-// CHECK:STDOUT:       {kind: 'Identifier', text: 'a'},
+// CHECK:STDOUT:       {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:       {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:     {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:   {kind: 'DeducedParameterList', text: ']', subtree_size: 5},
@@ -15,9 +15,9 @@
 // CHECK:STDOUT:   {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT: {kind: 'ClassDeclaration', text: ';', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:     {kind: 'Identifier', text: 'Bar'},
+// CHECK:STDOUT:     {kind: 'Name', text: 'Bar'},
 // CHECK:STDOUT:       {kind: 'DeducedParameterListStart', text: '['},
-// CHECK:STDOUT:         {kind: 'Identifier', text: 'a'},
+// CHECK:STDOUT:         {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'DeducedParameterList', text: ']', subtree_size: 5},

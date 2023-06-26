@@ -53,7 +53,7 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
       ParseNodeKind::ParameterList);
   auto [name_node, name_id] =
       context.node_stack().PopWithParseNode<SemanticsStringId>(
-          ParseNodeKind::Identifier);
+          ParseNodeKind::Name);
   auto fn_node = context.node_stack().PopForSoloParseNode(
       ParseNodeKind::FunctionIntroducer);
 
