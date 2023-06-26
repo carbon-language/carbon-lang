@@ -20,7 +20,7 @@ auto SemanticsNodeBlockStack::PeekForAdd() -> SemanticsNodeBlockId {
   CARBON_CHECK(!stack_.empty()) << "no current block";
   auto& back = stack_.back();
   if (!back.is_valid()) {
-    back = semantics_ir_->AddBlock();
+    back = semantics_ir_->AddNodeBlock();
     CARBON_VLOG() << name_ << " Add " << stack_.size() - 1 << ": " << back
                   << "\n";
   }

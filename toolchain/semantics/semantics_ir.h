@@ -82,13 +82,6 @@ class SemanticsIR {
   }
   auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
 
-  // Adds an empty node block, returning an ID to reference it.
-  auto AddBlock() -> SemanticsNodeBlockId {
-    SemanticsNodeBlockId id(node_blocks_.size());
-    node_blocks_.push_back({});
-    return id;
-  }
-
   // Adds a callable, returning an ID to reference it.
   auto AddFunction(SemanticsFunction function) -> SemanticsFunctionId {
     SemanticsFunctionId id(functions_.size());
@@ -134,6 +127,13 @@ class SemanticsIR {
   // Returns the requested node.
   auto GetNode(SemanticsNodeId node_id) const -> SemanticsNode {
     return nodes_[node_id.index];
+  }
+
+  // Adds an empty node block, returning an ID to reference it.
+  auto AddNodeBlock() -> SemanticsNodeBlockId {
+    SemanticsNodeBlockId id(node_blocks_.size());
+    node_blocks_.push_back({});
+    return id;
   }
 
   // Returns the requested node block.

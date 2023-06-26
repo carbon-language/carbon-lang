@@ -136,7 +136,7 @@ static auto AddDominatedBlockAndBranchImpl(SemanticsContext& context,
   if (!context.node_block_stack().is_current_block_reachable()) {
     return SemanticsNodeBlockId::Unreachable;
   }
-  auto block_id = context.semantics_ir().AddBlock();
+  auto block_id = context.semantics_ir().AddNodeBlock();
   context.AddNode(BranchNode::Make(parse_node, block_id, args...));
   return block_id;
 }
@@ -170,7 +170,7 @@ auto SemanticsContext::AddConvergenceBlockAndPush(
   for (SemanticsNodeBlockId block_id : blocks) {
     if (block_id != SemanticsNodeBlockId::Unreachable) {
       if (new_block_id == SemanticsNodeBlockId::Unreachable) {
-        new_block_id = semantics_ir().AddBlock();
+        new_block_id = semantics_ir().AddNodeBlock();
       }
       AddNodeToBlock(block_id,
                      SemanticsNode::Branch::Make(parse_node, new_block_id));
@@ -189,7 +189,7 @@ auto SemanticsContext::AddConvergenceBlockWithArgAndPush(
   for (auto [block_id, arg_id] : blocks_and_args) {
     if (block_id != SemanticsNodeBlockId::Unreachable) {
       if (new_block_id == SemanticsNodeBlockId::Unreachable) {
-        new_block_id = semantics_ir().AddBlock();
+        new_block_id = semantics_ir().AddNodeBlock();
       }
       AddNodeToBlock(block_id, SemanticsNode::BranchWithArg::Make(
                                    parse_node, new_block_id, arg_id));
