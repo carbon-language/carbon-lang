@@ -27,7 +27,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Floating-point literals](#floating-point-literals)
     -   [String types](#string-types)
         -   [String literals](#string-literals)
--   [Value categories and value phases](#expression-categories-and-value-phases)
+-   [Values, objects, and expressions](#values-objects-and-expressions)
+    -   [Expression categories](#expression-categories)
+    -   [Value phases](#value-phases)
 -   [Composite types](#composite-types)
     -   [Tuples](#tuples)
     -   [Struct types](#struct-types)
@@ -43,6 +45,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Constant `let` declarations](#constant-let-declarations)
     -   [Variable `var` declarations](#variable-var-declarations)
     -   [`auto`](#auto)
+    -   [Global constants and variables](#global-constants-and-variables)
 -   [Functions](#functions)
     -   [Parameters](#parameters)
     -   [`auto` return type](#auto-return-type)
@@ -794,11 +797,10 @@ not support
 the only pointer [operations](#expressions) are:
 
 -   Dereference: given a pointer `p`, `*p` gives the value `p` points to as an
-    [reference expression](#expression-categories-and-value-phases). `p->m` is
-    syntactic sugar for `(*p).m`.
--   Address-of: given an
-    [reference expression](#expression-categories-and-value-phases) `x`, `&x`
-    returns a pointer to `x`.
+    [reference expression](#expression-categories). `p->m` is syntactic sugar
+    for `(*p).m`.
+-   Address-of: given an [reference expression](#expression-categories) `x`,
+    `&x` returns a pointer to `x`.
 
 There are no [null pointers](https://en.wikipedia.org/wiki/Null_pointer) in
 Carbon. To represent a pointer that may not refer to a valid object, use the
@@ -1001,8 +1003,7 @@ the program's correctness must not depend on which option the Carbon
 implementation chooses.
 
 A [generic binding](#checked-and-template-parameters) uses `:!` instead of a
-colon (`:`) and can only match
-[constant or symbolic values](#expression-categories-and-value-phases), not
+colon (`:`) and can only match [constant or symbolic values](#value-phases), not
 run-time values.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
@@ -1219,7 +1220,7 @@ returned using a [tuple](#tuples) or [struct](#struct-types) type.
 
 > References:
 >
-> -   [Binding patterns and local variables with `let` and `var`](/values.md#binding-patterns-and-local-variables-with-let-and-var)
+> -   [Binding patterns and local variables with `let` and `var`](values.md#binding-patterns-and-local-variables-with-let-and-var)
 > -   Proposal
 >     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
@@ -2673,9 +2674,8 @@ templates. Constraints can then be added incrementally, with the compiler
 verifying that the semantics stay the same. Once all constraints have been
 added, removing the word `template` to switch to a checked parameter is safe.
 
-The [value phase](#expression-categories-and-value-phases) of a checked
-parameter is a symbolic value whereas the value phase of a template parameter is
-constant.
+The [value phase](#value-phases) of a checked parameter is a symbolic value
+whereas the value phase of a template parameter is constant.
 
 Although checked generics are generally preferred, templates enable translation
 of code between C++ and Carbon, and address some cases where the type checking
