@@ -27,7 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Floating-point literals](#floating-point-literals)
     -   [String types](#string-types)
         -   [String literals](#string-literals)
--   [Value categories and value phases](#value-categories-and-value-phases)
+-   [Value categories and value phases](#expression-categories-and-value-phases)
 -   [Composite types](#composite-types)
     -   [Tuples](#tuples)
     -   [Struct types](#struct-types)
@@ -394,7 +394,7 @@ Some values, such as `()` and `{}`, may even be used as types, but only act like
 types when they are in a type position, like after a `:` in a variable
 declaration or the return type after a `->` in a function declaration. Any
 expression in a type position must be
-[a constants or symbolic value](#value-categories-and-value-phases) so the
+[a constants or symbolic value](#expression-categories-and-value-phases) so the
 compiler can resolve whether the value can be used as a type. This also puts
 limits on how much operators can do different things for types. This is good for
 consistency, but is a significant restriction on Carbon's design.
@@ -635,21 +635,56 @@ are available for representing strings with `\`s and `"`s.
 > -   Proposal
 >     [#199: String literals](https://github.com/carbon-language/carbon-lang/pull/199)
 
-## Value categories and value phases
+## Values, objects, and expressions
 
-Every expression has a
-[value category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
-similar to [C++](https://en.cppreference.com/w/cpp/language/value_category),
-that is either _l-value_ or _r-value_. Carbon will automatically convert an
-l-value to an r-value, but not in the other direction.
+Carbon has both abstract _values_ and concrete _objects_. Carbon _values_ are
+things like `42`, `true`, and `i32` (a type value). Carbon _objects_ have
+_storage_ where values can be read and written. Storage also allows taking the
+address of an object in memory in Carbon.
 
-L-value expressions refer to values that have storage and a stable address. They
-may be modified, assuming their type is not [`const`](#const).
+> References:
+>
+> -   [Values, variables, and pointers](values.md)
+> -   Proposal
+>     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
-R-value expressions evaluate to values that may not have dedicated storage. This
-means they cannot be modified and their address generally cannot be taken. The
-values of r-value expressions are broken down into three kinds, called _value
-phases_:
+### Expression categories
+
+Carbon expressions produce values or reference objects. Every expression has a
+[category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
+similar to [C++](https://en.cppreference.com/w/cpp/language/value_category):
+
+-   [_Value expressions_](/values.md#value-expressions) produce abstract,
+    read-only _values_ that cannot be modified or have its address taken.
+-   [_Reference expressions_](/values.md#reference-expressions) refer to
+    _objects_ with _storage_ where a value may be read or written and the
+    object's address can be taken.
+-   [_Initializing expressions_](/values.md#initializing-expressions) which
+    require storage to be provided implicitly when evaluating the expression.
+    The expression then initializes an object in that storage. These are used to
+    model function returns, which can construct the returned value directly in
+    the caller's storage.
+
+Expressions in one category can be converted to any other category when needed.
+The primitive conversion steps used are:
+
+-   A _read_ converts a reference expression into a value expression.
+-   _Direct initialization_ converts a value expression into an initializing
+    expression.
+-   _Copy initialization_ converts a reference expression into an initializing
+    expression.
+-   _Temporary materialization_ converts an initializing expression into a
+    reference expression.
+
+> References:
+>
+> -   [Expression categories](values.md#expression-categories)
+> -   Proposal
+>     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
+
+### Value phases
+
+Value expressions are also broken down into three _value phases_:
 
 -   A _constant_ has a value known at compile time, and that value is available
     during type checking, for example to use as the size of an array. These
@@ -680,9 +715,7 @@ generally convert into runtime values if an operation that inspects the value is
 performed on them. Runtime values will convert into constants or to symbolic
 values if constant evaluation of the runtime expression succeeds.
 
-> **Note:** Conversion of runtime values to other phases is provisional, as are
-> the semantics of r-values. See pending proposal
-> [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006).
+> **Note:** Conversion of runtime values to other phases is provisional.
 
 ## Composite types
 
@@ -761,29 +794,25 @@ not support
 the only pointer [operations](#expressions) are:
 
 -   Dereference: given a pointer `p`, `*p` gives the value `p` points to as an
-    [l-value](#value-categories-and-value-phases). `p->m` is syntactic sugar for
-    `(*p).m`.
--   Address-of: given an [l-value](#value-categories-and-value-phases) `x`, `&x`
+    [reference expression](#expression-categories-and-value-phases). `p->m` is
+    syntactic sugar for `(*p).m`.
+-   Address-of: given an
+    [reference expression](#expression-categories-and-value-phases) `x`, `&x`
     returns a pointer to `x`.
 
 There are no [null pointers](https://en.wikipedia.org/wiki/Null_pointer) in
 Carbon. To represent a pointer that may not refer to a valid object, use the
 type `Optional(T*)`.
 
-**TODO:** Perhaps Carbon will have
+**Future work:** Perhaps Carbon will have
 [stricter pointer provenance](https://www.ralfj.de/blog/2022/04/11/provenance-exposed.html)
 or restrictions on casts between pointers and integers.
 
-> **Note:** While the syntax for pointers has been decided, the semantics of
-> pointers are provisional, as is the syntax for optionals. See pending proposal
-> [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006).
-
 > References:
 >
-> -   Question-for-leads issue
->     [#520: should we use whitespace-sensitive operator fixity?](https://github.com/carbon-language/carbon-lang/issues/520)
-> -   Question-for-leads issue
->     [#523: what syntax should we use for pointer types?](https://github.com/carbon-language/carbon-lang/issues/523)
+> -   [Pointers](values.md#pointers)
+> -   Proposal
+>     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
 ### Arrays and slices
 
@@ -844,7 +873,7 @@ Some common expressions in Carbon include:
         `not e`
     -   [Indexing](#arrays-and-slices): `a[3]`
     -   [Function](#functions) call: `f(4)`
-    -   [Pointer](#pointer-types): `*p`, `p->m`, `&x`
+    -   [Pointer](expressions/pointer_operators.md): `*p`, `p->m`, `&x`
     -   [Move](#move): `~x`
 
 -   [Conditionals](expressions/if.md): `if c then t else f`
@@ -873,6 +902,8 @@ are applied to convert the expression to the target type.
 >     [#911: Conditional expressions](https://github.com/carbon-language/carbon-lang/pull/911)
 > -   Proposal
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
+> -   Proposal
+>     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
 ## Declarations, Definitions, and Scopes
 
@@ -953,11 +984,11 @@ Binding patterns default to _`let` bindings_. The `var` keyword is used to make
 it a _`var` binding_.
 
 -   The result of a `let` binding is the name is bound to an
-    [r-value](#value-categories-and-value-phases). This means the value cannot
-    be modified, and its address generally cannot be taken.
+    [r-value](#expression-categories-and-value-phases). This means the value
+    cannot be modified, and its address generally cannot be taken.
 -   A `var` binding has dedicated storage, and so the name is an
-    [l-value](#value-categories-and-value-phases) which can be modified and has
-    a stable address.
+    [l-value](#expression-categories-and-value-phases) which can be modified and
+    has a stable address.
 
 A `let`-binding may be implemented as an alias for the original value (like a
 [`const` reference in C++](<https://en.wikipedia.org/wiki/Reference_(C%2B%2B)>)),
@@ -970,8 +1001,8 @@ implementation chooses.
 
 A [generic binding](#checked-and-template-parameters) uses `:!` instead of a
 colon (`:`) and can only match
-[constant or symbolic values](#value-categories-and-value-phases), not run-time
-values.
+[constant or symbolic values](#expression-categories-and-value-phases), not
+run-time values.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
@@ -1047,14 +1078,17 @@ Here `x: i64` is the pattern, which is followed by an equal sign (`=`) and the
 value to match, `42`. The names from [binding patterns](#binding-patterns) are
 introduced into the enclosing [scope](#declarations-definitions-and-scopes).
 
-> **Note:** `let` declarations are provisional. See pending proposal
-> [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006).
+> References:
+>
+> -   [Binding patterns and local variables with `let` and `var`](values.md#binding-patterns-and-local-variables-with-let-and-var)
+> -   Proposal
+>     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
 ### Variable `var` declarations
 
 A `var` declaration is similar, except with `var` bindings, so `x` here is an
-[l-value](#value-categories-and-value-phases) with storage and an address, and
-so may be modified:
+[l-value](#expression-categories-and-value-phases) with storage and an address,
+and so may be modified:
 
 ```carbon
 var x: i64 = 42;
@@ -1067,7 +1101,7 @@ they are used.
 
 > References:
 >
-> -   [Variables](variables.md)
+> -   [Binding patterns and local variables with `let` and `var`](values.md#binding-patterns-and-local-variables-with-let-and-var)
 > -   Proposal
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
 > -   Proposal
@@ -1076,6 +1110,8 @@ they are used.
 >     [#339: Add `var <type> <identifier> [ = <value> ];` syntax for variables](https://github.com/carbon-language/carbon-lang/pull/339)
 > -   Proposal
 >     [#618: var ordering](https://github.com/carbon-language/carbon-lang/pull/618)
+> -   Proposal
+>     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
 ### `auto`
 
@@ -1095,6 +1131,21 @@ var z: auto = (y > 1);
 > -   [Type inference](type_inference.md)
 > -   Proposal
 >     [#851: auto keyword for vars](https://github.com/carbon-language/carbon-lang/pull/851)
+
+### Global constants and variables
+
+[Constant `let` declarations](#constant-let-declarations) may occur at a global
+scope as well as local and member scopes. However, there are currently no global
+variables.
+
+> **Note**: The semantics of global constant declarations and absence of global
+> variable declarations is currently provisional.
+>
+> We are exploring several different ideas for how to design less bug-prone
+> patterns to replace the important use cases programmers still have for global
+> variables. We may be unable to fully address them, at least for migrated code,
+> and be forced to add some limited form of global variables back. We may also
+> discover that their convenience outweighs any improvements afforded.
 
 ## Functions
 
@@ -1147,9 +1198,9 @@ declaration. The parameter names in a forward declaration may be omitted using
 
 The bindings in the parameter list default to
 [`let` bindings](#binding-patterns), and so the parameter names are treated as
-[r-values](#value-categories-and-value-phases). This is appropriate for input
-parameters. This binding will be implemented using a pointer, unless it is legal
-to copy and copying is cheaper.
+[r-values](#expression-categories-and-value-phases). This is appropriate for
+input parameters. This binding will be implemented using a pointer, unless it is
+legal to copy and copying is cheaper.
 
 If the `var` keyword is added before the binding, then the arguments will be
 copied (or moved from a temporary) to new storage, and so can be mutated in the
@@ -1165,9 +1216,11 @@ the caller, and dereferencing using `*` in the callee.
 Outputs of a function should prefer to be returned. Multiple values may be
 returned using a [tuple](#tuples) or [struct](#struct-types) type.
 
-> **Note:** The semantics of parameter passing are provisional. See pending
-> proposal
-> [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006).
+> References:
+>
+> -   [Binding patterns and local variables with `let` and `var`](/values.md#binding-patterns-and-local-variables-with-let-and-var)
+> -   Proposal
+>     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
 ### `auto` return type
 
@@ -1688,7 +1741,7 @@ two methods `Distance` and `Offset`:
 -   `origin.Offset(`...`)` does modify the value of `origin`. This is signified
     using `[addr self: Self*]` in the method declaration. Since calling this
     method requires taking the address of `origin`, it may only be called on
-    [non-`const`](#const) [l-values](#value-categories-and-value-phases).
+    [non-`const`](#const) [l-values](#expression-categories-and-value-phases).
 -   Methods may be declared lexically inline like `Distance`, or lexically out
     of line like `Offset`.
 
@@ -1879,7 +1932,7 @@ For every type `MyClass`, there is the type `const MyClass` such that:
 
 -   The data representation is the same, so a `MyClass*` value may be implicitly
     converted to a `(const MyClass)*`.
--   A `const MyClass` [l-value](#value-categories-and-value-phases) may
+-   A `const MyClass` [l-value](#expression-categories-and-value-phases) may
     automatically convert to a `MyClass` r-value, the same way that a `MyClass`
     l-value can.
 -   If member `x` of `MyClass` has type `T`, then member `x` of `const MyClass`
@@ -2618,8 +2671,9 @@ templates. Constraints can then be added incrementally, with the compiler
 verifying that the semantics stay the same. Once all constraints have been
 added, removing the word `template` to switch to a checked parameter is safe.
 
-The [value phase](#value-categories-and-value-phases) of a checked parameter is
-a symbolic value whereas the value phase of a template parameter is constant.
+The [value phase](#expression-categories-and-value-phases) of a checked
+parameter is a symbolic value whereas the value phase of a template parameter is
+constant.
 
 Although checked generics are generally preferred, templates enable translation
 of code between C++ and Carbon, and address some cases where the type checking
@@ -3065,9 +3119,10 @@ The interfaces that correspond to each operator are given by:
 The
 [logical operators can not be overloaded](expressions/logical_operators.md#overloading).
 
-Operators that result in [l-values](#value-categories-and-value-phases), such as
-dereferencing `*p` and indexing `a[3]`, have interfaces that return the address
-of the value. Carbon automatically dereferences the pointer to get the l-value.
+Operators that result in [l-values](#expression-categories-and-value-phases),
+such as dereferencing `*p` and indexing `a[3]`, have interfaces that return the
+address of the value. Carbon automatically dereferences the pointer to get the
+l-value.
 
 Operators that can take multiple arguments, such as function calling operator
 `f(4)`, have a [variadic](generics/details.md#variadic-arguments) parameter

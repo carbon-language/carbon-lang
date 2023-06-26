@@ -22,7 +22,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Comparison to C++ parameters](#comparison-to-c-parameters)
     -   [Value representation and customization](#value-representation-and-customization)
     -   [Polymorphic types](#polymorphic-types)
-    -   [Interop with C++ `const &` and `const` methods.](#interop-with-c-const--and-const-methods)
+    -   [Interop with C++ `const &` and `const` methods](#interop-with-c-const--and-const-methods)
     -   [Escape hatches for value addresses in Carbon](#escape-hatches-for-value-addresses-in-carbon)
 -   [Initializing expressions](#initializing-expressions)
     -   [Function calls and returns](#function-calls-and-returns)
@@ -187,6 +187,14 @@ fn DestructuringExample() {
   MutateThing(&x);
 }
 ```
+
+If `auto` is used in place of the type for a local binding pattern,
+[type inference](type_inference.md) is used to automatically determine the
+variable's type.
+
+These local bindings introduce names scoped to the code block in which they
+occur, which will typically be marked by an open brace (`{`) and close brace
+(`}`).
 
 ### Consuming function parameters
 
@@ -688,55 +696,9 @@ where that initialization is not necessary.
 
 #### Declared `returned` variable
 
-This also allows the return's storage to be matched into a local `returned var`
-variable declaration within a function body, which can then be initialized and
-used just like any other `var` declaration. The storage used for the declaration
-is exactly that provided to a call to the function. For example:
-
-```carbon
-fn CreateMyObject2() -> MyType {
-  returned var result: MyType = CreateMyObject;
-
-  // ... Any code we want here ...
-
-  // Must explicitly use the variable return syntax rather than returning an
-  // expression.
-  return var;
-}
-```
-
-The pattern used for a `returned var` declaration does have some restrictions:
-it must produce the same _storage_ as a call would for the return type. The
-initializer for the declared storage also first initializes storage _with the
-return type_, and then the pattern is matched to bind names.
-
-There are also a set of restrictions on control flow in the presence of a
-`returned var` declaration to provide simple and understandable behavior while
-having reasonable expressivity:
-
-1. Once a `returned var` is in scope, another `returned var` cannot be declared.
-2. Any `return` with a `returned var` in scope must be `return var;` and returns
-   the declared `returned var`.
-3. If control flow exits the scope of a `returned var` in any way other than a
-   `return var;`, it ends the lifetime of the declared `returned var` exactly
-   like it would end the lifetime of a `var` declaration.
-4. There must be a `returned var` declaration in scope for any `return var;`
-   statement.
-
-These rules allows code like:
-
-```carbon
-fn MaybeReturnedVar() -> Point {
-  while (KeepTryingThings()) {
-    returned var p: Point = ...;
-    if (...) {
-      return var;
-    }
-  }
-
-  return MakeMeAPoint();
-}
-```
+The model of initialization of returns also facilitates the use of
+[`returned var` declarations](control_flow/return.md#returned-var). These
+directly observe the storage provided for initialization of a function's return.
 
 ## Pointers
 
@@ -786,8 +748,6 @@ distinction between indirect access and direct access.
 
 For a full discussion of the tradeoffs of these design decisions, see the
 alternatives considered section of [P2006]:
-
-[p2006]: /proposals/p2006.md
 
 -   [References in addition to pointers](/proposals/p2006.md#references-in-addition-to-pointers)
 -   [Syntax-free or automatic dereferencing](/proposals/p2006.md#syntax-free-or-automatic-dereferencing)
@@ -948,7 +908,13 @@ pursued based on a real and concrete need, and the minimal extension is adopted.
 
 ## Alternatives considered
 
--   [Immutable value escape hatch](/proposals/p2006.md#immutable-value-escape-hatch)
+-   [No `var` introducer keyword](/proposals/p0339.md#no-var-introducer-keyword)
+-   [Name of the `var` statement introducer](/proposals/p0339.md#name-of-the-var-statement-introducer)
+-   [Colon between type and identifier](/proposals/p0339.md#colon-between-type-and-identifier)
+-   [Type elision](/proposals/p0339.md#type-elision)
+-   [Type ordering](/proposals/p0618.md#type-ordering)
+-   [Elide the type instead of using `auto`](/proposals/p0851.md#elide-the-type-instead-of-using-auto)
+-   [Value expression escape hatches](/proposals/p2006.md#value-expression-escape-hatches)
 -   [References in addition to pointers](/proposals/p2006.md#references-in-addition-to-pointers)
 -   [Syntax-free or automatic dereferencing](/proposals/p2006.md#syntax-free-or-automatic-dereferencing)
 -   [Exclusively using references](/proposals/p2006.md#exclusively-using-references)
@@ -957,7 +923,14 @@ pursued based on a real and concrete need, and the minimal extension is adopted.
 
 ## References
 
--   Proposal
-    [#257: Initialization of memory and values](https://github.com/carbon-language/carbon-lang/pull/257)
--   Proposal
-    [#2006: Values, variables, and pointers](https://github.com/carbon-language/carbon-lang/pull/2006)
+-   [Proposal #257: Initialization of memory and values][p0257]
+-   [Proposal #339: `var` statement][p0339]
+-   [Proposal #618: `var` ordering][p0618]
+-   [Proposal #851: auto keyword for vars][p0851]
+-   [Proposal #2006: Values, variables, and pointers][p2006]
+
+[p0257]: /proposals/p0257.md
+[p0339]: /proposals/p0339.md
+[p0618]: /proposals/p0618.md
+[p0851]: /proposals/p0851.md
+[p2006]: /proposals/p2006.md

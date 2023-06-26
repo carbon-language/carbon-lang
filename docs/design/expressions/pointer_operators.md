@@ -20,13 +20,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-Carbon provides three unary operators related to pointers:
+Carbon provides the following operators related to pointers:
 
 -   `&` as a prefix unary operator takes the address of an object, forming a
     pointer to it.
 -   `*` as a prefix unary operator dereferences a pointer.
--   `*` as a postfix unary operator produces a pointer _type_ to some other
-    type.
 
 ## Details
 
@@ -36,25 +34,21 @@ details are covered here.
 
 The syntax tries to remain as similar as possible to C++ pointer types as they
 are commonly written in code and are expected to be extremely common and a key
-anchor of syntactic similarity between the languages. The different alternatives
-and tradeoffs for this syntax issue were discussed extensively in
-[#523](https://github.com/carbon-language/carbon-lang/issues/523).
+anchor of syntactic similarity between the languages.
 
 ### Precedence
 
-All of these operators have high precedence. Only
-[member access](member_access.md) expressions can be used as an unparenthesized
-operand to them. The postfix operator, because it is exclusively a _type_
-operator, doesn't have a precedence relationship with most other operators. The
-prefix operators, however, are generally above the other unary and binary
-operators and can appear inside them as unparenthesized operands. For the full
-details, see the [precedence graph](README.md#precedence).
+These operators have high precedence. Only [member access](member_access.md)
+expressions can be used as an unparenthesized operand to them.
+
+The two prefix operators `&` and `*` are generally above the other unary and
+binary operators and can appear inside them as unparenthesized operands. For the
+full details, see the [precedence graph](README.md#precedence).
 
 ## Alternatives considered
 
-TODO
+-   [Alternative pointer syntaxes](/proposals/p2006.md#alternative-pointer-syntaxes)
 
 ## References
 
--   Proposal
-    [#2006: Values, variables, and pointers](https://github.com/carbon-language/carbon-lang/pull/2006).
+-   [Proposal #2006: Values, variables, and pointers](/proposals/p2006.md)

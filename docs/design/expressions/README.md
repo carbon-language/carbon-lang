@@ -61,14 +61,19 @@ graph BT
     unqualifiedName["x"]
     click unqualifiedName "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/README.md#unqualified-names"
 
+    top((" "))
+
     memberAccess>"x.y<br>
                   x.(...)<br>
                   x->y<br>
                   x->(...)"]
     click memberAccess "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
 
-    pointerType["x*"]
-    click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/pointer.md"
+    constType["const T"]
+    click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
+
+    pointerType["T*"]
+    click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
 
     pointer["*x<br>
              &x<br>"]
@@ -133,8 +138,12 @@ graph BT
 
     expressionEnd["x;"]
 
-    memberAccess --> parens & braces & unqualifiedName
-    pointerType --> memberAccess
+    top --> parens & braces & unqualifiedName
+
+    constType --> top
+    pointerType --> constType
+
+    memberAccess --> top
     pointer --> memberAccess
     negation --> pointer
     complement --> pointer

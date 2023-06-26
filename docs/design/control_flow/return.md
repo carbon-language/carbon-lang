@@ -80,8 +80,8 @@ fn MaybeDraw(should_draw: bool) -> () {
 
 ### `returned var`
 
-[Variables](../variables.md) may be declared with a `returned` statement. Its
-syntax is:
+[Local variables](../values.md#binding-patterns-and-local-variables-with-let-and-var)
+may be declared with a `returned` statement. Its syntax is:
 
 > `returned` _var statement_
 
