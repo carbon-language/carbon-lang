@@ -57,7 +57,7 @@ TEST_F(ParseTreeTest, PrintPostorderAsYAML) {
 
   auto file = Yaml::SequenceValue{
       Yaml::MappingValue{{"kind", "FunctionIntroducer"}, {"text", "fn"}},
-      Yaml::MappingValue{{"kind", "DeclaredName"}, {"text", "F"}},
+      Yaml::MappingValue{{"kind", "Identifier"}, {"text", "F"}},
       Yaml::MappingValue{{"kind", "ParameterListStart"}, {"text", "("}},
       Yaml::MappingValue{
           {"kind", "ParameterList"}, {"text", ")"}, {"subtree_size", "2"}},
@@ -86,7 +86,7 @@ TEST_F(ParseTreeTest, PrintPreorderAsYAML) {
       Yaml::MappingValue{
           {"node_index", "0"}, {"kind", "FunctionIntroducer"}, {"text", "fn"}},
       Yaml::MappingValue{
-          {"node_index", "1"}, {"kind", "DeclaredName"}, {"text", "F"}},
+          {"node_index", "1"}, {"kind", "Identifier"}, {"text", "F"}},
       Yaml::MappingValue{{"node_index", "3"},
                          {"kind", "ParameterList"},
                          {"text", ")"},

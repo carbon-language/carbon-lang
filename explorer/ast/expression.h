@@ -858,6 +858,7 @@ class IntrinsicExpression : public RewritableMixin<Expression> {
     Print,
     Alloc,
     Dealloc,
+    PrintAllocs,
     Rand,
     ImplicitAs,
     ImplicitAsConvert,

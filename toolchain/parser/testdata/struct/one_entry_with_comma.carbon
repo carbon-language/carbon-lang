@@ -5,9 +5,9 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'z'},
+// CHECK:STDOUT:     {kind: 'Identifier', text: 'z'},
 // CHECK:STDOUT:       {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:           {kind: 'DesignatedName', text: 'n'},
+// CHECK:STDOUT:           {kind: 'Identifier', text: 'n'},
 // CHECK:STDOUT:         {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'StructFieldType', text: ':', subtree_size: 4},
@@ -16,7 +16,7 @@
 // CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 9},
 // CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:     {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:         {kind: 'DesignatedName', text: 'n'},
+// CHECK:STDOUT:         {kind: 'Identifier', text: 'n'},
 // CHECK:STDOUT:       {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'Literal', text: '4'},
 // CHECK:STDOUT:     {kind: 'StructFieldValue', text: '=', subtree_size: 4},

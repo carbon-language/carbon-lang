@@ -44,8 +44,8 @@ class ParseAndExecuteTestFile : public FileTestBase {
   }
 
   auto RunWithFiles(const llvm::SmallVector<TestFile>& test_files,
-                    llvm::raw_ostream& stdout, llvm::raw_ostream& stderr)
-      -> bool override {
+                    llvm::raw_pwrite_stream& stdout,
+                    llvm::raw_pwrite_stream& stderr) -> bool override {
     if (test_files.size() != 1) {
       ADD_FAILURE() << "Only 1 file is supported: " << test_files.size()
                     << " provided";

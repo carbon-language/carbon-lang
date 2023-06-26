@@ -7,10 +7,13 @@
 
 #include <list>
 #include <map>
+#include <optional>
 #include <tuple>
 #include <vector>
 
+#include "common/check.h"
 #include "common/ostream.h"
+#include "explorer/ast/address.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/statement.h"
@@ -45,30 +48,42 @@ class RuntimeScope {
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
-  // Binds `value` as the value of `value_node`.
-  void Bind(ValueNodeView value_node, Nonnull<const Value*> value);
-
   // Allocates storage for `value_node` in `heap`, and initializes it with
   // `value`.
-  // TODO: Update existing callers to use Bind instead, where appropriate.
-  void Initialize(ValueNodeView value_node, Nonnull<const Value*> value);
+  auto Initialize(ValueNodeView value_node, Nonnull<const Value*> value)
+      -> Nonnull<const LocationValue*>;
+
+  // Bind allocation lifetime to scope. Should only be called with unowned
+  // allocations to avoid a double free.
+  void BindLifetimeToScope(Address address);
+
+  // Binds location `address` of a reference value to `value_node` without
+  // allocating local storage.
+  void Bind(ValueNodeView value_node, Address address);
+
+  // Binds unlocated `value` to `value_node` without allocating local storage.
+  // TODO: BindValue should pin the lifetime of `value` and make sure it isn't
+  // mutated.
+  void BindValue(ValueNodeView value_node, Nonnull<const Value*> value);
 
   // Transfers the names and allocations from `other` into *this. The two
   // scopes must not define the same name, and must be backed by the same Heap.
   void Merge(RuntimeScope other);
 
-  // Returns the local storage for value_node, if it has storage local to
-  // this scope.
+  // Given node `value_node`, returns:
+  // - its `LocationValue*` if bound to a reference expression in this scope,
+  // - a `Value*` if bound to a value expression in this scope, or
+  // - `nullptr` if not bound.
   auto Get(ValueNodeView value_node) const
-      -> std::optional<Nonnull<const LocationValue*>>;
+      -> std::optional<Nonnull<const Value*>>;
 
-  // Returns the local values in created order
+  // Returns the local values with allocation in created order.
   auto allocations() const -> const std::vector<AllocationId>& {
     return allocations_;
   }
 
  private:
-  llvm::MapVector<ValueNodeView, Nonnull<const LocationValue*>,
+  llvm::MapVector<ValueNodeView, Nonnull<const Value*>,
                   std::map<ValueNodeView, unsigned>>
       locals_;
   std::vector<AllocationId> allocations_;
@@ -184,8 +199,12 @@ class LocationAction : public Action {
 // An Action which implements evaluation of an Expression to produce a `Value*`.
 class ExpressionAction : public Action {
  public:
-  explicit ExpressionAction(Nonnull<const Expression*> expression)
-      : Action(Kind::ExpressionAction), expression_(expression) {}
+  explicit ExpressionAction(
+      Nonnull<const Expression*> expression,
+      std::optional<AllocationId> initialized_location = std::nullopt)
+      : Action(Kind::ExpressionAction),
+        expression_(expression),
+        location_received_(initialized_location) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::ExpressionAction;
@@ -194,8 +213,14 @@ class ExpressionAction : public Action {
   // The Expression this Action evaluates.
   auto expression() const -> const Expression& { return *expression_; }
 
+  // The location provided for the initializing expression, if any.
+  auto location_received() const -> std::optional<AllocationId> {
+    return location_received_;
+  }
+
  private:
   Nonnull<const Expression*> expression_;
+  std::optional<AllocationId> location_received_;
 };
 
 // An Action which implements the Instantiation of Type. The result is expressed
@@ -242,8 +267,11 @@ class WitnessAction : public Action {
 // result.
 class StatementAction : public Action {
  public:
-  explicit StatementAction(Nonnull<const Statement*> statement)
-      : Action(Kind::StatementAction), statement_(statement) {}
+  explicit StatementAction(Nonnull<const Statement*> statement,
+                           std::optional<AllocationId> location_received)
+      : Action(Kind::StatementAction),
+        statement_(statement),
+        location_received_(location_received) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::StatementAction;
@@ -252,8 +280,25 @@ class StatementAction : public Action {
   // The Statement this Action executes.
   auto statement() const -> const Statement& { return *statement_; }
 
+  // The location provided for the initializing expression, if any.
+  auto location_received() const -> std::optional<AllocationId> {
+    return location_received_;
+  }
+
+  // Sets the location provided to an initializing expression.
+  auto set_location_created(AllocationId location_created) {
+    CARBON_CHECK(!location_created_) << "location created set twice";
+    location_created_ = location_created;
+  }
+  // Returns the location provided to an initializing expression, if any.
+  auto location_created() const -> std::optional<AllocationId> {
+    return location_created_;
+  }
+
  private:
   Nonnull<const Statement*> statement_;
+  std::optional<AllocationId> location_received_;
+  std::optional<AllocationId> location_created_;
 };
 
 // Action which implements the run-time effects of executing a Declaration.

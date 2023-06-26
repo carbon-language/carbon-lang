@@ -7,6 +7,8 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/iterator_range.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_node.h"
 
@@ -20,8 +22,10 @@ struct SemanticsFunction {
     if (return_type_id.is_valid()) {
       out << ", return_type: " << return_type_id;
     }
-    if (body_id.is_valid()) {
-      out << ", body: " << body_id;
+    if (!body_block_ids.empty()) {
+      out << llvm::formatv(
+          ", body: {{{0}}}",
+          llvm::make_range(body_block_ids.begin(), body_block_ids.end()));
     }
     out << "}";
   }
@@ -32,9 +36,10 @@ struct SemanticsFunction {
   SemanticsNodeBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
   SemanticsTypeId return_type_id;
-  // The body. This will be invalid for declarations which don't have a visible
-  // definition.
-  SemanticsNodeBlockId body_id;
+  // A list of the code blocks in the body of the function, in lexical order.
+  // The first block is the entry block. This will be empty for declarations
+  // that don't have a visible definition.
+  llvm::SmallVector<SemanticsNodeBlockId> body_block_ids;
 };
 
 struct SemanticsRealLiteral {

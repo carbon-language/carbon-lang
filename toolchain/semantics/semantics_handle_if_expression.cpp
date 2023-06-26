@@ -30,12 +30,14 @@ auto SemanticsHandleIfExpressionIf(SemanticsContext& context,
       SemanticsNode::BranchIf::Make(if_node, then_block_id, cond_value_id));
   context.AddNodeToBlock(if_block_id,
                          SemanticsNode::Branch::Make(if_node, else_block_id));
+  context.AddCurrentCodeBlockToFunction();
   return true;
 }
 
 auto SemanticsHandleIfExpressionThen(SemanticsContext& context,
                                      ParseTree::Node then_node) -> bool {
   context.node_stack().Push(then_node, context.node_block_stack().Pop());
+  context.AddCurrentCodeBlockToFunction();
   return true;
 }
 
@@ -65,6 +67,7 @@ auto SemanticsHandleIfExpressionElse(SemanticsContext& context,
   context.AddNodeToBlock(else_end_block_id,
                          SemanticsNode::BranchWithArg::Make(
                              else_node, resume_block_id, else_value_id));
+  context.AddCurrentCodeBlockToFunction();
 
   // Obtain the value in the resumption block and push it.
   context.AddNodeAndPush(

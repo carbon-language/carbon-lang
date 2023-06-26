@@ -34,13 +34,11 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
   }
   auto param_refs_id = context.node_stack().Pop<SemanticsNodeBlockId>(
       ParseNodeKind::ParameterList);
-  auto name_node =
-      context.node_stack().PopForSoloParseNode(ParseNodeKind::DeclaredName);
+  auto [name_node, name_id] =
+      context.node_stack().PopWithParseNode<SemanticsStringId>(
+          ParseNodeKind::Identifier);
   auto fn_node = context.node_stack().PopForSoloParseNode(
       ParseNodeKind::FunctionIntroducer);
-
-  auto name_str = context.parse_tree().GetNodeText(name_node);
-  auto name_id = context.semantics_ir().AddString(name_str);
 
   // Create the entry block.
   auto outer_block = context.node_block_stack().PeekForAdd();
@@ -51,7 +49,7 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
       {.name_id = name_id,
        .param_refs_id = param_refs_id,
        .return_type_id = return_type_id,
-       .body_id = context.node_block_stack().PeekForAdd()});
+       .body_block_ids = {context.node_block_stack().PeekForAdd()}});
   auto decl_id = context.AddNodeToBlock(
       outer_block,
       SemanticsNode::FunctionDeclaration::Make(fn_node, function_id));

@@ -25,8 +25,8 @@ class Driver {
  public:
   // Constructs a driver with any error or informational output directed to a
   // specified stream.
-  Driver(llvm::vfs::FileSystem& fs, llvm::raw_ostream& output_stream,
-         llvm::raw_ostream& error_stream)
+  Driver(llvm::vfs::FileSystem& fs, llvm::raw_pwrite_stream& output_stream,
+         llvm::raw_pwrite_stream& error_stream)
       : fs_(fs), output_stream_(output_stream), error_stream_(error_stream) {
     (void)fs_;
   }
@@ -66,8 +66,8 @@ class Driver {
                        llvm::ArrayRef<llvm::StringRef> args) -> void;
 
   llvm::vfs::FileSystem& fs_;
-  llvm::raw_ostream& output_stream_;
-  llvm::raw_ostream& error_stream_;
+  llvm::raw_pwrite_stream& output_stream_;
+  llvm::raw_pwrite_stream& error_stream_;
   llvm::raw_ostream* vlog_stream_ = nullptr;
 };
 

@@ -5,10 +5,10 @@
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, body: block2},
-// CHECK:STDOUT:   {name: str2, param_refs: block4, body: block5},
-// CHECK:STDOUT:   {name: str4, param_refs: block7, body: block8},
-// CHECK:STDOUT:   {name: str5, param_refs: block0, body: block9},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
+// CHECK:STDOUT:   {name: str1, param_refs: block4, body: {block5}}},
+// CHECK:STDOUT:   {name: str3, param_refs: block7, body: {block8}}},
+// CHECK:STDOUT:   {name: str5, param_refs: block0, body: {block9}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,
@@ -22,10 +22,10 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   Run0,
-// CHECK:STDOUT:   a,
 // CHECK:STDOUT:   Run1,
-// CHECK:STDOUT:   b,
+// CHECK:STDOUT:   a,
 // CHECK:STDOUT:   Run2,
+// CHECK:STDOUT:   b,
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
@@ -35,12 +35,12 @@
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+1, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+4, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+4, type: type1},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+6, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str4, arg1: node+6, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function3},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},

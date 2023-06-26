@@ -32,13 +32,6 @@ auto SemanticsHandleContinueStatementStart(SemanticsContext& context,
   return context.TODO(parse_node, "HandleContinueStatementStart");
 }
 
-auto SemanticsHandleDeclaredName(SemanticsContext& context,
-                                 ParseTree::Node parse_node) -> bool {
-  // The parent is responsible for binding the name.
-  context.node_stack().Push(parse_node);
-  return true;
-}
-
 auto SemanticsHandleDeducedParameterList(SemanticsContext& context,
                                          ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleDeducedParameterList");
@@ -50,19 +43,10 @@ auto SemanticsHandleDeducedParameterListStart(SemanticsContext& context,
   return context.TODO(parse_node, "HandleDeducedParameterListStart");
 }
 
-auto SemanticsHandleDesignatedName(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
-  auto name_str = context.parse_tree().GetNodeText(parse_node);
-  auto name_id = context.semantics_ir().AddString(name_str);
-  // The parent is responsible for binding the name.
-  context.node_stack().Push(parse_node, name_id);
-  return true;
-}
-
 auto SemanticsHandleDesignatorExpression(SemanticsContext& context,
                                          ParseTree::Node parse_node) -> bool {
-  auto name_id = context.node_stack().Pop<SemanticsStringId>(
-      ParseNodeKind::DesignatedName);
+  auto name_id =
+      context.node_stack().Pop<SemanticsStringId>(ParseNodeKind::Identifier);
 
   auto base_id = context.node_stack().Pop<SemanticsNodeId>();
   auto base = context.semantics_ir().GetNode(base_id);
@@ -156,6 +140,15 @@ auto SemanticsHandleGenericPatternBinding(SemanticsContext& context,
   return context.TODO(parse_node, "GenericPatternBinding");
 }
 
+auto SemanticsHandleIdentifier(SemanticsContext& context,
+                               ParseTree::Node parse_node) -> bool {
+  auto name_str = context.parse_tree().GetNodeText(parse_node);
+  auto name_id = context.semantics_ir().AddString(name_str);
+  // The parent is responsible for binding the name.
+  context.node_stack().Push(parse_node, name_id);
+  return true;
+}
+
 auto SemanticsHandleInfixOperator(SemanticsContext& context,
                                   ParseTree::Node parse_node) -> bool {
   auto rhs_id = context.node_stack().Pop<SemanticsNodeId>();
@@ -191,6 +184,7 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
       context.AddNodeToBlock(rhs_block_id,
                              SemanticsNode::BranchWithArg::Make(
                                  parse_node, resume_block_id, rhs_id));
+      context.AddCurrentCodeBlockToFunction();
 
       // Collect the result from either the first or second operand.
       context.AddNodeAndPush(
@@ -385,10 +379,9 @@ auto SemanticsHandlePatternBinding(SemanticsContext& context,
   auto cast_type_id = context.ExpressionAsType(type_node, parsed_type_id);
 
   // Get the name.
-  auto name_node =
-      context.node_stack().PopForSoloParseNode(ParseNodeKind::DeclaredName);
-  auto name_str = context.parse_tree().GetNodeText(name_node);
-  auto name_id = context.semantics_ir().AddString(name_str);
+  auto [name_node, name_id] =
+      context.node_stack().PopWithParseNode<SemanticsStringId>(
+          ParseNodeKind::Identifier);
 
   // Allocate storage, linked to the name for error locations.
   auto storage_id =
@@ -547,6 +540,7 @@ auto SemanticsHandleShortCircuitOperand(SemanticsContext& context,
   context.AddNodeToBlock(
       lhs_block_id, SemanticsNode::BranchWithArg::Make(
                         parse_node, end_block_id, short_circuit_result_id));
+  context.AddCurrentCodeBlockToFunction();
 
   // Put the condition back on the stack for SemanticsHandleInfixOperator.
   context.node_stack().Push(parse_node, cond_value_id);

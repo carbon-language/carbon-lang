@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str3, param_refs: block2, return_type: type1, body: block4},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4, block6, block8, block7, block9, block5, block11, block10, block12, block13}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,
@@ -16,10 +16,10 @@
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
+// CHECK:STDOUT:   F,
 // CHECK:STDOUT:   a,
 // CHECK:STDOUT:   b,
 // CHECK:STDOUT:   c,
-// CHECK:STDOUT:   F,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeBoolType,
@@ -27,11 +27,11 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+0, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+2, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+4, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+4, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block6, arg1: node+0},
 // CHECK:STDOUT:   {kind: Branch, arg0: block5},

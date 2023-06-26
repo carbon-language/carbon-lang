@@ -10,7 +10,6 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "toolchain/lowering/lowering_block_worklist.h"
 #include "toolchain/lowering/lowering_context.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
@@ -84,7 +83,6 @@ class LoweringFunctionContext {
     return lowering_context_->llvm_module();
   }
   auto builder() -> llvm::IRBuilder<>& { return builder_; }
-  auto block_worklist() -> LoweringBlockWorklist& { return block_worklist_; }
   auto semantics_ir() -> const SemanticsIR& {
     return lowering_context_->semantics_ir();
   }
@@ -97,9 +95,6 @@ class LoweringFunctionContext {
   llvm::Function* function_;
 
   llvm::IRBuilder<> builder_;
-
-  // A worklist for blocks we need to lower.
-  LoweringBlockWorklist block_worklist_;
 
   // Maps a function's SemanticsIR blocks to lowered blocks.
   llvm::DenseMap<SemanticsNodeBlockId, llvm::BasicBlock*> blocks_;
