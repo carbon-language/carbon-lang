@@ -12,26 +12,6 @@ auto SemanticsHandleAddress(SemanticsContext& context,
   return context.TODO(parse_node, "HandleAddress");
 }
 
-auto SemanticsHandleBreakStatement(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleBreakStatement");
-}
-
-auto SemanticsHandleBreakStatementStart(SemanticsContext& context,
-                                        ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleBreakStatementStart");
-}
-
-auto SemanticsHandleContinueStatement(SemanticsContext& context,
-                                      ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleContinueStatement");
-}
-
-auto SemanticsHandleContinueStatementStart(SemanticsContext& context,
-                                           ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleContinueStatementStart");
-}
-
 auto SemanticsHandleDeducedParameterList(SemanticsContext& context,
                                          ParseTree::Node parse_node) -> bool {
   return context.TODO(parse_node, "HandleDeducedParameterList");
@@ -99,40 +79,10 @@ auto SemanticsHandleEmptyDeclaration(SemanticsContext& /*context*/,
   return true;
 }
 
-auto SemanticsHandleExpressionStatement(SemanticsContext& context,
-                                        ParseTree::Node /*parse_node*/)
-    -> bool {
-  // Pop the expression without investigating its contents.
-  // TODO: This will probably eventually need to do some "do not discard"
-  // analysis.
-  context.node_stack().PopAndDiscardId();
-  return true;
-}
-
 auto SemanticsHandleFileEnd(SemanticsContext& /*context*/,
                             ParseTree::Node /*parse_node*/) -> bool {
   // Do nothing, no need to balance this node.
   return true;
-}
-
-auto SemanticsHandleForHeader(SemanticsContext& context,
-                              ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleForHeader");
-}
-
-auto SemanticsHandleForHeaderStart(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleForHeaderStart");
-}
-
-auto SemanticsHandleForIn(SemanticsContext& context, ParseTree::Node parse_node)
-    -> bool {
-  return context.TODO(parse_node, "HandleForIn");
-}
-
-auto SemanticsHandleForStatement(SemanticsContext& context,
-                                 ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleForStatement");
 }
 
 auto SemanticsHandleGenericPatternBinding(SemanticsContext& context,
@@ -422,69 +372,6 @@ auto SemanticsHandlePrefixOperator(SemanticsContext& context,
   return true;
 }
 
-auto SemanticsHandleReturnStatement(SemanticsContext& context,
-                                    ParseTree::Node parse_node) -> bool {
-  CARBON_CHECK(!context.return_scope_stack().empty());
-  const auto& fn_node =
-      context.semantics_ir().GetNode(context.return_scope_stack().back());
-  const auto callable =
-      context.semantics_ir().GetFunction(fn_node.GetAsFunctionDeclaration());
-
-  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
-      ParseNodeKind::ReturnStatementStart) {
-    context.node_stack().PopAndDiscardSoloParseNode(
-        ParseNodeKind::ReturnStatementStart);
-
-    if (callable.return_type_id.is_valid()) {
-      // TODO: Add a note pointing at the return type's parse node.
-      CARBON_DIAGNOSTIC(ReturnStatementMissingExpression, Error,
-                        "Must return a {0}.", std::string);
-      context.emitter()
-          .Build(parse_node, ReturnStatementMissingExpression,
-                 context.semantics_ir().StringifyType(callable.return_type_id))
-          .Emit();
-    }
-
-    context.AddNode(SemanticsNode::Return::Make(parse_node));
-  } else {
-    auto arg = context.node_stack().Pop<SemanticsNodeId>();
-    context.node_stack().PopAndDiscardSoloParseNode(
-        ParseNodeKind::ReturnStatementStart);
-
-    if (!callable.return_type_id.is_valid()) {
-      CARBON_DIAGNOSTIC(
-          ReturnStatementDisallowExpression, Error,
-          "No return expression should be provided in this context.");
-      CARBON_DIAGNOSTIC(ReturnStatementImplicitNote, Note,
-                        "There was no return type provided.");
-      context.emitter()
-          .Build(parse_node, ReturnStatementDisallowExpression)
-          .Note(fn_node.parse_node(), ReturnStatementImplicitNote)
-          .Emit();
-    } else {
-      arg =
-          context.ImplicitAsRequired(parse_node, arg, callable.return_type_id);
-    }
-
-    context.AddNode(SemanticsNode::ReturnExpression::Make(
-        parse_node, context.semantics_ir().GetNode(arg).type_id(), arg));
-  }
-
-  // Switch to a new, unreachable, empty node block. This typically won't
-  // contain any semantics IR, but it can do if there are statements following
-  // the `return` statement.
-  context.node_block_stack().Pop();
-  context.node_block_stack().PushUnreachable();
-  return true;
-}
-
-auto SemanticsHandleReturnStatementStart(SemanticsContext& context,
-                                         ParseTree::Node parse_node) -> bool {
-  // No action, just a bracketing node.
-  context.node_stack().Push(parse_node);
-  return true;
-}
-
 auto SemanticsHandleReturnType(SemanticsContext& context,
                                ParseTree::Node parse_node) -> bool {
   // Propagate the type expression.
@@ -617,21 +504,6 @@ auto SemanticsHandleVariableInitializer(SemanticsContext& context,
   // No action, just a bracketing node.
   context.node_stack().Push(parse_node);
   return true;
-}
-
-auto SemanticsHandleWhileCondition(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleWhileCondition");
-}
-
-auto SemanticsHandleWhileConditionStart(SemanticsContext& context,
-                                        ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleWhileConditionStart");
-}
-
-auto SemanticsHandleWhileStatement(SemanticsContext& context,
-                                   ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandleWhileStatement");
 }
 
 }  // namespace Carbon
