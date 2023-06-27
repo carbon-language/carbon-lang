@@ -9,12 +9,15 @@
 // CHECK:STDOUT: %EmptyTupleType = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %EmptyTupleType @F() {
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %EmptyTupleType @G() {
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %EmptyTupleType @H() {
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %EmptyTupleType @If(i1 %b) {
@@ -30,6 +33,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: 3:                                                ; preds = %2, %1
 // CHECK:STDOUT:   %H = call %EmptyTupleType @H()
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 
 fn F() {}

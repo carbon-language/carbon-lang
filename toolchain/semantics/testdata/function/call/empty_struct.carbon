@@ -33,6 +33,7 @@
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+8, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block6, arg1: function0, type: type0},
+// CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -58,6 +59,7 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+9,

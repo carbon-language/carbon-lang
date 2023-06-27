@@ -20,7 +20,7 @@ auto ParserHandlePackage(ParserContext& context) -> void {
   };
 
   if (!context.ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
-                                       ParseNodeKind::Identifier)) {
+                                       ParseNodeKind::Name)) {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPackage, Error,
                       "Expected identifier after `package`.");
     context.emitter().Emit(*context.position(), ExpectedIdentifierAfterPackage);

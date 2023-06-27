@@ -18,19 +18,17 @@ auto SemanticsHandleIfCondition(SemanticsContext& context,
   auto cond_value_id = context.node_stack().Pop<SemanticsNodeId>();
   cond_value_id = context.ImplicitAsBool(parse_node, cond_value_id);
 
-  // Create the else block and the then block, and branch to the right one. If
+  // Create the then block and the else block, and branch to the right one. If
   // there is no `else`, the then block will terminate with a branch to the
   // else block, which will be reused as the resumption block.
-  auto if_block_id = context.node_block_stack().PopForAdd();
-  auto else_block_id = context.node_block_stack().PushForAdd();
-  auto then_block_id = context.node_block_stack().PushForAdd();
+  auto then_block_id =
+      context.AddDominatedBlockAndBranchIf(parse_node, cond_value_id);
+  auto else_block_id = context.AddDominatedBlockAndBranch(parse_node);
 
-  // Branch to the appropriate block.
-  context.AddNodeToBlock(
-      if_block_id,
-      SemanticsNode::BranchIf::Make(parse_node, then_block_id, cond_value_id));
-  context.AddNodeToBlock(
-      if_block_id, SemanticsNode::Branch::Make(parse_node, else_block_id));
+  // Push the else and then blocks, and start emitting code in the then block.
+  context.node_block_stack().Pop();
+  context.node_block_stack().Push(else_block_id);
+  context.node_block_stack().Push(then_block_id);
   context.AddCurrentCodeBlockToFunction();
 
   context.node_stack().Push(parse_node);
@@ -71,11 +69,8 @@ auto SemanticsHandleIfStatement(SemanticsContext& context,
       // Branch from the then and else blocks to a new resumption block.
       auto then_block_id = context.node_stack().Pop<SemanticsNodeBlockId>(
           ParseNodeKind::IfStatementElse);
-      auto resume_block_id = context.node_block_stack().PushForAdd();
-      context.AddNodeToBlock(then_block_id, SemanticsNode::Branch::Make(
-                                                parse_node, resume_block_id));
-      context.AddNodeToBlock(sub_block_id, SemanticsNode::Branch::Make(
-                                               parse_node, resume_block_id));
+      context.AddConvergenceBlockAndPush(parse_node,
+                                         {then_block_id, sub_block_id});
       break;
     }
 

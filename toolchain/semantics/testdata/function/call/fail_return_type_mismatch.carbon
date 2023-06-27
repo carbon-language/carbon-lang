@@ -32,6 +32,7 @@
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+4, type: type2},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: nodeInvalidType, type: typeInvalidType},
+// CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -49,6 +50,7 @@
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

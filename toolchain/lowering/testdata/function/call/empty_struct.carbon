@@ -22,6 +22,7 @@
 // CHECK:STDOUT:   %1 = load %StructLiteralType, ptr %StructLiteralValue1, align 1
 // CHECK:STDOUT:   %Echo = call %StructLiteralType @Echo(%StructLiteralType %1)
 // CHECK:STDOUT:   store %StructLiteralType %Echo, ptr %var, align 1
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 
 fn Echo(a: {}) -> {} {
