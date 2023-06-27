@@ -157,4 +157,5 @@ cc_library(
 cc_library(
     name = "expression_category",
     hdrs = ["expression_category.h"],
+    deps = ["@llvm-project//llvm:Support"],
 )
