@@ -11,4 +11,14 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(SemanticsNodeKind) = {
 #include "toolchain/semantics/semantics_node_kind.def"
 };
 
+auto SemanticsNodeKind::terminator_kind() const -> SemanticsTerminatorKind {
+  static constexpr SemanticsTerminatorKind Table[] = {
+#define CARBON_SEMANTICS_NODE_KIND(Name) SemanticsTerminatorKind::NotTerminator,
+#define CARBON_SEMANTICS_NODE_KIND_WITH_TERMINATOR_KIND(Name, TerminatorKind) \
+  SemanticsTerminatorKind::TerminatorKind,
+#include "toolchain/semantics/semantics_node_kind.def"
+  };
+  return Table[AsInt()];
+}
+
 }  // namespace Carbon

@@ -57,8 +57,47 @@ class SemanticsContext {
   // Pops the top scope from scope_stack_, cleaning up names from name_lookup_.
   auto PopScope() -> void;
 
+  // Adds a `Branch` node branching to a new node block, and returns the ID of
+  // the new block. All paths to the branch target must go through the current
+  // block, though not necessarily through this branch.
+  auto AddDominatedBlockAndBranch(ParseTree::Node parse_node)
+      -> SemanticsNodeBlockId;
+
+  // Adds a `Branch` node branching to a new node block with a value, and
+  // returns the ID of the new block. All paths to the branch target must go
+  // through the current block.
+  auto AddDominatedBlockAndBranchWithArg(ParseTree::Node parse_node,
+                                         SemanticsNodeId arg_id)
+      -> SemanticsNodeBlockId;
+
+  // Adds a `BranchIf` node branching to a new node block, and returns the ID
+  // of the new block. All paths to the branch target must go through the
+  // current block.
+  auto AddDominatedBlockAndBranchIf(ParseTree::Node parse_node,
+                                    SemanticsNodeId cond_id)
+      -> SemanticsNodeBlockId;
+
+  // Adds branches from the given list of blocks to a new block, for
+  // reconvergence of control flow, and pushes the new block onto the node
+  // block stack.
+  auto AddConvergenceBlockAndPush(
+      ParseTree::Node parse_tree,
+      std::initializer_list<SemanticsNodeBlockId> blocks) -> void;
+
+  // Adds branches from the given list of blocks and values to a new block, for
+  // reconvergence of control flow with a result value, and pushes the new
+  // block onto the node block stack. Returns a node referring to the result
+  // value.
+  auto AddConvergenceBlockWithArgAndPush(
+      ParseTree::Node parse_node,
+      std::initializer_list<std::pair<SemanticsNodeBlockId, SemanticsNodeId>>
+          blocks_and_args) -> SemanticsNodeId;
+
   // Add the current code block to the enclosing function.
   auto AddCurrentCodeBlockToFunction() -> void;
+
+  // Returns whether the current position in the current block is reachable.
+  auto is_current_position_reachable() -> bool;
 
   // Runs ImplicitAsImpl for a set of arguments and parameters.
   //

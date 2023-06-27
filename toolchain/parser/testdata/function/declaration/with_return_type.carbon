@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:   {kind: 'Identifier', text: 'foo'},
+// CHECK:STDOUT:   {kind: 'Name', text: 'foo'},
 // CHECK:STDOUT:     {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:   {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'Literal', text: 'u32'},
