@@ -283,16 +283,18 @@ http_archive(
 )
 
 load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories")
+
 node_repositories(
     node_version = "10.19.0",
 )
 
 http_archive(
     name = "rules_tree_sitter",
-    urls = ["https://github.com/elliottt/rules_tree_sitter/archive/8e248d1ea054b0d5ecdd71de3dccfe421354491f.tar.gz"],
     sha256 = "7d7fbf982ce3ba74eabaa0bd7cee8d6f7fd651e25e2acfae177051c29174f04c",
     strip_prefix = "rules_tree_sitter-8e248d1ea054b0d5ecdd71de3dccfe421354491f",
+    urls = ["https://github.com/elliottt/rules_tree_sitter/archive/8e248d1ea054b0d5ecdd71de3dccfe421354491f.tar.gz"],
 )
 
 load("@rules_tree_sitter//tree_sitter:tree_sitter.bzl", "tree_sitter_register_toolchains")
+
 tree_sitter_register_toolchains()

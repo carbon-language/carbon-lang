@@ -12,16 +12,16 @@ enum TokenType {
 // our scanner is stateless
 void* tree_sitter_carbon_external_scanner_create() { return NULL; }
 
-unsigned tree_sitter_carbon_external_scanner_serialize(void* /* payload */,
-                                                       char* /* buffer */) {
+unsigned tree_sitter_carbon_external_scanner_serialize(void* payload,
+                                                       char* buffer) {
   return 0;  // zero bytes used to serialize
 }
 
-void tree_sitter_carbon_external_scanner_deserialize(void* /* payload */,
-                                                     const char* /* buffer */,
-                                                     unsigned /* length */) {}
+void tree_sitter_carbon_external_scanner_deserialize(void* payload,
+                                                     const char* buffer,
+                                                     unsigned length) {}
 
-void tree_sitter_carbon_external_scanner_destroy(void* /* payload */) {}
+void tree_sitter_carbon_external_scanner_destroy(void* payload) {}
 
 // https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/lexical_conventions/symbolic_tokens.md#overview
 // > the token after the operator must be an identifier, a literal, or any kind of opening bracket (for example, (, [, or {).
@@ -48,9 +48,9 @@ static bool is_whitespace(char c) { return c == ' ' || c == '\n'; }
 //
 // > But if the external scanner may return false and in this case Tree-sitter
 // > fallbacks to the internal lexing mechanism.
-bool tree_sitter_carbon_external_scanner_scan(void* /* payload */,
+bool tree_sitter_carbon_external_scanner_scan(void* payload,
                                               TSLexer* lexer,
-                                              const bool* /* valid_symbols */) {
+                                              const bool* valid_symbols) {
   // skip past whitespace if any
   bool whitespace = false;
   while (is_whitespace(lexer->lookahead)) {
