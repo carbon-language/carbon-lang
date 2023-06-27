@@ -175,7 +175,6 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
       output_file = args.front().split("=").second;
       args = args.drop_front();
     }
-
     if (output_file.empty()) {
       error_stream_ << "ERROR: Must provide an output file.\n";
       return false;

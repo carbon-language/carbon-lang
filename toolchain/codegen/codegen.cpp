@@ -84,11 +84,11 @@ auto CodeGen::GenerateObjectCode(llvm::StringRef output_file) -> bool {
   std::error_code ec;
   llvm::raw_fd_ostream dest(output_file, ec, llvm::sys::fs::OF_None);
   if (ec) {
-    error_stream_ << "Could not open file: " << ec.message() << "\n";
+    error_stream_ << "Error: Could not open file: " << ec.message() << "\n";
     return false;
   }
-  bool has_errors = EmitCode(output_stream_, target_machine,
-                             llvm::CodeGenFileType::CGFT_ObjectFile);
+  bool has_errors =
+      EmitCode(dest, target_machine, llvm::CodeGenFileType::CGFT_ObjectFile);
   delete target_machine;
   return has_errors;
 }
