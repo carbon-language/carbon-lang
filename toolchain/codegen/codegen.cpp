@@ -10,16 +10,11 @@
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/TargetSelect.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/TargetParser/Host.h"
 
 namespace Carbon {
-
-auto PrintAssemblyFromModule(llvm::Module& module,
-                             llvm::StringRef target_triple,
-                             llvm::raw_pwrite_stream& error_stream,
-                             llvm::raw_pwrite_stream& output_stream) -> bool {
+auto CodeGen::CreateTargetMachine() -> llvm::TargetMachine* {
   // Initialize the target registry etc.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
@@ -37,8 +32,8 @@ auto PrintAssemblyFromModule(llvm::Module& module,
   const auto* target = llvm::TargetRegistry::lookupTarget(triple, error);
 
   if (!target) {
-    error_stream << "ERROR: " << error << "\n";
-    return false;
+    error_stream_ << "ERROR: " << error << "\n";
+    return nullptr;
   }
 
   constexpr llvm::StringLiteral CPU = "generic";
@@ -48,24 +43,53 @@ auto PrintAssemblyFromModule(llvm::Module& module,
   std::optional<llvm::Reloc::Model> reloc_model;
   auto* target_machine = target->createTargetMachine(
       target_triple, CPU, Features, target_opts, reloc_model);
-  module.setDataLayout(target_machine->createDataLayout());
-  module.setTargetTriple(target_triple);
+  return target_machine;
+}
+auto CodeGen::EmitCode(llvm::raw_pwrite_stream& dest,
+                       llvm::TargetMachine* target_machine,
+                       llvm::CodeGenFileType file_type) -> bool {
+  Module.setDataLayout(target_machine->createDataLayout());
+  Module.setTargetTriple(target_triple);
 
   // Using the legacy PM to generate the assembly since the new PM
   // does not work with this yet.
   // TODO: make the new PM work with the codegen pipeline.
 
   llvm::legacy::PassManager pass;
-  auto file_type = llvm::CGFT_AssemblyFile;
 
-  if (target_machine->addPassesToEmitFile(pass, output_stream, nullptr,
-                                          file_type)) {
-    error_stream << "Nothing to write to object file\n";
+  if (target_machine->addPassesToEmitFile(pass, dest, nullptr, file_type)) {
+    error_stream_ << "Nothing to write to object file\n";
     return false;
   }
 
-  pass.run(module);
-  delete target_machine;
+  pass.run(Module);
   return true;
+}
+
+auto CodeGen::PrintAssembly() -> bool {
+  auto* target_machine = CreateTargetMachine();
+  if (target_machine == nullptr) {
+    return false;
+  }
+  bool has_errors = EmitCode(output_stream_, target_machine,
+                             llvm::CodeGenFileType::CGFT_AssemblyFile);
+  delete target_machine;
+  return has_errors;
+}
+auto CodeGen::GenerateObjectCode(llvm::StringRef output_file) -> bool {
+  auto* target_machine = CreateTargetMachine();
+  if (target_machine == nullptr) {
+    return false;
+  }
+  std::error_code ec;
+  llvm::raw_fd_ostream dest(output_file, ec, llvm::sys::fs::OF_None);
+  if (ec) {
+    error_stream_ << "Could not open file: " << ec.message() << "\n";
+    return false;
+  }
+  bool has_errors = EmitCode(output_stream_, target_machine,
+                             llvm::CodeGenFileType::CGFT_ObjectFile);
+  delete target_machine;
+  return has_errors;
 }
 }  // namespace Carbon
