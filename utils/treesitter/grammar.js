@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  */
 
+// This grammar is more permissive than toolchain because it is geared towards editor use.
+
 function repeat_sep1(thing, sep) {
   return seq(thing, repeat(seq(sep, thing)));
 }
