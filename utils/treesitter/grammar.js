@@ -170,7 +170,7 @@ module.exports = grammar({
         $.struct_type_literal
       ),
 
-    _binding_lhs: ($) => seq(optional('addr'), choice($.ident, '_')),
+    _binding_lhs: ($) => choice($.ident, '_', seq('addr', 'self')),
 
     paren_pattern: ($) =>
       seq('(', comma_sep($._non_expression_pattern, ','), ')'),
