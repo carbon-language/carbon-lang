@@ -592,11 +592,11 @@ void Value::Print(llvm::raw_ostream& out) const {
              fn_type.deduced_bindings()) {
           out << sep << *deduced;
         }
-        if (fn_type.is_unbound_method()) {
-          if (fn_type.addr_self()) {
-            out << sep << "addr self: " << fn_type.self_type() << "*";
+        if (auto self = fn_type.method_self()) {
+          if (self->addr_self) {
+            out << sep << "addr self: " << *self->self_type << "*";
           } else {
-            out << sep << "self: " << fn_type.self_type();
+            out << sep << "self: " << *self->self_type;
           }
         }
         out << "]";
@@ -852,12 +852,14 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
       const auto& fn1 = cast<FunctionType>(*t1);
       const auto& fn2 = cast<FunctionType>(*t2);
       // Verify `self` parameters match
-      if (fn1.is_unbound_method() != fn2.is_unbound_method()) {
+      auto self1 = fn1.method_self();
+      auto self2 = fn2.method_self();
+      if (self1.has_value() != self2.has_value()) {
         return false;
       }
-      if (fn1.is_unbound_method()) {
-        if (fn1.addr_self() != fn2.addr_self() ||
-            !TypeEqual(&fn1.self_type(), &fn2.self_type(), equality_ctx)) {
+      if (self1) {
+        if (self1->addr_self != self2->addr_self ||
+            !TypeEqual(self1->self_type, self2->self_type, equality_ctx)) {
           return false;
         }
       }
