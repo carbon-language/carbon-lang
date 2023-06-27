@@ -20,7 +20,8 @@ abstract class C {
   }
 }
 
-class D extends C {
+class D {
+  extend base: C;
   var b: i32;
   fn Foo[self: Self]() -> i32 {
     return 2;

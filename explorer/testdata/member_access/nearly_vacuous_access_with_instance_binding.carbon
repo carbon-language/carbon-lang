@@ -8,7 +8,7 @@
 package Foo api;
 interface A { fn F[self: Self]() -> i32; }
 class X {
-  impl as A {
+  extend impl as A {
     fn F[self: Self]() -> i32 { return 1; }
   }
 }

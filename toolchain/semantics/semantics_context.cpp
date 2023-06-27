@@ -28,11 +28,9 @@ SemanticsContext::SemanticsContext(const TokenizedBuffer& tokens,
       semantics_ir_(&semantics_ir),
       vlog_stream_(vlog_stream),
       node_stack_(parse_tree, vlog_stream),
-      node_block_stack_("node_block_stack_", semantics_ir.node_blocks(),
-                        vlog_stream),
-      params_or_args_stack_("params_or_args_stack_", semantics_ir.node_blocks(),
-                            vlog_stream),
-      args_type_info_stack_("args_type_info_stack_", semantics_ir.node_blocks(),
+      node_block_stack_("node_block_stack_", semantics_ir, vlog_stream),
+      params_or_args_stack_("params_or_args_stack_", semantics_ir, vlog_stream),
+      args_type_info_stack_("args_type_info_stack_", semantics_ir,
                             vlog_stream) {
   // Inserts the "Invalid" and "Type" types as "used types" so that
   // canonicalization can skip them. We don't emit either for lowering.
@@ -126,6 +124,122 @@ auto SemanticsContext::PopScope() -> void {
       name_lookup_.erase(it);
     } else {
       it->second.pop_back();
+    }
+  }
+}
+
+template <typename BranchNode, typename... Args>
+static auto AddDominatedBlockAndBranchImpl(SemanticsContext& context,
+                                           ParseTree::Node parse_node,
+                                           Args... args)
+    -> SemanticsNodeBlockId {
+  if (!context.node_block_stack().is_current_block_reachable()) {
+    return SemanticsNodeBlockId::Unreachable;
+  }
+  auto block_id = context.semantics_ir().AddNodeBlock();
+  context.AddNode(BranchNode::Make(parse_node, block_id, args...));
+  return block_id;
+}
+
+auto SemanticsContext::AddDominatedBlockAndBranch(ParseTree::Node parse_node)
+    -> SemanticsNodeBlockId {
+  return AddDominatedBlockAndBranchImpl<SemanticsNode::Branch>(*this,
+                                                               parse_node);
+}
+
+auto SemanticsContext::AddDominatedBlockAndBranchWithArg(
+    ParseTree::Node parse_node, SemanticsNodeId arg_id)
+    -> SemanticsNodeBlockId {
+  return AddDominatedBlockAndBranchImpl<SemanticsNode::BranchWithArg>(
+      *this, parse_node, arg_id);
+}
+
+auto SemanticsContext::AddDominatedBlockAndBranchIf(ParseTree::Node parse_node,
+                                                    SemanticsNodeId cond_id)
+    -> SemanticsNodeBlockId {
+  return AddDominatedBlockAndBranchImpl<SemanticsNode::BranchIf>(
+      *this, parse_node, cond_id);
+}
+
+auto SemanticsContext::AddConvergenceBlockAndPush(
+    ParseTree::Node parse_node,
+    std::initializer_list<SemanticsNodeBlockId> blocks) -> void {
+  CARBON_CHECK(blocks.size() >= 2) << "no convergence";
+
+  SemanticsNodeBlockId new_block_id = SemanticsNodeBlockId::Unreachable;
+  for (SemanticsNodeBlockId block_id : blocks) {
+    if (block_id != SemanticsNodeBlockId::Unreachable) {
+      if (new_block_id == SemanticsNodeBlockId::Unreachable) {
+        new_block_id = semantics_ir().AddNodeBlock();
+      }
+      AddNodeToBlock(block_id,
+                     SemanticsNode::Branch::Make(parse_node, new_block_id));
+    }
+  }
+  node_block_stack().Push(new_block_id);
+}
+
+auto SemanticsContext::AddConvergenceBlockWithArgAndPush(
+    ParseTree::Node parse_node,
+    std::initializer_list<std::pair<SemanticsNodeBlockId, SemanticsNodeId>>
+        blocks_and_args) -> SemanticsNodeId {
+  CARBON_CHECK(blocks_and_args.size() >= 2) << "no convergence";
+
+  SemanticsNodeBlockId new_block_id = SemanticsNodeBlockId::Unreachable;
+  for (auto [block_id, arg_id] : blocks_and_args) {
+    if (block_id != SemanticsNodeBlockId::Unreachable) {
+      if (new_block_id == SemanticsNodeBlockId::Unreachable) {
+        new_block_id = semantics_ir().AddNodeBlock();
+      }
+      AddNodeToBlock(block_id, SemanticsNode::BranchWithArg::Make(
+                                   parse_node, new_block_id, arg_id));
+    }
+  }
+  node_block_stack().Push(new_block_id);
+
+  // Acquire the result value.
+  SemanticsTypeId result_type_id =
+      semantics_ir().GetNode(blocks_and_args.begin()->second).type_id();
+  return AddNode(
+      SemanticsNode::BlockArg::Make(parse_node, result_type_id, new_block_id));
+}
+
+// Add the current code block to the enclosing function.
+auto SemanticsContext::AddCurrentCodeBlockToFunction() -> void {
+  CARBON_CHECK(!node_block_stack().empty()) << "no current code block";
+  CARBON_CHECK(!return_scope_stack().empty()) << "no current function";
+
+  if (!node_block_stack().is_current_block_reachable()) {
+    // Don't include unreachable blocks in the function.
+    return;
+  }
+
+  auto function_id = semantics_ir()
+                         .GetNode(return_scope_stack().back())
+                         .GetAsFunctionDeclaration();
+  semantics_ir()
+      .GetFunction(function_id)
+      .body_block_ids.push_back(node_block_stack().PeekForAdd());
+}
+
+auto SemanticsContext::is_current_position_reachable() -> bool {
+  switch (auto block_id = node_block_stack().Peek(); block_id.index) {
+    case SemanticsNodeBlockId::Unreachable.index: {
+      return false;
+    }
+    case SemanticsNodeBlockId::Invalid.index: {
+      return true;
+    }
+    default: {
+      // Our current position is at the end of a real block. That position is
+      // reachable unless the previous instruction is a terminator instruction.
+      const auto& block_contents = semantics_ir().GetNodeBlock(block_id);
+      if (block_contents.empty()) {
+        return true;
+      }
+      const auto& last_node = semantics_ir().GetNode(block_contents.back());
+      return last_node.kind().terminator_kind() !=
+             SemanticsTerminatorKind::Terminator;
     }
   }
 }

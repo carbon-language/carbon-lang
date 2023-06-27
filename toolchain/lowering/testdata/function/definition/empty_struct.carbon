@@ -10,7 +10,7 @@
 // CHECK:STDOUT: %StructLiteralType = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %EmptyTupleType @Echo(%StructLiteralType %a) {
-// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 
 fn Echo(a: {}) {

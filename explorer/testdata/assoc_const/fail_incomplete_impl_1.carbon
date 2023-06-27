@@ -13,6 +13,6 @@ interface HasThreeTypes {
 }
 
 // CHECK:STDERR: COMPILATION ERROR: fail_incomplete_impl_1.carbon:[[@LINE+1]]: implementation doesn't provide a concrete value for interface HasThreeTypes.B
-external impl i32 as HasThreeTypes where .A = i32 and .C = i32 {}
+impl i32 as HasThreeTypes where .A = i32 and .C = i32 {}
 
 fn Main() -> i32 { return 0; }

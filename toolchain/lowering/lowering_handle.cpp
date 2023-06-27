@@ -38,10 +38,11 @@ auto LoweringHandleBindName(LoweringFunctionContext& /*context*/,
   // Probably need to do something here, but not necessary for now.
 }
 
-auto LoweringHandleBlockArg(LoweringFunctionContext& /*context*/,
-                            SemanticsNodeId /*node_id*/, SemanticsNode node)
+auto LoweringHandleBlockArg(LoweringFunctionContext& context,
+                            SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  SemanticsNodeBlockId block_id = node.GetAsBlockArg();
+  context.SetLocal(node_id, context.GetBlockArg(block_id, node.type_id()));
 }
 
 auto LoweringHandleBoolLiteral(LoweringFunctionContext& context,
@@ -52,22 +53,60 @@ auto LoweringHandleBoolLiteral(LoweringFunctionContext& context,
   context.SetLocal(node_id, v);
 }
 
-auto LoweringHandleBranch(LoweringFunctionContext& /*context*/,
+auto LoweringHandleBranch(LoweringFunctionContext& context,
                           SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  SemanticsNodeBlockId target_block_id = node.GetAsBranch();
+
+  // Opportunistically avoid creating a BasicBlock that contains just a branch.
+  llvm::BasicBlock* block = context.builder().GetInsertBlock();
+  if (block->empty() && context.TryToReuseBlock(target_block_id, block)) {
+    // Reuse this block as the branch target.
+  } else {
+    context.builder().CreateBr(context.GetBlock(target_block_id));
+  }
+
+  context.builder().ClearInsertionPoint();
 }
 
-auto LoweringHandleBranchIf(LoweringFunctionContext& /*context*/,
+auto LoweringHandleBranchIf(LoweringFunctionContext& context,
                             SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  auto [target_block_id, cond_id] = node.GetAsBranchIf();
+  llvm::Value* cond = context.GetLocalLoaded(cond_id);
+  llvm::BasicBlock* then_block = context.GetBlock(target_block_id);
+  llvm::BasicBlock* else_block = context.CreateSyntheticBlock();
+  context.builder().CreateCondBr(cond, then_block, else_block);
+  context.builder().SetInsertPoint(else_block);
 }
 
-auto LoweringHandleBranchWithArg(LoweringFunctionContext& /*context*/,
+auto LoweringHandleBranchWithArg(LoweringFunctionContext& context,
                                  SemanticsNodeId /*node_id*/,
                                  SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  auto [target_block_id, arg_id] = node.GetAsBranchWithArg();
+  llvm::Value* arg = context.GetLocalLoaded(arg_id);
+  SemanticsTypeId arg_type_id =
+      context.semantics_ir().GetNode(arg_id).type_id();
+
+  // Opportunistically avoid creating a BasicBlock that contains just a branch.
+  // We only do this for a block that we know will only have a single
+  // predecessor, so that we can correctly populate the predecessors of the
+  // PHINode.
+  llvm::BasicBlock* block = context.builder().GetInsertBlock();
+  llvm::BasicBlock* phi_predecessor = block;
+  if (block->empty() && context.IsCurrentSyntheticBlock(block) &&
+      context.TryToReuseBlock(target_block_id, block)) {
+    // Reuse this block as the branch target.
+    phi_predecessor = block->getSinglePredecessor();
+    CARBON_CHECK(phi_predecessor)
+        << "Synthetic block did not have a single predecessor";
+  } else {
+    context.builder().CreateBr(context.GetBlock(target_block_id));
+  }
+
+  context.GetBlockArg(target_block_id, arg_type_id)
+      ->addIncoming(arg, phi_predecessor);
+  context.builder().ClearInsertionPoint();
 }
 
 auto LoweringHandleBuiltin(LoweringFunctionContext& /*context*/,
@@ -87,12 +126,6 @@ auto LoweringHandleCall(LoweringFunctionContext& context,
   auto* value =
       context.builder().CreateCall(function, args, function->getName());
   context.SetLocal(node_id, value);
-}
-
-auto LoweringHandleCodeBlock(LoweringFunctionContext& /*context*/,
-                             SemanticsNodeId /*node_id*/, SemanticsNode node)
-    -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
 auto LoweringHandleFunctionDeclaration(LoweringFunctionContext& /*context*/,

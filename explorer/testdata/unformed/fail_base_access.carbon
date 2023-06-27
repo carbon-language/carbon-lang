@@ -10,7 +10,9 @@ base class B {
   var n: i32;
 }
 
-class D extends B {}
+class D {
+  extend base: B;
+}
 
 fn Main() -> i32 {
   var d: D;

@@ -16,6 +16,7 @@
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/element_path.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/statement.h"
 #include "explorer/common/nonnull.h"
 #include "llvm/ADT/StringMap.h"
@@ -93,6 +94,38 @@ class Value {
 
  private:
   const Kind kind_;
+};
+
+// Contains the result of the evaluation of an expression, including a value,
+// the original expression category, and an optional address if available.
+class ExpressionResult {
+ public:
+  static auto Value(Nonnull<const Carbon::Value*> v) -> ExpressionResult {
+    return ExpressionResult(v, std::nullopt, ExpressionCategory::Value);
+  }
+  static auto Reference(Nonnull<const Carbon::Value*> v, Address address)
+      -> ExpressionResult {
+    return ExpressionResult(v, std::move(address),
+                            ExpressionCategory::Reference);
+  }
+  static auto Initializing(Nonnull<const Carbon::Value*> v, Address address)
+      -> ExpressionResult {
+    return ExpressionResult(v, std::move(address),
+                            ExpressionCategory::Initializing);
+  }
+
+  ExpressionResult(Nonnull<const Carbon::Value*> v,
+                   std::optional<Address> address, ExpressionCategory cat)
+      : value_(v), address_(std::move(address)), expr_cat_(cat) {}
+
+  auto value() const -> Nonnull<const Carbon::Value*> { return value_; }
+  auto address() const -> const std::optional<Address>& { return address_; }
+  auto expression_category() const -> ExpressionCategory { return expr_cat_; }
+
+ private:
+  Nonnull<const Carbon::Value*> value_;
+  std::optional<Address> address_;
+  ExpressionCategory expr_cat_;
 };
 
 // Returns whether the fully-resolved kind that this value will eventually have
@@ -631,19 +664,22 @@ class FunctionType : public Value {
 
   FunctionType(Nonnull<const Value*> parameters,
                Nonnull<const Value*> return_type)
-      : FunctionType(parameters, {}, return_type, {}, {}) {}
+      : FunctionType(parameters, {}, return_type, {}, {},
+                     /*is_initializing=*/false) {}
 
   FunctionType(Nonnull<const Value*> parameters,
                std::vector<GenericParameter> generic_parameters,
                Nonnull<const Value*> return_type,
                std::vector<Nonnull<const GenericBinding*>> deduced_bindings,
-               std::vector<Nonnull<const ImplBinding*>> impl_bindings)
+               std::vector<Nonnull<const ImplBinding*>> impl_bindings,
+               bool is_initializing)
       : Value(Kind::FunctionType),
         parameters_(parameters),
         generic_parameters_(std::move(generic_parameters)),
         return_type_(return_type),
         deduced_bindings_(std::move(deduced_bindings)),
-        impl_bindings_(std::move(impl_bindings)) {}
+        impl_bindings_(std::move(impl_bindings)),
+        is_initializing_(is_initializing) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
@@ -652,7 +688,7 @@ class FunctionType : public Value {
   template <typename F>
   auto Decompose(F f) const {
     return f(parameters_, generic_parameters_, return_type_, deduced_bindings_,
-             impl_bindings_);
+             impl_bindings_, is_initializing_);
   }
 
   // The type of the function parameter tuple.
@@ -674,6 +710,8 @@ class FunctionType : public Value {
   auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
     return impl_bindings_;
   }
+  // Return whether the function type is an initializing expression or not.
+  auto is_initializing() const -> bool { return is_initializing_; }
 
  private:
   Nonnull<const Value*> parameters_;
@@ -681,6 +719,7 @@ class FunctionType : public Value {
   Nonnull<const Value*> return_type_;
   std::vector<Nonnull<const GenericBinding*>> deduced_bindings_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
+  bool is_initializing_;
 };
 
 // A pointer type.

@@ -20,7 +20,8 @@ base class C {
   var value_c: i32;
 }
 
-class D extends C {
+class D {
+  extend base: C;
   fn Method2[self: Self]() {
     self.BasePrint(self.value_d);
   }

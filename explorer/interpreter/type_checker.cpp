@@ -21,6 +21,7 @@
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/pattern.h"
 #include "explorer/ast/value.h"
 #include "explorer/ast/value_transform.h"
 #include "explorer/common/arena.h"
@@ -1116,9 +1117,9 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
   BindingMap binding_args;
   if (has_arguments) {
     TupleValue args(interface.arguments);
-    if (!PatternMatch(&iface_decl->params().value()->value(), &args, source_loc,
-                      std::nullopt, binding_args, trace_stream_,
-                      this->arena_)) {
+    if (!PatternMatch(&iface_decl->params().value()->value(),
+                      ExpressionResult::Value(&args), source_loc, std::nullopt,
+                      binding_args, trace_stream_, this->arena_)) {
       return bad_builtin();
     }
   }
@@ -2431,7 +2432,8 @@ class TypeChecker::SubstituteTransform
                                                  &fn_type->return_type()));
     return type_checker_->arena_->New<FunctionType>(
         param, std::move(generic_parameters), ret, std::move(deduced_bindings),
-        std::move(subst_bindings).TakeImplBindings());
+        std::move(subst_bindings).TakeImplBindings(),
+        fn_type->is_initializing());
   }
 
   // Substituting into a `ConstraintType` needs special handling if we replace
@@ -3161,6 +3163,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           access.set_found_in_interface(result.interface);
           access.set_is_type_access(!IsInstanceMember(&access.member()));
           access.set_static_type(inst_member_type);
+          access.set_expression_category(ExpressionCategory::Value);
 
           if (const auto* func_decl =
                   dyn_cast<FunctionDeclaration>(result.member)) {
@@ -3774,7 +3777,9 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               Nonnull<const Value*> return_type,
               Substitute(call.bindings(), &fun_t.return_type()));
           call.set_static_type(return_type);
-          call.set_expression_category(ExpressionCategory::Value);
+          call.set_expression_category(fun_t.is_initializing()
+                                           ? ExpressionCategory::Initializing
+                                           : ExpressionCategory::Value);
           return Success();
         }
         case Value::Kind::TypeOfParameterizedEntityName: {
@@ -3908,6 +3913,15 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           const auto* arg_type = &args[0]->static_type();
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", arg_type));
+          e->set_static_type(TupleType::Empty());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::PrintAllocs: {
+          if (!args.empty()) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_print_allocs takes no arguments";
+          }
           e->set_static_type(TupleType::Empty());
           e->set_expression_category(ExpressionCategory::Value);
           return Success();
@@ -4467,9 +4481,9 @@ auto TypeChecker::TypeCheckPattern(
         // this level rather than on the overall initializer.
         if (!IsNonDeduceableType(type)) {
           BindingMap generic_args;
-          if (!PatternMatch(type, *expected, binding.type().source_loc(),
-                            std::nullopt, generic_args, trace_stream_,
-                            this->arena_)) {
+          if (!PatternMatch(type, ExpressionResult::Value(*expected),
+                            binding.type().source_loc(), std::nullopt,
+                            generic_args, trace_stream_, this->arena_)) {
             return ProgramError(binding.type().source_loc())
                    << "type pattern '" << *type
                    << "' does not match actual type '" << **expected << "'";
@@ -5112,7 +5126,7 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   f->set_static_type(arena_->New<FunctionType>(
       &f->param_pattern().static_type(), std::move(generic_parameters),
       &f->return_term().static_type(), std::move(deduced_bindings),
-      std::move(impl_bindings)));
+      std::move(impl_bindings), /*is_initializing*/ true));
   switch (f->kind()) {
     case DeclarationKind::FunctionDeclaration:
       // TODO: Should we pass in the bindings from the enclosing scope?
@@ -5186,32 +5200,76 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     *trace_stream_ << "** declaring class " << class_decl->name() << "\n";
   }
   Nonnull<SelfDeclaration*> self = class_decl->self();
-
   ImplScope class_scope(scope_info.innermost_scope);
 
-  std::optional<Nonnull<const NominalClassType*>> base_class;
-  if (class_decl->base_expr().has_value()) {
-    Nonnull<Expression*> base_class_expr = *class_decl->base_expr();
-    CARBON_ASSIGN_OR_RETURN(const auto base_type,
-                            TypeCheckTypeExp(base_class_expr, class_scope));
-    if (base_type->kind() != Value::Kind::NominalClassType) {
-      return ProgramError(class_decl->source_loc())
-             << "Unsupported base class type for class `" << class_decl->name()
-             << "`. Only simple classes are currently supported as base "
-                "class.";
-    }
+  // The base class and member declarations may refer to the class, so we must
+  // set the static type before we start processing them. We can't set the
+  // constant value until later, but the base class declaration doesn't need it.
+  self->set_static_type(arena_->New<TypeType>());
+  std::optional<Nonnull<ParameterizedEntityName*>> param_name;
+  if (class_decl->type_params().has_value()) {
+    // TODO: The `enclosing_bindings` should be tracked in the parameterized
+    // entity name so that they can be included in the eventual type.
+    param_name = arena_->New<ParameterizedEntityName>(
+        class_decl, *class_decl->type_params());
+    class_decl->set_static_type(
+        arena_->New<TypeOfParameterizedEntityName>(*param_name));
+  } else {
+    class_decl->set_static_type(&self->static_type());
+  }
 
-    base_class = cast<NominalClassType>(base_type);
-    if (base_class.value()->declaration().extensibility() ==
-        ClassExtensibility::None) {
-      return ProgramError(class_decl->source_loc())
-             << "Base class `" << base_class.value()->declaration().name()
-             << "` is `final` and cannot be inherited. Add the `base` or "
-                "`abstract` class prefix to `"
-             << base_class.value()->declaration().name()
-             << "` to allow it to be inherited";
+  // Find base class declaration, if any. Verify that is before any data member
+  // declarations, and there is at most one.
+  std::optional<Nonnull<const NominalClassType*>> base_class;
+  bool after_data_member = false;
+  for (Nonnull<Declaration*> m : class_decl->members()) {
+    switch (m->kind()) {
+      case DeclarationKind::VariableDeclaration:
+      case DeclarationKind::MixDeclaration: {
+        after_data_member = true;
+        break;
+      }
+      case DeclarationKind::ExtendBaseDeclaration: {
+        if (after_data_member) {
+          return ProgramError(m->source_loc())
+                 << "`extend base:` declaration must not be after `var` or "
+                    "`mix` declarations in a class.";
+        }
+        if (base_class.has_value()) {
+          return ProgramError(m->source_loc())
+                 << "At most one `extend base:` declaration in a class.";
+        }
+        Nonnull<Expression*> base_class_expr =
+            cast<ExtendBaseDeclaration>(*m).base_class();
+        CARBON_ASSIGN_OR_RETURN(const auto base_type,
+                                TypeCheckTypeExp(base_class_expr, class_scope));
+        if (base_type->kind() != Value::Kind::NominalClassType) {
+          return ProgramError(m->source_loc())
+                 << "Unsupported base class type for class `"
+                 << class_decl->name()
+                 << "`. Only simple classes are currently supported as base "
+                    "class.";
+        }
+        CARBON_RETURN_IF_ERROR(ExpectCompleteType(base_class_expr->source_loc(),
+                                                  "base class declaration",
+                                                  base_type));
+
+        base_class = cast<NominalClassType>(base_type);
+        if (base_class.value()->declaration().extensibility() ==
+            ClassExtensibility::None) {
+          return ProgramError(m->source_loc())
+                 << "Base class `" << base_class.value()->declaration().name()
+                 << "` is `final` and cannot be inherited. Add the `base` or "
+                    "`abstract` class prefix to `"
+                 << base_class.value()->declaration().name()
+                 << "` to allow it to be inherited";
+        }
+        class_decl->set_base_type(base_class);
+        break;
+      }
+      default:
+        break;
     }
-    class_decl->set_base_type(base_class);
   }
 
   std::vector<Nonnull<const GenericBinding*>> bindings = scope_info.bindings;
@@ -5316,23 +5374,13 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
       class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class,
       std::move(class_vtable));
-  self->set_static_type(arena_->New<TypeType>());
   self->set_constant_value(self_type);
 
   // The declarations of the members may refer to the class, so we must set the
-  // constant value of the class and its static type before we start processing
-  // the members.
-  if (class_decl->type_params().has_value()) {
-    // TODO: The `enclosing_bindings` should be tracked in the parameterized
-    // entity name so that they can be included in the eventual type.
-    Nonnull<ParameterizedEntityName*> param_name =
-        arena_->New<ParameterizedEntityName>(class_decl,
-                                             *class_decl->type_params());
-    class_decl->set_static_type(
-        arena_->New<TypeOfParameterizedEntityName>(param_name));
-    class_decl->set_constant_value(param_name);
+  // constant value of the class before we start processing the members.
+  if (param_name.has_value()) {
+    class_decl->set_constant_value(*param_name);
   } else {
-    class_decl->set_static_type(&self->static_type());
     class_decl->set_constant_value(self_type);
   }
 
@@ -5592,16 +5640,16 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
     // TODO: This should probably live in `DeclareDeclaration`, but it needs
     // to update state that's not available from there.
     switch (m->kind()) {
-      case DeclarationKind::InterfaceExtendsDeclaration: {
-        // For an `extends C;` declaration, add `Self impls C` to our
+      case DeclarationKind::InterfaceExtendDeclaration: {
+        // For an `extend C;` declaration, add `Self impls C` to our
         // constraint.
-        auto* extends = cast<InterfaceExtendsDeclaration>(m);
+        auto* extend = cast<InterfaceExtendDeclaration>(m);
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> base,
-            TypeCheckTypeExp(extends->base(), constraint_scope));
+            TypeCheckTypeExp(extend->base(), constraint_scope));
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const ConstraintType*> constraint_type,
-            ConvertToConstraintType(m->source_loc(), "extends declaration",
+            ConvertToConstraintType(m->source_loc(), "extend declaration",
                                     base));
         CARBON_RETURN_IF_ERROR(builder.AddAndSubstitute(
             *this, constraint_type, builder.GetSelfType(),
@@ -5610,18 +5658,19 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
         break;
       }
 
-      case DeclarationKind::InterfaceImplDeclaration: {
-        // For an `impl X as Y;` declaration, add `X impls Y` to our constraint.
-        auto* impl = cast<InterfaceImplDeclaration>(m);
+      case DeclarationKind::InterfaceRequireDeclaration: {
+        // For an `require X impls Y;` declaration, add `X impls Y` to our
+        // constraint.
+        auto* require = cast<InterfaceRequireDeclaration>(m);
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> impl_type,
-            TypeCheckTypeExp(impl->impl_type(), constraint_scope));
+            TypeCheckTypeExp(require->impl_type(), constraint_scope));
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> constraint,
-            TypeCheckTypeExp(impl->constraint(), constraint_scope));
+            TypeCheckTypeExp(require->constraint(), constraint_scope));
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const ConstraintType*> constraint_type,
-            ConvertToConstraintType(m->source_loc(), "impl as declaration",
+            ConvertToConstraintType(m->source_loc(), "require declaration",
                                     constraint));
         CARBON_RETURN_IF_ERROR(
             builder.AddAndSubstitute(*this, constraint_type, impl_type,
@@ -5762,7 +5811,8 @@ auto TypeChecker::CheckImplIsComplete(Nonnull<const InterfaceType*> iface_type,
                << "implementation doesn't provide a concrete value for "
                << *iface_type << "." << assoc->binding().name();
       }
-    } else if (isa<InterfaceImplDeclaration, InterfaceExtendsDeclaration>(m)) {
+    } else if (isa<InterfaceRequireDeclaration, InterfaceExtendDeclaration>(
+                   m)) {
       // These get translated into constraints so there's nothing we need to
       // check here.
     } else {
@@ -6140,7 +6190,6 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:
     case Value::Kind::MixinPseudoType:
-    case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::AlternativeValue:
     case Value::Kind::TupleValue:
     case Value::Kind::ImplWitness:
@@ -6154,11 +6203,11 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
-      CARBON_FATAL() << "type of alias target is not a type";
+      CARBON_FATAL() << "type of alias target is not a type: " << *type;
 
     case Value::Kind::AutoType:
     case Value::Kind::VariableType:
-      CARBON_FATAL() << "pattern type in alias target";
+      CARBON_FATAL() << "pattern type in alias target: " << *type;
 
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -6170,6 +6219,7 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::ChoiceType:
     case Value::Kind::StringType:
     case Value::Kind::AssociatedConstant:
+    case Value::Kind::TypeOfMixinPseudoType:
       return false;
 
     case Value::Kind::FunctionType:
@@ -6310,8 +6360,8 @@ auto TypeChecker::TypeCheckDeclaration(
       }
       break;
     }
-    case DeclarationKind::InterfaceExtendsDeclaration:
-    case DeclarationKind::InterfaceImplDeclaration:
+    case DeclarationKind::InterfaceExtendDeclaration:
+    case DeclarationKind::InterfaceRequireDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration: {
       // Checked in DeclareConstraintTypeDeclaration.
       break;
@@ -6320,6 +6370,10 @@ auto TypeChecker::TypeCheckDeclaration(
       CARBON_FATAL() << "Unreachable TypeChecker `Self` declaration";
     }
     case DeclarationKind::AliasDeclaration: {
+      break;
+    }
+    case DeclarationKind::ExtendBaseDeclaration: {
+      // Checked in TypeCheckClassDeclaration.
       break;
     }
   }
@@ -6373,6 +6427,10 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       CARBON_RETURN_IF_ERROR(DeclareClassDeclaration(&class_decl, scope_info));
       break;
     }
+    case DeclarationKind::ExtendBaseDeclaration: {
+      // Handled in DeclareClassDeclaration.
+      break;
+    }
     case DeclarationKind::MixinDeclaration: {
       auto& mixin_decl = cast<MixinDeclaration>(*d);
       CARBON_RETURN_IF_ERROR(DeclareMixinDeclaration(&mixin_decl, scope_info));
@@ -6423,8 +6481,8 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
       break;
     }
 
-    case DeclarationKind::InterfaceExtendsDeclaration:
-    case DeclarationKind::InterfaceImplDeclaration:
+    case DeclarationKind::InterfaceExtendDeclaration:
+    case DeclarationKind::InterfaceRequireDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration: {
       // The semantic effects are handled by DeclareConstraintTypeDeclaration.
       break;

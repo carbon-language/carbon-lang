@@ -10,7 +10,7 @@ interface A {
   fn F[self: Self](o: Self) -> Self;
 }
 class X {
-  impl as A {
+  extend impl as A {
     fn F[self: Self](o: Self) -> Self { return {.n = self.n + o.n}; }
   }
   var n: i32;

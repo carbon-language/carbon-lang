@@ -15,7 +15,7 @@ interface As(T:! type) {
 
 // Implicitly convert `Self` to `T`.
 interface ImplicitAs(T:! type) {
-  extends As(T);
+  extend As(T);
 }
 
 // TODO: This should be private.
@@ -87,7 +87,7 @@ interface EqWith(U:! type) {
 }
 
 constraint Eq {
-  extends EqWith(Self);
+  extend EqWith(Self);
 }
 
 // TODO: Simplify this once we have variadics
@@ -151,7 +151,7 @@ interface CompareWith(U:! type) {
   // TODO: Add `default fn` for Less, LessOrEquivalent, Greater, and GreaterOrEquivalent once it's available.
 }
 constraint Ordered {
-  extends CompareWith(Self);
+  extend CompareWith(Self);
 }
 
 impl i32 as CompareWith(Self) {
@@ -327,7 +327,7 @@ interface AddWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Add {
-  extends AddWith(Self) where .Result = Self;
+  extend AddWith(Self) where .Result = Self;
 }
 
 interface SubWith(U:! type) {
@@ -336,7 +336,7 @@ interface SubWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Sub {
-  extends SubWith(Self) where .Result = Self;
+  extend SubWith(Self) where .Result = Self;
 }
 
 interface MulWith(U:! type) {
@@ -345,7 +345,7 @@ interface MulWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Mul {
-  extends MulWith(Self) where .Result = Self;
+  extend MulWith(Self) where .Result = Self;
 }
 
 interface DivWith(U:! type) {
@@ -354,7 +354,7 @@ interface DivWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Div {
-  extends DivWith(Self) where .Result = Self;
+  extend DivWith(Self) where .Result = Self;
 }
 
 interface ModWith(U:! type) {
@@ -363,26 +363,26 @@ interface ModWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint Mod {
-  extends ModWith(Self) where .Result = Self;
+  extend ModWith(Self) where .Result = Self;
 }
 
 // Note, these impl declarations use the builtin addition for i32.
-external impl i32 as Negate where .Result = i32 {
+impl i32 as Negate where .Result = i32 {
   fn Op[self: i32]() -> i32 { return -self; }
 }
-external impl i32 as AddWith(i32) where .Result = i32 {
+impl i32 as AddWith(i32) where .Result = i32 {
   fn Op[self: i32](other: i32) -> i32 { return self + other; }
 }
-external impl i32 as SubWith(i32) where .Result = i32 {
+impl i32 as SubWith(i32) where .Result = i32 {
   fn Op[self: i32](other: i32) -> i32 { return self - other; }
 }
-external impl i32 as MulWith(i32) where .Result = i32 {
+impl i32 as MulWith(i32) where .Result = i32 {
   fn Op[self: i32](other: i32) -> i32 { return self * other; }
 }
-external impl i32 as DivWith(i32) where .Result = i32 {
+impl i32 as DivWith(i32) where .Result = i32 {
   fn Op[self: i32](other: i32) -> i32 { return self / other; }
 }
-external impl i32 as ModWith(i32) where .Result = i32 {
+impl i32 as ModWith(i32) where .Result = i32 {
   fn Op[self: i32](other: i32) -> i32 { return self % other; }
 }
 
@@ -404,7 +404,7 @@ interface BitAndWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint BitAnd {
-  extends BitAndWith(Self) where .Result = Self;
+  extend BitAndWith(Self) where .Result = Self;
 }
 
 // Binary `|`.
@@ -414,7 +414,7 @@ interface BitOrWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint BitOr {
-  extends BitOrWith(Self) where .Result = Self;
+  extend BitOrWith(Self) where .Result = Self;
 }
 
 // Binary `^`.
@@ -424,7 +424,7 @@ interface BitXorWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint BitXor {
-  extends BitXorWith(Self) where .Result = Self;
+  extend BitXorWith(Self) where .Result = Self;
 }
 
 // Binary `<<`.
@@ -434,7 +434,7 @@ interface LeftShiftWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint LeftShift {
-  extends LeftShiftWith(Self) where .Result = Self;
+  extend LeftShiftWith(Self) where .Result = Self;
 }
 
 // Binary `>>`.
@@ -444,35 +444,35 @@ interface RightShiftWith(U:! type) {
   fn Op[self: Self](other: U) -> Result;
 }
 constraint RightShift {
-  extends RightShiftWith(Self) where .Result = Self;
+  extend RightShiftWith(Self) where .Result = Self;
 }
 
-external impl i32 as BitComplement where .Result = i32 {
+impl i32 as BitComplement where .Result = i32 {
   fn Op[self: i32]() -> i32 {
     return __intrinsic_int_bit_complement(self);
   }
 }
-external impl i32 as BitAndWith(i32) where .Result = i32 {
+impl i32 as BitAndWith(i32) where .Result = i32 {
   fn Op[self: i32](other: i32) -> i32 {
     return __intrinsic_int_bit_and(self, other);
   }
 }
-external impl i32 as BitOrWith(i32) where .Result = i32 {
+impl i32 as BitOrWith(i32) where .Result = i32 {
   fn Op[self: i32](other: i32) -> i32 {
     return __intrinsic_int_bit_or(self, other);
   }
 }
-external impl i32 as BitXorWith(i32) where .Result = i32 {
+impl i32 as BitXorWith(i32) where .Result = i32 {
   fn Op[self: i32](other: i32) -> i32 {
     return __intrinsic_int_bit_xor(self, other);
   }
 }
-external impl i32 as LeftShiftWith(i32) where .Result = i32 {
+impl i32 as LeftShiftWith(i32) where .Result = i32 {
   fn Op[self: i32](other: i32) -> i32 {
     return __intrinsic_int_left_shift(self, other);
   }
 }
-external impl i32 as RightShiftWith(i32) where .Result = i32 {
+impl i32 as RightShiftWith(i32) where .Result = i32 {
   fn Op[self: i32](other: i32) -> i32 {
     return __intrinsic_int_right_shift(self, other);
   }
@@ -485,57 +485,57 @@ external impl i32 as RightShiftWith(i32) where .Result = i32 {
 interface AssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint Assign { extends AssignWith(Self); }
+constraint Assign { extend AssignWith(Self); }
 
 interface AddAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AddAssign { extends AddAssignWith(Self); }
+constraint AddAssign { extend AddAssignWith(Self); }
 
 interface SubAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint SubAssign { extends SubAssignWith(Self); }
+constraint SubAssign { extend SubAssignWith(Self); }
 
 interface MulAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint MulAssign { extends MulAssignWith(Self); }
+constraint MulAssign { extend MulAssignWith(Self); }
 
 interface DivAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint DivAssign { extends DivAssignWith(Self); }
+constraint DivAssign { extend DivAssignWith(Self); }
 
 interface ModAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint ModAssign { extends ModAssignWith(Self); }
+constraint ModAssign { extend ModAssignWith(Self); }
 
 interface BitAndAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint BitAssignAnd { extends BitAndAssignWith(Self); }
+constraint BitAssignAnd { extend BitAndAssignWith(Self); }
 
 interface BitOrAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint BitAssignOr { extends BitOrAssignWith(Self); }
+constraint BitAssignOr { extend BitOrAssignWith(Self); }
 
 interface BitXorAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint BitAssignXor { extends BitXorAssignWith(Self); }
+constraint BitAssignXor { extend BitXorAssignWith(Self); }
 
 interface LeftShiftAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint LeftShiftAssign { extends LeftShiftAssignWith(Self); }
+constraint LeftShiftAssign { extend LeftShiftAssignWith(Self); }
 
 interface RightShiftAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint RightShiftAssign { extends RightShiftAssignWith(Self); }
+constraint RightShiftAssign { extend RightShiftAssignWith(Self); }
 
 // TODO: This is temporary, and should eventually be replaced by
 // something more fine-grained. Not all class types should be
@@ -706,6 +706,9 @@ class Heap {
   }
   fn Delete[T:! type, self: Self](p : T*) {
     __intrinsic_delete(p);
+  }
+  fn PrintAllocs[self: Self]() {
+    __intrinsic_print_allocs();
   }
 }
 

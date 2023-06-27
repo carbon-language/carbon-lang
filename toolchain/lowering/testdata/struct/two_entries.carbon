@@ -9,18 +9,17 @@
 // CHECK:STDOUT: %StructLiteralType = type { i32, i32 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Run() {
-// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %var = alloca %StructLiteralType, align 8
 // CHECK:STDOUT:   %StructLiteralValue = alloca %StructLiteralType, align 8
 // CHECK:STDOUT:   %a = getelementptr inbounds %StructLiteralType, ptr %StructLiteralValue, i32 0, i32 0
 // CHECK:STDOUT:   store i32 1, ptr %a, align 4
 // CHECK:STDOUT:   %b = getelementptr inbounds %StructLiteralType, ptr %StructLiteralValue, i32 0, i32 1
 // CHECK:STDOUT:   store i32 2, ptr %b, align 4
-// CHECK:STDOUT:   %0 = load %StructLiteralType, ptr %StructLiteralValue, align 4
-// CHECK:STDOUT:   store %StructLiteralType %0, ptr %var, align 4
+// CHECK:STDOUT:   %1 = load %StructLiteralType, ptr %StructLiteralValue, align 4
+// CHECK:STDOUT:   store %StructLiteralType %1, ptr %var, align 4
 // CHECK:STDOUT:   %var1 = alloca %StructLiteralType, align 8
-// CHECK:STDOUT:   %1 = load %StructLiteralType, ptr %var, align 4
-// CHECK:STDOUT:   store %StructLiteralType %1, ptr %var1, align 4
+// CHECK:STDOUT:   %2 = load %StructLiteralType, ptr %var, align 4
+// CHECK:STDOUT:   store %StructLiteralType %2, ptr %var1, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
 

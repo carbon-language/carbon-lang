@@ -18,7 +18,7 @@ interface Vector {
 class Point {
   var x: i32;
   var y: i32;
-  impl as Vector {
+  extend impl as Vector {
     fn Zero() -> Self {
       return {.x = 1, .y = 1};
     }

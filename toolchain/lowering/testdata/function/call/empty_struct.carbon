@@ -10,20 +10,19 @@
 // CHECK:STDOUT: %EmptyTupleType = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %StructLiteralType @Echo(%StructLiteralType %a) {
-// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %StructLiteralValue = alloca %StructLiteralType, align 8
-// CHECK:STDOUT:   %0 = load %StructLiteralType, ptr %StructLiteralValue, align 1
-// CHECK:STDOUT:   ret %StructLiteralType %0
+// CHECK:STDOUT:   %1 = load %StructLiteralType, ptr %StructLiteralValue, align 1
+// CHECK:STDOUT:   ret %StructLiteralType %1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %EmptyTupleType @Main() {
-// CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %StructLiteralValue = alloca %StructLiteralType, align 8
 // CHECK:STDOUT:   %var = alloca %StructLiteralType, align 8
 // CHECK:STDOUT:   %StructLiteralValue1 = alloca %StructLiteralType, align 8
-// CHECK:STDOUT:   %0 = load %StructLiteralType, ptr %StructLiteralValue1, align 1
-// CHECK:STDOUT:   %Echo = call %StructLiteralType @Echo(%StructLiteralType %0)
+// CHECK:STDOUT:   %1 = load %StructLiteralType, ptr %StructLiteralValue1, align 1
+// CHECK:STDOUT:   %Echo = call %StructLiteralType @Echo(%StructLiteralType %1)
 // CHECK:STDOUT:   store %StructLiteralType %Echo, ptr %var, align 1
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 
 fn Echo(a: {}) -> {} {

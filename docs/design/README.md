@@ -1724,9 +1724,16 @@ Classes may only extend a single class. Carbon only supports single inheritance,
 and will use mixins instead of multiple inheritance.
 
 ```carbon
-base class MiddleDerived extends MyBaseClass { ... }
-class FinalDerived extends MiddleDerived { ... }
-// ❌ Forbidden: class Illegal extends FinalDerived { ... }
+base class MiddleDerived {
+  extend base: MyBaseClass;
+  ...
+}
+class FinalDerived {
+  extend base: MiddleDerived;
+  ...
+}
+// ❌ Forbidden: class Illegal { extend base: FinalDerived; ... }
+// may not extend `FinalDerived` since not declared `base` or `abstract`.
 ```
 
 A base class may define
@@ -1761,7 +1768,8 @@ For purposes of construction, a derived class acts like its first field is
 called `base` with the type of its immediate base class.
 
 ```carbon
-class MyDerivedType extends MyBaseType {
+class MyDerivedType {
+  extend base: MyBaseType;
   fn Make() -> MyDerivedType {
     return {.base = MyBaseType.Make(), .derived_field = 7};
   }
@@ -1785,7 +1793,8 @@ abstract class AbstractClass {
 // ❌ Error: can't instantiate abstract class
 var abc: AbstractClass = ...;
 
-class DerivedFromAbstract extends AbstractClass {
+class DerivedFromAbstract {
+  extend base: AbstractClass;
   fn Make() -> Self {
     // AbstractClass.Make() returns a
     // `partial AbstractClass` that can be used as
@@ -2398,8 +2407,8 @@ or [named constraint](generics/details.md#named-constraints), possibly renamed:
 
 ```carbon
 class ContactInfo {
-  external impl as Printable;
-  external impl as ToPrinterDevice;
+  impl as Printable;
+  impl as ToPrinterDevice;
   alias PrintToScreen = Printable.Print;
   alias PrintToPrinter = ToPrinterDevice.Print;
   ...
@@ -2667,7 +2676,7 @@ sufficient.
 class Circle {
   var radius: f32;
 
-  impl as Printable {
+  extend impl as Printable {
     fn Print[self: Self]() {
       Carbon.Print("Circle with radius: {0}", self.radius);
     }
@@ -2773,14 +2782,14 @@ values for the `ElementType` member of the interface using a `where` clause:
 
 ```carbon
 class IntStack {
-  impl as StackInterface where .ElementType = i32 {
+  extend impl as StackInterface where .ElementType = i32 {
     fn Push[addr self: Self*](value: i32);
     // ...
   }
 }
 
 class FruitStack {
-  impl as StackInterface where .ElementType = Fruit {
+  extend impl as StackInterface where .ElementType = Fruit {
     fn Push[addr self: Self*](value: Fruit);
     // ...
   }
@@ -2886,12 +2895,12 @@ An `impl` declaration may be parameterized by adding `forall [`_generic
 parameter list_`]` after the `impl` keyword introducer, as in:
 
 ```carbon
-external impl forall [T:! Printable] Vector(T) as Printable;
-external impl forall [Key:! Hashable, Value:! type]
+impl forall [T:! Printable] Vector(T) as Printable;
+impl forall [Key:! Hashable, Value:! type]
     HashMap(Key, Value) as Has(Key);
-external impl forall [T:! Ordered] T as PartiallyOrdered;
-external impl forall [T:! ImplicitAs(i32)] BigInt as AddWith(T);
-external impl forall [U:! type, T:! As(U)]
+impl forall [T:! Ordered] T as PartiallyOrdered;
+impl forall [T:! ImplicitAs(i32)] BigInt as AddWith(T);
+impl forall [U:! type, T:! As(U)]
     Optional(T) as As(Optional(U));
 ```
 
@@ -3014,7 +3023,7 @@ to type `T` and the second argument to type `U`, add the `like` keyword to both
 types in the `impl` declaration, as in:
 
 ```carbon
-external impl like T as AddWith(like U) where .Result = V {
+impl like T as AddWith(like U) where .Result = V {
   // `Self` is `T` here
   fn Op[self: Self](other: U) -> V { ... }
 }
@@ -3024,7 +3033,7 @@ When the operand types and result type are all the same, this is equivalent to
 implementing the `Add` interface:
 
 ```carbon
-external impl T as Add {
+impl T as Add {
   fn Op[self: Self](other: Self) -> Self { ... }
 }
 ```

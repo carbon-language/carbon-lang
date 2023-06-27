@@ -7,7 +7,7 @@
 
 package ExplorerTest api;
 
-external impl {} as EqWith({}) {
+impl {} as EqWith({}) {
   fn Equal[self: Self](other: Self) -> bool {
     return true;
   }

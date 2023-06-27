@@ -25,13 +25,13 @@ class ClassWithInternalF {
   fn F[self: Self]() { Print("ClassWithInternalF.F"); }
 }
 
-external impl ClassWithInternalF as HasF {
+impl ClassWithInternalF as HasF {
   fn F[self: Self]() { Print("ClassWithInternalF.(HasF.F)"); }
 }
 
 class ClassWithExternalF {}
 
-external impl ClassWithExternalF as HasF {
+impl ClassWithExternalF as HasF {
   fn F[self: Self]() { Print("ClassWithExternalF.(HasF.F)"); }
 }
 

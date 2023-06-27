@@ -73,8 +73,8 @@ class FileTestBase : public testing::Test {
   // implementation, which will validate stdout and stderr. The return value
   // should be false when "fail_" is in the filename.
   virtual auto RunWithFiles(const llvm::SmallVector<TestFile>& test_files,
-                            llvm::raw_ostream& stdout,
-                            llvm::raw_ostream& stderr) -> bool = 0;
+                            llvm::raw_pwrite_stream& stdout,
+                            llvm::raw_pwrite_stream& stderr) -> bool = 0;
 
   // Runs a test and compares output. This keeps output split by line so that
   // issues are a little easier to identify by the different line.

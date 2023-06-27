@@ -32,20 +32,8 @@ cc_library(
         ":semantics_node_kind",
         "//common:check",
         "//common:ostream",
+        "//toolchain/common:index_base",
         "//toolchain/parser:parse_tree",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "semantics_node_block_stack",
-    srcs = ["semantics_node_block_stack.cpp"],
-    hdrs = ["semantics_node_block_stack.h"],
-    deps = [
-        ":semantics_node",
-        "//common:check",
-        "//common:ostream",
-        "//common:vlog",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -70,6 +58,7 @@ cc_library(
     srcs = [
         "semantics_ir.cpp",
         "semantics_context.cpp",
+        "semantics_node_block_stack.cpp",
     ] +
     # Glob handler files to avoid missing anyway.
     glob([
@@ -78,11 +67,11 @@ cc_library(
     hdrs = [
         "semantics_context.h",
         "semantics_ir.h",
+        "semantics_node_block_stack.h",
     ],
     deps = [
         ":semantics_builtin_kind",
         ":semantics_node",
-        ":semantics_node_block_stack",
         ":semantics_node_stack",
         "//common:check",
         "//common:ostream",

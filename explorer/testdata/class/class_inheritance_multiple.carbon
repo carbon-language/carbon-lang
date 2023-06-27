@@ -17,12 +17,14 @@ base class A {
   var aa: String;
 }
 
-base class B extends A {
+base class B {
+  extend base: A;
   fn FunctionB() {}
   var b: i32;
 }
 
-class C extends B {
+class C {
+  extend base: B;
   fn FunctionC() {}
   var c: i32;
 }

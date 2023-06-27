@@ -21,10 +21,10 @@ class C {
   var c: i32;
 }
 
-external impl A as ImplicitAs(B) {
+impl A as ImplicitAs(B) {
   fn Convert[self: Self]() -> B { return {.b = self.a + 1}; }
 }
-external impl B as As(C) {
+impl B as As(C) {
   fn Convert[self: Self]() -> C { return {.c = self.b + 2}; }
 }
 

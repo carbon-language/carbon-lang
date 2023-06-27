@@ -78,12 +78,13 @@
   FINAL(VariableDeclaration)                              \
   CARBON_ConstraintTypeDeclaration_KINDS(ABSTRACT, FINAL) \
       ABSTRACT(ConstraintTypeDeclaration)                 \
-  FINAL(InterfaceExtendsDeclaration)                      \
-  FINAL(InterfaceImplDeclaration)                         \
+  FINAL(InterfaceExtendDeclaration)                       \
+  FINAL(InterfaceRequireDeclaration)                      \
   FINAL(AssociatedConstantDeclaration)                    \
   FINAL(ImplDeclaration)                                  \
   FINAL(MatchFirstDeclaration)                            \
-  FINAL(AliasDeclaration)
+  FINAL(AliasDeclaration)                                 \
+  FINAL(ExtendBaseDeclaration)
 
 #define CARBON_CallableDeclaration_KINDS(ABSTRACT, FINAL) \
   FINAL(FunctionDeclaration)                              \

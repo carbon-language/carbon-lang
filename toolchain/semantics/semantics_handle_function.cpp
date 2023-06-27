@@ -12,13 +12,25 @@ auto SemanticsHandleFunctionDeclaration(SemanticsContext& context,
 }
 
 auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
-                                       ParseTree::Node /*parse_node*/) -> bool {
-  // Merges code block children up under the FunctionDefinitionStart.
-  while (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
-         ParseNodeKind::FunctionDefinitionStart) {
-    context.node_stack().PopAndIgnore();
+                                       ParseTree::Node parse_node) -> bool {
+  auto function_id = context.node_stack().Pop<SemanticsFunctionId>(
+      ParseNodeKind::FunctionDefinitionStart);
+
+  // If the `}` of the function is reachable, reject if we need a return value
+  // and otherwise add an implicit `return;`.
+  if (context.is_current_position_reachable()) {
+    if (context.semantics_ir()
+            .GetFunction(function_id)
+            .return_type_id.is_valid()) {
+      CARBON_DIAGNOSTIC(
+          MissingReturnStatement, Error,
+          "Missing `return` at end of function with declared return type.");
+      context.emitter().Emit(parse_node, MissingReturnStatement);
+    } else {
+      context.AddNode(SemanticsNode::Return::Make(parse_node));
+    }
   }
-  context.node_stack().PopAndDiscardId(ParseNodeKind::FunctionDefinitionStart);
+
   context.return_scope_stack().pop_back();
   context.PopScope();
   context.node_block_stack().Pop();
@@ -39,13 +51,11 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
   }
   auto param_refs_id = context.node_stack().Pop<SemanticsNodeBlockId>(
       ParseNodeKind::ParameterList);
-  auto name_node =
-      context.node_stack().PopForSoloParseNode(ParseNodeKind::DeclaredName);
+  auto [name_node, name_id] =
+      context.node_stack().PopWithParseNode<SemanticsStringId>(
+          ParseNodeKind::Name);
   auto fn_node = context.node_stack().PopForSoloParseNode(
       ParseNodeKind::FunctionIntroducer);
-
-  auto name_str = context.parse_tree().GetNodeText(name_node);
-  auto name_id = context.semantics_ir().AddString(name_str);
 
   // Create the entry block.
   auto outer_block = context.node_block_stack().PeekForAdd();
@@ -56,7 +66,7 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
       {.name_id = name_id,
        .param_refs_id = param_refs_id,
        .return_type_id = return_type_id,
-       .body_id = context.node_block_stack().PeekForAdd()});
+       .body_block_ids = {context.node_block_stack().PeekForAdd()}});
   auto decl_id = context.AddNodeToBlock(
       outer_block,
       SemanticsNode::FunctionDeclaration::Make(fn_node, function_id));
