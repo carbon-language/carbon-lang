@@ -38,7 +38,6 @@ class ParseAndExecuteTestFile : public FileTestBase {
     } else {
       if (is_trace_test) {
         GTEST_SKIP() << "`trace` tests only check for trace output.";
-        is_trace_test = true;
       }
     }
   }

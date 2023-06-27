@@ -203,9 +203,7 @@ class Interpreter {
 //
 
 void Interpreter::TraceState() {
-  *trace_stream_ << "{\nstack:" << (todo_.empty() ? "" : " ") << todo_
-                 << "\nmemory:" << (heap_.empty() ? "" : " ") << heap_
-                 << "\n}\n";
+  *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
 }
 
 auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
