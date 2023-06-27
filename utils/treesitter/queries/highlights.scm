@@ -62,7 +62,7 @@
   "^"
   ">>"
   "<<"
-  (prefix_star)
+  "*" ; prefix star
   (postfix_star)
   "++"
   "--"
