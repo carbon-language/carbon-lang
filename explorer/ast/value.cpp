@@ -585,14 +585,15 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*this);
       out << "fn ";
-      if (!fn_type.deduced_bindings().empty() || fn_type.is_unbound_method()) {
+      auto self = fn_type.method_self();
+      if (!fn_type.deduced_bindings().empty() || self.has_value()) {
         out << "[";
         llvm::ListSeparator sep;
         for (Nonnull<const GenericBinding*> deduced :
              fn_type.deduced_bindings()) {
           out << sep << *deduced;
         }
-        if (auto self = fn_type.method_self()) {
+        if (self.has_value()) {
           if (self->addr_self) {
             out << sep << "addr self: " << *self->self_type << "*";
           } else {

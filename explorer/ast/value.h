@@ -697,12 +697,8 @@ class FunctionType : public Value {
     return impl_bindings_;
   }
 
+  // Binding for the implicit `self` parameter, if this is an unbound method.
   auto method_self() const -> std::optional<MethodSelf> { return method_self_; }
-  // Returns true if function has an unbound `self` receiver parameter.
-  auto is_unbound_method() const -> bool { return method_self_.has_value(); }
-  // Only valid if is_unbound_method() returns true.
-  auto addr_self() const -> bool { return method_self_->addr_self; }
-  auto self_type() const -> const Value& { return *method_self_->self_type; }
 
  private:
   std::optional<MethodSelf> method_self_;
