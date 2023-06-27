@@ -60,8 +60,6 @@ class Heap : public HeapAllocationInterface {
   // Print all the values on the heap to the stream `out`.
   void Print(llvm::raw_ostream& out) const;
 
-  auto empty() const -> bool { return values_.empty(); }
-
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   auto arena() const -> Arena& override { return *arena_; }
