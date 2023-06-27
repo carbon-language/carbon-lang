@@ -34,6 +34,8 @@ in Unicode Normalization Form C (NFC).
 
 ## Keywords
 
+<!-- Keep in sync with utils/textmate/Syntaxes/Carbon.plist -->
+
 The following words are interpreted as keywords:
 
 -   `abstract`
