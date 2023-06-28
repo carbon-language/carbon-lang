@@ -61,7 +61,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
                 <key>name</key>
                 <string>keyword.other.carbon</string>
                 <key>match</key>
-                <string>\b(abstract|adapt|addr|alias|and|api|as|auto|base|class|constraint|extend|final|fn|forall|friend|impl|impls|import|in|interface|let|library|like|namespace|not|observe|or|override|package|partial|private|protected|require|Self|type|var|virtual|where|_)\b</string>
+                <string>\b(abstract|adapt|addr|alias|and|api|as|auto|base|choice|class|constraint|destructor|extend|final|fn|forall|friend|impl|impls|import|in|interface|let|library|like|namespace|not|observe|or|override|package|partial|private|protected|require|Self|template|type|var|virtual|where|_)\b</string>
             </dict>
             <!-- Rule: builtin types -->
             <dict>
