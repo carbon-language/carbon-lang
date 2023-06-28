@@ -204,7 +204,7 @@ class CheckLine(Line):
         self.time_elapsed_pattern = re.compile(
             r"Time elapsed in (\S+): (\d+)ms"
         )
-        self.trailing_whitespace_pattern = re.compile(r"\s+$")
+        self.trailing_whitespace_pattern = re.compile(r"(\s+$)")
 
         # If any match is specific to this file, use the first matched line for
         # the location of the CHECK comment.
@@ -246,9 +246,7 @@ class CheckLine(Line):
                     r"Time elapsed in \1: {{[0-9]+}}ms", result, count=1
                 )
             elif trailing_match:
-                result = self.trailing_whitespace_pattern.sub(
-                    r"{{[ \t]}}", result
-                )
+                result = self.trailing_whitespace_pattern.sub(r"{{\1}}", result)
             else:
                 break
 
