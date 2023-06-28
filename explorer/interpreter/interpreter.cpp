@@ -4,8 +4,6 @@
 
 #include "explorer/interpreter/interpreter.h"
 
-#include <llvm/Support/raw_ostream.h>
-
 #include <iterator>
 #include <limits>
 #include <map>
@@ -34,6 +32,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/raw_ostream.h"
 
 using llvm::cast;
 using llvm::dyn_cast;

@@ -5,7 +5,7 @@
 #ifndef CARBON_EXPLORER_AST_EXPRESSION_CATEGORY_H_
 #define CARBON_EXPLORER_AST_EXPRESSION_CATEGORY_H_
 
-#include <llvm/ADT/StringRef.h>
+#include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
 
