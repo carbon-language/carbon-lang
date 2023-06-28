@@ -2430,8 +2430,18 @@ class TypeChecker::SubstituteTransform
     CARBON_ASSIGN_OR_RETURN(const auto* ret, type_checker_->SubstituteImpl(
                                                  subst_bindings.bindings(),
                                                  &fn_type->return_type()));
+    std::optional<FunctionType::MethodSelf> method_self =
+        fn_type->method_self();
+    if (method_self.has_value()) {
+      CARBON_ASSIGN_OR_RETURN(
+          const auto* self_type,
+          type_checker_->SubstituteImpl(subst_bindings.bindings(),
+                                        method_self->self_type));
+      method_self->self_type = self_type;
+    }
     return type_checker_->arena_->New<FunctionType>(
-        param, std::move(generic_parameters), ret, std::move(deduced_bindings),
+        method_self, param, std::move(generic_parameters), ret,
+        std::move(deduced_bindings),
         std::move(subst_bindings).TakeImplBindings(),
         fn_type->is_initializing());
   }
@@ -3082,10 +3092,10 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                 Nonnull<const Value*> field_type,
                 Substitute(member_t_class->bindings(), member_type));
             access.set_member(arena_->New<NamedElement>(member));
-            access.set_static_type(field_type);
             access.set_is_type_access(!IsInstanceMember(&access.member()));
             switch (member->kind()) {
               case DeclarationKind::VariableDeclaration:
+                access.set_static_type(field_type);
                 access.set_expression_category(
                     access.object().expression_category());
                 break;
@@ -3093,6 +3103,14 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                 const auto* func_decl = cast<FunctionDeclaration>(member);
                 CARBON_RETURN_IF_ERROR(CheckAddrMeAccess(
                     &access, func_decl, t_class.bindings(), impl_scope));
+                if (access.is_type_access()) {
+                  access.set_static_type(field_type);
+                } else {
+                  // Remove `self` from type since now bound.
+                  auto* function_type = cast<FunctionType>(field_type);
+                  access.set_static_type(arena_->New<FunctionType>(
+                      FunctionType::ExceptSelf{}, *function_type));
+                }
                 access.set_expression_category(ExpressionCategory::Value);
                 break;
               }
@@ -3162,13 +3180,22 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           access.set_member(arena_->New<NamedElement>(result.member));
           access.set_found_in_interface(result.interface);
           access.set_is_type_access(!IsInstanceMember(&access.member()));
-          access.set_static_type(inst_member_type);
           access.set_expression_category(ExpressionCategory::Value);
 
           if (const auto* func_decl =
                   dyn_cast<FunctionDeclaration>(result.member)) {
             CARBON_RETURN_IF_ERROR(
                 CheckAddrMeAccess(&access, func_decl, bindings, impl_scope));
+            if (access.is_type_access()) {
+              access.set_static_type(inst_member_type);
+            } else {
+              // Remove `self` from type since now bound.
+              auto* function_type = cast<FunctionType>(inst_member_type);
+              access.set_static_type(arena_->New<FunctionType>(
+                  FunctionType::ExceptSelf{}, *function_type));
+            }
+          } else {
+            access.set_static_type(inst_member_type);
           }
 
           // TODO: This is just a ConstraintImplWitness into the
@@ -3286,8 +3313,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                   Nonnull<const Value*> parameter_type,
                   Substitute(choice.bindings(),
                              *(*signature)->parameters_static_type()));
-              Nonnull<const Value*> type =
-                  arena_->New<FunctionType>(parameter_type, &choice);
+              Nonnull<const Value*> type = arena_->New<FunctionType>(
+                  std::nullopt, parameter_type, &choice);
               // TODO: Should there be a Declaration corresponding to each
               // choice type alternative?
               access.set_member(
@@ -3465,6 +3492,16 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
         return Success();
       };
 
+      auto set_static_type_remove_self = [&]() -> ErrorOr<Success> {
+        Nonnull<const Value*> member_type = &member_name.member().type();
+        CARBON_ASSIGN_OR_RETURN(member_type,
+                                Substitute(bindings_for_member(), member_type));
+        auto* function_type = cast<FunctionType>(member_type);
+        access.set_static_type(arena_->New<FunctionType>(
+            FunctionType::ExceptSelf{}, *function_type));
+        return Success();
+      };
+
       switch (std::optional<Nonnull<const Declaration*>> decl =
                   member_name.member().declaration();
               decl ? decl.value()->kind()
@@ -3484,7 +3521,12 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
             CARBON_CHECK(!has_instance || is_instance_member ||
                          !member_name.base_type().has_value())
                 << "vacuous compound member access";
-            CARBON_RETURN_IF_ERROR(set_static_type_as_member_type());
+            // If this is instance access, remove self bound from function type
+            if (has_instance && is_instance_member) {
+              CARBON_RETURN_IF_ERROR(set_static_type_remove_self());
+            } else {
+              CARBON_RETURN_IF_ERROR(set_static_type_as_member_type());
+            }
             access.set_expression_category(ExpressionCategory::Value);
             CARBON_RETURN_IF_ERROR(
                 CheckAddrMeAccess(&access, cast<FunctionDeclaration>(*decl),
@@ -3849,7 +3891,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                               TypeCheckTypeExp(&fn.return_type(), impl_scope));
       fn.set_static_type(arena_->New<TypeType>());
       fn.set_expression_category(ExpressionCategory::Value);
-      fn.set_constant_value(arena_->New<FunctionType>(param, ret));
+      fn.set_constant_value(
+          arena_->New<FunctionType>(std::nullopt, param, ret));
       return Success();
     }
     case ExpressionKind::StringLiteral:
@@ -5061,12 +5104,17 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
     CollectImplBindingsInPattern(deduced, impl_bindings);
   }
   // Type check the receiver pattern.
+  std::optional<FunctionType::MethodSelf> method_self;
   if (f->is_method()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
         &f->self_pattern(), PatternRequirements::Irrefutable, std::nullopt,
         function_scope, ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(&f->self_pattern(), all_bindings);
     CollectImplBindingsInPattern(&f->self_pattern(), impl_bindings);
+    FunctionType::MethodSelf method_self_present = {
+        (f->self_pattern().kind() == PatternKind::AddrPattern),
+        &f->self_pattern().static_type()};
+    method_self = method_self_present;
   }
   // Type check the parameter pattern.
   CARBON_RETURN_IF_ERROR(TypeCheckPattern(
@@ -5124,9 +5172,10 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   CARBON_CHECK(IsNonDeduceableType(&f->return_term().static_type()));
 
   f->set_static_type(arena_->New<FunctionType>(
-      &f->param_pattern().static_type(), std::move(generic_parameters),
-      &f->return_term().static_type(), std::move(deduced_bindings),
-      std::move(impl_bindings), /*is_initializing*/ true));
+      method_self, &f->param_pattern().static_type(),
+      std::move(generic_parameters), &f->return_term().static_type(),
+      std::move(deduced_bindings), std::move(impl_bindings),
+      /*is_initializing*/ true));
   switch (f->kind()) {
     case DeclarationKind::FunctionDeclaration:
       // TODO: Should we pass in the bindings from the enclosing scope?

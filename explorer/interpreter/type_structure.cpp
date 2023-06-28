@@ -81,6 +81,7 @@ struct TypeStructureBuilder {
   void Visit(const Address&) {}
   void Visit(const VTable&) {}
   void Visit(const FunctionType::GenericParameter&) {}
+  void Visit(const FunctionType::MethodSelf&) {}
   void Visit(const NamedElement&) {}
 
   // Constraint types can contain mentions of VariableTypes, but they aren't
