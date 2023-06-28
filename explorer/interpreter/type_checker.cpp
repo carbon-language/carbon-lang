@@ -507,8 +507,12 @@ static auto FindField(llvm::ArrayRef<NamedValue> fields,
   return *it;
 }
 
-auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
+auto TypeChecker::FieldTypes(SourceLocation source_loc,
+                             std::string_view context,
+                             const NominalClassType& class_type) const
     -> ErrorOr<std::vector<NamedValue>> {
+  CARBON_RETURN_IF_ERROR(ExpectCompleteType(source_loc, context, &class_type));
+
   std::vector<NamedValue> field_types;
   for (Nonnull<Declaration*> m : class_type.declaration().members()) {
     switch (m->kind()) {
@@ -527,12 +531,16 @@ auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
   return field_types;
 }
 
-auto TypeChecker::FieldTypesWithBase(const NominalClassType& class_type) const
+auto TypeChecker::FieldTypesWithBase(SourceLocation source_loc,
+                                     std::string_view context,
+                                     const NominalClassType& class_type) const
     -> ErrorOr<std::vector<NamedValue>> {
-  CARBON_ASSIGN_OR_RETURN(auto fields, FieldTypes(class_type));
+  CARBON_ASSIGN_OR_RETURN(auto fields,
+                          FieldTypes(source_loc, context, class_type));
   if (const auto base_type = class_type.base()) {
-    CARBON_ASSIGN_OR_RETURN(std::vector<NamedValue> base_fields,
-                            FieldTypesWithBase(*base_type.value()));
+    CARBON_ASSIGN_OR_RETURN(
+        std::vector<NamedValue> base_fields,
+        FieldTypesWithBase(source_loc, context, *base_type.value()));
     fields.emplace_back(NamedValue{std::string(NominalClassValue::BaseField),
                                    base_type.value()});
   }
@@ -540,9 +548,9 @@ auto TypeChecker::FieldTypesWithBase(const NominalClassType& class_type) const
 }
 
 auto TypeChecker::IsImplicitlyConvertible(
-    Nonnull<const Value*> source, Nonnull<const Value*> destination,
-    const ImplScope& impl_scope, bool allow_user_defined_conversions) const
-    -> ErrorOr<bool> {
+    SourceLocation source_loc, Nonnull<const Value*> source,
+    Nonnull<const Value*> destination, const ImplScope& impl_scope,
+    bool allow_user_defined_conversions) const -> ErrorOr<bool> {
   // Check for an exact match to avoid impl lookup in this common case.
   CARBON_CHECK(IsNonDeduceableType(source));
   CARBON_CHECK(IsNonDeduceableType(destination));
@@ -560,8 +568,8 @@ auto TypeChecker::IsImplicitlyConvertible(
   // to the actual destination type. We'll catch any problems when we actually
   // come to perform the conversion.
   if (isa<TupleType>(source) && IsTypeOfType(destination)) {
-    return IsBuiltinConversion(source, arena_->New<TypeType>(), impl_scope,
-                               allow_user_defined_conversions);
+    return IsBuiltinConversion(source_loc, source, arena_->New<TypeType>(),
+                               impl_scope, allow_user_defined_conversions);
   }
   if (IsTypeOfType(source) && IsTypeOfType(destination)) {
     return true;
@@ -570,13 +578,12 @@ auto TypeChecker::IsImplicitlyConvertible(
   // If we're not supposed to look for a user-defined conversion, check for
   // builtin conversions, which are normally found by impl lookup.
   if (!allow_user_defined_conversions) {
-    return IsBuiltinConversion(source, destination, impl_scope,
+    return IsBuiltinConversion(source_loc, source, destination, impl_scope,
                                allow_user_defined_conversions);
   }
 
   // We didn't find a builtin implicit conversion. Check if a user-defined one
   // exists.
-  SourceLocation source_loc = SourceLocation::DiagnosticsIgnored();
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<const InterfaceType*> iface_type,
       GetBuiltinInterfaceType(
@@ -588,7 +595,8 @@ auto TypeChecker::IsImplicitlyConvertible(
   return conversion_witness.has_value();
 }
 
-auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
+auto TypeChecker::IsBuiltinConversion(SourceLocation source_loc,
+                                      Nonnull<const Value*> source,
                                       Nonnull<const Value*> destination,
                                       const ImplScope& impl_scope,
                                       bool allow_user_defined_conversions) const
@@ -616,7 +624,7 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
             }
             CARBON_ASSIGN_OR_RETURN(
                 bool convertible,
-                IsImplicitlyConvertible(source_field->value,
+                IsImplicitlyConvertible(source_loc, source_field->value,
                                         destination_field.value, impl_scope,
                                         allow_user_defined_conversions));
             if (!convertible) {
@@ -628,12 +636,13 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
         case Value::Kind::NominalClassType: {
           CARBON_ASSIGN_OR_RETURN(
               std::vector<NamedValue> field_types,
-              FieldTypesWithBase(cast<NominalClassType>(*destination)));
+              FieldTypesWithBase(source_loc, "implicit conversion",
+                                 cast<NominalClassType>(*destination)));
           CARBON_ASSIGN_OR_RETURN(
               bool convertible,
               IsImplicitlyConvertible(
-                  source, arena_->New<StructType>(field_types), impl_scope,
-                  allow_user_defined_conversions));
+                  source_loc, source, arena_->New<StructType>(field_types),
+                  impl_scope, allow_user_defined_conversions));
           if (convertible) {
             return true;
           }
@@ -665,9 +674,10 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
           for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
             CARBON_ASSIGN_OR_RETURN(
                 bool convertible,
-                IsImplicitlyConvertible(
-                    source_tuple.elements()[i], destination_tuple.elements()[i],
-                    impl_scope, allow_user_defined_conversions));
+                IsImplicitlyConvertible(source_loc, source_tuple.elements()[i],
+                                        destination_tuple.elements()[i],
+                                        impl_scope,
+                                        allow_user_defined_conversions));
             if (!convertible) {
               all_ok = false;
               break;
@@ -687,9 +697,10 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
           for (Nonnull<const Value*> source_element : source_tuple.elements()) {
             CARBON_ASSIGN_OR_RETURN(
                 bool convertible,
-                IsImplicitlyConvertible(
-                    source_element, &destination_array.element_type(),
-                    impl_scope, allow_user_defined_conversions));
+                IsImplicitlyConvertible(source_loc, source_element,
+                                        &destination_array.element_type(),
+                                        impl_scope,
+                                        allow_user_defined_conversions));
             if (!convertible) {
               all_ok = false;
               break;
@@ -706,7 +717,8 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
           for (Nonnull<const Value*> source_element : source_tuple.elements()) {
             CARBON_ASSIGN_OR_RETURN(
                 bool convertible,
-                IsImplicitlyConvertible(source_element, destination, impl_scope,
+                IsImplicitlyConvertible(source_loc, source_element, destination,
+                                        impl_scope,
                                         allow_user_defined_conversions));
             if (!convertible) {
               all_types = false;
@@ -841,7 +853,8 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
         case Value::Kind::NominalClassType: {
           CARBON_ASSIGN_OR_RETURN(
               std::vector<NamedValue> field_types,
-              FieldTypesWithBase(cast<NominalClassType>(*destination)));
+              FieldTypesWithBase(source->source_loc(), "implicit conversion",
+                                 cast<NominalClassType>(*destination)));
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<Expression*> result,
               ImplicitlyConvert("implicit conversion", impl_scope, source,
@@ -972,7 +985,8 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
     auto* type_type = arena_->New<TypeType>();
     CARBON_ASSIGN_OR_RETURN(
         bool convertible,
-        IsBuiltinConversion(source_type, type_type, impl_scope,
+        IsBuiltinConversion(source->source_loc(), source_type, type_type,
+                            impl_scope,
                             /*allow_user_defined_conversions=*/true));
     if (convertible) {
       CARBON_ASSIGN_OR_RETURN(
@@ -1072,8 +1086,8 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
 }
 
 auto TypeChecker::IsIntrinsicConstraintSatisfied(
-    const IntrinsicConstraint& constraint, const ImplScope& impl_scope) const
-    -> ErrorOr<bool> {
+    SourceLocation source_loc, const IntrinsicConstraint& constraint,
+    const ImplScope& impl_scope) const -> ErrorOr<bool> {
   // TODO: Check to see if this constraint is known in the current impl scope.
   switch (constraint.kind) {
     case IntrinsicConstraint::ImplicitAs:
@@ -1081,8 +1095,8 @@ auto TypeChecker::IsIntrinsicConstraintSatisfied(
           << "wrong number of arguments for `__intrinsic_implicit_as`";
       CARBON_ASSIGN_OR_RETURN(
           bool convertible,
-          IsBuiltinConversion(constraint.type, constraint.arguments[0],
-                              impl_scope,
+          IsBuiltinConversion(source_loc, constraint.type,
+                              constraint.arguments[0], impl_scope,
                               /*allow_user_defined_conversions=*/true));
       if (trace_stream_->is_enabled()) {
         *trace_stream_ << constraint << " evaluated to " << convertible << "\n";
@@ -1637,9 +1651,10 @@ auto TypeChecker::ArgumentDeduction::Finish(
 
     bool type = IsType(subst_param) && IsType(mismatch.arg);
     if (type && mismatch.allow_implicit_conversion) {
-      CARBON_ASSIGN_OR_RETURN(bool convertible,
-                              type_checker.IsImplicitlyConvertible(
-                                  mismatch.arg, subst_param, impl_scope, true));
+      CARBON_ASSIGN_OR_RETURN(
+          bool convertible,
+          type_checker.IsImplicitlyConvertible(source_loc_, mismatch.arg,
+                                               subst_param, impl_scope, true));
       if (!convertible) {
         if (!diagnose_deduction_failure) {
           return {std::nullopt};
@@ -4376,11 +4391,13 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
       Nonnull<const Value*> rhs_type = &equals_clause.rhs().static_type();
       CARBON_ASSIGN_OR_RETURN(
           bool lhs_converts_to_rhs,
-          IsImplicitlyConvertible(lhs_type, rhs_type, impl_scope,
+          IsImplicitlyConvertible(equals_clause.lhs().source_loc(), lhs_type,
+                                  rhs_type, impl_scope,
                                   /*allow_user_defined_conversions=*/false));
       CARBON_ASSIGN_OR_RETURN(
           bool rhs_converts_to_lhs,
-          IsImplicitlyConvertible(rhs_type, lhs_type, impl_scope,
+          IsImplicitlyConvertible(equals_clause.rhs().source_loc(), rhs_type,
+                                  lhs_type, impl_scope,
                                   /*allow_user_defined_conversions=*/false));
       if (!lhs_converts_to_rhs && !rhs_converts_to_lhs) {
         return ProgramError(clause->source_loc())
