@@ -5,11 +5,11 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'n'},
+// CHECK:STDOUT:     {kind: 'Name', text: 'n'},
 // CHECK:STDOUT:     {kind: 'Literal', text: 'i8'},
 // CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'NameReference', text: 'F'},
+// CHECK:STDOUT:       {kind: 'NameExpression', text: 'F'},
 // CHECK:STDOUT:     {kind: 'CallExpressionStart', text: '(', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'Literal', text: 'i8'},
 // CHECK:STDOUT:     {kind: 'PostfixOperator', text: '*', subtree_size: 2},

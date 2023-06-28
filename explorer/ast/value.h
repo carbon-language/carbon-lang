@@ -16,6 +16,7 @@
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/element_path.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/statement.h"
 #include "explorer/common/nonnull.h"
 #include "llvm/ADT/StringMap.h"
@@ -93,6 +94,38 @@ class Value {
 
  private:
   const Kind kind_;
+};
+
+// Contains the result of the evaluation of an expression, including a value,
+// the original expression category, and an optional address if available.
+class ExpressionResult {
+ public:
+  static auto Value(Nonnull<const Carbon::Value*> v) -> ExpressionResult {
+    return ExpressionResult(v, std::nullopt, ExpressionCategory::Value);
+  }
+  static auto Reference(Nonnull<const Carbon::Value*> v, Address address)
+      -> ExpressionResult {
+    return ExpressionResult(v, std::move(address),
+                            ExpressionCategory::Reference);
+  }
+  static auto Initializing(Nonnull<const Carbon::Value*> v, Address address)
+      -> ExpressionResult {
+    return ExpressionResult(v, std::move(address),
+                            ExpressionCategory::Initializing);
+  }
+
+  ExpressionResult(Nonnull<const Carbon::Value*> v,
+                   std::optional<Address> address, ExpressionCategory cat)
+      : value_(v), address_(std::move(address)), expr_cat_(cat) {}
+
+  auto value() const -> Nonnull<const Carbon::Value*> { return value_; }
+  auto address() const -> const std::optional<Address>& { return address_; }
+  auto expression_category() const -> ExpressionCategory { return expr_cat_; }
+
+ private:
+  Nonnull<const Carbon::Value*> value_;
+  std::optional<Address> address_;
+  ExpressionCategory expr_cat_;
 };
 
 // Returns whether the fully-resolved kind that this value will eventually have
@@ -645,90 +678,97 @@ class FunctionType : public Value {
   FunctionType(std::optional<MethodSelf> method_self,
                Nonnull<const Value*> parameters,
                Nonnull<const Value*> return_type)
-      : FunctionType(method_self, parameters, {}, return_type, {}, {}) {}
+      : FunctionType(method_self, parameters, {}, return_type, {}, {),
+                     /*is_initializing=*/false) {}
 
-  FunctionType(std::optional<MethodSelf> method_self,
-               Nonnull<const Value*> parameters,
-               std::vector<GenericParameter> generic_parameters,
-               Nonnull<const Value*> return_type,
-               std::vector<Nonnull<const GenericBinding*>> deduced_bindings,
-               std::vector<Nonnull<const ImplBinding*>> impl_bindings)
-      : Value(Kind::FunctionType),
-        method_self_(method_self),
-        parameters_(parameters),
-        generic_parameters_(std::move(generic_parameters)),
-        return_type_(return_type),
-        deduced_bindings_(std::move(deduced_bindings)),
-        impl_bindings_(std::move(impl_bindings)) {}
+    FunctionType(std::optional<MethodSelf> method_self,
+                 Nonnull<const Value*> parameters,
+                 std::vector<GenericParameter> generic_parameters,
+                 Nonnull<const Value*> return_type,
+                 std::vector<Nonnull<const GenericBinding*>> deduced_bindings,
+                 std::vector<Nonnull<const ImplBinding*>> impl_bindings,
+                 bool is_initializing)
+        : Value(Kind::FunctionType),
+          method_self_(method_self),
+          parameters_(parameters),
+          generic_parameters_(std::move(generic_parameters)),
+          return_type_(return_type),
+          deduced_bindings_(std::move(deduced_bindings)),
+          impl_bindings_(std::move(impl_bindings)),
+          is_initializing_(is_initializing) {}
 
-  struct ExceptSelf {};
-  FunctionType(ExceptSelf, const FunctionType& clone)
-      : FunctionType(std::nullopt, clone.parameters_, clone.generic_parameters_,
-                     clone.return_type_, clone.deduced_bindings_,
-                     clone.impl_bindings_) {}
+    struct ExceptSelf {};
+    FunctionType(ExceptSelf, const FunctionType& clone)
+        : FunctionType(std::nullopt, clone.parameters_,
+                       clone.generic_parameters_, clone.return_type_,
+                       clone.deduced_bindings_, clone.impl_bindings_,
+                       clone.is_initializing_) {}
 
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::FunctionType;
-  }
+    static auto classof(const Value* value)->bool {
+      return value->kind() == Kind::FunctionType;
+    }
 
-  template <typename F>
-  auto Decompose(F f) const {
-    return f(method_self_, parameters_, generic_parameters_, return_type_,
-             deduced_bindings_, impl_bindings_);
-  }
+    template <typename F>
+    auto Decompose(F f) const {
+      return f(method_self_, parameters_, generic_parameters_, return_type_,
+               deduced_bindings_, impl_bindings_, is_initializing_);
+    }
 
-  // The type of the function parameter tuple.
-  auto parameters() const -> const Value& { return *parameters_; }
-  // Parameters that use a generic `:!` binding at the top level.
-  auto generic_parameters() const -> llvm::ArrayRef<GenericParameter> {
-    return generic_parameters_;
-  }
-  // The function return type.
-  auto return_type() const -> const Value& { return *return_type_; }
-  // All generic bindings in this function's signature that should be deduced
-  // in a call. This excludes any generic parameters.
-  auto deduced_bindings() const
-      -> llvm::ArrayRef<Nonnull<const GenericBinding*>> {
-    return deduced_bindings_;
-  }
-  // The bindings for the impl witness tables required by the
-  // bounds on the type parameters of the generic function.
-  auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
-    return impl_bindings_;
-  }
+    // The type of the function parameter tuple.
+    auto parameters() const->const Value& { return *parameters_; }
+    // Parameters that use a generic `:!` binding at the top level.
+    auto generic_parameters() const->llvm::ArrayRef<GenericParameter> {
+      return generic_parameters_;
+    }
+    // The function return type.
+    auto return_type() const->const Value& { return *return_type_; }
+    // All generic bindings in this function's signature that should be deduced
+    // in a call. This excludes any generic parameters.
+    auto deduced_bindings()
+        const->llvm::ArrayRef<Nonnull<const GenericBinding*>> {
+      return deduced_bindings_;
+    }
+    // The bindings for the impl witness tables required by the
+    // bounds on the type parameters of the generic function.
+    auto impl_bindings() const->llvm::ArrayRef<Nonnull<const ImplBinding*>> {
+      return impl_bindings_;
+    }
+    // Return whether the function type is an initializing expression or not.
+    auto is_initializing() const->bool { return is_initializing_; }
 
-  // Binding for the implicit `self` parameter, if this is an unbound method.
-  auto method_self() const -> std::optional<MethodSelf> { return method_self_; }
+    // Binding for the implicit `self` parameter, if this is an unbound method.
+    auto method_self() const->std::optional<MethodSelf> { return method_self_; }
 
- private:
-  std::optional<MethodSelf> method_self_;
-  Nonnull<const Value*> parameters_;
-  std::vector<GenericParameter> generic_parameters_;
-  Nonnull<const Value*> return_type_;
-  std::vector<Nonnull<const GenericBinding*>> deduced_bindings_;
-  std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
+   private:
+    std::optional<MethodSelf> method_self_;
+    Nonnull<const Value*> parameters_;
+    std::vector<GenericParameter> generic_parameters_;
+    Nonnull<const Value*> return_type_;
+    std::vector<Nonnull<const GenericBinding*>> deduced_bindings_;
+    std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
+    bool is_initializing_;
 };
 
 // A pointer type.
 class PointerType : public Value {
- public:
-  // Constructs a pointer type with the given pointee type.
-  explicit PointerType(Nonnull<const Value*> pointee_type)
-      : Value(Kind::PointerType), pointee_type_(pointee_type) {}
+   public:
+    // Constructs a pointer type with the given pointee type.
+    explicit PointerType(Nonnull<const Value*> pointee_type)
+        : Value(Kind::PointerType), pointee_type_(pointee_type) {}
 
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::PointerType;
-  }
+    static auto classof(const Value* value)->bool {
+      return value->kind() == Kind::PointerType;
+    }
 
-  template <typename F>
-  auto Decompose(F f) const {
-    return f(pointee_type_);
-  }
+    template <typename F>
+    auto Decompose(F f) const {
+      return f(pointee_type_);
+    }
 
-  auto pointee_type() const -> const Value& { return *pointee_type_; }
+    auto pointee_type() const->const Value& { return *pointee_type_; }
 
- private:
-  Nonnull<const Value*> pointee_type_;
+   private:
+    Nonnull<const Value*> pointee_type_;
 };
 
 // The `auto` type.
@@ -738,12 +778,12 @@ class AutoType : public Value {
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::AutoType;
-  }
+}
 
-  template <typename F>
-  auto Decompose(F f) const {
-    return f();
-  }
+template <typename F>
+auto Decompose(F f) const {
+  return f();
+}
 };
 
 // A struct type.

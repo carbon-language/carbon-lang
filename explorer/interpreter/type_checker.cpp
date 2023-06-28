@@ -21,6 +21,7 @@
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/pattern.h"
 #include "explorer/ast/value.h"
 #include "explorer/ast/value_transform.h"
 #include "explorer/common/arena.h"
@@ -1116,9 +1117,9 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
   BindingMap binding_args;
   if (has_arguments) {
     TupleValue args(interface.arguments);
-    if (!PatternMatch(&iface_decl->params().value()->value(), &args, source_loc,
-                      std::nullopt, binding_args, trace_stream_,
-                      this->arena_)) {
+    if (!PatternMatch(&iface_decl->params().value()->value(),
+                      ExpressionResult::Value(&args), source_loc, std::nullopt,
+                      binding_args, trace_stream_, this->arena_)) {
       return bad_builtin();
     }
   }
@@ -2441,7 +2442,8 @@ class TypeChecker::SubstituteTransform
     return type_checker_->arena_->New<FunctionType>(
         method_self, param, std::move(generic_parameters), ret,
         std::move(deduced_bindings),
-        std::move(subst_bindings).TakeImplBindings());
+        std::move(subst_bindings).TakeImplBindings(),
+        fn_type->is_initializing());
   }
 
   // Substituting into a `ConstraintType` needs special handling if we replace
@@ -3178,6 +3180,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           access.set_member(arena_->New<NamedElement>(result.member));
           access.set_found_in_interface(result.interface);
           access.set_is_type_access(!IsInstanceMember(&access.member()));
+          access.set_static_type(inst_member_type);
+          access.set_expression_category(ExpressionCategory::Value);
 
           if (const auto* func_decl =
                   dyn_cast<FunctionDeclaration>(result.member)) {
@@ -3816,7 +3820,9 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               Nonnull<const Value*> return_type,
               Substitute(call.bindings(), &fun_t.return_type()));
           call.set_static_type(return_type);
-          call.set_expression_category(ExpressionCategory::Value);
+          call.set_expression_category(fun_t.is_initializing()
+                                           ? ExpressionCategory::Initializing
+                                           : ExpressionCategory::Value);
           return Success();
         }
         case Value::Kind::TypeOfParameterizedEntityName: {
@@ -3951,6 +3957,15 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           const auto* arg_type = &args[0]->static_type();
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", arg_type));
+          e->set_static_type(TupleType::Empty());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::PrintAllocs: {
+          if (!args.empty()) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_print_allocs takes no arguments";
+          }
           e->set_static_type(TupleType::Empty());
           e->set_expression_category(ExpressionCategory::Value);
           return Success();
@@ -4510,9 +4525,9 @@ auto TypeChecker::TypeCheckPattern(
         // this level rather than on the overall initializer.
         if (!IsNonDeduceableType(type)) {
           BindingMap generic_args;
-          if (!PatternMatch(type, *expected, binding.type().source_loc(),
-                            std::nullopt, generic_args, trace_stream_,
-                            this->arena_)) {
+          if (!PatternMatch(type, ExpressionResult::Value(*expected),
+                            binding.type().source_loc(), std::nullopt,
+                            generic_args, trace_stream_, this->arena_)) {
             return ProgramError(binding.type().source_loc())
                    << "type pattern '" << *type
                    << "' does not match actual type '" << **expected << "'";
@@ -5160,7 +5175,8 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   f->set_static_type(arena_->New<FunctionType>(
       method_self, &f->param_pattern().static_type(),
       std::move(generic_parameters), &f->return_term().static_type(),
-      std::move(deduced_bindings), std::move(impl_bindings)));
+      std::move(deduced_bindings), std::move(impl_bindings),
+      /*is_initializing*/ true));
   switch (f->kind()) {
     case DeclarationKind::FunctionDeclaration:
       // TODO: Should we pass in the bindings from the enclosing scope?
@@ -5234,8 +5250,23 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     *trace_stream_ << "** declaring class " << class_decl->name() << "\n";
   }
   Nonnull<SelfDeclaration*> self = class_decl->self();
-
   ImplScope class_scope(scope_info.innermost_scope);
+
+  // The base class and member declarations may refer to the class, so we must
+  // set the static type before we start processing them. We can't set the
+  // constant value until later, but the base class declaration doesn't need it.
+  self->set_static_type(arena_->New<TypeType>());
+  std::optional<Nonnull<ParameterizedEntityName*>> param_name;
+  if (class_decl->type_params().has_value()) {
+    // TODO: The `enclosing_bindings` should be tracked in the parameterized
+    // entity name so that they can be included in the eventual type.
+    param_name = arena_->New<ParameterizedEntityName>(
+        class_decl, *class_decl->type_params());
+    class_decl->set_static_type(
+        arena_->New<TypeOfParameterizedEntityName>(*param_name));
+  } else {
+    class_decl->set_static_type(&self->static_type());
+  }
 
   // Find base class declaration, if any. Verify that is before any data member
   // declarations, and there is at most one.
@@ -5269,6 +5300,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                  << "`. Only simple classes are currently supported as base "
                     "class.";
         }
+        CARBON_RETURN_IF_ERROR(ExpectCompleteType(base_class_expr->source_loc(),
+                                                  "base class declaration",
+                                                  base_type));
 
         base_class = cast<NominalClassType>(base_type);
         if (base_class.value()->declaration().extensibility() ==
@@ -5390,23 +5424,13 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
       class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class,
       std::move(class_vtable));
-  self->set_static_type(arena_->New<TypeType>());
   self->set_constant_value(self_type);
 
   // The declarations of the members may refer to the class, so we must set the
-  // constant value of the class and its static type before we start processing
-  // the members.
-  if (class_decl->type_params().has_value()) {
-    // TODO: The `enclosing_bindings` should be tracked in the parameterized
-    // entity name so that they can be included in the eventual type.
-    Nonnull<ParameterizedEntityName*> param_name =
-        arena_->New<ParameterizedEntityName>(class_decl,
-                                             *class_decl->type_params());
-    class_decl->set_static_type(
-        arena_->New<TypeOfParameterizedEntityName>(param_name));
-    class_decl->set_constant_value(param_name);
+  // constant value of the class before we start processing the members.
+  if (param_name.has_value()) {
+    class_decl->set_constant_value(*param_name);
   } else {
-    class_decl->set_static_type(&self->static_type());
     class_decl->set_constant_value(self_type);
   }
 

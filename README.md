@@ -305,6 +305,8 @@ Past Carbon focused talks from the community:
 
 ### 2023
 
+Press `S` when viewing slides to see speaker notes.
+
 -   [Carbon’s Successor Strategy: From C++ interop to memory safety (Slides)](https://chandlerc.blog/slides/2023-cppnow-carbon-strategy/index.html#/),
     C++Now
 -   Definition-Checked Generics
