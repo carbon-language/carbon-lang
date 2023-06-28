@@ -3180,7 +3180,6 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           access.set_member(arena_->New<NamedElement>(result.member));
           access.set_found_in_interface(result.interface);
           access.set_is_type_access(!IsInstanceMember(&access.member()));
-          access.set_static_type(inst_member_type);
           access.set_expression_category(ExpressionCategory::Value);
 
           if (const auto* func_decl =
