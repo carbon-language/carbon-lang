@@ -1317,7 +1317,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       } else {
         //    { { v :: [][i] :: C, E, F} :: S, H}
         // -> { { v_i :: C, E, F} : S, H}
-        const auto& tuple = cast<TupleValue>(*act.results()[0]);
+        CARBON_ASSIGN_OR_RETURN(
+            auto converted,
+            Convert(act.results()[0],
+                    &cast<IndexExpression>(exp).object().static_type(),
+                    exp.source_loc()));
+        const auto& tuple = cast<TupleValue>(*converted);
         int i = cast<IntValue>(*act.results()[1]).value();
         if (i < 0 || i >= static_cast<int>(tuple.elements().size())) {
           return ProgramError(exp.source_loc())
