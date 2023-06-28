@@ -46,7 +46,10 @@ file_test(
     # Bazel limits sharding to 50. We have lots of tests, so this should
     # maximize parallelism.
     shard_count = 50,
-    tests = glob(["testdata/**/*.carbon"]),
+    tests = glob([
+        "testdata/**/*.carbon",
+        "trace_testdata/**/*.carbon",
+    ]),
     deps = [
         "//explorer/parse_and_execute",
         "//testing/file_test:file_test_base",

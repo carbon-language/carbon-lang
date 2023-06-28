@@ -16,9 +16,14 @@ class ParseAndExecuteTestFile : public FileTestBase {
       : FileTestBase(path), trace_(trace) {}
 
   auto SetUp() -> void override {
+    std::string path_str = path().string();
+    llvm::StringRef path_ref = path_str;
+
+    if (path_ref.find("trace_testdata") != llvm::StringRef::npos) {
+      is_trace_test = true;
+    }
+
     if (trace_) {
-      std::string path_str = path().string();
-      llvm::StringRef path_ref = path_str;
       if (path_ref.find("/limits/") != llvm::StringRef::npos) {
         GTEST_SKIP()
             << "`limits` tests check for various limit conditions (such as an "
@@ -29,6 +34,10 @@ class ParseAndExecuteTestFile : public FileTestBase {
                  path_ref.endswith(
                      "testdata/linked_list/typed_linked_list.carbon")) {
         GTEST_SKIP() << "Expensive test to trace";
+      }
+    } else {
+      if (is_trace_test) {
+        GTEST_SKIP() << "`trace` tests only check for trace output.";
       }
     }
   }
@@ -46,7 +55,7 @@ class ParseAndExecuteTestFile : public FileTestBase {
     TraceStream trace_stream;
     TestRawOstream trace_stream_ostream;
     if (trace_) {
-      trace_stream.set_stream(&trace_stream_ostream);
+      trace_stream.set_stream(is_trace_test ? &stdout : &trace_stream_ostream);
       trace_stream.set_allowed_phases({ProgramPhase::All});
     }
 
@@ -68,7 +77,9 @@ class ParseAndExecuteTestFile : public FileTestBase {
       stderr << result.error() << "\n";
     }
 
-    if (trace_) {
+    // Skip trace test check as they use stdout stream instead of
+    // trace_stream_ostream
+    if (trace_ && !is_trace_test) {
       EXPECT_FALSE(trace_stream_ostream.TakeStr().empty())
           << "Tracing should always do something";
     }
@@ -78,6 +89,7 @@ class ParseAndExecuteTestFile : public FileTestBase {
 
  private:
   bool trace_;
+  bool is_trace_test = false;
 };
 
 }  // namespace

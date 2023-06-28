@@ -34,64 +34,68 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
+// CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+1, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+2, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
+// CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+4, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+6, type: type1},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str4, arg1: node+6, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str4, arg1: node+8, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
+// CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function3},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+10, type: type1},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+13, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+12, type: type1},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+15, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+14, type: type1},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+17, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int3, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+16, type: type1},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+19, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int4, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+18, type: type1},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+21, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int5, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+20, type: type1},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+23, type: type1},
+// CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
+// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+7,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
-// CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+15,
@@ -101,20 +105,24 @@
 // CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:     node+20,
 // CHECK:STDOUT:     node+21,
+// CHECK:STDOUT:     node+22,
+// CHECK:STDOUT:     node+23,
+// CHECK:STDOUT:     node+24,
+// CHECK:STDOUT:     node+25,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:     node+15,
+// CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+17,
-// CHECK:STDOUT:     node+19,
+// CHECK:STDOUT:     node+20,
+// CHECK:STDOUT:     node+22,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+21,
+// CHECK:STDOUT:     node+24,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

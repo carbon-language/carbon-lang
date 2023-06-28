@@ -5,13 +5,13 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:   {kind: 'Identifier', text: 'foo'},
+// CHECK:STDOUT:   {kind: 'Name', text: 'foo'},
 // CHECK:STDOUT:     {kind: 'ParameterListStart', text: '('},
-// CHECK:STDOUT:       {kind: 'Identifier', text: 'a'},
+// CHECK:STDOUT:       {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:       {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:     {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'ParameterListComma', text: ','},
-// CHECK:STDOUT:       {kind: 'Identifier', text: 'b'},
+// CHECK:STDOUT:       {kind: 'Name', text: 'b'},
 // CHECK:STDOUT:       {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:     {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:   {kind: 'ParameterList', text: ')', subtree_size: 9},

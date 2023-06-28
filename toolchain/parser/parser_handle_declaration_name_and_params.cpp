@@ -12,7 +12,7 @@ static auto ParserHandleDeclarationNameAndParams(ParserContext& context,
   auto state = context.PopState();
 
   if (!context.ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
-                                       ParseNodeKind::Identifier)) {
+                                       ParseNodeKind::Name)) {
     CARBON_DIAGNOSTIC(ExpectedDeclarationName, Error,
                       "`{0}` introducer should be followed by a name.",
                       TokenKind);

@@ -9,20 +9,18 @@
 
 namespace Carbon {
 
-auto SemanticsNodeBlockStack::Push() -> void {
+auto SemanticsNodeBlockStack::Push(SemanticsNodeBlockId id) -> void {
   CARBON_VLOG() << name_ << " Push " << stack_.size() << "\n";
   CARBON_CHECK(stack_.size() < (1 << 20))
       << "Excessive stack size: likely infinite loop";
-  stack_.push_back(SemanticsNodeBlockId::Invalid);
+  stack_.push_back(id);
 }
 
 auto SemanticsNodeBlockStack::PeekForAdd() -> SemanticsNodeBlockId {
-  CARBON_CHECK(!stack_.empty());
+  CARBON_CHECK(!stack_.empty()) << "no current block";
   auto& back = stack_.back();
   if (!back.is_valid()) {
-    SemanticsNodeBlockId block_id(node_blocks_->size());
-    node_blocks_->resize(block_id.index + 1);
-    back = block_id;
+    back = semantics_ir_->AddNodeBlock();
     CARBON_VLOG() << name_ << " Add " << stack_.size() - 1 << ": " << back
                   << "\n";
   }
@@ -30,6 +28,7 @@ auto SemanticsNodeBlockStack::PeekForAdd() -> SemanticsNodeBlockId {
 }
 
 auto SemanticsNodeBlockStack::Pop() -> SemanticsNodeBlockId {
+  CARBON_CHECK(!stack_.empty()) << "no current block";
   auto back = stack_.pop_back_val();
   CARBON_VLOG() << name_ << " Pop " << stack_.size() << ": " << back << "\n";
   if (!back.is_valid()) {

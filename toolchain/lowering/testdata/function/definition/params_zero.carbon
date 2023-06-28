@@ -9,6 +9,7 @@
 // CHECK:STDOUT: %EmptyTupleType = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %EmptyTupleType @Foo() {
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 
 fn Foo() {}
