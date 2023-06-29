@@ -19,7 +19,7 @@
 // CHECK:STDOUT:   {kind: 'VariableDeclaration', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:       {kind: 'Name', text: 't'},
-// CHECK:STDOUT:       {kind: 'NameExpression', text: 'type'},
+// CHECK:STDOUT:       {kind: 'Literal', text: 'type'},
 // CHECK:STDOUT:     {kind: 'PatternBinding', text: ':', subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:       {kind: 'Literal', text: 'i32'},

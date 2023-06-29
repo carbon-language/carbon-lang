@@ -16,12 +16,15 @@ using ::testing::Eq;
 
 TEST(PrecedenceTest, OperatorsAreRecognized) {
   EXPECT_TRUE(PrecedenceGroup::ForLeading(TokenKind::Minus).has_value());
-  EXPECT_TRUE(PrecedenceGroup::ForLeading(TokenKind::Tilde).has_value());
+  EXPECT_TRUE(PrecedenceGroup::ForLeading(TokenKind::Caret).has_value());
   EXPECT_FALSE(PrecedenceGroup::ForLeading(TokenKind::Slash).has_value());
   EXPECT_FALSE(PrecedenceGroup::ForLeading(TokenKind::Identifier).has_value());
+  EXPECT_FALSE(PrecedenceGroup::ForLeading(TokenKind::Tilde).has_value());
 
   EXPECT_TRUE(
       PrecedenceGroup::ForTrailing(TokenKind::Minus, false).has_value());
+  EXPECT_TRUE(
+      PrecedenceGroup::ForTrailing(TokenKind::Caret, false).has_value());
   EXPECT_FALSE(
       PrecedenceGroup::ForTrailing(TokenKind::Tilde, false).has_value());
   EXPECT_TRUE(PrecedenceGroup::ForTrailing(TokenKind::Slash, true).has_value());
@@ -43,7 +46,7 @@ TEST(PrecedenceTest, InfixVsPostfix) {
   EXPECT_TRUE(PrecedenceGroup::ForTrailing(TokenKind::Star, true)->is_binary);
   EXPECT_FALSE(PrecedenceGroup::ForTrailing(TokenKind::Star, false)->is_binary);
 
-  // Infix `*` can appear in type contexts; binary `*` cannot.
+  // Postfix `*` can appear in type contexts; infix `*` cannot.
   EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::Star, true)->level,
                   PrecedenceGroup::ForType()),
@@ -53,7 +56,7 @@ TEST(PrecedenceTest, InfixVsPostfix) {
                   PrecedenceGroup::ForType()),
               Eq(OperatorPriority::LeftFirst));
 
-  // Binary `*` can appear in `+` contexts; binary `*` cannot.
+  // Infix `*` can appear in `+` contexts; postfix `*` cannot.
   EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::Star, true)->level,
                   PrecedenceGroup::ForTrailing(TokenKind::Plus, true)->level),
@@ -112,22 +115,22 @@ TEST(PrecedenceTest, IndirectRelations) {
               Eq(OperatorPriority::RightFirst));
 
   EXPECT_THAT(PrecedenceGroup::GetPriority(
-                  *PrecedenceGroup::ForLeading(TokenKind::Tilde),
+                  *PrecedenceGroup::ForLeading(TokenKind::Caret),
                   PrecedenceGroup::ForTrailing(TokenKind::Equal, true)->level),
               Eq(OperatorPriority::LeftFirst));
   EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::Equal, true)->level,
-                  *PrecedenceGroup::ForLeading(TokenKind::Tilde)),
+                  *PrecedenceGroup::ForLeading(TokenKind::Caret)),
               Eq(OperatorPriority::RightFirst));
 }
 
 TEST(PrecedenceTest, IncomparableOperators) {
   EXPECT_THAT(PrecedenceGroup::GetPriority(
-                  *PrecedenceGroup::ForLeading(TokenKind::Tilde),
+                  *PrecedenceGroup::ForLeading(TokenKind::Caret),
                   *PrecedenceGroup::ForLeading(TokenKind::Not)),
               Eq(OperatorPriority::Ambiguous));
   EXPECT_THAT(PrecedenceGroup::GetPriority(
-                  *PrecedenceGroup::ForLeading(TokenKind::Tilde),
+                  *PrecedenceGroup::ForLeading(TokenKind::Caret),
                   *PrecedenceGroup::ForLeading(TokenKind::Minus)),
               Eq(OperatorPriority::Ambiguous));
   EXPECT_THAT(PrecedenceGroup::GetPriority(
