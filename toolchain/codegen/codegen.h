@@ -21,6 +21,7 @@ class CodeGen {
         output_stream_(output_stream),
         error_stream_(error_stream),
         target_triple(triple){};
+
   // Generates the object code file.
   // Returns false in case of failure, and any information about the failure is
   // printed to the error stream.
