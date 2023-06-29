@@ -270,8 +270,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
 
   if (dump_mode == DumpMode::Assembly) {
     consumer.Flush();
-    CodeGen codegen =
-        CodeGen(*module, target_triple, error_stream_, output_stream_);
+    CodeGen codegen(*module, target_triple, error_stream_, output_stream_);
     has_errors |= !codegen.PrintAssembly();
     return !has_errors;
   }
