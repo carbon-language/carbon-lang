@@ -97,8 +97,14 @@ module.exports = grammar({
 
       const hex_real_number_literal = seq(
         hex_integer_literal,
-        token.immediate(/\.[0-9A-F]+/),
-        optional(seq(token.immediate(/p[+-]?/), token.immediate(hex_digits)))
+        token.immediate('.'),
+        token.immediate(hex_digits),
+        optional(
+          seq(
+            token.immediate(/p[+-]?/),
+            token.immediate(decimal_integer_literal)
+          )
+        )
       );
 
       return token(
