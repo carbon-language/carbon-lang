@@ -5,6 +5,7 @@
 #include "toolchain/codegen/codegen.h"
 
 #include <cstdio>
+#include <memory>
 
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/MC/TargetRegistry.h"
@@ -15,7 +16,7 @@
 
 namespace Carbon {
 
-auto CodeGen::CreateTargetMachine() -> llvm::TargetMachine* {
+auto CodeGen::CreateTargetMachine() -> std::unique_ptr<llvm::TargetMachine> {
   // Initialize the target registry etc.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
@@ -42,8 +43,9 @@ auto CodeGen::CreateTargetMachine() -> llvm::TargetMachine* {
 
   llvm::TargetOptions target_opts;
   std::optional<llvm::Reloc::Model> reloc_model;
-  auto* target_machine = target->createTargetMachine(
-      target_triple, CPU, Features, target_opts, reloc_model);
+  std::unique_ptr<llvm::TargetMachine> target_machine(
+      target->createTargetMachine(target_triple, CPU, Features, target_opts,
+                                  reloc_model));
   return target_machine;
 }
 
@@ -69,17 +71,17 @@ auto CodeGen::EmitCode(llvm::raw_pwrite_stream& dest,
 }
 
 auto CodeGen::PrintAssembly() -> bool {
-  auto* target_machine = CreateTargetMachine();
+  auto target_machine = CreateTargetMachine();
   if (target_machine == nullptr) {
     return false;
   }
-  bool has_errors = EmitCode(output_stream_, target_machine,
+  bool has_errors = EmitCode(output_stream_, target_machine.get(),
                              llvm::CodeGenFileType::CGFT_AssemblyFile);
-  delete target_machine;
   return has_errors;
 }
+
 auto CodeGen::GenerateObjectCode(llvm::StringRef output_file) -> bool {
-  auto* target_machine = CreateTargetMachine();
+  auto target_machine = CreateTargetMachine();
   if (target_machine == nullptr) {
     return false;
   }
@@ -89,9 +91,8 @@ auto CodeGen::GenerateObjectCode(llvm::StringRef output_file) -> bool {
     error_stream_ << "Error: Could not open file: " << ec.message() << "\n";
     return false;
   }
-  bool has_errors =
-      EmitCode(dest, target_machine, llvm::CodeGenFileType::CGFT_ObjectFile);
-  delete target_machine;
+  bool has_errors = EmitCode(dest, target_machine.get(),
+                             llvm::CodeGenFileType::CGFT_ObjectFile);
   return has_errors;
 }
 }  // namespace Carbon

@@ -37,10 +37,12 @@ class CodeGen {
   llvm::raw_pwrite_stream& output_stream_;
   llvm::raw_pwrite_stream& error_stream_;
   llvm::StringRef target_triple;
+
   // Creates the target machine for triple.
   // Returns nullptr in case of failure, and any information about the failure
   // is printed to the error stream.
-  auto CreateTargetMachine() -> llvm::TargetMachine*;
+  auto CreateTargetMachine() -> std::unique_ptr<llvm::TargetMachine>;
+
   // Using the llvm pass emits either assembly or object code to dest.
   // Returns false in case of failure, and any information about the failure is
   // printed to the error stream.

@@ -167,14 +167,18 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
 
   llvm::StringRef output_file;
   if (dump_mode == DumpMode::ObjectCode) {
-    if (!args.empty() && args.front().starts_with("--target_triple=")) {
-      target_triple = args.front().split("=").second;
-      args = args.drop_front();
+    while (!args.empty() && (args.front().starts_with("--target_triple=") ||
+                             args.front().starts_with("--output_file="))) {
+      if (args.front().starts_with("--target_triple=")) {
+        target_triple = args.front().split("=").second;
+        args = args.drop_front();
+      }
+      if (args.front().starts_with("--output_file=")) {
+        output_file = args.front().split("=").second;
+        args = args.drop_front();
+      }
     }
-    if (!args.empty() && args.front().starts_with("--output_file=")) {
-      output_file = args.front().split("=").second;
-      args = args.drop_front();
-    }
+
     if (output_file.empty()) {
       error_stream_ << "ERROR: Must provide an output file.\n";
       return false;
