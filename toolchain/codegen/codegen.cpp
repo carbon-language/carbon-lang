@@ -14,6 +14,7 @@
 #include "llvm/TargetParser/Host.h"
 
 namespace Carbon {
+
 auto CodeGen::CreateTargetMachine() -> llvm::TargetMachine* {
   // Initialize the target registry etc.
   llvm::InitializeAllTargetInfos();
