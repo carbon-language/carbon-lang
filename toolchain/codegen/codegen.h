@@ -47,6 +47,7 @@ class CodeGen {
                 llvm::TargetMachine* target_machine,
                 llvm::CodeGenFileType file_type) -> bool;
 };
+
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_CODEGEN_CODEGEN_H_
