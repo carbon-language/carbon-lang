@@ -90,8 +90,7 @@ auto CodeGen::GenerateObjectCode(llvm::StringRef output_file) -> bool {
     error_stream_ << "Error: Could not open file: " << ec.message() << "\n";
     return false;
   }
-  bool has_errors = EmitCode(dest, target_machine.get(),
-                             llvm::CodeGenFileType::CGFT_ObjectFile);
-  return has_errors;
+  return EmitCode(dest, target_machine.get(),
+                  llvm::CodeGenFileType::CGFT_ObjectFile);
 }
 }  // namespace Carbon
