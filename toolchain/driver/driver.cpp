@@ -277,8 +277,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
 
   if (dump_mode == DumpMode::ObjectCode) {
-    CodeGen codegen =
-        CodeGen(*module, target_triple, error_stream_, output_stream_);
+    CodeGen codegen(*module, target_triple, error_stream_, output_stream_);
     has_errors |= !codegen.GenerateObjectCode(output_file);
     return !has_errors;
   }
