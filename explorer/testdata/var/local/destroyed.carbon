@@ -15,6 +15,6 @@ class C {
 }
 
 fn Main() -> i32 {
-  var c: C = {};
+  var c_var_test: C = {};
   return 0;
 }
