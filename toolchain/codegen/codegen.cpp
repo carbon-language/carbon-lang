@@ -9,7 +9,6 @@
 
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/TargetParser/Host.h"
@@ -62,7 +61,7 @@ auto CodeGen::EmitCode(llvm::raw_pwrite_stream& dest,
   llvm::legacy::PassManager pass;
 
   if (target_machine->addPassesToEmitFile(pass, dest, nullptr, file_type)) {
-    error_stream_ << "Nothing to write to object file\n";
+    error_stream_ << "Error: Nothing to write to object file\n";
     return false;
   }
 
@@ -79,18 +78,12 @@ auto CodeGen::PrintAssembly() -> bool {
                   llvm::CodeGenFileType::CGFT_AssemblyFile);
 }
 
-auto CodeGen::GenerateObjectCode(llvm::StringRef output_file) -> bool {
+auto CodeGen::GenerateObjectCode() -> bool {
   auto target_machine = CreateTargetMachine();
   if (target_machine == nullptr) {
     return false;
   }
-  std::error_code ec;
-  llvm::raw_fd_ostream dest(output_file, ec, llvm::sys::fs::OF_None);
-  if (ec) {
-    error_stream_ << "Error: Could not open file: " << ec.message() << "\n";
-    return false;
-  }
-  return EmitCode(dest, target_machine.get(),
+  return EmitCode(output_stream_, target_machine.get(),
                   llvm::CodeGenFileType::CGFT_ObjectFile);
 }
 }  // namespace Carbon

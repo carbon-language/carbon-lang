@@ -276,8 +276,17 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
 
   if (dump_mode == DumpMode::ObjectCode) {
-    CodeGen codegen(*module, target_triple, error_stream_, output_stream_);
-    has_errors |= !codegen.GenerateObjectCode(output_file);
+    std::error_code ec;
+    llvm::raw_fd_ostream dest(output_file, ec, llvm::sys::fs::OF_None);
+    if (ec) {
+      error_stream_ << "Error: Could not open file: " << ec.message() << "\n";
+      return false;
+    }
+    CodeGen codegen(*module, target_triple, error_stream_, dest);
+    has_errors |= !codegen.GenerateObjectCode();
+    if (!has_errors) {
+      output_stream_ << "Success: Object file is generated!\n";
+    }
     return !has_errors;
   }
 

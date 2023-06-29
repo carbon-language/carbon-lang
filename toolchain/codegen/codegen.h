@@ -25,7 +25,7 @@ class CodeGen {
   // Generates the object code file.
   // Returns false in case of failure, and any information about the failure is
   // printed to the error stream.
-  auto GenerateObjectCode(llvm::StringRef output_file) -> bool;
+  auto GenerateObjectCode() -> bool;
 
   // Prints the assembly to stdout.
   // Returns false in case of failure, and any information about the failure is
