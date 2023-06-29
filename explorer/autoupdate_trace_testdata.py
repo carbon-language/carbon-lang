@@ -26,7 +26,7 @@ def main() -> None:
         "--tool=explorer",
         "--testdata=explorer/trace_testdata",
         "--autoupdate_arg=--trace_file=-",
-        "--autoupdate_arg=-trace_all",
+        "--autoupdate_arg=-trace_phase=all",
     ] + sys.argv[1:]
     exit(subprocess.call(args))
 
