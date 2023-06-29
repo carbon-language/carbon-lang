@@ -70,7 +70,8 @@ auto ParserHandleExpressionInPostfix(ParserContext& context) -> void {
     case TokenKind::IntegerTypeLiteral:
     case TokenKind::UnsignedIntegerTypeLiteral:
     case TokenKind::FloatingPointTypeLiteral:
-    case TokenKind::StringTypeLiteral: {
+    case TokenKind::StringTypeLiteral:
+    case TokenKind::Type: {
       context.AddLeafNode(ParseNodeKind::Literal, context.Consume());
       context.PushState(state);
       break;
