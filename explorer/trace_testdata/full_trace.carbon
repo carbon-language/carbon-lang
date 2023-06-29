@@ -27,6 +27,10 @@
 // CHECK:STDOUT: ** declaring function Main
 // CHECK:STDOUT: checking TuplePattern ()
 // CHECK:STDOUT: checking IntTypeLiteral i32
+// CHECK:STDOUT: --- running all steps for expression action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: i32 .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -37,7 +41,7 @@ package ExplorerTest api;
 
 interface TestInterface {}
 
-// CHECK:STDOUT: --- step exp i32 .0. (full_trace.carbon:[[@LINE+1184]]) --->
+// CHECK:STDOUT: --- step exp i32 .0. (full_trace.carbon:[[@LINE+2421]]) --->
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -73,6 +77,13 @@ interface TestInterface {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ********** starting execution **********
 // CHECK:STDOUT: ********** initializing globals **********
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface As {
+// CHECK:STDOUT: fn Convert ()-> T;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -82,6 +93,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface ImplicitAs {
+// CHECK:STDOUT: extend As(T);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -91,6 +109,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface __EqualConverter {
+// CHECK:STDOUT: let T:! type;
+// CHECK:STDOUT: fn Convert (t: T)-> Self;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -100,6 +126,16 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: fn __EqualConvert [T:! type](t: T, U:! __EqualConverter where .T = T)-> U {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return U.Convert(t);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -109,6 +145,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U:! type] U as __EqualConverter where .T = U {
+// CHECK:STDOUT: fn Convert (u: U)-> U {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return u;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -118,6 +166,28 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: match_first {
+// CHECK:STDOUT: impl forall [template U:! type, template T:! __intrinsic_implicit_as(U)] T as ImplicitAs(U) {
+// CHECK:STDOUT: fn Convert ()-> U {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return __intrinsic_implicit_as_convert(self, U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT: impl forall [T:! type, U:! type where .Self == T] T as ImplicitAs(U) {
+// CHECK:STDOUT: fn Convert ()-> U {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return __EqualConvert(self, U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -127,6 +197,19 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U1:! type, T1:! As(U1)] (T1) as As((U1)) {
+// CHECK:STDOUT: fn Convert ()-> (U1) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var (v1: T1) = self;
+// CHECK:STDOUT: return (v1.Convert());
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -136,6 +219,19 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U1:! type, U2:! type, T1:! As(U1), T2:! As(U2)] (T1, T2) as As((U1, U2)) {
+// CHECK:STDOUT: fn Convert ()-> (U1, U2) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var (v1: T1, v2: T2) = self;
+// CHECK:STDOUT: return (v1.Convert(), v2.Convert());
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -145,6 +241,19 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U1:! type, U2:! type, U3:! type, T1:! As(U1), T2:! As(U2), T3:! As(U3)] (T1, T2, T3) as As((U1, U2, U3)) {
+// CHECK:STDOUT: fn Convert ()-> (U1, U2, U3) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var (v1: T1, v2: T2, v3: T3) = self;
+// CHECK:STDOUT: return (v1.Convert(), v2.Convert(), v3.Convert());
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -154,6 +263,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface EqWith {
+// CHECK:STDOUT: fn Equal (other: U)-> bool;
+// CHECK:STDOUT: fn NotEqual (other: U)-> bool;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -163,6 +280,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint Eq {
+// CHECK:STDOUT: extend EqWith(Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -172,6 +296,28 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [T2:! type, U2:! type, T1:! EqWith(T2), U1:! EqWith(U2)] (T1, U1) as EqWith((T2, U2)) {
+// CHECK:STDOUT: fn Equal (other: (T2, U2))-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var (l1: T1, l2: U1) = self;
+// CHECK:STDOUT: var (r1: T2, r2: U2) = other;
+// CHECK:STDOUT: return ((l1 == r1) and (l2 == r2));
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: fn NotEqual (other: (T2, U2))-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var (l1: T1, l2: U1) = self;
+// CHECK:STDOUT: var (r1: T2, r2: U2) = other;
+// CHECK:STDOUT: return ((l1 != r1) or (l2 != r2));
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -181,6 +327,24 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl bool as EqWith(Self) {
+// CHECK:STDOUT: fn Equal (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return if self then other else (not other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: fn NotEqual (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return if self then (not other) else other;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -190,6 +354,24 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as EqWith(Self) {
+// CHECK:STDOUT: fn Equal (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return __intrinsic_int_eq(self, other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: fn NotEqual (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return (not __intrinsic_int_eq(self, other));
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -199,6 +381,24 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl String as EqWith(Self) {
+// CHECK:STDOUT: fn Equal (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return __intrinsic_str_eq(self, other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: fn NotEqual (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return (not __intrinsic_str_eq(self, other));
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -208,6 +408,16 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: choice Ordering {
+// CHECK:STDOUT: alt Less;
+// CHECK:STDOUT: alt Equivalent;
+// CHECK:STDOUT: alt Greater;
+// CHECK:STDOUT: alt Incomparable;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -217,6 +427,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface CompareWith {
+// CHECK:STDOUT: fn Compare (u: U)-> Ordering;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -226,6 +443,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint Ordered {
+// CHECK:STDOUT: extend CompareWith(Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -235,6 +459,34 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as CompareWith(Self) {
+// CHECK:STDOUT: fn Compare (other: Self)-> Ordering {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var comp: i32 = __intrinsic_int_compare(self, other);
+// CHECK:STDOUT: if ((comp == (- 1)))
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return Ordering.Less;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: if ((comp == 0))
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return Ordering.Equivalent;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: if ((comp == 1))
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return Ordering.Greater;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: return Ordering.Incomparable;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -244,6 +496,34 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl String as CompareWith(Self) {
+// CHECK:STDOUT: fn Compare (other: Self)-> Ordering {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var comp: i32 = __intrinsic_str_compare(self, other);
+// CHECK:STDOUT: if ((comp == (- 1)))
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return Ordering.Less;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: if ((comp == 0))
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return Ordering.Equivalent;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: if ((comp == 1))
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return Ordering.Greater;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: return Ordering.Incomparable;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -253,6 +533,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface LessWith {
+// CHECK:STDOUT: fn Less (other: U)-> bool;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -262,6 +549,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface LessEqWith {
+// CHECK:STDOUT: fn LessEq (other: U)-> bool;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -271,6 +565,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface GreaterWith {
+// CHECK:STDOUT: fn Greater (other: U)-> bool;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -280,6 +581,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface GreaterEqWith {
+// CHECK:STDOUT: fn GreaterEq (other: U)-> bool;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -289,6 +597,26 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as LessWith(Self) {
+// CHECK:STDOUT: fn Less (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var comp: Ordering = self.(CompareWith(i32).Compare)(other);
+// CHECK:STDOUT: match (comp) {
+// CHECK:STDOUT: case Ordering.Less =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return true;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: return false;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -298,6 +626,26 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl String as LessWith(Self) {
+// CHECK:STDOUT: fn Less (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var comp: Ordering = self.(CompareWith(String).Compare)(other);
+// CHECK:STDOUT: match (comp) {
+// CHECK:STDOUT: case Ordering.Less =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return true;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: return false;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -307,6 +655,31 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as LessEqWith(Self) {
+// CHECK:STDOUT: fn LessEq (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var comp: Ordering = self.(CompareWith(i32).Compare)(other);
+// CHECK:STDOUT: match (comp) {
+// CHECK:STDOUT: case Ordering.Less =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return true;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: case Ordering.Equivalent =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return true;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: return false;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -316,6 +689,31 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl String as LessEqWith(Self) {
+// CHECK:STDOUT: fn LessEq (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var comp: Ordering = self.(CompareWith(String).Compare)(other);
+// CHECK:STDOUT: match (comp) {
+// CHECK:STDOUT: case Ordering.Less =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return true;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: case Ordering.Equivalent =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return true;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: return false;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -325,6 +723,26 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as GreaterWith(Self) {
+// CHECK:STDOUT: fn Greater (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var comp: Ordering = self.(CompareWith(i32).Compare)(other);
+// CHECK:STDOUT: match (comp) {
+// CHECK:STDOUT: case Ordering.Greater =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return true;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: return false;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -334,6 +752,26 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl String as GreaterWith(Self) {
+// CHECK:STDOUT: fn Greater (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var comp: Ordering = self.(CompareWith(String).Compare)(other);
+// CHECK:STDOUT: match (comp) {
+// CHECK:STDOUT: case Ordering.Greater =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return true;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: return false;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -343,6 +781,31 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as GreaterEqWith(Self) {
+// CHECK:STDOUT: fn GreaterEq (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var comp: Ordering = self.(CompareWith(i32).Compare)(other);
+// CHECK:STDOUT: match (comp) {
+// CHECK:STDOUT: case Ordering.Greater =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return true;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: case Ordering.Equivalent =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return true;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: return false;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -352,6 +815,31 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl String as GreaterEqWith(Self) {
+// CHECK:STDOUT: fn GreaterEq (other: Self)-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: var comp: Ordering = self.(CompareWith(String).Compare)(other);
+// CHECK:STDOUT: match (comp) {
+// CHECK:STDOUT: case Ordering.Greater =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return true;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: case Ordering.Equivalent =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return true;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: return false;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -361,6 +849,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface Negate {
+// CHECK:STDOUT: let Result:! type;
+// CHECK:STDOUT: fn Op ()-> Result;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -370,6 +866,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface AddWith {
+// CHECK:STDOUT: let Result:! type;
+// CHECK:STDOUT: fn Op (other: U)-> Result;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -379,6 +883,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint Add {
+// CHECK:STDOUT: extend AddWith(Self) where .Result = Self;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -388,6 +899,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface SubWith {
+// CHECK:STDOUT: let Result:! type;
+// CHECK:STDOUT: fn Op (other: U)-> Result;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -397,6 +916,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint Sub {
+// CHECK:STDOUT: extend SubWith(Self) where .Result = Self;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -406,6 +932,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface MulWith {
+// CHECK:STDOUT: let Result:! type;
+// CHECK:STDOUT: fn Op (other: U)-> Result;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -415,6 +949,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint Mul {
+// CHECK:STDOUT: extend MulWith(Self) where .Result = Self;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -424,6 +965,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface DivWith {
+// CHECK:STDOUT: let Result:! type;
+// CHECK:STDOUT: fn Op (other: U)-> Result;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -433,6 +982,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint Div {
+// CHECK:STDOUT: extend DivWith(Self) where .Result = Self;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -442,6 +998,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface ModWith {
+// CHECK:STDOUT: let Result:! type;
+// CHECK:STDOUT: fn Op (other: U)-> Result;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -451,6 +1015,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint Mod {
+// CHECK:STDOUT: extend ModWith(Self) where .Result = Self;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -460,6 +1031,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as Negate where .Result = i32 {
+// CHECK:STDOUT: fn Op ()-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return (- self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -469,6 +1052,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as AddWith(i32) where .Result = i32 {
+// CHECK:STDOUT: fn Op (other: i32)-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return (self + other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -478,6 +1073,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as SubWith(i32) where .Result = i32 {
+// CHECK:STDOUT: fn Op (other: i32)-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return (self - other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -487,6 +1094,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as MulWith(i32) where .Result = i32 {
+// CHECK:STDOUT: fn Op (other: i32)-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return (self * other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -496,6 +1115,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as DivWith(i32) where .Result = i32 {
+// CHECK:STDOUT: fn Op (other: i32)-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return (self / other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -505,6 +1136,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as ModWith(i32) where .Result = i32 {
+// CHECK:STDOUT: fn Op (other: i32)-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return (self % other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -514,6 +1157,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface BitComplement {
+// CHECK:STDOUT: let Result:! type;
+// CHECK:STDOUT: fn Op ()-> Result;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -523,6 +1174,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface BitAndWith {
+// CHECK:STDOUT: let Result:! type;
+// CHECK:STDOUT: fn Op (other: U)-> Result;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -532,6 +1191,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint BitAnd {
+// CHECK:STDOUT: extend BitAndWith(Self) where .Result = Self;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -541,6 +1207,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface BitOrWith {
+// CHECK:STDOUT: let Result:! type;
+// CHECK:STDOUT: fn Op (other: U)-> Result;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -550,6 +1224,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint BitOr {
+// CHECK:STDOUT: extend BitOrWith(Self) where .Result = Self;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -559,6 +1240,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface BitXorWith {
+// CHECK:STDOUT: let Result:! type;
+// CHECK:STDOUT: fn Op (other: U)-> Result;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -568,6 +1257,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint BitXor {
+// CHECK:STDOUT: extend BitXorWith(Self) where .Result = Self;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -577,6 +1273,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface LeftShiftWith {
+// CHECK:STDOUT: let Result:! type;
+// CHECK:STDOUT: fn Op (other: U)-> Result;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -586,6 +1290,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint LeftShift {
+// CHECK:STDOUT: extend LeftShiftWith(Self) where .Result = Self;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -595,6 +1306,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface RightShiftWith {
+// CHECK:STDOUT: let Result:! type;
+// CHECK:STDOUT: fn Op (other: U)-> Result;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -604,6 +1323,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint RightShift {
+// CHECK:STDOUT: extend RightShiftWith(Self) where .Result = Self;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -613,6 +1339,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as BitComplement where .Result = i32 {
+// CHECK:STDOUT: fn Op ()-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return __intrinsic_int_bit_complement(self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -622,6 +1360,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as BitAndWith(i32) where .Result = i32 {
+// CHECK:STDOUT: fn Op (other: i32)-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return __intrinsic_int_bit_and(self, other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -631,6 +1381,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as BitOrWith(i32) where .Result = i32 {
+// CHECK:STDOUT: fn Op (other: i32)-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return __intrinsic_int_bit_or(self, other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -640,6 +1402,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as BitXorWith(i32) where .Result = i32 {
+// CHECK:STDOUT: fn Op (other: i32)-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return __intrinsic_int_bit_xor(self, other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -649,6 +1423,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as LeftShiftWith(i32) where .Result = i32 {
+// CHECK:STDOUT: fn Op (other: i32)-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return __intrinsic_int_left_shift(self, other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -658,6 +1444,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as RightShiftWith(i32) where .Result = i32 {
+// CHECK:STDOUT: fn Op (other: i32)-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return __intrinsic_int_right_shift(self, other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -667,6 +1465,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface AssignWith {
+// CHECK:STDOUT: fn Op (other: U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -676,6 +1481,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint Assign {
+// CHECK:STDOUT: extend AssignWith(Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -685,6 +1497,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface AddAssignWith {
+// CHECK:STDOUT: fn Op (other: U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -694,6 +1513,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint AddAssign {
+// CHECK:STDOUT: extend AddAssignWith(Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -703,6 +1529,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface SubAssignWith {
+// CHECK:STDOUT: fn Op (other: U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -712,6 +1545,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint SubAssign {
+// CHECK:STDOUT: extend SubAssignWith(Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -721,6 +1561,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface MulAssignWith {
+// CHECK:STDOUT: fn Op (other: U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -730,6 +1577,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint MulAssign {
+// CHECK:STDOUT: extend MulAssignWith(Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -739,6 +1593,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface DivAssignWith {
+// CHECK:STDOUT: fn Op (other: U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -748,6 +1609,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint DivAssign {
+// CHECK:STDOUT: extend DivAssignWith(Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -757,6 +1625,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface ModAssignWith {
+// CHECK:STDOUT: fn Op (other: U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -766,6 +1641,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint ModAssign {
+// CHECK:STDOUT: extend ModAssignWith(Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -775,6 +1657,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface BitAndAssignWith {
+// CHECK:STDOUT: fn Op (other: U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -784,6 +1673,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint BitAssignAnd {
+// CHECK:STDOUT: extend BitAndAssignWith(Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -793,6 +1689,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface BitOrAssignWith {
+// CHECK:STDOUT: fn Op (other: U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -802,6 +1705,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint BitAssignOr {
+// CHECK:STDOUT: extend BitOrAssignWith(Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -811,6 +1721,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface BitXorAssignWith {
+// CHECK:STDOUT: fn Op (other: U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -820,6 +1737,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint BitAssignXor {
+// CHECK:STDOUT: extend BitXorAssignWith(Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -829,6 +1753,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface LeftShiftAssignWith {
+// CHECK:STDOUT: fn Op (other: U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -838,6 +1769,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint LeftShiftAssign {
+// CHECK:STDOUT: extend LeftShiftAssignWith(Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -847,6 +1785,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface RightShiftAssignWith {
+// CHECK:STDOUT: fn Op (other: U);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -856,6 +1801,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: constraint RightShiftAssign {
+// CHECK:STDOUT: extend RightShiftAssignWith(Self);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -865,6 +1817,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [T:! type, U:! ImplicitAs(T)] T as AssignWith(U) {
+// CHECK:STDOUT: fn Op (other: U) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: (* self) = other.Convert();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -874,6 +1838,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U:! type, T:! AddWith(U) where .Self impls AssignWith(.Self.Result)] T as AddAssignWith(U) {
+// CHECK:STDOUT: fn Op (other: U) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: (* self) = ((* self) + other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -883,6 +1859,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U:! type, T:! SubWith(U) where .Self impls AssignWith(.Self.Result)] T as SubAssignWith(U) {
+// CHECK:STDOUT: fn Op (other: U) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: (* self) = ((* self) - other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -892,6 +1880,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U:! type, T:! MulWith(U) where .Self impls AssignWith(.Self.Result)] T as MulAssignWith(U) {
+// CHECK:STDOUT: fn Op (other: U) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: (* self) = ((* self) * other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -901,6 +1901,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U:! type, T:! DivWith(U) where .Self impls AssignWith(.Self.Result)] T as DivAssignWith(U) {
+// CHECK:STDOUT: fn Op (other: U) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: (* self) = ((* self) / other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -910,6 +1922,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U:! type, T:! ModWith(U) where .Self impls AssignWith(.Self.Result)] T as ModAssignWith(U) {
+// CHECK:STDOUT: fn Op (other: U) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: (* self) = ((* self) % other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -919,6 +1943,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U:! type, T:! BitAndWith(U) where .Self impls AssignWith(.Self.Result)] T as BitAndAssignWith(U) {
+// CHECK:STDOUT: fn Op (other: U) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: (* self) = ((* self) & other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -928,6 +1964,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U:! type, T:! BitOrWith(U) where .Self impls AssignWith(.Self.Result)] T as BitOrAssignWith(U) {
+// CHECK:STDOUT: fn Op (other: U) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: (* self) = ((* self) | other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -937,6 +1985,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U:! type, T:! BitXorWith(U) where .Self impls AssignWith(.Self.Result)] T as BitXorAssignWith(U) {
+// CHECK:STDOUT: fn Op (other: U) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: (* self) = ((* self) ^ other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -946,6 +2006,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U:! type, T:! LeftShiftWith(U) where .Self impls AssignWith(.Self.Result)] T as LeftShiftAssignWith(U) {
+// CHECK:STDOUT: fn Op (other: U) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: (* self) = ((* self) << other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -955,6 +2027,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl forall [U:! type, T:! RightShiftWith(U) where .Self impls AssignWith(.Self.Result)] T as RightShiftAssignWith(U) {
+// CHECK:STDOUT: fn Op (other: U) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: (* self) = ((* self) >> other);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -964,6 +2048,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface Inc {
+// CHECK:STDOUT: fn Op ();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -973,6 +2064,13 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface Dec {
+// CHECK:STDOUT: fn Op ();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -982,6 +2080,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as Inc {
+// CHECK:STDOUT: fn Op () {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: (* self) = ((* self) + 1);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -991,6 +2101,18 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: impl i32 as Dec {
+// CHECK:STDOUT: fn Op () {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: (* self) = ((* self) - 1);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -1000,6 +2122,16 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: fn Assert (condition: bool, message: String) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: __intrinsic_assert(condition, message);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -1009,6 +2141,16 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: fn Rand (low: i32, high: i32)-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return __intrinsic_rand(low, high);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -1018,6 +2160,14 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: choice OptionalElement {
+// CHECK:STDOUT: alt None;
+// CHECK:STDOUT: alt Element(T);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -1027,6 +2177,52 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: class Optional(T:! type) {
+// CHECK:STDOUT: fn CreateEmpty ()-> Optional(T) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return {.element = OptionalElement(T).None}.(interface ImplicitAs(T = class Optional(T = T)).Convert)();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: fn Create (value: T)-> Optional(T) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return {.element = OptionalElement(T).Element(value)}.(interface ImplicitAs(T = class Optional(T = T)).Convert)();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: fn HasValue ()-> bool {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: match (self.element) {
+// CHECK:STDOUT: case OptionalElement(T).None =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return false;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: return true;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: fn Get ()-> T {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: match (self.element) {
+// CHECK:STDOUT: case OptionalElement(T).Element(x: T) =>
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return x;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: Assert(false, "Attempted to unwrap empty Optional");
+// CHECK:STDOUT: return self.Get();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: var element: OptionalElement(T);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -1036,6 +2232,30 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: class Heap {
+// CHECK:STDOUT: fn New [T:! type](x: T)-> (* T) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return __intrinsic_new(x);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: fn Delete [T:! type](p: (* T)) {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: __intrinsic_delete(p);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: fn PrintAllocs () {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: __intrinsic_print_allocs();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -1045,6 +2265,11 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: var heap: Heap = {}.(interface ImplicitAs(T = class Heap).Convert)();
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
@@ -1208,27 +2433,47 @@ interface TestInterface {}
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory: 0: Heap{}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface TestInterface {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory: 0: Heap{}
 // CHECK:STDOUT: }
-// CHECK:STDOUT: --- step decl interface TestInterface .0. (full_trace.carbon:[[@LINE-1177]]) --->
+// CHECK:STDOUT: --- step decl interface TestInterface .0. (full_trace.carbon:[[@LINE-2404]]) --->
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory: 0: Heap{}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: --- running all steps for declaration action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: fn Main ()-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return 0;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory: 0: Heap{}
 // CHECK:STDOUT: }
 fn Main() -> i32 {
   return 0;
-// CHECK:STDOUT: --- step decl fn Main .0. (full_trace.carbon:[[@LINE+82]]) --->
+// CHECK:STDOUT: --- step decl fn Main .0. (full_trace.carbon:[[@LINE+86]]) --->
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory: 0: Heap{}
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ********** calling main function **********
+// CHECK:STDOUT: --- running all steps for expression action
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: Main() .0.
+// CHECK:STDOUT: ``` --->{{ }}
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory: 0: Heap{}
@@ -1266,17 +2511,17 @@ fn Main() -> i32 {
 // CHECK:STDOUT: stack: return 0; .0. ## {return 0;} .1. {} ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {}
 // CHECK:STDOUT: memory: 0: Heap{}
 // CHECK:STDOUT: }
-// CHECK:STDOUT: --- step stmt return 0; .0. (full_trace.carbon:[[@LINE-44]]) --->
+// CHECK:STDOUT: --- step stmt return 0; .0. (full_trace.carbon:[[@LINE-48]]) --->
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack: 0 .0. ## return 0; .1. ## {return 0;} .1. {} ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {}
 // CHECK:STDOUT: memory: 0: Heap{}
 // CHECK:STDOUT: }
-// CHECK:STDOUT: --- step exp 0 .0. (full_trace.carbon:[[@LINE-49]]) --->
+// CHECK:STDOUT: --- step exp 0 .0. (full_trace.carbon:[[@LINE-53]]) --->
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack: return 0; .1. {{[[][[]}}0]] ## {return 0;} .1. {} ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {}
 // CHECK:STDOUT: memory: 0: Heap{}
 // CHECK:STDOUT: }
-// CHECK:STDOUT: --- step stmt return 0; .1. (full_trace.carbon:[[@LINE-54]]) --->
+// CHECK:STDOUT: --- step stmt return 0; .1. (full_trace.carbon:[[@LINE-58]]) --->
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack: clean up.0. {} ## clean up.0. {} ## Main() .3. {{[[][[]}}fun<Main>, (), 0]] {}
 // CHECK:STDOUT: memory: 0: Heap{}
