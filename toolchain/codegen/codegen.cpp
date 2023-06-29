@@ -46,6 +46,7 @@ auto CodeGen::CreateTargetMachine() -> llvm::TargetMachine* {
       target_triple, CPU, Features, target_opts, reloc_model);
   return target_machine;
 }
+
 auto CodeGen::EmitCode(llvm::raw_pwrite_stream& dest,
                        llvm::TargetMachine* target_machine,
                        llvm::CodeGenFileType file_type) -> bool {
