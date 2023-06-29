@@ -11,6 +11,7 @@
 #include "llvm/Target/TargetMachine.h"
 
 namespace Carbon {
+
 class CodeGen {
  public:
   CodeGen(llvm::Module& module, llvm::StringRef triple,
