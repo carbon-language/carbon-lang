@@ -24,7 +24,7 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
   }
 
   auto function_id = name_node.GetAsFunctionDeclaration();
-  auto callable = context.semantics_ir().GetFunction(function_id);
+  const auto& callable = context.semantics_ir().GetFunction(function_id);
 
   CARBON_DIAGNOSTIC(NoMatchingCall, Error, "No matching callable was found.");
   auto diagnostic =
