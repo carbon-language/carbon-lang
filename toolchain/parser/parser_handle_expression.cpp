@@ -57,7 +57,7 @@ auto ParserHandleExpressionInPostfix(ParserContext& context) -> void {
   // expression.
   switch (context.PositionKind()) {
     case TokenKind::Identifier: {
-      context.AddLeafNode(ParseNodeKind::NameReference, context.Consume());
+      context.AddLeafNode(ParseNodeKind::NameExpression, context.Consume());
       context.PushState(state);
       break;
     }
@@ -70,7 +70,8 @@ auto ParserHandleExpressionInPostfix(ParserContext& context) -> void {
     case TokenKind::IntegerTypeLiteral:
     case TokenKind::UnsignedIntegerTypeLiteral:
     case TokenKind::FloatingPointTypeLiteral:
-    case TokenKind::StringTypeLiteral: {
+    case TokenKind::StringTypeLiteral:
+    case TokenKind::Type: {
       context.AddLeafNode(ParseNodeKind::Literal, context.Consume());
       context.PushState(state);
       break;
@@ -86,13 +87,13 @@ auto ParserHandleExpressionInPostfix(ParserContext& context) -> void {
       break;
     }
     case TokenKind::SelfValueIdentifier: {
-      context.AddLeafNode(ParseNodeKind::SelfValueIdentifier,
-                          context.Consume());
+      context.AddLeafNode(ParseNodeKind::SelfValueName, context.Consume());
       context.PushState(state);
       break;
     }
     case TokenKind::SelfTypeIdentifier: {
-      context.AddLeafNode(ParseNodeKind::SelfTypeIdentifier, context.Consume());
+      context.AddLeafNode(ParseNodeKind::SelfTypeNameExpression,
+                          context.Consume());
       context.PushState(state);
       break;
     }

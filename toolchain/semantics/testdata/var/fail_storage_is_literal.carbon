@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, body: block2},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,
@@ -28,6 +28,7 @@
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: typeInvalidType},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeInvalidType, type: typeInvalidType},
+// CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -41,6 +42,7 @@
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

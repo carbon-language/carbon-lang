@@ -21,6 +21,7 @@
 #include "common/ostream.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
+#include "explorer/ast/pattern.h"
 #include "explorer/ast/value.h"
 #include "explorer/ast/value_transform.h"
 #include "explorer/common/arena.h"
@@ -506,8 +507,12 @@ static auto FindField(llvm::ArrayRef<NamedValue> fields,
   return *it;
 }
 
-auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
+auto TypeChecker::FieldTypes(SourceLocation source_loc,
+                             std::string_view context,
+                             const NominalClassType& class_type) const
     -> ErrorOr<std::vector<NamedValue>> {
+  CARBON_RETURN_IF_ERROR(ExpectCompleteType(source_loc, context, &class_type));
+
   std::vector<NamedValue> field_types;
   for (Nonnull<Declaration*> m : class_type.declaration().members()) {
     switch (m->kind()) {
@@ -526,12 +531,16 @@ auto TypeChecker::FieldTypes(const NominalClassType& class_type) const
   return field_types;
 }
 
-auto TypeChecker::FieldTypesWithBase(const NominalClassType& class_type) const
+auto TypeChecker::FieldTypesWithBase(SourceLocation source_loc,
+                                     std::string_view context,
+                                     const NominalClassType& class_type) const
     -> ErrorOr<std::vector<NamedValue>> {
-  CARBON_ASSIGN_OR_RETURN(auto fields, FieldTypes(class_type));
+  CARBON_ASSIGN_OR_RETURN(auto fields,
+                          FieldTypes(source_loc, context, class_type));
   if (const auto base_type = class_type.base()) {
-    CARBON_ASSIGN_OR_RETURN(std::vector<NamedValue> base_fields,
-                            FieldTypesWithBase(*base_type.value()));
+    CARBON_ASSIGN_OR_RETURN(
+        std::vector<NamedValue> base_fields,
+        FieldTypesWithBase(source_loc, context, *base_type.value()));
     fields.emplace_back(NamedValue{std::string(NominalClassValue::BaseField),
                                    base_type.value()});
   }
@@ -539,9 +548,9 @@ auto TypeChecker::FieldTypesWithBase(const NominalClassType& class_type) const
 }
 
 auto TypeChecker::IsImplicitlyConvertible(
-    Nonnull<const Value*> source, Nonnull<const Value*> destination,
-    const ImplScope& impl_scope, bool allow_user_defined_conversions) const
-    -> ErrorOr<bool> {
+    SourceLocation source_loc, Nonnull<const Value*> source,
+    Nonnull<const Value*> destination, const ImplScope& impl_scope,
+    bool allow_user_defined_conversions) const -> ErrorOr<bool> {
   // Check for an exact match to avoid impl lookup in this common case.
   CARBON_CHECK(IsNonDeduceableType(source));
   CARBON_CHECK(IsNonDeduceableType(destination));
@@ -559,8 +568,8 @@ auto TypeChecker::IsImplicitlyConvertible(
   // to the actual destination type. We'll catch any problems when we actually
   // come to perform the conversion.
   if (isa<TupleType>(source) && IsTypeOfType(destination)) {
-    return IsBuiltinConversion(source, arena_->New<TypeType>(), impl_scope,
-                               allow_user_defined_conversions);
+    return IsBuiltinConversion(source_loc, source, arena_->New<TypeType>(),
+                               impl_scope, allow_user_defined_conversions);
   }
   if (IsTypeOfType(source) && IsTypeOfType(destination)) {
     return true;
@@ -569,13 +578,12 @@ auto TypeChecker::IsImplicitlyConvertible(
   // If we're not supposed to look for a user-defined conversion, check for
   // builtin conversions, which are normally found by impl lookup.
   if (!allow_user_defined_conversions) {
-    return IsBuiltinConversion(source, destination, impl_scope,
+    return IsBuiltinConversion(source_loc, source, destination, impl_scope,
                                allow_user_defined_conversions);
   }
 
   // We didn't find a builtin implicit conversion. Check if a user-defined one
   // exists.
-  SourceLocation source_loc = SourceLocation::DiagnosticsIgnored();
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<const InterfaceType*> iface_type,
       GetBuiltinInterfaceType(
@@ -587,7 +595,8 @@ auto TypeChecker::IsImplicitlyConvertible(
   return conversion_witness.has_value();
 }
 
-auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
+auto TypeChecker::IsBuiltinConversion(SourceLocation source_loc,
+                                      Nonnull<const Value*> source,
                                       Nonnull<const Value*> destination,
                                       const ImplScope& impl_scope,
                                       bool allow_user_defined_conversions) const
@@ -615,7 +624,7 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
             }
             CARBON_ASSIGN_OR_RETURN(
                 bool convertible,
-                IsImplicitlyConvertible(source_field->value,
+                IsImplicitlyConvertible(source_loc, source_field->value,
                                         destination_field.value, impl_scope,
                                         allow_user_defined_conversions));
             if (!convertible) {
@@ -627,12 +636,13 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
         case Value::Kind::NominalClassType: {
           CARBON_ASSIGN_OR_RETURN(
               std::vector<NamedValue> field_types,
-              FieldTypesWithBase(cast<NominalClassType>(*destination)));
+              FieldTypesWithBase(source_loc, "implicit conversion",
+                                 cast<NominalClassType>(*destination)));
           CARBON_ASSIGN_OR_RETURN(
               bool convertible,
               IsImplicitlyConvertible(
-                  source, arena_->New<StructType>(field_types), impl_scope,
-                  allow_user_defined_conversions));
+                  source_loc, source, arena_->New<StructType>(field_types),
+                  impl_scope, allow_user_defined_conversions));
           if (convertible) {
             return true;
           }
@@ -664,9 +674,10 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
           for (size_t i = 0; i < source_tuple.elements().size(); ++i) {
             CARBON_ASSIGN_OR_RETURN(
                 bool convertible,
-                IsImplicitlyConvertible(
-                    source_tuple.elements()[i], destination_tuple.elements()[i],
-                    impl_scope, allow_user_defined_conversions));
+                IsImplicitlyConvertible(source_loc, source_tuple.elements()[i],
+                                        destination_tuple.elements()[i],
+                                        impl_scope,
+                                        allow_user_defined_conversions));
             if (!convertible) {
               all_ok = false;
               break;
@@ -686,9 +697,10 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
           for (Nonnull<const Value*> source_element : source_tuple.elements()) {
             CARBON_ASSIGN_OR_RETURN(
                 bool convertible,
-                IsImplicitlyConvertible(
-                    source_element, &destination_array.element_type(),
-                    impl_scope, allow_user_defined_conversions));
+                IsImplicitlyConvertible(source_loc, source_element,
+                                        &destination_array.element_type(),
+                                        impl_scope,
+                                        allow_user_defined_conversions));
             if (!convertible) {
               all_ok = false;
               break;
@@ -705,7 +717,8 @@ auto TypeChecker::IsBuiltinConversion(Nonnull<const Value*> source,
           for (Nonnull<const Value*> source_element : source_tuple.elements()) {
             CARBON_ASSIGN_OR_RETURN(
                 bool convertible,
-                IsImplicitlyConvertible(source_element, destination, impl_scope,
+                IsImplicitlyConvertible(source_loc, source_element, destination,
+                                        impl_scope,
                                         allow_user_defined_conversions));
             if (!convertible) {
               all_types = false;
@@ -840,7 +853,8 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
         case Value::Kind::NominalClassType: {
           CARBON_ASSIGN_OR_RETURN(
               std::vector<NamedValue> field_types,
-              FieldTypesWithBase(cast<NominalClassType>(*destination)));
+              FieldTypesWithBase(source->source_loc(), "implicit conversion",
+                                 cast<NominalClassType>(*destination)));
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<Expression*> result,
               ImplicitlyConvert("implicit conversion", impl_scope, source,
@@ -971,7 +985,8 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
     auto* type_type = arena_->New<TypeType>();
     CARBON_ASSIGN_OR_RETURN(
         bool convertible,
-        IsBuiltinConversion(source_type, type_type, impl_scope,
+        IsBuiltinConversion(source->source_loc(), source_type, type_type,
+                            impl_scope,
                             /*allow_user_defined_conversions=*/true));
     if (convertible) {
       CARBON_ASSIGN_OR_RETURN(
@@ -1071,8 +1086,8 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
 }
 
 auto TypeChecker::IsIntrinsicConstraintSatisfied(
-    const IntrinsicConstraint& constraint, const ImplScope& impl_scope) const
-    -> ErrorOr<bool> {
+    SourceLocation source_loc, const IntrinsicConstraint& constraint,
+    const ImplScope& impl_scope) const -> ErrorOr<bool> {
   // TODO: Check to see if this constraint is known in the current impl scope.
   switch (constraint.kind) {
     case IntrinsicConstraint::ImplicitAs:
@@ -1080,8 +1095,8 @@ auto TypeChecker::IsIntrinsicConstraintSatisfied(
           << "wrong number of arguments for `__intrinsic_implicit_as`";
       CARBON_ASSIGN_OR_RETURN(
           bool convertible,
-          IsBuiltinConversion(constraint.type, constraint.arguments[0],
-                              impl_scope,
+          IsBuiltinConversion(source_loc, constraint.type,
+                              constraint.arguments[0], impl_scope,
                               /*allow_user_defined_conversions=*/true));
       if (trace_stream_->is_enabled()) {
         *trace_stream_ << constraint << " evaluated to " << convertible << "\n";
@@ -1116,9 +1131,9 @@ auto TypeChecker::GetBuiltinInterfaceType(SourceLocation source_loc,
   BindingMap binding_args;
   if (has_arguments) {
     TupleValue args(interface.arguments);
-    if (!PatternMatch(&iface_decl->params().value()->value(), &args, source_loc,
-                      std::nullopt, binding_args, trace_stream_,
-                      this->arena_)) {
+    if (!PatternMatch(&iface_decl->params().value()->value(),
+                      ExpressionResult::Value(&args), source_loc, std::nullopt,
+                      binding_args, trace_stream_, this->arena_)) {
       return bad_builtin();
     }
   }
@@ -1636,9 +1651,10 @@ auto TypeChecker::ArgumentDeduction::Finish(
 
     bool type = IsType(subst_param) && IsType(mismatch.arg);
     if (type && mismatch.allow_implicit_conversion) {
-      CARBON_ASSIGN_OR_RETURN(bool convertible,
-                              type_checker.IsImplicitlyConvertible(
-                                  mismatch.arg, subst_param, impl_scope, true));
+      CARBON_ASSIGN_OR_RETURN(
+          bool convertible,
+          type_checker.IsImplicitlyConvertible(source_loc_, mismatch.arg,
+                                               subst_param, impl_scope, true));
       if (!convertible) {
         if (!diagnose_deduction_failure) {
           return {std::nullopt};
@@ -2429,9 +2445,20 @@ class TypeChecker::SubstituteTransform
     CARBON_ASSIGN_OR_RETURN(const auto* ret, type_checker_->SubstituteImpl(
                                                  subst_bindings.bindings(),
                                                  &fn_type->return_type()));
+    std::optional<FunctionType::MethodSelf> method_self =
+        fn_type->method_self();
+    if (method_self.has_value()) {
+      CARBON_ASSIGN_OR_RETURN(
+          const auto* self_type,
+          type_checker_->SubstituteImpl(subst_bindings.bindings(),
+                                        method_self->self_type));
+      method_self->self_type = self_type;
+    }
     return type_checker_->arena_->New<FunctionType>(
-        param, std::move(generic_parameters), ret, std::move(deduced_bindings),
-        std::move(subst_bindings).TakeImplBindings());
+        method_self, param, std::move(generic_parameters), ret,
+        std::move(deduced_bindings),
+        std::move(subst_bindings).TakeImplBindings(),
+        fn_type->is_initializing());
   }
 
   // Substituting into a `ConstraintType` needs special handling if we replace
@@ -3080,10 +3107,10 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                 Nonnull<const Value*> field_type,
                 Substitute(member_t_class->bindings(), member_type));
             access.set_member(arena_->New<NamedElement>(member));
-            access.set_static_type(field_type);
             access.set_is_type_access(!IsInstanceMember(&access.member()));
             switch (member->kind()) {
               case DeclarationKind::VariableDeclaration:
+                access.set_static_type(field_type);
                 access.set_expression_category(
                     access.object().expression_category());
                 break;
@@ -3091,6 +3118,14 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                 const auto* func_decl = cast<FunctionDeclaration>(member);
                 CARBON_RETURN_IF_ERROR(CheckAddrMeAccess(
                     &access, func_decl, t_class.bindings(), impl_scope));
+                if (access.is_type_access()) {
+                  access.set_static_type(field_type);
+                } else {
+                  // Remove `self` from type since now bound.
+                  auto* function_type = cast<FunctionType>(field_type);
+                  access.set_static_type(arena_->New<FunctionType>(
+                      FunctionType::ExceptSelf{}, *function_type));
+                }
                 access.set_expression_category(ExpressionCategory::Value);
                 break;
               }
@@ -3160,12 +3195,22 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           access.set_member(arena_->New<NamedElement>(result.member));
           access.set_found_in_interface(result.interface);
           access.set_is_type_access(!IsInstanceMember(&access.member()));
-          access.set_static_type(inst_member_type);
+          access.set_expression_category(ExpressionCategory::Value);
 
           if (const auto* func_decl =
                   dyn_cast<FunctionDeclaration>(result.member)) {
             CARBON_RETURN_IF_ERROR(
                 CheckAddrMeAccess(&access, func_decl, bindings, impl_scope));
+            if (access.is_type_access()) {
+              access.set_static_type(inst_member_type);
+            } else {
+              // Remove `self` from type since now bound.
+              auto* function_type = cast<FunctionType>(inst_member_type);
+              access.set_static_type(arena_->New<FunctionType>(
+                  FunctionType::ExceptSelf{}, *function_type));
+            }
+          } else {
+            access.set_static_type(inst_member_type);
           }
 
           // TODO: This is just a ConstraintImplWitness into the
@@ -3283,8 +3328,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                   Nonnull<const Value*> parameter_type,
                   Substitute(choice.bindings(),
                              *(*signature)->parameters_static_type()));
-              Nonnull<const Value*> type =
-                  arena_->New<FunctionType>(parameter_type, &choice);
+              Nonnull<const Value*> type = arena_->New<FunctionType>(
+                  std::nullopt, parameter_type, &choice);
               // TODO: Should there be a Declaration corresponding to each
               // choice type alternative?
               access.set_member(
@@ -3462,6 +3507,16 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
         return Success();
       };
 
+      auto set_static_type_remove_self = [&]() -> ErrorOr<Success> {
+        Nonnull<const Value*> member_type = &member_name.member().type();
+        CARBON_ASSIGN_OR_RETURN(member_type,
+                                Substitute(bindings_for_member(), member_type));
+        auto* function_type = cast<FunctionType>(member_type);
+        access.set_static_type(arena_->New<FunctionType>(
+            FunctionType::ExceptSelf{}, *function_type));
+        return Success();
+      };
+
       switch (std::optional<Nonnull<const Declaration*>> decl =
                   member_name.member().declaration();
               decl ? decl.value()->kind()
@@ -3481,7 +3536,12 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
             CARBON_CHECK(!has_instance || is_instance_member ||
                          !member_name.base_type().has_value())
                 << "vacuous compound member access";
-            CARBON_RETURN_IF_ERROR(set_static_type_as_member_type());
+            // If this is instance access, remove self bound from function type
+            if (has_instance && is_instance_member) {
+              CARBON_RETURN_IF_ERROR(set_static_type_remove_self());
+            } else {
+              CARBON_RETURN_IF_ERROR(set_static_type_as_member_type());
+            }
             access.set_expression_category(ExpressionCategory::Value);
             CARBON_RETURN_IF_ERROR(
                 CheckAddrMeAccess(&access, cast<FunctionDeclaration>(*decl),
@@ -3774,7 +3834,9 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               Nonnull<const Value*> return_type,
               Substitute(call.bindings(), &fun_t.return_type()));
           call.set_static_type(return_type);
-          call.set_expression_category(ExpressionCategory::Value);
+          call.set_expression_category(fun_t.is_initializing()
+                                           ? ExpressionCategory::Initializing
+                                           : ExpressionCategory::Value);
           return Success();
         }
         case Value::Kind::TypeOfParameterizedEntityName: {
@@ -3844,7 +3906,8 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                               TypeCheckTypeExp(&fn.return_type(), impl_scope));
       fn.set_static_type(arena_->New<TypeType>());
       fn.set_expression_category(ExpressionCategory::Value);
-      fn.set_constant_value(arena_->New<FunctionType>(param, ret));
+      fn.set_constant_value(
+          arena_->New<FunctionType>(std::nullopt, param, ret));
       return Success();
     }
     case ExpressionKind::StringLiteral:
@@ -3908,6 +3971,15 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           const auto* arg_type = &args[0]->static_type();
           CARBON_RETURN_IF_ERROR(
               ExpectPointerType(e->source_loc(), "*", arg_type));
+          e->set_static_type(TupleType::Empty());
+          e->set_expression_category(ExpressionCategory::Value);
+          return Success();
+        }
+        case IntrinsicExpression::Intrinsic::PrintAllocs: {
+          if (!args.empty()) {
+            return ProgramError(e->source_loc())
+                   << "__intrinsic_print_allocs takes no arguments";
+          }
           e->set_static_type(TupleType::Empty());
           e->set_expression_category(ExpressionCategory::Value);
           return Success();
@@ -4362,11 +4434,13 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
       Nonnull<const Value*> rhs_type = &equals_clause.rhs().static_type();
       CARBON_ASSIGN_OR_RETURN(
           bool lhs_converts_to_rhs,
-          IsImplicitlyConvertible(lhs_type, rhs_type, impl_scope,
+          IsImplicitlyConvertible(equals_clause.lhs().source_loc(), lhs_type,
+                                  rhs_type, impl_scope,
                                   /*allow_user_defined_conversions=*/false));
       CARBON_ASSIGN_OR_RETURN(
           bool rhs_converts_to_lhs,
-          IsImplicitlyConvertible(rhs_type, lhs_type, impl_scope,
+          IsImplicitlyConvertible(equals_clause.rhs().source_loc(), rhs_type,
+                                  lhs_type, impl_scope,
                                   /*allow_user_defined_conversions=*/false));
       if (!lhs_converts_to_rhs && !rhs_converts_to_lhs) {
         return ProgramError(clause->source_loc())
@@ -4467,9 +4541,9 @@ auto TypeChecker::TypeCheckPattern(
         // this level rather than on the overall initializer.
         if (!IsNonDeduceableType(type)) {
           BindingMap generic_args;
-          if (!PatternMatch(type, *expected, binding.type().source_loc(),
-                            std::nullopt, generic_args, trace_stream_,
-                            this->arena_)) {
+          if (!PatternMatch(type, ExpressionResult::Value(*expected),
+                            binding.type().source_loc(), std::nullopt,
+                            generic_args, trace_stream_, this->arena_)) {
             return ProgramError(binding.type().source_loc())
                    << "type pattern '" << *type
                    << "' does not match actual type '" << **expected << "'";
@@ -5047,12 +5121,17 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
     CollectImplBindingsInPattern(deduced, impl_bindings);
   }
   // Type check the receiver pattern.
+  std::optional<FunctionType::MethodSelf> method_self;
   if (f->is_method()) {
     CARBON_RETURN_IF_ERROR(TypeCheckPattern(
         &f->self_pattern(), PatternRequirements::Irrefutable, std::nullopt,
         function_scope, ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(&f->self_pattern(), all_bindings);
     CollectImplBindingsInPattern(&f->self_pattern(), impl_bindings);
+    FunctionType::MethodSelf method_self_present = {
+        (f->self_pattern().kind() == PatternKind::AddrPattern),
+        &f->self_pattern().static_type()};
+    method_self = method_self_present;
   }
   // Type check the parameter pattern.
   CARBON_RETURN_IF_ERROR(TypeCheckPattern(
@@ -5110,9 +5189,10 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   CARBON_CHECK(IsNonDeduceableType(&f->return_term().static_type()));
 
   f->set_static_type(arena_->New<FunctionType>(
-      &f->param_pattern().static_type(), std::move(generic_parameters),
-      &f->return_term().static_type(), std::move(deduced_bindings),
-      std::move(impl_bindings)));
+      method_self, &f->param_pattern().static_type(),
+      std::move(generic_parameters), &f->return_term().static_type(),
+      std::move(deduced_bindings), std::move(impl_bindings),
+      /*is_initializing*/ true));
   switch (f->kind()) {
     case DeclarationKind::FunctionDeclaration:
       // TODO: Should we pass in the bindings from the enclosing scope?
@@ -5186,8 +5266,23 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     *trace_stream_ << "** declaring class " << class_decl->name() << "\n";
   }
   Nonnull<SelfDeclaration*> self = class_decl->self();
-
   ImplScope class_scope(scope_info.innermost_scope);
+
+  // The base class and member declarations may refer to the class, so we must
+  // set the static type before we start processing them. We can't set the
+  // constant value until later, but the base class declaration doesn't need it.
+  self->set_static_type(arena_->New<TypeType>());
+  std::optional<Nonnull<ParameterizedEntityName*>> param_name;
+  if (class_decl->type_params().has_value()) {
+    // TODO: The `enclosing_bindings` should be tracked in the parameterized
+    // entity name so that they can be included in the eventual type.
+    param_name = arena_->New<ParameterizedEntityName>(
+        class_decl, *class_decl->type_params());
+    class_decl->set_static_type(
+        arena_->New<TypeOfParameterizedEntityName>(*param_name));
+  } else {
+    class_decl->set_static_type(&self->static_type());
+  }
 
   // Find base class declaration, if any. Verify that is before any data member
   // declarations, and there is at most one.
@@ -5221,6 +5316,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                  << "`. Only simple classes are currently supported as base "
                     "class.";
         }
+        CARBON_RETURN_IF_ERROR(ExpectCompleteType(base_class_expr->source_loc(),
+                                                  "base class declaration",
+                                                  base_type));
 
         base_class = cast<NominalClassType>(base_type);
         if (base_class.value()->declaration().extensibility() ==
@@ -5342,23 +5440,13 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
       class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class,
       std::move(class_vtable));
-  self->set_static_type(arena_->New<TypeType>());
   self->set_constant_value(self_type);
 
   // The declarations of the members may refer to the class, so we must set the
-  // constant value of the class and its static type before we start processing
-  // the members.
-  if (class_decl->type_params().has_value()) {
-    // TODO: The `enclosing_bindings` should be tracked in the parameterized
-    // entity name so that they can be included in the eventual type.
-    Nonnull<ParameterizedEntityName*> param_name =
-        arena_->New<ParameterizedEntityName>(class_decl,
-                                             *class_decl->type_params());
-    class_decl->set_static_type(
-        arena_->New<TypeOfParameterizedEntityName>(param_name));
-    class_decl->set_constant_value(param_name);
+  // constant value of the class before we start processing the members.
+  if (param_name.has_value()) {
+    class_decl->set_constant_value(*param_name);
   } else {
-    class_decl->set_static_type(&self->static_type());
     class_decl->set_constant_value(self_type);
   }
 
@@ -6168,7 +6256,6 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:
     case Value::Kind::MixinPseudoType:
-    case Value::Kind::TypeOfMixinPseudoType:
     case Value::Kind::AlternativeValue:
     case Value::Kind::TupleValue:
     case Value::Kind::ImplWitness:
@@ -6182,11 +6269,11 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::StringValue:
     case Value::Kind::UninitializedValue:
-      CARBON_FATAL() << "type of alias target is not a type";
+      CARBON_FATAL() << "type of alias target is not a type: " << *type;
 
     case Value::Kind::AutoType:
     case Value::Kind::VariableType:
-      CARBON_FATAL() << "pattern type in alias target";
+      CARBON_FATAL() << "pattern type in alias target: " << *type;
 
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
@@ -6198,6 +6285,7 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::ChoiceType:
     case Value::Kind::StringType:
     case Value::Kind::AssociatedConstant:
+    case Value::Kind::TypeOfMixinPseudoType:
       return false;
 
     case Value::Kind::FunctionType:

@@ -260,7 +260,7 @@ interface EqWith(U:! type) {
   }
 }
 constraint Eq {
-  extends EqWith(Self);
+  extend EqWith(Self);
 }
 ```
 
@@ -275,7 +275,7 @@ class Path {
   private var path: String;
   private fn CanonicalPath[self: Self]() -> String;
 
-  external impl as Eq {
+  impl as Eq {
     fn Equal[self: Self](other: Self) -> bool {
       return (self.drive, self.CanonicalPath()) ==
              (other.drive, other.CanonicalPath());
@@ -295,8 +295,8 @@ class MyInt {
   var value: i32;
   fn Value[self: Self]() -> i32 { return self.value; }
 }
-external impl i32 as ImplicitAs(MyInt);
-external impl like MyInt as EqWith(like MyInt) {
+impl i32 as ImplicitAs(MyInt);
+impl like MyInt as EqWith(like MyInt) {
   fn Equal[self: Self](other: Self) -> bool {
     return self.Value() == other.Value();
   }
@@ -315,7 +315,7 @@ and `NotEqual` to return `true` for the same pair of values. Additionally, these
 operations should have no observable side-effects.
 
 ```
-external impl like MyFloat as EqWith(like MyFloat) {
+impl like MyFloat as EqWith(like MyFloat) {
   fn Equal[self: MyFloat](other: MyFloat) -> bool {
     if (self.IsNaN() or other.IsNaN()) {
       return false;
@@ -334,8 +334,8 @@ external impl like MyFloat as EqWith(like MyFloat) {
 Heterogeneous comparisons must be defined both ways around:
 
 ```
-external impl like MyInt as EqWith(like MyFloat);
-external impl like MyFloat as EqWith(like MyInt);
+impl like MyInt as EqWith(like MyFloat);
+impl like MyFloat as EqWith(like MyInt);
 ```
 
 **TODO:** Add an adapter to the standard library to make it easy to define the
@@ -371,12 +371,12 @@ interface OrderedWith(U:! type) {
   }
 }
 constraint Ordered {
-  extends OrderedWith(Self);
+  extend OrderedWith(Self);
 }
 
 // Ordering.Less < Ordering.Equivalent < Ordering.Greater.
 // Ordering.Incomparable is incomparable with all three.
-external impl Ordering as Ordered;
+impl Ordering as Ordered;
 ```
 
 **TODO:** Revise the above when we have a concrete design for enumerated types.
@@ -398,7 +398,7 @@ class MyWidget {
   fn Size[self: Self]() -> i32 { return self.width * self.height; }
 
   // Widgets are normally ordered by size.
-  external impl as Ordered {
+  impl as Ordered {
     fn Compare[self: Self](other: Self) -> Ordering {
       return self.Size().(Ordered.Compare)(other.Size());
     }
@@ -418,8 +418,8 @@ heterogeneous comparisons must be defined both ways around:
 fn ReverseOrdering(o: Ordering) -> Ordering {
   return Ordering.Equivalent.(Ordered.Compare)(o);
 }
-external impl like MyInt as OrderedWith(like MyFloat);
-external impl like MyFloat as OrderedWith(like MyInt) {
+impl like MyInt as OrderedWith(like MyFloat);
+impl like MyFloat as OrderedWith(like MyInt) {
   fn Compare[self: Self](other: Self) -> Ordering {
     return Reverse(other.(OrderedWith(Self).Compare)(self));
   }

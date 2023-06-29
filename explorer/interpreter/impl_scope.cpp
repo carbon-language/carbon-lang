@@ -192,9 +192,9 @@ auto ImplScope::TryResolve(Nonnull<const Value*> constraint_type,
               type_checker.Substitute(local_bindings, argument));
           converted.arguments.push_back(subst_arg);
         }
-        CARBON_ASSIGN_OR_RETURN(
-            bool intrinsic_satisfied,
-            type_checker.IsIntrinsicConstraintSatisfied(converted, *this));
+        CARBON_ASSIGN_OR_RETURN(bool intrinsic_satisfied,
+                                type_checker.IsIntrinsicConstraintSatisfied(
+                                    source_loc, converted, *this));
         if (!intrinsic_satisfied) {
           if (!diagnose_missing_impl) {
             return {std::nullopt};

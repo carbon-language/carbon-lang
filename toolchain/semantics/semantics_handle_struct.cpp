@@ -21,7 +21,7 @@ auto SemanticsHandleStructFieldDesignator(SemanticsContext& context,
   // This leaves the designated name on top because the `.` isn't interesting.
   CARBON_CHECK(
       context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
-      ParseNodeKind::DesignatedName);
+      ParseNodeKind::Name);
   return true;
 }
 
@@ -33,7 +33,7 @@ auto SemanticsHandleStructFieldType(SemanticsContext& context,
 
   auto [name_node, name_id] =
       context.node_stack().PopWithParseNode<SemanticsStringId>(
-          ParseNodeKind::DesignatedName);
+          ParseNodeKind::Name);
 
   context.AddNode(
       SemanticsNode::StructTypeField::Make(name_node, cast_type_id, name_id));
@@ -50,8 +50,8 @@ auto SemanticsHandleStructFieldValue(SemanticsContext& context,
                                      ParseTree::Node parse_node) -> bool {
   auto [value_parse_node, value_node_id] =
       context.node_stack().PopWithParseNode<SemanticsNodeId>();
-  auto name_id = context.node_stack().Pop<SemanticsStringId>(
-      ParseNodeKind::DesignatedName);
+  auto name_id =
+      context.node_stack().Pop<SemanticsStringId>(ParseNodeKind::Name);
 
   // Store the name for the type.
   auto type_block_id = context.args_type_info_stack().PeekForAdd();

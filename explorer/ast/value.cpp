@@ -585,12 +585,20 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*this);
       out << "fn ";
-      if (!fn_type.deduced_bindings().empty()) {
+      auto self = fn_type.method_self();
+      if (!fn_type.deduced_bindings().empty() || self.has_value()) {
         out << "[";
         llvm::ListSeparator sep;
         for (Nonnull<const GenericBinding*> deduced :
              fn_type.deduced_bindings()) {
           out << sep << *deduced;
+        }
+        if (self.has_value()) {
+          if (self->addr_self) {
+            out << sep << "addr self: " << *self->self_type << "*";
+          } else {
+            out << sep << "self: " << *self->self_type;
+          }
         }
         out << "]";
       }
@@ -844,6 +852,19 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::FunctionType: {
       const auto& fn1 = cast<FunctionType>(*t1);
       const auto& fn2 = cast<FunctionType>(*t2);
+      // Verify `self` parameters match
+      auto self1 = fn1.method_self();
+      auto self2 = fn2.method_self();
+      if (self1.has_value() != self2.has_value()) {
+        return false;
+      }
+      if (self1) {
+        if (self1->addr_self != self2->addr_self ||
+            !TypeEqual(self1->self_type, self2->self_type, equality_ctx)) {
+          return false;
+        }
+      }
+      // Verify parameters and return types match
       return TypeEqual(&fn1.parameters(), &fn2.parameters(), equality_ctx) &&
              TypeEqual(&fn1.return_type(), &fn2.return_type(), equality_ctx);
     }
@@ -1316,6 +1337,17 @@ auto NominalClassType::InheritsClass(Nonnull<const Value*> other) const
     ancestor_class = (*ancestor_class)->base();
   }
   return false;
+}
+
+auto ExpressionCategoryToString(ExpressionCategory cat) -> llvm::StringRef {
+  switch (cat) {
+    case ExpressionCategory::Value:
+      return "value";
+    case ExpressionCategory::Reference:
+      return "reference";
+    case ExpressionCategory::Initializing:
+      return "initializing";
+  }
 }
 
 }  // namespace Carbon

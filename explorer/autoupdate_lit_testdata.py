@@ -24,8 +24,9 @@ def main() -> None:
         # Flags to configure for explorer testing.
         "--tool=explorer",
         "--testdata=explorer/lit_testdata",
-        "--lit_run=%{explorer-run}",
-        "--lit_run=%{explorer-run-trace}",
+        "--lit_run=%{explorer} | %{FileCheck-strict}",
+        "--lit_run=%{explorer} --parser_debug --trace_file=- | "
+        "%{FileCheck-allow-unmatched}",
     ] + sys.argv[1:]
     exit(subprocess.call(args))
 

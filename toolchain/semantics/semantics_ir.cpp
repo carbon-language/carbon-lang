@@ -92,7 +92,53 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
   context.VerifyOnFinish();
 
   semantics_ir.has_errors_ = err_tracker.seen_error();
+
+#ifndef NDEBUG
+  if (auto verify = semantics_ir.Verify(); !verify.ok()) {
+    CARBON_FATAL() << semantics_ir
+                   << "Built invalid semantics IR: " << verify.error() << "\n";
+  }
+#endif
+
   return semantics_ir;
+}
+
+auto SemanticsIR::Verify() const -> ErrorOr<Success> {
+  // Invariants don't necessarily hold for invalid IR.
+  if (has_errors_) {
+    return Success();
+  }
+
+  // Check that every code block has a terminator sequence that appears at the
+  // end of the block.
+  for (const SemanticsFunction& function : functions_) {
+    for (SemanticsNodeBlockId block_id : function.body_block_ids) {
+      SemanticsTerminatorKind prior_kind =
+          SemanticsTerminatorKind::NotTerminator;
+      for (SemanticsNodeId node_id : GetNodeBlock(block_id)) {
+        SemanticsTerminatorKind node_kind =
+            GetNode(node_id).kind().terminator_kind();
+        if (prior_kind == SemanticsTerminatorKind::Terminator) {
+          return Error(llvm::formatv("Node {0} in block {1} follows terminator",
+                                     node_id, block_id));
+        }
+        if (prior_kind > node_kind) {
+          return Error(
+              llvm::formatv("Non-terminator node {0} in block {1} follows "
+                            "terminator sequence",
+                            node_id, block_id));
+        }
+        prior_kind = node_kind;
+      }
+      if (prior_kind != SemanticsTerminatorKind::Terminator) {
+        return Error(llvm::formatv("No terminator in block {0}", block_id));
+      }
+    }
+  }
+
+  // TODO: Check that a node only references other nodes that are either global
+  // or that dominate it.
+  return Success();
 }
 
 static constexpr int Indent = 2;
@@ -205,7 +251,6 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::BranchWithArg:
       case SemanticsNodeKind::Builtin:
       case SemanticsNodeKind::Call:
-      case SemanticsNodeKind::CodeBlock:
       case SemanticsNodeKind::CrossReference:
       case SemanticsNodeKind::FunctionDeclaration:
       case SemanticsNodeKind::IntegerLiteral:
