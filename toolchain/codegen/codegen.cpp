@@ -75,9 +75,8 @@ auto CodeGen::PrintAssembly() -> bool {
   if (target_machine == nullptr) {
     return false;
   }
-  bool has_errors = EmitCode(output_stream_, target_machine.get(),
-                             llvm::CodeGenFileType::CGFT_AssemblyFile);
-  return has_errors;
+  return EmitCode(output_stream_, target_machine.get(),
+                  llvm::CodeGenFileType::CGFT_AssemblyFile);
 }
 
 auto CodeGen::GenerateObjectCode(llvm::StringRef output_file) -> bool {
