@@ -40,6 +40,33 @@ using llvm::isa;
 
 namespace Carbon {
 
+// TODO: Refactor this method & maybe move it to somewhere else
+auto format_action_str(Action& act) -> std::string {
+  std::string str;
+  llvm::raw_string_ostream stream(str);
+  stream << act;
+  auto string_ref = llvm::StringRef(str);
+  llvm::SmallVector<llvm::StringRef> lines;
+  string_ref.split(lines, "\n");
+  auto step = lines.pop_back_val();
+  std::string res;
+
+  res += "\n```\n";
+  // Adds the first line
+  if (!lines.empty()) {
+    res += lines.front();
+    res += lines.size() > 1 ? "\n ...\n" : "\n";
+  }
+
+  // Adds the last line
+  if (lines.size() > 1) {
+    res += lines.back().str() + "\n";
+  }
+  res += "\n```" + step.str();
+
+  return res;
+}
+
 // Limits for various overflow conditions.
 static constexpr int64_t MaxTodoSize = 1e3;
 static constexpr int64_t MaxStepsTaken = 1e6;
@@ -632,9 +659,8 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     -> ErrorOr<Nonnull<const Value*>> {
   auto action_kind = action->kind_string();
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- recursive eval for " << action_kind << "\n```\n";
-    action->Print(trace_stream_->stream());
-    *trace_stream_ << "\n``` ---> \n";
+    *trace_stream_ << "--- recursive eval for " << action_kind
+                   << format_action_str(*action) << " ---> \n";
     TraceState();
   }
   todo_.BeginRecursiveAction();
@@ -2655,9 +2681,7 @@ auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- running all steps for " << action->kind_string()
-                   << "\n```\n";
-    action->Print(trace_stream_->stream());
-    *trace_stream_ << "\n``` ---> \n";
+                   << format_action_str(*action) << " ---> \n";
     TraceState();
   }
   todo_.Start(std::move(action));
