@@ -13,9 +13,9 @@
 // CHECK:STDOUT:   {mantissa: 0, exponent: -1, is_decimal: 1},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
+// CHECK:STDOUT:   x,
 // CHECK:STDOUT:   a,
 // CHECK:STDOUT:   b,
-// CHECK:STDOUT:   x,
 // CHECK:STDOUT:   y,
 // CHECK:STDOUT:   z,
 // CHECK:STDOUT: ]
@@ -25,16 +25,16 @@
 // CHECK:STDOUT:   node+2,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
-// CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: type0},
-// CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, type: type1},
+// CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, type: type0},
+// CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, type: type1},
 // CHECK:STDOUT:   {kind: StructType, arg0: block2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+3, type: type2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+3, type: type2},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type0},
-// CHECK:STDOUT:   {kind: StructTypeField, arg0: str0, type: type0},
+// CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+5, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, type: type1},
+// CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, type: type1},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+8, type: type1},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block4, type: type2},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+3, arg1: node+11, type: type2},

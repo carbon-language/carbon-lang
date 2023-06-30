@@ -24,6 +24,15 @@ on:
       - '!LICENSE'
       - '!CODEOWNERS'
       - '!.git*'
+  merge_group:
+    paths:
+      # Conservatively run the tests. However, skip them if the only paths in
+      # the pull request match files that we know don't impact the build.
+      - '**'
+      - '!**/*.md'
+      - '!LICENSE'
+      - '!CODEOWNERS'
+      - '!.git*'
 
 # Cancel previous workflows on the PR when there are multiple fast commits.
 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency

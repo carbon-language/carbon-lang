@@ -198,9 +198,13 @@ class CheckLine(Line):
         super().__init__()
         self.filename = Path(test).name
         self.indent = ""
-        self.out_line = out_line.rstrip()
+        self.out_line = out_line
         self.line_number_delta_prefix = line_number_delta_prefix
         self.line_number_pattern = line_number_pattern
+        self.time_elapsed_pattern = re.compile(
+            r"Time elapsed in (\S+): (\d+)ms"
+        )
+        self.trailing_whitespace_pattern = re.compile(r"(\s+$)")
 
         # If any match is specific to this file, use the first matched line for
         # the location of the CHECK comment.
@@ -216,26 +220,36 @@ class CheckLine(Line):
         assert self.out_line
         result = self.out_line
         while True:
-            match = self.line_number_pattern.search(result)
-            if not match:
-                break
-            if self._matches_filename(match):
-                line_number = int(match.group("line")) - 1
-                delta = line_number_remap[line_number] - output_line_number
-                # We use `:+d` here to produce `LINE-n` or `LINE+n` as
-                # appropriate.
-                result = self.line_number_pattern.sub(
-                    rf"\g<prefix>{self.line_number_delta_prefix}"
-                    rf"[[@LINE{delta:+d}]]\g<suffix>",
-                    result,
-                    count=1,
+            line_match = self.line_number_pattern.search(result)
+            time_match = self.time_elapsed_pattern.search(result)
+            trailing_match = self.trailing_whitespace_pattern.search(result)
+            if line_match:
+                if self._matches_filename(line_match):
+                    line_number = int(line_match.group("line")) - 1
+                    delta = line_number_remap[line_number] - output_line_number
+                    # We use `:+d` here to produce `LINE-n` or `LINE+n` as
+                    # appropriate.
+                    result = self.line_number_pattern.sub(
+                        rf"\g<prefix>{self.line_number_delta_prefix}"
+                        rf"[[@LINE{delta:+d}]]\g<suffix>",
+                        result,
+                        count=1,
+                    )
+                else:
+                    result = self.line_number_pattern.sub(
+                        r"\g<prefix>{{.*}}\g<suffix>",
+                        result,
+                        count=1,
+                    )
+            elif time_match:
+                result = self.time_elapsed_pattern.sub(
+                    r"Time elapsed in \1: {{[0-9]+}}ms", result, count=1
                 )
+            elif trailing_match:
+                result = self.trailing_whitespace_pattern.sub(r"{{\1}}", result)
             else:
-                result = self.line_number_pattern.sub(
-                    r"\g<prefix>{{.*}}\g<suffix>",
-                    result,
-                    count=1,
-                )
+                break
+
         return f"{self.indent}// CHECK:{result}\n"
 
     def _matches_filename(self, match: Match) -> bool:

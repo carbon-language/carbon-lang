@@ -34,6 +34,8 @@ in Unicode Normalization Form C (NFC).
 
 ## Keywords
 
+<!-- Keep in sync with utils/textmate/Syntaxes/Carbon.plist -->
+
 The following words are interpreted as keywords:
 
 -   `abstract`
@@ -47,10 +49,12 @@ The following words are interpreted as keywords:
 -   `base`
 -   `break`
 -   `case`
+-   `choice`
 -   `class`
 -   `constraint`
 -   `continue`
 -   `default`
+-   `destructor`
 -   `else`
 -   `extend`
 -   `final`
@@ -81,6 +85,7 @@ The following words are interpreted as keywords:
 -   `return`
 -   `returned`
 -   `Self`
+-   `template`
 -   `then`
 -   `type`
 -   `var`

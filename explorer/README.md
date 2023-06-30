@@ -168,22 +168,21 @@ performed during execution.
 Printing directly to the standard output using the `--trace_file` option is
 supported by passing `-` in place of a filepath (`--trace_file=-`).
 
-To customize the trace output and include specific information, you can use the
-following compiler options along with `--trace_file=...` option:
+To customize the trace output and include specific information, you can pass the
+following list of options to `-trace_phase=...` option along with
+`--trace_file=...` option:
 
--   `-trace_source_program`: Include trace output for the source program phase.
--   `-trace_name_resolution`: Include trace output for the name resolution
-    phase.
--   `-trace_control_flow_resolution`: Include trace output for the control flow
+-   `source_program`: Include trace output for the source program phase.
+-   `name_resolution`: Include trace output for the name resolution phase.
+-   `control_flow_resolution`: Include trace output for the control flow
     resolution phase.
--   `-trace_type_checking`: Include trace output for the type checking phase.
--   `-trace_unformed_variables_resolution`: Include trace output for the
-    unformed variables resolution phase.
--   `-trace_declarations`: Include trace output for printing declarations.
--   `-trace_execution`: Include trace output for program execution.
--   `-trace_timing`: Include timing logs indicating the time taken by each
-    phase.
--   `-trace_all`: Include trace output for all phases.
+-   `type_checking`: Include trace output for the type checking phase.
+-   `unformed_variables_resolution`: Include trace output for the unformed
+    variables resolution phase.
+-   `declarations`: Include trace output for printing declarations.
+-   `execution`: Include trace output for program execution.
+-   `timing`: Include timing logs indicating the time taken by each phase.
+-   `all`: Include trace output for all phases.
 
 By default, only execution trace will be added to the trace output. You can use
 combination of these options to include trace of multiple program phases.

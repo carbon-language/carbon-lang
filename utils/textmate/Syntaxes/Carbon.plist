@@ -54,14 +54,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
                 <key>name</key>
                 <string>keyword.control.carbon</string>
                 <key>match</key>
-                <string>\b(break|case|continue|default|else|if|for|match|return|then|while)\b</string>
+                <string>\b(break|case|continue|default|else|if|for|match|return|returned|then|while)\b</string>
             </dict>
             <!-- Rule: other keywords -->
             <dict>
                 <key>name</key>
                 <string>keyword.other.carbon</string>
                 <key>match</key>
-                <string>\b(abstract|addr|alias|and|api|as|auto|base|choice|class|constraint|destructor|extends|external|final|forall|fn|friend|impl|import|interface|let|library|like|namespace|not|observe|or|override|package|partial|private|protected|returned|template|var|virtual|where|while|_)\b</string>
+                <string>\b(abstract|adapt|addr|alias|and|api|as|auto|base|choice|class|constraint|destructor|extend|final|fn|forall|friend|impl|impls|import|in|interface|let|library|like|namespace|not|observe|or|override|package|partial|private|protected|require|Self|template|type|var|virtual|where|_)\b</string>
             </dict>
             <!-- Rule: builtin types -->
             <dict>
