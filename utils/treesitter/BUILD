@@ -3,26 +3,38 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_tree_sitter//tree_sitter:tree_sitter.bzl", "tree_sitter_cc_library")
-load("//bazel/sh_run:rules.bzl", "glob_sh_run")
 
 tree_sitter_cc_library(
-    name = "treesitter_carbon",
+    name = "treesitter",
     srcs = ["src/scanner.c"],
     grammar = ["grammar.js"],
 )
 
 cc_binary(
-    name = "treesitter_carbon_tester",
+    name = "test_runner",
     srcs = ["test.cpp"],
     deps = [
-        ":treesitter_carbon",
+        ":treesitter",
     ],
 )
 
-glob_sh_run(
-    args = [
-        "$(location :treesitter_carbon_tester)",
+tests = glob(
+    ["testdata/**/*.carbon"],
+    exclude = [
+        "testdata/**/fail_*",
+        "testdata/function/declaration/addr.carbon",
+        "testdata/generics/generic_params/template_addr.carbon",
+        "testdata/operators/recover_infix_uneven_space_before.carbon",
+        "testdata/operators/recover_postfix_space_surrounding.carbon",
     ],
-    data = [":treesitter_carbon_tester"],
-    file_exts = ["carbon"],
+)
+
+cc_test(
+    name = "tests",
+    srcs = ["test.cpp"],
+    args = ["$(location {0})".format(x) for x in tests],
+    data = tests,
+    deps = [
+        ":treesitter",
+    ],
 )

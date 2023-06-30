@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 extern "C" {
 TSLanguage* tree_sitter_carbon();
@@ -25,27 +26,39 @@ static auto ReadFile(std::filesystem::path path) -> std::string {
 }
 
 auto main(int argc, char** argv) -> int {
-  if (argc != 2) {
-    std::cerr << "Usage: treesitter_carbon_tester <file>\n";
+  if (argc < 2) {
+    std::cerr << "Usage: treesitter_carbon_tester <file>...\n";
     return 2;
   }
-
-  std::string str = ReadFile(std::string(argv[1]));
 
   auto* parser = ts_parser_new();
   ts_parser_set_language(parser, tree_sitter_carbon());
 
-  auto* tree = ts_parser_parse_string(parser, nullptr, str.c_str(), str.size());
+  std::vector<std::string> failed;
+  for (int i = 1; i < argc; i++) {
+    std::string file_path = argv[i];
+    std::string source = ReadFile(file_path);
 
-  auto root = ts_tree_root_node(tree);
-  char* node_debug = ts_node_string(root);
+    auto* tree =
+        ts_parser_parse_string(parser, nullptr, source.c_str(), source.size());
 
-  std::cout << node_debug;
-  auto has_error = ts_node_has_error(root);
-  free(node_debug);
-  ts_tree_delete(tree);
+    auto root = ts_tree_root_node(tree);
+    auto has_error = ts_node_has_error(root);
+    char* node_debug = ts_node_string(root);
+
+    std::cout << file_path << ":\n" << node_debug << "\n";
+    if (has_error) {
+      failed.push_back(file_path);
+    }
+
+    free(node_debug);
+    ts_tree_delete(tree);
+  }
   ts_parser_delete(parser);
-  if (has_error) {
+  for (const auto& file : failed) {
+    std::cout << "FAILED " << file << "\n";
+  }
+  if (!failed.empty()) {
     return 1;
   }
 }
