@@ -81,18 +81,20 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
                      "Include trace output for all phases.")));
 
   cl::list<FileContext> allowed_file_contexts(
+      "trace_file_context",
       cl::desc("Select file contexts for which you want to include the trace "
                "output"),
       cl::values(
           clEnumValN(
-              FileContext::Main, "trace_file_main",
+              FileContext::Main, "main",
               "Include trace output for file containing the main function"),
-          clEnumValN(FileContext::Prelude, "trace_file_prelude",
+          clEnumValN(FileContext::Prelude, "prelude",
                      "Include trace output for prelude"),
-          clEnumValN(FileContext::Import, "trace_file_import",
+          clEnumValN(FileContext::Import, "import",
                      "Include trace output for imports"),
-          clEnumValN(FileContext::All, "trace_file_all",
-                     "Include trace output for all files")));
+          clEnumValN(FileContext::All, "all",
+                     "Include trace output for all files")),
+      cl::CommaSeparated);
 
   // Use the executable path as a base for the relative prelude path.
   std::string exe =

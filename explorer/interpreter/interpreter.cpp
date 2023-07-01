@@ -165,7 +165,7 @@ class Interpreter {
   // Instantiate a witness by replacing all type variables and impl binding
   // references that occur within it by the current values of those variables.
   auto InstantiateWitness(Nonnull<const Witness*> witness,
-                          std::optional<SourceLocation> source_loc)
+                          SourceLocation source_loc)
       -> ErrorOr<Nonnull<const Witness*>>;
 
   // Call the function `fun` with the given `arg` and the `witnesses`
@@ -766,7 +766,7 @@ auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
 }
 
 auto Interpreter::InstantiateWitness(Nonnull<const Witness*> witness,
-                                     std::optional<SourceLocation> source_loc)
+                                     SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Witness*>> {
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<const Value*> value,
@@ -2014,8 +2014,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
 }
 
 auto Interpreter::StepWitness() -> ErrorOr<Success> {
-  Action& act = todo_.CurrentAction();
-  const Witness* witness = cast<WitnessAction>(act).witness();
+  auto& act = cast<WitnessAction>(todo_.CurrentAction());
+  const Witness* witness = act.witness();
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- step witness " << *witness << " ." << act.pos()
                    << ". --->\n";

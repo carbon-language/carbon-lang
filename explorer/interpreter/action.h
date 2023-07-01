@@ -172,12 +172,12 @@ class Action {
   // most-derived type being constructed.
   explicit Action(std::optional<SourceLocation> source_loc, Kind kind)
       : source_loc_(source_loc), kind_(kind) {}
+  std::optional<SourceLocation> source_loc_;
 
  private:
   int pos_ = 0;
   std::vector<Nonnull<const Value*>> results_;
   std::optional<RuntimeScope> scope_;
-  std::optional<SourceLocation> source_loc_;
 
   const Kind kind_;
 };
@@ -255,11 +255,16 @@ class TypeInstantiationAction : public Action {
 class WitnessAction : public Action {
  public:
   explicit WitnessAction(Nonnull<const Witness*> witness,
-                         std::optional<SourceLocation> source_loc)
+                         SourceLocation source_loc)
       : Action(source_loc, Kind::WitnessAction), witness_(witness) {}
 
   static auto classof(const Action* action) -> bool {
     return action->kind() == Kind::WitnessAction;
+  }
+
+  auto source_loc() -> SourceLocation {
+    CARBON_CHECK(source_loc_);
+    return *source_loc_;
   }
 
   // The Witness this Action resolves.

@@ -2963,7 +2963,8 @@ auto TypeChecker::TypeCheckExp(Nonnull<Expression*> e,
                                const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   return RunWithExtraStack([&]() { return TypeCheckExpImpl(e, impl_scope); });
-};
+}
+
 // NOLINTNEXTLINE(readability-function-size)
 auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                                    const ImplScope& impl_scope)
