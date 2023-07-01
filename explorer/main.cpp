@@ -78,7 +78,8 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
               ProgramPhase::Timing, "timing",
               "Include timing logs for each phase, indicating the time taken."),
           clEnumValN(ProgramPhase::All, "all",
-                     "Include trace output for all phases.")));
+                     "Include trace output for all phases.")),
+      cl::CommaSeparated);
 
   cl::list<FileContext> allowed_file_contexts(
       "trace_file_context",
