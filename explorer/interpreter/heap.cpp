@@ -40,7 +40,6 @@ auto Heap::Read(const Address& a, SourceLocation source_loc) const
 auto Heap::Write(const Address& a, Nonnull<const Value*> v,
                  SourceLocation source_loc) -> ErrorOr<Success> {
   CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
-  CARBON_RETURN_IF_ERROR(this->CheckWritable(a.allocation_, source_loc));
   if (states_[a.allocation_.index_] == ValueState::Uninitialized) {
     if (!a.element_path_.IsEmpty()) {
       return ProgramError(source_loc)
@@ -76,18 +75,7 @@ auto Heap::CheckInit(AllocationId allocation, SourceLocation source_loc) const
   return Success();
 }
 
-auto Heap::CheckWritable(AllocationId allocation,
-                         SourceLocation source_loc) const -> ErrorOr<Success> {
-  if (states_[allocation.index_] == ValueState::AlivePinned) {
-    return ProgramError(source_loc)
-           << "unable to mutate pinned value " << *values_[allocation.index_];
-  }
-  return Success();
-}
-
-auto Heap::Deallocate(AllocationId allocation, SourceLocation source_loc)
-    -> ErrorOr<Success> {
-  CARBON_RETURN_IF_ERROR(this->CheckWritable(allocation, source_loc));
+auto Heap::Deallocate(AllocationId allocation) -> ErrorOr<Success> {
   if (states_[allocation.index_] != ValueState::Dead) {
     states_[allocation.index_] = ValueState::Dead;
   } else {
@@ -97,9 +85,8 @@ auto Heap::Deallocate(AllocationId allocation, SourceLocation source_loc)
   return Success();
 }
 
-auto Heap::Deallocate(const Address& a, SourceLocation loc)
-    -> ErrorOr<Success> {
-  return Deallocate(a.allocation_, loc);
+auto Heap::Deallocate(const Address& a) -> ErrorOr<Success> {
+  return Deallocate(a.allocation_);
 }
 
 auto Heap::is_initialized(AllocationId allocation) const -> bool {

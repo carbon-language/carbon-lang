@@ -37,8 +37,7 @@ class HeapAllocationInterface {
   virtual auto AllocateValue(Nonnull<const Value*> v) -> AllocationId = 0;
 
   // Marks this allocation, and all of its sub-objects, as dead.
-  virtual auto Deallocate(AllocationId allocation, SourceLocation source_loc)
-      -> ErrorOr<Success> = 0;
+  virtual auto Deallocate(AllocationId allocation) -> ErrorOr<Success> = 0;
 
   // Returns the arena used to allocate the values in this heap.
   virtual auto arena() const -> Arena& = 0;

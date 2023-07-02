@@ -1843,8 +1843,7 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
               return todo_.Spawn(std::make_unique<DestroyAction>(
                   arena_->New<LocationValue>(obj_addr), child_class_value));
             } else {
-              CARBON_RETURN_IF_ERROR(
-                  heap_.Deallocate(obj_addr, exp.source_loc()));
+              CARBON_RETURN_IF_ERROR(heap_.Deallocate(obj_addr));
               return todo_.FinishAction(
                   arena_->New<ExpressionValue>(TupleValue::Empty()));
             }
@@ -1853,8 +1852,7 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
               return todo_.Spawn(std::make_unique<DestroyAction>(
                   arena_->New<LocationValue>(ptr->address()), pointee));
             } else {
-              CARBON_RETURN_IF_ERROR(
-                  heap_.Deallocate(ptr->address(), exp.source_loc()));
+              CARBON_RETURN_IF_ERROR(heap_.Deallocate(ptr->address()));
               return todo_.FinishAction(
                   arena_->New<ExpressionValue>(TupleValue::Empty()));
             }
@@ -2692,8 +2690,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
         return todo_.RunAgain();
       }
     } else {
-      CARBON_RETURN_IF_ERROR(
-          heap_.Deallocate(allocation, cleanup.source_loc()));
+      CARBON_RETURN_IF_ERROR(heap_.Deallocate(allocation));
       return todo_.RunAgain();
     }
   }
