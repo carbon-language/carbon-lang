@@ -277,22 +277,24 @@ local_repository(
 ###############################################################################
 
 http_archive(
-    name = "build_bazel_rules_nodejs",
-    sha256 = "4e1a5633267a0ca1d550cced2919dd4148575c0bafd47608b88aea79c41b5ca3",
-    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/4.2.0/rules_nodejs-4.2.0.tar.gz"],
+    name = "rules_nodejs",
+    sha256 = "d124665ea12f89153086746821cf6c9ef93ab88360a50c1aeefa1fe522421704",
+    strip_prefix = "rules_nodejs-6.0.0-beta1",
+    url = "https://github.com/bazelbuild/rules_nodejs/releases/download/v6.0.0-beta1/rules_nodejs-v6.0.0-beta1.tar.gz",
 )
 
-load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories")
+load("@rules_nodejs//nodejs:repositories.bzl", "DEFAULT_NODE_VERSION", "nodejs_register_toolchains")
 
-node_repositories(
-    node_version = "10.19.0",
+nodejs_register_toolchains(
+    name = "nodejs",
+    node_version = DEFAULT_NODE_VERSION,
 )
 
 http_archive(
     name = "rules_tree_sitter",
-    sha256 = "7d7fbf982ce3ba74eabaa0bd7cee8d6f7fd651e25e2acfae177051c29174f04c",
-    strip_prefix = "rules_tree_sitter-8e248d1ea054b0d5ecdd71de3dccfe421354491f",
-    urls = ["https://github.com/elliottt/rules_tree_sitter/archive/8e248d1ea054b0d5ecdd71de3dccfe421354491f.tar.gz"],
+    sha256 = "a3ffcdc718d6f9f2a39507af6f3f73f5b08ed5a000581ce88ffeefa5df4593c6",
+    strip_prefix = "rules_tree_sitter-cc4b283d796358f6575ff3a30e3639a7fcd85cc2",
+    urls = ["https://github.com/Maan2003/rules_tree_sitter/archive/cc4b283d796358f6575ff3a30e3639a7fcd85cc2.tar.gz"],
 )
 
 load("@rules_tree_sitter//tree_sitter:tree_sitter.bzl", "tree_sitter_register_toolchains")
