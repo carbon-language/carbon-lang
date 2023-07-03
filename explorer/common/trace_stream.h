@@ -36,7 +36,7 @@ enum class ProgramPhase {
 };
 
 // Enumerates the contexts for different types of files, used for tracing and
-// controlling for which file contexts tracing should be enabled
+// controlling for which file contexts tracing should be enabled.
 enum class FileContext { Unknown, Main, Prelude, Import, All, Last = All };
 
 // Encapsulates the trace stream so that we can cleanly disable tracing while
@@ -54,7 +54,7 @@ class TraceStream {
 
   // This method gets the file context by using filename from source location
   // TODO: implement a way to differentiate between the main file and imports
-  // based upon source location / filename
+  // based upon source location / filename.
   auto file_context() const -> FileContext {
     if (source_loc_.has_value()) {
       auto filename =
@@ -153,7 +153,7 @@ class TraceStream {
 };
 
 // This is a RAII class to set the current program phase, destructor invocation
-// restores the previous phase
+// restores the previous phase.
 class SetProgramPhase {
  public:
   explicit SetProgramPhase(TraceStream& trace_stream,
@@ -164,7 +164,7 @@ class SetProgramPhase {
   }
 
   // This can be used for cases when current phase is set multiple times within
-  // the same scope
+  // the same scope.
   auto update_phase(ProgramPhase program_phase) -> void {
     trace_stream_.set_current_phase(program_phase);
   }
@@ -177,7 +177,7 @@ class SetProgramPhase {
 };
 
 // This is a RAII class to set the source location in trace stream, destructor
-// invocation restores the initial source location
+// invocation restores the initial source location.
 class SetFileContext {
  public:
   explicit SetFileContext(TraceStream& trace_stream,
@@ -188,7 +188,7 @@ class SetFileContext {
   }
 
   // This can be used for cases when source location needs to be updated
-  // multiple times within the same scope
+  // multiple times within the same scope.
   auto update_source_loc(std::optional<SourceLocation> source_loc) {
     trace_stream_.set_source_loc(source_loc);
   }

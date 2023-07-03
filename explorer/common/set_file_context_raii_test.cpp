@@ -11,7 +11,7 @@ namespace Carbon::Testing {
 namespace {
 
 // TODO: write test cases to distinguish between file context of main file and
-// an import once imports are supported
+// an import once imports are supported.
 
 TEST(SetFileContextRaiiTest, Simple) {
   TraceStream trace_stream;
@@ -23,7 +23,7 @@ TEST(SetFileContextRaiiTest, Simple) {
 
   // Considering the file context for a trace stream is FileContext::Unknown by
   // default, as the default value of source location in a trace stream is
-  // std::nullopt
+  // std::nullopt.
   EXPECT_TRUE(trace_stream.file_context() == FileContext::Unknown);
 }
 
@@ -39,7 +39,7 @@ TEST(SetFileContextRaiiTest, UpdateFileContext) {
 
   // Considering the file context for a trace stream is FileContext::Unknown by
   // default, as the default value of source location in a trace stream is
-  // std::nullopt
+  // std::nullopt.
   EXPECT_TRUE(trace_stream.file_context() == FileContext::Unknown);
 }
 
