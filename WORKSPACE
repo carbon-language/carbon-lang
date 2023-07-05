@@ -292,9 +292,9 @@ nodejs_register_toolchains(
 
 http_archive(
     name = "rules_tree_sitter",
-    sha256 = "e78d787a4c98750b6d316bf0e91c4fe89bf2e70caa8de91202560b416ce1becc",
-    strip_prefix = "rules_tree_sitter-dcf93583adb41758205919466f876ed4552d62bf",
-    urls = ["https://github.com/Maan2003/rules_tree_sitter/archive/dcf93583adb41758205919466f876ed4552d62bf.tar.gz"],
+    sha256 = "a09f177a2b8acb2f8a84def6ca0c41a5bd26b25634aa7313f22ade6c54e57ca1",
+    strip_prefix = "rules_tree_sitter-bc3a2131053207de7dfd9b24046b811ce770e35d",
+    urls = ["https://github.com/Maan2003/rules_tree_sitter/archive/bc3a2131053207de7dfd9b24046b811ce770e35d.tar.gz"],
 )
 
 load("@rules_tree_sitter//tree_sitter:tree_sitter.bzl", "tree_sitter_register_toolchains")

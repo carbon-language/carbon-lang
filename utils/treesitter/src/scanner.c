@@ -12,19 +12,23 @@ enum TokenType {
 // our scanner is stateless
 void* tree_sitter_carbon_external_scanner_create() { return NULL; }
 
-unsigned tree_sitter_carbon_external_scanner_serialize(void* payload,
-                                                       char* buffer) {
+unsigned tree_sitter_carbon_external_scanner_serialize(
+    __attribute__((unused)) void* payload,
+    __attribute__((unused)) char* buffer) {
   return 0;  // zero bytes used to serialize
 }
 
-void tree_sitter_carbon_external_scanner_deserialize(void* payload,
-                                                     const char* buffer,
-                                                     unsigned length) {}
+void tree_sitter_carbon_external_scanner_deserialize(
+    __attribute__((unused)) void* payload,
+    __attribute__((unused)) const char* buffer,
+    __attribute__((unused)) unsigned length) {}
 
-void tree_sitter_carbon_external_scanner_destroy(void* payload) {}
+void tree_sitter_carbon_external_scanner_destroy(
+    __attribute__((unused)) void* payload) {}
 
 // https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/lexical_conventions/symbolic_tokens.md#overview
-// > the token after the operator must be an identifier, a literal, or any kind of opening bracket (for example, (, [, or {).
+// > the token after the operator must be an identifier, a literal, or any kind
+// of opening bracket (for example, (, [, or {).
 static bool token_allowed_after_binary_operator(char c) {
   return
       // identifier
@@ -48,9 +52,10 @@ static bool is_whitespace(char c) { return c == ' ' || c == '\n'; }
 //
 // > But if the external scanner may return false and in this case Tree-sitter
 // > fallbacks to the internal lexing mechanism.
-bool tree_sitter_carbon_external_scanner_scan(void* payload,
-                                              TSLexer* lexer,
-                                              const bool* valid_symbols) {
+bool tree_sitter_carbon_external_scanner_scan(
+    __attribute__((unused)) void* payload,
+    __attribute__((unused)) TSLexer* lexer,
+    __attribute__((unused)) const bool* valid_symbols) {
   // skip past whitespace if any
   bool whitespace = false;
   while (is_whitespace(lexer->lookahead)) {
