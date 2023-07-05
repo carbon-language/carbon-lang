@@ -17,6 +17,8 @@
 (function_declaration (declared_name (ident) @function))
 (call_expression (ident) @function)
 
+; TODO: add more specific rules
+
 ; upper case => type
 ((ident) @type
   (#match? @type "^[A-Z]"))
