@@ -33,7 +33,7 @@ auto CodeGen::CreateTargetMachine() -> std::unique_ptr<llvm::TargetMachine> {
   const auto* target = llvm::TargetRegistry::lookupTarget(triple, error);
 
   if (!target) {
-    error_stream_ << "ERROR: " << error << "\n";
+    error_stream_ << "ERROR: Invalid -target_triple: " << error << "\n";
     return nullptr;
   }
 
