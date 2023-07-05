@@ -40,7 +40,7 @@ auto main(int argc, char** argv) -> int {
     std::string source = ReadFile(file_path);
 
     auto* tree =
-        ts_parser_parse_string(parser, nullptr, source.c_str(), source.size());
+        ts_parser_parse_string(parser, nullptr, source.data(), source.size());
 
     auto root = ts_tree_root_node(tree);
     auto has_error = ts_node_has_error(root);
