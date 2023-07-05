@@ -90,7 +90,8 @@ class SemanticsIR {
   }
 
   // Returns the requested callable.
-  auto GetFunction(SemanticsFunctionId function_id) const -> SemanticsFunction {
+  auto GetFunction(SemanticsFunctionId function_id) const
+      -> const SemanticsFunction& {
     return functions_[function_id.index];
   }
 
