@@ -2,6 +2,9 @@
 ; Exceptions. See /LICENSE for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+; This maps syntax node patterns to highlighting scopes.
+; The scopes are used themes and editors to select style for that node.
+
 (comment) @comment
 (builtin_type) @type.builtin
 (bool_literal) @constant.builtin
