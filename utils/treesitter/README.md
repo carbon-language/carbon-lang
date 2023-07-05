@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Tree-sitter grammar for Carbon
 
-## Installation
+## Editor Installation
 
 ### Helix
 

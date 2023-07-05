@@ -12,7 +12,7 @@ function repeat_sep1(thing, sep) {
 }
 
 function comma_sep(thing) {
-  // Trailing comma is only allowed if there is atleast one element.
+  // Trailing comma is only allowed if there is at least one element.
   return optional(seq(repeat_sep1(thing, ','), optional(',')));
 }
 
@@ -180,7 +180,7 @@ module.exports = grammar({
     _binding_lhs: ($) => choice($.ident, '_'),
 
     paren_pattern: ($) =>
-      seq('(', comma_sep($._non_expression_pattern, ','), ')'),
+      seq('(', comma_sep($._non_expression_pattern), ')'),
 
     _non_expression_pattern: ($) =>
       choice(

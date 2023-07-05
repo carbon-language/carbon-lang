@@ -50,7 +50,7 @@ static bool is_whitespace(char c) { return c == ' ' || c == '\n'; }
 // > parse, the external scanner will be called first before anything else is
 // > done.
 //
-// > But if the external scanner may return false and in this case Tree-sitter
+// > But the external scanner may return false and in this case Tree-sitter
 // > fallbacks to the internal lexing mechanism.
 bool tree_sitter_carbon_external_scanner_scan(
     __attribute__((unused)) void* payload,
