@@ -75,6 +75,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Files, libraries, packages](#files-libraries-packages)
     -   [Package declaration](#package-declaration)
     -   [Imports](#imports)
+        -   [Same-package imports](#same-package-imports)
+        -   [Cross-package imports](#cross-package-imports)
     -   [Name visibility](#name-visibility)
     -   [Package scope](#package-scope)
     -   [Namespaces](#namespaces)
@@ -2158,29 +2160,16 @@ After the package declaration, files may include `import` declarations. The
 library name, or both. If the library is omitted, the default library for that
 package is imported.
 
-Libraries from other packages are imported by specifying the package name.
+All `import` declarations must appear before all other non-`package`
+declarations in the file.
+
+#### Same-package imports
+
+The package name must be omitted when importing a library from the current
+package.
 
 ```carbon
-// Import the "Vector" library from the
-// `LinearAlgebra` package.
-import LinearAlgebra library "Vector";
-// Import the default library from the
-// `ArbitraryPrecision` package.
-import ArbitraryPrecision;
-```
-
-The syntax `import PackageName ...` introduces the name `PackageName` as a
-[`private`](#name-visibility) name naming the given package. It cannot be used
-to import libraries of the current package. Importing additional libraries from
-that package makes additional members of `PackageName` visible.
-
-It is an error to specify the package name `Main`. Libraries in the `Main`
-package can only be imported from within that package.
-
-Libraries from the current package are imported by omitting the package name.
-
-```carbon
-// Import the "Vertex" library from the same package.
+// Import the "Vertex" library from the package containing this file.
 import library "Vertex";
 ```
 
@@ -2189,19 +2178,55 @@ given library to the top-level scope of the current file as
 [`private`](#name-visibility) names, and similarly for names in
 [namespaces](#namespaces).
 
-An `import` declaration is not permitted to omit both the package name and the
-library. As a special case, for packages other than the `Main` package, the
-default library can be imported with the syntax `import library default;`:
+Every `impl` file automatically imports the `api` file for its library.
+Attempting to perform an import of the current library is invalid.
+
+```
+package MyPackage library "Widgets" impl;
+
+// ❌ Error, this import is performed implicitly.
+import MyPackage library "Widgets";
+```
+
+The default library for a package does not have a string name, and is instead
+named with the `default` keyword.
 
 ```carbon
 // Import the default library from the same package.
 import library default;
 ```
 
-Every `impl` file automatically imports the `api` file for its library.
+It is an error to use the `import library default;` syntax in the `Main`
+package.
 
-All `import` declarations must appear before all other non-`package`
-declarations in the file.
+#### Cross-package imports
+
+When the package name is specified, the `import` declaration imports a library
+from another package.
+
+```carbon
+package MyPackage impl;
+
+// Import the "Vector" library from the `LinearAlgebra` package.
+import LinearAlgebra library "Vector";
+
+// Import the default library from the `ArbitraryPrecision` package.
+import ArbitraryPrecision;
+```
+
+The syntax `import PackageName ...` introduces the name `PackageName` as a
+[`private`](#name-visibility) name naming the given package. Importing
+additional libraries from that package makes additional members of `PackageName`
+visible.
+
+It is an error to specify the name of the current package. The package name must
+be omitted when [importing from the same package](#same-package-imports).
+
+It is an error to specify `library default` in a package-qualified import.
+Instead, omit the `library` portion of the declaration.
+
+It is an error to specify the package name `Main`. Libraries in the `Main`
+package can only be imported from within that package.
 
 > References:
 >

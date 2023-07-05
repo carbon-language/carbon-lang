@@ -82,10 +82,10 @@ Important Carbon goals for code and name organization are:
 
 ## Overview
 
-### Small programs
-
 Carbon [source files](source_files.md) have a `.carbon` extension, such as
 `geometry.carbon`. These files are the basic unit of compilation.
+
+### Small programs
 
 For programs that fit into a single source file, no syntax is required to
 introduce the file. A very simple Carbon program can consist of a single file
@@ -105,7 +105,7 @@ can be written containing pieces of the program:
 ```
 library "Colors" api;
 
-choice Color = Red | Green | Blue;
+choice Color { Red, Green, Blue }
 
 fn ColorName(c: Color) -> String;
 ```
@@ -167,8 +167,9 @@ package would start with:
 package Geometry api;
 ```
 
-A tiny package may consist of a single library with a single file, and not use
-any further features of the `package` keyword.
+A tiny package may consist of a single library with a single `api` file. As with
+libraries, additional implementation files can be added to the package by using
+the `impl` keyword in the package declaration:
 
 ```
 package Geometry impl;
