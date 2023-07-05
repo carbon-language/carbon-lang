@@ -249,7 +249,7 @@ module.exports = grammar({
       prec.right(PREC.TermPrefix, seq('*', $._expression)),
 
     fn_type_expression: ($) =>
-      prec.left(seq('__Fn', $.tuple, '->', $._expression)),
+      prec.left(seq('__Fn', $.paren_expression, '->', $._expression)),
 
     if_expression: ($) =>
       prec(
@@ -258,8 +258,6 @@ module.exports = grammar({
       ),
 
     paren_expression: ($) => seq('(', comma_sep($._expression), ')'),
-
-    tuple: ($) => $.paren_expression,
 
     index_expression: ($) =>
       prec(PREC.TermPostfix, seq($._expression, '[', $._expression, ']')),
@@ -295,7 +293,8 @@ module.exports = grammar({
     where_expression: ($) =>
       prec.left(PREC.TermPostfix, seq($._expression, 'where', $.where_clause)),
 
-    call_expression: ($) => prec(PREC.TermPostfix, seq($._expression, $.tuple)),
+    call_expression: ($) =>
+      prec(PREC.TermPostfix, seq($._expression, $.paren_expression)),
 
     pointer_expression: ($) =>
       prec(PREC.TypePostfix, seq($._expression, $.postfix_star)),
@@ -406,8 +405,6 @@ module.exports = grammar({
 
     deduced_params: ($) => seq('[', comma_sep($.deduced_param), ']'),
 
-    tuple_pattern: ($) => $.paren_pattern,
-
     return_type: ($) => seq('->', choice('auto', $._expression)),
 
     function_declaration: ($) =>
@@ -416,7 +413,7 @@ module.exports = grammar({
         'fn',
         $.declared_name,
         optional($.deduced_params),
-        $.tuple_pattern,
+        $.paren_pattern,
         optional($.return_type),
         choice($.block, ';')
       ),
@@ -426,7 +423,7 @@ module.exports = grammar({
     alias_declaration: ($) =>
       seq('alias', $.declared_name, '=', $._expression, ';'),
 
-    type_params: ($) => $.tuple_pattern,
+    type_params: ($) => $.paren_pattern,
 
     interface_body_item: ($) =>
       choice(
