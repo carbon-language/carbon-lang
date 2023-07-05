@@ -6,6 +6,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Tree-sitter grammar for Carbon
 
+Tree-sitter is currently used for syntax highlighting in supported editors.
+
 ## Editor Installation
 
 ### Helix
