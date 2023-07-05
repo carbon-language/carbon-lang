@@ -179,8 +179,7 @@ module.exports = grammar({
 
     _binding_lhs: ($) => choice($.ident, '_'),
 
-    paren_pattern: ($) =>
-      seq('(', comma_sep($._non_expression_pattern), ')'),
+    paren_pattern: ($) => seq('(', comma_sep($._non_expression_pattern), ')'),
 
     _non_expression_pattern: ($) =>
       choice(
@@ -307,7 +306,6 @@ module.exports = grammar({
         $.builtin_type,
         $.call_expression,
         $.deref_expression,
-        $.designator,
         $.fn_type_expression,
         $.ident,
         $.if_expression,
@@ -318,8 +316,7 @@ module.exports = grammar({
         $.postfix_expression,
         $.ref_expression,
         $.unary_prefix_expression,
-        $.where_expression,
-        seq('.', 'Self')
+        $.where_expression
       ),
 
     var_declaration: ($) =>
@@ -441,7 +438,7 @@ module.exports = grammar({
         $.declared_name,
         optional($.deduced_params),
         optional($.type_params),
-        $.interface_body
+        choice(';', $.interface_body)
       ),
 
     constraint_declaration: ($) =>
@@ -450,7 +447,7 @@ module.exports = grammar({
         $.declared_name,
         optional($.deduced_params),
         optional($.type_params),
-        $.interface_body
+        choice(';', $.interface_body)
       ),
 
     impl_body_item: ($) => choice($.function_declaration, $.alias_declaration),
@@ -461,6 +458,7 @@ module.exports = grammar({
       seq(
         'impl',
         optional(seq('forall', $.deduced_params)),
+        optional($._expression),
         'as',
         $._expression,
         $.impl_body
