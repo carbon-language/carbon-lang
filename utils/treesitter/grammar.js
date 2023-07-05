@@ -302,26 +302,25 @@ module.exports = grammar({
 
     _expression: ($) =>
       choice(
-        $.ident,
-        $.pointer_expression,
-        $.index_expression,
-        $.fn_type_expression,
-        $.designator,
-        seq('.', 'Self'),
-        $.literal,
-        $.builtin_type,
-        $.paren_expression,
         $.array_literal,
-        $.if_expression,
-        $.binary_expression,
-        $.unary_prefix_expression,
         $.as_expression,
-        $.paren_expression,
-        $.postfix_expression,
+        $.binary_expression,
+        $.builtin_type,
         $.call_expression,
-        $.ref_expression,
         $.deref_expression,
-        $.where_expression
+        $.designator,
+        $.fn_type_expression,
+        $.ident,
+        $.if_expression,
+        $.index_expression,
+        $.literal,
+        $.paren_expression,
+        $.pointer_expression,
+        $.postfix_expression,
+        $.ref_expression,
+        $.unary_prefix_expression,
+        $.where_expression,
+        seq('.', 'Self')
       ),
 
     var_declaration: ($) =>
