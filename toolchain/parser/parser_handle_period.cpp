@@ -6,11 +6,11 @@
 
 namespace Carbon {
 
-// Handles DesignatorOrQualifierAs variants.
+// Handles PeriodAs variants.
 // TODO: This currently only supports identifiers on the rhs, but will in the
 // future need to handle things like `object.(Interface.member)` for qualifiers.
-auto ParserHandleDesignatorOrQualifier(ParserContext& context,
-                                       ParseNodeKind node_kind) -> void {
+auto ParserHandlePeriod(ParserContext& context, ParseNodeKind node_kind)
+    -> void {
   auto state = context.PopState();
 
   // `.` identifier
@@ -38,21 +38,16 @@ auto ParserHandleDesignatorOrQualifier(ParserContext& context,
   context.AddNode(node_kind, dot, state.subtree_start, state.has_error);
 }
 
-auto ParserHandleDesignatorOrQualifierAsDeclaration(ParserContext& context)
-    -> void {
-  ParserHandleDesignatorOrQualifier(context,
-                                    ParseNodeKind::QualifiedDeclaration);
+auto ParserHandlePeriodAsDeclaration(ParserContext& context) -> void {
+  ParserHandlePeriod(context, ParseNodeKind::QualifiedDeclaration);
 }
 
-auto ParserHandleDesignatorOrQualifierAsExpression(ParserContext& context)
-    -> void {
-  ParserHandleDesignatorOrQualifier(context,
-                                    ParseNodeKind::QualifiedExpression);
+auto ParserHandlePeriodAsExpression(ParserContext& context) -> void {
+  ParserHandlePeriod(context, ParseNodeKind::MemberAccessExpression);
 }
 
-auto ParserHandleDesignatorOrQualifierAsStruct(ParserContext& context) -> void {
-  ParserHandleDesignatorOrQualifier(context,
-                                    ParseNodeKind::StructFieldDesignator);
+auto ParserHandlePeriodAsStruct(ParserContext& context) -> void {
+  ParserHandlePeriod(context, ParseNodeKind::StructFieldDesignator);
 }
 
 }  // namespace Carbon

@@ -150,7 +150,7 @@ auto SemanticsContext::LookupName(ParseTree::Node parse_node,
     // TODO: Check for ambiguous lookups.
     return it->second.back();
   } else {
-    auto scope = semantics_ir_->GetNameScope(scope_id);
+    const auto& scope = semantics_ir_->GetNameScope(scope_id);
     auto it = scope.find(name_id);
     if (it == scope.end()) {
       if (print_diagnostics) {

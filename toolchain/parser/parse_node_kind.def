@@ -249,11 +249,12 @@ CARBON_PARSE_NODE_KIND_BRACKET(CallExpression, CallExpressionStart)
 // `GenericType(type_args).ChildType(child_type_args).Name`.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedDeclaration, 2)
 
-// A qualified expression, such as `a.b` or `GetObject().(Interface.member)`:
+// A member access expression, such as `a.b` or
+// `GetObject().(Interface.member)`:
 //   _external_: lhs expression
 //   _external_: rhs expression
 // QualifiedExpression
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedExpression, 2)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(MemberAccessExpression, 2)
 
 // A literal.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Literal, 0)

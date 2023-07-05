@@ -119,7 +119,7 @@ auto ParserHandleExpressionInPostfixLoop(ParserContext& context) -> void {
   switch (context.PositionKind()) {
     case TokenKind::Period: {
       context.PushState(state);
-      state.state = ParserState::DesignatorOrQualifierAsExpression;
+      state.state = ParserState::PeriodAsExpression;
       context.PushState(state);
       break;
     }

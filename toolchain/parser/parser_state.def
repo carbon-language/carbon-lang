@@ -138,7 +138,7 @@ CARBON_PARSER_STATE(CodeBlockFinish)
 //   1. DeclarationNameAndParamsAfterNameAs(None|Optional|Required)
 // If `Identifier`:
 //   1. DeclarationNameAndParamsAfterNameAs(None|Optional|Required)
-//   2. DesignatorOrQualifierAsDeclaration
+//   2. PeriodAsDeclaration
 // Else:
 //   (state done)
 CARBON_PARSER_STATE_VARIANTS3(DeclarationNameAndParams, None, Optional,
@@ -151,7 +151,7 @@ CARBON_PARSER_STATE_VARIANTS3(DeclarationNameAndParams, None, Optional,
 //
 // If `Period`:
 //   1. DeclarationNameAndParamsAfterNameAs(None|Optional|Required)
-//   2. DesignatorOrQualifierAsDeclaration
+//   2. PeriodAsDeclaration
 // If `OpenSquareBracket`:
 //   1. ParameterListAsDeduced
 //   2. DeclarationNameAndParamsAfterDeduced
@@ -200,16 +200,20 @@ CARBON_PARSER_STATE(DeclarationNameAndParamsAfterDeduced)
 //   1. DeclarationScopeLoop
 CARBON_PARSER_STATE(DeclarationScopeLoop)
 
-// Handles a designator or qualifier. Only does one `.<expression>` segment; the
-// source is responsible for handling chaining.
+// Handles periods. Only does one `.<expression>` segment; the source is
+// responsible for handling chaining.
+//
+// The forms of this are:
+// - Designated names in structs.
+// - Qualified names in declarations.
+// - Member access expressions.
 //
 // Declarations and expressions have qualifiers such as `x.y`, while structs
 // have designators such as `.z`.
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE_VARIANTS3(DesignatorOrQualifier, Declaration, Expression,
-                              Struct)
+CARBON_PARSER_STATE_VARIANTS3(Period, Declaration, Expression, Struct)
 
 // Handles processing of an expression.
 //
@@ -244,7 +248,7 @@ CARBON_PARSER_STATE(ExpressionInPostfix)
 // such as designators or parenthesized parameters.
 //
 // If `Period`:
-//   1. DesignatorOrQualifierAsExpression
+//   1. PeriodAsExpression
 //   2. ExpressionInPostfixLoop
 // If `OpenParen`:
 //   1. CallExpression

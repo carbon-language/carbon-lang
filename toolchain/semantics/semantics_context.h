@@ -24,7 +24,7 @@ class SemanticsContext {
   // declaration_name_stack_.
   //
   // A qualified declaration name will consist of entries which are either
-  // Identifiers are full expressions. Expressions are expected to resolve to
+  // Identifiers or full expressions. Expressions are expected to resolve to
   // types, such as how `fn Vector(i32).Clear() { ... }` uses the expression
   // `Vector(i32)` to indicate the type whose member is being declared.
   // Identifiers such as `Clear` will be resolved to a name if possible, for
@@ -32,8 +32,10 @@ class SemanticsContext {
   // and are otherwise marked as an unresolved identifier.
   //
   // Unresolved identifiers are valid if and only if they are the last step of a
-  // qualified name. Resolved identifiers in the last step will occur for both
-  // out-of-line definitions and new declarations, depending on context.
+  // qualified name; all resolved qualifiers must resolve to an entity with
+  // members, such as a namespace. Resolved identifiers in the last step will
+  // occur for both out-of-line definitions and new declarations, depending on
+  // context.
   //
   // Example state transitions:
   //

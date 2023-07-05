@@ -14,7 +14,7 @@
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'NameExpression', text: 'Foo'},
 // CHECK:STDOUT:           {kind: 'Name', text: 'Baz'},
-// CHECK:STDOUT:         {kind: 'QualifiedExpression', text: '.', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'MemberAccessExpression', text: '.', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'CallExpressionStart', text: '(', subtree_size: 4},
 // CHECK:STDOUT:     {kind: 'CallExpression', text: ')', subtree_size: 5},
 // CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 6},

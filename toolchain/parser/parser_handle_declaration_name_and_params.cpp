@@ -7,18 +7,19 @@
 namespace Carbon {
 
 // Handles DeclarationNameAndParamsAs(Optional|Required).
-static auto ParserHandleDeclarationNameAndParams(
-    ParserContext& context, std::optional<ParserState> after_name) -> void {
+static auto ParserHandleDeclarationNameAndParams(ParserContext& context,
+                                                 ParserState after_name)
+    -> void {
   auto state = context.PopState();
 
   // TODO: Should handle designated names.
   if (auto identifier = context.ConsumeIf(TokenKind::Identifier)) {
-    state.state = *after_name;
+    state.state = after_name;
     context.PushState(state);
 
     if (context.PositionIs(TokenKind::Period)) {
       context.AddLeafNode(ParseNodeKind::Name, *identifier);
-      state.state = ParserState::DesignatorOrQualifierAsDeclaration;
+      state.state = ParserState::PeriodAsDeclaration;
       context.PushState(state);
     } else {
       context.AddLeafNode(ParseNodeKind::Name, *identifier);
@@ -65,7 +66,7 @@ static auto ParserHandleDeclarationNameAndParamsAfterName(
   if (context.PositionIs(TokenKind::Period)) {
     // Continue designator processing.
     context.PushState(state);
-    state.state = ParserState::DesignatorOrQualifierAsDeclaration;
+    state.state = ParserState::PeriodAsDeclaration;
     context.PushState(state);
     return;
   }
