@@ -199,7 +199,7 @@ module.exports = grammar({
         [PREC.NumericPrefix, '-'],
         [PREC.NumericPrefix, '--'],
         [PREC.NumericPrefix, '++'],
-        [PREC.BitwisePrefix, '~'],
+        [PREC.BitwisePrefix, '^'],
         [PREC.LogicalPrefix, 'not'],
       ];
 
