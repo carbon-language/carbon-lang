@@ -9,6 +9,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <queue>
 #include <random>
 #include <utility>
 #include <variant>
@@ -17,6 +18,7 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "explorer/ast/address.h"
+#include "explorer/ast/bindings.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/expression.h"
@@ -183,6 +185,12 @@ class Interpreter {
 
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
                       Nonnull<const Value*> receiver) -> ErrorOr<Success>;
+
+  // If the given `method` has a self argument, bind it to `method_scope`.
+  void BindSelfIfPresent(const CallExpression& call,
+                         const FunctionDeclaration& method,
+                         const BoundMethodValue* method_val,
+                         RuntimeScope& method_scope, BindingMap& generic_args);
 
   auto phase() const -> Phase { return phase_; }
 
@@ -851,39 +859,6 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
   }
 }
 
-auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
-                                 Nonnull<const Value*> receiver)
-    -> ErrorOr<Success> {
-  const DestructorDeclaration& method = *fun;
-  CARBON_CHECK(method.is_method());
-  RuntimeScope method_scope(&heap_);
-  BindingMap generic_args;
-
-  // TODO: move this logic into PatternMatch, and call it here.
-  const auto* p = &method.self_pattern().value();
-  const auto* placeholder = dyn_cast<BindingPlaceholderValue>(p);
-  if (!placeholder) {
-    // TODO: Fix this, probably merging logic with CallFunction.
-    // https://github.com/carbon-language/carbon-lang/issues/2802
-    return ProgramError(fun->source_loc())
-           << "destructors currently don't support `addr self` bindings";
-  }
-  if (auto& value_node = placeholder->value_node()) {
-    if (value_node->expression_category() == ExpressionCategory::Value) {
-      method_scope.BindValue(*placeholder->value_node(), receiver);
-    } else {
-      CARBON_FATAL()
-          << "TODO: [self addr: Self*] destructors not implemented yet";
-    }
-  }
-  CARBON_CHECK(method.body().has_value())
-      << "Calling a method that's missing a body";
-
-  auto act = std::make_unique<StatementAction>(*method.body(), std::nullopt);
-  return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
-                     std::move(method_scope));
-}
-
 auto Interpreter::CallFunction(const CallExpression& call,
                                Nonnull<const Value*> fun,
                                Nonnull<const Value*> arg,
@@ -945,6 +920,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
       // Bind the receiver to the `self` parameter, if there is one.
       if (const auto* method_val = dyn_cast<BoundMethodValue>(func_val)) {
         CARBON_CHECK(function.is_method());
+/*
         const auto* self_pattern = &function.self_pattern().value();
         if (const auto* placeholder =
                 dyn_cast<BindingPlaceholderValue>(self_pattern)) {
@@ -963,6 +939,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
               this->arena_);
           CARBON_CHECK(success) << "Failed to bind addr self";
         }
+*/
+        BindSelfIfPresent(call, function, method_val, function_scope,
+                          generic_args);
       }
 
       CARBON_ASSIGN_OR_RETURN(
@@ -1013,6 +992,64 @@ auto Interpreter::CallFunction(const CallExpression& call,
     default:
       return ProgramError(call.source_loc())
              << "in call, expected a function, not " << *fun;
+  }
+}
+
+auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
+                                 Nonnull<const Value*> receiver)
+    -> ErrorOr<Success> {
+  const DestructorDeclaration& method = *fun;
+  CARBON_CHECK(method.is_method());
+  RuntimeScope method_scope(&heap_);
+  BindingMap generic_args;
+
+  // TODO: move this logic into PatternMatch, and call it here.
+  const auto* p = &method.self_pattern().value();
+  const auto* placeholder = dyn_cast<BindingPlaceholderValue>(p);
+  if (!placeholder) {
+    // TODO: Fix this, probably merging logic with CallFunction.
+    // https://github.com/carbon-language/carbon-lang/issues/2802
+    return ProgramError(fun->source_loc())
+           << "destructors currently don't support `addr self` bindings";
+  }
+  if (auto& value_node = placeholder->value_node()) {
+    if (value_node->expression_category() == ExpressionCategory::Value) {
+      method_scope.BindValue(*placeholder->value_node(), receiver);
+    } else {
+      CARBON_FATAL()
+          << "TODO: [self addr: Self*] destructors not implemented yet";
+    }
+  }
+  CARBON_CHECK(method.body().has_value())
+      << "Calling a method that's missing a body";
+
+  auto act = std::make_unique<StatementAction>(*method.body(), std::nullopt);
+  return todo_.Spawn(std::unique_ptr<Action>(std::move(act)),
+                     std::move(method_scope));
+}
+
+void Interpreter::BindSelfIfPresent(const CallExpression& call,
+                                    const FunctionDeclaration& method,
+                                    const BoundMethodValue* method_val,
+                                    RuntimeScope& method_scope,
+                                    BindingMap& generic_args) {
+  CARBON_CHECK(method.is_method());
+  const auto* self_pattern = &method.self_pattern().value();
+  if (const auto* placeholder =
+          dyn_cast<BindingPlaceholderValue>(self_pattern)) {
+    // Immutable self with `[self: Self]`
+    // TODO: move this logic into PatternMatch
+    if (placeholder->value_node().has_value()) {
+      method_scope.BindValue(*placeholder->value_node(),
+                             method_val->receiver());
+    }
+  } else {
+    // Mutable self with `[addr self: Self*]`
+    CARBON_CHECK(isa<AddrValue>(self_pattern));
+    CARBON_CHECK(PatternMatch(self_pattern,
+                              ExpressionResult::Value(method_val->receiver()),
+                              call.source_loc(), &method_scope, generic_args,
+                              trace_stream_, this->arena_));
   }
 }
 
