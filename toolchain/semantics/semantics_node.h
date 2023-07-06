@@ -168,8 +168,8 @@ struct SemanticsTypeId : public IndexBase {
   // The builtin TypeType.
   static const SemanticsTypeId TypeType;
 
-  // The builtin InvalidType.
-  static const SemanticsTypeId InvalidType;
+  // The builtin Error.
+  static const SemanticsTypeId Error;
 
   // An explicitly invalid ID.
   static const SemanticsTypeId Invalid;
@@ -179,8 +179,8 @@ struct SemanticsTypeId : public IndexBase {
     out << "type";
     if (index == TypeType.index) {
       out << "TypeType";
-    } else if (index == InvalidType.index) {
-      out << "InvalidType";
+    } else if (index == Error.index) {
+      out << "Error";
     } else {
       IndexBase::Print(out);
     }
@@ -189,7 +189,7 @@ struct SemanticsTypeId : public IndexBase {
 
 constexpr SemanticsTypeId SemanticsTypeId::TypeType =
     SemanticsTypeId(SemanticsTypeId::InvalidIndex - 2);
-constexpr SemanticsTypeId SemanticsTypeId::InvalidType =
+constexpr SemanticsTypeId SemanticsTypeId::Error =
     SemanticsTypeId(SemanticsTypeId::InvalidIndex - 1);
 constexpr SemanticsTypeId SemanticsTypeId::Invalid =
     SemanticsTypeId(SemanticsTypeId::InvalidIndex);

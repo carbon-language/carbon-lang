@@ -238,7 +238,7 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
   }
 
   // Should only be reached on error.
-  context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinInvalidType);
+  context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinError);
   return true;
 }
 

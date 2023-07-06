@@ -225,11 +225,11 @@ class SemanticsIR {
     return type_id;
   }
 
-  // Gets the node ID for a type. This doesn't handle TypeType or InvalidType in
+  // Gets the node ID for a type. This doesn't handle TypeType or Error in
   // order to avoid a check; callers that need that should use
   // GetTypeAllowBuiltinTypes.
   auto GetType(SemanticsTypeId type_id) const -> SemanticsNodeId {
-    // Double-check it's not called with TypeType or InvalidType.
+    // Double-check it's not called with TypeType or Error.
     CARBON_CHECK(type_id.index >= 0)
         << "Invalid argument for GetType: " << type_id;
     return types_[type_id.index];
@@ -239,8 +239,8 @@ class SemanticsIR {
       -> SemanticsNodeId {
     if (type_id == SemanticsTypeId::TypeType) {
       return SemanticsNodeId::BuiltinTypeType;
-    } else if (type_id == SemanticsTypeId::InvalidType) {
-      return SemanticsNodeId::BuiltinInvalidType;
+    } else if (type_id == SemanticsTypeId::Error) {
+      return SemanticsNodeId::BuiltinError;
     } else {
       return GetType(type_id);
     }
