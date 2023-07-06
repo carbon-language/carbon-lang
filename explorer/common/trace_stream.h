@@ -163,13 +163,13 @@ class SetProgramPhase {
     trace_stream.set_current_phase(program_phase);
   }
 
+  ~SetProgramPhase() { trace_stream_.set_current_phase(initial_phase_); }
+
   // This can be used for cases when current phase is set multiple times within
   // the same scope.
   auto update_phase(ProgramPhase program_phase) -> void {
     trace_stream_.set_current_phase(program_phase);
   }
-
-  ~SetProgramPhase() { trace_stream_.set_current_phase(initial_phase_); }
 
  private:
   TraceStream& trace_stream_;
@@ -187,13 +187,13 @@ class SetFileContext {
     trace_stream_.set_source_loc(source_loc);
   }
 
+  ~SetFileContext() { trace_stream_.set_source_loc(initial_source_loc_); }
+
   // This can be used for cases when source location needs to be updated
   // multiple times within the same scope.
   auto update_source_loc(std::optional<SourceLocation> source_loc) {
     trace_stream_.set_source_loc(source_loc);
   }
-
-  ~SetFileContext() { trace_stream_.set_source_loc(initial_source_loc_); }
 
  private:
   TraceStream& trace_stream_;
