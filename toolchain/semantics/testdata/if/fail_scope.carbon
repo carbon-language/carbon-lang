@@ -33,7 +33,7 @@
 // CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+7, type: type1},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5, type: type1},
 // CHECK:STDOUT:   {kind: Branch, arg0: block6},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeInvalidType, type: typeInvalidType},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError, type: typeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

@@ -23,7 +23,7 @@
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeInvalidType, type: typeInvalidType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeError, type: typeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

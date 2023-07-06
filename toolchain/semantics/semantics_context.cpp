@@ -33,10 +33,10 @@ SemanticsContext::SemanticsContext(const TokenizedBuffer& tokens,
       params_or_args_stack_("params_or_args_stack_", semantics_ir, vlog_stream),
       args_type_info_stack_("args_type_info_stack_", semantics_ir,
                             vlog_stream) {
-  // Inserts the "Invalid" and "Type" types as "used types" so that
+  // Inserts the "Error" and "Type" types as "used types" so that
   // canonicalization can skip them. We don't emit either for lowering.
   canonical_types_.insert(
-      {SemanticsNodeId::BuiltinInvalidType, SemanticsTypeId::InvalidType});
+      {SemanticsNodeId::BuiltinError, SemanticsTypeId::Error});
   canonical_types_.insert(
       {SemanticsNodeId::BuiltinTypeType, SemanticsTypeId::TypeType});
 }
@@ -142,7 +142,7 @@ auto SemanticsContext::LookupName(ParseTree::Node parse_node,
         emitter_->Emit(parse_node, NameNotFound,
                        semantics_ir_->GetString(name_id));
       }
-      return SemanticsNodeId::BuiltinInvalidType;
+      return SemanticsNodeId::BuiltinError;
     }
     CARBON_CHECK(!it->second.empty())
         << "Should have been erased: " << semantics_ir_->GetString(name_id);
@@ -157,7 +157,7 @@ auto SemanticsContext::LookupName(ParseTree::Node parse_node,
         emitter_->Emit(parse_node, NameNotFound,
                        semantics_ir_->GetString(name_id));
       }
-      return SemanticsNodeId::BuiltinInvalidType;
+      return SemanticsNodeId::BuiltinError;
     }
 
     return it->second;
@@ -360,7 +360,7 @@ auto SemanticsContext::ApplyDeclarationNameQualifier(
         auto resolved_node_id = LookupName(name_context.parse_node, name_id,
                                            name_context.target_scope_id,
                                            /*print_diagnostics=*/false);
-        if (resolved_node_id == SemanticsNodeId::BuiltinInvalidType) {
+        if (resolved_node_id == SemanticsNodeId::BuiltinError) {
           // Invalid indicates an unresolved node. Store it and return.
           name_context.state = DeclarationNameContext::State::Unresolved;
           name_context.unresolved_name_id = name_id;
@@ -479,20 +479,20 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     -> ImplicitAsKind {
   // Start by making sure both sides are valid. If any part is invalid, the
   // result is invalid and we shouldn't error.
-  if (value_id == SemanticsNodeId::BuiltinInvalidType) {
+  if (value_id == SemanticsNodeId::BuiltinError) {
     // If the value is invalid, we can't do much, but do "succeed".
     return ImplicitAsKind::Identical;
   }
   auto value = semantics_ir_->GetNode(value_id);
   auto value_type_id = value.type_id();
-  if (value_type_id == SemanticsTypeId::InvalidType) {
+  if (value_type_id == SemanticsTypeId::Error) {
     return ImplicitAsKind::Identical;
   }
 
-  if (as_type_id == SemanticsTypeId::InvalidType) {
+  if (as_type_id == SemanticsTypeId::Error) {
     // Although the target type is invalid, this still changes the value.
     if (output_value_id != nullptr) {
-      *output_value_id = SemanticsNodeId::BuiltinInvalidType;
+      *output_value_id = SemanticsNodeId::BuiltinError;
     }
     return ImplicitAsKind::Compatible;
   }
@@ -519,7 +519,7 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
   // TODO: Handle ImplicitAs for compatible structs and tuples.
 
   if (output_value_id != nullptr) {
-    *output_value_id = SemanticsNodeId::BuiltinInvalidType;
+    *output_value_id = SemanticsNodeId::BuiltinError;
   }
   return ImplicitAsKind::Incompatible;
 }

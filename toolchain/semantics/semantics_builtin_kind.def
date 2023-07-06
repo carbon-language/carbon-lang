@@ -40,9 +40,11 @@
 // This has a deliberately self-referential type.
 CARBON_SEMANTICS_BUILTIN_KIND(TypeType, "Type")
 
-// Used when a SemanticNode has an invalid type, which should then be ignored
-// for future type checking.
-CARBON_SEMANTICS_BUILTIN_KIND(InvalidType, "<unknown>")
+// Used when a semantic error has been detected, and a SemanticNodeId is still
+// required. For example, when there is a type checking issue, this will be used
+// in the type_id. It's typically used as a cue that semantic checking doesn't
+// need to issue further diagnostics.
+CARBON_SEMANTICS_BUILTIN_KIND(Error, "<error>")
 
 // -----------------------------------------------------------------------------
 // TODO: Below types are all placeholders. While the above may last, the below

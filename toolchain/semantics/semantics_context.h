@@ -210,7 +210,7 @@ class SemanticsContext {
       -> bool;
 
   // Runs ImplicitAsImpl for a situation where a cast is required, returning the
-  // updated `value_id`. Prints a diagnostic and returns an InvalidType if
+  // updated `value_id`. Prints a diagnostic and returns an Error if
   // unsupported.
   auto ImplicitAsRequired(ParseTree::Node parse_node, SemanticsNodeId value_id,
                           SemanticsTypeId as_type_id) -> SemanticsNodeId;

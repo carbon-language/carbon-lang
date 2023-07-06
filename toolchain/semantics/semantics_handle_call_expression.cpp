@@ -32,7 +32,7 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
   if (!context.ImplicitAsForArgs(refs_id, name_node.parse_node(),
                                  callable.param_refs_id, &diagnostic)) {
     diagnostic.Emit();
-    context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinInvalidType);
+    context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinError);
     return true;
   }
 
