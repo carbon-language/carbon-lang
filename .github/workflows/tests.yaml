@@ -6,7 +6,7 @@ name: test
 
 on:
   push:
-    branches: [trunk]
+    branches: [action-test]
   pull_request_target:
   merge_group:
 
