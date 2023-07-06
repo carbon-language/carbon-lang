@@ -1,0 +1,46 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Note that this name must exactly match the name in `tests.yaml`.
+#
+# This is not a real "test" workflow, but a fallback used to work around a
+# problem where ignored checks cannot be required:
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onpushpull_requestpull_request_targetpathspaths-ignore
+name: test
+
+# This mus exactly match the `on` clause in `tests.yaml` except for inverting
+# `paths-ignore` to `paths`. The purpose is that exactly one of this workflow or
+# the one in `tests.yaml` fires for a given case.
+on:
+  push:
+    branches: [trunk]
+    paths:
+      - '**/*.md'
+      - 'LICENSE'
+      - 'CODEOWNERS'
+      - '.git*'
+  pull_request_target:
+    paths:
+      - '**/*.md'
+      - 'LICENSE'
+      - 'CODEOWNERS'
+      - '.git*'
+  merge_group:
+    paths:
+      - '**/*.md'
+      - 'LICENSE'
+      - 'CODEOWNERS'
+      - '.git*'
+
+# Cancel previous workflows on the PR when there are multiple fast commits.
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No tests to run."'
