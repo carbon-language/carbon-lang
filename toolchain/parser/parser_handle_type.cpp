@@ -16,8 +16,8 @@ static auto ParserHandleTypeIntroducer(ParserContext& context,
 
   state.state = after_params_state;
   context.PushState(state);
-  state.state = ParserState::DeclarationNameAndParamsAsOptional;
-  context.PushState(state);
+  context.PushState(ParserState::DeclarationNameAndParamsAsOptional,
+                    state.token);
 }
 
 auto ParserHandleTypeIntroducerAsClass(ParserContext& context) -> void {

@@ -132,12 +132,19 @@ as follows:
 A content line is considered empty if it contains only whitespace characters.
 
 ```carbon
-var String: w = '''
-  This is a string literal. Its first character is 'T' and its last character is
-  a newline character. It contains another newline between 'is' and 'a'.
+// All block string literals contain a trailing newline by default.
+var String: newline_example = '''
+  This is a block string literal. Its first character is 'T' and its last character is
+  a newline. It contains another newline character between 'is' and 'a'.
   ''';
 
-// This string literal is invalid because the ''' after 'closing' terminates
+// Newlines can be suppressed using the escape character '\'
+var String: suppressed_newlines = '''
+  This is another block string literal. The newline character here \
+  is suppressed, along with the trailing newline here.\
+  ''';
+
+// This block string literal is invalid because the ''' after 'closing' terminates
 // the literal, but is not at the start of the line.
 var String: invalid = '''
   error: closing ''' is not on its own line.

@@ -24,7 +24,7 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
   }
 
   auto function_id = name_node.GetAsFunctionDeclaration();
-  auto callable = context.semantics_ir().GetFunction(function_id);
+  const auto& callable = context.semantics_ir().GetFunction(function_id);
 
   CARBON_DIAGNOSTIC(NoMatchingCall, Error, "No matching callable was found.");
   auto diagnostic =
@@ -32,7 +32,7 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
   if (!context.ImplicitAsForArgs(refs_id, name_node.parse_node(),
                                  callable.param_refs_id, &diagnostic)) {
     diagnostic.Emit();
-    context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinInvalidType);
+    context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinError);
     return true;
   }
 
@@ -57,8 +57,7 @@ auto SemanticsHandleCallExpressionComma(SemanticsContext& context,
 
 auto SemanticsHandleCallExpressionStart(SemanticsContext& context,
                                         ParseTree::Node parse_node) -> bool {
-  auto name_id =
-      context.node_stack().Pop<SemanticsNodeId>(ParseNodeKind::NameExpression);
+  auto name_id = context.node_stack().Pop<SemanticsNodeId>();
   context.node_stack().Push(parse_node, name_id);
   context.ParamOrArgStart();
   return true;

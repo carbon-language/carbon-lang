@@ -8,8 +8,9 @@
 # Directories created by python.
 **/__pycache__/
 
-# Ignore the user's VSCode settings.
+# Ignore the user's VSCode settings and debug setup.
 /.vscode/settings.json
+/.vscode/launch.json
 
 # Ignore the user's Idea settings.
 /.idea/

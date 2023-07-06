@@ -51,9 +51,7 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
   }
   auto param_refs_id = context.node_stack().Pop<SemanticsNodeBlockId>(
       ParseNodeKind::ParameterList);
-  auto [name_node, name_id] =
-      context.node_stack().PopWithParseNode<SemanticsStringId>(
-          ParseNodeKind::Name);
+  auto name_context = context.PopDeclarationName();
   auto fn_node = context.node_stack().PopForSoloParseNode(
       ParseNodeKind::FunctionIntroducer);
 
@@ -61,16 +59,19 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
   auto outer_block = context.node_block_stack().PeekForAdd();
   context.node_block_stack().Push();
 
+  // TODO: Support out-of-line definitions, which will have a resolved
+  // name_context. Right now, those become errors in AddNameToLookup.
+
   // Add the callable.
   auto function_id = context.semantics_ir().AddFunction(
-      {.name_id = name_id,
+      {.name_id = name_context.unresolved_name_id,
        .param_refs_id = param_refs_id,
        .return_type_id = return_type_id,
        .body_block_ids = {context.node_block_stack().PeekForAdd()}});
   auto decl_id = context.AddNodeToBlock(
       outer_block,
       SemanticsNode::FunctionDeclaration::Make(fn_node, function_id));
-  context.AddNameToLookup(name_node, name_id, decl_id);
+  context.AddNameToLookup(name_context, decl_id);
 
   context.PushScope();
   for (auto ref_id : context.semantics_ir().GetNodeBlock(param_refs_id)) {
@@ -86,8 +87,20 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
 
 auto SemanticsHandleFunctionIntroducer(SemanticsContext& context,
                                        ParseTree::Node parse_node) -> bool {
-  // No action, just a bracketing node.
+  // Push the bracketing node.
   context.node_stack().Push(parse_node);
+  // A name should always follow.
+  context.PushDeclarationName();
+  return true;
+}
+
+auto SemanticsHandleReturnType(SemanticsContext& context,
+                               ParseTree::Node parse_node) -> bool {
+  // Propagate the type expression.
+  auto [type_parse_node, type_node_id] =
+      context.node_stack().PopWithParseNode<SemanticsNodeId>();
+  auto cast_node_id = context.ExpressionAsType(type_parse_node, type_node_id);
+  context.node_stack().Push(parse_node, cast_node_id);
   return true;
 }
 

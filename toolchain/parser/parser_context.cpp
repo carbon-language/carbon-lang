@@ -425,10 +425,17 @@ auto ParserContext::RecoverFromDeclarationError(StateStackEntry state,
           /*has_error=*/true);
 }
 
+auto ParserContext::EmitExpectedDeclarationSemi(TokenKind expected_kind)
+    -> void {
+  CARBON_DIAGNOSTIC(ExpectedDeclarationSemi, Error,
+                    "`{0}` declarations must end with a `;`.", TokenKind);
+  emitter().Emit(*position(), ExpectedDeclarationSemi, expected_kind);
+}
+
 auto ParserContext::EmitExpectedDeclarationSemiOrDefinition(
     TokenKind expected_kind) -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclarationSemiOrDefinition, Error,
-                    "`{0}` should either end with a `;` for a declaration or "
+                    "`{0}` declarations must either end with a `;` or "
                     "have a `{{ ... }` block for a definition.",
                     TokenKind);
   emitter().Emit(*position(), ExpectedDeclarationSemiOrDefinition,
