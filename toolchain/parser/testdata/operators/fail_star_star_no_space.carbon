@@ -20,5 +20,5 @@
 // before we notice the missing whitespace around the second `*`.
 // It'd be better to (somehow) form n*(*p) and reject due to the missing
 // whitespace around the first `*`.
-// CHECK:STDERR: fail_star_star_no_space.carbon:[[@LINE+1]]:16: Expected `;` to terminate `var` declaration.
+// CHECK:STDERR: fail_star_star_no_space.carbon:[[@LINE+1]]:16: `var` declarations must end with a `;`.
 var n: i8 = n**p;

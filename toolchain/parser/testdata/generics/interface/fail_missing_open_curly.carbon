@@ -13,8 +13,8 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+1]]:15: `interface` should either end with a `;` for a declaration or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+1]]:15: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition.
 interface Bar Baz {}
 
-// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+1]]:14: `interface` should either end with a `;` for a declaration or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+1]]:14: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition.
 interface Foo

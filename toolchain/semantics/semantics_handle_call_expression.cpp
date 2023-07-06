@@ -57,8 +57,7 @@ auto SemanticsHandleCallExpressionComma(SemanticsContext& context,
 
 auto SemanticsHandleCallExpressionStart(SemanticsContext& context,
                                         ParseTree::Node parse_node) -> bool {
-  auto name_id =
-      context.node_stack().Pop<SemanticsNodeId>(ParseNodeKind::NameExpression);
+  auto name_id = context.node_stack().Pop<SemanticsNodeId>();
   context.node_stack().Push(parse_node, name_id);
   context.ParamOrArgStart();
   return true;

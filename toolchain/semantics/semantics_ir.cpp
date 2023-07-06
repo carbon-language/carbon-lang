@@ -254,6 +254,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::CrossReference:
       case SemanticsNodeKind::FunctionDeclaration:
       case SemanticsNodeKind::IntegerLiteral:
+      case SemanticsNodeKind::Namespace:
       case SemanticsNodeKind::RealLiteral:
       case SemanticsNodeKind::Return:
       case SemanticsNodeKind::ReturnExpression:

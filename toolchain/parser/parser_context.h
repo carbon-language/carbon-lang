@@ -215,6 +215,14 @@ class ParserContext {
                               *position_, tree_->size()));
   }
 
+  // Pushes a new state with a specific token for context. Used when forming a
+  // new subtree with a token that isn't the start of the subtree.
+  auto PushState(ParserState state, TokenizedBuffer::Token token) -> void {
+    PushState(StateStackEntry(state, PrecedenceGroup::ForTopLevelExpression(),
+                              PrecedenceGroup::ForTopLevelExpression(), token,
+                              tree_->size()));
+  }
+
   // Pushes a new expression state with specific precedence.
   auto PushStateForExpression(PrecedenceGroup ambient_precedence) -> void {
     PushState(StateStackEntry(ParserState::Expression, ambient_precedence,
@@ -255,6 +263,10 @@ class ParserContext {
                                ParserState keyword_state, int subtree_start)
       -> void;
 
+  // Emits a diagnostic for a declaration missing a semi.
+  auto EmitExpectedDeclarationSemi(TokenKind expected_kind) -> void;
+
+  // Emits a diagnostic for a declaration missing a semi or definition.
   auto EmitExpectedDeclarationSemiOrDefinition(TokenKind expected_kind) -> void;
 
   // Handles error recovery in a declaration, particularly before any possible
