@@ -51,7 +51,6 @@ jobs:
               - 'LICENSE'
               - 'CODEOWNERS'
               - '.git*'
-              - '.github/**/*'
 
       # Setup Python and related tools.
       - uses: actions/setup-python@v4
