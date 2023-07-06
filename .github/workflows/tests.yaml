@@ -28,6 +28,17 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+      # Checkout the pull request head or the branch.
+      - name: Checkout pull request
+        if: github.event_name == 'pull_request_target'
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout branch
+        if: github.event_name != 'pull_request_target'
+        uses: actions/checkout@v3
+
       # Tests should only run on applicable paths, but we still need to have an
       # action run for the merge queue. We filter steps based on the paths here,
       # and condition steps on the output.
@@ -41,21 +52,6 @@ jobs:
               - '!LICENSE'
               - '!CODEOWNERS'
               - '!.git*'
-
-      # Checkout the pull request head or the branch.
-      - name: Checkout pull request
-        if:
-          steps.filter.outputs.src == 'true' && github.event_name ==
-          'pull_request_target'
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Checkout branch
-        if:
-          steps.filter.outputs.src == 'true' && github.event_name ==
-          'pull_request_target'
-        uses: actions/checkout@v3
 
       # Setup Python and related tools.
       - uses: actions/setup-python@v4
