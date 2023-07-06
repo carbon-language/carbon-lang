@@ -391,9 +391,6 @@ auto SemanticsHandleQualifiedDeclaration(SemanticsContext& context,
   // Identifier or expression children. Later qualifiers will have a
   // QualifiedDeclaration as the first child, and an Identifier or expression as
   // the second child.
-  //
-  // The child parse nodes are in reverse order versus how they need to be
-  // applied.
   auto [parse_node2, node_or_name_id2] =
       context.node_stack().PopWithParseNode<SemanticsNodeId>();
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
