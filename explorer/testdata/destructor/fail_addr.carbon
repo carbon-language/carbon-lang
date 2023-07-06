@@ -10,7 +10,6 @@ class A {
   destructor[addr self: Self*] {
     self->n += 1;
     Print("DESTRUCTOR A {0}", self->n);
-  // CHECK:STDERR: RUNTIME ERROR: fail_addr.carbon:[[@LINE+1]]: destructors currently don't support `addr self` bindings
   }
 
   var n: i32;
@@ -20,3 +19,6 @@ fn Main() -> i32 {
   var a: A = {.n = 2};
   return 0;
 }
+
+// CHECK:STDOUT: DESTRUCTOR A 3
+// CHECK:STDOUT: result: 0
