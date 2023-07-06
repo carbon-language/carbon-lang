@@ -46,17 +46,16 @@ jobs:
         uses: dorny/paths-filter@v2
         with:
           filters: |
-            src:
-              - '**/*'
-              - '!**/*.md'
-              - '!LICENSE'
-              - '!CODEOWNERS'
-              - '!.git*'
-              - '!.github/**/*'
+            ignore:
+              - '**/*.md'
+              - 'LICENSE'
+              - 'CODEOWNERS'
+              - '.git*'
+              - '.github/**/*'
 
       # Setup Python and related tools.
       - uses: actions/setup-python@v4
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.ignore == 'false'
         with:
           # Match the min version listed in docs/project/contribution_tools.md
           python-version: '3.9'
@@ -65,7 +64,7 @@ jobs:
       # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
       # Both 14 and 15 are candidates because GitHub is testing new images.
       - name: Setup LLVM and Clang (macOS)
-        if: steps.filter.outputs.src == 'true' && matrix.os == 'macos-12'
+        if: steps.filter.outputs.ignore == 'false' && matrix.os == 'macos-12'
         run: |
           LLVM_PATH="$(brew --prefix llvm@15)"
           if [[ ! -e "${LLVM_PATH}" ]]; then
@@ -83,7 +82,7 @@ jobs:
       # Both 14 and 15 are candidates for forwards compatibility, although 15
       # isn't provided.
       - name: Setup LLVM and Clang (Linux)
-        if: steps.filter.outputs.src == 'true' && matrix.os == 'ubuntu-22.04'
+        if: steps.filter.outputs.ignore == 'false' && matrix.os == 'ubuntu-22.04'
         run: |
           LLVM_PATH="/usr/lib/llvm-15"
           if [[ ! -e "${LLVM_PATH}" ]]; then
@@ -98,7 +97,7 @@ jobs:
 
       # Print the various tool paths and versions to help in debugging.
       - name: Print tool debugging info
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.ignore == 'false'
         run: |
           echo '*** PATH'
           echo $PATH
@@ -117,7 +116,7 @@ jobs:
 
       # Extract our access key for our build cache.
       - name: Extract access key
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.ignore == 'false'
         env:
           GCP_BUILDS_SERVICE_ACCOUNT: ${{ secrets.GCP_BUILDS_SERVICE_ACCOUNT }}
         run: |
@@ -126,17 +125,17 @@ jobs:
 
       # We need to replace the `.` with a `_` for the build cache.
       - name: Setup LLVM and Clang (macOS)
-        if: steps.filter.outputs.src == 'true' && matrix.os == 'macos-12'
+        if: steps.filter.outputs.ignore == 'false' && matrix.os == 'macos-12'
         run: |
           echo "os_for_cache=macos-12" >> $GITHUB_ENV
       - name: Setup LLVM and Clang (Linux)
-        if: steps.filter.outputs.src == 'true' && matrix.os == 'ubuntu-22.04'
+        if: steps.filter.outputs.ignore == 'false' && matrix.os == 'ubuntu-22.04'
         run: |
           echo "os_for_cache=ubuntu-22_04" >> $GITHUB_ENV
 
       # Add our bazel configuration and print basic info to ease debugging.
       - name: Configure Bazel and print info
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.ignore == 'false'
         env:
           # Add a cache version for changes that bazel won't otherwise detect,
           # like llvm version changes.
@@ -155,7 +154,7 @@ jobs:
 
       # Build all targets first to isolate build failures.
       - name: Build (${{ matrix.build_mode }})
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.ignore == 'false'
         env:
           # 'libtool_check_unique failed to generate' workaround.
           # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
@@ -164,7 +163,7 @@ jobs:
 
       # Run all test targets.
       - name: Test (${{ matrix.build_mode }})
-        if: steps.filter.outputs.src == 'true'
+        if: steps.filter.outputs.ignore == 'false'
         env:
           # 'libtool_check_unique failed to generate' workaround.
           # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
