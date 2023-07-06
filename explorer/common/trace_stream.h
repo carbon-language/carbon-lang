@@ -52,7 +52,7 @@ class TraceStream {
  public:
   explicit TraceStream() { set_allowed_file_contexts({FileContext::Unknown}); }
 
-  // This method gets the file context by using filename from source location
+  // This method gets the file context by using filename from source location.
   // TODO: implement a way to differentiate between the main file and imports
   // based upon source location / filename.
   auto file_context() const -> FileContext {
