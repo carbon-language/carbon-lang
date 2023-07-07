@@ -6,9 +6,11 @@
 
 namespace Carbon {
 
-static auto HandleFunctionDeclarationOrDefinition(
-    SemanticsContext& context, ParseTree::Node /*parse_node*/)
-    -> SemanticsNodeId {
+// Build a FunctionDeclaration describing the signature of a function. This
+// handles the common logic shared by function declaration syntax and function
+// definition syntax.
+static auto BuildFunctionDeclaration(SemanticsContext& context)
+    -> std::pair<SemanticsFunctionId, SemanticsNodeId> {
   SemanticsTypeId return_type_id = SemanticsTypeId::Invalid;
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnType) {
@@ -36,12 +38,13 @@ static auto HandleFunctionDeclarationOrDefinition(
   auto decl_id = context.AddNode(
       SemanticsNode::FunctionDeclaration::Make(fn_node, function_id));
   context.AddNameToLookup(name_context, decl_id);
-  return decl_id;
+  return {function_id, decl_id};
 }
 
 auto SemanticsHandleFunctionDeclaration(SemanticsContext& context,
-                                        ParseTree::Node parse_node) -> bool {
-  HandleFunctionDeclarationOrDefinition(context, parse_node);
+                                        ParseTree::Node /*parse_node*/)
+    -> bool {
+  BuildFunctionDeclaration(context);
   return true;
 }
 
@@ -75,9 +78,7 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
                                             ParseTree::Node parse_node)
     -> bool {
   // Process the declaration portion of the function.
-  auto decl_id = HandleFunctionDeclarationOrDefinition(context, parse_node);
-  auto function_id =
-      context.semantics_ir().GetNode(decl_id).GetAsFunctionDeclaration();
+  auto [function_id, decl_id] = BuildFunctionDeclaration(context);
   const auto& function = context.semantics_ir().GetFunction(function_id);
 
   // Create the function scope and the entry block.
