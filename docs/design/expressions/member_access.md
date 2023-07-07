@@ -129,16 +129,16 @@ remaining cases we wish to support:
 -   The first operand is a type, and lookup should consider members of that
     type. For example, `i32.Least` should find the member constant `Least` of
     the type `i32`.
--   The first operand is a type-of-type, and lookup should consider members of
-    that type-of-type. For example, `Addable.Add` should find the member
-    function `Add` of the interface `Addable`. Because a type-of-type is a type,
-    this is a special case of the previous bullet.
+-   The first operand is a facet type, and lookup should consider members of
+    that facet type. For example, `Addable.Add` should find the member function
+    `Add` of the interface `Addable`. Because a facet type is a type, this is a
+    special case of the previous bullet.
 
-Note that because a type is a value, and a type-of-type is a type, these cases
-are overlapping and not entirely separable.
+Note that because a type is a value, and a facet type is a type, these cases are
+overlapping and not entirely separable.
 
 If any of the above lookups ever looks for members of a type parameter, it
-should consider members of the type-of-type, treating the type parameter as an
+should consider members of the facet type, treating the type parameter as an
 archetype.
 
 **Note:** If lookup is performed into a type that involves a template parameter,
@@ -151,7 +151,7 @@ For a simple member access, the word is looked up in the following types:
 -   If the first operand can be evaluated and evaluates to a type, that type.
 -   If the type of the first operand can be evaluated, that type.
 -   If the type of the first operand is a generic type parameter, and the type
-    of that generic type parameter can be evaluated, that type-of-type.
+    of that generic type parameter can be evaluated, that facet type.
 
 The results of these lookups are [combined](#lookup-ambiguity).
 
@@ -271,10 +271,10 @@ class SquareWidget {
 }
 
 fn DrawWidget(r: RoundWidget, s: SquareWidget) {
-  // ✅ OK, lookup in type and lookup in type-of-type find the same entity.
+  // ✅ OK, lookup in type and lookup in facet type find the same entity.
   DrawTemplate(r);
 
-  // ✅ OK, lookup in type and lookup in type-of-type find the same entity.
+  // ✅ OK, lookup in type and lookup in facet type find the same entity.
   DrawTemplate(s);
 
   // ✅ OK, found in type.
@@ -294,11 +294,10 @@ the lookup results is the unique member that was found.
 ## `impl` lookup
 
 When the second operand of a member access expression resolves to a member of an
-interface `I`, and the first operand is a value other than a type-of-type,
-_`impl` lookup_ is performed to map the member of the interface to the
-corresponding member of the relevant `impl`. The member of the `impl` replaces
-the member of the interface in all further processing of the member access
-expression.
+interface `I`, and the first operand is a value other than a facet type, _`impl`
+lookup_ is performed to map the member of the interface to the corresponding
+member of the relevant `impl`. The member of the `impl` replaces the member of
+the interface in all further processing of the member access expression.
 
 ```carbon
 interface Addable {
@@ -378,7 +377,7 @@ class C {
   }
 }
 
-// `V` is `I` and `M` is `I.F`. Because `V` is a type-of-type,
+// `V` is `I` and `M` is `I.F`. Because `V` is a facet type,
 // `impl` lookup is not performed, and the alias binds to #1.
 alias A1 = I.F;
 

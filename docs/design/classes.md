@@ -1595,7 +1595,7 @@ class MyDerivedClass {
 
 The properties of a type, whether type is abstract, base, or final, and whether
 the destructor is virtual or non-virtual, determines which
-[type-of-types](/docs/design/generics/terminology.md#type-of-type) it satisfies.
+[facet types](/docs/design/generics/terminology.md#facet-type) it satisfies.
 
 -   Non-abstract classes are `Concrete`. This means you can create local and
     member variables of this type. `Concrete` types have destructors that are
@@ -1623,7 +1623,7 @@ conform to the decision on
 | final    | any         | yes        | yes         | yes            |
 
 The compiler automatically determines which of these
-[type-of-types](/docs/design/generics/terminology.md#type-of-type) a given type
+[facet types](/docs/design/generics/terminology.md#facet-type) a given type
 satisfies. It is illegal to directly implement `Concrete`, `Deletable`, or
 `Destructible` directly. For more about these constraints, see
 ["destructor constraints" in the detailed generics design](/docs/design/generics/details.md#destructor-constraints).
@@ -1670,7 +1670,7 @@ and not implemented in the current class.
 
 Types satisfy the
 [`TrivialDestructor`](/docs/design/generics/details.md#destructor-constraints)
-type-of-type if:
+facet type if:
 
 -   the class declaration does not define a destructor or the class defines the
     destructor with an empty body `{ }`,
@@ -1949,11 +1949,11 @@ We want four things so that Carbon's object-safe interfaces may interoperate
 with C++ abstract base classes without data members, matching the
 [interface as base class use case](#interface-as-base-class):
 
--   Ability to convert an object-safe interface (a type-of-type) into an
+-   Ability to convert an object-safe interface (a facet type) into an
     C++-compatible base class (a base type), maybe using
     `AsBaseClass(MyInterface)`.
 -   Ability to convert a C++ base class without data members (a base type) into
-    an object-safe interface (a type-of-type), maybe using `AsInterface(MyIBC)`.
+    an object-safe interface (a facet type), maybe using `AsInterface(MyIBC)`.
 -   Ability to convert a (thin) pointer to an abstract base class to a `DynPtr`
     of the corresponding interface.
 -   Ability to convert `DynPtr(MyInterface)` values to a proxy type that extends
@@ -2160,7 +2160,7 @@ implementations for [data classes](#data-classes) more generally. These
 implementations will typically subject to the criteria that all the data fields
 of the type must implement the interface. An example use case would be to say
 that a data class is serializable if all of its fields were. For this we will
-need a type-of-type for capturing that criteria, maybe something like
+need a facet type for capturing that criteria, maybe something like
 `DataFieldsImplement(MyInterface)`. The templated implementation will need some
 way of iterating through the fields so it can perform operations fieldwise. This
 feature should also implement the interfaces for any tuples whose fields satisfy
@@ -2239,7 +2239,7 @@ the type of `U.x`."
     -   [Allow functions to act as destructors](/proposals/p1154.md#allow-functions-to-act-as-destructors)
     -   [Allow private destructors](/proposals/p1154.md#allow-private-destructors)
     -   [Allow multiple conditional destructors](/proposals/p1154.md#allow-multiple-conditional-destructors)
-    -   [Type-of-type naming](/proposals/p1154.md#type-of-type-naming)
+    -   [Facet type naming](/proposals/p1154.md#type-of-type-naming)
     -   [Other approaches to extensible classes without vtables](/proposals/p1154.md#other-approaches-to-extensible-classes-without-vtables)
 
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)

@@ -21,7 +21,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Contrast with templates](#contrast-with-templates)
     -   [Implementing interfaces](#implementing-interfaces)
         -   [Accessing members of interfaces](#accessing-members-of-interfaces)
-    -   [Type-of-types](#type-of-types)
+    -   [Facet types](#facet-types)
     -   [Generic functions](#generic-functions)
         -   [Deduced parameters](#deduced-parameters)
         -   [Generic type parameters](#generic-type-parameters)
@@ -71,11 +71,11 @@ Summary of how Carbon generics work:
     external, in which case the implementation is allowed to be defined in the
     library defining the interface.
 -   Interfaces are used as the type of a generic type parameter, acting as a
-    _type-of-type_. Type-of-types in general specify the capabilities and
+    _facet type_. Facet types in general specify the capabilities and
     requirements of the type. Types define specific implementations of those
     capabilities. Inside such a generic function, the API of the type is
     [erased](terminology.md#type-erasure), except for the names defined in the
-    type-of-type.
+    facet type.
 -   _Deduced parameters_ are parameters whose values are determined by the
     values and (most commonly) the types of the explicit arguments. Generic type
     parameters are typically deduced.
@@ -85,9 +85,9 @@ Summary of how Carbon generics work:
 -   Interfaces can require other interfaces be implemented.
 -   Interfaces can [extend](terminology.md#extending-an-interface) required
     interfaces.
--   The `&` operation on type-of-types allows you conveniently combine
-    interfaces. It gives you all the names that don't conflict.
--   You may also declare a new type-of-type directly using
+-   The `&` operation on facet types allows you conveniently combine interfaces.
+    It gives you all the names that don't conflict.
+-   You may also declare a new facet type directly using
     ["named constraints"](terminology.md#named-constraints). Named constraints
     can express requirements that multiple interfaces be implemented, and give
     you control over how name conflicts are handled.
@@ -180,7 +180,7 @@ definition is required after seeing the call sites once all the
 [instantiations](terminology.md#instantiation) are known.
 
 Note: [Generics terminology](terminology.md) goes into more detail about the
-[differences between generics and templates](terminology.md#generic-versus-template-parameters).
+[differences between checked and template generic parameters](terminology.md#checked-versus-template-parameters).
 
 ### Implementing interfaces
 
@@ -250,7 +250,7 @@ song.(Comparable.Less)(song);
 song.(Printable.Print)();
 ```
 
-### Type-of-types
+### Facet types
 
 To type check a function, the compiler needs to be able to verify that uses of a
 value match the capabilities of the value's type. In `SortVector`, the parameter
@@ -259,19 +259,19 @@ specific type value assigned to `T` is not known when type checking the
 `SortVector` function. Instead it is the constraints on `T` that let the
 compiler know what operations may be performed on values of type `T`. Those
 constraints are represented by the type of `T`, a
-[**_type-of-type_**](terminology.md#type-of-type).
+[**_facet type_**](terminology.md#facet-type).
 
-In general, a type-of-type describes the capabilities of a type, while a type
+In general, a facet type describes the capabilities of a type, while a type
 defines specific implementations of those capabilities. An interface, like
-`Comparable`, may be used as a type-of-type. In that case, the constraint on the
+`Comparable`, may be used as a facet type. In that case, the constraint on the
 type is that it must implement the interface `Comparable`.
 
-A type-of-type also defines a set of names and a mapping to corresponding
+A facet type also defines a set of names and a mapping to corresponding
 qualified names. Those names are used for
 [simple member lookup](terminology.md#simple-member-access) in scopes where the
 value of the type is not known, such as when the type is a generic parameter.
 
-You may combine interfaces into new type-of-types using
+You may combine interfaces into new facet types using
 [the `&` operator](#combining-interfaces) or
 [named constraints](#named-constraints).
 
@@ -332,10 +332,10 @@ fn PrintIt(p: Song*) {
 Inside the function body, you can treat the generic type parameter just like any
 other type. There is no need to refer to or access generic parameters
 differently because they are defined as generic, as long as you only refer to
-the names defined by [type-of-type](#type-of-types) for the type parameter.
+the names defined by [facet type](#facet-types) for the type parameter.
 
-You may also refer to any of the methods of interfaces required by the
-type-of-type using a
+You may also refer to any of the methods of interfaces required by the facet
+type using a
 [qualified member access expression](#accessing-members-of-interfaces), as shown
 in the following sections.
 
@@ -398,8 +398,8 @@ k.IsEqual(k);
 
 ### Combining interfaces
 
-The `&` operation on type-of-types allows you conveniently combine interfaces.
-It gives you all the names that don't conflict.
+The `&` operation on facet types allows you conveniently combine interfaces. It
+gives you all the names that don't conflict.
 
 ```
 interface Renderable {
@@ -431,7 +431,7 @@ fn BothDraws[T:! Renderable & EndOfGame](game_state: T*) {
 
 #### Named constraints
 
-You may also declare a new type-of-type directly using
+You may also declare a new facet type directly using
 ["named constraints"](terminology.md#named-constraints). Named constraints can
 express requirements that multiple interfaces be implemented, and give you
 control over how name conflicts are handled. Named constraints have other
@@ -462,11 +462,10 @@ fn CallItAll[T:! Combined](game_state: T*, int winner) {
 #### Type erasure
 
 Inside a generic function, the API of a type argument is
-[erased](terminology.md#type-erasure) except for the names defined in the
-type-of-type. An equivalent model is to say an
-[archetype](terminology.md#archetype) is used for type checking and name lookup
-when the actual type is not known in that scope. The archetype has members
-dictated by the type-of-type.
+[erased](terminology.md#type-erasure) except for the names defined in the facet
+type. An equivalent model is to say an [archetype](terminology.md#archetype) is
+used for type checking and name lookup when the actual type is not known in that
+scope. The archetype has members dictated by the facet type.
 
 For example: If there were a class `CDCover` defined this way:
 
@@ -587,7 +586,7 @@ fn CompileError[T:! type, U:! Equatable(T)](x: U) -> T;
 
 ### Constraints
 
-Type-of-types can be further constrained using a `where` clause:
+Facet types can be further constrained using a `where` clause:
 
 ```
 fn FindFirstPrime[T:! Container where .Element == i32]

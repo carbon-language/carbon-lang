@@ -21,10 +21,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Return type](#return-type)
     -   [Implementation model](#implementation-model)
 -   [Interfaces recap](#interfaces-recap)
--   [Type-of-types](#type-of-types)
+-   [Facet types](#facet-types)
 -   [Named constraints](#named-constraints)
-    -   [Subtyping between type-of-types](#subtyping-between-type-of-types)
--   [Combining interfaces by anding type-of-types](#combining-interfaces-by-anding-type-of-types)
+    -   [Subtyping between facet types](#subtyping-between-facet-types)
+-   [Combining interfaces by anding facet types](#combining-interfaces-by-anding-facet-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
         -   [`extend` and `impl` with named constraints](#extend-and-impl-with-named-constraints)
@@ -51,7 +51,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Same type constraints](#same-type-constraints)
             -   [Set an associated type to a specific value](#set-an-associated-type-to-a-specific-value)
             -   [Equal generic types](#equal-generic-types)
-                -   [Satisfying both type-of-types](#satisfying-both-type-of-types)
+                -   [Satisfying both facet types](#satisfying-both-facet-types)
         -   [Type bound for associated type](#type-bound-for-associated-type)
             -   [Type bounds on associated types in declarations](#type-bounds-on-associated-types-in-declarations)
             -   [Type bounds on associated types in interfaces](#type-bounds-on-associated-types-in-interfaces)
@@ -65,13 +65,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Referencing names in the interface being defined](#referencing-names-in-the-interface-being-defined)
     -   [Manual type equality](#manual-type-equality)
         -   [`observe` declarations](#observe-declarations)
--   [Other constraints as type-of-types](#other-constraints-as-type-of-types)
+-   [Other constraints as facet types](#other-constraints-as-facet-types)
     -   [Is a derived class](#is-a-derived-class)
     -   [Type compatible with another type](#type-compatible-with-another-type)
         -   [Same implementation restriction](#same-implementation-restriction)
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other implementations](#example-creating-an-impl-out-of-other-implementations)
-    -   [Sized types and type-of-types](#sized-types-and-type-of-types)
+    -   [Sized types and facet types](#sized-types-and-facet-types)
         -   [Implementation model](#implementation-model-2)
     -   [`TypeId`](#typeid)
     -   [Destructor constraints](#destructor-constraints)
@@ -145,8 +145,8 @@ a string. To do this, we give the `PrintToStdout` function two parameters: one
 is the value to print, let's call that `val`, the other is the type of that
 value, let's call that `T`. The type of `val` is `T`, what is the type of `T`?
 Well, since we want to let `T` be any type implementing the
-`ConvertibleToString` interface, we express that in the "interfaces are
-type-of-types" model by saying the type of `T` is `ConvertibleToString`.
+`ConvertibleToString` interface, we express that in the "interfaces are facet
+types" model by saying the type of `T` is `ConvertibleToString`.
 
 Since we can figure out `T` from the type of `val`, we don't need the caller to
 pass in `T` explicitly, so it can be a
@@ -164,10 +164,10 @@ the interface's functions to function pointers. For more on this, see
 
 In addition to function pointer members, interfaces can include any constants
 that belong to a type. For example, the
-[type's size](#sized-types-and-type-of-types) (represented by an integer
-constant member of the type) could be a member of an interface and its
-implementation. There are a few cases why we would include another interface
-implementation as a member:
+[type's size](#sized-types-and-facet-types) (represented by an integer constant
+member of the type) could be a member of an interface and its implementation.
+There are a few cases why we would include another interface implementation as a
+member:
 
 -   [associated types](#associated-types)
 -   [type parameters](#parameterized-interfaces)
@@ -237,7 +237,7 @@ Each declaration in the interface defines an
 [associated entity](terminology.md#associated-entity). In this example, `Vector`
 has two associated methods, `Add` and `Scale`.
 
-An interface defines a type-of-type, that is a type whose values are types. The
+An interface defines a facet type, that is a type whose values are types. The
 values of an interface are any types implementing the interface, and so provide
 definitions for all the functions (and other members) declared in the interface.
 
@@ -597,8 +597,8 @@ var v: Point = AddAndScaleGeneric(a, w, 2.5);
 ```
 
 Here `T` is a type whose type is `Vector`. The `:!` syntax means that `T` is a
-_[generic parameter](terminology.md#generic-versus-template-parameters)_. That
-means it must be known to the caller, but we will only use the information
+_[checked generic parameter](terminology.md#checked-versus-template-parameters)_.
+That means it must be known to the caller, but we will only use the information
 present in the signature of the function to type check the body of
 `AddAndScaleGeneric`'s definition. In this case, we know that any value of type
 `T` implements the `Vector` interface and so has an `Add` and a `Scale` method.
@@ -805,35 +805,35 @@ An interface's name may be used in a few different contexts:
 -   to define [an `impl` for a type](#implementing-interfaces),
 -   as a namespace name in
     [a qualified name](#qualified-member-names-and-compound-member-access), and
--   as a [type-of-type](terminology.md#type-of-type) for
+-   as a [facet type](terminology.md#facet-type) for
     [a generic type parameter](#generics).
 
-While interfaces are examples of type-of-types, type-of-types are a more general
+While interfaces are examples of facet types, facet types are a more general
 concept, for which interfaces are a building block.
 
-## Type-of-types
+## Facet types
 
-A [type-of-type](terminology.md#type-of-type) consists of a set of requirements
-and a set of names. Requirements are typically a set of interfaces that a type
-must satisfy, though other kinds of requirements are added below. The names are
+A [facet type](terminology.md#facet-type) consists of a set of requirements and
+a set of names. Requirements are typically a set of interfaces that a type must
+satisfy, though other kinds of requirements are added below. The names are
 aliases for qualified names in those interfaces.
 
-An interface is one particularly simple example of a type-of-type. For example,
-`Vector` as a type-of-type has a set of requirements consisting of the single
+An interface is one particularly simple example of a facet type. For example,
+`Vector` as a facet type has a set of requirements consisting of the single
 interface `Vector`. Its set of names consists of `Add` and `Scale` which are
 aliases for the corresponding qualified names inside `Vector` as a namespace.
 
-The requirements determine which types are values of a given type-of-type. The
-set of names in a type-of-type determines the API of a generic type value and
-define the result of [member access](/docs/design/expressions/member_access.md)
-into the type-of-type.
+The requirements determine which types are values of a given facet type. The set
+of names in a facet type determines the API of a generic type value and define
+the result of [member access](/docs/design/expressions/member_access.md) into
+the facet type.
 
-This general structure of type-of-types holds not just for interfaces, but
-others described in the rest of this document.
+This general structure of facet types holds not just for interfaces, but others
+described in the rest of this document.
 
 ## Named constraints
 
-If the interfaces discussed above are the building blocks for type-of-types,
+If the interfaces discussed above are the building blocks for facet types,
 [generic named constraints](terminology.md#named-constraints) describe how they
 may be composed together. Unlike interfaces which are nominal, the name of a
 named constraint is not a part of its value. Two different named constraints
@@ -843,7 +843,7 @@ implement, types automatically implement any named constraints they can satisfy.
 
 A named constraint definition can contain interface requirements using `impl`
 declarations and names using `alias` declarations. Note that this allows us to
-declare the aspects of a type-of-type directly.
+declare the aspects of a facet type directly.
 
 ```
 constraint VectorLegoFish {
@@ -882,9 +882,8 @@ whenever an interface may be. This includes all of these
 -   A named constraint may be used as a namespace name in
     [a qualified name](#qualified-member-names-and-compound-member-access). For
     example, `VectorLegoFish.VAdd` refers to the same name as `Vector.Add`.
--   A named constraint may be used as a
-    [type-of-type](terminology.md#type-of-type) for
-    [a generic type parameter](#generics).
+-   A named constraint may be used as a [facet type](terminology.md#facet-type)
+    for [a generic type parameter](#generics).
 
 We don't expect developers to directly define many named constraints, but other
 constructs we do expect them to use will be defined in terms of them. For
@@ -895,8 +894,8 @@ as:
 constraint type { }
 ```
 
-That is, `type` is the type-of-type with no requirements (so matches every
-type), and defines no names.
+That is, `type` is the facet type with no requirements (so matches every type),
+and defines no names.
 
 ```
 fn Identity[T:! type](x: T) -> T {
@@ -979,15 +978,15 @@ class ImplementsS {
 **TODO:** Move the `template constraint` and `auto` content to the template
 design document, once it exists.
 
-### Subtyping between type-of-types
+### Subtyping between facet types
 
-There is a subtyping relationship between type-of-types that allows calls of one
+There is a subtyping relationship between facet types that allows calls of one
 generic function from another as long as it has a subset of the requirements.
 
-Given a generic type variable `T` with type-of-type `I1`, it satisfies a
-type-of-type `I2` as long as the requirements of `I1` are a superset of the
-requirements of `I2`. This means a value `x` of type `T` may be passed to
-functions requiring types to satisfy `I2`, as in this example:
+Given a generic type variable `T` with facet type `I1`, it satisfies a facet
+type `I2` as long as the requirements of `I1` are a superset of the requirements
+of `I2`. This means a value `x` of type `T` may be passed to functions requiring
+types to satisfy `I2`, as in this example:
 
 ```
 interface Printable { fn Print[self: Self](); }
@@ -1014,12 +1013,12 @@ fn PrintDrawPrint[T1:! PrintAndRender](x1: T1) {
 }
 ```
 
-## Combining interfaces by anding type-of-types
+## Combining interfaces by anding facet types
 
 In order to support functions that require more than one interface to be
-implemented, we provide a combination operator on type-of-types, written `&`.
-This operator gives the type-of-type with the union of all the requirements and
-the union of the names minus any conflicts.
+implemented, we provide a combination operator on facet types, written `&`. This
+operator gives the facet type with the union of all the requirements and the
+union of the names minus any conflicts.
 
 ```
 interface Printable {
@@ -1030,7 +1029,7 @@ interface Renderable {
   fn Draw[self: Self]();
 }
 
-// `Printable & Renderable` is syntactic sugar for this type-of-type:
+// `Printable & Renderable` is syntactic sugar for this facet type:
 constraint {
   require Self impls Printable;
   require Self impls Renderable;
@@ -1072,7 +1071,7 @@ interface EndOfGame {
   fn Draw[self: Self]();
   fn Winner[self: Self](player: i32);
 }
-// `Renderable & EndOfGame` is syntactic sugar for this type-of-type:
+// `Renderable & EndOfGame` is syntactic sugar for this facet type:
 constraint {
   require Self impls Renderable;
   require Self impls EndOfGame;
@@ -1107,13 +1106,13 @@ fn RenderTieGame[T:! RenderableAndEndOfGame](x: T) {
 ```
 
 Reserving the name when there is a conflict is part of resolving what happens
-when you combine more than two type-of-types. If `x` is forbidden in `A`, it is
+when you combine more than two facet types. If `x` is forbidden in `A`, it is
 forbidden in `A & B`, whether or not `B` defines the name `x`. This makes `&`
 associative and commutative, and so it is well defined on sets of interfaces, or
-other type-of-types, independent of order.
+other facet types, independent of order.
 
-Note that we do _not_ consider two type-of-types using the same name to mean the
-same thing to be a conflict. For example, combining a type-of-type with itself
+Note that we do _not_ consider two facet types using the same name to mean the
+same thing to be a conflict. For example, combining a facet type with itself
 gives itself, `MyTypeOfType & MyTypeOfType == MyTypeOfType`. Also, given two
 [interface extensions](#interface-extension) of a common base interface, the
 combination should not conflict on any names in the common base.
@@ -1124,21 +1123,21 @@ considered using `+`,
 See [#531](https://github.com/carbon-language/carbon-lang/issues/531) for the
 discussion.
 
-**Future work:** We may want to define another operator on type-of-types for
-adding requirements to a type-of-type without affecting the names, and so avoid
+**Future work:** We may want to define another operator on facet types for
+adding requirements to a facet type without affecting the names, and so avoid
 the possibility of name conflicts. Note this means the operation is not
 commutative. If we call this operator `[&]`, then `A [&] B` has the names of `A`
 and `B [&] A` has the names of `B`.
 
 ```
-// `Printable [&] Renderable` is syntactic sugar for this type-of-type:
+// `Printable [&] Renderable` is syntactic sugar for this facet type:
 constraint {
   require Self impls Printable;
   require Self impls Renderable;
   alias Print = Printable.Print;
 }
 
-// `Renderable [&] EndOfGame` is syntactic sugar for this type-of-type:
+// `Renderable [&] EndOfGame` is syntactic sugar for this facet type:
 constraint {
   require Self impls Renderable;
   require Self impls EndOfGame;
@@ -1173,7 +1172,7 @@ type. For example, in C++,
 requires all containers to also satisfy the requirements of
 `DefaultConstructible`, `CopyConstructible`, `EqualityComparable`, and
 `Swappable`. This is already a capability for
-[type-of-types in general](#type-of-types). For consistency we will use the same
+[facet types in general](#facet-types). For consistency we will use the same
 semantics and syntax as we do for [named constraints](#named-constraints):
 
 ```
@@ -2456,9 +2455,9 @@ So far, we have restricted a generic type parameter by saying it has to
 implement an interface or a set of interfaces. There are a variety of other
 constraints we would like to be able to express, such as applying restrictions
 to its associated types and associated constants. This is done using the `where`
-operator that adds constraints to a type-of-type.
+operator that adds constraints to a facet type.
 
-The where operator can be applied to a type-of-type in a declaration context:
+The where operator can be applied to a facet type in a declaration context:
 
 ```
 // Constraints on function parameters:
@@ -2484,14 +2483,13 @@ We also allow you to name constraints using a `where` operator in a `let` or
 described in the ["constraint use cases"](#constraint-use-cases) section, but
 generally look like boolean expressions that should evaluate to `true`.
 
-The result of applying a `where` operator to a type-of-type is another
-type-of-type. Note that this expands the kinds of requirements that
-type-of-types can have from just interface requirements to also include the
-various kinds of constraints discussed later in this section. In addition, it
-can introduce relationships between different type variables, such as that a
-member of one is equal to the member of another. The `where` operator is not
-associative, so a type expression using multiple must use round parens `(`...`)`
-to specify grouping.
+The result of applying a `where` operator to a facet type is another facet type.
+Note that this expands the kinds of requirements that facet types can have from
+just interface requirements to also include the various kinds of constraints
+discussed later in this section. In addition, it can introduce relationships
+between different type variables, such as that a member of one is equal to the
+member of another. The `where` operator is not associative, so a type expression
+using multiple must use round parens `(`...`)` to specify grouping.
 
 **Comparison with other languages:** Both Swift and Rust use `where` clauses on
 declarations instead of in the expression syntax. These happen after the type
@@ -2658,10 +2656,10 @@ fn Map[CT:! Container,
       (c: CT, f: FT) -> Vector(FT.OutputType);
 ```
 
-###### Satisfying both type-of-types
+###### Satisfying both facet types
 
 If the two types being constrained to be equal have been declared with different
-type-of-types, then the actual type value they are set to will have to satisfy
+facet types, then the actual type value they are set to will have to satisfy
 both constraints. For example, if `SortedContainer.ElementType` is declared to
 be `Comparable`, then in this declaration:
 
@@ -2719,8 +2717,8 @@ fn SortContainer
 ```
 
 In contrast to [a same type constraint](#same-type-constraints), this does not
-say what type `ElementType` exactly is, just that it must satisfy some
-type-of-type.
+say what type `ElementType` exactly is, just that it must satisfy some facet
+type.
 
 **Note:** `Container` defines `ElementType` as having type `type`, but
 `ContainerType.ElementType` has type `Comparable`. This is because
@@ -2755,7 +2753,7 @@ fn F[ContainerType:! ContainerInterface
 ```
 
 We would like to be able to name this constraint, defining a
-`RandomAccessContainer` to be a type-of-type whose types satisfy
+`RandomAccessContainer` to be a facet type whose types satisfy
 `ContainerInterface` with an `IteratorType` satisfying `RandomAccessIterator`.
 
 ```
@@ -3341,11 +3339,11 @@ fn F[T:! Transitive](t: T) {
 Since adding an `observe` declaration only adds external implementations of
 interfaces to generic types, they may be added without breaking existing code.
 
-## Other constraints as type-of-types
+## Other constraints as facet types
 
-There are some constraints that we will naturally represent as named
-type-of-types. These can either be used directly to constrain a generic type
-parameter, or in a `where ... impls ...` clause to constrain an associated type.
+There are some constraints that we will naturally represent as named facet
+types. These can either be used directly to constrain a generic type parameter,
+or in a `where ... impls ...` clause to constrain an associated type.
 
 The compiler determines which types implement these interfaces, developers can
 not explicitly implement these interfaces for their own types.
@@ -3354,7 +3352,7 @@ not explicitly implement these interfaces for their own types.
 
 ### Is a derived class
 
-Given a type `T`, `Extends(T)` is a type-of-type whose values are types that are
+Given a type `T`, `Extends(T)` is a facet type whose values are types that are
 derived from `T`. That is, `Extends(T)` is the set of all types `U` that are
 subtypes of `T`.
 
@@ -3377,15 +3375,15 @@ fn DownCast[T:! type](p: T*, U:! type where .Self extends T) -> U*;
 
 ### Type compatible with another type
 
-Given a type `U`, define the type-of-type `CompatibleWith(U)` as follows:
+Given a type `U`, define the facet type `CompatibleWith(U)` as follows:
 
 > `CompatibleWith(U)` is a type whose values are types `T` such that `T` and `U`
 > are [compatible](terminology.md#compatible-types). That is values of types `T`
 > and `U` can be cast back and forth without any change in representation (for
 > example `T` is an [adapter](#adapting-types) for `U`).
 
-To support this, we extend the requirements that type-of-types are allowed to
-have to include a "data representation requirement" option.
+To support this, we extend the requirements that facet types are allowed to have
+to include a "data representation requirement" option.
 
 `CompatibleWith` determines an equivalence relationship between types.
 Specifically, given two types `T1` and `T2`, they are equivalent if
@@ -3515,7 +3513,7 @@ assert((s1 as SongByArtistThenTitle).Compare(s2) ==
        CompareResult.Less);
 ```
 
-### Sized types and type-of-types
+### Sized types and facet types
 
 What is the size of a type?
 
@@ -3533,8 +3531,8 @@ What is the size of a type?
     essentially equivalent to having dynamic size.
 
 A type is called _sized_ if it is in the first two categories, and _unsized_
-otherwise. Note: something with size 0 is still considered "sized". The
-type-of-type `Sized` is defined as follows:
+otherwise. Note: something with size 0 is still considered "sized". The facet
+type `Sized` is defined as follows:
 
 > `Sized` is a type whose values are types `T` that are "sized" -- that is the
 > size of `T` is known, though possibly only generically.
@@ -3592,7 +3590,7 @@ local variables when using the dynamic strategy? Or should we only allow
 `MaybeBox` values to be instantiated locally? Or should this just be a case
 where the compiler won't necessarily use the dynamic strategy?
 
-**Open question:** Should the `Sized` type-of-type expose an associated constant
+**Open question:** Should the `Sized` facet type expose an associated constant
 with the size? So you could say `T.ByteSize` in the above example to get a
 generic int value with the size of `T`. Similarly you might say `T.ByteStride`
 to get the number of bytes used for each element of an array of `T`.
@@ -3630,7 +3628,7 @@ requests those capabilities?
 
 ### Destructor constraints
 
-There are four type-of-types related to
+There are four facet types related to
 [the destructors of types](/docs/design/classes.md#destructors):
 
 -   `Concrete` types may be local or member variables.
@@ -3640,7 +3638,7 @@ There are four type-of-types related to
     using the `UnsafeDelete` method on the correct `Allocator`, but it may be
     unsafe. The concerning case is deleting a pointer to a derived class through
     a pointer to its base class without a virtual destructor.
--   `TrivialDestructor` types have empty destructors. This type-of-type may be
+-   `TrivialDestructor` types have empty destructors. This facet type may be
     used with [specialization](#lookup-resolution-and-specialization) to unlock
     specific optimizations.
 
@@ -3649,16 +3647,16 @@ There are four type-of-types related to
 conform to the decision on
 [question-for-leads issue #1058: "How should interfaces for core functionality be named?"](https://github.com/carbon-language/carbon-lang/issues/1058).
 
-The type-of-types `Concrete`, `Deletable`, and `TrivialDestructor` all extend
+The facet types `Concrete`, `Deletable`, and `TrivialDestructor` all extend
 `Destructible`. Combinations of them may be formed using
-[the `&` operator](#combining-interfaces-by-anding-type-of-types). For example,
-a generic function that both instantiates and deletes values of a type `T` would
+[the `&` operator](#combining-interfaces-by-anding-facet-types). For example, a
+generic function that both instantiates and deletes values of a type `T` would
 require `T` implement `Concrete & Deletable`.
 
-Types are forbidden from explicitly implementing these type-of-types directly.
+Types are forbidden from explicitly implementing these facet types directly.
 Instead they use
 [`destructor` declarations in their class definition](/docs/design/classes.md#destructors)
-and the compiler uses them to determine which of these type-of-types are
+and the compiler uses them to determine which of these facet types are
 implemented.
 
 ## Generic `let`
@@ -3857,8 +3855,8 @@ class Array(T:! type, template N:! i64) {
 ```
 
 Inside the scope of this `impl` definition, both `P` and `T` refer to the same
-type, but `P` has the type-of-type of `Printable` and so has a `Print` member.
-The relationship between `T` and `P` is as if there was a `where P == T` clause.
+type, but `P` has the facet type of `Printable` and so has a `Print` member. The
+relationship between `T` and `P` is as if there was a `where P == T` clause.
 
 **TODO:** Need to resolve whether the `T` name can be reused, or if we require
 that you need to use new names, like `P`, when creating new type variables.
@@ -4608,7 +4606,7 @@ The declaration of an interface implementation consists of:
 -   an optional deduced parameter list in square brackets `[`...`]`,
 -   a type, including an optional parameter pattern,
 -   the keyword `as`, and
--   a [type-of-type](#type-of-types), including an optional
+-   a [facet type](#facet-types), including an optional
     [parameter pattern](#parameterized-interfaces) and
     [`where` clause](#where-constraints) assigning
     [associated constants](#associated-constants) and
@@ -5485,8 +5483,8 @@ the unparameterized impl when there is an exact match.
 
 To reduce the boilerplate needed to support these implicit conversions when
 defining operator overloads, Carbon has the `like` operator. This operator can
-only be used in the type or type-of-type part of an `impl` declaration, as part
-of a forward declaration or definition, in a place of a type.
+only be used in the type or facet type part of an `impl` declaration, as part of
+a forward declaration or definition, in a place of a type.
 
 ```
 // Notice `f64` has been replaced by `like f64`
@@ -5695,9 +5693,9 @@ be [implied constraints](#implied-constraints) on the function's parameters.
 
 ### Specialization
 
-[Specialization](terminology.md#generic-specialization) is used to improve
-performance in specific cases when a general strategy would be inefficient. For
-example, you might use
+[Specialization](terminology.md#checked-generic-specialization) is used to
+improve performance in specific cases when a general strategy would be
+inefficient. For example, you might use
 [binary search](https://en.wikipedia.org/wiki/Binary_search_algorithm) for
 containers that support random access and keep their contents in sorted order
 but [linear search](https://en.wikipedia.org/wiki/Linear_search) in other cases.
@@ -5893,7 +5891,7 @@ arguments.
 
 ### Range constraints on generic integers
 
-We currently only support `where` clauses on type-of-types. We may want to also
+We currently only support `where` clauses on facet types. We may want to also
 support constraints on generic integers. The constraint with the most expected
 value is the ability to do comparisons like `<`, or `>=`. For example, you might
 constrain the `N` member of [`NSpacePoint`](#associated-constants) using an

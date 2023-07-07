@@ -54,8 +54,8 @@ forward-looking.
 ## Background
 
 Carbon will support
-[generics](terminology.md#generic-versus-template-parameters) to support generic
-programming by way of
+[checked generics](terminology.md#checked-versus-template-parameters) to support
+generic programming by way of
 [parameterization of language constructs](terminology.md#parameterized-language-constructs)
 with [early type checking](terminology.md#early-versus-late-type-checking) and
 [complete definition checking](terminology.md#complete-definition-checking).

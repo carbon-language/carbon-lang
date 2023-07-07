@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Parameterized language constructs](#parameterized-language-constructs)
--   [Generic versus template parameters](#generic-versus-template-parameters)
+-   [Checked versus template parameters](#checked-versus-template-parameters)
     -   [Polymorphism](#polymorphism)
         -   [Parametric polymorphism](#parametric-polymorphism)
         -   [Compile-time duck typing](#compile-time-duck-typing)
@@ -46,18 +46,18 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Instantiation](#instantiation)
 -   [Specialization](#specialization)
     -   [Template specialization](#template-specialization)
-    -   [Generic specialization](#generic-specialization)
+    -   [Checked generic specialization](#checked-generic-specialization)
 -   [Conditional conformance](#conditional-conformance)
 -   [Interface type parameters and associated types](#interface-type-parameters-and-associated-types)
 -   [Type constraints](#type-constraints)
--   [Type-of-type](#type-of-type)
+-   [Facet type](#facet-type)
 -   [References](#references)
 
 <!-- tocstop -->
 
 ## Parameterized language constructs
 
-Generally speaking, when we talk about either templates or a generics system, we
+Generally speaking, when we talk about generics, either checked or template, we
 are talking about generalizing some language construct by adding a parameter to
 it. Language constructs here primarily would include functions and types, but we
 may want to support parameterizing other language constructs like
@@ -67,29 +67,29 @@ This parameter broadens the scope of the language construct on an axis defined
 by that parameter, for example it could define a family of functions instead of
 a single one.
 
-## Generic versus template parameters
+## Checked versus template parameters
 
-When we are distinguishing between generics and templates in Carbon, it is on a
+When we distinguish between checked and template generics in Carbon, it is on a
 parameter by parameter basis. A single function can take a mix of regular,
-generic, and template parameters.
+checked, and template parameters.
 
 -   **Regular parameters**, or "dynamic parameters", are designated using the
     "\<name>`:` \<type>" syntax (or "\<value>").
--   **Generic parameters** are designated using `:!` between the name and the
+-   **Checked parameters** are designated using `:!` between the name and the
     type (so it is "\<name>`:!` \<type>").
 -   **Template parameters** are designated using "`template` \<name>`:!`
     \<type>".
 
-The syntax for generic and template parameters was decided in
+The syntax for checked and template parameters was decided in
 [questions-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565).
 
-Expected difference between generics and templates:
+Expected difference between checked and template parameters:
 
 <table>
   <tr>
-   <td><strong>Generics</strong>
+   <td><strong>Checked</strong>
    </td>
-   <td><strong>Templates</strong>
+   <td><strong>Template</strong>
    </td>
   </tr>
   <tr>
@@ -107,7 +107,7 @@ Expected difference between generics and templates:
   <tr>
    <td>name lookup resolved for definitions in isolation ("early")
    </td>
-   <td>some name lookup may require information from calls (name lookup may be "late")
+   <td>name lookup can use information from calls (name lookup may be "late")
    </td>
   </tr>
   <tr>
@@ -138,7 +138,7 @@ Expected difference between generics and templates:
 
 ### Polymorphism
 
-Generics and templates provide different forms of
+Generics provide different forms of
 [polymorphism](<https://en.wikipedia.org/wiki/Polymorphism_(computer_science)>)
 than object-oriented programming with inheritance. That uses
 [subtype polymorphism](https://en.wikipedia.org/wiki/Subtyping) where different
@@ -186,19 +186,19 @@ Templates work with ad-hoc polymorphism in two ways:
     will only resolve that call after the types are known.
 
 In Carbon, we expect there to be a compile error if overloading of some name
-prevents a generic function from being typechecked from its definition alone.
-For example, let's say we have some overloaded function called `F` that has two
-overloads:
+prevents a checked generic function from being typechecked from its definition
+alone. For example, let's say we have some overloaded function called `F` that
+has two overloads:
 
 ```
 fn F[template T:! type](x: T*) -> T;
 fn F(x: Int) -> bool;
 ```
 
-A generic function `G` can call `F` with a type like `T*` that cannot possibly
-call the `F(Int)` overload for `F`, and so it can consistently determine the
-return type of `F`. But `G` can't call `F` with an argument that could match
-either overload.
+A checked generic function `G` can call `F` with a type like `T*` that cannot
+possibly call the `F(Int)` overload for `F`, and so it can consistently
+determine the return type of `F`. But `G` can't call `F` with an argument that
+could match either overload.
 
 **Note:** It is undecided what to do in the situation where `F` is overloaded,
 but the signatures are consistent and so callers could still typecheck calls to
@@ -220,15 +220,15 @@ they could be removed and the function would still have the same capabilities.
 Constraints only affect the caller, which will use them to resolve overloaded
 calls to the template and provide clearer error messages.
 
-With generics using constrained genericity, the function body can be checked
-against the signature at the time of definition. Note that it is still perfectly
-permissible to have no constraints on a type; that just means that you can only
-perform operations that work for all types (such as manipulate pointers to
-values of that type) in the body of the function.
+With checked generics using constrained genericity, the function body can be
+checked against the signature at the time of definition. Note that it is still
+perfectly permissible to have no constraints on a type; that just means that you
+can only perform operations that work for all types (such as manipulate pointers
+to values of that type) in the body of the function.
 
 ### Dependent names
 
-A name is said to be _dependent_ if it depends on some generic or template
+A name is said to be _dependent_ if it depends on some checked or template
 parameter. Note: this matches
 [the use of the term "dependent" in C++](https://www.google.com/search?q=c%2B%2B+dependent+name),
 not as in [dependent types](https://en.wikipedia.org/wiki/Dependent_type).
@@ -240,7 +240,7 @@ parameterized code for correctness _independently_ of any particular arguments.
 It includes type checking and other semantic checks. It is possible, even with
 templates, to check semantics of expressions that are not
 [dependent](#dependent-names) on any template parameter in the definition.
-Adding constraints to template parameters and/or switching them to be generic
+Adding constraints to template parameters and/or switching them to be checked
 allows the compiler to increase how much of the definition can be checked. Any
 remaining checks are delayed until [instantiation](#instantiation), which can
 fail.
@@ -258,7 +258,7 @@ instantiate the implementation (for example, [type erasure](#type-erasure) or
 
 Early type checking is where expressions and statements are type checked when
 the definition of the function body is compiled, as part of definition checking.
-This occurs for regular and generic values.
+This occurs for regular and checked generic values.
 
 Late type checking is where expressions and statements may only be fully
 typechecked once calling information is known. Late type checking delays
@@ -441,11 +441,10 @@ function signatures can change from base class to derived class, see
 [covariance and contravariance in Wikipedia](<https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)>).
 
 In a generics context, we are specifically interested in the subtyping
-relationships between [type-of-types](#type-of-type). In particular, a
-type-of-type encompasses a set of [type constraints](#type-constraints), and you
-can convert a type from a more-restrictive type-of-type to another type-of-type
-whose constraints are implied by the first. C++ concepts terminology uses the
-term
+relationships between [facet types](#facet-type). In particular, a facet type
+encompasses a set of [type constraints](#type-constraints), and you can convert
+a type from a more-restrictive facet type to another facet type whose
+constraints are implied by the first. C++ concepts terminology uses the term
 ["subsumes"](https://en.cppreference.com/w/cpp/language/constraints#Partial_ordering_of_constraints)
 to talk about this partial ordering of constraints, but we avoid that term since
 it is at odds with the use of the term in
@@ -614,13 +613,13 @@ might have a specialization `std::vector<T*>` that is implemented in terms of
 templated type can be changed in a specialization, as happens for
 `std::vector<bool>`.
 
-### Generic specialization
+### Checked generic specialization
 
-Specialization of generics, or types used by generics, is restricted to changing
-the implementation _without_ affecting the interface. This restriction is needed
-to preserve the ability to perform type checking of generic definitions that
-reference a type that can be specialized, without statically knowing which
-specialization will be used.
+Specialization of checked generics, or types used by checked generics, is
+restricted to changing the implementation _without_ affecting the interface.
+This restriction is needed to preserve the ability to perform type checking of
+generic definitions that reference a type that can be specialized, without
+statically knowing which specialization will be used.
 
 While there is nothing fundamentally incompatible about specialization with
 generics, even when implemented using witness tables, the result may be
@@ -759,12 +758,12 @@ express, for example:
 Note that type constraints can be a restriction on one type parameter or
 associated type, or can define a relationship between multiple types.
 
-## Type-of-type
+## Facet type
 
-A type-of-type is the type used when declaring some type parameter. It foremost
+A facet type is the type used when declaring some type parameter. It foremost
 determines which types are legal arguments for that type parameter, also known
 as [type constraints](#type-constraints). For template parameters, that is all a
-type-of-type does. For generic parameters, it also determines the API that is
+facet type does. For generic parameters, it also determines the API that is
 available in the body of the function.
 
 ## References

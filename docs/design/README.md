@@ -2750,7 +2750,7 @@ fn DrawTies[T:! Renderable & GameResult](x: T) {
 
 > References:
 >
-> -   [Combining interfaces by anding type-of-types](generics/details.md#combining-interfaces-by-anding-type-of-types)
+> -   [Combining interfaces by anding facet types](generics/details.md#combining-interfaces-by-anding-facet-types)
 > -   Question-for-leads issue
 >     [#531: Combine interfaces with `+` or `&`](https://github.com/carbon-language/carbon-lang/issues/531)
 > -   Proposal
