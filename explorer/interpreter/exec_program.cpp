@@ -24,6 +24,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
                     Nonnull<TraceStream*> trace_stream,
                     Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<AST> {
   SetProgramPhase set_prog_phase(*trace_stream, ProgramPhase::SourceProgram);
+  SetFileContext set_file_ctx(*trace_stream, std::nullopt);
 
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** source program **********\n";
@@ -68,9 +69,11 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
   set_prog_phase.update_phase(ProgramPhase::Declarations);
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** printing declarations **********\n";
-    for (int i = ast.num_prelude_declarations;
-         i < static_cast<int>(ast.declarations.size()); ++i) {
-      *trace_stream << *ast.declarations[i];
+    for (auto& declaration : ast.declarations) {
+      set_file_ctx.update_source_loc(declaration->source_loc());
+      if (trace_stream->is_enabled()) {
+        *trace_stream << *declaration;
+      }
     }
   }
   return ast;

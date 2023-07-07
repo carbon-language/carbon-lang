@@ -13,6 +13,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/common/nonnull.h"
+#include "explorer/common/source_location.h"
 
 namespace Carbon {
 
@@ -34,6 +35,10 @@ enum class ProgramPhase {
   Last = All                   // Last program phase indicator.
 };
 
+// Enumerates the contexts for different types of files, used for tracing and
+// controlling for which file contexts tracing should be enabled.
+enum class FileContext { Unknown, Main, Prelude, Import, All, Last = All };
+
 // Encapsulates the trace stream so that we can cleanly disable tracing while
 // the prelude is being processed. The prelude is expected to take a
 // disproprotionate amount of time to log, so we try to avoid it.
@@ -45,12 +50,32 @@ enum class ProgramPhase {
 // contexts.
 class TraceStream {
  public:
+  explicit TraceStream() { set_allowed_file_contexts({FileContext::Unknown}); }
+
+  // This method gets the file context by using filename from source location.
+  // TODO: implement a way to differentiate between the main file and imports
+  // based upon source location / filename.
+  auto file_context() const -> FileContext {
+    if (source_loc_.has_value()) {
+      auto filename =
+          llvm::StringRef(source_loc_->filename()).rsplit("/").second;
+      if (filename == "prelude.carbon") {
+        return FileContext::Prelude;
+      } else {
+        return FileContext::Main;
+      }
+    } else {
+      return FileContext::Unknown;
+    }
+  };
+
   // Returns true if tracing is currently enabled.
   // TODO: use current source location for file context based filtering instead
   // of just checking if current code context is Prelude.
   auto is_enabled() const -> bool {
     return stream_.has_value() && !in_prelude_ &&
-           allowed_phases_[static_cast<int>(current_phase_)];
+           allowed_phases_[static_cast<int>(current_phase_)] &&
+           allowed_file_contexts_[static_cast<int>(file_context())];
   }
 
   // Sets whether the prelude is being skipped.
@@ -79,6 +104,29 @@ class TraceStream {
     }
   }
 
+  auto set_allowed_file_contexts(std::vector<FileContext> contexts_list)
+      -> void {
+    if (contexts_list.empty()) {
+      allowed_file_contexts_.set(static_cast<int>(FileContext::Main));
+    } else {
+      for (auto context : contexts_list) {
+        if (context == FileContext::All) {
+          allowed_file_contexts_.set();
+        } else {
+          allowed_file_contexts_.set(static_cast<int>(context));
+        }
+      }
+    }
+  }
+
+  auto set_source_loc(std::optional<SourceLocation> source_loc) {
+    source_loc_ = source_loc;
+  }
+
+  auto source_loc() -> std::optional<SourceLocation> { return source_loc_; }
+
+  auto allowed_phases() { return allowed_phases_; }
+
   // Returns the internal stream. Requires is_enabled.
   auto stream() const -> llvm::raw_ostream& {
     CARBON_CHECK(is_enabled() && stream_.has_value());
@@ -97,13 +145,15 @@ class TraceStream {
 
  private:
   bool in_prelude_ = false;
-  std::optional<Nonnull<llvm::raw_ostream*>> stream_;
   ProgramPhase current_phase_ = ProgramPhase::Unknown;
+  std::optional<SourceLocation> source_loc_ = std::nullopt;
+  std::optional<Nonnull<llvm::raw_ostream*>> stream_;
   std::bitset<static_cast<int>(ProgramPhase::Last) + 1> allowed_phases_;
+  std::bitset<static_cast<int>(FileContext::Last) + 1> allowed_file_contexts_;
 };
 
 // This is a RAII class to set the current program phase, destructor invocation
-// restores the previous phase
+// restores the previous phase.
 class SetProgramPhase {
  public:
   explicit SetProgramPhase(TraceStream& trace_stream,
@@ -113,17 +163,41 @@ class SetProgramPhase {
     trace_stream.set_current_phase(program_phase);
   }
 
+  ~SetProgramPhase() { trace_stream_.set_current_phase(initial_phase_); }
+
   // This can be used for cases when current phase is set multiple times within
-  // the same scope
+  // the same scope.
   auto update_phase(ProgramPhase program_phase) -> void {
     trace_stream_.set_current_phase(program_phase);
   }
 
-  ~SetProgramPhase() { trace_stream_.set_current_phase(initial_phase_); }
-
  private:
   TraceStream& trace_stream_;
   ProgramPhase initial_phase_;
+};
+
+// This is a RAII class to set the source location in trace stream, destructor
+// invocation restores the initial source location.
+class SetFileContext {
+ public:
+  explicit SetFileContext(TraceStream& trace_stream,
+                          std::optional<SourceLocation> source_loc)
+      : trace_stream_(trace_stream),
+        initial_source_loc_(trace_stream.source_loc()) {
+    trace_stream_.set_source_loc(source_loc);
+  }
+
+  ~SetFileContext() { trace_stream_.set_source_loc(initial_source_loc_); }
+
+  // This can be used for cases when source location needs to be updated
+  // multiple times within the same scope.
+  auto update_source_loc(std::optional<SourceLocation> source_loc) {
+    trace_stream_.set_source_loc(source_loc);
+  }
+
+ private:
+  TraceStream& trace_stream_;
+  std::optional<SourceLocation> initial_source_loc_;
 };
 
 }  // namespace Carbon
