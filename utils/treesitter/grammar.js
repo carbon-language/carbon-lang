@@ -342,7 +342,7 @@ module.exports = grammar({
     match_statement: ($) =>
       seq('match', '(', $._expression, ')', '{', repeat($.match_clause), '}'),
 
-    returned_var_statement: ($) => seq('returned', $.var_declaration, ';'),
+    returned_var_statement: ($) => seq('returned', $.var_declaration),
 
     while_statement: ($) => seq('while', '(', $._expression, ')', $.block),
 
