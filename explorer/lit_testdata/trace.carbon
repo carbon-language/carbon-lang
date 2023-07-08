@@ -6,16 +6,17 @@
 // sanity checking on --parser_debug --trace_file=- along with filter flags output.
 //
 // NOAUTOUPDATE
-// RUN: %{explorer} --parser_debug --trace_file=- | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,NO-UNFORMED,NO-DECLS,EXEC,NO-TIMING
-// RUN: %{explorer} --parser_debug --trace_file=- -trace_execution | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,NO-UNFORMED,NO-DECLS,EXEC,NO-TIMING
-// RUN: %{explorer} --parser_debug --trace_file=- -trace_source_program | %{FileCheck-allow-unmatched} --check-prefixes=SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,NO-UNFORMED,NO-DECLS,NO-EXEC,NO-TIMING
-// RUN: %{explorer} --parser_debug --trace_file=- -trace_name_resolution | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,NO-UNFORMED,NO-DECLS,NO-EXEC,NO-TIMING
-// RUN: %{explorer} --parser_debug --trace_file=- -trace_control_flow_resolution | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,FLOW,NO-TYPE,NO-UNFORMED,NO-DECLS,NO-EXEC,NO-TIMING
-// RUN: %{explorer} --parser_debug --trace_file=- -trace_type_checking | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,TYPE,NO-UNFORMED,NO-DECLS,NO-EXEC,NO-TIMING
-// RUN: %{explorer} --parser_debug --trace_file=- -trace_unformed_variables_resolution | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,UNFORMED,NO-DECLS,NO-EXEC,NO-TIMING
-// RUN: %{explorer} --parser_debug --trace_file=- -trace_declarations | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,NO-UNFORMED,DECLS,NO-EXEC,NO-TIMING
-// RUN: %{explorer} --parser_debug --trace_file=- -trace_timing | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,NO-UNFORMED,NO-DECLS,NO-EXEC,TIMING
-// RUN: %{explorer} --parser_debug --trace_file=- -trace_all | %{FileCheck-allow-unmatched} --check-prefixes=SOURCE,NAMES,NO-PRELUDE,FLOW,TYPE,UNFORMED,DECLS,EXEC,TIMING
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_file_context=all | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,NO-UNFORMED,NO-DECLS,EXEC,NO-TIMING
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_file_context=all -trace_phase=execution | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,NO-UNFORMED,NO-DECLS,EXEC,NO-TIMING
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_file_context=all -trace_phase=source_program | %{FileCheck-allow-unmatched} --check-prefixes=SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,NO-UNFORMED,NO-DECLS,NO-EXEC,NO-TIMING
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_file_context=all -trace_phase=name_resolution | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,NO-UNFORMED,NO-DECLS,NO-EXEC,NO-TIMING
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_file_context=all -trace_phase=control_flow_resolution | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,FLOW,NO-TYPE,NO-UNFORMED,NO-DECLS,NO-EXEC,NO-TIMING
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_file_context=all -trace_phase=type_checking | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,TYPE,NO-UNFORMED,NO-DECLS,NO-EXEC,NO-TIMING
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_file_context=all -trace_phase=unformed_variables_resolution | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,UNFORMED,NO-DECLS,NO-EXEC,NO-TIMING
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_file_context=all -trace_phase=declarations | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,NO-UNFORMED,DECLS,NO-EXEC,NO-TIMING
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_file_context=all -trace_phase=timing | %{FileCheck-allow-unmatched} --check-prefixes=NO-SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,NO-UNFORMED,NO-DECLS,NO-EXEC,TIMING
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_file_context=all -trace_phase=all | %{FileCheck-allow-unmatched} --check-prefixes=SOURCE,NAMES,NO-PRELUDE,FLOW,TYPE,UNFORMED,DECLS,EXEC,TIMING
+// RUN: %{explorer} --parser_debug --trace_file=- -trace_file_context=all -trace_phase=source_program,declarations | %{FileCheck-allow-unmatched} --check-prefixes=SOURCE,NO-NAMES,NO-PRELUDE,NO-FLOW,NO-TYPE,NO-UNFORMED,DECLS,NO-EXEC,NO-TIMING
 // NO-SOURCE-NOT:STDOUT: ********** source program **********
 //        SOURCE:STDOUT: ********** source program **********
 // NO-SOURCE-NOT:STDOUT: interface TestInterface {

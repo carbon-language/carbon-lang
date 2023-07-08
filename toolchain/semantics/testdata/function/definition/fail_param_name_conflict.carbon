@@ -48,6 +48,6 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+2]]:16: Redefining a in the same scope.
-// CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+1]]:8: Previous definition is here.
+// CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+2]]:16: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+1]]:8: Name is previously declared here.
 fn Bar(a: i32, a: i32) {}

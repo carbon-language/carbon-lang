@@ -57,7 +57,7 @@ static auto ParserHandleBraceExpressionParameter(
 
   state.state = after_designator_state;
   context.PushState(state);
-  context.PushState(ParserState::DesignatorAsStruct);
+  context.PushState(ParserState::PeriodAsStruct);
 }
 
 auto ParserHandleBraceExpressionParameterAsType(ParserContext& context)

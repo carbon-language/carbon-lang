@@ -46,6 +46,10 @@ auto ParserHandleDeclarationScopeLoop(ParserContext& context) -> void {
       context.PushState(ParserState::TypeIntroducerAsInterface);
       break;
     }
+    case TokenKind::Namespace: {
+      context.PushState(ParserState::Namespace);
+      break;
+    }
     case TokenKind::Semi: {
       context.AddLeafNode(ParseNodeKind::EmptyDeclaration, context.Consume());
       break;

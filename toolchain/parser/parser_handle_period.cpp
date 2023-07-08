@@ -6,8 +6,11 @@
 
 namespace Carbon {
 
-// Handles DesignatorAs.
-auto ParserHandleDesignator(ParserContext& context, bool as_struct) -> void {
+// Handles PeriodAs variants.
+// TODO: This currently only supports identifiers on the rhs, but will in the
+// future need to handle things like `object.(Interface.member)` for qualifiers.
+auto ParserHandlePeriod(ParserContext& context, ParseNodeKind node_kind)
+    -> void {
   auto state = context.PopState();
 
   // `.` identifier
@@ -18,8 +21,8 @@ auto ParserHandleDesignator(ParserContext& context, bool as_struct) -> void {
     CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDot, Error,
                       "Expected identifier after `.`.");
     context.emitter().Emit(*context.position(), ExpectedIdentifierAfterDot);
-    // If we see a keyword, assume it was intended to be the designated name.
-    // TODO: Should keywords be valid in designators?
+    // If we see a keyword, assume it was intended to be a name.
+    // TODO: Should keywords be valid here?
     if (context.PositionKind().is_keyword()) {
       context.AddLeafNode(ParseNodeKind::Name, context.Consume(),
                           /*has_error=*/true);
@@ -32,17 +35,19 @@ auto ParserHandleDesignator(ParserContext& context, bool as_struct) -> void {
     }
   }
 
-  context.AddNode(as_struct ? ParseNodeKind::StructFieldDesignator
-                            : ParseNodeKind::DesignatorExpression,
-                  dot, state.subtree_start, state.has_error);
+  context.AddNode(node_kind, dot, state.subtree_start, state.has_error);
 }
 
-auto ParserHandleDesignatorAsExpression(ParserContext& context) -> void {
-  ParserHandleDesignator(context, /*as_struct=*/false);
+auto ParserHandlePeriodAsDeclaration(ParserContext& context) -> void {
+  ParserHandlePeriod(context, ParseNodeKind::QualifiedDeclaration);
 }
 
-auto ParserHandleDesignatorAsStruct(ParserContext& context) -> void {
-  ParserHandleDesignator(context, /*as_struct=*/true);
+auto ParserHandlePeriodAsExpression(ParserContext& context) -> void {
+  ParserHandlePeriod(context, ParseNodeKind::MemberAccessExpression);
+}
+
+auto ParserHandlePeriodAsStruct(ParserContext& context) -> void {
+  ParserHandlePeriod(context, ParseNodeKind::StructFieldDesignator);
 }
 
 }  // namespace Carbon

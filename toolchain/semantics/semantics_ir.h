@@ -90,7 +90,8 @@ class SemanticsIR {
   }
 
   // Returns the requested callable.
-  auto GetFunction(SemanticsFunctionId function_id) const -> SemanticsFunction {
+  auto GetFunction(SemanticsFunctionId function_id) const
+      -> const SemanticsFunction& {
     return functions_[function_id.index];
   }
 
@@ -111,6 +112,27 @@ class SemanticsIR {
   auto GetIntegerLiteral(SemanticsIntegerLiteralId int_id) const
       -> const llvm::APInt& {
     return integer_literals_[int_id.index];
+  }
+
+  // Adds a name scope, returning an ID to reference it.
+  auto AddNameScope() -> SemanticsNameScopeId {
+    SemanticsNameScopeId name_scopes_id(name_scopes_.size());
+    name_scopes_.resize(name_scopes_id.index + 1);
+    return name_scopes_id;
+  }
+
+  // Adds an entry to a name scope. Returns true on success, false on
+  // duplicates.
+  auto AddNameScopeEntry(SemanticsNameScopeId scope_id,
+                         SemanticsStringId name_id, SemanticsNodeId target_id)
+      -> bool {
+    return name_scopes_[scope_id.index].insert({name_id, target_id}).second;
+  }
+
+  // Returns the requested name scope.
+  auto GetNameScope(SemanticsNameScopeId scope_id)
+      -> const llvm::DenseMap<SemanticsStringId, SemanticsNodeId>& {
+    return name_scopes_[scope_id.index];
   }
 
   // Adds a node to a specified block, returning an ID to reference the node.
@@ -203,11 +225,11 @@ class SemanticsIR {
     return type_id;
   }
 
-  // Gets the node ID for a type. This doesn't handle TypeType or InvalidType in
+  // Gets the node ID for a type. This doesn't handle TypeType or Error in
   // order to avoid a check; callers that need that should use
   // GetTypeAllowBuiltinTypes.
   auto GetType(SemanticsTypeId type_id) const -> SemanticsNodeId {
-    // Double-check it's not called with TypeType or InvalidType.
+    // Double-check it's not called with TypeType or Error.
     CARBON_CHECK(type_id.index >= 0)
         << "Invalid argument for GetType: " << type_id;
     return types_[type_id.index];
@@ -217,8 +239,8 @@ class SemanticsIR {
       -> SemanticsNodeId {
     if (type_id == SemanticsTypeId::TypeType) {
       return SemanticsNodeId::BuiltinTypeType;
-    } else if (type_id == SemanticsTypeId::InvalidType) {
-      return SemanticsNodeId::BuiltinInvalidType;
+    } else if (type_id == SemanticsTypeId::Error) {
+      return SemanticsNodeId::BuiltinError;
     } else {
       return GetType(type_id);
     }
@@ -269,6 +291,10 @@ class SemanticsIR {
 
   // Storage for integer literals.
   llvm::SmallVector<llvm::APInt> integer_literals_;
+
+  // Storage for name scopes.
+  llvm::SmallVector<llvm::DenseMap<SemanticsStringId, SemanticsNodeId>>
+      name_scopes_;
 
   // Storage for real literals.
   llvm::SmallVector<SemanticsRealLiteral> real_literals_;

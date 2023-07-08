@@ -127,8 +127,31 @@ CARBON_PARSER_STATE(CodeBlock)
 //   (state done)
 CARBON_PARSER_STATE(CodeBlockFinish)
 
-// Handles a general declaration name and parameters, such as `Foo[...](...)`.
+// Handles a declaration name and parameters, such as `Foo[...](...)`.
 //
+// Allowed parameters:
+// - None: `Foo` only.
+// - Optional: `Foo`, `Foo(...)`, or `Foo[...](...)`.
+// - Required: ``Foo(...)` or `Foo[...](...)`.
+//
+// If `Identifier` followed by `Period`:
+//   1. DeclarationNameAndParamsAfterNameAs(None|Optional|Required)
+// If `Identifier`:
+//   1. DeclarationNameAndParamsAfterNameAs(None|Optional|Required)
+//   2. PeriodAsDeclaration
+// Else:
+//   (state done)
+CARBON_PARSER_STATE_VARIANTS3(DeclarationNameAndParams, None, Optional,
+                              Required)
+
+// Handles a declaration name between the main name and deduced parameters.
+//
+// For `None`, parameters aren't supported so only `Period` or `Else` paths are
+// used.
+//
+// If `Period`:
+//   1. DeclarationNameAndParamsAfterNameAs(None|Optional|Required)
+//   2. PeriodAsDeclaration
 // If `OpenSquareBracket`:
 //   1. ParameterListAsDeduced
 //   2. DeclarationNameAndParamsAfterDeduced
@@ -136,7 +159,8 @@ CARBON_PARSER_STATE(CodeBlockFinish)
 //   1. ParameterListAsRegular
 // Else:
 //   (state done)
-CARBON_PARSER_STATE_VARIANTS2(DeclarationNameAndParams, Optional, Required)
+CARBON_PARSER_STATE_VARIANTS3(DeclarationNameAndParamsAfterName, None, Optional,
+                              Required)
 
 // Handles regular parameters such as `(...)` for the general declaration case.
 // Only used after deduced parameters.
@@ -164,6 +188,9 @@ CARBON_PARSER_STATE(DeclarationNameAndParamsAfterDeduced)
 // If `Interface`:
 //   1. TypeIntroducerAsInterface
 //   2. DeclarationScopeLoop
+// If `Namespace`:
+//   2. Namespace
+//   3. DeclarationScopeLoop
 // If `Semi`:
 //   1. DeclarationScopeLoop
 // If `Var`:
@@ -173,11 +200,20 @@ CARBON_PARSER_STATE(DeclarationNameAndParamsAfterDeduced)
 //   1. DeclarationScopeLoop
 CARBON_PARSER_STATE(DeclarationScopeLoop)
 
-// Handles a designator expression, such as `.z` in `x.(y.z)`.
+// Handles periods. Only does one `.<expression>` segment; the source is
+// responsible for handling chaining.
+//
+// The forms of this are:
+// - Designated names in structs.
+// - Qualified names in declarations.
+// - Member access expressions.
+//
+// Declarations and expressions have qualifiers such as `x.y`, while structs
+// have designators such as `.z`.
 //
 // Always:
 //   (state done)
-CARBON_PARSER_STATE_VARIANTS2(Designator, Expression, Struct)
+CARBON_PARSER_STATE_VARIANTS3(Period, Declaration, Expression, Struct)
 
 // Handles processing of an expression.
 //
@@ -212,7 +248,7 @@ CARBON_PARSER_STATE(ExpressionInPostfix)
 // such as designators or parenthesized parameters.
 //
 // If `Period`:
-//   1. DesignatorAsExpression
+//   1. PeriodAsExpression
 //   2. ExpressionInPostfixLoop
 // If `OpenParen`:
 //   1. CallExpression
@@ -328,6 +364,19 @@ CARBON_PARSER_STATE(FunctionSignatureFinish)
 // Always:
 //   (state done)
 CARBON_PARSER_STATE(FunctionDefinitionFinish)
+
+// Handles `namespace`.
+//
+// Always:
+//   1. DeclarationNameAndParamsAsNone
+//   2. NamespaceFinish
+CARBON_PARSER_STATE(Namespace)
+
+// Handles `namespace` after the name.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE(NamespaceFinish)
 
 // Handles `package`.
 //

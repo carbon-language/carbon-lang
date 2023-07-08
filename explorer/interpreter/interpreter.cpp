@@ -24,6 +24,7 @@
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "explorer/common/source_location.h"
+#include "explorer/common/trace_stream.h"
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/action_stack.h"
 #include "explorer/interpreter/stack.h"
@@ -190,7 +191,8 @@ class Interpreter {
 
   // Instantiate a witness by replacing all type variables and impl binding
   // references that occur within it by the current values of those variables.
-  auto InstantiateWitness(Nonnull<const Witness*> witness)
+  auto InstantiateWitness(Nonnull<const Witness*> witness,
+                          SourceLocation source_loc)
       -> ErrorOr<Nonnull<const Witness*>>;
 
   // Call the function `fun` with the given `arg` and the `witnesses`
@@ -663,6 +665,7 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
                    << format_action_str(*action) << " ---> \n";
     TraceState();
   }
+
   todo_.BeginRecursiveAction();
   CARBON_RETURN_IF_ERROR(todo_.Spawn(std::move(action)));
   // Note that the only `RecursiveAction` we can encounter here is our own --
@@ -691,7 +694,7 @@ auto Interpreter::EvalAssociatedConstant(
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> interface,
                           InstantiateType(&assoc->interface(), source_loc));
   CARBON_ASSIGN_OR_RETURN(Nonnull<const Witness*> witness,
-                          InstantiateWitness(&assoc->witness()));
+                          InstantiateWitness(&assoc->witness(), source_loc));
 
   const auto* impl_witness = dyn_cast<ImplWitness>(witness);
   if (!impl_witness) {
@@ -783,8 +786,8 @@ auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
 
   ImplWitnessMap witnesses = bindings->witnesses();
   for (auto& [bind, witness] : witnesses) {
-    CARBON_ASSIGN_OR_RETURN(witness,
-                            InstantiateWitness(cast<Witness>(witness)));
+    CARBON_ASSIGN_OR_RETURN(
+        witness, InstantiateWitness(cast<Witness>(witness), source_loc));
   }
 
   if (args == bindings->args() && witnesses == bindings->witnesses()) {
@@ -793,11 +796,12 @@ auto Interpreter::InstantiateBindings(Nonnull<const Bindings*> bindings,
   return arena_->New<Bindings>(std::move(args), std::move(witnesses));
 }
 
-auto Interpreter::InstantiateWitness(Nonnull<const Witness*> witness)
+auto Interpreter::InstantiateWitness(Nonnull<const Witness*> witness,
+                                     SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Witness*>> {
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<const Value*> value,
-      EvalRecursively(std::make_unique<WitnessAction>(witness)));
+      EvalRecursively(std::make_unique<WitnessAction>(witness, source_loc)));
   return cast<Witness>(value);
 }
 
@@ -1436,8 +1440,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             // Next, if we're accessing an interface member, evaluate the `impl`
             // expression to find the corresponding witness.
             if (impl_has_value) {
-              return todo_.Spawn(
-                  std::make_unique<WitnessAction>(access.impl().value()));
+              return todo_.Spawn(std::make_unique<WitnessAction>(
+                  access.impl().value(), access.source_loc()));
             } else {
               return todo_.RunAgain();
             }
@@ -1534,8 +1538,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             if (impl_has_value) {
               // Next, if we're accessing an interface member, evaluate the
               // `impl` expression to find the corresponding witness.
-              return todo_.Spawn(
-                  std::make_unique<WitnessAction>(access.impl().value()));
+              return todo_.Spawn(std::make_unique<WitnessAction>(
+                  access.impl().value(), access.source_loc()));
             } else {
               return todo_.RunAgain();
             }
@@ -1678,8 +1682,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                  act.pos() < 2 + static_cast<int>(num_witnesses)) {
         auto iter = call.witnesses().begin();
         std::advance(iter, act.pos() - 2);
-        return todo_.Spawn(
-            std::make_unique<WitnessAction>(cast<Witness>(iter->second)));
+        return todo_.Spawn(std::make_unique<WitnessAction>(
+            cast<Witness>(iter->second), call.source_loc()));
       } else if (act.pos() == 2 + static_cast<int>(num_witnesses)) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
@@ -2041,8 +2045,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
 }
 
 auto Interpreter::StepWitness() -> ErrorOr<Success> {
-  Action& act = todo_.CurrentAction();
-  const Witness* witness = cast<WitnessAction>(act).witness();
+  auto& act = cast<WitnessAction>(todo_.CurrentAction());
+  const Witness* witness = act.witness();
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- step witness " << *witness << " ." << act.pos()
                    << ". --->\n";
@@ -2066,8 +2070,8 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
       llvm::ArrayRef<Nonnull<const Witness*>> witnesses =
           cast<ConstraintWitness>(witness)->witnesses();
       if (act.pos() < static_cast<int>(witnesses.size())) {
-        return todo_.Spawn(
-            std::make_unique<WitnessAction>(witnesses[act.pos()]));
+        return todo_.Spawn(std::make_unique<WitnessAction>(witnesses[act.pos()],
+                                                           act.source_loc()));
       }
       std::vector<Nonnull<const Witness*>> new_witnesses;
       new_witnesses.reserve(witnesses.size());
@@ -2082,7 +2086,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
       const auto* constraint_impl = cast<ConstraintImplWitness>(witness);
       if (act.pos() == 0) {
         return todo_.Spawn(std::make_unique<WitnessAction>(
-            constraint_impl->constraint_witness()));
+            constraint_impl->constraint_witness(), act.source_loc()));
       }
       return todo_.FinishAction(ConstraintImplWitness::Make(
           arena_, cast<Witness>(act.results()[0]), constraint_impl->index()));
@@ -2702,7 +2706,10 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
     *trace_stream << "********** initializing globals **********\n";
   }
 
+  SetFileContext set_file_ctx(*trace_stream,
+                              ast.declarations.front()->source_loc());
   for (Nonnull<Declaration*> declaration : ast.declarations) {
+    set_file_ctx.update_source_loc(declaration->source_loc());
     CARBON_RETURN_IF_ERROR(interpreter.RunAllSteps(
         std::make_unique<DeclarationAction>(declaration)));
   }
@@ -2711,6 +2718,8 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
     *trace_stream << "********** calling main function **********\n";
   }
 
+  CARBON_CHECK(ast.main_call);
+  set_file_ctx.update_source_loc(ast.main_call.value()->source_loc());
   CARBON_RETURN_IF_ERROR(interpreter.RunAllSteps(
       std::make_unique<ExpressionAction>(*ast.main_call)));
 

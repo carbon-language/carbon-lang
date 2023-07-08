@@ -101,6 +101,21 @@ struct SemanticsIntegerLiteralId : public IndexBase {
   }
 };
 
+// The ID of a name scope.
+struct SemanticsNameScopeId : public IndexBase {
+  // An explicitly invalid ID.
+  static const SemanticsNameScopeId Invalid;
+
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "name_scope";
+    IndexBase::Print(out);
+  }
+};
+
+constexpr SemanticsNameScopeId SemanticsNameScopeId::Invalid =
+    SemanticsNameScopeId(SemanticsNameScopeId::InvalidIndex);
+
 // The ID of a node block.
 struct SemanticsNodeBlockId : public IndexBase {
   // All SemanticsIR instances must provide the 0th node block as empty.
@@ -153,8 +168,8 @@ struct SemanticsTypeId : public IndexBase {
   // The builtin TypeType.
   static const SemanticsTypeId TypeType;
 
-  // The builtin InvalidType.
-  static const SemanticsTypeId InvalidType;
+  // The builtin Error.
+  static const SemanticsTypeId Error;
 
   // An explicitly invalid ID.
   static const SemanticsTypeId Invalid;
@@ -164,8 +179,8 @@ struct SemanticsTypeId : public IndexBase {
     out << "type";
     if (index == TypeType.index) {
       out << "TypeType";
-    } else if (index == InvalidType.index) {
-      out << "InvalidType";
+    } else if (index == Error.index) {
+      out << "Error";
     } else {
       IndexBase::Print(out);
     }
@@ -174,7 +189,7 @@ struct SemanticsTypeId : public IndexBase {
 
 constexpr SemanticsTypeId SemanticsTypeId::TypeType =
     SemanticsTypeId(SemanticsTypeId::InvalidIndex - 2);
-constexpr SemanticsTypeId SemanticsTypeId::InvalidType =
+constexpr SemanticsTypeId SemanticsTypeId::Error =
     SemanticsTypeId(SemanticsTypeId::InvalidIndex - 1);
 constexpr SemanticsTypeId SemanticsTypeId::Invalid =
     SemanticsTypeId(SemanticsTypeId::InvalidIndex);
@@ -354,6 +369,9 @@ class SemanticsNode {
 
   using IntegerLiteral = Factory<SemanticsNodeKind::IntegerLiteral,
                                  SemanticsIntegerLiteralId /*integer_id*/>;
+
+  using Namespace = FactoryNoType<SemanticsNodeKind::Namespace,
+                                  SemanticsNameScopeId /*name_scope_id*/>;
 
   using RealLiteral = Factory<SemanticsNodeKind::RealLiteral,
                               SemanticsRealLiteralId /*real_id*/>;
