@@ -321,7 +321,6 @@ static auto InitializePlaceholderValue(const ValueNodeView& value_node,
         // allocation to allow us to reference it without the need for a copy.
         bindings->Initialize(value_node, v.value());
       } else if (v.expression_category() == ExpressionCategory::Reference) {
-        // TODO: Prevent mutation, error on mutation, or copy
         // Bind the reference expression value directly.
         CARBON_CHECK(v.address())
             << "Missing location from reference expression";
