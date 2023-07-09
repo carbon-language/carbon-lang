@@ -26,6 +26,7 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
   } else {
     states_.push_back(ValueState::Alive);
   }
+  revisions_.push_back(0);
   return a;
 }
 
@@ -51,6 +52,7 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
   CARBON_ASSIGN_OR_RETURN(values_[a.allocation_.index_],
                           values_[a.allocation_.index_]->SetField(
                               arena_, a.element_path_, v, source_loc));
+  ++revisions_[a.allocation_.index_];
   return Success();
 }
 
@@ -100,6 +102,10 @@ auto Heap::is_discarded(AllocationId allocation) const -> bool {
 void Heap::Discard(AllocationId allocation) {
   CARBON_CHECK(states_[allocation.index_] == ValueState::Uninitialized);
   states_[allocation.index_] = ValueState::Discarded;
+}
+
+auto Heap::revision(const Address& a) const -> int {
+  return revisions_[a.allocation_.index_];
 }
 
 void Heap::Print(llvm::raw_ostream& out) const {

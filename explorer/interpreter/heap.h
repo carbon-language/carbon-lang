@@ -42,6 +42,10 @@ class Heap : public HeapAllocationInterface {
   auto Write(const Address& a, Nonnull<const Value*> v,
              SourceLocation source_loc) -> ErrorOr<Success> override;
 
+  // Returns the revision number of the given allocation, incremented with each
+  // mutation.
+  auto revision(const Address& a) const -> int override;
+
   // Put the given value on the heap and mark its state.
   // Mark UninitializedValue as uninitialized and other values as alive.
   auto AllocateValue(Nonnull<const Value*> v) -> AllocationId override;
@@ -76,6 +80,7 @@ class Heap : public HeapAllocationInterface {
   Nonnull<Arena*> arena_;
   std::vector<Nonnull<const Value*>> values_;
   std::vector<ValueState> states_;
+  std::vector<int> revisions_;
 };
 
 }  // namespace Carbon

@@ -42,6 +42,10 @@ class HeapAllocationInterface {
   // Returns the arena used to allocate the values in this heap.
   virtual auto arena() const -> Arena& = 0;
 
+  // Returns the revision number of the given allocation, incremented with each
+  // mutation.
+  virtual auto revision(const Address& a) const -> int = 0;
+
  protected:
   HeapAllocationInterface() = default;
   virtual ~HeapAllocationInterface() = default;

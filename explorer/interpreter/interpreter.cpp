@@ -299,7 +299,6 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
 
 static auto InitializePlaceholderValue(const ValueNodeView& value_node,
                                        ExpressionResult v,
-                                       SourceLocation source_loc,
                                        Nonnull<RuntimeScope*> bindings) {
   switch (value_node.expression_category()) {
     case ExpressionCategory::Reference:
@@ -324,9 +323,7 @@ static auto InitializePlaceholderValue(const ValueNodeView& value_node,
         // Bind the reference expression value directly.
         CARBON_CHECK(v.address())
             << "Missing location from reference expression";
-        bool ok =
-            bindings->BindAndPin(value_node, *v.address(), source_loc).ok();
-        CARBON_CHECK(ok) << "Failed to bind and pin value";
+        bindings->BindAndPin(value_node, *v.address());
       } else {
         // Location initialized by initializing expression, bind node to
         // address.
@@ -367,8 +364,7 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
       CARBON_CHECK(bindings.has_value());
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       if (placeholder.value_node().has_value()) {
-        InitializePlaceholderValue(*placeholder.value_node(), v, source_loc,
-                                   *bindings);
+        InitializePlaceholderValue(*placeholder.value_node(), v, *bindings);
       }
       return true;
     }

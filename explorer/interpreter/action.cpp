@@ -58,14 +58,11 @@ void RuntimeScope::Bind(ValueNodeView value_node, Address address) {
   CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
 }
 
-auto RuntimeScope::BindAndPin(ValueNodeView value_node, Address address,
-                              SourceLocation source_loc) -> ErrorOr<Success> {
+void RuntimeScope::BindAndPin(ValueNodeView value_node, Address address) {
   Bind(value_node, address);
-  CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> pinned_value,
-                          heap_->Read(address, source_loc));
-  bool success = pinned_values_.insert({value_node, pinned_value}).second;
+  bool success =
+      pinned_values_.insert({value_node, heap_->revision(address)}).second;
   CARBON_CHECK(success) << "Duplicate pinned node for " << value_node.base();
-  return Success();
 }
 
 void RuntimeScope::BindLifetimeToScope(Address address) {
@@ -98,14 +95,12 @@ auto RuntimeScope::Initialize(ValueNodeView value_node,
 void RuntimeScope::Merge(RuntimeScope other) {
   CARBON_CHECK(heap_ == other.heap_);
   for (auto& element : other.locals_) {
-    CARBON_CHECK(locals_.count(element.first) == 0)
-        << "Duplicate definition of" << element.first;
-    locals_.insert(element);
+    bool success = locals_.insert(element).second;
+    CARBON_CHECK(success) << "Duplicate definition of" << element.first;
   }
   for (auto& element : other.pinned_values_) {
-    CARBON_CHECK(pinned_values_.count(element.first) == 0)
-        << "Duplicate definition of" << element.first;
-    pinned_values_.insert(element);
+    bool success = pinned_values_.insert(element).second;
+    CARBON_CHECK(success) << "Duplicate definition of" << element.first;
   }
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
                       other.allocations_.end());
@@ -123,10 +118,8 @@ auto RuntimeScope::Get(ValueNodeView value_node,
   if (pinned_it != pinned_values_.end()) {
     // Check if pinned value was modified.
     CARBON_CHECK(it->second->kind() == Value::Kind::LocationValue);
-    CARBON_ASSIGN_OR_RETURN(
-        Nonnull<const Value*> current,
-        heap_->Read(cast<LocationValue>(it->second)->address(), source_loc));
-    if (current != pinned_it->second) {
+    if (pinned_it->second !=
+        heap_->revision(cast<LocationValue>(it->second)->address())) {
       return ProgramError(source_loc)
              << "Value has changed since it was pinned";
     }

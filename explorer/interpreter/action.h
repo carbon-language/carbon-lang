@@ -64,8 +64,7 @@ class RuntimeScope {
 
   // Binds location `address` of a reference value to `value_node` without
   // allocating local storage, and pins the value, making it immutable.
-  auto BindAndPin(ValueNodeView value_node, Address address,
-                  SourceLocation source_loc) -> ErrorOr<Success>;
+  void BindAndPin(ValueNodeView value_node, Address address);
 
   // Binds unlocated `value` to `value_node` without allocating local storage.
   // TODO: BindValue should pin the lifetime of `value` and make sure it isn't
@@ -92,9 +91,7 @@ class RuntimeScope {
   llvm::MapVector<ValueNodeView, Nonnull<const Value*>,
                   std::map<ValueNodeView, unsigned>>
       locals_;
-  llvm::MapVector<ValueNodeView, Nonnull<const Value*>,
-                  std::map<ValueNodeView, unsigned>>
-      pinned_values_;
+  std::map<ValueNodeView, int> pinned_values_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
 };
