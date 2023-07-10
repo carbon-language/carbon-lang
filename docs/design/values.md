@@ -504,7 +504,10 @@ base class MyBase { ... }
 
 fn UseBase(b: MyBase) { ... }
 
-class Derived extends MyBase { ... }
+class Derived {
+  extend base: MyBase;
+  ...
+}
 
 fn PassDerived() {
   var d: Derived = ...;
@@ -533,7 +536,7 @@ ability of the implementation to introduce copies or a temporary specifically
 for the purpose of the interop remains.
 
 **Future work:** when a type customizes its value representation, as currently
-specified this will break the use of `const &` C++ APIs with such an value. We
+specified this will break the use of `const &` C++ APIs with such a value. We
 should extend the rules around value representation customization to require
 that either the representation type can be converted to (a copy) of the
 customized type, or implements an interop-specific interface to compute a
@@ -556,8 +559,8 @@ to the operation in question. For example:
 
 ```carbon
 class S {
-  fn ValueMemberFunction[me: Self]();
-  fn AddrMemberFunction[addr me: const Self*]();
+  fn ValueMemberFunction[self: Self]();
+  fn AddrMemberFunction[addr self: const Self*]();
 }
 
 fn F(s_value: S) {
