@@ -39,52 +39,20 @@ class DriverTest : public testing::Test {
 };
 
 TEST_F(DriverTest, FullCommandErrors) {
-  EXPECT_FALSE(driver_.RunFullCommand({}));
+  EXPECT_FALSE(driver_.RunCommand({}));
   EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver_.RunFullCommand({"foo"}));
+  EXPECT_FALSE(driver_.RunCommand({"foo"}));
   EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver_.RunFullCommand({"foo --bar --baz"}));
-  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
-}
-
-TEST_F(DriverTest, Help) {
-  EXPECT_TRUE(driver_.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {}));
-  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
-  auto help_text = test_output_stream_.TakeStr();
-
-  // Help text should mention each subcommand.
-#define CARBON_SUBCOMMAND(Name, Spelling, ...) \
-  EXPECT_THAT(help_text, HasSubstr(Spelling));
-#include "toolchain/driver/flags.def"
-
-  // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver_.RunFullCommand({"help"}));
-  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(help_text));
-}
-
-TEST_F(DriverTest, HelpErrors) {
-  EXPECT_FALSE(driver_.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"foo"}));
-  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
-
-  EXPECT_FALSE(
-      driver_.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"help"}));
-  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
-
-  EXPECT_FALSE(
-      driver_.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
-  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
+  EXPECT_FALSE(driver_.RunCommand({"foo --bar --baz"}));
   EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 }
 
 TEST_F(DriverTest, DumpTokens) {
   auto file = CreateTestFile("Hello World");
-  EXPECT_TRUE(
-      driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"tokens", file}));
+  EXPECT_TRUE(driver_.RunCommand(
+      {"compile", "--phase=tokenize", "--dump-tokens", file}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   auto tokenized_text = test_output_stream_.TakeStr();
 
@@ -112,44 +80,12 @@ TEST_F(DriverTest, DumpTokens) {
                                      {"column", "12"},
                                      {"indent", "1"},
                                      {"spelling", ""}}}));
-
-  // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver_.RunFullCommand({"dump", "tokens", file}));
-  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(tokenized_text));
-}
-
-TEST_F(DriverTest, DumpErrors) {
-  EXPECT_FALSE(driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"foo"}));
-  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
-
-  EXPECT_FALSE(
-      driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
-  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
-
-  EXPECT_FALSE(
-      driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"tokens"}));
-  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
-
-  EXPECT_FALSE(driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
-                                         {"tokens", "/not/a/real/file/name"}));
-  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 }
 
 TEST_F(DriverTest, DumpParseTree) {
-  auto file = CreateTestFile("var v: Int = 42;");
-  EXPECT_TRUE(driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
-                                        {"parse-tree", file}));
-  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
-  // Verify there is output without examining it.
-  EXPECT_FALSE(test_output_stream_.TakeStr().empty());
-
-  // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver_.RunFullCommand({"dump", "parse-tree", file}));
+  auto file = CreateTestFile("var v: i32 = 42;");
+  EXPECT_TRUE(driver_.RunCommand(
+      {"compile", "--phase=parse", "--dump-parse-tree", file}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Verify there is output without examining it.
   EXPECT_FALSE(test_output_stream_.TakeStr().empty());

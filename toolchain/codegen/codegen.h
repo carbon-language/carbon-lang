@@ -14,41 +14,32 @@ namespace Carbon {
 
 class CodeGen {
  public:
-  CodeGen(llvm::Module& module, llvm::StringRef triple,
-          llvm::raw_pwrite_stream& error_stream,
-          llvm::raw_pwrite_stream& output_stream)
-      : Module(module),
-        output_stream_(output_stream),
-        error_stream_(error_stream),
-        target_triple(triple){};
+  static auto Create(llvm::Module& module, llvm::StringRef target_triple,
+                     llvm::raw_ostream& errors) -> std::optional<CodeGen>;
 
   // Generates the object code file.
   // Returns false in case of failure, and any information about the failure is
   // printed to the error stream.
-  auto GenerateObjectCode() -> bool;
+  auto EmitObject(llvm::raw_pwrite_stream& out) -> bool;
 
   // Prints the assembly to stdout.
   // Returns false in case of failure, and any information about the failure is
   // printed to the error stream.
-  auto PrintAssembly() -> bool;
+  auto EmitAssembly(llvm::raw_pwrite_stream& out) -> bool;
 
  private:
-  llvm::Module& Module;
-  llvm::raw_pwrite_stream& output_stream_;
-  llvm::raw_pwrite_stream& error_stream_;
-  llvm::StringRef target_triple;
-
-  // Creates the target machine for triple.
-  // Returns nullptr in case of failure, and any information about the failure
-  // is printed to the error stream.
-  auto CreateTargetMachine() -> std::unique_ptr<llvm::TargetMachine>;
+  explicit CodeGen(llvm::Module& module, llvm::raw_ostream& errors)
+      : module_(module), errors_(errors) {}
 
   // Using the llvm pass emits either assembly or object code to dest.
   // Returns false in case of failure, and any information about the failure is
   // printed to the error stream.
-  auto EmitCode(llvm::raw_pwrite_stream& dest,
-                llvm::TargetMachine* target_machine,
-                llvm::CodeGenFileType file_type) -> bool;
+  auto EmitCode(llvm::raw_pwrite_stream& out, llvm::CodeGenFileType file_type)
+      -> bool;
+
+  llvm::Module& module_;
+  llvm::raw_ostream& errors_;
+  std::unique_ptr<llvm::TargetMachine> target_machine_;
 };
 
 }  // namespace Carbon

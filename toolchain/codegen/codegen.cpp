@@ -15,7 +15,8 @@
 
 namespace Carbon {
 
-auto CodeGen::CreateTargetMachine() -> std::unique_ptr<llvm::TargetMachine> {
+auto CodeGen::Create(llvm::Module& module, llvm::StringRef target_triple,
+                     llvm::raw_ostream& errors) -> std::optional<CodeGen> {
   // Initialize the target registry etc.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
@@ -24,66 +25,50 @@ auto CodeGen::CreateTargetMachine() -> std::unique_ptr<llvm::TargetMachine> {
   llvm::InitializeAllAsmPrinters();
 
   std::string error;
-  llvm::StringRef triple = target_triple;
-  std::string host_triple;
-  if (target_triple.empty()) {
-    host_triple = llvm::sys::getDefaultTargetTriple();
-    triple = host_triple;
-  }
-  const auto* target = llvm::TargetRegistry::lookupTarget(triple, error);
+  const llvm::Target* target =
+      llvm::TargetRegistry::lookupTarget(target_triple, error);
 
   if (!target) {
-    error_stream_ << "ERROR: Invalid -target_triple: " << error << "\n";
-    return nullptr;
+    errors << "ERROR: Invalid target: " << error << "\n";
+    return {};
   }
+  module.setTargetTriple(target_triple);
 
   constexpr llvm::StringLiteral CPU = "generic";
   constexpr llvm::StringLiteral Features = "";
 
   llvm::TargetOptions target_opts;
   std::optional<llvm::Reloc::Model> reloc_model;
-  std::unique_ptr<llvm::TargetMachine> target_machine(
-      target->createTargetMachine(target_triple, CPU, Features, target_opts,
-                                  reloc_model));
-  return target_machine;
+  CodeGen codegen(module, errors);
+  codegen.target_machine_.reset(target->createTargetMachine(
+      target_triple, CPU, Features, target_opts, reloc_model));
+  return codegen;
 }
 
-auto CodeGen::EmitCode(llvm::raw_pwrite_stream& dest,
-                       llvm::TargetMachine* target_machine,
+auto CodeGen::EmitAssembly(llvm::raw_pwrite_stream& out) -> bool {
+  return EmitCode(out, llvm::CodeGenFileType::CGFT_AssemblyFile);
+}
+
+auto CodeGen::EmitObject(llvm::raw_pwrite_stream& out) -> bool {
+  return EmitCode(out, llvm::CodeGenFileType::CGFT_ObjectFile);
+}
+
+auto CodeGen::EmitCode(llvm::raw_pwrite_stream& out,
                        llvm::CodeGenFileType file_type) -> bool {
-  Module.setDataLayout(target_machine->createDataLayout());
-  Module.setTargetTriple(target_triple);
+  module_.setDataLayout(target_machine_->createDataLayout());
 
   // Using the legacy PM to generate the assembly since the new PM
   // does not work with this yet.
   // TODO: make the new PM work with the codegen pipeline.
-
   llvm::legacy::PassManager pass;
-
-  if (target_machine->addPassesToEmitFile(pass, dest, nullptr, file_type)) {
-    error_stream_ << "Error: Nothing to write to object file\n";
+  // Note that this returns true on an error.
+  if (target_machine_->addPassesToEmitFile(pass, out, nullptr, file_type)) {
+    errors_ << "ERROR: Unable to emit to this file.\n";
     return false;
   }
 
-  pass.run(Module);
+  pass.run(module_);
   return true;
 }
 
-auto CodeGen::PrintAssembly() -> bool {
-  auto target_machine = CreateTargetMachine();
-  if (target_machine == nullptr) {
-    return false;
-  }
-  return EmitCode(output_stream_, target_machine.get(),
-                  llvm::CodeGenFileType::CGFT_AssemblyFile);
-}
-
-auto CodeGen::GenerateObjectCode() -> bool {
-  auto target_machine = CreateTargetMachine();
-  if (target_machine == nullptr) {
-    return false;
-  }
-  return EmitCode(output_stream_, target_machine.get(),
-                  llvm::CodeGenFileType::CGFT_ObjectFile);
-}
 }  // namespace Carbon

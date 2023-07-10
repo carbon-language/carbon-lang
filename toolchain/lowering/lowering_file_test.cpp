@@ -18,7 +18,8 @@ class LoweringFileTest : public DriverFileTestBase {
 
   auto MakeArgs(const llvm::SmallVector<llvm::StringRef>& test_files)
       -> llvm::SmallVector<llvm::StringRef> override {
-    llvm::SmallVector<llvm::StringRef> args({"dump", "llvm-ir"});
+    llvm::SmallVector<llvm::StringRef> args(
+        {"compile", "--phase=lower", "--dump-llvm-ir"});
     args.insert(args.end(), test_files.begin(), test_files.end());
     return args;
   }

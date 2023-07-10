@@ -32,7 +32,8 @@ TEST(SemanticsIRTest, YAML) {
                           llvm::MemoryBuffer::getMemBuffer("var x: i32 = 0;")));
   TestRawOstream print_stream;
   Driver d(fs, print_stream, llvm::errs());
-  d.RunFullCommand({"dump", "semantics-ir", "test.carbon"});
+  d.RunCommand(
+      {"compile", "--phase=syntax", "--dump-semantics-ir", "test.carbon"});
 
   // Matches the ID of a node. The numbers may change because of builtin
   // cross-references, so this code is only doing loose structural checks.
