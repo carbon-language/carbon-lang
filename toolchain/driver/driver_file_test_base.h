@@ -42,7 +42,7 @@ class DriverFileTestBase : public FileTestBase {
     }
 
     Driver driver(fs, stdout, stderr);
-    return driver.RunCommand(MakeArgs(test_file_names));
+    return driver.RunFullCommand(MakeArgs(test_file_names));
   }
 
   virtual auto MakeArgs(const llvm::SmallVector<llvm::StringRef>& test_files)

@@ -30,6 +30,6 @@ auto main(int argc, char** argv) -> int {
   llvm::SmallVector<llvm::StringRef, 16> args(argv + 1, argv + argc);
   auto fs = llvm::vfs::getRealFileSystem();
   Carbon::Driver driver(*fs, llvm::outs(), llvm::errs());
-  bool success = driver.RunCommand(args);
+  bool success = driver.RunFullCommand(args);
   return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

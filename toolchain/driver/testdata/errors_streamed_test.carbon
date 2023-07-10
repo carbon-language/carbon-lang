@@ -2,8 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{carbon} compile --phase=tokenize --stream-errors %s | \
+// RUN: %{not} %{carbon} --print-errors=streamed dump tokens %s | \
 // RUN:   %{FileCheck-strict}
+// CHECK:STDOUT: [
+// CHECK-COUNT-17:STDOUT: {{.*}}
+// CHECK:STDOUT: ]
 
 fn run(String program) {
   return True;
