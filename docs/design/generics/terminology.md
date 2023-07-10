@@ -21,6 +21,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Definition checking](#definition-checking)
         -   [Complete definition checking](#complete-definition-checking)
         -   [Early versus late type checking](#early-versus-late-type-checking)
+-   [Types and `type`](#types-and-type)
+-   [Facet type](#facet-type)
+-   [Facet](#facet)
+-   [Generic type](#generic-type)
+-   [Generic type parameter](#generic-type-parameter)
 -   [Deduced parameter](#deduced-parameter)
 -   [Interface](#interface)
     -   [Structural interfaces](#structural-interfaces)
@@ -50,7 +55,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Conditional conformance](#conditional-conformance)
 -   [Interface type parameters and associated types](#interface-type-parameters-and-associated-types)
 -   [Type constraints](#type-constraints)
--   [Facet type](#facet-type)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -258,12 +262,70 @@ instantiate the implementation (for example, [type erasure](#type-erasure) or
 
 Early type checking is where expressions and statements are type checked when
 the definition of the function body is compiled, as part of definition checking.
-This occurs for regular and checked generic values.
+This occurs for regular and checked-generic values.
 
 Late type checking is where expressions and statements may only be fully
 typechecked once calling information is known. Late type checking delays
 complete definition checking. This occurs for
 [template-dependent](#dependent-names) values.
+
+## Types and `type`
+
+A _type_ is a value of type `type`. Conversely, `type` is the type of all types.
+
+Expressions in type position, for example the return type of a function or the
+expression to the right of a `:` or `:!` in a binding, are implicitly cast to
+type `type`. This means that it is legal to put a value that is not a type where
+a type is expected, as long as it has an implicit conversion to `type` that may
+be performed at compile time.
+
+## Facet type
+
+A _facet type_ is a [type](#types-and-type) whose values are some subset of the
+values of `type`, determined by a set of [type constraints](#type-constraints):
+
+-   [Interfaces](#interface) and [named constraints](#named-constraints) are
+    facet types whose constraints are that the interface or named constraint is
+    satisfied by the type.
+-   The values produced by `&` operations between facet types and by `where`
+    expressions are facet types, whose set of constraints are determined by the
+    `&` or `where` expression.
+-   `type` is a facet type whose set of constraints is empty.
+
+A facet type is the type used when declaring some type parameter. It foremost
+determines which types are legal arguments for that type parameter. For template
+parameters, that is all a facet type does. For checked parameters, it also
+determines the API that is available in the body of the definition of the
+[generic function, class, or other entity](#parameterized-language-constructs).
+
+## Facet
+
+A _facet_ is a value of a [facet type](#facet-type). For example,
+`i32 as Hashable` is a facet, and `Hashable` is a facet type. Note that all
+types are facets, since [`type`](#types-and-type) is considered a facet type.
+Not all facets are types, though.
+
+## Generic type
+
+We use the term _generic type_ to refer to a [type](#types-and-type) or
+[facet](#facet) introduced by a `:!` binding (with or without the `template`
+modifier), such as in a (checked or template) generic parameter or associated
+constant. In the binding `T:! Hashable`, `T` is a generic type.
+
+It is worth noting that a generic type is _not_ necessarily a type. It may
+instead be a facet with a type that is a facet type other than `type`.
+
+## Generic type parameter
+
+A generic type parameter is a [parameter](#parameterized-language-constructs)
+that is a [generic type](#generic-type). Equivalently, it is a parameter
+declared using a `:!` binding, with or without the `template` modifier, and a
+[facet type](#facet-type). For example, in `class HashSet(T:! Hashable)`, `T` is
+a generic type parameter for the class `HashSet`, with the facet type
+`Hashable`.
+
+A generic type parameter declared with the `template` modifier is referred to as
+a _template type parameter_, and as a _checked type parameter_ otherwise.
 
 ## Deduced parameter
 
@@ -331,10 +393,12 @@ type must implement and constraints on the
 ## Associated entity
 
 An _associated entity_ is a requirement in an interface that a type's
-implementation of the interface must satisfy by having a matching member. A
+implementation of the interface must satisfy by having a matching definition. A
 requirement that the type define a value for a member constant is called an
 _associated constant_, and similarly an _associated function_ or _associated
-type_.
+[generic type](#generic-type)_. Note that other languages use the term
+"associated type" instead of "associated generic type," but in Carbon a generic
+type is a [facet](#facet) may not be a type.
 
 Different types can satisfy an interface with different definitions for a given
 member. These definitions are _associated_ with what type is implementing the
@@ -469,8 +533,8 @@ permitted, always has the same meaning as an explicit cast.
 
 ## Coherence
 
-A generics system has the _implementation coherence_ property, or simply
-_coherence_, if there is a single answer to the question "what is the
+A generics or interface system has the _implementation coherence_ property, or
+simply _coherence_, if there is a single answer to the question "what is the
 implementation of this interface for this type, if any?" independent of context,
 such as the libraries imported into a given file.
 
@@ -512,9 +576,9 @@ and as a workaround for
 
 "Type erasure" is where a type's API is replaced by a subset. Everything outside
 of the preserved subset is said to have been "erased". This can happen in a
-variety of contexts including both generics and runtime polymorphism. For
-generics, type erasure restricts a type to just the API required by the
-constraints on a generic function.
+variety of contexts including both checked generics and runtime polymorphism.
+For checked generics, type erasure restricts a type to just the API required by
+the constraints on that type stated in the signature of the function.
 
 An example of type erasure in runtime polymorphism in C++ is casting from a
 pointer of a derived type to a pointer to an abstract base type. Only the API of
@@ -548,14 +612,14 @@ interface.
 ## Witness tables
 
 [Witness tables](https://forums.swift.org/t/where-does-the-term-witness-table-come-from/54334/4)
-are an implementation strategy where values passed to a generic parameter are
-compiled into a table of required functionality. That table is then filled in
-for a given passed-in type with references to the implementation on the original
-type. The generic is implemented using calls into entries in the witness table,
-which turn into calls to the original type. This doesn't necessarily imply a
-runtime indirection: it may be a purely compile-time separation of concerns.
-However, it insists on a full abstraction boundary between the generic user of a
-type and the concrete implementation.
+are an implementation strategy where values passed to a generic type parameter
+are compiled into a table of required functionality. That table is then filled
+in for a given passed-in type with references to the implementation on the
+original type. The generic is implemented using calls into entries in the
+witness table, which turn into calls to the original type. This doesn't
+necessarily imply a runtime indirection: it may be a purely compile-time
+separation of concerns. However, it insists on a full abstraction boundary
+between the generic user of a type and the concrete implementation.
 
 A simple way to imagine a witness table is as a struct of function pointers, one
 per method in the interface. However, in practice, it's more complex because it
@@ -737,7 +801,7 @@ DoAdd(apple, orange);
 
 ## Type constraints
 
-Type constraints restrict which types are legal for template or generic
+Type constraints restrict which types are legal for template or checked
 parameters or associated types. They help define semantics under which they
 should be called, and prevent incorrect calls.
 
@@ -757,14 +821,6 @@ express, for example:
 
 Note that type constraints can be a restriction on one type parameter or
 associated type, or can define a relationship between multiple types.
-
-## Facet type
-
-A facet type is the type used when declaring some type parameter. It foremost
-determines which types are legal arguments for that type parameter, also known
-as [type constraints](#type-constraints). For template parameters, that is all a
-facet type does. For generic parameters, it also determines the API that is
-available in the body of the function.
 
 ## References
 
