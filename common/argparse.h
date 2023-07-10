@@ -30,7 +30,7 @@ namespace Carbon {
 // This is a collection of tools to describe both simple and reasonably complex
 // command line interfaces, and parse arguments based on those descriptions. It
 // optimizes for command line tools that will parse arguments exactly once per
-// execution, and specifically tools that make heavy use a subcommand-style
+// execution, and specifically tools that make heavy use of a subcommand-style
 // command line interfaces.
 //
 // ## Terminology used by this library
@@ -40,8 +40,9 @@ namespace Carbon {
 // _Option_: A _named_ argument starting with `--` to configure some aspect of
 // the tool. These often have both long spellings that start with `--` and
 // short, single character spellings that start with `-` and can be bundled with
-// other single character options. _Flag_: A boolean or binary option. These can
-// only be enabled or disabled.
+// other single character options.
+//
+// _Flag_: A boolean or binary option. These can only be enabled or disabled.
 //
 // _Positional argument_: An argument that is not named but is identified based
 // on the order in which it is encountered in the command line, with options
@@ -441,14 +442,26 @@ class Args {
     // the argument.
     //
     // For one-of arguments, this method also provides an array of possible
-    // values that may be used. The only value strings that will be parsed are
-    // those described in the array, and the value stored in the storage for a
-    // particular parsed value string is the one associated with it. There must
-    // be a single homogeneous type for the all of the candidate values and that
-    // type must be storable into the result storage pointee type. At most one
-    // of the array can also be marked as a default value, which will make
-    // specifying a value optional, and also will cause that value to be stored
-    // into the result even if the argument is not parsed explicitly.
+    // values that may be used:
+    //
+    // ```cpp
+    //   arg_b.SetOneOf(
+    //       {
+    //           arg_b.OneOfValue("x", 1),
+    //           arg_b.OneOfValue("y", 2),
+    //           arg_b.OneOfValue("z", 3).Default(true),
+    //       },
+    //       &value);
+    // ```
+    //
+    // The only value strings that will be parsed are those described in the
+    // array, and the value stored in the storage for a particular parsed value
+    // string is the one associated with it. There must be a single homogeneous
+    // type for the all of the candidate values and that type must be storable
+    // into the result storage pointee type. At most one of the array can also
+    // be marked as a default value, which will make specifying a value
+    // optional, and also will cause that value to be stored into the result
+    // even if the argument is not parsed explicitly.
     template <typename T, typename U, size_t N>
     void SetOneOf(const OneOfValueT<U> (&values)[N], T* result);
 
@@ -461,7 +474,19 @@ class Args {
     //
     // Similar to `SetOneOf`, this must also describe the candidate value
     // strings that can be parsed and the consequent values that are used for
-    // those strings. Instead of storing, these values are appended.
+    // those strings:
+    //
+    // ```cpp
+    //   arg_b.AppendOneOf(
+    //       {
+    //           arg_b.OneOfValue("x", 1),
+    //           arg_b.OneOfValue("y", 2),
+    //           arg_b.OneOfValue("z", 3),
+    //       },
+    //       &values);
+    // ```
+    //
+    // Instead of storing, these values are appended.
     //
     // However, appending one-of arguments cannot use a default. The values must
     // always be explicitly parsed.
