@@ -861,6 +861,32 @@ types in Carbon provide access to an object with an API subset that can help
 model important requirements like ensuring usage is exclusively by way of a
 _thread-safe_ interface subset of an otherwise _thread-compatible_ type.
 
+Note that `const T` is a type qualification and is generally orthogonal to
+expression categories or what form of pattern is used, including for object
+parameters. Notionally, it can occur both with `addr` and value object
+parameters. However, on value patterns, it is redundant as there is no
+meaningful distinction between a value expression of type `T` and type
+`const T`. For example, given a type and methods:
+
+```carbon
+class X {
+  fn Method[self: Self]();
+  fn ConstMethod[self: const Self]();
+  fn AddrMethod[addr self: Self*]();
+  fn AddrConstMethod[addr self: const Self*]();
+}
+```
+
+The methods can be called on different kinds of expressions according to the
+following table:
+
+|  Expression category: | `let x: X` (value) | `let x: const X` (const value) | `var x: X` (reference) | `var x: const X` (const reference) |
+| --------------------: | ------------------ | ------------------------------ | ---------------------- | ---------------------------------- |
+|         `x.Method();` | ✅                 | ✅                             | ✅                     | ✅                                 |
+|    `x.ConstMethod();` | ✅                 | ✅                             | ✅                     | ✅                                 |
+|     `x.AddrMethod();` | ❌                 | ❌                             | ✅                     | ❌                                 |
+| `x.AddrConstMethod()` | ❌                 | ❌                             | ✅                     | ✅                                 |
+
 The `const T` type has the same representation as `T` with the same field names,
 but all of its field types are also `const`-qualified. Other than fields, all
 other members `T` are also members of `const T`, and impl lookup ignores the
@@ -870,9 +896,13 @@ defined in terms of `const T` reference expressions to `T` value expressions.
 
 It is expected that `const T` will largely occur as part of a
 [pointer](#pointers), as the express purpose is to form reference expressions.
-Carbon will support conversions between pointers to `const`-qualified types that
-follow the same rules as used in C++ to avoid inadvertent loss of
-`const`-qualification.
+The precedence rules are even designed for this common case, `const T*` means
+`(const T)*`, or a pointer-to-const. Carbon will support conversions between
+pointers to `const`-qualified types that follow the same rules as used in C++ to
+avoid inadvertent loss of `const`-qualification.
+
+The syntax details of `const` are also covered in the
+[type operators](/docs/design/expressions/type_operators.md) documentation.
 
 ## Lifetime overloading
 
