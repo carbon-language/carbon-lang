@@ -179,19 +179,18 @@ module.exports = grammar({
 
     _binding_lhs: ($) => choice($.ident, '_'),
 
-    paren_pattern: ($) => seq('(', comma_sep($._non_expression_pattern), ')'),
+    paren_pattern: ($) => seq('(', comma_sep($._pattern), ')'),
 
-    _non_expression_pattern: ($) =>
+    _pattern: ($) =>
       choice(
         'auto',
         seq($._binding_lhs, ':', $._expression),
         seq($._binding_lhs, ':!', $._expression),
         seq('template', $._binding_lhs, ':!', $._expression),
         $.paren_pattern,
-        seq('var', $._non_expression_pattern)
+        seq('var', $._pattern),
+        $.literal
       ),
-
-    pattern: ($) => choice($._non_expression_pattern, $._expression),
 
     unary_prefix_expression: ($) => {
       const table = [
@@ -320,15 +319,9 @@ module.exports = grammar({
       ),
 
     var_declaration: ($) =>
-      seq(
-        'var',
-        $._non_expression_pattern,
-        optional(seq('=', $._expression)),
-        ';'
-      ),
+      seq('var', $._pattern, optional(seq('=', $._expression)), ';'),
 
-    let_declaration: ($) =>
-      seq('let', $._non_expression_pattern, '=', $._expression, ';'),
+    let_declaration: ($) => seq('let', $._pattern, '=', $._expression, ';'),
 
     assign_statement: ($) =>
       seq($._expression, $._assign_operator, $._expression, ';'),
@@ -337,7 +330,7 @@ module.exports = grammar({
       choice('=', '+=', '/=', '*=', '%=', '-=', '&=', '|=', '^=', '<<=', '>>='),
 
     match_clause: ($) =>
-      seq(choice(seq('case', $.pattern), 'default'), '=>', $.block),
+      seq(choice(seq('case', $._pattern), 'default'), '=>', $.block),
 
     match_statement: ($) =>
       seq('match', '(', $._expression, ')', '{', repeat($.match_clause), '}'),
@@ -359,15 +352,7 @@ module.exports = grammar({
     else: ($) => choice(seq('else', $.if_statement), seq('else', $.block)),
 
     for_statement: ($) =>
-      seq(
-        'for',
-        '(',
-        $._non_expression_pattern,
-        'in',
-        $._expression,
-        ')',
-        $.block
-      ),
+      seq('for', '(', $._pattern, 'in', $._expression, ')', $.block),
 
     statement: ($) =>
       choice(
