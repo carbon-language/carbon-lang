@@ -165,6 +165,21 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
       return llvm::StructType::create(*llvm_context_, subtypes,
                                       "StructLiteralType");
     }
+    case SemanticsNodeKind::TupleType: {
+      auto refs = semantics_ir_->GetNodeBlock(node.GetAsTupleType());
+      llvm::SmallVector<llvm::Type*> subtypes;
+      subtypes.reserve(refs.size());
+      for (auto ref_id : refs) {
+        auto type_id = semantics_ir_->GetNode(ref_id).type_id();
+        // TODO: Handle recursive types. The restriction for builtins prevents
+        // recursion while still letting them cache.
+        CARBON_CHECK(type_id.index < SemanticsBuiltinKind::ValidCount)
+            << type_id;
+        subtypes.push_back(GetType(type_id));
+      }
+      return llvm::StructType::create(*llvm_context_, subtypes,
+                                      "TupleLiteralType");
+    }
     default: {
       CARBON_FATAL() << "Cannot use node as type: " << node_id;
     }

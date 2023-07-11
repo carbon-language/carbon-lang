@@ -233,6 +233,8 @@ class SemanticsContext {
   auto CanonicalizeStructType(ParseTree::Node parse_node,
                               SemanticsNodeBlockId refs_id) -> SemanticsTypeId;
 
+  auto CanonicalizeTupleType(ParseTree::Node parse_node,
+                             SemanticsNodeBlockId refs_id) -> SemanticsTypeId;
   // Converts an expression for use as a type.
   // TODO: This should eventually return a type ID.
   auto ExpressionAsType(ParseTree::Node parse_node, SemanticsNodeId value_id)
@@ -302,6 +304,19 @@ class SemanticsContext {
    public:
     explicit StructTypeNode(const llvm::FoldingSetNodeID& node_id,
                             SemanticsTypeId type_id)
+        : llvm::FastFoldingSetNode(node_id), type_id_(type_id) {}
+
+    auto type_id() -> SemanticsTypeId { return type_id_; }
+
+   private:
+    SemanticsTypeId type_id_;
+  };
+
+  // A FoldingSet node for a struct type.
+  class TupleTypeNode : public llvm::FastFoldingSetNode {
+   public:
+    explicit TupleTypeNode(const llvm::FoldingSetNodeID& node_id,
+                           SemanticsTypeId type_id)
         : llvm::FastFoldingSetNode(node_id), type_id_(type_id) {}
 
     auto type_id() -> SemanticsTypeId { return type_id_; }
@@ -397,6 +412,14 @@ class SemanticsContext {
   // so that canonical_struct_types_ can have stable pointers.
   llvm::SmallVector<std::unique_ptr<StructTypeNode>>
       canonical_struct_types_nodes_;
+  // Tracks struct type literals which have been defined, so that they aren't
+  // repeatedly redefined.
+  llvm::FoldingSet<TupleTypeNode> canonical_tuple_types_;
+
+  // Storage for the nodes in canonical_struct_types_. This stores in pointers
+  // so that canonical_struct_types_ can have stable pointers.
+  llvm::SmallVector<std::unique_ptr<TupleTypeNode>>
+      canonical_tuple_types_nodes_;
 };
 
 // Parse node handlers. Returns false for unrecoverable errors.

@@ -72,6 +72,7 @@ cc_library(
     deps = [
         ":semantics_builtin_kind",
         ":semantics_node",
+        ":semantics_node_kind",
         ":semantics_node_stack",
         "//common:check",
         "//common:ostream",

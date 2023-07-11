@@ -10,6 +10,7 @@
 #include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
+#include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
 
@@ -73,13 +74,15 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
   // for example if an unrecoverable state is encountered.
   for (auto parse_node : parse_tree.postorder()) {
     switch (auto parse_kind = parse_tree.node_kind(parse_node)) {
-#define CARBON_PARSE_NODE_KIND(Name)                   \
-  case ParseNodeKind::Name: {                          \
-    if (!SemanticsHandle##Name(context, parse_node)) { \
-      semantics_ir.has_errors_ = true;                 \
-      return semantics_ir;                             \
-    }                                                  \
-    break;                                             \
+#define CARBON_PARSE_NODE_KIND(Name)                      \
+  case ParseNodeKind::Name: {                             \
+    parse_tree.node_kind(parse_node).Print(llvm::outs()); \
+    llvm::outs() << "\n";                                 \
+    if (!SemanticsHandle##Name(context, parse_node)) {    \
+      semantics_ir.has_errors_ = true;                    \
+      return semantics_ir;                                \
+    }                                                     \
+    break;                                                \
   }
 #include "toolchain/parser/parse_node_kind.def"
     }
@@ -241,6 +244,30 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
         steps.push_back({.node_id = GetTypeAllowBuiltinTypes(node.type_id())});
         break;
       }
+      case SemanticsNodeKind::TupleType: {
+        auto refs = GetNodeBlock(node.GetAsTupleType());
+        if (refs.empty()) {
+          out << "Empty Tuple";
+          break;
+        } else if (step.index == 0) {
+          out << "(";
+        } else if (step.index < static_cast<int>(refs.size())) {
+          out << ", ";
+        } else {
+          out << ")";
+          break;
+        }
+
+        steps.push_back({.node_id = step.node_id, .index = step.index + 1});
+        steps.push_back({.node_id = refs[step.index]});
+        break;
+      }
+      case SemanticsNodeKind::TupleTypeField: {
+        steps.push_back({.node_id = GetTypeAllowBuiltinTypes(node.type_id())});
+        break;
+      }
+      case SemanticsNodeKind::TupleValue:
+      case SemanticsNodeKind::TupleMemberAccess:
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BindName:

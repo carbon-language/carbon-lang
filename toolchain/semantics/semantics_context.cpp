@@ -506,7 +506,13 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
   if (as_type_id == SemanticsTypeId::TypeType) {
     // TODO: When converting `()` to a type, the result is `() as Type`.
     // Right now there is no tuple value support.
-
+    if (value.kind() == SemanticsNodeKind::TupleValue &&
+        value.GetAsTupleValue() == SemanticsNodeBlockId::Empty) {
+      if (output_value_id != nullptr) {
+        *output_value_id = semantics_ir_->GetType(value_type_id);
+      }
+      return ImplicitAsKind::Compatible;
+    }
     // When converting `{}` to a type, the result is `{} as Type`.
     if (value.kind() == SemanticsNodeKind::StructValue &&
         value.GetAsStructValue() == SemanticsNodeBlockId::Empty) {
@@ -608,6 +614,38 @@ auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
       std::make_unique<StructTypeNode>(canonical_id, type_id));
   canonical_struct_types_.InsertNode(canonical_struct_types_nodes_.back().get(),
                                      insert_pos);
+  return type_id;
+}
+
+auto SemanticsContext::CanonicalizeTupleType(ParseTree::Node parse_node,
+                                             SemanticsNodeBlockId refs_id)
+    -> SemanticsTypeId {
+  // Construct the field structure for lookup.
+  auto refs = semantics_ir_->GetNodeBlock(refs_id);
+  llvm::FoldingSetNodeID canonical_id;
+  for (const auto& ref_id : refs) {
+    auto ref = semantics_ir_->GetNode(ref_id);
+    canonical_id.AddInteger(ref.GetAsTupleTypeField().index);
+    canonical_id.AddInteger(ref.type_id().index);
+  }
+
+  // If a struct with matching fields was already created, reuse it.
+  void* insert_pos;
+  auto* node =
+      canonical_tuple_types_.FindNodeOrInsertPos(canonical_id, insert_pos);
+  if (node != nullptr) {
+    return node->type_id();
+  }
+
+  // The struct doesn't already exist, so create and store it as canonical.
+  auto node_id = AddNode(SemanticsNode::TupleType::Make(
+      parse_node, SemanticsTypeId::TypeType, refs_id));
+  auto type_id = semantics_ir_->AddType(node_id);
+  CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
+  canonical_tuple_types_nodes_.push_back(
+      std::make_unique<TupleTypeNode>(canonical_id, type_id));
+  canonical_tuple_types_.InsertNode(canonical_tuple_types_nodes_.back().get(),
+                                    insert_pos);
   return type_id;
 }
 
