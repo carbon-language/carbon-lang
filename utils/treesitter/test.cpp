@@ -59,6 +59,7 @@ auto main(int argc, char** argv) -> int {
     std::cout << "FAILED " << file << "\n";
   }
   if (!failed.empty()) {
+    std::cout << failed.size() << " tests failing.\n";
     return 1;
   }
 }
