@@ -483,6 +483,16 @@ module.exports = grammar({
         choice(';', $.class_body)
       ),
 
+    choice_declaration: ($) =>
+      seq(
+        'choice',
+        $.declared_name,
+        optional($.type_params),
+        '{',
+        comma_sep(seq($.ident, optional($.paren_expression))),
+        '}'
+      ),
+
     empty_declaration: ($) => ';',
 
     declaration: ($) =>
@@ -496,7 +506,8 @@ module.exports = grammar({
         $.interface_declaration,
         $.constraint_declaration,
         $.impl_declaration,
-        $.class_declaration
+        $.class_declaration,
+        $.choice_declaration
       ),
   },
 });
