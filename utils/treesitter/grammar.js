@@ -283,7 +283,7 @@ module.exports = grammar({
         choice(
           seq($._expression, '==', $._expression),
           seq($._expression, 'impls', $._expression),
-          seq($.designator, '=', $._expression),
+          seq($._expression, '=', $._expression),
           prec.left(seq($.where_clause, 'and', $.where_clause))
         )
       ),
@@ -315,7 +315,9 @@ module.exports = grammar({
         $.postfix_expression,
         $.ref_expression,
         $.unary_prefix_expression,
-        $.where_expression
+        $.where_expression,
+        '.Self',
+        $.designator
       ),
 
     var_declaration: ($) =>
