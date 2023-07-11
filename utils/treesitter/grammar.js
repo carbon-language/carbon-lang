@@ -437,7 +437,7 @@ module.exports = grammar({
 
     impl_body_item: ($) => choice($.function_declaration, $.alias_declaration),
 
-    impl_body: ($) => seq('{', $.impl_body_item, '}'),
+    impl_body: ($) => seq('{', repeat($.impl_body_item), '}'),
 
     impl_declaration: ($) =>
       seq(
