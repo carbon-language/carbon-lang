@@ -405,6 +405,17 @@ class SemanticsNode {
 
   using VarStorage = Factory<SemanticsNodeKind::VarStorage>;
 
+  using TupleType = Factory<SemanticsNodeKind::TupleType, SemanticsNodeBlockId>;
+  using TupleTypeField =
+      Factory<SemanticsNodeKind::TupleTypeField, SemanticsNodeId>;
+
+  using TupleValue =
+      Factory<SemanticsNodeKind::TupleValue, SemanticsNodeBlockId /*refs_id*/>;
+
+  using TupleMemberAccess = Factory<SemanticsNodeKind::TupleMemberAccess,
+                                    SemanticsNodeId /*struct_id*/,
+                                    SemanticsMemberIndex /*ref_index*/>;
+
   SemanticsNode()
       : SemanticsNode(ParseTree::Node::Invalid, SemanticsNodeKind::Invalid,
                       SemanticsTypeId::Invalid) {}
