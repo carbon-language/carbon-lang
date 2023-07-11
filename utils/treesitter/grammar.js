@@ -509,6 +509,9 @@ module.exports = grammar({
         '}'
       ),
 
+    match_first_declaration: ($) =>
+      seq('__match_first', '{', repeat($.impl_declaration), '}'),
+
     empty_declaration: ($) => ';',
 
     declaration: ($) =>
@@ -524,7 +527,8 @@ module.exports = grammar({
         $.impl_declaration,
         $.class_declaration,
         $.choice_declaration,
-        $.mixin_declaration
+        $.mixin_declaration,
+        $.match_first_declaration
       ),
   },
 });
