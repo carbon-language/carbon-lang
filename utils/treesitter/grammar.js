@@ -455,11 +455,20 @@ module.exports = grammar({
     extend_base_declaration: ($) =>
       seq('extend', 'base', ':', $._expression, ';'),
 
+    destructor_declaration: ($) =>
+      seq(
+        optional(choice('virtual', 'impl')),
+        'destructor',
+        optional($.deduced_params),
+        choice($.block, ';')
+      ),
+
     class_body_item: ($) =>
       choice(
         $.declaration,
         $.extend_base_declaration,
-        $.extend_impl_declaration
+        $.extend_impl_declaration,
+        $.destructor_declaration
       ),
 
     class_body: ($) => seq('{', repeat($.class_body_item), '}'),
