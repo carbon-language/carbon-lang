@@ -201,10 +201,9 @@ needed. For more on this, see
 When the implementation of `ConvertibleToString` for `Song` is defined as
 internal, every member of `ConvertibleToString` is also a member of `Song`. This
 includes members of `ConvertibleToString` that are not explicitly named in the
-`impl` definition but have defaults. Whether the implementation is defined as
-[internal](terminology.md#internal-impl) or
-[external](terminology.md#external-impl), you may access the `ToString` function
-for a `Song` value `s` by a writing function call
+`impl` definition but have defaults. Whether the type
+[extends the implementation](terminology.md#extending-an-impl) or not, you may
+access the `ToString` function for a `Song` value `s` by a writing function call
 [using a qualified member access expression](terminology.md#qualified-member-access-expression),
 like `s.(ConvertibleToString.ToString)()`.
 
@@ -358,9 +357,8 @@ class Player {
 
 ### External impl
 
-Interfaces may also be implemented for a type
-[externally](terminology.md#external-impl), by using `impl` without `extend`. An
-external impl does not add the interface's methods to the type.
+Interfaces may also be implemented for a type without adding the interface's
+methods to the type by using `impl` without `extend`.
 
 ```
 class Point2 {
@@ -628,13 +626,12 @@ acts like a [supertype](https://en.wikipedia.org/wiki/Subtyping) of any `T`
 implementing `Vector`.
 
 For name lookup purposes, an archetype is considered to have
-[implemented its constraint internally](terminology.md#internal-impl). The only
-oddity is that the archetype may have different names for members than specific
-types `T` that implement interfaces from the constraint
-[externally](terminology.md#external-impl). This difference in names can also
-occur for supertypes in C++, for example members in a derived class can hide
-members in the base class with the same name, though it is not that common for
-it to come up in practice.
+[extend the implementation of its constraint](terminology.md#extending-an-impl).
+The only oddity is that the archetype may have different names for members than
+specific types `T` that don't extend the implementation of interfaces from the
+constraint. This difference in names can also occur for supertypes in C++, for
+example members in a derived class can hide members in the base class with the
+same name, though it is not that common for it to come up in practice.
 
 The behavior of calling `AddAndScaleGeneric` with a value of a specific type
 like `Point` is to set `T` to `Point` after all the names have been qualified.
@@ -647,9 +644,9 @@ fn AddAndScaleForPoint(a: Point, b: Point, s: Double) -> Point {
 ```
 
 This qualification gives a consistent interpretation to the body of the function
-even when the type supplied by the caller
-[implements the interface externally](terminology.md#external-impl), as `Point2`
-does:
+even when the type supplied by the caller does not
+[extend the implementation of the interface](terminology.md#extending-an-impl),
+like `Point2`:
 
 ```
 // AddAndScaleGeneric with T = Point2
@@ -1909,7 +1906,8 @@ fn Complex64.CloserToOrigin[self: Self](them: Self) -> bool {
 ### Use case: Accessing external names
 
 Consider a case where a function will call several functions from an interface
-that is [implemented externally](terminology.md#external-impl) for a type.
+that the type does not
+[extend the implementation of](terminology.md#extending-an-impl).
 
 ```
 interface DrawingContext {
@@ -1922,10 +1920,10 @@ interface DrawingContext {
 impl Window as DrawingContext { ... }
 ```
 
-An adapter can make that much more convenient by making a compatible type where
-the interface is [implemented internally](terminology.md#internal-impl). This
-avoids having to [qualify](terminology.md#qualified-member-access-expression)
-each call to methods in the interface.
+An adapter can make that more convenient by making a compatible type that does
+extends the implementation of the interface. This avoids having to
+[qualify](terminology.md#qualified-member-access-expression) each call to
+methods in the interface.
 
 ```
 class DrawInWindow {
@@ -3164,8 +3162,9 @@ fn F[T:! Transitive](t: T) {
 A value of type `A`, such as the return value of `GetA()`, has the API of `P`.
 Any such value also implements `Q`, and since the compiler can see that by way
 of a single `where` equality, values of type `A` are treated as if they
-implement `Q` [externally](terminology.md#external-impl). However, the compiler
-will require a cast to `B` or `C` to see that the type implements `R`.
+implement `Q` [without extending it](terminology.md#extending-an-impl). However,
+the compiler will require a cast to `B` or `C` to see that the type implements
+`R`.
 
 ```
 fn TakesPQR[U:! P & Q & R](u: U);
@@ -3621,10 +3620,10 @@ fn SortByAddress[T:! type](v: Vector(T*)*) { ... }
 In particular, the compiler should in general avoid monomorphizing to generate
 multiple instantiations of the function in this case.
 
-**Open question:** Should `TypeId` be
-[implemented externally](terminology.md#external-impl) for types to avoid name
-pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
-requests those capabilities?
+**Open question:** We have not yet decided whether types should
+[extend their implementation](terminology.md#extending-an-impl) of `TypeId`. The
+reason not to is to avoid name pollution (`.TypeName`, `.TypeHash`, etc.) unless
+the function specifically requests those capabilities.
 
 ### Destructor constraints
 

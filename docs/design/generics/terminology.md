@@ -33,8 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Named constraints](#named-constraints)
 -   [Associated entity](#associated-entity)
 -   [Impl: Implementation of an interface](#impl-implementation-of-an-interface)
-    -   [Internal impl](#internal-impl)
-    -   [External impl](#external-impl)
+    -   [Extending an impl](#extending-an-impl)
 -   [Member access](#member-access)
     -   [Simple member access](#simple-member-access)
     -   [Qualified member access expression](#qualified-member-access-expression)
@@ -190,7 +189,7 @@ Templates work with ad-hoc polymorphism in two ways:
     will only resolve that call after the types are known.
 
 In Carbon, we expect there to be a compile error if overloading of some name
-prevents a checked generic function from being typechecked from its definition
+prevents a checked-generic function from being typechecked from its definition
 alone. For example, let's say we have some overloaded function called `F` that
 has two overloads:
 
@@ -420,20 +419,16 @@ values for associated types, etc. are given. Implementations are needed for
 by requiring an impl to be defined. In can still make sense to implement a named
 constraint as a way to implement all of the interfaces it requires.
 
-### Internal impl
+### Extending an impl
 
-A type that implements an interface _internally_ has all the named members of
-the interface as named members of the type. This means that the members of the
-interface are available by way of both
+A type that _extends_ the implementation an interface has all the named members
+of the interface as named members of the type. This means that the members of
+the interface are available by way of both
 [simple member access and qualified member access expressions](#member-access).
 
-### External impl
-
-In contrast, a type that implements an interface _externally_ does not include
-the named members of the interface in the type. The members of the interface are
-still implemented by the type, though, and so may be accessed using
-[qualified member access expressions](#qualified-member-access-expression) for
-those members.
+If a type implements an interface without extending, the members of the
+interface may only be accessed using
+[qualified member access expressions](#qualified-member-access-expression).
 
 ## Member access
 
@@ -446,12 +441,13 @@ qualified names, which we call a _qualified member access expression_.
 
 Simple member access has the from `object.member`, where `member` is a word
 naming a member of `object`. This form may be used to access members of
-interfaces [implemented internally](#internal-impl) by the type of `object`.
+interfaces when the type of `object`
+[extends the implementation](#extending-an-impl) of that interface.
 
-If `String` implements `Printable` internally, then `s1.Print()` calls the
-`Print` method of `Printable` using simple member access. In this case, the name
-`Print` is used without qualifying it with the name of the interface it is a
-member of since it is recognized as a member of the type itself as well.
+If `String` extends its implementation of `Printable`, then `s1.Print()` calls
+the `Print` method of `Printable` using simple member access. In this case, the
+name `Print` is used without qualifying it with the name of the interface it is
+a member of since it is recognized as a member of the type itself as well.
 
 ### Qualified member access expression
 
@@ -470,8 +466,7 @@ method may be called using the qualified member name by writing the qualified
 member access expression `s1.(Comparable.Less)(s2)`.
 
 This form may be used to access any member of an interface implemented for a
-type, whether it is implemented [internally](#internal-impl) or
-[externally](#external-impl).
+type, whether or not it [extends the implementation](#extending-an-impl).
 
 ## Compatible types
 
@@ -600,7 +595,7 @@ the archetype is the supertype of all types satisfying the interface.
 
 In addition to satisfying all the requirements of its constraint, the archetype
 also has the member names of its constraint. Effectively it is considered to
-[implement the constraint internally](#internal-impl).
+[extend the implementation of the constraint](#extending-an-impl).
 
 ## Extending an interface
 
