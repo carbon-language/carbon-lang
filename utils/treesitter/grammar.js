@@ -463,11 +463,14 @@ module.exports = grammar({
         choice($.block, ';')
       ),
 
+    mix_declaration: ($) => seq('__mix', $._expression, ';'),
+
     class_body_item: ($) =>
       choice(
         $.declaration,
         $.extend_base_declaration,
         $.extend_impl_declaration,
+        $.mix_declaration,
         $.destructor_declaration
       ),
 
@@ -493,6 +496,19 @@ module.exports = grammar({
         '}'
       ),
 
+    mixin_import: ($) => seq('for', $._expression),
+
+    mixin_declaration: ($) =>
+      seq(
+        '__mixin',
+        $.declared_name,
+        optional($.type_params),
+        optional($.mixin_import),
+        '{',
+        repeat(choice($.function_declaration, $.mix_declaration)),
+        '}'
+      ),
+
     empty_declaration: ($) => ';',
 
     declaration: ($) =>
@@ -507,7 +523,8 @@ module.exports = grammar({
         $.constraint_declaration,
         $.impl_declaration,
         $.class_declaration,
-        $.choice_declaration
+        $.choice_declaration,
+        $.mixin_declaration
       ),
   },
 });
