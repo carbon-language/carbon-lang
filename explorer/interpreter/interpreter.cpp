@@ -1006,6 +1006,16 @@ auto Interpreter::CallDestructor(Nonnull<const DestructorDeclaration*> fun,
   const DestructorDeclaration& method = *fun;
   CARBON_CHECK(method.is_method());
 
+/*
+      const auto& addr = cast<AddrValue>(*p);
+      CARBON_CHECK(v.value()->kind() == Value::Kind::LocationValue);
+      const auto& location = cast<LocationValue>(*v.value());
+      return PatternMatch(
+          &addr.pattern(),
+          ExpressionResult::Value(arena->New<PointerValue>(location.address())),
+          source_loc, bindings, generic_args, trace_stream, arena);
+*/
+
   RuntimeScope method_scope(&heap_);
   BindingMap generic_args;
 /*
