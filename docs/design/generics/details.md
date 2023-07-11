@@ -507,7 +507,7 @@ though:
 -   It makes reading code harder, since you have to search the file for these
     declarations that affect name lookup.
 
-**Comparison with other languages:** Both Rust and Swift support external
+**Comparison with other languages:** Both Rust and Swift support out-of-line
 implementation.
 [Swift's syntax](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID277)
 does this as an "extension" of the original type. In Rust, all implementations
