@@ -76,21 +76,27 @@ There are three expression categories in Carbon:
 Expressions in one category can be converted to any other category when needed.
 The primitive conversion steps used are:
 
--   A _read_ converts a reference expression into a value expression.
--   _Direct initialization_ converts a value expression into an initializing
+-   A <a id="read">_read_</a> converts a reference expression into a value
     expression.
--   _Copy initialization_ converts a reference expression into an initializing
-    expression.
--   _Temporary materialization_ converts an initializing expression into a
-    reference expression.
+-   <a id="direct-init">_Direct initialization_</a> converts a value expression
+    into an initializing expression.
+-   <a id="copy-init">_Copy initialization_</a> converts a reference expression
+    into an initializing expression.
+-   <a id="temporary-materialization">_Temporary materialization_</a> converts
+    an initializing expression into a reference expression.
 
 These conversion steps combine to provide the transitive conversion table:
 
-|               From: | value                   | reference | initializing     |
-| ------------------: | ----------------------- | --------- | ---------------- |
-|        to **value** | ==                      | read      | temporary + read |
-|    to **reference** | direct init + temporary | ==        | temporary        |
-| to **initializing** | direct init             | copy init | ==               |
+|               From: | value                           | reference     | initializing             |
+| ------------------: | ------------------------------- | ------------- | ------------------------ |
+|        to **value** | ==                              | [read][]      | [temporary][] + [read][] |
+|    to **reference** | [direct init][] + [temporary][] | ==            | [temporary][]            |
+| to **initializing** | [direct init][]                 | [copy init][] | ==                       |
+
+[read]: #read
+[direct init]: #direct-init
+[copy init]: #copy-init
+[temporary]: #temporary-materialization
 
 Reference expressions formed through temporary materialization are called
 [_ephemeral reference expressions_](#ephemeral-reference-expressions) and have
@@ -152,10 +158,9 @@ fn Example() {
 ### Local variables
 
 A local binding pattern can be introduced with either the `let` or `var`
-keyword. The `let` introducer begins a value pattern just like the default
-patterns in other contexts. The `var` introducer works exactly the same as
-introducing the pattern in some other context with `var` -- there's just no need
-for the outer `let`.
+keyword. The `let` introducer begins a value pattern which works the same as the
+default patterns in other contexts. The `var` introducer immediately begins a
+variable pattern.
 
 -   `let` _identifier_`:` _( expression |_ `auto` _)_ `=` _value_`;`
 -   `var` _identifier_`:` _( expression |_ `auto` _) [_ `=` _value ]_`;`
@@ -259,8 +264,9 @@ Carbon:
 -   Dereferenced [pointers](#pointers): `*p`
 -   Names of subobjects through member access to some other durable reference
     expression: `x.member` or `p->member`
--   [Indexing](/docs/design/expressions/indexing.md) some other durable
-    reference expression: `array[i]`
+-   [Indexing](/docs/design/expressions/indexing.md) into a type similar to
+    C++'s `std::span` that implements `IndirectIndexWith`, or indexing into any
+    type with a durable reference expression such as `local_array[i]`.
 
 Durable reference expressions can only be produced _directly_ by one of these
 expressions. They are never produced by converting one of the other expression
@@ -268,12 +274,13 @@ categories into a reference expression.
 
 ### Ephemeral reference expressions
 
-We call the reference expressions formed through [temporary materialization]
-_ephemeral reference expressions_. They still refer to an object with storage,
-but it may be storage that will not outlive the full expression. Because the
-storage is only temporary, we impose restrictions on where these reference
-expressions can be used: their address can only be taken implicitly as part of a
-method call whose `self` parameter is marked with the `addr` specifier.
+We call the reference expressions formed through [temporary
+materialization][temporary] _ephemeral reference expressions_. They still refer
+to an object with storage, but it may be storage that will not outlive the full
+expression. Because the storage is only temporary, we impose restrictions on
+where these reference expressions can be used: their address can only be taken
+implicitly as part of a method call whose `self` parameter is marked with the
+`addr` specifier.
 
 **Future work:** The current design allows directly requiring an ephemeral
 reference for `addr`-methods because this replicates the flexibility in C++ --

@@ -26,6 +26,9 @@ Carbon provides the following operators related to pointers:
     pointer to it.
 -   `*` as a prefix unary operator dereferences a pointer.
 
+Note that [member access expressions](member_access.md) include an `->` form
+that implicitly performs a dereference in the same way as the `*` operator.
+
 ## Details
 
 The semantic details of pointer operators are collected in the main
