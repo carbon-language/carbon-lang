@@ -402,7 +402,7 @@ module.exports = grammar({
       choice(
         $.generic_binding,
         seq($.ident, ':', $._expression),
-        seq('addr', 'self', ':', $._expression)
+        seq(optional('addr'), 'self', ':', $._expression)
       ),
 
     deduced_params: ($) => seq('[', comma_sep($.deduced_param), ']'),
