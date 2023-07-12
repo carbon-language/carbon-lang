@@ -12,7 +12,7 @@ tree_sitter_cc_library(
 
 cc_binary(
     name = "test_runner",
-    srcs = ["test.cpp"],
+    srcs = ["test_runner.cpp"],
     deps = [
         ":treesitter",
     ],
@@ -30,7 +30,7 @@ tests = glob(
 
 cc_test(
     name = "tests",
-    srcs = ["test.cpp"],
+    srcs = ["test_runner.cpp"],
     args = ["$(location {0})".format(x) for x in tests],
     data = tests,
     deps = [
