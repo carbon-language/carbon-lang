@@ -193,7 +193,10 @@ module.exports = grammar({
         seq($._binding_lhs, ':!', $._expression),
         seq('template', $._binding_lhs, ':!', $._expression),
         seq('var', $._pattern),
-        $.paren_pattern
+        $.paren_pattern,
+        // alternative patterns
+        // example: Optional(i32).Some(x: i32)
+        seq($._expression, $.paren_pattern)
       ),
 
     _pattern: ($) => choice($._pattern_without_expression, $._expression),
