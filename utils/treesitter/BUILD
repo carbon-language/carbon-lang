@@ -18,6 +18,7 @@ cc_binary(
     ],
 )
 
+# TODO: export target from explorer
 explorer_test_files = glob(
     ["testdata/explorer/**/*.carbon"],
     exclude = [
