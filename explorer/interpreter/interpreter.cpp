@@ -266,7 +266,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
       CARBON_ASSIGN_OR_RETURN(
           const auto* value,
           heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc));
-      return arena_->New<ExpressionValue>(
+      return arena_->New<ReferenceExpressionValue>(
           value, cast<PointerValue>(*args[0]).address(),
           ExpressionCategory::Reference);
     }
@@ -353,14 +353,14 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
                   << ExpressionCategoryToString(v.expression_category())
                   << " expression with value " << *v.value() << "\n";
   }
-  if (v.value()->kind() == Value::Kind::ExpressionValue) {
-    const auto* expr_value = cast<ExpressionValue>(v.value());
+  if (v.value()->kind() == Value::Kind::ReferenceExpressionValue) {
+    const auto* expr_value = cast<ReferenceExpressionValue>(v.value());
     return PatternMatch(p, expr_value->expression_result(), source_loc,
                         bindings, generic_args, trace_stream, arena);
   }
   const auto expr_result = [](Nonnull<const Value*> v) -> ExpressionResult {
-    if (v->kind() == Value::Kind::ExpressionValue) {
-      return cast<ExpressionValue>(v)->expression_result();
+    if (v->kind() == Value::Kind::ReferenceExpressionValue) {
+      return cast<ReferenceExpressionValue>(v)->expression_result();
     }
     return ExpressionResult::Value(v);
   };
@@ -1048,8 +1048,8 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       // parameterized types for pointers in function call parameters.
       return value;
     }
-    case Value::Kind::ExpressionValue: {
-      const auto* expr_value = cast<ExpressionValue>(value);
+    case Value::Kind::ReferenceExpressionValue: {
+      const auto* expr_value = cast<ReferenceExpressionValue>(value);
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> converted,
           Convert(expr_value->value(), destination_type, source_loc));
@@ -1336,7 +1336,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         act.location_received()));
   } else {
     CARBON_CHECK(act.results().size() == 1);
-    if (const auto* expr_value = dyn_cast<ExpressionValue>(act.results()[0])) {
+    if (const auto* expr_value =
+            dyn_cast<ReferenceExpressionValue>(act.results()[0])) {
       // Unwrap the ExpressionAction to only keep the resulting
       // `Value*`.
       return todo_.FinishAction(expr_value->value());
@@ -1442,8 +1443,9 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
             }
             std::optional<const Value*> type_result;
             const auto* result =
-                act.results()[0]->kind() == Value::Kind::ExpressionValue
-                    ? cast<ExpressionValue>(act.results()[0])->value()
+                act.results()[0]->kind() ==
+                        Value::Kind::ReferenceExpressionValue
+                    ? cast<ReferenceExpressionValue>(act.results()[0])->value()
                     : act.results()[0];
             if (!isa<InterfaceType, NamedConstraintType, ConstraintType>(
                     result)) {
@@ -1505,7 +1507,8 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
                   aggregate,
                   this->heap_.Read(location->address(), exp.source_loc()));
             } else if (const auto* expr_value =
-                           dyn_cast<ExpressionValue>(act.results()[0])) {
+                           dyn_cast<ReferenceExpressionValue>(
+                               act.results()[0])) {
               lhs_address = expr_value->address();
               aggregate = expr_value->value();
               me_value = aggregate;
@@ -1518,7 +1521,7 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
                 aggregate->GetElement(arena_, ElementPath(member),
                                       exp.source_loc(), me_value));
             if (lhs_address) {
-              return todo_.FinishAction(arena_->New<ExpressionValue>(
+              return todo_.FinishAction(arena_->New<ReferenceExpressionValue>(
                   member_value, lhs_address->ElementAddress(member.element()),
                   ExpressionCategory::Reference));
             } else {
@@ -1653,7 +1656,7 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
         CARBON_ASSIGN_OR_RETURN(
             value, heap_.Read(location->address(), exp.source_loc()));
         if (ident.expression_category() == ExpressionCategory::Reference) {
-          return todo_.FinishAction(arena_->New<ExpressionValue>(
+          return todo_.FinishAction(arena_->New<ReferenceExpressionValue>(
               value, location->address(), ExpressionCategory::Reference));
         } else {
           return todo_.FinishAction(value);
@@ -2354,15 +2357,15 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
                                   : ExpressionCategory::Value;
         if (definition.has_init()) {
           Nonnull<const Value*> result = act.results()[0];
-          std::optional<Nonnull<const ExpressionValue*>> v_expr =
-              (result->kind() == Value::Kind::ExpressionValue)
-                  ? std::optional{cast<ExpressionValue>(result)}
+          std::optional<Nonnull<const ReferenceExpressionValue*>> v_expr =
+              (result->kind() == Value::Kind::ReferenceExpressionValue)
+                  ? std::optional{cast<ReferenceExpressionValue>(result)}
                   : std::nullopt;
           const auto init_location = act.location_created();
           v = v_expr ? (*v_expr)->value() : result;
           if (expr_category == ExpressionCategory::Reference) {
-            CARBON_CHECK(v_expr)
-                << "Expecting ExpressionValue from reference expression";
+            CARBON_CHECK(v_expr) << "Expecting ReferenceExpressionValue from "
+                                    "reference expression";
             v_location = (*v_expr)->address();
             CARBON_CHECK(v_location)
                 << "Expecting a valid address from reference expression";

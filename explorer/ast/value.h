@@ -299,18 +299,21 @@ class ExpressionResult {
 // Contains the result of the evaluation of an expression, including the
 // returned `Value*` and actual expression category, as well as its `Address`
 // for reference expressions.
-class ExpressionValue : public Value {
+class ReferenceExpressionValue : public Value {
  public:
-  explicit ExpressionValue(ExpressionResult expr_result)
-      : Value(Kind::ExpressionValue), expr_result_(std::move(expr_result)) {}
-  explicit ExpressionValue(Nonnull<const Value*> value)
-      : ExpressionValue(ExpressionResult::Value(value)) {}
-  ExpressionValue(Nonnull<const Value*> value, std::optional<Address> address,
-                  ExpressionCategory cat)
-      : ExpressionValue(ExpressionResult(value, std::move(address), cat)) {}
+  explicit ReferenceExpressionValue(ExpressionResult expr_result)
+      : Value(Kind::ReferenceExpressionValue),
+        expr_result_(std::move(expr_result)) {}
+  explicit ReferenceExpressionValue(Nonnull<const Value*> value)
+      : ReferenceExpressionValue(ExpressionResult::Value(value)) {}
+  ReferenceExpressionValue(Nonnull<const Value*> value,
+                           std::optional<Address> address,
+                           ExpressionCategory cat)
+      : ReferenceExpressionValue(
+            ExpressionResult(value, std::move(address), cat)) {}
 
   static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::ExpressionValue;
+    return value->kind() == Kind::ReferenceExpressionValue;
   }
 
   template <typename F>

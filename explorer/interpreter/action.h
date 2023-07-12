@@ -231,8 +231,9 @@ class ValueExpressionAction : public Action {
 };
 
 // An Action which implements evaluation of an Expression to produce an
-// `ExpressionValue*`. The `preserve_nested_categories` flag can be used to
-// preserve values as `ExpressionValue` in nested value types, such as tuples.
+// `ReferenceExpressionValue*`. The `preserve_nested_categories` flag can be
+// used to preserve values as `ReferenceExpressionValue` in nested value types,
+// such as tuples.
 class ExpressionAction : public Action {
  public:
   ExpressionAction(
@@ -251,7 +252,7 @@ class ExpressionAction : public Action {
   auto expression() const -> const Expression& { return *expression_; }
 
   // Returns whether direct descendent actions should preserve values as
-  // `ExpressionValue*`s.
+  // `ReferenceExpressionValue*`s.
   auto preserve_nested_categories() const -> bool {
     return preserve_nested_categories_;
   }
