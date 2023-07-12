@@ -569,7 +569,8 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "lval<" << cast<LocationValue>(*this).address() << ">";
       break;
     case Value::Kind::ReferenceExpressionValue:
-      out << "expr<" << cast<ReferenceExpressionValue>(*this).address() << ">";
+      out << "ref_expr<" << cast<ReferenceExpressionValue>(*this).address()
+          << ">";
       break;
     case Value::Kind::BoolType:
       out << "bool";

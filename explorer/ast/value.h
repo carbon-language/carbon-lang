@@ -296,21 +296,14 @@ class ExpressionResult {
   ExpressionCategory expr_cat_;
 };
 
-// Contains the result of the evaluation of an expression, including the
-// returned `Value*` and actual expression category, as well as its `Address`
-// for reference expressions.
+// Represents the result of the evaluation of a reference expression, and
+// holds the resulting `Value*` and its `Address`.
 class ReferenceExpressionValue : public Value {
  public:
-  explicit ReferenceExpressionValue(ExpressionResult expr_result)
+  ReferenceExpressionValue(Nonnull<const Value*> value, Address address)
       : Value(Kind::ReferenceExpressionValue),
-        expr_result_(std::move(expr_result)) {}
-  explicit ReferenceExpressionValue(Nonnull<const Value*> value)
-      : ReferenceExpressionValue(ExpressionResult::Value(value)) {}
-  ReferenceExpressionValue(Nonnull<const Value*> value,
-                           std::optional<Address> address,
-                           ExpressionCategory cat)
-      : ReferenceExpressionValue(
-            ExpressionResult(value, std::move(address), cat)) {}
+        value_(value),
+        address_(std::move(address)) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::ReferenceExpressionValue;
@@ -318,21 +311,15 @@ class ReferenceExpressionValue : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(expr_result_.value(), expr_result_.address(),
-             expr_result_.expression_category());
+    return f(value_, address_);
   }
 
-  auto value() const -> Nonnull<const Value*> { return expr_result_.value(); }
-  auto address() const -> std::optional<Address> {
-    return expr_result_.address();
-  }
-  auto expression_category() const -> ExpressionCategory {
-    return expr_result_.expression_category();
-  }
-  auto expression_result() const -> ExpressionResult { return expr_result_; }
+  auto value() const -> Nonnull<const Value*> { return value_; }
+  auto address() const -> const Address& { return address_; }
 
  private:
-  ExpressionResult expr_result_;
+  Nonnull<const Value*> value_;
+  Address address_;
 };
 
 // A pointer value

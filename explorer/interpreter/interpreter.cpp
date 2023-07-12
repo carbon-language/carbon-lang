@@ -267,8 +267,7 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
           const auto* value,
           heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc));
       return arena_->New<ReferenceExpressionValue>(
-          value, cast<PointerValue>(*args[0]).address(),
-          ExpressionCategory::Reference);
+          value, cast<PointerValue>(*args[0]).address());
     }
     case Operator::AddressOf:
       return arena_->New<PointerValue>(cast<LocationValue>(*args[0]).address());
@@ -353,17 +352,17 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
                   << ExpressionCategoryToString(v.expression_category())
                   << " expression with value " << *v.value() << "\n";
   }
-  if (v.value()->kind() == Value::Kind::ReferenceExpressionValue) {
-    const auto* expr_value = cast<ReferenceExpressionValue>(v.value());
-    return PatternMatch(p, expr_value->expression_result(), source_loc,
-                        bindings, generic_args, trace_stream, arena);
-  }
-  const auto expr_result = [](Nonnull<const Value*> v) -> ExpressionResult {
-    if (v->kind() == Value::Kind::ReferenceExpressionValue) {
-      return cast<ReferenceExpressionValue>(v)->expression_result();
+  const auto make_expr_result =
+      [](Nonnull<const Value*> v) -> ExpressionResult {
+    if (const auto* expr_v = dyn_cast<ReferenceExpressionValue>(v)) {
+      return ExpressionResult::Reference(expr_v->value(), expr_v->address());
     }
     return ExpressionResult::Value(v);
   };
+  if (v.value()->kind() == Value::Kind::ReferenceExpressionValue) {
+    return PatternMatch(p, make_expr_result(v.value()), source_loc, bindings,
+                        generic_args, trace_stream, arena);
+  }
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
       CARBON_CHECK(bindings.has_value());
@@ -397,7 +396,7 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
           CARBON_CHECK(p_tup.elements().size() == v_tup.elements().size());
           for (size_t i = 0; i < p_tup.elements().size(); ++i) {
             if (!PatternMatch(p_tup.elements()[i],
-                              expr_result(v_tup.elements()[i]), source_loc,
+                              make_expr_result(v_tup.elements()[i]), source_loc,
                               bindings, generic_args, trace_stream, arena)) {
               return false;
             }
@@ -1522,8 +1521,7 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
                                       exp.source_loc(), me_value));
             if (lhs_address) {
               return todo_.FinishAction(arena_->New<ReferenceExpressionValue>(
-                  member_value, lhs_address->ElementAddress(member.element()),
-                  ExpressionCategory::Reference));
+                  member_value, lhs_address->ElementAddress(member.element())));
             } else {
               return todo_.FinishAction(member_value);
             }
@@ -1657,7 +1655,7 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
             value, heap_.Read(location->address(), exp.source_loc()));
         if (ident.expression_category() == ExpressionCategory::Reference) {
           return todo_.FinishAction(arena_->New<ReferenceExpressionValue>(
-              value, location->address(), ExpressionCategory::Reference));
+              value, location->address()));
         } else {
           return todo_.FinishAction(value);
         }
