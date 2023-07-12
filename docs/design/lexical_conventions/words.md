@@ -85,6 +85,7 @@ The following words are interpreted as keywords:
 -   `return`
 -   `returned`
 -   `Self`
+-   `self`
 -   `template`
 -   `then`
 -   `type`
