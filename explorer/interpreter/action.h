@@ -112,8 +112,8 @@ class Action {
  public:
   enum class Kind {
     LocationAction,
+    ValueExpressionAction,
     ExpressionAction,
-    ExpressionCategoryAction,
     WitnessAction,
     StatementAction,
     DeclarationAction,
@@ -204,17 +204,17 @@ class LocationAction : public Action {
 };
 
 // An Action which implements evaluation of an Expression to produce a `Value*`.
-class ExpressionAction : public Action {
+class ValueExpressionAction : public Action {
  public:
-  explicit ExpressionAction(
+  explicit ValueExpressionAction(
       Nonnull<const Expression*> expression,
       std::optional<AllocationId> initialized_location = std::nullopt)
-      : Action(Kind::ExpressionAction),
+      : Action(Kind::ValueExpressionAction),
         expression_(expression),
         location_received_(initialized_location) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->kind() == Kind::ExpressionAction;
+    return action->kind() == Kind::ValueExpressionAction;
   }
 
   // The Expression this Action evaluates.
@@ -233,18 +233,18 @@ class ExpressionAction : public Action {
 // An Action which implements evaluation of an Expression to produce an
 // `ExpressionValue*`. The `preserve_nested_categories` flag can be used to
 // preserve values as `ExpressionValue` in nested value types, such as tuples.
-class ExpressionCategoryAction : public Action {
+class ExpressionAction : public Action {
  public:
-  ExpressionCategoryAction(
+  ExpressionAction(
       Nonnull<const Expression*> expression, bool preserve_nested_categories,
       std::optional<AllocationId> initialized_location = std::nullopt)
-      : Action(Kind::ExpressionCategoryAction),
+      : Action(Kind::ExpressionAction),
         expression_(expression),
         location_received_(initialized_location),
         preserve_nested_categories_(preserve_nested_categories) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->kind() == Kind::ExpressionCategoryAction;
+    return action->kind() == Kind::ExpressionAction;
   }
 
   // The Expression this Action evaluates.

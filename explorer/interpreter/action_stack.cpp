@@ -110,8 +110,8 @@ enum class FinishActionKind {
 
 static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
   switch (kind) {
+    case Action::Kind::ValueExpressionAction:
     case Action::Kind::ExpressionAction:
-    case Action::Kind::ExpressionCategoryAction:
     case Action::Kind::WitnessAction:
     case Action::Kind::LocationAction:
     case Action::Kind::TypeInstantiationAction:
