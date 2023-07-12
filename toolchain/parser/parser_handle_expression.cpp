@@ -70,7 +70,8 @@ auto ParserHandleExpressionInPostfix(ParserContext& context) -> void {
     case TokenKind::IntegerTypeLiteral:
     case TokenKind::UnsignedIntegerTypeLiteral:
     case TokenKind::FloatingPointTypeLiteral:
-    case TokenKind::StringTypeLiteral: {
+    case TokenKind::StringTypeLiteral:
+    case TokenKind::Type: {
       context.AddLeafNode(ParseNodeKind::Literal, context.Consume());
       context.PushState(state);
       break;
@@ -118,7 +119,7 @@ auto ParserHandleExpressionInPostfixLoop(ParserContext& context) -> void {
   switch (context.PositionKind()) {
     case TokenKind::Period: {
       context.PushState(state);
-      state.state = ParserState::DesignatorAsExpression;
+      state.state = ParserState::PeriodAsExpression;
       context.PushState(state);
       break;
     }
@@ -297,9 +298,9 @@ auto ParserHandleExpressionStatementFinish(ParserContext& context) -> void {
   }
 
   if (!state.has_error) {
-    CARBON_DIAGNOSTIC(ExpectedSemiAfterExpression, Error,
-                      "Expected `;` after expression.");
-    context.emitter().Emit(*context.position(), ExpectedSemiAfterExpression);
+    CARBON_DIAGNOSTIC(ExpectedExpressionSemi, Error,
+                      "Expected `;` after expression statement.");
+    context.emitter().Emit(*context.position(), ExpectedExpressionSemi);
   }
 
   if (auto semi_token = context.SkipPastLikelyEnd(state.token)) {

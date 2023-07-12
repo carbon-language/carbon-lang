@@ -51,34 +51,51 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
       cl::desc("Output file for tracing; set to `-` to output to stdout."));
 
   cl::list<ProgramPhase> allowed_program_phases(
+      "trace_phase",
       cl::desc("Select the program phases to include in the output. By "
                "default, only the execution trace will be added to the trace "
                "output. Use a combination of the following flags to include "
                "outputs for multiple phases:"),
       cl::values(
-          clEnumValN(ProgramPhase::SourceProgram, "trace_source_program",
+          clEnumValN(ProgramPhase::SourceProgram, "source_program",
                      "Include trace output for the Source Program phase."),
-          clEnumValN(ProgramPhase::NameResolution, "trace_name_resolution",
+          clEnumValN(ProgramPhase::NameResolution, "name_resolution",
                      "Include trace output for the Name Resolution phase."),
           clEnumValN(
-              ProgramPhase::ControlFlowResolution,
-              "trace_control_flow_resolution",
+              ProgramPhase::ControlFlowResolution, "control_flow_resolution",
               "Include trace output for the Control Flow Resolution phase."),
-          clEnumValN(ProgramPhase::TypeChecking, "trace_type_checking",
+          clEnumValN(ProgramPhase::TypeChecking, "type_checking",
                      "Include trace output for the Type Checking phase."),
           clEnumValN(ProgramPhase::UnformedVariableResolution,
-                     "trace_unformed_variables_resolution",
+                     "unformed_variables_resolution",
                      "Include trace output for the Unformed Variables "
                      "Resolution phase."),
-          clEnumValN(ProgramPhase::Declarations, "trace_declarations",
+          clEnumValN(ProgramPhase::Declarations, "declarations",
                      "Include trace output for printing Declarations."),
-          clEnumValN(ProgramPhase::Execution, "trace_execution",
+          clEnumValN(ProgramPhase::Execution, "execution",
                      "Include trace output for Program Execution."),
           clEnumValN(
-              ProgramPhase::Timing, "trace_timing",
+              ProgramPhase::Timing, "timing",
               "Include timing logs for each phase, indicating the time taken."),
-          clEnumValN(ProgramPhase::All, "trace_all",
-                     "Include trace output for all phases.")));
+          clEnumValN(ProgramPhase::All, "all",
+                     "Include trace output for all phases.")),
+      cl::CommaSeparated);
+
+  cl::list<FileContext> allowed_file_contexts(
+      "trace_file_context",
+      cl::desc("Select file contexts for which you want to include the trace "
+               "output"),
+      cl::values(
+          clEnumValN(
+              FileContext::Main, "main",
+              "Include trace output for file containing the main function"),
+          clEnumValN(FileContext::Prelude, "prelude",
+                     "Include trace output for prelude"),
+          clEnumValN(FileContext::Import, "import",
+                     "Include trace output for imports"),
+          clEnumValN(FileContext::All, "all",
+                     "Include trace output for all files")),
+      cl::CommaSeparated);
 
   // Use the executable path as a base for the relative prelude path.
   std::string exe =
@@ -101,6 +118,7 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   if (!trace_file_name.empty()) {
     // Adding allowed phases in the trace_stream
     trace_stream.set_allowed_phases(allowed_program_phases);
+    trace_stream.set_allowed_file_contexts(allowed_file_contexts);
     if (trace_file_name == "-") {
       trace_stream.set_stream(&llvm::outs());
     } else {

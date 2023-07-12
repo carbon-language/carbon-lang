@@ -25,10 +25,10 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: nodeInvalidType, arg1: node+2, type: typeInvalidType},
+// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: nodeError, arg1: node+2, type: typeError},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+3, arg1: node+4, type: typeInvalidType},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5, type: typeInvalidType},
+// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+3, arg1: node+4, type: typeError},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5, type: typeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

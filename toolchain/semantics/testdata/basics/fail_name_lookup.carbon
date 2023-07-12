@@ -13,6 +13,7 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   Main,
+// CHECK:STDOUT:   x,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeEmptyTupleType,

@@ -904,10 +904,10 @@ Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
 -   `c.Expand(`...`)` does modify the value of `c`. This is signified using
     `[addr self: Self*]` in the method declaration.
 
-The pattern '`addr` _patt_' means "first take the address of the argument, which
-must be an
+The pattern '`addr self:` _type_' means "first take the address of the argument,
+which must be an
 [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>), and
-then match pattern _patt_ against it".
+then match pattern '`self:` _type_' against it".
 
 If the method declaration also includes
 [deduced generic parameters](/docs/design/generics/overview.md#deduced-parameters),

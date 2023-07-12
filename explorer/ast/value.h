@@ -688,18 +688,34 @@ class FunctionType : public Value {
     Nonnull<const GenericBinding*> binding;
   };
 
-  FunctionType(Nonnull<const Value*> parameters,
+  // For methods with unbound `self` parameters.
+  struct MethodSelf {
+    template <typename F>
+    auto Decompose(F f) const {
+      return f(addr_self, self_type);
+    }
+
+    // True if `self` parameter uses an `addr` pattern.
+    bool addr_self;
+    // Type of `self` parameter.
+    const Value* self_type;
+  };
+
+  FunctionType(std::optional<MethodSelf> method_self,
+               Nonnull<const Value*> parameters,
                Nonnull<const Value*> return_type)
-      : FunctionType(parameters, {}, return_type, {}, {},
+      : FunctionType(method_self, parameters, {}, return_type, {}, {},
                      /*is_initializing=*/false) {}
 
-  FunctionType(Nonnull<const Value*> parameters,
+  FunctionType(std::optional<MethodSelf> method_self,
+               Nonnull<const Value*> parameters,
                std::vector<GenericParameter> generic_parameters,
                Nonnull<const Value*> return_type,
                std::vector<Nonnull<const GenericBinding*>> deduced_bindings,
                std::vector<Nonnull<const ImplBinding*>> impl_bindings,
                bool is_initializing)
       : Value(Kind::FunctionType),
+        method_self_(method_self),
         parameters_(parameters),
         generic_parameters_(std::move(generic_parameters)),
         return_type_(return_type),
@@ -707,14 +723,20 @@ class FunctionType : public Value {
         impl_bindings_(std::move(impl_bindings)),
         is_initializing_(is_initializing) {}
 
+  struct ExceptSelf {};
+  FunctionType(ExceptSelf, const FunctionType& clone)
+      : FunctionType(std::nullopt, clone.parameters_, clone.generic_parameters_,
+                     clone.return_type_, clone.deduced_bindings_,
+                     clone.impl_bindings_, clone.is_initializing_) {}
+
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
   }
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(parameters_, generic_parameters_, return_type_, deduced_bindings_,
-             impl_bindings_, is_initializing_);
+    return f(method_self_, parameters_, generic_parameters_, return_type_,
+             deduced_bindings_, impl_bindings_, is_initializing_);
   }
 
   // The type of the function parameter tuple.
@@ -739,7 +761,11 @@ class FunctionType : public Value {
   // Return whether the function type is an initializing expression or not.
   auto is_initializing() const -> bool { return is_initializing_; }
 
+  // Binding for the implicit `self` parameter, if this is an unbound method.
+  auto method_self() const -> std::optional<MethodSelf> { return method_self_; }
+
  private:
+  std::optional<MethodSelf> method_self_;
   Nonnull<const Value*> parameters_;
   std::vector<GenericParameter> generic_parameters_;
   Nonnull<const Value*> return_type_;

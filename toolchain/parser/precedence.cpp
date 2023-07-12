@@ -209,7 +209,7 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
     case TokenKind::PlusPlus:
       return PrecedenceGroup(NumericPrefix);
 
-    case TokenKind::Tilde:
+    case TokenKind::Caret:
       return PrecedenceGroup(BitwisePrefix);
 
     case TokenKind::If:
@@ -233,6 +233,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
     case TokenKind::PercentEqual:
     case TokenKind::AmpEqual:
     case TokenKind::PipeEqual:
+    case TokenKind::CaretEqual:
     case TokenKind::GreaterGreaterEqual:
     case TokenKind::LessLessEqual:
       return Trailing{.level = CompoundAssignment, .is_binary = true};
@@ -248,7 +249,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
       return Trailing{.level = BitwiseAnd, .is_binary = true};
     case TokenKind::Pipe:
       return Trailing{.level = BitwiseOr, .is_binary = true};
-    case TokenKind::Xor:
+    case TokenKind::Caret:
       return Trailing{.level = BitwiseXor, .is_binary = true};
     case TokenKind::GreaterGreater:
     case TokenKind::LessLess:
@@ -286,14 +287,12 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
       return Trailing{.level = NumericPostfix, .is_binary = false};
 
     // Prefix-only operators.
-    case TokenKind::Tilde:
     case TokenKind::Not:
       break;
 
     // Symbolic tokens that might be operators eventually.
+    case TokenKind::Tilde:
     case TokenKind::Backslash:
-    case TokenKind::Caret:
-    case TokenKind::CaretEqual:
     case TokenKind::Comma:
     case TokenKind::TildeEqual:
     case TokenKind::Exclaim:

@@ -19,5 +19,5 @@
 fn F() {
   return
 // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+2]]:1: Expected expression.
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+1]]:1: Expected `;` after `return`.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+1]]:1: `return` statements must end with a `;`.
 }

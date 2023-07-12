@@ -118,6 +118,7 @@ enum class DumpMode {
   SemanticsIR,
   LLVMIR,
   Assembly,
+  ObjectCode,
   Unknown
 };
 
@@ -134,10 +135,11 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                        .Case("semantics-ir", DumpMode::SemanticsIR)
                        .Case("llvm-ir", DumpMode::LLVMIR)
                        .Case("assembly", DumpMode::Assembly)
+                       .Case("objcode", DumpMode::ObjectCode)
                        .Default(DumpMode::Unknown);
   if (dump_mode == DumpMode::Unknown) {
     error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, "
-                     "semantics-ir, llvm-ir, or assembly.\n";
+                     "semantics-ir, llvm-ir, assembly, or objcode.\n";
     return false;
   }
   args = args.drop_front();
@@ -161,6 +163,26 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
       args.front().starts_with("--target_triple=")) {
     target_triple = args.front().split("=").second;
     args = args.drop_front();
+  }
+
+  llvm::StringRef output_file;
+  if (dump_mode == DumpMode::ObjectCode) {
+    while (!args.empty() && (args.front().starts_with("--target_triple=") ||
+                             args.front().starts_with("--output_file="))) {
+      if (args.front().starts_with("--target_triple=")) {
+        target_triple = args.front().split("=").second;
+        args = args.drop_front();
+      }
+      if (args.front().starts_with("--output_file=")) {
+        output_file = args.front().split("=").second;
+        args = args.drop_front();
+      }
+    }
+
+    if (output_file.empty()) {
+      error_stream_ << "ERROR: Must provide an output file.\n";
+      return false;
+    }
   }
 
   if (args.empty()) {
@@ -248,8 +270,23 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
 
   if (dump_mode == DumpMode::Assembly) {
     consumer.Flush();
-    has_errors |= !Carbon::PrintAssemblyFromModule(
-        *module, target_triple, error_stream_, output_stream_);
+    CodeGen codegen(*module, target_triple, error_stream_, output_stream_);
+    has_errors |= !codegen.PrintAssembly();
+    return !has_errors;
+  }
+
+  if (dump_mode == DumpMode::ObjectCode) {
+    std::error_code ec;
+    llvm::raw_fd_ostream dest(output_file, ec, llvm::sys::fs::OF_None);
+    if (ec) {
+      error_stream_ << "Error: Could not open file: " << ec.message() << "\n";
+      return false;
+    }
+    CodeGen codegen(*module, target_triple, error_stream_, dest);
+    has_errors |= !codegen.GenerateObjectCode();
+    if (!has_errors) {
+      output_stream_ << "Success: Object file is generated!\n";
+    }
     return !has_errors;
   }
 

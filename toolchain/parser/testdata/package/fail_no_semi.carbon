@@ -11,5 +11,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+1]]:21: Expected `;` to end package directive.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+1]]:21: `package` declarations must end with a `;`.
 package Geometry api

@@ -26,7 +26,7 @@
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+2, type: type1},
 // CHECK:STDOUT:   {kind: StructType, arg0: block0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeInvalidType, type: typeInvalidType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeError, type: typeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
