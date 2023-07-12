@@ -25,8 +25,7 @@ auto SemanticsHandlePatternBinding(SemanticsContext& context,
 
   // Get the name.
   auto [name_node, name_id] =
-      context.node_stack().PopWithParseNode<SemanticsStringId>(
-          ParseNodeKind::Name);
+      context.node_stack().PopWithParseNode<ParseNodeKind::Name>();
 
   // Allocate storage, linked to the name for error locations.
   auto storage_id =
