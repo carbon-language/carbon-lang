@@ -307,7 +307,8 @@ auto SemanticsContext::PopDeclarationName() -> DeclarationNameContext {
       ParseNodeKind::QualifiedDeclaration) {
     // Any parts from a QualifiedDeclaration will already have been processed
     // into the name.
-    node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::QualifiedDeclaration);
+    node_stack_
+        .PopAndDiscardSoloParseNode<ParseNodeKind::QualifiedDeclaration>();
   } else {
     // The name had no qualifiers, so we need to process the node now.
     auto [parse_node, node_or_name_id] =

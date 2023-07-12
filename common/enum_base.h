@@ -53,12 +53,11 @@ namespace Carbon::Internal {
 //   ```
 template <typename DerivedT, typename EnumT>
 class EnumBase {
- protected:
+ public:
   // An alias for the raw enum type. This is an implementation detail and
-  // shouldn't be used, but we need it for a signature so it is declared early.
+  // should rarely be used directly, only when an actual enum type is needed.
   using RawEnumType = EnumT;
 
- public:
   using EnumType = DerivedT;
   using UnderlyingType = std::underlying_type_t<RawEnumType>;
 
@@ -92,7 +91,8 @@ class EnumBase {
   // the base itself. This should only be used in the `Create` function below.
   constexpr EnumBase() = default;
 
-  // Create an instance from the raw enumerator, for internal use.
+  // Create an instance from the raw enumerator. Mainly used internally, but may
+  // be exposed for unusual use cases.
   static constexpr auto Create(RawEnumType value) -> EnumType {
     EnumType result;
     result.value_ = value;
