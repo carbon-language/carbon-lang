@@ -172,7 +172,9 @@ class Action {
     scope_ = std::move(scope);
   }
 
-  auto source_loc() -> std::optional<SourceLocation> { return source_loc_; }
+  auto source_loc() const -> std::optional<SourceLocation> {
+    return source_loc_;
+  }
 
  protected:
   // Constructs an Action. `kind` must be the enumerator corresponding to the

@@ -2688,7 +2688,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
     }
     if (act.pos() % 2 == 0) {
       auto* location = arena_->New<LocationValue>(Address(allocation));
-      auto value = heap_.Read(location->address(), cleanup.source_loc());
+      auto value = heap_.Read(location->address(), *cleanup.source_loc());
       // Step over uninitialized values.
       if (value.ok()) {
         return todo_.Spawn(std::make_unique<DestroyAction>(location, *value));
