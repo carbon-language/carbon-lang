@@ -192,6 +192,10 @@ class Interpreter {
   // The stream for the Print intrinsic.
   Nonnull<llvm::raw_ostream*> print_stream_;
 
+  // Stores the sizes of the action stack (todo_) and the Heap (heap_) used for
+  // used for checking if trace state is changed
+  std::pair<int, int> stack_heap_sizes;
+
   Phase phase_;
 
   // The number of steps taken by the interpreter. Used for infinite loop
@@ -204,7 +208,11 @@ class Interpreter {
 //
 
 void Interpreter::TraceState() {
-  *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
+  if (stack_heap_sizes.first != todo_.size() ||
+      stack_heap_sizes.second != heap_.size()) {
+    *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
+    stack_heap_sizes = {todo_.size(), heap_.size()};
+  }
 }
 
 auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
