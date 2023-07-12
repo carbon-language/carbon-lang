@@ -18,10 +18,10 @@ cc_binary(
     ],
 )
 
-tests = glob(
-    ["testdata/**/*.carbon"],
+explorer_test_files = glob(
+    ["testdata/explorer/**/*.carbon"],
     exclude = [
-        "testdata/**/fail_*",
+        "testdata/explorer/**/fail_*",
 
         # multiline strings
         "testdata/explorer/string/*",
@@ -29,10 +29,10 @@ tests = glob(
 )
 
 cc_test(
-    name = "tests",
+    name = "explorer_tests",
     srcs = ["test_runner.cpp"],
-    args = ["$(location {0})".format(x) for x in tests],
-    data = tests,
+    args = ["$(location {0})".format(x) for x in explorer_test_files],
+    data = explorer_test_files,
     deps = [
         ":treesitter",
     ],
