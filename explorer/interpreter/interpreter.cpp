@@ -87,10 +87,10 @@ class Interpreter {
  private:
   auto Step() -> ErrorOr<Success>;
 
+  // State transitions for expressions value generation.
+  auto StepValueExp() -> ErrorOr<Success>;
   // State transitions for expressions.
   auto StepExp() -> ErrorOr<Success>;
-  // State transitions for expression categories.
-  auto StepExpCategory() -> ErrorOr<Success>;
   // State transitions for lvalues.
   auto StepLocation() -> ErrorOr<Success>;
   // State transitions for witnesses.
@@ -1329,7 +1329,7 @@ auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
   }
 }
 
-auto Interpreter::StepExp() -> ErrorOr<Success> {
+auto Interpreter::StepValueExp() -> ErrorOr<Success> {
   auto& act = cast<ValueExpressionAction>(todo_.CurrentAction());
   if (act.pos() == 0) {
     return todo_.Spawn(std::make_unique<ExpressionAction>(
@@ -1348,7 +1348,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
   }
 }
 
-auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
+auto Interpreter::StepExp() -> ErrorOr<Success> {
   auto& act = cast<ExpressionAction>(todo_.CurrentAction());
   const Expression& exp = act.expression();
   if (trace_stream_->is_enabled()) {
@@ -1760,7 +1760,7 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
               act.results()[2 + static_cast<int>(num_witnesses)]);
         }
       } else {
-        CARBON_FATAL() << "in StepExp with Call pos " << act.pos();
+        CARBON_FATAL() << "in StepValueExp with Call pos " << act.pos();
       }
     }
     case ExpressionKind::IntrinsicExpression: {
@@ -2726,10 +2726,10 @@ auto Interpreter::Step() -> ErrorOr<Success> {
       CARBON_RETURN_IF_ERROR(StepLocation());
       break;
     case Action::Kind::ValueExpressionAction:
-      CARBON_RETURN_IF_ERROR(StepExp());
+      CARBON_RETURN_IF_ERROR(StepValueExp());
       break;
     case Action::Kind::ExpressionAction:
-      CARBON_RETURN_IF_ERROR(StepExpCategory());
+      CARBON_RETURN_IF_ERROR(StepExp());
       break;
     case Action::Kind::WitnessAction:
       CARBON_RETURN_IF_ERROR(StepWitness());
