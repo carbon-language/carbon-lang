@@ -1656,12 +1656,9 @@ auto Interpreter::StepExpCategory() -> ErrorOr<Success> {
         if (ident.expression_category() == ExpressionCategory::Reference) {
           return todo_.FinishAction(arena_->New<ReferenceExpressionValue>(
               value, location->address()));
-        } else {
-          return todo_.FinishAction(value);
         }
-      } else {
-        return todo_.FinishAction(value);
       }
+      return todo_.FinishAction(value);
     }
     case ExpressionKind::DotSelfExpression: {
       CARBON_CHECK(act.pos() == 0);
