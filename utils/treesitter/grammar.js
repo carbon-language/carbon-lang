@@ -293,6 +293,7 @@ module.exports = grammar({
           seq($._expression, '==', $._expression),
           seq($._expression, 'impls', $._expression),
           seq($._expression, '=', $._expression),
+          // FIXME: logical and conflicts with this
           prec.left(seq($.where_clause, 'and', $.where_clause))
         )
       ),

@@ -22,10 +22,9 @@ tests = glob(
     ["testdata/**/*.carbon"],
     exclude = [
         "testdata/**/fail_*",
-        "testdata/function/declaration/addr.carbon",
-        "testdata/generics/generic_params/template_addr.carbon",
-        "testdata/operators/recover_infix_uneven_space_before.carbon",
-        "testdata/operators/recover_postfix_space_surrounding.carbon",
+
+        # multiline strings
+        "testdata/explorer/string/*",
     ],
 )
 
