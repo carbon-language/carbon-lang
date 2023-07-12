@@ -50,7 +50,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Instantiation](#instantiation)
 -   [Specialization](#specialization)
     -   [Template specialization](#template-specialization)
-    -   [Checked generic specialization](#checked-generic-specialization)
+    -   [Checked-generic specialization](#checked-generic-specialization)
 -   [Conditional conformance](#conditional-conformance)
 -   [Interface type parameters and associated types](#interface-type-parameters-and-associated-types)
 -   [Type constraints](#type-constraints)
@@ -303,7 +303,13 @@ determines the API that is available in the body of the definition of the
 A _facet_ is a value of a [facet type](#facet-type). For example,
 `i32 as Hashable` is a facet, and `Hashable` is a facet type. Note that all
 types are facets, since [`type`](#types-and-type) is considered a facet type.
-Not all facets are types, though.
+Not all facets are types, though: `i32 as Hashable` is of type `Hashable` not
+`type`, so it is a facet that is not a type. However, in places where a type is
+expected, for example to the right of a `:` in a binding or after the `->` in a
+function declaration, there is an automatic implicit conversion to `type`. This
+means that a facet may be used in those positions. For example, the facet
+`i32 as Hashable` will implicitly convert to `(i32 as Hashable) as type`, which
+is `i32`, in those contexts.
 
 ## Generic type
 
@@ -389,9 +395,8 @@ An _associated entity_ is a requirement in an interface that a type's
 implementation of the interface must satisfy by having a matching definition. A
 requirement that the type define a value for a member constant is called an
 _associated constant_, and similarly an _associated function_ or _associated
-[generic type](#generic-type)_. Note that other languages use the term
-"associated type" instead of "associated generic type," but in Carbon a generic
-type is a [facet](#facet) may not be a type.
+type_. Note that an associated type will be a [generic type](#generic-type), and
+so may not be a type, but a [facet](#facet) usable as a type.
 
 Different types can satisfy an interface with different definitions for a given
 member. These definitions are _associated_ with what type is implementing the
@@ -587,7 +592,7 @@ of "type erasure" used in Carbon.
 
 A placeholder type is used when type checking a function in place of a generic
 type parameter. This allows type checking when the specific type to be used is
-not known at type checking time. The type satisfies just its constraint and no
+not known at type-checking time. The type satisfies just its constraint and no
 more, so it acts as the most general type satisfying the interface. In this way
 the archetype is the supertype of all types satisfying the interface.
 
@@ -662,15 +667,16 @@ and other errors may only happen for **some** instantiations.
 
 ### Template specialization
 
-Specialization in C++ is essentially overloading in the context of a template.
-The template is overloaded to have a different definition for some subset of the
+Specialization in C++ is essentially overloading, or
+[ad-hoc polymorphism](#ad-hoc-polymorphism), in the context of a template. The
+template is overloaded to have a different definition for some subset of the
 possible template argument values. For example, the C++ type `std::vector<T>`
 might have a specialization `std::vector<T*>` that is implemented in terms of
 `std::vector<void*>` to reduce code size. In C++, even the interface of a
 templated type can be changed in a specialization, as happens for
 `std::vector<bool>`.
 
-### Checked generic specialization
+### Checked-generic specialization
 
 Specialization of checked generics, or types used by checked generics, is
 restricted to changing the implementation _without_ affecting the interface.
@@ -679,7 +685,7 @@ generic definitions that reference a type that can be specialized, without
 statically knowing which specialization will be used.
 
 While there is nothing fundamentally incompatible about specialization with
-generics, even when implemented using witness tables, the result may be
+checked generics, even when implemented using witness tables, the result may be
 surprising because the selection of the specialized generic happens outside of
 the witness-table-based indirection between the generic code and the concrete
 implementation. Provided all selection relies exclusively on interfaces, this
@@ -821,3 +827,6 @@ associated type, or can define a relationship between multiple types.
 -   [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
 -   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
 -   [#1013: Generics: Set associated constants using where constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
+-   [#2138: Checked and template generic terminology](https://github.com/carbon-language/carbon-lang/pull/2138)
+-   [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
+-   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
