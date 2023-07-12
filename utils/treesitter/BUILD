@@ -18,22 +18,11 @@ cc_binary(
     ],
 )
 
-# TODO: export target from explorer
-explorer_test_files = glob(
-    ["testdata/explorer/**/*.carbon"],
-    exclude = [
-        "testdata/explorer/**/fail_*",
-
-        # multiline strings
-        "testdata/explorer/string/*",
-    ],
-)
-
 cc_test(
     name = "explorer_tests",
     srcs = ["test_runner.cpp"],
-    args = ["$(location {0})".format(x) for x in explorer_test_files],
-    data = explorer_test_files,
+    args = ["$(locations //explorer:treesitter_testdata)"],
+    data = ["//explorer:treesitter_testdata"],
     deps = [
         ":treesitter",
     ],
