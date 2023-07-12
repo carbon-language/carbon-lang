@@ -73,6 +73,10 @@ module.exports = grammar({
 
     comment: ($) => token(seq('//', /.*/)),
 
+    // NOTE: this must be before ident rule to increase its priority.
+    // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p2015.md#syntax
+    numeric_type_literal: ($) => /[iuf][1-9][0-9]*/,
+
     ident: ($) => /[A-Za-z_][A-Za-z0-9_]*/,
 
     bool_literal: ($) => choice('true', 'false'),
@@ -119,9 +123,6 @@ module.exports = grammar({
         )
       );
     },
-
-    // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p2015.md#syntax
-    numeric_type_literal: ($) => /[iuf][1-9][0-9]*/,
 
     _string_content: ($) => token.immediate(/[^\\"]+/),
 
