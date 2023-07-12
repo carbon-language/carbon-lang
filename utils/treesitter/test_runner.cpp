@@ -42,6 +42,7 @@ auto main(int argc, char** argv) -> int {
     std::string source = ReadFile(file_path);
 
     // `and` in where clauses is not parsed correctly.
+    // TODO: remove once where clause is implemented correctly.
     if (source.find("where") != std::string::npos &&
         source.find("and") != std::string::npos) {
       skipped.push_back(file_path);
