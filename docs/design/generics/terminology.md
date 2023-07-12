@@ -239,9 +239,9 @@ not as in [dependent types](https://en.wikipedia.org/wiki/Dependent_type).
 ### Definition checking
 
 Definition checking is the process of semantically checking the definition of
-parameterized code for correctness _independently_ of any particular arguments.
-It includes type checking and other semantic checks. It is possible, even with
-templates, to check semantics of expressions that are not
+parameterized code for correctness _independently_ of any particular argument
+values. It includes type checking and other semantic checks. It is possible,
+even with templates, to check semantics of expressions that are not
 [dependent](#dependent-names) on any template parameter in the definition.
 Adding constraints to template parameters and/or switching them to be checked
 allows the compiler to increase how much of the definition can be checked. Any
@@ -253,8 +253,9 @@ fail.
 Complete definition checking is when the definition can be _fully_ semantically
 checked, including type checking. It is an especially useful property because it
 enables _separate_ semantic checking of the definition, a prerequisite to
-separate compilation. It also enables implementation strategies that don’t
-instantiate the implementation (for example, [type erasure](#type-erasure) or
+separate compilation. It also is a requirement for implementation strategies
+that don’t instantiate the implementation (for example,
+[type erasure](#type-erasure) or
 [dynamic-dispatch witness tables](#dynamic-dispatch-witness-table)).
 
 #### Early versus late type checking
@@ -336,14 +337,6 @@ function name in a function signature:
 
 Deduced arguments are determined as a result of pattern matching the explicit
 argument values (usually the types of those values) to the explicit parameters.
-Note that function signatures can typically be rewritten to avoid using deduced
-parameters:
-
-```
-fn F[template T:! type](value: T);
-// is equivalent to:
-fn F(value: (template T:! type));
-```
 
 See more [here](overview.md#deduced-parameters).
 
@@ -355,7 +348,8 @@ to know about the interface requirements to call the function, not anything
 about the implementation of the function body, and the compiler can check the
 function body without knowing anything more about the caller. Callers of the
 function provide a value that has an implementation of the API and the body of
-the function may then use that API (and nothing else).
+the function may then use that API. In the case of a checked generic, the
+function may _only_ use that API.
 
 ### Structural interfaces
 
@@ -416,8 +410,9 @@ values for associated types, etc. are given. Implementations are needed for
 [nominal interfaces](#nominal-interfaces);
 [structural interfaces](#structural-interfaces) and
 [named constraints](#named-constraints) define conformance implicitly instead of
-by requiring an impl to be defined. In can still make sense to implement a named
-constraint as a way to implement all of the interfaces it requires.
+by requiring an impl to be defined. In can still make sense to explicitly
+implement a named constraint as a way to implement all of the interfaces it
+requires.
 
 ### Extending an impl
 
@@ -533,18 +528,21 @@ simply _coherence_, if there is a single answer to the question "what is the
 implementation of this interface for this type, if any?" independent of context,
 such as the libraries imported into a given file.
 
-This is typically enforced by making sure the definition of the implementation
-must be imported if you import both the interface and the type. This may be done
-by requiring the implementation to be in the same library as the interface or
-type. This is called an _orphan rule_, meaning we don't allow an implementation
-that is not with either of its parents (parent type or parent interface).
+This is enforced using two kinds of rules:
 
-Note that in addition to an orphan rule that implementations are visible when
-queried, coherence also requires a rule for resolving what happens if there are
-multiple non-orphan implementations. In Rust, this is called the
-[overlap rule or overlap check](https://rust-lang.github.io/chalk/book/clauses/coherence.html#chalk-overlap-check).
-This could be just producing an error in that situation, or picking one using
-some specialization rule.
+-   An _orphan rule_ is a restriction on which files may declare a particular
+    implementation. This is to ensure that the implementation is imported any
+    time it could be used. For example, if neither the type nor the interface is
+    parameterized, the orphan rule requires that the implementation must be in
+    the same library as the interface or type. The rule is we don't allow an
+    _orphan_ implementation that is not with either of its parents (parent type
+    or parent interface).
+-   An _overlap rule_ is a way to _consistently_ select a single implementation
+    when multiple implementations apply. In Carbon, overlap is resolved by
+    picking a single implementation using a rule that picks the one that is
+    considered most specialized. In Rust, by contrast, the
+    [overlap rule or overlap check](https://rust-lang.github.io/chalk/book/clauses/coherence.html#chalk-overlap-check)
+    instead produces an error if two implementations apply at once.
 
 ## Adapting a type
 
