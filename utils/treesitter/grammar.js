@@ -78,7 +78,8 @@ module.exports = grammar({
     bool_literal: ($) => choice('true', 'false'),
 
     numeric_literal: ($) => {
-      // This is using variables because rules are not allowed in token.immediate and token.
+      // This is using variables because rules are not allowed in
+      // token.immediate and token.
       // https://github.com/tree-sitter/tree-sitter/issues/449
       const decimal_integer_literal = choice('0', /[1-9](_?[0-9])*/);
       const hex_digits = /[0-9A-F](_?[0-9A-F])*/;
