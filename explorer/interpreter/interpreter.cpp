@@ -194,7 +194,7 @@ class Interpreter {
 
   // Stores the sizes of the action stack (todo_) and the Heap (heap_) used for
   // used for checking if trace state is changed
-  std::pair<int, int> stack_heap_sizes;
+  std::pair<int, int> stack_heap_sizes_;
 
   Phase phase_;
 
@@ -208,10 +208,10 @@ class Interpreter {
 //
 
 void Interpreter::TraceState() {
-  if (stack_heap_sizes.first != todo_.size() ||
-      stack_heap_sizes.second != heap_.size()) {
+  if (stack_heap_sizes_.first != todo_.size() ||
+      stack_heap_sizes_.second != heap_.size()) {
     *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
-    stack_heap_sizes = {todo_.size(), heap_.size()};
+    stack_heap_sizes_ = {todo_.size(), heap_.size()};
   }
 }
 
