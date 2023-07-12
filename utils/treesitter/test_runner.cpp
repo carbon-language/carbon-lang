@@ -25,6 +25,7 @@ static auto ReadFile(std::filesystem::path path) -> std::string {
   return buffer.str();
 }
 
+// TODO: use file_test.cpp
 auto main(int argc, char** argv) -> int {
   if (argc < 2) {
     std::cerr << "Usage: treesitter_carbon_tester <file>...\n";
