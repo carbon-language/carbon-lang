@@ -391,9 +391,7 @@ module.exports = grammar({
         $.for_statement
       ),
 
-    _statement_list: ($) => seq($.statement, repeat($.statement)),
-
-    block: ($) => seq('{', optional($._statement_list), '}'),
+    block: ($) => seq('{', repeat($.statement), '}'),
 
     declared_name: ($) => repeat_sep1($.ident, '.'),
 
