@@ -328,6 +328,7 @@ module.exports = grammar({
         $.ref_expression,
         $.unary_prefix_expression,
         $.where_expression,
+        'self',
         '.Self',
         $.designator
       ),
