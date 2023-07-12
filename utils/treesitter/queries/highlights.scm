@@ -122,7 +122,6 @@
   "return"
   "returned"
   "Self"
-  "self"
   "template"
   "then"
   "type"
