@@ -516,14 +516,12 @@ module.exports = grammar({
         '}'
       ),
 
-    mixin_import: ($) => seq('for', $._expression),
-
     mixin_declaration: ($) =>
       seq(
         '__mixin',
         $.declared_name,
         optional($.type_params),
-        optional($.mixin_import),
+        optional(seq('for', $._expression)),
         '{',
         repeat(choice($.function_declaration, $.mix_declaration)),
         '}'
