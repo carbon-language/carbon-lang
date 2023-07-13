@@ -2419,7 +2419,7 @@ class ContactInfo {
 >
 > -   [Aliases](aliases.md)
 > -   ["Aliasing" in "Code and name organization"](code_and_name_organization/README.md#aliasing)
-> -   [`alias` a name from an external impl](generics/details.md#external-impl)
+> -   [`alias` a name from an interface impl](generics/details.md#avoiding-name-collisions)
 > -   [`alias` a name in a named constraint](generics/details.md#named-constraints)
 > -   Proposal
 >     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
@@ -2676,7 +2676,7 @@ sufficient.
 class Circle {
   var radius: f32;
 
-  extend impl as Printable {
+  impl as Printable {
     fn Print[self: Self]() {
       Carbon.Print("Circle with radius: {0}", self.radius);
     }
@@ -2684,16 +2684,23 @@ class Circle {
 }
 ```
 
-In this case, `Print` is a member of `Circle`. Interfaces may also be
-implemented [externally](generics/details.md#external-impl), which means the
-members of the interface are not direct members of the type. Those methods may
-still be called using compound member access syntax
-([1](expressions/member_access.md),
-[2](generics/details.md#qualified-member-names-and-compound-member-access)) to
-qualify the name of the member, as in `x.(Printable.Print)()`. External
-implementations don't have to be in the same library as the type definition,
-subject to the orphan rule ([1](generics/details.md#impl-lookup),
-[2](generics/details.md#orphan-rule)) for
+In this case, `Print` is not a direct member of `Circle`, but:
+
+-   `Circle` may be passed to functions expecting a type that implements
+    `Printable`, and
+-   the members of `Printable` such as `Print` may be called using compound
+    member access syntax ([1](expressions/member_access.md),
+    [2](generics/details.md#qualified-member-names-and-compound-member-access))
+    to qualify the name of the member, as in `c.(Printable.Print)()`.
+
+To include the members of the interface as direct members of the type, use the
+[`extend`](generics/details.md#extend-impl) keyword, as in
+`extend impl as Printable`. This is only permitted on `impl` declarations in the
+body of a class definition.
+
+Without `extend`, implementations don't have to be in the same library as the
+type definition, subject to the orphan rule
+([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)) for
 [coherence](generics/terminology.md#coherence).
 
 Interfaces and implementations may be
