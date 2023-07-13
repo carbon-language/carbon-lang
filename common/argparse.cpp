@@ -348,14 +348,9 @@ void Args::MetaPrinter::PrintArgValueUsage(const Arg& arg) const {
   }
   if (arg.kind == Arg::Kind::OneOf) {
     out_ << "(";
-    bool first = true;
+    llvm::ListSeparator sep("|");
     for (llvm::StringRef value_string : arg.value_strings) {
-      if (first) {
-        first = false;
-      } else {
-        out_ << "|";
-      }
-      out_ << value_string;
+      out_ << sep << value_string;
     }
     out_ << ")";
     return;
@@ -386,14 +381,9 @@ void Args::MetaPrinter::PrintShortName(const Arg& arg) const {
 void Args::MetaPrinter::PrintArgShortValues(const Arg& arg) const {
   CARBON_CHECK(arg.kind == Arg::Kind::OneOf)
       << "Only one-of arguments have interesting value snippets to print.";
-  bool first = true;
+  llvm::ListSeparator sep;
   for (llvm::StringRef value_string : arg.value_strings) {
-    if (first) {
-      first = false;
-    } else {
-      out_ << ", ";
-    }
-    out_ << value_string;
+    out_ << sep << value_string;
   }
 }
 void Args::MetaPrinter::PrintArgLongValues(const Arg& arg,

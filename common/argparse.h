@@ -30,7 +30,7 @@ namespace Carbon {
 // This is a collection of tools to describe both simple and reasonably complex
 // command line interfaces, and parse arguments based on those descriptions. It
 // optimizes for command line tools that will parse arguments exactly once per
-// execution, and specifically tools that make heavy use of a subcommand-style
+// execution, and specifically tools that make heavy use of subcommand-style
 // command line interfaces.
 //
 // ## Terminology used by this library
@@ -57,7 +57,7 @@ namespace Carbon {
 // arguments. A command with subcommands cannot parse positional arguments, only
 // a leaf command can do that.
 //
-// _Action_: An open ended callback, typically reflecting a specific subcommand
+// _Action_: An open-ended callback, typically reflecting a specific subcommand
 // being parsed. Can either directly perform the operation or simply mark which
 // operation was selected.
 //
@@ -163,17 +163,13 @@ namespace Carbon {
 //
 // At many points in this library, a block of text is specified as a string.
 // These should be written using multi-line raw string literals that start on
-// there own line such as:
+// their own line such as:
 //
 // ```cpp
 //     ...
 //     .help = R"""(
 // Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-// tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-// quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-// consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-// cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-// proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+// tempor incididunt ut labore et dolore magna aliqua.
 // )""",
 // ```
 //
