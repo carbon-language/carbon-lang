@@ -401,7 +401,6 @@ module.exports = grammar({
     deduced_param: ($) =>
       choice(
         $.generic_binding,
-        seq($.ident, ':', $._expression),
         seq(optional('addr'), 'self', ':', $._expression)
       ),
 
