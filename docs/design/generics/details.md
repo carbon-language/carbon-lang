@@ -13,8 +13,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Interfaces](#interfaces)
 -   [Implementing interfaces](#implementing-interfaces)
+    -   [Inline `impl`](#inline-impl)
+    -   [`extend impl`](#extend-impl)
+    -   [Out-of-line `impl`](#out-of-line-impl)
+        -   [Defining an `impl` in another library than the type](#defining-an-impl-in-another-library-than-the-type)
+    -   [Forward `impl` declaration](#forward-impl-declaration)
     -   [Implementing multiple interfaces](#implementing-multiple-interfaces)
-    -   [External impl](#external-impl)
+    -   [Avoiding name collisions](#avoiding-name-collisions)
     -   [Qualified member names and compound member access](#qualified-member-names-and-compound-member-access)
     -   [Access](#access)
 -   [Generics](#generics)
@@ -251,15 +256,17 @@ have different definitions for `Add` and `Scale`, so we say their definitions
 are _associated_ with what type is implementing `Vector`. The `impl` defines
 what is associated with the implementing type for that interface.
 
+### Inline `impl`
+
 An impl may be defined inline inside the type definition:
 
 ```
-class Point {
+class Point_Inline {
   var x: f64;
   var y: f64;
-  extend impl as Vector {
+  impl as Vector {
     // In this scope, the `Self` keyword is an
-    // alias for `Point`.
+    // alias for `Point_Inline`.
     fn Add[self: Self](b: Self) -> Self {
       return {.x = a.x + b.x, .y = a.y + b.y};
     }
@@ -270,38 +277,178 @@ class Point {
 }
 ```
 
+### `extend impl`
+
 Interfaces that are implemented inline with the `extend` keyword contribute to
 the type's API:
 
 ```
-var p1: Point = {.x = 1.0, .y = 2.0};
-var p2: Point = {.x = 2.0, .y = 4.0};
+class Point_Extend {
+  var x: f64;
+  var y: f64;
+  extend impl as Vector {
+    fn Add[self: Self](b: Self) -> Self {
+      return {.x = a.x + b.x, .y = a.y + b.y};
+    }
+    fn Scale[self: Self](v: f64) -> Self {
+      return {.x = a.x * v, .y = a.y * v};
+    }
+  }
+}
+
+var p1: Point_Extend = {.x = 1.0, .y = 2.0};
+var p2: Point_Extend = {.x = 2.0, .y = 4.0};
 Assert(p1.Scale(2.0) == p2);
 Assert(p1.Add(p1) == p2);
 ```
 
-**Note:** A type may implement any number of different interfaces, but may
-provide at most one implementation of any single interface. This makes the act
-of selecting an implementation of an interface for a type unambiguous throughout
-the whole program.
+Without `extend`, those methods may only be accessed with
+[qualified member names and compound member access](#qualified-member-names-and-compound-member-access):
 
-**Comparison with other languages:** Rust defines implementations lexically
+```
+// Point_Inline did not use `extend` when
+// implementing `Vector`:
+var a: Point_Inline = {.x = 1.0, .y = 2.0};
+// `a` does *not* have `Add` and `Scale` methods:
+// ❌ Error: a.Add(a.Scale(2.0));
+```
+
+This is consistent with the general Carbon rule that if the names of another
+entity affect a class' API, then that is mentioned with an `extend` declaration
+in the `class` definition.
+
+**Comparison with other languages:** Rust only defines implementations lexically
 outside of the `class` definition. This Carbon approach means that a type's API
 is described by declarations inside the `class` definition and doesn't change
 afterwards.
 
-**References:** This interface implementation syntax was accepted in
+**References:** Carbon's interface implementation syntax was first defined in
 [proposal #553](https://github.com/carbon-language/carbon-lang/pull/553). In
 particular, see
 [the alternatives considered](/proposals/p0553.md#interface-implementation-syntax).
+This syntax was changed to use `extend` in
+[proposal #2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760).
+
+### Out-of-line `impl`
+
+An impl may also be defined after the type definition, by naming the type
+between `impl` and `as`:
+
+```
+class Point_OutOfLine {
+  var x: f64;
+  var y: f64;
+}
+
+impl Point_OutOfLine as Vector {
+  // In this scope, the `Self` keyword is an
+  // alias for `Point_OutOfLine`.
+  fn Add[self: Self](b: Self) -> Self {
+    return {.x = a.x + b.x, .y = a.y + b.y};
+  }
+  fn Scale[self: Self](v: f64) -> Self {
+    return {.x = a.x * v, .y = a.y * v};
+  }
+}
+```
+
+Since `extend impl` may only be used inside the class definition, out-of-line
+definitions do not contribute to the class' API unless there is a corresponding
+[forward declaration in the class definition using `extend](#forward-impl-declaration).
+
+Conversely, being declared or defined lexically inside the class means that
+implementation is available to other members defined in the class. For example,
+it would allow implementing another interface or method that requires this
+interface to be implemented.
+
+**Open question:** Do implementations need to be defined lexically inside the
+class to get access to private members, or is it sufficient to be defined in the
+same library as the class?
+
+**Comparison with other languages:** Both Rust and Swift support out-of-line
+implementation.
+[Swift's syntax](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID277)
+does this as an "extension" of the original type. In Rust, all implementations
+are out-of-line as in
+[this example](https://doc.rust-lang.org/rust-by-example/trait.html). Unlike
+Swift and Rust, we don't allow a type's API to be modified outside its
+definition. So in Carbon a type's API is consistent no matter what is imported,
+unlike Swift and Rust.
+
+#### Defining an `impl` in another library than the type
+
+An out-of-line `impl` declaration is allowed to be defined in a different
+library from `Point_OutOfLine`, restricted by
+[the coherence/orphan rules](#impl-lookup) that ensure that the implementation
+of an interface can't change based on imports. In particular, the `impl`
+declaration is allowed in the library defining the interface (`Vector` in this
+case) in addition to the library that defines the type (`Point_OutOfLine` here).
+This (at least partially) addresses
+[the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
+
+You can't use `extend` outside the class definition, so an `impl` declarations
+in a different library will never affect the class' API. This means that the API
+of a class such as `Point_OutOfLine` doesn't change based on what is imported.
+It would be particularly bad if two different libraries implemented interfaces
+with conflicting names that both affected the API of a single type. As a
+consequence of this restriction, you can find all the names of direct members
+(those available by [simple member access](terminology.md#simple-member-access))
+of a type in the definition of that type. The only thing that may be in another
+library is an `impl` of an interface.
+
+**Rejected alternative:** We could allow types to have different APIs in
+different files based on explicit configuration in that file. For example, we
+could support a declaration that a given interface or a given method of an
+interface is "in scope" for a particular type in this file. With that
+declaration, the method could be called using
+[simple member access](terminology.md#simple-member-access). This avoids most
+concerns arising from name collisions between interfaces. It has a few downsides
+though:
+
+-   It increases variability between files, since the same type will have
+    different APIs depending on these declarations. This makes it harder to
+    copy-paste code between files.
+-   It makes reading code harder, since you have to search the file for these
+    declarations that affect name lookup.
+
+### Forward `impl` declaration
+
+An `impl` declaration may be forward declared and then defined later. If this is
+done using [`extend` to add to the type's API](#extend-impl), only the
+declaration in the class definition will use the `extend` keyword, as in this
+example:
+
+```
+class Point_ExtendForward {
+  var x: f64;
+  var y: f64;
+  // Forward declaration in class definition using `extend`.
+  // Signals that you should look in the definition of
+  // `Vector` since those methods are included in this type.
+  extend impl as Vector;
+}
+
+// Definition outside class definition does not.
+impl Point_ExtendForward as Vector {
+  fn Add[self: Self](b: Self) -> Self {
+    return {.x = a.x + b.x, .y = a.y + b.y};
+  }
+  fn Scale[self: Self](v: f64) -> Self {
+    return {.x = a.x * v, .y = a.y * v};
+  }
+}
+```
+
+More about forward declaring implementations in
+[its dedicated section](#declaring-implementations).
 
 ### Implementing multiple interfaces
 
 To implement more than one interface when defining a type, simply include an
-`impl` block per interface.
+`impl` block or forward declaration per interface.
 
 ```
-class Point {
+class Point_2Extend {
   var x: f64;
   var y: f64;
   extend impl as Vector {
@@ -314,24 +461,13 @@ class Point {
 }
 ```
 
-In this case, all the functions `Add`, `Scale`, and `Draw` end up a part of the
-API for `Point`. This means you can't implement two interfaces that have a name
-in common (unless you use an `impl` without `extend` for one or both, for an
-[external impl](#external-impl)).
+Since both were declared using `extend`, all the functions `Add`, `Scale`, and
+`Draw` end up a part of the API for `Point_2Extend`.
 
-```
-class GameBoard {
-  extend impl as Drawable {
-    fn Draw[self: Self]() { ... }
-  }
-  extend impl as EndOfGame {
-    // ❌ Error: `GameBoard` has two methods named
-    // `Draw` with the same signature.
-    fn Draw[self: Self]() { ... }
-    fn Winner[self: Self](player: i32) { ... }
-  }
-}
-```
+**Note:** A type may implement any number of different interfaces, but may
+provide at most one implementation of any single interface. This makes the act
+of selecting an implementation of an interface for a type unambiguous throughout
+the whole program.
 
 **Open question:** Should we have some syntax for the case where you want both
 names to be given the same implementation? It seems like that might be a common
@@ -355,93 +491,42 @@ class Player {
 }
 ```
 
-### External impl
+### Avoiding name collisions
 
-Interfaces may also be implemented for a type without adding the interface's
-methods to the type by using `impl` without `extend`.
+To avoid name collisions, you can't extend implementations of two interfaces
+that have a name in common:
 
 ```
-class Point2 {
-  var x: f64;
-  var y: f64;
-
-  impl as Vector {
-    // In this scope, the `Self` keyword is an
-    // alias for `Point2`.
-    fn Add[self: Self](b: Self) -> Self {
-      return {.x = a.x + b.x, .y = a.y + b.y};
-    }
-    fn Scale[self: Self](v: f64) -> Self {
-      return {.x = a.x * v, .y = a.y * v};
-    }
+class GameBoard {
+  extend impl as Drawable {
+    fn Draw[self: Self]() { ... }
+  }
+  extend impl as EndOfGame {
+    // ❌ Error: `GameBoard` has two methods named `Draw`.
+    fn Draw[self: Self]() { ... }
+    fn Winner[self: Self](player: i32) { ... }
   }
 }
-
-var a: Point2 = {.x = 1.0, .y = 2.0};
-// `a` does *not* have `Add` and `Scale` methods:
-// ❌ Error: a.Add(a.Scale(2.0));
 ```
 
-An external impl may include the name of the implementing type before `as`,
-which is required to define it out-of-line:
+To implement two interfaces that have a name in common, omit `extend` for one or
+both.
+
+You might also omit `extend` when implementing an interface for a type to avoid
+cluttering the API of that type or to avoid a name collision with another member
+of that type. A syntax for reusing method implementations allows us to include
+names from an implementation selectively:
 
 ```
-class Point3 {
+class Point_ReuseMethodInImpl {
   var x: f64;
   var y: f64;
-}
-
-impl Point3 as Vector {
-  // In this scope, the `Self` keyword is an
-  // alias for `Point3`.
-  fn Add[self: Self](b: Self) -> Self {
-    return {.x = a.x + b.x, .y = a.y + b.y};
-  }
-  fn Scale[self: Self](v: f64) -> Self {
-    return {.x = a.x * v, .y = a.y * v};
-  }
-}
-
-var a: Point3 = {.x = 1.0, .y = 2.0};
-// `a` does *not* have `Add` and `Scale` methods:
-// ❌ Error: a.Add(a.Scale(2.0));
-```
-
-**References:** The external interface implementation syntax was decided in
-[proposal #553](https://github.com/carbon-language/carbon-lang/pull/553), and
-then replaced in
-[proposal #2760](https://github.com/carbon-language/carbon-lang/pull/2760).
-
-An external `impl` declaration is allowed to be defined in a different library
-from `Point3`, restricted by [the coherence/orphan rules](#impl-lookup) that
-ensure that the implementation of an interface can't change based on imports. In
-particular, the `impl` declaration is allowed in the library defining the
-interface (`Vector` in this case) in addition to the library that defines the
-type (`Point3` here). This (at least partially) addresses
-[the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
-
-Carbon requires `impl` declarations in a different library to be external so
-that the API of `Point3` doesn't change based on what is imported. It would be
-particularly bad if two different libraries implemented interfaces with
-conflicting names that both affected the API of a single type. As a consequence
-of this restriction, you can find all the names of direct members (those
-available by [simple member access](terminology.md#simple-member-access)) of a
-type in the definition of that type. The only thing that may be in another
-library is an `impl` of an interface.
-
-You might also use an external `impl` to implement an interface for a type to
-avoid cluttering the API of that type, for example to avoid a name collision. A
-syntax for reusing method implementations allows us to do this selectively when
-needed. In this case, the external `impl` may be declared lexically inside the
-class scope.
-
-```
-class Point4a {
-  var x: f64;
-  var y: f64;
+  // `Add()` is a method of `Point_ReuseMethodInImpl`.
   fn Add[self: Self](b: Self) -> Self {
     return {.x = self.x + b.x, .y = self.y + b.y};
   }
+  // No `extend`, so other members of `Vector` are not
+  // part of `Point_ReuseMethodInImpl`'s API.
   impl as Vector {
     alias Add = Point4a.Add;  // Syntax TBD
     fn Scale[self: Self](v: f64) -> Self {
@@ -452,9 +537,11 @@ class Point4a {
 
 // OR:
 
-class Point4b {
+class Point_IncludeMethodFromImpl {
   var x: f64;
   var y: f64;
+  // No `extend`, so members of `Vector` are not
+  // part of `Point_IncludeMethodFromImpl`'s API.
   impl as Vector {
     fn Add[self: Self](b: Self) -> Self {
       return {.x = self.x + b.x, .y = self.y + b.y};
@@ -463,12 +550,15 @@ class Point4b {
       return {.x = self.x * v, .y = self.y * v};
     }
   }
+  // Include `Add` explicitly as a member.
   alias Add = Vector.Add;
 }
 
 // OR:
 
-class Point4c {
+// This is the same as `Point_ReuseMethodInImpl`,
+// except the `impl` is out-of-line.
+class Point_ReuseByOutOfLine {
   var x: f64;
   var y: f64;
   fn Add[self: Self](b: Self) -> Self {
@@ -476,68 +566,44 @@ class Point4c {
   }
 }
 
-impl Point4c as Vector {
-  alias Add = Point4c.Add;  // Syntax TBD
+impl Point_ReuseByOutOfLine as Vector {
+  alias Add = Point_ReuseByOutOfLine.Add;  // Syntax TBD
   fn Scale[self: Self](v: f64) -> Self {
     return {.x = self.x * v, .y = self.y * v};
   }
 }
 ```
 
-Being defined lexically inside the class means that implementation is available
-to other members defined in the class. For example, it would allow implementing
-another interface or method that requires this interface to be implemented.
-
-**Open question:** Do implementations need to be defined lexically inside the
-class to get access to private members, or is it sufficient to be defined in the
-same library as the class?
-
-**Rejected alternative:** We could allow types to have different APIs in
-different files based on explicit configuration in that file. For example, we
-could support a declaration that a given interface or a given method of an
-interface is "in scope" for a particular type in this file. With that
-declaration, the method could be called using
-[simple member access](terminology.md#simple-member-access). This avoids most
-concerns arising from name collisions between interfaces. It has a few downsides
-though:
-
--   It increases variability between files, since the same type will have
-    different APIs depending on these declarations. This makes it harder to
-    copy-paste code between files.
--   It makes reading code harder, since you have to search the file for these
-    declarations that affect name lookup.
-
-**Comparison with other languages:** Both Rust and Swift support out-of-line
-implementation.
-[Swift's syntax](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID277)
-does this as an "extension" of the original type. In Rust, all implementations
-are out-of-line as in
-[this example](https://doc.rust-lang.org/rust-by-example/trait.html). Unlike
-Swift and Rust, we don't allow a type's API to be modified outside its
-definition. So in Carbon a type's API is consistent no matter what is imported,
-unlike Swift and Rust.
-
 ### Qualified member names and compound member access
 
-Given a value of type `Point3` and an interface `Vector` implemented for that
-type, you can access the methods from that interface using a
+```
+class Point_NoExtend {
+  var x: f64;
+  var y: f64;
+}
+
+impl Point_NoExtend as Vector { ... }
+```
+
+Given a value of type `Point_NoExtend` and an interface `Vector` implemented for
+that type, you can access the methods from that interface using a
 [qualified member access expression](terminology.md#qualified-member-access-expression)
 whether or not the implementation is done with an
-[external `impl` declaration](#external-impl). The qualified member access
+[`extend impl` declaration](#extend-impl). The qualified member access
 expression writes the member's _qualified name_ in the parentheses of the
 [compound member access syntax](/docs/design/expressions/member_access.md):
 
 ```
-var p1: Point3 = {.x = 1.0, .y = 2.0};
-var p2: Point3 = {.x = 2.0, .y = 4.0};
+var p1: Point_NoExtend = {.x = 1.0, .y = 2.0};
+var p2: Point_NoExtend = {.x = 2.0, .y = 4.0};
 Assert(p1.(Vector.Scale)(2.0) == p2);
 Assert(p1.(Vector.Add)(p1) == p2);
 ```
 
 Note that the name in the parens is looked up in the containing scope, not in
-the names of members of `Point3`. So if there was another interface `Drawable`
-with method `Draw` defined in the `Plot` package also implemented for `Point3`,
-as in:
+the names of members of `Point_NoExtend`. So if there was another interface
+`Drawable` with method `Draw` defined in the `Plot` package also implemented for
+`Point_NoExtend`, as in:
 
 ```
 package Plot;
@@ -547,7 +613,7 @@ interface Drawable {
   fn Draw[self: Self]();
 }
 
-impl Points.Point3 as Drawable { ... }
+impl Points.Point_NoExtend as Drawable { ... }
 ```
 
 You could access `Draw` with a qualified name:
@@ -556,7 +622,7 @@ You could access `Draw` with a qualified name:
 import Plot;
 import Points;
 
-var p: Points.Point3 = {.x = 1.0, .y = 2.0};
+var p: Points.Point_NoExtend = {.x = 1.0, .y = 2.0};
 p.(Plot.Drawable.Draw)();
 ```
 
@@ -591,7 +657,7 @@ Here is a function that can accept values of any type that has implemented the
 fn AddAndScaleGeneric[T:! Vector](a: T, b: T, s: f64) -> T {
   return a.Add(b).Scale(s);
 }
-var v: Point = AddAndScaleGeneric(a, w, 2.5);
+var v: Point_Extend = AddAndScaleGeneric(a, w, 2.5);
 ```
 
 Here `T` is a type whose type is `Vector`. The `:!` syntax means that `T` is a
@@ -634,11 +700,14 @@ example members in a derived class can hide members in the base class with the
 same name, though it is not that common for it to come up in practice.
 
 The behavior of calling `AddAndScaleGeneric` with a value of a specific type
-like `Point` is to set `T` to `Point` after all the names have been qualified.
+like `Point_Extend` is to set `T` to `Point_Extend` after all the names have
+been qualified.
 
 ```
-// AddAndScaleGeneric with T = Point
-fn AddAndScaleForPoint(a: Point, b: Point, s: Double) -> Point {
+// AddAndScaleGeneric with T = Point_Extend
+fn AddAndScaleForPoint_Extend(
+    a: Point_Extend, b: Point_Extend, s: Double)
+    -> Point_Extend {
   return a.(Vector.Add)(b).(Vector.Scale)(s);
 }
 ```
@@ -646,11 +715,11 @@ fn AddAndScaleForPoint(a: Point, b: Point, s: Double) -> Point {
 This qualification gives a consistent interpretation to the body of the function
 even when the type supplied by the caller does not
 [extend the implementation of the interface](terminology.md#extending-an-impl),
-like `Point2`:
+like `Point_NoExtend`:
 
 ```
-// AddAndScaleGeneric with T = Point2
-fn AddAndScaleForPoint2(a: Point2, b: Point2, s: Double) -> Point2 {
+// AddAndScaleGeneric with T = Point_NoExtend
+fn AddAndScaleForPoint_NoExtend(a: Point_NoExtend, b: Point_NoExtend, s: Double) -> Point_NoExtend {
   // ✅ This works even though `a.Add(b).Scale(s)` wouldn't.
   return a.(Vector.Add)(b).(Vector.Scale)(s);
 }
@@ -660,16 +729,18 @@ fn AddAndScaleForPoint2(a: Point2, b: Point2, s: Double) -> Point2 {
 
 From the caller's perspective, the return type is the result of substituting the
 caller's values for the generic parameters into the return type expression. So
-`AddAndScaleGeneric` called with `Point` values returns a `Point` and called
-with `Point2` values returns a `Point2`. So looking up a member on the resulting
-value will look in `Point` or `Point2` rather than `Vector`.
+`AddAndScaleGeneric` called with `Point_Extend` values returns a `Point_Extend`
+and called with `Point_NoExtend` values returns a `Point_NoExtend`. So looking
+up a member on the resulting value will look in `Point_Extend` or
+`Point_NoExtend` rather than `Vector`.
 
 This is part of realizing
 [the goal that generic functions can be used in place of regular functions without changing the return type that callers see](goals.md#path-from-regular-functions).
 In this example, `AddAndScaleGeneric` can be substituted for
-`AddAndScaleForPoint` and `AddAndScaleForPoint2` without affecting the return
-types. This requires the return value to be converted to the type that the
-caller expects instead of the erased type used inside the generic function.
+`AddAndScaleForPoint_Extend` and `AddAndScaleForPoint_NoExtend` without
+affecting the return types. This requires the return value to be converted to
+the type that the caller expects instead of the erased type used inside the
+generic function.
 
 A generic caller of a generic function performs the same substitution process to
 determine the return type, but the result may be generic. In this example of
@@ -755,26 +826,26 @@ class Vector {
 }
 ```
 
-The [impl of Vector for Point](#implementing-interfaces) would be a value of
-this type:
+The [impl of Vector for Point_Inline](#inline-impl) would be a value of this
+type:
 
 ```
-var VectorForPoint: Vector  = {
-    .Self = Point,
+var VectorForPoint_Inline: Vector  = {
+    .Self = Point_Inline,
     // `lambda` is **placeholder** syntax for defining a
     // function value.
-    .Add = lambda(a: Point, b: Point) -> Point {
+    .Add = lambda(a: Point_Inline, b: Point_Inline) -> Point_Inline {
       return {.x = a.x + b.x, .y = a.y + b.y};
     },
-    .Scale = lambda(a: Point, v: f64) -> Point {
+    .Scale = lambda(a: Point_Inline, v: f64) -> Point_Inline {
       return {.x = a.x * v, .y = a.y * v};
     },
 };
 ```
 
 Since generic arguments (where the parameter is declared using `:!`) are passed
-at compile time, so the actual value of `VectorForPoint` can be used to generate
-the code for functions using that impl. This is the
+at compile time, so the actual value of `VectorForPoint_Inline` can be used to
+generate the code for functions using that impl. This is the
 [static-dispatch witness table](terminology.md#static-dispatch-witness-table)
 approach.
 
@@ -1733,8 +1804,8 @@ there is no implicit conversion from `B` to `A`, matching `adapt` without
 `extend` but unlike class extension.
 
 To avoid or resolve name conflicts between interfaces, an `impl` may be declared
-[external](#external-impl). The names in that interface may then be pulled in
-individually or renamed using `alias` declarations.
+without [`extend`](#extend-impl). The names in that interface may then be pulled
+in individually or renamed using `alias` declarations.
 
 ```
 class SongRenderToPrintDriver {
@@ -2669,15 +2740,16 @@ fn Contains
 ```
 
 the `where` constraint means `CT.ElementType` must satisfy `Comparable` as well.
-However, inside the body of `Contains`, `CT.ElementType` will only act like the
-implementation of `Comparable` is [external](#external-impl). That is, items
-from the `needles` container won't directly have a `Compare` method member, but
-can still be implicitly converted to `Comparable` and can still call `Compare`
-using the compound member access syntax, `needle.(Comparable.Compare)(elt)`. The
-rule is that an `==` `where` constraint between two type variables does not
-modify the set of member names of either type. (If you write
-`where .ElementType = String` with a `=` and a concrete type, then
-`.ElementType` is actually set to `String` including the complete `String` API.)
+However, inside the body of `Contains`, `CT.ElementType` will act like the
+implementation of `Comparable` is declared without [`extend`](#extend-impl).
+That is, items from the `needles` container won't directly have a `Compare`
+method member, but can still be implicitly converted to `Comparable` and can
+still call `Compare` using the compound member access syntax,
+`needle.(Comparable.Compare)(elt)`. The rule is that an `==` `where` constraint
+between two type variables does not modify the set of member names of either
+type. (If you write `where .ElementType = String` with a `=` and a concrete
+type, then `.ElementType` is actually set to `String` including the complete
+`String` API.)
 
 Note that `==` constraints are symmetric, so the previous declaration of
 `Contains` is equivalent to an alternative declaration where `CT` is declared
@@ -3782,8 +3854,8 @@ interface when its element type satisfies the same interface:
     if the element type is comparable.
 -   A container is copyable if its elements are.
 
-This may be done with an [external `impl`](#external-impl) by specifying a more
-specific implementing type to the left of the `as` in the declaration:
+This may be done by specifying a more specific implementing type to the left of
+the `as` in the declaration:
 
 ```
 interface Printable {
@@ -3805,7 +3877,7 @@ impl forall [T:! Printable] Vector(T) as Printable {
 ```
 
 Note that no `forall` clause or type may be specified when declaring an `impl`
-with the `extend` keyword:
+with the [`extend`](#extend-impl) keyword:
 
 ```
 class Array(T:! type, template N:! i64) {
@@ -3950,8 +4022,8 @@ than one root type, so the `impl` declaration will use a type variable for the
 
     This means that every type is the common type with itself.
 
-Blanket impl declarations must always be [external](#external-impl) and defined
-lexically out-of-line.
+Blanket impl declarations may never be declared using [`extend`](#extend-impl)
+and must always be defined lexically [out-of-line](#out-of-line-impl).
 
 #### Difference between a blanket impl and a named constraint
 
@@ -3982,8 +4054,8 @@ class BigInt {
 impl forall [T:! ImplicitAs(i32)] BigInt as AddTo(T) { ... }
 ```
 
-Wildcard impl declarations must always be [external](#external-impl), to avoid
-having the names in the interface defined for the type multiple times.
+Wildcard impl declarations may never be declared using [`extend`](#extend-impl),
+to avoid having the names in the interface defined for the type multiple times.
 
 ### Combinations
 
