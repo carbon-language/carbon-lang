@@ -45,7 +45,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** resolving names **********\n";
   }
-  CARBON_RETURN_IF_ERROR(ResolveNames(ast));
+  CARBON_RETURN_IF_ERROR(ResolveNames(ast, trace_stream));
 
   set_prog_phase.update_phase(ProgramPhase::ControlFlowResolution);
   if (trace_stream->is_enabled()) {

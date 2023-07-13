@@ -39,6 +39,8 @@ namespace {
 // bodies.
 class NameResolver {
  public:
+  explicit NameResolver(Nonnull<TraceStream*> trace_stream)
+      : trace_stream_(trace_stream) {}
   enum class ResolveFunctionBodies {
     // Do not resolve names in function bodies.
     Skip,
@@ -122,6 +124,8 @@ class NameResolver {
 
   // Mapping from declarations to the scope in which they expose a name.
   llvm::DenseMap<const Declaration*, StaticScope*> exposed_name_scopes_;
+
+  Nonnull<TraceStream*> trace_stream_;
 };
 
 }  // namespace
@@ -166,7 +170,8 @@ auto NameResolver::AddExposedName(DeclaredName name, ValueNodeView value,
   // known but not declared namespace name.
   CARBON_ASSIGN_OR_RETURN(
       Nonnull<StaticScope*> scope,
-      ResolveQualifier(name, enclosing_scope, /*allow_undeclared=*/true));
+      ResolveQualifier(name, enclosing_scope,
+                       /*allow_undeclared=*/true));  // Qualifier Resolution
   CARBON_RETURN_IF_ERROR(scope->Add(
       name.inner_name(), value, StaticScope::NameStatus::KnownButNotDeclared));
   return scope;
@@ -176,6 +181,11 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
                                    StaticScope& enclosing_scope,
                                    bool allow_qualified_names)
     -> ErrorOr<Success> {
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "-- add exposed name ";
+    declaration.PrintID(trace_stream_->stream());
+    *trace_stream_ << "(" << declaration.source_loc() << ") --\n";
+  }
   switch (declaration.kind()) {
     case DeclarationKind::NamespaceDeclaration: {
       const auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
@@ -927,16 +937,21 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
   return Success();
 }
 
-auto ResolveNames(AST& ast) -> ErrorOr<Success> {
+auto ResolveNames(AST& ast, Nonnull<TraceStream*> trace_stream)
+    -> ErrorOr<Success> {
   return RunWithExtraStack([&]() -> ErrorOr<Success> {
-    NameResolver resolver;
-
+    NameResolver resolver(trace_stream);
+    SetFileContext set_file_ctx(*trace_stream, std::nullopt);
     StaticScope file_scope;
+
     for (auto* declaration : ast.declarations) {
+      set_file_ctx.update_source_loc(declaration->source_loc());
       CARBON_RETURN_IF_ERROR(resolver.AddExposedNames(
           *declaration, file_scope, /*allow_qualified_names=*/true));
     }
+
     for (auto* declaration : ast.declarations) {
+      set_file_ctx.update_source_loc(declaration->source_loc());
       CARBON_RETURN_IF_ERROR(resolver.ResolveNames(
           *declaration, file_scope,
           NameResolver::ResolveFunctionBodies::AfterDeclarations));

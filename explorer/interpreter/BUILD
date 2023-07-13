@@ -148,6 +148,7 @@ cc_library(
         "//explorer/ast",
         "//explorer/ast:static_scope",
         "//explorer/common:arena",
+        "//explorer/common:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
