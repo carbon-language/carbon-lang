@@ -186,6 +186,16 @@ repos:
           - ''
           - '" '
           - ''
+          - --custom_format
+          - '\.scm$'
+          - ''
+          - '; '
+          - ''
+          - --custom_format
+          - '\.c$'
+          - ''
+          - '// '
+          - ''
         exclude: |
           (?x)^(
               .bazelversion|

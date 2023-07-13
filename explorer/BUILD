@@ -80,3 +80,17 @@ filegroup(
     # Files are used for validating fuzzer completeness.
     visibility = ["//explorer/fuzzing:__pkg__"],
 )
+
+filegroup(
+    name = "treesitter_testdata",
+    srcs = glob(
+        ["testdata/**/*.carbon"],
+        exclude = [
+            "testdata/**/fail_*",
+
+            # multiline strings
+            "testdata/string/*",
+        ],
+    ),
+    visibility = ["//utils/treesitter:__pkg__"],
+)
