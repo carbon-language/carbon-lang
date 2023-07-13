@@ -295,7 +295,7 @@ module.exports = grammar({
           seq($._expression, '==', $._expression),
           seq($._expression, 'impls', $._expression),
           seq($._expression, '=', $._expression),
-          // FIXME: logical and conflicts with this
+          // TODO: Fix conflict with logical and
           prec.left(seq($.where_clause, 'and', $.where_clause))
         )
       ),
@@ -329,6 +329,7 @@ module.exports = grammar({
         $.unary_prefix_expression,
         $.where_expression,
         'self',
+        // TODO: Remove these two once `where` clauses don't use the expression rule
         '.Self',
         $.designator
       ),
