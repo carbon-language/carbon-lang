@@ -577,9 +577,9 @@ escape unexpectedly.
 
 Despite interop requiring an address to implement, C++ doesn't require that the
 address of a `const &` parameter is stable beyond the lifetime of the function,
-or point back to some original object. The
-C++ implementation already requires the ability to introduce copies or a temporary, which
-also serves the needs of interop.
+or point back to some original object. The C++ implementation already requires
+the ability to introduce copies or a temporary, which also serves the needs of
+interop.
 
 **Future work:** when a type customizes its value representation, as currently
 specified this will break the use of `const &` C++ APIs with such a value. We
