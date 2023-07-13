@@ -46,16 +46,18 @@ namespace Carbon {
 //
 // _Positional argument_: An argument that is not named but is identified based
 // on the order in which it is encountered in the command line, with options
-// removed.
+// removed. Only a leaf command can contain positional arguments.
 //
-// _Command_: The container of options and positional arguments to parse and an
-// action to take when successful.
+// _Command_: The container of options, subcommands, and positional arguments to
+// parse and an action to take when successful.
+//
+// _Leaf command_: A command that doesn't contain subcommands. This is the only
+// kind of command that can contain positional arguments.
 //
 // _Subcommand_: A command nested within another command and identified by a
 // specific name that ends the parsing of arguments based on the parent and
 // switches to parse based on the specific subcommand's options and positional
-// arguments. A command with subcommands cannot parse positional arguments, only
-// a leaf command can do that.
+// arguments. A command with subcommands cannot parse positional arguments.
 //
 // _Action_: An open-ended callback, typically reflecting a specific subcommand
 // being parsed. Can either directly perform the operation or simply mark which

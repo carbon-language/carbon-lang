@@ -62,6 +62,60 @@ class Args::MetaPrinter {
   // Width limit for the leaf command options in usage rendering.
   static constexpr int MaxLeafOptionUsageWidth = 16;
 
+  static constexpr Args::CommandInfo HelpCommandInfo = {
+      .name = "help",
+      .help = R"""(
+Prints help information for the command, including a description, command line
+usage, and details of each subcommand and option that can be provided.
+)""",
+      .help_short = R"""(
+Prints help information.
+)""",
+  };
+  static constexpr Args::ArgInfo HelpArgInfo = {
+      .name = "help",
+      .value_name = "(full|short)",
+      .help = R"""(
+Prints help information for the command, including a description, command line
+usage, and details of each option that can be provided.
+)""",
+      .help_short = HelpCommandInfo.help_short,
+  };
+
+  // Provide a customized description for help on a subcommand to avoid
+  // confusion with the top-level help.
+  static constexpr Args::CommandInfo SubHelpCommandInfo = {
+      .name = "help",
+      .help = R"""(
+Prints help information for the subcommand, including a description, command
+line usage, and details of each further subcommand and option that can be
+provided.
+)""",
+      .help_short = R"""(
+Prints subcommand help information.
+)""",
+  };
+  static constexpr Args::ArgInfo SubHelpArgInfo = {
+      .name = "help",
+      .value_name = "(full|short)",
+      .help = R"""(
+Prints help information for the subcommand, including a description, command
+line usage, and details of each option that can be provided.
+)""",
+      .help_short = SubHelpCommandInfo.help_short,
+  };
+
+  static constexpr Args::CommandInfo VersionCommandInfo = {
+      .name = "version",
+      .help = R"""(
+Prints the version of this command.
+)""",
+  };
+  static constexpr Args::ArgInfo VersionArgInfo = {
+      .name = "version",
+      .help = VersionCommandInfo.help,
+  };
+
   void PrintTextBlock(llvm::StringRef indent, llvm::StringRef text) const;
 
   void PrintRawVersion(const Command& command, llvm::StringRef indent) const;
@@ -93,60 +147,6 @@ class Args::MetaPrinter {
 
 void Args::MetaPrinter::RegisterWithCommand(const Command& command,
                                             CommandBuilder& builder) {
-  constexpr Args::CommandInfo HelpCommandInfo = {
-      .name = "help",
-      .help = R"""(
-Prints help information for the command, including a description, command line
-usage, and details of each subcommand and option that can be provided.
-)""",
-      .help_short = R"""(
-Prints help information.
-)""",
-  };
-  constexpr Args::ArgInfo HelpArgInfo = {
-      .name = "help",
-      .value_name = "(full|short)",
-      .help = R"""(
-Prints help information for the command, including a description, command line
-usage, and details of each option that can be provided.
-)""",
-      .help_short = HelpCommandInfo.help_short,
-  };
-
-  // Provide a customized description for help on a subcommand to avoid
-  // confusion with the top-level help.
-  constexpr Args::CommandInfo SubHelpCommandInfo = {
-      .name = "help",
-      .help = R"""(
-Prints help information for the subcommand, including a description, command
-line usage, and details of each further subcommand and option that can be
-provided.
-)""",
-      .help_short = R"""(
-Prints subcommand help information.
-)""",
-  };
-  constexpr Args::ArgInfo SubHelpArgInfo = {
-      .name = "help",
-      .value_name = "(full|short)",
-      .help = R"""(
-Prints help information for the subcommand, including a description, command
-line usage, and details of each option that can be provided.
-)""",
-      .help_short = SubHelpCommandInfo.help_short,
-  };
-
-  constexpr Args::CommandInfo VersionCommandInfo = {
-      .name = "version",
-      .help = R"""(
-Prints the version of this command.
-)""",
-  };
-  constexpr Args::ArgInfo VersionArgInfo = {
-      .name = "version",
-      .help = VersionCommandInfo.help,
-  };
-
   bool is_subcommand = command.parent;
   bool has_subcommands = !command.subcommands.empty();
 
@@ -787,11 +787,11 @@ auto Args::Parser::ParseOneOfArgValue(const Arg& arg, llvm::StringRef value)
     -> bool {
   CARBON_CHECK(arg.kind == Arg::Kind::OneOf) << "Incorrect kind: " << arg.kind;
   if (!arg.value_action(arg, value)) {
-    std::string v;
-    llvm::raw_string_ostream vs(v);
-    llvm::printEscapedString(value, vs);
-    errors_ << "ERROR: Option '--" << arg.info.name << "=" << v
-            << "' has an invalid value '" << v << "'; valid values are: ";
+    errors_ << "ERROR: Option '--" << arg.info.name << "=";
+    llvm::printEscapedString(value, errors_);
+    errors_ << "' has an invalid value '";
+    llvm::printEscapedString(value, errors_);
+    errors_ << "'; valid values are: ";
     for (auto value_string : arg.value_strings.drop_back()) {
       errors_ << "'" << value_string << "', ";
     }
