@@ -76,27 +76,22 @@ There are three expression categories in Carbon:
 Expressions in one category can be converted to any other category when needed.
 The primitive conversion steps used are:
 
--   A <a id="read">_read_</a> converts a reference expression into a value
-    expression.
--   <a id="direct-init">_Direct initialization_</a> converts a value expression
-    into an initializing expression.
--   <a id="copy-init">_Copy initialization_</a> converts a reference expression
-    into an initializing expression.
--   <a id="temporary-materialization">_Temporary materialization_</a> converts
-    an initializing expression into a reference expression.
+-   [_Value binding_](#value-binding) forms a value expression from the current
+    value of the object referenced by a reference expression.
+-   [_Direct initialization_](#direct-initialization) converts a value
+    expression into an initializing expression.
+-   [_Copy initialization_](#copy-initialization) converts a reference
+    expression into an initializing expression.
+-   [_Temporary materialization_](#temporary-materialization) converts an
+    initializing expression into a reference expression.
 
 These conversion steps combine to provide the transitive conversion table:
 
-|               From: | value                           | reference     | initializing             |
-| ------------------: | ------------------------------- | ------------- | ------------------------ |
-|        to **value** | ==                              | [read][]      | [temporary][] + [read][] |
-|    to **reference** | [direct init][] + [temporary][] | ==            | [temporary][]            |
-| to **initializing** | [direct init][]                 | [copy init][] | ==                       |
-
-[read]: #read
-[direct init]: #direct-init
-[copy init]: #copy-init
-[temporary]: #temporary-materialization
+|               From: | value                   | reference | initializing     |
+| ------------------: | ----------------------- | --------- | ---------------- |
+|        to **value** | ==                      | read      | temporary + read |
+|    to **reference** | direct init + temporary | ==        | temporary        |
+| to **initializing** | direct init             | copy init | ==               |
 
 Reference expressions formed through temporary materialization are called
 [_ephemeral reference expressions_](#ephemeral-reference-expressions) and have
@@ -105,6 +100,38 @@ to declared storage are called
 [_durable reference expressions_](#durable-reference-expressions). Beyond the
 restrictions on what is valid, there is no distinction in their behavior or
 semantics.
+
+#### Value binding
+
+We call forming a value expression from a reference expression _value binding_.
+This forms a value expression that will evaluate to the value of the object in
+the referenced storage of the reference expression. It may do this by eagerly
+reading that value into a machine register, lazily reading that value on-demand
+into a machine register, or in some other way modeling that abstract value.
+
+See the [value expressions](#value-expressions) section for more details on the
+semantics of value expressions.
+
+#### Direct initialization
+
+This is the first way we have of initializing storage of an object. There may
+not be storage for the source of this initialization, as the value expression
+used for the initialization may be in a machine register or simply be abstractly
+modeled like a source literal. A canonical example here is zeroing an object.
+
+#### Copy initialization
+
+This initializes storage for an object based on some other object which already
+has initialized storage. A classic example here are types which can be copied
+trivially and where this is implemented as a `memcpy` of their underlying bytes.
+
+#### Temporary materialization
+
+We use temporary materialization when we need to initialize an object via
+storage, but weren't provided dedicate storage and can simply bind the result to
+a value afterward.
+
+> **Open question:** The lifetimes of temporaries is not yet specified.
 
 ## Binding patterns and local variables with `let` and `var`
 
@@ -274,13 +301,13 @@ categories into a reference expression.
 
 ### Ephemeral reference expressions
 
-We call the reference expressions formed through [temporary
-materialization][temporary] _ephemeral reference expressions_. They still refer
-to an object with storage, but it may be storage that will not outlive the full
-expression. Because the storage is only temporary, we impose restrictions on
-where these reference expressions can be used: their address can only be taken
-implicitly as part of a method call whose `self` parameter is marked with the
-`addr` specifier.
+We call the reference expressions formed through
+[temporary materialization](#temporary-materialization) _ephemeral reference
+expressions_. They still refer to an object with storage, but it may be storage
+that will not outlive the full expression. Because the storage is only
+temporary, we impose restrictions on where these reference expressions can be
+used: their address can only be taken implicitly as part of a method call whose
+`self` parameter is marked with the `addr` specifier.
 
 **Future work:** The current design allows directly requiring an ephemeral
 reference for `addr`-methods because this replicates the flexibility in C++ --
@@ -310,19 +337,26 @@ select the mechanism of passing function inputs. But it is also important to
 enable generic code that needs a single type model that will have generically
 good performance.
 
-To achieve this goal, a Carbon program must in general behave equivalently with
-value expressions that are implemented as a _reference_ to the original object
-or as either a _copy_ or _move_ if that would be valid for the type. However,
-using a copy or a move is purely optional and an optimization. Value expressions
-are valid with both uncopyable and unmovable types.
+When forming a value expression from a reference expression, Carbon
+[binds](#value-binding) the referenced object to that value expression. This
+allows immediately reading from the object's storage into a machine register or
+a copy if desired, but does not require that. The read of the underlying object
+can also be deferred until the value expression itself is used. Once an object
+is bound to a value expression in this way, any mutation to the object or it's
+storage ends the lifetime of the value expression, and makes any use of the
+value expression an error.
 
-**Experimental:** We currently make an additional requirement that helps ensure
-this equivalence will be true and allows us to detect the most risky cases where
-it would not be true: we require that once a value is formed by reading a stored
-object, that original object must not be mutated prior to the last use of the
-value, or any transitive value. We consider this restriction experimental as we
-may want to strengthen or weaken it based on our experience with Carbon code
-using these constructs, and especially interoperating with C++.
+> Note: this is _not_ intended to ever become "undefined behavior", but instead
+> just "erroneous". We want to be able to detect and report such code as having
+> a bug, but do not want unbounded UB and are not aware of important
+> optimizations that this would inhibit.
+>
+> _Open issue:_ We need a common definition of erroneous behavior that we can
+> use here (and elsewhere). Once we have that, we should cite it here.
+
+> Note: this restriction is also **experimental** -- we may want to strengthen
+> or weaken it based on experience, especially with C++ interop and a more
+> complete memory safety story.
 
 Even with these restrictions, we expect to make values in Carbon useful in
 roughly the same places as `const &`s in C++, but with added efficiency in the
@@ -887,12 +921,12 @@ class X {
 The methods can be called on different kinds of expressions according to the
 following table:
 
-|  Expression category: | `let x: X` (value) | `let x: const X` (const value) | `var x: X` (reference) | `var x: const X` (const reference) |
-| --------------------: | ------------------ | ------------------------------ | ---------------------- | ---------------------------------- |
-|         `x.Method();` | ✅                 | ✅                             | ✅                     | ✅                                 |
-|    `x.ConstMethod();` | ✅                 | ✅                             | ✅                     | ✅                                 |
-|     `x.AddrMethod();` | ❌                 | ❌                             | ✅                     | ❌                                 |
-| `x.AddrConstMethod()` | ❌                 | ❌                             | ✅                     | ✅                                 |
+|  Expression category: | `let x: X` <br/> (value) | `let x: const X` <br/> (const value) | `var x: X` <br/> (reference) | `var x: const X` <br/> (const reference) |
+| --------------------: | ------------------------ | ------------------------------------ | ---------------------------- | ---------------------------------------- |
+|         `x.Method();` | ✅                       | ✅                                   | ✅                           | ✅                                       |
+|    `x.ConstMethod();` | ✅                       | ✅                                   | ✅                           | ✅                                       |
+|     `x.AddrMethod();` | ❌                       | ❌                                   | ✅                           | ❌                                       |
+| `x.AddrConstMethod()` | ❌                       | ❌                                   | ✅                           | ✅                                       |
 
 The `const T` type has the same representation as `T` with the same field names,
 but all of its field types are also `const`-qualified. Other than fields, all
