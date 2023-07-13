@@ -9,8 +9,7 @@ namespace Carbon {
 
 auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
                                            ParseTree::Node parse_node) -> bool {
-  auto name_id =
-      context.node_stack().Pop<SemanticsStringId>(ParseNodeKind::Name);
+  SemanticsStringId name_id = context.node_stack().Pop<ParseNodeKind::Name>();
 
   auto base_id = context.node_stack().Pop<SemanticsNodeId>();
   auto base = context.semantics_ir().GetNode(base_id);
