@@ -12,6 +12,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Values, objects, and expressions](#values-objects-and-expressions)
     -   [Expression categories](#expression-categories)
+        -   [Value binding](#value-binding)
+        -   [Direct initialization](#direct-initialization)
+        -   [Copy initialization](#copy-initialization)
+        -   [Temporary materialization](#temporary-materialization)
 -   [Binding patterns and local variables with `let` and `var`](#binding-patterns-and-local-variables-with-let-and-var)
     -   [Local variables](#local-variables)
     -   [Consuming function parameters](#consuming-function-parameters)
@@ -127,7 +131,7 @@ trivially and where this is implemented as a `memcpy` of their underlying bytes.
 
 #### Temporary materialization
 
-We use temporary materialization when we need to initialize an object via
+We use temporary materialization when we need to initialize an object by way of
 storage, but weren't provided dedicate storage and can simply bind the result to
 a value afterward.
 
