@@ -27,3 +27,9 @@ code --install-extension out/carbon.vsix
 
 1. Open utils/vscode folder in VS Code.
 2. Launch the extension using Run command (F5).
+
+To update dependencies:
+
+```shell
+npm update
+```
