@@ -575,8 +575,9 @@ create an untenable interop ergonomic barrier. However, this does create some
 additional constraints on value expressions and a way that their addresses can
 escape unexpectedly.
 
-Despite interop requiring an address to implement, the address isn't guaranteed
-to be stable or useful or point back to some original object necessarily. The
+Despite interop requiring an address to implement, C++ doesn't require that the
+address of a `const &` parameter is stable beyond the lifetime of the function,
+or point back to some original object. The
 ability of the implementation to introduce copies or a temporary specifically
 for the purpose of the interop remains.
 
