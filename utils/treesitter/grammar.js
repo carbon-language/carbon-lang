@@ -483,8 +483,6 @@ module.exports = grammar({
         choice($.block, ';')
       ),
 
-    mix_declaration: ($) => seq('__mix', $._expression, ';'),
-
     class_body_item: ($) =>
       choice(
         $.declaration,
@@ -516,20 +514,6 @@ module.exports = grammar({
         '}'
       ),
 
-    mixin_declaration: ($) =>
-      seq(
-        '__mixin',
-        $.declared_name,
-        optional($.type_params),
-        optional(seq('for', $._expression)),
-        '{',
-        repeat(choice($.function_declaration, $.mix_declaration)),
-        '}'
-      ),
-
-    match_first_declaration: ($) =>
-      seq('__match_first', '{', repeat($.impl_declaration), '}'),
-
     empty_declaration: ($) => ';',
 
     declaration: ($) =>
@@ -548,5 +532,22 @@ module.exports = grammar({
         $.mixin_declaration,
         $.match_first_declaration
       ),
+
+    // Explorer only experimental featurues
+    mix_declaration: ($) => seq('__mix', $._expression, ';'),
+
+    mixin_declaration: ($) =>
+      seq(
+        '__mixin',
+        $.declared_name,
+        optional($.type_params),
+        optional(seq('for', $._expression)),
+        '{',
+        repeat(choice($.function_declaration, $.mix_declaration)),
+        '}'
+      ),
+
+    match_first_declaration: ($) =>
+      seq('__match_first', '{', repeat($.impl_declaration), '}'),
   },
 });
