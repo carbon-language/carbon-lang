@@ -116,24 +116,31 @@ Prints the version of this command.
       .help = VersionCommandInfo.help,
   };
 
+  // A general helper for rendering a text block.
   void PrintTextBlock(llvm::StringRef indent, llvm::StringRef text) const;
 
+  // Helpers for version and build information printing.
   void PrintRawVersion(const Command& command, llvm::StringRef indent) const;
   void PrintRawBuildInfo(const Command& command, llvm::StringRef indent) const;
 
+  // Helpers for printing components of help and usage output for arguments,
+  // including options and positional arguments.
   void PrintArgValueUsage(const Arg& arg) const;
   void PrintOptionUsage(const Arg& option) const;
-  void PrintShortName(const Arg& arg) const;
+  void PrintOptionShortName(const Arg& arg) const;
   void PrintArgShortValues(const Arg& arg) const;
   void PrintArgLongValues(const Arg& arg, llvm::StringRef indent) const;
   void PrintArgHelp(const Arg& arg, llvm::StringRef indent) const;
 
+  // Helpers for printing command usage summaries.
   void PrintRawUsageCommandAndOptions(
       const Command& command,
       int max_option_width = MaxLeafOptionUsageWidth) const;
   void PrintRawUsage(const Command& command, llvm::StringRef indent) const;
   void PrintUsage(const Command& command) const;
 
+  // Helpers to print various sections of `PrintHelp` that only occur within
+  // that output.
   void PrintHelpSubcommands(const Command& command) const;
   void PrintHelpPositionalArgs(const Command& command) const;
   void PrintHelpOptions(const Command& command) const;
@@ -373,7 +380,7 @@ void Args::MetaPrinter::PrintOptionUsage(const Arg& option) const {
   }
 }
 
-void Args::MetaPrinter::PrintShortName(const Arg& arg) const {
+void Args::MetaPrinter::PrintOptionShortName(const Arg& arg) const {
   CARBON_CHECK(!arg.info.short_name.empty()) << "No short name to use.";
   out_ << "-" << arg.info.short_name;
 }
@@ -607,7 +614,7 @@ void Args::MetaPrinter::PrintHelpOptions(const Command& command) const {
     out_ << "\n";
     out_ << "  ";
     if (!option->info.short_name.empty()) {
-      PrintShortName(*option);
+      PrintOptionShortName(*option);
       out_ << ", ";
     } else {
       out_ << "    ";
