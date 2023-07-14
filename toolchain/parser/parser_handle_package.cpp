@@ -77,10 +77,7 @@ auto ParserHandlePackage(ParserContext& context) -> void {
   }
 
   if (!context.PositionIs(TokenKind::Semi)) {
-    CARBON_DIAGNOSTIC(ExpectedSemiToEndPackageDirective, Error,
-                      "Expected `;` to end package directive.");
-    context.emitter().Emit(*context.position(),
-                           ExpectedSemiToEndPackageDirective);
+    context.EmitExpectedDeclarationSemi(TokenKind::Package);
     exit_on_parse_error();
     return;
   }

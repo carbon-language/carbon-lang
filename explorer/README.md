@@ -168,24 +168,35 @@ performed during execution.
 Printing directly to the standard output using the `--trace_file` option is
 supported by passing `-` in place of a filepath (`--trace_file=-`).
 
-To customize the trace output and include specific information, you can pass the
-following list of options to `-trace_phase=...` option along with
-`--trace_file=...` option:
+Trace output can be customized by selecting program phases and file contexts for
+which tracing should be enabled. The `-trace_phase=...` option is used to select
+program phases, while the `-trace_file_context=...` option is used to select
+file contexts.
 
--   `source_program`: Include trace output for the source program phase.
--   `name_resolution`: Include trace output for the name resolution phase.
--   `control_flow_resolution`: Include trace output for the control flow
+The following options can be passed as a comma-separated list to the
+`-trace_phase=...` option to select program phases:
+
+-   `source_program`: Includes trace output for the source program phase.
+-   `name_resolution`: Includes trace output for the name resolution phase.
+-   `control_flow_resolution`: Includes trace output for the control flow
     resolution phase.
--   `type_checking`: Include trace output for the type checking phase.
--   `unformed_variables_resolution`: Include trace output for the unformed
+-   `type_checking`: Includes trace output for the type checking phase.
+-   `unformed_variables_resolution`: Includes trace output for the unformed
     variables resolution phase.
--   `declarations`: Include trace output for printing declarations.
--   `execution`: Include trace output for program execution.
--   `timing`: Include timing logs indicating the time taken by each phase.
--   `all`: Include trace output for all phases.
+-   `declarations`: Includes trace output for printing declarations.
+-   `execution`: Includes trace output for program execution.
+-   `timing`: Includes timing logs indicating the time taken by each phase.
+-   `all`: Includes trace output for all phases.
+-   By default, tracing is only enabled for the `execution` phase.
 
-By default, only execution trace will be added to the trace output. You can use
-combination of these options to include trace of multiple program phases.
+The following options can be passed as a comma-separated list to the
+`-trace_file_context=...` option to select file contexts:
+
+-   `main`: Includes trace output for the file containing the main function.
+-   `prelude`: Includes trace output for the prelude.
+-   `import`: Includes trace output for imports.
+-   `include`: Includes trace output for all.
+-   By default, tracing is only enabled for the `main` file context.
 
 ### State of the Program
 

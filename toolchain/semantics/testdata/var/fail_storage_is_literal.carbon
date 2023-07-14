@@ -24,10 +24,10 @@
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: VarStorage, type: typeInvalidType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: typeInvalidType},
+// CHECK:STDOUT:   {kind: VarStorage, type: typeError},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: typeError},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeInvalidType, type: typeInvalidType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeError, type: typeError},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [

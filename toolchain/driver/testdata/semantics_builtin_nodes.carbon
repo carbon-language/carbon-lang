@@ -17,7 +17,7 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeTypeType, type: typeTypeType},
-// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeInvalidType, type: typeInvalidType},
+// CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeError, type: typeError},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeBoolType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeFloatingPointType, type: typeTypeType},

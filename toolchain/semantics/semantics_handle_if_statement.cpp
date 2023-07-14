@@ -37,7 +37,7 @@ auto SemanticsHandleIfCondition(SemanticsContext& context,
 
 auto SemanticsHandleIfStatementElse(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
-  context.node_stack().PopAndDiscardSoloParseNode(ParseNodeKind::IfCondition);
+  context.node_stack().PopAndDiscardSoloParseNode<ParseNodeKind::IfCondition>();
 
   // Switch to emitting the else block.
   auto then_block_id = context.node_block_stack().PopForAdd();
@@ -56,8 +56,8 @@ auto SemanticsHandleIfStatement(SemanticsContext& context,
               context.node_stack().PeekParseNode())) {
     case ParseNodeKind::IfCondition: {
       // Branch from then block to else block.
-      context.node_stack().PopAndDiscardSoloParseNode(
-          ParseNodeKind::IfCondition);
+      context.node_stack()
+          .PopAndDiscardSoloParseNode<ParseNodeKind::IfCondition>();
       context.AddNodeToBlock(
           sub_block_id,
           SemanticsNode::Branch::Make(parse_node,
@@ -67,8 +67,8 @@ auto SemanticsHandleIfStatement(SemanticsContext& context,
 
     case ParseNodeKind::IfStatementElse: {
       // Branch from the then and else blocks to a new resumption block.
-      auto then_block_id = context.node_stack().Pop<SemanticsNodeBlockId>(
-          ParseNodeKind::IfStatementElse);
+      SemanticsNodeBlockId then_block_id =
+          context.node_stack().Pop<ParseNodeKind::IfStatementElse>();
       context.AddConvergenceBlockAndPush(parse_node,
                                          {then_block_id, sub_block_id});
       break;

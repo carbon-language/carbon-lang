@@ -81,6 +81,22 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
                      "Include trace output for all phases.")),
       cl::CommaSeparated);
 
+  cl::list<FileContext> allowed_file_contexts(
+      "trace_file_context",
+      cl::desc("Select file contexts for which you want to include the trace "
+               "output"),
+      cl::values(
+          clEnumValN(
+              FileContext::Main, "main",
+              "Include trace output for file containing the main function"),
+          clEnumValN(FileContext::Prelude, "prelude",
+                     "Include trace output for prelude"),
+          clEnumValN(FileContext::Import, "import",
+                     "Include trace output for imports"),
+          clEnumValN(FileContext::All, "all",
+                     "Include trace output for all files")),
+      cl::CommaSeparated);
+
   // Use the executable path as a base for the relative prelude path.
   std::string exe =
       llvm::sys::fs::getMainExecutable(argv[0], static_for_main_addr);
@@ -102,6 +118,7 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   if (!trace_file_name.empty()) {
     // Adding allowed phases in the trace_stream
     trace_stream.set_allowed_phases(allowed_program_phases);
+    trace_stream.set_allowed_file_contexts(allowed_file_contexts);
     if (trace_file_name == "-") {
       trace_stream.set_stream(&llvm::outs());
     } else {

@@ -13,8 +13,8 @@ auto ParserHandleFunctionIntroducer(ParserContext& context) -> void {
 
   state.state = ParserState::FunctionAfterParameters;
   context.PushState(state);
-  state.state = ParserState::DeclarationNameAndParamsAsRequired;
-  context.PushState(state);
+  context.PushState(ParserState::DeclarationNameAndParamsAsRequired,
+                    state.token);
 }
 
 auto ParserHandleFunctionAfterParameters(ParserContext& context) -> void {

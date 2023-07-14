@@ -147,6 +147,8 @@ def get_rules(bazel: str, targets: str, keep_going: bool) -> Dict[str, Rule]:
             elif rule_class == "genrule":
                 if list_name == "outs":
                     outs = get_bazel_list(list_child, True)
+            elif rule_class == "tree_sitter_cc_library":
+                continue
             else:
                 exit(f"unexpected rule type: {rule_class}")
         rules[rule_name] = Rule(hdrs, srcs, deps, outs)

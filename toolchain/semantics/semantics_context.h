@@ -20,6 +20,83 @@ namespace Carbon {
 // Context and shared functionality for semantics handlers.
 class SemanticsContext {
  public:
+  // Context for declaration name construction, tracked in
+  // declaration_name_stack_.
+  //
+  // A qualified declaration name will consist of entries which are either
+  // Identifiers or full expressions. Expressions are expected to resolve to
+  // types, such as how `fn Vector(i32).Clear() { ... }` uses the expression
+  // `Vector(i32)` to indicate the type whose member is being declared.
+  // Identifiers such as `Clear` will be resolved to a name if possible, for
+  // example when declaring things that are in a non-generic type or namespace,
+  // and are otherwise marked as an unresolved identifier.
+  //
+  // Unresolved identifiers are valid if and only if they are the last step of a
+  // qualified name; all resolved qualifiers must resolve to an entity with
+  // members, such as a namespace. Resolved identifiers in the last step will
+  // occur for both out-of-line definitions and new declarations, depending on
+  // context.
+  //
+  // Example state transitions:
+  //
+  // ```
+  // // New -> Unresolved, because `MyNamespace` is newly declared.
+  // namespace MyNamespace;
+  //
+  // // New -> Resolved -> Unresolved, because `MyType` is newly declared.
+  // class MyNamespace.MyType;
+  //
+  // // New -> Resolved -> Resolved, because `MyType` was forward declared.
+  // class MyNamespace.MyType {
+  //   // New -> Unresolved, because `DoSomething` is newly declared.
+  //   fn DoSomething();
+  // }
+  //
+  // // New -> Resolved -> Resolved -> ResolvedNonScope, because `DoSomething`
+  // // is forward declared in `MyType`, but is not a scope itself.
+  // fn MyNamespace.MyType.DoSomething() { ... }
+  // ```
+  struct DeclarationNameContext {
+    enum class State {
+      // A new context which has not processed any parts of the qualifier.
+      New,
+
+      // A node ID has been resolved, whether through an identifier or
+      // expression. This provided a new scope, such as a type.
+      Resolved,
+
+      // A node ID has been resolved, whether through an identifier or
+      // expression. It did not provide a new scope, so must be the final part,
+      // such as an out-of-line function definition.
+      ResolvedNonScope,
+
+      // An identifier didn't resolve.
+      Unresolved,
+
+      // An error has occurred, such as an additional qualifier past an
+      // unresolved name. No new diagnostics should be emitted.
+      Error,
+    };
+
+    State state = State::New;
+
+    // The scope which qualified names are added to. For unqualified names,
+    // this will be Invalid to indicate the current scope should be used.
+    SemanticsNameScopeId target_scope_id = SemanticsNameScopeId::Invalid;
+
+    // The last parse node used.
+    ParseTree::Node parse_node = ParseTree::Node::Invalid;
+
+    union {
+      // The ID of a resolved qualifier, including both identifiers and
+      // expressions. Invalid indicates resolution failed.
+      SemanticsNodeId resolved_node_id = SemanticsNodeId::Invalid;
+
+      // The ID of an unresolved identifier.
+      SemanticsStringId unresolved_name_id;
+    };
+  };
+
   // Stores references for work.
   explicit SemanticsContext(const TokenizedBuffer& tokens,
                             DiagnosticEmitter<ParseTree::Node>& emitter,
@@ -47,8 +124,14 @@ class SemanticsContext {
   auto AddNameToLookup(ParseTree::Node name_node, SemanticsStringId name_id,
                        SemanticsNodeId target_id) -> void;
 
-  // Lookup up a name, returning the referenced node.
-  auto LookupName(ParseTree::Node parse_node, llvm::StringRef name)
+  // Adds a name to name lookup. Prints a diagnostic for name conflicts.
+  auto AddNameToLookup(DeclarationNameContext name_context,
+                       SemanticsNodeId target_id) -> void;
+
+  // Performs name lookup in a specified scope, returning the referenced node.
+  // If scope_id is invalid, uses the current contextual scope.
+  auto LookupName(ParseTree::Node parse_node, SemanticsStringId name_id,
+                  SemanticsNameScopeId scope_id, bool print_diagnostics)
       -> SemanticsNodeId;
 
   // Pushes a new scope onto scope_stack_.
@@ -99,6 +182,20 @@ class SemanticsContext {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
+  // Pushes processing of a new declaration name, which will be used
+  // contextually.
+  auto PushDeclarationName() -> void;
+
+  // Pops the current declaration name processing, returning the final context
+  // for adding the name to lookup. This also pops the final name node from the
+  // node stack, which will be applied to the declaration name if appropriate.
+  auto PopDeclarationName() -> DeclarationNameContext;
+
+  // Applies an entry from the node stack to the top of the declaration name
+  // stack.
+  auto ApplyDeclarationNameQualifier(ParseTree::Node parse_node,
+                                     SemanticsNodeId node_or_name_id) -> void;
+
   // Runs ImplicitAsImpl for a set of arguments and parameters.
   //
   // This will eventually need to support checking against multiple possible
@@ -113,7 +210,7 @@ class SemanticsContext {
       -> bool;
 
   // Runs ImplicitAsImpl for a situation where a cast is required, returning the
-  // updated `value_id`. Prints a diagnostic and returns an InvalidType if
+  // updated `value_id`. Prints a diagnostic and returns an Error if
   // unsupported.
   auto ImplicitAsRequired(ParseTree::Node parse_node, SemanticsNodeId value_id,
                           SemanticsTypeId as_type_id) -> SemanticsNodeId;
@@ -274,6 +371,10 @@ class SemanticsContext {
 
   // A stack for scope context.
   llvm::SmallVector<ScopeStackEntry> scope_stack_;
+
+  // A stack for declaration name context. See DeclarationNameContext for
+  // details.
+  llvm::SmallVector<DeclarationNameContext> declaration_name_stack_;
 
   // Maps identifiers to name lookup results. Values are a stack of name lookup
   // results in the ancestor scopes. This offers constant-time lookup of names,

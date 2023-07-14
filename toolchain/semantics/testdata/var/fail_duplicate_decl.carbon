@@ -55,7 +55,7 @@
 
 fn Main() {
   var x: i32 = 0;
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+2]]:7: Redefining x in the same scope.
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-2]]:7: Previous definition is here.
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+2]]:7: Duplicate name being declared in the same scope.
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-2]]:7: Name is previously declared here.
   var x: i32 = 0;
 }
