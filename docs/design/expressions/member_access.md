@@ -169,7 +169,8 @@ impl i32 as Printable;
 class Point {
   var x: i32;
   var y: i32;
-  // Internal impl injects the name `Print` into class `Point`.
+  // Extending impl injects the name `Print` into class
+  // `Point`.
   extend impl as Printable;
 }
 
