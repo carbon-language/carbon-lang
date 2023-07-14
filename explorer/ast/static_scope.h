@@ -12,6 +12,7 @@
 #include "explorer/ast/value_node.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
+#include "explorer/common/trace_stream.h"
 #include "llvm/ADT/StringMap.h"
 
 namespace Carbon {
@@ -35,11 +36,14 @@ class StaticScope {
   };
 
   // Construct a root scope.
-  StaticScope() = default;
+  explicit StaticScope(Nonnull<TraceStream*> trace_stream)
+      : trace_stream_(trace_stream){};
 
   // Construct a scope that is nested within the given scope.
   explicit StaticScope(Nonnull<const StaticScope*> parent)
-      : parent_scope_(parent) {}
+      : parent_scope_(parent), trace_stream_(parent->trace_stream_) {}
+
+  StaticScope() = default;
 
   // Defines `name` to be `entity` in this scope, or reports a compilation error
   // if `name` is already defined to be a different entity in this scope.
@@ -102,6 +106,8 @@ class StaticScope {
 
   // Stores the value node of the BindingPattern of the returned var definition.
   std::optional<ValueNodeView> returned_var_def_view_;
+
+  Nonnull<TraceStream*> trace_stream_;
 };
 
 }  // namespace Carbon

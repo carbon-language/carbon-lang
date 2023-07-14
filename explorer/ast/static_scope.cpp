@@ -23,6 +23,12 @@ auto StaticScope::Add(std::string_view name, ValueNodeView entity,
     if (static_cast<int>(status) > static_cast<int>(it->second.status)) {
       it->second.status = status;
     }
+  } else {
+    if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "--- declared `" << name << "` in `"
+                     << PrintAsID(entity.base()) << "` ("
+                     << entity.base().source_loc() << ")\n";
+    }
   }
   return Success();
 }
@@ -32,6 +38,9 @@ void StaticScope::MarkDeclared(std::string_view name) {
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
   if (it->second.status == NameStatus::KnownButNotDeclared) {
     it->second.status = NameStatus::DeclaredButNotUsable;
+    if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "--- marked `" << name << "` declared but not usable\n";
+    }
   }
 }
 
@@ -39,6 +48,9 @@ void StaticScope::MarkUsable(std::string_view name) {
   auto it = declared_names_.find(name);
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
   it->second.status = NameStatus::Usable;
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- marked `" << name << "` usable\n";
+  }
 }
 
 auto StaticScope::Resolve(std::string_view name,
@@ -66,6 +78,14 @@ auto StaticScope::ResolveHere(std::optional<ValueNodeView> this_scope,
     } else {
       return ProgramError(source_loc)
              << "name '" << name << "' has not been declared in this scope";
+    }
+  } else {
+    if (this_scope) {
+      if (trace_stream_->is_enabled()) {
+        *trace_stream_ << "--- declared `" << name << "` in "
+                       << PrintAsID(this_scope->base()) << "` ("
+                       << this_scope->base().source_loc() << ")\n";
+      }
     }
   }
   return *result;

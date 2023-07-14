@@ -136,6 +136,7 @@ auto NameResolver::ResolveQualifier(DeclaredName name,
     -> ErrorOr<Nonnull<StaticScope*>> {
   Nonnull<StaticScope*> scope = &enclosing_scope;
   std::optional<ValueNodeView> scope_node;
+
   for (const auto& [loc, qualifier] : name.qualifiers()) {
     // TODO: If we permit qualified names anywhere other than the top level, we
     // will need to decide whether the first name in the qualifier is looked up
@@ -151,6 +152,11 @@ auto NameResolver::ResolveQualifier(DeclaredName name,
     } else {
       return ProgramError(name.source_loc())
              << PrintAsID(node.base()) << " cannot be used as a name qualifier";
+    }
+
+    if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "--- resolved qualifier `" << qualifier << "` for "
+                     << "\n";
     }
   }
   return scope;
@@ -182,9 +188,9 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
                                    bool allow_qualified_names)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "-- add exposed name ";
+    *trace_stream_ << "--- add exposed name `";
     declaration.PrintID(trace_stream_->stream());
-    *trace_stream_ << "(" << declaration.source_loc() << ") --\n";
+    *trace_stream_ << "` (" << declaration.source_loc() << ")\n";
   }
   switch (declaration.kind()) {
     case DeclarationKind::NamespaceDeclaration: {
@@ -287,6 +293,8 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
 auto NameResolver::ResolveNames(Expression& expression,
                                 const StaticScope& enclosing_scope)
     -> ErrorOr<std::optional<ValueNodeView>> {
+  if (trace_stream_->is_enabled()) {
+  }
   return RunWithExtraStack(
       [&]() { return ResolveNamesImpl(expression, enclosing_scope); });
 }
@@ -294,6 +302,11 @@ auto NameResolver::ResolveNames(Expression& expression,
 auto NameResolver::ResolveNamesImpl(Expression& expression,
                                     const StaticScope& enclosing_scope)
     -> ErrorOr<std::optional<ValueNodeView>> {
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "** resolving expr `";
+    expression.Print(trace_stream_->stream());
+    *trace_stream_ << "` (" << expression.source_loc() << ")\n";
+  }
   switch (expression.kind()) {
     case ExpressionKind::CallExpression: {
       auto& call = cast<CallExpression>(expression);
@@ -468,6 +481,13 @@ auto NameResolver::ResolveNamesImpl(Expression& expression,
     case ExpressionKind::UnimplementedExpression:
       return ProgramError(expression.source_loc()) << "Unimplemented";
   }
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "** finished resolving expr `";
+    expression.Print(trace_stream_->stream());
+    *trace_stream_ << "` (" << expression.source_loc() << ")\n";
+  }
+
   return {std::nullopt};
 }
 
@@ -481,6 +501,11 @@ auto NameResolver::ResolveNames(WhereClause& clause,
 auto NameResolver::ResolveNamesImpl(WhereClause& clause,
                                     const StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "** resolving clause `";
+    clause.PrintID(trace_stream_->stream());
+    *trace_stream_ << "` (" << clause.source_loc() << ")\n";
+  }
   switch (clause.kind()) {
     case WhereClauseKind::ImplsWhereClause: {
       auto& impls_clause = cast<ImplsWhereClause>(clause);
@@ -505,6 +530,13 @@ auto NameResolver::ResolveNamesImpl(WhereClause& clause,
       break;
     }
   }
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "** finished resolving clause `";
+    clause.PrintID(trace_stream_->stream());
+    *trace_stream_ << "` (" << clause.source_loc() << ")\n";
+  }
+
   return Success();
 }
 
@@ -517,6 +549,12 @@ auto NameResolver::ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
 auto NameResolver::ResolveNamesImpl(Pattern& pattern,
                                     StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "** resolving pattern `";
+    pattern.Print(trace_stream_->stream());
+    *trace_stream_ << "` (" << pattern.source_loc() << ")\n";
+  }
+
   switch (pattern.kind()) {
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(pattern);
@@ -565,6 +603,13 @@ auto NameResolver::ResolveNamesImpl(Pattern& pattern,
           ResolveNames(cast<AddrPattern>(pattern).binding(), enclosing_scope));
       break;
   }
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "** finished resolving pattern `";
+    pattern.Print(trace_stream_->stream());
+    *trace_stream_ << "` (" << pattern.source_loc() << ")\n";
+  }
+
   return Success();
 }
 
@@ -578,6 +623,11 @@ auto NameResolver::ResolveNames(Statement& statement,
 auto NameResolver::ResolveNamesImpl(Statement& statement,
                                     StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "** resolving stmt `";
+    statement.PrintID(trace_stream_->stream());
+    *trace_stream_ << "` (" << statement.source_loc() << ")\n";
+  }
   switch (statement.kind()) {
     case StatementKind::ExpressionStatement:
       CARBON_RETURN_IF_ERROR(ResolveNames(
@@ -686,6 +736,13 @@ auto NameResolver::ResolveNamesImpl(Statement& statement,
     case StatementKind::Continue:
       break;
   }
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "** finished resolving stmt `";
+    statement.PrintID(trace_stream_->stream());
+    *trace_stream_ << "` (" << statement.source_loc() << ")\n";
+  }
+
   return Success();
 }
 
@@ -722,6 +779,12 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
                                     StaticScope& enclosing_scope,
                                     ResolveFunctionBodies bodies)
     -> ErrorOr<Success> {
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "** resolving decl `";
+    declaration.PrintID(trace_stream_->stream());
+    *trace_stream_ << "` (" << declaration.source_loc() << ")\n";
+  }
+
   switch (declaration.kind()) {
     case DeclarationKind::NamespaceDeclaration: {
       auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
@@ -934,6 +997,13 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
       break;
     }
   }
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "** finished resolving decl `";
+    declaration.PrintID(trace_stream_->stream());
+    *trace_stream_ << "` (" << declaration.source_loc() << ")\n";
+  }
+
   return Success();
 }
 
@@ -942,7 +1012,7 @@ auto ResolveNames(AST& ast, Nonnull<TraceStream*> trace_stream)
   return RunWithExtraStack([&]() -> ErrorOr<Success> {
     NameResolver resolver(trace_stream);
     SetFileContext set_file_ctx(*trace_stream, std::nullopt);
-    StaticScope file_scope;
+    StaticScope file_scope(trace_stream);
 
     for (auto* declaration : ast.declarations) {
       set_file_ctx.update_source_loc(declaration->source_loc());
