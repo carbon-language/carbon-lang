@@ -41,7 +41,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Use case: Using independent libraries together](#use-case-using-independent-libraries-together)
     -   [Use case: Defining an impl for use by other types](#use-case-defining-an-impl-for-use-by-other-types)
     -   [Use case: Private impl](#use-case-private-impl)
-    -   [Use case: Accessing external names](#use-case-accessing-external-names)
+    -   [Use case: Accessing interface names](#use-case-accessing-interface-names)
     -   [Adapter with stricter invariants](#adapter-with-stricter-invariants)
 -   [Associated constants](#associated-constants)
     -   [Associated class functions](#associated-class-functions)
@@ -203,8 +203,8 @@ somewhere else as long as Carbon can be guaranteed to see the definition when
 needed. For more on this, see
 [the implementing interfaces section](#implementing-interfaces) below.
 
-When the implementation of `ConvertibleToString` for `Song` is defined as
-internal, every member of `ConvertibleToString` is also a member of `Song`. This
+When the implementation of `ConvertibleToString` for `Song` is declared with
+`extend`, every member of `ConvertibleToString` is also a member of `Song`. This
 includes members of `ConvertibleToString` that are not explicitly named in the
 `impl` definition but have defaults. Whether the type
 [extends the implementation](terminology.md#extending-an-impl) or not, you may
@@ -754,8 +754,8 @@ fn DoubleThreeTimes[U:! Vector](a: U) -> U {
 
 the return type of `AddAndScaleGeneric` is found by substituting in the `U` from
 `DoubleThreeTimes` for the `T` from `AddAndScaleGeneric` in the return type
-expression of `AddAndScaleGeneric`. `U` is an archetype of `Vector`, and so
-implements `Vector` internally and therefore has a `Scale` method.
+expression of `AddAndScaleGeneric`. `U` is an archetype of `Vector`, and so acts
+as if it extends `Vector` and therefore has a `Scale` method.
 
 If `U` had a more specific type, the return value would have the additional
 capabilities of `U`. For example, given a parameterized type `GeneralPoint`
@@ -773,16 +773,16 @@ fn CallWithGeneralPoint[C:! Numeric](p: GeneralPoint(C)) -> C {
   // deduced to be `GeneralPoint(C)`.
 
   // ❌ Illegal: AddAndScaleGeneric(p, p, 2.0).Scale(2.0);
-  //    `GeneralPoint(C)` implements `Vector` externally, and so
-  //    does not have a `Scale` method.
+  //    `GeneralPoint(C)` implements but does not extend `Vector`,
+  //    and so does not have a `Scale` method.
 
   // ✅ Allowed: `GeneralPoint(C)` has a `Get` method
   AddAndScaleGeneric(p, p, 2.0).Get(0);
 
-  // ✅ Allowed: `GeneralPoint(C)` implements `Vector`
-  //    externally, and so has a `Vector.Scale` method.
-  //    `Vector.Scale` returns `Self` which is `GeneralPoint(C)`
-  //    again, and so has a `Get` method.
+  // ✅ Allowed: `GeneralPoint(C)` implements `Vector`, and so has
+  //    a `Vector.Scale` method. `Vector.Scale` returns `Self`
+  //    which is `GeneralPoint(C)` again, and so has a `Get`
+  //    method.
   return AddAndScaleGeneric(p, p, 2.0).(Vector.Scale)(2.0).Get(0);
 }
 ```
@@ -790,7 +790,7 @@ fn CallWithGeneralPoint[C:! Numeric](p: GeneralPoint(C)) -> C {
 The result of the call to `AddAndScaleGeneric` from `CallWithGeneralPoint` has
 type `GeneralPoint(C)` and so has a `Get` method and a `Vector.Scale` method.
 But, in contrast to how `DoubleThreeTimes` works, since `Vector` is implemented
-externally the return value in this case does not directly have a `Scale`
+without `extend` the return value in this case does not directly have a `Scale`
 method.
 
 ### Implementation model
@@ -1557,7 +1557,7 @@ though could be defined in the `impl` block of `IncidenceGraph`,
     }
     ```
 
--   Implementing `Graph` externally.
+-   Implementing `Graph` out-of-line.
 
     ```
     class MyEdgeListIncidenceGraph {
@@ -1814,12 +1814,13 @@ class SongRenderToPrintDriver {
   // Add a new `Print()` member function.
   fn Print[self: Self]() { ... }
 
-  // Avoid name conflict with new `Print` function by making
-  // the implementation of the `Printable` interface external.
+  // Avoid name conflict with new `Print`
+  // function by implementing the `Printable`
+  // interface without `extend`.
   impl as Printable = Song;
 
-  // Make the `Print` function from `Printable` available
-  // under the name `PrintToScreen`.
+  // Make the `Print` function from `Printable`
+  // available under the name `PrintToScreen`.
   alias PrintToScreen = Printable.Print;
 }
 ```
@@ -1974,7 +1975,7 @@ fn Complex64.CloserToOrigin[self: Self](them: Self) -> bool {
 }
 ```
 
-### Use case: Accessing external names
+### Use case: Accessing interface names
 
 Consider a case where a function will call several functions from an interface
 that the type does not
@@ -3244,26 +3245,29 @@ fn TakesPQR[U:! P & Q & R](u: U);
 fn G[T:! Transitive](t: T) {
   var a: T.A = t.GetA();
 
-  // ✅ Allowed: `T.A` implements `P`.
+  // ✅ Allowed: `T.A` implements `P` and
+  // includes its API, as if it extends `P`.
   a.InP();
 
-  // ✅ Allowed: `T.A` implements `Q` externally.
+  // ✅ Allowed: `T.A` implements (but does not
+  // extend) `Q`.
   a.(Q.InQ)();
 
   // ❌ Not allowed: a.InQ();
 
   // ✅ Allowed: values of type `T.A` may be cast
-  // to `T.B`, which implements `Q` internally.
+  // to `T.B`, which extends and implements `Q`.
   (a as T.B).InQ();
 
-  // ✅ Allowed: `T.B` implements `R` externally.
+  // ✅ Allowed: `T.B` implements (but does not
+  // extend) `R`.
   (a as T.B).(R.InR)();
+  // ❌ Not allowed: (a as T.B).InR();
 
   // ❌ Not allowed: TakesPQR(a);
 
   // ✅ Allowed: `T.B` implements `P`, `Q`, and
-  // `R`, though the implementations of `P`
-  // and `R` are external.
+  // `R`, though `T.B` doesn't extend `P` or `R`.
   TakesPQR(a as T.B);
 }
 ```
@@ -3407,7 +3411,7 @@ fn F[T:! Transitive](t: T) {
 }
 ```
 
-Since adding an `observe` declaration only adds external implementations of
+Since adding an `observe` declaration only adds non-extending implementations of
 interfaces to generic types, they may be added without breaking existing code.
 
 ## Other constraints as facet types
@@ -3764,9 +3768,9 @@ The `where .Self == U` modifier allows values to implicitly convert between type
 `T`, the erased type, and type `U`, the concrete type. Note that implicit
 conversion is
 [only performed across a single `where` equality](#manual-type-equality). This
-can be used to switch to the API of `C` when it is external, as an alternative
-to [using an adapter](#use-case-accessing-external-names), or to simplify
-inlining of a generic function while preserving semantics.
+can be used to switch to the API of `C` when `U` does not extend `C`, as an
+alternative to [using an adapter](#use-case-accessing-interface-names), or to
+simplify inlining of a generic function while preserving semantics.
 
 ## Parameterized impl declarations
 
@@ -3774,8 +3778,7 @@ There are cases where an impl definition should apply to more than a single type
 and interface combination. The solution is to parameterize the impl definition,
 so it applies to a family of types, interfaces, or both. This includes:
 
--   Declare an impl for a parameterized type, which may be external or declared
-    out-of-line.
+-   Declare an impl for a parameterized type.
 -   "Conditional conformance" where a parameterized type implements some
     interface if the parameter to the type satisfies some criteria, like
     implementing the same interface.
@@ -3820,16 +3823,16 @@ impl forall [T:! type] Vector(T) as Iterable
 ```
 
 The parameter for the type can be used as an argument to the interface being
-implemented:
+implemented, with or without `extend`:
 
 ```
 class HashMap(Key:! Hashable, Value:! type) {
   extend impl as Has(Key) { ... }
-  extend impl as Contains(HashSet(Key)) { ... }
+  impl as Contains(HashSet(Key)) { ... }
 }
 ```
 
-or externally out-of-line:
+or out-of-line:
 
 ```
 class HashMap(Key:! Hashable, Value:! type) { ... }
@@ -3914,13 +3917,13 @@ var no_print: Array(Unprintable, 2) = ...;
 no_print.Print();
 ```
 
-It is still legal to declare or define an external impl lexically inside the
-class scope, as in:
+It is legal to declare or define a conditional impl lexically inside the class
+scope without `extend`, as in:
 
 ```
 class Array(T:! type, template N:! i64) {
-  // ✅ Allowed: external impl defined in class scope may use `forall`
-  // and may specify a type.
+  // ✅ Allowed: non-extending impl defined in class scope may
+  // use `forall` and may specify a type.
   impl forall [P:! Printable] Array(P, N) as Printable { ... }
 }
 ```
@@ -4684,7 +4687,7 @@ The declaration of an interface implementation consists of:
     [associated types](#associated-types).
 
 **Note:** The `extend` keyword, when present, is not part of the declaration. It
-is only present for internal `impl` declarations in class scope.
+precedes the `impl` declaration in class scope.
 
 An implementation of an interface for a type may be forward declared subject to
 these rules:
@@ -4705,11 +4708,11 @@ these rules:
     does not apply to `impl as` declarations in an interface or named constraint
     definition, as those are considered interface requirements not forward
     declarations.
--   Every internal implementation must be declared (or defined) inside the scope
-    of the class definition. It may also be declared before the class definition
-    or defined afterwards. Note that the class itself is incomplete in the scope
-    of the class definition, but member function bodies defined inline are
-    processed
+-   Every extending implementation must be declared (or defined) inside the
+    scope of the class definition. It may also be declared before the class
+    definition or defined afterwards. Note that the class itself is incomplete
+    in the scope of the class definition, but member function bodies defined
+    inline are processed
     [as if they appeared immediately after the end of the outermost enclosing class](/docs/project/principles/information_accumulation.md#exceptions).
 -   For [coherence](goals.md#coherence), we require that any impl that matches
     an [impl lookup](#impl-lookup) query in the same file, must be declared
@@ -4791,11 +4794,9 @@ interface Interface4 {
   let T4:! type;
 }
 
-// Forward declaration of external implementations
+// Out-of-line forward declarations
 impl MyClass as Interface1 where .T1 = i32;
 impl MyClass as Interface2 where .T2 = bool;
-
-// Forward declaration of an internal implementation
 impl MyClass as Interface3 where .T3 = f32;
 impl MyClass as Interface4 where .T4 = String;
 
@@ -4808,42 +4809,47 @@ interface Interface6 {
 
 // Definition of the previously declared class type
 class MyClass {
-  // Definition of previously declared external impl.
+  // Inline definition of previously declared impl.
   // Note: no need to repeat assignments to associated
   // constants.
   impl as Interface1 where _ { }
 
-  // Definition of previously declared internal impl.
+  // Inline extending definition of previously declared
+  // impl.
+  // Note: `extend` only appears on the declaration in
+  // class scope
   // Note: allowed even though `MyClass` is incomplete.
   // Note: allowed but not required to repeat `where`
   // clause.
   extend impl as Interface3 where .T3 = f32 { }
 
-  // Redeclaration of previously declared internal impl.
-  // Every internal implementation must be declared in
-  // the class definition.
+  // Extending redeclaration of previously declared
+  // impl. Every extending implementation must be
+  // declared in the class definition.
   extend impl as Interface4 where _;
 
-  // Forward declaration of external implementation.
+  // Inline forward declaration of implementation.
   impl MyClass as Interface5 where .T5 = u64;
   // or: impl as Interface5 where .T5 = u64;
 
-  // Forward declaration of internal implementation.
+  // Forward declaration of extending implementation.
   extend impl as Interface6 where .T6 = u8;
-  // Not: extend impl MyClass as Interface6 where .T6 = u8;
+  // *Not*:
+  //   extend impl MyClass as Interface6 where .T6 = u8;
+  // No optional type after `extend impl`, it must be
+  // followed immediately by `as`
 }
 
 // It would be legal to move the following definitions
 // from the API file to the implementation file for
 // this library.
 
-// Definition of implementations previously declared
-// external.
+// Definitions of previously declared implementations.
 impl MyClass as Interface2 where _ { }
 impl MyClass as Interface5 where _ { }
 
-// Definition of implementations previously declared
-// internal.
+// Definition of previously declared extending
+// implementations.
 impl MyClass as Interface4 where _ { }
 impl MyClass as Interface6 where _ { }
 ```
