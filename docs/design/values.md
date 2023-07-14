@@ -581,14 +581,26 @@ or point back to some original object. The C++ implementation already requires
 the ability to introduce copies or a temporary, which also serves the needs of
 interop.
 
-**Future work:** when a type customizes its value representation, as currently
-specified this will break the use of `const &` C++ APIs with such a value. We
-should extend the rules around value representation customization to require
-that either the representation type can be converted to (a copy) of the
-customized type, or implements an interop-specific interface to compute a
-`const` pointer to the original object used to form the representation object.
-This will allow custom representations to either create copies for interop or
-retain a pointer to the original object and expose that for interop as desired.
+> **Future work:** when a type customizes its value representation, as currently
+> specified this will break the use of `const &` C++ APIs with such a value. We
+> should extend the rules around value representation customization to require
+> that either the representation type can be converted to (a copy) of the
+> customized type, or implements an interop-specific interface to compute a
+> `const` pointer to the original object used to form the representation object.
+> This will allow custom representations to either create copies for interop or
+> retain a pointer to the original object and expose that for interop as
+> desired.
+
+Another risk is exposing Carbon's value expressions to `const &` parameters in
+this way, as C++ allows casting away `const`. However, in the absence of
+`mutable` members, casting away `const` does not make it safe to _mutate_
+through a `const &` parameter (or a `const`-qualified method). C++ allows
+`const &` parameters and `const` member functions to access objects that are
+_declared_ `const`. These objects cannot be mutated, even if `const` is removed,
+exactly the same as Carbon value expressions. In fact, these kinds of mutations
+[break in real implementations](https://cpp.compiler-explorer.com/z/KMhTondaK).
+The result is that Carbon's value expressions will work similarly to
+`const`-declared objects in C++, and will interop with C++ code similarly well.
 
 ### Escape hatches for value addresses in Carbon
 
