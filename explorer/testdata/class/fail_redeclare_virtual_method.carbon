@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -12,8 +10,9 @@ base class C {
   virtual fn Foo[self:Self]() {}
 }
 
-class D extends C {
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/class/fail_redeclare_virtual_method.carbon:[[@LINE+1]]: Error declaring `Foo`: method is declared virtual in base class, use `impl` to override it.
+class D {
+  extend base: C;
+  // CHECK:STDERR: COMPILATION ERROR: fail_redeclare_virtual_method.carbon:[[@LINE+1]]: Error declaring `Foo`: method is declared virtual in base class, use `impl` to override it.
   virtual fn Foo[self:Self]() {}
 }
 

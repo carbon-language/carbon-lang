@@ -9,13 +9,14 @@
 
 #include <fstream>
 
+#include "common/fuzzing/proto_to_carbon.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon::Testing {
 namespace {
 
-TEST(FuzzerUtilTest, ParseAndExecute) {
+TEST(FuzzerUtilTest, ParseAndExecuteProto) {
   const ErrorOr<Fuzzing::Carbon> carbon_proto = ParseCarbonTextProto(R"(
     compilation_unit {
       package_statement { package_name: "P" }
@@ -41,37 +42,16 @@ TEST(FuzzerUtilTest, ParseAndExecute) {
       }
     })");
   ASSERT_TRUE(carbon_proto.ok());
-  const ErrorOr<int> result = ParseAndExecute(carbon_proto->compilation_unit());
+  const ErrorOr<int> result = ParseAndExecuteProto(*carbon_proto);
   ASSERT_TRUE(result.ok()) << "Execution failed: " << result.error();
   EXPECT_EQ(*result, 0);
 }
 
 TEST(FuzzerUtilTest, GetRunfilesFile) {
-  EXPECT_THAT(*Internal::GetRunfilesFile("carbon/explorer/data/prelude.carbon"),
+  EXPECT_THAT(*GetRunfilesFile("carbon/explorer/data/prelude.carbon"),
               testing::EndsWith("/prelude.carbon"));
-  EXPECT_THAT(Internal::GetRunfilesFile("nonexistent-file").error().message(),
+  EXPECT_THAT(GetRunfilesFile("nonexistent-file").error().message(),
               testing::EndsWith("doesn't exist"));
-}
-
-TEST(FuzzerUtilTest, ParseCarbonTextProtoWithUnknownField) {
-  const ErrorOr<Fuzzing::Carbon> carbon_proto =
-      ParseCarbonTextProto(R"(
-    compilation_unit {
-      garbage: "value"
-      declarations {
-        choice {
-          name {
-            name: "Ch"
-          }
-        }
-      }
-    })",
-                           /*allow_unknown=*/true);
-  ASSERT_TRUE(carbon_proto.ok());
-  // No EqualsProto in gmock - https://github.com/google/googletest/issues/1761.
-  EXPECT_EQ(
-      carbon_proto->compilation_unit().declarations(0).choice().name().name(),
-      "Ch");
 }
 
 }  // namespace

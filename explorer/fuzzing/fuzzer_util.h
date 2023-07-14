@@ -7,31 +7,18 @@
 
 #include "common/error.h"
 #include "common/fuzzing/carbon.pb.h"
+#include "explorer/ast/ast.h"
 
-namespace Carbon {
-
-// Parses text proto with a Carbon message, optionally ignoring unknown fields.
-auto ParseCarbonTextProto(const std::string& contents,
-                          bool allow_unknown = true)
-    -> ErrorOr<Fuzzing::Carbon>;
-
-// Converts `compilation_unit` to Carbon. Adds an default `Main()`
-// definition if one is not present in the proto.
-auto ProtoToCarbonWithMain(const Fuzzing::CompilationUnit& compilation_unit)
-    -> std::string;
+namespace Carbon::Testing {
 
 // Parses and executes a fuzzer-generated program.
 // Returns program result if execution was successful.
-auto ParseAndExecute(const Fuzzing::CompilationUnit& compilation_unit)
-    -> ErrorOr<int>;
-
-namespace Internal {
+auto ParseAndExecuteProto(const Fuzzing::Carbon& carbon) -> ErrorOr<int>;
 
 // Returns a full path for a file under bazel runfiles.
 // Exposed for testing.
 auto GetRunfilesFile(const std::string& file) -> ErrorOr<std::string>;
 
-}  // namespace Internal
-}  // namespace Carbon
+}  // namespace Carbon::Testing
 
 #endif  // CARBON_EXPLORER_FUZZING_FUZZER_UTIL_H_

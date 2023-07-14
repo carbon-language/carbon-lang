@@ -2,6 +2,9 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("//bazel/sh_run:rules.bzl", "glob_sh_run")
+load("//testing/file_test:rules.bzl", "file_test")
+
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
@@ -29,20 +32,8 @@ cc_library(
         ":semantics_node_kind",
         "//common:check",
         "//common:ostream",
+        "//toolchain/common:index_base",
         "//toolchain/parser:parse_tree",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "semantics_node_block_stack",
-    srcs = ["semantics_node_block_stack.cpp"],
-    hdrs = ["semantics_node_block_stack.h"],
-    deps = [
-        ":semantics_node",
-        "//common:check",
-        "//common:ostream",
-        "//common:vlog",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -66,20 +57,26 @@ cc_library(
     name = "semantics_ir",
     srcs = [
         "semantics_ir.cpp",
-        "semantics_parse_tree_handler.cpp",
-    ],
+        "semantics_context.cpp",
+        "semantics_node_block_stack.cpp",
+    ] +
+    # Glob handler files to avoid missing anyway.
+    glob([
+        "semantics_handle*.cpp",
+    ]),
     hdrs = [
+        "semantics_context.h",
         "semantics_ir.h",
-        "semantics_parse_tree_handler.h",
+        "semantics_node_block_stack.h",
     ],
     deps = [
         ":semantics_builtin_kind",
         ":semantics_node",
-        ":semantics_node_block_stack",
         ":semantics_node_stack",
         "//common:check",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/common:pretty_stack_trace_function",
         "//toolchain/diagnostics:diagnostic_kind",
         "//toolchain/lexer:numeric_literal",
         "//toolchain/lexer:token_kind",
@@ -96,12 +93,43 @@ cc_test(
     size = "small",
     srcs = ["semantics_ir_test.cpp"],
     deps = [
-        ":semantics_ir",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "//toolchain/common:yaml_test_helpers",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/driver",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
+)
+
+file_test(
+    name = "semantics_file_test",
+    srcs = ["semantics_file_test.cpp"],
+    tests = glob(["testdata/**/*.carbon"]),
+    deps = [
+        "//toolchain/driver:driver_file_test_base",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+glob_sh_run(
+    args = [
+        "$(location //toolchain/driver:carbon)",
+        "dump",
+        "semantics-ir",
+    ],
+    data = ["//toolchain/driver:carbon"],
+    file_exts = ["carbon"],
+)
+
+glob_sh_run(
+    args = [
+        "$(location //toolchain/driver:carbon)",
+        "-v",
+        "dump",
+        "semantics-ir",
+    ],
+    data = ["//toolchain/driver:carbon"],
+    file_exts = ["carbon"],
+    run_ext = "verbose",
 )

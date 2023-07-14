@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
@@ -14,7 +12,7 @@ interface AddMul {
   fn Mul[self: Self](o: Self) -> Self;
 }
 
-external impl i32 as AddMul {
+impl i32 as AddMul {
   fn Add[self: i32](o: i32) -> i32 {
     return self + o;
   }
@@ -37,7 +35,7 @@ interface Vector(Scalar:! AddMul) {
 class Point {
   var x: i32;
   var y: i32;
-  impl Point as Vector(i32) {
+  extend impl as Vector(i32) {
     fn Zero() -> Point {
       return {.x = 0, .y = 0};
     }

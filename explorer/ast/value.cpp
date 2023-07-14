@@ -13,6 +13,7 @@
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/element_path.h"
+#include "explorer/ast/value_transform.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
 #include "llvm/ADT/STLExtras.h"
@@ -26,6 +27,86 @@ using llvm::cast;
 using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
 using llvm::isa;
+
+namespace {
+// A visitor that walks the Value*s nested within a value.
+struct NestedValueVisitor {
+  template <typename T>
+  auto VisitParts(const T& decomposable) -> bool {
+    return decomposable.Decompose(
+        [&](const auto&... parts) { return (Visit(parts) && ...); });
+  }
+
+  auto Visit(Nonnull<const Value*> value) -> bool {
+    if (!callback(value)) {
+      return false;
+    }
+
+    return value->Visit<bool>(
+        [&](const auto* derived_value) { return VisitParts(*derived_value); });
+  }
+
+  auto Visit(Nonnull<const Bindings*> bindings) -> bool {
+    for (auto [binding, value] : bindings->args()) {
+      if (!Visit(value)) {
+        return false;
+      }
+    }
+    for (auto [binding, value] : bindings->witnesses()) {
+      if (!Visit(value)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template <typename T>
+  auto Visit(const std::vector<T>& vec) -> bool {
+    for (auto& v : vec) {
+      if (!Visit(v)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template <typename T>
+  auto Visit(const std::optional<T>& opt) -> bool {
+    return !opt || Visit(*opt);
+  }
+
+  template <typename T,
+            typename = std::enable_if_t<IsRecursivelyTransformable<T>>>
+  auto Visit(Nonnull<const T*> value) -> bool {
+    return VisitParts(*value);
+  }
+  template <typename T,
+            typename = std::enable_if_t<IsRecursivelyTransformable<T>>>
+  auto Visit(const T& value) -> bool {
+    return VisitParts(value);
+  }
+
+  // Other value components can't refer to a value.
+  auto Visit(Nonnull<const AstNode*>) -> bool { return true; }
+  auto Visit(ValueNodeView) -> bool { return true; }
+  auto Visit(int) -> bool { return true; }
+  auto Visit(Address) -> bool { return true; }
+  auto Visit(const std::string&) -> bool { return true; }
+  auto Visit(Nonnull<const NominalClassValue**>) -> bool {
+    // This is the pointer to the most-derived value within a class value,
+    // which is not "within" this value, so we shouldn't visit it.
+    return true;
+  }
+  auto Visit(const VTable&) -> bool { return true; }
+
+  llvm::function_ref<bool(const Value*)> callback;
+};
+}  // namespace
+
+auto VisitNestedValues(Nonnull<const Value*> value,
+                       llvm::function_ref<bool(const Value*)> visitor) -> bool {
+  return NestedValueVisitor{.callback = visitor}.Visit(value);
+}
 
 auto StructValue::FindField(std::string_view name) const
     -> std::optional<Nonnull<const Value*>> {
@@ -414,9 +495,13 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::TupleValue: {
       out << "(";
       llvm::ListSeparator sep;
-      for (Nonnull<const Value*> element :
-           cast<TupleValueBase>(*this).elements()) {
+      const auto elements = cast<TupleValueBase>(*this).elements();
+      for (Nonnull<const Value*> element : elements) {
         out << sep << *element;
+      }
+      // Print trailing comma for single element tuples: (i32,).
+      if (elements.size() == 1) {
+        out << ",";
       }
       out << ")";
       break;
@@ -494,21 +579,26 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::AutoType:
       out << "auto";
       break;
-    case Value::Kind::ContinuationType:
-      out << "Continuation";
-      break;
     case Value::Kind::PointerType:
       out << cast<PointerType>(*this).pointee_type() << "*";
       break;
     case Value::Kind::FunctionType: {
       const auto& fn_type = cast<FunctionType>(*this);
       out << "fn ";
-      if (!fn_type.deduced_bindings().empty()) {
+      auto self = fn_type.method_self();
+      if (!fn_type.deduced_bindings().empty() || self.has_value()) {
         out << "[";
         llvm::ListSeparator sep;
         for (Nonnull<const GenericBinding*> deduced :
              fn_type.deduced_bindings()) {
           out << sep << *deduced;
+        }
+        if (self.has_value()) {
+          if (self->addr_self) {
+            out << sep << "addr self: " << *self->self_type << "*";
+          } else {
+            out << sep << "self: " << *self->self_type;
+          }
         }
         out << "]";
       }
@@ -672,10 +762,6 @@ void Value::Print(llvm::raw_ostream& out) const {
       out << "." << *GetName(assoc.constant()) << ")";
       break;
     }
-    case Value::Kind::ContinuationValue: {
-      out << cast<ContinuationValue>(*this).representation();
-      break;
-    }
     case Value::Kind::StringType:
       out << "String";
       break;
@@ -706,8 +792,11 @@ void Value::Print(llvm::raw_ostream& out) const {
     }
     case Value::Kind::StaticArrayType: {
       const auto& array_type = cast<StaticArrayType>(*this);
-      out << "[" << array_type.element_type() << "; " << array_type.size()
-          << "]";
+      out << "[" << array_type.element_type() << ";";
+      if (array_type.has_size()) {
+        out << " " << array_type.size();
+      }
+      out << "]";
       break;
     }
   }
@@ -763,6 +852,19 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::FunctionType: {
       const auto& fn1 = cast<FunctionType>(*t1);
       const auto& fn2 = cast<FunctionType>(*t2);
+      // Verify `self` parameters match
+      auto self1 = fn1.method_self();
+      auto self2 = fn2.method_self();
+      if (self1.has_value() != self2.has_value()) {
+        return false;
+      }
+      if (self1) {
+        if (self1->addr_self != self2->addr_self ||
+            !TypeEqual(self1->self_type, self2->self_type, equality_ctx)) {
+          return false;
+        }
+      }
+      // Verify parameters and return types match
       return TypeEqual(&fn1.parameters(), &fn2.parameters(), equality_ctx) &&
              TypeEqual(&fn1.return_type(), &fn2.return_type(), equality_ctx);
     }
@@ -870,7 +972,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     }
     case Value::Kind::IntType:
     case Value::Kind::BoolType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::TypeType:
     case Value::Kind::StringType:
       return true;
@@ -898,7 +999,6 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::LocationValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::ParameterizedEntityName:
     case Value::Kind::MemberName:
@@ -1034,7 +1134,6 @@ auto ValueStructurallyEqual(
     case Value::Kind::ConstraintWitness:
     case Value::Kind::ConstraintImplWitness:
     case Value::Kind::ChoiceType:
-    case Value::Kind::ContinuationType:
     case Value::Kind::VariableType:
     case Value::Kind::StringType:
     case Value::Kind::TypeOfMixinPseudoType:
@@ -1047,7 +1146,6 @@ auto ValueStructurallyEqual(
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::ContinuationValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
     case Value::Kind::UninitializedValue:
@@ -1239,6 +1337,17 @@ auto NominalClassType::InheritsClass(Nonnull<const Value*> other) const
     ancestor_class = (*ancestor_class)->base();
   }
   return false;
+}
+
+auto ExpressionCategoryToString(ExpressionCategory cat) -> llvm::StringRef {
+  switch (cat) {
+    case ExpressionCategory::Value:
+      return "value";
+    case ExpressionCategory::Reference:
+      return "reference";
+    case ExpressionCategory::Initializing:
+      return "initializing";
+  }
 }
 
 }  // namespace Carbon

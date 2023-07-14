@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -19,8 +17,8 @@ class Point {
 }
 
 // Error: need to specify which type implementing `Vector` for.
-// CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/interface/fail_external_impl_omit_self.carbon:[[@LINE+1]]: could not resolve 'Self'
-external impl as Vector {
+// CHECK:STDERR: COMPILATION ERROR: fail_external_impl_omit_self.carbon:[[@LINE+1]]: could not resolve 'Self'
+impl as Vector {
   fn Add[self: Point](b: Point) -> Point {
     return {.x = self.x + b.x, .y = self.y + b.y};
   }

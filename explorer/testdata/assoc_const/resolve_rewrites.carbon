@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: result: 1
 
 package ExplorerTest api;
@@ -39,7 +37,7 @@ fn F[
 }
 
 class C {
-  impl as ManyTypes where
+  extend impl as ManyTypes where
     .T0 = i32 and
     .T1 = .T0 and
     .T2 = .T1 and

@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: XYZ: 1
 // CHECK:STDOUT: XY: 1
 // CHECK:STDOUT: XZ: 1
@@ -26,16 +24,16 @@ interface Y {}
 interface Z {}
 
 __match_first {
-  external impl forall [T:! X] T as A {
+  impl forall [T:! X] T as A {
     fn Which() -> i32 { return 1; }
   }
-  external impl forall [T:! Y] T as A {
+  impl forall [T:! Y] T as A {
     fn Which() -> i32 { return 2; }
   }
-  external impl forall [T:! Z] T as A {
+  impl forall [T:! Z] T as A {
     fn Which() -> i32 { return 3; }
   }
-  external impl forall [T:! type] T as A {
+  impl forall [T:! type] T as A {
     fn Which() -> i32 { return 4; }
   }
 }

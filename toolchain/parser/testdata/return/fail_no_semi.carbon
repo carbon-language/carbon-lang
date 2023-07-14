@@ -3,10 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
+// CHECK:STDOUT:     {kind: 'Name', text: 'F'},
 // CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
@@ -19,6 +18,6 @@
 
 fn F() {
   return
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/return/fail_no_semi.carbon:[[@LINE+2]]:1: Expected expression.
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/return/fail_no_semi.carbon:[[@LINE+1]]:1: Expected `;` after `return`.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+2]]:1: Expected expression.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+1]]:1: `return` statements must end with a `;`.
 }

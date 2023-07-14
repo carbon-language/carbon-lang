@@ -77,6 +77,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Files, libraries, packages](#files-libraries-packages)
     -   [Package declaration](#package-declaration)
     -   [Imports](#imports)
+        -   [Same-package imports](#same-package-imports)
+        -   [Cross-package imports](#cross-package-imports)
     -   [Name visibility](#name-visibility)
     -   [Package scope](#package-scope)
     -   [Namespaces](#namespaces)
@@ -1779,9 +1781,16 @@ Classes may only extend a single class. Carbon only supports single inheritance,
 and will use mixins instead of multiple inheritance.
 
 ```carbon
-base class MiddleDerived extends MyBaseClass { ... }
-class FinalDerived extends MiddleDerived { ... }
-// ❌ Forbidden: class Illegal extends FinalDerived { ... }
+base class MiddleDerived {
+  extend base: MyBaseClass;
+  ...
+}
+class FinalDerived {
+  extend base: MiddleDerived;
+  ...
+}
+// ❌ Forbidden: class Illegal { extend base: FinalDerived; ... }
+// may not extend `FinalDerived` since not declared `base` or `abstract`.
 ```
 
 A base class may define
@@ -1816,7 +1825,8 @@ For purposes of construction, a derived class acts like its first field is
 called `base` with the type of its immediate base class.
 
 ```carbon
-class MyDerivedType extends MyBaseType {
+class MyDerivedType {
+  extend base: MyBaseType;
   fn Make() -> MyDerivedType {
     return {.base = MyBaseType.Make(), .derived_field = 7};
   }
@@ -1840,7 +1850,8 @@ abstract class AbstractClass {
 // ❌ Error: can't instantiate abstract class
 var abc: AbstractClass = ...;
 
-class DerivedFromAbstract extends AbstractClass {
+class DerivedFromAbstract {
+  extend base: AbstractClass;
   fn Make() -> Self {
     // AbstractClass.Make() returns a
     // `partial AbstractClass` that can be used as
@@ -2144,16 +2155,12 @@ to coordinate to avoid name conflicts, but not across packages.
 
 ### Package declaration
 
-> **Note:** This is provisional, designs for a default package, making the
-> package name optional, and omitting the `package` declaration have not been
-> through the proposal process yet. See
-> [#2323](https://github.com/carbon-language/carbon-lang/issues/2323).
-
 Files start with an optional package declaration, consisting of:
 
--   the `package` keyword introducer,
--   an optional identifier specifying the package name,
--   optional `library` followed by a string with the library name,
+-   optionally, the `package` keyword followed by an identifier specifying the
+    package name,
+-   optionally, the `library` keyword followed by a string with the library
+    name,
 -   either `api` or `impl`, and
 -   a terminating semicolon (`;`).
 
@@ -2168,60 +2175,52 @@ package Geometry library "Shapes" api;
 
 Parts of this declaration may be omitted:
 
--   If the package name is omitted, as in `package library "Main" api;`, the
-    file contributes to the default package. No other package may import from
-    the default package.
+-   If the package keyword is not specified, as in `library "Widgets" api;`, the
+    file contributes to the `Main` package. No other package may import from the
+    `Main` package, and it cannot be named explicitly.
 
 -   If the library keyword is not specified, as in `package Geometry api;`, this
     file contributes to the default library.
 
--   If a file has no package declaration at all, it is the `api` file belonging
-    to the default package and default library. This is particularly for tests
-    and smaller examples. No other library can import this library even from
-    within the default package. It can be split across multiple `impl` files
-    using a `package impl;` package declaration.
+-   If both keywords are omitted, the package declaration must be omitted
+    entirely. In this case, the file is an `impl` file belonging to the default
+    library of the `Main` package, which implicitly has an empty `api` file.
+    This library is used to define the entry point for the program, and tests
+    and smaller examples may choose to reside entirely within this library. No
+    other library can import this library even from within the default package.
 
-A program need not use the default package, but if it does, it should contain
-the entry-point function. By default, the entry-point function is `Run` from the
-default package.
+If the default library of the `Main` package contains a function named `Run`,
+that function is the program entry point. Otherwise, the program's entry point
+may be defined in another language, such as by defining a C++ `main` function.
+
+> **Note:** Valid signatures for the entry point have not yet been decided.
 
 > References:
 >
 > -   [Code and name organization](code_and_name_organization)
 > -   Proposal
 >     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
+> -   Proposal
+>     [#2550: Simplified package declaration for the main package](https://github.com/carbon-language/carbon-lang/pull/2550)
 
 ### Imports
 
-> **Note:** This is provisional, designs for making the package name optional
-> have not been through the proposal process yet. See
-> [#2001](https://github.com/carbon-language/carbon-lang/issues/2001).
+After the package declaration, files may include `import` declarations. The
+`import` keyword is followed by the package name, `library` followed by the
+library name, or both. If the library is omitted, the default library for that
+package is imported.
 
-After the package declaration, files may include `import` declarations. These
-include the package name and optionally `library` followed by the library name.
-If the library is omitted, the default library for that package is imported.
+All `import` declarations must appear before all other non-`package`
+declarations in the file.
 
-```carbon
-// Import the "Vector" library from the
-// `LinearAlgebra` package.
-import LinearAlgebra library "Vector";
-// Import the default library from the
-// `ArbitraryPrecision` package.
-import ArbitraryPrecision;
-```
+#### Same-package imports
 
-The syntax `import PackageName ...` introduces the name `PackageName` as a
-[`private`](#name-visibility) name naming the given package. It cannot be used
-to import libraries of the current package. Importing additional libraries from
-that package makes additional members of `PackageName` visible.
-
-Libraries from the current package are imported by omitting the package name.
+The package name must be omitted when importing a library from the current
+package.
 
 ```carbon
-// Import the "Vertex" library from the same package.
+// Import the "Vertex" library from the package containing this file.
 import library "Vertex";
-// Import the default library from the same package.
-import library default;
 ```
 
 The `import library ...` syntax adds all the public top-level names within the
@@ -2230,15 +2229,62 @@ given library to the top-level scope of the current file as
 [namespaces](#namespaces).
 
 Every `impl` file automatically imports the `api` file for its library.
+Attempting to perform an import of the current library is invalid.
 
-All `import` declarations must appear before all other non-`package`
-declarations in the file.
+```
+package MyPackage library "Widgets" impl;
+
+// ❌ Error, this import is performed implicitly.
+import MyPackage library "Widgets";
+```
+
+The default library for a package does not have a string name, and is instead
+named with the `default` keyword.
+
+```carbon
+// Import the default library from the same package.
+import library default;
+```
+
+It is an error to use the `import library default;` syntax in the `Main`
+package.
+
+#### Cross-package imports
+
+When the package name is specified, the `import` declaration imports a library
+from another package.
+
+```carbon
+package MyPackage impl;
+
+// Import the "Vector" library from the `LinearAlgebra` package.
+import LinearAlgebra library "Vector";
+
+// Import the default library from the `ArbitraryPrecision` package.
+import ArbitraryPrecision;
+```
+
+The syntax `import PackageName ...` introduces the name `PackageName` as a
+[`private`](#name-visibility) name naming the given package. Importing
+additional libraries from that package makes additional members of `PackageName`
+visible.
+
+It is an error to specify the name of the current package. The package name must
+be omitted when [importing from the same package](#same-package-imports).
+
+It is an error to specify `library default` in a package-qualified import.
+Instead, omit the `library` portion of the declaration.
+
+It is an error to specify the package name `Main`. Libraries in the `Main`
+package can only be imported from within that package.
 
 > References:
 >
 > -   [Code and name organization](code_and_name_organization)
 > -   Proposal
 >     [#107: Code and name organization](https://github.com/carbon-language/carbon-lang/pull/107)
+> -   Proposal
+>     [#2550: Simplified package declaration for the main package](https://github.com/carbon-language/carbon-lang/pull/2550)
 
 ### Name visibility
 
@@ -2456,8 +2502,8 @@ or [named constraint](generics/details.md#named-constraints), possibly renamed:
 
 ```carbon
 class ContactInfo {
-  external impl as Printable;
-  external impl as ToPrinterDevice;
+  impl as Printable;
+  impl as ToPrinterDevice;
   alias PrintToScreen = Printable.Print;
   alias PrintToPrinter = ToPrinterDevice.Print;
   ...
@@ -2725,7 +2771,7 @@ sufficient.
 class Circle {
   var radius: f32;
 
-  impl as Printable {
+  extend impl as Printable {
     fn Print[self: Self]() {
       Carbon.Print("Circle with radius: {0}", self.radius);
     }
@@ -2831,14 +2877,14 @@ values for the `ElementType` member of the interface using a `where` clause:
 
 ```carbon
 class IntStack {
-  impl as StackInterface where .ElementType = i32 {
+  extend impl as StackInterface where .ElementType = i32 {
     fn Push[addr self: Self*](value: i32);
     // ...
   }
 }
 
 class FruitStack {
-  impl as StackInterface where .ElementType = Fruit {
+  extend impl as StackInterface where .ElementType = Fruit {
     fn Push[addr self: Self*](value: Fruit);
     // ...
   }
@@ -2944,12 +2990,12 @@ An `impl` declaration may be parameterized by adding `forall [`_generic
 parameter list_`]` after the `impl` keyword introducer, as in:
 
 ```carbon
-external impl forall [T:! Printable] Vector(T) as Printable;
-external impl forall [Key:! Hashable, Value:! type]
+impl forall [T:! Printable] Vector(T) as Printable;
+impl forall [Key:! Hashable, Value:! type]
     HashMap(Key, Value) as Has(Key);
-external impl forall [T:! Ordered] T as PartiallyOrdered;
-external impl forall [T:! ImplicitAs(i32)] BigInt as AddWith(T);
-external impl forall [U:! type, T:! As(U)]
+impl forall [T:! Ordered] T as PartiallyOrdered;
+impl forall [T:! ImplicitAs(i32)] BigInt as AddWith(T);
+impl forall [U:! type, T:! As(U)]
     Optional(T) as As(Optional(U));
 ```
 
@@ -3072,7 +3118,7 @@ to type `T` and the second argument to type `U`, add the `like` keyword to both
 types in the `impl` declaration, as in:
 
 ```carbon
-external impl like T as AddWith(like U) where .Result = V {
+impl like T as AddWith(like U) where .Result = V {
   // `Self` is `T` here
   fn Op[self: Self](other: U) -> V { ... }
 }
@@ -3082,7 +3128,7 @@ When the operand types and result type are all the same, this is equivalent to
 implementing the `Add` interface:
 
 ```carbon
-external impl T as Add {
+impl T as Add {
   fn Op[self: Self](other: Self) -> Self { ... }
 }
 ```

@@ -16,6 +16,7 @@
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/element_path.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/statement.h"
 #include "explorer/common/nonnull.h"
 #include "llvm/ADT/StringMap.h"
@@ -95,6 +96,38 @@ class Value {
   const Kind kind_;
 };
 
+// Contains the result of the evaluation of an expression, including a value,
+// the original expression category, and an optional address if available.
+class ExpressionResult {
+ public:
+  static auto Value(Nonnull<const Carbon::Value*> v) -> ExpressionResult {
+    return ExpressionResult(v, std::nullopt, ExpressionCategory::Value);
+  }
+  static auto Reference(Nonnull<const Carbon::Value*> v, Address address)
+      -> ExpressionResult {
+    return ExpressionResult(v, std::move(address),
+                            ExpressionCategory::Reference);
+  }
+  static auto Initializing(Nonnull<const Carbon::Value*> v, Address address)
+      -> ExpressionResult {
+    return ExpressionResult(v, std::move(address),
+                            ExpressionCategory::Initializing);
+  }
+
+  ExpressionResult(Nonnull<const Carbon::Value*> v,
+                   std::optional<Address> address, ExpressionCategory cat)
+      : value_(v), address_(std::move(address)), expr_cat_(cat) {}
+
+  auto value() const -> Nonnull<const Carbon::Value*> { return value_; }
+  auto address() const -> const std::optional<Address>& { return address_; }
+  auto expression_category() const -> ExpressionCategory { return expr_cat_; }
+
+ private:
+  Nonnull<const Carbon::Value*> value_;
+  std::optional<Address> address_;
+  ExpressionCategory expr_cat_;
+};
+
 // Returns whether the fully-resolved kind that this value will eventually have
 // is currently unknown, because it depends on a generic parameter.
 inline auto IsValueKindDependent(Nonnull<const Value*> type) -> bool {
@@ -121,6 +154,12 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
 auto ValueEqual(Nonnull<const Value*> v1, Nonnull<const Value*> v2,
                 std::optional<Nonnull<const EqualityContext*>> equality_ctx)
     -> bool;
+
+// Call the given `visitor` on all values nested within the given value,
+// including `value` itself, in a preorder traversal. Aborts and returns
+// `false` if `visitor` returns `false`, otherwise returns `true`.
+auto VisitNestedValues(Nonnull<const Value*> value,
+                       llvm::function_ref<bool(const Value*)> visitor) -> bool;
 
 // An integer value.
 class IntValue : public Value {
@@ -623,21 +662,46 @@ class FunctionType : public Value {
     Nonnull<const GenericBinding*> binding;
   };
 
-  FunctionType(Nonnull<const Value*> parameters,
-               Nonnull<const Value*> return_type)
-      : FunctionType(parameters, {}, return_type, {}, {}) {}
+  // For methods with unbound `self` parameters.
+  struct MethodSelf {
+    template <typename F>
+    auto Decompose(F f) const {
+      return f(addr_self, self_type);
+    }
 
-  FunctionType(Nonnull<const Value*> parameters,
+    // True if `self` parameter uses an `addr` pattern.
+    bool addr_self;
+    // Type of `self` parameter.
+    const Value* self_type;
+  };
+
+  FunctionType(std::optional<MethodSelf> method_self,
+               Nonnull<const Value*> parameters,
+               Nonnull<const Value*> return_type)
+      : FunctionType(method_self, parameters, {}, return_type, {}, {},
+                     /*is_initializing=*/false) {}
+
+  FunctionType(std::optional<MethodSelf> method_self,
+               Nonnull<const Value*> parameters,
                std::vector<GenericParameter> generic_parameters,
                Nonnull<const Value*> return_type,
                std::vector<Nonnull<const GenericBinding*>> deduced_bindings,
-               std::vector<Nonnull<const ImplBinding*>> impl_bindings)
+               std::vector<Nonnull<const ImplBinding*>> impl_bindings,
+               bool is_initializing)
       : Value(Kind::FunctionType),
+        method_self_(method_self),
         parameters_(parameters),
         generic_parameters_(std::move(generic_parameters)),
         return_type_(return_type),
         deduced_bindings_(std::move(deduced_bindings)),
-        impl_bindings_(std::move(impl_bindings)) {}
+        impl_bindings_(std::move(impl_bindings)),
+        is_initializing_(is_initializing) {}
+
+  struct ExceptSelf {};
+  FunctionType(ExceptSelf, const FunctionType& clone)
+      : FunctionType(std::nullopt, clone.parameters_, clone.generic_parameters_,
+                     clone.return_type_, clone.deduced_bindings_,
+                     clone.impl_bindings_, clone.is_initializing_) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
@@ -645,8 +709,8 @@ class FunctionType : public Value {
 
   template <typename F>
   auto Decompose(F f) const {
-    return f(parameters_, generic_parameters_, return_type_, deduced_bindings_,
-             impl_bindings_);
+    return f(method_self_, parameters_, generic_parameters_, return_type_,
+             deduced_bindings_, impl_bindings_, is_initializing_);
   }
 
   // The type of the function parameter tuple.
@@ -668,13 +732,20 @@ class FunctionType : public Value {
   auto impl_bindings() const -> llvm::ArrayRef<Nonnull<const ImplBinding*>> {
     return impl_bindings_;
   }
+  // Return whether the function type is an initializing expression or not.
+  auto is_initializing() const -> bool { return is_initializing_; }
+
+  // Binding for the implicit `self` parameter, if this is an unbound method.
+  auto method_self() const -> std::optional<MethodSelf> { return method_self_; }
 
  private:
+  std::optional<MethodSelf> method_self_;
   Nonnull<const Value*> parameters_;
   std::vector<GenericParameter> generic_parameters_;
   Nonnull<const Value*> return_type_;
   std::vector<Nonnull<const GenericBinding*>> deduced_bindings_;
   std::vector<Nonnull<const ImplBinding*>> impl_bindings_;
+  bool is_initializing_;
 };
 
 // A pointer type.
@@ -1290,21 +1361,6 @@ class ChoiceType : public Value {
   Nonnull<const Bindings*> bindings_;
 };
 
-// A continuation type.
-class ContinuationType : public Value {
- public:
-  ContinuationType() : Value(Kind::ContinuationType) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::ContinuationType;
-  }
-
-  template <typename F>
-  auto Decompose(F f) const {
-    return f();
-  }
-};
-
 // A variable type.
 class VariableType : public Value {
  public:
@@ -1447,48 +1503,6 @@ class AssociatedConstant : public Value {
   Nonnull<const InterfaceType*> interface_;
   Nonnull<const AssociatedConstantDeclaration*> constant_;
   Nonnull<const Witness*> witness_;
-};
-
-// A first-class continuation representation of a fragment of the stack.
-// The representation of a continuation is opaque and determined by the
-// interpreter.
-class ContinuationValue : public Value {
- public:
-  // Base class for the representation of a continuation, which is not defined
-  // here for layering reasons. The interpreter provides the derived class
-  // `StackFragment` that defines the concrete representation, which is
-  // expected to be the only derived class outside of tests.
-  class Representation {
-   public:
-    virtual ~Representation() {}
-
-    Representation(Representation&&) = delete;
-    auto operator=(Representation&&) -> Representation& = delete;
-
-    virtual void Print(llvm::raw_ostream& out) const = 0;
-    LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
-
-   protected:
-    Representation() = default;
-  };
-
-  explicit ContinuationValue(Nonnull<Representation*> representation)
-      : Value(Kind::ContinuationValue), representation_(representation) {}
-
-  static auto classof(const Value* value) -> bool {
-    return value->kind() == Kind::ContinuationValue;
-  }
-
-  template <typename F>
-  auto Decompose(F f) const {
-    return f(representation_);
-  }
-
-  // The representation of the continuation.
-  auto representation() const -> Representation& { return *representation_; }
-
- private:
-  Nonnull<Representation*> representation_;
 };
 
 // The String type.
@@ -1635,7 +1649,8 @@ class StaticArrayType : public Value {
  public:
   // Constructs a statically-sized array type with the given element type and
   // size.
-  StaticArrayType(Nonnull<const Value*> element_type, size_t size)
+  StaticArrayType(Nonnull<const Value*> element_type,
+                  std::optional<size_t> size)
       : Value(Kind::StaticArrayType),
         element_type_(element_type),
         size_(size) {}
@@ -1650,11 +1665,15 @@ class StaticArrayType : public Value {
   }
 
   auto element_type() const -> const Value& { return *element_type_; }
-  auto size() const -> size_t { return size_; }
+  auto size() const -> size_t {
+    CARBON_CHECK(has_size());
+    return *size_;
+  }
+  auto has_size() const -> bool { return size_.has_value(); }
 
  private:
   Nonnull<const Value*> element_type_;
-  size_t size_;
+  std::optional<size_t> size_;
 };
 
 template <typename R, typename F>

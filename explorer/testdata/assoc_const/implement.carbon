@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: result: 2
 
 package ExplorerTest api;
@@ -16,7 +14,7 @@ interface Vector {
 class Point {
   var x: i32;
   var y: i32;
-  impl as Vector where .Dim = 2 {}
+  extend impl as Vector where .Dim = 2 {}
 }
 
 fn Main() -> i32 {

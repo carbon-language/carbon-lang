@@ -4,15 +4,14 @@
 //
 // TODO: This should have an error.
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'F'},
+// CHECK:STDOUT:     {kind: 'Name', text: 'F'},
 // CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'WhileConditionStart', text: '('},
-// CHECK:STDOUT:       {kind: 'NameReference', text: 'a'},
+// CHECK:STDOUT:       {kind: 'NameExpression', text: 'a'},
 // CHECK:STDOUT:     {kind: 'WhileCondition', text: ')', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'CodeBlockStart', text: 'break', has_error: yes},
 // CHECK:STDOUT:         {kind: 'BreakStatementStart', text: 'break'},
@@ -25,6 +24,6 @@
 
 fn F() {
   while (a)
-    // CHECK:STDERR: {{.*}}/toolchain/parser/testdata/while/fail_unbraced.carbon:[[@LINE+1]]:5: Expected braced code block.
+    // CHECK:STDERR: fail_unbraced.carbon:[[@LINE+1]]:5: Expected braced code block.
     break;
 }

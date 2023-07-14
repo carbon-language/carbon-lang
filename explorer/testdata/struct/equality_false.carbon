@@ -3,14 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 // TODO: Implement this with some kind of reflection?
-external impl {.x: i32, .y: i32} as EqWith(Self) {
+impl {.x: i32, .y: i32} as EqWith(Self) {
   fn Equal[self: Self](other: Self) -> bool {
     return self.x == other.x and self.y == other.y;
   }

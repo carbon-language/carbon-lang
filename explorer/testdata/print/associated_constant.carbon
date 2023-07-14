@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: i32
 // CHECK:STDOUT: String
 // CHECK:STDOUT: result: 0
@@ -15,8 +13,8 @@ interface HasName {
     let Name:! String;
 }
 
-external impl i32 as HasName where .Name = "i32" {}
-external impl String as HasName where .Name = "String" {}
+impl i32 as HasName where .Name = "i32" {}
+impl String as HasName where .Name = "String" {}
 
 fn Main() -> i32 {
     Print(i32.(HasName.Name));

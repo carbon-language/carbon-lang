@@ -45,11 +45,11 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: b0d1fba7ac3be53c71fb0d3211d911e629f8aecb # frozen: 23.1.0
+    rev: bf7a16254ec96b084a6caf3d435ec18f0f245cc7 # frozen: 23.3.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: cafd5506f18eea191804850dacc0a4264772d59d # frozen: v3.0.0-alpha.4
+    rev: 6fd1ced85fc139abd7f5ab4f3d78dab37592cd5e # frozen: v3.0.0-alpha.9-for-vscode
     hooks:
       - id: prettier
   - repo: local
@@ -122,7 +122,7 @@ repos:
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: '0b037c2b59aa62dc3be3287d175295f1a5547eb9' # frozen: v0.991
+    rev: 'bd424e49d4f0181d4c8b8909a8cd5ce9eb058044' # frozen: v1.3.0
     hooks:
       - id: mypy
         # Use setup.cfg to match the command line.
@@ -144,7 +144,7 @@ repos:
               .*_test\.py
           )$
   - repo: https://github.com/codespell-project/codespell
-    rev: 055cb2a9bc1e98a9800a352c53c38a50faf62dc3 # frozen: v2.2.2
+    rev: 355e50e14fd03fe83e4ed9aa0489824b150b3b58 # frozen: v2.2.5
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore', '--uri-ignore-words-list', '*']
@@ -185,6 +185,16 @@ repos:
           - '\.vim$'
           - ''
           - '" '
+          - ''
+          - --custom_format
+          - '\.scm$'
+          - ''
+          - '; '
+          - ''
+          - --custom_format
+          - '\.c$'
+          - ''
+          - '// '
           - ''
         exclude: |
           (?x)^(

@@ -10,7 +10,7 @@
 #include "explorer/ast/expression.h"
 #include "llvm/Support/Casting.h"
 
-namespace Carbon {
+namespace Carbon::Testing {
 
 using ::llvm::cast;
 using ::llvm::dyn_cast;
@@ -340,10 +340,6 @@ static auto ExpressionToProto(const Expression& expression)
       expression_proto.mutable_string_type_literal();
       break;
 
-    case ExpressionKind::ContinuationTypeLiteral:
-      expression_proto.mutable_continuation_type_literal();
-      break;
-
     case ExpressionKind::TypeTypeLiteral:
       expression_proto.mutable_type_type_literal();
       break;
@@ -358,8 +354,10 @@ static auto ExpressionToProto(const Expression& expression)
           expression_proto.mutable_array_type_literal();
       *array_literal_proto->mutable_element_type() =
           ExpressionToProto(array_literal.element_type_expression());
-      *array_literal_proto->mutable_size() =
-          ExpressionToProto(array_literal.size_expression());
+      if (array_literal.has_size_expression()) {
+        *array_literal_proto->mutable_size() =
+            ExpressionToProto(array_literal.size_expression());
+      }
       break;
     }
   }
@@ -565,25 +563,6 @@ static auto StatementToProto(const Statement& statement) -> Fuzzing::Statement {
       break;
     }
 
-    case StatementKind::Continuation: {
-      const auto& continuation = cast<Continuation>(statement);
-      auto* continuation_proto = statement_proto.mutable_continuation();
-      continuation_proto->set_name(continuation.name());
-      *continuation_proto->mutable_body() =
-          BlockStatementToProto(continuation.body());
-      break;
-    }
-
-    case StatementKind::Run:
-      *statement_proto.mutable_run()->mutable_argument() =
-          ExpressionToProto(cast<Run>(statement).argument());
-      break;
-
-    case StatementKind::Await:
-      // Initializes with the default value; there's nothing to set.
-      statement_proto.mutable_await_statement();
-      break;
-
     case StatementKind::Break:
       // Initializes with the default value; there's nothing to set.
       statement_proto.mutable_break_statement();
@@ -777,18 +756,20 @@ static auto DeclarationToProto(const Declaration& declaration)
       break;
     }
 
-    case DeclarationKind::InterfaceExtendsDeclaration: {
-      const auto& extends = cast<InterfaceExtendsDeclaration>(declaration);
-      auto* extends_proto = declaration_proto.mutable_interface_extends();
-      *extends_proto->mutable_base() = ExpressionToProto(*extends.base());
+    case DeclarationKind::InterfaceExtendDeclaration: {
+      const auto& extend = cast<InterfaceExtendDeclaration>(declaration);
+      auto* extend_proto = declaration_proto.mutable_interface_extend();
+      *extend_proto->mutable_base() = ExpressionToProto(*extend.base());
       break;
     }
 
-    case DeclarationKind::InterfaceImplDeclaration: {
-      const auto& impl = cast<InterfaceImplDeclaration>(declaration);
-      auto* impl_proto = declaration_proto.mutable_interface_impl();
-      *impl_proto->mutable_impl_type() = ExpressionToProto(*impl.impl_type());
-      *impl_proto->mutable_constraint() = ExpressionToProto(*impl.constraint());
+    case DeclarationKind::InterfaceRequireDeclaration: {
+      const auto& require = cast<InterfaceRequireDeclaration>(declaration);
+      auto* require_proto = declaration_proto.mutable_interface_require();
+      *require_proto->mutable_impl_type() =
+          ExpressionToProto(*require.impl_type());
+      *require_proto->mutable_constraint() =
+          ExpressionToProto(*require.constraint());
       break;
     }
 
@@ -862,19 +843,27 @@ static auto DeclarationToProto(const Declaration& declaration)
       *alias_proto->mutable_target() = ExpressionToProto(alias.target());
       break;
     }
+
+    case DeclarationKind::ExtendBaseDeclaration: {
+      const auto& extend_base = cast<ExtendBaseDeclaration>(declaration);
+      auto* extend_base_proto = declaration_proto.mutable_extend_base();
+      *extend_base_proto->mutable_base_class() =
+          ExpressionToProto(*extend_base.base_class());
+      break;
+    }
   }
   return declaration_proto;
 }
 
-auto AstToProto(const AST& ast) -> Fuzzing::CompilationUnit {
-  Fuzzing::CompilationUnit compilation_unit;
-  *compilation_unit.mutable_package_statement() =
-      LibraryNameToProto(ast.package);
-  compilation_unit.set_is_api(ast.is_api);
+auto AstToProto(const AST& ast) -> Fuzzing::Carbon {
+  Fuzzing::Carbon carbon;
+  auto* unit = carbon.mutable_compilation_unit();
+  *unit->mutable_package_statement() = LibraryNameToProto(ast.package);
+  unit->set_is_api(ast.is_api);
   for (const Declaration* declaration : ast.declarations) {
-    *compilation_unit.add_declarations() = DeclarationToProto(*declaration);
+    *unit->add_declarations() = DeclarationToProto(*declaration);
   }
-  return compilation_unit;
+  return carbon;
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::Testing

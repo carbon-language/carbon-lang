@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: MemberF.F
 // CHECK:STDOUT: ImplF.(HasF.F)
 // CHECK:STDOUT: BothFs.(HasF.F)
@@ -45,14 +43,14 @@ class MemberF {
 }
 
 class ImplF {}
-external impl ImplF as HasF {
+impl ImplF as HasF {
   fn F[self: Self]() { Print("ImplF.(HasF.F)"); }
 }
 
 class BothFs {
   fn F[self: Self]() { Print("BothFs.F"); }
 }
-external impl BothFs as HasF {
+impl BothFs as HasF {
   fn F[self: Self]() { Print("BothFs.(HasF.F)"); }
 }
 

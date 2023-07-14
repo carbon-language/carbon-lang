@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: result: 1
 
 package ExplorerTest api;
@@ -13,7 +11,7 @@ interface HasAssoc {
   let Assoc:! type;
 }
 class X {
-  external impl as HasAssoc where .Assoc = i32 {}
+  impl as HasAssoc where .Assoc = i32 {}
 }
 
 alias WithoutRewrite = HasAssoc where .Assoc == i32;

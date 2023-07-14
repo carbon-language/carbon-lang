@@ -817,20 +817,6 @@ class IntTypeLiteral : public Expression {
   }
 };
 
-class ContinuationTypeLiteral : public Expression {
- public:
-  explicit ContinuationTypeLiteral(SourceLocation source_loc)
-      : Expression(AstNodeKind::ContinuationTypeLiteral, source_loc) {}
-
-  explicit ContinuationTypeLiteral(CloneContext& context,
-                                   const ContinuationTypeLiteral& other)
-      : Expression(context, other) {}
-
-  static auto classof(const AstNode* node) -> bool {
-    return InheritsFromContinuationTypeLiteral(node->kind());
-  }
-};
-
 class TypeTypeLiteral : public Expression {
  public:
   explicit TypeTypeLiteral(SourceLocation source_loc)
@@ -866,12 +852,13 @@ class ValueLiteral : public ConstantValueLiteral {
   }
 };
 
-class IntrinsicExpression : public Expression {
+class IntrinsicExpression : public RewritableMixin<Expression> {
  public:
   enum class Intrinsic {
     Print,
     Alloc,
     Dealloc,
+    PrintAllocs,
     Rand,
     ImplicitAs,
     ImplicitAsConvert,
@@ -895,13 +882,13 @@ class IntrinsicExpression : public Expression {
 
   explicit IntrinsicExpression(Intrinsic intrinsic, Nonnull<TupleLiteral*> args,
                                SourceLocation source_loc)
-      : Expression(AstNodeKind::IntrinsicExpression, source_loc),
+      : RewritableMixin(AstNodeKind::IntrinsicExpression, source_loc),
         intrinsic_(intrinsic),
         args_(args) {}
 
   explicit IntrinsicExpression(CloneContext& context,
                                const IntrinsicExpression& other)
-      : Expression(context, other),
+      : RewritableMixin(context, other),
         intrinsic_(other.intrinsic_),
         args_(context.Clone(other.args_)) {}
 
@@ -1135,22 +1122,17 @@ class WhereExpression : public RewritableMixin<Expression> {
 // created by type-checking when a type conversion is found to be necessary but
 // that conversion is implemented directly rather than by an `ImplicitAs`
 // implementation.
-class BuiltinConvertExpression : public Expression {
+class BuiltinConvertExpression : public RewritableMixin<Expression> {
  public:
-  BuiltinConvertExpression(Nonnull<Expression*> source_expression,
-                           Nonnull<const Value*> destination_type)
-      : Expression(AstNodeKind::BuiltinConvertExpression,
-                   source_expression->source_loc()),
-        source_expression_(source_expression) {
-    set_static_type(destination_type);
-    set_expression_category(ExpressionCategory::Value);
-  }
+  BuiltinConvertExpression(Nonnull<Expression*> source_expression)
+      : RewritableMixin(AstNodeKind::BuiltinConvertExpression,
+                        source_expression->source_loc()),
+        source_expression_(source_expression) {}
 
   explicit BuiltinConvertExpression(CloneContext& context,
                                     const BuiltinConvertExpression& other)
-      : Expression(context, other),
-        source_expression_(context.Clone(other.source_expression_)),
-        rewritten_form_(context.Clone(other.rewritten_form_)) {}
+      : RewritableMixin(context, other),
+        source_expression_(context.Clone(other.source_expression_)) {}
 
   static auto classof(const AstNode* node) -> bool {
     return InheritsFromBuiltinConvertExpression(node->kind());
@@ -1163,22 +1145,8 @@ class BuiltinConvertExpression : public Expression {
     return source_expression_;
   }
 
-  // Set the rewritten form of this expression. Can only be called during type
-  // checking.
-  auto set_rewritten_form(Nonnull<const Expression*> rewritten_form) -> void {
-    CARBON_CHECK(!rewritten_form_.has_value()) << "rewritten form set twice";
-    rewritten_form_ = rewritten_form;
-  }
-
-  // Get the rewritten form of this expression. A rewritten form can be used to
-  // prepare the conversion during type checking.
-  auto rewritten_form() const -> std::optional<Nonnull<const Expression*>> {
-    return rewritten_form_;
-  }
-
  private:
   Nonnull<Expression*> source_expression_;
-  std::optional<Nonnull<const Expression*>> rewritten_form_;
 };
 
 // An expression whose semantics have not been implemented. This can be used
@@ -1231,9 +1199,9 @@ class ArrayTypeLiteral : public ConstantValueLiteral {
  public:
   // Constructs an array type literal which uses the given expressions to
   // represent the element type and size.
-  explicit ArrayTypeLiteral(SourceLocation source_loc,
-                            Nonnull<Expression*> element_type_expression,
-                            Nonnull<Expression*> size_expression)
+  explicit ArrayTypeLiteral(
+      SourceLocation source_loc, Nonnull<Expression*> element_type_expression,
+      std::optional<Nonnull<Expression*>> size_expression = std::nullopt)
       : ConstantValueLiteral(AstNodeKind::ArrayTypeLiteral, source_loc),
         element_type_expression_(element_type_expression),
         size_expression_(size_expression) {}
@@ -1255,14 +1223,22 @@ class ArrayTypeLiteral : public ConstantValueLiteral {
     return *element_type_expression_;
   }
 
-  auto size_expression() const -> const Expression& {
-    return *size_expression_;
+  auto has_size_expression() const -> bool {
+    return size_expression_.has_value();
   }
-  auto size_expression() -> Expression& { return *size_expression_; }
+
+  auto size_expression() const -> const Expression& {
+    CARBON_CHECK(size_expression_.has_value());
+    return **size_expression_;
+  }
+  auto size_expression() -> Expression& {
+    CARBON_CHECK(size_expression_.has_value());
+    return **size_expression_;
+  }
 
  private:
   Nonnull<Expression*> element_type_expression_;
-  Nonnull<Expression*> size_expression_;
+  std::optional<Nonnull<Expression*>> size_expression_;
 };
 
 // Converts paren_contents to an Expression, interpreting the parentheses as

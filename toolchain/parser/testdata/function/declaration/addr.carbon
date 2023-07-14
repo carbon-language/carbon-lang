@@ -3,12 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:   {kind: 'DeclaredName', text: 'foo'},
+// CHECK:STDOUT:   {kind: 'Name', text: 'foo'},
 // CHECK:STDOUT:     {kind: 'ParameterListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'DeclaredName', text: 'a'},
+// CHECK:STDOUT:         {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:           {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'PatternBinding', text: ':', subtree_size: 4},

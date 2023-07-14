@@ -34,9 +34,16 @@ in Unicode Normalization Form C (NFC).
 
 ## Keywords
 
+<!--
+Keep in sync:
+- utils/textmate/Syntaxes/Carbon.plist
+- utils/treesitter/queries/highlights.scm
+-->
+
 The following words are interpreted as keywords:
 
 -   `abstract`
+-   `adapt`
 -   `addr`
 -   `alias`
 -   `and`
@@ -46,13 +53,14 @@ The following words are interpreted as keywords:
 -   `base`
 -   `break`
 -   `case`
+-   `choice`
 -   `class`
 -   `constraint`
 -   `continue`
 -   `default`
+-   `destructor`
 -   `else`
--   `extends`
--   `external`
+-   `extend`
 -   `final`
 -   `fn`
 -   `for`
@@ -77,9 +85,11 @@ The following words are interpreted as keywords:
 -   `partial`
 -   `private`
 -   `protected`
+-   `require`
 -   `return`
 -   `returned`
 -   `Self`
+-   `template`
 -   `then`
 -   `type`
 -   `var`

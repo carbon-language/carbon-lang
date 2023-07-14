@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -19,7 +17,7 @@ interface HasF {
 impl forall [template T:! HasF] T as CallF {
   // TODO: This case should be accepted, using `ClassWithExternalF.(HasF.F)`.
   // TODO: The other case should be rejected due to ambiguity.
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/template/fail_name_lookup.carbon:[[@LINE+1]]: class ClassWithExternalF does not have a field named F
+  // CHECK:STDERR: COMPILATION ERROR: fail_name_lookup.carbon:[[@LINE+1]]: class ClassWithExternalF does not have a field named F
   fn DoIt[self: Self]() { self.F(); }
 }
 
@@ -27,13 +25,13 @@ class ClassWithInternalF {
   fn F[self: Self]() { Print("ClassWithInternalF.F"); }
 }
 
-external impl ClassWithInternalF as HasF {
+impl ClassWithInternalF as HasF {
   fn F[self: Self]() { Print("ClassWithInternalF.(HasF.F)"); }
 }
 
 class ClassWithExternalF {}
 
-external impl ClassWithExternalF as HasF {
+impl ClassWithExternalF as HasF {
   fn F[self: Self]() { Print("ClassWithExternalF.(HasF.F)"); }
 }
 

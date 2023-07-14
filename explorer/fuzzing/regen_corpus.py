@@ -35,8 +35,7 @@ def _carbon_to_proto(carbon_file: str) -> str:
     """Converts carbon file to text proto string."""
     try:
         p = subprocess.run(
-            "bazel-bin/explorer/fuzzing/fuzzverter --mode carbon_to_proto "
-            f"--input {carbon_file} --output /dev/stdout",
+            f"bazel-bin/explorer/fuzzing/ast_to_proto {carbon_file}",
             shell=True,
             check=True,
             stdout=subprocess.PIPE,
@@ -65,12 +64,12 @@ def _write_corpus_files(text_protos: Iterable[str], corpus_dir: str) -> None:
 def main() -> None:
     os.chdir(os.path.join(os.path.dirname(__file__), "../.."))
 
-    print("Building fuzzverter...", flush=True)
+    print("Building ast_to_proto...", flush=True)
     subprocess.check_call(
         [
             "bazel",
             "build",
-            "//explorer/fuzzing:fuzzverter",
+            "//explorer/fuzzing:ast_to_proto",
         ]
     )
     carbon_sources = _get_files(_TESTDATA, ".carbon")
@@ -95,12 +94,8 @@ def main() -> None:
             [
                 "bazel",
                 "build",
-                "--features=fuzzer",
-                # Workaround for #1208.
-                "--copt=-U_LIBCPP_DEBUG",
-                # Workaround for #1173.
-                "--per_file_copt=llvm/.*@-fno-sanitize=fuzzer",
-                "//explorer/fuzzing:explorer_fuzzer",
+                "--config=fuzzer",
+                "//explorer/fuzzing:explorer_fuzzer.full_corpus",
             ]
         )
 
@@ -110,7 +105,7 @@ def main() -> None:
         )
         subprocess.check_call(
             [
-                "bazel-bin/explorer/fuzzing/explorer_fuzzer",
+                "bazel-bin/explorer/fuzzing/explorer_fuzzer.full_corpus",
                 "-merge=1",
                 _FUZZER_CORPUS,
                 new_corpus_dir,

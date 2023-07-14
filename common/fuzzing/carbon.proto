@@ -114,7 +114,6 @@ message BoolLiteral {
 }
 
 message IntTypeLiteral {}
-message ContinuationTypeLiteral {}
 
 message IntLiteral {
   optional int64 value = 1;
@@ -177,16 +176,15 @@ message Expression {
     BoolTypeLiteral bool_type_literal = 12;
     BoolLiteral bool_literal = 13;
     IntTypeLiteral int_type_literal = 14;
-    ContinuationTypeLiteral continuation_type_literal = 15;
-    IntLiteral int_literal = 16;
-    StringLiteral string_literal = 17;
-    StringTypeLiteral string_type_literal = 18;
-    TypeTypeLiteral type_type_literal = 19;
-    UnimplementedExpression unimplemented_expression = 20;
-    ArrayTypeLiteral array_type_literal = 21;
-    CompoundMemberAccessExpression compound_member_access = 22;
-    WhereExpression where = 23;
-    DesignatorExpression designator = 24;
+    IntLiteral int_literal = 15;
+    StringLiteral string_literal = 16;
+    StringTypeLiteral string_type_literal = 17;
+    TypeTypeLiteral type_type_literal = 18;
+    UnimplementedExpression unimplemented_expression = 19;
+    ArrayTypeLiteral array_type_literal = 20;
+    CompoundMemberAccessExpression compound_member_access = 21;
+    WhereExpression where = 22;
+    DesignatorExpression designator = 23;
   }
 }
 
@@ -319,17 +317,6 @@ message MatchStatement {
   repeated MatchClause clauses = 2;
 }
 
-message ContinuationStatement {
-  optional string name = 1;
-  optional BlockStatement body = 2;
-}
-
-message RunStatement {
-  optional Expression argument = 1;
-}
-
-message AwaitStatement {}
-
 message BreakStatement {}
 message ContinueStatement {}
 
@@ -344,13 +331,10 @@ message Statement {
     BlockStatement block = 7;
     WhileStatement while_statement = 8;
     MatchStatement match = 9;
-    ContinuationStatement continuation = 10;
-    RunStatement run = 11;
-    AwaitStatement await_statement = 12;
-    BreakStatement break_statement = 13;
-    ContinueStatement continue_statement = 14;
-    ForStatement for_statement = 15;
-    IncrementDecrementStatement inc_dec = 16;
+    BreakStatement break_statement = 10;
+    ContinueStatement continue_statement = 11;
+    ForStatement for_statement = 12;
+    IncrementDecrementStatement inc_dec = 13;
   }
 }
 
@@ -387,6 +371,10 @@ message ClassDeclaration {
   optional TuplePattern type_params = 3;
 }
 
+message ExtendBaseDeclaration {
+  optional Expression base_class = 1;
+}
+
 message AlternativeSignature {
   optional string name = 1;
   optional TupleLiteralExpression signature = 3;
@@ -408,11 +396,11 @@ message LetDeclaration {
   // `let` declarations in general.
 }
 
-message InterfaceExtendsDeclaration {
+message InterfaceExtendDeclaration {
   optional Expression base = 1;
 }
 
-message InterfaceImplDeclaration {
+message InterfaceRequireDeclaration {
   optional Expression impl_type = 1;
   optional Expression constraint = 2;
 }
@@ -481,11 +469,12 @@ message Declaration {
     MixinDeclaration mixin = 9;
     MixDeclaration mix = 10;
     DestructorDeclaration destructor = 11;
-    InterfaceExtendsDeclaration interface_extends = 12;
-    InterfaceImplDeclaration interface_impl = 13;
+    InterfaceExtendDeclaration interface_extend = 12;
+    InterfaceRequireDeclaration interface_require = 13;
     ConstraintDeclaration constraint = 14;
     MatchFirstDeclaration match_first = 15;
     NamespaceDeclaration namespace = 16;
+    ExtendBaseDeclaration extend_base = 17;
   }
 }
 

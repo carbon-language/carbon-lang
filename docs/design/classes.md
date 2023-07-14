@@ -684,7 +684,6 @@ The declarations for nominal class types will have:
 -   an optional `abstract` or `base` prefix
 -   `class` introducer
 -   the name of the class
--   an optional `extends` followed by the name of the immediate base class
 -   `{`, an open curly brace
 -   a sequence of declarations
 -   `}`, a close curly brace
@@ -712,9 +711,9 @@ determined at compile time.
 To support circular references between class types, we allow
 [forward declaration](https://en.wikipedia.org/wiki/Forward_declaration) of
 types. Forward declarations end with semicolon `;` after the name of the class,
-instead of any `extends` clause and the block of declarations in curly braces
-`{`...`}`. A type that is forward declared is considered incomplete until the
-end of a definition with the same name.
+instead of the block of declarations in curly braces `{`...`}`. A type that is
+forward declared is considered incomplete until the end of a definition with the
+same name.
 
 ```
 // Forward declaration of `GraphNode`.
@@ -905,10 +904,10 @@ Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
 -   `c.Expand(`...`)` does modify the value of `c`. This is signified using
     `[addr self: Self*]` in the method declaration.
 
-The pattern '`addr` _patt_' means "first take the address of the argument, which
-must be an
+The pattern '`addr self:` _type_' means "first take the address of the argument,
+which must be an
 [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>), and
-then match pattern _patt_ against it".
+then match pattern '`self:` _type_' against it".
 
 If the method declaration also includes
 [deduced generic parameters](/docs/design/generics/overview.md#deduced-parameters),
@@ -1132,9 +1131,16 @@ base class MyBaseClass { ... }
 A _base class_ may be _extended_ to get a _derived class_:
 
 ```
-base class MiddleDerived extends MyBaseClass { ... }
-class FinalDerived extends MiddleDerived { ... }
-// ❌ Forbidden: class Illegal extends FinalDerived { ... }
+base class MiddleDerived {
+  extend base: MyBaseClass;
+  ...
+}
+class FinalDerived {
+  extend base: MiddleDerived;
+  ...
+}
+// ❌ Forbidden: class Illegal { extend base: FinalDerived; ... }
+// may not extend `FinalDerived` since not declared `base` or `abstract`.
 ```
 
 An _[abstract class](https://en.wikipedia.org/wiki/Abstract_type)_ or _abstract
@@ -1218,7 +1224,7 @@ There are three virtual override keywords:
     doesn't match the base class. We intentionally use the same keyword here as
     for implementing interfaces, to emphasize that they are similar operations.
 
-| Keyword on<br />method in `C` | Allowed in<br />`abstract class C` | Allowed in<br />`base class C` | Allowed in<br />final `class C` | in `B` where<br />`C extends B`                          | in `D` where<br />`D extends C`                                                  |
+| Keyword on<br />method in `C` | Allowed in<br />`abstract class C` | Allowed in<br />`base class C` | Allowed in<br />final `class C` | in `B` where<br />`C` extends `B`                        | in `D` where<br />`D` extends `C`                                                |
 | ----------------------------- | ---------------------------------- | ------------------------------ | ------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `virtual`                     | ✅                                 | ✅                             | ❌                              | _not present_                                            | `abstract`<br />`impl`<br />_not mentioned_                                      |
 | `abstract`                    | ✅                                 | ❌                             | ❌                              | _not present_<br />`virtual`<br />`abstract`<br />`impl` | `abstract`<br />`impl`<br />_may not be<br />mentioned if<br />`D` is not final_ |
@@ -1252,7 +1258,10 @@ base class Extensible { ... }
 // Can be replaced by:
 
 abstract class ExtensibleBase { ... }
-class ExactlyExtensible extends ExtensibleBase { ... }
+class ExactlyExtensible {
+  extend base: ExtensibleBase;
+  ...
+}
 ```
 
 #### `Self` refers to the current type
@@ -1269,7 +1278,8 @@ base class B1 {
   //   virtual fn F[self: B1](x: B1) -> B1;
 }
 
-class D1 extends B1 {
+class D1 {
+  extend base: B1;
   // ❌ Illegal:
   //   impl fn F[self: Self](x: Self) -> Self;
   // since that would mean the same thing as:
@@ -1294,7 +1304,8 @@ base class B2 {
   //   virtual fn Clone[self: B2]() -> B2*;
 }
 
-class D2 extends B2 {
+class D2 {
+  extend base: B2;
   // ✅ Allowed
   impl fn Clone[self: Self]() -> Self*;
   // Means the same thing as:
@@ -1320,7 +1331,8 @@ type, this time with a `.base` member to initialize the members of the immediate
 base type.
 
 ```
-class MyDerivedType extends MyBaseType {
+class MyDerivedType {
+  extend base: MyBaseType;
   fn Create() -> MyDerivedType {
     return {.base = MyBaseType.Create(), .derived_field = ...};
   }
@@ -1455,7 +1467,8 @@ abstract class MyAbstractClass {
 }
 
 // Base class returns a partial type
-base class Derived extends MyAbstractClass {
+base class Derived {
+  extend base: MyAbstractClass;
   protected fn Create() -> partial Self {
     return {.base = MyAbstractClass.Create(), .derived_field = ...};
   }
@@ -1467,7 +1480,8 @@ base class MyBaseClass {
 }
 
 // Base class returns a full type
-base class ExtensibleDerived extends MyBaseClass {
+base class ExtensibleDerived {
+  extend base: MyBaseClass;
   fn Create() -> Self {
     return {.base = MyBaseClass.Create(), .derived_field = ...};
   }
@@ -1478,7 +1492,8 @@ base class ExtensibleDerived extends MyBaseClass {
 And final classes will return a type that does not use the partial facet:
 
 ```
-class FinalDerived extends MiddleDerived {
+class FinalDerived {
+  extend base: MiddleDerived;
   fn Create() -> Self {
     return {.base = MiddleDerived.Create(), .derived_field = ...};
   }
@@ -1572,7 +1587,8 @@ base class MyBaseClass {
   virtual destructor [addr self: Self*] { ... }
 }
 
-class MyDerivedClass extends MyBaseClass {
+class MyDerivedClass {
+  extend base: MyBaseClass;
   impl destructor [addr self: Self*] { ... }
 }
 ```
@@ -1633,7 +1649,8 @@ function expecting a `Deletable` type, use the `UnsafeAllowDelete`
 [type adapter](/docs/design/generics/details.md#adapting-types).
 
 ```
-adapter UnsafeAllowDelete(T:! Concrete) extends T {
+class UnsafeAllowDelete(T:! Concrete) {
+  extend adapt T;
   impl as Deletable {}
 }
 
@@ -1777,7 +1794,8 @@ base class MyBaseClass {
   protected var data: i32;
 }
 
-class MyDerivedClass extends MyBaseClass {
+class MyDerivedClass {
+  extend base: MyBaseClass;
   fn UsesProtected[addr self: Self*]() {
     // Can access protected members in derived class
     var x: i32 = HelperClassFunction(3);
@@ -1975,9 +1993,10 @@ There are some opportunities to improve on and simplify the C++ story:
 This design directly supports Carbon classes inheriting from a single C++ class.
 
 ```
-class CarbonClass extends C++.CPlusPlusClass {
+class CarbonClass {
+  extend base: Cpp.CPlusPlusClass;
   fn Create() -> Self {
-    return {.base = C++.CPlusPlusClass(...), .other_fields = ...};
+    return {.base = Cpp.CPlusPlusClass(...), .other_fields = ...};
   }
   ...
 }
@@ -2132,7 +2151,7 @@ interface ConstructWidgetFrom {
   fn Construct(Self) -> Widget;
 }
 
-external impl {.kind: WidgetKind, .size: i32}
+impl {.kind: WidgetKind, .size: i32}
     as ConstructWidgetFrom { ... }
 ```
 
@@ -2233,6 +2252,10 @@ the type of `U.x`."
 
     -   [No unqualified lookup when defining outside a scope](/proposals/p2287.md#no-unqualified-lookup-when-defining-outside-a-scope)
 
+-   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
+    -   [Use `extends` instead of `extend`](/proposals/p2760.md#use-extends-instead-of-extend)
+    -   [List base class in class declaration](/proposals/p2760.md#list-base-class-in-class-declaration)
+
 ## References
 
 -   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
@@ -2244,3 +2267,4 @@ the type of `U.x`."
 -   [#1154: Destructors](https://github.com/carbon-language/carbon-lang/pull/1154)
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
 -   [#2287: Allow unqualified name lookup for class members](https://github.com/carbon-language/carbon-lang/pull/2287)
+-   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)

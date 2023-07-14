@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
+load("//bazel/sh_run:rules.bzl", "glob_sh_run")
+load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -29,9 +31,13 @@ cc_library(
     name = "parse_tree",
     srcs = [
         "parse_tree.cpp",
-        "parser.cpp",
-        "parser.h",
-    ],
+        "parser_context.cpp",
+        "parser_context.h",
+    ] +
+    # Glob handler files to avoid missing anyway.
+    glob([
+        "parser_handle_*.cpp",
+    ]),
     hdrs = ["parse_tree.h"],
     deps = [
         ":parse_node_kind",
@@ -55,8 +61,9 @@ cc_test(
     deps = [
         ":parse_node_kind",
         ":parse_tree",
-        "//common:gtest_main",
         "//common:ostream",
+        "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
@@ -104,8 +111,40 @@ cc_test(
     srcs = ["precedence_test.cpp"],
     deps = [
         ":precedence",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "//toolchain/lexer:token_kind",
         "@com_google_googletest//:gtest",
     ],
+)
+
+file_test(
+    name = "parse_tree_file_test",
+    srcs = ["parse_tree_file_test.cpp"],
+    tests = glob(["testdata/**/*.carbon"]),
+    deps = [
+        "//toolchain/driver:driver_file_test_base",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+glob_sh_run(
+    args = [
+        "$(location //toolchain/driver:carbon)",
+        "dump",
+        "parse-tree",
+    ],
+    data = ["//toolchain/driver:carbon"],
+    file_exts = ["carbon"],
+)
+
+glob_sh_run(
+    args = [
+        "$(location //toolchain/driver:carbon)",
+        "-v",
+        "dump",
+        "parse-tree",
+    ],
+    data = ["//toolchain/driver:carbon"],
+    file_exts = ["carbon"],
+    run_ext = "verbose",
 )

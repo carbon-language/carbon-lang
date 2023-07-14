@@ -3,22 +3,21 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 // CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: Deallocating a derived class from base class pointer requires a virtual destructor
 
 package ExplorerTest api;
 
 
 base class A{
-    destructor[self: Self]{}
+  destructor[self: Self]{}
 }
 
-class B extends A {
-    fn Create() -> Self {
-        return {.base={}};
-    }
-    destructor[self: Self]{}
+class B {
+  extend base: A;
+  fn Create() -> Self {
+    return {.base={}};
+  }
+  destructor[self: Self]{}
 }
 
 fn Main() -> i32 {

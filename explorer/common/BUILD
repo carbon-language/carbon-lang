@@ -27,7 +27,8 @@ cc_test(
     deps = [
         ":error_builders",
         ":source_location",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -46,5 +47,37 @@ cc_library(
     deps = [
         ":nonnull",
         "//common:ostream",
+    ],
+)
+
+cc_library(
+    name = "trace_stream",
+    hdrs = ["trace_stream.h"],
+    deps = [
+        ":source_location",
+        "//common:check",
+        "//common:ostream",
+        "//explorer/common:nonnull",
+    ],
+)
+
+cc_test(
+    name = "set_program_phase_raii_test",
+    srcs = ["set_program_phase_raii_test.cpp"],
+    deps = [
+        ":trace_stream",
+        "//testing/util:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_test(
+    name = "set_file_context_raii_test",
+    srcs = ["set_file_context_raii_test.cpp"],
+    deps = [
+        ":source_location",
+        ":trace_stream",
+        "//testing/util:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )

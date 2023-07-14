@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: result: 3
 
 package Foo api;
@@ -14,7 +12,7 @@ interface HasF {
 }
 
 class X {
-  impl as HasF {
+  extend impl as HasF {
     fn F[self: Self](o: Self) -> Self { return {.n = self.n + o.n}; }
   }
   var n: i32;
@@ -22,7 +20,7 @@ class X {
 
 class Y {
   var m: i32;
-  impl as ImplicitAs(X) {
+  extend impl as ImplicitAs(X) {
     fn Convert[self: Self]() -> X { return {.n = self.m}; }
   }
 }

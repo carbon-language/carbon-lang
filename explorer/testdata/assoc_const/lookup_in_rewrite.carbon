@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: 1
 // CHECK:STDOUT: i32.Hash
 // CHECK:STDOUT: 0
@@ -23,7 +21,7 @@ interface Hashable {
 }
 
 class Potato {
-  external impl as Hashable {
+  impl as Hashable {
     fn Hash[self: Self]() -> i32 {
       Print("Potato.(Hashable.Hash)");
       return 1;
@@ -41,7 +39,7 @@ interface Maker {
   fn Make() -> Result;
 }
 
-external impl i32 as Hashable {
+impl i32 as Hashable {
   fn Hash[self: Self]() -> i32 {
     Print("i32.Hash");
     return self;
@@ -71,13 +69,13 @@ fn I[T:! Maker where .Result = Potato](x: T) -> i32 {
 }
 
 class IntFactory {
-  impl as Maker where .Result = i32 {
+  extend impl as Maker where .Result = i32 {
     fn Make() -> i32 { return 0; }
   }
 }
 
 class PotatoFactory {
-  impl as Maker where .Result = Potato {
+  extend impl as Maker where .Result = Potato {
     fn Make() -> Potato { return {}; }
   }
 }

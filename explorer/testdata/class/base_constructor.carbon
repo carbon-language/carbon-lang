@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: 1
 // CHECK:STDOUT: 2
 // CHECK:STDOUT: result: 0
@@ -18,7 +16,8 @@ base class A {
   var value_a: i32;
 }
 
-class B extends A {
+class B {
+  extend base: A;
   fn Create() -> Self {
     return {.base = A.Create(), .value_b = 2};
   }

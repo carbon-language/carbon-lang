@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
+load("//bazel/sh_run:rules.bzl", "glob_sh_run")
+load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = [
     "//bazel/check_deps:__pkg__",
@@ -21,12 +23,8 @@ cc_library(
     hdrs = ["main.h"],
     deps = [
         "//common:error",
-        "//explorer/common:arena",
-        "//explorer/common:nonnull",
-        "//explorer/interpreter:exec_program",
-        "//explorer/interpreter:trace_stream",
-        "//explorer/syntax",
-        "//explorer/syntax:prelude",
+        "//explorer/common:trace_stream",
+        "//explorer/parse_and_execute",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -40,4 +38,59 @@ cc_binary(
         "//common:bazel_working_dir",
         "@llvm-project//llvm:Support",
     ],
+)
+
+file_test(
+    name = "file_test",
+    srcs = ["file_test.cpp"],
+    # Bazel limits sharding to 50. We have lots of tests, so this should
+    # maximize parallelism.
+    shard_count = 50,
+    tests = glob([
+        "testdata/**/*.carbon",
+        "trace_testdata/**/*.carbon",
+    ]),
+    deps = [
+        "//explorer/parse_and_execute",
+        "//testing/file_test:file_test_base",
+        "//testing/util:test_raw_ostream",
+    ],
+)
+
+glob_sh_run(
+    args = ["$(location //explorer)"],
+    data = ["//explorer"],
+    file_exts = ["carbon"],
+)
+
+glob_sh_run(
+    args = [
+        "$(location //explorer)",
+        "--parser_debug",
+        "--trace_file=-",
+    ],
+    data = ["//explorer"],
+    file_exts = ["carbon"],
+    run_ext = "verbose",
+)
+
+filegroup(
+    name = "carbon_files",
+    srcs = glob(["testdata/**/*.carbon"]),
+    # Files are used for validating fuzzer completeness.
+    visibility = ["//explorer/fuzzing:__pkg__"],
+)
+
+filegroup(
+    name = "treesitter_testdata",
+    srcs = glob(
+        ["testdata/**/*.carbon"],
+        exclude = [
+            "testdata/**/fail_*",
+
+            # multiline strings
+            "testdata/string/*",
+        ],
+    ),
+    visibility = ["//utils/treesitter:__pkg__"],
 )

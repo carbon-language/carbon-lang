@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: result: 3
 
 package Foo api;
@@ -12,7 +10,7 @@ interface A {
   fn F[self: Self](o: Self) -> Self;
 }
 class X {
-  impl as A {
+  extend impl as A {
     fn F[self: Self](o: Self) -> Self { return {.n = self.n + o.n}; }
   }
   var n: i32;

@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: structs equal: 0
 // CHECK:STDOUT: structs not equal: 1
 // CHECK:STDOUT: result: 0
@@ -14,7 +12,7 @@ package ExplorerTest api;
 class MyType {
   var value: i32;
 
-  impl as EqWith(Self) {
+  extend impl as EqWith(Self) {
     fn Equal[self: Self](other: Self) -> bool {
       return self.value == other.value;
     }

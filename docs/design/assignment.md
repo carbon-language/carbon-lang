@@ -177,7 +177,7 @@ provided for built-in types as necessary to give the semantics described above.
 interface AssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint Assign { extends AssignWith(Self); }
+constraint Assign { extend AssignWith(Self); }
 ```
 
 Given `var x: T` and `y: U`:
@@ -191,7 +191,7 @@ Given `var x: T` and `y: U`:
 interface AddAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint AddAssign { extends AddAssignWith(Self); }
+constraint AddAssign { extend AddAssignWith(Self); }
 ```
 
 ```
@@ -199,7 +199,7 @@ constraint AddAssign { extends AddAssignWith(Self); }
 interface SubAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint SubAssign { extends SubAssignWith(Self); }
+constraint SubAssign { extend SubAssignWith(Self); }
 ```
 
 ```
@@ -207,7 +207,7 @@ constraint SubAssign { extends SubAssignWith(Self); }
 interface MulAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint MulAssign { extends MulAssignWith(Self); }
+constraint MulAssign { extend MulAssignWith(Self); }
 ```
 
 ```
@@ -215,7 +215,7 @@ constraint MulAssign { extends MulAssignWith(Self); }
 interface DivAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint DivAssign { extends DivAssignWith(Self); }
+constraint DivAssign { extend DivAssignWith(Self); }
 ```
 
 ```
@@ -223,7 +223,7 @@ constraint DivAssign { extends DivAssignWith(Self); }
 interface ModAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint ModAssign { extends ModAssignWith(Self); }
+constraint ModAssign { extend ModAssignWith(Self); }
 ```
 
 ```
@@ -250,7 +250,7 @@ Given `var x: T` and `y: U`:
 interface BitAndAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint BitAndAssign { extends BitAndAssignWith(Self); }
+constraint BitAndAssign { extend BitAndAssignWith(Self); }
 ```
 
 ```
@@ -258,7 +258,7 @@ constraint BitAndAssign { extends BitAndAssignWith(Self); }
 interface BitOrAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint BitOrAssign { extends BitOrAssignWith(Self); }
+constraint BitOrAssign { extend BitOrAssignWith(Self); }
 ```
 
 ```
@@ -266,7 +266,7 @@ constraint BitOrAssign { extends BitOrAssignWith(Self); }
 interface BitXorAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint BitXorAssign { extends BitXorAssignWith(Self); }
+constraint BitXorAssign { extend BitXorAssignWith(Self); }
 ```
 
 ```
@@ -274,7 +274,7 @@ constraint BitXorAssign { extends BitXorAssignWith(Self); }
 interface LeftShiftAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint LeftShiftAssign { extends LeftShiftAssignWith(Self); }
+constraint LeftShiftAssign { extend LeftShiftAssignWith(Self); }
 ```
 
 ```
@@ -282,7 +282,7 @@ constraint LeftShiftAssign { extends LeftShiftAssignWith(Self); }
 interface RightShiftAssignWith(U:! type) {
   fn Op[addr self: Self*](other: U);
 }
-constraint RightShiftAssign { extends RightShiftAssignWith(Self); }
+constraint RightShiftAssign { extend RightShiftAssignWith(Self); }
 ```
 
 Given `var x: T` and `y: U`:

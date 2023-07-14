@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
+load("//bazel/sh_run:rules.bzl", "glob_sh_run")
+load("//testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -24,7 +26,7 @@ cc_test(
     srcs = ["token_kind_test.cpp"],
     deps = [
         ":token_kind",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -92,8 +94,8 @@ cc_test(
         ":numeric_literal",
         ":test_helpers",
         "//common:check",
-        "//common:gtest_main",
         "//common:ostream",
+        "//testing/util:gtest_main",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
@@ -145,8 +147,8 @@ cc_test(
         ":string_literal",
         ":test_helpers",
         "//common:check",
-        "//common:gtest_main",
         "//common:ostream",
+        "//testing/util:gtest_main",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
@@ -206,7 +208,8 @@ cc_test(
     deps = [
         ":tokenized_buffer",
         ":tokenized_buffer_test_helpers",
-        "//common:gtest_main",
+        "//testing/util:gtest_main",
+        "//testing/util:test_raw_ostream",
         "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
@@ -227,4 +230,24 @@ cc_fuzz_test(
         "//toolchain/diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
     ],
+)
+
+file_test(
+    name = "lexer_file_test",
+    srcs = ["lexer_file_test.cpp"],
+    tests = glob(["testdata/**/*.carbon"]),
+    deps = [
+        "//toolchain/driver:driver_file_test_base",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+glob_sh_run(
+    args = [
+        "$(location //toolchain/driver:carbon)",
+        "dump",
+        "tokens",
+    ],
+    data = ["//toolchain/driver:carbon"],
+    file_exts = ["carbon"],
 )

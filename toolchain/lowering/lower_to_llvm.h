@@ -13,7 +13,8 @@ namespace Carbon {
 
 // Lowers Semantics IR to LLVM IR.
 auto LowerToLLVM(llvm::LLVMContext& llvm_context, llvm::StringRef module_name,
-                 const SemanticsIR& semantics_ir)
+                 const SemanticsIR& semantics_ir,
+                 llvm::raw_ostream* vlog_stream)
     -> std::unique_ptr<llvm::Module>;
 
 }  // namespace Carbon

@@ -80,8 +80,8 @@ cc_test(
     deps = [
         ":ast",
         ":ast_test_matchers",
-        "//common:gtest_main",
         "//explorer/common:arena",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -92,8 +92,8 @@ cc_test(
     deps = [
         ":ast",
         ":paren_contents",
-        "//common:gtest_main",
         "//explorer/common:arena",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -119,8 +119,8 @@ cc_test(
     deps = [
         ":ast",
         ":paren_contents",
-        "//common:gtest_main",
         "//explorer/common:arena",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -132,8 +132,8 @@ cc_test(
     deps = [
         ":ast",
         ":paren_contents",
-        "//common:gtest_main",
         "//explorer/common:arena",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -157,4 +157,5 @@ cc_library(
 cc_library(
     name = "expression_category",
     hdrs = ["expression_category.h"],
+    deps = ["@llvm-project//llvm:Support"],
 )

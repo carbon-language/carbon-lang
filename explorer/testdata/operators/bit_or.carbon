@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: 3
 // CHECK:STDOUT: 7
 // CHECK:STDOUT: 15
@@ -14,7 +12,7 @@ package ExplorerTest api;
 
 class A { var n: i32; }
 
-external impl A as BitOrWith(i32) where .Result = A {
+impl A as BitOrWith(i32) where .Result = A {
   fn Op[self: Self](rhs: i32) -> A { return {.n = self.n | rhs}; }
 }
 

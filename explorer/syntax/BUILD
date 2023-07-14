@@ -2,10 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package(default_visibility = [
-    "//explorer:__pkg__",
-    "//explorer/fuzzing:__pkg__",
-])
+package(default_visibility = ["//explorer/parse_and_execute:__pkg__"])
 
 cc_library(
     name = "bison_wrap",
@@ -18,8 +15,8 @@ cc_test(
     srcs = ["parse_test.cpp"],
     deps = [
         ":syntax",
-        "//common:gtest_main",
         "//explorer/common:arena",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -74,6 +71,10 @@ cc_library(
         "-Wno-unused-but-set-variable",
         "-Wno-unused-function",
         "-Wno-writable-strings",
+    ],
+    visibility = [
+        "//explorer/fuzzing:__pkg__",
+        "//explorer/parse_and_execute:__pkg__",
     ],
     deps = [
         ":bison_wrap",
@@ -144,8 +145,8 @@ cc_test(
     deps = [
         ":parse_test_matchers",
         ":syntax",
-        "//common:gtest_main",
         "//explorer/ast:ast_test_matchers",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )

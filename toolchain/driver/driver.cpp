@@ -10,9 +10,9 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/Support/Error.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
+#include "toolchain/codegen/codegen.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/sorting_diagnostic_consumer.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/lowering/lower_to_llvm.h"
@@ -40,7 +40,8 @@ auto GetSubcommand(llvm::StringRef name) -> Subcommand {
 }  // namespace
 
 auto Driver::RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
-  DiagnosticConsumer* consumer = &ConsoleDiagnosticConsumer();
+  StreamDiagnosticConsumer stream_consumer(error_stream_);
+  DiagnosticConsumer* consumer = &stream_consumer;
   std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
   // TODO: Figure out a command-line support library, this is temporary.
   if (!args.empty() && args[0] == "-v") {
@@ -116,6 +117,8 @@ enum class DumpMode {
   ParseTree,
   SemanticsIR,
   LLVMIR,
+  Assembly,
+  ObjectCode,
   Unknown
 };
 
@@ -131,10 +134,12 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
                        .Case("parse-tree", DumpMode::ParseTree)
                        .Case("semantics-ir", DumpMode::SemanticsIR)
                        .Case("llvm-ir", DumpMode::LLVMIR)
+                       .Case("assembly", DumpMode::Assembly)
+                       .Case("objcode", DumpMode::ObjectCode)
                        .Default(DumpMode::Unknown);
   if (dump_mode == DumpMode::Unknown) {
-    error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, or "
-                     "semantics-ir.\n";
+    error_stream_ << "ERROR: Dump mode should be one of tokens, parse-tree, "
+                     "semantics-ir, llvm-ir, assembly, or objcode.\n";
     return false;
   }
   args = args.drop_front();
@@ -153,6 +158,33 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     semantics_ir_include_builtins = true;
   }
 
+  llvm::StringRef target_triple;
+  if (dump_mode == DumpMode::Assembly && !args.empty() &&
+      args.front().starts_with("--target_triple=")) {
+    target_triple = args.front().split("=").second;
+    args = args.drop_front();
+  }
+
+  llvm::StringRef output_file;
+  if (dump_mode == DumpMode::ObjectCode) {
+    while (!args.empty() && (args.front().starts_with("--target_triple=") ||
+                             args.front().starts_with("--output_file="))) {
+      if (args.front().starts_with("--target_triple=")) {
+        target_triple = args.front().split("=").second;
+        args = args.drop_front();
+      }
+      if (args.front().starts_with("--output_file=")) {
+        output_file = args.front().split("=").second;
+        args = args.drop_front();
+      }
+    }
+
+    if (output_file.empty()) {
+      error_stream_ << "ERROR: Must provide an output file.\n";
+      return false;
+    }
+  }
+
   if (args.empty()) {
     error_stream_ << "ERROR: No input file specified.\n";
     return false;
@@ -166,15 +198,11 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
 
   CARBON_VLOG() << "*** SourceBuffer::CreateFromFile ***\n";
-  auto source = SourceBuffer::CreateFromFile(input_file_name);
+  auto source = SourceBuffer::CreateFromFile(fs_, input_file_name);
   CARBON_VLOG() << "*** SourceBuffer::CreateFromFile done ***\n";
-  if (!source) {
-    error_stream_ << "ERROR: Unable to open input source file: ";
-    llvm::handleAllErrors(source.takeError(),
-                          [&](const llvm::ErrorInfoBase& ei) {
-                            ei.log(error_stream_);
-                            error_stream_ << "\n";
-                          });
+  if (!source.ok()) {
+    error_stream_ << "ERROR: Unable to open input source file: "
+                  << source.error();
     return false;
   }
 
@@ -225,7 +253,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   CARBON_VLOG() << "*** LowerToLLVM ***\n";
   llvm::LLVMContext llvm_context;
   const std::unique_ptr<llvm::Module> module =
-      LowerToLLVM(llvm_context, input_file_name, semantics_ir);
+      LowerToLLVM(llvm_context, input_file_name, semantics_ir, vlog_stream_);
   CARBON_VLOG() << "*** LowerToLLVM done ***\n";
   if (dump_mode == DumpMode::LLVMIR) {
     consumer.Flush();
@@ -238,6 +266,28 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     module->print(*vlog_stream_, /*AAW=*/nullptr,
                   /*ShouldPreserveUseListOrder=*/false,
                   /*IsForDebug=*/true);
+  }
+
+  if (dump_mode == DumpMode::Assembly) {
+    consumer.Flush();
+    CodeGen codegen(*module, target_triple, error_stream_, output_stream_);
+    has_errors |= !codegen.PrintAssembly();
+    return !has_errors;
+  }
+
+  if (dump_mode == DumpMode::ObjectCode) {
+    std::error_code ec;
+    llvm::raw_fd_ostream dest(output_file, ec, llvm::sys::fs::OF_None);
+    if (ec) {
+      error_stream_ << "Error: Could not open file: " << ec.message() << "\n";
+      return false;
+    }
+    CodeGen codegen(*module, target_triple, error_stream_, dest);
+    has_errors |= !codegen.GenerateObjectCode();
+    if (!has_errors) {
+      output_stream_ << "Success: Object file is generated!\n";
+    }
+    return !has_errors;
   }
 
   llvm_unreachable("should handle all dump modes");

@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: c.Foo() -> 1
 // CHECK:STDOUT: c.Bar() -> 2
 // CHECK:STDOUT: d.Foo() -> 3
@@ -24,7 +22,8 @@ base class C {
   }
 }
 
-class D extends C {
+class D {
+  extend base: C;
   impl fn Foo[self: Self]() -> i32 {
     return 3;
   }

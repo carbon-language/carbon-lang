@@ -5,6 +5,8 @@
 #ifndef CARBON_EXPLORER_AST_EXPRESSION_CATEGORY_H_
 #define CARBON_EXPLORER_AST_EXPRESSION_CATEGORY_H_
 
+#include "llvm/ADT/StringRef.h"
+
 namespace Carbon {
 
 // The category of a Carbon expression indicates whether it evaluates
@@ -17,6 +19,8 @@ enum class ExpressionCategory {
   // An "initializing expression" takes a location and initialize it.
   Initializing,
 };
+
+auto ExpressionCategoryToString(ExpressionCategory cat) -> llvm::StringRef;
 
 }  // namespace Carbon
 

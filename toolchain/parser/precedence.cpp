@@ -37,6 +37,8 @@ enum PrecedenceLevel : int8_t {
   Relational,
   LogicalAnd,
   LogicalOr,
+  // Conditional.
+  If,
   // Assignment.
   SimpleAssignment,
   CompoundAssignment,
@@ -62,11 +64,11 @@ struct OperatorPriorityTable {
     MarkHigherThan({TypePostfix}, {Type});
     MarkHigherThan(
         {Modulo, Additive, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift, Type},
-        {SimpleAssignment, CompoundAssignment, Relational});
+        {Relational});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
-    MarkHigherThan(
-        {SimpleAssignment, CompoundAssignment, LogicalAnd, LogicalOr},
-        {Lowest});
+    MarkHigherThan({LogicalAnd, LogicalOr}, {If});
+    MarkHigherThan({If}, {SimpleAssignment, CompoundAssignment});
+    MarkHigherThan({SimpleAssignment, CompoundAssignment}, {Lowest});
 
     // Compute the transitive closure of the above relationships: if we parse
     // `a $ b @ c` as `(a $ b) @ c` and parse `b @ c % d` as `(b @ c) % d`,
@@ -137,7 +139,7 @@ struct OperatorPriorityTable {
     // Ambiguous would mean it's an error. LeftFirst is meaningless. For now we
     // allow all prefix operators to be repeated.
     for (PrecedenceLevel prefix :
-         {TermPrefix, NumericPrefix, BitwisePrefix, LogicalPrefix}) {
+         {TermPrefix, NumericPrefix, BitwisePrefix, LogicalPrefix, If}) {
       table[prefix][prefix] = OperatorPriority::RightFirst;
     }
 
@@ -207,8 +209,11 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
     case TokenKind::PlusPlus:
       return PrecedenceGroup(NumericPrefix);
 
-    case TokenKind::Tilde:
+    case TokenKind::Caret:
       return PrecedenceGroup(BitwisePrefix);
+
+    case TokenKind::If:
+      return PrecedenceGroup(If);
 
     default:
       return std::nullopt;
@@ -228,6 +233,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
     case TokenKind::PercentEqual:
     case TokenKind::AmpEqual:
     case TokenKind::PipeEqual:
+    case TokenKind::CaretEqual:
     case TokenKind::GreaterGreaterEqual:
     case TokenKind::LessLessEqual:
       return Trailing{.level = CompoundAssignment, .is_binary = true};
@@ -243,7 +249,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
       return Trailing{.level = BitwiseAnd, .is_binary = true};
     case TokenKind::Pipe:
       return Trailing{.level = BitwiseOr, .is_binary = true};
-    case TokenKind::Xor:
+    case TokenKind::Caret:
       return Trailing{.level = BitwiseXor, .is_binary = true};
     case TokenKind::GreaterGreater:
     case TokenKind::LessLess:
@@ -281,14 +287,12 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
       return Trailing{.level = NumericPostfix, .is_binary = false};
 
     // Prefix-only operators.
-    case TokenKind::Tilde:
     case TokenKind::Not:
       break;
 
     // Symbolic tokens that might be operators eventually.
+    case TokenKind::Tilde:
     case TokenKind::Backslash:
-    case TokenKind::Caret:
-    case TokenKind::CaretEqual:
     case TokenKind::Comma:
     case TokenKind::TildeEqual:
     case TokenKind::Exclaim:

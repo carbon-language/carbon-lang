@@ -21,6 +21,9 @@
 //   - CARBON_KEYWORD_TOKEN(Name, Spelling)
 //     Defines a keyword which has the provided spelling, such as `if`.
 //     Spellings must be unique.
+//   - CARBON_TOKEN_WITH_VIRTUAL_NODE(Token)
+//     Wrapped around one of the abokve _TOKEN macros, indicates that this
+//     token has one additional virtual node in the parse tree.
 //
 // This tree represents the subset relationship between these macros, where if a
 // specific x-macro isn't defined, it'll fall back to the parent macro.
@@ -31,6 +34,10 @@
 
 #ifndef CARBON_SYMBOL_TOKEN
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) CARBON_TOKEN(Name)
+#endif
+
+#ifndef CARBON_TOKEN_WITH_VIRTUAL_NODE
+#define CARBON_TOKEN_WITH_VIRTUAL_NODE(Name) Name
 #endif
 
 // Note that symbols need to be ordered from longest to shortest to effectively
@@ -114,25 +121,31 @@ CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseSquareBracket, "]", OpenSquareBracket)
 #endif
 // clang-format off
 CARBON_KEYWORD_TOKEN(Abstract,            "abstract")
+CARBON_KEYWORD_TOKEN(Adapt,               "adapt")
 CARBON_KEYWORD_TOKEN(Addr,                "addr")
 CARBON_KEYWORD_TOKEN(Alias,               "alias")
-CARBON_KEYWORD_TOKEN(And,                 "and")
+CARBON_TOKEN_WITH_VIRTUAL_NODE(
+  CARBON_KEYWORD_TOKEN(And,               "and"))
 CARBON_KEYWORD_TOKEN(Api,                 "api")
 CARBON_KEYWORD_TOKEN(As,                  "as")
 CARBON_KEYWORD_TOKEN(Auto,                "auto")
 CARBON_KEYWORD_TOKEN(Base,                "base")
+CARBON_KEYWORD_TOKEN(Bool,                "bool")
 CARBON_KEYWORD_TOKEN(Break,               "break")
 CARBON_KEYWORD_TOKEN(Case,                "case")
+CARBON_KEYWORD_TOKEN(Choice,              "choice")
 CARBON_KEYWORD_TOKEN(Class,               "class")
 CARBON_KEYWORD_TOKEN(Constraint,          "constraint")
 CARBON_KEYWORD_TOKEN(Continue,            "continue")
 CARBON_KEYWORD_TOKEN(Default,             "default")
+CARBON_KEYWORD_TOKEN(Destructor,          "destructor")
 CARBON_KEYWORD_TOKEN(Else,                "else")
-CARBON_KEYWORD_TOKEN(Extends,             "extends")
-CARBON_KEYWORD_TOKEN(External,            "external")
+CARBON_KEYWORD_TOKEN(Extend,              "extend")
+CARBON_KEYWORD_TOKEN(False,               "false")
 CARBON_KEYWORD_TOKEN(Final,               "final")
 CARBON_KEYWORD_TOKEN(Fn,                  "fn")
 CARBON_KEYWORD_TOKEN(For,                 "for")
+CARBON_KEYWORD_TOKEN(Forall,              "forall")
 CARBON_KEYWORD_TOKEN(Friend,              "friend")
 CARBON_KEYWORD_TOKEN(If,                  "if")
 CARBON_KEYWORD_TOKEN(Impl,                "impl")
@@ -140,19 +153,21 @@ CARBON_KEYWORD_TOKEN(Impls,               "impls")
 CARBON_KEYWORD_TOKEN(Import,              "import")
 CARBON_KEYWORD_TOKEN(In,                  "in")
 CARBON_KEYWORD_TOKEN(Interface,           "interface")
-CARBON_KEYWORD_TOKEN(Is,                  "is")
 CARBON_KEYWORD_TOKEN(Let,                 "let")
 CARBON_KEYWORD_TOKEN(Library,             "library")
+CARBON_KEYWORD_TOKEN(Like,                "like")
 CARBON_KEYWORD_TOKEN(Match,               "match")
 CARBON_KEYWORD_TOKEN(Namespace,           "namespace")
 CARBON_KEYWORD_TOKEN(Not,                 "not")
 CARBON_KEYWORD_TOKEN(Observe,             "observe")
-CARBON_KEYWORD_TOKEN(Or,                  "or")
+CARBON_TOKEN_WITH_VIRTUAL_NODE(
+  CARBON_KEYWORD_TOKEN(Or,                "or"))
 CARBON_KEYWORD_TOKEN(Override,            "override")
 CARBON_KEYWORD_TOKEN(Package,             "package")
 CARBON_KEYWORD_TOKEN(Partial,             "partial")
 CARBON_KEYWORD_TOKEN(Private,             "private")
 CARBON_KEYWORD_TOKEN(Protected,           "protected")
+CARBON_KEYWORD_TOKEN(Require,             "require")
 CARBON_KEYWORD_TOKEN(Return,              "return")
 CARBON_KEYWORD_TOKEN(Returned,            "returned")
 CARBON_KEYWORD_TOKEN(SelfTypeIdentifier,  "Self")
@@ -161,14 +176,14 @@ CARBON_KEYWORD_TOKEN(SelfValueIdentifier, "self")
 CARBON_KEYWORD_TOKEN(StringTypeLiteral,   "String")
 CARBON_KEYWORD_TOKEN(Template,            "template")
 CARBON_KEYWORD_TOKEN(Then,                "then")
+CARBON_KEYWORD_TOKEN(True,                "true")
+CARBON_KEYWORD_TOKEN(Type,                "type")
 // Underscore is tokenized as a keyword because it's part of identifiers.
 CARBON_KEYWORD_TOKEN(Underscore,          "_")
 CARBON_KEYWORD_TOKEN(Var,                 "var")
 CARBON_KEYWORD_TOKEN(Virtual,             "virtual")
 CARBON_KEYWORD_TOKEN(Where,               "where")
 CARBON_KEYWORD_TOKEN(While,               "while")
-// TODO: In use by precedence.cpp, but not standardized.
-CARBON_KEYWORD_TOKEN(Xor,                 "xor")
 // clang-format on
 #undef CARBON_KEYWORD_TOKEN
 
@@ -183,3 +198,4 @@ CARBON_TOKEN(Error)
 CARBON_TOKEN(EndOfFile)
 
 #undef CARBON_TOKEN
+#undef CARBON_TOKEN_WITH_VIRTUAL_NODE

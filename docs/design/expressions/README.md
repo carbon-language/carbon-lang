@@ -262,7 +262,7 @@ with parentheses around the member name:
 ```
 interface I { fn F[self: Self](); }
 class X {}
-external impl X as I { fn F[self: Self]() {} }
+impl X as I { fn F[self: Self]() {} }
 
 // `x.I.F()` would mean `(x.I).F()`.
 fn Q(x: X) { x.(I.F)(); }

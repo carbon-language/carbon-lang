@@ -104,4 +104,13 @@ auto TokenKind::fixed_spelling() const -> llvm::StringRef {
   return Table[AsInt()];
 }
 
+auto TokenKind::expected_parse_tree_size() const -> int {
+  static constexpr int8_t Table[] = {
+#define CARBON_TOKEN(Name) 1,
+#define CARBON_TOKEN_WITH_VIRTUAL_NODE(size) 1 + size
+#include "toolchain/lexer/token_kind.def"
+  };
+  return Table[AsInt()];
+}
+
 }  // namespace Carbon

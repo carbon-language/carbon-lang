@@ -4,6 +4,7 @@
 
 #include "explorer/interpreter/heap.h"
 
+#include "common/check.h"
 #include "explorer/ast/value.h"
 #include "explorer/common/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
@@ -38,6 +39,11 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
                  SourceLocation source_loc) -> ErrorOr<Success> {
   CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
   if (states_[a.allocation_.index_] == ValueState::Uninitialized) {
+    if (!a.element_path_.IsEmpty()) {
+      return ProgramError(source_loc)
+             << "undefined behavior: store to subobject of uninitialized value "
+             << *values_[a.allocation_.index_];
+    }
     states_[a.allocation_.index_] = ValueState::Alive;
   }
   CARBON_ASSIGN_OR_RETURN(values_[a.allocation_.index_],
@@ -46,23 +52,12 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
   return Success();
 }
 
-auto Heap::GetAllocationId(Nonnull<const Value*> v) const
-    -> std::optional<AllocationId> {
-  auto iter = std::find(values_.begin(), values_.end(), v);
-  if (iter != values_.end()) {
-    auto index = iter - values_.begin();
-    if (states_[index] == ValueState::Alive) {
-      return AllocationId(index);
-    }
-  }
-  return std::nullopt;
-}
-
 auto Heap::CheckAlive(AllocationId allocation, SourceLocation source_loc) const
     -> ErrorOr<Success> {
-  if (states_[allocation.index_] == ValueState::Dead) {
+  if (states_[allocation.index_] == ValueState::Dead ||
+      states_[allocation.index_] == ValueState::Discarded) {
     return ProgramError(source_loc)
-           << "undefined behavior: access to dead value "
+           << "undefined behavior: access to dead or discarded value "
            << *values_[allocation.index_];
   }
   return Success();
@@ -88,6 +83,19 @@ void Heap::Deallocate(AllocationId allocation) {
 }
 
 void Heap::Deallocate(const Address& a) { Deallocate(a.allocation_); }
+
+auto Heap::is_initialized(AllocationId allocation) const -> bool {
+  return states_[allocation.index_] != ValueState::Uninitialized;
+}
+
+auto Heap::is_discarded(AllocationId allocation) const -> bool {
+  return states_[allocation.index_] == ValueState::Discarded;
+}
+
+void Heap::Discard(AllocationId allocation) {
+  CARBON_CHECK(states_[allocation.index_] == ValueState::Uninitialized);
+  states_[allocation.index_] = ValueState::Discarded;
+}
 
 void Heap::Print(llvm::raw_ostream& out) const {
   llvm::ListSeparator sep;

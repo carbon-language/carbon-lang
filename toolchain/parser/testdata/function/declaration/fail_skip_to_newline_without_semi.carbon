@@ -3,18 +3,18 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT: {kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:   {kind: 'InvalidParse', text: '('},
+// CHECK:STDOUT: {kind: 'FunctionDeclaration', text: 'fn', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:   {kind: 'DeclaredName', text: 'F'},
+// CHECK:STDOUT:   {kind: 'Name', text: 'F'},
 // CHECK:STDOUT:     {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:   {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT: {kind: 'FunctionDeclaration', text: ';', subtree_size: 5},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/function/declaration/fail_skip_to_newline_without_semi.carbon:[[@LINE+1]]:4: `fn` introducer should be followed by a name.
+// CHECK:STDERR: fail_skip_to_newline_without_semi.carbon:[[@LINE+1]]:4: `fn` introducer should be followed by a name.
 fn ()
 fn F();

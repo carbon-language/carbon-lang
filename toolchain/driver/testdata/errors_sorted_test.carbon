@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{carbon-run-tokens}
+// RUN: %{not} %{carbon} dump tokens %s |  %{FileCheck-strict}
 // CHECK:STDOUT: [
 // CHECK-COUNT-17:STDOUT: {{.*}}
 // CHECK:STDOUT: ]

@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: Allocate B
 // CHECK:STDOUT: DESTRUCTOR B
 // CHECK:STDOUT: DESTRUCTOR A
@@ -23,7 +21,8 @@ base class A{
     }
 }
 
-class B extends A {
+class B {
+  extend base: A;
     fn Create() -> Self{
         return {.base={}};
     }

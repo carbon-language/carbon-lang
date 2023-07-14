@@ -16,6 +16,44 @@ cc_library(
     ],
 )
 
+cc_binary(
+    name = "ast_to_proto",
+    testonly = 1,
+    srcs = ["ast_to_proto_main.cpp"],
+    deps = [
+        ":ast_to_proto_lib",
+        "//common:bazel_working_dir",
+        "//common:error",
+        "//common/fuzzing:carbon_cc_proto",
+        "//explorer/ast",
+        "//explorer/common:arena",
+        "//explorer/syntax",
+        "@com_google_protobuf//:protobuf_headers",
+    ],
+)
+
+cc_test(
+    name = "ast_to_proto_test",
+    srcs = ["ast_to_proto_test.cpp"],
+    args = [
+        "$(locations //explorer:standard_libraries)",
+        "$(locations //explorer:carbon_files)",
+    ],
+    data = [
+        "//explorer:carbon_files",
+        "//explorer:standard_libraries",
+    ],
+    deps = [
+        ":ast_to_proto_lib",
+        "//common/fuzzing:carbon_cc_proto",
+        "//common/fuzzing:proto_to_carbon_lib",
+        "//explorer/syntax",
+        "//testing/util:test_raw_ostream",
+        "@com_google_googletest//:gtest",
+        "@com_google_protobuf//:protobuf_headers",
+    ],
+)
+
 cc_library(
     name = "fuzzer_util",
     testonly = 1,
@@ -26,57 +64,12 @@ cc_library(
         "//common:error",
         "//common/fuzzing:carbon_cc_proto",
         "//common/fuzzing:proto_to_carbon_lib",
-        "//explorer/interpreter:exec_program",
-        "//explorer/interpreter:trace_stream",
-        "//explorer/syntax",
-        "//explorer/syntax:prelude",
+        "//explorer/ast",
+        "//explorer/parse_and_execute",
         "@bazel_tools//tools/cpp/runfiles",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
     ],
-)
-
-cc_test(
-    name = "ast_to_proto_test",
-    srcs = ["ast_to_proto_test.cpp"],
-    args = [
-        "$(locations //explorer:standard_libraries)",
-        "$(locations //explorer/testdata:carbon_files)",
-    ],
-    data = [
-        "//explorer:standard_libraries",
-        "//explorer/testdata:carbon_files",
-    ],
-    deps = [
-        ":ast_to_proto_lib",
-        "//common/fuzzing:carbon_cc_proto",
-        "//explorer/syntax",
-        "@com_google_googletest//:gtest",
-        "@com_google_protobuf//:protobuf_headers",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_binary(
-    name = "fuzzverter",
-    testonly = 1,
-    srcs = ["fuzzverter.cpp"],
-    deps = [
-        ":ast_to_proto_lib",
-        ":fuzzer_util",
-        "//common:error",
-        "//common/fuzzing:carbon_cc_proto",
-        "//explorer/common:error_builders",
-        "//explorer/common:nonnull",
-        "//explorer/syntax",
-        "@com_google_protobuf//:protobuf_headers",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-filegroup(
-    name = "fuzzer_corpus_files",
-    srcs = glob(["fuzzer_corpus/**"]),
 )
 
 cc_test(
@@ -87,51 +80,8 @@ cc_test(
     ],
     deps = [
         ":fuzzer_util",
-        "//common:gtest_main",
-        "@com_google_googletest//:gtest",
-        "@com_google_protobuf//:protobuf_headers",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_test(
-    name = "proto_to_carbon_test",
-    srcs = ["proto_to_carbon_test.cpp"],
-    args = [
-        "$(locations //explorer:standard_libraries)",
-        "$(locations //explorer/testdata:carbon_files)",
-    ],
-    data = [
-        "//explorer:standard_libraries",
-        "//explorer/testdata:carbon_files",
-    ],
-    deps = [
-        ":ast_to_proto_lib",
-        "//common/fuzzing:carbon_cc_proto",
         "//common/fuzzing:proto_to_carbon_lib",
-        "//explorer/syntax",
-        "@com_google_googletest//:gtest",
-        "@com_google_protobuf//:protobuf_headers",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_test(
-    name = "clone_test",
-    srcs = ["clone_test.cpp"],
-    args = [
-        "$(locations //explorer:standard_libraries)",
-        "$(locations //explorer/testdata:carbon_files)",
-    ],
-    data = [
-        "//explorer:standard_libraries",
-        "//explorer/testdata:carbon_files",
-    ],
-    deps = [
-        ":ast_to_proto_lib",
-        "//common/fuzzing:carbon_cc_proto",
-        "//explorer/ast",
-        "//explorer/syntax",
+        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",

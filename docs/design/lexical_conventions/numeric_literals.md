@@ -49,8 +49,8 @@ Decimal integers are written as a non-zero decimal digit followed by zero or
 more additional decimal digits, or as a single `0`.
 
 Integers in other bases are written as a `0` followed by a base specifier
-character, followed by a sequence of digits in the corresponding base. The
-available base specifiers and corresponding bases are:
+character, followed by a sequence of one or more digits in the corresponding
+base. The available base specifiers and corresponding bases are:
 
 | Base specifier | Base | Digits                   |
 | -------------- | ---- | ------------------------ |

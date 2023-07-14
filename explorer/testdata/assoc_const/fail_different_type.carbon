@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{explorer-run}
-// RUN: %{not} %{explorer-run-trace}
 
 package ExplorerTest api;
 
@@ -16,12 +14,12 @@ fn F(T:! Iface where .T == i32) {}
 
 class Good {}
 class Bad {}
-external impl Good as Iface where .T = i32 {}
-external impl Bad as Iface where .T = Bad {}
+impl Good as Iface where .T = i32 {}
+impl Bad as Iface where .T = Bad {}
 
 fn Main() -> i32 {
   F(Good);
-  // CHECK:STDERR: COMPILATION ERROR: {{.*}}/explorer/testdata/assoc_const/fail_different_type.carbon:[[@LINE+1]]: constraint requires that (T).(Iface.T) (with value class Bad) == i32, which is not known to be true
+  // CHECK:STDERR: COMPILATION ERROR: fail_different_type.carbon:[[@LINE+1]]: constraint requires that (T).(Iface.T) (with value class Bad) == i32, which is not known to be true
   F(Bad);
   return 0;
 }

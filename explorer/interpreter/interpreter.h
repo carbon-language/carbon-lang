@@ -15,9 +15,9 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/value.h"
+#include "explorer/common/trace_stream.h"
 #include "explorer/interpreter/action.h"
 #include "explorer/interpreter/heap.h"
-#include "explorer/interpreter/trace_stream.h"
 #include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {
@@ -25,13 +25,15 @@ namespace Carbon {
 // Interprets the program defined by `ast`, allocating values on `arena` and
 // printing traces if `trace` is true.
 auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
-                   Nonnull<TraceStream*> trace_stream) -> ErrorOr<int>;
+                   Nonnull<TraceStream*> trace_stream,
+                   Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int>;
 
 // Interprets `e` at compile-time, allocating values on `arena` and
 // printing traces if `trace` is true. The caller must ensure that all the
 // code this evaluates has been typechecked.
 auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
-               Nonnull<TraceStream*> trace_stream)
+               Nonnull<TraceStream*> trace_stream,
+               Nonnull<llvm::raw_ostream*> print_stream)
     -> ErrorOr<Nonnull<const Value*>>;
 
 // Attempts to match `v` against the pattern `p`, returning whether matching
@@ -43,10 +45,12 @@ auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
 // The matches for generic variables in the pattern are output in
 // `generic_args`.
 // TODO: consider moving this to a separate header.
-[[nodiscard]] auto PatternMatch(
-    Nonnull<const Value*> p, Nonnull<const Value*> v, SourceLocation source_loc,
-    std::optional<Nonnull<RuntimeScope*>> bindings, BindingMap& generic_args,
-    Nonnull<TraceStream*> trace_stream, Nonnull<Arena*> arena) -> bool;
+[[nodiscard]] auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
+                                SourceLocation source_loc,
+                                std::optional<Nonnull<RuntimeScope*>> bindings,
+                                BindingMap& generic_args,
+                                Nonnull<TraceStream*> trace_stream,
+                                Nonnull<Arena*> arena) -> bool;
 
 }  // namespace Carbon
 

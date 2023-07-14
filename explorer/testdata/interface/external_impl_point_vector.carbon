@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
@@ -19,7 +17,7 @@ class Point {
   var y: i32;
 }
 
-external impl Point as Vector {
+impl Point as Vector {
   fn Add[self: Point](b: Point) -> Point {
     return {.x = self.x + b.x, .y = self.y + b.y};
   }

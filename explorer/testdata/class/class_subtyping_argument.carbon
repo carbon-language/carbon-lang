@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: Foo(c1): 1
 // CHECK:STDOUT: Foo(c2): 1
 // CHECK:STDOUT: Foo(d): 1
@@ -17,11 +15,13 @@ base class C {
   var val: i32;
 }
 
-base class D extends C {
+base class D {
+  extend base: C;
   var val: i32;
 }
 
-class E extends D {
+class E {
+  extend base: D;
   var val: i32;
 }
 

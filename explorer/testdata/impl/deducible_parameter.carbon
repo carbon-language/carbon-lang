@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: result: 1
 
 package ExplorerTest api;
@@ -16,7 +14,7 @@ interface B {
 
 class C(T:! type) {}
 
-external impl forall [T:! type] C(T) as A(T) & B {
+impl forall [T:! type] C(T) as A(T) & B {
   fn F() -> i32 { return 1; }
 }
 

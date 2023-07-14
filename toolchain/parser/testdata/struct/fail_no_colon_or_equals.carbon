@@ -3,12 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{not} %{carbon-run-parser}
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:     {kind: 'DeclaredName', text: 'x'},
+// CHECK:STDOUT:     {kind: 'Name', text: 'x'},
 // CHECK:STDOUT:       {kind: 'StructLiteralOrStructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:         {kind: 'DesignatedName', text: 'a'},
+// CHECK:STDOUT:         {kind: 'Name', text: 'a'},
 // CHECK:STDOUT:       {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'StructFieldUnknown', text: '.', has_error: yes},
 // CHECK:STDOUT:     {kind: 'StructLiteral', text: '}', subtree_size: 5},
@@ -20,5 +19,5 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: {{.*}}/toolchain/parser/testdata/struct/fail_no_colon_or_equals.carbon:[[@LINE+1]]:11: Expected `.field: field_type` or `.field = value`.
+// CHECK:STDERR: fail_no_colon_or_equals.carbon:[[@LINE+1]]:11: Expected `.field: field_type` or `.field = value`.
 var x: {.a} = {};

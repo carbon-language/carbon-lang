@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
 // CHECK:STDOUT: 6
 // CHECK:STDOUT: 5
 // CHECK:STDOUT: 6
@@ -19,10 +17,10 @@ package ExplorerTest api;
 
 class A { var n: i32; }
 
-external impl A as Inc {
+impl A as Inc {
   fn Op[addr self: Self*]() { ++self->n; }
 }
-external impl A as Dec {
+impl A as Dec {
   fn Op[addr self: Self*]() { --self->n; }
 }
 

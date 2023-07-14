@@ -124,16 +124,10 @@ static auto ResolveControlFlow(Nonnull<Statement*> statement,
       }
       return Success();
     }
-    case StatementKind::Continuation:
-      CARBON_RETURN_IF_ERROR(ResolveControlFlow(
-          &cast<Continuation>(*statement).body(), std::nullopt, std::nullopt));
-      return Success();
     case StatementKind::ExpressionStatement:
     case StatementKind::Assign:
     case StatementKind::IncrementDecrement:
     case StatementKind::VariableDefinition:
-    case StatementKind::Run:
-    case StatementKind::Await:
       return Success();
   }
 }
@@ -189,12 +183,13 @@ auto ResolveControlFlow(Nonnull<Declaration*> declaration) -> ErrorOr<Success> {
     case DeclarationKind::NamespaceDeclaration:
     case DeclarationKind::ChoiceDeclaration:
     case DeclarationKind::VariableDeclaration:
-    case DeclarationKind::InterfaceExtendsDeclaration:
-    case DeclarationKind::InterfaceImplDeclaration:
+    case DeclarationKind::InterfaceExtendDeclaration:
+    case DeclarationKind::InterfaceRequireDeclaration:
     case DeclarationKind::AssociatedConstantDeclaration:
     case DeclarationKind::SelfDeclaration:
     case DeclarationKind::AliasDeclaration:
     case DeclarationKind::MixDeclaration:
+    case DeclarationKind::ExtendBaseDeclaration:
       // do nothing
       break;
   }

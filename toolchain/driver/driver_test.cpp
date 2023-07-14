@@ -10,6 +10,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/SourceMgr.h"
+#include "testing/util/test_raw_ostream.h"
 #include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
@@ -20,60 +21,38 @@ using ::testing::ElementsAre;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
 
-/// A raw_ostream that makes it easy to repeatedly check streamed output.
-class RawTestOstream : public llvm::raw_ostream {
- public:
-  ~RawTestOstream() override {
-    flush();
-    if (!buffer_.empty()) {
-      ADD_FAILURE() << "Unchecked output:\n" << buffer_;
-    }
+class DriverTest : public testing::Test {
+ protected:
+  DriverTest() : driver_(fs_, test_output_stream_, test_error_stream_) {}
+
+  auto CreateTestFile(llvm::StringRef text) -> llvm::StringRef {
+    static constexpr llvm::StringLiteral TestFileName = "test_file.carbon";
+    fs_.addFile(TestFileName, /*ModificationTime=*/0,
+                llvm::MemoryBuffer::getMemBuffer(text));
+    return TestFileName;
   }
 
-  /// Flushes the stream and returns the contents so far, clearing the stream
-  /// back to empty.
-  auto TakeStr() -> std::string {
-    flush();
-    std::string result = std::move(buffer_);
-    buffer_.clear();
-    return result;
-  }
-
- private:
-  void write_impl(const char* ptr, size_t size) override {
-    buffer_.append(ptr, ptr + size);
-  }
-
-  [[nodiscard]] auto current_pos() const -> uint64_t override {
-    return buffer_.size();
-  }
-
-  std::string buffer_;
+  llvm::vfs::InMemoryFileSystem fs_;
+  TestRawOstream test_output_stream_;
+  TestRawOstream test_error_stream_;
+  Driver driver_;
 };
 
-TEST(DriverTest, FullCommandErrors) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
-  Driver driver = Driver(test_output_stream, test_error_stream);
+TEST_F(DriverTest, FullCommandErrors) {
+  EXPECT_FALSE(driver_.RunFullCommand({}));
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver.RunFullCommand({}));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
+  EXPECT_FALSE(driver_.RunFullCommand({"foo"}));
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver.RunFullCommand({"foo"}));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
-
-  EXPECT_FALSE(driver.RunFullCommand({"foo --bar --baz"}));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
+  EXPECT_FALSE(driver_.RunFullCommand({"foo --bar --baz"}));
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 }
 
-TEST(DriverTest, Help) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
-  Driver driver = Driver(test_output_stream, test_error_stream);
-
-  EXPECT_TRUE(driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {}));
-  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
-  auto help_text = test_output_stream.TakeStr();
+TEST_F(DriverTest, Help) {
+  EXPECT_TRUE(driver_.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {}));
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  auto help_text = test_output_stream_.TakeStr();
 
   // Help text should mention each subcommand.
 #define CARBON_SUBCOMMAND(Name, Spelling, ...) \
@@ -81,56 +60,33 @@ TEST(DriverTest, Help) {
 #include "toolchain/driver/flags.def"
 
   // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver.RunFullCommand({"help"}));
-  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(help_text));
+  EXPECT_TRUE(driver_.RunFullCommand({"help"}));
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(help_text));
 }
 
-TEST(DriverTest, HelpErrors) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
-  Driver driver = Driver(test_output_stream, test_error_stream);
-
-  EXPECT_FALSE(driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"foo"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
-
-  EXPECT_FALSE(driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"help"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
+TEST_F(DriverTest, HelpErrors) {
+  EXPECT_FALSE(driver_.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"foo"}));
+  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 
   EXPECT_FALSE(
-      driver.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
+      driver_.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"help"}));
+  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
+
+  EXPECT_FALSE(
+      driver_.RunHelpSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
+  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 }
 
-auto CreateTestFile(llvm::StringRef text) -> std::string {
-  int fd = -1;
-  llvm::SmallString<1024> path;
-  auto ec = llvm::sys::fs::createTemporaryFile("test_file", ".txt", fd, path);
-  if (ec) {
-    llvm::report_fatal_error(llvm::Twine("Failed to create temporary file: ") +
-                             ec.message());
-  }
-
-  llvm::raw_fd_ostream s(fd, /*shouldClose=*/true);
-  s << text;
-  s.close();
-
-  return path.str().str();
-}
-
-TEST(DriverTest, DumpTokens) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
-  Driver driver = Driver(test_output_stream, test_error_stream);
-
-  auto test_file_path = CreateTestFile("Hello World");
-  EXPECT_TRUE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
-                                       {"tokens", test_file_path}));
-  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
-  auto tokenized_text = test_output_stream.TakeStr();
+TEST_F(DriverTest, DumpTokens) {
+  auto file = CreateTestFile("Hello World");
+  EXPECT_TRUE(
+      driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"tokens", file}));
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  auto tokenized_text = test_output_stream_.TakeStr();
 
   EXPECT_THAT(Yaml::Value::FromText(tokenized_text),
               ElementsAre(Yaml::SequenceValue{
@@ -158,53 +114,45 @@ TEST(DriverTest, DumpTokens) {
                                      {"spelling", ""}}}));
 
   // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver.RunFullCommand({"dump", "tokens", test_file_path}));
-  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(tokenized_text));
+  EXPECT_TRUE(driver_.RunFullCommand({"dump", "tokens", file}));
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(tokenized_text));
 }
 
-TEST(DriverTest, DumpErrors) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
-  Driver driver = Driver(test_output_stream, test_error_stream);
-
-  EXPECT_FALSE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"foo"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
+TEST_F(DriverTest, DumpErrors) {
+  EXPECT_FALSE(driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"foo"}));
+  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 
   EXPECT_FALSE(
-      driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
+      driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"--xyz"}));
+  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 
   EXPECT_FALSE(
-      driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"tokens"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
+      driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(), {"tokens"}));
+  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 
-  EXPECT_FALSE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
-                                        {"tokens", "/not/a/real/file/name"}));
-  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
-  EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
+  EXPECT_FALSE(driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
+                                         {"tokens", "/not/a/real/file/name"}));
+  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
 }
 
-TEST(DriverTest, DumpParseTree) {
-  RawTestOstream test_output_stream;
-  RawTestOstream test_error_stream;
-  Driver driver = Driver(test_output_stream, test_error_stream);
-
-  auto test_file_path = CreateTestFile("var v: Int = 42;");
-  EXPECT_TRUE(driver.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
-                                       {"parse-tree", test_file_path}));
-  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
+TEST_F(DriverTest, DumpParseTree) {
+  auto file = CreateTestFile("var v: Int = 42;");
+  EXPECT_TRUE(driver_.RunDumpSubcommand(ConsoleDiagnosticConsumer(),
+                                        {"parse-tree", file}));
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Verify there is output without examining it.
-  EXPECT_FALSE(test_output_stream.TakeStr().empty());
+  EXPECT_FALSE(test_output_stream_.TakeStr().empty());
 
   // Check that the subcommand dispatch works.
-  EXPECT_TRUE(driver.RunFullCommand({"dump", "parse-tree", test_file_path}));
-  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
+  EXPECT_TRUE(driver_.RunFullCommand({"dump", "parse-tree", file}));
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   // Verify there is output without examining it.
-  EXPECT_FALSE(test_output_stream.TakeStr().empty());
+  EXPECT_FALSE(test_output_stream_.TakeStr().empty());
 }
 
 }  // namespace
