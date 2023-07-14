@@ -111,7 +111,7 @@ auto SemanticsHandleReturnType(SemanticsContext& context,
                                ParseTree::Node parse_node) -> bool {
   // Propagate the type expression.
   auto [type_parse_node, type_node_id] =
-      context.node_stack().PopWithParseNode<SemanticsNodeId>();
+      context.node_stack().PopExpressionWithParseNode();
   auto cast_node_id = context.ExpressionAsType(type_parse_node, type_node_id);
   context.node_stack().Push(parse_node, cast_node_id);
   return true;
