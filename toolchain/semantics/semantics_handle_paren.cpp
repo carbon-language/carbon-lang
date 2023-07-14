@@ -8,7 +8,7 @@ namespace Carbon {
 
 auto SemanticsHandleParenExpression(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
-  auto value_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto value_id = context.node_stack().PopExpression();
   context.node_stack()
       .PopAndDiscardSoloParseNode<
           ParseNodeKind::ParenExpressionOrTupleLiteralStart>();
