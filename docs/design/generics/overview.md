@@ -66,10 +66,12 @@ Summary of how Carbon generics work:
     methods, functions, and other entities for types to implement.
 -   Types must explicitly _implement_ interfaces to indicate that they support
     its functionality. A given type may implement an interface at most once.
--   Implementations may be part of the type's definition, in which case you can
-    directly call the interface's methods on those types. Or, they may be
-    external, in which case the implementation is allowed to be defined in the
-    library defining the interface.
+-   Implementations may be declared inline in the body of a class definition, or
+    out-of-line.
+-   Types may extend an implementation declared inline, in which case you can
+    directly call the interface's methods on those types.
+-   Out-of-line implementations may be defined in the library defining the
+    interface.
 -   Interfaces are used as the type of a generic type parameter, acting as a
     _facet type_. Facet types in general specify the capabilities and
     requirements of the type. Types define specific implementations of those
@@ -230,19 +232,18 @@ library defining either the class or the interface.
 
 #### Accessing members of interfaces
 
-The methods of an interface implemented internally within the class definition
-may be called with the
+Methods from an interface that a class extends may be called with the
 [simple member access syntax](terminology.md#simple-member-access). Methods of
 all implemented interfaces may be called with a
 [qualified member access expression](terminology.md#qualified-member-access-expression),
-whether they are defined internally or externally.
+whether the class extends them or not.
 
 ```
 var song: Song;
 // `song.Print()` is allowed, unlike `song.Play()`.
 song.Print();
-// `Less` is defined in `Comparable`, which is
-// implemented externally for `Song`
+// `Less` is defined in `Comparable`, which `Song`
+// does not extend the implementation of.
 song.(Comparable.Less)(song);
 // Can also call `Print` using a qualified member
 // access expression, using the compound member access

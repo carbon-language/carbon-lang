@@ -3336,8 +3336,8 @@ need to be overridden for a Carbon type, that can be done with a nonmember C++
 function.
 
 Carbon interfaces with no C++ equivalent, such as
-[`CommonTypeWith(U)`](#common-type), may be implemented for C++ types externally
-in Carbon code. To satisfy the orphan rule
+[`CommonTypeWith(U)`](#common-type), may be implemented for C++ types
+out-of-line in Carbon code. To satisfy the orphan rule
 ([1](generics/details.md#impl-lookup), [2](generics/details.md#orphan-rule)),
 each C++ library will have a corresponding Carbon wrapper library that must be
 imported instead of the C++ library if the Carbon wrapper exists. **TODO:**

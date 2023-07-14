@@ -93,7 +93,7 @@ reusing the result from an earlier comparison:
 
 ```carbon
 class ChattyIntMatcher {
-  external impl as EqWith(i32) {
+  impl as EqWith(i32) {
     fn Eq[me: ChattyIntMatcher](other: i32) {
       Print("Matching {0}", other);
       return other == 1;
@@ -144,7 +144,7 @@ value matches the scope of the binding.
 ```carbon
 class NoisyDestructor {
   fn Make() -> Self { return {}; }
-  external impl i32 as ImplicitAs(NoisyDestructor) {
+  impl i32 as ImplicitAs(NoisyDestructor) {
     fn Convert[me: i32]() -> Self { return Make(); }
   }
   destructor {
@@ -265,7 +265,7 @@ before pattern matching is performed.
 
 ```carbon
 fn G[T:! Type](p: T*);
-class X { external impl as ImplicitAs(i32*); }
+class X { impl as ImplicitAs(i32*); }
 // ✅ Deduces `T = i32` then implicitly and
 // trivially converts `p` to `i32*`.
 fn H1(p: i32*) { G(p); }
@@ -441,7 +441,7 @@ match (Optional(i32).None) {
 }
 
 class X {
-  external impl as ImplicitAs(Optional(i32));
+  impl as ImplicitAs(Optional(i32));
 }
 
 match ({} as X) {
