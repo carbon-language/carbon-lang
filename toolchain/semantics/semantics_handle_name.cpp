@@ -87,25 +87,34 @@ auto SemanticsHandleNameExpression(SemanticsContext& context,
 
 auto SemanticsHandleQualifiedDeclaration(SemanticsContext& context,
                                          ParseTree::Node parse_node) -> bool {
-  // The first two qualifiers in a chain will be a QualifiedDeclaration with two
-  // Identifier or expression children. Later qualifiers will have a
-  // QualifiedDeclaration as the first child, and an Identifier or expression as
-  // the second child.
-  auto [parse_node2, node_or_name_id2] =
-      context.node_stack().PopExpressionWithParseNode();
-  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
-      ParseNodeKind::QualifiedDeclaration) {
-    // First QualifiedDeclaration in a chain.
-    auto [parse_node1, node_or_name_id1] =
-        context.node_stack().PopExpressionWithParseNode();
-    context.ApplyDeclarationNameQualifier(parse_node1, node_or_name_id1);
-    // Add the QualifiedDeclaration so that it can be used for bracketing.
-    context.node_stack().Push(parse_node);
+  auto pop_and_apply_first_child = [&]() {
+    if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
+        ParseNodeKind::QualifiedDeclaration) {
+      // First QualifiedDeclaration in a chain.
+      auto [parse_node1, node_id1] =
+          context.node_stack().PopExpressionWithParseNode();
+      context.declaration_name_stack().ApplyExpressionQualifier(parse_node1,
+                                                                node_id1);
+      // Add the QualifiedDeclaration so that it can be used for bracketing.
+      context.node_stack().Push(parse_node);
+    } else {
+      // Nothing to do: the QualifiedDeclaration remains as a bracketing node
+      // for later QualifiedDeclarations.
+    }
+  };
+
+  ParseTree::Node parse_node2 = context.node_stack().PeekParseNode();
+  if (context.parse_tree().node_kind(parse_node2) == ParseNodeKind::Name) {
+    SemanticsStringId name_id2 =
+        context.node_stack().Pop<ParseNodeKind::Name>();
+    pop_and_apply_first_child();
+    context.declaration_name_stack().ApplyNameQualifier(parse_node2, name_id2);
   } else {
-    // Nothing to do: the QualifiedDeclaration remains as a bracketing node for
-    // later QualifiedDeclarations.
+    SemanticsNodeId node_id2 = context.node_stack().PopExpression();
+    pop_and_apply_first_child();
+    context.declaration_name_stack().ApplyExpressionQualifier(parse_node2,
+                                                              node_id2);
   }
-  context.ApplyDeclarationNameQualifier(parse_node2, node_or_name_id2);
 
   return true;
 }
