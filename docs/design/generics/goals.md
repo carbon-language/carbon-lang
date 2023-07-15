@@ -482,7 +482,7 @@ cases remain:
 -   They should be some way of selecting between multiple implementations of an
     interface for a given type. For example, a _Song_ might support multiple
     orderings, such as by title or by artist. These would be represented by
-    having multiple implementations of a _Comparable_ interface.
+    having multiple implementations of a _Ordered_ interface.
 -   In order to allow libraries to be composed, there must be some way of saying
     a type implements an interface that is in another package that the authors
     of the type were unaware of. This is especially important since the library
@@ -611,7 +611,7 @@ to work from C++, and Carbon functions could use that interface to invoke `swap`
 on C++ types.
 
 Similarly, we will want some way to implement Carbon interfaces for C++ types.
-For example, we might have a template implementation of an `Addable` interface
+For example, we might have a template implementation of an `AddWith` interface
 for any C++ type that implements `operator+`.
 
 ## What we are not doing with checked generics
@@ -652,7 +652,7 @@ when recursion creates an infinite collection of types, such as in
 or:
 
 ```carbon
-fn Sort[T:! Comparable](list: List(T)) -> List(T) {
+fn Sort[T:! Ordered](list: List(T)) -> List(T) {
   if (list.size() == 1) return list;
   var chunks: List(List(T)) = FormChunks(list, sqrt(list.size()));
   chunks = chunks.ApplyToEach(Sort);
@@ -661,11 +661,10 @@ fn Sort[T:! Comparable](list: List(T)) -> List(T) {
 }
 ```
 
-This, given an implementation of `Comparable` for any list with elements that
-are themselves `Comparable`, would recursively call itself to produce a set of
-types without bound. That is, calling `Sort` on a `List(Int)` would internally
-call `Sort` on a `List(List(Int))` and so on recursively without any static
-limit.
+This, given an implementation of `Ordered` for any list with elements that are
+themselves `Ordered`, would recursively call itself to produce a set of types
+without bound. That is, calling `Sort` on a `List(Int)` would internally call
+`Sort` on a `List(List(Int))` and so on recursively without any static limit.
 
 We won't require all checked-generic Carbon code to support dynamic dispatch,
 but we would like it to be an implementation option for the compiler in the
