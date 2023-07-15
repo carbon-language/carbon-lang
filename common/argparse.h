@@ -92,7 +92,7 @@ namespace Carbon {
 // use cases:
 //
 // - All options must have a unique long name that is accessed with a `--`
-//   prefix. The name must consist of characters in the set [-a-zA-Z0-1], and it
+//   prefix. The name must consist of characters in the set [-a-zA-Z0-9], and it
 //   must not start with a `-` or `no-`.
 //
 // - Values are always attached using an `=` after the name. Only a few simple
@@ -102,7 +102,7 @@ namespace Carbon {
 //     `ssize_t`.
 //   - One of a fixed set of strings
 //
-// - Options may be parsed multiple times, and configure the behavior:
+// - Options may be parsed multiple times, and the behavior can be configured:
 //   - Each time, they can set a new value, overwriting any previous.
 //   - They can append the value to a container.
 //   - TODO: They can increment a count.
@@ -258,7 +258,7 @@ class Args {
 
     // For options, it is sometimes useful to render a distinct value
     // placeholder name to help clarify what the value should contain. These are
-    // often in `All-CAPS` to make it clear they are placeholders. For example,
+    // often in `ALL-CAPS` to make it clear they are placeholders. For example,
     // an `output` option might set this to `FILE` so it renders as
     // `--output=FILE`.
     llvm::StringRef value_name = "";
