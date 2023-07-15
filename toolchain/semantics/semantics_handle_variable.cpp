@@ -15,7 +15,7 @@ auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
       context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
       ParseNodeKind::PatternBinding;
   if (has_init) {
-    expr_node_id = context.node_stack().Pop<SemanticsNodeId>();
+    expr_node_id = context.node_stack().PopExpression();
     context.node_stack()
         .PopAndDiscardSoloParseNode<ParseNodeKind::VariableInitializer>();
   }
