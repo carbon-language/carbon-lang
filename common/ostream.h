@@ -62,35 +62,6 @@ void PrintTo(T* p, std::ostream* out) {
   }
 }
 
-// True if T can be used with `<<` and an `llvm::raw_ostream`.
-template <typename T>
-static constexpr bool HasRawOstream = Requires<const T, llvm::raw_ostream>(
-    [](auto&& t, auto&& out) -> decltype(out << t) {});
-
-// Provide an `operator<<` which detects types with `raw_ostream` overloads and
-// uses that to map to a `std::ostream` overload for enum types. Other types
-// should simply provide a `Print` method which will give them all of these
-// while also being more usable from a debugger. But enums cannot add this so we
-// let them define a single operator and connect to it here.
-//
-// This overload is disabled for non-enum types, or when there is no
-// `raw_ostream` streaming support. And to make this overload be unusually low
-// priority, it is designed to take even the `std::ostream` parameter as a
-// template, and SFINAE disable itself unless that template parameter matches
-// `std::ostream`. This ensures that an *explicit* operator will be preferred
-// when provided.
-template <typename S, typename T,
-          typename = std::enable_if_t<std::is_enum_v<T>>,
-          typename = std::enable_if_t<HasRawOstream<T>>,
-          typename = std::enable_if_t<std::is_base_of_v<
-              std::ostream, std::remove_reference_t<std::remove_cv_t<S>>>>,
-          typename = std::enable_if_t<!std::is_same_v<
-              std::remove_reference_t<std::remove_cv_t<T>>, llvm::raw_ostream>>>
-auto operator<<(S& standard_out, const T& value) -> S& {
-  llvm::raw_os_ostream(standard_out) << value;
-  return standard_out;
-}
-
 // Helper to support printing the ID for a type that has a method
 // `void PrintID(llvm::raw_ostream& out) const`. Usage:
 //
