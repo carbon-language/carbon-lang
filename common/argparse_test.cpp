@@ -225,6 +225,9 @@ TEST(ArgParserTest, PositionalArgs) {
               Eq(Args::ParseResult::Success));
   EXPECT_THAT(source_string, StrEq("src2"));
   EXPECT_THAT(dest_string, StrEq("dst2"));
+
+  // TODO: test a positional argument of exactly `-` witohut any `--`.
+  // TODO: test an empty positional argument sequence using two `--` in a row.
 }
 
 TEST(ArgParserTest, BasicSubcommands) {

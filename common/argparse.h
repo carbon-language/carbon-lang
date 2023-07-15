@@ -48,6 +48,12 @@ namespace Carbon {
 // on the order in which it is encountered in the command line, with options
 // removed. Only a leaf command can contain positional arguments.
 //
+// _Value_: The value parameter provided to an argument. For options, this is
+// provided after an `=`s and the option name. For positional arguments, the
+// value is the only thing provided. The string of the value is parsed according
+// to the kind of argument with fairly simple rules. See the argument builders
+// for more details.
+//
 // _Command_: The container of options, subcommands, and positional arguments to
 // parse and an action to take when successful.
 //
@@ -145,7 +151,7 @@ namespace Carbon {
 // Leaf commands (and subcommands) can accept positional arguments. These work
 // similar to options but consist *only* of the value. They have names, but the
 // name is only used in documentation and error messages. Positional argument
-// values cannot start with a `-` character until after option parsing is ended
+// values cannot start with a `-` character ( until after option parsing is ended
 // with a `--` argument.
 //
 // Singular positional arguments store the single value in that position.
@@ -159,7 +165,9 @@ namespace Carbon {
 //     my-diff-tool a.txt b.txt c.txt -- new-a.txt new-b.txt new-c.txt
 //
 // The `--` used in this way *both* ends option parsing and the positional
-// argument sequence.
+// argument sequence. Note that if there are no positional arguments prior to
+// the first `--`, then it will just end option parsing. To pass an empty
+// sequence of positional arguments two `--` arguments would be required.
 //
 // ## Help text blocks and rendering
 //
@@ -571,8 +579,10 @@ class Args {
   // Commands are classified based on the action they result in when run.
   //
   // Commands that require a subcommand have no action and are just a means to
-  // reach the subcommand actions. This also distinguishes meta actions from
-  // normal ones.
+  // reach the subcommand actions.
+  //
+  // Commands with _meta_ actions are also a separate kind from those with
+  // normal actions.
   enum class CommandKind {
     Invalid,
     RequiresSubcommand,
