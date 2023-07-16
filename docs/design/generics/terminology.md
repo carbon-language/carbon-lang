@@ -324,10 +324,9 @@ instead be a facet with a type that is a facet type other than `type`.
 
 ## Generic type parameter
 
-A generic type parameter is a
-[parameter](#generic-means-compile-time-parameterized) that is a
-[generic type](#generic-type). Equivalently, it is a parameter declared using a
-`:!` binding, with or without the `template` modifier, and a
+A _generic type parameter_ is a
+[generic parameter](#generic-means-compile-time-parameterized) that is a
+[generic type](#generic-type). Equivalently, it is a generic parameter with a
 [facet type](#facet-type). For example, in `class HashSet(T:! Hashable)`, `T` is
 a generic type parameter for the class `HashSet`, with the facet type
 `Hashable`.

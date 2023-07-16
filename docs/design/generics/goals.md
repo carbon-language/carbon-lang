@@ -55,7 +55,7 @@ forward-looking.
 Carbon will support both
 [checked and template generics](terminology.md#checked-versus-template-parameters)
 to support generic programming by way of
-[parameterization of language constructs](terminology.md#generic-means-compile-time-parameterized).
+[compile-time parameterization of language constructs](terminology.md#generic-means-compile-time-parameterized).
 
 Carbon's checked generics will feature
 [early type checking](terminology.md#early-versus-late-type-checking) and
