@@ -12,7 +12,7 @@ fn Main() -> i32 {
   let a_pinned: i32 = a;
   a = 2;
   a = original;
-  // CHECK:STDERR: RUNTIME ERROR: fail_pinned_value_restored.carbon:[[@LINE+1]]: Value has changed since it was pinned
+  // CHECK:STDERR: RUNTIME ERROR: fail_pinned_value_restored.carbon:[[@LINE+1]]: Reference has changed since this value was bound.
   Print("{0}", a_pinned);
   return 0;
 }

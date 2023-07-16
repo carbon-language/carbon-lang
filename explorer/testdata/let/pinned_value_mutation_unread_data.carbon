@@ -3,14 +3,19 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
+fn Foo(n: i32) {
+  Print("{0}", n);
+}
+
 fn Main() -> i32 {
-  var a: i32 = 1;
-  let a_pinned: i32 = a;
-  a = 2;
-  // CHECK:STDERR: RUNTIME ERROR: fail_pinned_value_changed.carbon:[[@LINE+1]]: Reference has changed since this value was bound.
-  Print("{0}", a_pinned);
+  var v: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  let a: i32 = v.a;
+  v.b = 3;
+  Foo(a);
   return 0;
 }

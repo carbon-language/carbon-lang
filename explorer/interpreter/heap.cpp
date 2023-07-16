@@ -26,7 +26,7 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
   } else {
     states_.push_back(ValueState::Alive);
   }
-  revisions_.push_back(0);
+  bound_values_.push_back(llvm::DenseMap<const AstNode*, Address>{});
   return a;
 }
 
@@ -52,7 +52,18 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
   CARBON_ASSIGN_OR_RETURN(values_[a.allocation_.index_],
                           values_[a.allocation_.index_]->SetField(
                               arena_, a.element_path_, v, source_loc));
-  ++revisions_[a.allocation_.index_];
+  auto& bound_values_map = bound_values_[a.allocation_.index_];
+  // End lifetime of all values bound to this address and its subobjects.
+  if (a.element_path_.IsEmpty()) {
+    bound_values_map.clear();
+  } else {
+    for (auto value_it = bound_values_map.begin();
+         value_it != bound_values_map.end(); ++value_it) {
+      if (AddressesAreStrictlyNested(a, value_it->second)) {
+        bound_values_map.erase(value_it);
+      }
+    }
+  }
   return Success();
 }
 
@@ -104,8 +115,14 @@ void Heap::Discard(AllocationId allocation) {
   states_[allocation.index_] = ValueState::Discarded;
 }
 
-auto Heap::revision(const Address& a) const -> int {
-  return revisions_[a.allocation_.index_];
+void Heap::BindValueToReference(const ValueNodeView& node, const Address& a) {
+  // Update mapped node ignoring any previous mapping.
+  bound_values_[a.allocation_.index_].insert({&node.base(), a});
+}
+
+auto Heap::is_bound_value_alive(const ValueNodeView& node,
+                                const Address& a) const -> bool {
+  return bound_values_[a.allocation_.index_].contains(&node.base());
 }
 
 void Heap::Print(llvm::raw_ostream& out) const {
@@ -122,4 +139,41 @@ void Heap::Print(llvm::raw_ostream& out) const {
   }
 }
 
+auto Heap::AddressesAreStrictlyNested(const Address& first,
+                                      const Address& second) -> bool {
+  if (first.allocation_.index_ != second.allocation_.index_) {
+    return false;
+  }
+  return PathsAreStrictlyNested(first.element_path_, second.element_path_);
+}
+
+auto Heap::PathsAreStrictlyNested(const ElementPath& first,
+                                  const ElementPath& second) -> bool {
+  for (size_t i = 0;
+       i < std::min(first.components_.size(), second.components_.size()); ++i) {
+    Nonnull<const Element*> element = first.components_[i].element();
+    Nonnull<const Element*> other_element = second.components_[i].element();
+    if (element->kind() != other_element->kind()) {
+      return false;
+    }
+    switch (element->kind()) {
+      case Carbon::ElementKind::NamedElement:
+        if (!element->IsNamed(
+                llvm::cast<NamedElement>(other_element)->name())) {
+          return false;
+        }
+        break;
+      case Carbon::ElementKind::PositionalElement:
+        if (llvm::cast<PositionalElement>(element)->index() !=
+            llvm::cast<PositionalElement>(other_element)->index()) {
+          return false;
+        }
+        break;
+      case Carbon::ElementKind::BaseElement:
+        // Nothing to test.
+        break;
+    }
+  }
+  return true;
+}
 }  // namespace Carbon

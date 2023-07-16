@@ -27,14 +27,14 @@ using llvm::cast;
 
 RuntimeScope::RuntimeScope(RuntimeScope&& other) noexcept
     : locals_(std::move(other.locals_)),
-      pinned_values_(std::move(other.pinned_values_)),
+      bound_values_(std::move(other.bound_values_)),
       // To transfer ownership of other.allocations_, we have to empty it out.
       allocations_(std::exchange(other.allocations_, {})),
       heap_(other.heap_) {}
 
 auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
   locals_ = std::move(rhs.locals_);
-  pinned_values_ = std::move(rhs.pinned_values_);
+  bound_values_ = std::move(rhs.bound_values_);
   // To transfer ownership of rhs.allocations_, we have to empty it out.
   allocations_ = std::exchange(rhs.allocations_, {});
   heap_ = rhs.heap_;
@@ -60,9 +60,9 @@ void RuntimeScope::Bind(ValueNodeView value_node, Address address) {
 
 void RuntimeScope::BindAndPin(ValueNodeView value_node, Address address) {
   Bind(value_node, address);
-  bool success =
-      pinned_values_.insert({value_node, heap_->revision(address)}).second;
+  bool success = bound_values_.insert(&value_node.base()).second;
   CARBON_CHECK(success) << "Duplicate pinned node for " << value_node.base();
+  heap_->BindValueToReference(value_node, address);
 }
 
 void RuntimeScope::BindLifetimeToScope(Address address) {
@@ -96,11 +96,11 @@ void RuntimeScope::Merge(RuntimeScope other) {
   CARBON_CHECK(heap_ == other.heap_);
   for (auto& element : other.locals_) {
     bool success = locals_.insert(element).second;
-    CARBON_CHECK(success) << "Duplicate definition of" << element.first;
+    CARBON_CHECK(success) << "Duplicate definition of " << element.first;
   }
-  for (auto& element : other.pinned_values_) {
-    bool success = pinned_values_.insert(element).second;
-    CARBON_CHECK(success) << "Duplicate definition of" << element.first;
+  for (const auto* element : other.bound_values_) {
+    bool success = bound_values_.insert(element).second;
+    CARBON_CHECK(success) << "Duplicate bound value.";
   }
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
                       other.allocations_.end());
@@ -114,14 +114,13 @@ auto RuntimeScope::Get(ValueNodeView value_node,
   if (it == locals_.end()) {
     return {std::nullopt};
   }
-  auto pinned_it = pinned_values_.find(value_node);
-  if (pinned_it != pinned_values_.end()) {
-    // Check if pinned value was modified.
+  if (bound_values_.contains(&value_node.base())) {
+    // Check if the bound value is still alive.
     CARBON_CHECK(it->second->kind() == Value::Kind::LocationValue);
-    if (pinned_it->second !=
-        heap_->revision(cast<LocationValue>(it->second)->address())) {
+    if (!heap_->is_bound_value_alive(
+            value_node, cast<LocationValue>(it->second)->address())) {
       return ProgramError(source_loc)
-             << "Value has changed since it was pinned";
+             << "Reference has changed since this value was bound.";
     }
   }
   return {it->second};

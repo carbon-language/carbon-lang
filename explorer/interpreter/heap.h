@@ -10,6 +10,7 @@
 #include "common/ostream.h"
 #include "explorer/ast/address.h"
 #include "explorer/ast/value.h"
+#include "explorer/ast/value_node.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
 #include "explorer/interpreter/heap_allocation_interface.h"
@@ -42,9 +43,12 @@ class Heap : public HeapAllocationInterface {
   auto Write(const Address& a, Nonnull<const Value*> v,
              SourceLocation source_loc) -> ErrorOr<Success> override;
 
-  // Returns the revision number of the given allocation, incremented with each
-  // mutation.
-  auto revision(const Address& a) const -> int override;
+  // Returns whether the value bound at the given node is still alive.
+  auto is_bound_value_alive(const ValueNodeView& node, const Address& a) const
+      -> bool override;
+
+  void BindValueToReference(const ValueNodeView& node,
+                            const Address& a) override;
 
   // Put the given value on the heap and mark its state.
   // Mark UninitializedValue as uninitialized and other values as alive.
@@ -69,6 +73,17 @@ class Heap : public HeapAllocationInterface {
   auto arena() const -> Arena& override { return *arena_; }
 
  private:
+  // Returns whether the address have the same AllocationdId and their path
+  // are strictly nested.
+  static auto AddressesAreStrictlyNested(const Address& first,
+                                         const Address& second) -> bool;
+
+  // Returns whether the provided paths are strictly nested. This checks the
+  // name, index, and base element only, and might not valid if used to
+  // compare paths based on a different AllocationId.
+  static auto PathsAreStrictlyNested(const ElementPath& first,
+                                     const ElementPath& second) -> bool;
+
   // Signal an error if the allocation is no longer alive.
   auto CheckAlive(AllocationId allocation, SourceLocation source_loc) const
       -> ErrorOr<Success>;
@@ -80,7 +95,7 @@ class Heap : public HeapAllocationInterface {
   Nonnull<Arena*> arena_;
   std::vector<Nonnull<const Value*>> values_;
   std::vector<ValueState> states_;
-  std::vector<int> revisions_;
+  std::vector<llvm::DenseMap<const AstNode*, Address>> bound_values_;
 };
 
 }  // namespace Carbon

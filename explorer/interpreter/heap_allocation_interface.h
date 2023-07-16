@@ -7,6 +7,7 @@
 
 #include "common/error.h"
 #include "explorer/ast/address.h"
+#include "explorer/ast/value_node.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
@@ -42,9 +43,13 @@ class HeapAllocationInterface {
   // Returns the arena used to allocate the values in this heap.
   virtual auto arena() const -> Arena& = 0;
 
-  // Returns the revision number of the given allocation, incremented with each
-  // mutation.
-  virtual auto revision(const Address& a) const -> int = 0;
+  // Binds a value node to a reference, and manages its lifetime.
+  virtual void BindValueToReference(const ValueNodeView& node,
+                                    const Address& a) = 0;
+
+  // Returns whether the value bound at the given node is still alive.
+  virtual auto is_bound_value_alive(const ValueNodeView& node,
+                                    const Address& a) const -> bool = 0;
 
  protected:
   HeapAllocationInterface() = default;

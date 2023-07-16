@@ -18,7 +18,7 @@ fn Main() -> i32 {
   var c: C = { .i = 1 };
   let pinned_c: C = c;
   c.i = 2;
-  // CHECK:STDERR: RUNTIME ERROR: fail_pinned_value_subobject_changed.carbon:[[@LINE+1]]: Value has changed since it was pinned
+  // CHECK:STDERR: RUNTIME ERROR: fail_pinned_value_subobject_changed.carbon:[[@LINE+1]]: Reference has changed since this value was bound.
   Foo(pinned_c);
   return 0;
 }
