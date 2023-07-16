@@ -9,10 +9,9 @@ namespace Carbon {
 
 auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
                                            ParseTree::Node parse_node) -> bool {
-  auto name_id =
-      context.node_stack().Pop<SemanticsStringId>(ParseNodeKind::Name);
+  SemanticsStringId name_id = context.node_stack().Pop<ParseNodeKind::Name>();
 
-  auto base_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto base_id = context.node_stack().PopExpression();
   auto base = context.semantics_ir().GetNode(base_id);
   if (base.kind() == SemanticsNodeKind::Namespace) {
     // For a namespace, just resolve the name.
@@ -93,12 +92,12 @@ auto SemanticsHandleQualifiedDeclaration(SemanticsContext& context,
   // QualifiedDeclaration as the first child, and an Identifier or expression as
   // the second child.
   auto [parse_node2, node_or_name_id2] =
-      context.node_stack().PopWithParseNode<SemanticsNodeId>();
+      context.node_stack().PopExpressionWithParseNode();
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
       ParseNodeKind::QualifiedDeclaration) {
     // First QualifiedDeclaration in a chain.
     auto [parse_node1, node_or_name_id1] =
-        context.node_stack().PopWithParseNode<SemanticsNodeId>();
+        context.node_stack().PopExpressionWithParseNode();
     context.ApplyDeclarationNameQualifier(parse_node1, node_or_name_id1);
     // Add the QualifiedDeclaration so that it can be used for bracketing.
     context.node_stack().Push(parse_node);

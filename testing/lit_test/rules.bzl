@@ -4,13 +4,23 @@
 
 """Rule for a lit test."""
 
-def glob_lit_tests(driver, data, test_file_exts, exclude = None, **kwargs):
+def glob_lit_tests(name, driver, data, test_file_exts, exclude = None, **kwargs):
     """Runs `lit` on test_dir.
 
     `lit` reference:
       https://llvm.org/docs/CommandGuide/lit.html
 
+    This will generate three types of rules:
+    1. For each test file, a rule with ".test" at the end. For example,
+       "foo/bar/baz.carbon" will generate ":foo/bar/baz.carbon.test"
+    2. If any test exists in subdirectory, a test_suite is generated for each
+       directory. For example, ":foo" will run all tests under directory "foo",
+       and ":foo/bar" will run all tests under "foo/bar".
+    3. A test_suite containing all tests. The name of this will be the "name"
+       arg passed to the glob_lit_tests rule.
+
     Args:
+      name: The name of the test_suite rule to generate for running all tests.
       driver: The path to the lit config.
       data: A list of tools to provide to the tests. These will be aliased for
         execution.
@@ -27,10 +37,12 @@ def glob_lit_tests(driver, data, test_file_exts, exclude = None, **kwargs):
     )
     data.append("@llvm-project//llvm:lit")
     suites = dict()
+    all_tests = list()
     for f in test_files:
         if f.split(".")[-1] not in test_file_exts:
             continue
         test = "%s.test" % f
+        all_tests.append(test)
         native.py_test(
             name = test,
             srcs = ["//testing/lit_test:lit_test.py"],
@@ -49,5 +61,6 @@ def glob_lit_tests(driver, data, test_file_exts, exclude = None, **kwargs):
             if dir not in suites:
                 suites[dir] = []
             suites[dir].append(test)
+    native.test_suite(name = name, tests = all_tests)
     for suite, tests in suites.items():
         native.test_suite(name = suite, tests = tests)

@@ -5,6 +5,7 @@
 load("//testing/lit_test:rules.bzl", "glob_lit_tests")
 
 glob_lit_tests(
+    name = "all_lit_tests",
     data = [
         "//testing/lit_test:merge_output",
         "//toolchain/driver:carbon",
