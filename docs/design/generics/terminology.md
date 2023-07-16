@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Parameterized language constructs](#parameterized-language-constructs)
+-   [Generic means compile-time parameterized](#generic-means-compile-time-parameterized)
 -   [Checked versus template parameters](#checked-versus-template-parameters)
     -   [Polymorphism](#polymorphism)
         -   [Parametric polymorphism](#parametric-polymorphism)
@@ -58,12 +58,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## Parameterized language constructs
+## Generic means compile-time parameterized
 
-Generally speaking, when we talk about generics, either checked or template, we
-are talking about generalizing some language construct by adding a parameter to
-it. Language constructs here primarily would include functions and types, but we
-may want to support parameterizing other language constructs like
+Generally speaking, when we talk about _generics_, either checked or template,
+we are talking about generalizing some language construct by adding a
+compile-time parameter, called a _generic parameter_, to it. Language constructs
+here primarily would include functions and types, but we may want to support
+parameterizing other language constructs like
 [interfaces](#interface-type-parameters-and-associated-types).
 
 This parameter broadens the scope of the language construct on an axis defined
@@ -296,7 +297,7 @@ A facet type is the type used when declaring some type parameter. It foremost
 determines which types are legal arguments for that type parameter. For template
 parameters, that is all a facet type does. For checked parameters, it also
 determines the API that is available in the body of the definition of the
-[generic function, class, or other entity](#parameterized-language-constructs).
+[generic function, class, or other entity](#generic-means-compile-time-parameterized).
 
 ## Facet
 
@@ -323,9 +324,10 @@ instead be a facet with a type that is a facet type other than `type`.
 
 ## Generic type parameter
 
-A generic type parameter is a [parameter](#parameterized-language-constructs)
-that is a [generic type](#generic-type). Equivalently, it is a parameter
-declared using a `:!` binding, with or without the `template` modifier, and a
+A generic type parameter is a
+[parameter](#generic-means-compile-time-parameterized) that is a
+[generic type](#generic-type). Equivalently, it is a parameter declared using a
+`:!` binding, with or without the `template` modifier, and a
 [facet type](#facet-type). For example, in `class HashSet(T:! Hashable)`, `T` is
 a generic type parameter for the class `HashSet`, with the facet type
 `Hashable`.
