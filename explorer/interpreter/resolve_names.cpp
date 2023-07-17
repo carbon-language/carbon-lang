@@ -153,11 +153,6 @@ auto NameResolver::ResolveQualifier(DeclaredName name,
       return ProgramError(name.source_loc())
              << PrintAsID(node.base()) << " cannot be used as a name qualifier";
     }
-
-    if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "--- resolved qualifier `" << qualifier << "` for "
-                     << "\n";
-    }
   }
   return scope;
 }
@@ -187,11 +182,6 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
                                    StaticScope& enclosing_scope,
                                    bool allow_qualified_names)
     -> ErrorOr<Success> {
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- add exposed name `";
-    declaration.PrintID(trace_stream_->stream());
-    *trace_stream_ << "` (" << declaration.source_loc() << ")\n";
-  }
   switch (declaration.kind()) {
     case DeclarationKind::NamespaceDeclaration: {
       const auto& namespace_decl = cast<NamespaceDeclaration>(declaration);
@@ -293,8 +283,6 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
 auto NameResolver::ResolveNames(Expression& expression,
                                 const StaticScope& enclosing_scope)
     -> ErrorOr<std::optional<ValueNodeView>> {
-  if (trace_stream_->is_enabled()) {
-  }
   return RunWithExtraStack(
       [&]() { return ResolveNamesImpl(expression, enclosing_scope); });
 }
@@ -302,11 +290,6 @@ auto NameResolver::ResolveNames(Expression& expression,
 auto NameResolver::ResolveNamesImpl(Expression& expression,
                                     const StaticScope& enclosing_scope)
     -> ErrorOr<std::optional<ValueNodeView>> {
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** resolving expr `";
-    expression.Print(trace_stream_->stream());
-    *trace_stream_ << "` (" << expression.source_loc() << ")\n";
-  }
   switch (expression.kind()) {
     case ExpressionKind::CallExpression: {
       auto& call = cast<CallExpression>(expression);
@@ -449,7 +432,7 @@ auto NameResolver::ResolveNamesImpl(Expression& expression,
             &cast<GenericBinding>(enclosing_dot_self->base()));
       }
       // Introduce `.Self` into scope on the right of the `where` keyword.
-      StaticScope where_scope(&enclosing_scope);
+      StaticScope where_scope(&enclosing_scope, &where);
       CARBON_RETURN_IF_ERROR(where_scope.Add(".Self", &where.self_binding()));
       for (Nonnull<WhereClause*> clause : where.clauses()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*clause, where_scope));
@@ -482,12 +465,6 @@ auto NameResolver::ResolveNamesImpl(Expression& expression,
       return ProgramError(expression.source_loc()) << "Unimplemented";
   }
 
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished resolving expr `";
-    expression.Print(trace_stream_->stream());
-    *trace_stream_ << "` (" << expression.source_loc() << ")\n";
-  }
-
   return {std::nullopt};
 }
 
@@ -501,11 +478,6 @@ auto NameResolver::ResolveNames(WhereClause& clause,
 auto NameResolver::ResolveNamesImpl(WhereClause& clause,
                                     const StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** resolving clause `";
-    clause.PrintID(trace_stream_->stream());
-    *trace_stream_ << "` (" << clause.source_loc() << ")\n";
-  }
   switch (clause.kind()) {
     case WhereClauseKind::ImplsWhereClause: {
       auto& impls_clause = cast<ImplsWhereClause>(clause);
@@ -531,12 +503,6 @@ auto NameResolver::ResolveNamesImpl(WhereClause& clause,
     }
   }
 
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished resolving clause `";
-    clause.PrintID(trace_stream_->stream());
-    *trace_stream_ << "` (" << clause.source_loc() << ")\n";
-  }
-
   return Success();
 }
 
@@ -549,12 +515,6 @@ auto NameResolver::ResolveNames(Pattern& pattern, StaticScope& enclosing_scope)
 auto NameResolver::ResolveNamesImpl(Pattern& pattern,
                                     StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** resolving pattern `";
-    pattern.Print(trace_stream_->stream());
-    *trace_stream_ << "` (" << pattern.source_loc() << ")\n";
-  }
-
   switch (pattern.kind()) {
     case PatternKind::BindingPattern: {
       auto& binding = cast<BindingPattern>(pattern);
@@ -567,7 +527,7 @@ auto NameResolver::ResolveNamesImpl(Pattern& pattern,
     case PatternKind::GenericBinding: {
       auto& binding = cast<GenericBinding>(pattern);
       // `.Self` is in scope in the context of the type.
-      StaticScope self_scope(&enclosing_scope);
+      StaticScope self_scope(&enclosing_scope, &binding);
       CARBON_RETURN_IF_ERROR(self_scope.Add(".Self", &binding));
       CARBON_RETURN_IF_ERROR(ResolveNames(binding.type(), self_scope));
       if (binding.name() != AnonymousName) {
@@ -602,12 +562,6 @@ auto NameResolver::ResolveNamesImpl(Pattern& pattern,
       CARBON_RETURN_IF_ERROR(
           ResolveNames(cast<AddrPattern>(pattern).binding(), enclosing_scope));
       break;
-  }
-
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished resolving pattern `";
-    pattern.Print(trace_stream_->stream());
-    *trace_stream_ << "` (" << pattern.source_loc() << ")\n";
   }
 
   return Success();
@@ -698,7 +652,7 @@ auto NameResolver::ResolveNamesImpl(Statement& statement,
     }
     case StatementKind::Block: {
       auto& block = cast<Block>(statement);
-      StaticScope block_scope(&enclosing_scope);
+      StaticScope block_scope(&enclosing_scope, &block);
       for (Nonnull<Statement*> sub_statement : block.statements()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*sub_statement, block_scope));
       }
@@ -712,8 +666,8 @@ auto NameResolver::ResolveNamesImpl(Statement& statement,
       break;
     }
     case StatementKind::For: {
-      StaticScope statement_scope(&enclosing_scope);
       auto& for_stmt = cast<For>(statement);
+      StaticScope statement_scope(&enclosing_scope, &for_stmt);
       CARBON_RETURN_IF_ERROR(
           ResolveNames(for_stmt.loop_target(), statement_scope));
       CARBON_RETURN_IF_ERROR(
@@ -726,7 +680,7 @@ auto NameResolver::ResolveNamesImpl(Statement& statement,
       auto& match = cast<Match>(statement);
       CARBON_RETURN_IF_ERROR(ResolveNames(match.expression(), enclosing_scope));
       for (Match::Clause& clause : match.clauses()) {
-        StaticScope clause_scope(&enclosing_scope);
+        StaticScope clause_scope(&enclosing_scope, &clause.statement());
         CARBON_RETURN_IF_ERROR(ResolveNames(clause.pattern(), clause_scope));
         CARBON_RETURN_IF_ERROR(ResolveNames(clause.statement(), clause_scope));
       }
@@ -799,7 +753,7 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
       auto& iface = cast<ConstraintTypeDeclaration>(declaration);
       CARBON_ASSIGN_OR_RETURN(Nonnull<StaticScope*> scope,
                               ResolveQualifier(iface.name(), enclosing_scope));
-      StaticScope iface_scope(scope);
+      StaticScope iface_scope(scope, &iface);
       scope->MarkDeclared(iface.name().inner_name());
       if (auto params = iface.params()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**params, iface_scope));
@@ -814,7 +768,7 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
     }
     case DeclarationKind::ImplDeclaration: {
       auto& impl = cast<ImplDeclaration>(declaration);
-      StaticScope impl_scope(&enclosing_scope);
+      StaticScope impl_scope(&enclosing_scope, &impl);
       for (Nonnull<GenericBinding*> binding : impl.deduced_parameters()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(binding->type(), impl_scope));
         CARBON_RETURN_IF_ERROR(impl_scope.Add(binding->name(), binding));
@@ -851,7 +805,7 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
               : DeclaredName(function.source_loc(), "destructor");
       CARBON_ASSIGN_OR_RETURN(Nonnull<StaticScope*> scope,
                               ResolveQualifier(name, enclosing_scope));
-      StaticScope function_scope(scope);
+      StaticScope function_scope(scope, &function);
       scope->MarkDeclared(name.inner_name());
       for (Nonnull<GenericBinding*> binding : function.deduced_parameters()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(*binding, function_scope));
@@ -878,7 +832,7 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<StaticScope*> scope,
           ResolveQualifier(class_decl.name(), enclosing_scope));
-      StaticScope class_scope(scope);
+      StaticScope class_scope(scope, &class_decl);
       scope->MarkDeclared(class_decl.name().inner_name());
       if (auto type_params = class_decl.type_params()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**type_params, class_scope));
@@ -900,7 +854,7 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<StaticScope*> scope,
           ResolveQualifier(mixin_decl.name(), enclosing_scope));
-      StaticScope mixin_scope(scope);
+      StaticScope mixin_scope(scope, &mixin_decl);
       scope->MarkDeclared(mixin_decl.name().inner_name());
       if (auto params = mixin_decl.params()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**params, mixin_scope));
@@ -920,7 +874,7 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
       auto& choice = cast<ChoiceDeclaration>(declaration);
       CARBON_ASSIGN_OR_RETURN(Nonnull<StaticScope*> scope,
                               ResolveQualifier(choice.name(), enclosing_scope));
-      StaticScope choice_scope(scope);
+      StaticScope choice_scope(scope, &choice);
       scope->MarkDeclared(choice.name().inner_name());
       if (auto type_params = choice.type_params()) {
         CARBON_RETURN_IF_ERROR(ResolveNames(**type_params, choice_scope));
@@ -966,7 +920,7 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
     }
     case DeclarationKind::AssociatedConstantDeclaration: {
       auto& let = cast<AssociatedConstantDeclaration>(declaration);
-      StaticScope constant_scope(&enclosing_scope);
+      StaticScope constant_scope(&enclosing_scope, &let);
       enclosing_scope.MarkDeclared(let.binding().name());
       CARBON_RETURN_IF_ERROR(ResolveNames(let.binding(), constant_scope));
       enclosing_scope.MarkUsable(let.binding().name());

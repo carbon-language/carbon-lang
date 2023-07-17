@@ -37,11 +37,14 @@ class StaticScope {
 
   // Construct a root scope.
   explicit StaticScope(Nonnull<TraceStream*> trace_stream)
-      : trace_stream_(trace_stream){};
+      : ast_node_(std::nullopt), trace_stream_(trace_stream){};
 
   // Construct a scope that is nested within the given scope.
-  explicit StaticScope(Nonnull<const StaticScope*> parent)
-      : parent_scope_(parent), trace_stream_(parent->trace_stream_) {}
+  explicit StaticScope(Nonnull<const StaticScope*> parent,
+                       std::optional<Nonnull<AstNode*>> ast_node = std::nullopt)
+      : parent_scope_(parent),
+        ast_node_(ast_node),
+        trace_stream_(parent->trace_stream_) {}
 
   StaticScope() = default;
 
@@ -51,6 +54,10 @@ class StaticScope {
   // methods will fail for it.
   auto Add(std::string_view name, ValueNodeView entity,
            NameStatus status = NameStatus::Usable) -> ErrorOr<Success>;
+
+  void Print(llvm::raw_ostream& out) const;
+
+  void PrintID(llvm::raw_ostream& out) const;
 
   // Marks `name` as being past its point of declaration.
   void MarkDeclared(std::string_view name);
@@ -106,6 +113,8 @@ class StaticScope {
 
   // Stores the value node of the BindingPattern of the returned var definition.
   std::optional<ValueNodeView> returned_var_def_view_;
+
+  std::optional<Nonnull<AstNode*>> ast_node_;
 
   Nonnull<TraceStream*> trace_stream_;
 };

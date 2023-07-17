@@ -6,6 +6,7 @@
 
 #include <optional>
 
+#include "common/ostream.h"
 #include "explorer/common/error_builders.h"
 #include "llvm/Support/Error.h"
 
@@ -25,12 +26,28 @@ auto StaticScope::Add(std::string_view name, ValueNodeView entity,
     }
   } else {
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "--- declared `" << name << "` in `"
-                     << PrintAsID(entity.base()) << "` ("
+      *trace_stream_ << "--- declared `" << name << "` as `" << entity
+                     << "` in `" << PrintAsID(*this) << "` ("
                      << entity.base().source_loc() << ")\n";
     }
   }
   return Success();
+}
+
+void StaticScope::Print(llvm::raw_ostream& out) const {
+  if (ast_node_) {
+    ast_node_.value()->Print(out);
+  } else {
+    *trace_stream_ << "root";
+  }
+}
+
+void StaticScope::PrintID(llvm::raw_ostream& out) const {
+  if (ast_node_) {
+    ast_node_.value()->PrintID(out);
+  } else {
+    *trace_stream_ << "root";
+  }
 }
 
 void StaticScope::MarkDeclared(std::string_view name) {
@@ -39,7 +56,9 @@ void StaticScope::MarkDeclared(std::string_view name) {
   if (it->second.status == NameStatus::KnownButNotDeclared) {
     it->second.status = NameStatus::DeclaredButNotUsable;
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "--- marked `" << name << "` declared but not usable\n";
+      *trace_stream_ << "--- marked `" << name
+                     << "` declared but not usable in `" << PrintAsID(*this)
+                     << "`\n";
     }
   }
 }
@@ -49,7 +68,8 @@ void StaticScope::MarkUsable(std::string_view name) {
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
   it->second.status = NameStatus::Usable;
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- marked `" << name << "` usable\n";
+    *trace_stream_ << "--- marked `" << name << "` usable in `"
+                   << PrintAsID(*this) << "`\n";
   }
 }
 
@@ -80,12 +100,10 @@ auto StaticScope::ResolveHere(std::optional<ValueNodeView> this_scope,
              << "name '" << name << "' has not been declared in this scope";
     }
   } else {
-    if (this_scope) {
-      if (trace_stream_->is_enabled()) {
-        *trace_stream_ << "--- declared `" << name << "` in "
-                       << PrintAsID(this_scope->base()) << "` ("
-                       << this_scope->base().source_loc() << ")\n";
-      }
+    if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "--- resolved `" << name << "` as `" << result
+                     << "` in `" << PrintAsID(*this) << "` (" << source_loc
+                     << ")\n";
     }
   }
   return *result;
