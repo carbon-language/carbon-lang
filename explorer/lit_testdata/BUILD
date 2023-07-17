@@ -6,6 +6,7 @@ load("//bazel/sh_run:rules.bzl", "glob_sh_run")
 load("//testing/lit_test:rules.bzl", "glob_lit_tests")
 
 glob_lit_tests(
+    name = "all_lit_tests",
     data = [
         "//explorer",
         "//testing/lit_test:merge_output",

@@ -13,7 +13,7 @@ auto SemanticsHandleExpressionStatement(SemanticsContext& context,
   // Pop the expression without investigating its contents.
   // TODO: This will probably eventually need to do some "do not discard"
   // analysis.
-  context.node_stack().PopAndDiscardId();
+  context.node_stack().PopExpression();
   return true;
 }
 
@@ -27,8 +27,8 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
 
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnStatementStart) {
-    context.node_stack().PopAndDiscardSoloParseNode(
-        ParseNodeKind::ReturnStatementStart);
+    context.node_stack()
+        .PopAndDiscardSoloParseNode<ParseNodeKind::ReturnStatementStart>();
 
     if (callable.return_type_id.is_valid()) {
       // TODO: Add a note pointing at the return type's parse node.
@@ -42,9 +42,9 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
 
     context.AddNode(SemanticsNode::Return::Make(parse_node));
   } else {
-    auto arg = context.node_stack().Pop<SemanticsNodeId>();
-    context.node_stack().PopAndDiscardSoloParseNode(
-        ParseNodeKind::ReturnStatementStart);
+    auto arg = context.node_stack().PopExpression();
+    context.node_stack()
+        .PopAndDiscardSoloParseNode<ParseNodeKind::ReturnStatementStart>();
 
     if (!callable.return_type_id.is_valid()) {
       CARBON_DIAGNOSTIC(

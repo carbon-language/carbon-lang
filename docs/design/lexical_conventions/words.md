@@ -34,7 +34,11 @@ in Unicode Normalization Form C (NFC).
 
 ## Keywords
 
-<!-- Keep in sync with utils/textmate/Syntaxes/Carbon.plist -->
+<!--
+Keep in sync:
+- utils/textmate/Syntaxes/Carbon.plist
+- utils/treesitter/queries/highlights.scm
+-->
 
 The following words are interpreted as keywords:
 

@@ -309,11 +309,12 @@ auto SemanticsContext::PopDeclarationName() -> DeclarationNameContext {
       ParseNodeKind::QualifiedDeclaration) {
     // Any parts from a QualifiedDeclaration will already have been processed
     // into the name.
-    node_stack_.PopAndDiscardSoloParseNode(ParseNodeKind::QualifiedDeclaration);
+    node_stack_
+        .PopAndDiscardSoloParseNode<ParseNodeKind::QualifiedDeclaration>();
   } else {
     // The name had no qualifiers, so we need to process the node now.
     auto [parse_node, node_or_name_id] =
-        node_stack_.PopWithParseNode<SemanticsNodeId>();
+        node_stack_.PopExpressionWithParseNode();
     ApplyDeclarationNameQualifier(parse_node, node_or_name_id);
   }
 
@@ -565,7 +566,7 @@ auto SemanticsContext::ParamOrArgSave(bool for_args) -> void {
     // For an argument, we add a stub reference to the expression on the top of
     // the stack. There may not be anything on the IR prior to this.
     auto [entry_parse_node, entry_node_id] =
-        node_stack_.PopWithParseNode<SemanticsNodeId>();
+        node_stack_.PopExpressionWithParseNode();
     param_or_arg_id = AddNode(SemanticsNode::StubReference::Make(
         entry_parse_node, semantics_ir_->GetNode(entry_node_id).type_id(),
         entry_node_id));

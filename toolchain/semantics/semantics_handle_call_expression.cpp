@@ -13,8 +13,8 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
 
   // TODO: Convert to call expression.
   auto [call_expr_parse_node, name_id] =
-      context.node_stack().PopWithParseNode<SemanticsNodeId>(
-          ParseNodeKind::CallExpressionStart);
+      context.node_stack()
+          .PopWithParseNode<ParseNodeKind::CallExpressionStart>();
   auto name_node = context.semantics_ir().GetNode(name_id);
   if (name_node.kind() != SemanticsNodeKind::FunctionDeclaration) {
     // TODO: Work on error.
@@ -57,7 +57,7 @@ auto SemanticsHandleCallExpressionComma(SemanticsContext& context,
 
 auto SemanticsHandleCallExpressionStart(SemanticsContext& context,
                                         ParseTree::Node parse_node) -> bool {
-  auto name_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto name_id = context.node_stack().PopExpression();
   context.node_stack().Push(parse_node, name_id);
   context.ParamOrArgStart();
   return true;

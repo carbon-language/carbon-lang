@@ -30,8 +30,8 @@ auto SemanticsHandleParameterList(SemanticsContext& context,
   context.node_block_stack().Pop();
 
   context.PopScope();
-  context.node_stack().PopAndDiscardSoloParseNode(
-      ParseNodeKind::ParameterListStart);
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<ParseNodeKind::ParameterListStart>();
   context.node_stack().Push(parse_node, refs_id);
   return true;
 }
