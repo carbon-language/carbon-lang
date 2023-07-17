@@ -8,7 +8,7 @@ namespace Carbon {
 
 auto SemanticsHandleIfExpressionIf(SemanticsContext& context,
                                    ParseTree::Node if_node) -> bool {
-  auto cond_value_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto cond_value_id = context.node_stack().PopExpression();
 
   context.node_stack().Push(if_node);
 
@@ -35,13 +35,12 @@ auto SemanticsHandleIfExpressionThen(SemanticsContext& context,
 
 auto SemanticsHandleIfExpressionElse(SemanticsContext& context,
                                      ParseTree::Node else_node) -> bool {
-  auto else_value_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto else_value_id = context.node_stack().PopExpression();
   auto [then_node, then_end_block_id] =
-      context.node_stack().PopWithParseNode<SemanticsNodeBlockId>(
-          ParseNodeKind::IfExpressionThen);
-  auto then_value_id = context.node_stack().Pop<SemanticsNodeId>();
+      context.node_stack().PopWithParseNode<ParseNodeKind::IfExpressionThen>();
+  auto then_value_id = context.node_stack().PopExpression();
   auto if_node =
-      context.node_stack().PopForSoloParseNode(ParseNodeKind::IfExpressionIf);
+      context.node_stack().PopForSoloParseNode<ParseNodeKind::IfExpressionIf>();
 
   // Convert the `else` value to the `then` value's type, and finish the `else`
   // block.
@@ -58,7 +57,7 @@ auto SemanticsHandleIfExpressionElse(SemanticsContext& context,
   context.AddCurrentCodeBlockToFunction();
 
   // Push the result value.
-  context.node_stack().Push(if_node, chosen_value_id);
+  context.node_stack().Push(else_node, chosen_value_id);
   return true;
 }
 

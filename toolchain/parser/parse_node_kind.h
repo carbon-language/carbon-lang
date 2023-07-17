@@ -33,6 +33,8 @@ class ParseNodeKind : public CARBON_ENUM_BASE(ParseNodeKind) {
   // Returns the number of children that the node must have, often 0. Requires
   // that has_bracket is false.
   auto child_count() const -> int32_t;
+
+  using EnumBase::Create;
 };
 
 #define CARBON_PARSE_NODE_KIND(Name) \
