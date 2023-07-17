@@ -49,6 +49,7 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
           context.semantics_ir().GetString(name_id));
       break;
     }
+
     default: {
       CARBON_DIAGNOSTIC(QualifiedExpressionUnsupported, Error,
                         "Type `{0}` does not support qualified expressions.",
