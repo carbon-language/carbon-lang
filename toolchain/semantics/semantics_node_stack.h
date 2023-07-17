@@ -82,7 +82,8 @@ class SemanticsNodeStack {
     PopForSoloParseNode<RequiredParseKind>();
   }
 
-  // Pops the top of the stack and returns the parse_node and the ID.
+  // Pops an expression from the top of the stack and returns the parse_node and
+  // the ID.
   auto PopExpressionWithParseNode()
       -> std::pair<ParseTree::Node, SemanticsNodeId> {
     return PopWithParseNode<SemanticsNodeId>();
@@ -325,12 +326,6 @@ class SemanticsNodeStack {
 
   // Require a ParseNodeKind be mapped to a particular IdKind.
   auto RequireIdKind(ParseNodeKind parse_kind, IdKind id_kind) -> void {
-    // TODO: Name can be popped as a node_id by declaration name handling. Will
-    // refactor to remove this quirk.
-    if (parse_kind == ParseNodeKind::Name &&
-        id_kind == IdKind::SemanticsNodeId) {
-      return;
-    }
     CARBON_CHECK(ParseNodeKindToIdKind(parse_kind) == id_kind)
         << "Unexpected IdKind mapping for " << parse_kind;
   }
