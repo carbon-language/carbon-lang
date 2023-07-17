@@ -178,8 +178,6 @@ class Interpreter {
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
                       Nonnull<const Value*> receiver) -> ErrorOr<Success>;
 
-  void TraceState();
-
   auto phase() const -> Phase { return phase_; }
 
   Nonnull<Arena*> arena_;
@@ -192,10 +190,6 @@ class Interpreter {
   // The stream for the Print intrinsic.
   Nonnull<llvm::raw_ostream*> print_stream_;
 
-  // Stores the sizes of the action stack (todo_) and the Heap (heap_) used for
-  // used for checking if trace state is changed
-  std::pair<int, int> stack_heap_sizes_;
-
   Phase phase_;
 
   // The number of steps taken by the interpreter. Used for infinite loop
@@ -206,14 +200,6 @@ class Interpreter {
 //
 // State Operations
 //
-
-void Interpreter::TraceState() {
-  if (stack_heap_sizes_.first != todo_.size() ||
-      stack_heap_sizes_.second != heap_.size()) {
-    *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
-    stack_heap_sizes_ = {todo_.size(), heap_.size()};
-  }
-}
 
 auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
                            const std::vector<Nonnull<const Value*>>& args,
@@ -640,10 +626,6 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
 
 auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     -> ErrorOr<Nonnull<const Value*>> {
-  if (trace_stream_->is_enabled()) {
-    TraceState();
-  }
-
   todo_.BeginRecursiveAction();
   CARBON_RETURN_IF_ERROR(todo_.Spawn(std::move(action)));
   // Note that the only `RecursiveAction` we can encounter here is our own --
@@ -651,9 +633,6 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
   // action is finished and popped off the queue before returning to us.
   while (!isa<RecursiveAction>(todo_.CurrentAction())) {
     CARBON_RETURN_IF_ERROR(Step());
-    if (trace_stream_->is_enabled()) {
-      TraceState();
-    }
   }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- recursive eval done\n";
@@ -2660,15 +2639,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
 
 auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     -> ErrorOr<Success> {
-  if (trace_stream_->is_enabled()) {
-    TraceState();
-  }
   todo_.Start(std::move(action));
   while (!todo_.empty()) {
     CARBON_RETURN_IF_ERROR(Step());
-    if (trace_stream_->is_enabled()) {
-      TraceState();
-    }
   }
   return Success();
 }

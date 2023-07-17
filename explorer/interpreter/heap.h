@@ -64,8 +64,6 @@ class Heap : public HeapAllocationInterface {
 
   auto arena() const -> Arena& override { return *arena_; }
 
-  auto size() const -> int { return values_.size(); }
-
  private:
   // Signal an error if the allocation is no longer alive.
   auto CheckAlive(AllocationId allocation, SourceLocation source_loc) const
