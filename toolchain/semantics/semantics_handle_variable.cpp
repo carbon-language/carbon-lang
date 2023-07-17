@@ -26,7 +26,6 @@ auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
   auto binding = context.semantics_ir().GetNode(binding_id);
   auto [name_id, storage_id] = binding.GetAsBindName();
   context.AddNameToLookup(binding.parse_node(), name_id, storage_id);
-
   // If there was an initializer, assign it to storage.
   if (has_init) {
     auto cast_value_id = context.ImplicitAsRequired(

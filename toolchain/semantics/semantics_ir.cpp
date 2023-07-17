@@ -74,15 +74,13 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
   // for example if an unrecoverable state is encountered.
   for (auto parse_node : parse_tree.postorder()) {
     switch (auto parse_kind = parse_tree.node_kind(parse_node)) {
-#define CARBON_PARSE_NODE_KIND(Name)                      \
-  case ParseNodeKind::Name: {                             \
-    parse_tree.node_kind(parse_node).Print(llvm::outs()); \
-    llvm::outs() << "\n";                                 \
-    if (!SemanticsHandle##Name(context, parse_node)) {    \
-      semantics_ir.has_errors_ = true;                    \
-      return semantics_ir;                                \
-    }                                                     \
-    break;                                                \
+#define CARBON_PARSE_NODE_KIND(Name)                   \
+  case ParseNodeKind::Name: {                          \
+    if (!SemanticsHandle##Name(context, parse_node)) { \
+      semantics_ir.has_errors_ = true;                 \
+      return semantics_ir;                             \
+    }                                                  \
+    break;                                             \
   }
 #include "toolchain/parser/parse_node_kind.def"
     }
@@ -245,9 +243,9 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
         break;
       }
       case SemanticsNodeKind::TupleType: {
-        auto refs = GetNodeBlock(node.GetAsTupleType());
+        auto refs = GetTypeBlock(node.GetAsTupleType());
         if (refs.empty()) {
-          out << "Empty Tuple";
+          out << "() as Type";
           break;
         } else if (step.index == 0) {
           out << "(";
@@ -257,17 +255,11 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
           out << ")";
           break;
         }
-
         steps.push_back({.node_id = step.node_id, .index = step.index + 1});
-        steps.push_back({.node_id = refs[step.index]});
+        steps.push_back(
+            {.node_id = GetTypeAllowBuiltinTypes(refs[step.index])});
         break;
       }
-      case SemanticsNodeKind::TupleTypeField: {
-        steps.push_back({.node_id = GetTypeAllowBuiltinTypes(node.type_id())});
-        break;
-      }
-      case SemanticsNodeKind::TupleValue:
-      case SemanticsNodeKind::TupleMemberAccess:
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BindName:
@@ -289,6 +281,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::StructMemberAccess:
       case SemanticsNodeKind::StructValue:
       case SemanticsNodeKind::StubReference:
+      case SemanticsNodeKind::TupleValue:
       case SemanticsNodeKind::UnaryOperatorNot:
       case SemanticsNodeKind::VarStorage:
         // We don't need to handle stringification for nodes that don't show up
