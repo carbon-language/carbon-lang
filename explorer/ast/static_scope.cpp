@@ -8,6 +8,7 @@
 
 #include "common/ostream.h"
 #include "explorer/common/error_builders.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/Support/Error.h"
 
 namespace Carbon {
@@ -38,7 +39,7 @@ void StaticScope::Print(llvm::raw_ostream& out) const {
   if (ast_node_) {
     ast_node_.value()->Print(out);
   } else {
-    *trace_stream_ << "root";
+    *trace_stream_ << "package";
   }
 }
 
@@ -46,7 +47,7 @@ void StaticScope::PrintID(llvm::raw_ostream& out) const {
   if (ast_node_) {
     ast_node_.value()->PrintID(out);
   } else {
-    *trace_stream_ << "root";
+    *trace_stream_ << "package";
   }
 }
 
@@ -99,12 +100,6 @@ auto StaticScope::ResolveHere(std::optional<ValueNodeView> this_scope,
       return ProgramError(source_loc)
              << "name '" << name << "' has not been declared in this scope";
     }
-  } else {
-    if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "--- resolved `" << name << "` as `" << result
-                     << "` in `" << PrintAsID(*this) << "` (" << source_loc
-                     << ")\n";
-    }
   }
   return *result;
 }
@@ -132,6 +127,15 @@ auto StaticScope::TryResolveHere(std::string_view name,
   if (it == declared_names_.end()) {
     return {std::nullopt};
   }
+
+  auto exit_scope_function = llvm::make_scope_exit([&]() {
+    if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "--- resolved `" << name << "` as `"
+                     << it->second.entity << "` in `" << PrintAsID(*this)
+                     << "` (" << source_loc << ")\n";
+    }
+  });
+
   if (allow_undeclared) {
     return {it->second.entity};
   }

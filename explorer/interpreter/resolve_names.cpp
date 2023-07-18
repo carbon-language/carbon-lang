@@ -189,7 +189,7 @@ auto NameResolver::AddExposedNames(const Declaration& declaration,
           Nonnull<StaticScope*> scope,
           AddExposedName(namespace_decl.name(), &namespace_decl,
                          enclosing_scope, allow_qualified_names));
-      namespace_scopes_.try_emplace(&namespace_decl, scope);
+      namespace_scopes_.try_emplace(&namespace_decl, scope, &namespace_decl);
       break;
     }
     case DeclarationKind::InterfaceDeclaration:
@@ -578,9 +578,8 @@ auto NameResolver::ResolveNamesImpl(Statement& statement,
                                     StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** resolving stmt `";
-    statement.PrintID(trace_stream_->stream());
-    *trace_stream_ << "` (" << statement.source_loc() << ")\n";
+    *trace_stream_ << "** resolving stmt `" << PrintAsID(statement) << "` ("
+                   << statement.source_loc() << ")\n";
   }
   switch (statement.kind()) {
     case StatementKind::ExpressionStatement:

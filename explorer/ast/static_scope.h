@@ -40,8 +40,9 @@ class StaticScope {
       : ast_node_(std::nullopt), trace_stream_(trace_stream){};
 
   // Construct a scope that is nested within the given scope.
-  explicit StaticScope(Nonnull<const StaticScope*> parent,
-                       std::optional<Nonnull<AstNode*>> ast_node = std::nullopt)
+  explicit StaticScope(
+      Nonnull<const StaticScope*> parent,
+      std::optional<Nonnull<const AstNode*>> ast_node = std::nullopt)
       : parent_scope_(parent),
         ast_node_(ast_node),
         trace_stream_(parent->trace_stream_) {}
@@ -114,7 +115,7 @@ class StaticScope {
   // Stores the value node of the BindingPattern of the returned var definition.
   std::optional<ValueNodeView> returned_var_def_view_;
 
-  std::optional<Nonnull<AstNode*>> ast_node_;
+  std::optional<Nonnull<const AstNode*>> ast_node_;
 
   Nonnull<TraceStream*> trace_stream_;
 };
