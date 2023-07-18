@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:     {kind: 'Name', text: 'Foo'},
+// CHECK:STDOUT:     {kind: 'NameExpression', text: 'Foo'},
 // CHECK:STDOUT:     {kind: 'Name', text: ';', has_error: yes},
 // CHECK:STDOUT:   {kind: 'QualifiedDeclaration', text: '.', subtree_size: 3},
 // CHECK:STDOUT: {kind: 'Namespace', text: ';', subtree_size: 5},

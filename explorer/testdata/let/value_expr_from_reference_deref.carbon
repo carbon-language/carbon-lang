@@ -3,10 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: 0: Heap{}, 1: C{}
-// CHECK:STDOUT: Bind from c reference expression
-// CHECK:STDOUT: Binding scope end
-// CHECK:STDOUT: 0: Heap{}, 1: C{}
+// CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: ptr<Allocation(1)>
+// CHECK:STDOUT: Initialize c from reference expression from deferenced pointer
+// CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: ptr<Allocation(1)>
 // CHECK:STDOUT: c destroyed
 // CHECK:STDOUT: result: 0
 
@@ -18,16 +17,16 @@ class C {
   }
 }
 
-fn CallWithValueExpressionBinding(c: C) {
-  Print("Binding scope end");
+fn FromReferenceExpressionDeref() {
+  var c_var: C = {};
+  var c_ref: C* = &c_var;
+  heap.PrintAllocs();
+  Print("Initialize c from reference expression from deferenced pointer");
+  let c: C = *c_ref;
+  heap.PrintAllocs();
 }
 
 fn Main() -> i32 {
-  var c_var: C = {};
-  heap.PrintAllocs();
-
-  Print("Bind from c reference expression");
-  CallWithValueExpressionBinding(c_var);
-  heap.PrintAllocs();
+  FromReferenceExpressionDeref();
   return 0;
 }

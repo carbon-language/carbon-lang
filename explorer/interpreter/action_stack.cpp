@@ -49,15 +49,15 @@ auto ActionStack::ValueOfNode(ValueNodeView value_node,
     // with that node. This will help keep unwanted dynamic-scoping behavior
     // from sneaking in.
     if (action->scope().has_value()) {
-      std::optional<Nonnull<const Value*>> result =
-          action->scope()->Get(value_node);
+      CARBON_ASSIGN_OR_RETURN(auto result,
+                              action->scope()->Get(value_node, source_loc));
       if (result.has_value()) {
         return *result;
       }
     }
   }
   if (globals_.has_value()) {
-    std::optional<Nonnull<const Value*>> result = globals_->Get(value_node);
+    CARBON_ASSIGN_OR_RETURN(auto result, globals_->Get(value_node, source_loc));
     if (result.has_value()) {
       return *result;
     }
@@ -110,6 +110,7 @@ enum class FinishActionKind {
 
 static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
   switch (kind) {
+    case Action::Kind::ValueExpressionAction:
     case Action::Kind::ExpressionAction:
     case Action::Kind::WitnessAction:
     case Action::Kind::LocationAction:
@@ -207,8 +208,8 @@ auto ActionStack::UnwindToWithCaptureScopesToDestroy(
     auto item = todo_.Pop();
     auto& scope = item->scope();
     if (scope && item->kind() != Action::Kind::CleanUpAction) {
-      std::unique_ptr<Action> cleanup_action =
-          std::make_unique<CleanUpAction>(std::move(*scope));
+      std::unique_ptr<Action> cleanup_action = std::make_unique<CleanUpAction>(
+          std::move(*scope), ast_node->source_loc());
       scopes_to_destroy.push(std::move(cleanup_action));
     }
   }
@@ -274,8 +275,8 @@ void ActionStack::PushCleanUpActions(
   while (!actions.empty()) {
     auto& act = actions.top();
     if (act->scope()) {
-      std::unique_ptr<Action> cleanup_action =
-          std::make_unique<CleanUpAction>(std::move(*act->scope()));
+      std::unique_ptr<Action> cleanup_action = std::make_unique<CleanUpAction>(
+          std::move(*act->scope()), SourceLocation("stack cleanup", 1));
       Push(std::move(cleanup_action));
     }
     actions.pop();
@@ -285,8 +286,8 @@ void ActionStack::PushCleanUpActions(
 void ActionStack::PushCleanUpAction(std::unique_ptr<Action> act) {
   auto& scope = act->scope();
   if (scope && act->kind() != Action::Kind::CleanUpAction) {
-    std::unique_ptr<Action> cleanup_action =
-        std::make_unique<CleanUpAction>(std::move(*scope));
+    std::unique_ptr<Action> cleanup_action = std::make_unique<CleanUpAction>(
+        std::move(*scope), SourceLocation("stack cleanup", 1));
     Push(std::move(cleanup_action));
   }
 }

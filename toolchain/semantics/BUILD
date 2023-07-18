@@ -59,6 +59,7 @@ cc_library(
         "semantics_ir.cpp",
         "semantics_context.cpp",
         "semantics_node_block_stack.cpp",
+        "semantics_declaration_name_stack.cpp",
     ] +
     # Glob handler files to avoid missing anyway.
     glob([
@@ -66,6 +67,7 @@ cc_library(
     ]),
     hdrs = [
         "semantics_context.h",
+        "semantics_declaration_name_stack.h",
         "semantics_ir.h",
         "semantics_node_block_stack.h",
     ],

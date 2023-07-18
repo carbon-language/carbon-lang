@@ -91,6 +91,7 @@ struct NestedValueVisitor {
   auto Visit(ValueNodeView) -> bool { return true; }
   auto Visit(int) -> bool { return true; }
   auto Visit(Address) -> bool { return true; }
+  auto Visit(ExpressionCategory) -> bool { return true; }
   auto Visit(const std::string&) -> bool { return true; }
   auto Visit(Nonnull<const NominalClassValue**>) -> bool {
     // This is the pointer to the most-derived value within a class value,
@@ -567,6 +568,10 @@ void Value::Print(llvm::raw_ostream& out) const {
     case Value::Kind::LocationValue:
       out << "lval<" << cast<LocationValue>(*this).address() << ">";
       break;
+    case Value::Kind::ReferenceExpressionValue:
+      out << "ref_expr<" << cast<ReferenceExpressionValue>(*this).address()
+          << ">";
+      break;
     case Value::Kind::BoolType:
       out << "bool";
       break;
@@ -997,6 +1002,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::StringValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ReferenceExpressionValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::UninitializedValue:
@@ -1148,6 +1154,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ReferenceExpressionValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::MemberName:
       // TODO: support pointer comparisons once we have a clearer distinction
