@@ -12,6 +12,7 @@
 #include "common/ostream.h"
 #include "explorer/ast/statement.h"
 #include "explorer/ast/value.h"
+#include "explorer/common/trace_stream.h"
 #include "explorer/interpreter/action.h"
 
 namespace Carbon {
@@ -23,12 +24,16 @@ enum class Phase { CompileTime, RunTime };
 class ActionStack {
  public:
   // Constructs an empty compile-time ActionStack.
-  ActionStack() : phase_(Phase::CompileTime) {}
+  explicit ActionStack(Nonnull<TraceStream*> trace_stream)
+      : phase_(Phase::CompileTime), trace_stream_(trace_stream) {}
 
   // Constructs an empty run-time ActionStack that allocates global variables
   // on `heap`.
-  explicit ActionStack(Nonnull<HeapAllocationInterface*> heap)
-      : globals_(RuntimeScope(heap)), phase_(Phase::RunTime) {}
+  explicit ActionStack(Nonnull<TraceStream*> trace_stream,
+                       Nonnull<HeapAllocationInterface*> heap)
+      : globals_(RuntimeScope(heap)),
+        phase_(Phase::RunTime),
+        trace_stream_(trace_stream) {}
 
   void Print(llvm::raw_ostream& out) const;
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
@@ -104,7 +109,19 @@ class ActionStack {
   auto UnwindPast(Nonnull<const Statement*> ast_node,
                   Nonnull<const Value*> result) -> ErrorOr<Success>;
 
-  void Pop() { todo_.Pop(); }
+  void Pop() {
+    todo_.Pop();
+    if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "+++ stack: [ " << *this << " ]\n";
+    }
+  }
+
+  void Push(std::unique_ptr<Action> action) {
+    todo_.Push(std::move(action));
+    if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "+++ stack: [ " << *this << " ]\n";
+    }
+  }
 
   auto size() const -> int { return todo_.size(); }
 
@@ -136,6 +153,7 @@ class ActionStack {
   std::optional<Nonnull<const Value*>> result_;
   std::optional<RuntimeScope> globals_;
   Phase phase_;
+  Nonnull<TraceStream*> trace_stream_;
 };
 
 }  // namespace Carbon

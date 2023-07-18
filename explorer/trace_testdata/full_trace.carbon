@@ -25,13 +25,14 @@
 // CHECK:STDOUT: ** declaring function Main
 // CHECK:STDOUT: checking TuplePattern ()
 // CHECK:STDOUT: checking IntTypeLiteral i32
+// CHECK:STDOUT: +++ stack: [ i32 .0. ]
 
 
 package ExplorerTest api;
 
 interface TestInterface {}
 
-// CHECK:STDOUT: --- step exp i32 .0. (full_trace.carbon:[[@LINE+37]]) --->
+// CHECK:STDOUT: --- step exp i32 .0. (full_trace.carbon:[[@LINE+43]]) --->
 // CHECK:STDOUT: ** finished declaring function Main of type fn () -> i32
 // CHECK:STDOUT: checking FunctionDeclaration
 // CHECK:STDOUT: ** checking function Main
@@ -63,76 +64,47 @@ interface TestInterface {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ********** starting execution **********
 // CHECK:STDOUT: ********** initializing globals **********
-// CHECK:STDOUT: {
-// CHECK:STDOUT: stack:{{ }}
-// CHECK:STDOUT: memory: 0: Heap{}
+// CHECK:STDOUT: +++ stack: [ interface TestInterface {
 // CHECK:STDOUT: }
-// CHECK:STDOUT: --- step decl interface TestInterface .0. (full_trace.carbon:[[@LINE-38]]) --->
+// CHECK:STDOUT:  .0. ]
+// CHECK:STDOUT: --- step decl interface TestInterface .0. (full_trace.carbon:[[@LINE-37]]) --->
+// CHECK:STDOUT: +++ stack: [ fn Main ()-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return 0;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:  .0. ]
 fn Main() -> i32 {
   return 0;
-// CHECK:STDOUT: --- step decl fn Main .0. (full_trace.carbon:[[@LINE+70]]) --->
+// CHECK:STDOUT: --- step decl fn Main .0. (full_trace.carbon:[[@LINE+35]]) --->
 // CHECK:STDOUT: ********** calling main function **********
+// CHECK:STDOUT: +++ stack: [ Main() .0. ]
 // CHECK:STDOUT: --- step exp Main() .0. (<Main()>:0) --->
-// CHECK:STDOUT: {
-// CHECK:STDOUT: stack: Main .0. ## Main() .1.
-// CHECK:STDOUT: memory: 0: Heap{}
-// CHECK:STDOUT: }
+// CHECK:STDOUT: +++ stack: [ Main .0. ## Main() .1. ]
 // CHECK:STDOUT: --- step exp Main .0. (<Main()>:0) --->
-// CHECK:STDOUT: {
-// CHECK:STDOUT: stack: Main() .1. {{[[][[]}}fun<Main>]]
-// CHECK:STDOUT: memory: 0: Heap{}
-// CHECK:STDOUT: }
 // CHECK:STDOUT: --- step exp Main() .1. (<Main()>:0) --->
-// CHECK:STDOUT: {
-// CHECK:STDOUT: stack: () .0. ## Main() .2. {{[[][[]}}fun<Main>]]
-// CHECK:STDOUT: memory: 0: Heap{}
-// CHECK:STDOUT: }
+// CHECK:STDOUT: +++ stack: [ () .0. ## Main() .2. {{[[][[]}}fun<Main>]] ]
 // CHECK:STDOUT: --- step exp () .0. (<Main()>:0) --->
-// CHECK:STDOUT: {
-// CHECK:STDOUT: stack: Main() .2. {{[[][[]}}fun<Main>, ()]]
-// CHECK:STDOUT: memory: 0: Heap{}
-// CHECK:STDOUT: }
 // CHECK:STDOUT: --- step exp Main() .2. (<Main()>:0) --->
 // CHECK:STDOUT: calling function: fun<Main>
 // CHECK:STDOUT: match pattern ()
 // CHECK:STDOUT: from value expression with value ()
-// CHECK:STDOUT: {
-// CHECK:STDOUT: stack: {return 0;} .0. ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {}
-// CHECK:STDOUT: memory: 0: Heap{}
-// CHECK:STDOUT: }
-// CHECK:STDOUT: --- step stmt {return 0;} .0. (full_trace.carbon:[[@LINE+40]]) --->
-// CHECK:STDOUT: {
-// CHECK:STDOUT: stack: return 0; .0. ## {return 0;} .1. {} ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {}
-// CHECK:STDOUT: memory: 0: Heap{}
-// CHECK:STDOUT: }
-// CHECK:STDOUT: --- step stmt return 0; .0. (full_trace.carbon:[[@LINE-36]]) --->
-// CHECK:STDOUT: {
-// CHECK:STDOUT: stack: 0 .0. ## return 0; .1. ## {return 0;} .1. {} ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {}
-// CHECK:STDOUT: memory: 0: Heap{}
-// CHECK:STDOUT: }
-// CHECK:STDOUT: --- step exp 0 .0. (full_trace.carbon:[[@LINE-41]]) --->
-// CHECK:STDOUT: {
-// CHECK:STDOUT: stack: return 0; .1. {{[[][[]}}0]] ## {return 0;} .1. {} ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {}
-// CHECK:STDOUT: memory: 0: Heap{}
-// CHECK:STDOUT: }
-// CHECK:STDOUT: --- step stmt return 0; .1. (full_trace.carbon:[[@LINE-46]]) --->
-// CHECK:STDOUT: {
-// CHECK:STDOUT: stack: clean up.0. {} ## clean up.0. {} ## Main() .3. {{[[][[]}}fun<Main>, (), 0]] {}
-// CHECK:STDOUT: memory: 0: Heap{}
-// CHECK:STDOUT: }
-// CHECK:STDOUT: {
-// CHECK:STDOUT: stack: clean up.0. {} ## Main() .3. {{[[][[]}}fun<Main>, (), 0]] {}
-// CHECK:STDOUT: memory: 0: Heap{}
-// CHECK:STDOUT: }
-// CHECK:STDOUT: {
-// CHECK:STDOUT: stack: Main() .3. {{[[][[]}}fun<Main>, (), 0]] {}
-// CHECK:STDOUT: memory: 0: Heap{}
-// CHECK:STDOUT: }
+// CHECK:STDOUT: +++ stack: [ .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {} ]
+// CHECK:STDOUT: +++ stack: [ {return 0;} .0. ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {} ]
+// CHECK:STDOUT: --- step stmt {return 0;} .0. (full_trace.carbon:[[@LINE+20]]) --->
+// CHECK:STDOUT: +++ stack: [ return 0; .0. ## {return 0;} .1. {} ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {} ]
+// CHECK:STDOUT: --- step stmt return 0; .0. (full_trace.carbon:[[@LINE-18]]) --->
+// CHECK:STDOUT: +++ stack: [ 0 .0. ## return 0; .1. ## {return 0;} .1. {} ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {} ]
+// CHECK:STDOUT: --- step exp 0 .0. (full_trace.carbon:[[@LINE-20]]) --->
+// CHECK:STDOUT: --- step stmt return 0; .1. (full_trace.carbon:[[@LINE-21]]) --->
+// CHECK:STDOUT: +++ stack: [ clean up.0. {} ## Main() .3. {{[[][[]}}fun<Main>, (), 0]] {} ]
+// CHECK:STDOUT: +++ stack: [ clean up.0. {} ## clean up.0. {} ## Main() .3. {{[[][[]}}fun<Main>, (), 0]] {} ]
+// CHECK:STDOUT: +++ stack: [ clean up.0. {} ## Main() .3. {{[[][[]}}fun<Main>, (), 0]] {} ]
+// CHECK:STDOUT: +++ stack: [ Main() .3. {{[[][[]}}fun<Main>, (), 0]] {} ]
 // CHECK:STDOUT: --- step exp Main() .3. (<Main()>:0) --->
-// CHECK:STDOUT: {
-// CHECK:STDOUT: stack:{{ }}
-// CHECK:STDOUT: memory: 0: Heap{}
-// CHECK:STDOUT: }
+// CHECK:STDOUT: +++ stack: [ clean up.0. {} ]
+// CHECK:STDOUT: +++ stack: [  ]
 // CHECK:STDOUT: interpreter result: 0
 // CHECK:STDOUT: ********** printing timing **********
 // CHECK:STDOUT: Time elapsed in ExecProgram: {{[0-9]+}}ms

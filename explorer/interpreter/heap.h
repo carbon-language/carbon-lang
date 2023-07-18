@@ -12,6 +12,7 @@
 #include "explorer/ast/value.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
+#include "explorer/common/trace_stream.h"
 #include "explorer/interpreter/heap_allocation_interface.h"
 
 namespace Carbon {
@@ -27,7 +28,8 @@ class Heap : public HeapAllocationInterface {
   };
 
   // Constructs an empty Heap.
-  explicit Heap(Nonnull<Arena*> arena) : arena_(arena){};
+  explicit Heap(Nonnull<TraceStream*> trace_stream, Nonnull<Arena*> arena)
+      : arena_(arena), trace_stream_(trace_stream){};
 
   Heap(const Heap&) = delete;
   auto operator=(const Heap&) -> Heap& = delete;
@@ -76,6 +78,7 @@ class Heap : public HeapAllocationInterface {
   Nonnull<Arena*> arena_;
   std::vector<Nonnull<const Value*>> values_;
   std::vector<ValueState> states_;
+  Nonnull<TraceStream*> trace_stream_;
 };
 
 }  // namespace Carbon

@@ -47,12 +47,13 @@ static constexpr int64_t MaxStepsTaken = 1e6;
 static constexpr int64_t MaxArenaAllocated = 1e9;
 
 // Constructs an ActionStack suitable for the specified phase.
-static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
+static auto MakeTodo(Phase phase, Nonnull<Heap*> heap,
+                     Nonnull<TraceStream*> trace_stream) -> ActionStack {
   switch (phase) {
     case Phase::CompileTime:
-      return ActionStack();
+      return ActionStack(trace_stream);
     case Phase::RunTime:
-      return ActionStack(heap);
+      return ActionStack(trace_stream, heap);
   }
 }
 
@@ -68,8 +69,8 @@ class Interpreter {
               Nonnull<TraceStream*> trace_stream,
               Nonnull<llvm::raw_ostream*> print_stream)
       : arena_(arena),
-        heap_(arena),
-        todo_(MakeTodo(phase, &heap_)),
+        heap_(trace_stream, arena),
+        todo_(MakeTodo(phase, &heap_, trace_stream)),
         trace_stream_(trace_stream),
         print_stream_(print_stream),
         phase_(phase) {}

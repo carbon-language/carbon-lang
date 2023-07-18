@@ -22,7 +22,7 @@ void ActionStack::Print(llvm::raw_ostream& out) const {
 void ActionStack::Start(std::unique_ptr<Action> action) {
   result_ = std::nullopt;
   CARBON_CHECK(todo_.empty());
-  todo_.Push(std::move(action));
+  Push(std::move(action));
 }
 
 void ActionStack::Initialize(ValueNodeView value_node,
@@ -165,7 +165,7 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
 auto ActionStack::Spawn(std::unique_ptr<Action> child) -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
-  todo_.Push(std::move(child));
+  Push(std::move(child));
   return Success();
 }
 
@@ -173,8 +173,8 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
     -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
-  todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));
-  todo_.Push(std::move(child));
+  Push(std::make_unique<ScopeAction>(std::move(scope)));
+  Push(std::move(child));
   return Success();
 }
 
@@ -184,7 +184,7 @@ auto ActionStack::ReplaceWith(std::unique_ptr<Action> replacement)
   CARBON_CHECK(FinishActionKindFor(old->kind()) ==
                FinishActionKindFor(replacement->kind()))
       << "Can't replace action " << *old << " with " << *replacement;
-  todo_.Push(std::move(replacement));
+  Push(std::move(replacement));
   return Success();
 }
 
@@ -276,7 +276,7 @@ void ActionStack::PushCleanUpActions(
     if (act->scope()) {
       std::unique_ptr<Action> cleanup_action =
           std::make_unique<CleanUpAction>(std::move(*act->scope()));
-      todo_.Push(std::move(cleanup_action));
+      Push(std::move(cleanup_action));
     }
     actions.pop();
   }
@@ -287,7 +287,7 @@ void ActionStack::PushCleanUpAction(std::unique_ptr<Action> act) {
   if (scope && act->kind() != Action::Kind::CleanUpAction) {
     std::unique_ptr<Action> cleanup_action =
         std::make_unique<CleanUpAction>(std::move(*scope));
-    todo_.Push(std::move(cleanup_action));
+    Push(std::move(cleanup_action));
   }
 }
 

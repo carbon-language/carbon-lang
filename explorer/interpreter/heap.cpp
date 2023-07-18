@@ -19,11 +19,17 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
   // to leave it up to the caller.
   AllocationId a(values_.size());
   values_.push_back(v);
+
   if (v->kind() == Carbon::Value::Kind::UninitializedValue) {
     states_.push_back(ValueState::Uninitialized);
   } else {
     states_.push_back(ValueState::Alive);
   }
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "+++ memory: [ " << *this << " ]\n";
+  }
+
   return a;
 }
 
@@ -49,6 +55,9 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
   CARBON_ASSIGN_OR_RETURN(values_[a.allocation_.index_],
                           values_[a.allocation_.index_]->SetField(
                               arena_, a.element_path_, v, source_loc));
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "+++ memory: [ " << *this << " ]\n";
+  }
   return Success();
 }
 
@@ -80,9 +89,18 @@ void Heap::Deallocate(AllocationId allocation) {
     CARBON_FATAL() << "deallocating an already dead value: "
                    << *values_[allocation.index_];
   }
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "+++ memory: [ " << *this << " ]\n";
+  }
 }
 
-void Heap::Deallocate(const Address& a) { Deallocate(a.allocation_); }
+void Heap::Deallocate(const Address& a) {
+  Deallocate(a.allocation_);
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "+++ memory: [ " << *this << " ]\n";
+  }
+}
 
 auto Heap::is_initialized(AllocationId allocation) const -> bool {
   return states_[allocation.index_] != ValueState::Uninitialized;
