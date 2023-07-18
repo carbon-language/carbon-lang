@@ -36,9 +36,9 @@ auto SemanticsHandleTupleLiteral(SemanticsContext& context,
           ParseNodeKind::ParenExpressionOrTupleLiteralStart>();
   auto node_blocks = context.semantics_ir().GetNodeBlock(refs_id);
   llvm::SmallVector<SemanticsTypeId> type_ids;
+  type_ids.reserve(node_blocks.size());
   for (auto node : node_blocks) {
-    auto type_id = context.semantics_ir().GetNode(node).type_id();
-    type_ids.push_back(type_id);
+    type_ids.push_back(context.semantics_ir().GetNode(node).type_id());
   }
   auto type_id = context.CanonicalizeTupleType(parse_node, type_ids);
 

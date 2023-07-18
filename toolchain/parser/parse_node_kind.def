@@ -213,8 +213,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileStatement, 2)
 //   _external_: expression
 // ParenExpression
 
-
-// Tuples, such as `(i32,) = (1,)`:
+// Tuples, such as `(1, 2)`:
 //   ParenExpressionOrTupleLiteralStart
 //   _external_: expression
 //   TupleLiteralComma

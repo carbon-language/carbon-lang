@@ -540,7 +540,6 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
   if (output_value_id != nullptr) {
     *output_value_id = SemanticsNodeId::BuiltinError;
   }
-
   return ImplicitAsKind::Incompatible;
 }
 

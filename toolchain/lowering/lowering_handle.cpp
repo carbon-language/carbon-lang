@@ -218,13 +218,13 @@ auto LoweringHandleStructType(LoweringFunctionContext& /*context*/,
 auto LoweringHandleTupleValue(LoweringFunctionContext& /*context*/,
                               SemanticsNodeId /*node_id*/,
                               SemanticsNode /*node*/) -> void {
-  // No Action to take
+  // TODO.
 }
 
 auto LoweringHandleTupleType(LoweringFunctionContext& /*context*/,
                              SemanticsNodeId /*node_id*/,
                              SemanticsNode /*node*/) -> void {
-  // No action to take
+  // No action to take.
 }
 
 auto LoweringHandleStructTypeField(LoweringFunctionContext& /*context*/,
