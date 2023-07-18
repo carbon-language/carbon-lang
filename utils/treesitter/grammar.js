@@ -198,10 +198,11 @@ module.exports = grammar({
         $.paren_pattern,
         // alternative patterns
         // example: Optional(i32).Some(x: i32)
-        seq($._expression, $.paren_pattern)
+        seq($._simple_expression, $.paren_pattern)
       ),
 
-    _pattern: ($) => choice($._pattern_without_expression, $._expression),
+    _pattern: ($) =>
+      choice($._pattern_without_expression, $._simple_expression),
 
     unary_prefix_expression: ($) => {
       const table = [
@@ -252,13 +253,14 @@ module.exports = grammar({
     // This should be non-associative but conflicts are not allowed in tree-sitter
     as_expression: ($) => prec.left(seq($._expression, 'as', $._expression)),
 
-    ref_expression: ($) => prec.right(PREC.TermPrefix, seq('&', $._expression)),
+    ref_expression: ($) =>
+      prec.right(PREC.TermPrefix, seq('&', $._simple_expression)),
 
     deref_expression: ($) =>
-      prec.right(PREC.TermPrefix, seq('*', $._expression)),
+      prec.right(PREC.TermPrefix, seq('*', $._simple_expression)),
 
     fn_type_expression: ($) =>
-      prec.left(seq('__Fn', $.paren_expression, '->', $._expression)),
+      prec.left(seq('__Fn', $.paren_expression, '->', $._simple_expression)),
 
     if_expression: ($) =>
       prec(
@@ -269,7 +271,10 @@ module.exports = grammar({
     paren_expression: ($) => seq('(', comma_sep($._expression), ')'),
 
     index_expression: ($) =>
-      prec(PREC.TermPostfix, seq($._expression, '[', $._expression, ']')),
+      prec(
+        PREC.TermPostfix,
+        seq($._simple_expression, '[', $._expression, ']')
+      ),
 
     designator: ($) => seq('.', choice('base', $.ident)),
 
@@ -277,7 +282,7 @@ module.exports = grammar({
       prec(
         PREC.TermPostfix,
         seq(
-          $._expression,
+          $._simple_expression,
           choice(
             '++',
             '--',
@@ -292,10 +297,9 @@ module.exports = grammar({
       prec(
         PREC.WhereClause,
         choice(
-          seq($._expression, '==', $._expression),
-          seq($._expression, 'impls', $._expression),
-          seq($._expression, '=', $._expression),
-          // TODO: Fix conflict with logical and
+          seq($._simple_expression, '==', $._simple_expression),
+          seq($._simple_expression, 'impls', $._simple_expression),
+          seq($._simple_expression, '=', $._simple_expression),
           prec.left(seq($.where_clause, 'and', $.where_clause))
         )
       ),
@@ -304,34 +308,39 @@ module.exports = grammar({
       prec.left(PREC.TermPostfix, seq($._expression, 'where', $.where_clause)),
 
     call_expression: ($) =>
-      prec(PREC.TermPostfix, seq($._expression, $.paren_expression)),
+      prec(PREC.TermPostfix, seq($._simple_expression, $.paren_expression)),
 
     pointer_expression: ($) =>
-      prec(PREC.TypePostfix, seq($._expression, $.postfix_star)),
+      prec(PREC.TypePostfix, seq($._simple_expression, $.postfix_star)),
 
-    _expression: ($) =>
+    _simple_expression: ($) =>
       choice(
         $.array_literal,
-        $.as_expression,
-        $.binary_expression,
         $.builtin_type,
         $.call_expression,
         $.deref_expression,
         $.fn_type_expression,
         $.ident,
-        $.if_expression,
         $.index_expression,
         $.literal,
         $.paren_expression,
         $.pointer_expression,
         $.postfix_expression,
         $.ref_expression,
-        $.unary_prefix_expression,
-        $.where_expression,
         'self',
         // TODO: Remove these two once `where` clauses don't use the expression rule
         '.Self',
         $.designator
+      ),
+
+    _expression: ($) =>
+      choice(
+        $.as_expression,
+        $.binary_expression,
+        $.if_expression,
+        $.unary_prefix_expression,
+        $.where_expression,
+        $._simple_expression
       ),
 
     var_declaration: ($) =>
