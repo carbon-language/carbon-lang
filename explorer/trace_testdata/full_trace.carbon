@@ -26,6 +26,7 @@
 // CHECK:STDOUT: checking TuplePattern ()
 // CHECK:STDOUT: checking IntTypeLiteral i32
 // CHECK:STDOUT: +++ stack: [ i32 .0. ]
+// CHECK:STDOUT: +++ stack: [ i32 .0. ## i32 .1. ]
 
 
 package ExplorerTest api;
@@ -77,34 +78,37 @@ interface TestInterface {}
 // CHECK:STDOUT:  .0. ]
 fn Main() -> i32 {
   return 0;
-// CHECK:STDOUT: --- step decl fn Main .0. (full_trace.carbon:[[@LINE+35]]) --->
+// CHECK:STDOUT: --- step decl fn Main .0. (full_trace.carbon:[[@LINE+38]]) --->
 // CHECK:STDOUT: ********** calling main function **********
 // CHECK:STDOUT: +++ stack: [ Main() .0. ]
+// CHECK:STDOUT: +++ stack: [ Main() .0. ## Main() .1. ]
 // CHECK:STDOUT: --- step exp Main() .0. (<Main()>:0) --->
-// CHECK:STDOUT: +++ stack: [ Main .0. ## Main() .1. ]
+// CHECK:STDOUT: +++ stack: [ Main .0. ## Main() .1. ## Main() .1. ]
+// CHECK:STDOUT: +++ stack: [ Main .0. ## Main .1. ## Main() .1. ## Main() .1. ]
 // CHECK:STDOUT: --- step exp Main .0. (<Main()>:0) --->
 // CHECK:STDOUT: --- step exp Main() .1. (<Main()>:0) --->
-// CHECK:STDOUT: +++ stack: [ () .0. ## Main() .2. {{[[][[]}}fun<Main>]] ]
+// CHECK:STDOUT: +++ stack: [ () .0. ## Main() .2. {{[[][[]}}fun<Main>]] ## Main() .1. ]
 // CHECK:STDOUT: --- step exp () .0. (<Main()>:0) --->
 // CHECK:STDOUT: --- step exp Main() .2. (<Main()>:0) --->
 // CHECK:STDOUT: calling function: fun<Main>
 // CHECK:STDOUT: match pattern ()
 // CHECK:STDOUT: from value expression with value ()
-// CHECK:STDOUT: +++ stack: [ .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {} ]
-// CHECK:STDOUT: +++ stack: [ {return 0;} .0. ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {} ]
-// CHECK:STDOUT: --- step stmt {return 0;} .0. (full_trace.carbon:[[@LINE+20]]) --->
-// CHECK:STDOUT: +++ stack: [ return 0; .0. ## {return 0;} .1. {} ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {} ]
-// CHECK:STDOUT: --- step stmt return 0; .0. (full_trace.carbon:[[@LINE-18]]) --->
-// CHECK:STDOUT: +++ stack: [ 0 .0. ## return 0; .1. ## {return 0;} .1. {} ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {} ]
-// CHECK:STDOUT: --- step exp 0 .0. (full_trace.carbon:[[@LINE-20]]) --->
-// CHECK:STDOUT: --- step stmt return 0; .1. (full_trace.carbon:[[@LINE-21]]) --->
-// CHECK:STDOUT: +++ stack: [ clean up.0. {} ## Main() .3. {{[[][[]}}fun<Main>, (), 0]] {} ]
-// CHECK:STDOUT: +++ stack: [ clean up.0. {} ## clean up.0. {} ## Main() .3. {{[[][[]}}fun<Main>, (), 0]] {} ]
-// CHECK:STDOUT: +++ stack: [ clean up.0. {} ## Main() .3. {{[[][[]}}fun<Main>, (), 0]] {} ]
-// CHECK:STDOUT: +++ stack: [ Main() .3. {{[[][[]}}fun<Main>, (), 0]] {} ]
+// CHECK:STDOUT: +++ stack: [ .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {} ## Main() .1. ]
+// CHECK:STDOUT: +++ stack: [ {return 0;} .0. ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {} ## Main() .1. ]
+// CHECK:STDOUT: --- step stmt {return 0;} .0. (full_trace.carbon:[[@LINE+21]]) --->
+// CHECK:STDOUT: +++ stack: [ return 0; .0. ## {return 0;} .1. {} ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {} ## Main() .1. ]
+// CHECK:STDOUT: --- step stmt return 0; .0. (full_trace.carbon:[[@LINE-20]]) --->
+// CHECK:STDOUT: +++ stack: [ 0 .0. ## return 0; .1. ## {return 0;} .1. {} ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {} ## Main() .1. ]
+// CHECK:STDOUT: +++ stack: [ 0 .0. ## 0 .1. ## return 0; .1. ## {return 0;} .1. {} ## .0. {} ## Main() .3. {{[[][[]}}fun<Main>, ()]] {} ## Main() .1. ]
+// CHECK:STDOUT: --- step exp 0 .0. (full_trace.carbon:[[@LINE-23]]) --->
+// CHECK:STDOUT: --- step stmt return 0; .1. (full_trace.carbon:[[@LINE-24]]) --->
+// CHECK:STDOUT: +++ stack: [ clean up.0. {} ## Main() .3. {{[[][[]}}fun<Main>, (), 0]] {} ## Main() .1. ]
+// CHECK:STDOUT: +++ stack: [ clean up.0. {} ## clean up.0. {} ## Main() .3. {{[[][[]}}fun<Main>, (), 0]] {} ## Main() .1. ]
+// CHECK:STDOUT: +++ stack: [ clean up.0. {} ## Main() .3. {{[[][[]}}fun<Main>, (), 0]] {} ## Main() .1. ]
+// CHECK:STDOUT: +++ stack: [ Main() .3. {{[[][[]}}fun<Main>, (), 0]] {} ## Main() .1. ]
 // CHECK:STDOUT: --- step exp Main() .3. (<Main()>:0) --->
-// CHECK:STDOUT: +++ stack: [ clean up.0. {} ]
-// CHECK:STDOUT: +++ stack: [  ]
+// CHECK:STDOUT: +++ stack: [ clean up.0. {} ## Main() .1. {{[[][[]}}0]] ]
+// CHECK:STDOUT: +++ stack: [ Main() .1. {{[[][[]}}0]] ]
 // CHECK:STDOUT: interpreter result: 0
 // CHECK:STDOUT: ********** printing timing **********
 // CHECK:STDOUT: Time elapsed in ExecProgram: {{[0-9]+}}ms
