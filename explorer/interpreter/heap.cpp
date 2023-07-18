@@ -70,9 +70,11 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
       }
     }
   }
+
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "+++ memory: [ " << *this << " ]\n";
   }
+
   return Success();
 }
 
@@ -104,6 +106,11 @@ auto Heap::Deallocate(AllocationId allocation) -> ErrorOr<Success> {
     CARBON_FATAL() << "deallocating an already dead value: "
                    << *values_[allocation.index_];
   }
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "+++ memory: [ " << *this << " ]\n";
+  }
+
   return Success();
 }
 
