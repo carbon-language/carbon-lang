@@ -8,8 +8,8 @@ namespace Carbon {
 
 auto SemanticsHandleInfixOperator(SemanticsContext& context,
                                   ParseTree::Node parse_node) -> bool {
-  auto rhs_id = context.node_stack().Pop<SemanticsNodeId>();
-  auto lhs_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto rhs_id = context.node_stack().PopExpression();
+  auto lhs_id = context.node_stack().PopExpression();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
@@ -66,7 +66,7 @@ auto SemanticsHandlePostfixOperator(SemanticsContext& context,
 
 auto SemanticsHandlePrefixOperator(SemanticsContext& context,
                                    ParseTree::Node parse_node) -> bool {
-  auto value_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto value_id = context.node_stack().PopExpression();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
@@ -90,7 +90,7 @@ auto SemanticsHandlePrefixOperator(SemanticsContext& context,
 auto SemanticsHandleShortCircuitOperand(SemanticsContext& context,
                                         ParseTree::Node parse_node) -> bool {
   // Convert the condition to `bool`.
-  auto cond_value_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto cond_value_id = context.node_stack().PopExpression();
   cond_value_id = context.ImplicitAsBool(parse_node, cond_value_id);
   auto bool_type_id = context.semantics_ir().GetNode(cond_value_id).type_id();
 

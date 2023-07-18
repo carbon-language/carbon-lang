@@ -20,7 +20,7 @@ auto SemanticsHandleGenericPatternBinding(SemanticsContext& context,
 auto SemanticsHandlePatternBinding(SemanticsContext& context,
                                    ParseTree::Node parse_node) -> bool {
   auto [type_node, parsed_type_id] =
-      context.node_stack().PopWithParseNode<SemanticsNodeId>();
+      context.node_stack().PopExpressionWithParseNode();
   auto cast_type_id = context.ExpressionAsType(type_node, parsed_type_id);
 
   // Get the name.

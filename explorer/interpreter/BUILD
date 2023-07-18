@@ -23,6 +23,7 @@ cc_library(
         "//explorer/common:arena",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
+        "//explorer/common:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -80,6 +81,7 @@ cc_library(
         ":action",
         ":heap_allocation_interface",
         "//common:check",
+        "//common:error",
         "//common:ostream",
         "//explorer/ast",
         "//explorer/common:error_builders",
@@ -93,9 +95,11 @@ cc_library(
     name = "heap_allocation_interface",
     hdrs = ["heap_allocation_interface.h"],
     deps = [
+        "//common:error",
         "//explorer/ast",
         "//explorer/common:arena",
         "//explorer/common:nonnull",
+        "//explorer/common:source_location",
     ],
 )
 
@@ -255,6 +259,7 @@ cc_library(
     deps = [
         "//common:ostream",
         "//explorer/ast",
+        "//explorer/ast:expression_category",
         "//explorer/common:nonnull",
         "@llvm-project//llvm:Support",
     ],

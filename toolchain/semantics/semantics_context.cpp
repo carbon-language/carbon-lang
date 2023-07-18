@@ -10,13 +10,12 @@
 #include "toolchain/diagnostics/diagnostic_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
+#include "toolchain/semantics/semantics_declaration_name_stack.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_node_block_stack.h"
 
 namespace Carbon {
-
-CARBON_DIAGNOSTIC(NameNotFound, Error, "Name {0} not found", llvm::StringRef);
 
 SemanticsContext::SemanticsContext(const TokenizedBuffer& tokens,
                                    DiagnosticEmitter<ParseTree::Node>& emitter,
@@ -31,8 +30,8 @@ SemanticsContext::SemanticsContext(const TokenizedBuffer& tokens,
       node_stack_(parse_tree, vlog_stream),
       node_block_stack_("node_block_stack_", semantics_ir, vlog_stream),
       params_or_args_stack_("params_or_args_stack_", semantics_ir, vlog_stream),
-      args_type_info_stack_("args_type_info_stack_", semantics_ir,
-                            vlog_stream) {
+      args_type_info_stack_("args_type_info_stack_", semantics_ir, vlog_stream),
+      declaration_name_stack_(this) {
   // Inserts the "Error" and "Type" types as "used types" so that
   // canonicalization can skip them. We don't emit either for lowering.
   canonical_types_.insert(
@@ -75,10 +74,24 @@ auto SemanticsContext::AddNodeAndPush(ParseTree::Node parse_node,
   node_stack_.Push(parse_node, node_id);
 }
 
-CARBON_DIAGNOSTIC(NameDeclarationDuplicate, Error,
-                  "Duplicate name being declared in the same scope.");
-CARBON_DIAGNOSTIC(NameDeclarationPrevious, Note,
-                  "Name is previously declared here.");
+auto SemanticsContext::DiagnoseDuplicateName(ParseTree::Node parse_node,
+                                             SemanticsNodeId prev_def_id)
+    -> void {
+  CARBON_DIAGNOSTIC(NameDeclarationDuplicate, Error,
+                    "Duplicate name being declared in the same scope.");
+  CARBON_DIAGNOSTIC(NameDeclarationPrevious, Note,
+                    "Name is previously declared here.");
+  auto prev_def = semantics_ir_->GetNode(prev_def_id);
+  emitter_->Build(parse_node, NameDeclarationDuplicate)
+      .Note(prev_def.parse_node(), NameDeclarationPrevious)
+      .Emit();
+}
+
+auto SemanticsContext::DiagnoseNameNotFound(ParseTree::Node parse_node,
+                                            SemanticsStringId name_id) -> void {
+  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name {0} not found", llvm::StringRef);
+  emitter_->Emit(parse_node, NameNotFound, semantics_ir_->GetString(name_id));
+}
 
 auto SemanticsContext::AddNameToLookup(ParseTree::Node name_node,
                                        SemanticsStringId name_id,
@@ -86,48 +99,7 @@ auto SemanticsContext::AddNameToLookup(ParseTree::Node name_node,
   if (current_scope().names.insert(name_id).second) {
     name_lookup_[name_id].push_back(target_id);
   } else {
-    auto prev_def_id = name_lookup_[name_id].back();
-    auto prev_def = semantics_ir_->GetNode(prev_def_id);
-    emitter_->Build(name_node, NameDeclarationDuplicate)
-        .Note(prev_def.parse_node(), NameDeclarationPrevious)
-        .Emit();
-  }
-}
-
-auto SemanticsContext::AddNameToLookup(DeclarationNameContext name_context,
-                                       SemanticsNodeId target_id) -> void {
-  switch (name_context.state) {
-    case DeclarationNameContext::State::Error:
-      // The name is invalid and a diagnostic has already been emitted.
-      return;
-
-    case DeclarationNameContext::State::New:
-      CARBON_FATAL() << "Name is missing, not expected to call AddNameToLookup "
-                        "(but that may change based on error handling).";
-
-    case DeclarationNameContext::State::Resolved:
-    case DeclarationNameContext::State::ResolvedNonScope: {
-      auto prev_def = semantics_ir_->GetNode(name_context.resolved_node_id);
-      emitter_->Build(name_context.parse_node, NameDeclarationDuplicate)
-          .Note(prev_def.parse_node(), NameDeclarationPrevious)
-          .Emit();
-      return;
-    }
-
-    case DeclarationNameContext::State::Unresolved:
-      if (name_context.target_scope_id == SemanticsNameScopeId::Invalid) {
-        AddNameToLookup(name_context.parse_node,
-                        name_context.unresolved_name_id, target_id);
-      } else {
-        bool success = semantics_ir_->AddNameScopeEntry(
-            name_context.target_scope_id, name_context.unresolved_name_id,
-            target_id);
-        CARBON_CHECK(success)
-            << "Duplicate names should have been resolved previously: "
-            << name_context.unresolved_name_id << " in "
-            << name_context.target_scope_id;
-      }
-      return;
+    DiagnoseDuplicateName(name_node, name_lookup_[name_id].back());
   }
 }
 
@@ -139,8 +111,7 @@ auto SemanticsContext::LookupName(ParseTree::Node parse_node,
     auto it = name_lookup_.find(name_id);
     if (it == name_lookup_.end()) {
       if (print_diagnostics) {
-        emitter_->Emit(parse_node, NameNotFound,
-                       semantics_ir_->GetString(name_id));
+        DiagnoseNameNotFound(parse_node, name_id);
       }
       return SemanticsNodeId::BuiltinError;
     }
@@ -154,8 +125,7 @@ auto SemanticsContext::LookupName(ParseTree::Node parse_node,
     auto it = scope.find(name_id);
     if (it == scope.end()) {
       if (print_diagnostics) {
-        emitter_->Emit(parse_node, NameNotFound,
-                       semantics_ir_->GetString(name_id));
+        DiagnoseNameNotFound(parse_node, name_id);
       }
       return SemanticsNodeId::BuiltinError;
     }
@@ -291,106 +261,6 @@ auto SemanticsContext::is_current_position_reachable() -> bool {
       const auto& last_node = semantics_ir().GetNode(block_contents.back());
       return last_node.kind().terminator_kind() !=
              SemanticsTerminatorKind::Terminator;
-    }
-  }
-}
-
-auto SemanticsContext::PushDeclarationName() -> void {
-  declaration_name_stack_.push_back(
-      {.state = DeclarationNameContext::State::New,
-       .target_scope_id = SemanticsNameScopeId::Invalid,
-       .resolved_node_id = SemanticsNodeId::Invalid});
-}
-
-auto SemanticsContext::PopDeclarationName() -> DeclarationNameContext {
-  if (parse_tree_->node_kind(node_stack().PeekParseNode()) ==
-      ParseNodeKind::QualifiedDeclaration) {
-    // Any parts from a QualifiedDeclaration will already have been processed
-    // into the name.
-    node_stack_
-        .PopAndDiscardSoloParseNode<ParseNodeKind::QualifiedDeclaration>();
-  } else {
-    // The name had no qualifiers, so we need to process the node now.
-    auto [parse_node, node_or_name_id] =
-        node_stack_.PopWithParseNode<SemanticsNodeId>();
-    ApplyDeclarationNameQualifier(parse_node, node_or_name_id);
-  }
-
-  return declaration_name_stack_.pop_back_val();
-}
-
-auto SemanticsContext::ApplyDeclarationNameQualifier(
-    ParseTree::Node parse_node, SemanticsNodeId node_or_name_id) -> void {
-  auto& name_context = declaration_name_stack_.back();
-  switch (name_context.state) {
-    case DeclarationNameContext::State::Error:
-      // Already in an error state, so return without examining.
-      return;
-
-    case DeclarationNameContext::State::Unresolved:
-      // Because more qualifiers were found, we diagnose that the earlier
-      // qualifier failed to resolve.
-      name_context.state = DeclarationNameContext::State::Error;
-      emitter_->Emit(name_context.parse_node, NameNotFound,
-                     semantics_ir_->GetString(name_context.unresolved_name_id));
-      return;
-
-    case DeclarationNameContext::State::ResolvedNonScope: {
-      // Because more qualifiers were found, we diagnose that the earlier
-      // qualifier didn't resolve to a scoped entity.
-      name_context.state = DeclarationNameContext::State::Error;
-      CARBON_DIAGNOSTIC(QualifiedDeclarationInNonScope, Error,
-                        "Declaration qualifiers are only allowed for entities "
-                        "that provide a scope.");
-      CARBON_DIAGNOSTIC(QualifiedDeclarationNonScopeEntity, Note,
-                        "Non-scope entity referenced here.");
-      emitter_->Build(parse_node, QualifiedDeclarationInNonScope)
-          .Note(name_context.parse_node, QualifiedDeclarationNonScopeEntity)
-          .Emit();
-      return;
-    }
-
-    case DeclarationNameContext::State::New:
-    case DeclarationNameContext::State::Resolved: {
-      name_context.parse_node = parse_node;
-      if (parse_tree().node_kind(name_context.parse_node) ==
-          ParseNodeKind::Name) {
-        // For identifier nodes, we need to perform a lookup on the identifier.
-        // This means the input node_id is actually a string ID.
-        SemanticsStringId name_id(node_or_name_id.index);
-        auto resolved_node_id = LookupName(name_context.parse_node, name_id,
-                                           name_context.target_scope_id,
-                                           /*print_diagnostics=*/false);
-        if (resolved_node_id == SemanticsNodeId::BuiltinError) {
-          // Invalid indicates an unresolved node. Store it and return.
-          name_context.state = DeclarationNameContext::State::Unresolved;
-          name_context.unresolved_name_id = name_id;
-          return;
-        } else {
-          // Store the resolved node and continue for the target scope update.
-          name_context.resolved_node_id = resolved_node_id;
-        }
-      } else {
-        // For other nodes, we expect a regular resolved node, for example a
-        // namespace or generic type. Store it and continue for the target scope
-        // update.
-        name_context.resolved_node_id = node_or_name_id;
-      }
-
-      // This will only be reached for resolved nodes. We update the target
-      // scope based on the resolved type.
-      auto resolved_node =
-          semantics_ir_->GetNode(name_context.resolved_node_id);
-      switch (resolved_node.kind()) {
-        case SemanticsNodeKind::Namespace:
-          name_context.state = DeclarationNameContext::State::Resolved;
-          name_context.target_scope_id = resolved_node.GetAsNamespace();
-          break;
-        default:
-          name_context.state = DeclarationNameContext::State::ResolvedNonScope;
-          break;
-      }
-      return;
     }
   }
 }
@@ -547,7 +417,7 @@ auto SemanticsContext::ParamOrArgSave(bool for_args) -> void {
     // For an argument, we add a stub reference to the expression on the top of
     // the stack. There may not be anything on the IR prior to this.
     auto [entry_parse_node, entry_node_id] =
-        node_stack_.PopWithParseNode<SemanticsNodeId>();
+        node_stack_.PopExpressionWithParseNode();
     param_or_arg_id = AddNode(SemanticsNode::StubReference::Make(
         entry_parse_node, semantics_ir_->GetNode(entry_node_id).type_id(),
         entry_node_id));

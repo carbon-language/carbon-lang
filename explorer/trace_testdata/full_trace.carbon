@@ -124,6 +124,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory:{{ }}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: {
+// CHECK:STDOUT: stack: i32 .0. ## i32 .1.
+// CHECK:STDOUT: memory:{{ }}
+// CHECK:STDOUT: }
 // CHECK:STDOUT: --- step exp i32 .0. (full_trace.carbon:[[@LINE-89]]) --->
 // CHECK:STDOUT: {
 // CHECK:STDOUT: stack:{{ }}
@@ -216,24 +220,36 @@ fn Main() -> i32 {
 // CHECK:STDOUT: stack:{{ }}
 // CHECK:STDOUT: memory: 0: Heap{}
 // CHECK:STDOUT: }
+// CHECK:STDOUT: {
+// CHECK:STDOUT: stack: Main() .0. ## Main() .1.
+// CHECK:STDOUT: memory: 0: Heap{}
+// CHECK:STDOUT: }
 // CHECK:STDOUT: --- step exp Main() .0. (<Main()>:0) --->
 // CHECK:STDOUT: {
-// CHECK:STDOUT: stack: Main .0. ## Main() .1.
+// CHECK:STDOUT: stack: Main .0. ## Main() .1. ## Main() .1.
+// CHECK:STDOUT: memory: 0: Heap{}
+// CHECK:STDOUT: }
+// CHECK:STDOUT: {
+// CHECK:STDOUT: stack: Main .0. ## Main .1. ## Main() .1. ## Main() .1.
 // CHECK:STDOUT: memory: 0: Heap{}
 // CHECK:STDOUT: }
 // CHECK:STDOUT: --- step exp Main .0. (<Main()>:0) --->
 // CHECK:STDOUT: {
-// CHECK:STDOUT: stack: Main() .1. {{[[][[]}}fun<Main>]]
+// CHECK:STDOUT: stack: Main .1. {{[[][[]}}fun<Main>]] ## Main() .1. ## Main() .1.
+// CHECK:STDOUT: memory: 0: Heap{}
+// CHECK:STDOUT: }
+// CHECK:STDOUT: {
+// CHECK:STDOUT: stack: Main() .1. {{[[][[]}}fun<Main>]] ## Main() .1.
 // CHECK:STDOUT: memory: 0: Heap{}
 // CHECK:STDOUT: }
 // CHECK:STDOUT: --- step exp Main() .1. (<Main()>:0) --->
 // CHECK:STDOUT: {
-// CHECK:STDOUT: stack: () .0. ## Main() .2. {{[[][[]}}fun<Main>]]
+// CHECK:STDOUT: stack: () .0. ## Main() .2. {{[[][[]}}fun<Main>]] ## Main() .1.
 // CHECK:STDOUT: memory: 0: Heap{}
 // CHECK:STDOUT: }
 // CHECK:STDOUT: --- step exp () .0. (<Main()>:0) --->
 // CHECK:STDOUT: {
-// CHECK:STDOUT: stack: Main() .2. {{[[][[]}}fun<Main>, ()]]
+// CHECK:STDOUT: stack: Main() .2. {{[[][[]}}fun<Main>, ()]] ## Main() .1.
 // CHECK:STDOUT: memory: 0: Heap{}
 // CHECK:STDOUT: }
 // CHECK:STDOUT: --- step exp Main() .2. (<Main()>:0) --->

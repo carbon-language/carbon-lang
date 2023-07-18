@@ -27,8 +27,7 @@ auto SemanticsHandleStructFieldDesignator(SemanticsContext& context,
 
 auto SemanticsHandleStructFieldType(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
-  auto [type_node, type_id] =
-      context.node_stack().PopWithParseNode<SemanticsNodeId>();
+  auto [type_node, type_id] = context.node_stack().PopExpressionWithParseNode();
   SemanticsTypeId cast_type_id = context.ExpressionAsType(type_node, type_id);
 
   auto [name_node, name_id] =
@@ -48,7 +47,7 @@ auto SemanticsHandleStructFieldUnknown(SemanticsContext& context,
 auto SemanticsHandleStructFieldValue(SemanticsContext& context,
                                      ParseTree::Node parse_node) -> bool {
   auto [value_parse_node, value_node_id] =
-      context.node_stack().PopWithParseNode<SemanticsNodeId>();
+      context.node_stack().PopExpressionWithParseNode();
   SemanticsStringId name_id = context.node_stack().Pop<ParseNodeKind::Name>();
 
   // Store the name for the type.

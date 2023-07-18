@@ -115,6 +115,7 @@ class ElementPath {
   // another Value, so its implementation details are tied to the implementation
   // details of Value.
   friend class Value;
+  friend class Heap;
   std::vector<Component> components_;
 };
 
