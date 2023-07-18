@@ -520,8 +520,8 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
       }
       auto tuple_type_id = CanonicalizeTupleType(value.parse_node(), type_ids);
       if (output_value_id != nullptr) {
-        *output_value_id = semantics_ir_->GetTypeAllowBuiltinTypes(
-            tuple_type_id);  // GetType(tuple_type_id);
+        *output_value_id =
+            semantics_ir_->GetTypeAllowBuiltinTypes(tuple_type_id);
       }
       return ImplicitAsKind::Compatible;
     }

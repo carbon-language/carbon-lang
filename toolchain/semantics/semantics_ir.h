@@ -245,7 +245,7 @@ class SemanticsIR {
     }
   }
 
-  // Adds an empty node block, returning an ID to reference it.
+  // Adds an empty type block, returning an ID to reference it.
   auto AddTypeBlock() -> SemanticsTypeBlockId {
     SemanticsTypeBlockId id(type_blocks_.size());
     type_blocks_.push_back({});
