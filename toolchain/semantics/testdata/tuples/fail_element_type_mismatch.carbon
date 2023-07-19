@@ -66,6 +66,6 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+2]]:31: Cannot implicitly convert from `(i32, f64) as type` to `(i32, i32) as type`.
 
+// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+1]]:31: Cannot implicitly convert from `(i32, f64) as type` to `(i32, i32) as type`.
 var x: (i32, i32) = (2, 65.89);

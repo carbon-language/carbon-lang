@@ -636,8 +636,8 @@ auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
 }
 
 auto SemanticsContext::CanonicalizeTupleType(
-    ParseTree::Node parse_node,
-    const llvm::SmallVector<SemanticsTypeId>&& type_ids) -> SemanticsTypeId {
+    ParseTree::Node parse_node, llvm::SmallVector<SemanticsTypeId>&& type_ids)
+    -> SemanticsTypeId {
   llvm::FoldingSetNodeID canonical_id;
   for (const auto& type_id : type_ids) {
     canonical_id.AddInteger(type_id.index);
@@ -652,7 +652,7 @@ auto SemanticsContext::CanonicalizeTupleType(
   // The tuple type doesn't already exist, so create and store it as canonical.
   auto type_block_id = semantics_ir_->AddTypeBlock();
   auto& type_block = semantics_ir_->GetTypeBlock(type_block_id);
-  type_block = type_ids;
+  type_block = std::move(type_ids);
   auto node_id = AddNode(SemanticsNode::TupleType::Make(
       parse_node, SemanticsTypeId::TypeType, type_block_id));
   auto type_id = semantics_ir_->AddType(node_id);
