@@ -5303,18 +5303,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   // evaluation, etc.) until the `extend base` declaration is processed in
   // order.
   std::optional<Nonnull<const NominalClassType*>> base_class;
-  bool first = true;
-  for (Nonnull<Declaration*> m : class_decl->members()) {
-    if (m->kind() != DeclarationKind::ExtendBaseDeclaration) {
-      first = false;
-    } else if (base_class.has_value()) {
-      return ProgramError(m->source_loc())
-             << "At most one `extend base:` declaration in a class.";
-    } else if (!first) {
-      return ProgramError(m->source_loc())
-             << "`extend base:` declarations after the first declaration in "
-                "the class are not yet supported";
-    } else {
+  if (!class_decl->members().empty()) {
+    Nonnull<Declaration*> m = class_decl->members()[0];
+    if (m->kind() == DeclarationKind::ExtendBaseDeclaration) {
       Nonnull<Expression*> base_class_expr =
           cast<ExtendBaseDeclaration>(*m).base_class();
       CARBON_ASSIGN_OR_RETURN(const auto base_type,
@@ -5340,6 +5331,20 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                << "` to allow it to be inherited";
       }
       class_decl->set_base_type(base_class);
+    }
+    for (auto it = std::next(class_decl->members().begin());
+         it != class_decl->members().end(); ++it) {
+      Nonnull<Declaration*> m = *it;
+      if (m->kind() == DeclarationKind::ExtendBaseDeclaration) {
+        if (base_class.has_value()) {
+          return ProgramError(m->source_loc())
+                 << "At most one `extend base:` declaration in a class.";
+        } else {
+          return ProgramError(m->source_loc())
+                 << "`extend base:` declarations after the first declaration "
+                    "in the class are not yet supported";
+        }
+      }
     }
   }
 
