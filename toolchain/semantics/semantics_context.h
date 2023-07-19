@@ -247,6 +247,9 @@ class SemanticsContext {
     if (node.kind() == SemanticsNodeKind::StubReference) {
       value_id = node.GetAsStubReference();
     }
+    CARBON_CHECK(semantics_ir_->GetNode(value_id).kind() !=
+                 SemanticsNodeKind::StubReference)
+        << "Stub reference should not point to another stub reference";
     return CanonicalizeType(
         ImplicitAsRequired(parse_node, value_id, SemanticsTypeId::TypeType));
   }
