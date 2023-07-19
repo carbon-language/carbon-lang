@@ -66,5 +66,5 @@
 
 
 fn Main() -> (i32, i32) {
-	return (15, 35);
+  return (15, 35);
 }
