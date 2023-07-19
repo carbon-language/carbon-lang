@@ -11,6 +11,7 @@ namespace Carbon::Testing {
 namespace {
 
 using ::testing::Eq;
+using ::testing::MatchesRegex;
 
 TEST(ParseAndExecuteTest, Recursion) {
   std::string source = R"(
@@ -36,9 +37,10 @@ TEST(ParseAndExecuteTest, Recursion) {
       ParseAndExecute("explorer/data/prelude.carbon", "test.carbon", source,
                       /*parser_debug=*/false, &trace_stream, &llvm::nulls());
   ASSERT_FALSE(err.ok());
+  // Don't expect any particular source location for the error.
   EXPECT_THAT(err.error().message(),
-              Eq("RUNTIME ERROR: overflow:1: stack overflow: too many "
-                 "interpreter actions on stack"));
+              MatchesRegex("RUNTIME ERROR:.* stack overflow: too many "
+                           "interpreter actions on stack"));
 }
 
 }  // namespace

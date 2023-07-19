@@ -2620,7 +2620,7 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
           const Address object = destroy_act.location()->address();
           const Address var_addr =
               object.ElementAddress(arena_->New<NamedElement>(var));
-          const auto v = heap_.Read(var_addr, SourceLocation("destructor", 1));
+          const auto v = heap_.Read(var_addr, var->source_loc());
           CARBON_CHECK(v.ok())
               << "Failed to read member `" << var->binding().name()
               << "` from class `" << class_decl.name() << "`";
@@ -2706,21 +2706,28 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
 
 // State transition.
 auto Interpreter::Step() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+
+  auto error_builder = [&] {
+    if (auto loc = act.source_loc()) {
+      return ProgramError(*loc);
+    }
+    return ErrorBuilder();
+  };
+
   // Check for various overflow conditions before stepping.
   if (todo_.size() > MaxTodoSize) {
-    return ProgramError(SourceLocation("overflow", 1))
+    return error_builder()
            << "stack overflow: too many interpreter actions on stack";
   }
   if (++steps_taken_ > MaxStepsTaken) {
-    return ProgramError(SourceLocation("overflow", 1))
+    return error_builder()
            << "possible infinite loop: too many interpreter steps executed";
   }
   if (arena_->allocated() > MaxArenaAllocated) {
-    return ProgramError(SourceLocation("overflow", 1))
-           << "out of memory: exceeded arena allocation limit";
+    return error_builder() << "out of memory: exceeded arena allocation limit";
   }
 
-  Action& act = todo_.CurrentAction();
   switch (act.kind()) {
     case Action::Kind::LocationAction:
       CARBON_RETURN_IF_ERROR(StepLocation());

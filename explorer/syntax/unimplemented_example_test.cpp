@@ -22,14 +22,15 @@ TEST(UnimplementedExampleTest, VerifyPrecedence) {
     }
   )";
   Arena arena;
-  EXPECT_THAT(ParseFromString(&arena, "dummy.carbon", Program, false),
-              ParsedAs(ASTDeclarations(
-                  ElementsAre(MatchesFunctionDeclaration().WithBody(
-                      BlockContentsAre(ElementsAre(MatchesReturn(MatchesEq(
-                          MatchesUnimplementedExpression(
-                              "ExampleInfix", ElementsAre(MatchesLiteral(1),
-                                                          MatchesLiteral(2))),
-                          MatchesLiteral(3))))))))));
+  EXPECT_THAT(
+      ParseFromString(&arena, "dummy.carbon", FileKind::Main, Program, false),
+      ParsedAs(
+          ASTDeclarations(ElementsAre(MatchesFunctionDeclaration().WithBody(
+              BlockContentsAre(ElementsAre(MatchesReturn(MatchesEq(
+                  MatchesUnimplementedExpression(
+                      "ExampleInfix",
+                      ElementsAre(MatchesLiteral(1), MatchesLiteral(2))),
+                  MatchesLiteral(3))))))))));
 }
 
 }  // namespace

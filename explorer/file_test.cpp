@@ -57,7 +57,7 @@ class ParseAndExecuteTestFile : public FileTestBase {
     if (trace_) {
       trace_stream.set_stream(is_trace_test ? &stdout : &trace_stream_ostream);
       trace_stream.set_allowed_phases({ProgramPhase::All});
-      trace_stream.set_allowed_file_contexts({FileContext::Main});
+      trace_stream.set_allowed_file_kinds({FileKind::Main});
     }
 
     // Set the location of the prelude.
