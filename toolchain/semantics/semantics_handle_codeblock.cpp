@@ -17,7 +17,7 @@ auto SemanticsHandleCodeBlockStart(SemanticsContext& context,
 auto SemanticsHandleCodeBlock(SemanticsContext& context,
                               ParseTree::Node /*parse_node*/) -> bool {
   context.PopScope();
-  context.node_stack().PopForSoloParseNode(ParseNodeKind::CodeBlockStart);
+  context.node_stack().PopForSoloParseNode<ParseNodeKind::CodeBlockStart>();
   return true;
 }
 

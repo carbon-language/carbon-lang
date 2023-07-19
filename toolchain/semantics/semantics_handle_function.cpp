@@ -14,17 +14,16 @@ static auto BuildFunctionDeclaration(SemanticsContext& context)
   SemanticsTypeId return_type_id = SemanticsTypeId::Invalid;
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnType) {
-    return_type_id =
-        context.node_stack().Pop<SemanticsTypeId>(ParseNodeKind::ReturnType);
+    return_type_id = context.node_stack().Pop<ParseNodeKind::ReturnType>();
   } else {
     // Canonicalize the empty tuple for the implicit return.
     context.CanonicalizeType(SemanticsNodeId::BuiltinEmptyTupleType);
   }
-  auto param_refs_id = context.node_stack().Pop<SemanticsNodeBlockId>(
-      ParseNodeKind::ParameterList);
-  auto name_context = context.PopDeclarationName();
-  auto fn_node = context.node_stack().PopForSoloParseNode(
-      ParseNodeKind::FunctionIntroducer);
+  SemanticsNodeBlockId param_refs_id =
+      context.node_stack().Pop<ParseNodeKind::ParameterList>();
+  auto name_context = context.declaration_name_stack().Pop();
+  auto fn_node = context.node_stack()
+                     .PopForSoloParseNode<ParseNodeKind::FunctionIntroducer>();
 
   // TODO: Support out-of-line definitions, which will have a resolved
   // name_context. Right now, those become errors in AddNameToLookup.
@@ -37,7 +36,7 @@ static auto BuildFunctionDeclaration(SemanticsContext& context)
        .body_block_ids = {}});
   auto decl_id = context.AddNode(
       SemanticsNode::FunctionDeclaration::Make(fn_node, function_id));
-  context.AddNameToLookup(name_context, decl_id);
+  context.declaration_name_stack().AddNameToLookup(name_context, decl_id);
   return {function_id, decl_id};
 }
 
@@ -50,8 +49,8 @@ auto SemanticsHandleFunctionDeclaration(SemanticsContext& context,
 
 auto SemanticsHandleFunctionDefinition(SemanticsContext& context,
                                        ParseTree::Node parse_node) -> bool {
-  auto function_id = context.node_stack().Pop<SemanticsFunctionId>(
-      ParseNodeKind::FunctionDefinitionStart);
+  SemanticsFunctionId function_id =
+      context.node_stack().Pop<ParseNodeKind::FunctionDefinitionStart>();
 
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
@@ -104,7 +103,7 @@ auto SemanticsHandleFunctionIntroducer(SemanticsContext& context,
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // A name should always follow.
-  context.PushDeclarationName();
+  context.declaration_name_stack().Push();
   return true;
 }
 
@@ -112,7 +111,7 @@ auto SemanticsHandleReturnType(SemanticsContext& context,
                                ParseTree::Node parse_node) -> bool {
   // Propagate the type expression.
   auto [type_parse_node, type_node_id] =
-      context.node_stack().PopWithParseNode<SemanticsNodeId>();
+      context.node_stack().PopExpressionWithParseNode();
   auto cast_node_id = context.ExpressionAsType(type_parse_node, type_node_id);
   context.node_stack().Push(parse_node, cast_node_id);
   return true;

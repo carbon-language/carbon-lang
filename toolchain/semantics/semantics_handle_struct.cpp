@@ -27,13 +27,11 @@ auto SemanticsHandleStructFieldDesignator(SemanticsContext& context,
 
 auto SemanticsHandleStructFieldType(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
-  auto [type_node, type_id] =
-      context.node_stack().PopWithParseNode<SemanticsNodeId>();
+  auto [type_node, type_id] = context.node_stack().PopExpressionWithParseNode();
   SemanticsTypeId cast_type_id = context.ExpressionAsType(type_node, type_id);
 
   auto [name_node, name_id] =
-      context.node_stack().PopWithParseNode<SemanticsStringId>(
-          ParseNodeKind::Name);
+      context.node_stack().PopWithParseNode<ParseNodeKind::Name>();
 
   context.AddNode(
       SemanticsNode::StructTypeField::Make(name_node, cast_type_id, name_id));
@@ -49,9 +47,8 @@ auto SemanticsHandleStructFieldUnknown(SemanticsContext& context,
 auto SemanticsHandleStructFieldValue(SemanticsContext& context,
                                      ParseTree::Node parse_node) -> bool {
   auto [value_parse_node, value_node_id] =
-      context.node_stack().PopWithParseNode<SemanticsNodeId>();
-  auto name_id =
-      context.node_stack().Pop<SemanticsStringId>(ParseNodeKind::Name);
+      context.node_stack().PopExpressionWithParseNode();
+  SemanticsStringId name_id = context.node_stack().Pop<ParseNodeKind::Name>();
 
   // Store the name for the type.
   auto type_block_id = context.args_type_info_stack().PeekForAdd();
@@ -72,8 +69,9 @@ auto SemanticsHandleStructLiteral(SemanticsContext& context,
       /*for_args=*/true, ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();
-  context.node_stack().PopAndDiscardSoloParseNode(
-      ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<
+          ParseNodeKind::StructLiteralOrStructTypeLiteralStart>();
   auto type_block_id = context.args_type_info_stack().Pop();
 
   auto type_id = context.CanonicalizeStructType(parse_node, type_block_id);
@@ -102,8 +100,9 @@ auto SemanticsHandleStructTypeLiteral(SemanticsContext& context,
       /*for_args=*/false, ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
 
   context.PopScope();
-  context.node_stack().PopAndDiscardSoloParseNode(
-      ParseNodeKind::StructLiteralOrStructTypeLiteralStart);
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<
+          ParseNodeKind::StructLiteralOrStructTypeLiteralStart>();
   // This is only used for value literals.
   context.args_type_info_stack().Pop();
 

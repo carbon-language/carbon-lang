@@ -108,6 +108,7 @@
 %type <VirtualOverride> destructor_virtual_override_intro
 %type <ClassExtensibility> class_declaration_extensibility
 %type <Nonnull<Declaration*>> declaration
+%type <Nonnull<Declaration*>> namespace_declaration
 %type <BisonWrap<DeclaredName>> declared_name
 %type <Nonnull<FunctionDeclaration*>> function_declaration
 %type <Nonnull<DestructorDeclaration*>> destructor_declaration
@@ -118,7 +119,7 @@
 %type <Nonnull<ImplDeclaration*>> extend_impl_declaration
 %type <Nonnull<MatchFirstDeclaration*>> match_first_declaration
 %type <std::vector<Nonnull<ImplDeclaration*>>> match_first_declaration_list
-%type <std::vector<Nonnull<Declaration*>>> declaration_list
+%type <std::vector<Nonnull<Declaration*>>> top_level_declaration_list
 %type <std::vector<Nonnull<Declaration*>>> class_body
 %type <std::vector<Nonnull<Declaration*>>> mixin_body
 %type <std::vector<Nonnull<Declaration*>>> interface_body
@@ -321,12 +322,12 @@
 
 %start input
 %%
-input: package_directive import_directives declaration_list
+input: package_directive import_directives top_level_declaration_list
     {
       *ast = AST({.package = $[package_directive].first,
                   .is_api = $[package_directive].second,
                   .imports = std::move($[import_directives]),
-                  .declarations = std::move($[declaration_list])});
+                  .declarations = std::move($[top_level_declaration_list])});
     }
 ;
 package_directive:
@@ -1391,13 +1392,9 @@ class_declaration_extensibility:
 | BASE
     { $$ = Carbon::ClassExtensibility::Base; }
 ;
+// Declarations which are valid in most contexts: top-level, classes, etc.
 declaration:
-  NAMESPACE declared_name SEMICOLON
-    {
-      $$ = arena->New<NamespaceDeclaration>(context.source_loc(),
-                                            std::move($[declared_name]));
-    }
-| function_declaration
+  function_declaration
     { $$ = $[function_declaration]; }
 | destructor_declaration
     { $$ = $[destructor_declaration]; }
@@ -1546,13 +1543,27 @@ destructor_declaration:
     }
   }
 ;
-declaration_list:
+namespace_declaration:
+  NAMESPACE declared_name SEMICOLON
+    {
+      $$ = arena->New<NamespaceDeclaration>(context.source_loc(),
+                                            std::move($[declared_name]));
+    }
+;
+top_level_declaration_list:
   // Empty
     { $$ = {}; }
-| declaration_list[accumulated_declaration_list] declaration
+| top_level_declaration_list[accumulated_top_level_declaration_list]
+  declaration
     {
-      $$ = std::move($[accumulated_declaration_list]);
+      $$ = std::move($[accumulated_top_level_declaration_list]);
       $$.push_back(Nonnull<Declaration*>($[declaration]));
+    }
+| top_level_declaration_list[accumulated_top_level_declaration_list]
+  namespace_declaration
+    {
+      $$ = std::move($[accumulated_top_level_declaration_list]);
+      $$.push_back(Nonnull<Declaration*>($[namespace_declaration]));
     }
 ;
 extend_base_declaration:

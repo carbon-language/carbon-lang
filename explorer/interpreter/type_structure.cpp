@@ -7,6 +7,7 @@
 #include <limits>
 
 #include "explorer/ast/declaration.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/value.h"
 #include "llvm/ADT/StringExtras.h"
 
@@ -76,6 +77,7 @@ struct TypeStructureBuilder {
   // Ignore values that can't contain holes.
   void Visit(int) {}
   void Visit(std::string_view) {}
+  void Visit(ExpressionCategory) {}
   void Visit(Nonnull<const AstNode*>) {}
   void Visit(const ValueNodeView&) {}
   void Visit(const Address&) {}

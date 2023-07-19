@@ -15,14 +15,14 @@ auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
       context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
       ParseNodeKind::PatternBinding;
   if (has_init) {
-    expr_node_id = context.node_stack().Pop<SemanticsNodeId>();
-    context.node_stack().PopAndDiscardSoloParseNode(
-        ParseNodeKind::VariableInitializer);
+    expr_node_id = context.node_stack().PopExpression();
+    context.node_stack()
+        .PopAndDiscardSoloParseNode<ParseNodeKind::VariableInitializer>();
   }
 
   // Get the storage and add it to name lookup.
-  auto binding_id =
-      context.node_stack().Pop<SemanticsNodeId>(ParseNodeKind::PatternBinding);
+  SemanticsNodeId binding_id =
+      context.node_stack().Pop<ParseNodeKind::PatternBinding>();
   auto binding = context.semantics_ir().GetNode(binding_id);
   auto [name_id, storage_id] = binding.GetAsBindName();
   context.AddNameToLookup(binding.parse_node(), name_id, storage_id);
@@ -37,8 +37,8 @@ auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
         storage_id, cast_value_id));
   }
 
-  context.node_stack().PopAndDiscardSoloParseNode(
-      ParseNodeKind::VariableIntroducer);
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<ParseNodeKind::VariableIntroducer>();
 
   return true;
 }
