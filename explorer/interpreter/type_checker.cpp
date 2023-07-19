@@ -5312,7 +5312,8 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
              << "At most one `extend base:` declaration in a class.";
     } else if (!first) {
       return ProgramError(m->source_loc())
-             << "`extend base:` declarations after the first declaration in the class are not yet supported";
+             << "`extend base:` declarations after the first declaration in "
+                "the class are not yet supported";
     } else {
       Nonnull<Expression*> base_class_expr =
           cast<ExtendBaseDeclaration>(*m).base_class();

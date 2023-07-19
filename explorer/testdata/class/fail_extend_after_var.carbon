@@ -11,7 +11,7 @@ base class C {
 
 class E {
   var x: i32;
-  // CHECK:STDERR: COMPILATION ERROR: fail_extend_after_var.carbon:[[@LINE+1]]: `extend base:` declaration must first in a class.
+  // CHECK:STDERR: COMPILATION ERROR: fail_extend_after_var.carbon:[[@LINE+1]]: `extend base:` declarations after the first declaration in the class are not yet supported
   extend base: C;
 }
 

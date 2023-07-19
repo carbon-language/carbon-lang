@@ -13,7 +13,7 @@ class E {
   // This should be allowed, but Explorer forbids it until the problem from
   // https://github.com/carbon-language/carbon-lang/issues/2994 can be fixed.
 
-  // CHECK:STDERR: COMPILATION ERROR: fail_extend_member_class.carbon:[[@LINE+1]]: `extend base:` declaration must first in a class.
+  // CHECK:STDERR: COMPILATION ERROR: fail_extend_member_class.carbon:[[@LINE+1]]: `extend base:` declarations after the first declaration in the class are not yet supported
   extend base: C;
 }
 
