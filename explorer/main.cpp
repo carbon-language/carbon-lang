@@ -117,7 +117,7 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   TraceStream trace_stream;
 
   if (!trace_file_name.empty()) {
-    // Adding allowed phases in the trace_stream
+    // Adding allowed phases in the trace_stream.
     trace_stream.set_allowed_phases(trace_phases);
 
     // Translate --trace_file_context setting into a list of FileKinds.

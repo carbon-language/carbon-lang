@@ -2709,8 +2709,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
 
   auto fatal_error_builder = [&] {
-    if (auto loc = act.source_loc())
+    if (auto loc = act.source_loc()) {
       return ProgramError(*loc);
+    }
     return ErrorBuilder();
   };
 
