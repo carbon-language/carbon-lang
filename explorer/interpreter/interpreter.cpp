@@ -2708,7 +2708,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
 auto Interpreter::Step() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
 
-  auto fatal_error_builder = [&] {
+  auto error_builder = [&] {
     if (auto loc = act.source_loc()) {
       return ProgramError(*loc);
     }
@@ -2717,16 +2717,15 @@ auto Interpreter::Step() -> ErrorOr<Success> {
 
   // Check for various overflow conditions before stepping.
   if (todo_.size() > MaxTodoSize) {
-    return fatal_error_builder()
+    return error_builder()
            << "stack overflow: too many interpreter actions on stack";
   }
   if (++steps_taken_ > MaxStepsTaken) {
-    return fatal_error_builder()
+    return error_builder()
            << "possible infinite loop: too many interpreter steps executed";
   }
   if (arena_->allocated() > MaxArenaAllocated) {
-    return fatal_error_builder()
-           << "out of memory: exceeded arena allocation limit";
+    return error_builder() << "out of memory: exceeded arena allocation limit";
   }
 
   switch (act.kind()) {
