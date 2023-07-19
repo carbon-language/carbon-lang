@@ -519,7 +519,8 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
               ExpressionAsType(value.parse_node(), tuple_node_id));
         }
       }
-      auto tuple_type_id = CanonicalizeTupleType(value.parse_node(), type_ids);
+      auto tuple_type_id =
+          CanonicalizeTupleType(value.parse_node(), std::move(type_ids));
       if (output_value_id != nullptr) {
         *output_value_id =
             semantics_ir_->GetTypeAllowBuiltinTypes(tuple_type_id);
@@ -636,7 +637,7 @@ auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
 
 auto SemanticsContext::CanonicalizeTupleType(
     ParseTree::Node parse_node,
-    const llvm::SmallVector<SemanticsTypeId>& type_ids) -> SemanticsTypeId {
+    const llvm::SmallVector<SemanticsTypeId>&& type_ids) -> SemanticsTypeId {
   llvm::FoldingSetNodeID canonical_id;
   for (const auto& type_id : type_ids) {
     canonical_id.AddInteger(type_id.index);

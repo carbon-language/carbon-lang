@@ -233,9 +233,9 @@ class SemanticsContext {
   auto CanonicalizeStructType(ParseTree::Node parse_node,
                               SemanticsNodeBlockId refs_id) -> SemanticsTypeId;
 
-  auto CanonicalizeTupleType(ParseTree::Node parse_node,
-                             const llvm::SmallVector<SemanticsTypeId>& type_ids)
-      -> SemanticsTypeId;
+  auto CanonicalizeTupleType(
+      ParseTree::Node parse_node,
+      const llvm::SmallVector<SemanticsTypeId>&& type_ids) -> SemanticsTypeId;
   // Converts an expression for use as a type.
   // TODO: This should eventually return a type ID.
   auto ExpressionAsType(ParseTree::Node parse_node, SemanticsNodeId value_id)

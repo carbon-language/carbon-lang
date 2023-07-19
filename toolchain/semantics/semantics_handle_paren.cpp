@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <utility>
+
 #include "toolchain/semantics/semantics_context.h"
 
 namespace Carbon {
@@ -40,7 +42,7 @@ auto SemanticsHandleTupleLiteral(SemanticsContext& context,
   for (auto node : node_block) {
     type_ids.push_back(context.semantics_ir().GetNode(node).type_id());
   }
-  auto type_id = context.CanonicalizeTupleType(parse_node, type_ids);
+  auto type_id = context.CanonicalizeTupleType(parse_node, std::move(type_ids));
 
   auto value_id = context.AddNode(
       SemanticsNode::TupleValue::Make(parse_node, type_id, refs_id));
