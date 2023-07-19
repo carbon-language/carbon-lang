@@ -252,6 +252,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
         } else if (step.index < static_cast<int>(refs.size())) {
           out << ", ";
         } else {
+          // A tuple of one element has a comma to disambiguate from an expression.
           if (step.index == 1) {
             out << ",";
           }
