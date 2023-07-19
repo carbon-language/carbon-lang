@@ -18,24 +18,24 @@ function comma_sep(thing) {
 
 // This is based on toolchain/parser/precedence.cpp
 const PREC = {
-  TermPrefix: 11,
-  TermPostfix: 11,
-  NumericPrefix: 10,
-  NumericPostfix: 10,
-  Multiplicative: 9,
-  Additive: 8,
-  BitwisePrefix: 7,
-  BitwiseAnd: 6,
-  BitwiseOr: 6,
-  BitwiseXor: 6,
-  BitShift: 6,
-  TypePostfix: 5,
-  LogicalPrefix: 4,
-  Relational: 3,
-  LogicalAnd: 2,
-  LogicalOr: 2,
+  TermPrefix: 12,
+  TermPostfix: 12,
+  NumericPrefix: 11,
+  NumericPostfix: 11,
+  Multiplicative: 10,
+  Additive: 9,
+  BitwisePrefix: 8,
+  BitwiseAnd: 7,
+  BitwiseOr: 7,
+  BitwiseXor: 7,
+  BitShift: 7,
+  TypePostfix: 6,
+  LogicalPrefix: 5,
+  Relational: 4,
+  LogicalAnd: 3,
+  LogicalOr: 3,
+  IfExpression: 2,
   WhereClause: 1,
-  IfExpression: 1,
 };
 
 module.exports = grammar({
@@ -294,18 +294,18 @@ module.exports = grammar({
       ),
 
     where_clause: ($) =>
-      prec(
-        PREC.WhereClause,
-        choice(
-          seq($._simple_expression, '==', $._simple_expression),
-          seq($._simple_expression, 'impls', $._simple_expression),
-          seq($._simple_expression, '=', $._simple_expression),
-          prec.left(seq($.where_clause, 'and', $.where_clause))
+      choice(
+        seq($._simple_expression, '==', $._simple_expression),
+        seq($._simple_expression, 'impls', $._simple_expression),
+        seq($._simple_expression, '=', $._simple_expression),
+        prec.left(
+          PREC.WhereClause + 1,
+          seq($.where_clause, 'and', $.where_clause)
         )
       ),
 
     where_expression: ($) =>
-      prec.left(PREC.TermPostfix, seq($._expression, 'where', $.where_clause)),
+      prec.left(PREC.WhereClause, seq($._expression, 'where', $.where_clause)),
 
     call_expression: ($) =>
       prec(PREC.TermPostfix, seq($._simple_expression, $.paren_expression)),
@@ -328,7 +328,6 @@ module.exports = grammar({
         $.postfix_expression,
         $.ref_expression,
         'self',
-        // TODO: Remove these two once `where` clauses don't use the expression rule
         '.Self',
         $.designator
       ),
