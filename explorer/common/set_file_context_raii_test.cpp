@@ -12,6 +12,8 @@ namespace {
 
 TEST(SetFileContextRaiiTest, UpdateFileContext) {
   TraceStream trace_stream;
+  trace_stream.set_stream(&llvm::nulls());
+  trace_stream.set_allowed_phases({ProgramPhase::All});
   trace_stream.set_allowed_file_kinds({FileKind::Main});
 
   {

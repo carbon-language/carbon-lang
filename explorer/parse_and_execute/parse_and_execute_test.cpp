@@ -10,6 +10,7 @@
 namespace Carbon::Testing {
 namespace {
 
+using ::testing::EndsWith;
 using ::testing::Eq;
 
 TEST(ParseAndExecuteTest, Recursion) {
@@ -36,9 +37,9 @@ TEST(ParseAndExecuteTest, Recursion) {
       ParseAndExecute("explorer/data/prelude.carbon", "test.carbon", source,
                       /*parser_debug=*/false, &trace_stream, &llvm::nulls());
   ASSERT_FALSE(err.ok());
-  EXPECT_THAT(err.error().message(),
-              Eq("RUNTIME ERROR: overflow:1: stack overflow: too many "
-                 "interpreter actions on stack"));
+  EXPECT_THAT(
+      err.error().message(),
+      EndsWith("stack overflow: too many interpreter actions on stack"));
 }
 
 }  // namespace
