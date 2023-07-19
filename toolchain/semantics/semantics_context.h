@@ -240,6 +240,10 @@ class SemanticsContext {
   // TODO: This should eventually return a type ID.
   auto ExpressionAsType(ParseTree::Node parse_node, SemanticsNodeId value_id)
       -> SemanticsTypeId {
+    auto node = semantics_ir_->GetNode(value_id);
+    if (node.kind() == SemanticsNodeKind::StubReference) {
+      value_id = node.GetAsStubReference();
+    }
     return CanonicalizeType(
         ImplicitAsRequired(parse_node, value_id, SemanticsTypeId::TypeType));
   }
