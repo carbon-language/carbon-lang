@@ -5332,9 +5332,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
       }
       class_decl->set_base_type(base_class);
     }
-    for (auto it = std::next(class_decl->members().begin());
-         it != class_decl->members().end(); ++it) {
-      Nonnull<Declaration*> m = *it;
+    for (Nonnull<Declaration*> m : class_decl->members().drop_front()) {
       if (m->kind() == DeclarationKind::ExtendBaseDeclaration) {
         if (base_class.has_value()) {
           return ProgramError(m->source_loc())
