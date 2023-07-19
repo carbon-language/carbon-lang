@@ -109,18 +109,19 @@ class ActionStack {
   auto UnwindPast(Nonnull<const Statement*> ast_node,
                   Nonnull<const Value*> result) -> ErrorOr<Success>;
 
-  void Pop() {
-    todo_.Pop();
+  auto Pop() -> std::unique_ptr<Action> {
+    auto popped_action = todo_.Pop();
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "+++ stack: [ " << *this << " ]\n";
+      *trace_stream_ << "(-) stack-pop: " << *popped_action << "\n";
     }
+    return popped_action;
   }
 
   void Push(std::unique_ptr<Action> action) {
-    todo_.Push(std::move(action));
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "+++ stack: [ " << *this << " ]\n";
+      *trace_stream_ << "(+) stack-push: " << *action << "\n";
     }
+    todo_.Push(std::move(action));
   }
 
   auto size() const -> int { return todo_.size(); }
