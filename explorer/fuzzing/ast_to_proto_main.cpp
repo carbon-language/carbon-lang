@@ -38,7 +38,7 @@ auto Main(int argc, char** argv) -> ErrorOr<Success> {
   proto_file.close();
 
   Arena arena;
-  const ErrorOr<AST> ast = Parse(&arena, argv[1],
+  const ErrorOr<AST> ast = Parse(&arena, argv[1], FileKind::Main,
                                  /*parser_debug=*/false);
   if (!ast.ok()) {
     return ErrorBuilder() << "Parsing failed: " << ast.error().message();

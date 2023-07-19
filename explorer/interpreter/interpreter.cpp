@@ -2515,7 +2515,7 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
           const Address object = destroy_act.location()->address();
           const Address var_addr =
               object.ElementAddress(arena_->New<NamedElement>(var));
-          const auto v = heap_.Read(var_addr, SourceLocation("destructor", 1));
+          const auto v = heap_.Read(var_addr, var->source_loc());
           CARBON_CHECK(v.ok())
               << "Failed to read member `" << var->binding().name()
               << "` from class `" << class_decl.name() << "`";
@@ -2583,8 +2583,10 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
     }
     if (act.pos() % 2 == 0) {
       auto* location = arena_->New<LocationValue>(Address(allocation));
+      // TODO: Provide a real location here.
       auto value =
-          heap_.Read(location->address(), SourceLocation("destructor", 1));
+          heap_.Read(location->address(),
+                     SourceLocation("destructor", 1, FileKind::Unknown));
       // Step over uninitialized values.
       if (value.ok()) {
         return todo_.Spawn(std::make_unique<DestroyAction>(location, *value));
@@ -2602,21 +2604,28 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
 
 // State transition.
 auto Interpreter::Step() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+
+  auto fatal_error_builder = [&] {
+    if (auto loc = act.source_loc())
+      return ProgramError(*loc);
+    return ErrorBuilder();
+  };
+
   // Check for various overflow conditions before stepping.
   if (todo_.size() > MaxTodoSize) {
-    return ProgramError(SourceLocation("overflow", 1))
+    return fatal_error_builder()
            << "stack overflow: too many interpreter actions on stack";
   }
   if (++steps_taken_ > MaxStepsTaken) {
-    return ProgramError(SourceLocation("overflow", 1))
+    return fatal_error_builder()
            << "possible infinite loop: too many interpreter steps executed";
   }
   if (arena_->allocated() > MaxArenaAllocated) {
-    return ProgramError(SourceLocation("overflow", 1))
+    return fatal_error_builder()
            << "out of memory: exceeded arena allocation limit";
   }
 
-  Action& act = todo_.CurrentAction();
   switch (act.kind()) {
     case Action::Kind::LocationAction:
       CARBON_RETURN_IF_ERROR(StepLocation());

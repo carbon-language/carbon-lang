@@ -14,6 +14,7 @@
 #include "common/ostream.h"
 #include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
+#include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {
 
@@ -35,47 +36,19 @@ enum class ProgramPhase {
   Last = All                   // Last program phase indicator.
 };
 
-// Enumerates the contexts for different types of files, used for tracing and
-// controlling for which file contexts tracing should be enabled.
-enum class FileContext { Unknown, Main, Prelude, Import, All, Last = All };
-
 // Encapsulates the trace stream so that we can cleanly disable tracing while
 // the prelude is being processed. The prelude is expected to take a
 // disproprotionate amount of time to log, so we try to avoid it.
-//
-// TODO: While the prelude is combined with the provided program as a single
-// AST, the AST knows which declarations came from the prelude. When the prelude
-// is fully treated as a separate file, we should be able to take a different
-// approach where the caller explicitly toggles tracing when switching file
-// contexts.
 class TraceStream {
  public:
-  explicit TraceStream() { set_allowed_file_contexts({FileContext::Unknown}); }
-
-  // This method gets the file context by using filename from source location.
-  // TODO: implement a way to differentiate between the main file and imports
-  // based upon source location / filename.
-  auto file_context() const -> FileContext {
-    if (source_loc_.has_value()) {
-      auto filename =
-          llvm::StringRef(source_loc_->filename()).rsplit("/").second;
-      if (filename == "prelude.carbon") {
-        return FileContext::Prelude;
-      } else {
-        return FileContext::Main;
-      }
-    } else {
-      return FileContext::Unknown;
-    }
-  };
+  explicit TraceStream() {}
 
   // Returns true if tracing is currently enabled.
-  // TODO: use current source location for file context based filtering instead
-  // of just checking if current code context is Prelude.
   auto is_enabled() const -> bool {
     return stream_.has_value() && !in_prelude_ &&
            allowed_phases_[static_cast<int>(current_phase_)] &&
-           allowed_file_contexts_[static_cast<int>(file_context())];
+           (!source_loc_ ||
+            allowed_file_kinds_[static_cast<int>(source_loc_->file_kind())]);
   }
 
   // Sets whether the prelude is being skipped.
@@ -90,7 +63,8 @@ class TraceStream {
     current_phase_ = current_phase;
   }
 
-  auto set_allowed_phases(std::vector<ProgramPhase> allowed_phases_list) {
+  auto set_allowed_phases(llvm::ArrayRef<ProgramPhase> allowed_phases_list)
+      -> void {
     if (allowed_phases_list.empty()) {
       allowed_phases_.set(static_cast<int>(ProgramPhase::Execution));
     } else {
@@ -104,28 +78,19 @@ class TraceStream {
     }
   }
 
-  auto set_allowed_file_contexts(std::vector<FileContext> contexts_list)
-      -> void {
-    if (contexts_list.empty()) {
-      allowed_file_contexts_.set(static_cast<int>(FileContext::Main));
-    } else {
-      for (auto context : contexts_list) {
-        if (context == FileContext::All) {
-          allowed_file_contexts_.set();
-        } else {
-          allowed_file_contexts_.set(static_cast<int>(context));
-        }
-      }
+  auto set_allowed_file_kinds(llvm::ArrayRef<FileKind> kind_list) -> void {
+    for (auto kind : kind_list) {
+      allowed_file_kinds_.set(static_cast<int>(kind));
     }
   }
 
-  auto set_source_loc(std::optional<SourceLocation> source_loc) {
+  auto set_source_loc(std::optional<SourceLocation> source_loc) -> void {
     source_loc_ = source_loc;
   }
 
-  auto source_loc() -> std::optional<SourceLocation> { return source_loc_; }
-
-  auto allowed_phases() { return allowed_phases_; }
+  auto source_loc() const -> std::optional<SourceLocation> {
+    return source_loc_;
+  }
 
   // Returns the internal stream. Requires is_enabled.
   auto stream() const -> llvm::raw_ostream& {
@@ -149,7 +114,7 @@ class TraceStream {
   std::optional<SourceLocation> source_loc_ = std::nullopt;
   std::optional<Nonnull<llvm::raw_ostream*>> stream_;
   std::bitset<static_cast<int>(ProgramPhase::Last) + 1> allowed_phases_;
-  std::bitset<static_cast<int>(FileContext::Last) + 1> allowed_file_contexts_;
+  std::bitset<static_cast<int>(FileKind::Last) + 1> allowed_file_kinds_;
 };
 
 // This is a RAII class to set the current program phase, destructor invocation

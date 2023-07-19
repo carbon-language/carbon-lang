@@ -50,7 +50,7 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
       "trace_file",
       cl::desc("Output file for tracing; set to `-` to output to stdout."));
 
-  cl::list<ProgramPhase> allowed_program_phases(
+  cl::list<ProgramPhase> trace_phases(
       "trace_phase",
       cl::desc("Select the program phases to include in the output. By "
                "default, only the execution trace will be added to the trace "
@@ -81,19 +81,20 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
                      "Include trace output for all phases.")),
       cl::CommaSeparated);
 
-  cl::list<FileContext> allowed_file_contexts(
+  enum class TraceFileContext { Main, Prelude, Import, All };
+  cl::list<TraceFileContext> trace_file_contexts(
       "trace_file_context",
       cl::desc("Select file contexts for which you want to include the trace "
                "output"),
       cl::values(
           clEnumValN(
-              FileContext::Main, "main",
+              TraceFileContext::Main, "main",
               "Include trace output for file containing the main function"),
-          clEnumValN(FileContext::Prelude, "prelude",
+          clEnumValN(TraceFileContext::Prelude, "prelude",
                      "Include trace output for prelude"),
-          clEnumValN(FileContext::Import, "import",
+          clEnumValN(TraceFileContext::Import, "import",
                      "Include trace output for imports"),
-          clEnumValN(FileContext::All, "all",
+          clEnumValN(TraceFileContext::All, "all",
                      "Include trace output for all files")),
       cl::CommaSeparated);
 
@@ -117,8 +118,34 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
 
   if (!trace_file_name.empty()) {
     // Adding allowed phases in the trace_stream
-    trace_stream.set_allowed_phases(allowed_program_phases);
-    trace_stream.set_allowed_file_contexts(allowed_file_contexts);
+    trace_stream.set_allowed_phases(trace_phases);
+
+    // Translate --trace_file_context setting into a list of FileKinds.
+    llvm::SmallVector<FileKind> trace_file_kinds = {FileKind::Unknown};
+    if (!trace_file_contexts.getNumOccurrences()) {
+      trace_file_kinds.push_back(FileKind::Main);
+    } else {
+      for (auto context : trace_file_contexts) {
+        switch (context) {
+          case TraceFileContext::Main:
+            trace_file_kinds.push_back(FileKind::Main);
+            break;
+          case TraceFileContext::Prelude:
+            trace_file_kinds.push_back(FileKind::Prelude);
+            break;
+          case TraceFileContext::Import:
+            trace_file_kinds.push_back(FileKind::Import);
+            break;
+          case TraceFileContext::All:
+            trace_file_kinds.push_back(FileKind::Main);
+            trace_file_kinds.push_back(FileKind::Prelude);
+            trace_file_kinds.push_back(FileKind::Import);
+            break;
+        }
+      }
+    }
+    trace_stream.set_allowed_file_kinds(trace_file_kinds);
+
     if (trace_file_name == "-") {
       trace_stream.set_stream(&llvm::outs());
     } else {
