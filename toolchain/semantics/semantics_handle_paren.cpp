@@ -34,10 +34,10 @@ auto SemanticsHandleTupleLiteral(SemanticsContext& context,
   context.node_stack()
       .PopAndDiscardSoloParseNode<
           ParseNodeKind::ParenExpressionOrTupleLiteralStart>();
-  auto node_blocks = context.semantics_ir().GetNodeBlock(refs_id);
+  const auto& node_block = context.semantics_ir().GetNodeBlock(refs_id);
   llvm::SmallVector<SemanticsTypeId> type_ids;
-  type_ids.reserve(node_blocks.size());
-  for (auto node : node_blocks) {
+  type_ids.reserve(node_block.size());
+  for (auto node : node_block) {
     type_ids.push_back(context.semantics_ir().GetNode(node).type_id());
   }
   auto type_id = context.CanonicalizeTupleType(parse_node, type_ids);

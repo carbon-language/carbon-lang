@@ -39,5 +39,5 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+1]]:17: Cannot implicitly convert from `i32` to `() as Type`.
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+1]]:17: Cannot implicitly convert from `i32` to `() as type`.
 var x: () = (66);

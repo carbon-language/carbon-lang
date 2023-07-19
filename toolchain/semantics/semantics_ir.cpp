@@ -245,14 +245,17 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::TupleType: {
         auto refs = GetTypeBlock(node.GetAsTupleType());
         if (refs.empty()) {
-          out << "() as Type";
+          out << "() as type";
           break;
         } else if (step.index == 0) {
           out << "(";
         } else if (step.index < static_cast<int>(refs.size())) {
           out << ", ";
         } else {
-          out << ")";
+          if (step.index == 1) {
+            out << ",";
+          }
+          out << ") as type";
           break;
         }
         steps.push_back({.node_id = step.node_id, .index = step.index + 1});

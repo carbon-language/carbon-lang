@@ -510,12 +510,13 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
       llvm::SmallVector<SemanticsTypeId> type_ids;
       // If it is empty tuple type, we don't fetch anything
       if (tuple_block_id != SemanticsNodeBlockId::Empty) {
-        auto tuple_block = semantics_ir_->GetNodeBlock(tuple_block_id);
-        for (auto node_id : tuple_block) {
+        const auto& tuple_block = semantics_ir_->GetNodeBlock(tuple_block_id);
+        for (auto tuple_node_id : tuple_block) {
           // TODO: Eventually ExpressionAsType will insert implicit cast
           // instructions. When that happens, this will need to verify the full
           // tuple conversion will work before calling it.
-          type_ids.push_back(ExpressionAsType(value.parse_node(), node_id));
+          type_ids.push_back(
+              ExpressionAsType(value.parse_node(), tuple_node_id));
         }
       }
       auto tuple_type_id = CanonicalizeTupleType(value.parse_node(), type_ids);

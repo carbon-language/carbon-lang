@@ -60,5 +60,5 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_too_few_element.carbon:[[@LINE+1]]:26: Cannot implicitly convert from `(i32)` to `(i32, i32)`.
+// CHECK:STDERR: fail_too_few_element.carbon:[[@LINE+1]]:26: Cannot implicitly convert from `(i32,) as type` to `(i32, i32) as type`.
 var x: (i32, i32) = (2, );
