@@ -5,8 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: 0: Heap{}, 1: C{}
 // CHECK:STDOUT: Initialize c from value expression
-// CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: C{}
-// CHECK:STDOUT: c destroyed
+// CHECK:STDOUT: 0: Heap{}, 1: C{}
 // CHECK:STDOUT: c destroyed
 // CHECK:STDOUT: result: 0
 
