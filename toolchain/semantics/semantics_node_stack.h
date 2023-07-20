@@ -252,6 +252,7 @@ class SemanticsNodeStack {
       case Carbon::ParseNodeKind::PatternBinding:
       case Carbon::ParseNodeKind::PrefixOperator:
       case Carbon::ParseNodeKind::ShortCircuitOperand:
+      case Carbon::ParseNodeKind::StructFieldType:
       case Carbon::ParseNodeKind::StructFieldValue:
       case Carbon::ParseNodeKind::StructLiteral:
       case Carbon::ParseNodeKind::StructTypeLiteral:
@@ -274,7 +275,6 @@ class SemanticsNodeStack {
       case Carbon::ParseNodeKind::ParenExpressionOrTupleLiteralStart:
       case Carbon::ParseNodeKind::QualifiedDeclaration:
       case Carbon::ParseNodeKind::ReturnStatementStart:
-      case Carbon::ParseNodeKind::StructFieldType:
       case Carbon::ParseNodeKind::StructLiteralOrStructTypeLiteralStart:
       case Carbon::ParseNodeKind::VariableInitializer:
       case Carbon::ParseNodeKind::VariableIntroducer:
