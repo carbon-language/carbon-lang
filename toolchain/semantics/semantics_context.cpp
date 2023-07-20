@@ -508,7 +508,7 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     if (value.kind() == SemanticsNodeKind::TupleValue) {
       auto tuple_block_id = value.GetAsTupleValue();
       llvm::SmallVector<SemanticsTypeId> type_ids;
-      // If it is empty tuple type, we don't fetch anything
+      // If it is empty tuple type, we don't fetch anything.
       if (tuple_block_id != SemanticsNodeBlockId::Empty) {
         const auto& tuple_block = semantics_ir_->GetNodeBlock(tuple_block_id);
         for (auto tuple_node_id : tuple_block) {
