@@ -19,6 +19,14 @@
 // CHECK:STDOUT:   node+2,
 // CHECK:STDOUT:   node+4,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     type0,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     typeError,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+0, type: type0},

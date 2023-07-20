@@ -23,6 +23,8 @@
 // CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type0},

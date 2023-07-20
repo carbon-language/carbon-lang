@@ -19,6 +19,8 @@
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: Namespace, arg0: name_scope0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},

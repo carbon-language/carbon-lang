@@ -24,6 +24,14 @@
 // CHECK:STDOUT:   node+4,
 // CHECK:STDOUT:   node+6,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     typeTypeType,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     type0,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
