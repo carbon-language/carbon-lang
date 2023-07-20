@@ -528,8 +528,8 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
       return ImplicitAsKind::Compatible;
     }
     // When converting `{}` to a type, the result is `{} as Type`.
-    else if (value.kind() == SemanticsNodeKind::StructValue &&
-             value.GetAsStructValue() == SemanticsNodeBlockId::Empty) {
+    if (value.kind() == SemanticsNodeKind::StructValue &&
+        value.GetAsStructValue() == SemanticsNodeBlockId::Empty) {
       if (output_value_id != nullptr) {
         *output_value_id = semantics_ir_->GetType(value_type_id);
       }

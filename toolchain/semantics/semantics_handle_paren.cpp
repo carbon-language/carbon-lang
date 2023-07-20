@@ -22,6 +22,13 @@ auto SemanticsHandleParenExpression(SemanticsContext& context,
   return true;
 }
 
+auto SemanticsHandleParenExpressionOrTupleLiteralStart(
+    SemanticsContext& context, ParseTree::Node parse_node) -> bool {
+  context.node_stack().Push(parse_node);
+  context.ParamOrArgStart();
+  return true;
+}
+
 auto SemanticsHandleTupleLiteralComma(SemanticsContext& context,
                                       ParseTree::Node /*parse_node*/) -> bool {
   context.ParamOrArgComma(/*for_args=*/true);
@@ -47,13 +54,6 @@ auto SemanticsHandleTupleLiteral(SemanticsContext& context,
   auto value_id = context.AddNode(
       SemanticsNode::TupleValue::Make(parse_node, type_id, refs_id));
   context.node_stack().Push(parse_node, value_id);
-  return true;
-}
-
-auto SemanticsHandleParenExpressionOrTupleLiteralStart(
-    SemanticsContext& context, ParseTree::Node parse_node) -> bool {
-  context.node_stack().Push(parse_node);
-  context.ParamOrArgStart();
   return true;
 }
 
