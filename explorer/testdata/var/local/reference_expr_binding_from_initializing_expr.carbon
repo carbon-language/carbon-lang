@@ -5,7 +5,6 @@
 // AUTOUPDATE
 // CHECK:STDOUT: Bind from c initializing expression
 // CHECK:STDOUT: 0: Heap{}, 1: !Uninit<class C>
-// CHECK:STDOUT: 0: Heap{}, 1: !Uninit<class C>
 // CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: C{}
 // CHECK:STDOUT: Binding scope end
 // CHECK:STDOUT: c destroyed
