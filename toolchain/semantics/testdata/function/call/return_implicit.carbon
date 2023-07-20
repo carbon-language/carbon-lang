@@ -22,5 +22,6 @@
 // CHECK:STDOUT: ]
 
 // TODO test if builtin implicit empty tuple type is treated as being the same type as an explicitly-created empty tuple type.
+// Currently crashes due to call expression.
 // fn MakeImplicitEmptyTuple() {}
 // var v: () = MakeImplicitEmptyTuple();
