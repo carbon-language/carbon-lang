@@ -275,8 +275,10 @@ void ActionStack::PushCleanUpActions(
   while (!actions.empty()) {
     auto& act = actions.top();
     if (act->scope()) {
+      // TODO: Provide a real source location.
       std::unique_ptr<Action> cleanup_action = std::make_unique<CleanUpAction>(
-          std::move(*act->scope()), SourceLocation("stack cleanup", 1));
+          std::move(*act->scope()),
+          SourceLocation("stack cleanup", 1, FileKind::Unknown));
       Push(std::move(cleanup_action));
     }
     actions.pop();
@@ -286,8 +288,10 @@ void ActionStack::PushCleanUpActions(
 void ActionStack::PushCleanUpAction(std::unique_ptr<Action> act) {
   auto& scope = act->scope();
   if (scope && act->kind() != Action::Kind::CleanUpAction) {
+    // TODO: Provide a real source location.
     std::unique_ptr<Action> cleanup_action = std::make_unique<CleanUpAction>(
-        std::move(*scope), SourceLocation("stack cleanup", 1));
+        std::move(*scope),
+        SourceLocation("stack cleanup", 1, FileKind::Unknown));
     Push(std::move(cleanup_action));
   }
 }

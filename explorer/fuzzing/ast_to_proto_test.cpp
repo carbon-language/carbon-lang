@@ -99,7 +99,8 @@ TEST(AstToProtoTest, SetsAllProtoFields) {
   Fuzzing::Carbon merged_proto;
   for (const llvm::StringRef f : *carbon_files) {
     Arena arena;
-    const ErrorOr<AST> ast = Parse(&arena, f, /*parser_debug=*/false);
+    const ErrorOr<AST> ast =
+        Parse(&arena, f, FileKind::Main, /*parser_debug=*/false);
     if (ast.ok()) {
       merged_proto.MergeFrom(AstToProto(*ast));
     }
@@ -136,7 +137,8 @@ TEST(AstToProtoTest, Roundtrip) {
   int parsed_ok_count = 0;
   for (const llvm::StringRef f : *carbon_files) {
     Arena arena;
-    const ErrorOr<AST> ast = Parse(&arena, f, /*parser_debug=*/false);
+    const ErrorOr<AST> ast =
+        Parse(&arena, f, FileKind::Main, /*parser_debug=*/false);
     if (ast.ok()) {
       ++parsed_ok_count;
       const std::string source_from_proto =
@@ -144,8 +146,8 @@ TEST(AstToProtoTest, Roundtrip) {
       SCOPED_TRACE(testing::Message()
                    << "Carbon file: " << f << ", source from proto:\n"
                    << source_from_proto);
-      const ErrorOr<AST> ast_from_proto =
-          ParseFromString(&arena, f, source_from_proto, /*parser_debug=*/false);
+      const ErrorOr<AST> ast_from_proto = ParseFromString(
+          &arena, f, FileKind::Main, source_from_proto, /*parser_debug=*/false);
 
       if (ast_from_proto.ok()) {
         EXPECT_EQ(AstToString(*ast), AstToString(*ast_from_proto));
@@ -175,7 +177,8 @@ TEST(AstToProtoTest, SameProtoAfterClone) {
   int parsed_ok_count = 0;
   for (const llvm::StringRef f : *carbon_files) {
     Arena arena;
-    const ErrorOr<AST> ast = Parse(&arena, f, /*parser_debug=*/false);
+    const ErrorOr<AST> ast =
+        Parse(&arena, f, FileKind::Main, /*parser_debug=*/false);
     if (ast.ok()) {
       ++parsed_ok_count;
       const AST clone = CloneAST(arena, *ast);

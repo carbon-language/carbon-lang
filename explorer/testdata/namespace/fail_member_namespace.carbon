@@ -4,10 +4,11 @@
 //
 // AUTOUPDATE
 
-package ExplorerTest impl;
+package Foo api;
 
-fn Main() -> i32 {
-  // CHECK:STDERR: RUNTIME ERROR: fail_loop.carbon:[[@LINE+1]]: possible infinite loop: too many interpreter steps executed
-  while (true) { }
-  return 0;
+class C {
+  // CHECK:STDERR: SYNTAX ERROR: fail_member_namespace.carbon:[[@LINE+1]]: syntax error, unexpected NAMESPACE, expecting CLASS
+  namespace N;
 }
+
+fn Main() -> i32 { return 0; }

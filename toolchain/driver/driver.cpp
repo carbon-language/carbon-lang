@@ -167,15 +167,15 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
 
   llvm::StringRef output_file;
   if (dump_mode == DumpMode::ObjectCode) {
-    while (!args.empty() && (args.front().starts_with("--target_triple=") ||
-                             args.front().starts_with("--output_file="))) {
+    while (!args.empty()) {
       if (args.front().starts_with("--target_triple=")) {
         target_triple = args.front().split("=").second;
         args = args.drop_front();
-      }
-      if (args.front().starts_with("--output_file=")) {
+      } else if (args.front().starts_with("--output_file=")) {
         output_file = args.front().split("=").second;
         args = args.drop_front();
+      } else {
+        break;
       }
     }
 

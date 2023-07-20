@@ -15,12 +15,12 @@
 namespace Carbon {
 
 static auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
-                      std::string_view input_file_name, bool parser_debug)
-    -> ErrorOr<AST> {
+                      std::string_view input_file_name, FileKind file_kind,
+                      bool parser_debug) -> ErrorOr<AST> {
   // Prepare other parser arguments.
   std::optional<AST> ast = std::nullopt;
   ParseAndLexContext context(arena->New<std::string>(input_file_name),
-                             parser_debug);
+                             file_kind, parser_debug);
 
   // Do the parse.
   auto parser = Parser(arena, scanner, context, &ast);
@@ -43,11 +43,11 @@ static auto ParseImpl(yyscan_t scanner, Nonnull<Arena*> arena,
 }
 
 auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name,
-           bool parser_debug) -> ErrorOr<AST> {
+           FileKind file_kind, bool parser_debug) -> ErrorOr<AST> {
   std::string name_str(input_file_name);
   FILE* input_file = fopen(name_str.c_str(), "r");
   if (input_file == nullptr) {
-    return ProgramError(SourceLocation(name_str.c_str(), 0))
+    return ProgramError(SourceLocation(name_str.c_str(), 0, file_kind))
            << "Error opening file: " << std::strerror(errno);
   }
 
@@ -58,7 +58,7 @@ auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name,
   yy_switch_to_buffer(buffer, scanner);
 
   ErrorOr<AST> result =
-      ParseImpl(scanner, arena, input_file_name, parser_debug);
+      ParseImpl(scanner, arena, input_file_name, file_kind, parser_debug);
 
   // Clean up the lexer.
   yy_delete_buffer(buffer, scanner);
@@ -69,8 +69,8 @@ auto Parse(Nonnull<Arena*> arena, std::string_view input_file_name,
 }
 
 auto ParseFromString(Nonnull<Arena*> arena, std::string_view input_file_name,
-                     std::string_view file_contents, bool parser_debug)
-    -> ErrorOr<AST> {
+                     FileKind file_kind, std::string_view file_contents,
+                     bool parser_debug) -> ErrorOr<AST> {
   // Prepare the lexer.
   yyscan_t scanner;
   yylex_init(&scanner);
@@ -79,7 +79,7 @@ auto ParseFromString(Nonnull<Arena*> arena, std::string_view input_file_name,
   yy_switch_to_buffer(buffer, scanner);
 
   ErrorOr<AST> result =
-      ParseImpl(scanner, arena, input_file_name, parser_debug);
+      ParseImpl(scanner, arena, input_file_name, file_kind, parser_debug);
 
   // Clean up the lexer.
   yy_delete_buffer(buffer, scanner);

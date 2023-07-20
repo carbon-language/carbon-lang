@@ -34,7 +34,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
     }
   }
 
-  SourceLocation source_loc("<Main()>", 0);
+  SourceLocation source_loc("<Main()>", 0, FileKind::Main);
   ast.main_call = arena->New<CallExpression>(
       source_loc, arena->New<IdentifierExpression>(source_loc, "Main"),
       arena->New<TupleLiteral>(source_loc));

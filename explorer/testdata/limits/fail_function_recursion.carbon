@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: RUNTIME ERROR: overflow:1: stack overflow: too many interpreter actions on stack
 
 package EmptyIdentifier impl;
 
 fn A() {
+  // CHECK:STDERR: RUNTIME ERROR: fail_function_recursion.carbon:[[@LINE+1]]: stack overflow: too many interpreter actions on stack
   A();
 }
 
