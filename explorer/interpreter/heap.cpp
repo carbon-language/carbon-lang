@@ -32,8 +32,8 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
   bound_values_.push_back(llvm::DenseMap<const AstNode*, Address>{});
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "(+) memory-alloc: #" << a.index_ << " `" << *v << "` "
-                   << (is_uninitialized ? "uninitialized" : "") << "\n";
+    *trace_stream_ << "(+) memory-alloc: #" << a.index_ << " `" << *v << "`"
+                   << (is_uninitialized ? " uninitialized" : "") << "\n";
   }
 
   return a;
