@@ -592,10 +592,11 @@ auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
   auto node = semantics_ir_->GetNode(node_id);
   if (node.kind() == SemanticsNodeKind::StubReference) {
     node_id = node.GetAsStubReference();
+    CARBON_CHECK(semantics_ir_->GetNode(node_id).kind() !=
+                 SemanticsNodeKind::StubReference)
+        << "Stub reference should not point to another stub reference";
   }
-  CARBON_CHECK(semantics_ir_->GetNode(node_id).kind() !=
-               SemanticsNodeKind::StubReference)
-      << "Stub reference should not point to another stub reference";
+
   auto it = canonical_types_.find(node_id);
   if (it != canonical_types_.end()) {
     return it->second;
