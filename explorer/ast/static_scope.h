@@ -37,12 +37,11 @@ class StaticScope {
 
   // Construct a root scope.
   explicit StaticScope(Nonnull<TraceStream*> trace_stream)
-      : ast_node_(std::nullopt), trace_stream_(trace_stream){};
+      : ast_node_(std::nullopt), trace_stream_(trace_stream) {}
 
   // Construct a scope that is nested within the given scope.
-  explicit StaticScope(
-      Nonnull<const StaticScope*> parent,
-      std::optional<Nonnull<const AstNode*>> ast_node = std::nullopt)
+  explicit StaticScope(Nonnull<const StaticScope*> parent,
+                       std::optional<Nonnull<const AstNode*>> ast_node)
       : parent_scope_(parent),
         ast_node_(ast_node),
         trace_stream_(parent->trace_stream_) {}

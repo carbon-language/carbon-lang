@@ -169,10 +169,9 @@ auto NameResolver::AddExposedName(DeclaredName name, ValueNodeView value,
   // We are just collecting names at this stage, so nothing is marked as
   // declared yet. Therefore we don't complain if the qualifier contains a
   // known but not declared namespace name.
-  CARBON_ASSIGN_OR_RETURN(
-      Nonnull<StaticScope*> scope,
-      ResolveQualifier(name, enclosing_scope,
-                       /*allow_undeclared=*/true));  // Qualifier Resolution
+  CARBON_ASSIGN_OR_RETURN(Nonnull<StaticScope*> scope,
+                          ResolveQualifier(name, enclosing_scope,
+                                           /*allow_undeclared=*/true));
   CARBON_RETURN_IF_ERROR(scope->Add(
       name.inner_name(), value, StaticScope::NameStatus::KnownButNotDeclared));
   return scope;
