@@ -147,10 +147,24 @@ class SemanticsContext {
   auto CanonicalizeStructType(ParseTree::Node parse_node,
                               SemanticsNodeBlockId refs_id) -> SemanticsTypeId;
 
+  // Handles canonicalization of tuple types. This may create a new tuple type
+  // if the `type_ids` doesn't match an existing tuple type.
+  auto CanonicalizeTupleType(ParseTree::Node parse_node,
+                             llvm::SmallVector<SemanticsTypeId>&& type_ids)
+      -> SemanticsTypeId;
+
   // Converts an expression for use as a type.
   // TODO: This should eventually return a type ID.
   auto ExpressionAsType(ParseTree::Node parse_node, SemanticsNodeId value_id)
       -> SemanticsTypeId {
+    auto node = semantics_ir_->GetNode(value_id);
+    if (node.kind() == SemanticsNodeKind::StubReference) {
+      value_id = node.GetAsStubReference();
+      CARBON_CHECK(semantics_ir_->GetNode(value_id).kind() !=
+                   SemanticsNodeKind::StubReference)
+          << "Stub reference should not point to another stub reference";
+    }
+
     return CanonicalizeType(
         ImplicitAsRequired(parse_node, value_id, SemanticsTypeId::TypeType));
   }
@@ -215,11 +229,11 @@ class SemanticsContext {
     Compatible,
   };
 
-  // A FoldingSet node for a struct type.
-  class StructTypeNode : public llvm::FastFoldingSetNode {
+  // A FoldingSet node for a struct or tuple type.
+  class TypeNode : public llvm::FastFoldingSetNode {
    public:
-    explicit StructTypeNode(const llvm::FoldingSetNodeID& node_id,
-                            SemanticsTypeId type_id)
+    explicit TypeNode(const llvm::FoldingSetNodeID& node_id,
+                      SemanticsTypeId type_id)
         : llvm::FastFoldingSetNode(node_id), type_id_(type_id) {}
 
     auto type_id() -> SemanticsTypeId { return type_id_; }
@@ -308,12 +322,16 @@ class SemanticsContext {
 
   // Tracks struct type literals which have been defined, so that they aren't
   // repeatedly redefined.
-  llvm::FoldingSet<StructTypeNode> canonical_struct_types_;
+  llvm::FoldingSet<TypeNode> canonical_struct_types_;
 
-  // Storage for the nodes in canonical_struct_types_. This stores in pointers
-  // so that canonical_struct_types_ can have stable pointers.
-  llvm::SmallVector<std::unique_ptr<StructTypeNode>>
-      canonical_struct_types_nodes_;
+  // Tracks tuple type literals which have been defined, so that they aren't
+  // repeatedly redefined.
+  llvm::FoldingSet<TypeNode> canonical_tuple_types_;
+
+  // Storage for the nodes in canonical_struct_types_ and
+  // canonical_tuple_types_. This stores in pointers so that FoldingSet can have
+  // stable pointers.
+  llvm::SmallVector<std::unique_ptr<TypeNode>> canonical_types_nodes_;
 };
 
 // Parse node handlers. Returns false for unrecoverable errors.

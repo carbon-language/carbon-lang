@@ -5,22 +5,28 @@
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
+// CHECK:STDOUT:   1,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
-// CHECK:STDOUT:   F,
+// CHECK:STDOUT:   x,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
-// CHECK:STDOUT:   node+0,
+// CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT:   node+2,
+// CHECK:STDOUT:   node+4,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+0, type: type0},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type0},
-// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
+// CHECK:STDOUT:   {kind: TupleValue, arg0: block2, type: type1},
+// CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock1, type: typeTypeType},
+// CHECK:STDOUT:   {kind: VarStorage, type: type2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+5, type: type2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -29,11 +35,15 @@
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-fn F() -> () {
-// CHECK:STDERR: fail_missing_return_empty_tuple.carbon:[[@LINE+1]]:1: Missing `return` at end of function with declared return type.
-}
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+1]]:12: Cannot implicitly convert from `i32` to `Type`.
+var x: (1, );

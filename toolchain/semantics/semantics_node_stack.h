@@ -256,6 +256,8 @@ class SemanticsNodeStack {
       case Carbon::ParseNodeKind::StructLiteral:
       case Carbon::ParseNodeKind::StructTypeLiteral:
         return IdKind::SemanticsNodeId;
+      case Carbon::ParseNodeKind::TupleLiteral:
+        return IdKind::SemanticsNodeId;
       case Carbon::ParseNodeKind::IfExpressionThen:
       case Carbon::ParseNodeKind::IfStatementElse:
       case Carbon::ParseNodeKind::ParameterList:

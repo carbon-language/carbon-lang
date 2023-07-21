@@ -6,6 +6,7 @@
 
 #include <utility>
 
+#include "common/check.h"
 #include "common/vlog.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
@@ -14,6 +15,7 @@
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_node_block_stack.h"
+#include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
 
@@ -372,11 +374,29 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     // Type doesn't need to change.
     return ImplicitAsKind::Identical;
   }
-
   if (as_type_id == SemanticsTypeId::TypeType) {
-    // TODO: When converting `()` to a type, the result is `() as Type`.
-    // Right now there is no tuple value support.
-
+    if (value.kind() == SemanticsNodeKind::TupleValue) {
+      auto tuple_block_id = value.GetAsTupleValue();
+      llvm::SmallVector<SemanticsTypeId> type_ids;
+      // If it is empty tuple type, we don't fetch anything.
+      if (tuple_block_id != SemanticsNodeBlockId::Empty) {
+        const auto& tuple_block = semantics_ir_->GetNodeBlock(tuple_block_id);
+        for (auto tuple_node_id : tuple_block) {
+          // TODO: Eventually ExpressionAsType will insert implicit cast
+          // instructions. When that happens, this will need to verify the full
+          // tuple conversion will work before calling it.
+          type_ids.push_back(
+              ExpressionAsType(value.parse_node(), tuple_node_id));
+        }
+      }
+      auto tuple_type_id =
+          CanonicalizeTupleType(value.parse_node(), std::move(type_ids));
+      if (output_value_id != nullptr) {
+        *output_value_id =
+            semantics_ir_->GetTypeAllowBuiltinTypes(tuple_type_id);
+      }
+      return ImplicitAsKind::Compatible;
+    }
     // When converting `{}` to a type, the result is `{} as Type`.
     if (value.kind() == SemanticsNodeKind::StructValue &&
         value.GetAsStructValue() == SemanticsNodeBlockId::Empty) {
@@ -439,6 +459,14 @@ auto SemanticsContext::ParamOrArgSave(bool for_args) -> void {
 
 auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
     -> SemanticsTypeId {
+  auto node = semantics_ir_->GetNode(node_id);
+  if (node.kind() == SemanticsNodeKind::StubReference) {
+    node_id = node.GetAsStubReference();
+    CARBON_CHECK(semantics_ir_->GetNode(node_id).kind() !=
+                 SemanticsNodeKind::StubReference)
+        << "Stub reference should not point to another stub reference";
+  }
+
   auto it = canonical_types_.find(node_id);
   if (it != canonical_types_.end()) {
     return it->second;
@@ -474,10 +502,39 @@ auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
       parse_node, SemanticsTypeId::TypeType, refs_id));
   auto type_id = semantics_ir_->AddType(node_id);
   CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
-  canonical_struct_types_nodes_.push_back(
-      std::make_unique<StructTypeNode>(canonical_id, type_id));
-  canonical_struct_types_.InsertNode(canonical_struct_types_nodes_.back().get(),
+  canonical_types_nodes_.push_back(
+      std::make_unique<TypeNode>(canonical_id, type_id));
+  canonical_struct_types_.InsertNode(canonical_types_nodes_.back().get(),
                                      insert_pos);
+  return type_id;
+}
+
+auto SemanticsContext::CanonicalizeTupleType(
+    ParseTree::Node parse_node, llvm::SmallVector<SemanticsTypeId>&& type_ids)
+    -> SemanticsTypeId {
+  llvm::FoldingSetNodeID canonical_id;
+  for (const auto& type_id : type_ids) {
+    canonical_id.AddInteger(type_id.index);
+  }
+  // If a tuple with matching fields was already created, reuse it.
+  void* insert_pos;
+  auto* node =
+      canonical_tuple_types_.FindNodeOrInsertPos(canonical_id, insert_pos);
+  if (node != nullptr) {
+    return node->type_id();
+  }
+  // The tuple type doesn't already exist, so create and store it as canonical.
+  auto type_block_id = semantics_ir_->AddTypeBlock();
+  auto& type_block = semantics_ir_->GetTypeBlock(type_block_id);
+  type_block = std::move(type_ids);
+  auto node_id = AddNode(SemanticsNode::TupleType::Make(
+      parse_node, SemanticsTypeId::TypeType, type_block_id));
+  auto type_id = semantics_ir_->AddType(node_id);
+  CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
+  canonical_types_nodes_.push_back(
+      std::make_unique<TypeNode>(canonical_id, type_id));
+  canonical_tuple_types_.InsertNode(canonical_types_nodes_.back().get(),
+                                    insert_pos);
   return type_id;
 }
 
