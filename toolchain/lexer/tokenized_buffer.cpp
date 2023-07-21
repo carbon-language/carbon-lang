@@ -88,7 +88,7 @@ class TokenizedBuffer::Lexer {
         emitter_(translator_, consumer),
         token_translator_(&buffer, &current_column_),
         token_emitter_(token_translator_, consumer),
-        current_line_(buffer.AddLine({0, 0, 0})),
+        current_line_(buffer.AddLine(LineInfo(0))),
         current_line_info_(&buffer.GetLineInfo(current_line_)) {}
 
   // Perform the necessary bookkeeping to step past a newline at the current
@@ -97,7 +97,7 @@ class TokenizedBuffer::Lexer {
     current_line_info_->length = current_column_;
 
     current_line_ = buffer_->AddLine(
-        {current_line_info_->start + current_column_ + 1, 0, 0});
+        LineInfo(current_line_info_->start + current_column_ + 1));
     current_line_info_ = &buffer_->GetLineInfo(current_line_);
     current_column_ = 0;
     set_indent_ = false;
@@ -907,23 +907,37 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   int line_number = line_it - buffer_->line_infos_.begin();
   int column_number = offset - line_it->start;
 
+  llvm::StringRef line;
+
   // We might still be lexing the last line. If so, check to see if there are
   // any newline characters between the position we've finished lexing up to
   // and the given location.
   if (incomplete_line_info && column_number > *last_line_lexed_to_column_) {
     column_number = *last_line_lexed_to_column_;
+    int64_t start = line_it->start;
     for (int64_t i = line_it->start + *last_line_lexed_to_column_; i != offset;
          ++i) {
       if (buffer_->source_->text()[i] == '\n') {
+        start = i;
         ++line_number;
         column_number = 0;
       } else {
         ++column_number;
       }
     }
+    line = buffer_->source_->text().substr(start).take_until(
+        [](char c) { return c == '\n'; });
+  } else if (line_it->length < 0) {
+    line =
+        buffer_->source_->text().substr(line_it->start).take_until([](char c) {
+          return c == '\n';
+        });
+  } else {
+    line = buffer_->source_->text().substr(line_it->start, line_it->length);
   }
 
-  return {.file_name = buffer_->source_->filename().str(),
+  return {.file_name = buffer_->source_->filename(),
+          .line = line,
           .line_number = line_number + 1,
           .column_number = column_number + 1};
 }

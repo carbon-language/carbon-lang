@@ -39,5 +39,7 @@
 // CHECK:STDOUT: ]
 
 fn F() -> () {
-// CHECK:STDERR: fail_missing_return_empty_tuple.carbon:[[@LINE+1]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: fail_missing_return_empty_tuple.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
 }

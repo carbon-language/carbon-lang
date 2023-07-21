@@ -39,6 +39,8 @@
 // CHECK:STDOUT: ]
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+1]]:13: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:13: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR:   return 1.0;
+  // CHECK:STDERR:             ^
   return 1.0;
 }

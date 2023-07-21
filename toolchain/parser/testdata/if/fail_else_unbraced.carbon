@@ -61,15 +61,23 @@
 
 fn F() {
   if (a)
-    // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+1]]:5: Expected braced code block.
+    // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+3]]:5: Expected braced code block.
+    // CHECK:STDERR:     if (b)
+    // CHECK:STDERR:     ^
     if (b)
-      // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+1]]:7: Expected braced code block.
+      // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+3]]:7: Expected braced code block.
+      // CHECK:STDERR:       c;
+      // CHECK:STDERR:       ^
       c;
     else
-      // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+1]]:7: Expected braced code block.
+      // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+3]]:7: Expected braced code block.
+      // CHECK:STDERR:       d;
+      // CHECK:STDERR:       ^
       d;
   else
-    // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+1]]:5: Expected braced code block.
+    // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+3]]:5: Expected braced code block.
+    // CHECK:STDERR:     e;
+    // CHECK:STDERR:     ^
     e;
   if (x) { f; }
   else if (x) { g; }

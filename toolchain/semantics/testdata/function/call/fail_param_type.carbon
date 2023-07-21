@@ -65,7 +65,11 @@
 fn Run(a: i32) {}
 
 fn Main() {
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+2]]:6: No matching callable was found.
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-4]]:1: Function cannot be used: Cannot implicityly convert argument 0 from `f64` to `i32`.
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+6]]:6: No matching callable was found.
+  // CHECK:STDERR:   Run(1.0);
+  // CHECK:STDERR:      ^
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-6]]:1: Function cannot be used: Cannot implicityly convert argument 0 from `f64` to `i32`.
+  // CHECK:STDERR: fn Run(a: i32) {}
+  // CHECK:STDERR: ^
   Run(1.0);
 }

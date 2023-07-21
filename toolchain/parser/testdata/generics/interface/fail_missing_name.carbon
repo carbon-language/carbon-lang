@@ -10,6 +10,8 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_missing_name.carbon:[[@LINE+1]]:11: `interface` introducer should be followed by a name.
+// CHECK:STDERR: fail_missing_name.carbon:[[@LINE+3]]:11: `interface` introducer should be followed by a name.
+// CHECK:STDERR: interface {
+// CHECK:STDERR:           ^
 interface {
 }

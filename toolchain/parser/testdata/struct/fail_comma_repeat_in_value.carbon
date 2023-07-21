@@ -23,5 +23,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_comma_repeat_in_value.carbon:[[@LINE+1]]:16: Expected `.field = value`.
+// CHECK:STDERR: fail_comma_repeat_in_value.carbon:[[@LINE+3]]:16: Expected `.field = value`.
+// CHECK:STDERR: var x: {.a = 0,,} = {};
+// CHECK:STDERR:                ^
 var x: {.a = 0,,} = {};

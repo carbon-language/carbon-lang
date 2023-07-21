@@ -61,5 +61,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+1]]:30: Cannot implicitly convert from `{.b: f64}` to `{.a: i32}`.
+// CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+3]]:30: Cannot implicitly convert from `{.b: f64}` to `{.a: i32}`.
+// CHECK:STDERR: var x: {.a: i32} = {.b = 1.0};
+// CHECK:STDERR:                              ^
 var x: {.a: i32} = {.b = 1.0};
