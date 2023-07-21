@@ -897,8 +897,6 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   const auto* line_it = std::partition_point(
       buffer_->line_infos_.begin(), buffer_->line_infos_.end(),
       [offset](const LineInfo& line) { return line.start <= offset; });
-  bool incomplete_line_info = last_line_lexed_to_column_ != nullptr &&
-                              line_it == buffer_->line_infos_.end();
 
   // Step back one line to find the line containing the given position.
   CARBON_CHECK(line_it != buffer_->line_infos_.begin())
@@ -909,30 +907,35 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
 
   llvm::StringRef line;
 
-  // We might still be lexing the last line. If so, check to see if there are
-  // any newline characters between the position we've finished lexing up to
-  // and the given location.
-  if (incomplete_line_info && column_number > *last_line_lexed_to_column_) {
-    column_number = *last_line_lexed_to_column_;
-    int64_t start = line_it->start;
-    for (int64_t i = line_it->start + *last_line_lexed_to_column_; i != offset;
-         ++i) {
-      if (buffer_->source_->text()[i] == '\n') {
-        start = i;
-        ++line_number;
-        column_number = 0;
+  // A negative length indicates the line isn't fully processed.
+  if (line_it->length < 0) {
+    if (column_number > *last_line_lexed_to_column_) {
+      // The location of the diagnostic hasn't been lexed yet. Check to see if
+      // there are any newline characters between the position we've finished
+      // lexing up to and the given location.
+      int64_t examine_start = line_it->start + *last_line_lexed_to_column_;
+      auto examine_slice = buffer_->source_->text().substr(
+          examine_start, offset - examine_start);
+      auto newline_pos = examine_slice.rfind('\n');
+      if (newline_pos != llvm::StringRef::npos) {
+        // A newline was found before the diagnostic's offset, so adjust the
+        // diagnostic location.
+        line = buffer_->source_->text().substr(newline_pos + 1);
+        column_number = offset - newline_pos;
+        // Add the number of newlines between the old and new start.
+        line_number += examine_slice.take_front(newline_pos).count('\n') + 1;
       } else {
-        ++column_number;
+        // We can use the start because no newline came before the column.
+        line = buffer_->source_->text().substr(line_it->start);
       }
+    } else {
+      // We can use the start because the column was already lexed.
+      line = buffer_->source_->text().substr(line_it->start);
     }
-    line = buffer_->source_->text().substr(start).take_until(
-        [](char c) { return c == '\n'; });
-  } else if (line_it->length < 0) {
-    line =
-        buffer_->source_->text().substr(line_it->start).take_until([](char c) {
-          return c == '\n';
-        });
+    // Look for the next newline since we don't know the length.
+    line = line.take_until([](char c) { return c == '\n'; });
   } else {
+    // The line is fully lexed, so grab it directly.
     line = buffer_->source_->text().substr(line_it->start, line_it->length);
   }
 
