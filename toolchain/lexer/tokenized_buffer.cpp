@@ -897,8 +897,6 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   const auto* line_it = std::partition_point(
       buffer_->line_infos_.begin(), buffer_->line_infos_.end(),
       [offset](const LineInfo& line) { return line.start <= offset; });
-  bool incomplete_line_info = last_line_lexed_to_column_ != nullptr &&
-                              line_it == buffer_->line_infos_.end();
 
   // Step back one line to find the line containing the given position.
   CARBON_CHECK(line_it != buffer_->line_infos_.begin())
@@ -907,33 +905,31 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   int line_number = line_it - buffer_->line_infos_.begin();
   int column_number = offset - line_it->start;
 
-  llvm::StringRef line;
-
-  // We might still be lexing the last line. If so, check to see if there are
-  // any newline characters between the position we've finished lexing up to
-  // and the given location.
-  if (incomplete_line_info && column_number > *last_line_lexed_to_column_) {
-    column_number = *last_line_lexed_to_column_;
-    int64_t start = line_it->start;
-    for (int64_t i = line_it->start + *last_line_lexed_to_column_; i != offset;
-         ++i) {
-      if (buffer_->source_->text()[i] == '\n') {
-        start = i;
-        ++line_number;
-        column_number = 0;
-      } else {
-        ++column_number;
+  // Start by grabbing the buffer. If the line isn't fully lexed, the length
+  // will be npos and the buffer will be grabbed from the start; we'll then
+  // adjust the length.
+  llvm::StringRef line =
+      buffer_->source_->text().substr(line_it->start, line_it->length);
+  if (line_it->length == static_cast<int32_t>(llvm::StringRef::npos)) {
+    // The location of the diagnostic hasn't been lexed yet. Check to see if
+    // there are any newline characters between the position we've finished
+    // lexing up to and the given location.
+    if (column_number > *last_line_lexed_to_column_) {
+      auto start_newline_pos =
+          line.take_front(*last_line_lexed_to_column_).rfind('\n');
+      if (start_newline_pos != llvm::StringRef::npos) {
+        // Adjust the diagnostic location because a newline was found.
+        line_number += line.take_front(start_newline_pos).count('\n') + 1;
+        column_number = offset - start_newline_pos;
+        line = line.drop_front(start_newline_pos + 1);
       }
     }
-    line = buffer_->source_->text().substr(start).take_until(
-        [](char c) { return c == '\n'; });
-  } else if (line_it->length < 0) {
-    line =
-        buffer_->source_->text().substr(line_it->start).take_until([](char c) {
-          return c == '\n';
-        });
-  } else {
-    line = buffer_->source_->text().substr(line_it->start, line_it->length);
+    // Look for the next newline since we don't know the length. We can start at
+    // the column because we've already skipped past prior newlines.
+    auto end_newline_pos = line.find('\n', column_number);
+    if (end_newline_pos != llvm::StringRef::npos) {
+      line = line.take_front(end_newline_pos);
+    }
   }
 
   return {.file_name = buffer_->source_->filename(),

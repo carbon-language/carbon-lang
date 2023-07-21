@@ -360,7 +360,10 @@ class TokenizedBuffer {
   struct LineInfo {
     // The length will always be assigned later. Indent may be assigned if
     // non-zero.
-    explicit LineInfo(int64_t start) : start(start), length(-1), indent(0) {}
+    explicit LineInfo(int64_t start)
+        : start(start),
+          length(static_cast<int32_t>(llvm::StringRef::npos)),
+          indent(0) {}
 
     // Zero-based byte offset of the start of the line within the source buffer
     // provided.
