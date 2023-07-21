@@ -543,7 +543,7 @@ class TokenizedBuffer::Lexer {
   int current_column_ = 0;
   bool set_indent_ = false;
 
-  llvm::SmallVector<Token, 8> open_groups_;
+  llvm::SmallVector<Token> open_groups_;
 };
 
 auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
