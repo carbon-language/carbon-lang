@@ -84,10 +84,18 @@ class TokenizedBuffer::Lexer {
 
   Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
       : buffer_(&buffer),
-        translator_(&buffer, &current_column_),
-        emitter_(translator_, consumer),
-        token_translator_(&buffer, &current_column_),
-        token_emitter_(token_translator_, consumer),
+        emitter_(
+            [this](const char* loc) {
+              return buffer_->SourcePointerToDiagnosticLocation(
+                  loc, current_column_);
+            },
+            consumer),
+        token_emitter_(
+            [this](Token t) {
+              return buffer_->TokenToDiagnosticLocationInternal(
+                  t, current_column_);
+            },
+            consumer),
         current_line_(buffer.AddLine(LineInfo(0))),
         current_line_info_(&buffer.GetLineInfo(current_line_)) {}
 
@@ -531,10 +539,7 @@ class TokenizedBuffer::Lexer {
  private:
   TokenizedBuffer* buffer_;
 
-  SourceBufferLocationTranslator translator_;
   LexerDiagnosticEmitter emitter_;
-
-  TokenLocationTranslator token_translator_;
   TokenDiagnosticEmitter token_emitter_;
 
   Line current_line_;
@@ -885,79 +890,80 @@ auto TokenizedBuffer::TokenIterator::Print(llvm::raw_ostream& output) const
   output << token_.index;
 }
 
-auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
-    const char* loc) -> DiagnosticLocation {
-  CARBON_CHECK(StringRefContainsPointer(buffer_->source_->text(), loc))
+auto TokenizedBuffer::SourcePointerToDiagnosticLocation(
+    const char* loc, int last_line_lexed_to_column) const
+    -> DiagnosticLocation {
+  CARBON_CHECK(StringRefContainsPointer(source_->text(), loc))
       << "location not within buffer";
-  int64_t offset = loc - buffer_->source_->text().begin();
+  int64_t offset = loc - source_->text().begin();
 
   // Find the first line starting after the given location. Note that we can't
   // inspect `line.length` here because it is not necessarily correct for the
   // final line during lexing (but will be correct later for the parse tree).
   const auto* line_it = std::partition_point(
-      buffer_->line_infos_.begin(), buffer_->line_infos_.end(),
+      line_infos_.begin(), line_infos_.end(),
       [offset](const LineInfo& line) { return line.start <= offset; });
 
   // Step back one line to find the line containing the given position.
-  CARBON_CHECK(line_it != buffer_->line_infos_.begin())
+  CARBON_CHECK(line_it != line_infos_.begin())
       << "location precedes the start of the first line";
   --line_it;
-  int line_number = line_it - buffer_->line_infos_.begin();
+  int line_number = line_it - line_infos_.begin();
   int column_number = offset - line_it->start;
 
   llvm::StringRef line;
 
   // A negative length indicates the line isn't fully processed.
   if (line_it->length < 0) {
-    if (column_number > *last_line_lexed_to_column_) {
+    if (column_number > last_line_lexed_to_column) {
       // The location of the diagnostic hasn't been lexed yet. Check to see if
       // there are any newline characters between the position we've finished
       // lexing up to and the given location.
-      int64_t examine_start = line_it->start + *last_line_lexed_to_column_;
-      auto examine_slice = buffer_->source_->text().substr(
-          examine_start, offset - examine_start);
+      int64_t examine_start = line_it->start + last_line_lexed_to_column;
+      auto examine_slice =
+          source_->text().substr(examine_start, offset - examine_start);
       auto newline_pos = examine_slice.rfind('\n');
       if (newline_pos != llvm::StringRef::npos) {
         // A newline was found before the diagnostic's offset, so adjust the
         // diagnostic location.
-        line = buffer_->source_->text().substr(newline_pos + 1);
+        line = source_->text().substr(newline_pos + 1);
         column_number = offset - newline_pos;
         // Add the number of newlines between the old and new start.
         line_number += examine_slice.take_front(newline_pos).count('\n') + 1;
       } else {
         // We can use the start because no newline came before the column.
-        line = buffer_->source_->text().substr(line_it->start);
+        line = source_->text().substr(line_it->start);
       }
     } else {
       // We can use the start because the column was already lexed.
-      line = buffer_->source_->text().substr(line_it->start);
+      line = source_->text().substr(line_it->start);
     }
     // Look for the next newline since we don't know the length.
     line = line.take_until([](char c) { return c == '\n'; });
   } else {
     // The line is fully lexed, so grab it directly.
-    line = buffer_->source_->text().substr(line_it->start, line_it->length);
+    line = source_->text().substr(line_it->start, line_it->length);
   }
 
-  return {.file_name = buffer_->source_->filename(),
+  return {.file_name = source_->filename(),
           .line = line,
           .line_number = line_number + 1,
           .column_number = column_number + 1};
 }
 
-auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
-    -> DiagnosticLocation {
+auto TokenizedBuffer::TokenToDiagnosticLocationInternal(
+    Token token, int last_line_lexed_to_column) const -> DiagnosticLocation {
   // Map the token location into a position within the source buffer.
-  const auto& token_info = buffer_->GetTokenInfo(token);
-  const auto& line_info = buffer_->GetLineInfo(token_info.token_line);
+  const auto& token_info = GetTokenInfo(token);
+  const auto& line_info = GetLineInfo(token_info.token_line);
   const char* token_start =
-      buffer_->source_->text().begin() + line_info.start + token_info.column;
+      source_->text().begin() + line_info.start + token_info.column;
 
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
-  return SourceBufferLocationTranslator(buffer_, last_line_lexed_to_column_)
-      .GetLocation(token_start);
+  return SourcePointerToDiagnosticLocation(token_start,
+                                           last_line_lexed_to_column);
 }
 
 }  // namespace Carbon

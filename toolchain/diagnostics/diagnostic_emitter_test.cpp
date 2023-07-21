@@ -14,17 +14,15 @@
 namespace Carbon::Testing {
 namespace {
 
-struct FakeDiagnosticLocationTranslator : DiagnosticLocationTranslator<int> {
-  auto GetLocation(int n) -> DiagnosticLocation override {
-    return {.line_number = 1, .column_number = n};
-  }
-};
-
 class DiagnosticEmitterTest : public ::testing::Test {
  protected:
-  DiagnosticEmitterTest() : emitter_(translator_, consumer_) {}
+  DiagnosticEmitterTest()
+      : emitter_(
+            [](int n) {
+              return DiagnosticLocation{.line_number = 1, .column_number = n};
+            },
+            consumer_) {}
 
-  FakeDiagnosticLocationTranslator translator_;
   Testing::MockDiagnosticConsumer consumer_;
   DiagnosticEmitter<int> emitter_;
 };

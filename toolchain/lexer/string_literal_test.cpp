@@ -28,8 +28,11 @@ class StringLiteralTest : public ::testing::Test {
 
   auto Parse(llvm::StringRef text) -> std::string {
     LexedStringLiteral token = Lex(text);
-    Testing::SingleTokenDiagnosticTranslator translator(text);
-    DiagnosticEmitter<const char*> emitter(translator, error_tracker);
+    DiagnosticEmitter<const char*> emitter(
+        [&](const char* pos) {
+          return SingleTokenToDiagnosticLocation(text, pos);
+        },
+        error_tracker);
     return token.ComputeValue(emitter);
   }
 

@@ -6,7 +6,6 @@
 
 #include "common/check.h"
 #include "toolchain/common/pretty_stack_trace_function.h"
-#include "toolchain/parser/parse_tree_node_location_translator.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
@@ -57,9 +56,12 @@ auto SemanticsIR::MakeFromParseTree(const SemanticsIR& builtin_ir,
         type, BuiltinIR, SemanticsNodeId(i));
   }
 
-  ParseTreeNodeLocationTranslator translator(&tokens, &parse_tree);
   ErrorTrackingDiagnosticConsumer err_tracker(consumer);
-  DiagnosticEmitter<ParseTree::Node> emitter(translator, err_tracker);
+  DiagnosticEmitter<ParseTree::Node> emitter(
+      [&](ParseTree::Node node) {
+        return tokens.TokenToDiagnosticLocation(parse_tree.node_token(node));
+      },
+      err_tracker);
 
   SemanticsContext context(tokens, emitter, parse_tree, semantics_ir,
                            vlog_stream);

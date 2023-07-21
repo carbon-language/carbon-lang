@@ -132,20 +132,6 @@ class DiagnosticConsumer {
   virtual auto Flush() -> void {}
 };
 
-// An interface that can translate some representation of a location into a
-// diagnostic location.
-//
-// TODO: Revisit this once the diagnostics machinery is more complete and see
-// if we can turn it into a `std::function`.
-template <typename LocationT>
-class DiagnosticLocationTranslator {
- public:
-  virtual ~DiagnosticLocationTranslator() = default;
-
-  [[nodiscard]] virtual auto GetLocation(LocationT loc)
-      -> DiagnosticLocation = 0;
-};
-
 namespace Internal {
 
 // Use the DIAGNOSTIC macro to instantiate this.
@@ -248,7 +234,7 @@ class DiagnosticEmitter {
                      Internal::NoTypeDeduction<Args>... args)
         -> DiagnosticMessage {
       return DiagnosticMessage(
-          diagnostic_base.Kind, emitter_->translator_->GetLocation(location),
+          diagnostic_base.Kind, emitter_->translator_(location),
           diagnostic_base.Format, {std::move(args)...},
           [&diagnostic_base](const DiagnosticMessage& message) -> std::string {
             return diagnostic_base.FormatFn(message);
@@ -262,9 +248,9 @@ class DiagnosticEmitter {
   // The `translator` and `consumer` are required to outlive the diagnostic
   // emitter.
   explicit DiagnosticEmitter(
-      DiagnosticLocationTranslator<LocationT>& translator,
+      std::function<DiagnosticLocation(LocationT)> translator,
       DiagnosticConsumer& consumer)
-      : translator_(&translator), consumer_(&consumer) {}
+      : translator_(translator), consumer_(&consumer) {}
   ~DiagnosticEmitter() = default;
 
   // Emits an error.
@@ -294,7 +280,7 @@ class DiagnosticEmitter {
   }
 
  private:
-  DiagnosticLocationTranslator<LocationT>* translator_;
+  std::function<DiagnosticLocation(LocationT)> translator_;
   DiagnosticConsumer* consumer_;
 };
 

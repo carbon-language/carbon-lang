@@ -166,24 +166,6 @@ class TokenizedBuffer {
     bool is_decimal_;
   };
 
-  // A diagnostic location translator that maps token locations into source
-  // buffer locations.
-  class TokenLocationTranslator : public DiagnosticLocationTranslator<Token> {
-   public:
-    explicit TokenLocationTranslator(const TokenizedBuffer* buffer,
-                                     int* last_line_lexed_to_column)
-        : buffer_(buffer),
-          last_line_lexed_to_column_(last_line_lexed_to_column) {}
-
-    // Map the given token into a diagnostic location.
-    auto GetLocation(Token token) -> DiagnosticLocation override;
-
-   private:
-    const TokenizedBuffer* buffer_;
-    // Passed to SourceBufferLocationTranslator.
-    int* last_line_lexed_to_column_;
-  };
-
   // Lexes a buffer of source code into a tokenized buffer.
   //
   // The provided source buffer must outlive any returned `TokenizedBuffer`
@@ -249,6 +231,13 @@ class TokenizedBuffer {
   // Returns the text for an identifier.
   [[nodiscard]] auto GetIdentifierText(Identifier id) const -> llvm::StringRef;
 
+  // Translates a token to a diagnostic location. Only used after lexing is
+  // complete; TokenToDiagnosticLocationInternal is used privately during
+  // lexing.
+  auto TokenToDiagnosticLocation(Token token) const -> DiagnosticLocation {
+    return TokenToDiagnosticLocationInternal(token, -1);
+  }
+
   // Prints a description of the tokenized stream to the provided `raw_ostream`.
   //
   // It prints one line of information for each token in the buffer, including
@@ -293,26 +282,16 @@ class TokenizedBuffer {
   class Lexer;
   friend Lexer;
 
-  // A diagnostic location translator that maps token locations into source
-  // buffer locations.
-  class SourceBufferLocationTranslator
-      : public DiagnosticLocationTranslator<const char*> {
-   public:
-    explicit SourceBufferLocationTranslator(const TokenizedBuffer* buffer,
-                                            int* last_line_lexed_to_column)
-        : buffer_(buffer),
-          last_line_lexed_to_column_(last_line_lexed_to_column) {}
+  // Translates a pointer into the source buffer to a diagnostic location.
+  auto SourcePointerToDiagnosticLocation(const char* loc,
+                                         int last_line_lexed_to_column) const
+      -> DiagnosticLocation;
 
-    // Map the given position within the source buffer into a diagnostic
-    // location.
-    auto GetLocation(const char* loc) -> DiagnosticLocation override;
-
-   private:
-    const TokenizedBuffer* buffer_;
-    // The last lexed column, for determining whether the last line should be
-    // checked for unlexed newlines. May be null after lexing is complete.
-    int* last_line_lexed_to_column_;
-  };
+  // Translates a token to a diagnostic location. last_line_lexed_to_column will
+  // be -1 after lexing is complete.
+  auto TokenToDiagnosticLocationInternal(Token token,
+                                         int last_line_lexed_to_column) const
+      -> DiagnosticLocation;
 
   // Specifies minimum widths to use when printing a token's fields via
   // `printToken`.

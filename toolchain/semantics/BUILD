@@ -86,7 +86,6 @@ cc_library(
         "//toolchain/lexer:tokenized_buffer",
         "//toolchain/parser:parse_node_kind",
         "//toolchain/parser:parse_tree",
-        "//toolchain/parser:parse_tree_node_location_translator",
         "@llvm-project//llvm:Support",
     ],
 )

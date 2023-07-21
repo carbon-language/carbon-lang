@@ -20,9 +20,11 @@ namespace Carbon {
 
 auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
                       llvm::raw_ostream* vlog_stream) -> ParseTree {
-  TokenizedBuffer::TokenLocationTranslator translator(
-      &tokens, /*last_line_lexed_to_column=*/nullptr);
-  TokenDiagnosticEmitter emitter(translator, consumer);
+  TokenDiagnosticEmitter emitter(
+      [&tokens](TokenizedBuffer::Token t) {
+        return tokens.TokenToDiagnosticLocation(t);
+      },
+      consumer);
 
   // Delegate to the parser.
   ParseTree tree(tokens);
