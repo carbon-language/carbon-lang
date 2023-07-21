@@ -6,7 +6,7 @@ name: test
 
 on:
   push:
-    branches: [action-test]
+    branches: [trunk]
   pull_request_target:
   merge_group:
 
@@ -28,11 +28,8 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      # Free up disk space (Ubuntu only). This frees up about 8GB according to
-      # https://github.com/marketplace/actions/maximize-build-disk-space. There
-      # are additional settings which we can enable to free up more; however,
-      # those aren't enabled here so that if we run into a limit, we have some
-      # easy measures to get more space while examining the build.
+      # Ubuntu images start with 23GB available, and this adds 14GB more. For
+      # comparison, MacOS images have >100GB free.
       - name: Free up disk space (Ubuntu)
         if: matrix.os == 'ubuntu-22.04'
         uses: jlumbroso/free-disk-space@v1.2.0
@@ -40,8 +37,11 @@ jobs:
           android: true
           dotnet: true
           haskell: true
+          # Although we could delete more, if we run into a limit, it provides a
+          # little flexibility to get space while trying to shrink the build.
+          # There's also support for docker images at head (1.2.0 is still
+          # the latest release).
           large-packages: false
-          docker-images: false
           swap-storage: false
 
       # Checkout the pull request head or the branch.
