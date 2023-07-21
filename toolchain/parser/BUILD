@@ -47,6 +47,7 @@ cc_library(
         "//common:error",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/common:pretty_stack_trace_function",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",
