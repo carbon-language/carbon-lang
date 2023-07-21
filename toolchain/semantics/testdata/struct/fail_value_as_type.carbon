@@ -19,6 +19,8 @@
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT:   node+3,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, type: type0},

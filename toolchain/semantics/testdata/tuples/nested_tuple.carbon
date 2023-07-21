@@ -23,6 +23,24 @@
 // CHECK:STDOUT:   node+8,
 // CHECK:STDOUT:   node+9,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     typeTypeType,
+// CHECK:STDOUT:     typeTypeType,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     type0,
+// CHECK:STDOUT:     typeTypeType,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     type2,
+// CHECK:STDOUT:     type2,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     type3,
+// CHECK:STDOUT:     type2,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},

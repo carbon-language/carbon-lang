@@ -14,6 +14,8 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
