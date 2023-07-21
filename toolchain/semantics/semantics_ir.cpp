@@ -155,6 +155,24 @@ static auto PrintList(llvm::raw_ostream& out, llvm::StringLiteral name,
   out << "]\n";
 }
 
+template <typename T>
+static auto PrintBlock(llvm::raw_ostream& out, llvm::StringLiteral block_name,
+                       const llvm::SmallVector<T>& blocks) {
+  out << block_name << ": [\n";
+  for (const auto& block : blocks) {
+    out.indent(Indent);
+    out << "[\n";
+
+    for (const auto& node : block) {
+      out.indent(2 * Indent);
+      out << node << ",\n";
+    }
+    out.indent(Indent);
+    out << "],\n";
+  }
+  out << "]\n";
+}
+
 auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
     -> void {
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
@@ -165,6 +183,8 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
   PrintList(out, "strings", strings_);
   PrintList(out, "types", types_);
 
+  PrintBlock(out, "type_blocks", type_blocks_);
+
   out << "nodes: [\n";
   for (int i = include_builtins ? 0 : SemanticsBuiltinKind::ValidCount;
        i < static_cast<int>(nodes_.size()); ++i) {
@@ -174,19 +194,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
   }
   out << "]\n";
 
-  out << "node_blocks: [\n";
-  for (const auto& node_block : node_blocks_) {
-    out.indent(Indent);
-    out << "[\n";
-
-    for (const auto& node : node_block) {
-      out.indent(2 * Indent);
-      out << node << ",\n";
-    }
-    out.indent(Indent);
-    out << "],\n";
-  }
-  out << "]\n";
+  PrintBlock(out, "node_blocks", node_blocks_);
 }
 
 auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {

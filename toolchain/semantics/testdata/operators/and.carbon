@@ -21,6 +21,8 @@
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeBoolType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type0},

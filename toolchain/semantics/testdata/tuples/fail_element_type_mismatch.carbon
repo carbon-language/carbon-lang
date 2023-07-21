@@ -22,6 +22,20 @@
 // CHECK:STDOUT:   nodeFloatingPointType,
 // CHECK:STDOUT:   node+11,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     typeTypeType,
+// CHECK:STDOUT:     typeTypeType,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     type1,
+// CHECK:STDOUT:     type1,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     type1,
+// CHECK:STDOUT:     type3,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
