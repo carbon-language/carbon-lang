@@ -90,8 +90,7 @@ class SemanticsIR {
   }
 
   // Returns the requested callable.
-  auto GetFunction(SemanticsFunctionId function_id) const
-      -> const SemanticsFunction& {
+  auto GetFunction(SemanticsFunctionId function_id) const -> SemanticsFunction {
     return functions_[function_id.index];
   }
 
@@ -225,11 +224,11 @@ class SemanticsIR {
     return type_id;
   }
 
-  // Gets the node ID for a type. This doesn't handle TypeType or Error in
+  // Gets the node ID for a type. This doesn't handle TypeType or InvalidType in
   // order to avoid a check; callers that need that should use
   // GetTypeAllowBuiltinTypes.
   auto GetType(SemanticsTypeId type_id) const -> SemanticsNodeId {
-    // Double-check it's not called with TypeType or Error.
+    // Double-check it's not called with TypeType or InvalidType.
     CARBON_CHECK(type_id.index >= 0)
         << "Invalid argument for GetType: " << type_id;
     return types_[type_id.index];
@@ -244,6 +243,25 @@ class SemanticsIR {
     } else {
       return GetType(type_id);
     }
+  }
+
+  // Adds an empty type block, returning an ID to reference it.
+  auto AddTypeBlock() -> SemanticsTypeBlockId {
+    SemanticsTypeBlockId id(type_blocks_.size());
+    type_blocks_.push_back({});
+    return id;
+  }
+
+  // Returns the requested type block.
+  auto GetTypeBlock(SemanticsTypeBlockId block_id) const
+      -> const llvm::SmallVector<SemanticsTypeId>& {
+    return type_blocks_[block_id.index];
+  }
+
+  // Returns the requested type block.
+  auto GetTypeBlock(SemanticsTypeBlockId block_id)
+      -> llvm::SmallVector<SemanticsTypeId>& {
+    return type_blocks_[block_id.index];
   }
 
   // Produces a string version of a type.
@@ -307,6 +325,9 @@ class SemanticsIR {
   // Nodes which correspond to in-use types. Stored separately for easy access
   // by lowering.
   llvm::SmallVector<SemanticsNodeId> types_;
+
+  // Storage for blocks within the IR. These reference entries in types_.
+  llvm::SmallVector<llvm::SmallVector<SemanticsTypeId>> type_blocks_;
 
   // The type of the empty tuple. This is special-cased due to its use in
   // implicit function returns.

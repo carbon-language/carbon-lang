@@ -442,4 +442,23 @@ auto ParserContext::EmitExpectedDeclarationSemiOrDefinition(
                  expected_kind);
 }
 
+auto ParserContext::PrintForStackDump(llvm::raw_ostream& output) const -> void {
+  output << "Parser stack:\n";
+  for (int i = 0; i < static_cast<int>(state_stack_.size()); ++i) {
+    const auto& entry = state_stack_[i];
+    output << "\t" << i << ".\t" << entry.state;
+    PrintTokenForStackDump(output, entry.token);
+  }
+  output << "\tcursor\tposition_";
+  PrintTokenForStackDump(output, *position_);
+}
+
+auto ParserContext::PrintTokenForStackDump(llvm::raw_ostream& output,
+                                           TokenizedBuffer::Token token) const
+    -> void {
+  output << " @ " << tokens_->GetLineNumber(tokens_->GetLine(token)) << ":"
+         << tokens_->GetColumnNumber(token) << ": token " << token << " : "
+         << tokens_->GetKind(token) << "\n";
+}
+
 }  // namespace Carbon

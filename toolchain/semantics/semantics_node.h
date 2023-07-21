@@ -194,6 +194,15 @@ constexpr SemanticsTypeId SemanticsTypeId::Error =
 constexpr SemanticsTypeId SemanticsTypeId::Invalid =
     SemanticsTypeId(SemanticsTypeId::InvalidIndex);
 
+// The ID of a type block.
+struct SemanticsTypeBlockId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "typeBlock";
+    IndexBase::Print(out);
+  }
+};
+
 // An index for member access.
 struct SemanticsMemberIndex : public IndexBase {
   using IndexBase::IndexBase;
@@ -400,11 +409,16 @@ class SemanticsNode {
   using StubReference =
       Factory<SemanticsNodeKind::StubReference, SemanticsNodeId /*node_id*/>;
 
+  using TupleType =
+      Factory<SemanticsNodeKind::TupleType, SemanticsTypeBlockId /*refs_id*/>;
+
+  using TupleValue =
+      Factory<SemanticsNodeKind::TupleValue, SemanticsNodeBlockId /*refs_id*/>;
+
   using UnaryOperatorNot = Factory<SemanticsNodeKind::UnaryOperatorNot,
                                    SemanticsNodeId /*operand_id*/>;
 
   using VarStorage = Factory<SemanticsNodeKind::VarStorage>;
-
   SemanticsNode()
       : SemanticsNode(ParseTree::Node::Invalid, SemanticsNodeKind::Invalid,
                       SemanticsTypeId::Invalid) {}

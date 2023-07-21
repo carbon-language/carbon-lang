@@ -215,6 +215,18 @@ auto LoweringHandleStructType(LoweringFunctionContext& /*context*/,
   // No action to take.
 }
 
+auto LoweringHandleTupleValue(LoweringFunctionContext& /*context*/,
+                              SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
+auto LoweringHandleTupleType(LoweringFunctionContext& /*context*/,
+                             SemanticsNodeId /*node_id*/,
+                             SemanticsNode /*node*/) -> void {
+  // No action to take.
+}
+
 auto LoweringHandleStructTypeField(LoweringFunctionContext& /*context*/,
                                    SemanticsNodeId /*node_id*/,
                                    SemanticsNode /*node*/) -> void {

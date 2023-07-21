@@ -10,6 +10,7 @@
 #include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
+#include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
 
@@ -241,6 +242,29 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
         steps.push_back({.node_id = GetTypeAllowBuiltinTypes(node.type_id())});
         break;
       }
+      case SemanticsNodeKind::TupleType: {
+        auto refs = GetTypeBlock(node.GetAsTupleType());
+        if (refs.empty()) {
+          out << "() as type";
+          break;
+        } else if (step.index == 0) {
+          out << "(";
+        } else if (step.index < static_cast<int>(refs.size())) {
+          out << ", ";
+        } else {
+          // A tuple of one element has a comma to disambiguate from an
+          // expression.
+          if (step.index == 1) {
+            out << ",";
+          }
+          out << ") as type";
+          break;
+        }
+        steps.push_back({.node_id = step.node_id, .index = step.index + 1});
+        steps.push_back(
+            {.node_id = GetTypeAllowBuiltinTypes(refs[step.index])});
+        break;
+      }
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BindName:
@@ -262,6 +286,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::StructMemberAccess:
       case SemanticsNodeKind::StructValue:
       case SemanticsNodeKind::StubReference:
+      case SemanticsNodeKind::TupleValue:
       case SemanticsNodeKind::UnaryOperatorNot:
       case SemanticsNodeKind::VarStorage:
         // We don't need to handle stringification for nodes that don't show up

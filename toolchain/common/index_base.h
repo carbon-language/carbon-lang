@@ -8,9 +8,6 @@
 #include <type_traits>
 
 #include "common/ostream.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/iterator.h"
-#include "llvm/Support/Format.h"
 
 namespace Carbon {
 
