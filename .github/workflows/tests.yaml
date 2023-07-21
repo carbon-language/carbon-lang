@@ -6,7 +6,7 @@ name: test
 
 on:
   push:
-    branches: [trunk]
+    branches: [action-test]
   pull_request_target:
   merge_group:
 
@@ -28,6 +28,22 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+      # Free up disk space (Ubuntu only). This frees up about 8GB according to
+      # https://github.com/marketplace/actions/maximize-build-disk-space. There
+      # are additional settings which we can enable to free up more; however,
+      # those aren't enabled here so that if we run into a limit, we have some
+      # easy measures to get more space while examining the build.
+      - name: Free up disk space (Ubuntu)
+        if: matrix.os == 'ubuntu-22.04'
+        uses: jlumbroso/free-disk-space@v1.2.0
+        with:
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: false
+          swap-storage: false
+
       # Checkout the pull request head or the branch.
       - name: Checkout pull request
         if: github.event_name == 'pull_request_target'
@@ -80,7 +96,7 @@ jobs:
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md
       # Both 14 and 15 are candidates for forwards compatibility, although 15
       # isn't provided.
-      - name: Setup LLVM and Clang (Linux)
+      - name: Setup LLVM and Clang (Ubuntu)
         if:
           steps.filter.outputs.ignore == 'false' && matrix.os == 'ubuntu-22.04'
         run: |
@@ -128,7 +144,7 @@ jobs:
         if: steps.filter.outputs.ignore == 'false' && matrix.os == 'macos-12'
         run: |
           echo "os_for_cache=macos-12" >> $GITHUB_ENV
-      - name: Setup LLVM and Clang (Linux)
+      - name: Setup LLVM and Clang (Ubuntu)
         if:
           steps.filter.outputs.ignore == 'false' && matrix.os == 'ubuntu-22.04'
         run: |
@@ -153,6 +169,11 @@ jobs:
           EOF
           bazelisk info
 
+      # Just for visibility, print space before and after the build.
+      - name: Disk space before build
+        if: steps.filter.outputs.ignore == 'false'
+        run: df -h
+
       # Build all targets first to isolate build failures.
       - name: Build (${{ matrix.build_mode }})
         if: steps.filter.outputs.ignore == 'false'
@@ -170,3 +191,8 @@ jobs:
           # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
           BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
         run: bazelisk test -c ${{ matrix.build_mode }} //...:all
+
+      # See "Disk space before build".
+      - name: Disk space after build
+        if: steps.filter.outputs.ignore == 'false'
+        run: df -h
