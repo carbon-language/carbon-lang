@@ -87,9 +87,6 @@ filegroup(
         ["testdata/**/*.carbon"],
         exclude = [
             "testdata/**/fail_*",
-
-            # multiline strings
-            "testdata/string/*",
         ],
     ),
     visibility = ["//utils/treesitter:__pkg__"],

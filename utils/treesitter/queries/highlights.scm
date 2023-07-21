@@ -8,8 +8,7 @@
 (comment) @comment
 (builtin_type) @type.builtin
 (bool_literal) @constant.builtin
-(escape_sequence) @constant.character.escape
-(string_literal) @string
+(string) @string
 (numeric_literal) @constant.builtin
 (numeric_type_literal) @type.builtin
 
