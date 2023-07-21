@@ -56,5 +56,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+1]]:21: Cannot implicitly convert from `{.a: i32}` to `{} as Type`.
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:21: Cannot implicitly convert from `{.a: i32}` to `{} as Type`.
+// CHECK:STDERR: var x: {} = {.a = 1};
+// CHECK:STDERR:                     ^
 var x: {} = {.a = 1};

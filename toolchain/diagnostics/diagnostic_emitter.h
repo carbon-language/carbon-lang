@@ -45,12 +45,14 @@ enum class DiagnosticLevel : int8_t {
           ::Carbon::DiagnosticKind::DiagnosticName,           \
           ::Carbon::DiagnosticLevel::Level, Format)
 
+// A location for a diagnostic in a file. The lifetime of a DiagnosticLocation
+// is required to be less than SourceBuffer that it refers to due to the
+// contained file_name and line references.
 struct DiagnosticLocation {
   // Name of the file or buffer that this diagnostic refers to.
-  // TODO: Move this out of DiagnosticLocation, as part of an expectation that
-  // files will be compiled separately, so storing the file's path
-  // per-diagnostic is wasteful.
-  std::string file_name;
+  llvm::StringRef file_name;
+  // A reference to the line of the error.
+  llvm::StringRef line;
   // 1-based line number.
   int32_t line_number;
   // 1-based column number.
@@ -311,7 +313,10 @@ class StreamDiagnosticConsumer : public DiagnosticConsumer {
     *stream_ << message.location.file_name << ":"
              << message.location.line_number << ":"
              << message.location.column_number << ": "
-             << message.format_fn(message) << "\n";
+             << message.format_fn(message) << "\n"
+             << message.location.line << "\n";
+    stream_->indent(message.location.column_number - 1);
+    *stream_ << "^\n";
   }
 
  private:

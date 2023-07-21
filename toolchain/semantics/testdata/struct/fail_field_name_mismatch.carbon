@@ -60,5 +60,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+1]]:28: Cannot implicitly convert from `{.b: i32}` to `{.a: i32}`.
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:28: Cannot implicitly convert from `{.b: i32}` to `{.a: i32}`.
+// CHECK:STDERR: var x: {.a: i32} = {.b = 1};
+// CHECK:STDERR:                            ^
 var x: {.a: i32} = {.b = 1};

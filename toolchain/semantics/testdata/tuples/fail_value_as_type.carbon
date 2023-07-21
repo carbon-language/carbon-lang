@@ -53,5 +53,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+1]]:12: Cannot implicitly convert from `i32` to `Type`.
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:12: Cannot implicitly convert from `i32` to `Type`.
+// CHECK:STDERR: var x: (1, );
+// CHECK:STDERR:            ^
 var x: (1, );

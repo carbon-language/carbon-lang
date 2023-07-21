@@ -63,5 +63,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+1]]:37: Cannot implicitly convert from `{.a: i32}` to `{.a: i32, .b: i32}`.
+// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+3]]:37: Cannot implicitly convert from `{.a: i32}` to `{.a: i32, .b: i32}`.
+// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};
+// CHECK:STDERR:                                     ^
 var x: {.a: i32, .b: i32} = {.a = 1};

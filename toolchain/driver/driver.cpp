@@ -6,6 +6,7 @@
 
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -200,6 +201,9 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   CARBON_VLOG() << "*** SourceBuffer::CreateFromFile ***\n";
   auto source = SourceBuffer::CreateFromFile(fs_, input_file_name);
   CARBON_VLOG() << "*** SourceBuffer::CreateFromFile done ***\n";
+  // Require flushing the consumer before the source buffer is destroyed,
+  // because diagnostics may reference the buffer.
+  auto flush = llvm::make_scope_exit([&]() { consumer.Flush(); });
   if (!source.ok()) {
     error_stream_ << "ERROR: Unable to open input source file: "
                   << source.error();
@@ -214,7 +218,6 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   CARBON_VLOG() << "*** TokenizedBuffer::Lex done ***\n";
   if (dump_mode == DumpMode::TokenizedBuffer) {
     CARBON_VLOG() << "Finishing output.";
-    consumer.Flush();
     output_stream_ << tokenized_source;
     return !has_errors;
   }
@@ -225,7 +228,6 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   has_errors |= parse_tree.has_errors();
   CARBON_VLOG() << "*** ParseTree::Parse done ***\n";
   if (dump_mode == DumpMode::ParseTree) {
-    consumer.Flush();
     parse_tree.Print(output_stream_, parse_tree_preorder);
     return !has_errors;
   }
@@ -238,7 +240,6 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   has_errors |= semantics_ir.has_errors();
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree done ***\n";
   if (dump_mode == DumpMode::SemanticsIR) {
-    consumer.Flush();
     semantics_ir.Print(output_stream_, semantics_ir_include_builtins);
     return !has_errors;
   }
@@ -256,7 +257,6 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
       LowerToLLVM(llvm_context, input_file_name, semantics_ir, vlog_stream_);
   CARBON_VLOG() << "*** LowerToLLVM done ***\n";
   if (dump_mode == DumpMode::LLVMIR) {
-    consumer.Flush();
     module->print(output_stream_, /*AAW=*/nullptr,
                   /*ShouldPreserveUseListOrder=*/true);
     return !has_errors;
@@ -269,7 +269,6 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   }
 
   if (dump_mode == DumpMode::Assembly) {
-    consumer.Flush();
     CodeGen codegen(*module, target_triple, error_stream_, output_stream_);
     has_errors |= !codegen.PrintAssembly();
     return !has_errors;

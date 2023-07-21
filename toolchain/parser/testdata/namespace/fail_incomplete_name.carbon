@@ -12,5 +12,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_incomplete_name.carbon:[[@LINE+1]]:15: Expected identifier after `.`.
+// CHECK:STDERR: fail_incomplete_name.carbon:[[@LINE+3]]:15: Expected identifier after `.`.
+// CHECK:STDERR: namespace Foo.;
+// CHECK:STDERR:               ^
 namespace Foo.;

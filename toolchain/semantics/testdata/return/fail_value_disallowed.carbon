@@ -39,7 +39,11 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE+2]]:11: No return expression should be provided in this context.
-  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE-2]]:1: There was no return type provided.
+  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE+6]]:11: No return expression should be provided in this context.
+  // CHECK:STDERR:   return 0;
+  // CHECK:STDERR:           ^
+  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE-4]]:1: There was no return type provided.
+  // CHECK:STDERR: fn Main() {
+  // CHECK:STDERR: ^
   return 0;
 }
