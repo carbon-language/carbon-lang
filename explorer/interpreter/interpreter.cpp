@@ -48,12 +48,13 @@ static constexpr int64_t MaxStepsTaken = 1e6;
 static constexpr int64_t MaxArenaAllocated = 1e9;
 
 // Constructs an ActionStack suitable for the specified phase.
-static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
+static auto MakeTodo(Phase phase, Nonnull<Heap*> heap,
+                     Nonnull<TraceStream*> trace_stream) -> ActionStack {
   switch (phase) {
     case Phase::CompileTime:
-      return ActionStack();
+      return ActionStack(trace_stream);
     case Phase::RunTime:
-      return ActionStack(heap);
+      return ActionStack(trace_stream, heap);
   }
 }
 
@@ -69,8 +70,8 @@ class Interpreter {
               Nonnull<TraceStream*> trace_stream,
               Nonnull<llvm::raw_ostream*> print_stream)
       : arena_(arena),
-        heap_(arena),
-        todo_(MakeTodo(phase, &heap_)),
+        heap_(trace_stream, arena),
+        todo_(MakeTodo(phase, &heap_, trace_stream)),
         trace_stream_(trace_stream),
         print_stream_(print_stream),
         phase_(phase) {}
@@ -181,8 +182,6 @@ class Interpreter {
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
                       Nonnull<const Value*> receiver) -> ErrorOr<Success>;
 
-  void TraceState();
-
   auto phase() const -> Phase { return phase_; }
 
   Nonnull<Arena*> arena_;
@@ -205,10 +204,6 @@ class Interpreter {
 //
 // State Operations
 //
-
-void Interpreter::TraceState() {
-  *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
-}
 
 auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
                            const std::vector<Nonnull<const Value*>>& args,
@@ -651,10 +646,6 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
 
 auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     -> ErrorOr<Nonnull<const Value*>> {
-  if (trace_stream_->is_enabled()) {
-    TraceState();
-  }
-
   todo_.BeginRecursiveAction();
   CARBON_RETURN_IF_ERROR(todo_.Spawn(std::move(action)));
   // Note that the only `RecursiveAction` we can encounter here is our own --
@@ -662,9 +653,6 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
   // action is finished and popped off the queue before returning to us.
   while (!isa<RecursiveAction>(todo_.CurrentAction())) {
     CARBON_RETURN_IF_ERROR(Step());
-    if (trace_stream_->is_enabled()) {
-      TraceState();
-    }
   }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- recursive eval done\n";
@@ -2766,15 +2754,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
 
 auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     -> ErrorOr<Success> {
-  if (trace_stream_->is_enabled()) {
-    TraceState();
-  }
   todo_.Start(std::move(action));
   while (!todo_.empty()) {
     CARBON_RETURN_IF_ERROR(Step());
-    if (trace_stream_->is_enabled()) {
-      TraceState();
-    }
   }
   return Success();
 }
