@@ -33,9 +33,8 @@ auto SemanticsHandleStructFieldType(SemanticsContext& context,
   auto [name_node, name_id] =
       context.node_stack().PopWithParseNode<ParseNodeKind::Name>();
 
-  context.AddNode(
-      SemanticsNode::StructTypeField::Make(name_node, cast_type_id, name_id));
-  context.node_stack().Push(parse_node);
+  context.AddNodeAndPush(parse_node, SemanticsNode::StructTypeField::Make(
+                                         name_node, cast_type_id, name_id));
   return true;
 }
 

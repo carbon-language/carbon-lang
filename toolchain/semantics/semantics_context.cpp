@@ -432,29 +432,20 @@ auto SemanticsContext::ParamOrArgEnd(bool for_args, ParseNodeKind start_kind)
 }
 
 auto SemanticsContext::ParamOrArgSave(bool for_args) -> void {
-  SemanticsNodeId param_or_arg_id = SemanticsNodeId::Invalid;
+  auto [entry_parse_node, entry_node_id] =
+      node_stack_.PopExpressionWithParseNode();
   if (for_args) {
     // For an argument, we add a stub reference to the expression on the top of
     // the stack. There may not be anything on the IR prior to this.
-    auto [entry_parse_node, entry_node_id] =
-        node_stack_.PopExpressionWithParseNode();
-    param_or_arg_id = AddNode(SemanticsNode::StubReference::Make(
+    entry_node_id = AddNode(SemanticsNode::StubReference::Make(
         entry_parse_node, semantics_ir_->GetNode(entry_node_id).type_id(),
         entry_node_id));
-  } else {
-    // For a parameter, there should always be something in the IR.
-    node_stack_.PopAndIgnore();
-    auto ir_id = node_block_stack_.Peek();
-    CARBON_CHECK(ir_id.is_valid());
-    auto& ir = semantics_ir_->GetNodeBlock(ir_id);
-    CARBON_CHECK(!ir.empty()) << "Should have had a param";
-    param_or_arg_id = ir.back();
   }
 
   // Save the param or arg ID.
   auto& params_or_args =
       semantics_ir_->GetNodeBlock(params_or_args_stack_.PeekForAdd());
-  params_or_args.push_back(param_or_arg_id);
+  params_or_args.push_back(entry_node_id);
 }
 
 auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
