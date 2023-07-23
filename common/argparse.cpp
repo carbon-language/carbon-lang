@@ -664,6 +664,9 @@ class Args::Parser {
   auto ParsePositionalArg(llvm::StringRef unparsed_arg) -> bool;
   auto ParseSubcommand(llvm::StringRef unparsed_arg) -> bool;
 
+  auto ParsePositionalSuffix(llvm::ArrayRef<llvm::StringRef> unparsed_args)
+      -> bool;
+
   auto FinalizeParse() -> ParseResult;
 
   llvm::raw_ostream& errors_;
@@ -675,7 +678,7 @@ class Args::Parser {
   ShortOptionTableT short_option_table_;
   SubcommandMapT subcommand_map_;
 
-  ssize_t positional_arg_index = -1;
+  ssize_t positional_arg_index = 0;
   bool appending_to_positional_arg = false;
 
   ActionT arg_meta_action_;
@@ -964,20 +967,14 @@ auto Args::Parser::FinalizeParsedOptions() -> bool {
 }
 
 auto Args::Parser::ParsePositionalArg(llvm::StringRef unparsed_arg) -> bool {
-  if (!appending_to_positional_arg) {
-    // If we're not continuing to append to a current positional arg,
-    // increment the positional arg index to find the next argument we
-    // should use here.
-    ++positional_arg_index;
-    if (static_cast<size_t>(positional_arg_index) >=
-        command_->positional_args.size()) {
-      errors_ << "ERROR: Completed parsing all "
-              << command_->positional_args.size()
-              << " configured positional arguments, and found an additional "
-                 "positional argument: '"
-              << unparsed_arg << "'\n";
-      return false;
-    }
+  if (static_cast<size_t>(positional_arg_index) >=
+      command_->positional_args.size()) {
+    errors_ << "ERROR: Completed parsing all "
+            << command_->positional_args.size()
+            << " configured positional arguments, and found an additional "
+               "positional argument: '"
+            << unparsed_arg << "'\n";
+    return false;
   }
 
   const Arg& arg = *command_->positional_args[positional_arg_index];
@@ -985,6 +982,12 @@ auto Args::Parser::ParsePositionalArg(llvm::StringRef unparsed_arg) -> bool {
   // Mark that we'll keep appending here until a `--` marker. When already
   // appending this is redundant but harmless.
   appending_to_positional_arg = arg.is_append;
+  if (!appending_to_positional_arg) {
+    // If we're not continuing to append to a current positional arg,
+    // increment the positional arg index to find the next argument we
+    // should use here.
+    ++positional_arg_index;
+  }
 
   return ParseArg(arg, unparsed_arg);
 }
@@ -1024,9 +1027,20 @@ auto Args::Parser::FinalizeParse() -> ParseResult {
   if (!FinalizeParsedOptions()) {
     return ParseResult::Error;
   }
+
+  // If we were appending to a positional argument, mark that as complete.
   llvm::ArrayRef positional_args = command_->positional_args;
+  if (appending_to_positional_arg) {
+    CARBON_CHECK(static_cast<size_t>(positional_arg_index) <
+                 positional_args.size())
+        << "Appending to a positional argument with an invalid index: "
+        << positional_arg_index;
+    ++positional_arg_index;
+  }
+
+  // See if any positional args are required and unparsed.
   auto unparsed_positional_args =
-      positional_args.slice(positional_arg_index + 1);
+      positional_args.slice(positional_arg_index);
   if (!unparsed_positional_args.empty()) {
     // There are un-parsed positional arguments, make sure they aren't required.
     const Arg& missing_arg = *unparsed_positional_args.front();
@@ -1062,41 +1076,94 @@ auto Args::Parser::FinalizeParse() -> ParseResult {
   }
 }
 
-auto Args::Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
-    -> ParseResult {
-  PopulateMaps(*command_);
-
-  bool options_allowed = true;
-
+auto Args::Parser::ParsePositionalSuffix(
+    llvm::ArrayRef<llvm::StringRef> unparsed_args) -> bool {
+  CARBON_CHECK(!command_->positional_args.empty())
+      << "Cannot do positional suffix parsing without positional arguments!";
+  CARBON_CHECK(!unparsed_args.empty() && unparsed_args.front() == "--")
+      << "Must be called with a suffix of arguments starting with a `--` that "
+         "switches to positional suffix parsing.";
+  // Once we're in the positional suffix, we can track empty positional
+  // arguments.
+  bool empty_positional = false;
   while (!unparsed_args.empty()) {
     llvm::StringRef unparsed_arg = unparsed_args.front();
     unparsed_args = unparsed_args.drop_front();
 
-    if (unparsed_arg == "--") {
-      // Disable further parsing of options.
-      options_allowed = false;
-      // If we were appending to a positional argument, stop at the `--` so that
-      // any further unparsed arguments are parsed as the next positional
-      // argument.
-      appending_to_positional_arg = false;
+    if (unparsed_arg != "--") {
+      if (!ParsePositionalArg(unparsed_arg)) {
+        return false;
+      }
+      empty_positional = false;
       continue;
     }
 
-    if (options_allowed) {
-      if (unparsed_arg.starts_with("--")) {
-        // Note that the exact argument "--" has been handled above already.
-        if (!ParseLongOption(unparsed_arg)) {
-          return ParseResult::Error;
-        }
-        continue;
+    if (appending_to_positional_arg || empty_positional) {
+      ++positional_arg_index;
+      if (static_cast<size_t>(positional_arg_index) >=
+          command_->positional_args.size()) {
+        errors_
+            << "ERROR: Completed parsing all "
+            << command_->positional_args.size()
+            << " configured positional arguments, but found a subsequent `--` "
+               "and have no further positional arguments to parse beyond it.\n";
+        return false;
       }
+    }
+    appending_to_positional_arg = false;
+    empty_positional = true;
+  }
 
-      if (unparsed_arg.starts_with("-") && unparsed_arg.size() > 1) {
-        if (!ParseShortOptionSeq(unparsed_arg)) {
-          return ParseResult::Error;
-        }
-        continue;
+  return true;
+}
+
+auto Args::Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
+    -> ParseResult {
+  PopulateMaps(*command_);
+
+  while (!unparsed_args.empty()) {
+    llvm::StringRef unparsed_arg = unparsed_args.front();
+
+    // Peak at the front for an exact `--` argument that switches to a
+    // positional suffix parsing without dropping this argument.
+    if (unparsed_arg == "--") {
+      if (command_->positional_args.empty()) {
+        errors_ << "ERROR: Cannot meaningfully end option and subcommand "
+                   "arguments with a `--` argument when there are no "
+                   "positional arguments to parse.\n";
+        return ParseResult::Error;
       }
+      if (static_cast<size_t>(positional_arg_index) >=
+          command_->positional_args.size()) {
+        errors_ << "ERROR: Switched to purely positional arguments with a `--` "
+                   "argument despite already having parsed all positional "
+                   "arguments for this command.\n";
+        return ParseResult::Error;
+      }
+      if (!ParsePositionalSuffix(unparsed_args)) {
+        return ParseResult::Error;
+      }
+      // No more unparsed arguments to handle.
+      break;
+    }
+
+    // Now that we're not switching parse modes, drop the current unparsed
+    // argument and parse it.
+    unparsed_args = unparsed_args.drop_front();
+
+    if (unparsed_arg.starts_with("--")) {
+      // Note that the exact argument "--" has been handled above already.
+      if (!ParseLongOption(unparsed_arg)) {
+        return ParseResult::Error;
+      }
+      continue;
+    }
+
+    if (unparsed_arg.starts_with("-") && unparsed_arg.size() > 1) {
+      if (!ParseShortOptionSeq(unparsed_arg)) {
+        return ParseResult::Error;
+      }
+      continue;
     }
 
     CARBON_CHECK(command_->positional_args.empty() ||

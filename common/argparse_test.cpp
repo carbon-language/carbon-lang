@@ -226,8 +226,66 @@ TEST(ArgParserTest, PositionalArgs) {
   EXPECT_THAT(source_string, StrEq("src2"));
   EXPECT_THAT(dest_string, StrEq("dst2"));
 
-  // TODO: test a positional argument of exactly `-` witohut any `--`.
-  // TODO: test an empty positional argument sequence using two `--` in a row.
+  EXPECT_THAT(parse({"-", "--", "-"}, llvm::errs()),
+              Eq(Args::ParseResult::Success));
+  EXPECT_THAT(source_string, StrEq("-"));
+  EXPECT_THAT(dest_string, StrEq("-"));
+}
+
+TEST(ArgParserTest, PositionalAppendArgs) {
+  bool flag = false;
+  llvm::StringRef string_option = "";
+  llvm::SmallVector<llvm::StringRef> source_strings;
+  llvm::SmallVector<llvm::StringRef> dest_strings;
+  auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
+    return Args::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
+      b.AddFlag({.name = "flag"}, [&](auto& arg_b) { arg_b.Set(&flag); });
+      b.AddStringOption({.name = "option"},
+                        [&](auto& arg_b) { arg_b.Set(&string_option); });
+      b.AddStringPositionalArg({.name = "sources"}, [&](auto& arg_b) {
+        arg_b.Append(&source_strings);
+        arg_b.Required(true);
+      });
+      b.AddStringPositionalArg({.name = "dest"}, [&](auto& arg_b) {
+        arg_b.Append(&dest_strings);
+        arg_b.Required(true);
+      });
+      b.Do([] {});
+    });
+  };
+
+  TestRawOstream os;
+  EXPECT_THAT(parse({"--flag", "--option=x"}, os),
+              Eq(Args::ParseResult::Error));
+  EXPECT_THAT(
+      os.TakeStr(),
+      StrEq("ERROR: Not all required positional arguments were provided. First "
+            "missing and required positional argument: 'sources'\n"));
+
+  EXPECT_THAT(
+      parse({"src1", "--flag", "src2", "--option=value", "--", "--dst--"},
+            llvm::errs()),
+      Eq(Args::ParseResult::Success));
+  EXPECT_TRUE(flag);
+  EXPECT_THAT(string_option, StrEq("value"));
+  EXPECT_THAT(source_strings, ElementsAre(StrEq("src1"), StrEq("src2")));
+  EXPECT_THAT(dest_strings, ElementsAre(StrEq("--dst--")));
+
+  source_strings.clear();
+  dest_strings.clear();
+  EXPECT_THAT(
+      parse({"--", "--src1--", "--src2--", "--", "dst1", "dst2"}, llvm::errs()),
+      Eq(Args::ParseResult::Success));
+  EXPECT_THAT(source_strings,
+              ElementsAre(StrEq("--src1--"), StrEq("--src2--")));
+  EXPECT_THAT(dest_strings, ElementsAre(StrEq("dst1"), StrEq("dst2")));
+
+  source_strings.clear();
+  dest_strings.clear();
+  EXPECT_THAT(parse({"--", "--", "dst1", "dst2"}, llvm::errs()),
+              Eq(Args::ParseResult::Success));
+  EXPECT_THAT(source_strings, ElementsAre());
+  EXPECT_THAT(dest_strings, ElementsAre(StrEq("dst1"), StrEq("dst2")));
 }
 
 TEST(ArgParserTest, BasicSubcommands) {

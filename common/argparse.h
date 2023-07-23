@@ -150,9 +150,9 @@ namespace Carbon {
 //
 // Leaf commands (and subcommands) can accept positional arguments. These work
 // similar to options but consist *only* of the value. They have names, but the
-// name is only used in documentation and error messages. Positional argument
-// values cannot start with a `-` character ( until after option parsing is ended
-// with a `--` argument.
+// name is only used in documentation and error messages. Except for the special
+// case of the exact argument `-`, positional argument values cannot start with
+// a `-` character until after option parsing is ended with a `--` argument.
 //
 // Singular positional arguments store the single value in that position.
 // Appending positional arguments append all of the values in sequence.
@@ -167,7 +167,9 @@ namespace Carbon {
 // The `--` used in this way *both* ends option parsing and the positional
 // argument sequence. Note that if there are no positional arguments prior to
 // the first `--`, then it will just end option parsing. To pass an empty
-// sequence of positional arguments two `--` arguments would be required.
+// sequence of positional arguments two `--` arguments would be required. Once
+// option parsing is ended, even a single positional argument can be skipped
+// using a `--` argument without a positional argument.
 //
 // ## Help text blocks and rendering
 //
@@ -781,9 +783,9 @@ struct Args::Command {
 
   bool is_help_hidden = false;
 
-  llvm::SmallVector<std::unique_ptr<Arg>, 8> options = {};
-  llvm::SmallVector<std::unique_ptr<Arg>, 2> positional_args = {};
-  llvm::SmallVector<std::unique_ptr<Command>, 2> subcommands = {};
+  llvm::SmallVector<std::unique_ptr<Arg>> options = {};
+  llvm::SmallVector<std::unique_ptr<Arg>> positional_args = {};
+  llvm::SmallVector<std::unique_ptr<Command>> subcommands = {};
 };
 
 template <typename T>
