@@ -1744,13 +1744,13 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       } else if (act.pos() == function_call_pos) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
-        // Prepare parameters tuple
+        // Prepare parameters tuple.
         std::vector<Nonnull<const Value*>> param_values;
         for (int i = 1; i <= num_args; ++i) {
           param_values.push_back(act.results()[i]);
         }
         const auto* param_tuple = arena_->New<TupleValue>(param_values);
-        // Prepare witnesses
+        // Prepare witnesses.
         ImplWitnessMap witnesses;
         if (num_witnesses > 0) {
           int i = 1 + num_args;
