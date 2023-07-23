@@ -22,7 +22,7 @@ void ActionStack::Print(llvm::raw_ostream& out) const {
 void ActionStack::Start(std::unique_ptr<Action> action) {
   result_ = std::nullopt;
   CARBON_CHECK(todo_.empty());
-  todo_.Push(std::move(action));
+  Push(std::move(action));
 }
 
 void ActionStack::Initialize(ValueNodeView value_node,
@@ -129,7 +129,7 @@ static auto FinishActionKindFor(Action::Kind kind) -> FinishActionKind {
 
 auto ActionStack::FinishAction() -> ErrorOr<Success> {
   std::stack<std::unique_ptr<Action>> scopes_to_destroy;
-  std::unique_ptr<Action> act = todo_.Pop();
+  std::unique_ptr<Action> act = Pop();
   switch (FinishActionKindFor(act->kind())) {
     case FinishActionKind::Value:
       CARBON_FATAL() << "This kind of action must produce a result: " << *act;
@@ -147,7 +147,7 @@ auto ActionStack::FinishAction() -> ErrorOr<Success> {
 auto ActionStack::FinishAction(Nonnull<const Value*> result)
     -> ErrorOr<Success> {
   std::stack<std::unique_ptr<Action>> scopes_to_destroy;
-  std::unique_ptr<Action> act = todo_.Pop();
+  std::unique_ptr<Action> act = Pop();
   switch (FinishActionKindFor(act->kind())) {
     case FinishActionKind::NoValue:
       CARBON_FATAL() << "This kind of action cannot produce results: " << *act;
@@ -166,7 +166,7 @@ auto ActionStack::FinishAction(Nonnull<const Value*> result)
 auto ActionStack::Spawn(std::unique_ptr<Action> child) -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
-  todo_.Push(std::move(child));
+  Push(std::move(child));
   return Success();
 }
 
@@ -174,18 +174,18 @@ auto ActionStack::Spawn(std::unique_ptr<Action> child, RuntimeScope scope)
     -> ErrorOr<Success> {
   Action& action = *todo_.Top();
   action.set_pos(action.pos() + 1);
-  todo_.Push(std::make_unique<ScopeAction>(std::move(scope)));
-  todo_.Push(std::move(child));
+  Push(std::make_unique<ScopeAction>(std::move(scope)));
+  Push(std::move(child));
   return Success();
 }
 
 auto ActionStack::ReplaceWith(std::unique_ptr<Action> replacement)
     -> ErrorOr<Success> {
-  std::unique_ptr<Action> old = todo_.Pop();
+  std::unique_ptr<Action> old = Pop();
   CARBON_CHECK(FinishActionKindFor(old->kind()) ==
                FinishActionKindFor(replacement->kind()))
       << "Can't replace action " << *old << " with " << *replacement;
-  todo_.Push(std::move(replacement));
+  Push(std::move(replacement));
   return Success();
 }
 
@@ -205,7 +205,7 @@ auto ActionStack::UnwindToWithCaptureScopesToDestroy(
         &statement_action->statement() == ast_node) {
       break;
     }
-    auto item = todo_.Pop();
+    auto item = Pop();
     auto& scope = item->scope();
     if (scope && item->kind() != Action::Kind::CleanUpAction) {
       std::unique_ptr<Action> cleanup_action = std::make_unique<CleanUpAction>(
@@ -237,7 +237,7 @@ auto ActionStack::UnwindPastWithCaptureScopesToDestroy(
     Nonnull<const Statement*> ast_node) -> std::stack<std::unique_ptr<Action>> {
   std::stack<std::unique_ptr<Action>> scopes_to_destroy =
       UnwindToWithCaptureScopesToDestroy(ast_node);
-  auto item = todo_.Pop();
+  auto item = Pop();
   scopes_to_destroy.push(std::move(item));
   PopScopes(scopes_to_destroy);
   return scopes_to_destroy;
@@ -255,7 +255,7 @@ auto ActionStack::UnwindPast(Nonnull<const Statement*> ast_node,
 void ActionStack::PopScopes(
     std::stack<std::unique_ptr<Action>>& cleanup_stack) {
   while (!todo_.empty() && llvm::isa<ScopeAction>(*todo_.Top())) {
-    auto act = todo_.Pop();
+    auto act = Pop();
     if (act->scope()) {
       cleanup_stack.push(std::move(act));
     }
@@ -279,7 +279,7 @@ void ActionStack::PushCleanUpActions(
       std::unique_ptr<Action> cleanup_action = std::make_unique<CleanUpAction>(
           std::move(*act->scope()),
           SourceLocation("stack cleanup", 1, FileKind::Unknown));
-      todo_.Push(std::move(cleanup_action));
+      Push(std::move(cleanup_action));
     }
     actions.pop();
   }
@@ -292,7 +292,7 @@ void ActionStack::PushCleanUpAction(std::unique_ptr<Action> act) {
     std::unique_ptr<Action> cleanup_action = std::make_unique<CleanUpAction>(
         std::move(*scope),
         SourceLocation("stack cleanup", 1, FileKind::Unknown));
-    todo_.Push(std::move(cleanup_action));
+    Push(std::move(cleanup_action));
   }
 }
 

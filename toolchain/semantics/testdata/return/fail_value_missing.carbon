@@ -17,6 +17,8 @@
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: Return},
@@ -33,6 +35,8 @@
 // CHECK:STDOUT: ]
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+1]]:9: Must return a i32.
+  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+3]]:9: Must return a i32.
+  // CHECK:STDERR:   return;
+  // CHECK:STDERR:         ^
   return;
 }

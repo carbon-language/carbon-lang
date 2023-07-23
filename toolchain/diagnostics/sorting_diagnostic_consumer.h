@@ -40,7 +40,10 @@ class SortingDiagnosticConsumer : public DiagnosticConsumer {
   }
 
  private:
+  // A Diagnostic is undesirably large for inline storage by SmallVector, so we
+  // specify 0.
   llvm::SmallVector<Diagnostic, 0> diagnostics_;
+
   DiagnosticConsumer* next_consumer_;
 };
 

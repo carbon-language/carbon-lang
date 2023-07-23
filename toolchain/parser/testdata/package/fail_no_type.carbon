@@ -10,5 +10,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_no_type.carbon:[[@LINE+1]]:17: Expected a `api` or `impl`.
+// CHECK:STDERR: fail_no_type.carbon:[[@LINE+3]]:17: Expected a `api` or `impl`.
+// CHECK:STDERR: package Geometry;
+// CHECK:STDERR:                 ^
 package Geometry;

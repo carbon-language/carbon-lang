@@ -15,5 +15,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: recover_prefix_space.carbon:[[@LINE+1]]:13: Whitespace is not allowed after this unary operator.
+// CHECK:STDERR: recover_prefix_space.carbon:[[@LINE+3]]:13: Whitespace is not allowed after this unary operator.
+// CHECK:STDERR: var n: i8 = - n;
+// CHECK:STDERR:             ^
 var n: i8 = - n;

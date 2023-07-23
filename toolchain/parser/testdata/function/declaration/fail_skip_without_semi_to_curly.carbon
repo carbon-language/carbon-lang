@@ -13,6 +13,8 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_skip_without_semi_to_curly.carbon:[[@LINE+1]]:1: Unrecognized declaration introducer.
+// CHECK:STDERR: fail_skip_without_semi_to_curly.carbon:[[@LINE+3]]:1: Unrecognized declaration introducer.
+// CHECK:STDERR: struct X { fn () }
+// CHECK:STDERR: ^
 struct X { fn () }
 fn F();

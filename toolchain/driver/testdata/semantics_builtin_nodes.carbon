@@ -15,6 +15,8 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeTypeType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: CrossReference, arg0: ir0, arg1: nodeError, type: typeError},

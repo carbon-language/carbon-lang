@@ -19,6 +19,8 @@
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: Namespace, arg0: name_scope0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
@@ -47,7 +49,11 @@ namespace Foo;
 fn Foo.Baz() {
 }
 
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+2]]:8: Duplicate name being declared in the same scope.
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE-4]]:1: Name is previously declared here.
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:8: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fn Foo.Baz() {
+// CHECK:STDERR:        ^
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE-6]]:1: Name is previously declared here.
+// CHECK:STDERR: fn Foo.Baz() {
+// CHECK:STDERR: ^
 fn Foo.Baz() {
 }

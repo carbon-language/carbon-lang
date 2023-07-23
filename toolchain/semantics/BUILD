@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
 load("//testing/file_test:rules.bzl", "file_test")
 
@@ -74,6 +75,7 @@ cc_library(
     deps = [
         ":semantics_builtin_kind",
         ":semantics_node",
+        ":semantics_node_kind",
         ":semantics_node_stack",
         "//common:check",
         "//common:ostream",
@@ -110,6 +112,17 @@ file_test(
     tests = glob(["testdata/**/*.carbon"]),
     deps = [
         "//toolchain/driver:driver_file_test_base",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_fuzz_test(
+    name = "semantics_fuzzer",
+    size = "small",
+    srcs = ["semantics_fuzzer.cpp"],
+    corpus = glob(["fuzzer_corpus/*"]),
+    deps = [
+        "//toolchain/driver",
         "@llvm-project//llvm:Support",
     ],
 )

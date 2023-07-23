@@ -18,6 +18,8 @@
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: Return},
@@ -34,6 +36,8 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: fail_name_lookup.carbon:[[@LINE+1]]:3: Name x not found
+  // CHECK:STDERR: fail_name_lookup.carbon:[[@LINE+3]]:3: Name x not found
+  // CHECK:STDERR:   x;
+  // CHECK:STDERR:   ^
   x;
 }

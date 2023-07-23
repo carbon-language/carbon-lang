@@ -21,12 +21,21 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
   // to leave it up to the caller.
   AllocationId a(values_.size());
   values_.push_back(v);
+  bool is_uninitialized = false;
+
   if (v->kind() == Carbon::Value::Kind::UninitializedValue) {
     states_.push_back(ValueState::Uninitialized);
+    is_uninitialized = true;
   } else {
     states_.push_back(ValueState::Alive);
   }
   bound_values_.push_back(llvm::DenseMap<const AstNode*, Address>{});
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "(+) memory-alloc: #" << a.index_ << " `" << *v << "`"
+                   << (is_uninitialized ? " uninitialized" : "") << "\n";
+  }
+
   return a;
 }
 
@@ -35,7 +44,15 @@ auto Heap::Read(const Address& a, SourceLocation source_loc) const
   CARBON_RETURN_IF_ERROR(this->CheckInit(a.allocation_, source_loc));
   CARBON_RETURN_IF_ERROR(this->CheckAlive(a.allocation_, source_loc));
   Nonnull<const Value*> value = values_[a.allocation_.index_];
-  return value->GetElement(arena_, a.element_path_, source_loc, value);
+  ErrorOr<Nonnull<const Value*>> read_value =
+      value->GetElement(arena_, a.element_path_, source_loc, value);
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "+++ memory-read: #" << a.allocation_.index_ << " `"
+                   << **read_value << "`\n";
+  }
+
+  return read_value;
 }
 
 auto Heap::Write(const Address& a, Nonnull<const Value*> v,
@@ -64,6 +81,12 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
       }
     }
   }
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "+++ memory-write: #" << a.allocation_.index_ << " `"
+                   << *values_[a.allocation_.index_] << "`\n";
+  }
+
   return Success();
 }
 
@@ -95,6 +118,12 @@ auto Heap::Deallocate(AllocationId allocation) -> ErrorOr<Success> {
     CARBON_FATAL() << "deallocating an already dead value: "
                    << *values_[allocation.index_];
   }
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "(-) memory-dealloc: #" << allocation.index_ << " `"
+                   << *values_[allocation.index_] << "`\n";
+  }
+
   return Success();
 }
 

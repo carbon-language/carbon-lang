@@ -21,6 +21,8 @@
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT:   nodeFloatingPointType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
@@ -45,6 +47,8 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+1]]:19: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+3]]:19: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR:   var x: i32 = 1.0;
+  // CHECK:STDERR:                   ^
   var x: i32 = 1.0;
 }

@@ -358,6 +358,10 @@ class TokenizedBuffer {
   };
 
   struct LineInfo {
+    // The length will always be assigned later. Indent may be assigned if
+    // non-zero.
+    explicit LineInfo(int64_t start) : start(start), length(-1), indent(0) {}
+
     // Zero-based byte offset of the start of the line within the source buffer
     // provided.
     int64_t start;
@@ -393,17 +397,17 @@ class TokenizedBuffer {
 
   SourceBuffer* source_;
 
-  llvm::SmallVector<TokenInfo, 16> token_infos_;
+  llvm::SmallVector<TokenInfo> token_infos_;
 
-  llvm::SmallVector<LineInfo, 16> line_infos_;
+  llvm::SmallVector<LineInfo> line_infos_;
 
-  llvm::SmallVector<IdentifierInfo, 16> identifier_infos_;
+  llvm::SmallVector<IdentifierInfo> identifier_infos_;
 
   // Storage for integers that form part of the value of a numeric or type
   // literal.
-  llvm::SmallVector<llvm::APInt, 16> literal_int_storage_;
+  llvm::SmallVector<llvm::APInt> literal_int_storage_;
 
-  llvm::SmallVector<std::string, 16> literal_string_storage_;
+  llvm::SmallVector<std::string> literal_string_storage_;
 
   llvm::DenseMap<llvm::StringRef, Identifier> identifier_map_;
 

@@ -21,6 +21,8 @@
 // CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
@@ -55,7 +57,11 @@
 
 fn Main() {
   var x: i32 = 0;
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+2]]:7: Duplicate name being declared in the same scope.
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-2]]:7: Name is previously declared here.
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+6]]:7: Duplicate name being declared in the same scope.
+  // CHECK:STDERR:   var x: i32 = 0;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-4]]:7: Name is previously declared here.
+  // CHECK:STDERR:   var x: i32 = 0;
+  // CHECK:STDERR:       ^
   var x: i32 = 0;
 }

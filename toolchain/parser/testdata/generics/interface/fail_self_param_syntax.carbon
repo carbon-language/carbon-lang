@@ -42,9 +42,13 @@
 // CHECK:STDOUT: ]
 
 interface Foo {
-  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+1]]:13: Expected parameter declaration.
+  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:13: Expected parameter declaration.
+  // CHECK:STDERR:   fn Sub[me Self](b: Self) -> Self;
+  // CHECK:STDERR:             ^
   fn Sub[me Self](b: Self) -> Self;
 
-  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+1]]:10: Expected parameter declaration.
+  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:10: Expected parameter declaration.
+  // CHECK:STDERR:   fn Mul[Self](b: Self) -> Self;
+  // CHECK:STDERR:          ^
   fn Mul[Self](b: Self) -> Self;
 }
