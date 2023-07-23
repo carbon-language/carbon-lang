@@ -1039,8 +1039,7 @@ auto Args::Parser::FinalizeParse() -> ParseResult {
   }
 
   // See if any positional args are required and unparsed.
-  auto unparsed_positional_args =
-      positional_args.slice(positional_arg_index);
+  auto unparsed_positional_args = positional_args.slice(positional_arg_index);
   if (!unparsed_positional_args.empty()) {
     // There are un-parsed positional arguments, make sure they aren't required.
     const Arg& missing_arg = *unparsed_positional_args.front();
