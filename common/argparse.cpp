@@ -636,11 +636,18 @@ class Args::Parser {
   friend Args;
   friend CommandBuilder;
 
+  // For the option and subcommand maps, we use somewhat large small size
+  // buffers (16) as there is no real size pressure on these and its nice to
+  // avoid heap allocation in the small cases.
   using OptionMapT =
       llvm::SmallDenseMap<llvm::StringRef, llvm::PointerIntPair<Arg*, 1, bool>,
                           16>;
-  using ShortOptionTableT = std::array<OptionMapT::mapped_type*, 128>;
   using SubcommandMapT = llvm::SmallDenseMap<llvm::StringRef, Command*, 16>;
+
+  // This table is sized to be 128 so that it can hold ASCII characters. We
+  // don't need any more than this and using a direct table indexed by the
+  // character's numeric value makes for a convenient map.
+  using ShortOptionTableT = std::array<OptionMapT::mapped_type*, 128>;
 
   void PopulateMaps(const Command& command);
 
