@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// An autoupdate wants to put the CHECK in the middle of the block string.
 // NOAUTOUPDATE
 
 // CHECK:STDOUT: [
