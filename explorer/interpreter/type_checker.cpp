@@ -6678,6 +6678,7 @@ auto TypeChecker::InstantiateImplDeclaration(
     Nonnull<const Bindings*> bindings) const
     -> ErrorOr<std::pair<Nonnull<ImplDeclaration*>, Nonnull<Bindings*>>> {
   CARBON_CHECK(IsTemplateSaturated(*bindings));
+  SetFileContext set_file_ctx(*trace_stream_, old_impl->source_loc());
 
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "instantiating " << *old_impl;
