@@ -3,31 +3,37 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: Bind from c initializing expression
+// CHECK:STDOUT: 0: Heap{}, 1: !Uninit<class C>
 // CHECK:STDOUT: 0: Heap{}, 1: C{}
-// CHECK:STDOUT: Bind from c value expression
 // CHECK:STDOUT: Binding scope end
-// CHECK:STDOUT: 0: Heap{}, 1: C{}
 // CHECK:STDOUT: c destroyed
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{}
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 class C {
+  fn Create() -> C {
+    heap.PrintAllocs();
+    return Create2();
+  }
+  fn Create2() -> C {
+    return {};
+  }
   destructor[self: Self] {
     Print("c destroyed");
   }
 }
 
 fn CallWithValueExpressionBinding(c: C) {
+    heap.PrintAllocs();
     Print("Binding scope end");
 }
 
 fn Main() -> i32 {
-  let c_let: C = {};
-  heap.PrintAllocs();
-
-  Print("Bind from c value expression");
-  CallWithValueExpressionBinding(c_let);
+  Print("Bind from c initializing expression");
+  CallWithValueExpressionBinding(C.Create());
   heap.PrintAllocs();
   return 0;
 }

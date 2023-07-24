@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: 0: Heap{}, 1: C{}
-// CHECK:STDOUT: Bind from c value expression
+// CHECK:STDOUT: 0: Heap{}
+// CHECK:STDOUT: Bind from 'temporary' c value expression
 // CHECK:STDOUT: Binding scope end
-// CHECK:STDOUT: 0: Heap{}, 1: C{}
 // CHECK:STDOUT: c destroyed
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{}
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
@@ -23,11 +23,10 @@ fn CallWithValueExpressionBinding(c: C) {
 }
 
 fn Main() -> i32 {
-  let c_let: C = {};
   heap.PrintAllocs();
 
-  Print("Bind from c value expression");
-  CallWithValueExpressionBinding(c_let);
+  Print("Bind from 'temporary' c value expression");
+  CallWithValueExpressionBinding({});
   heap.PrintAllocs();
   return 0;
 }
