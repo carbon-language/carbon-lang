@@ -911,21 +911,16 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   llvm::StringRef line =
       buffer_->source_->text().substr(line_it->start, line_it->length);
   if (line_it->length == static_cast<int32_t>(llvm::StringRef::npos)) {
-    // The location of the diagnostic hasn't been lexed yet. Check to see if
-    // there are any newline characters between the position we've finished
-    // lexing up to and the given location.
-    if (column_number > *last_line_lexed_to_column_) {
-      auto start_newline_pos =
-          line.take_front(*last_line_lexed_to_column_).rfind('\n');
-      if (start_newline_pos != llvm::StringRef::npos) {
-        // Adjust the diagnostic location because a newline was found.
-        line_number += line.take_front(start_newline_pos).count('\n') + 1;
-        column_number = offset - start_newline_pos;
-        line = line.drop_front(start_newline_pos + 1);
-      }
-    }
+    CARBON_CHECK(column_number < *last_line_lexed_to_column_ ||
+                 line.substr(*last_line_lexed_to_column_,
+                             column_number - *last_line_lexed_to_column_)
+                         .count('\n') == 0)
+        << "Currently we assume no unlexed newlines prior to the error column, "
+           "but there was one when erroring at "
+        << buffer_->source_->filename() << ":" << line_number << ":"
+        << column_number << ", lexed to column " << *last_line_lexed_to_column_;
     // Look for the next newline since we don't know the length. We can start at
-    // the column because we've already skipped past prior newlines.
+    // the column because prior newlines will have been lexed.
     auto end_newline_pos = line.find('\n', column_number);
     if (end_newline_pos != llvm::StringRef::npos) {
       line = line.take_front(end_newline_pos);
