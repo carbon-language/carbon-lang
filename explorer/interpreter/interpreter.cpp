@@ -1486,26 +1486,23 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             ElementPath::Component member(&access.member(), found_in_interface,
                                           witness);
             const Value* aggregate;
-            const Value* me_value;
+            Nonnull<const Value*> me_value = act.results()[0];
             std::optional<Address> lhs_address;
             if (access.is_type_access()) {
               aggregate = act.results().back();
             } else if (const auto* location =
-                           dyn_cast<LocationValue>(act.results()[0])) {
+                           dyn_cast<LocationValue>(me_value)) {
               lhs_address = location->address();
-              me_value = act.results()[0];
               CARBON_ASSIGN_OR_RETURN(
                   aggregate,
                   this->heap_.Read(location->address(), exp.source_loc()));
             } else if (const auto* expr_value =
-                           dyn_cast<ReferenceExpressionValue>(
-                               act.results()[0])) {
+                           dyn_cast<ReferenceExpressionValue>(me_value)) {
               lhs_address = expr_value->address();
-              aggregate = expr_value->value();
-              me_value = aggregate;
+              me_value = expr_value->value();
+              aggregate = me_value;
             } else {
-              aggregate = act.results()[0];
-              me_value = aggregate;
+              aggregate = me_value;
             }
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> member_value,
