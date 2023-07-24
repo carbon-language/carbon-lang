@@ -1486,7 +1486,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             ElementPath::Component member(&access.member(), found_in_interface,
                                           witness);
             const Value* aggregate;
-            const Value* me_value;
+            std::optional<Nonnull<const Value*>> me_value;
             std::optional<Address> lhs_address;
             if (access.is_type_access()) {
               aggregate = act.results().back();
