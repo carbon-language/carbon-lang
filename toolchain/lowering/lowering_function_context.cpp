@@ -4,9 +4,7 @@
 
 #include "toolchain/lowering/lowering_function_context.h"
 
-#include "common/vlog.h"
 #include "toolchain/semantics/semantics_ir.h"
-#include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
 
