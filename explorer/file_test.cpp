@@ -42,9 +42,13 @@ class ParseAndExecuteTestFile : public FileTestBase {
     }
   }
 
-  auto RunWithFiles(const llvm::SmallVector<TestFile>& test_files,
+  auto RunWithFiles(const llvm::SmallVector<llvm::StringRef>& test_args,
+                    const llvm::SmallVector<TestFile>& test_files,
                     llvm::raw_pwrite_stream& stdout,
                     llvm::raw_pwrite_stream& stderr) -> bool override {
+    CARBON_CHECK(test_args.empty())
+        << "ARGS are not currently used in explorer's file_test.";
+
     if (test_files.size() != 1) {
       ADD_FAILURE() << "Only 1 file is supported: " << test_files.size()
                     << " provided";
@@ -86,6 +90,10 @@ class ParseAndExecuteTestFile : public FileTestBase {
     }
 
     return result.ok();
+  }
+
+  auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
+    return {};
   }
 
  private:

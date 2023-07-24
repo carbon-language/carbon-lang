@@ -2,9 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{carbon} -v dump semantics-ir %s | %{FileCheck-allow-unmatched}
+// ARGS: -v dump semantics-ir %s
 //
 // Only checks a couple statements in order to minimize manual update churn.
+// NOAUTOUPDATE
+// SET-CHECK-SUBSET
 // CHECK:STDERR: Node Push 0: FunctionIntroducer -> <none>
 // CHECK:STDERR: AddNode block{{[0-9]+}}: {kind: FunctionDeclaration, arg0: function{{[0-9]+}}}
 
