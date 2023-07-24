@@ -905,9 +905,9 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   int line_number = line_it - buffer_->line_infos_.begin();
   int column_number = offset - line_it->start;
 
-  // Start by grabbing the buffer. If the line isn't fully lexed, the length
-  // will be npos and the buffer will be grabbed from the start; we'll then
-  // adjust the length.
+  // Start by grabbing the line from the buffer. If the line isn't fully lexed,
+  // the length will be npos and the line will be grabbed from the known start
+  // to the end of the buffer; we'll then adjust the length.
   llvm::StringRef line =
       buffer_->source_->text().substr(line_it->start, line_it->length);
   if (line_it->length == static_cast<int32_t>(llvm::StringRef::npos)) {
