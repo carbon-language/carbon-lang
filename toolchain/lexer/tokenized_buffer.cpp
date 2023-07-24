@@ -84,9 +84,9 @@ class TokenizedBuffer::Lexer {
 
   Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
       : buffer_(&buffer),
-        translator_(&buffer, &current_column_),
+        translator_(&buffer),
         emitter_(translator_, consumer),
-        token_translator_(&buffer, &current_column_),
+        token_translator_(&buffer),
         token_emitter_(token_translator_, consumer),
         current_line_(buffer.AddLine(LineInfo(0))),
         current_line_info_(&buffer.GetLineInfo(current_line_)) {}
@@ -911,14 +911,11 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   llvm::StringRef line =
       buffer_->source_->text().substr(line_it->start, line_it->length);
   if (line_it->length == static_cast<int32_t>(llvm::StringRef::npos)) {
-    CARBON_CHECK(column_number < *last_line_lexed_to_column_ ||
-                 line.substr(*last_line_lexed_to_column_,
-                             column_number - *last_line_lexed_to_column_)
-                         .count('\n') == 0)
+    CARBON_CHECK(line.take_front(column_number).count('\n') == 0)
         << "Currently we assume no unlexed newlines prior to the error column, "
            "but there was one when erroring at "
         << buffer_->source_->filename() << ":" << line_number << ":"
-        << column_number << ", lexed to column " << *last_line_lexed_to_column_;
+        << column_number;
     // Look for the next newline since we don't know the length. We can start at
     // the column because prior newlines will have been lexed.
     auto end_newline_pos = line.find('\n', column_number);
@@ -944,8 +941,7 @@ auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
-  return SourceBufferLocationTranslator(buffer_, last_line_lexed_to_column_)
-      .GetLocation(token_start);
+  return SourceBufferLocationTranslator(buffer_).GetLocation(token_start);
 }
 
 }  // namespace Carbon
