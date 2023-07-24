@@ -38,7 +38,7 @@ fn N.Foo(n: i32) -> i32 {
 fn Main() -> i32 {
   var x: i32 = N.Foo(0);
   return x;
-// CHECK:STDOUT: --- declared `Main` as `fn Main` in `package` (full_trace.carbon:[[@LINE+310]])
+// CHECK:STDOUT: --- declared `Main` as `fn Main` in `package` (full_trace.carbon:[[@LINE+330]])
 // CHECK:STDOUT: ** resolving decl `interface TestInterface` (full_trace.carbon:[[@LINE-15]])
 // CHECK:STDOUT: --- marked `TestInterface` declared but not usable in `package`
 // CHECK:STDOUT: --- marked `TestInterface` usable in `package`
@@ -58,10 +58,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ** finished resolving stmt `return (n + 1);` (full_trace.carbon:[[@LINE-24]])
 // CHECK:STDOUT: ** finished resolving stmt `{return (n + 1);}` (full_trace.carbon:[[@LINE-23]])
 // CHECK:STDOUT: ** finished resolving decl `fn N.Foo` (full_trace.carbon:[[@LINE-24]])
-// CHECK:STDOUT: ** resolving decl `fn Main` (full_trace.carbon:[[@LINE+290]])
+// CHECK:STDOUT: ** resolving decl `fn Main` (full_trace.carbon:[[@LINE+310]])
 // CHECK:STDOUT: --- marked `Main` declared but not usable in `package`
 // CHECK:STDOUT: --- marked `Main` usable in `package`
-// CHECK:STDOUT: ** resolving stmt `{var x: i32 = N.Foo(0);return x;}` (full_trace.carbon:[[@LINE+287]])
+// CHECK:STDOUT: ** resolving stmt `{var x: i32 = N.Foo(0);return x;}` (full_trace.carbon:[[@LINE+307]])
 // CHECK:STDOUT: ** resolving stmt `var x: i32 = N.Foo(0);` (full_trace.carbon:[[@LINE-26]])
 // CHECK:STDOUT: --- resolved `N` as `namespace N` in `package` (full_trace.carbon:[[@LINE-27]])
 // CHECK:STDOUT: --- resolved `Foo` as `fn N.Foo` in `namespace N` (full_trace.carbon:[[@LINE-28]])
@@ -70,8 +70,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ** resolving stmt `return x;` (full_trace.carbon:[[@LINE-30]])
 // CHECK:STDOUT: --- resolved `x` as `x` in `{var x: i32 = N.Foo(0);return x;}` (full_trace.carbon:[[@LINE-31]])
 // CHECK:STDOUT: ** finished resolving stmt `return x;` (full_trace.carbon:[[@LINE-32]])
-// CHECK:STDOUT: ** finished resolving stmt `{var x: i32 = N.Foo(0);return x;}` (full_trace.carbon:[[@LINE+278]])
-// CHECK:STDOUT: ** finished resolving decl `fn Main` (full_trace.carbon:[[@LINE+277]])
+// CHECK:STDOUT: ** finished resolving stmt `{var x: i32 = N.Foo(0);return x;}` (full_trace.carbon:[[@LINE+298]])
+// CHECK:STDOUT: ** finished resolving decl `fn Main` (full_trace.carbon:[[@LINE+297]])
 // CHECK:STDOUT: --- resolved `Main` as `fn Main` in `package` (<Main()>:0)
 // CHECK:STDOUT: ********** resolving control flow **********
 // CHECK:STDOUT: ********** type checking **********
@@ -162,6 +162,26 @@ fn Main() -> i32 {
 // CHECK:STDOUT: performing argument deduction for bindings:{{ }}
 // CHECK:STDOUT: deduction succeeded with results: {}
 // CHECK:STDOUT: ********** resolving unformed variables **********
+// CHECK:STDOUT: --- resolving unformed for decl `interface TestInterface` (full_trace.carbon:[[@LINE-138]])
+// CHECK:STDOUT: --- resolving unformed for decl `namespace N` (full_trace.carbon:[[@LINE-136]])
+// CHECK:STDOUT: --- resolving unformed for decl `fn N.Foo` (full_trace.carbon:[[@LINE-131]])
+// CHECK:STDOUT: --- resolving unformed for stmt `{return (n + 1);}` (full_trace.carbon:[[@LINE-132]])
+// CHECK:STDOUT: --- resolving unformed for stmt `return (n + 1);` (full_trace.carbon:[[@LINE-135]])
+// CHECK:STDOUT: --- resolving unformed for expr `(n + 1)` (full_trace.carbon:[[@LINE-136]])
+// CHECK:STDOUT: --- resolving unformed for expr `n` (full_trace.carbon:[[@LINE-137]])
+// CHECK:STDOUT: *** check `n` (full_trace.carbon:[[@LINE-138]])
+// CHECK:STDOUT: --- resolving unformed for expr `1` (full_trace.carbon:[[@LINE-139]])
+// CHECK:STDOUT: --- resolving unformed for decl `fn Main` (full_trace.carbon:[[@LINE+197]])
+// CHECK:STDOUT: --- resolving unformed for stmt `{var x: i32 = N.Foo(0);return x;}` (full_trace.carbon:[[@LINE+196]])
+// CHECK:STDOUT: --- resolving unformed for stmt `var x: i32 = N.Foo(0);` (full_trace.carbon:[[@LINE-137]])
+// CHECK:STDOUT: --- resolving unformed for pattern `x: i32` (full_trace.carbon:[[@LINE-138]])
+// CHECK:STDOUT: *** add init `x` (full_trace.carbon:[[@LINE-139]])
+// CHECK:STDOUT: --- resolving unformed for expr `N.Foo(0)` (full_trace.carbon:[[@LINE-140]])
+// CHECK:STDOUT: --- resolving unformed for expr `(0)` (full_trace.carbon:[[@LINE-141]])
+// CHECK:STDOUT: --- resolving unformed for expr `0` (full_trace.carbon:[[@LINE-142]])
+// CHECK:STDOUT: --- resolving unformed for stmt `return x;` (full_trace.carbon:[[@LINE-142]])
+// CHECK:STDOUT: --- resolving unformed for expr `x` (full_trace.carbon:[[@LINE-143]])
+// CHECK:STDOUT: *** check `x` (full_trace.carbon:[[@LINE-144]])
 // CHECK:STDOUT: ********** printing declarations **********
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
@@ -183,12 +203,12 @@ fn Main() -> i32 {
 // CHECK:STDOUT: (+) stack-push: interface TestInterface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:  .0.
-// CHECK:STDOUT: --- step decl interface TestInterface .0. (full_trace.carbon:[[@LINE-159]]) --->
+// CHECK:STDOUT: --- step decl interface TestInterface .0. (full_trace.carbon:[[@LINE-179]]) --->
 // CHECK:STDOUT: (-) stack-pop: interface TestInterface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:  .0.
 // CHECK:STDOUT: (+) stack-push: namespace N; .0.
-// CHECK:STDOUT: --- step decl namespace N .0. (full_trace.carbon:[[@LINE-161]]) --->
+// CHECK:STDOUT: --- step decl namespace N .0. (full_trace.carbon:[[@LINE-181]]) --->
 // CHECK:STDOUT: (-) stack-pop: namespace N; .0.
 // CHECK:STDOUT: (+) stack-push: fn Foo (n: i32)-> i32 {
 // CHECK:STDOUT: {
@@ -197,7 +217,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:  .0.
-// CHECK:STDOUT: --- step decl fn N.Foo .0. (full_trace.carbon:[[@LINE-164]]) --->
+// CHECK:STDOUT: --- step decl fn N.Foo .0. (full_trace.carbon:[[@LINE-184]]) --->
 // CHECK:STDOUT: (-) stack-pop: fn Foo (n: i32)-> i32 {
 // CHECK:STDOUT: {
 // CHECK:STDOUT: return (n + 1);
@@ -243,27 +263,27 @@ fn Main() -> i32 {
 // CHECK:STDOUT: (+) stack-push: {var x: i32 = N.Foo(0);return x;} .0.
 // CHECK:STDOUT: --- step stmt {var x: i32 = N.Foo(0);return x;} .0. (full_trace.carbon:[[@LINE+107]]) --->
 // CHECK:STDOUT: (+) stack-push: var x: i32 = N.Foo(0); .0.
-// CHECK:STDOUT: --- step stmt var x: i32 = N.Foo(0); .0. (full_trace.carbon:[[@LINE-207]]) --->
+// CHECK:STDOUT: --- step stmt var x: i32 = N.Foo(0); .0. (full_trace.carbon:[[@LINE-227]]) --->
 // CHECK:STDOUT: (+) memory-alloc: #1 `Uninit<i32>` uninitialized
 // CHECK:STDOUT: (+) stack-push: N.Foo(0) .0.
-// CHECK:STDOUT: --- step exp N.Foo(0) .0. (full_trace.carbon:[[@LINE-210]]) --->
+// CHECK:STDOUT: --- step exp N.Foo(0) .0. (full_trace.carbon:[[@LINE-230]]) --->
 // CHECK:STDOUT: (+) stack-push: N.Foo .0.
 // CHECK:STDOUT: (+) stack-push: N.Foo .0.
-// CHECK:STDOUT: --- step exp N.Foo .0. (full_trace.carbon:[[@LINE-213]]) --->
+// CHECK:STDOUT: --- step exp N.Foo .0. (full_trace.carbon:[[@LINE-233]]) --->
 // CHECK:STDOUT: (-) stack-pop: N.Foo .0.
 // CHECK:STDOUT: (+) stack-push: Foo .0.
-// CHECK:STDOUT: --- step exp Foo .0. (full_trace.carbon:[[@LINE-216]]) --->
+// CHECK:STDOUT: --- step exp Foo .0. (full_trace.carbon:[[@LINE-236]]) --->
 // CHECK:STDOUT: (-) stack-pop: Foo .0.
 // CHECK:STDOUT: (-) stack-pop: N.Foo .1. {{[[][[]}}fun<N.Foo>]]
-// CHECK:STDOUT: --- step exp N.Foo(0) .1. (full_trace.carbon:[[@LINE-219]]) --->
+// CHECK:STDOUT: --- step exp N.Foo(0) .1. (full_trace.carbon:[[@LINE-239]]) --->
 // CHECK:STDOUT: (+) stack-push: (0) .0.
-// CHECK:STDOUT: --- step exp (0) .0. (full_trace.carbon:[[@LINE-221]]) --->
+// CHECK:STDOUT: --- step exp (0) .0. (full_trace.carbon:[[@LINE-241]]) --->
 // CHECK:STDOUT: (+) stack-push: 0 .0.
-// CHECK:STDOUT: --- step exp 0 .0. (full_trace.carbon:[[@LINE-223]]) --->
+// CHECK:STDOUT: --- step exp 0 .0. (full_trace.carbon:[[@LINE-243]]) --->
 // CHECK:STDOUT: (-) stack-pop: 0 .0.
-// CHECK:STDOUT: --- step exp (0) .1. (full_trace.carbon:[[@LINE-225]]) --->
+// CHECK:STDOUT: --- step exp (0) .1. (full_trace.carbon:[[@LINE-245]]) --->
 // CHECK:STDOUT: (-) stack-pop: (0) .1. {{[[][[]}}0]]
-// CHECK:STDOUT: --- step exp N.Foo(0) .2. (full_trace.carbon:[[@LINE-227]]) --->
+// CHECK:STDOUT: --- step exp N.Foo(0) .2. (full_trace.carbon:[[@LINE-247]]) --->
 // CHECK:STDOUT: calling function: fun<N.Foo>
 // CHECK:STDOUT: match pattern (Placeholder<n>,)
 // CHECK:STDOUT: from value expression with value (0,)
@@ -272,28 +292,28 @@ fn Main() -> i32 {
 // CHECK:STDOUT: (+) memory-alloc: #2 `0`
 // CHECK:STDOUT: (+) stack-push: .0. {n: i32: lval<Allocation(2)>}
 // CHECK:STDOUT: (+) stack-push: {return (n + 1);} .0.
-// CHECK:STDOUT: --- step stmt {return (n + 1);} .0. (full_trace.carbon:[[@LINE-239]]) --->
+// CHECK:STDOUT: --- step stmt {return (n + 1);} .0. (full_trace.carbon:[[@LINE-259]]) --->
 // CHECK:STDOUT: (+) stack-push: return (n + 1); .0.
-// CHECK:STDOUT: --- step stmt return (n + 1); .0. (full_trace.carbon:[[@LINE-243]]) --->
+// CHECK:STDOUT: --- step stmt return (n + 1); .0. (full_trace.carbon:[[@LINE-263]]) --->
 // CHECK:STDOUT: (+) stack-push: (n + 1) .0.
 // CHECK:STDOUT: (+) stack-push: (n + 1) .0.
-// CHECK:STDOUT: --- step exp (n + 1) .0. (full_trace.carbon:[[@LINE-246]]) --->
+// CHECK:STDOUT: --- step exp (n + 1) .0. (full_trace.carbon:[[@LINE-266]]) --->
 // CHECK:STDOUT: (+) stack-push: n .0.
 // CHECK:STDOUT: (+) stack-push: n .0.
-// CHECK:STDOUT: --- step exp n .0. (full_trace.carbon:[[@LINE-249]]) --->
+// CHECK:STDOUT: --- step exp n .0. (full_trace.carbon:[[@LINE-269]]) --->
 // CHECK:STDOUT: +++ memory-read: #2 `0`
 // CHECK:STDOUT: (-) stack-pop: n .0.
 // CHECK:STDOUT: (-) stack-pop: n .1. {{[[][[]}}0]]
-// CHECK:STDOUT: --- step exp (n + 1) .1. (full_trace.carbon:[[@LINE-253]]) --->
+// CHECK:STDOUT: --- step exp (n + 1) .1. (full_trace.carbon:[[@LINE-273]]) --->
 // CHECK:STDOUT: (+) stack-push: 1 .0.
 // CHECK:STDOUT: (+) stack-push: 1 .0.
-// CHECK:STDOUT: --- step exp 1 .0. (full_trace.carbon:[[@LINE-256]]) --->
+// CHECK:STDOUT: --- step exp 1 .0. (full_trace.carbon:[[@LINE-276]]) --->
 // CHECK:STDOUT: (-) stack-pop: 1 .0.
 // CHECK:STDOUT: (-) stack-pop: 1 .1. {{[[][[]}}1]]
-// CHECK:STDOUT: --- step exp (n + 1) .2. (full_trace.carbon:[[@LINE-259]]) --->
+// CHECK:STDOUT: --- step exp (n + 1) .2. (full_trace.carbon:[[@LINE-279]]) --->
 // CHECK:STDOUT: (-) stack-pop: (n + 1) .2. {{[[][[]}}0, 1]]
 // CHECK:STDOUT: (-) stack-pop: (n + 1) .1. {{[[][[]}}1]]
-// CHECK:STDOUT: --- step stmt return (n + 1); .1. (full_trace.carbon:[[@LINE-262]]) --->
+// CHECK:STDOUT: --- step stmt return (n + 1); .1. (full_trace.carbon:[[@LINE-282]]) --->
 // CHECK:STDOUT: +++ memory-write: #1 `1`
 // CHECK:STDOUT: (-) stack-pop: return (n + 1); .1. {{[[][[]}}1]]
 // CHECK:STDOUT: (-) stack-pop: {return (n + 1);} .1. {}
@@ -306,25 +326,25 @@ fn Main() -> i32 {
 // CHECK:STDOUT: (-) stack-pop: destroy.0.
 // CHECK:STDOUT: (-) memory-dealloc: #2 `0`
 // CHECK:STDOUT: (-) stack-pop: clean up.2. {n: i32: lval<Allocation(2)>}
-// CHECK:STDOUT: --- step exp N.Foo(0) .3. (full_trace.carbon:[[@LINE-270]]) --->
+// CHECK:STDOUT: --- step exp N.Foo(0) .3. (full_trace.carbon:[[@LINE-290]]) --->
 // CHECK:STDOUT: (-) stack-pop: N.Foo(0) .3. {{[[][[]}}fun<N.Foo>, (0,), 1]] {}
 // CHECK:STDOUT: (+) stack-push: clean up.0. {}
 // CHECK:STDOUT: (-) stack-pop: clean up.0. {}
-// CHECK:STDOUT: --- step stmt var x: i32 = N.Foo(0); .1. (full_trace.carbon:[[@LINE-274]]) --->
+// CHECK:STDOUT: --- step stmt var x: i32 = N.Foo(0); .1. (full_trace.carbon:[[@LINE-294]]) --->
 // CHECK:STDOUT: +++ memory-read: #1 `1`
 // CHECK:STDOUT: match pattern Placeholder<x>
 // CHECK:STDOUT: from initializing expression with value 1
 // CHECK:STDOUT: (-) stack-pop: var x: i32 = N.Foo(0); .1. {{[[][[]}}1]]
 // CHECK:STDOUT: --- step stmt {var x: i32 = N.Foo(0);return x;} .1. (full_trace.carbon:[[@LINE+33]]) --->
 // CHECK:STDOUT: (+) stack-push: return x; .0.
-// CHECK:STDOUT: --- step stmt return x; .0. (full_trace.carbon:[[@LINE-280]]) --->
+// CHECK:STDOUT: --- step stmt return x; .0. (full_trace.carbon:[[@LINE-300]]) --->
 // CHECK:STDOUT: (+) stack-push: x .0.
 // CHECK:STDOUT: (+) stack-push: x .0.
-// CHECK:STDOUT: --- step exp x .0. (full_trace.carbon:[[@LINE-283]]) --->
+// CHECK:STDOUT: --- step exp x .0. (full_trace.carbon:[[@LINE-303]]) --->
 // CHECK:STDOUT: +++ memory-read: #1 `1`
 // CHECK:STDOUT: (-) stack-pop: x .0.
 // CHECK:STDOUT: (-) stack-pop: x .1. {{[[][[]}}ref_expr<Allocation(1)>]]
-// CHECK:STDOUT: --- step stmt return x; .1. (full_trace.carbon:[[@LINE-287]]) --->
+// CHECK:STDOUT: --- step stmt return x; .1. (full_trace.carbon:[[@LINE-307]]) --->
 // CHECK:STDOUT: (-) stack-pop: return x; .1. {{[[][[]}}1]]
 // CHECK:STDOUT: (-) stack-pop: {var x: i32 = N.Foo(0);return x;} .2. {x: i32: lval<Allocation(1)>}
 // CHECK:STDOUT: (-) stack-pop: .0. {}

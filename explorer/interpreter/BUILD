@@ -235,6 +235,7 @@ cc_library(
         "//explorer/ast:static_scope",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
+        "//explorer/common:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
