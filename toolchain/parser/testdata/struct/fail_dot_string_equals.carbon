@@ -25,5 +25,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_dot_string_equals.carbon:[[@LINE+1]]:10: Expected identifier after `.`.
+// CHECK:STDERR: fail_dot_string_equals.carbon:[[@LINE+3]]:10: Expected identifier after `.`.
+// CHECK:STDERR: var x: {."hello" = 0, .y = 4} = {};
+// CHECK:STDERR:          ^
 var x: {."hello" = 0, .y = 4} = {};

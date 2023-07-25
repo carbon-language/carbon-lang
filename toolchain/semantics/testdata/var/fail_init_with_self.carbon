@@ -19,6 +19,8 @@
 // CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
@@ -41,6 +43,8 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: fail_init_with_self.carbon:[[@LINE+1]]:16: Name x not found
+  // CHECK:STDERR: fail_init_with_self.carbon:[[@LINE+3]]:16: Name x not found
+  // CHECK:STDERR:   var x: i32 = x;
+  // CHECK:STDERR:                ^
   var x: i32 = x;
 }

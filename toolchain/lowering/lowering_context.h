@@ -32,7 +32,12 @@ class LoweringContext {
 
   // Returns a lowered type for the given type_id.
   auto GetType(SemanticsTypeId type_id) -> llvm::Type* {
-    // Neither TypeType nor InvalidType should be passed in.
+    // InvalidType should not be passed in.
+    if (type_id == SemanticsTypeId::TypeType) {
+      // TODO: Handle TypeType. Currently using a place holder
+      // as a workaround.
+      return llvm::Type::getInt1Ty(llvm_context());
+    }
     CARBON_CHECK(type_id.index >= 0) << type_id;
     return types_[type_id.index];
   }

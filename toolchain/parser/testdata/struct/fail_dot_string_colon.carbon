@@ -25,5 +25,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_dot_string_colon.carbon:[[@LINE+1]]:10: Expected identifier after `.`.
+// CHECK:STDERR: fail_dot_string_colon.carbon:[[@LINE+3]]:10: Expected identifier after `.`.
+// CHECK:STDERR: var x: {."hello": i32, .y: i32} = {};
+// CHECK:STDERR:          ^
 var x: {."hello": i32, .y: i32} = {};

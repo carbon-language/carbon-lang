@@ -18,6 +18,8 @@
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
@@ -38,5 +40,7 @@
 // CHECK:STDOUT: ]
 
 var x: i32;
-// CHECK:STDERR: fail_qualifier_unsupported.carbon:[[@LINE+1]]:15: Type `i32` does not support qualified expressions.
+// CHECK:STDERR: fail_qualifier_unsupported.carbon:[[@LINE+3]]:15: Type `i32` does not support qualified expressions.
+// CHECK:STDERR: var y: i32 = x.b;
+// CHECK:STDERR:               ^
 var y: i32 = x.b;

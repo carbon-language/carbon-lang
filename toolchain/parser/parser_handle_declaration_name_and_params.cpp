@@ -18,7 +18,10 @@ static auto ParserHandleDeclarationNameAndParams(ParserContext& context,
     context.PushState(state);
 
     if (context.PositionIs(TokenKind::Period)) {
-      context.AddLeafNode(ParseNodeKind::Name, *identifier);
+      // Because there's a qualifier, we process the first segment as an
+      // expression for simplicity. This just means semantics has one less thing
+      // to handle here.
+      context.AddLeafNode(ParseNodeKind::NameExpression, *identifier);
       state.state = ParserState::PeriodAsDeclaration;
       context.PushState(state);
     } else {

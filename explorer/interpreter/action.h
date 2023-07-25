@@ -18,9 +18,11 @@
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/statement.h"
 #include "explorer/ast/value.h"
+#include "explorer/common/source_location.h"
 #include "explorer/interpreter/dictionary.h"
 #include "explorer/interpreter/heap_allocation_interface.h"
 #include "explorer/interpreter/stack.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Support/Compiler.h"
 
@@ -61,6 +63,10 @@ class RuntimeScope {
   // allocating local storage.
   void Bind(ValueNodeView value_node, Address address);
 
+  // Binds location `address` of a reference value to `value_node` without
+  // allocating local storage, and pins the value, making it immutable.
+  void BindAndPin(ValueNodeView value_node, Address address);
+
   // Binds unlocated `value` to `value_node` without allocating local storage.
   // TODO: BindValue should pin the lifetime of `value` and make sure it isn't
   // mutated.
@@ -74,8 +80,8 @@ class RuntimeScope {
   // - its `LocationValue*` if bound to a reference expression in this scope,
   // - a `Value*` if bound to a value expression in this scope, or
   // - `nullptr` if not bound.
-  auto Get(ValueNodeView value_node) const
-      -> std::optional<Nonnull<const Value*>>;
+  auto Get(ValueNodeView value_node, SourceLocation source_loc) const
+      -> ErrorOr<std::optional<Nonnull<const Value*>>>;
 
   // Returns the local values with allocation in created order.
   auto allocations() const -> const std::vector<AllocationId>& {
@@ -86,6 +92,7 @@ class RuntimeScope {
   llvm::MapVector<ValueNodeView, Nonnull<const Value*>,
                   std::map<ValueNodeView, unsigned>>
       locals_;
+  llvm::DenseSet<const AstNode*> bound_values_;
   std::vector<AllocationId> allocations_;
   Nonnull<HeapAllocationInterface*> heap_;
 };
@@ -106,6 +113,7 @@ class Action {
  public:
   enum class Kind {
     LocationAction,
+    ValueExpressionAction,
     ExpressionAction,
     WitnessAction,
     StatementAction,
@@ -165,7 +173,9 @@ class Action {
     scope_ = std::move(scope);
   }
 
-  auto source_loc() -> std::optional<SourceLocation> { return source_loc_; }
+  auto source_loc() const -> std::optional<SourceLocation> {
+    return source_loc_;
+  }
 
  protected:
   // Constructs an Action. `kind` must be the enumerator corresponding to the
@@ -202,17 +212,17 @@ class LocationAction : public Action {
 };
 
 // An Action which implements evaluation of an Expression to produce a `Value*`.
-class ExpressionAction : public Action {
+class ValueExpressionAction : public Action {
  public:
-  explicit ExpressionAction(
+  explicit ValueExpressionAction(
       Nonnull<const Expression*> expression,
       std::optional<AllocationId> initialized_location = std::nullopt)
-      : Action(expression->source_loc(), Kind::ExpressionAction),
+      : Action(expression->source_loc(), Kind::ValueExpressionAction),
         expression_(expression),
         location_received_(initialized_location) {}
 
   static auto classof(const Action* action) -> bool {
-    return action->kind() == Kind::ExpressionAction;
+    return action->kind() == Kind::ValueExpressionAction;
   }
 
   // The Expression this Action evaluates.
@@ -226,6 +236,44 @@ class ExpressionAction : public Action {
  private:
   Nonnull<const Expression*> expression_;
   std::optional<AllocationId> location_received_;
+};
+
+// An Action which implements evaluation of a reference Expression to produce an
+// `ReferenceExpressionValue*`. The `preserve_nested_categories` flag can be
+// used to preserve values as `ReferenceExpressionValue` in nested value types,
+// such as tuples.
+class ExpressionAction : public Action {
+ public:
+  ExpressionAction(
+      Nonnull<const Expression*> expression, bool preserve_nested_categories,
+      std::optional<AllocationId> initialized_location = std::nullopt)
+      : Action(expression->source_loc(), Kind::ExpressionAction),
+        expression_(expression),
+        location_received_(initialized_location),
+        preserve_nested_categories_(preserve_nested_categories) {}
+
+  static auto classof(const Action* action) -> bool {
+    return action->kind() == Kind::ExpressionAction;
+  }
+
+  // The Expression this Action evaluates.
+  auto expression() const -> const Expression& { return *expression_; }
+
+  // Returns whether direct descendent actions should preserve values as
+  // `ReferenceExpressionValue*`s.
+  auto preserve_nested_categories() const -> bool {
+    return preserve_nested_categories_;
+  }
+
+  // The location provided for the initializing expression, if any.
+  auto location_received() const -> std::optional<AllocationId> {
+    return location_received_;
+  }
+
+ private:
+  Nonnull<const Expression*> expression_;
+  std::optional<AllocationId> location_received_;
+  bool preserve_nested_categories_;
 };
 
 // An Action which implements the Instantiation of Type. The result is expressed
@@ -334,8 +382,8 @@ class DeclarationAction : public Action {
 // An Action which implements destroying all local allocations in a scope.
 class CleanUpAction : public Action {
  public:
-  explicit CleanUpAction(RuntimeScope scope)
-      : Action(std::nullopt, Kind::CleanUpAction),
+  explicit CleanUpAction(RuntimeScope scope, SourceLocation source_loc)
+      : Action(source_loc, Kind::CleanUpAction),
         allocations_count_(scope.allocations().size()) {
     StartScope(std::move(scope));
   }

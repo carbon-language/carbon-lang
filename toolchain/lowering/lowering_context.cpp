@@ -165,6 +165,16 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
       return llvm::StructType::create(*llvm_context_, subtypes,
                                       "StructLiteralType");
     }
+    case SemanticsNodeKind::TupleType: {
+      auto refs = semantics_ir_->GetTypeBlock(node.GetAsTupleType());
+      llvm::SmallVector<llvm::Type*> subtypes;
+      subtypes.reserve(refs.size());
+      for (auto ref_id : refs) {
+        subtypes.push_back(GetType(ref_id));
+      }
+      return llvm::StructType::create(*llvm_context_, subtypes,
+                                      "TupleLiteralType");
+    }
     default: {
       CARBON_FATAL() << "Cannot use node as type: " << node_id;
     }

@@ -27,6 +27,10 @@ def main() -> None:
         "--testdata=explorer/trace_testdata",
         "--autoupdate_arg=--trace_file=-",
         "--autoupdate_arg=-trace_phase=all",
+        "--extra_check_replacement",
+        r".+Time elapsed in (\S+): (\d+)ms",
+        r"Time elapsed in (\S+): (\d+)ms",
+        r"Time elapsed in \1: {{[0-9]+}}ms",
     ] + sys.argv[1:]
     exit(subprocess.call(args))
 

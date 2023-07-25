@@ -12,10 +12,12 @@ namespace Carbon {
 void AddPrelude(std::string_view prelude_file_name, Nonnull<Arena*> arena,
                 std::vector<Nonnull<Declaration*>>* declarations,
                 int* num_prelude_declarations) {
-  ErrorOr<AST> parse_result = Parse(arena, prelude_file_name, false);
+  ErrorOr<AST> parse_result =
+      Parse(arena, prelude_file_name, FileKind::Prelude, false);
   if (!parse_result.ok()) {
     // Try again with tracing, to help diagnose the problem.
-    ErrorOr<AST> trace_parse_result = Parse(arena, prelude_file_name, true);
+    ErrorOr<AST> trace_parse_result =
+        Parse(arena, prelude_file_name, FileKind::Prelude, true);
     CARBON_FATAL() << "Failed to parse prelude:\n"
                    << trace_parse_result.error();
   }

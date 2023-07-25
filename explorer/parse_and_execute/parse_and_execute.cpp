@@ -93,7 +93,7 @@ auto ParseAndExecuteFile(std::string_view prelude_path,
                          Nonnull<llvm::raw_ostream*> print_stream)
     -> ErrorOr<int> {
   auto parse = [&](Arena* arena) {
-    return Parse(arena, input_file_name, parser_debug);
+    return Parse(arena, input_file_name, FileKind::Main, parser_debug);
   };
   return ParseAndExecuteHelper(parse, prelude_path, trace_stream, print_stream);
 }
@@ -104,7 +104,8 @@ auto ParseAndExecute(std::string_view prelude_path,
                      Nonnull<TraceStream*> trace_stream,
                      Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int> {
   auto parse = [&](Arena* arena) {
-    return ParseFromString(arena, input_file_name, file_contents, parser_debug);
+    return ParseFromString(arena, input_file_name, FileKind::Main,
+                           file_contents, parser_debug);
   };
   return ParseAndExecuteHelper(parse, prelude_path, trace_stream, print_stream);
 }

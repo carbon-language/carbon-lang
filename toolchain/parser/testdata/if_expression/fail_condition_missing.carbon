@@ -25,6 +25,8 @@
 // CHECK:STDOUT: ]
 
 fn F() {
-  // CHECK:STDERR: fail_condition_missing.carbon:[[@LINE+1]]:18: Expected expression.
+  // CHECK:STDERR: fail_condition_missing.carbon:[[@LINE+3]]:18: Expected expression.
+  // CHECK:STDERR:   var n: i32 = if;
+  // CHECK:STDERR:                  ^
   var n: i32 = if;
 }

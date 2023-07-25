@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
+load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 cc_library(
     name = "ast_to_proto_lib",
@@ -10,8 +10,8 @@ cc_library(
     srcs = ["ast_to_proto.cpp"],
     hdrs = ["ast_to_proto.h"],
     deps = [
-        "//common/fuzzing:carbon_cc_proto",
         "//explorer/ast",
+        "//testing/fuzzing:carbon_cc_proto",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -24,10 +24,10 @@ cc_binary(
         ":ast_to_proto_lib",
         "//common:bazel_working_dir",
         "//common:error",
-        "//common/fuzzing:carbon_cc_proto",
         "//explorer/ast",
         "//explorer/common:arena",
         "//explorer/syntax",
+        "//testing/fuzzing:carbon_cc_proto",
         "@com_google_protobuf//:protobuf_headers",
     ],
 )
@@ -45,9 +45,9 @@ cc_test(
     ],
     deps = [
         ":ast_to_proto_lib",
-        "//common/fuzzing:carbon_cc_proto",
-        "//common/fuzzing:proto_to_carbon_lib",
         "//explorer/syntax",
+        "//testing/fuzzing:carbon_cc_proto",
+        "//testing/fuzzing:proto_to_carbon_lib",
         "//testing/util:test_raw_ostream",
         "@com_google_googletest//:gtest",
         "@com_google_protobuf//:protobuf_headers",
@@ -62,10 +62,10 @@ cc_library(
     deps = [
         "//common:check",
         "//common:error",
-        "//common/fuzzing:carbon_cc_proto",
-        "//common/fuzzing:proto_to_carbon_lib",
         "//explorer/ast",
         "//explorer/parse_and_execute",
+        "//testing/fuzzing:carbon_cc_proto",
+        "//testing/fuzzing:proto_to_carbon_lib",
         "@bazel_tools//tools/cpp/runfiles",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
@@ -80,7 +80,7 @@ cc_test(
     ],
     deps = [
         ":fuzzer_util",
-        "//common/fuzzing:proto_to_carbon_lib",
+        "//testing/fuzzing:proto_to_carbon_lib",
         "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@com_google_protobuf//:protobuf_headers",
@@ -90,10 +90,11 @@ cc_test(
 
 cc_fuzz_test(
     name = "explorer_fuzzer",
-    testonly = 1,
+    size = "small",
     srcs = ["explorer_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/*"]),
     shard_count = 8,
+    tags = ["proto-fuzzer"],
     deps = [
         ":fuzzer_util",
         "//common:error",

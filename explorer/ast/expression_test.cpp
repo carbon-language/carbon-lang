@@ -24,7 +24,7 @@ using testing::IsEmpty;
 MATCHER(IntField, "") { return arg->kind() == ExpressionKind::IntLiteral; }
 
 static auto FakeSourceLoc(int line_num) -> SourceLocation {
-  return SourceLocation("<test>", line_num);
+  return SourceLocation("<test>", line_num, FileKind::Main);
 }
 
 class ExpressionTest : public ::testing::Test {

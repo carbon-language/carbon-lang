@@ -70,7 +70,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(PackageDirective, PackageIntroducer)
 
 // `namespace`:
 //   NamespaceStart
-//   _external_: Identifier or QualifiedDeclaration
+//   _external_: Name or QualifiedDeclaration
 // Namespace
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(NamespaceStart, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Namespace, 2)
@@ -84,7 +84,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(CodeBlock, CodeBlockStart)
 
 // `fn`:
 //     FunctionIntroducer
-//     _external_: Identifier or QualifiedDeclaration
+//     _external_: Name or QualifiedDeclaration
 //     _external_: ParameterList
 //       _external_: type expression
 //     ReturnType
@@ -208,12 +208,12 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileConditionStart, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(WhileCondition, WhileConditionStart)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileStatement, 2)
 
-// Parenthesized expressions:
+// Parenthesized expressions, such as `(2)`:
 //   ParenExpressionOrTupleLiteralStart
 //   _external_: expression
 // ParenExpression
-
-// Tuples:
+//
+// Tuples, such as `(1, 2)`:
 //   ParenExpressionOrTupleLiteralStart
 //   _external_: expression
 //   TupleLiteralComma
@@ -241,8 +241,8 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(CallExpressionComma, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(CallExpression, CallExpressionStart)
 
 // A qualified declaration, such as `a.b`:
-//   _external_: Identifier or QualifiedDeclaration
-//   _external_: Identifier
+//   _external_: NameExpression or QualifiedDeclaration
+//   _external_: Name
 // QualifiedDeclaration
 //
 // TODO: This will eventually more general expressions, for example with
@@ -329,7 +329,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(StructTypeLiteral,
 
 // `class`:
 //     ClassIntroducer
-//     _external_: Identifier or QualifiedDeclaration
+//     _external_: Name or QualifiedDeclaration
 //   ClassDefinitionStart
 //   _external_: declarations
 // ClassDefinition
@@ -344,7 +344,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(ClassDeclaration, ClassIntroducer)
 
 // `interface`:
 //     InterfaceIntroducer
-//     _external_: Identifier or QualifiedDeclaration
+//     _external_: Name or QualifiedDeclaration
 //   InterfaceDefinitionStart
 //   _external_: declarations
 // InterfaceDefinition
@@ -359,7 +359,7 @@ CARBON_PARSE_NODE_KIND_BRACKET(InterfaceDeclaration, InterfaceIntroducer)
 
 // `constraint`:
 //     NamedConstraintIntroducer
-//     _external_: Identifier or QualifiedDeclaration
+//     _external_: Name or QualifiedDeclaration
 //   NamedConstraintDefinitionStart
 //   _external_: declarations
 // NamedConstraintDefinition

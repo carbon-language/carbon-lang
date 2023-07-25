@@ -215,6 +215,32 @@ auto LoweringHandleStructType(LoweringFunctionContext& /*context*/,
   // No action to take.
 }
 
+auto LoweringHandleTupleValue(LoweringFunctionContext& context,
+                              SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  auto* llvm_type = context.GetType(node.type_id());
+  auto* alloca = context.builder().CreateAlloca(
+      llvm_type, /*ArraySize=*/nullptr, "TupleLiteralValue");
+  context.SetLocal(node_id, alloca);
+
+  auto refs = context.semantics_ir().GetNodeBlock(node.GetAsTupleValue());
+  auto type_refs = context.semantics_ir().GetTypeBlock(
+      context.semantics_ir()
+          .GetNode(context.semantics_ir().GetType(node.type_id()))
+          .GetAsTupleType());
+
+  for (int i = 0; i < static_cast<int>(type_refs.size()); ++i) {
+    auto* gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
+    context.builder().CreateStore(context.GetLocal(refs[i]), gep);
+  }
+}
+
+auto LoweringHandleTupleType(LoweringFunctionContext& /*context*/,
+                             SemanticsNodeId /*node_id*/,
+                             SemanticsNode /*node*/) -> void {
+  // No action to take.
+}
+
 auto LoweringHandleStructTypeField(LoweringFunctionContext& /*context*/,
                                    SemanticsNodeId /*node_id*/,
                                    SemanticsNode /*node*/) -> void {
@@ -247,7 +273,14 @@ auto LoweringHandleStructValue(LoweringFunctionContext& context,
 auto LoweringHandleStubReference(LoweringFunctionContext& context,
                                  SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  context.SetLocal(node_id, context.GetLocal(node.GetAsStubReference()));
+  // TODO: Handle TypeType. Currently using a place holder
+  // but this is just a workaround.
+  if (node.type_id() == SemanticsTypeId::TypeType) {
+    llvm::Value* v = llvm::ConstantInt::get(context.builder().getInt1Ty(), 0);
+    context.SetLocal(node_id, v);
+  } else {
+    context.SetLocal(node_id, context.GetLocal(node.GetAsStubReference()));
+  }
 }
 
 auto LoweringHandleUnaryOperatorNot(LoweringFunctionContext& context,

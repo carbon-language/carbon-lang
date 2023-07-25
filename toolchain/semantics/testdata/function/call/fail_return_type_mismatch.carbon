@@ -23,6 +23,8 @@
 // CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type0},
@@ -57,6 +59,8 @@
 fn Foo() -> f64 { return 1.0; }
 
 fn Run() {
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+1]]:21: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:21: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR:   var x: i32 = Foo();
+  // CHECK:STDERR:                     ^
   var x: i32 = Foo();
 }

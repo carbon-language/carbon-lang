@@ -26,6 +26,8 @@
 // CHECK:STDOUT:   nodeBoolType,
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+0, type: type0},
@@ -124,7 +126,9 @@ fn If1(b: bool) -> i32 {
     return 1;
   } else {
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+1]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
 }
 
 fn If2(b: bool) -> i32 {
@@ -132,12 +136,16 @@ fn If2(b: bool) -> i32 {
   } else {
     return 2;
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+1]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
 }
 
 fn If3(b: bool) -> i32 {
   if (b) {
     return 1;
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+1]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
 }

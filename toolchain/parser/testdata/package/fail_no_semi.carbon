@@ -11,5 +11,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+1]]:21: `package` declarations must end with a `;`.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:21: `package` declarations must end with a `;`.
+// CHECK:STDERR: package Geometry api
+// CHECK:STDERR:                     ^
 package Geometry api
