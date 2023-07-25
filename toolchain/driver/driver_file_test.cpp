@@ -6,13 +6,12 @@
 #include <string>
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
 #include "toolchain/driver/driver_file_test_base.h"
 
 namespace Carbon::Testing {
 namespace {
 
-class CodeGenFileTest : public DriverFileTestBase {
+class DriverFileTest : public DriverFileTestBase {
  public:
   using DriverFileTestBase::DriverFileTestBase;
 
@@ -25,7 +24,7 @@ class CodeGenFileTest : public DriverFileTestBase {
 
 auto RegisterFileTests(const llvm::SmallVector<std::filesystem::path>& paths)
     -> void {
-  CodeGenFileTest::RegisterTests<CodeGenFileTest>("CodeGenFileTest", paths);
+  DriverFileTest::RegisterTests<DriverFileTest>("DriverFileTest", paths);
 }
 
 }  // namespace Carbon::Testing
