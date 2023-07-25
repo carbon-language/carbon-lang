@@ -170,14 +170,7 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(refs.size());
       for (auto ref_id : refs) {
-        if (ref_id == SemanticsTypeId::TypeType) {
-          // TODO: Handle TypeType. Currently using a place holder
-          // but this is just a workaround not an actual solution.
-          subtypes.push_back(llvm::Type::getInt1Ty(*llvm_context_));
-        } else {
-          subtypes.push_back(GetType(ref_id));
-        }
-        CARBON_CHECK(ref_id.index < SemanticsBuiltinKind::ValidCount) << ref_id;
+        subtypes.push_back(GetType(ref_id));
       }
       return llvm::StructType::create(*llvm_context_, subtypes,
                                       "TupleLiteralType");
