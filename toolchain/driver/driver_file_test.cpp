@@ -6,18 +6,17 @@
 #include <string>
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
 #include "toolchain/driver/driver_file_test_base.h"
 
 namespace Carbon::Testing {
 namespace {
 
-class SemanticsFileTest : public DriverFileTestBase {
+class DriverFileTest : public DriverFileTestBase {
  public:
   using DriverFileTestBase::DriverFileTestBase;
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
-    return {"dump", "semantics-ir", "%s"};
+    CARBON_FATAL() << "ARGS is always set in these tests";
   }
 };
 
@@ -25,8 +24,7 @@ class SemanticsFileTest : public DriverFileTestBase {
 
 auto RegisterFileTests(const llvm::SmallVector<std::filesystem::path>& paths)
     -> void {
-  SemanticsFileTest::RegisterTests<SemanticsFileTest>("SemanticsFileTest",
-                                                      paths);
+  DriverFileTest::RegisterTests<DriverFileTest>("DriverFileTest", paths);
 }
 
 }  // namespace Carbon::Testing

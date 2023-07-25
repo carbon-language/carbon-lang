@@ -12,12 +12,12 @@
 namespace Carbon::Testing {
 namespace {
 
-class SemanticsFileTest : public DriverFileTestBase {
+class CodeGenFileTest : public DriverFileTestBase {
  public:
   using DriverFileTestBase::DriverFileTestBase;
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
-    return {"dump", "semantics-ir", "%s"};
+    CARBON_FATAL() << "ARGS is always set in these tests";
   }
 };
 
@@ -25,8 +25,7 @@ class SemanticsFileTest : public DriverFileTestBase {
 
 auto RegisterFileTests(const llvm::SmallVector<std::filesystem::path>& paths)
     -> void {
-  SemanticsFileTest::RegisterTests<SemanticsFileTest>("SemanticsFileTest",
-                                                      paths);
+  CodeGenFileTest::RegisterTests<CodeGenFileTest>("CodeGenFileTest", paths);
 }
 
 }  // namespace Carbon::Testing

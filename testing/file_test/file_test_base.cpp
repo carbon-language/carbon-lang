@@ -8,7 +8,9 @@
 #include <fstream>
 
 #include "common/check.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/InitLLVM.h"
 #include "testing/util/test_raw_ostream.h"
 
@@ -20,6 +22,9 @@ static int base_dir_len = 0;
 static std::string* subset_target = nullptr;
 
 using ::testing::Eq;
+using ::testing::Matcher;
+using ::testing::MatchesRegex;
+using ::testing::StrEq;
 
 void FileTestBase::RegisterTests(
     const char* fixture_label,
@@ -70,18 +75,37 @@ auto FileTestBase::TestBody() -> void {
   std::string test_content = ReadFile(path());
 
   // Load expected output.
+  llvm::SmallVector<std::string> test_args;
   llvm::SmallVector<TestFile> test_files;
-  llvm::SmallVector<testing::Matcher<std::string>> expected_stdout;
-  llvm::SmallVector<testing::Matcher<std::string>> expected_stderr;
-  ProcessTestFile(test_content, test_files, expected_stdout, expected_stderr);
+  llvm::SmallVector<Matcher<std::string>> expected_stdout;
+  llvm::SmallVector<Matcher<std::string>> expected_stderr;
+  bool check_subset = false;
+  ProcessTestFile(test_content, test_args, test_files, expected_stdout,
+                  expected_stderr, check_subset);
   if (HasFailure()) {
     return;
+  }
+
+  // Process arguments.
+  if (test_args.empty()) {
+    test_args = GetDefaultArgs();
+  }
+  DoArgReplacements(test_args, test_files);
+  if (HasFailure()) {
+    return;
+  }
+
+  // Pass arguments as StringRef.
+  llvm::SmallVector<llvm::StringRef> test_args_ref;
+  test_args_ref.reserve(test_args.size());
+  for (const auto& arg : test_args) {
+    test_args_ref.push_back(arg);
   }
 
   // Capture trace streaming, but only when in debug mode.
   TestRawOstream stdout;
   TestRawOstream stderr;
-  bool run_succeeded = RunWithFiles(test_files, stdout, stderr);
+  bool run_succeeded = RunWithFiles(test_args_ref, test_files, stdout, stderr);
   if (HasFailure()) {
     return;
   }
@@ -91,14 +115,63 @@ auto FileTestBase::TestBody() -> void {
          "is expected to fail.";
 
   // Check results.
-  EXPECT_THAT(SplitOutput(stdout.TakeStr()), ElementsAreArray(expected_stdout));
-  EXPECT_THAT(SplitOutput(stderr.TakeStr()), ElementsAreArray(expected_stderr));
+  if (check_subset) {
+    EXPECT_THAT(SplitOutput(stdout.TakeStr()), IsSupersetOf(expected_stdout));
+    EXPECT_THAT(SplitOutput(stderr.TakeStr()), IsSupersetOf(expected_stderr));
+
+  } else {
+    EXPECT_THAT(SplitOutput(stdout.TakeStr()),
+                ElementsAreArray(expected_stdout));
+    EXPECT_THAT(SplitOutput(stderr.TakeStr()),
+                ElementsAreArray(expected_stderr));
+  }
+}
+
+auto FileTestBase::DoArgReplacements(
+    llvm::SmallVector<std::string>& test_args,
+    const llvm::SmallVector<TestFile>& test_files) -> void {
+  for (auto* it = test_args.begin(); it != test_args.end(); ++it) {
+    auto percent = it->find("%");
+    if (percent == std::string::npos) {
+      continue;
+    }
+
+    if (percent + 1 >= it->size()) {
+      FAIL() << "% is not allowed on its own: " << *it;
+    }
+    char c = (*it)[percent + 1];
+    switch (c) {
+      case 's': {
+        if (*it != "%s") {
+          FAIL() << "%s must be the full argument: " << *it;
+        }
+        it = test_args.erase(it);
+        for (const auto& file : test_files) {
+          it = test_args.insert(it, file.filename);
+          ++it;
+        }
+        // Back up once because the for loop will advance.
+        --it;
+        break;
+      }
+      case 't': {
+        char* temp = getenv("TEST_TMPDIR");
+        CARBON_CHECK(temp != nullptr);
+        it->replace(percent, 2, llvm::formatv("{0}/temp_file", temp));
+        break;
+      }
+      default:
+        FAIL() << "%" << c << " is not supported: " << *it;
+    }
+  }
 }
 
 auto FileTestBase::ProcessTestFile(
-    llvm::StringRef file_content, llvm::SmallVector<TestFile>& test_files,
-    llvm::SmallVector<testing::Matcher<std::string>>& expected_stdout,
-    llvm::SmallVector<testing::Matcher<std::string>>& expected_stderr) -> void {
+    llvm::StringRef file_content, llvm::SmallVector<std::string>& test_args,
+    llvm::SmallVector<TestFile>& test_files,
+    llvm::SmallVector<Matcher<std::string>>& expected_stdout,
+    llvm::SmallVector<Matcher<std::string>>& expected_stderr,
+    bool& check_subset) -> void {
   llvm::StringRef cursor = file_content;
   bool found_content_pre_split = false;
   int line_index = 0;
@@ -135,15 +208,34 @@ auto FileTestBase::ProcessTestFile(
 
     // Process expectations when found.
     auto line_trimmed = line.ltrim();
-    if (!line_trimmed.consume_front("// CHECK")) {
-      continue;
-    }
-    if (line_trimmed.consume_front(":STDOUT:")) {
-      expected_stdout.push_back(TransformExpectation(line_index, line_trimmed));
-    } else if (line_trimmed.consume_front(":STDERR:")) {
-      expected_stderr.push_back(TransformExpectation(line_index, line_trimmed));
-    } else {
-      FAIL() << "Unexpected CHECK in input: " << line.str();
+    if (line_trimmed.consume_front("// ARGS: ")) {
+      if (test_args.empty()) {
+        // Split the line into arguments.
+        std::pair<llvm::StringRef, llvm::StringRef> cursor =
+            llvm::getToken(line_trimmed);
+        while (!cursor.first.empty()) {
+          test_args.push_back(std::string(cursor.first));
+          cursor = llvm::getToken(cursor.second);
+        }
+      } else {
+        FAIL() << "ARGS was specified multiple times: " << line.str();
+      }
+    } else if (line_trimmed == "// SET-CHECK-SUBSET") {
+      if (!check_subset) {
+        check_subset = true;
+      } else {
+        FAIL() << "SET-CHECK-SUBSET was specified multiple times";
+      }
+    } else if (line_trimmed.consume_front("// CHECK")) {
+      if (line_trimmed.consume_front(":STDOUT:")) {
+        expected_stdout.push_back(
+            TransformExpectation(line_index, line_trimmed));
+      } else if (line_trimmed.consume_front(":STDERR:")) {
+        expected_stderr.push_back(
+            TransformExpectation(line_index, line_trimmed));
+      } else {
+        FAIL() << "Unexpected CHECK in input: " << line.str();
+      }
     }
   }
 
@@ -159,17 +251,17 @@ auto FileTestBase::ProcessTestFile(
 
   // Assume there is always a suffix `\n` in output.
   if (!expected_stdout.empty()) {
-    expected_stdout.push_back(testing::StrEq(""));
+    expected_stdout.push_back(StrEq(""));
   }
   if (!expected_stderr.empty()) {
-    expected_stderr.push_back(testing::StrEq(""));
+    expected_stderr.push_back(StrEq(""));
   }
 }
 
 auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
-    -> testing::Matcher<std::string> {
+    -> Matcher<std::string> {
   if (in.empty()) {
-    return testing::StrEq("");
+    return StrEq("");
   }
   CARBON_CHECK(in[0] == ' ') << "Malformated input: " << in;
   std::string str = in.substr(1).str();
@@ -245,7 +337,7 @@ auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
     }
   }
 
-  return testing::MatchesRegex(str);
+  return MatchesRegex(str);
 }
 
 }  // namespace Carbon::Testing
