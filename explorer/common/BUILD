@@ -9,6 +9,7 @@ cc_library(
     hdrs = ["arena.h"],
     deps = [
         ":nonnull",
+        "@llvm-project//llvm:Support",
     ],
 )
 

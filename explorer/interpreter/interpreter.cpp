@@ -122,7 +122,7 @@ class Interpreter {
   auto ConvertStructToClass(Nonnull<const StructValue*> init,
                             Nonnull<const NominalClassType*> class_type,
                             SourceLocation source_loc)
-      -> ErrorOr<Nonnull<NominalClassValue*>>;
+      -> ErrorOr<Nonnull<const NominalClassValue*>>;
 
   // Evaluate an expression immediately, recursively, and return its result.
   //
@@ -796,7 +796,7 @@ auto Interpreter::InstantiateWitness(Nonnull<const Witness*> witness,
 auto Interpreter::ConvertStructToClass(
     Nonnull<const StructValue*> init_struct,
     Nonnull<const NominalClassType*> class_type, SourceLocation source_loc)
-    -> ErrorOr<Nonnull<NominalClassValue*>> {
+    -> ErrorOr<Nonnull<const NominalClassValue*>> {
   std::vector<NamedValue> struct_values;
   std::optional<Nonnull<const NominalClassValue*>> base_instance;
   // Instantiate the `destination_type` to obtain the runtime
@@ -1209,7 +1209,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
         case DeclarationKind::ClassDeclaration: {
           const auto& class_decl = cast<ClassDeclaration>(decl);
           return todo_.FinishAction(arena_->New<NominalClassType>(
-              &class_decl, bindings, class_decl.base_type(), VTable()));
+              &class_decl, bindings, class_decl.base_type(), EmptyVTable()));
         }
         case DeclarationKind::InterfaceDeclaration:
           return todo_.FinishAction(arena_->New<InterfaceType>(
@@ -1310,7 +1310,7 @@ auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
             Nonnull<const Bindings*> bindings,
             InstantiateBindings(&class_type.bindings(), source_loc));
         return todo_.FinishAction(arena_->New<NominalClassType>(
-            &class_type.declaration(), bindings, base, class_type.vtable()));
+            &class_type.declaration(), bindings, base, &class_type.vtable()));
       }
     }
     case Value::Kind::PointerType: {
@@ -1457,8 +1457,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
                     result)) {
               type_result = result;
             }
-            MemberName* member_name = arena_->New<MemberName>(
-                type_result, found_in_interface, member_name_type->member());
+            const auto* member_name = arena_->New<MemberName>(
+                type_result, found_in_interface, &member_name_type->member());
             return todo_.FinishAction(member_name);
           }
         } else {
@@ -1573,8 +1573,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             CARBON_CHECK(!access.member().base_type().has_value())
                 << "compound member access forming a member name should be "
                    "performing impl lookup";
-            auto* member_name = arena_->New<MemberName>(
-                act.results()[0], found_in_interface, access.member().member());
+            auto* member_name =
+                arena_->New<MemberName>(act.results()[0], found_in_interface,
+                                        &access.member().member());
             return todo_.FinishAction(member_name);
           }
         } else {

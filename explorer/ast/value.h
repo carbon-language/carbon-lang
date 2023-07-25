@@ -41,6 +41,16 @@ struct AllocateTrait {
 using VTable =
     llvm::StringMap<std::pair<Nonnull<const CallableDeclaration*>, int>>;
 
+// Returns a pointer to an empty VTable that will never be deallocated.
+//
+// Using this instead of `new VTable()` avoids unnecessary allocations, and
+// takes better advantage of Arena canonicalization when a VTable pointer is
+// used as a constructor argument.
+inline auto EmptyVTable() -> Nonnull<const VTable*> {
+  static Nonnull<const VTable*> result = new VTable();
+  return result;
+}
+
 // Abstract base class of all AST nodes representing values.
 //
 // Value and its derived classes support LLVM-style RTTI, including
@@ -49,8 +59,14 @@ using VTable =
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
+//
+// Arena's canonicalization support is enabled for Value and all derived types.
+// As a result, all Values must be immutable, and all their constructor
+// arguments must be copyable, equality-comparable, and hashable. See
+// Arena's documentation for details.
 class Value {
  public:
+  using EnableCanonicalizedAllocation = void;
   enum class Kind {
 #define CARBON_VALUE_KIND(kind) kind,
 #include "explorer/ast/value_kinds.def"
@@ -684,6 +700,15 @@ class FunctionType : public Value {
       return f(index, binding);
     }
 
+    inline friend auto operator==(const GenericParameter& lhs,
+                                  const GenericParameter& rhs) -> bool {
+      return lhs.index == rhs.index && lhs.binding == rhs.binding;
+    }
+    inline friend auto hash_value(const GenericParameter& parameter)
+        -> llvm::hash_code {
+      return llvm::hash_combine(parameter.index, parameter.binding);
+    }
+
     size_t index;
     Nonnull<const GenericBinding*> binding;
   };
@@ -693,6 +718,14 @@ class FunctionType : public Value {
     template <typename F>
     auto Decompose(F f) const {
       return f(addr_self, self_type);
+    }
+
+    inline friend auto operator==(const MethodSelf& lhs, const MethodSelf& rhs)
+        -> bool {
+      return lhs.addr_self == rhs.addr_self && lhs.self_type == rhs.self_type;
+    }
+    inline friend auto hash_value(const MethodSelf& self) -> llvm::hash_code {
+      return llvm::hash_combine(self.addr_self, self.self_type);
     }
 
     // True if `self` parameter uses an `addr` pattern.
@@ -723,11 +756,17 @@ class FunctionType : public Value {
         impl_bindings_(std::move(impl_bindings)),
         is_initializing_(is_initializing) {}
 
-  struct ExceptSelf {};
-  FunctionType(ExceptSelf, const FunctionType& clone)
-      : FunctionType(std::nullopt, clone.parameters_, clone.generic_parameters_,
-                     clone.return_type_, clone.deduced_bindings_,
-                     clone.impl_bindings_, clone.is_initializing_) {}
+  struct ExceptSelf {
+    friend auto operator==(ExceptSelf, ExceptSelf) -> bool { return true; }
+    friend auto hash_value(ExceptSelf) -> llvm::hash_code {
+      return llvm::hash_combine(0);
+    }
+  };
+  FunctionType(ExceptSelf, const FunctionType* clone)
+      : FunctionType(std::nullopt, clone->parameters_,
+                     clone->generic_parameters_, clone->return_type_,
+                     clone->deduced_bindings_, clone->impl_bindings_,
+                     clone->is_initializing_) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
@@ -840,12 +879,13 @@ class NominalClassType : public Value {
   explicit NominalClassType(
       Nonnull<const ClassDeclaration*> declaration,
       Nonnull<const Bindings*> bindings,
-      std::optional<Nonnull<const NominalClassType*>> base, VTable class_vtable)
+      std::optional<Nonnull<const NominalClassType*>> base,
+      Nonnull<const VTable*> class_vtable)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         bindings_(bindings),
         base_(base),
-        vtable_(std::move(class_vtable)),
+        vtable_(class_vtable),
         hierarchy_level_(base ? (*base)->hierarchy_level() + 1 : 0) {}
 
   static auto classof(const Value* value) -> bool {
@@ -872,7 +912,7 @@ class NominalClassType : public Value {
     return bindings_->witnesses();
   }
 
-  auto vtable() const -> const VTable& { return vtable_; }
+  auto vtable() const -> const VTable& { return *vtable_; }
 
   // Returns how many levels from the top ancestor class it is. i.e. a class
   // with no base returns `0`, while a class with a `.base` and `.base.base`
@@ -892,7 +932,7 @@ class NominalClassType : public Value {
   Nonnull<const ClassDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
   const std::optional<Nonnull<const NominalClassType*>> base_;
-  const VTable vtable_;
+  Nonnull<const VTable*> vtable_;
   int hierarchy_level_;
 };
 
@@ -1030,6 +1070,15 @@ struct ImplsConstraint {
     return f(type, interface);
   }
 
+  inline friend auto operator==(const ImplsConstraint& lhs,
+                                const ImplsConstraint& rhs) -> bool {
+    return lhs.type == rhs.type && lhs.interface == rhs.interface;
+  }
+  inline friend auto hash_value(const ImplsConstraint& constraint)
+      -> llvm::hash_code {
+    return llvm::hash_combine(constraint.type, constraint.interface);
+  }
+
   // The type that is required to implement the interface.
   Nonnull<const Value*> type;
   // The interface that is required to be implemented.
@@ -1041,6 +1090,19 @@ struct IntrinsicConstraint {
   template <typename F>
   auto Decompose(F f) const {
     return f(type, kind, arguments);
+  }
+
+  inline friend auto operator==(const IntrinsicConstraint& lhs,
+                                const IntrinsicConstraint& rhs) -> bool {
+    return lhs.type == rhs.type && lhs.kind == rhs.kind &&
+           lhs.arguments == rhs.arguments;
+  }
+  inline friend auto hash_value(const IntrinsicConstraint& constraint)
+      -> llvm::hash_code {
+    return llvm::hash_combine(
+        constraint.type, constraint.kind,
+        llvm::hash_combine_range(constraint.arguments.begin(),
+                                 constraint.arguments.end()));
   }
 
   // Print the intrinsic constraint.
@@ -1068,6 +1130,16 @@ struct EqualityConstraint {
     return f(values);
   }
 
+  inline friend auto operator==(const EqualityConstraint& lhs,
+                                const EqualityConstraint& rhs) -> bool {
+    return lhs.values == rhs.values;
+  }
+  inline friend auto hash_value(const EqualityConstraint& constraint)
+      -> llvm::hash_code {
+    return llvm::hash_combine_range(constraint.values.begin(),
+                                    constraint.values.end());
+  }
+
   // Visit the values in this equality constraint that are a single step away
   // from the given value according to this equality constraint. That is: if
   // `value` is identical to a value in `values`, then call the visitor on all
@@ -1092,6 +1164,22 @@ struct RewriteConstraint {
              converted_replacement);
   }
 
+  inline friend auto operator==(const RewriteConstraint& lhs,
+                                const RewriteConstraint& rhs) -> bool {
+    return lhs.constant == rhs.constant &&
+           lhs.unconverted_replacement == rhs.unconverted_replacement &&
+           lhs.unconverted_replacement_type ==
+               rhs.unconverted_replacement_type &&
+           lhs.converted_replacement == rhs.converted_replacement;
+  }
+  inline friend auto hash_value(const RewriteConstraint& constraint)
+      -> llvm::hash_code {
+    return llvm::hash_combine(constraint.constant,
+                              constraint.unconverted_replacement,
+                              constraint.unconverted_replacement_type,
+                              constraint.converted_replacement);
+  }
+
   // The associated constant value that is rewritten.
   Nonnull<const AssociatedConstant*> constant;
   // The replacement in its original type.
@@ -1107,6 +1195,13 @@ struct LookupContext {
   template <typename F>
   auto Decompose(F f) const {
     return f(context);
+  }
+
+  inline friend auto operator==(LookupContext lhs, LookupContext rhs) -> bool {
+    return lhs.context == rhs.context;
+  }
+  inline friend auto hash_value(LookupContext context) -> llvm::hash_code {
+    return llvm::hash_combine(context.context);
   }
 
   Nonnull<const Value*> context;
@@ -1445,11 +1540,11 @@ class MemberName : public Value {
  public:
   MemberName(std::optional<Nonnull<const Value*>> base_type,
              std::optional<Nonnull<const InterfaceType*>> interface,
-             NamedElement member)
+             Nonnull<const NamedElement*> member)
       : Value(Kind::MemberName),
         base_type_(base_type),
         interface_(interface),
-        member_(std::move(member)) {
+        member_(member) {
     CARBON_CHECK(base_type || interface)
         << "member name must be in a type, an interface, or both";
   }
@@ -1464,7 +1559,7 @@ class MemberName : public Value {
   }
 
   // Prints the member name or identifier.
-  void Print(llvm::raw_ostream& out) const { member_.Print(out); }
+  void Print(llvm::raw_ostream& out) const { member_->Print(out); }
 
   // The type for which `name` is a member or a member of an `impl`.
   auto base_type() const -> std::optional<Nonnull<const Value*>> {
@@ -1475,14 +1570,14 @@ class MemberName : public Value {
     return interface_;
   }
   // The member.
-  auto member() const -> const NamedElement& { return member_; }
+  auto member() const -> const NamedElement& { return *member_; }
   // The name of the member.
   auto name() const -> std::string_view { return member().name(); }
 
  private:
   std::optional<Nonnull<const Value*>> base_type_;
   std::optional<Nonnull<const InterfaceType*>> interface_;
-  NamedElement member_;
+  Nonnull<const NamedElement*> member_;
 };
 
 // A symbolic value representing an associated constant.
@@ -1621,8 +1716,8 @@ class TypeOfParameterizedEntityName : public Value {
 // as the member name in a compound member access.
 class TypeOfMemberName : public Value {
  public:
-  explicit TypeOfMemberName(NamedElement member)
-      : Value(Kind::TypeOfMemberName), member_(std::move(member)) {}
+  explicit TypeOfMemberName(Nonnull<const NamedElement*> member)
+      : Value(Kind::TypeOfMemberName), member_(member) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TypeOfMemberName;
@@ -1635,10 +1730,10 @@ class TypeOfMemberName : public Value {
 
   // TODO: consider removing this or moving it elsewhere in the AST,
   // since it's arguably part of the expression value rather than its type.
-  auto member() const -> NamedElement { return member_; }
+  auto member() const -> const NamedElement& { return *member_; }
 
  private:
-  NamedElement member_;
+  Nonnull<const NamedElement*> member_;
 };
 
 // The type of a namespace name.

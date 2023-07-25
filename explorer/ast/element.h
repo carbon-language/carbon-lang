@@ -29,6 +29,14 @@ struct NamedValue {
     return f(name, value);
   }
 
+  inline friend auto operator==(const NamedValue& lhs, const NamedValue& rhs)
+      -> bool {
+    return lhs.name == rhs.name && lhs.value == rhs.value;
+  }
+  inline friend auto hash_value(const NamedValue& value) -> llvm::hash_code {
+    return llvm::hash_combine(value.name, value.value);
+  }
+
   // The field name.
   std::string name;
 
@@ -36,14 +44,19 @@ struct NamedValue {
   Nonnull<const Value*> value;
 };
 
-// A generic member of a type.
+// A generic member of a type. This is can be a named, positional or other type
+// of member.
 //
-// This is can be a named, positional or other type of member.
+// Arena's canonicalization support is enabled for Element and all derived
+// types. As a result, all Elements must be immutable, and all their constructor
+// arguments must be copyable, equality-comparable, and hashable. See
+// Arena's documentation for details.
 class Element {
  protected:
   explicit Element(ElementKind kind) : kind_(kind) {}
 
  public:
+  using EnableCanonicalizedAllocation = void;
   virtual ~Element() = default;
 
   // Call `f` on this value, cast to its most-derived type. `R` specifies the
