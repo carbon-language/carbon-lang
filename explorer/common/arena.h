@@ -16,21 +16,22 @@
 #include "explorer/common/nonnull.h"
 #include "llvm/ADT/Hashing.h"
 
-namespace std {
-// FIXME what should we do about these?
-template <typename T>
-auto hash_value(const std::vector<T>& vector) -> llvm::hash_code {
-  return llvm::hash_combine(
-      llvm::hash_combine_range(vector.begin(), vector.end()), vector.size());
-}
-
-inline auto hash_value(nullopt_t) -> llvm::hash_code {
-  return llvm::hash_combine();
-}
-inline auto operator==(nullopt_t, nullopt_t) -> bool { return true; }
-}  // namespace std
-
 namespace Carbon {
+
+// Adapter metafunction that converts T to a form that is usable as part of
+// a key in a hash map.
+//
+// ArgKey<T>::type must be implicitly convertible from T, equality-comparable,
+// and have a hash_value overload as defined in llvm/ADT/Hashing.h. This
+// should only be customized in cases where we cannot modify T itself to
+// satisfy those requirements.
+template <typename T, typename = void>
+struct ArgKey {
+  using type = T;
+};
+
+template <typename T>
+using ArgKeyType = typename ArgKey<T>::type;
 
 // Allocates and maintains ownership of arbitrary objects, so that their
 // lifetimes all end at the same time. It can also canonicalize the allocated
@@ -59,9 +60,11 @@ class Arena {
   // If T::EnableCanonicalizedAllocation exists and names a type, this method
   // will canonicalize the allocated objects, meaning that two calls to this
   // method with the same T and equal arguments will return pointers to the same
-  // object. If canonicalization is enabled, Args... must all be copyable,
-  // equality-comparable, and have a hash_value overload as defined in
-  // llvm/ADT/Hashing.h.
+  // object. If canonicalization is enabled, all types in Args... must be
+  // copyable, equality-comparable, and have a hash_value overload as defined in
+  // llvm/ADT/Hashing.h. If it's not possible to modify an argument type A to
+  // satisfy those requirements, the ArgKey<A> customization point can be used
+  // instead.
   //
   // Canonically-allocated objects must not be mutated, because those mutations
   // would be visible to all users that happened to allocate a T object with
@@ -144,7 +147,8 @@ class Arena {
   // a non-null pointer to a T object constructed with those arguments.
   template <typename T, typename... Args>
   using CanonicalizationTable =
-      std::unordered_map<std::tuple<Args...>, Nonnull<const T*>, LlvmHasher>;
+      std::unordered_map<std::tuple<ArgKeyType<Args>...>, Nonnull<const T*>,
+                         LlvmHasher>;
 
   // Maps a CanonicalizationTable type to a unique instance of that type for
   // this arena. For a key equal to &TypeId<T>::id for some T, the corresponding
@@ -153,6 +157,36 @@ class Arena {
 };
 
 // Implementation details only below here -------------------------------------
+
+template <>
+struct ArgKey<std::nullopt_t> {
+  using type = struct NulloptProxy {
+    NulloptProxy(std::nullopt_t) {}
+    friend auto operator==(NulloptProxy, NulloptProxy) -> bool { return true; }
+    friend auto hash_value(NulloptProxy) -> llvm::hash_code {
+      return llvm::hash_combine();
+    }
+  };
+};
+
+template <typename T>
+struct ArgKey<std::vector<T>> {
+  using type = class VectorProxy {
+   public:
+    VectorProxy(std::vector<T> vec) : vec_(std::move(vec)) {}
+    friend auto operator==(const VectorProxy& lhs, const VectorProxy& rhs) {
+      return lhs.vec_ == rhs.vec_;
+    }
+    friend auto hash_value(const VectorProxy& v) {
+      return llvm::hash_combine(
+          llvm::hash_combine_range(v.vec_.begin(), v.vec_.end()),
+          v.vec_.size());
+    }
+
+   private:
+    std::vector<T> vec_;
+  };
+};
 
 template <typename T, typename... Args,
           typename std::enable_if_t<std::is_constructible_v<T, Args...> &&
@@ -209,7 +243,7 @@ auto Arena::CanonicalInstance(const Args&... args) -> const T*& {
     wrapped_table.emplace<MapType>();
   }
   MapType& table = std::any_cast<MapType&>(wrapped_table);
-  return table[std::tuple<Args...>(args...)];
+  return table[typename MapType::key_type(args...)];
 }
 
 // Templated destruction of a pointer.
