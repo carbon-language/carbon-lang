@@ -38,7 +38,7 @@
 
 // Tracks expressions which are valid as types.
 // This has a deliberately self-referential type.
-CARBON_SEMANTICS_BUILTIN_KIND(TypeType, "Type")
+CARBON_SEMANTICS_BUILTIN_KIND(TypeType, "type")
 
 // Used when a semantic error has been detected, and a SemanticNodeId is still
 // required. For example, when there is a type checking issue, this will be used
@@ -65,7 +65,7 @@ CARBON_SEMANTICS_BUILTIN_KIND(FloatingPointType, "f64")
 CARBON_SEMANTICS_BUILTIN_KIND(StringType, "String")
 
 // The canonical empty tuple type.
-CARBON_SEMANTICS_BUILTIN_KIND(EmptyTupleType, "() as Type")
+CARBON_SEMANTICS_BUILTIN_KIND(EmptyTupleType, "() as type")
 
 // Keep invalid last, so that we can use values as array indices without needing
 // an invalid entry.
