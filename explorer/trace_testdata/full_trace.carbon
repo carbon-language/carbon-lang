@@ -17,6 +17,7 @@ fn Main() -> i32 {
   return x;
 }
 
+// Place checks after code so that line numbers are stable, reducing merge conflicts.
 // AUTOUPDATE
 // CHECK:STDOUT: ********** source program **********
 // CHECK:STDOUT: interface TestInterface {
