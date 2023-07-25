@@ -77,8 +77,8 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
       }
 
       if (trace_stream->is_enabled()) {
-        *trace_stream << "--- resolved return statement `" << *statement
-                      << "` for `" << PrintAsID(*((*function)->declaration))
+        *trace_stream << "--- flow-resolved return statement `" << *statement
+                      << "` in `" << PrintAsID(*((*function)->declaration))
                       << "` (" << statement->source_loc() << ")\n";
       }
 
@@ -92,7 +92,7 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
       cast<Break>(*statement).set_loop(*loop);
 
       if (trace_stream->is_enabled()) {
-        *trace_stream << "--- resolved break statement `" << *statement
+        *trace_stream << "--- flow-resolved break statement `" << *statement
                       << "` for `" << PrintAsID(**loop) << "`\n";
       }
 
@@ -105,8 +105,9 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
       cast<Continue>(*statement).set_loop(*loop);
 
       if (trace_stream->is_enabled()) {
-        *trace_stream << "--- resolved continue statement `" << *statement
-                      << "` for `" << PrintAsID(**loop) << "`\n";
+        *trace_stream << "--- flow-resolved continue statement `" << *statement
+                      << "` in `" << PrintAsID(**loop) << "` ("
+                      << statement->source_loc() << ")\n";
       }
 
       return Success();
@@ -118,12 +119,6 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
         CARBON_RETURN_IF_ERROR(ResolveControlFlow(
             trace_stream, *if_stmt.else_block(), loop, function));
       }
-
-      if (trace_stream->is_enabled()) {
-        *trace_stream << "--- resolved if statement `" << PrintAsID(*statement)
-                      << "` (" << statement->source_loc() << ")\n";
-      }
-
       return Success();
     }
     case StatementKind::Block: {
@@ -132,13 +127,6 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
         CARBON_RETURN_IF_ERROR(
             ResolveControlFlow(trace_stream, block_statement, loop, function));
       }
-
-      if (trace_stream->is_enabled()) {
-        *trace_stream << "--- resolved block statement `"
-                      << PrintAsID(*statement) << "` ("
-                      << statement->source_loc() << ")\n";
-      }
-
       return Success();
     }
     case StatementKind::For: {
@@ -146,8 +134,9 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
           trace_stream, &cast<For>(*statement).body(), statement, function));
 
       if (trace_stream->is_enabled()) {
-        *trace_stream << "--- resolved for statement `" << PrintAsID(*statement)
-                      << "` (" << statement->source_loc() << ")\n";
+        *trace_stream << "--- flow-resolved for statement `"
+                      << PrintAsID(*statement) << "` ("
+                      << statement->source_loc() << ")\n";
       }
 
       return Success();
@@ -157,7 +146,7 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
           trace_stream, &cast<While>(*statement).body(), statement, function));
 
       if (trace_stream->is_enabled()) {
-        *trace_stream << "--- resolved while statement `"
+        *trace_stream << "--- flow-resolved while statement `"
                       << PrintAsID(*statement) << "` ("
                       << statement->source_loc() << ")\n";
       }
@@ -168,11 +157,6 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
       for (Match::Clause& clause : match.clauses()) {
         CARBON_RETURN_IF_ERROR(ResolveControlFlow(
             trace_stream, &clause.statement(), loop, function));
-      }
-      if (trace_stream->is_enabled()) {
-        *trace_stream << "--- resolved match statement `"
-                      << PrintAsID(*statement) << "` ("
-                      << statement->source_loc() << ")\n";
       }
       return Success();
     }
