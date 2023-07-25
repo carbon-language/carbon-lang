@@ -13,7 +13,7 @@
 
 #include "common/bazel_working_dir.h"
 #include "common/error.h"
-#include "common/fuzzing/proto_to_carbon.h"
+#include "testing/fuzzing/proto_to_carbon.h"
 
 namespace Carbon {
 

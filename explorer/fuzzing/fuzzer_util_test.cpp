@@ -9,9 +9,9 @@
 
 #include <fstream>
 
-#include "common/fuzzing/proto_to_carbon.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "testing/fuzzing/proto_to_carbon.h"
 
 namespace Carbon::Testing {
 namespace {
