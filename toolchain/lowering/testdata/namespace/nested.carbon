@@ -6,14 +6,12 @@
 // CHECK:STDOUT: ; ModuleID = 'nested.carbon'
 // CHECK:STDOUT: source_filename = "nested.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %EmptyTupleType = type {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Wiz() {
+// CHECK:STDOUT: define i1 @Wiz() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Baz() {
-// CHECK:STDOUT:   %Wiz = call %EmptyTupleType @Wiz()
+// CHECK:STDOUT: define i1 @Baz() {
+// CHECK:STDOUT:   %Wiz = call i1 @Wiz()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

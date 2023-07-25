@@ -6,18 +6,16 @@
 // CHECK:STDOUT: ; ModuleID = 'function.carbon'
 // CHECK:STDOUT: source_filename = "function.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %EmptyTupleType = type {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Baz() {
+// CHECK:STDOUT: define i1 @Baz() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Baz.1() {
+// CHECK:STDOUT: define i1 @Baz.1() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Bar() {
-// CHECK:STDOUT:   %Baz.1 = call %EmptyTupleType @Baz.1()
+// CHECK:STDOUT: define i1 @Bar() {
+// CHECK:STDOUT:   %Baz.1 = call i1 @Baz.1()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

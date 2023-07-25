@@ -6,9 +6,7 @@
 // CHECK:STDOUT: ; ModuleID = 'params_one.carbon'
 // CHECK:STDOUT: source_filename = "params_one.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %EmptyTupleType = type {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Foo(i32 %a) {
+// CHECK:STDOUT: define i1 @Foo(i32 %a) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

@@ -6,13 +6,11 @@
 // CHECK:STDOUT: ; ModuleID = 'code_after_return.carbon'
 // CHECK:STDOUT: source_filename = "code_after_return.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %EmptyTupleType = type {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @F() {
+// CHECK:STDOUT: define i1 @F() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Main() {
+// CHECK:STDOUT: define i1 @Main() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

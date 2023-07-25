@@ -6,12 +6,10 @@
 // CHECK:STDOUT: ; ModuleID = 'simple.carbon'
 // CHECK:STDOUT: source_filename = "simple.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %EmptyTupleType = type {}
+// CHECK:STDOUT: declare i1 @F(i32)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare %EmptyTupleType @F(i32)
-// CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @G(i32 %n) {
-// CHECK:STDOUT:   %F = call %EmptyTupleType @F(i32 %n)
+// CHECK:STDOUT: define i1 @G(i32 %n) {
+// CHECK:STDOUT:   %F = call i1 @F(i32 %n)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

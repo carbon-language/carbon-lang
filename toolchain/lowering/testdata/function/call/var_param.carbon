@@ -6,17 +6,15 @@
 // CHECK:STDOUT: ; ModuleID = 'var_param.carbon'
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %EmptyTupleType = type {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @DoNothing(i32 %a) {
+// CHECK:STDOUT: define i1 @DoNothing(i32 %a) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Main() {
+// CHECK:STDOUT: define i1 @Main() {
 // CHECK:STDOUT:   %var = alloca i32, align 4
 // CHECK:STDOUT:   store i32 0, ptr %var, align 4
 // CHECK:STDOUT:   %1 = load i32, ptr %var, align 4
-// CHECK:STDOUT:   %DoNothing = call %EmptyTupleType @DoNothing(i32 %1)
+// CHECK:STDOUT:   %DoNothing = call i1 @DoNothing(i32 %1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 
