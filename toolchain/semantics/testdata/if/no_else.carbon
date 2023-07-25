@@ -20,7 +20,6 @@
 // CHECK:STDOUT:   b,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
-// CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT:   nodeBoolType,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
@@ -30,8 +29,8 @@
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: Return},
-// CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+4, type: type1},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+4, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block7, arg1: node+4},
 // CHECK:STDOUT:   {kind: Branch, arg0: block8},

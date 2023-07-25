@@ -217,10 +217,10 @@ class SemanticsIR {
   auto AddType(SemanticsNodeId node_id) -> SemanticsTypeId {
     SemanticsTypeId type_id(types_.size());
     types_.push_back(node_id);
-    if (node_id == SemanticsNodeId::BuiltinEmptyTupleType) {
-      CARBON_CHECK(!empty_tuple_type_id_.is_valid());
-      empty_tuple_type_id_ = type_id;
-    }
+    // if (node_id == SemanticsNodeId::BuiltinEmptyTupleType) {
+    //   CARBON_CHECK(!empty_tuple_type_id_.is_valid());
+    //   empty_tuple_type_id_ = type_id;
+    // }
     return type_id;
   }
 
@@ -331,7 +331,7 @@ class SemanticsIR {
 
   // The type of the empty tuple. This is special-cased due to its use in
   // implicit function returns.
-  SemanticsTypeId empty_tuple_type_id_ = SemanticsTypeId::Invalid;
+  SemanticsTypeId empty_tuple_type_id_ = SemanticsTypeId::TypeType;
 
   // All nodes. The first entries will always be cross-references to builtins,
   // at indices matching SemanticsBuiltinKind ordering.

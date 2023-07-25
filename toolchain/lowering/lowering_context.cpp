@@ -127,15 +127,6 @@ auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
 
 auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
   switch (node_id.index) {
-    case SemanticsBuiltinKind::EmptyTupleType.AsInt():
-      // Represent empty types as empty structs.
-      // TODO: Investigate special-casing handling of these so that they can be
-      // collectively replaced with LLVM's void, particularly around function
-      // returns. LLVM doesn't allow declaring variables with a void type, so
-      // that may require significant special casing.
-      return llvm::StructType::create(
-          *llvm_context_, llvm::ArrayRef<llvm::Type*>(),
-          SemanticsBuiltinKind::FromInt(node_id.index).name());
     case SemanticsBuiltinKind::FloatingPointType.AsInt():
       // TODO: Handle different sizes.
       return llvm::Type::getDoubleTy(*llvm_context_);
