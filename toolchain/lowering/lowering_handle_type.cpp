@@ -9,13 +9,13 @@ namespace Carbon {
 auto LoweringHandleStructType(LoweringFunctionContext& context,
                               SemanticsNodeId node_id, SemanticsNode /*node*/)
     -> void {
-  context.SetLocal(node_id, context.GetTypeValue());
+  context.SetLocal(node_id, context.GetTypeAsValue());
 }
 
 auto LoweringHandleTupleType(LoweringFunctionContext& context,
                              SemanticsNodeId node_id, SemanticsNode /*node*/)
     -> void {
-  context.SetLocal(node_id, context.GetTypeValue());
+  context.SetLocal(node_id, context.GetTypeAsValue());
 }
 
 }  // namespace Carbon

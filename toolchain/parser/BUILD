@@ -34,7 +34,7 @@ cc_library(
         "parser_context.cpp",
         "parser_context.h",
     ] +
-    # Glob handler files to avoid missing anyway.
+    # Glob handler files to avoid missing any.
     glob([
         "parser_handle_*.cpp",
     ]),

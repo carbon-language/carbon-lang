@@ -25,7 +25,7 @@ cc_library(
         "lowering_context.cpp",
         "lowering_function_context.cpp",
     ] +
-    # Glob handler files to avoid missing anyway.
+    # Glob handler files to avoid missing any.
     glob([
         "lowering_handle*.cpp",
     ]),

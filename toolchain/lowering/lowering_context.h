@@ -35,7 +35,7 @@ class LoweringContext {
   auto GetType(SemanticsTypeId type_id) -> llvm::Type* {
     // InvalidType should not be passed in.
     if (type_id == SemanticsTypeId::TypeType) {
-      // `type` is represented as `{}`.
+      // `type` is lowered to an empty LLVM StructType.
       return llvm::StructType::get(llvm_context());
     }
     CARBON_CHECK(type_id.index >= 0) << type_id;
@@ -43,7 +43,7 @@ class LoweringContext {
   }
 
   // Returns a lowered value to use for a value of type `type`.
-  auto GetTypeValue() -> llvm::Value* {
+  auto GetTypeAsValue() -> llvm::Value* {
     return llvm::ConstantStruct::getAnon(llvm_context(), {});
   }
 

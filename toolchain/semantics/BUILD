@@ -62,7 +62,7 @@ cc_library(
         "semantics_node_block_stack.cpp",
         "semantics_declaration_name_stack.cpp",
     ] +
-    # Glob handler files to avoid missing anyway.
+    # Glob handler files to avoid missing any.
     glob([
         "semantics_handle*.cpp",
     ]),

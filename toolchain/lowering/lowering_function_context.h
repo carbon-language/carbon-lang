@@ -42,7 +42,7 @@ class LoweringFunctionContext {
   auto GetLocal(SemanticsNodeId node_id) -> llvm::Value* {
     // All builtins are types, with the same empty lowered value.
     if (node_id.index < SemanticsBuiltinKind::ValidCount) {
-      return GetTypeValue();
+      return GetTypeAsValue();
     }
 
     auto it = locals_.find(node_id);
@@ -71,8 +71,8 @@ class LoweringFunctionContext {
   }
 
   // Returns a lowered value to use for a value of type `type`.
-  auto GetTypeValue() -> llvm::Value* {
-    return lowering_context_->GetTypeValue();
+  auto GetTypeAsValue() -> llvm::Value* {
+    return lowering_context_->GetTypeAsValue();
   }
 
   // Create a synthetic block that corresponds to no SemanticsNodeBlockId. Such
