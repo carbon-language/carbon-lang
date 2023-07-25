@@ -170,18 +170,14 @@ class TokenizedBuffer {
   // buffer locations.
   class TokenLocationTranslator : public DiagnosticLocationTranslator<Token> {
    public:
-    explicit TokenLocationTranslator(const TokenizedBuffer* buffer,
-                                     int* last_line_lexed_to_column)
-        : buffer_(buffer),
-          last_line_lexed_to_column_(last_line_lexed_to_column) {}
+    explicit TokenLocationTranslator(const TokenizedBuffer* buffer)
+        : buffer_(buffer) {}
 
     // Map the given token into a diagnostic location.
     auto GetLocation(Token token) -> DiagnosticLocation override;
 
    private:
     const TokenizedBuffer* buffer_;
-    // Passed to SourceBufferLocationTranslator.
-    int* last_line_lexed_to_column_;
   };
 
   // Lexes a buffer of source code into a tokenized buffer.
@@ -298,10 +294,8 @@ class TokenizedBuffer {
   class SourceBufferLocationTranslator
       : public DiagnosticLocationTranslator<const char*> {
    public:
-    explicit SourceBufferLocationTranslator(const TokenizedBuffer* buffer,
-                                            int* last_line_lexed_to_column)
-        : buffer_(buffer),
-          last_line_lexed_to_column_(last_line_lexed_to_column) {}
+    explicit SourceBufferLocationTranslator(const TokenizedBuffer* buffer)
+        : buffer_(buffer) {}
 
     // Map the given position within the source buffer into a diagnostic
     // location.
@@ -309,9 +303,6 @@ class TokenizedBuffer {
 
    private:
     const TokenizedBuffer* buffer_;
-    // The last lexed column, for determining whether the last line should be
-    // checked for unlexed newlines. May be null after lexing is complete.
-    int* last_line_lexed_to_column_;
   };
 
   // Specifies minimum widths to use when printing a token's fields via
@@ -360,7 +351,10 @@ class TokenizedBuffer {
   struct LineInfo {
     // The length will always be assigned later. Indent may be assigned if
     // non-zero.
-    explicit LineInfo(int64_t start) : start(start), length(-1), indent(0) {}
+    explicit LineInfo(int64_t start)
+        : start(start),
+          length(static_cast<int32_t>(llvm::StringRef::npos)),
+          indent(0) {}
 
     // Zero-based byte offset of the start of the line within the source buffer
     // provided.

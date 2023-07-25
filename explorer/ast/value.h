@@ -73,7 +73,7 @@ class Value {
   // `me_value`, otherwise pass `*this`.
   auto GetElement(Nonnull<Arena*> arena, const ElementPath& path,
                   SourceLocation source_loc,
-                  Nonnull<const Value*> me_value) const
+                  std::optional<Nonnull<const Value*>> me_value) const
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`

@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
+load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
 load("//testing/file_test:rules.bzl", "file_test")
 
@@ -62,7 +62,7 @@ cc_library(
         "semantics_node_block_stack.cpp",
         "semantics_declaration_name_stack.cpp",
     ] +
-    # Glob handler files to avoid missing anyway.
+    # Glob handler files to avoid missing any.
     glob([
         "semantics_handle*.cpp",
     ]),

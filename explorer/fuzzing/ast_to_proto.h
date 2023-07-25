@@ -5,8 +5,8 @@
 #ifndef CARBON_EXPLORER_FUZZING_AST_TO_PROTO_H_
 #define CARBON_EXPLORER_FUZZING_AST_TO_PROTO_H_
 
-#include "common/fuzzing/carbon.pb.h"
 #include "explorer/ast/ast.h"
+#include "testing/fuzzing/carbon.pb.h"
 
 namespace Carbon::Testing {
 
