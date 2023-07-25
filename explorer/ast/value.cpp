@@ -376,7 +376,8 @@ static auto SetFieldImpl(
                                     path_end, field_value, source_loc);
           inits.ok()) {
         return arena->New<NominalClassValue>(
-            &object.type(), *inits, object.base(), object.class_value_ptr());
+            &object.type(), *inits, object.base(),
+            arena->New<const NominalClassValue*>());
       } else if (object.base().has_value()) {
         auto new_base = SetFieldImpl(arena, object.base().value(), path_begin,
                                      path_end, field_value, source_loc);
