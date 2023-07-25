@@ -302,8 +302,7 @@ enum class ArgKind {
   OneOf,
   MetaActionOnly,
 };
-auto operator<<(llvm::raw_ostream& output, ArgKind kind)
-    -> llvm::raw_ostream&;
+auto operator<<(llvm::raw_ostream& output, ArgKind kind) -> llvm::raw_ostream&;
 
 // A builder used to configure an argument for parsing.
 class ArgBuilder {
@@ -341,7 +340,7 @@ class FlagBuilder : public ArgBuilder {
   //
   // This must be called on the builder.
   void Set(bool* flag);
-  
+
  private:
   using ArgBuilder::ArgBuilder;
 };
@@ -639,7 +638,7 @@ class CommandBuilder {
 
  private:
   friend Parser;
-  
+
   explicit CommandBuilder(Command& command, MetaPrinter& meta_printer);
 
   auto AddArgImpl(const ArgInfo& info, ArgKind kind) -> Arg&;
@@ -760,7 +759,8 @@ auto CommandLine::OneOfArgBuilder::OneOfValueT<T>::Default(
 }
 
 template <typename T>
-CommandLine::OneOfArgBuilder::OneOfValueT<T>::OneOfValueT(llvm::StringRef str, T value)
+CommandLine::OneOfArgBuilder::OneOfValueT<T>::OneOfValueT(llvm::StringRef str,
+                                                          T value)
     : str(str), value(std::move(value)) {}
 
 template <typename T>
@@ -771,7 +771,7 @@ auto CommandLine::OneOfArgBuilder::OneOfValue(llvm::StringRef str, T value)
 
 template <typename T, typename U, size_t N>
 void CommandLine::OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N],
-                                     T* result) {
+                                            T* result) {
   static_assert(N > 0, "Must include at least one value.");
   arg_.is_append = false;
   OneOfImpl(
@@ -780,8 +780,8 @@ void CommandLine::OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N],
 }
 
 template <typename T, typename U, size_t N>
-void CommandLine::OneOfArgBuilder::AppendOneOf(const OneOfValueT<U> (&values)[N],
-                                        llvm::SmallVectorImpl<T>* sequence) {
+void CommandLine::OneOfArgBuilder::AppendOneOf(
+    const OneOfValueT<U> (&values)[N], llvm::SmallVectorImpl<T>* sequence) {
   static_assert(N > 0, "Must include at least one value.");
   arg_.is_append = true;
   OneOfImpl(

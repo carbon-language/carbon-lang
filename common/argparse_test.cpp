@@ -92,13 +92,15 @@ TEST(ArgParserTest, BooleanFlags) {
   EXPECT_FALSE(flag);
 
   TestRawOstream os;
-  EXPECT_THAT(parse({"--no-flag=true"}, os), Eq(CommandLine::ParseResult::Error));
+  EXPECT_THAT(parse({"--no-flag=true"}, os),
+              Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(
       os.TakeStr(),
       StrEq("ERROR: Cannot specify a value when using a flag name prefixed "
             "with 'no-' -- that prefix implies a value of 'false'.\n"));
 
-  EXPECT_THAT(parse({"--no-flag=false"}, os), Eq(CommandLine::ParseResult::Error));
+  EXPECT_THAT(parse({"--no-flag=false"}, os),
+              Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(
       os.TakeStr(),
       StrEq("ERROR: Cannot specify a value when using a flag name prefixed "
@@ -330,7 +332,8 @@ TEST(ArgParserTest, BasicSubcommands) {
   EXPECT_THAT(os.TakeStr(), StrEq("ERROR: Invalid subcommand 'sub3'. Available "
                                   "subcommands: 'sub1', 'sub2', or 'help'\n"));
 
-  EXPECT_THAT(parse({"--flag", "sub1"}, os), Eq(CommandLine::ParseResult::Error));
+  EXPECT_THAT(parse({"--flag", "sub1"}, os),
+              Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq("ERROR: Unknown option '--flag'\n"));
 
   EXPECT_THAT(parse({"sub1", "--flag"}, llvm::errs()),
@@ -462,7 +465,8 @@ TEST(ArgParserTest, OneOfOption) {
   EXPECT_THAT(parse({"--option=xx"}, os), Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::formatv(ErrorStr, "xx")));
 
-  EXPECT_THAT(parse({"--option=\xFF"}, os), Eq(CommandLine::ParseResult::Error));
+  EXPECT_THAT(parse({"--option=\xFF"}, os),
+              Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::formatv(ErrorStr, "\\FF")));
 
   EXPECT_THAT(parse({llvm::StringRef("--option=\0", 10)}, os),
@@ -771,7 +775,8 @@ Closing remarks.
   EXPECT_THAT(parse({"help"}, os), Eq(CommandLine::ParseResult::MetaSuccess));
   EXPECT_THAT(os.TakeStr(), StrEq(help_flag_output));
 
-  EXPECT_THAT(parse({"--version"}, os), Eq(CommandLine::ParseResult::MetaSuccess));
+  EXPECT_THAT(parse({"--version"}, os),
+              Eq(CommandLine::ParseResult::MetaSuccess));
   std::string version_flag_output = os.TakeStr();
   EXPECT_THAT(version_flag_output, StrEq(llvm::StringRef(R"""(
 Test Command -- version 1.2.3
@@ -780,7 +785,8 @@ Build timestamp: )""" __TIMESTAMP__ R"""(
 Build config: test-config-info
 )""")
                                              .ltrim('\n')));
-  EXPECT_THAT(parse({"version"}, os), Eq(CommandLine::ParseResult::MetaSuccess));
+  EXPECT_THAT(parse({"version"}, os),
+              Eq(CommandLine::ParseResult::MetaSuccess));
   EXPECT_THAT(os.TakeStr(), StrEq(version_flag_output));
 
   EXPECT_THAT(parse({"--flag", "edit", "--option=42", "--help"}, os),
