@@ -45,12 +45,6 @@ class LoweringFunctionContext {
     return it->second;
   }
 
-  // This is required for handling typetype stub reference.
-  auto TryToReuseLocal(SemanticsNodeId node_id) -> bool {
-    auto it = locals_.find(node_id);
-    return it != locals_.end();
-  }
-
   // Returns a local (versus global) value for the given node in loaded state.
   // Loads will only be inserted on an as-needed basis.
   auto GetLocalLoaded(SemanticsNodeId node_id) -> llvm::Value*;

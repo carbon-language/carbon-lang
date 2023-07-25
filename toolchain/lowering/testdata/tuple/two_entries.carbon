@@ -12,9 +12,9 @@
 // CHECK:STDOUT: define i32 @Run() {
 // CHECK:STDOUT:   %TupleLiteralValue = alloca %TupleLiteralType, align 8
 // CHECK:STDOUT:   %1 = getelementptr inbounds %TupleLiteralType, ptr %TupleLiteralValue, i32 0, i32 0
-// CHECK:STDOUT:   store i1 true, ptr %1, align 1
+// CHECK:STDOUT:   store i1 false, ptr %1, align 1
 // CHECK:STDOUT:   %2 = getelementptr inbounds %TupleLiteralType, ptr %TupleLiteralValue, i32 0, i32 1
-// CHECK:STDOUT:   store i1 true, ptr %2, align 1
+// CHECK:STDOUT:   store i1 false, ptr %2, align 1
 // CHECK:STDOUT:   %var = alloca %TupleLiteralType.0, align 8
 // CHECK:STDOUT:   %TupleLiteralValue1 = alloca %TupleLiteralType.0, align 8
 // CHECK:STDOUT:   %3 = getelementptr inbounds %TupleLiteralType.0, ptr %TupleLiteralValue1, i32 0, i32 0
@@ -25,9 +25,9 @@
 // CHECK:STDOUT:   store %TupleLiteralType.0 %5, ptr %var, align 4
 // CHECK:STDOUT:   %TupleLiteralValue2 = alloca %TupleLiteralType, align 8
 // CHECK:STDOUT:   %6 = getelementptr inbounds %TupleLiteralType, ptr %TupleLiteralValue2, i32 0, i32 0
-// CHECK:STDOUT:   store i1 true, ptr %6, align 1
+// CHECK:STDOUT:   store i1 false, ptr %6, align 1
 // CHECK:STDOUT:   %7 = getelementptr inbounds %TupleLiteralType, ptr %TupleLiteralValue2, i32 0, i32 1
-// CHECK:STDOUT:   store i1 true, ptr %7, align 1
+// CHECK:STDOUT:   store i1 false, ptr %7, align 1
 // CHECK:STDOUT:   %var3 = alloca %TupleLiteralType.0, align 8
 // CHECK:STDOUT:   %8 = load %TupleLiteralType.0, ptr %var, align 4
 // CHECK:STDOUT:   store %TupleLiteralType.0 %8, ptr %var3, align 4

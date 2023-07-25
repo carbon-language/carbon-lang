@@ -276,13 +276,8 @@ auto LoweringHandleStubReference(LoweringFunctionContext& context,
   // TODO: Handle TypeType. Currently using a place holder
   // but this is just a workaround.
   if (node.type_id() == SemanticsTypeId::TypeType) {
-    if (!context.TryToReuseLocal(node_id)) {
-      llvm::Value* v = llvm::ConstantInt::get(context.builder().getInt1Ty(),
-                                              node.GetAsStubReference().index);
-      context.SetLocal(node_id, v);
-    } else {
-      context.SetLocal(node_id, context.GetLocal(node.GetAsStubReference()));
-    }
+    llvm::Value* v = llvm::ConstantInt::get(context.builder().getInt1Ty(), 0);
+    context.SetLocal(node_id, v);
   } else {
     context.SetLocal(node_id, context.GetLocal(node.GetAsStubReference()));
   }
