@@ -31,6 +31,9 @@ def main() -> None:
         r".+Time elapsed in (\S+): (\d+)ms",
         r"Time elapsed in (\S+): (\d+)ms",
         r"Time elapsed in \1: {{[0-9]+}}ms",
+        # Do not perform line number replacement.
+        "--line_number_pattern",
+        "(?!)",
     ] + sys.argv[1:]
     exit(subprocess.call(args))
 
