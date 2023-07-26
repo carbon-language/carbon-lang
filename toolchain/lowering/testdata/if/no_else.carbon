@@ -19,10 +19,12 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: 1:                                                ; preds = %0
 // CHECK:STDOUT:   call void @F()
+// CHECK:STDOUT:   %TupleLiteralValue = alloca {}, align 8
 // CHECK:STDOUT:   br label %2
 // CHECK:STDOUT:
 // CHECK:STDOUT: 2:                                                ; preds = %1, %0
 // CHECK:STDOUT:   call void @G()
+// CHECK:STDOUT:   %TupleLiteralValue1 = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

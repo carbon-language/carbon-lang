@@ -8,7 +8,6 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: %TupleLiteralType = type {}
 // CHECK:STDOUT:
-
 // CHECK:STDOUT: define void @MakeImplicitEmptyTuple() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -17,9 +16,12 @@
 // CHECK:STDOUT:   %TupleLiteralValue = alloca %TupleLiteralType, align 8
 // CHECK:STDOUT:   %var = alloca %TupleLiteralType, align 8
 // CHECK:STDOUT:   call void @MakeImplicitEmptyTuple()
-// CHECK:STDOUT:   store i1 false, ptr %var, align 1
+// CHECK:STDOUT:   %TupleLiteralValue1 = alloca {}, align 8
+// CHECK:STDOUT:   %1 = load %TupleLiteralType, ptr %TupleLiteralValue1, align 1
+// CHECK:STDOUT:   store %TupleLiteralType %1, ptr %var, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
+
 
 fn MakeImplicitEmptyTuple() {
 }

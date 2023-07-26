@@ -22,7 +22,6 @@
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 
-
 fn Echo(a: ()) -> () {
   return a;
 }

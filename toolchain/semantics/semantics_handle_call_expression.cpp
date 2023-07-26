@@ -43,7 +43,8 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
 
   // TODO: Propagate return types from callable.
   SemanticsTypeId type_id = callable.return_type_id;
-  // For functions with no return type, setting return type to empty tuple type.
+  // For functions with an implicit return type, set the return type to empty
+  // tuple type.
   if (type_id == SemanticsTypeId::Invalid) {
     type_id = context.CanonicalizeTupleType(call_expr_parse_node, {});
   }
