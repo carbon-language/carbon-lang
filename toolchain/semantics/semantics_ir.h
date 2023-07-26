@@ -217,10 +217,6 @@ class SemanticsIR {
   auto AddType(SemanticsNodeId node_id) -> SemanticsTypeId {
     SemanticsTypeId type_id(types_.size());
     types_.push_back(node_id);
-    // if (node_id == SemanticsNodeId::BuiltinEmptyTupleType) {
-    //   CARBON_CHECK(!empty_tuple_type_id_.is_valid());
-    //   empty_tuple_type_id_ = type_id;
-    // }
     return type_id;
   }
 

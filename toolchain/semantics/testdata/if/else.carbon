@@ -23,8 +23,11 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeBoolType,
+// CHECK:STDOUT:   node+11,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
@@ -38,11 +41,12 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function3},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block8, arg1: node+6},
 // CHECK:STDOUT:   {kind: Branch, arg0: block9},
-// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0},
-// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1},
+// CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
+// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type1},
+// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type1},
 // CHECK:STDOUT:   {kind: Branch, arg0: block10},
 // CHECK:STDOUT:   {kind: Branch, arg0: block10},
-// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function2},
+// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function2, type: type1},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -76,15 +80,16 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+11,
-// CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+15,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:     node+17,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

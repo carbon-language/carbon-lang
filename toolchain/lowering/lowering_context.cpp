@@ -157,6 +157,10 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
                                       "StructLiteralType");
     }
     case SemanticsNodeKind::TupleType: {
+      // TODO: Investigate special-casing handling of empty tuples so that they
+      // can be collectively replaced with LLVM's void, particularly around
+      // function returns. LLVM doesn't allow declaring variables with a void
+      // type, so that may require significant special casing.
       auto refs = semantics_ir_->GetTypeBlock(node.GetAsTupleType());
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(refs.size());
