@@ -6,21 +6,25 @@
 
 namespace Carbon {
 
-// Handles PeriodAs variants.
+// Handles PeriodAs variants and ArrowExpression.
 // TODO: This currently only supports identifiers on the rhs, but will in the
 // future need to handle things like `object.(Interface.member)` for qualifiers.
-auto ParserHandlePeriod(ParserContext& context, ParseNodeKind node_kind)
+static auto ParserHandlePeriodOrArrow(ParserContext& context,
+                                      ParseNodeKind node_kind, bool is_arrow)
     -> void {
   auto state = context.PopState();
 
   // `.` identifier
-  auto dot = context.ConsumeChecked(TokenKind::Period);
+  auto dot = context.ConsumeChecked(is_arrow ? TokenKind::MinusGreater
+                                             : TokenKind::Period);
 
   if (!context.ConsumeAndAddLeafNodeIf(TokenKind::Identifier,
                                        ParseNodeKind::Name)) {
-    CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDot, Error,
-                      "Expected identifier after `.`.");
-    context.emitter().Emit(*context.position(), ExpectedIdentifierAfterDot);
+    CARBON_DIAGNOSTIC(ExpectedIdentifierAfterDotOrArrow, Error,
+                      "Expected identifier after `{0}`.", llvm::StringRef);
+    context.emitter().Emit(*context.position(),
+                           ExpectedIdentifierAfterDotOrArrow,
+                           is_arrow ? "->" : ".");
     // If we see a keyword, assume it was intended to be a name.
     // TODO: Should keywords be valid here?
     if (context.PositionKind().is_keyword()) {
@@ -39,15 +43,23 @@ auto ParserHandlePeriod(ParserContext& context, ParseNodeKind node_kind)
 }
 
 auto ParserHandlePeriodAsDeclaration(ParserContext& context) -> void {
-  ParserHandlePeriod(context, ParseNodeKind::QualifiedDeclaration);
+  ParserHandlePeriodOrArrow(context, ParseNodeKind::QualifiedDeclaration,
+                            /*is_arrow=*/false);
 }
 
 auto ParserHandlePeriodAsExpression(ParserContext& context) -> void {
-  ParserHandlePeriod(context, ParseNodeKind::MemberAccessExpression);
+  ParserHandlePeriodOrArrow(context, ParseNodeKind::MemberAccessExpression,
+                            /*is_arrow=*/false);
 }
 
 auto ParserHandlePeriodAsStruct(ParserContext& context) -> void {
-  ParserHandlePeriod(context, ParseNodeKind::StructFieldDesignator);
+  ParserHandlePeriodOrArrow(context, ParseNodeKind::StructFieldDesignator,
+                            /*is_arrow=*/false);
+}
+
+auto ParserHandleArrowExpression(ParserContext& context) -> void {
+  ParserHandlePeriodOrArrow(
+      context, ParseNodeKind::PointerMemberAccessExpression, /*is_arrow=*/true);
 }
 
 }  // namespace Carbon

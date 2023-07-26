@@ -215,6 +215,13 @@ CARBON_PARSER_STATE(DeclarationScopeLoop)
 //   (state done)
 CARBON_PARSER_STATE_VARIANTS3(Period, Declaration, Expression, Struct)
 
+// Handles `->name` expressions. Identical to PeriodAsExpression except for the
+// leading token.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE(ArrowExpression)
+
 // Handles processing of an expression.
 //
 // If `If`:
@@ -249,6 +256,9 @@ CARBON_PARSER_STATE(ExpressionInPostfix)
 //
 // If `Period`:
 //   1. PeriodAsExpression
+//   2. ExpressionInPostfixLoop
+// If `MinusGreater`:
+//   1. ArrowExpression
 //   2. ExpressionInPostfixLoop
 // If `OpenParen`:
 //   1. CallExpression

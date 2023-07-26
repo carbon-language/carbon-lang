@@ -65,6 +65,12 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
   return true;
 }
 
+auto SemanticsHandlePointerMemberAccessExpression(SemanticsContext& context,
+                                                  ParseTree::Node parse_node)
+    -> bool {
+  return context.TODO(parse_node, "HandlePointerMemberAccessExpression");
+}
+
 auto SemanticsHandleName(SemanticsContext& context, ParseTree::Node parse_node)
     -> bool {
   auto name_str = context.parse_tree().GetNodeText(parse_node);
