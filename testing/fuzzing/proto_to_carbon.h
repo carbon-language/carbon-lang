@@ -2,11 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_COMMON_FUZZING_PROTO_TO_CARBON_H_
-#define CARBON_COMMON_FUZZING_PROTO_TO_CARBON_H_
+#ifndef CARBON_TESTING_FUZZING_PROTO_TO_CARBON_H_
+#define CARBON_TESTING_FUZZING_PROTO_TO_CARBON_H_
 
 #include "common/error.h"
-#include "common/fuzzing/carbon.pb.h"
+#include "testing/fuzzing/carbon.pb.h"
 
 namespace Carbon {
 
@@ -24,4 +24,4 @@ auto ParseCarbonTextProto(const std::string& contents)
 
 }  // namespace Carbon
 
-#endif  // CARBON_COMMON_FUZZING_PROTO_TO_CARBON_H_
+#endif  // CARBON_TESTING_FUZZING_PROTO_TO_CARBON_H_

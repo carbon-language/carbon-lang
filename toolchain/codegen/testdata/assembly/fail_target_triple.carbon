@@ -2,7 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{carbon} dump objcode --target_triple=x86_64-unknown-linux-gnu --output_file=%t %s | %{FileCheck-strict}
-// CHECK:STDOUT: Success: Object file is generated!
+// ARGS: dump assembly --target_triple=x86_687-unknown-linux-gnu %s
+// TODO: Support autoupdate with ARGS.
+// NOAUTOUPDATE
+// CHECK:STDERR: ERROR: Invalid -target_triple:{{.*}}
 
 fn Main() -> i32 { return 0; }

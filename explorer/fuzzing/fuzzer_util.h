@@ -6,8 +6,8 @@
 #define CARBON_EXPLORER_FUZZING_FUZZER_UTIL_H_
 
 #include "common/error.h"
-#include "common/fuzzing/carbon.pb.h"
 #include "explorer/ast/ast.h"
+#include "testing/fuzzing/carbon.pb.h"
 
 namespace Carbon::Testing {
 

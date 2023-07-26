@@ -40,6 +40,11 @@ class LoweringFunctionContext {
 
   // Returns a local (versus global) value for the given node.
   auto GetLocal(SemanticsNodeId node_id) -> llvm::Value* {
+    // All builtins are types, with the same empty lowered value.
+    if (node_id.index < SemanticsBuiltinKind::ValidCount) {
+      return GetTypeAsValue();
+    }
+
     auto it = locals_.find(node_id);
     CARBON_CHECK(it != locals_.end()) << "Missing local: " << node_id;
     return it->second;
@@ -63,6 +68,11 @@ class LoweringFunctionContext {
   // Returns a lowered type for the given type_id.
   auto GetType(SemanticsTypeId type_id) -> llvm::Type* {
     return lowering_context_->GetType(type_id);
+  }
+
+  // Returns a lowered value to use for a value of type `type`.
+  auto GetTypeAsValue() -> llvm::Value* {
+    return lowering_context_->GetTypeAsValue();
   }
 
   // Create a synthetic block that corresponds to no SemanticsNodeBlockId. Such

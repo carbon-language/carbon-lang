@@ -2,7 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// RUN: %{not} %{carbon} dump objcode --output_file=%t --target_triple=x86_64-unknown-linux-gnu | %{FileCheck-strict}
-// CHECK:STDERR: ERROR: No input file specified.
+// ARGS: dump objcode --target_triple=x86_64-unknown-linux-gnu --output_file=%t %s
+// TODO: Support autoupdate with ARGS.
+// NOAUTOUPDATE
+// CHECK:STDOUT: Success: Object file is generated!
 
 fn Main() -> i32 { return 0; }

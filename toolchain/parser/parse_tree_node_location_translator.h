@@ -14,7 +14,7 @@ class ParseTreeNodeLocationTranslator
  public:
   explicit ParseTreeNodeLocationTranslator(const TokenizedBuffer* tokens,
                                            const ParseTree* parse_tree)
-      : token_translator_(tokens, nullptr), parse_tree_(parse_tree) {}
+      : token_translator_(tokens), parse_tree_(parse_tree) {}
 
   // Map the given token into a diagnostic location.
   auto GetLocation(ParseTree::Node node) -> DiagnosticLocation override {

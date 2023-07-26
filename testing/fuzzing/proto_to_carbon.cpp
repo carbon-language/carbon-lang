@@ -2,15 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "common/fuzzing/proto_to_carbon.h"
+#include "testing/fuzzing/proto_to_carbon.h"
 
 #include <google/protobuf/text_format.h>
 
 #include <string_view>
 
-#include "common/fuzzing/carbon.pb.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include "testing/fuzzing/carbon.pb.h"
 
 namespace Carbon {
 

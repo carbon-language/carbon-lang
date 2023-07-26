@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_LOWERING_LOWERING_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWERING_LOWERING_CONTEXT_H_
 
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "toolchain/semantics/semantics_ir.h"
@@ -32,9 +33,18 @@ class LoweringContext {
 
   // Returns a lowered type for the given type_id.
   auto GetType(SemanticsTypeId type_id) -> llvm::Type* {
-    // Neither TypeType nor InvalidType should be passed in.
+    // InvalidType should not be passed in.
+    if (type_id == SemanticsTypeId::TypeType) {
+      // `type` is lowered to an empty LLVM StructType.
+      return llvm::StructType::get(llvm_context());
+    }
     CARBON_CHECK(type_id.index >= 0) << type_id;
     return types_[type_id.index];
+  }
+
+  // Returns a lowered value to use for a value of type `type`.
+  auto GetTypeAsValue() -> llvm::Value* {
+    return llvm::ConstantStruct::getAnon(llvm_context(), {});
   }
 
   auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }

@@ -57,6 +57,10 @@ auto SemanticsHandleLiteral(SemanticsContext& context,
               id));
       break;
     }
+    case TokenKind::Type: {
+      context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinTypeType);
+      break;
+    }
     case TokenKind::Bool: {
       context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinBoolType);
       break;
