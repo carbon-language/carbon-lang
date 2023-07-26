@@ -97,19 +97,6 @@ class Arena {
   auto allocated() -> int64_t { return allocated_; }
 
  private:
-  // Allocates an object in the arena. Unlike New, this will always allocate
-  // and construct a new object.
-  template <
-      typename T, typename... Args,
-      typename std::enable_if_t<std::is_constructible_v<T, Args...>>* = nullptr>
-  auto UniqueNew(Args&&... args) -> Nonnull<T*>;
-
-  // Returns a pointer to the canonical instance of T constructed from
-  // `args...`, or null if there is no such instance yet. Returns a mutable
-  // reference so that a null entry can be updated.
-  template <typename T, typename... Args>
-  auto CanonicalInstance(const Args&... args) -> const T*&;
-
   // Virtualizes arena entries so that a single vector can contain many types,
   // avoiding templated statics.
   class ArenaEntry {
@@ -120,10 +107,6 @@ class Arena {
   // Templated destruction of a pointer.
   template <typename T>
   class ArenaEntryTyped;
-
-  // Manages allocations in an arena for destruction at shutdown.
-  std::vector<std::unique_ptr<ArenaEntry>> arena_;
-  int64_t allocated_ = 0;
 
   // Hash functor implemented in terms of hash_value (see llvm/ADT/Hashing.h).
   struct LlvmHasher {
@@ -150,6 +133,23 @@ class Arena {
   using CanonicalizationTable =
       std::unordered_map<std::tuple<ArgKeyType<Args>...>, Nonnull<const T*>,
                          LlvmHasher>;
+
+  // Allocates an object in the arena. Unlike New, this will always allocate
+  // and construct a new object.
+  template <
+      typename T, typename... Args,
+      typename std::enable_if_t<std::is_constructible_v<T, Args...>>* = nullptr>
+  auto UniqueNew(Args&&... args) -> Nonnull<T*>;
+
+  // Returns a pointer to the canonical instance of T constructed from
+  // `args...`, or null if there is no such instance yet. Returns a mutable
+  // reference so that a null entry can be updated.
+  template <typename T, typename... Args>
+  auto CanonicalInstance(const Args&... args) -> const T*&;
+
+  // Manages allocations in an arena for destruction at shutdown.
+  std::vector<std::unique_ptr<ArenaEntry>> arena_;
+  int64_t allocated_ = 0;
 
   // Maps a CanonicalizationTable type to a unique instance of that type for
   // this arena. For a key equal to &TypeId<T>::id for some T, the corresponding

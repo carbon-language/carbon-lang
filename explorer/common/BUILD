@@ -13,6 +13,16 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "arena_test",
+    srcs = ["arena_test.cpp"],
+    deps = [
+        ":arena",
+        "//testing/util:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
 cc_library(
     name = "error_builders",
     hdrs = ["error_builders.h"],
