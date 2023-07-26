@@ -32,8 +32,8 @@ auto Heap::AllocateValue(Nonnull<const Value*> v) -> AllocationId {
   bound_values_.push_back(llvm::DenseMap<const AstNode*, Address>{});
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "(+) memory-alloc: #" << a.index_ << " `" << *v << "`"
-                   << (is_uninitialized ? " uninitialized" : "") << "\n";
+    trace_stream_->log("(+)", "memory-alloc", a.index_, *v,
+                       is_uninitialized ? " uninitialized" : "");
   }
 
   return a;
@@ -48,8 +48,9 @@ auto Heap::Read(const Address& a, SourceLocation source_loc) const
       value->GetElement(arena_, a.element_path_, source_loc, value);
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "+++ memory-read: #" << a.allocation_.index_ << " `"
-                   << **read_value << "`\n";
+    trace_stream_->log("+++", "memory-read",
+                       "#" + std::to_string(a.allocation_.index_),
+                       **read_value);
   }
 
   return read_value;
@@ -83,8 +84,8 @@ auto Heap::Write(const Address& a, Nonnull<const Value*> v,
   }
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "+++ memory-write: #" << a.allocation_.index_ << " `"
-                   << *values_[a.allocation_.index_] << "`\n";
+    trace_stream_->log("+++", "memory-write", a.allocation_.index_,
+                       *values_[a.allocation_.index_]);
   }
 
   return Success();
@@ -120,8 +121,9 @@ auto Heap::Deallocate(AllocationId allocation) -> ErrorOr<Success> {
   }
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "(-) memory-dealloc: #" << allocation.index_ << " `"
-                   << *values_[allocation.index_] << "`\n";
+    trace_stream_->log("(-)", "memory-dealloc",
+                       "#" + std::to_string(allocation.index_),
+                       *values_[allocation.index_]);
   }
 
   return Success();

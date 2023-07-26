@@ -27,9 +27,9 @@ auto StaticScope::Add(std::string_view name, ValueNodeView entity,
     }
   } else {
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "--- declared `" << name << "` as `" << entity
-                     << "` in `" << PrintAsID(*this) << "` ("
-                     << entity.base().source_loc() << ")\n";
+      trace_stream_->log("---", "declared", name, "as", entity, "in",
+                         PrintAsID(*this), "(", entity.base().source_loc(),
+                         ")\n");
     }
   }
   return Success();
@@ -57,9 +57,8 @@ void StaticScope::MarkDeclared(std::string_view name) {
   if (it->second.status == NameStatus::KnownButNotDeclared) {
     it->second.status = NameStatus::DeclaredButNotUsable;
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "--- marked `" << name
-                     << "` declared but not usable in `" << PrintAsID(*this)
-                     << "`\n";
+      trace_stream_->log("---", "marked", name, "declared but not usable in",
+                         PrintAsID(*this));
     }
   }
 }
@@ -69,8 +68,7 @@ void StaticScope::MarkUsable(std::string_view name) {
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
   it->second.status = NameStatus::Usable;
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- marked `" << name << "` usable in `"
-                   << PrintAsID(*this) << "`\n";
+    trace_stream_->log("---", "marked", name, "usable in", PrintAsID(*this));
   }
 }
 
@@ -130,9 +128,8 @@ auto StaticScope::TryResolveHere(std::string_view name,
 
   auto exit_scope_function = llvm::make_scope_exit([&]() {
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "--- resolved `" << name << "` as `"
-                     << it->second.entity << "` in `" << PrintAsID(*this)
-                     << "` (" << source_loc << ")\n";
+      trace_stream_->log("---", "resolved", name, "as", it->second.entity, "in",
+                         PrintAsID(*this), "(", source_loc, ")\n");
     }
   });
 

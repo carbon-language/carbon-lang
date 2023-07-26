@@ -504,8 +504,8 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<LocationAction>(act).expression();
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- step location " << exp << " ." << act.pos() << "."
-                   << " (" << exp.source_loc() << ") --->\n";
+    trace_stream_->log("---", "step-loc", "." + std::to_string(act.pos()) + ".",
+                       exp.source_loc(), exp);
   }
   switch (exp.kind()) {
     case ExpressionKind::IdentifierExpression: {
@@ -1337,8 +1337,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
   auto& act = cast<ExpressionAction>(todo_.CurrentAction());
   const Expression& exp = act.expression();
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- step exp " << exp << " ." << act.pos() << "."
-                   << " (" << exp.source_loc() << ") --->\n";
+    trace_stream_->log("---", "step-exp", "." + std::to_string(act.pos()) + ".",
+                       exp.source_loc(), exp);
   }
   switch (exp.kind()) {
     case ExpressionKind::IndexExpression: {
@@ -2104,8 +2104,9 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
   auto& act = cast<WitnessAction>(todo_.CurrentAction());
   const Witness* witness = act.witness();
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- step witness " << *witness << " ." << act.pos()
-                   << ". --->\n";
+    trace_stream_->log("---", "step-wtns",
+                       "." + std::to_string(act.pos()) + ".", act.source_loc(),
+                       *witness);
   }
   switch (witness->kind()) {
     case Value::Kind::BindingWitness: {
@@ -2170,10 +2171,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
   auto& act = cast<StatementAction>(todo_.CurrentAction());
   const Statement& stmt = act.statement();
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- step stmt ";
-    stmt.PrintDepth(1, trace_stream_->stream());
-    *trace_stream_ << " ." << act.pos() << ". "
-                   << "(" << stmt.source_loc() << ") --->\n";
+    trace_stream_->log("---", "step-stmt",
+                       "." + std::to_string(act.pos()) + ".", stmt.source_loc(),
+                       PrintAsID(stmt));
   }
   switch (stmt.kind()) {
     case StatementKind::Match: {
@@ -2498,10 +2498,9 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       const auto& ret_var = cast<ReturnVar>(stmt);
       const ValueNodeView& value_node = ret_var.value_node();
       if (trace_stream_->is_enabled()) {
-        *trace_stream_ << "--- step returned var "
-                       << cast<BindingPattern>(value_node.base()).name() << " ."
-                       << act.pos() << "."
-                       << " (" << stmt.source_loc() << ") --->\n";
+        trace_stream_->log(
+            "---", "step-ret-var", "." + std::to_string(act.pos()) + ".",
+            stmt.source_loc(), cast<BindingPattern>(value_node.base()).name());
       }
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
                               todo_.ValueOfNode(value_node, stmt.source_loc()));
@@ -2540,10 +2539,9 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Declaration& decl = cast<DeclarationAction>(act).declaration();
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- step decl ";
-    decl.PrintID(trace_stream_->stream());
-    *trace_stream_ << " ." << act.pos() << ". "
-                   << "(" << decl.source_loc() << ") --->\n";
+    trace_stream_->log("---", "step decl ",
+                       "." + std::to_string(act.pos()) + ".", decl.source_loc(),
+                       PrintAsID(decl));
   }
   switch (decl.kind()) {
     case DeclarationKind::VariableDeclaration: {

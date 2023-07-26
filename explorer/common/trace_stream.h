@@ -100,6 +100,18 @@ class TraceStream {
 
   auto current_phase() const -> ProgramPhase { return current_phase_; }
 
+  template <typename U, typename... T>
+  auto log(U&& message, T&&... messages) const -> llvm::raw_ostream& {
+    CARBON_CHECK(is_enabled());
+    if constexpr (sizeof...(messages) == 0) {
+      **stream_ << message;
+      return **stream_ << "\n";
+    } else {
+      **stream_ << message << "\t\t";
+      return log(std::forward<T>(messages)...);
+    }
+  }
+
   // Outputs a trace message. Requires is_enabled.
   template <typename T>
   auto operator<<(T&& message) const -> llvm::raw_ostream& {
