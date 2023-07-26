@@ -400,7 +400,8 @@ class NominalClassValue : public Value {
   // NominalClassValue*, that must be common to all NominalClassValue of the
   // same object. The pointee is updated, when `NominalClassValue`s are
   // constructed, to point to the `NominalClassValue` corresponding to the
-  // child-most class type.
+  // child-most class type. Sets *class_value_ptr = this, which corresponds to
+  // the static type of the value matching its dynamic type.
   NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
                     std::optional<Nonnull<const NominalClassValue*>> base,
                     Nonnull<const NominalClassValue** const> class_value_ptr);
