@@ -9,6 +9,8 @@ namespace Carbon {
 CARBON_DIAGNOSTIC(
     OperatorRequiresParentheses, Error,
     "Parentheses are required to disambiguate operator precedence.");
+CARBON_DIAGNOSTIC(UnaryOperatorRequiresParentheses, Error,
+                  "Parentheses are required around this unary operator.");
 
 auto ParserHandleExpression(ParserContext& context) -> void {
   auto state = context.PopState();
@@ -21,7 +23,8 @@ auto ParserHandleExpression(ParserContext& context) -> void {
         OperatorPriority::RightFirst) {
       // The precedence rules don't permit this prefix operator in this
       // context. Diagnose this, but carry on and parse it anyway.
-      context.emitter().Emit(*context.position(), OperatorRequiresParentheses);
+      context.emitter().Emit(*context.position(),
+                             UnaryOperatorRequiresParentheses);
     } else {
       // Check that this operator follows the proper whitespace rules.
       context.DiagnoseOperatorFixity(ParserContext::OperatorFixity::Prefix);
@@ -120,6 +123,12 @@ auto ParserHandleExpressionInPostfixLoop(ParserContext& context) -> void {
     case TokenKind::Period: {
       context.PushState(state);
       state.state = ParserState::PeriodAsExpression;
+      context.PushState(state);
+      break;
+    }
+    case TokenKind::MinusGreater: {
+      context.PushState(state);
+      state.state = ParserState::ArrowExpression;
       context.PushState(state);
       break;
     }
