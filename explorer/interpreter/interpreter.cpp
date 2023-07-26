@@ -1490,6 +1490,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             std::optional<Address> lhs_address;
             if (access.is_type_access()) {
               aggregate = act.results().back();
+              me_value = aggregate;
             } else if (const auto* location =
                            dyn_cast<LocationValue>(act.results()[0])) {
               lhs_address = location->address();
