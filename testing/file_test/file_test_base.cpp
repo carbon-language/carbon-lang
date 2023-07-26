@@ -7,6 +7,8 @@
 #include <filesystem>
 #include <fstream>
 
+#include "absl/flags/flag.h"
+#include "absl/flags/parse.h"
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
@@ -14,12 +16,13 @@
 #include "llvm/Support/InitLLVM.h"
 #include "testing/util/test_raw_ostream.h"
 
+ABSL_FLAG(std::vector<std::string>, file_tests, {},
+          "A comma-separated list of tests for file_test infrastructure.");
+
 namespace Carbon::Testing {
 
 // The length of the base directory.
 static int base_dir_len = 0;
-// The name of the `.subset` target.
-static std::string* subset_target = nullptr;
 
 using ::testing::Eq;
 using ::testing::Matcher;
@@ -68,8 +71,11 @@ auto FileTestBase::TestBody() -> void {
   CARBON_CHECK(src_dir);
   std::string test_file = path().lexically_relative(
       std::filesystem::path(src_dir).append("carbon"));
-  llvm::errs() << "\nTo test this file alone, run:\n  bazel test "
-               << *subset_target << " --test_arg=" << test_file << "\n\n";
+  const char* target = getenv("TEST_TARGET");
+  CARBON_CHECK(target);
+  // This advice overrides the --file_tests flag provided by the file_test rule.
+  llvm::errs() << "\nTo test this file alone, run:\n  bazel test " << target
+               << " --test_arg=--file_tests=" << test_file << "\n\n";
 
   // Store the file so that test_files can use references to content.
   std::string test_content = ReadFile(path());
@@ -343,6 +349,7 @@ auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
 }  // namespace Carbon::Testing
 
 auto main(int argc, char** argv) -> int {
+  absl::ParseCommandLine(argc, argv);
   testing::InitGoogleTest(&argc, argv);
   llvm::setBugReportMsg(
       "Please report issues to "
@@ -350,23 +357,14 @@ auto main(int argc, char** argv) -> int {
       "crash backtrace.\n");
   llvm::InitLLVM init_llvm(argc, argv);
 
-  if (argc < 2) {
-    llvm::errs() << "At least one test file must be provided.\n";
+  if (argc > 1) {
+    llvm::errs() << "Unexpected arguments starting at: " << argv[1] << "\n";
     return EXIT_FAILURE;
   }
 
+  // Configure the base directory for test names.
   const char* target = getenv("TEST_TARGET");
   CARBON_CHECK(target != nullptr);
-
-  // Configure the name of the subset target.
-  std::string subset_target_storage = target;
-  static constexpr char SubsetSuffix[] = ".subset";
-  if (!llvm::StringRef(subset_target_storage).ends_with(SubsetSuffix)) {
-    subset_target_storage += SubsetSuffix;
-  }
-  Carbon::Testing::subset_target = &subset_target_storage;
-
-  // Configure the base directory for test names.
   llvm::StringRef target_dir = target;
   std::error_code ec;
   std::filesystem::path working_dir = std::filesystem::current_path(ec);
@@ -379,9 +377,9 @@ auto main(int argc, char** argv) -> int {
 
   // Register tests based on their absolute path.
   llvm::SmallVector<std::filesystem::path> paths;
-  for (int i = 1; i < argc; ++i) {
-    auto path = std::filesystem::absolute(argv[i], ec);
-    CARBON_CHECK(!ec) << argv[i] << ": " << ec.message();
+  for (const auto& file_test : absl::GetFlag(FLAGS_file_tests)) {
+    auto path = std::filesystem::absolute(file_test, ec);
+    CARBON_CHECK(!ec) << file_test << ": " << ec.message();
     CARBON_CHECK(llvm::StringRef(path.string()).starts_with(base_dir))
         << "\n  " << path << "\n  should start with\n  " << base_dir;
     paths.push_back(path);
