@@ -2526,12 +2526,16 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
         // -> { {v :: C', E', F'} :: S, H}
         const CallableDeclaration& function = cast<Return>(stmt).function();
+        CARBON_ASSIGN_OR_RETURN(
+            Nonnull<const Value*> return_value,
+            Convert(act.results()[0], &function.return_term().static_type(),
+                    stmt.source_loc()));
         // Write to initialized storage location, if any.
         if (const auto location = act.location_received()) {
-          CARBON_RETURN_IF_ERROR(heap_.Write(
-              Address(*location), act.results()[0], stmt.source_loc()));
+          CARBON_RETURN_IF_ERROR(
+              heap_.Write(Address(*location), return_value, stmt.source_loc()));
         }
-        return todo_.UnwindPast(*function.body(), act.results()[0]);
+        return todo_.UnwindPast(*function.body(), return_value);
       }
   }
 }
