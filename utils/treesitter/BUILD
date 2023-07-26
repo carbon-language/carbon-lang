@@ -27,3 +27,21 @@ cc_test(
         ":treesitter",
     ],
 )
+
+filegroup(
+    name = "fail_testdata",
+    srcs = glob(["testdata/**/fail_*.carbon"]),
+)
+
+cc_test(
+    name = "fail_tests",
+    srcs = ["test_runner.cpp"],
+    args = ["$(locations :fail_testdata)"],
+    data = [":fail_testdata"],
+    env = {
+        "FAIL_TESTS": "1",
+    },
+    deps = [
+        ":treesitter",
+    ],
+)
