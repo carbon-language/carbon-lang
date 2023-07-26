@@ -125,7 +125,7 @@ class Arena {
   std::vector<std::unique_ptr<ArenaEntry>> arena_;
   int64_t allocated_ = 0;
 
-  // Hash functor implemented in terms of hash_value (see llvm/ADT/Hashing.h)
+  // Hash functor implemented in terms of hash_value (see llvm/ADT/Hashing.h).
   struct LlvmHasher {
     template <typename T>
     auto operator()(const T& t) const -> size_t {
@@ -140,6 +140,7 @@ class Arena {
   // Inspired by llvm::Any::TypeId.
   template <typename T>
   struct TypeId {
+    // This is only used for an address to compare; the value is unimportant.
     static char id;
   };
 
@@ -156,7 +157,9 @@ class Arena {
   std::map<char*, std::any> canonical_tables_;
 };
 
-// Implementation details only below here -------------------------------------
+// ---------------------------------------
+// Implementation details only below here.
+// ---------------------------------------
 
 template <>
 struct ArgKey<std::nullopt_t> {
