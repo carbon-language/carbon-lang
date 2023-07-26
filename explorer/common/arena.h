@@ -136,9 +136,7 @@ class Arena {
 
   // Allocates an object in the arena. Unlike New, this will always allocate
   // and construct a new object.
-  template <
-      typename T, typename... Args,
-      typename std::enable_if_t<std::is_constructible_v<T, Args...>>* = nullptr>
+  template <typename T, typename... Args>
   auto UniqueNew(Args&&... args) -> Nonnull<T*>;
 
   // Returns a pointer to the canonical instance of T constructed from
@@ -219,8 +217,7 @@ void Arena::New(WriteAddressTo<U> addr, Args&&... args) {
   allocated_ += sizeof(T);
 }
 
-template <typename T, typename... Args,
-          typename std::enable_if_t<std::is_constructible_v<T, Args...>>*>
+template <typename T, typename... Args>
 auto Arena::UniqueNew(Args&&... args) -> Nonnull<T*> {
   auto smart_ptr =
       std::make_unique<ArenaEntryTyped<T>>(std::forward<Args>(args)...);
