@@ -129,7 +129,6 @@ auto LoweringHandleCall(LoweringFunctionContext& context,
   } else {
     value = context.builder().CreateCall(function, args, function->getName());
   }
-
   context.SetLocal(node_id, value);
 }
 
