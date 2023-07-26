@@ -140,6 +140,7 @@ cc_library(
         "//explorer/ast",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
+        "//explorer/common:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )

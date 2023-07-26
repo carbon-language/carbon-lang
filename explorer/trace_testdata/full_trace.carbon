@@ -76,6 +76,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ** finished resolving decl `fn Main` (full_trace.carbon:18)
 // CHECK:STDOUT: --- resolved `Main` as `fn Main` in `package` (<Main()>:0)
 // CHECK:STDOUT: ********** resolving control flow **********
+// CHECK:STDOUT: --- flow-resolved return statement `return (n + 1);` in `fn N.Foo` (full_trace.carbon:12)
+// CHECK:STDOUT: --- flow-resolved return statement `return x;` in `fn Main` (full_trace.carbon:17)
 // CHECK:STDOUT: ********** type checking **********
 // CHECK:STDOUT: ** declaring interface TestInterface
 // CHECK:STDOUT: ** finished declaring interface TestInterface
