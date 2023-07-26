@@ -51,6 +51,10 @@
 // CHECK:STDOUT: ]
 
 fn F() -> i32 {
+  // TODO: Indicate the locations of both operators involved in the precedence
+  // error, so that it's clear what ambiguity we're referring to.
+  // TODO: Improve error recovery so that we recover as `3 * (i32*) * 4`, not
+  // as `(3 * i32)* * 4`, to suppress the second error here.
   // CHECK:STDERR: fail_pointer_type_in_expression.carbon:[[@LINE+6]]:17: Parentheses are required to disambiguate operator precedence.
   // CHECK:STDERR:   return 3 * i32* * 4;
   // CHECK:STDERR:                 ^

@@ -9,8 +9,9 @@ namespace Carbon {
 // Handles PeriodAs variants and ArrowExpression.
 // TODO: This currently only supports identifiers on the rhs, but will in the
 // future need to handle things like `object.(Interface.member)` for qualifiers.
-auto ParserHandlePeriodOrArrow(ParserContext& context, ParseNodeKind node_kind,
-                               bool is_arrow) -> void {
+static auto ParserHandlePeriodOrArrow(ParserContext& context,
+                                      ParseNodeKind node_kind, bool is_arrow)
+    -> void {
   auto state = context.PopState();
 
   // `.` identifier
@@ -43,22 +44,22 @@ auto ParserHandlePeriodOrArrow(ParserContext& context, ParseNodeKind node_kind,
 
 auto ParserHandlePeriodAsDeclaration(ParserContext& context) -> void {
   ParserHandlePeriodOrArrow(context, ParseNodeKind::QualifiedDeclaration,
-                            false);
+                            /*is_arrow=*/false);
 }
 
 auto ParserHandlePeriodAsExpression(ParserContext& context) -> void {
   ParserHandlePeriodOrArrow(context, ParseNodeKind::MemberAccessExpression,
-                            false);
+                            /*is_arrow=*/false);
 }
 
 auto ParserHandlePeriodAsStruct(ParserContext& context) -> void {
   ParserHandlePeriodOrArrow(context, ParseNodeKind::StructFieldDesignator,
-                            false);
+                            /*is_arrow=*/false);
 }
 
 auto ParserHandleArrowExpression(ParserContext& context) -> void {
-  ParserHandlePeriodOrArrow(context,
-                            ParseNodeKind::PointerMemberAccessExpression, true);
+  ParserHandlePeriodOrArrow(
+      context, ParseNodeKind::PointerMemberAccessExpression, /*is_arrow=*/true);
 }
 
 }  // namespace Carbon
