@@ -166,6 +166,18 @@ fn Main() -> i32 {
 // CHECK:STDOUT: performing argument deduction for bindings:{{ }}
 // CHECK:STDOUT: deduction succeeded with results: {}
 // CHECK:STDOUT: ********** resolving unformed variables **********
+// CHECK:STDOUT: *** resolving-unformed in decl `interface TestInterface` (full_trace.carbon:7)
+// CHECK:STDOUT: *** resolving-unformed in decl `namespace N` (full_trace.carbon:9)
+// CHECK:STDOUT: *** resolving-unformed in decl `fn N.Foo` (full_trace.carbon:13)
+// CHECK:STDOUT: *** resolving-unformed in stmt `{return (n + 1);}` (full_trace.carbon:13)
+// CHECK:STDOUT: *** resolving-unformed in stmt `return (n + 1);` (full_trace.carbon:12)
+// CHECK:STDOUT: --- check `n` (full_trace.carbon:12)
+// CHECK:STDOUT: *** resolving-unformed in decl `fn Main` (full_trace.carbon:18)
+// CHECK:STDOUT: *** resolving-unformed in stmt `{var x: i32 = N.Foo(0);return x;}` (full_trace.carbon:18)
+// CHECK:STDOUT: *** resolving-unformed in stmt `var x: i32 = N.Foo(0);` (full_trace.carbon:16)
+// CHECK:STDOUT: --- add init `x` (full_trace.carbon:16)
+// CHECK:STDOUT: *** resolving-unformed in stmt `return x;` (full_trace.carbon:17)
+// CHECK:STDOUT: --- check `x` (full_trace.carbon:17)
 // CHECK:STDOUT: ********** printing declarations **********
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
