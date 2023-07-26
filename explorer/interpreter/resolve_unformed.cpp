@@ -109,11 +109,6 @@ static auto ResolveUnformedImpl(Nonnull<TraceStream*> trace_stream,
                                 FlowFacts& flow_facts,
                                 FlowFacts::ActionType action)
     -> ErrorOr<Success> {
-  if (trace_stream->is_enabled()) {
-    *trace_stream << "*** resolving-unformed in expr `" << *expression << "` ("
-                  << expression->source_loc() << ")\n";
-  }
-
   switch (expression->kind()) {
     case ExpressionKind::IdentifierExpression: {
       const auto& identifier = cast<IdentifierExpression>(*expression);
@@ -228,10 +223,6 @@ static auto ResolveUnformedImpl(Nonnull<TraceStream*> trace_stream,
                                 FlowFacts& flow_facts,
                                 FlowFacts::ActionType action)
     -> ErrorOr<Success> {
-  if (trace_stream->is_enabled()) {
-    *trace_stream << "*** resolving-unformed in pattern `" << *pattern << "` ("
-                  << pattern->source_loc() << ")\n";
-  }
   switch (pattern->kind()) {
     case PatternKind::BindingPattern: {
       const auto& binding_pattern = cast<BindingPattern>(*pattern);
