@@ -6,13 +6,13 @@
 // CHECK:STDOUT: ; ModuleID = 'params_one_comma.carbon'
 // CHECK:STDOUT: source_filename = "params_one_comma.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @Foo(i32 %a) {
+// CHECK:STDOUT: define void @Foo(i32 %a) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @Main() {
-// CHECK:STDOUT:   %Foo = call i1 @Foo(i32 1)
-// CHECK:STDOUT:   %Foo1 = call i1 @Foo(i32 1)
+// CHECK:STDOUT: define void @Main() {
+// CHECK:STDOUT:   call void @Foo(i32 1)
+// CHECK:STDOUT:   call void @Foo(i32 1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

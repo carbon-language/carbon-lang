@@ -6,7 +6,7 @@
 // CHECK:STDOUT: ; ModuleID = 'params_two.carbon'
 // CHECK:STDOUT: source_filename = "params_two.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @Foo(i32 %a, i32 %b) {
+// CHECK:STDOUT: define void @Foo(i32 %a, i32 %b) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

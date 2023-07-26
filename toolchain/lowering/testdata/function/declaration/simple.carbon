@@ -6,10 +6,10 @@
 // CHECK:STDOUT: ; ModuleID = 'simple.carbon'
 // CHECK:STDOUT: source_filename = "simple.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i1 @F(i32)
+// CHECK:STDOUT: declare void @F(i32)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @G(i32 %n) {
-// CHECK:STDOUT:   %F = call i1 @F(i32 %n)
+// CHECK:STDOUT: define void @G(i32 %n) {
+// CHECK:STDOUT:   call void @F(i32 %n)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

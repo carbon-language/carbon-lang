@@ -123,8 +123,13 @@ auto LoweringHandleCall(LoweringFunctionContext& context,
   for (auto ref_id : context.semantics_ir().GetNodeBlock(refs_id)) {
     args.push_back(context.GetLocalLoaded(ref_id));
   }
-  auto* value =
-      context.builder().CreateCall(function, args, function->getName());
+  llvm::CallInst* value;
+  if (function->getReturnType()->isVoidTy()) {
+    value = context.builder().CreateCall(function, args);
+  } else {
+    value = context.builder().CreateCall(function, args, function->getName());
+  }
+
   context.SetLocal(node_id, value);
 }
 

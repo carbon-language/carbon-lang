@@ -12,7 +12,7 @@
 // CHECK:STDOUT:   ret %TupleLiteralType %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @Main() {
+// CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT:   %TupleLiteralValue = alloca %TupleLiteralType, align 8
 // CHECK:STDOUT:   %var = alloca %TupleLiteralType, align 8
 // CHECK:STDOUT:   %TupleLiteralValue1 = alloca %TupleLiteralType, align 8
@@ -21,6 +21,7 @@
 // CHECK:STDOUT:   store %TupleLiteralType %Echo, ptr %var, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
+
 
 fn Echo(a: ()) -> () {
   return a;

@@ -270,10 +270,6 @@ class SemanticsIR {
     return types_;
   }
 
-  auto empty_tuple_type_id() const -> SemanticsTypeId {
-    return empty_tuple_type_id_;
-  }
-
   // The node blocks, for direct mutation.
   auto node_blocks() -> llvm::SmallVector<llvm::SmallVector<SemanticsNodeId>>& {
     return node_blocks_;
@@ -324,10 +320,6 @@ class SemanticsIR {
 
   // Storage for blocks within the IR. These reference entries in types_.
   llvm::SmallVector<llvm::SmallVector<SemanticsTypeId>> type_blocks_;
-
-  // The type of the empty tuple. This is special-cased due to its use in
-  // implicit function returns.
-  SemanticsTypeId empty_tuple_type_id_ = SemanticsTypeId::TypeType;
 
   // All nodes. The first entries will always be cross-references to builtins,
   // at indices matching SemanticsBuiltinKind ordering.

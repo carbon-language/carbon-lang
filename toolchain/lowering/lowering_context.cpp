@@ -7,6 +7,7 @@
 #include "common/vlog.h"
 #include "toolchain/lowering/lowering_function_context.h"
 #include "toolchain/semantics/semantics_ir.h"
+#include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
@@ -64,9 +65,7 @@ auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
     args[i] = GetType(semantics_ir().GetNode(param_refs[i]).type_id());
   }
 
-  llvm::Type* return_type = GetType(function.return_type_id.is_valid()
-                                        ? function.return_type_id
-                                        : semantics_ir().empty_tuple_type_id());
+  llvm::Type* return_type = GetType(function.return_type_id);
   llvm::FunctionType* function_type =
       llvm::FunctionType::get(return_type, args, /*isVarArg=*/false);
   auto* llvm_function = llvm::Function::Create(

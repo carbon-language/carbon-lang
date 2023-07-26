@@ -6,12 +6,12 @@
 // CHECK:STDOUT: ; ModuleID = 'nested.carbon'
 // CHECK:STDOUT: source_filename = "nested.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @Wiz() {
+// CHECK:STDOUT: define void @Wiz() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @Baz() {
-// CHECK:STDOUT:   %Wiz = call i1 @Wiz()
+// CHECK:STDOUT: define void @Baz() {
+// CHECK:STDOUT:   call void @Wiz()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

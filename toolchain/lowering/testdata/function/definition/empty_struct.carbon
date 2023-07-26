@@ -8,7 +8,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: %StructLiteralType = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @Echo(%StructLiteralType %a) {
+// CHECK:STDOUT: define void @Echo(%StructLiteralType %a) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

@@ -6,7 +6,7 @@
 // CHECK:STDOUT: ; ModuleID = 'no_value.carbon'
 // CHECK:STDOUT: source_filename = "no_value.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @Main() {
+// CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

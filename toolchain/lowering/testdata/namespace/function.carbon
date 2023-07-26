@@ -6,16 +6,16 @@
 // CHECK:STDOUT: ; ModuleID = 'function.carbon'
 // CHECK:STDOUT: source_filename = "function.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @Baz() {
+// CHECK:STDOUT: define void @Baz() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @Baz.1() {
+// CHECK:STDOUT: define void @Baz.1() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @Bar() {
-// CHECK:STDOUT:   %Baz.1 = call i1 @Baz.1()
+// CHECK:STDOUT: define void @Bar() {
+// CHECK:STDOUT:   call void @Baz.1()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

@@ -14,7 +14,7 @@
 // CHECK:STDOUT:   ret %StructLiteralType %1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @Main() {
+// CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT:   %StructLiteralValue = alloca %StructLiteralType, align 8
 // CHECK:STDOUT:   %var = alloca %StructLiteralType, align 8
 // CHECK:STDOUT:   %StructLiteralValue1 = alloca %StructLiteralType, align 8
