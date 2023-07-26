@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/lowering/lowering_function_context.h"
+#include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
 
@@ -22,6 +23,16 @@ auto LoweringHandleAssign(LoweringFunctionContext& context,
                           SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
   auto [storage_id, value_id] = node.GetAsAssign();
+  auto value_node = context.semantics_ir().GetNode(value_id);
+  if (value_node.kind() == SemanticsNodeKind::Call) {
+    auto [refs_id, function_id] = value_node.GetAsCall();
+    auto* function = context.GetFunction(function_id);
+    if (function->getReturnType()->isVoidTy()) {
+      llvm::Value* v = llvm::ConstantInt::get(context.builder().getInt1Ty(), 0);
+      context.builder().CreateStore(v, context.GetLocal(storage_id));
+      return;
+    }
+  }
   context.builder().CreateStore(context.GetLocalLoaded(value_id),
                                 context.GetLocal(storage_id));
 }
