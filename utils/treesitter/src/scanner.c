@@ -49,18 +49,7 @@ static void advance(struct TSLexer* lexer) {
   lexer->advance(lexer, /* skip= */ false);
 }
 
-static bool eat(struct TSLexer* lexer, const char* string) {
-  while (*string != '\0') {
-    if (lexer->lookahead != *string) {
-      return false;
-    }
-    advance(lexer);
-    string++;
-  }
-  return true;
-}
-
-static bool eat_count(struct TSLexer* lexer, char ch, int count) {
+static int eat_count(struct TSLexer* lexer, char ch, int count) {
   int matched = 0;
   while (matched != count) {
     if (lexer->lookahead != ch) {
@@ -69,7 +58,7 @@ static bool eat_count(struct TSLexer* lexer, char ch, int count) {
     advance(lexer);
     matched++;
   }
-  return matched == count;
+  return matched;
 }
 
 // https://tree-sitter.github.io/tree-sitter/creating-parsers#external-scanners
@@ -118,24 +107,27 @@ bool tree_sitter_carbon_external_scanner_scan(
       hash_count++;
     }
     if (lexer->lookahead == '\'') {
-      if (!eat(lexer, "'''")) {
+      if (eat_count(lexer, '\'', 3) != 3) {
         return false;
       }
       while (!lexer->eof(lexer)) {
         // ''' must be on its own line.
         // so look for \n *'''#{hash_count}
+        // we can ignore escapes
         if (lexer->lookahead == '\n') {
           advance(lexer);
           while (lexer->lookahead == ' ') {
             advance(lexer);
           }
-          if (!eat(lexer, "'''")) {
+          if (eat_count(lexer, '\'', 3) != 3) {
+            // treat less than 3 `'`s as normal characters
             continue;
           }
-          if (eat_count(lexer, '#', hash_count)) {
+          if (eat_count(lexer, '#', hash_count) == hash_count) {
             // end of string
             return true;
           } else {
+            // treat as normal characters
             continue;
           }
         } else {
@@ -149,15 +141,18 @@ bool tree_sitter_carbon_external_scanner_scan(
         if (lexer->lookahead == '\\') {
           advance(lexer);
           if (eat_count(lexer, '#', hash_count)) {
-            // skip the next character
-            advance(lexer);
+            // treat next character as not special
+            // but \n is not allowed in simple string
+            if (lexer->lookahead != '\n') {
+              advance(lexer);
+            }
           } else {
             // not an escape
             continue;
           }
         } else if (lexer->lookahead == '"') {
           advance(lexer);
-          if (eat_count(lexer, '#', hash_count)) {
+          if (eat_count(lexer, '#', hash_count) == hash_count) {
             // end of string
             return true;
           } else {
