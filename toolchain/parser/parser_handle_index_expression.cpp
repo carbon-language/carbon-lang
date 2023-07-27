@@ -13,8 +13,9 @@ auto ParserHandleIndexExpression(ParserContext& context) -> void {
   context.AddNode(ParseNodeKind::IndexExpressionStart, context.Consume(),
                   state.subtree_start, state.has_error);
   if (context.PositionIs(TokenKind::CloseSquareBracket)) {
-    CARBON_DIAGNOSTIC(InvalidIndexExpression, Error, "Expected integer.");
-    context.emitter().Emit(*context.position(), InvalidIndexExpression);
+    CARBON_DIAGNOSTIC(ExpectedExpressionAfter, Error,
+                      "Expected integer literal.");
+    context.emitter().Emit(*context.position(), ExpectedExpressionAfter);
     context.ReturnErrorOnState();
   } else {
     context.PushState(ParserState::Expression);
