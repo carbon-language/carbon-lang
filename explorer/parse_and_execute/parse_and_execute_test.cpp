@@ -10,10 +10,16 @@
 namespace Carbon::Testing {
 namespace {
 
-using ::testing::Eq;
 using ::testing::MatchesRegex;
 
 TEST(ParseAndExecuteTest, Recursion) {
+  llvm::vfs::InMemoryFileSystem fs;
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> prelude =
+      llvm::MemoryBuffer::getFile("explorer/data/prelude.carbon");
+  ASSERT_FALSE(prelude.getError()) << prelude.getError().message();
+  ASSERT_TRUE(fs.addFile("prelude.carbon", /*ModificationTime=*/0,
+                         std::move(*prelude)));
+
   std::string source = R"(
     package Test api;
     fn Main() -> i32 {
@@ -32,9 +38,12 @@ TEST(ParseAndExecuteTest, Recursion) {
         ;
     }
   )";
+  ASSERT_TRUE(fs.addFile("test.carbon", /*ModificationTime=*/0,
+                         llvm::MemoryBuffer::getMemBuffer(source)));
+
   TraceStream trace_stream;
   auto err =
-      ParseAndExecute("explorer/data/prelude.carbon", "test.carbon", source,
+      ParseAndExecute(fs, "prelude.carbon", "test.carbon",
                       /*parser_debug=*/false, &trace_stream, &llvm::nulls());
   ASSERT_FALSE(err.ok());
   // Don't expect any particular source location for the error.

@@ -18,6 +18,7 @@ fn Main() -> i32 {
 }
 
 // Place checks after code so that line numbers are stable, reducing merge conflicts.
+// ARGS: --trace_file=- --trace_phase=all %s
 // AUTOUPDATE
 // CHECK:STDOUT: ********** source program **********
 // CHECK:STDOUT: interface TestInterface {

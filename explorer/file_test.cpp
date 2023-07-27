@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "absl/flags/flag.h"
-#include "explorer/parse_and_execute/parse_and_execute.h"
+#include "common/check.h"
+#include "explorer/main.h"
 #include "testing/file_test/file_test_base.h"
 #include "testing/util/test_raw_ostream.h"
 
@@ -24,61 +25,65 @@ class ParseAndExecuteTestFile : public FileTestBase {
                     const llvm::SmallVector<TestFile>& test_files,
                     llvm::raw_pwrite_stream& stdout,
                     llvm::raw_pwrite_stream& stderr) -> bool override {
-    CARBON_CHECK(test_args.empty())
-        << "ARGS are not currently used in explorer's file_test.";
+    // Create the files in-memory.
+    llvm::vfs::InMemoryFileSystem fs(new llvm::vfs::InMemoryFileSystem());
+    for (const auto& test_file : test_files) {
+      if (!fs.addFile(test_file.filename, /*ModificationTime=*/0,
+                      llvm::MemoryBuffer::getMemBuffer(test_file.content))) {
+        ADD_FAILURE() << "File is repeated: " << test_file.filename;
+        return false;
+      }
+    }
 
-    if (test_files.size() != 1) {
-      ADD_FAILURE() << "Only 1 file is supported: " << test_files.size()
-                    << " provided";
+    // Add the prelude.
+    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> prelude =
+        llvm::MemoryBuffer::getFile("explorer/data/prelude.carbon");
+    if (prelude.getError()) {
+      ADD_FAILURE() << prelude.getError().message();
+      return false;
+    }
+    // TODO: This path is long with a prefix / because of the path expectations
+    // in tests. Change those to allow a shorter path (e.g., `prelude.carbon`)
+    // here.
+    static constexpr llvm::StringLiteral PreludePath =
+        "/explorer/data/prelude.carbon";
+    if (!fs.addFile(PreludePath, /*ModificationTime=*/0, std::move(*prelude))) {
+      ADD_FAILURE() << "Duplicate prelude.carbon";
       return false;
     }
 
+    llvm::SmallVector<const char*> args = {"explorer"};
+    for (auto arg : test_args) {
+      args.push_back(arg.data());
+    }
+    TestRawOstream trace_stream;
+
     // Trace output is only checked for a few tests.
     bool check_trace_output =
-        path().string().find("/trace_testdata/") != std::string::npos;
+        path().string().find("trace_testdata/") != std::string::npos;
 
-    // Capture trace streaming, but only when in debug mode.
-    TraceStream trace_stream;
-    TestRawOstream trace_stream_ostream;
-    if (check_trace_output || absl::GetFlag(FLAGS_trace)) {
-      trace_stream.set_stream(check_trace_output ? &stdout
-                                                 : &trace_stream_ostream);
-      trace_stream.set_allowed_phases({ProgramPhase::All});
-      trace_stream.set_allowed_file_kinds({FileKind::Main});
-    }
-
-    // Set the location of the prelude.
-    char* test_srcdir = getenv("TEST_SRCDIR");
-    CARBON_CHECK(test_srcdir != nullptr);
-    std::string prelude_path(test_srcdir);
-    prelude_path += "/carbon/explorer/data/prelude.carbon";
-
-    // Run the parse. Parser debug output is always off because it's difficult
-    // to redirect.
-    auto result = ParseAndExecute(
-        prelude_path, test_files[0].filename, test_files[0].content,
-        /*parser_debug=*/false, &trace_stream, &stdout);
-    // This mirrors printing currently done by main.cpp.
-    if (result.ok()) {
-      stdout << "result: " << *result << "\n";
-    } else {
-      stderr << result.error() << "\n";
-    }
+    int exit_code = ExplorerMain(
+        args.size(), args.data(), /*install_path=*/"", PreludePath, stdout,
+        stderr, check_trace_output ? stdout : trace_stream, fs);
 
     // Skip trace test check as they use stdout stream instead of
     // trace_stream_ostream
     if (absl::GetFlag(FLAGS_trace)) {
-      CARBON_CHECK(!check_trace_output)
-          << "trace tests should only be run in the default mode.";
-      EXPECT_FALSE(trace_stream_ostream.TakeStr().empty())
+      EXPECT_FALSE(trace_stream.TakeStr().empty())
           << "Tracing should always do something";
     }
 
-    return result.ok();
+    return exit_code == EXIT_SUCCESS;
   }
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
-    return {};
+    llvm::SmallVector<std::string> args;
+    if (absl::GetFlag(FLAGS_trace)) {
+      args.push_back("--trace_file=-");
+      args.push_back("--trace_phase=all");
+    }
+    args.push_back("%s");
+    return args;
   }
 };
 

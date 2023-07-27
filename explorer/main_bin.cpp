@@ -13,5 +13,6 @@ auto main(int argc, char** argv) -> int {
       argc, argv, static_cast<void*>(&static_for_main_addr),
       // This assumes execution from `bazel-bin/explorer`, either directly or
       // with `bazel run`.
-      "explorer.runfiles/carbon/explorer/data/prelude.carbon");
+      "explorer.runfiles/carbon/explorer/data/prelude.carbon", llvm::outs(),
+      llvm::errs());
 }
