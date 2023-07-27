@@ -51,7 +51,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** resolving control flow **********\n";
   }
-  CARBON_RETURN_IF_ERROR(ResolveControlFlow(ast));
+  CARBON_RETURN_IF_ERROR(ResolveControlFlow(trace_stream, ast));
 
   set_prog_phase.update_phase(ProgramPhase::TypeChecking);
   if (trace_stream->is_enabled()) {
@@ -64,7 +64,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** resolving unformed variables **********\n";
   }
-  CARBON_RETURN_IF_ERROR(ResolveUnformed(ast));
+  CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, ast));
 
   set_prog_phase.update_phase(ProgramPhase::Declarations);
   if (trace_stream->is_enabled()) {

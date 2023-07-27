@@ -6,10 +6,6 @@
 
 namespace Carbon {
 
-CARBON_DIAGNOSTIC(
-    OperatorRequiresParentheses, Error,
-    "Parentheses are required to disambiguate operator precedence.");
-
 auto ParserHandleExpression(ParserContext& context) -> void {
   auto state = context.PopState();
 
@@ -21,7 +17,13 @@ auto ParserHandleExpression(ParserContext& context) -> void {
         OperatorPriority::RightFirst) {
       // The precedence rules don't permit this prefix operator in this
       // context. Diagnose this, but carry on and parse it anyway.
-      context.emitter().Emit(*context.position(), OperatorRequiresParentheses);
+      CARBON_DIAGNOSTIC(
+          UnaryOperatorRequiresParentheses, Error,
+          "Parentheses are required around this unary `{0}` operator.",
+          TokenKind);
+      context.emitter().Emit(*context.position(),
+                             UnaryOperatorRequiresParentheses,
+                             context.PositionKind());
     } else {
       // Check that this operator follows the proper whitespace rules.
       context.DiagnoseOperatorFixity(ParserContext::OperatorFixity::Prefix);
@@ -123,6 +125,12 @@ auto ParserHandleExpressionInPostfixLoop(ParserContext& context) -> void {
       context.PushState(state);
       break;
     }
+    case TokenKind::MinusGreater: {
+      context.PushState(state);
+      state.state = ParserState::ArrowExpression;
+      context.PushState(state);
+      break;
+    }
     case TokenKind::OpenParen: {
       context.PushState(state);
       state.state = ParserState::CallExpression;
@@ -171,6 +179,9 @@ auto ParserHandleExpressionLoop(ParserContext& context) -> void {
     // Either the LHS operator and this operator are ambiguous, or the
     // LHS operator is a unary operator that can't be nested within
     // this operator. Either way, parentheses are required.
+    CARBON_DIAGNOSTIC(
+        OperatorRequiresParentheses, Error,
+        "Parentheses are required to disambiguate operator precedence.");
     context.emitter().Emit(*context.position(), OperatorRequiresParentheses);
     state.has_error = true;
   } else {

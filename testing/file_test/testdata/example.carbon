@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// CHECK:STDOUT: 2 args: `default_args`, `example.carbon`
 // CHECK:STDOUT: something
 // CHECK:STDOUT:
 // CHECK:STDOUT: [[@LINE+1]]: Line delta

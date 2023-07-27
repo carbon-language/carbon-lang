@@ -256,6 +256,13 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(QualifiedDeclaration, 2)
 // QualifiedExpression
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(MemberAccessExpression, 2)
 
+// A pointer member access expression, such as `a->b` or
+// `GetObject()->(Interface.member)`:
+//   _external_: lhs expression
+//   _external_: rhs expression
+// QualifiedExpression
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(PointerMemberAccessExpression, 2)
+
 // A literal.
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(Literal, 0)
 
