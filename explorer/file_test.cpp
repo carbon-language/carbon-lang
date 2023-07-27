@@ -2,45 +2,23 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "absl/flags/flag.h"
 #include "explorer/parse_and_execute/parse_and_execute.h"
 #include "testing/file_test/file_test_base.h"
 #include "testing/util/test_raw_ostream.h"
+
+ABSL_FLAG(bool, trace, false,
+          "Set to true to run tests with tracing enabled, even if they don't "
+          "otherwise specify it. This does not result in checking trace output "
+          "contents; it essentially only verifies there's not a crash bug.");
 
 namespace Carbon::Testing {
 namespace {
 
 class ParseAndExecuteTestFile : public FileTestBase {
  public:
-  explicit ParseAndExecuteTestFile(const std::filesystem::path& path,
-                                   bool trace)
-      : FileTestBase(path), trace_(trace) {}
-
-  auto SetUp() -> void override {
-    std::string path_str = path().string();
-    llvm::StringRef path_ref = path_str;
-
-    if (path_ref.find("trace_testdata") != llvm::StringRef::npos) {
-      is_trace_test = true;
-    }
-
-    if (trace_) {
-      if (path_ref.find("/limits/") != llvm::StringRef::npos) {
-        GTEST_SKIP()
-            << "`limits` tests check for various limit conditions (such as an "
-               "infinite loop). The tests collectively don't test tracing "
-               "because it creates substantial additional overhead.";
-      } else if (path_ref.endswith(
-                     "testdata/assoc_const/rewrite_large_type.carbon") ||
-                 path_ref.endswith(
-                     "testdata/linked_list/typed_linked_list.carbon")) {
-        GTEST_SKIP() << "Expensive test to trace";
-      }
-    } else {
-      if (is_trace_test) {
-        GTEST_SKIP() << "`trace` tests only check for trace output.";
-      }
-    }
-  }
+  explicit ParseAndExecuteTestFile(const std::filesystem::path& path)
+      : FileTestBase(path) {}
 
   auto RunWithFiles(const llvm::SmallVector<llvm::StringRef>& test_args,
                     const llvm::SmallVector<TestFile>& test_files,
@@ -55,11 +33,16 @@ class ParseAndExecuteTestFile : public FileTestBase {
       return false;
     }
 
+    // Trace output is only checked for a few tests.
+    bool check_trace_output =
+        path().string().find("/trace_testdata/") != std::string::npos;
+
     // Capture trace streaming, but only when in debug mode.
     TraceStream trace_stream;
     TestRawOstream trace_stream_ostream;
-    if (trace_) {
-      trace_stream.set_stream(is_trace_test ? &stdout : &trace_stream_ostream);
+    if (check_trace_output || absl::GetFlag(FLAGS_trace)) {
+      trace_stream.set_stream(check_trace_output ? &stdout
+                                                 : &trace_stream_ostream);
       trace_stream.set_allowed_phases({ProgramPhase::All});
       trace_stream.set_allowed_file_kinds({FileKind::Main});
     }
@@ -84,7 +67,9 @@ class ParseAndExecuteTestFile : public FileTestBase {
 
     // Skip trace test check as they use stdout stream instead of
     // trace_stream_ostream
-    if (trace_ && !is_trace_test) {
+    if (absl::GetFlag(FLAGS_trace)) {
+      CARBON_CHECK(!check_trace_output)
+          << "trace tests should only be run in the default mode.";
       EXPECT_FALSE(trace_stream_ostream.TakeStr().empty())
           << "Tracing should always do something";
     }
@@ -95,10 +80,6 @@ class ParseAndExecuteTestFile : public FileTestBase {
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
     return {};
   }
-
- private:
-  bool trace_;
-  bool is_trace_test = false;
 };
 
 }  // namespace
@@ -107,13 +88,8 @@ extern auto RegisterFileTests(
     const llvm::SmallVector<std::filesystem::path>& paths) -> void {
   ParseAndExecuteTestFile::RegisterTests(
       "ParseAndExecuteTestFile", paths, [](const std::filesystem::path& path) {
-        return new ParseAndExecuteTestFile(path, /*trace=*/false);
+        return new ParseAndExecuteTestFile(path);
       });
-  ParseAndExecuteTestFile::RegisterTests("ParseAndExecuteTestFile.trace", paths,
-                                         [](const std::filesystem::path& path) {
-                                           return new ParseAndExecuteTestFile(
-                                               path, /*trace=*/true);
-                                         });
 }
 
 }  // namespace Carbon::Testing
