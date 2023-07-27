@@ -320,6 +320,14 @@ class SemanticsContext {
   // SemanticsIR.
   llvm::DenseMap<SemanticsNodeId, SemanticsTypeId> canonical_types_;
 
+  // Tracks const types which have been defined, so that they aren't repeatedly
+  // redefined.
+  llvm::FoldingSet<TypeNode> canonical_const_types_;
+
+  // Tracks pointer types which have been defined, so that they aren't
+  // repeatedly redefined.
+  llvm::FoldingSet<TypeNode> canonical_pointer_types_;
+
   // Tracks struct type literals which have been defined, so that they aren't
   // repeatedly redefined.
   llvm::FoldingSet<TypeNode> canonical_struct_types_;

@@ -61,7 +61,27 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
 
 auto SemanticsHandlePostfixOperator(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandlePostfixOperator");
+  auto value_id = context.node_stack().PopExpression();
+
+  // Figure out the operator for the token.
+  auto token = context.parse_tree().node_token(parse_node);
+  switch (auto token_kind = context.tokens().GetKind(token)) {
+    case TokenKind::Star: {
+      auto inner_type_id = context.ExpressionAsType(parse_node, value_id);
+      context.AddNodeAndPush(
+          parse_node,
+          SemanticsNode::PointerType::Make(
+              parse_node,
+              context.CanonicalizeType(SemanticsNodeId::BuiltinTypeType),
+              inner_type_id));
+      break;
+    }
+
+    default:
+      return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
+  }
+
+  return true;
 }
 
 auto SemanticsHandlePrefixOperator(SemanticsContext& context,
@@ -79,6 +99,17 @@ auto SemanticsHandlePrefixOperator(SemanticsContext& context,
               parse_node, context.semantics_ir().GetNode(value_id).type_id(),
               value_id));
       break;
+
+    case TokenKind::Const: {
+      auto inner_type_id = context.ExpressionAsType(parse_node, value_id);
+      context.AddNodeAndPush(
+          parse_node,
+          SemanticsNode::ConstType::Make(
+              parse_node,
+              context.CanonicalizeType(SemanticsNodeId::BuiltinTypeType),
+              inner_type_id));
+      break;
+    }
 
     default:
       return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));

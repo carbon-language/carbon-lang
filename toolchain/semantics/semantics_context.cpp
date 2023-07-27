@@ -463,9 +463,58 @@ auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
     return it->second;
   }
 
-  auto type_id = semantics_ir_->AddType(node_id);
-  CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
-  return type_id;
+  switch (node.kind()) {
+    case SemanticsNodeKind::Builtin:
+    case SemanticsNodeKind::CrossReference: {
+      // TODO: Cross-references should be canonicalized by looking at their
+      // target rather than treating them as new unique types.
+      auto type_id = semantics_ir_->AddType(node_id);
+      CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
+      return type_id;
+    }
+
+    case SemanticsNodeKind::ConstType: {
+      llvm::FoldingSetNodeID canonical_id;
+      canonical_id.AddInteger(node.GetAsConstType().index);
+      void* insert_pos;
+      auto* node =
+          canonical_const_types_.FindNodeOrInsertPos(canonical_id, insert_pos);
+      if (node != nullptr) {
+        return node->type_id();
+      }
+      auto type_id = semantics_ir_->AddType(node_id);
+      CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
+      canonical_types_nodes_.push_back(
+          std::make_unique<TypeNode>(canonical_id, type_id));
+      canonical_const_types_.InsertNode(canonical_types_nodes_.back().get(),
+                                        insert_pos);
+      return type_id;
+    }
+
+    case SemanticsNodeKind::PointerType: {
+      llvm::FoldingSetNodeID canonical_id;
+      canonical_id.AddInteger(node.GetAsPointerType().index);
+      void* insert_pos;
+      auto* node = canonical_pointer_types_.FindNodeOrInsertPos(canonical_id,
+                                                                insert_pos);
+      if (node != nullptr) {
+        return node->type_id();
+      }
+      auto type_id = semantics_ir_->AddType(node_id);
+      CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
+      canonical_types_nodes_.push_back(
+          std::make_unique<TypeNode>(canonical_id, type_id));
+      canonical_pointer_types_.InsertNode(canonical_types_nodes_.back().get(),
+                                          insert_pos);
+      return type_id;
+    }
+
+    // TODO: Handle StructType and TupleType here.
+
+    default: {
+      CARBON_FATAL() << "Unexpected non-canonical type node " << node;
+    }
+  }
 }
 
 auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
