@@ -108,6 +108,7 @@ bool tree_sitter_carbon_external_scanner_scan(
     }
     if (lexer->lookahead == '\'') {
       if (eat_count(lexer, '\'', 3) != 3) {
+        // lexer state is ignored on return false
         return false;
       }
       while (!lexer->eof(lexer)) {
