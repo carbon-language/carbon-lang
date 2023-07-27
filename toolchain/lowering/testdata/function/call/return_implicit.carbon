@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: ; ModuleID = 'implicit_empty_tuple_return.carbon'
-// CHECK:STDOUT: source_filename = "implicit_empty_tuple_return.carbon"
+// CHECK:STDOUT: ; ModuleID = 'return_implicit.carbon'
+// CHECK:STDOUT: source_filename = "return_implicit.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: %TupleLiteralType = type {}
 // CHECK:STDOUT:
