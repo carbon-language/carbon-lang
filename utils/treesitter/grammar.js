@@ -51,7 +51,7 @@ module.exports = grammar({
   extras: ($) => [/\s/, $.comment],
 
   // NOTE: This must match the order in src/scanner.c, names are not used for matching.
-  externals: ($) => [$.binary_star, $.postfix_star],
+  externals: ($) => [$.binary_star, $.postfix_star, $.string],
 
   rules: {
     source_file: ($) =>
@@ -63,7 +63,7 @@ module.exports = grammar({
 
     api_or_impl: ($) => choice('api', 'impl'),
 
-    library_path: ($) => seq('library', $.string_literal),
+    library_path: ($) => seq('library', $.string),
 
     package_directive: ($) =>
       seq('package', $.ident, optional($.library_path), $.api_or_impl, ';'),
@@ -124,34 +124,6 @@ module.exports = grammar({
       );
     },
 
-    _string_content: ($) => token.immediate(/[^\\"]+/),
-
-    escape_sequence: ($) =>
-      token.immediate(
-        seq(
-          '\\',
-          choice(
-            'n',
-            't',
-            'r',
-            "'",
-            '"',
-            '\\',
-            '0',
-            /x[0-9A-F]{2}/,
-            /u\{[0-9A-F]+\}/
-          )
-        )
-      ),
-
-    // TODO: multiline string
-    string_literal: ($) =>
-      seq(
-        '"',
-        repeat(choice($._string_content, $.escape_sequence)),
-        token.immediate('"')
-      ),
-
     array_literal: ($) =>
       seq(
         '[',
@@ -174,7 +146,7 @@ module.exports = grammar({
         $.bool_literal,
         $.numeric_literal,
         $.numeric_type_literal,
-        $.string_literal,
+        $.string,
         $.struct_literal,
         $.struct_type_literal
       ),
