@@ -30,8 +30,8 @@
 
 fn Foo() {}
 
-fn Bar(a : ()) -> () { return a; }
+fn Bar(a: ()) -> () { return a; }
 
 fn Main() {
-  var x : () = Bar(Foo());
+  var x: () = Bar(Foo());
 }
