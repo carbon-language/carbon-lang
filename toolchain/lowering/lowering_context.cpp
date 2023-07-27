@@ -7,6 +7,7 @@
 #include "common/vlog.h"
 #include "toolchain/lowering/lowering_function_context.h"
 #include "toolchain/semantics/semantics_ir.h"
+#include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
@@ -64,9 +65,11 @@ auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
     args[i] = GetType(semantics_ir().GetNode(param_refs[i]).type_id());
   }
 
-  llvm::Type* return_type = GetType(function.return_type_id.is_valid()
-                                        ? function.return_type_id
-                                        : semantics_ir().empty_tuple_type_id());
+  // If return type is not valid, the function does not have a return type.
+  // Hence, set return type to void.
+  llvm::Type* return_type = function.return_type_id.is_valid()
+                                ? GetType(function.return_type_id)
+                                : llvm::Type::getVoidTy(llvm_context());
   llvm::FunctionType* function_type =
       llvm::FunctionType::get(return_type, args, /*isVarArg=*/false);
   auto* llvm_function = llvm::Function::Create(
@@ -127,15 +130,6 @@ auto LoweringContext::BuildFunctionDefinition(SemanticsFunctionId function_id)
 
 auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
   switch (node_id.index) {
-    case SemanticsBuiltinKind::EmptyTupleType.AsInt():
-      // Represent empty types as empty structs.
-      // TODO: Investigate special-casing handling of these so that they can be
-      // collectively replaced with LLVM's void, particularly around function
-      // returns. LLVM doesn't allow declaring variables with a void type, so
-      // that may require significant special casing.
-      return llvm::StructType::create(
-          *llvm_context_, llvm::ArrayRef<llvm::Type*>(),
-          SemanticsBuiltinKind::FromInt(node_id.index).name());
     case SemanticsBuiltinKind::FloatingPointType.AsInt():
       // TODO: Handle different sizes.
       return llvm::Type::getDoubleTy(*llvm_context_);
@@ -166,6 +160,10 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
                                       "StructLiteralType");
     }
     case SemanticsNodeKind::TupleType: {
+      // TODO: Investigate special-casing handling of empty tuples so that they
+      // can be collectively replaced with LLVM's void, particularly around
+      // function returns. LLVM doesn't allow declaring variables with a void
+      // type, so that may require significant special casing.
       auto refs = semantics_ir_->GetTypeBlock(node.GetAsTupleType());
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(refs.size());

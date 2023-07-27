@@ -6,7 +6,7 @@
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str1, param_refs: block0, body: {block2}}},
-// CHECK:STDOUT:   {name: str8, param_refs: block0, body: {block3}}},
+// CHECK:STDOUT:   {name: str7, param_refs: block0, body: {block3}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -17,7 +17,6 @@
 // CHECK:STDOUT:   Baz,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
-// CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]

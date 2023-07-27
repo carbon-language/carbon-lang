@@ -15,9 +15,6 @@ static auto BuildFunctionDeclaration(SemanticsContext& context)
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnType) {
     return_type_id = context.node_stack().Pop<ParseNodeKind::ReturnType>();
-  } else {
-    // Canonicalize the empty tuple for the implicit return.
-    context.CanonicalizeType(SemanticsNodeId::BuiltinEmptyTupleType);
   }
   SemanticsNodeBlockId param_refs_id =
       context.node_stack().Pop<ParseNodeKind::ParameterList>();

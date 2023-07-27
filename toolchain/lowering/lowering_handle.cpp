@@ -123,9 +123,17 @@ auto LoweringHandleCall(LoweringFunctionContext& context,
   for (auto ref_id : context.semantics_ir().GetNodeBlock(refs_id)) {
     args.push_back(context.GetLocalLoaded(ref_id));
   }
-  auto* value =
-      context.builder().CreateCall(function, args, function->getName());
-  context.SetLocal(node_id, value);
+  if (function->getReturnType()->isVoidTy()) {
+    context.builder().CreateCall(function, args);
+    // TODO: use empty tuple type.
+    // TODO: don't create the empty tuple if the call does not get assigned.
+    context.SetLocal(node_id, context.builder().CreateAlloca(
+                                  llvm::StructType::get(context.llvm_context()),
+                                  /*ArraySize=*/nullptr, "TupleLiteralValue"));
+  } else {
+    context.SetLocal(node_id, context.builder().CreateCall(
+                                  function, args, function->getName()));
+  }
 }
 
 auto LoweringHandleFunctionDeclaration(LoweringFunctionContext& /*context*/,

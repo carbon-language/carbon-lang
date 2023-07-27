@@ -3,29 +3,29 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: ; ModuleID = 'empty_tuple.carbon'
-// CHECK:STDOUT: source_filename = "empty_tuple.carbon"
+// CHECK:STDOUT: ; ModuleID = 'return_implicit.carbon'
+// CHECK:STDOUT: source_filename = "return_implicit.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: %TupleLiteralType = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %TupleLiteralType @Echo(%TupleLiteralType %a) {
-// CHECK:STDOUT:   ret %TupleLiteralType %a
+// CHECK:STDOUT: define void @MakeImplicitEmptyTuple() {
+// CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT:   %TupleLiteralValue = alloca %TupleLiteralType, align 8
 // CHECK:STDOUT:   %var = alloca %TupleLiteralType, align 8
-// CHECK:STDOUT:   %TupleLiteralValue1 = alloca %TupleLiteralType, align 8
+// CHECK:STDOUT:   call void @MakeImplicitEmptyTuple()
+// CHECK:STDOUT:   %TupleLiteralValue1 = alloca {}, align 8
 // CHECK:STDOUT:   %1 = load %TupleLiteralType, ptr %TupleLiteralValue1, align 1
-// CHECK:STDOUT:   %Echo = call %TupleLiteralType @Echo(%TupleLiteralType %1)
-// CHECK:STDOUT:   store %TupleLiteralType %Echo, ptr %var, align 1
+// CHECK:STDOUT:   store %TupleLiteralType %1, ptr %var, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 
-fn Echo(a: ()) -> () {
-  return a;
+
+fn MakeImplicitEmptyTuple() {
 }
 
 fn Main() {
-  var b: () = Echo(());
+  var b: () = MakeImplicitEmptyTuple();
 }
