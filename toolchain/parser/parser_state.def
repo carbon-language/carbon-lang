@@ -39,6 +39,22 @@
   CARBON_PARSER_STATE_VARIANT(State, Variant1)                             \
   CARBON_PARSER_STATE_VARIANTS2(State, Variant2, Variant3)
 
+
+// Handles an index expression `a[0]`.
+//
+// If `CloseSquareBracket`:
+//   1. IndexExpressionFinish
+// Else:
+//   1. Expression
+//   2. IndexExpressionFinish
+CARBON_PARSER_STATE(IndexExpression)
+
+// Handles finishing the index expression.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE(IndexExpressionFinish)
+
 // Handles the `{` of a brace expression.
 //
 // If `CloseCurlyBrace`:
@@ -263,6 +279,8 @@ CARBON_PARSER_STATE(ExpressionInPostfix)
 // If `OpenParen`:
 //   1. CallExpression
 //   2. ExpressionInPostfixLoop
+// If `OpenSquareBracket`:
+//   1. IndexExpressionStart
 // Else:
 //   (state done)
 CARBON_PARSER_STATE(ExpressionInPostfixLoop)

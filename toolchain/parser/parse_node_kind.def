@@ -213,7 +213,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(WhileStatement, 2)
 //   IndexExpressionStart
 //   _external_: expression
 // IndexExpression
-CARBON_PARSE_NODE_KIND_CHILD_COUNT(IndexExpressionStart, 0)
+CARBON_PARSE_NODE_KIND_CHILD_COUNT(IndexExpressionStart, 1)
 CARBON_PARSE_NODE_KIND_BRACKET(IndexExpression, IndexExpressionStart)
 
 // Parenthesized expressions, such as `(2)`:
