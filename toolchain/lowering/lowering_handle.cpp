@@ -124,9 +124,8 @@ auto LoweringHandleCall(LoweringFunctionContext& context,
   }
   if (function->getReturnType()->isVoidTy()) {
     context.builder().CreateCall(function, args);
-    // TODO call GetType with empty tuple type.
     context.SetLocal(node_id, context.builder().CreateAlloca(
-                                  context.GetType(SemanticsTypeId::TypeType),
+                                  llvm::StructType::get(context.llvm_context()),
                                   /*ArraySize=*/nullptr, "TupleLiteralValue"));
   } else {
     context.SetLocal(node_id, context.builder().CreateCall(

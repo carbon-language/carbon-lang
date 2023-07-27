@@ -38,10 +38,6 @@ class LoweringContext {
       // `type` is lowered to an empty LLVM StructType.
       return llvm::StructType::get(llvm_context());
     }
-    // Function with no return type gets void type.
-    if (type_id == SemanticsTypeId::Invalid) {
-      return llvm::Type::getVoidTy(llvm_context());
-    }
     CARBON_CHECK(type_id.index >= 0) << type_id;
     return types_[type_id.index];
   }

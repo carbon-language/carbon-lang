@@ -65,7 +65,11 @@ auto LoweringContext::BuildFunctionDeclaration(SemanticsFunctionId function_id)
     args[i] = GetType(semantics_ir().GetNode(param_refs[i]).type_id());
   }
 
-  llvm::Type* return_type = GetType(function.return_type_id);
+  // If return type is not valid, the function does not have a return type.
+  // Hence, set return type to void.
+  llvm::Type* return_type = function.return_type_id.is_valid()
+                                ? GetType(function.return_type_id)
+                                : llvm::Type::getVoidTy(llvm_context());
   llvm::FunctionType* function_type =
       llvm::FunctionType::get(return_type, args, /*isVarArg=*/false);
   auto* llvm_function = llvm::Function::Create(
