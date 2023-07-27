@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/lowering/lowering_function_context.h"
+
 namespace Carbon {
 
 auto LoweringHandleInvalid(LoweringFunctionContext& /*context*/,
@@ -124,6 +125,8 @@ auto LoweringHandleCall(LoweringFunctionContext& context,
   }
   if (function->getReturnType()->isVoidTy()) {
     context.builder().CreateCall(function, args);
+    // TODO: use empty tuple type.
+    // TODO: don't create the empty tuple if the call does not get assigned.
     context.SetLocal(node_id, context.builder().CreateAlloca(
                                   llvm::StructType::get(context.llvm_context()),
                                   /*ArraySize=*/nullptr, "TupleLiteralValue"));
