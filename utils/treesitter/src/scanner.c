@@ -140,7 +140,7 @@ bool tree_sitter_carbon_external_scanner_scan(
       while (!lexer->eof(lexer)) {
         if (lexer->lookahead == '\\') {
           advance(lexer);
-          if (eat_count(lexer, '#', hash_count)) {
+          if (eat_count(lexer, '#', hash_count) == hash_count) {
             // treat next character as not special
             // but \n is not allowed in simple string
             if (lexer->lookahead != '\n') {
