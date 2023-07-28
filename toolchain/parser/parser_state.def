@@ -39,7 +39,6 @@
   CARBON_PARSER_STATE_VARIANT(State, Variant1)                             \
   CARBON_PARSER_STATE_VARIANTS2(State, Variant2, Variant3)
 
-
 // Handles an index expression `a[0]`.
 //
 // If `CloseSquareBracket`:
@@ -281,6 +280,7 @@ CARBON_PARSER_STATE(ExpressionInPostfix)
 //   2. ExpressionInPostfixLoop
 // If `OpenSquareBracket`:
 //   1. IndexExpressionStart
+//   2. ExpressionInPostfixLoop
 // Else:
 //   (state done)
 CARBON_PARSER_STATE(ExpressionInPostfixLoop)

@@ -8,17 +8,14 @@
 
 namespace Carbon {
 
-auto SemanticsHandleIndexExpressionStart(SemanticsContext& /*context*/,
-                                         ParseTree::Node /*parse_node*/)
-    -> bool {
-  // TODO
-  return true;
+auto SemanticsHandleIndexExpressionStart(SemanticsContext& context,
+                                         ParseTree::Node parse_node) -> bool {
+  return context.TODO(parse_node, "HandleIndexExpressionStart");
 }
 
-auto SemanticsHandleIndexExpression(SemanticsContext& /*context*/,
-                                    ParseTree::Node /*parse_node*/) -> bool {
-  // TODO
-  return true;
+auto SemanticsHandleIndexExpression(SemanticsContext& context,
+                                    ParseTree::Node parse_node) -> bool {
+  return context.TODO(parse_node, "HandleIndexExpression");
 }
 
 }  // namespace Carbon

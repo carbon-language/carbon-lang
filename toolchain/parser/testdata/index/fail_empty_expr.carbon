@@ -17,7 +17,7 @@
 // CHECK:STDOUT: ]
 
 
-// CHECK:STDERR: fail_empty_expr.carbon:[[@LINE+3]]:17: Expected integer literal.
-// CHECK:STDERR: var v : i32 = t[];
-// CHECK:STDERR:                 ^
-var v : i32 = t[];
+// CHECK:STDERR: fail_empty_expr.carbon:[[@LINE+3]]:16: Expected expression inside the square bracket.
+// CHECK:STDERR: var v: i32 = t[];
+// CHECK:STDERR:                ^
+var v: i32 = t[];

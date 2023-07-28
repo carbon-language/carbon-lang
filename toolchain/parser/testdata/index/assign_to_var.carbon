@@ -17,4 +17,4 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-var v : i32 = t[0];
+var v: i32 = t[0];
