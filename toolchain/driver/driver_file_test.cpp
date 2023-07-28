@@ -2,7 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <filesystem>
 #include <string>
 
 #include "llvm/ADT/SmallVector.h"
@@ -22,9 +21,6 @@ class DriverFileTest : public DriverFileTestBase {
 
 }  // namespace
 
-auto RegisterFileTests(const llvm::SmallVector<std::filesystem::path>& paths)
-    -> void {
-  DriverFileTest::RegisterTests<DriverFileTest>("DriverFileTest", paths);
-}
+CARBON_FILE_TEST_FACTORY(DriverFileTest);
 
 }  // namespace Carbon::Testing
