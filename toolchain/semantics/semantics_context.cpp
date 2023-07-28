@@ -448,6 +448,31 @@ auto SemanticsContext::ParamOrArgSave(bool for_args) -> void {
   params_or_args.push_back(entry_node_id);
 }
 
+template <typename ProfileType, typename MakeNode>
+auto SemanticsContext::CanonicalizeTypeImpl(SemanticsNodeKind kind,
+                                            ProfileType profile_type,
+                                            MakeNode make_node)
+    -> SemanticsTypeId {
+  llvm::FoldingSetNodeID canonical_id;
+  kind.Profile(canonical_id);
+  profile_type(canonical_id);
+
+  void* insert_pos;
+  auto* node =
+      canonical_type_nodes_.FindNodeOrInsertPos(canonical_id, insert_pos);
+  if (node != nullptr) {
+    return node->type_id();
+  }
+
+  auto node_id = make_node();
+  auto type_id = semantics_ir_->AddType(node_id);
+  CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
+  type_node_storage_.push_back(
+      std::make_unique<TypeNode>(canonical_id, type_id));
+  canonical_type_nodes_.InsertNode(type_node_storage_.back().get(), insert_pos);
+  return type_id;
+}
+
 auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
     -> SemanticsTypeId {
   auto node = semantics_ir_->GetNode(node_id);
@@ -474,42 +499,24 @@ auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
     }
 
     case SemanticsNodeKind::ConstType: {
-      llvm::FoldingSetNodeID canonical_id;
-      canonical_id.AddInteger(node.GetAsConstType().index);
-      void* insert_pos;
-      auto* node =
-          canonical_const_types_.FindNodeOrInsertPos(canonical_id, insert_pos);
-      if (node != nullptr) {
-        return node->type_id();
-      }
-      auto type_id = semantics_ir_->AddType(node_id);
-      CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
-      canonical_types_nodes_.push_back(
-          std::make_unique<TypeNode>(canonical_id, type_id));
-      canonical_const_types_.InsertNode(canonical_types_nodes_.back().get(),
-                                        insert_pos);
-      return type_id;
+      return CanonicalizeTypeImpl(
+          node.kind(), node_id, [&](llvm::FoldingSetNodeID& canonical_id) {
+            canonical_id.AddInteger(node.GetAsConstType().index);
+          });
     }
 
     case SemanticsNodeKind::PointerType: {
-      llvm::FoldingSetNodeID canonical_id;
-      canonical_id.AddInteger(node.GetAsPointerType().index);
-      void* insert_pos;
-      auto* node = canonical_pointer_types_.FindNodeOrInsertPos(canonical_id,
-                                                                insert_pos);
-      if (node != nullptr) {
-        return node->type_id();
-      }
-      auto type_id = semantics_ir_->AddType(node_id);
-      CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
-      canonical_types_nodes_.push_back(
-          std::make_unique<TypeNode>(canonical_id, type_id));
-      canonical_pointer_types_.InsertNode(canonical_types_nodes_.back().get(),
-                                          insert_pos);
-      return type_id;
+      return CanonicalizeTypeImpl(
+          node.kind(), node_id, [&](llvm::FoldingSetNodeID& canonical_id) {
+            canonical_id.AddInteger(node.GetAsPointerType().index);
+          });
     }
 
-    // TODO: Handle StructType and TupleType here.
+    case SemanticsNodeKind::StructType:
+    case SemanticsNodeKind::TupleType: {
+      CARBON_FATAL() << "Type should have been canonizalized when created: "
+                     << node;
+    }
 
     default: {
       CARBON_FATAL() << "Unexpected non-canonical type node " << node;
@@ -520,62 +527,39 @@ auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
 auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
                                               SemanticsNodeBlockId refs_id)
     -> SemanticsTypeId {
-  // Construct the field structure for lookup.
-  auto refs = semantics_ir_->GetNodeBlock(refs_id);
-  llvm::FoldingSetNodeID canonical_id;
-  for (const auto& ref_id : refs) {
-    auto ref = semantics_ir_->GetNode(ref_id);
-    canonical_id.AddInteger(ref.GetAsStructTypeField().index);
-    canonical_id.AddInteger(ref.type_id().index);
-  }
-
-  // If a struct with matching fields was already created, reuse it.
-  void* insert_pos;
-  auto* node =
-      canonical_struct_types_.FindNodeOrInsertPos(canonical_id, insert_pos);
-  if (node != nullptr) {
-    return node->type_id();
-  }
-
-  // The struct doesn't already exist, so create and store it as canonical.
-  auto node_id = AddNode(SemanticsNode::StructType::Make(
-      parse_node, SemanticsTypeId::TypeType, refs_id));
-  auto type_id = semantics_ir_->AddType(node_id);
-  CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
-  canonical_types_nodes_.push_back(
-      std::make_unique<TypeNode>(canonical_id, type_id));
-  canonical_struct_types_.InsertNode(canonical_types_nodes_.back().get(),
-                                     insert_pos);
-  return type_id;
+  auto profile_struct = [&](llvm::FoldingSetNodeID& canonical_id) {
+    auto refs = semantics_ir_->GetNodeBlock(refs_id);
+    for (const auto& ref_id : refs) {
+      auto ref = semantics_ir_->GetNode(ref_id);
+      canonical_id.AddInteger(ref.GetAsStructTypeField().index);
+      canonical_id.AddInteger(ref.type_id().index);
+    }
+  };
+  auto make_struct_node = [&] {
+    return AddNode(SemanticsNode::StructType::Make(
+        parse_node, SemanticsTypeId::TypeType, refs_id));
+  };
+  return CanonicalizeTypeImpl(SemanticsNodeKind::StructType, profile_struct,
+                              make_struct_node);
 }
 
 auto SemanticsContext::CanonicalizeTupleType(
     ParseTree::Node parse_node, llvm::SmallVector<SemanticsTypeId>&& type_ids)
     -> SemanticsTypeId {
-  llvm::FoldingSetNodeID canonical_id;
-  for (const auto& type_id : type_ids) {
-    canonical_id.AddInteger(type_id.index);
-  }
-  // If a tuple with matching fields was already created, reuse it.
-  void* insert_pos;
-  auto* node =
-      canonical_tuple_types_.FindNodeOrInsertPos(canonical_id, insert_pos);
-  if (node != nullptr) {
-    return node->type_id();
-  }
-  // The tuple type doesn't already exist, so create and store it as canonical.
-  auto type_block_id = semantics_ir_->AddTypeBlock();
-  auto& type_block = semantics_ir_->GetTypeBlock(type_block_id);
-  type_block = std::move(type_ids);
-  auto node_id = AddNode(SemanticsNode::TupleType::Make(
-      parse_node, SemanticsTypeId::TypeType, type_block_id));
-  auto type_id = semantics_ir_->AddType(node_id);
-  CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
-  canonical_types_nodes_.push_back(
-      std::make_unique<TypeNode>(canonical_id, type_id));
-  canonical_tuple_types_.InsertNode(canonical_types_nodes_.back().get(),
-                                    insert_pos);
-  return type_id;
+  auto profile_tuple = [&](llvm::FoldingSetNodeID& canonical_id) {
+    for (const auto& type_id : type_ids) {
+      canonical_id.AddInteger(type_id.index);
+    }
+  };
+  auto make_tuple_node = [&] {
+    auto type_block_id = semantics_ir_->AddTypeBlock();
+    auto& type_block = semantics_ir_->GetTypeBlock(type_block_id);
+    type_block = std::move(type_ids);
+    return AddNode(SemanticsNode::TupleType::Make(
+        parse_node, SemanticsTypeId::TypeType, type_block_id));
+  };
+  return CanonicalizeTypeImpl(SemanticsNodeKind::TupleType, profile_tuple,
+                              make_tuple_node);
 }
 
 auto SemanticsContext::PrintForStackDump(llvm::raw_ostream& output) const

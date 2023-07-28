@@ -7,6 +7,7 @@
 
 #include <cstdint>
 
+#include "llvm/ADT/FoldingSet.h"
 #include "common/enum_base.h"
 
 namespace Carbon {
@@ -42,6 +43,10 @@ class SemanticsNodeKind : public CARBON_ENUM_BASE(SemanticsNodeKind) {
   // code block appears after all other instructions, and ends with a
   // terminator instruction.
   [[nodiscard]] auto terminator_kind() const -> SemanticsTerminatorKind;
+
+  void Profile(llvm::FoldingSetNodeID &id) {
+    id.AddInteger(AsInt());
+  }
 };
 
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
