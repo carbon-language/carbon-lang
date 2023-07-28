@@ -30,7 +30,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Named constraints](#named-constraints)
         -   [Type erasure](#type-erasure)
     -   [Adapting types](#adapting-types)
-    -   [Interface input and output types](#interface-input-and-output-types)
+    -   [Interface inputs and outputs](#interface-inputs-and-outputs)
         -   [Associated types](#associated-types)
         -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Constraints](#constraints)
@@ -517,13 +517,13 @@ class SongByTitle {
 Values of type `Song` may be cast to `SongByArtist` or `SongByTitle` to get a
 specific sort order.
 
-### Interface input and output types
+### Interface inputs and outputs
 
-[Associated types and interface parameters](terminology.md#interface-type-parameters-and-associated-types)
+[Associated constants and interface parameters](terminology.md#interface-parameters-and-associated-constants)
 allow function signatures to vary with the implementing type. The biggest
-difference between these is that associated types ("output types") may be
-deduced from a type, and types can implement the same interface multiple times
-with different interface parameters ("input types").
+difference between these is that associated constants ("outputs") may be deduced
+from a type, and types can implement the same interface multiple times with
+different interface parameters ("inputs").
 
 #### Associated types
 

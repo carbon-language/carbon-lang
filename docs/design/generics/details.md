@@ -2264,7 +2264,7 @@ class DynamicArray(T:! type) {
 ```
 
 For context, see
-["Interface type parameters and associated types" in the generics terminology document](terminology.md#interface-type-parameters-and-associated-types).
+["Interface parameters and associated constants" in the generics terminology document](terminology.md#interface-parameters-and-associated-constants).
 
 **Comparison with other languages:** Both
 [Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
@@ -2314,7 +2314,7 @@ interface at most once.
 If instead you want a family of related interfaces, one per possible value of a
 type parameter, multiple of which could be implemented for a single type, you
 would use
-[parameterized interfaces](terminology.md#interface-type-parameters-and-associated-types).
+[parameterized interfaces](terminology.md#interface-parameters-and-associated-constants).
 To write a parameterized version of the stack interface, instead of using
 associated types, write a parameter list after the name of the interface instead
 of the associated type declaration:

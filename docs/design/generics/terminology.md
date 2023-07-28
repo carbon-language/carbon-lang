@@ -24,8 +24,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Types and `type`](#types-and-type)
 -   [Facet type](#facet-type)
 -   [Facet](#facet)
--   [Generic type](#generic-type)
--   [Generic type parameter](#generic-type-parameter)
+-   [Type expression](#type-expression)
+-   [Facet binding](#facet-binding)
 -   [Deduced parameter](#deduced-parameter)
 -   [Interface](#interface)
     -   [Structural interfaces](#structural-interfaces)
@@ -52,7 +52,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Template specialization](#template-specialization)
     -   [Checked-generic specialization](#checked-generic-specialization)
 -   [Conditional conformance](#conditional-conformance)
--   [Interface type parameters and associated types](#interface-type-parameters-and-associated-types)
+-   [Interface parameters and associated constants](#interface-parameters-and-associated-constants)
 -   [Type constraints](#type-constraints)
 -   [References](#references)
 
@@ -60,16 +60,26 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Generic means compile-time parameterized
 
-Generally speaking, when we talk about _generics_, either checked or template,
-we are talking about generalizing some language construct by adding a
-compile-time parameter, called a _generic parameter_, to it. Language constructs
-here primarily would include functions and types, but we may want to support
-parameterizing other language constructs like
-[interfaces](#interface-type-parameters-and-associated-types).
+Generally speaking, when we talk about _generics_, either
+[checked or template](#checked-versus-template-parameters), we are talking about
+generalizing some language construct by adding a compile-time parameter, called
+a _generic parameter_, to it. So:
+
+-   a _generic function_ is a function with at least one compile-time parameter,
+    which could be an explicit argument to the function or
+    [deduced](#deduced-parameter);
+-   a _generic type_ is a function with a compile-time parameter, for example a
+    container type parameterized by the type of the contained elements;
+-   a _generic interface_ is an [interface](#interface) with
+    [a compile-time parameter](#interface-parameters-and-associated-constants).
 
 This parameter broadens the scope of the language construct on an axis defined
 by that parameter, for example it could define a family of functions instead of
 a single one.
+
+Note that different languages allow different things to be parameterized; for
+example, Rust supports
+[generic associated types](https://rust-lang.github.io/rfcs/1598-generic_associated_types.html).
 
 ## Checked versus template parameters
 
@@ -312,27 +322,19 @@ means that a facet may be used in those positions. For example, the facet
 `i32 as Hashable` will implicitly convert to `(i32 as Hashable) as type`, which
 is `i32`, in those contexts.
 
-## Generic type
+## Type expression
 
-We use the term _generic type_ to refer to a [type](#types-and-type) or
-[facet](#facet) introduced by a `:!` binding (with or without the `template`
-modifier), such as in a (checked or template) generic parameter or associated
-constant. In the binding `T:! Hashable`, `T` is a generic type.
+A _type expression_ is an expression that is being used as a type. In some
+cases, what is written in the source code is a value, like a [facet](#facet) or
+tuple of types, that is not a type but has an implicit conversion to `type`. In
+those cases, we are concerned with the type value after the implicit conversion.
 
-It is worth noting that a generic type is _not_ necessarily a type. It may
-instead be a facet with a type that is a facet type other than `type`.
+## Facet binding
 
-## Generic type parameter
-
-A _generic type parameter_ is a
-[generic parameter](#generic-means-compile-time-parameterized) that is a
-[generic type](#generic-type). Equivalently, it is a generic parameter with a
-[facet type](#facet-type). For example, in `class HashSet(T:! Hashable)`, `T` is
-a generic type parameter for the class `HashSet`, with the facet type
-`Hashable`.
-
-A generic type parameter declared with the `template` modifier is referred to as
-a _template type parameter_, and as a _checked type parameter_ otherwise.
+We use the term _facet binding_ to refer to the name introduced by a `:!`
+binding pattern (with or without the `template` modifier) with a
+[facet type](#facet-type). In the binding pattern `T:! Hashable`,`T` is a facet
+binding, and the value of `T` is a [facet](#facet).
 
 ## Deduced parameter
 
@@ -388,16 +390,16 @@ definition. The criteria for a named constraint, however, are less focused on
 the type's API and instead might include a set of nominal interfaces that the
 type must implement and constraints on the
 [associated entities](#associated-entity) and
-[interface type parameters](#interface-type-parameters-and-associated-types).
+[interface parameters](#interface-parameters-and-associated-constants).
 
 ## Associated entity
 
 An _associated entity_ is a requirement in an interface that a type's
 implementation of the interface must satisfy by having a matching definition. A
 requirement that the type define a value for a member constant is called an
-_associated constant_, and similarly an _associated function_ or _associated
-type_. Note that an associated type will be a [generic type](#generic-type), and
-so may not be a type, but a [facet](#facet) usable as a type.
+_associated constant_. If the type of the associated constant is a
+[facet type](#facet-type), then it is called an _associated [facet](#facet)_.
+Similarly, an interface can have _associated function_ or _associated method_.
 
 Different types can satisfy an interface with different definitions for a given
 member. These definitions are _associated_ with what type is implementing the
@@ -412,7 +414,7 @@ instead of associated entity.
 
 An _impl_ is an implementation of an interface for a specific type, called the
 _implementing type_. It is the place where the function bodies are defined,
-values for associated types, etc. are given. Implementations are needed for
+values for associated constants, etc. are given. Implementations are needed for
 [nominal interfaces](#nominal-interfaces);
 [structural interfaces](#structural-interfaces) and
 [named constraints](#named-constraints) define conformance implicitly instead of
@@ -622,7 +624,7 @@ between the generic user of a type and the concrete implementation.
 
 A simple way to imagine a witness table is as a struct of function pointers, one
 per method in the interface. However, in practice, it's more complex because it
-must model things like associated types and interfaces.
+must model things like associated facets and interfaces.
 
 Witness tables are called "dictionary passing" in Haskell. Outside of generics,
 a [vtable](https://en.wikipedia.org/wiki/Virtual_method_table) is a witness
@@ -699,10 +701,11 @@ that it always supports, but satisfies additional interfaces under some
 conditions on the type argument. For example: `Array(T)` might implement
 `Comparable` if `T` itself implements `Comparable`, using lexicographical order.
 
-## Interface type parameters and associated types
+## Interface parameters and associated constants
 
-_Interface type parameters_ and _associated types_ are both ways of allowing the
-types in function signatures in an interface to vary. For example, different
+_Interface parameters_ and [associated constants](#associated-entity) are both
+ways of allowing the types in function signatures in an interface to vary. For
+example, different
 [stacks](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>) will have
 different element types. That element type would be used as the parameter type
 of the `Push` function and the return type of the `Pop` function. As
@@ -710,19 +713,18 @@ of the `Push` function and the return type of the `Pop` function. As
 we can distinguish these by whether they are input parameters or output
 parameters:
 
--   An interface type parameter is a parameter or input to the interface type.
-    That means they must be specified before an implementation of the interface
-    may be determined.
--   In contrast, associated types are outputs. This means that they are
-    determined by the implementation, and need not be specified in a type
-    constraint.
+-   An interface parameter is a parameter or input to the interface. That means
+    they must be specified before an implementation of the interface may be
+    determined.
+-   In contrast, associated constants are outputs. This means that they are
+    determined by the implementation, and need not be specified in a
+    [type constraint](#type-constraints).
 
 Functions using an interface as a constraint need not specify the value of its
-associated types. An associated type is a kind of
-[associated entity](#associated-entity).
+associated constants.
 
 ```
-// Stack using associated types
+// Stack using associated facets
 interface Stack {
   let ElementType:! type;
   fn Push[addr self: Self*](value: ElementType);
@@ -731,7 +733,7 @@ interface Stack {
 
 // Works on any type implementing `Stack`. Return type
 // is determined by the type's implementation of `Stack`.
-fn PeekAtTopOfStack[T: Stack](s: T*) -> T.ElementType {
+fn PeekAtTopOfStack[T:! Stack](s: T*) -> T.ElementType {
   let ret: T.ElementType = s->Pop();
   s->Push(ret);
   return ret;
@@ -745,17 +747,17 @@ class FruitStack {
 }
 ```
 
-Associated types are particularly called for when the implementation of the
-interface determines the type, not the caller. For example, the iterator type
+Associated constants are particularly called for when the implementation of the
+interface determines the value, not the caller. For example, the iterator type
 for a container is specific to the container and not something you would expect
 a user of the interface to specify.
 
-If you have an interface with type parameters, a type can have multiple matching
-impl declarations for different combinations of type parameters. As a result,
-type parameters may not be deduced in a function call. However, if the interface
-parameters are specified, a type can only have a single implementation of the
-given interface. This unique implementation choice determines the values of
-associated types.
+If you have an interface with parameters, a type can have multiple matching
+`impl` declarations for different combinations of argument values. As a result,
+interface parameters may not be deduced in a function call. However, if the
+interface parameters are specified, a type can only have a single implementation
+of the given interface. This unique implementation choice determines the values
+of associated constants.
 
 For example, we might have an interface that says how to perform addition with
 another type:
@@ -789,8 +791,8 @@ fn DoAdd[T:! type, U:! AddWith(T)](x: U, y: T) -> U.ResultType {
 fn CompileError[T:! type, U:! AddWith(T)](x: U) -> T;
 ```
 
-Once the interface parameter can be determined, that determines the values for
-associated types, such as `ResultType` in the example. As always, calls with
+Once the interface parameters can be determined, that determines the values for
+associated constants, such as `ResultType` in the example. As always, calls with
 types for which no implementation exists will be rejected at the call site:
 
 ```
@@ -799,28 +801,32 @@ types for which no implementation exists will be rejected at the call site:
 DoAdd(apple, orange);
 ```
 
+The type of an interface parameters and associated constants is commonly a
+[facet type](#facet-type), but not always. For example, one might have an
+integer type and be used to specify the size of an array type.
+
 ## Type constraints
 
-Type constraints restrict which types are legal for template or checked
-parameters or associated types. They help define semantics under which they
-should be called, and prevent incorrect calls.
+Type constraints restrict which types are legal for generic parameters or
+associated facets. They help define semantics under which they should be called,
+and prevent incorrect calls.
 
 In general there are a number of different type relationships we would like to
 express, for example:
 
 -   This function accepts two containers. The container types may be different,
     but the element types need to match.
--   For this container interface we have associated types for iterators and
+-   For this container interface we have associated facets for iterators and
     elements. The iterator type's element type needs to match the container's
     element type.
--   An interface may define an associated type that needs to be constrained to
+-   An interface may define an associated facet that needs to be constrained to
     implement some interfaces.
 -   This type must be [compatible](#compatible-types) with another type. You
     might use this to define alternate implementations of a single interfaces,
     such as sorting order, for a single type.
 
-Note that type constraints can be a restriction on one type parameter or
-associated type, or can define a relationship between multiple types.
+Note that type constraints can be a restriction on one facet parameter or
+associated facet, or can define a relationship between multiple facets.
 
 ## References
 
