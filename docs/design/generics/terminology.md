@@ -398,8 +398,12 @@ An _associated entity_ is a requirement in an interface that a type's
 implementation of the interface must satisfy by having a matching definition. A
 requirement that the type define a value for a member constant is called an
 _associated constant_. If the type of the associated constant is a
-[facet type](#facet-type), then it is called an _associated [facet](#facet)_.
-Similarly, an interface can have _associated function_ or _associated method_.
+[facet type](#facet-type), then it is called an _associated [facet](#facet)_,
+which corresponds to what is called an "associated type" in other languages
+([Swift](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/generics/#Associated-Types),
+[Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-types)).
+Similarly, an interface can have _associated function_, _associated method_, or
+_associated class function_.
 
 Different types can satisfy an interface with different definitions for a given
 member. These definitions are _associated_ with what type is implementing the

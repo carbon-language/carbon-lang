@@ -31,7 +31,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Type erasure](#type-erasure)
     -   [Adapting types](#adapting-types)
     -   [Interface inputs and outputs](#interface-inputs-and-outputs)
-        -   [Associated types](#associated-types)
+        -   [Associated constants](#associated-constants)
         -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Constraints](#constraints)
     -   [Parameterized impl declarations](#parameterized-impl-declarations)
@@ -525,12 +525,12 @@ difference between these is that associated constants ("outputs") may be deduced
 from a type, and types can implement the same interface multiple times with
 different interface parameters ("inputs").
 
-#### Associated types
+#### Associated constants
 
-Expect types that vary in an interface to be associated types by default. Since
-associated types may be deduced, they are more convenient to use. Imagine a
-`Stack` interface. Different types implementing `Stack` will have different
-element types:
+Expect parts of function signatures that vary in an interface to be associated
+constants by default. Since associated constants may be deduced, they are more
+convenient to use. Imagine a `Stack` interface. Different types implementing
+`Stack` will have different element types:
 
 ```
 interface Stack {
@@ -541,7 +541,7 @@ interface Stack {
 }
 ```
 
-`ElementType` is an associated type of the interface `Stack`. Types that
+`ElementType` is an associated constant of the interface `Stack`. Types that
 implement `Stack` give `ElementType` a specific value of some type implementing
 `Movable`. Functions that accept a type implementing `Stack` can deduce the
 `ElementType` from the stack type.
@@ -581,7 +581,8 @@ fn FindInVector[T:! type, U:! Equatable(T)](v: Vector(T), needle: U)
 
 // ❌ This is forbidden. Since `U` could implement `Equatable`
 // multiple times, there is no way to determine the value for `T`.
-// Contrast with `PeekAtTopOfStack` in the associated type example.
+// Contrast with `PeekAtTopOfStack` in the associated constant
+// example.
 fn CompileError[T:! type, U:! Equatable(T)](x: U) -> T;
 ```
 
@@ -608,7 +609,7 @@ increase the knowledge that may be used in the body of the function to operate
 on values of those types.
 
 Constraints are also used when implementing an interface to specify the values
-of associated types (and other associated constants).
+of associated constants.
 
 ```
 class Vector(T:! Movable) {

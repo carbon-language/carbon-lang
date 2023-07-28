@@ -45,7 +45,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Adapter with stricter invariants](#adapter-with-stricter-invariants)
 -   [Associated constants](#associated-constants)
     -   [Associated class functions](#associated-class-functions)
--   [Associated types](#associated-types)
+-   [Associated facets](#associated-facets)
     -   [Implementation model](#implementation-model-1)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
@@ -54,12 +54,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Constraint use cases](#constraint-use-cases)
         -   [Set an associated constant to a specific value](#set-an-associated-constant-to-a-specific-value)
         -   [Same type constraints](#same-type-constraints)
-            -   [Set an associated type to a specific value](#set-an-associated-type-to-a-specific-value)
-            -   [Equal generic types](#equal-generic-types)
+            -   [Set an associated facet to a specific value](#set-an-associated-facet-to-a-specific-value)
+            -   [Equal facet bindings](#equal-facet-bindings)
                 -   [Satisfying both facet types](#satisfying-both-facet-types)
-        -   [Type bound for associated type](#type-bound-for-associated-type)
-            -   [Type bounds on associated types in declarations](#type-bounds-on-associated-types-in-declarations)
-            -   [Type bounds on associated types in interfaces](#type-bounds-on-associated-types-in-interfaces)
+        -   [Type bound for associated facet](#type-bound-for-associated-facet)
+            -   [Type bounds on associated facets in declarations](#type-bounds-on-associated-facets-in-declarations)
+            -   [Type bounds on associated facets in interfaces](#type-bounds-on-associated-facets-in-interfaces)
         -   [Combining constraints](#combining-constraints)
         -   [Recursive constraints](#recursive-constraints)
         -   [Parameterized type implements interface](#parameterized-type-implements-interface)
@@ -127,8 +127,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Evolution](#evolution)
     -   [Testing](#testing)
     -   [Impl with state](#impl-with-state)
-    -   [Generic associated types and higher-ranked types](#generic-associated-types-and-higher-ranked-types)
-        -   [Generic associated types](#generic-associated-types)
+    -   [Generic associated facets and higher-ranked facets](#generic-associated-facets-and-higher-ranked-facets)
+        -   [Generic associated facets](#generic-associated-facets)
         -   [Higher-ranked types](#higher-ranked-types)
     -   [Field requirements](#field-requirements)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
@@ -174,7 +174,7 @@ member of the type) could be a member of an interface and its implementation.
 There are a few cases why we would include another interface implementation as a
 member:
 
--   [associated types](#associated-types)
+-   [associated facets](#associated-facets)
 -   [type parameters](#parameterized-interfaces)
 -   [interface requirements](#interface-requiring-other-interfaces)
 
@@ -991,7 +991,7 @@ members of those interfaces.
 
 To declare a named constraint that includes other declarations for use with
 template parameters, use the `template` keyword before `constraint`. Method,
-associated type, and associated function requirements may only be declared
+associated constant, and associated function requirements may only be declared
 inside a `template constraint`. Note that a generic constraint ignores the names
 of members defined for a type, but a template constraint can depend on them.
 
@@ -1371,8 +1371,8 @@ interface SetAlgebra {
 
 **Alternative considered:** The `extend` declarations are in the body of the
 `interface` definition instead of the header so we can use
-[associated types (defined below)](#associated-types) also defined in the body
-in parameters or constraints of the interface being extended.
+[associated constants](terminology.md#associated-entity) also defined in the
+body in parameters or constraints of the interface being extended.
 
 ```
 // A type can implement `ConvertibleTo` many times, using
@@ -1381,8 +1381,8 @@ interface ConvertibleTo(T:! type) { ... }
 
 // A type can only implement `PreferredConversion` once.
 interface PreferredConversion {
-  let AssociatedType:! type;
-  extend ConvertibleTo(AssociatedType);
+  let AssociatedFacet:! type;
+  extend ConvertibleTo(AssociatedFacet);
 }
 ```
 
@@ -2139,19 +2139,19 @@ Together associated methods and associated class functions are called
 _associated functions_, much like together methods and class functions are
 called [member functions](/docs/design/classes.md#member-functions).
 
-## Associated types
+## Associated facets
 
-Associated types are [associated entities](terminology.md#associated-entity)
-that happen to be types. These are particularly interesting since they can be
-used in the signatures of associated methods or functions, to allow the
-signatures of methods to vary from implementation to implementation. We already
-have one example of this: the `Self` type discussed
-[in the "Interfaces" section](#interfaces). For other cases, we can say that the
-interface declares that each implementation will provide a type under a specific
-name. For example:
+Associated facets are [associated entities](terminology.md#associated-entity)
+that happen to have a [facet type](terminology.md#facet-type). These are
+particularly interesting since they can be used in the signatures of associated
+methods or functions, to allow the signatures of methods to vary from
+implementation to implementation. We already have one example of this: the
+`Self` type discussed [in the "Interfaces" section](#interfaces). For other
+cases, we can say that the interface declares that each implementation will
+provide a facet under a specific name. For example:
 
 ```
-interface StackAssociatedType {
+interface StackAssociatedFacet {
   let ElementType:! type;
   fn Push[addr self: Self*](value: ElementType);
   fn Pop[addr self: Self*]() -> ElementType;
@@ -2159,11 +2159,11 @@ interface StackAssociatedType {
 }
 ```
 
-Here we have an interface called `StackAssociatedType` which defines two
+Here we have an interface called `StackAssociatedFacet` which defines two
 methods, `Push` and `Pop`. The signatures of those two methods declare them as
 accepting or returning values with the type `ElementType`, which any implementer
-of `StackAssociatedType` must also define. For example, maybe `DynamicArray`
-implements `StackAssociatedType`:
+of `StackAssociatedFacet` must also define. For example, maybe `DynamicArray`
+implements `StackAssociatedFacet`:
 
 ```
 class DynamicArray(T:! type) {
@@ -2173,8 +2173,8 @@ class DynamicArray(T:! type) {
   fn Insert[addr self: Self*](pos: IteratorType, value: T);
   fn Remove[addr self: Self*](pos: IteratorType);
 
-  // Set the associated type `ElementType` to `T`.
-  extend impl as StackAssociatedType where .ElementType = T {
+  // Set the associated facet `ElementType` to `T`.
+  extend impl as StackAssociatedFacet where .ElementType = T {
     fn Push[addr self: Self*](value: ElementType) {
       self->Insert(self->End(), value);
     }
@@ -2195,7 +2195,7 @@ class DynamicArray(T:! type) {
 
 The keyword `Self` can be used after the `as` in an `impl` declaration as a
 shorthand for the type being implemented, including in the `where` clause
-specifying the values of associated types, as in:
+specifying the values of associated facets, as in:
 
 ```
 impl VeryLongTypeName as Add
@@ -2206,16 +2206,16 @@ impl VeryLongTypeName as Add
 ```
 
 **Alternatives considered:** See
-[other syntax options considered in #731 for specifying associated types](/proposals/p0731.md#syntax-for-associated-constants).
+[other syntax options considered in #731 for specifying associated facets](/proposals/p0731.md#syntax-for-associated-constants).
 In particular, it was deemed that
-[Swift's approach of inferring the associated type from method signatures in the impl](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190)
+[Swift's approach of inferring an associated facet from method signatures in the impl](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190)
 was unneeded complexity.
 
-The definition of the `StackAssociatedType` is sufficient for writing a generic
+The definition of the `StackAssociatedFacet` is sufficient for writing a generic
 function that operates on anything implementing that interface, for example:
 
 ```
-fn PeekAtTopOfStack[StackType:! StackAssociatedType](s: StackType*)
+fn PeekAtTopOfStack[StackType:! StackAssociatedFacet](s: StackType*)
     -> StackType.ElementType {
   var top: StackType.ElementType = s->Pop();
   s->Push(top);
@@ -2224,11 +2224,11 @@ fn PeekAtTopOfStack[StackType:! StackAssociatedType](s: StackType*)
 ```
 
 Inside the generic function `PeekAtTopOfStack`, the `ElementType` associated
-type member of `StackType` is erased. This means `StackType.ElementType` has the
-API dictated by the declaration of `ElementType` in the interface
-`StackAssociatedType`.
+facet member of `StackType` is erased. This means `StackType.ElementType` has
+the API dictated by the declaration of `ElementType` in the interface
+`StackAssociatedFacet`.
 
-Outside the generic, associated types have the concrete type values determined
+Outside the generic, associated facets have the concrete facet values determined
 by impl lookup, rather than the erased version of that type used inside a
 generic.
 
@@ -2243,7 +2243,7 @@ This is another part of achieving
 [the goal that generic functions can be used in place of regular functions without changing the return type that callers see](goals.md#path-from-regular-functions)
 discussed in the [return type section](#return-type).
 
-Associated types can also be implemented using a
+Associated facets can also be implemented using a
 [member type](/docs/design/classes.md#member-type).
 
 ```
@@ -2269,11 +2269,11 @@ For context, see
 **Comparison with other languages:** Both
 [Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
 and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
-support associated types.
+support these, but call them "associated types."
 
 ### Implementation model
 
-The associated type can be modeled by a witness table field in the interface's
+The associated facet can be modeled by a witness table field in the interface's
 witness table.
 
 ```
@@ -2308,7 +2308,7 @@ class Container(Self:! type) {
 
 ## Parameterized interfaces
 
-Associated types don't change the fact that a type can only implement an
+Associated constants don't change the fact that a type can only implement an
 interface at most once.
 
 If instead you want a family of related interfaces, one per possible value of a
@@ -2316,8 +2316,8 @@ type parameter, multiple of which could be implemented for a single type, you
 would use
 [parameterized interfaces](terminology.md#interface-parameters-and-associated-constants).
 To write a parameterized version of the stack interface, instead of using
-associated types, write a parameter list after the name of the interface instead
-of the associated type declaration:
+associated constants, write a parameter list after the name of the interface
+instead of the associated constant declaration:
 
 ```
 interface StackParameterized(ElementType:! type) {
@@ -2359,9 +2359,9 @@ class Produce {
 }
 ```
 
-Unlike associated types in interfaces and parameters to types, interface
+Unlike associated constants in interfaces and parameters to types, interface
 parameters can't be deduced. For example, if we were to rewrite
-[the `PeekAtTopOfStack` example in the "associated types" section](#associated-types)
+[the `PeekAtTopOfStack` example in the "associated facets" section](#associated-facets)
 for `StackParameterized(T)` it would generate a compile error:
 
 ```
@@ -2469,15 +2469,15 @@ class ReverseLookup(FromType:! type, ToType:! type) {
 ```
 
 **Comparison with other languages:** Rust calls
-[traits with type parameters "generic traits"](https://doc.rust-lang.org/reference/items/traits.html#generic-traits)
+[traits with parameters "generic traits"](https://doc.rust-lang.org/reference/items/traits.html#generic-traits)
 and
 [uses them for operator overloading](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading).
 
 [Rust uses the term "type parameters"](https://github.com/rust-lang/rfcs/blob/master/text/0195-associated-items.md#clearer-trait-matching)
-for both interface type parameters and associated types. The difference is that
-interface parameters are "inputs" since they _determine_ which `impl` to use,
-and associated types are "outputs" since they are determined _by_ the `impl`,
-but play no role in selecting the `impl`.
+for both interface facet parameters and associated facets. The difference is
+that interface parameters are "inputs" since they _determine_ which `impl` to
+use, and associated constants are "outputs" since they are determined _by_ the
+`impl`, but play no role in selecting the `impl`.
 
 ### Impl lookup
 
@@ -2521,16 +2521,16 @@ support parameters. Parameters would work the same way as for interfaces.
 
 ## Where constraints
 
-So far, we have restricted a generic type parameter by saying it has to
+So far, we have restricted a generic facet parameter by saying it has to
 implement an interface or a set of interfaces. There are a variety of other
 constraints we would like to be able to express, such as applying restrictions
-to its associated types and associated constants. This is done using the `where`
-operator that adds constraints to a facet type.
+to its associated constants. This is done using the `where` operator that adds
+constraints to a facet type.
 
 The where operator can be applied to a facet type in a declaration context:
 
 ```
-// Constraints on function parameters:
+// Constraints on generic function parameters:
 fn F[V:! D where ...](v: V) { ... }
 
 // Constraints on a class parameter:
@@ -2604,10 +2604,11 @@ The "dot followed by the name of a member" construct, `.N` in the examples
 above, is called a _designator_. A designator refers to the value of that member
 for whatever type is to satisfy this constraint.
 
-To name such a constraint, you may use a `let` or a `constraint` declaration:
+To name such a constraint, you may use a `let template` or a `constraint`
+declaration:
 
 ```
-let Point2DInterface:! auto = NSpacePoint where .N = 2;
+let template Point2DInterface:! auto = NSpacePoint where .N = 2;
 constraint Point2DInterface {
   extend NSpacePoint where .N = 2;
 }
@@ -2634,10 +2635,10 @@ interface PointCloud {
 
 #### Same type constraints
 
-##### Set an associated type to a specific value
+##### Set an associated facet to a specific value
 
 Functions accepting a generic type might also want to constrain one of its
-associated types to be a specific, concrete type. For example, we might want to
+associated facets to be a specific, concrete type. For example, we might want to
 have a function only accept stacks containing integers:
 
 ```
@@ -2651,25 +2652,27 @@ fn SumIntStack[T:! Stack where .ElementType = i32](s: T*) -> i32 {
 }
 ```
 
-To name these sorts of constraints, we could use `let` declarations or
+To name these sorts of constraints, we could use `let template` declarations or
 `constraint` definitions:
 
 ```
-let IntStack:! auto = Stack where .ElementType = i32;
+let template IntStack:! auto = Stack where .ElementType = i32;
 constraint IntStack {
   extend Stack where .ElementType = i32;
 }
 ```
 
 This syntax is also used to specify the values of
-[associated types](#associated-types) when implementing an interface for a type.
+[associated facets](#associated-facets) when implementing an interface for a
+type.
 
-##### Equal generic types
+##### Equal facet bindings
 
-Alternatively, two generic types could be constrained to be equal to each other,
-without specifying what that type is. This uses `==` instead of `=`. For
-example, we could make the `ElementType` of an `Iterator` interface equal to the
-`ElementType` of a `Container` interface as follows:
+Alternatively, two [facet bindings](terminology.md#facet-binding) could be
+constrained to be equal to each other, without specifying what the facet value
+is. This uses `==` instead of `=`. For example, we could make the `ElementType`
+of an `Iterator` interface equal to the `ElementType` of a `Container` interface
+as follows:
 
 ```
 interface Iterator {
@@ -2683,7 +2686,7 @@ interface Container {
 }
 ```
 
-Given an interface with two associated types
+Given an interface with two associated facets
 
 ```
 interface PairInterface {
@@ -2710,14 +2713,14 @@ interface HasEqualPair {
 This kind of constraint can be named:
 
 ```
-let EqualPair:! auto =
+let template EqualPair:! auto =
     PairInterface where .Left == .Right;
 constraint EqualPair {
   extend PairInterface where .Left == .Right;
 }
 ```
 
-Another example of same type constraints is when associated types of two
+Another example of same type constraints is when associated facets of two
 different interfaces are constrained to be equal:
 
 ```
@@ -2763,13 +2766,13 @@ fn Contains
     (haystack: SC, needles: CT) -> bool;
 ```
 
-#### Type bound for associated type
+#### Type bound for associated facet
 
-A `where` clause can express that a type must implement an interface. This is
-more flexible than the usual approach of including that interface in the type
-since it can be applied to associated type members as well.
+A `where` clause can express that a facet binding must implement an interface.
+This is more flexible than the usual approach of including that interface in the
+type since it can be applied to associated facet members as well.
 
-##### Type bounds on associated types in declarations
+##### Type bounds on associated facets in declarations
 
 In the following example, normally the `ElementType` of a `Container` can be any
 type. The `SortContainer` function, however, takes a pointer to a type
@@ -2797,7 +2800,7 @@ type.
 `Container`. This means we need to be a bit careful when talking about the type
 of `ContainerType` when there is a `where` clause modifying it.
 
-##### Type bounds on associated types in interfaces
+##### Type bounds on associated facets in interfaces
 
 Given these definitions (omitting `ElementType` for brevity):
 
@@ -2814,7 +2817,7 @@ interface RandomAccessIterator {
 ```
 
 We can then define a function that only accepts types that implement
-`ContainerInterface` where its `IteratorType` associated type implements
+`ContainerInterface` where its `IteratorType` associated facet implements
 `RandomAccessIterator`:
 
 ```
@@ -2828,7 +2831,7 @@ We would like to be able to name this constraint, defining a
 `ContainerInterface` with an `IteratorType` satisfying `RandomAccessIterator`.
 
 ```
-let RandomAccessContainer:! auto =
+let template RandomAccessContainer:! auto =
     ContainerInterface where .IteratorType impls RandomAccessIterator;
 // or
 constraint RandomAccessContainer {
@@ -2847,8 +2850,8 @@ fn F[ContainerType:! ContainerInterface
 #### Combining constraints
 
 Constraints can be combined by separating constraint clauses with the `and`
-keyword. This example expresses a constraint that two associated types are equal
-and satisfy an interface:
+keyword. This example expresses a constraint that two associated facets are
+equal and satisfy an interface:
 
 ```
 fn EqualContainers
@@ -2865,9 +2868,9 @@ type in a parameter list that is already using commas to separate parameters.
 
 #### Recursive constraints
 
-We sometimes need to constrain a type to equal one of its associated types. In
+We sometimes need to constrain a type to equal one of its associated facets. In
 this first example, we want to represent the function `Abs` which will return
-`Self` for some but not all types, so we use an associated type `MagnitudeType`
+`Self` for some but not all types, so we use an associated facet `MagnitudeType`
 to encode the return type:
 
 ```
@@ -2890,9 +2893,9 @@ the original container type. However, taking the slice of a slice always gives
 you the same type, and some functions want to only operate on containers whose
 slice type is the same as the container type.
 
-To solve this problem, we think of `Self` as an actual associated type member of
-every interface. We can then address it using `.Self` in a `where` clause, like
-any other associated type member.
+To solve this problem, we think of `Self` as an actual associated facet member
+of every interface. We can then address it using `.Self` in a `where` clause,
+like any other associated facet member.
 
 ```
 fn Relu[T:! HasAbs where .MagnitudeType == .Self](x: T) {
@@ -2906,7 +2909,7 @@ fn UseContainer[T:! Container where .SliceType == .Self](c: T) -> bool {
 ```
 
 Notice that in an interface definition, `Self` refers to the type implementing
-this interface while `.Self` refers to the associated type currently being
+this interface while `.Self` refers to the associated facet currently being
 defined.
 
 ```
@@ -2925,11 +2928,11 @@ interface Container {
 These recursive constraints can be named:
 
 ```
-let RealAbs:! auto = HasAbs where .MagnitudeType == .Self;
+let template RealAbs:! auto = HasAbs where .MagnitudeType == .Self;
 constraint RealAbs {
   extend HasAbs where .MagnitudeType == Self;
 }
-let ContainerIsSlice:! auto =
+let template ContainerIsSlice:! auto =
     Container where .SliceType == .Self;
 constraint ContainerIsSlice {
   extend Container where .SliceType == Self;
@@ -3124,7 +3127,7 @@ say that the `EdgesFrom` would only be conditionally available when `Edge` does
 satisfy the constraints on `HashSet` arguments. Instead, Carbon will reject this
 definition, requiring the user to include all the constraints required for the
 other declarations in the interface in the declaration of the `Edge` associated
-type. Similarly, a parameter to a class must be declared with all the
+facet. Similarly, a parameter to a class must be declared with all the
 constraints needed to declare the members of the class that depend on that
 parameter.
 
@@ -3198,8 +3201,8 @@ means that if two type expressions are only transitively equal, the user will
 need to include a sequence of casts or use an
 [`observe` declaration](#observe-declarations) to convert between them.
 
-Given this interface `Transitive` that has associated types that are constrained
-to all be equal, with interfaces `P`, `Q`, and `R`:
+Given this interface `Transitive` that has associated facets that are
+constrained to all be equal, with interfaces `P`, `Q`, and `R`:
 
 ```
 interface P { fn InP[self: Self](); }
@@ -3273,8 +3276,8 @@ fn G[T:! Transitive](t: T) {
 ```
 
 The compiler may have several different `where` clauses to consider,
-particularly when an interface has associated types that recursively satisfy the
-same interface. For example, given this interface `Commute`:
+particularly when an interface has associated facets that recursively satisfy
+the same interface. For example, given this interface `Commute`:
 
 ```
 interface Commute {
@@ -3374,7 +3377,7 @@ prior to `X.Y.Y.X`.
 After an `observe` declaration, all of the listed type expressions are
 considered equal to each other using a single `where` equality. In this example,
 the `observe` declaration in the `Transitive` interface definition provides the
-link between associated types `A` and `C` that allows function `F` to type
+link between associated facets `A` and `C` that allows function `F` to type
 check.
 
 ```
@@ -3417,8 +3420,8 @@ interfaces to generic types, they may be added without breaking existing code.
 ## Other constraints as facet types
 
 There are some constraints that we will naturally represent as named facet
-types. These can either be used directly to constrain a generic type parameter,
-or in a `where ... impls ...` clause to constrain an associated type.
+types. These can either be used directly to constrain a facet binding, or in a
+`where ... impls ...` clause to constrain an associated facet.
 
 The compiler determines which types implement these interfaces, developers can
 not explicitly implement these interfaces for their own types.
@@ -3579,7 +3582,7 @@ class ThenCompare(
   }
 }
 
-let SongByArtistThenTitle: auto =
+let template SongByArtistThenTitle: auto =
     ThenCompare(Song, (SongByArtist, SongByTitle));
 var s1: Song = ...;
 var s2: SongByArtistThenTitle =
@@ -4459,8 +4462,8 @@ Since we do not require the compiler to compare the definitions of functions,
 agreement is only possible for interfaces without any function members.
 
 If the Carbon compiler sees a matching `final` impl, it can assume it won't be
-specialized so it can use the assignments of the associated types in that impl
-definition.
+specialized so it can use the assignments of the associated constants in that
+impl definition.
 
 ```
 fn F[T:! type](x: T) {
@@ -4533,9 +4536,9 @@ differences between the Carbon and Rust plans:
     declared `final`.
 -   Since a Rust impl is not specializable by default, generic functions can
     assume that if a matching blanket impl declaration is found, the associated
-    types from that impl will be used. In Carbon, if a generic function requires
-    an associated type to have a particular value, the function commonly will
-    need to state that using an explicit constraint.
+    constants from that impl will be used. In Carbon, if a generic function
+    requires an associated constant to have a particular value, the function
+    commonly will need to state that using an explicit constraint.
 -   Carbon will not have the "fundamental" attribute used by Rust on types or
     traits, as described in
     [Rust RFC 1023: "Rebalancing Coherence"](https://rust-lang.github.io/rfcs/1023-rebalancing-coherence.html).
@@ -4683,8 +4686,8 @@ The declaration of an interface implementation consists of:
 -   a [facet type](#facet-types), including an optional
     [parameter pattern](#parameterized-interfaces) and
     [`where` clause](#where-constraints) assigning
-    [associated constants](#associated-constants) and
-    [associated types](#associated-types).
+    [associated constants](#associated-constants) including
+    [associated facets](#associated-facets).
 
 **Note:** The `extend` keyword, when present, is not part of the declaration. It
 precedes the `impl` declaration in class scope.
@@ -4738,7 +4741,8 @@ after name and alias resolution. To agree:
     evaluation of type expressions is performed.
 
 Interface implementation declarations match if the type and interface
-expressions match:
+expressions match along with
+[the `forall` clause](#parameterized-impl-declarations), if any:
 
 -   If the type part is omitted, it is rewritten to `Self` in the context of the
     declaration.
@@ -4746,7 +4750,7 @@ expressions match:
     scope, this should match the type name and optional parameter expression
     after `class`. So in `class MyClass { ... }`, `Self` is rewritten to
     `MyClass`. In `class Vector(T:! Movable) { ... }`, `Self` is rewritten to
-    `Vector(T:! Movable)`.
+    `forall [T:! Movable] Vector(T)`.
 -   Types match if they have the same name after name and alias resolution and
     the same parameters, or are the same type parameter.
 -   Interfaces match if they have the same name after name and alias resolution
@@ -4856,8 +4860,8 @@ impl MyClass as Interface6 where _ { }
 
 ### Example of declaring interfaces with cyclic references
 
-In this example, `Node` has an `EdgeType` associated type that is constrained to
-implement `Edge`, and `Edge` has a `NodeType` associated type that is
+In this example, `Node` has an `EdgeType` associated facet that is constrained
+to implement `Edge`, and `Edge` has a `NodeType` associated facet that is
 constrained to implement `Node`. Furthermore, the `NodeType` of an `EdgeType` is
 the original type, and the other way around. This is accomplished by naming and
 then forward declaring the constraints that can't be stated directly:
@@ -4993,7 +4997,7 @@ developers desire. As an example, in Rust the
 has one required method but dozens of "provided methods" with defaults.
 
 Defaults may also be provided for associated constants, such as associated
-types, and interface parameters, using the `= <default value>` syntax.
+facets, and interface parameters, using the `= <default value>` syntax.
 
 ```
 interface Add(Right:! type = Self) {
@@ -5007,7 +5011,7 @@ impl String as Add() {
 }
 ```
 
-Note that `Self` is a legal default value for an associated type or type
+Note that `Self` is a legal default value for an associated facet or facet
 parameter. In this case the value of those names is not determined until `Self`
 is, so `Add()` is equivalent to the constraint:
 
@@ -5021,7 +5025,7 @@ constraint AddDefault {
 Note also that the parenthesis are required after `Add`, even when all
 parameters are left as their default values.
 
-More generally, default expressions may reference other associated types or
+More generally, default expressions may reference other associated constants or
 `Self` as parameters to type constructors. For example:
 
 ```
@@ -5259,7 +5263,7 @@ interface B(T:! type) {
 
 An implementation of `B` for a set of types can only be valid if there is a
 visible implementation of `A` with the same `T` parameter for those types with
-the `.Result` associated type set to `i32`. That is
+the `.Result` associated facet set to `i32`. That is
 [not sufficient](/proposals/p1088.md#less-strict-about-requirements-with-where-clauses),
 though, unless the implementation of `A` can't be specialized, either because it
 is [marked `final`](#final-impl-declarations) or is not
@@ -5931,14 +5935,14 @@ expected behavior of any type implementing that interface.
 
 A feature we might consider where an `impl` itself can have state.
 
-### Generic associated types and higher-ranked types
+### Generic associated facets and higher-ranked facets
 
 This would be some way to express the requirement that there is a way to go from
 a type to an implementation of an interface parameterized by that type.
 
-#### Generic associated types
+#### Generic associated facets
 
-Generic associated types are about when this is a requirement of an interface.
+Generic associated facets are about when this is a requirement of an interface.
 These are also called "associated type constructors."
 
 Rust has
@@ -5948,7 +5952,7 @@ Rust has
 
 Higher-ranked types are used to represent this requirement in a function
 signature. They can be
-[emulated using generic associated types](https://smallcultfollowing.com/babysteps//blog/2016/11/03/associated-type-constructors-part-2-family-traits/).
+[emulated using generic associated facets](https://smallcultfollowing.com/babysteps//blog/2016/11/03/associated-type-constructors-part-2-family-traits/).
 
 ### Field requirements
 
@@ -5980,7 +5984,7 @@ types at runtime, and there are also concerns about reasoning about comparisons
 between multiple generic integer parameters. For example, if `J < K` and
 `K <= L`, can we call a function that requires `J < L`? There is also a
 secondary syntactic concern about how to write this kind of constraint on a
-parameter, as opposed to an associated type, as in `N:! u32 where ___ >= 2`.
+parameter, as opposed to an associated facet, as in `N:! u32 where ___ >= 2`.
 
 ## References
 

@@ -87,7 +87,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Checked and template parameters](#checked-and-template-parameters)
     -   [Interfaces and implementations](#interfaces-and-implementations)
     -   [Combining constraints](#combining-constraints)
-    -   [Associated types](#associated-types)
+    -   [Associated constants](#associated-constants)
     -   [Generic entities](#generic-entities)
         -   [Generic Classes](#generic-classes)
         -   [Generic choice types](#generic-choice-types)
@@ -2700,7 +2700,7 @@ In addition to function requirements, interfaces can contain:
 -   [requirements that other interfaces be implemented](generics/details.md#interface-requiring-other-interfaces)
     or
     [interfaces that this interface extends](generics/details.md#interface-extension)
--   [associated types](generics/details.md#associated-types) and other
+-   [associated facets](generics/details.md#associated-facets) and other
     [associated constants](generics/details.md#associated-constants)
 -   [interface defaults](generics/details.md#interface-defaults)
 -   [`final` interface members](generics/details.md#final-members)
@@ -2800,9 +2800,9 @@ fn DrawTies[T:! Renderable & GameResult](x: T) {
 > -   Proposal
 >     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
 
-### Associated types
+### Associated constants
 
-An associated type is a type member of an interface whose value is determined by
+An associated constant is a member of an interface whose value is determined by
 the implementation of that interface for a specific type. These values are set
 to compile-time values in implementations, and so use the
 [`:!` generic syntax](#checked-and-template-parameters) inside a
@@ -2810,7 +2810,7 @@ to compile-time values in implementations, and so use the
 allows types in the signatures of functions in the interface to vary. For
 example, an interface describing a
 [stack](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>) might use an
-associated type to represent the type of elements stored in the stack.
+associated constant to represent the type of elements stored in the stack.
 
 ```
 interface StackInterface {
@@ -2821,8 +2821,8 @@ interface StackInterface {
 }
 ```
 
-Then different types implementing `StackInterface` can specify different type
-values for the `ElementType` member of the interface using a `where` clause:
+Then different types implementing `StackInterface` can specify different values
+for the `ElementType` member of the interface using a `where` clause:
 
 ```carbon
 class IntStack {
@@ -2842,7 +2842,7 @@ class FruitStack {
 
 > References:
 >
-> -   [Generics: Associated types](generics/details.md#associated-types)
+> -   [Generics: Associated constants](generics/details.md#associated-constants)
 > -   Proposal
 >     [#731: Generics details 2: adapters, associated types, parameterized interfaces](https://github.com/carbon-language/carbon-lang/pull/731)
 > -   Proposal
@@ -2924,8 +2924,8 @@ a type can have distinct implementations of `AddWith(i32)` and
 `AddWith(BigInt)`.
 
 Parameters to an interface _determine_ which implementation is selected for a
-type, in contrast to [associated types](#associated-types) which are _determined
-by_ the implementation of an interface for a type.
+type, in contrast to [associated constants](#associated-constants) which are
+_determined by_ the implementation of an interface for a type.
 
 > References:
 >
@@ -2996,7 +2996,7 @@ Carbon generics have a number of other features, including:
     same data representation as an existing type, so you may cast between the
     two types, but can implement different interfaces or implement interfaces
     differently.
--   Additional requirements can be placed on the associated types of an
+-   Additional requirements can be placed on the associated constants of an
     interface using
     [`where` constraints](generics/details.md#where-constraints).
 -   [Implied constraints](generics/details.md#implied-constraints) allows some
