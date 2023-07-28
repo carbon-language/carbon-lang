@@ -200,7 +200,7 @@ template <typename T, typename... Args,
           typename std::enable_if_t<std::is_constructible_v<T, Args...> &&
                                     Arena::CanonicalizeAllocation<T>::value>*>
 auto Arena::New(Args&&... args) -> Nonnull<const T*> {
-  const T*& canonical_instance = CanonicalInstance<T>(this, args...);
+  const T*& canonical_instance = CanonicalInstance<T>(args...);
   if (canonical_instance == nullptr) {
     canonical_instance = UniqueNew<T>(std::forward<Args>(args)...);
   }
