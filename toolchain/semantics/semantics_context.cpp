@@ -563,7 +563,8 @@ auto SemanticsContext::CanonicalizeTupleType(
                               make_tuple_node);
 }
 
-auto SemanticsContext::GetUnqualifiedType(SemanticsTypeId type_id) -> SemanticsTypeId {
+auto SemanticsContext::GetUnqualifiedType(SemanticsTypeId type_id)
+    -> SemanticsTypeId {
   SemanticsNode type_node =
       semantics_ir_->GetNode(semantics_ir_->GetType(type_id));
   if (type_node.kind() == SemanticsNodeKind::ConstType)

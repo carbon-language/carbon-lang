@@ -385,8 +385,8 @@ class SemanticsNode {
   using Namespace = FactoryNoType<SemanticsNodeKind::Namespace,
                                   SemanticsNameScopeId /*name_scope_id*/>;
 
-  using PointerType = Factory<SemanticsNodeKind::PointerType,
-                              SemanticsTypeId /*pointee_id*/>;
+  using PointerType =
+      Factory<SemanticsNodeKind::PointerType, SemanticsTypeId /*pointee_id*/>;
 
   using RealLiteral = Factory<SemanticsNodeKind::RealLiteral,
                               SemanticsRealLiteralId /*real_id*/>;
