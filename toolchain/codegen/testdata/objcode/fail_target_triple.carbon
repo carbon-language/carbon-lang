@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // ARGS: dump objcode --target_triple=x86_684-unknown-linux-gnu --output_file=%t %s
-// TODO: Support autoupdate with ARGS.
+// No autoupdate because the message comes from LLVM.
 // NOAUTOUPDATE
 // CHECK:STDERR: ERROR: Invalid -target_triple:{{.*}}
 
