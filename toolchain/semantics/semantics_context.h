@@ -169,6 +169,9 @@ class SemanticsContext {
         ImplicitAsRequired(parse_node, value_id, SemanticsTypeId::TypeType));
   }
 
+  // Removes any top-level `const` qualifiers from a type.
+  auto GetUnqualifiedType(SemanticsTypeId type_id) -> SemanticsTypeId;
+
   // Starts handling parameters or arguments.
   auto ParamOrArgStart() -> void;
 

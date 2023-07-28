@@ -501,7 +501,8 @@ auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
     case SemanticsNodeKind::ConstType: {
       return CanonicalizeTypeImpl(
           node.kind(), node_id, [&](llvm::FoldingSetNodeID& canonical_id) {
-            canonical_id.AddInteger(node.GetAsConstType().index);
+            canonical_id.AddInteger(
+                GetUnqualifiedType(node.GetAsConstType()).index);
           });
     }
 
@@ -560,6 +561,14 @@ auto SemanticsContext::CanonicalizeTupleType(
   };
   return CanonicalizeTypeImpl(SemanticsNodeKind::TupleType, profile_tuple,
                               make_tuple_node);
+}
+
+auto SemanticsContext::GetUnqualifiedType(SemanticsTypeId type_id) -> SemanticsTypeId {
+  SemanticsNode type_node =
+      semantics_ir_->GetNode(semantics_ir_->GetType(type_id));
+  if (type_node.kind() == SemanticsNodeKind::ConstType)
+    return type_node.GetAsConstType();
+  return type_id;
 }
 
 auto SemanticsContext::PrintForStackDump(llvm::raw_ostream& output) const

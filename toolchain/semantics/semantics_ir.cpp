@@ -211,6 +211,12 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::PointerType:
       return -2;
 
+    case SemanticsNodeKind::CrossReference:
+      // TODO: Once we support stringification of cross-references, we'll need
+      // to determine the precedence of the target of the cross-reference. For
+      // now, all cross-references refer to builtin types from the prelude.
+      return 0;
+
     case SemanticsNodeKind::Assign:
     case SemanticsNodeKind::BinaryOperatorAdd:
     case SemanticsNodeKind::BindName:
@@ -220,7 +226,6 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::BranchIf:
     case SemanticsNodeKind::BranchWithArg:
     case SemanticsNodeKind::Call:
-    case SemanticsNodeKind::CrossReference:
     case SemanticsNodeKind::FunctionDeclaration:
     case SemanticsNodeKind::IntegerLiteral:
     case SemanticsNodeKind::Invalid:
