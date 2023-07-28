@@ -23,6 +23,7 @@ cc_library(
     hdrs = ["main.h"],
     deps = [
         "//common:error",
+        "//common:ostream",
         "//explorer/common:trace_stream",
         "//explorer/parse_and_execute",
         "@llvm-project//llvm:Support",
@@ -45,7 +46,8 @@ cc_library(
     testonly = 1,
     srcs = ["file_test.cpp"],
     deps = [
-        "//explorer/parse_and_execute",
+        ":main",
+        "//common:check",
         "//testing/file_test:file_test_base",
         "//testing/util:test_raw_ostream",
         "@com_google_absl//absl/flags:flag",

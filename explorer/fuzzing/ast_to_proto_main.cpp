@@ -31,15 +31,10 @@ auto Main(int argc, char** argv) -> ErrorOr<Success> {
     return Error("Argument must be a file.");
   }
 
-  // Read the input file.
-  std::ifstream proto_file(argv[1]);
-  std::stringstream buffer;
-  buffer << proto_file.rdbuf();
-  proto_file.close();
-
   Arena arena;
-  const ErrorOr<AST> ast = Parse(&arena, argv[1], FileKind::Main,
-                                 /*parser_debug=*/false);
+  const ErrorOr<AST> ast =
+      Parse(*llvm::vfs::getRealFileSystem(), &arena, argv[1], FileKind::Main,
+            /*parser_debug=*/false);
   if (!ast.ok()) {
     return ErrorBuilder() << "Parsing failed: " << ast.error().message();
   }

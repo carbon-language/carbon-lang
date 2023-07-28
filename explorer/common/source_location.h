@@ -26,7 +26,7 @@ class SourceLocation {
   }
 
   // The filename should be eternal or arena-allocated to eliminate copies.
-  explicit constexpr SourceLocation(const char* filename, int line_num,
+  explicit constexpr SourceLocation(std::string_view filename, int line_num,
                                     FileKind file_kind)
       : filename_(filename), line_num_(line_num), file_kind_(file_kind) {}
   explicit SourceLocation(Nonnull<const std::string*> filename, int line_num,
