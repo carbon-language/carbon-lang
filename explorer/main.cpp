@@ -31,9 +31,7 @@ namespace cl = llvm::cl;
 namespace path = llvm::sys::path;
 
 auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
-                  llvm::StringRef relative_prelude_path,
-                  llvm::raw_ostream& out_stream, llvm::raw_ostream& err_stream)
-    -> int {
+                  llvm::StringRef relative_prelude_path) -> int {
   llvm::setBugReportMsg(
       "Please report issues to "
       "https://github.com/carbon-language/carbon-lang/issues and include the "
@@ -42,15 +40,15 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
 
   // Printing to stderr should flush stdout. This is most noticeable when stderr
   // is piped to stdout.
-  err_stream.tie(&out_stream);
+  llvm::errs().tie(&llvm::outs());
 
   std::string exe =
       llvm::sys::fs::getMainExecutable(argv[0], static_for_main_addr);
   llvm::StringRef install_path = path::parent_path(exe);
 
   return ExplorerMain(argc, const_cast<const char**>(argv), install_path,
-                      relative_prelude_path, out_stream, err_stream, out_stream,
-                      *llvm::vfs::getRealFileSystem());
+                      relative_prelude_path, llvm::outs(), llvm::errs(),
+                      llvm::outs(), *llvm::vfs::getRealFileSystem());
 }
 
 auto ExplorerMain(int argc, const char** argv, llvm::StringRef install_path,
