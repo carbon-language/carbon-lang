@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "absl/flags/flag.h"
-#include "common/check.h"
 #include "explorer/main.h"
 #include "testing/file_test/file_test_base.h"
 #include "testing/util/test_raw_ostream.h"
@@ -16,10 +15,9 @@ ABSL_FLAG(bool, trace, false,
 namespace Carbon::Testing {
 namespace {
 
-class ParseAndExecuteTestFile : public FileTestBase {
+class ExplorerFileTest : public FileTestBase {
  public:
-  explicit ParseAndExecuteTestFile(const std::filesystem::path& path)
-      : FileTestBase(path) {}
+  using FileTestBase::FileTestBase;
 
   auto RunWithFiles(const llvm::SmallVector<llvm::StringRef>& test_args,
                     const llvm::SmallVector<TestFile>& test_files,
@@ -89,12 +87,6 @@ class ParseAndExecuteTestFile : public FileTestBase {
 
 }  // namespace
 
-extern auto RegisterFileTests(
-    const llvm::SmallVector<std::filesystem::path>& paths) -> void {
-  ParseAndExecuteTestFile::RegisterTests(
-      "ParseAndExecuteTestFile", paths, [](const std::filesystem::path& path) {
-        return new ParseAndExecuteTestFile(path);
-      });
-}
+CARBON_FILE_TEST_FACTORY(ExplorerFileTest);
 
 }  // namespace Carbon::Testing

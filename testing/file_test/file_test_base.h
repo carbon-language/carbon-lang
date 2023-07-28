@@ -19,8 +19,8 @@
 
 namespace Carbon::Testing {
 
-// A framework for testing files. Children implement `RegisterTestFiles` with
-// calls to `RegisterTests` using a factory that constructs the child.
+// A framework for testing files. Children write
+// `CARBON_FILE_TEST_FACTORY(MyTest)` which is used to construct the tests.
 // `RunWithFiles` must also be implemented and will be called as part of
 // individual test executions. This framework includes a `main` implementation,
 // so users must not provide one.
@@ -94,23 +94,7 @@ class FileTestBase : public testing::Test {
     llvm::StringRef content;
   };
 
-  explicit FileTestBase(const std::filesystem::path& path) : path_(&path) {}
-
-  // Used by children to register tests with gtest.
-  static auto RegisterTests(
-      const char* fixture_label,
-      const llvm::SmallVector<std::filesystem::path>& paths,
-      std::function<FileTestBase*(const std::filesystem::path&)> factory)
-      -> void;
-
-  template <typename FileTestChildT>
-  static auto RegisterTests(
-      const char* fixture_label,
-      const llvm::SmallVector<std::filesystem::path>& paths) -> void {
-    RegisterTests(fixture_label, paths, [](const std::filesystem::path& path) {
-      return new FileTestChildT(path);
-    });
-  }
+  explicit FileTestBase(std::filesystem::path path) : path_(std::move(path)) {}
 
   // Implemented by children to run the test. Called by the TestBody
   // implementation, which will validate stdout and stderr. The return value
@@ -128,7 +112,7 @@ class FileTestBase : public testing::Test {
   auto TestBody() -> void final;
 
   // Returns the full path of the file being tested.
-  auto path() -> const std::filesystem::path& { return *path_; };
+  auto path() -> const std::filesystem::path& { return path_; };
 
  private:
   // Does replacements in ARGS for %s and %t.
@@ -148,12 +132,29 @@ class FileTestBase : public testing::Test {
   static auto TransformExpectation(int line_index, llvm::StringRef in)
       -> testing::Matcher<std::string>;
 
-  const std::filesystem::path* path_;
+  const std::filesystem::path path_;
+};
+
+struct FileTestFactory {
+  // The test fixture name.
+  const char* name;
+  // A factory function for tests.
+  std::function<FileTestBase*(const std::filesystem::path& path)> factory_fn;
 };
 
 // Must be implemented by the individual file_test to initialize tests.
-extern auto RegisterFileTests(
-    const llvm::SmallVector<std::filesystem::path>& paths) -> void;
+//
+// We can't use INSTANTIATE_TEST_CASE_P because of ordering issues between
+// container initialization and test instantiation by InitGoogleTest, but this
+// also allows us more flexibility in execution.
+extern auto GetFileTestFactory() -> FileTestFactory;
+
+// Provides a standard way to implement GetFileTestFactory.
+#define CARBON_FILE_TEST_FACTORY(Name)                                         \
+  auto GetFileTestFactory()->FileTestFactory {                                 \
+    return {(#Name),                                                           \
+            [](const std::filesystem::path& path) { return new Name(path); }}; \
+  }
 
 }  // namespace Carbon::Testing
 
