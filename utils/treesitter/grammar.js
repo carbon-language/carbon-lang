@@ -151,7 +151,7 @@ module.exports = grammar({
         $.struct_type_literal
       ),
 
-    _binding_lhs: ($) => choice($.ident, '_'),
+    binding_lhs: ($) => choice($.ident, '_'),
 
     paren_pattern: ($) =>
       seq(
@@ -163,9 +163,9 @@ module.exports = grammar({
     _pattern_without_expression: ($) =>
       choice(
         'auto',
-        seq($._binding_lhs, ':', $._expression),
-        seq($._binding_lhs, ':!', $._expression),
-        seq('template', $._binding_lhs, ':!', $._expression),
+        seq($.binding_lhs, ':', $._expression),
+        seq($.binding_lhs, ':!', $._expression),
+        seq('template', $.binding_lhs, ':!', $._expression),
         seq('var', $._pattern),
         $.paren_pattern,
         // alternative patterns
