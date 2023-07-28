@@ -41,9 +41,7 @@
 
 // Handles an index expression `a[0]`.
 //
-// If `CloseSquareBracket`:
-//   1. IndexExpressionFinish
-// Else:
+// Always:
 //   1. Expression
 //   2. IndexExpressionFinish
 CARBON_PARSER_STATE(IndexExpression)

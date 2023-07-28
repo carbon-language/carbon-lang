@@ -11,13 +11,13 @@
 // CHECK:STDOUT:   {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:       {kind: 'NameExpression', text: 't'},
 // CHECK:STDOUT:     {kind: 'IndexExpressionStart', text: '[', subtree_size: 2},
-// CHECK:STDOUT:   {kind: 'IndexExpression', text: ']', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'InvalidParse', text: ']', has_error: yes},
+// CHECK:STDOUT:   {kind: 'IndexExpression', text: ']', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 10},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-
-// CHECK:STDERR: fail_empty_expr.carbon:[[@LINE+3]]:16: Expected expression inside the square bracket.
+// CHECK:STDERR: fail_empty_expr.carbon:[[@LINE+3]]:16: Expected expression.
 // CHECK:STDERR: var v: i32 = t[];
 // CHECK:STDERR:                ^
 var v: i32 = t[];
