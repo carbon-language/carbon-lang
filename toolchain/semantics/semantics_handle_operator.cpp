@@ -85,14 +85,34 @@ auto SemanticsHandlePrefixOperator(SemanticsContext& context,
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
   switch (auto token_kind = context.tokens().GetKind(token)) {
-    case TokenKind::Not:
-      value_id = context.ImplicitAsBool(parse_node, value_id);
+    case TokenKind::Amp: {
+      // Only durable reference expressions can have their address taken.
+      switch (
+          GetSemanticsExpressionCategory(context.semantics_ir(), value_id)) {
+        case SemanticsExpressionCategory::DurableReference:
+          break;
+        case SemanticsExpressionCategory::EphemeralReference:
+          CARBON_DIAGNOSTIC(AddressOfEphemeralReference, Error,
+                            "Cannot take the address of a temporary object.");
+          context.emitter().Emit(parse_node, AddressOfEphemeralReference);
+          break;
+        default:
+          CARBON_DIAGNOSTIC(
+              AddressOfNonReference, Error,
+              "Cannot take the address of non-reference expression.");
+          context.emitter().Emit(parse_node, AddressOfNonReference);
+          break;
+      }
       context.AddNodeAndPush(
           parse_node,
-          SemanticsNode::UnaryOperatorNot::Make(
-              parse_node, context.semantics_ir().GetNode(value_id).type_id(),
+          SemanticsNode::AddressOf::Make(
+              parse_node,
+              context.GetPointerType(
+                  parse_node,
+                  context.semantics_ir().GetNode(value_id).type_id()),
               value_id));
       return true;
+    }
 
     case TokenKind::Const: {
       // `const (const T)` is probably not what the developer intended.
@@ -112,6 +132,18 @@ auto SemanticsHandlePrefixOperator(SemanticsContext& context,
                                          inner_type_id));
       return true;
     }
+
+    case TokenKind::Not:
+      value_id = context.ImplicitAsBool(parse_node, value_id);
+      context.AddNodeAndPush(
+          parse_node,
+          SemanticsNode::UnaryOperatorNot::Make(
+              parse_node, context.semantics_ir().GetNode(value_id).type_id(),
+              value_id));
+      return true;
+
+    case TokenKind::Star:
+      return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
 
     default:
       return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));

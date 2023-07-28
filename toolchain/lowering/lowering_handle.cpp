@@ -18,6 +18,12 @@ auto LoweringHandleCrossReference(LoweringFunctionContext& /*context*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
+auto LoweringHandleAddressOf(LoweringFunctionContext& context,
+                             SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  context.SetLocal(node_id, context.GetLocal(node.GetAsAddressOf()));
+}
+
 auto LoweringHandleAssign(LoweringFunctionContext& context,
                           SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
