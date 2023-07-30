@@ -1280,6 +1280,11 @@ auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
   const Nonnull<const Value*> type = cast<TypeInstantiationAction>(act).type();
   SourceLocation source_loc = cast<TypeInstantiationAction>(act).source_loc();
 
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- step instantiate type `" << *type << "` ("
+                   << source_loc << ") --->\n";
+  }
+
   switch (type->kind()) {
     case Value::Kind::NominalClassType: {
       const auto& class_type = cast<NominalClassType>(*type);

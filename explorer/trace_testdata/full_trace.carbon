@@ -8,13 +8,16 @@ interface TestInterface {}
 
 namespace N;
 
-fn N.Foo(n: i32) -> i32 {
-  return n + 1;
+class N.T {
+  fn Foo[self: Self]() -> i32 {
+    return self.n + 1;
+  }
+  var n: i32;
 }
 
 fn Main() -> i32 {
-  var x: i32 = N.Foo(0);
-  return x;
+  var n: N.T = { .n = -1 };
+  return n.Foo();
 }
 
 // Place checks after code so that line numbers are stable, reducing merge conflicts.
