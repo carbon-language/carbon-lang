@@ -36,6 +36,19 @@ void Bindings::Add(Nonnull<const GenericBinding*> binding,
   }
 }
 
+void Bindings::Print(llvm::raw_ostream& out) const {
+  llvm::ListSeparator sep;
+  out << " >  bindings args: [";
+  for (const auto& [binding, value] : args_) {
+    out << sep << "`" << *binding << "`: `" << *value << "`";
+  }
+  out << "]\n >  bindings witnesses: [";
+  for (const auto& [binding, value] : witnesses_) {
+    out << sep << "`" << *binding << "`: `" << *value << "`";
+  }
+  out << "]";
+};
+
 auto Bindings::None() -> Nonnull<const Bindings*> {
   static Nonnull<const Bindings*> bindings = new Bindings;
   return bindings;

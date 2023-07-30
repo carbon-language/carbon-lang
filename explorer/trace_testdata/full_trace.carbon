@@ -79,92 +79,85 @@ fn Main() -> i32 {
 // CHECK:STDOUT: --- flow-resolved return statement `return (n + 1);` in `fn N.Foo` (full_trace.carbon:12)
 // CHECK:STDOUT: --- flow-resolved return statement `return x;` in `fn Main` (full_trace.carbon:17)
 // CHECK:STDOUT: ********** type checking **********
-// CHECK:STDOUT: ** declaring interface TestInterface
-// CHECK:STDOUT: ** finished declaring interface TestInterface
-// CHECK:STDOUT: checking InterfaceDeclaration
-// CHECK:STDOUT: ** checking interface TestInterface
-// CHECK:STDOUT: impl declarations:{{ }}
-// CHECK:STDOUT: impl declarations: bool as interface EqWith(U = bool), i32 as interface EqWith(U = i32), String as interface EqWith(U = String), i32 as interface CompareWith(U = i32), String as interface CompareWith(U = String), i32 as interface LessWith(U = i32), String as interface LessWith(U = String), i32 as interface LessEqWith(U = i32), String as interface LessEqWith(U = String), i32 as interface GreaterWith(U = i32), String as interface GreaterWith(U = String), i32 as interface GreaterEqWith(U = i32), String as interface GreaterEqWith(U = String), i32 as interface Negate, i32 as interface AddWith(U = i32), i32 as interface SubWith(U = i32), i32 as interface MulWith(U = i32), i32 as interface DivWith(U = i32), i32 as interface ModWith(U = i32), i32 as interface BitComplement, i32 as interface BitAndWith(U = i32), i32 as interface BitOrWith(U = i32), i32 as interface BitXorWith(U = i32), i32 as interface LeftShiftWith(U = i32), i32 as interface RightShiftWith(U = i32), i32 as interface Inc, i32 as interface Dec, U as interface __EqualConverter [0], (T1,) as interface As(T = (U1,)) [0, 0, 0; 1, 1, 0, 0, 0], (T1, T2) as interface As(T = (U1, U2)) [0, 0, 0; 0, 0, 1; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1], (T1, U1) as interface EqWith(U = (T2, U2)) [0, 0, 0; 0, 0, 1; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1], (T1, T2, T3) as interface As(T = (U1, U2, U3)) [0, 0, 0; 0, 0, 1; 0, 0, 2; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1; 1, 1, 0, 0, 2], T as interface ImplicitAs(T = U) [0; 1, 1, 0], T as interface As(T = U) [0; 1, 1, 0], T as interface ImplicitAs(T = U) [0; 1, 1, 0], T as interface As(T = U) [0; 1, 1, 0], T as interface AssignWith(U = U) [0; 1, 1, 0], T as interface AddAssignWith(U = U) [0; 1, 1, 0], T as interface SubAssignWith(U = U) [0; 1, 1, 0], T as interface MulAssignWith(U = U) [0; 1, 1, 0], T as interface DivAssignWith(U = U) [0; 1, 1, 0], T as interface ModAssignWith(U = U) [0; 1, 1, 0], T as interface BitAndAssignWith(U = U) [0; 1, 1, 0], T as interface BitOrAssignWith(U = U) [0; 1, 1, 0], T as interface BitXorAssignWith(U = U) [0; 1, 1, 0], T as interface LeftShiftAssignWith(U = U) [0; 1, 1, 0], T as interface RightShiftAssignWith(U = U) [0; 1, 1, 0]
-// CHECK:STDOUT: ** finished checking interface TestInterface
-// CHECK:STDOUT: checking NamespaceDeclaration
-// CHECK:STDOUT: ** declaring function Foo
-// CHECK:STDOUT: checking TuplePattern (n: i32)
-// CHECK:STDOUT: checking BindingPattern n: i32
-// CHECK:STDOUT: checking ExpressionPattern i32
-// CHECK:STDOUT: checking IntTypeLiteral i32
+// CHECK:STDOUT: *** declaring `interface TestInterface` (full_trace.carbon:7)
+// CHECK:STDOUT: *** finished declaring `interface TestInterface` (full_trace.carbon:7)
+// CHECK:STDOUT: *** checking InterfaceDeclaration `interface TestInterface` (full_trace.carbon:7)
+// CHECK:STDOUT: *** checking `interface TestInterface` (full_trace.carbon:7)
+// CHECK:STDOUT: []
+// CHECK:STDOUT:  +  [`bool` as `interface EqWith(U = bool)`, `i32` as `interface EqWith(U = i32)`, `String` as `interface EqWith(U = String)`, `i32` as `interface CompareWith(U = i32)`, `String` as `interface CompareWith(U = String)`, `i32` as `interface LessWith(U = i32)`, `String` as `interface LessWith(U = String)`, `i32` as `interface LessEqWith(U = i32)`, `String` as `interface LessEqWith(U = String)`, `i32` as `interface GreaterWith(U = i32)`, `String` as `interface GreaterWith(U = String)`, `i32` as `interface GreaterEqWith(U = i32)`, `String` as `interface GreaterEqWith(U = String)`, `i32` as `interface Negate`, `i32` as `interface AddWith(U = i32)`, `i32` as `interface SubWith(U = i32)`, `i32` as `interface MulWith(U = i32)`, `i32` as `interface DivWith(U = i32)`, `i32` as `interface ModWith(U = i32)`, `i32` as `interface BitComplement`, `i32` as `interface BitAndWith(U = i32)`, `i32` as `interface BitOrWith(U = i32)`, `i32` as `interface BitXorWith(U = i32)`, `i32` as `interface LeftShiftWith(U = i32)`, `i32` as `interface RightShiftWith(U = i32)`, `i32` as `interface Inc`, `i32` as `interface Dec`, `U` as `interface __EqualConverter` [0], `(T1,)` as `interface As(T = (U1,))` [0, 0, 0; 1, 1, 0, 0, 0], `(T1, T2)` as `interface As(T = (U1, U2))` [0, 0, 0; 0, 0, 1; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1], `(T1, U1)` as `interface EqWith(U = (T2, U2))` [0, 0, 0; 0, 0, 1; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1], `(T1, T2, T3)` as `interface As(T = (U1, U2, U3))` [0, 0, 0; 0, 0, 1; 0, 0, 2; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1; 1, 1, 0, 0, 2], `T` as `interface ImplicitAs(T = U)` [0; 1, 1, 0], `T` as `interface As(T = U)` [0; 1, 1, 0], `T` as `interface ImplicitAs(T = U)` [0; 1, 1, 0], `T` as `interface As(T = U)` [0; 1, 1, 0], `T` as `interface AssignWith(U = U)` [0; 1, 1, 0], `T` as `interface AddAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface SubAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface MulAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface DivAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface ModAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface BitAndAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface BitOrAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface BitXorAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface LeftShiftAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface RightShiftAssignWith(U = U)` [0; 1, 1, 0]]
+// CHECK:STDOUT: *** finished checking `interface TestInterface` (full_trace.carbon:7)
+// CHECK:STDOUT: *** checking NamespaceDeclaration `namespace N` (full_trace.carbon:9)
+// CHECK:STDOUT: *** declaring function `Foo` (full_trace.carbon:13)
+// CHECK:STDOUT: *** checking TuplePattern `(n: i32)` (full_trace.carbon:11)
+// CHECK:STDOUT: *** checking BindingPattern `n: i32` (full_trace.carbon:11)
+// CHECK:STDOUT: *** checking ExpressionPattern `i32` (full_trace.carbon:11)
+// CHECK:STDOUT: *** checking IntTypeLiteral `i32` (full_trace.carbon:11)
 // CHECK:STDOUT: (+) stack-push: i32 .0.
 // CHECK:STDOUT: (+) stack-push: i32 .0.
 // CHECK:STDOUT: --- step exp i32 .0. (full_trace.carbon:11) --->
 // CHECK:STDOUT: (-) stack-pop: i32 .0.
 // CHECK:STDOUT: (-) stack-pop: i32 .1. {{[[][[]}}i32]]
-// CHECK:STDOUT: finished checking tuple pattern field n: i32
-// CHECK:STDOUT: checking IntTypeLiteral i32
+// CHECK:STDOUT: *** finished checking tuple pattern field `n: i32` (full_trace.carbon:11)
+// CHECK:STDOUT: *** checking IntTypeLiteral `i32` (full_trace.carbon:11)
 // CHECK:STDOUT: (+) stack-push: i32 .0.
 // CHECK:STDOUT: (+) stack-push: i32 .0.
 // CHECK:STDOUT: --- step exp i32 .0. (full_trace.carbon:11) --->
 // CHECK:STDOUT: (-) stack-pop: i32 .0.
 // CHECK:STDOUT: (-) stack-pop: i32 .1. {{[[][[]}}i32]]
-// CHECK:STDOUT: ** finished declaring function Foo of type fn (i32,) -> i32
-// CHECK:STDOUT: checking FunctionDeclaration
-// CHECK:STDOUT: ** checking function Foo
-// CHECK:STDOUT: impl declarations:{{ }}
-// CHECK:STDOUT: impl declarations: bool as interface EqWith(U = bool), i32 as interface EqWith(U = i32), String as interface EqWith(U = String), i32 as interface CompareWith(U = i32), String as interface CompareWith(U = String), i32 as interface LessWith(U = i32), String as interface LessWith(U = String), i32 as interface LessEqWith(U = i32), String as interface LessEqWith(U = String), i32 as interface GreaterWith(U = i32), String as interface GreaterWith(U = String), i32 as interface GreaterEqWith(U = i32), String as interface GreaterEqWith(U = String), i32 as interface Negate, i32 as interface AddWith(U = i32), i32 as interface SubWith(U = i32), i32 as interface MulWith(U = i32), i32 as interface DivWith(U = i32), i32 as interface ModWith(U = i32), i32 as interface BitComplement, i32 as interface BitAndWith(U = i32), i32 as interface BitOrWith(U = i32), i32 as interface BitXorWith(U = i32), i32 as interface LeftShiftWith(U = i32), i32 as interface RightShiftWith(U = i32), i32 as interface Inc, i32 as interface Dec, U as interface __EqualConverter [0], (T1,) as interface As(T = (U1,)) [0, 0, 0; 1, 1, 0, 0, 0], (T1, T2) as interface As(T = (U1, U2)) [0, 0, 0; 0, 0, 1; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1], (T1, U1) as interface EqWith(U = (T2, U2)) [0, 0, 0; 0, 0, 1; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1], (T1, T2, T3) as interface As(T = (U1, U2, U3)) [0, 0, 0; 0, 0, 1; 0, 0, 2; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1; 1, 1, 0, 0, 2], T as interface ImplicitAs(T = U) [0; 1, 1, 0], T as interface As(T = U) [0; 1, 1, 0], T as interface ImplicitAs(T = U) [0; 1, 1, 0], T as interface As(T = U) [0; 1, 1, 0], T as interface AssignWith(U = U) [0; 1, 1, 0], T as interface AddAssignWith(U = U) [0; 1, 1, 0], T as interface SubAssignWith(U = U) [0; 1, 1, 0], T as interface MulAssignWith(U = U) [0; 1, 1, 0], T as interface DivAssignWith(U = U) [0; 1, 1, 0], T as interface ModAssignWith(U = U) [0; 1, 1, 0], T as interface BitAndAssignWith(U = U) [0; 1, 1, 0], T as interface BitOrAssignWith(U = U) [0; 1, 1, 0], T as interface BitXorAssignWith(U = U) [0; 1, 1, 0], T as interface LeftShiftAssignWith(U = U) [0; 1, 1, 0], T as interface RightShiftAssignWith(U = U) [0; 1, 1, 0]
-// CHECK:STDOUT: checking Block {
-// CHECK:STDOUT: return (n + 1);
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: checking ReturnExpression return (n + 1);
-// CHECK:STDOUT: checking OperatorExpression (n + 1)
-// CHECK:STDOUT: checking IdentifierExpression n
-// CHECK:STDOUT: checking IntLiteral 1
-// CHECK:STDOUT: ** finished checking function Foo
-// CHECK:STDOUT: ** declaring function Main
-// CHECK:STDOUT: checking TuplePattern ()
-// CHECK:STDOUT: checking IntTypeLiteral i32
+// CHECK:STDOUT: *** finished declaring function `Foo` of type `fn (i32,) -> i32` (full_trace.carbon:13)
+// CHECK:STDOUT: *** checking FunctionDeclaration `fn N.Foo` (full_trace.carbon:13)
+// CHECK:STDOUT: *** checking function `Foo` (full_trace.carbon:13)
+// CHECK:STDOUT: --- impl declarations for `fn N.Foo` (full_trace.carbon:13)
+// CHECK:STDOUT:  +  []
+// CHECK:STDOUT:  +  [`bool` as `interface EqWith(U = bool)`, `i32` as `interface EqWith(U = i32)`, `String` as `interface EqWith(U = String)`, `i32` as `interface CompareWith(U = i32)`, `String` as `interface CompareWith(U = String)`, `i32` as `interface LessWith(U = i32)`, `String` as `interface LessWith(U = String)`, `i32` as `interface LessEqWith(U = i32)`, `String` as `interface LessEqWith(U = String)`, `i32` as `interface GreaterWith(U = i32)`, `String` as `interface GreaterWith(U = String)`, `i32` as `interface GreaterEqWith(U = i32)`, `String` as `interface GreaterEqWith(U = String)`, `i32` as `interface Negate`, `i32` as `interface AddWith(U = i32)`, `i32` as `interface SubWith(U = i32)`, `i32` as `interface MulWith(U = i32)`, `i32` as `interface DivWith(U = i32)`, `i32` as `interface ModWith(U = i32)`, `i32` as `interface BitComplement`, `i32` as `interface BitAndWith(U = i32)`, `i32` as `interface BitOrWith(U = i32)`, `i32` as `interface BitXorWith(U = i32)`, `i32` as `interface LeftShiftWith(U = i32)`, `i32` as `interface RightShiftWith(U = i32)`, `i32` as `interface Inc`, `i32` as `interface Dec`, `U` as `interface __EqualConverter` [0], `(T1,)` as `interface As(T = (U1,))` [0, 0, 0; 1, 1, 0, 0, 0], `(T1, T2)` as `interface As(T = (U1, U2))` [0, 0, 0; 0, 0, 1; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1], `(T1, U1)` as `interface EqWith(U = (T2, U2))` [0, 0, 0; 0, 0, 1; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1], `(T1, T2, T3)` as `interface As(T = (U1, U2, U3))` [0, 0, 0; 0, 0, 1; 0, 0, 2; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1; 1, 1, 0, 0, 2], `T` as `interface ImplicitAs(T = U)` [0; 1, 1, 0], `T` as `interface As(T = U)` [0; 1, 1, 0], `T` as `interface ImplicitAs(T = U)` [0; 1, 1, 0], `T` as `interface As(T = U)` [0; 1, 1, 0], `T` as `interface AssignWith(U = U)` [0; 1, 1, 0], `T` as `interface AddAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface SubAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface MulAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface DivAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface ModAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface BitAndAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface BitOrAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface BitXorAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface LeftShiftAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface RightShiftAssignWith(U = U)` [0; 1, 1, 0]]
+// CHECK:STDOUT: *** checking Block `{return (n + 1);}` (full_trace.carbon:13)
+// CHECK:STDOUT: *** checking ReturnExpression `return (n + 1);` (full_trace.carbon:12)
+// CHECK:STDOUT: *** checking OperatorExpression `(n + 1)` (full_trace.carbon:12)
+// CHECK:STDOUT: *** checking IdentifierExpression `n` (full_trace.carbon:12)
+// CHECK:STDOUT: *** checking IntLiteral `1` (full_trace.carbon:12)
+// CHECK:STDOUT: *** finished checking function `Foo` (full_trace.carbon:13)
+// CHECK:STDOUT: *** declaring function `Main` (full_trace.carbon:18)
+// CHECK:STDOUT: *** checking TuplePattern `()` (full_trace.carbon:15)
+// CHECK:STDOUT: *** checking IntTypeLiteral `i32` (full_trace.carbon:15)
 // CHECK:STDOUT: (+) stack-push: i32 .0.
 // CHECK:STDOUT: (+) stack-push: i32 .0.
 // CHECK:STDOUT: --- step exp i32 .0. (full_trace.carbon:15) --->
 // CHECK:STDOUT: (-) stack-pop: i32 .0.
 // CHECK:STDOUT: (-) stack-pop: i32 .1. {{[[][[]}}i32]]
-// CHECK:STDOUT: ** finished declaring function Main of type fn () -> i32
-// CHECK:STDOUT: checking FunctionDeclaration
-// CHECK:STDOUT: ** checking function Main
-// CHECK:STDOUT: impl declarations:{{ }}
-// CHECK:STDOUT: impl declarations: bool as interface EqWith(U = bool), i32 as interface EqWith(U = i32), String as interface EqWith(U = String), i32 as interface CompareWith(U = i32), String as interface CompareWith(U = String), i32 as interface LessWith(U = i32), String as interface LessWith(U = String), i32 as interface LessEqWith(U = i32), String as interface LessEqWith(U = String), i32 as interface GreaterWith(U = i32), String as interface GreaterWith(U = String), i32 as interface GreaterEqWith(U = i32), String as interface GreaterEqWith(U = String), i32 as interface Negate, i32 as interface AddWith(U = i32), i32 as interface SubWith(U = i32), i32 as interface MulWith(U = i32), i32 as interface DivWith(U = i32), i32 as interface ModWith(U = i32), i32 as interface BitComplement, i32 as interface BitAndWith(U = i32), i32 as interface BitOrWith(U = i32), i32 as interface BitXorWith(U = i32), i32 as interface LeftShiftWith(U = i32), i32 as interface RightShiftWith(U = i32), i32 as interface Inc, i32 as interface Dec, U as interface __EqualConverter [0], (T1,) as interface As(T = (U1,)) [0, 0, 0; 1, 1, 0, 0, 0], (T1, T2) as interface As(T = (U1, U2)) [0, 0, 0; 0, 0, 1; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1], (T1, U1) as interface EqWith(U = (T2, U2)) [0, 0, 0; 0, 0, 1; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1], (T1, T2, T3) as interface As(T = (U1, U2, U3)) [0, 0, 0; 0, 0, 1; 0, 0, 2; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1; 1, 1, 0, 0, 2], T as interface ImplicitAs(T = U) [0; 1, 1, 0], T as interface As(T = U) [0; 1, 1, 0], T as interface ImplicitAs(T = U) [0; 1, 1, 0], T as interface As(T = U) [0; 1, 1, 0], T as interface AssignWith(U = U) [0; 1, 1, 0], T as interface AddAssignWith(U = U) [0; 1, 1, 0], T as interface SubAssignWith(U = U) [0; 1, 1, 0], T as interface MulAssignWith(U = U) [0; 1, 1, 0], T as interface DivAssignWith(U = U) [0; 1, 1, 0], T as interface ModAssignWith(U = U) [0; 1, 1, 0], T as interface BitAndAssignWith(U = U) [0; 1, 1, 0], T as interface BitOrAssignWith(U = U) [0; 1, 1, 0], T as interface BitXorAssignWith(U = U) [0; 1, 1, 0], T as interface LeftShiftAssignWith(U = U) [0; 1, 1, 0], T as interface RightShiftAssignWith(U = U) [0; 1, 1, 0]
-// CHECK:STDOUT: checking Block {
-// CHECK:STDOUT: var x: i32 = N.Foo(0);
-// CHECK:STDOUT: return x;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: checking VariableDefinition var x: i32 = N.Foo(0);
-// CHECK:STDOUT: checking CallExpression N.Foo(0)
-// CHECK:STDOUT: checking SimpleMemberAccessExpression N.Foo
-// CHECK:STDOUT: checking IdentifierExpression Foo
-// CHECK:STDOUT: checking TupleLiteral (0)
-// CHECK:STDOUT: checking IntLiteral 0
-// CHECK:STDOUT: checking call to function of type fn (i32,) -> i32
-// CHECK:STDOUT: with arguments of type: (i32,)
-// CHECK:STDOUT: performing argument deduction for bindings:{{ }}
-// CHECK:STDOUT: deducing i32 from i32
-// CHECK:STDOUT: deduction succeeded with results: {}
-// CHECK:STDOUT: checking BindingPattern x: i32, expecting i32
-// CHECK:STDOUT: checking ExpressionPattern i32, expecting i32
-// CHECK:STDOUT: checking IntTypeLiteral i32
+// CHECK:STDOUT: *** finished declaring function `Main` of type `fn () -> i32` (full_trace.carbon:18)
+// CHECK:STDOUT: *** checking FunctionDeclaration `fn Main` (full_trace.carbon:18)
+// CHECK:STDOUT: *** checking function `Main` (full_trace.carbon:18)
+// CHECK:STDOUT: --- impl declarations for `fn Main` (full_trace.carbon:18)
+// CHECK:STDOUT:  +  []
+// CHECK:STDOUT:  +  [`bool` as `interface EqWith(U = bool)`, `i32` as `interface EqWith(U = i32)`, `String` as `interface EqWith(U = String)`, `i32` as `interface CompareWith(U = i32)`, `String` as `interface CompareWith(U = String)`, `i32` as `interface LessWith(U = i32)`, `String` as `interface LessWith(U = String)`, `i32` as `interface LessEqWith(U = i32)`, `String` as `interface LessEqWith(U = String)`, `i32` as `interface GreaterWith(U = i32)`, `String` as `interface GreaterWith(U = String)`, `i32` as `interface GreaterEqWith(U = i32)`, `String` as `interface GreaterEqWith(U = String)`, `i32` as `interface Negate`, `i32` as `interface AddWith(U = i32)`, `i32` as `interface SubWith(U = i32)`, `i32` as `interface MulWith(U = i32)`, `i32` as `interface DivWith(U = i32)`, `i32` as `interface ModWith(U = i32)`, `i32` as `interface BitComplement`, `i32` as `interface BitAndWith(U = i32)`, `i32` as `interface BitOrWith(U = i32)`, `i32` as `interface BitXorWith(U = i32)`, `i32` as `interface LeftShiftWith(U = i32)`, `i32` as `interface RightShiftWith(U = i32)`, `i32` as `interface Inc`, `i32` as `interface Dec`, `U` as `interface __EqualConverter` [0], `(T1,)` as `interface As(T = (U1,))` [0, 0, 0; 1, 1, 0, 0, 0], `(T1, T2)` as `interface As(T = (U1, U2))` [0, 0, 0; 0, 0, 1; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1], `(T1, U1)` as `interface EqWith(U = (T2, U2))` [0, 0, 0; 0, 0, 1; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1], `(T1, T2, T3)` as `interface As(T = (U1, U2, U3))` [0, 0, 0; 0, 0, 1; 0, 0, 2; 1, 1, 0, 0, 0; 1, 1, 0, 0, 1; 1, 1, 0, 0, 2], `T` as `interface ImplicitAs(T = U)` [0; 1, 1, 0], `T` as `interface As(T = U)` [0; 1, 1, 0], `T` as `interface ImplicitAs(T = U)` [0; 1, 1, 0], `T` as `interface As(T = U)` [0; 1, 1, 0], `T` as `interface AssignWith(U = U)` [0; 1, 1, 0], `T` as `interface AddAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface SubAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface MulAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface DivAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface ModAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface BitAndAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface BitOrAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface BitXorAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface LeftShiftAssignWith(U = U)` [0; 1, 1, 0], `T` as `interface RightShiftAssignWith(U = U)` [0; 1, 1, 0]]
+// CHECK:STDOUT: *** checking Block `{var x: i32 = N.Foo(0);return x;}` (full_trace.carbon:18)
+// CHECK:STDOUT: *** checking VariableDefinition `var x: i32 = N.Foo(0);` (full_trace.carbon:16)
+// CHECK:STDOUT: *** checking CallExpression `N.Foo(0)` (full_trace.carbon:16)
+// CHECK:STDOUT: *** checking SimpleMemberAccessExpression `N.Foo` (full_trace.carbon:16)
+// CHECK:STDOUT: *** checking IdentifierExpression `Foo` (full_trace.carbon:16)
+// CHECK:STDOUT: *** checking TupleLiteral `(0)` (full_trace.carbon:16)
+// CHECK:STDOUT: *** checking IntLiteral `0` (full_trace.carbon:16)
+// CHECK:STDOUT: *** checking call to function of type `fn (i32,) -> i32` with arguments of type `(i32,)` (full_trace.carbon:16)
+// CHECK:STDOUT: *** performing argument deduction for bindings: []
+// CHECK:STDOUT: *** deducing `i32` from `i32`
+// CHECK:STDOUT: --> deduction succeeded with results: []
+// CHECK:STDOUT: *** checking BindingPattern `x: i32`, expecting `i32` (full_trace.carbon:16)
+// CHECK:STDOUT: *** checking ExpressionPattern `i32`, expecting `i32` (full_trace.carbon:16)
+// CHECK:STDOUT: *** checking IntTypeLiteral `i32` (full_trace.carbon:16)
 // CHECK:STDOUT: (+) stack-push: i32 .0.
 // CHECK:STDOUT: (+) stack-push: i32 .0.
 // CHECK:STDOUT: --- step exp i32 .0. (full_trace.carbon:16) --->
 // CHECK:STDOUT: (-) stack-pop: i32 .0.
 // CHECK:STDOUT: (-) stack-pop: i32 .1. {{[[][[]}}i32]]
-// CHECK:STDOUT: checking ReturnExpression return x;
-// CHECK:STDOUT: checking IdentifierExpression x
-// CHECK:STDOUT: ** finished checking function Main
-// CHECK:STDOUT: checking CallExpression Main()
-// CHECK:STDOUT: checking IdentifierExpression Main
-// CHECK:STDOUT: checking TupleLiteral ()
-// CHECK:STDOUT: checking call to function of type fn () -> i32
-// CHECK:STDOUT: with arguments of type: ()
-// CHECK:STDOUT: performing argument deduction for bindings:{{ }}
-// CHECK:STDOUT: deduction succeeded with results: {}
+// CHECK:STDOUT: *** checking ReturnExpression `return x;` (full_trace.carbon:17)
+// CHECK:STDOUT: *** checking IdentifierExpression `x` (full_trace.carbon:17)
+// CHECK:STDOUT: *** finished checking function `Main` (full_trace.carbon:18)
+// CHECK:STDOUT: *** checking CallExpression `Main()` (<Main()>:0)
+// CHECK:STDOUT: *** checking IdentifierExpression `Main` (<Main()>:0)
+// CHECK:STDOUT: *** checking TupleLiteral `()` (<Main()>:0)
+// CHECK:STDOUT: *** checking call to function of type `fn () -> i32` with arguments of type `()` (<Main()>:0)
+// CHECK:STDOUT: *** performing argument deduction for bindings: []
+// CHECK:STDOUT: --> deduction succeeded with results: []
 // CHECK:STDOUT: ********** resolving unformed variables **********
 // CHECK:STDOUT: *** resolving-unformed in decl `interface TestInterface` (full_trace.carbon:7)
 // CHECK:STDOUT: *** resolving-unformed in decl `namespace N` (full_trace.carbon:9)

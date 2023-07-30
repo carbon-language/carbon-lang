@@ -8,9 +8,11 @@
 #include <map>
 #include <utility>
 
+#include "common/ostream.h"
 #include "explorer/ast/clone_context.h"
 #include "explorer/common/nonnull.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
 
@@ -57,6 +59,8 @@ class Bindings {
       : args_(std::move(args)) {}
 
   explicit Bindings(CloneContext& context, const Bindings& other);
+
+  void Print(llvm::raw_ostream& out) const;
 
   template <typename F>
   auto Decompose(F f) const {
