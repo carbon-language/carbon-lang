@@ -192,4 +192,31 @@ void Action::Print(llvm::raw_ostream& out) const {
   }
 }
 
+auto Action::kind_string() const -> std::string_view {
+  switch (kind()) {
+    case Action::Kind::LocationAction:
+      return "LocationAction";
+    case Action::Kind::ValueExpressionAction:
+      return "ValueExpressionAction";
+    case Action::Kind::ExpressionAction:
+      return "ExpressionAction";
+    case Action::Kind::WitnessAction:
+      return "WitnessAction";
+    case Action::Kind::StatementAction:
+      return "StatementAction";
+    case Action::Kind::DeclarationAction:
+      return "DeclarationAction";
+    case Action::Kind::TypeInstantiationAction:
+      return "TypeInstantiationAction";
+    case Action::Kind::ScopeAction:
+      return "ScopeAction";
+    case Action::Kind::RecursiveAction:
+      return "RecursiveAction";
+    case Action::Kind::CleanUpAction:
+      return "CleanUpAction";
+    case Action::Kind::DestroyAction:
+      return "DestroyAction";
+  }
+}
+
 }  // namespace Carbon
