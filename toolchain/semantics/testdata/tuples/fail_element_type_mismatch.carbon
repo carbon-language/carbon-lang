@@ -81,8 +81,8 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = StubReference <noderef 3>
-// CHECK:STDOUT:   %1: type = StubReference <noderef 3>
+// CHECK:STDOUT:   %0: type = StubReference i32
+// CHECK:STDOUT:   %1: type = StubReference i32
 // CHECK:STDOUT:   %2: type = TupleType {type, type}
 // CHECK:STDOUT:   %3: (type, type) as type = TupleValue {%0, %1}
 // CHECK:STDOUT:   %4: type = TupleType {i32, i32}
@@ -93,7 +93,7 @@
 // CHECK:STDOUT:   %8: f64 = StubReference %7
 // CHECK:STDOUT:   %9: type = TupleType {i32, f64}
 // CHECK:STDOUT:   %10: (i32, f64) as type = TupleValue {%6, %8}
-// CHECK:STDOUT:   Assign <error>, %x, <noderef 1>
+// CHECK:STDOUT:   Assign <error>, %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+3]]:31: Cannot implicitly convert from `(i32, f64) as type` to `(i32, i32) as type`.

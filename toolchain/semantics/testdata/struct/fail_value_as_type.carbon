@@ -51,7 +51,7 @@
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %1: i32 = StubReference %0
-// CHECK:STDOUT:   %2: type = StructType {<noderef 7>}
+// CHECK:STDOUT:   %2: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %3: {.a: i32} = StructValue {%1}
 // CHECK:STDOUT:   %x: <error> = VarStorage
 // CHECK:STDOUT: }

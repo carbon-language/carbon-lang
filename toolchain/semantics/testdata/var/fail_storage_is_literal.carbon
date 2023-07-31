@@ -55,7 +55,7 @@
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %x: <error> = VarStorage
 // CHECK:STDOUT:   %1: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   Assign <error>, %x, <noderef 1>
+// CHECK:STDOUT:   Assign <error>, %x, <error>
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

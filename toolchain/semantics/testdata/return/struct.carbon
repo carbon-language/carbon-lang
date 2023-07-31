@@ -57,8 +57,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   StructTypeField i32, "a"
-// CHECK:STDOUT:   %0: type = StructType {<noderef 6>}
+// CHECK:STDOUT:   %0: type = struct_type {.a: i32}
 // CHECK:STDOUT:   FunctionDeclaration @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

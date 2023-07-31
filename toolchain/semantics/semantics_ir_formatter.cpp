@@ -11,6 +11,11 @@ namespace {
 class NodeNamer {
  public:
   auto GetNameFor(SemanticsNodeId node_id) -> std::string {
+    // Check for a builtin.
+    if (node_id.index < SemanticsBuiltinKind::ValidCount) {
+      return SemanticsBuiltinKind::FromInt(node_id.index).label().str();
+    }
+
     auto it = names.find(node_id);
     if (it == names.end()) {
       // This should not happen in valid IR.
@@ -198,12 +203,7 @@ class SemanticsIRFormatter {
       -> void {
     out_ << "  ";
     FormatInstructionLHS(node_id, node);
-    out_ << name;
-    if (node.kind().type_field_kind() == SemanticsTypeFieldKind::Argument) {
-      FormatArgs(std::pair(node.type_id(), args));
-    } else {
-      FormatArgs(args);
-    }
+    FormatInstructionRHS<Kind>(node, name, args);
     out_ << "\n";
   }
 
@@ -217,6 +217,17 @@ class SemanticsIRFormatter {
     }
   }
 
+  template <typename Kind>
+  auto FormatInstructionRHS(SemanticsNode node, llvm::StringRef name,
+                            decltype(Kind::Get(node)) args) -> void {
+    out_ << name;
+    if (node.kind().type_field_kind() == SemanticsTypeFieldKind::Argument) {
+      FormatArgs(std::pair(node.type_id(), args));
+    } else {
+      FormatArgs(args);
+    }
+  }
+
   // BindName is handled by the NodeNamer and doesn't appear in the output.
   template <>
   auto FormatInstruction<SemanticsNode::BindName>(
@@ -224,16 +235,12 @@ class SemanticsIRFormatter {
       std::pair<SemanticsStringId, SemanticsNodeId>) -> void {}
 
   template <>
-  auto FormatInstruction<SemanticsNode::BlockArg>(SemanticsNodeId node_id,
-                                                      SemanticsNode node,
-                                                      llvm::StringRef,
-                                                      SemanticsNodeBlockId self)
+  auto FormatInstructionRHS<SemanticsNode::BlockArg>(SemanticsNode,
+                                                     llvm::StringRef,
+                                                     SemanticsNodeBlockId self)
       -> void {
-    out_ << "  ";
-    FormatInstructionLHS(node_id, node);
     out_ << "block_arg ";
     FormatLabel(self);
-    out_ << "\n";
   }
 
   template <>
@@ -277,6 +284,26 @@ class SemanticsIRFormatter {
     FormatLabel(target);
     out_ << "\n";
     in_terminator_sequence = false;
+  }
+
+  template <>
+  auto FormatInstruction<SemanticsNode::StructTypeField>(
+      SemanticsNodeId, SemanticsNode, llvm::StringRef,
+      SemanticsStringId) -> void {}
+
+  template <>
+  auto FormatInstructionRHS<SemanticsNode::StructType>(
+      SemanticsNode, llvm::StringRef, SemanticsNodeBlockId types_id) -> void {
+    out_ << "struct_type {";
+    llvm::ListSeparator sep;
+    for (auto field_id : semantics_ir_.GetNodeBlock(types_id)) {
+      out_ << sep << ".";
+      auto node = semantics_ir_.GetNode(field_id);
+      FormatString(node.GetAsStructTypeField());
+      out_ << ": ";
+      FormatType(node.type_id());
+    }
+    out_ << "}";
   }
 
   auto FormatArgs(SemanticsNode::NoArgs) -> void {}

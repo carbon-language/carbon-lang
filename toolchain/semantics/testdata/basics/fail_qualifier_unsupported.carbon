@@ -41,7 +41,7 @@
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: i32 = VarStorage
 // CHECK:STDOUT:   %y: i32 = VarStorage
-// CHECK:STDOUT:   Assign <error>, %y, <noderef 1>
+// CHECK:STDOUT:   Assign <error>, %y, <error>
 // CHECK:STDOUT: }
 
 var x: i32;

@@ -80,7 +80,7 @@
 // CHECK:STDOUT:   ReturnExpression i32, %n
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
-// CHECK:STDOUT:   ReturnExpression <error>, <noderef 1>
+// CHECK:STDOUT:   ReturnExpression <error>, <error>
 // CHECK:STDOUT: }
 
 fn VarScope(b: bool) -> i32 {

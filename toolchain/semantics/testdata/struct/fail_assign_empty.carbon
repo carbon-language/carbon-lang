@@ -47,12 +47,11 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   StructTypeField i32, "a"
-// CHECK:STDOUT:   %0: type = StructType {<noderef 6>}
+// CHECK:STDOUT:   %0: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: {.a: i32} = VarStorage
-// CHECK:STDOUT:   %1: type = StructType {}
+// CHECK:STDOUT:   %1: type = struct_type {}
 // CHECK:STDOUT:   %2: {} as Type = StructValue {}
-// CHECK:STDOUT:   Assign <error>, %x, <noderef 1>
+// CHECK:STDOUT:   Assign <error>, %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:22: Cannot implicitly convert from `{} as type` to `{.a: i32}`.

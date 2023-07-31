@@ -116,13 +116,11 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   StructTypeField i32, "a"
-// CHECK:STDOUT:   %0: type = StubReference <noderef 3>
+// CHECK:STDOUT:   %0: type = StubReference i32
 // CHECK:STDOUT:   %1: type = TupleType {type}
 // CHECK:STDOUT:   %2: (type,) as type = TupleValue {%0}
 // CHECK:STDOUT:   %3: type = TupleType {i32}
-// CHECK:STDOUT:   StructTypeField (i32,) as type, "b"
-// CHECK:STDOUT:   %4: type = StructType {<noderef 6>, <noderef 11>}
+// CHECK:STDOUT:   %4: type = struct_type {.a: i32, .b: (i32,) as type}
 // CHECK:STDOUT:   %x: {.a: i32, .b: (i32,) as type} = VarStorage
 // CHECK:STDOUT:   %5: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %6: i32 = StubReference %5
@@ -132,10 +130,8 @@
 // CHECK:STDOUT:   %10: (i32,) as type = StubReference %9
 // CHECK:STDOUT:   %11: {.a: i32, .b: (i32,) as type} = StructValue {%6, %10}
 // CHECK:STDOUT:   Assign {.a: i32, .b: (i32,) as type}, %x, %11
-// CHECK:STDOUT:   StructTypeField i32, "a"
-// CHECK:STDOUT:   %12: type = StubReference <noderef 3>
+// CHECK:STDOUT:   %12: type = StubReference i32
 // CHECK:STDOUT:   %13: (type,) as type = TupleValue {%12}
-// CHECK:STDOUT:   StructTypeField (i32,) as type, "b"
 // CHECK:STDOUT:   %y: {.a: i32, .b: (i32,) as type} = VarStorage
 // CHECK:STDOUT:   Assign {.a: i32, .b: (i32,) as type}, %y, %x
 // CHECK:STDOUT: }

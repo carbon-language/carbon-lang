@@ -69,7 +69,7 @@
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: i32 = VarStorage
 // CHECK:STDOUT:   %0: f64 = Call {}, @Foo
-// CHECK:STDOUT:   Assign <error>, %x, <noderef 1>
+// CHECK:STDOUT:   Assign <error>, %x, <error>
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

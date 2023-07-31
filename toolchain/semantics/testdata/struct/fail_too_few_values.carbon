@@ -63,15 +63,13 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   StructTypeField i32, "a"
-// CHECK:STDOUT:   StructTypeField i32, "b"
-// CHECK:STDOUT:   %0: type = StructType {<noderef 6>, <noderef 7>}
+// CHECK:STDOUT:   %0: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %x: {.a: i32, .b: i32} = VarStorage
 // CHECK:STDOUT:   %1: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %2: i32 = StubReference %1
-// CHECK:STDOUT:   %3: type = StructType {<noderef 12>}
+// CHECK:STDOUT:   %3: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %4: {.a: i32} = StructValue {%2}
-// CHECK:STDOUT:   Assign <error>, %x, <noderef 1>
+// CHECK:STDOUT:   Assign <error>, %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+3]]:37: Cannot implicitly convert from `{.a: i32}` to `{.a: i32, .b: i32}`.

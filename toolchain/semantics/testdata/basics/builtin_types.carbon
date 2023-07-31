@@ -75,7 +75,7 @@
 // CHECK:STDOUT:   %2: String = StringLiteral "Test"
 // CHECK:STDOUT:   Assign String, %test_str, %2
 // CHECK:STDOUT:   %test_type: type = VarStorage
-// CHECK:STDOUT:   Assign type, %test_type, <noderef 3>
+// CHECK:STDOUT:   Assign type, %test_type, i32
 // CHECK:STDOUT: }
 
 var test_i32: i32 = 0;

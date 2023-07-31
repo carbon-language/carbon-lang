@@ -110,12 +110,12 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = StubReference <noderef 3>
-// CHECK:STDOUT:   %1: type = StubReference <noderef 3>
+// CHECK:STDOUT:   %0: type = StubReference i32
+// CHECK:STDOUT:   %1: type = StubReference i32
 // CHECK:STDOUT:   %2: type = TupleType {type, type}
 // CHECK:STDOUT:   %3: (type, type) as type = TupleValue {%0, %1}
 // CHECK:STDOUT:   %4: (type, type) as type = StubReference %3
-// CHECK:STDOUT:   %5: type = StubReference <noderef 3>
+// CHECK:STDOUT:   %5: type = StubReference i32
 // CHECK:STDOUT:   %6: type = TupleType {(type, type) as type, type}
 // CHECK:STDOUT:   %7: ((type, type) as type, type) as type = TupleValue {%4, %5}
 // CHECK:STDOUT:   %8: type = TupleType {i32, i32}

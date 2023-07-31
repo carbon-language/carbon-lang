@@ -61,14 +61,13 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   StructTypeField i32, "a"
-// CHECK:STDOUT:   %0: type = StructType {<noderef 6>}
+// CHECK:STDOUT:   %0: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: {.a: i32} = VarStorage
 // CHECK:STDOUT:   %1: f64 = RealLiteral 10e-1
 // CHECK:STDOUT:   %2: f64 = StubReference %1
-// CHECK:STDOUT:   %3: type = StructType {<noderef 11>}
+// CHECK:STDOUT:   %3: type = struct_type {.b: f64}
 // CHECK:STDOUT:   %4: {.b: f64} = StructValue {%2}
-// CHECK:STDOUT:   Assign <error>, %x, <noderef 1>
+// CHECK:STDOUT:   Assign <error>, %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+3]]:30: Cannot implicitly convert from `{.b: f64}` to `{.a: i32}`.

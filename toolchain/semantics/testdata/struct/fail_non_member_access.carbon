@@ -64,15 +64,14 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   StructTypeField i32, "a"
-// CHECK:STDOUT:   %0: type = StructType {<noderef 6>}
+// CHECK:STDOUT:   %0: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: {.a: i32} = VarStorage
 // CHECK:STDOUT:   %1: i32 = IntegerLiteral 4
 // CHECK:STDOUT:   %2: i32 = StubReference %1
 // CHECK:STDOUT:   %3: {.a: i32} = StructValue {%2}
 // CHECK:STDOUT:   Assign {.a: i32}, %x, %3
 // CHECK:STDOUT:   %y: i32 = VarStorage
-// CHECK:STDOUT:   Assign <error>, %y, <noderef 1>
+// CHECK:STDOUT:   Assign <error>, %y, <error>
 // CHECK:STDOUT: }
 
 var x: {.a: i32} = {.a = 4};

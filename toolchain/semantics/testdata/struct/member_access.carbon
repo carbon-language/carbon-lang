@@ -85,9 +85,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   StructTypeField f64, "a"
-// CHECK:STDOUT:   StructTypeField i32, "b"
-// CHECK:STDOUT:   %0: type = StructType {<noderef 6>, <noderef 7>}
+// CHECK:STDOUT:   %0: type = struct_type {.a: f64, .b: i32}
 // CHECK:STDOUT:   %x: {.a: f64, .b: i32} = VarStorage
 // CHECK:STDOUT:   %1: f64 = RealLiteral 0e-1
 // CHECK:STDOUT:   %2: f64 = StubReference %1

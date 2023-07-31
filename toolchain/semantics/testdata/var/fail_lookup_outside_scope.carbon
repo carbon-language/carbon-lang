@@ -48,7 +48,7 @@
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   FunctionDeclaration @Main
 // CHECK:STDOUT:   %y: i32 = VarStorage
-// CHECK:STDOUT:   Assign <error>, %y, <noderef 1>
+// CHECK:STDOUT:   Assign <error>, %y, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

@@ -83,9 +83,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   StructTypeField i32, "a"
-// CHECK:STDOUT:   StructTypeField i32, "b"
-// CHECK:STDOUT:   %0: type = StructType {<noderef 6>, <noderef 7>}
+// CHECK:STDOUT:   %0: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %x: {.a: i32, .b: i32} = VarStorage
 // CHECK:STDOUT:   %1: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %2: i32 = StubReference %1
@@ -93,8 +91,6 @@
 // CHECK:STDOUT:   %4: i32 = StubReference %3
 // CHECK:STDOUT:   %5: {.a: i32, .b: i32} = StructValue {%2, %4}
 // CHECK:STDOUT:   Assign {.a: i32, .b: i32}, %x, %5
-// CHECK:STDOUT:   StructTypeField i32, "a"
-// CHECK:STDOUT:   StructTypeField i32, "b"
 // CHECK:STDOUT:   %y: {.a: i32, .b: i32} = VarStorage
 // CHECK:STDOUT:   Assign {.a: i32, .b: i32}, %y, %x
 // CHECK:STDOUT: }
