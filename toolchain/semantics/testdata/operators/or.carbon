@@ -93,13 +93,13 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: bool = Call {}, @F
+// CHECK:STDOUT:   %0: bool = Call @F()
 // CHECK:STDOUT:   %1: bool = UnaryOperatorNot %0
 // CHECK:STDOUT:   %2: bool = BoolLiteral true
 // CHECK:STDOUT:   if %1 br !0 else br !1(%2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %3: bool = Call {}, @G
+// CHECK:STDOUT:   %3: bool = Call @G()
 // CHECK:STDOUT:   br !1(%3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:

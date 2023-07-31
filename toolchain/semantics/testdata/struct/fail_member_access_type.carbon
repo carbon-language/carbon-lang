@@ -69,7 +69,7 @@
 // CHECK:STDOUT:   %x: {.a: f64} = VarStorage
 // CHECK:STDOUT:   %1: f64 = RealLiteral 40e-1
 // CHECK:STDOUT:   %2: f64 = StubReference %1
-// CHECK:STDOUT:   %3: {.a: f64} = StructValue {%2}
+// CHECK:STDOUT:   %3: {.a: f64} = StructValue (%2)
 // CHECK:STDOUT:   Assign {.a: f64}, %x, %3
 // CHECK:STDOUT:   %y: i32 = VarStorage
 // CHECK:STDOUT:   Assign <error>, %y, <error>

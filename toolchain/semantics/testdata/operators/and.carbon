@@ -91,12 +91,12 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: bool = Call {}, @F
+// CHECK:STDOUT:   %0: bool = Call @F()
 // CHECK:STDOUT:   %1: bool = BoolLiteral false
 // CHECK:STDOUT:   if %0 br !0 else br !1(%1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %2: bool = Call {}, @G
+// CHECK:STDOUT:   %2: bool = Call @G()
 // CHECK:STDOUT:   br !1(%2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:

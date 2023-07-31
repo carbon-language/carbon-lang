@@ -51,8 +51,8 @@
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: type = TupleType {}
-// CHECK:STDOUT:   %1: () as type = Call {}, @F
+// CHECK:STDOUT:   %0: type = TupleType ()
+// CHECK:STDOUT:   %1: () as type = Call @F()
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

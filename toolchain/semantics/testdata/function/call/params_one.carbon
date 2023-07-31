@@ -80,8 +80,8 @@
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %1: i32 = StubReference %0
-// CHECK:STDOUT:   %2: type = TupleType {}
-// CHECK:STDOUT:   %3: () as type = Call {%1}, @Foo
+// CHECK:STDOUT:   %2: type = TupleType ()
+// CHECK:STDOUT:   %3: () as type = Call @Foo(%1)
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

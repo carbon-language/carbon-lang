@@ -90,11 +90,11 @@
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %1: i32 = StubReference %0
-// CHECK:STDOUT:   %2: type = TupleType {}
-// CHECK:STDOUT:   %3: () as type = Call {%1}, @Foo
+// CHECK:STDOUT:   %2: type = TupleType ()
+// CHECK:STDOUT:   %3: () as type = Call @Foo(%1)
 // CHECK:STDOUT:   %4: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %5: i32 = StubReference %4
-// CHECK:STDOUT:   %6: () as type = Call {%5}, @Foo
+// CHECK:STDOUT:   %6: () as type = Call @Foo(%5)
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

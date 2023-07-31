@@ -119,16 +119,16 @@
 // CHECK:STDOUT:   if %b br !0 else br !1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %0: type = TupleType {}
-// CHECK:STDOUT:   %1: () as type = Call {}, @F
+// CHECK:STDOUT:   %0: type = TupleType ()
+// CHECK:STDOUT:   %1: () as type = Call @F()
 // CHECK:STDOUT:   br !2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %2: () as type = Call {}, @G
+// CHECK:STDOUT:   %2: () as type = Call @G()
 // CHECK:STDOUT:   br !2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2:
-// CHECK:STDOUT:   %3: () as type = Call {}, @H
+// CHECK:STDOUT:   %3: () as type = Call @H()
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

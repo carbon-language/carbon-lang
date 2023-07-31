@@ -69,7 +69,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: () as type = TupleValue {}
+// CHECK:STDOUT:   %0: () as type = TupleValue ()
 // CHECK:STDOUT:   %1 = FunctionDeclaration @Echo
 // CHECK:STDOUT:   %2 = FunctionDeclaration @Main
 // CHECK:STDOUT: }
@@ -81,9 +81,9 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: () as type = TupleValue {}
+// CHECK:STDOUT:   %0: () as type = TupleValue ()
 // CHECK:STDOUT:   %1: () as type = StubReference %0
-// CHECK:STDOUT:   %2: () as type = Call {%1}, @Echo
+// CHECK:STDOUT:   %2: () as type = Call @Echo(%1)
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

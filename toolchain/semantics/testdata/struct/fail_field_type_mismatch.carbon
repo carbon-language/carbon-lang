@@ -66,7 +66,7 @@
 // CHECK:STDOUT:   %1: f64 = RealLiteral 10e-1
 // CHECK:STDOUT:   %2: f64 = StubReference %1
 // CHECK:STDOUT:   %3: type = StructType {.b: f64}
-// CHECK:STDOUT:   %4: {.b: f64} = StructValue {%2}
+// CHECK:STDOUT:   %4: {.b: f64} = StructValue (%2)
 // CHECK:STDOUT:   Assign <error>, %x, <error>
 // CHECK:STDOUT: }
 

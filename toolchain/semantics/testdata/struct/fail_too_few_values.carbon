@@ -68,7 +68,7 @@
 // CHECK:STDOUT:   %1: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %2: i32 = StubReference %1
 // CHECK:STDOUT:   %3: type = StructType {.a: i32}
-// CHECK:STDOUT:   %4: {.a: i32} = StructValue {%2}
+// CHECK:STDOUT:   %4: {.a: i32} = StructValue (%2)
 // CHECK:STDOUT:   Assign <error>, %x, <error>
 // CHECK:STDOUT: }
 

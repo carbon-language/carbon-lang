@@ -109,11 +109,11 @@
 // CHECK:STDOUT:   if %b br !0 else br !1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %0: i32 = Call {}, @A
+// CHECK:STDOUT:   %0: i32 = Call @A()
 // CHECK:STDOUT:   br !2(%0)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %1: i32 = Call {}, @B
+// CHECK:STDOUT:   %1: i32 = Call @B()
 // CHECK:STDOUT:   br !2(%1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2:

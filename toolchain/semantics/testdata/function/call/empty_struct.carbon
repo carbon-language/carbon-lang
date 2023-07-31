@@ -67,7 +67,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: {} as Type = StructValue {}
+// CHECK:STDOUT:   %0: {} as Type = StructValue ()
 // CHECK:STDOUT:   %1 = FunctionDeclaration @Echo
 // CHECK:STDOUT:   %2 = FunctionDeclaration @Main
 // CHECK:STDOUT: }
@@ -79,9 +79,9 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: {} as Type = StructValue {}
+// CHECK:STDOUT:   %0: {} as Type = StructValue ()
 // CHECK:STDOUT:   %1: {} as Type = StubReference %0
-// CHECK:STDOUT:   %2: {} as Type = Call {%1}, @Echo
+// CHECK:STDOUT:   %2: {} as Type = Call @Echo(%1)
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

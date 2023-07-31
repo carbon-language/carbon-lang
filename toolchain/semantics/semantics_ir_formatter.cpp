@@ -292,6 +292,15 @@ class SemanticsIRFormatter {
   }
 
   template <>
+  auto FormatInstructionRHS<SemanticsNode::Call>(
+      SemanticsNode, llvm::StringRef name,
+      std::pair<SemanticsNodeBlockId, SemanticsFunctionId> args) -> void {
+    out_ << name << " ";
+    FormatArg(args.second);
+    FormatArg(args.first);
+  }
+
+  template <>
   auto FormatInstructionRHS<SemanticsNode::CrossReference>(
       SemanticsNode, llvm::StringRef,
       std::pair<SemanticsCrossReferenceIRId, SemanticsNodeId> args) -> void {
@@ -383,13 +392,13 @@ class SemanticsIRFormatter {
   }
 
   auto FormatArg(SemanticsNodeBlockId id) -> void {
-    out_ << '{';
+    out_ << '(';
     llvm::ListSeparator sep;
     for (auto node_id : semantics_ir_.GetNodeBlock(id)) {
       out_ << sep;
       FormatArg(node_id);
     }
-    out_ << '}';
+    out_ << ')';
   }
 
   auto FormatArg(SemanticsRealLiteralId id) -> void {
@@ -409,13 +418,13 @@ class SemanticsIRFormatter {
   }
 
   auto FormatArg(SemanticsTypeBlockId id) -> void {
-    out_ << '{';
+    out_ << '(';
     llvm::ListSeparator sep;
     for (auto type_id : semantics_ir_.GetTypeBlock(id)) {
       out_ << sep;
       FormatArg(type_id);
     }
-    out_ << '}';
+    out_ << ')';
   }
 
   auto FormatNodeName(SemanticsNodeId id) -> void {
