@@ -111,24 +111,26 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32, %b: i32, %c: i32) {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
-// CHECK:STDOUT:   %15: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %16: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   %17: i32 = BinaryOperatorAdd %15, %16
-// CHECK:STDOUT:   %18: i32 = IntegerLiteral 3
-// CHECK:STDOUT:   %19: i32 = BinaryOperatorAdd %17, %18
-// CHECK:STDOUT:   %20: i32 = StubReference %19
-// CHECK:STDOUT:   %21: i32 = IntegerLiteral 4
-// CHECK:STDOUT:   %22: i32 = IntegerLiteral 5
-// CHECK:STDOUT:   %23: i32 = BinaryOperatorAdd %21, %22
-// CHECK:STDOUT:   %24: i32 = StubReference %23
-// CHECK:STDOUT:   %25: i32 = IntegerLiteral 6
-// CHECK:STDOUT:   %26: i32 = StubReference %25
-// CHECK:STDOUT:   %27: type = TupleType {}
-// CHECK:STDOUT:   %28: () as type = Call {%20, %24, %26}, @Foo
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %1: i32 = IntegerLiteral 2
+// CHECK:STDOUT:   %2: i32 = BinaryOperatorAdd %0, %1
+// CHECK:STDOUT:   %3: i32 = IntegerLiteral 3
+// CHECK:STDOUT:   %4: i32 = BinaryOperatorAdd %2, %3
+// CHECK:STDOUT:   %5: i32 = StubReference %4
+// CHECK:STDOUT:   %6: i32 = IntegerLiteral 4
+// CHECK:STDOUT:   %7: i32 = IntegerLiteral 5
+// CHECK:STDOUT:   %8: i32 = BinaryOperatorAdd %6, %7
+// CHECK:STDOUT:   %9: i32 = StubReference %8
+// CHECK:STDOUT:   %10: i32 = IntegerLiteral 6
+// CHECK:STDOUT:   %11: i32 = StubReference %10
+// CHECK:STDOUT:   %12: type = TupleType {}
+// CHECK:STDOUT:   %13: () as type = Call {%5, %9, %11}, @Foo
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

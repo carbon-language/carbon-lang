@@ -46,10 +46,11 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
-// CHECK:STDOUT:   %7: i32 = IntegerLiteral 12
-// CHECK:STDOUT:   %8: i32 = IntegerLiteral 34
-// CHECK:STDOUT:   %9: i32 = BinaryOperatorAdd %7, %8
-// CHECK:STDOUT:   ReturnExpression i32, %9
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 12
+// CHECK:STDOUT:   %1: i32 = IntegerLiteral 34
+// CHECK:STDOUT:   %2: i32 = BinaryOperatorAdd %0, %1
+// CHECK:STDOUT:   ReturnExpression i32, %2
 // CHECK:STDOUT: }
 
 fn Main() -> i32 {

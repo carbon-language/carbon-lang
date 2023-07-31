@@ -82,17 +82,19 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
-// CHECK:STDOUT:   %11: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %12: i32 = StubReference %11
-// CHECK:STDOUT:   %13: type = TupleType {}
-// CHECK:STDOUT:   %14: () as type = Call {%12}, @Foo
-// CHECK:STDOUT:   %15: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %16: i32 = StubReference %15
-// CHECK:STDOUT:   %17: () as type = Call {%16}, @Foo
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %1: i32 = StubReference %0
+// CHECK:STDOUT:   %2: type = TupleType {}
+// CHECK:STDOUT:   %3: () as type = Call {%1}, @Foo
+// CHECK:STDOUT:   %4: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %5: i32 = StubReference %4
+// CHECK:STDOUT:   %6: () as type = Call {%5}, @Foo
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

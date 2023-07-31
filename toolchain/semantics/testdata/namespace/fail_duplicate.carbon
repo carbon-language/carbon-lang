@@ -49,10 +49,12 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn invalid() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

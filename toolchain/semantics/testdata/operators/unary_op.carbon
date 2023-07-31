@@ -50,8 +50,9 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {
-// CHECK:STDOUT:   %9: bool = UnaryOperatorNot %6
-// CHECK:STDOUT:   ReturnExpression bool, %9
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: bool = UnaryOperatorNot %b
+// CHECK:STDOUT:   ReturnExpression bool, %0
 // CHECK:STDOUT: }
 
 fn Not(b: bool) -> bool {

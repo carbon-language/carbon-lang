@@ -65,12 +65,16 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) -> i32 {
-// CHECK:STDOUT:   BranchIf {%11, %12}, %6
-// CHECK:STDOUT:   Branch {%13, %14}
-// CHECK:STDOUT:   %11: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   ReturnExpression i32, %11
-// CHECK:STDOUT:   %13: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   ReturnExpression i32, %13
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !0 else br !1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0:
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   ReturnExpression i32, %0
+// CHECK:STDOUT:
+// CHECK:STDOUT: !1:
+// CHECK:STDOUT:   %1: i32 = IntegerLiteral 2
+// CHECK:STDOUT:   ReturnExpression i32, %1
 // CHECK:STDOUT: }
 
 fn If(b: bool) -> i32 {

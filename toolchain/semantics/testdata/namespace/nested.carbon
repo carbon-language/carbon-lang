@@ -61,12 +61,14 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Wiz() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
-// CHECK:STDOUT:   %11: type = TupleType {}
-// CHECK:STDOUT:   %12: () as type = Call {}, @Wiz
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: type = TupleType {}
+// CHECK:STDOUT:   %1: () as type = Call {}, @Wiz
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

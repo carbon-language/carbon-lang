@@ -41,8 +41,9 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
-// CHECK:STDOUT:   %7: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   ReturnExpression i32, %7
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   ReturnExpression i32, %0
 // CHECK:STDOUT: }
 
 fn Main() -> i32 {

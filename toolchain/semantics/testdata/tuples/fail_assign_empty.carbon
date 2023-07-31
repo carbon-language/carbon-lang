@@ -59,15 +59,14 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %6: type = StubReference %3
-// CHECK:STDOUT:   %7: type = TupleType {type}
-// CHECK:STDOUT:   %8: (type,) as type = TupleValue {%6}
-// CHECK:STDOUT:   %9: type = TupleType {i32}
-// CHECK:STDOUT:   %10: (i32,) as type = VarStorage
-// CHECK:STDOUT:   BindName (i32,) as type, "x", %10
-// CHECK:STDOUT:   %12: type = TupleType {}
-// CHECK:STDOUT:   %13: () as type = TupleValue {}
-// CHECK:STDOUT:   Assign <error>, %10, %1
+// CHECK:STDOUT:   %0: type = StubReference <noderef 3>
+// CHECK:STDOUT:   %1: type = TupleType {type}
+// CHECK:STDOUT:   %2: (type,) as type = TupleValue {%0}
+// CHECK:STDOUT:   %3: type = TupleType {i32}
+// CHECK:STDOUT:   %x: (i32,) as type = VarStorage
+// CHECK:STDOUT:   %4: type = TupleType {}
+// CHECK:STDOUT:   %5: () as type = TupleValue {}
+// CHECK:STDOUT:   Assign <error>, %x, <noderef 1>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:19: Cannot implicitly convert from `() as type` to `(i32,) as type`.

@@ -85,20 +85,26 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) {
-// CHECK:STDOUT:   BranchIf {%15, %16, %17}, %10
-// CHECK:STDOUT:   Branch {%18, %19}
-// CHECK:STDOUT:   %15: type = TupleType {}
-// CHECK:STDOUT:   %16: () as type = Call {}, @F
-// CHECK:STDOUT:   Branch {%18, %19}
-// CHECK:STDOUT:   %18: () as type = Call {}, @G
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !0 else br !1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0:
+// CHECK:STDOUT:   %0: type = TupleType {}
+// CHECK:STDOUT:   %1: () as type = Call {}, @F
+// CHECK:STDOUT:   br !1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !1:
+// CHECK:STDOUT:   %2: () as type = Call {}, @G
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

@@ -51,17 +51,16 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %6: i32 = VarStorage
-// CHECK:STDOUT:   BindName i32, "x", %6
-// CHECK:STDOUT:   %8: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   Assign i32, %6, %8
+// CHECK:STDOUT:   %x: i32 = VarStorage
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   Assign i32, %x, %0
 // CHECK:STDOUT:   FunctionDeclaration @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
-// CHECK:STDOUT:   %11: i32 = VarStorage
-// CHECK:STDOUT:   BindName i32, "y", %11
-// CHECK:STDOUT:   Assign i32, %11, %6
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %y: i32 = VarStorage
+// CHECK:STDOUT:   Assign i32, %y, <noderef 6>
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

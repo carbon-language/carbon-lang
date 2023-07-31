@@ -134,30 +134,34 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run0() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run1(%a: i32) {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run2(%a: i32, %b: i32) {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
-// CHECK:STDOUT:   %19: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %20: i32 = StubReference %19
-// CHECK:STDOUT:   %21: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   %22: i32 = StubReference %21
-// CHECK:STDOUT:   %23: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %24: i32 = StubReference %23
-// CHECK:STDOUT:   %25: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   %26: i32 = StubReference %25
-// CHECK:STDOUT:   %27: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %28: i32 = StubReference %27
-// CHECK:STDOUT:   %29: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   %30: i32 = StubReference %29
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %1: i32 = StubReference %0
+// CHECK:STDOUT:   %2: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   %3: i32 = StubReference %2
+// CHECK:STDOUT:   %4: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %5: i32 = StubReference %4
+// CHECK:STDOUT:   %6: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   %7: i32 = StubReference %6
+// CHECK:STDOUT:   %8: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %9: i32 = StubReference %8
+// CHECK:STDOUT:   %10: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   %11: i32 = StubReference %10
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

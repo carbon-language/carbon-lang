@@ -81,14 +81,20 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {
-// CHECK:STDOUT:   BranchIf {%15, %17}, %6
-// CHECK:STDOUT:   Branch {%16, %18}
-// CHECK:STDOUT:   %15: i32 = BinaryOperatorAdd %8, %10
-// CHECK:STDOUT:   BranchWithArg {%19, %20}, %15
-// CHECK:STDOUT:   %16: i32 = BinaryOperatorAdd %10, %8
-// CHECK:STDOUT:   BranchWithArg {%19, %20}, %16
-// CHECK:STDOUT:   %19: i32 = BlockArg {%19, %20}
-// CHECK:STDOUT:   ReturnExpression i32, %19
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !0 else br !1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0:
+// CHECK:STDOUT:   %0: i32 = BinaryOperatorAdd %n, %m
+// CHECK:STDOUT:   br !2(%0)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !1:
+// CHECK:STDOUT:   %1: i32 = BinaryOperatorAdd %m, %n
+// CHECK:STDOUT:   br !2(%1)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !2:
+// CHECK:STDOUT:   %2: i32 = block_arg !2
+// CHECK:STDOUT:   ReturnExpression i32, %2
 // CHECK:STDOUT: }
 
 fn F(b: bool, n: i32, m: i32) -> i32 {

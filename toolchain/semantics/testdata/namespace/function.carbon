@@ -65,16 +65,19 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {
-// CHECK:STDOUT:   %12: type = TupleType {}
-// CHECK:STDOUT:   %13: () as type = Call {}, @Baz
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: type = TupleType {}
+// CHECK:STDOUT:   %1: () as type = Call {}, @Baz
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

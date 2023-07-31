@@ -80,25 +80,31 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
-// CHECK:STDOUT:   %7: bool = BoolLiteral true
-// CHECK:STDOUT:   ReturnExpression bool, %7
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: bool = BoolLiteral true
+// CHECK:STDOUT:   ReturnExpression bool, %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
-// CHECK:STDOUT:   %10: bool = BoolLiteral true
-// CHECK:STDOUT:   ReturnExpression bool, %10
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: bool = BoolLiteral true
+// CHECK:STDOUT:   ReturnExpression bool, %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
-// CHECK:STDOUT:   %13: bool = Call {}, @F
-// CHECK:STDOUT:   %14: bool = UnaryOperatorNot %13
-// CHECK:STDOUT:   %15: bool = BoolLiteral true
-// CHECK:STDOUT:   BranchIf {%18, %19}, %14
-// CHECK:STDOUT:   BranchWithArg {%20, %21}, %15
-// CHECK:STDOUT:   %18: bool = Call {}, @G
-// CHECK:STDOUT:   BranchWithArg {%20, %21}, %18
-// CHECK:STDOUT:   %20: bool = BlockArg {%20, %21}
-// CHECK:STDOUT:   ReturnExpression bool, %20
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: bool = Call {}, @F
+// CHECK:STDOUT:   %1: bool = UnaryOperatorNot %0
+// CHECK:STDOUT:   %2: bool = BoolLiteral true
+// CHECK:STDOUT:   if %1 br !0 else br !1(%2)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0:
+// CHECK:STDOUT:   %3: bool = Call {}, @G
+// CHECK:STDOUT:   br !1(%3)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !1:
+// CHECK:STDOUT:   %4: bool = block_arg !1
+// CHECK:STDOUT:   ReturnExpression bool, %4
 // CHECK:STDOUT: }
 
 fn F() -> bool { return true; }

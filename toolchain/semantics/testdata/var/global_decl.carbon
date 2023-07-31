@@ -31,8 +31,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %6: i32 = VarStorage
-// CHECK:STDOUT:   BindName i32, "x", %6
+// CHECK:STDOUT:   %x: i32 = VarStorage
 // CHECK:STDOUT: }
 
 var x: i32;

@@ -41,12 +41,11 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %6: i32 = VarStorage
-// CHECK:STDOUT:   BindName i32, "test_i32", %6
-// CHECK:STDOUT:   %8: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %9: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   %10: i32 = BinaryOperatorAdd %8, %9
-// CHECK:STDOUT:   Assign i32, %6, %10
+// CHECK:STDOUT:   %test_i32: i32 = VarStorage
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %1: i32 = IntegerLiteral 2
+// CHECK:STDOUT:   %2: i32 = BinaryOperatorAdd %0, %1
+// CHECK:STDOUT:   Assign i32, %test_i32, %2
 // CHECK:STDOUT: }
 
 var test_i32: i32 = ((1) + (2));

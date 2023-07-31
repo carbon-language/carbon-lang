@@ -74,16 +74,17 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {
-// CHECK:STDOUT:   ReturnExpression i32, %6
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   ReturnExpression i32, %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
-// CHECK:STDOUT:   %11: i32 = VarStorage
-// CHECK:STDOUT:   BindName i32, "b", %11
-// CHECK:STDOUT:   %13: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %14: i32 = StubReference %13
-// CHECK:STDOUT:   %15: i32 = Call {%14}, @Echo
-// CHECK:STDOUT:   Assign i32, %11, %15
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %b: i32 = VarStorage
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %1: i32 = StubReference %0
+// CHECK:STDOUT:   %2: i32 = Call {%1}, @Echo
+// CHECK:STDOUT:   Assign i32, %b, %2
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

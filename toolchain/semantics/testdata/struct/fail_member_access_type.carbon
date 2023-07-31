@@ -66,16 +66,14 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   StructTypeField f64, "a"
-// CHECK:STDOUT:   %7: type = StructType {%6}
-// CHECK:STDOUT:   %8: {.a: f64} = VarStorage
-// CHECK:STDOUT:   BindName {.a: f64}, "x", %8
-// CHECK:STDOUT:   %10: f64 = RealLiteral 40e-1
-// CHECK:STDOUT:   %12: f64 = StubReference %10
-// CHECK:STDOUT:   %13: {.a: f64} = StructValue {%12}
-// CHECK:STDOUT:   Assign {.a: f64}, %8, %13
-// CHECK:STDOUT:   %15: i32 = VarStorage
-// CHECK:STDOUT:   BindName i32, "y", %15
-// CHECK:STDOUT:   Assign <error>, %15, %1
+// CHECK:STDOUT:   %0: type = StructType {<noderef 6>}
+// CHECK:STDOUT:   %x: {.a: f64} = VarStorage
+// CHECK:STDOUT:   %1: f64 = RealLiteral 40e-1
+// CHECK:STDOUT:   %2: f64 = StubReference %1
+// CHECK:STDOUT:   %3: {.a: f64} = StructValue {%2}
+// CHECK:STDOUT:   Assign {.a: f64}, %x, %3
+// CHECK:STDOUT:   %y: i32 = VarStorage
+// CHECK:STDOUT:   Assign <error>, %y, <noderef 1>
 // CHECK:STDOUT: }
 
 var x: {.a: f64} = {.a = 4.0};

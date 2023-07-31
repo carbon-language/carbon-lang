@@ -53,12 +53,14 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
-// CHECK:STDOUT:   %9: type = TupleType {}
-// CHECK:STDOUT:   %10: () as type = Call {}, @Foo
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: type = TupleType {}
+// CHECK:STDOUT:   %1: () as type = Call {}, @Foo
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

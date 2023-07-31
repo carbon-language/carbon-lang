@@ -38,12 +38,13 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %6: type = TupleType {}
-// CHECK:STDOUT:   %7: () as type = TupleValue {}
+// CHECK:STDOUT:   %0: type = TupleType {}
+// CHECK:STDOUT:   %1: () as type = TupleValue {}
 // CHECK:STDOUT:   FunctionDeclaration @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> () as type {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
 
 fn F() -> () {

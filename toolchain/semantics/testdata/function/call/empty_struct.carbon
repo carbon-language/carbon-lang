@@ -67,19 +67,21 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %10: {} as Type = StructValue {}
+// CHECK:STDOUT:   %0: {} as Type = StructValue {}
 // CHECK:STDOUT:   FunctionDeclaration @Echo
 // CHECK:STDOUT:   FunctionDeclaration @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: {} as Type) -> {} as Type {
-// CHECK:STDOUT:   ReturnExpression {} as Type, %8
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   ReturnExpression {} as Type, %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
-// CHECK:STDOUT:   %14: {} as Type = StructValue {}
-// CHECK:STDOUT:   %15: {} as Type = StubReference %14
-// CHECK:STDOUT:   %16: {} as Type = Call {%15}, @Echo
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: {} as Type = StructValue {}
+// CHECK:STDOUT:   %1: {} as Type = StubReference %0
+// CHECK:STDOUT:   %2: {} as Type = Call {%1}, @Echo
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

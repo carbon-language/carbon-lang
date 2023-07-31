@@ -36,10 +36,9 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %6: type = VarStorage
-// CHECK:STDOUT:   BindName type, "x", %6
-// CHECK:STDOUT:   %8: i32 = IntegerLiteral 42
-// CHECK:STDOUT:   Assign <error>, %6, %1
+// CHECK:STDOUT:   %x: type = VarStorage
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 42
+// CHECK:STDOUT:   Assign <error>, %x, <noderef 1>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+3]]:17: Cannot implicitly convert from `i32` to `type`.

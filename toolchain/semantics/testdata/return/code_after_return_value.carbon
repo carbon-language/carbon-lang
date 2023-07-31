@@ -69,8 +69,9 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {
-// CHECK:STDOUT:   %9: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   ReturnExpression i32, %9
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   ReturnExpression i32, %0
 // CHECK:STDOUT: }
 
 fn F(b: bool) -> i32 {

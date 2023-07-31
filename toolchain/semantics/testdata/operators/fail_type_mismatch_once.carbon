@@ -52,12 +52,13 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
-// CHECK:STDOUT:   %7: i32 = IntegerLiteral 12
-// CHECK:STDOUT:   %8: f64 = RealLiteral 34e-1
-// CHECK:STDOUT:   %9: <error> = BinaryOperatorAdd %1, %8
-// CHECK:STDOUT:   %10: i32 = IntegerLiteral 12
-// CHECK:STDOUT:   %11: <error> = BinaryOperatorAdd %9, %10
-// CHECK:STDOUT:   ReturnExpression <error>, %11
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 12
+// CHECK:STDOUT:   %1: f64 = RealLiteral 34e-1
+// CHECK:STDOUT:   %2: <error> = BinaryOperatorAdd <noderef 1>, %1
+// CHECK:STDOUT:   %3: i32 = IntegerLiteral 12
+// CHECK:STDOUT:   %4: <error> = BinaryOperatorAdd %2, %3
+// CHECK:STDOUT:   ReturnExpression <error>, %4
 // CHECK:STDOUT: }
 
 fn Main() -> i32 {

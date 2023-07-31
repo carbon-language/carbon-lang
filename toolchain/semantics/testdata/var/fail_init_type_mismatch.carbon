@@ -49,10 +49,10 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
-// CHECK:STDOUT:   %7: i32 = VarStorage
-// CHECK:STDOUT:   BindName i32, "x", %7
-// CHECK:STDOUT:   %9: f64 = RealLiteral 10e-1
-// CHECK:STDOUT:   Assign <error>, %7, %1
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %x: i32 = VarStorage
+// CHECK:STDOUT:   %0: f64 = RealLiteral 10e-1
+// CHECK:STDOUT:   Assign <error>, %x, <noderef 1>
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

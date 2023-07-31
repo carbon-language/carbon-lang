@@ -90,25 +90,23 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %6: type = StubReference %3
-// CHECK:STDOUT:   %7: type = StubReference %3
-// CHECK:STDOUT:   %8: type = TupleType {type, type}
-// CHECK:STDOUT:   %9: (type, type) as type = TupleValue {%6, %7}
-// CHECK:STDOUT:   %10: type = TupleType {i32, i32}
-// CHECK:STDOUT:   %11: (i32, i32) as type = VarStorage
-// CHECK:STDOUT:   BindName (i32, i32) as type, "x", %11
-// CHECK:STDOUT:   %13: i32 = IntegerLiteral 4
-// CHECK:STDOUT:   %14: i32 = StubReference %13
-// CHECK:STDOUT:   %15: i32 = IntegerLiteral 102
-// CHECK:STDOUT:   %16: i32 = StubReference %15
-// CHECK:STDOUT:   %17: (i32, i32) as type = TupleValue {%14, %16}
-// CHECK:STDOUT:   Assign (i32, i32) as type, %11, %17
-// CHECK:STDOUT:   %19: type = StubReference %3
-// CHECK:STDOUT:   %20: type = StubReference %3
-// CHECK:STDOUT:   %21: (type, type) as type = TupleValue {%19, %20}
-// CHECK:STDOUT:   %22: (i32, i32) as type = VarStorage
-// CHECK:STDOUT:   BindName (i32, i32) as type, "y", %22
-// CHECK:STDOUT:   Assign (i32, i32) as type, %22, %11
+// CHECK:STDOUT:   %0: type = StubReference <noderef 3>
+// CHECK:STDOUT:   %1: type = StubReference <noderef 3>
+// CHECK:STDOUT:   %2: type = TupleType {type, type}
+// CHECK:STDOUT:   %3: (type, type) as type = TupleValue {%0, %1}
+// CHECK:STDOUT:   %4: type = TupleType {i32, i32}
+// CHECK:STDOUT:   %x: (i32, i32) as type = VarStorage
+// CHECK:STDOUT:   %5: i32 = IntegerLiteral 4
+// CHECK:STDOUT:   %6: i32 = StubReference %5
+// CHECK:STDOUT:   %7: i32 = IntegerLiteral 102
+// CHECK:STDOUT:   %8: i32 = StubReference %7
+// CHECK:STDOUT:   %9: (i32, i32) as type = TupleValue {%6, %8}
+// CHECK:STDOUT:   Assign (i32, i32) as type, %x, %9
+// CHECK:STDOUT:   %10: type = StubReference <noderef 3>
+// CHECK:STDOUT:   %11: type = StubReference <noderef 3>
+// CHECK:STDOUT:   %12: (type, type) as type = TupleValue {%10, %11}
+// CHECK:STDOUT:   %y: (i32, i32) as type = VarStorage
+// CHECK:STDOUT:   Assign (i32, i32) as type, %y, %x
 // CHECK:STDOUT: }
 
 var x: (i32, i32) = (4, 102);

@@ -117,29 +117,27 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   StructTypeField i32, "a"
-// CHECK:STDOUT:   %7: type = StubReference %3
-// CHECK:STDOUT:   %8: type = TupleType {type}
-// CHECK:STDOUT:   %9: (type,) as type = TupleValue {%7}
-// CHECK:STDOUT:   %10: type = TupleType {i32}
+// CHECK:STDOUT:   %0: type = StubReference <noderef 3>
+// CHECK:STDOUT:   %1: type = TupleType {type}
+// CHECK:STDOUT:   %2: (type,) as type = TupleValue {%0}
+// CHECK:STDOUT:   %3: type = TupleType {i32}
 // CHECK:STDOUT:   StructTypeField (i32,) as type, "b"
-// CHECK:STDOUT:   %12: type = StructType {%6, %11}
-// CHECK:STDOUT:   %13: {.a: i32, .b: (i32,) as type} = VarStorage
-// CHECK:STDOUT:   BindName {.a: i32, .b: (i32,) as type}, "x", %13
-// CHECK:STDOUT:   %15: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %17: i32 = StubReference %15
-// CHECK:STDOUT:   %18: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   %19: i32 = StubReference %18
-// CHECK:STDOUT:   %20: (i32,) as type = TupleValue {%19}
-// CHECK:STDOUT:   %22: (i32,) as type = StubReference %20
-// CHECK:STDOUT:   %23: {.a: i32, .b: (i32,) as type} = StructValue {%17, %22}
-// CHECK:STDOUT:   Assign {.a: i32, .b: (i32,) as type}, %13, %23
+// CHECK:STDOUT:   %4: type = StructType {<noderef 6>, <noderef 11>}
+// CHECK:STDOUT:   %x: {.a: i32, .b: (i32,) as type} = VarStorage
+// CHECK:STDOUT:   %5: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %6: i32 = StubReference %5
+// CHECK:STDOUT:   %7: i32 = IntegerLiteral 2
+// CHECK:STDOUT:   %8: i32 = StubReference %7
+// CHECK:STDOUT:   %9: (i32,) as type = TupleValue {%8}
+// CHECK:STDOUT:   %10: (i32,) as type = StubReference %9
+// CHECK:STDOUT:   %11: {.a: i32, .b: (i32,) as type} = StructValue {%6, %10}
+// CHECK:STDOUT:   Assign {.a: i32, .b: (i32,) as type}, %x, %11
 // CHECK:STDOUT:   StructTypeField i32, "a"
-// CHECK:STDOUT:   %26: type = StubReference %3
-// CHECK:STDOUT:   %27: (type,) as type = TupleValue {%26}
+// CHECK:STDOUT:   %12: type = StubReference <noderef 3>
+// CHECK:STDOUT:   %13: (type,) as type = TupleValue {%12}
 // CHECK:STDOUT:   StructTypeField (i32,) as type, "b"
-// CHECK:STDOUT:   %29: {.a: i32, .b: (i32,) as type} = VarStorage
-// CHECK:STDOUT:   BindName {.a: i32, .b: (i32,) as type}, "y", %29
-// CHECK:STDOUT:   Assign {.a: i32, .b: (i32,) as type}, %29, %13
+// CHECK:STDOUT:   %y: {.a: i32, .b: (i32,) as type} = VarStorage
+// CHECK:STDOUT:   Assign {.a: i32, .b: (i32,) as type}, %y, %x
 // CHECK:STDOUT: }
 
 var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};

@@ -70,14 +70,17 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @VarScope(%b: bool) -> i32 {
-// CHECK:STDOUT:   BranchIf {%11, %12, %13, %14, %15}, %6
-// CHECK:STDOUT:   Branch {%17}
-// CHECK:STDOUT:   %11: i32 = VarStorage
-// CHECK:STDOUT:   BindName i32, "n", %11
-// CHECK:STDOUT:   %13: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   Assign i32, %11, %13
-// CHECK:STDOUT:   ReturnExpression i32, %11
-// CHECK:STDOUT:   ReturnExpression <error>, %1
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !0 else br !1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0:
+// CHECK:STDOUT:   %n: i32 = VarStorage
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 2
+// CHECK:STDOUT:   Assign i32, %n, %0
+// CHECK:STDOUT:   ReturnExpression i32, %n
+// CHECK:STDOUT:
+// CHECK:STDOUT: !1:
+// CHECK:STDOUT:   ReturnExpression <error>, <noderef 1>
 // CHECK:STDOUT: }
 
 fn VarScope(b: bool) -> i32 {

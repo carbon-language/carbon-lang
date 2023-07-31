@@ -65,21 +65,17 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %6: i32 = VarStorage
-// CHECK:STDOUT:   BindName i32, "test_i32", %6
-// CHECK:STDOUT:   %8: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   Assign i32, %6, %8
-// CHECK:STDOUT:   %10: f64 = VarStorage
-// CHECK:STDOUT:   BindName f64, "test_f64", %10
-// CHECK:STDOUT:   %12: f64 = RealLiteral 1e-1
-// CHECK:STDOUT:   Assign f64, %10, %12
-// CHECK:STDOUT:   %14: String = VarStorage
-// CHECK:STDOUT:   BindName String, "test_str", %14
-// CHECK:STDOUT:   %16: String = StringLiteral "Test"
-// CHECK:STDOUT:   Assign String, %14, %16
-// CHECK:STDOUT:   %18: type = VarStorage
-// CHECK:STDOUT:   BindName type, "test_type", %18
-// CHECK:STDOUT:   Assign type, %18, %3
+// CHECK:STDOUT:   %test_i32: i32 = VarStorage
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   Assign i32, %test_i32, %0
+// CHECK:STDOUT:   %test_f64: f64 = VarStorage
+// CHECK:STDOUT:   %1: f64 = RealLiteral 1e-1
+// CHECK:STDOUT:   Assign f64, %test_f64, %1
+// CHECK:STDOUT:   %test_str: String = VarStorage
+// CHECK:STDOUT:   %2: String = StringLiteral "Test"
+// CHECK:STDOUT:   Assign String, %test_str, %2
+// CHECK:STDOUT:   %test_type: type = VarStorage
+// CHECK:STDOUT:   Assign type, %test_type, <noderef 3>
 // CHECK:STDOUT: }
 
 var test_i32: i32 = 0;

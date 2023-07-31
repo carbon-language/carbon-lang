@@ -121,26 +121,42 @@
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: bool, %b: bool, %c: bool) -> i32 {
-// CHECK:STDOUT:   BranchIf {%15, %16}, %6
-// CHECK:STDOUT:   Branch {%22, %23}
-// CHECK:STDOUT:   BranchIf {%17, %19}, %8
-// CHECK:STDOUT:   Branch {%18, %20}
-// CHECK:STDOUT:   %17: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   BranchWithArg {%21, %29}, %17
-// CHECK:STDOUT:   %18: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   BranchWithArg {%21, %29}, %18
-// CHECK:STDOUT:   %21: i32 = BlockArg {%21, %29}
-// CHECK:STDOUT:   BranchWithArg {%31, %32}, %21
-// CHECK:STDOUT:   BranchIf {%24, %26}, %10
-// CHECK:STDOUT:   Branch {%25, %27}
-// CHECK:STDOUT:   %24: i32 = IntegerLiteral 3
-// CHECK:STDOUT:   BranchWithArg {%28, %30}, %24
-// CHECK:STDOUT:   %25: i32 = IntegerLiteral 4
-// CHECK:STDOUT:   BranchWithArg {%28, %30}, %25
-// CHECK:STDOUT:   %28: i32 = BlockArg {%28, %30}
-// CHECK:STDOUT:   BranchWithArg {%31, %32}, %28
-// CHECK:STDOUT:   %31: i32 = BlockArg {%31, %32}
-// CHECK:STDOUT:   ReturnExpression i32, %31
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %a br !0 else br !4
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0:
+// CHECK:STDOUT:   if %b br !1 else br !2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !1:
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   br !3(%0)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !2:
+// CHECK:STDOUT:   %1: i32 = IntegerLiteral 2
+// CHECK:STDOUT:   br !3(%1)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !3:
+// CHECK:STDOUT:   %2: i32 = block_arg !3
+// CHECK:STDOUT:   br !8(%2)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !4:
+// CHECK:STDOUT:   if %c br !5 else br !6
+// CHECK:STDOUT:
+// CHECK:STDOUT: !5:
+// CHECK:STDOUT:   %3: i32 = IntegerLiteral 3
+// CHECK:STDOUT:   br !7(%3)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !6:
+// CHECK:STDOUT:   %4: i32 = IntegerLiteral 4
+// CHECK:STDOUT:   br !7(%4)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !7:
+// CHECK:STDOUT:   %5: i32 = block_arg !7
+// CHECK:STDOUT:   br !8(%5)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !8:
+// CHECK:STDOUT:   %6: i32 = block_arg !8
+// CHECK:STDOUT:   ReturnExpression i32, %6
 // CHECK:STDOUT: }
 
 fn F(a: bool, b: bool, c: bool) -> i32 {

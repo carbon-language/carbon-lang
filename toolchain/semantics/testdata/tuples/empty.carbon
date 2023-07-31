@@ -50,16 +50,14 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %6: type = TupleType {}
-// CHECK:STDOUT:   %7: () as type = TupleValue {}
-// CHECK:STDOUT:   %8: () as type = VarStorage
-// CHECK:STDOUT:   BindName () as type, "x", %8
-// CHECK:STDOUT:   %10: () as type = TupleValue {}
-// CHECK:STDOUT:   Assign () as type, %8, %10
-// CHECK:STDOUT:   %12: () as type = TupleValue {}
-// CHECK:STDOUT:   %13: () as type = VarStorage
-// CHECK:STDOUT:   BindName () as type, "y", %13
-// CHECK:STDOUT:   Assign () as type, %13, %8
+// CHECK:STDOUT:   %0: type = TupleType {}
+// CHECK:STDOUT:   %1: () as type = TupleValue {}
+// CHECK:STDOUT:   %x: () as type = VarStorage
+// CHECK:STDOUT:   %2: () as type = TupleValue {}
+// CHECK:STDOUT:   Assign () as type, %x, %2
+// CHECK:STDOUT:   %3: () as type = TupleValue {}
+// CHECK:STDOUT:   %y: () as type = VarStorage
+// CHECK:STDOUT:   Assign () as type, %y, %x
 // CHECK:STDOUT: }
 
 var x: () = ();
