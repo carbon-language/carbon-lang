@@ -60,6 +60,15 @@ struct SemanticsFunctionId : public IndexBase {
   }
 };
 
+// The ID of a function.
+struct SemanticsDataStructureId : public IndexBase {
+  using IndexBase::IndexBase;
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "ds";
+    IndexBase::Print(out);
+  }
+};
+
 // The ID of a cross-referenced IR.
 struct SemanticsCrossReferenceIRId : public IndexBase {
   using IndexBase::IndexBase;
@@ -382,6 +391,8 @@ class SemanticsNode {
 
   using IntegerLiteral = Factory<SemanticsNodeKind::IntegerLiteral,
                                  SemanticsIntegerLiteralId /*integer_id*/>;
+
+  using Index = Factory<SemanticsNodeKind::Index, SemanticsNodeId /*tuple_id*/>;
 
   using Namespace = FactoryNoType<SemanticsNodeKind::Namespace,
                                   SemanticsNameScopeId /*name_scope_id*/>;

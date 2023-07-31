@@ -257,6 +257,8 @@ class SemanticsNodeStack {
       case ParseNodeKind::StructLiteral:
       case ParseNodeKind::StructFieldType:
       case ParseNodeKind::StructTypeLiteral:
+      case ParseNodeKind::IndexExpressionStart:
+      case ParseNodeKind::IndexExpression:
       case ParseNodeKind::TupleLiteral:
         return IdKind::SemanticsNodeId;
       case ParseNodeKind::IfExpressionThen:
