@@ -94,8 +94,8 @@
 // CHECK:STDOUT:   %5: {.a: f64, .b: i32} = StructValue {%2, %4}
 // CHECK:STDOUT:   Assign {.a: f64, .b: i32}, %x, %5
 // CHECK:STDOUT:   %y: i32 = VarStorage
-// CHECK:STDOUT:   StructMemberAccess i32, %x, member1
-// CHECK:STDOUT:   Assign i32, %y, <noderef 21>
+// CHECK:STDOUT:   %6: i32 = StructMemberAccess %x, member1
+// CHECK:STDOUT:   Assign i32, %y, %6
 // CHECK:STDOUT:   %z: i32 = VarStorage
 // CHECK:STDOUT:   Assign i32, %z, %y
 // CHECK:STDOUT: }
