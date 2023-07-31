@@ -661,7 +661,9 @@ var v: Point_Extend = AddAndScaleGeneric(a, w, 2.5);
 ```
 
 Here `T` is a type whose type is `Vector`. The `:!` syntax means that `T` is a
-_[checked generic parameter](terminology.md#checked-versus-template-parameters)_.
+_[checked generic](terminology.md#checked-versus-template-parameters)_ binding.
+Since this specifically is in a function declaration, it marks a _checked
+[generic parameter](terminology.md#generic-means-compile-time-parameterized)_.
 That means it must be known to the caller, but we will only use the information
 present in the signature of the function to type check the body of
 `AddAndScaleGeneric`'s definition. In this case, we know that any value of type
@@ -2952,7 +2954,7 @@ The `.Self` construct follows these rules:
     thing or isn't a type.
 -   You get the innermost, most-specific type for `.Self` if it is introduced
     twice in a scope. By the previous rule, it is only legal if they all refer
-    to the same generic parameter.
+    to the same facet binding.
 
 So in `X:! A where ...`, `.Self` is introduced twice, after the `:!` and the
 `where`. This is allowed since both times it means `X`. After the `:!`, `.Self`
@@ -3192,7 +3194,8 @@ fn F[T:! SomeInterface](x: T) {
 
 We want to know if the return type of method `T.H` is the same as the parameter
 type of `T.G` in order to typecheck the function. However, determining whether
-two type expressions are transitively equal is in general undecidable, as
+two [type expressions](terminology.md#type-expression) are transitively equal is
+in general undecidable, as
 [has been shown in Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
 
 Carbon's approach is to only allow implicit conversions between two type
@@ -3338,9 +3341,10 @@ can find a sequence that prove they are equal.
 
 #### `observe` declarations
 
-An `observe` declaration lists a sequence of type expressions that are equal by
-some same-type `where` constraints. These `observe` declarations may be included
-in an `interface` definition or a function body, as in:
+An `observe` declaration lists a sequence of
+[type expressions](terminology.md#type-expression) that are equal by some
+same-type `where` constraints. These `observe` declarations may be included in
+an `interface` definition or a function body, as in:
 
 ```
 interface Commute {
@@ -4738,7 +4742,7 @@ after name and alias resolution. To agree:
     declarations, they must match.
 -   Types agree if they correspond to the same expression tree, after name and
     alias resolution and canonicalization of parentheses. Note that no other
-    evaluation of type expressions is performed.
+    evaluation of expressions is performed.
 
 Interface implementation declarations match if the type and interface
 expressions match along with
@@ -5749,10 +5753,10 @@ template, using `:!` or `template...:!`, not dynamic, with a plain `:`.
 
 Two types are the same if they have the same name and the same arguments.
 Carbon's [manual type equality](#manual-type-equality) approach means that the
-compiler may not always be able to tell when two type expressions are equal
-without help from the user, in the form of
-[`observe` declarations](#observe-declarations). This means Carbon will not in
-general be able to determine when types are unequal.
+compiler may not always be able to tell when two
+[type expressions](terminology.md#type-expression) are equal without help from
+the user, in the form of [`observe` declarations](#observe-declarations). This
+means Carbon will not in general be able to determine when types are unequal.
 
 Unlike an [interface's parameters](#parameterized-interfaces), a type's
 parameters may be [deduced](terminology.md#deduced-parameter), as in:
