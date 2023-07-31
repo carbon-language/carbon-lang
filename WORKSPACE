@@ -56,12 +56,12 @@ configure_clang_toolchain(name = "bazel_cc_toolchain")
 # Abseil libraries
 ###############################################################################
 
-# Head as of 2022-09-13.
-abseil_version = "530cd52f585c9d31b2b28cea7e53915af7a878e3"
+# Head as of 2023-07-31.
+abseil_version = "407f2fdd5ec6f79287919486aa5869b346093906"
 
 http_archive(
     name = "com_google_absl",
-    sha256 = "f8a6789514a3b109111252af92da41d6e64f90efca9fb70515d86debee57dc24",
+    sha256 = "953a914ac42f87caf5ed6a86890e183ae4e2bc69666a90c67605091d6e77e502",
     strip_prefix = "abseil-cpp-{0}".format(abseil_version),
     urls = ["https://github.com/abseil/abseil-cpp/archive/{0}.tar.gz".format(abseil_version)],
 )
@@ -70,12 +70,12 @@ http_archive(
 # RE2 libraries
 ###############################################################################
 
-# Head as of 2022-09-14.
-re2_version = "cc1c9db8bf5155d89d10d65998cdb226f676492c"
+# Head as of 2023-07-31.
+re2_version = "960c861764ff54c9a12ff683ba55ccaad1a8f73b"
 
 http_archive(
     name = "com_googlesource_code_re2",
-    sha256 = "8ef976c79a300f8c5e880535665bd4ba146fb09fb6d2342f8f1a02d9af29f365",
+    sha256 = "8315f22198c25e9f7f1a3754566824710c08ddbb39d93e9920f4a131e871fc15",
     strip_prefix = "re2-{0}".format(re2_version),
     urls = ["https://github.com/google/re2/archive/{0}.tar.gz".format(re2_version)],
 )
@@ -84,12 +84,12 @@ http_archive(
 # GoogleTest libraries
 ###############################################################################
 
-# Head as of 2022-09-14.
-googletest_version = "1336c4b6d1a6f4bc6beebccb920e5ff858889292"
+# Head as of 2023-07-31.
+googletest_version = "c875c4e2249ec124c24f72141b3780c22256fd44"
 
 http_archive(
     name = "com_google_googletest",
-    sha256 = "d701aaeb9a258afba27210d746d971042be96c371ddc5a49f1e8914d9ea17e3c",
+    sha256 = "21e0cd1110ba534409facccdda1bad90174e7ee7ded60c00dd2b43b4df654080",
     strip_prefix = "googletest-{0}".format(googletest_version),
     urls = ["https://github.com/google/googletest/archive/{0}.tar.gz".format(googletest_version)],
 )
