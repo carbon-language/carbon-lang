@@ -72,9 +72,9 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   FunctionDeclaration @F
-// CHECK:STDOUT:   FunctionDeclaration @G
-// CHECK:STDOUT:   FunctionDeclaration @And
+// CHECK:STDOUT:   %0 = FunctionDeclaration @F
+// CHECK:STDOUT:   %1 = FunctionDeclaration @G
+// CHECK:STDOUT:   %2 = FunctionDeclaration @And
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
@@ -100,7 +100,7 @@
 // CHECK:STDOUT:   br !1(%2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %3: bool = block_arg !1
+// CHECK:STDOUT:   %3: bool = BlockArg !1
 // CHECK:STDOUT:   ReturnExpression bool, %3
 // CHECK:STDOUT: }
 

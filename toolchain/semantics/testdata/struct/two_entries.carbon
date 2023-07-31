@@ -83,7 +83,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %0: type = StructType {.a: i32, .b: i32}
 // CHECK:STDOUT:   %x: {.a: i32, .b: i32} = VarStorage
 // CHECK:STDOUT:   %1: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %2: i32 = StubReference %1

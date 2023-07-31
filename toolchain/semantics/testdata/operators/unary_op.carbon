@@ -46,7 +46,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   FunctionDeclaration @Not
+// CHECK:STDOUT:   %0 = FunctionDeclaration @Not
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {

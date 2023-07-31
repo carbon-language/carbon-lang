@@ -121,9 +121,9 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   FunctionDeclaration @If1
-// CHECK:STDOUT:   FunctionDeclaration @If2
-// CHECK:STDOUT:   FunctionDeclaration @If3
+// CHECK:STDOUT:   %0 = FunctionDeclaration @If1
+// CHECK:STDOUT:   %1 = FunctionDeclaration @If2
+// CHECK:STDOUT:   %2 = FunctionDeclaration @If3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If1(%b: bool) -> i32 {

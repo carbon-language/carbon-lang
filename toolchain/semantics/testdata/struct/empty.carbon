@@ -48,7 +48,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = struct_type {}
+// CHECK:STDOUT:   %0: type = StructType {}
 // CHECK:STDOUT:   %1: {} as Type = StructValue {}
 // CHECK:STDOUT:   %x: {} as Type = VarStorage
 // CHECK:STDOUT:   %2: {} as Type = StructValue {}

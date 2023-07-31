@@ -77,8 +77,8 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   FunctionDeclaration @Foo
-// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT:   %0 = FunctionDeclaration @Foo
+// CHECK:STDOUT:   %1 = FunctionDeclaration @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {

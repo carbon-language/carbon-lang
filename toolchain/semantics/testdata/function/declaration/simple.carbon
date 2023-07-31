@@ -44,8 +44,8 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   FunctionDeclaration @F
-// CHECK:STDOUT:   FunctionDeclaration @G
+// CHECK:STDOUT:   %0 = FunctionDeclaration @F
+// CHECK:STDOUT:   %1 = FunctionDeclaration @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

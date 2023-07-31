@@ -43,9 +43,9 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   Namespace name_scope0
-// CHECK:STDOUT:   FunctionDeclaration @Baz
-// CHECK:STDOUT:   FunctionDeclaration invalid
+// CHECK:STDOUT:   %0 = Namespace {.Baz = %1}
+// CHECK:STDOUT:   %1 = FunctionDeclaration @Baz
+// CHECK:STDOUT:   %2 = FunctionDeclaration invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {

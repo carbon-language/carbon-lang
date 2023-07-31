@@ -77,7 +77,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   FunctionDeclaration @F
+// CHECK:STDOUT:   %0 = FunctionDeclaration @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {
@@ -93,7 +93,7 @@
 // CHECK:STDOUT:   br !2(%1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2:
-// CHECK:STDOUT:   %2: i32 = block_arg !2
+// CHECK:STDOUT:   %2: i32 = BlockArg !2
 // CHECK:STDOUT:   ReturnExpression i32, %2
 // CHECK:STDOUT: }
 

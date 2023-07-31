@@ -65,7 +65,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = struct_type {.a: f64}
+// CHECK:STDOUT:   %0: type = StructType {.a: f64}
 // CHECK:STDOUT:   %x: {.a: f64} = VarStorage
 // CHECK:STDOUT:   %1: f64 = RealLiteral 40e-1
 // CHECK:STDOUT:   %2: f64 = StubReference %1

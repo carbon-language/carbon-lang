@@ -120,7 +120,7 @@
 // CHECK:STDOUT:   %1: type = TupleType {type}
 // CHECK:STDOUT:   %2: (type,) as type = TupleValue {%0}
 // CHECK:STDOUT:   %3: type = TupleType {i32}
-// CHECK:STDOUT:   %4: type = struct_type {.a: i32, .b: (i32,) as type}
+// CHECK:STDOUT:   %4: type = StructType {.a: i32, .b: (i32,) as type}
 // CHECK:STDOUT:   %x: {.a: i32, .b: (i32,) as type} = VarStorage
 // CHECK:STDOUT:   %5: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %6: i32 = StubReference %5

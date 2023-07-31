@@ -66,7 +66,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   FunctionDeclaration @VarScope
+// CHECK:STDOUT:   %0 = FunctionDeclaration @VarScope
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @VarScope(%b: bool) -> i32 {

@@ -56,7 +56,9 @@ class NodeNamer {
     // Sequentially number all remaining typed values.
     for (auto node_id : semantics_ir.GetNodeBlock(block_id)) {
       auto node = semantics_ir.GetNode(node_id);
-      if (node.kind().type_field_kind() == SemanticsTypeFieldKind::Type) {
+      if (node.kind().type_field_kind() == SemanticsTypeFieldKind::Type ||
+          node.kind().type_field_kind() ==
+              SemanticsTypeFieldKind::UntypedValue) {
         auto& name = names[node_id];
         if (name.empty()) {
           names[node_id] = "%" + llvm::itostr(unnamed_count++);
@@ -214,6 +216,9 @@ class SemanticsIRFormatter {
       out_ << ": ";
       FormatType(node.type_id());
       out_ << " = ";
+    } else if (node.kind().type_field_kind() == SemanticsTypeFieldKind::UntypedValue) {
+      FormatNodeName(node_id);
+      out_ << " = ";
     }
   }
 
@@ -236,10 +241,10 @@ class SemanticsIRFormatter {
 
   template <>
   auto FormatInstructionRHS<SemanticsNode::BlockArg>(SemanticsNode,
-                                                     llvm::StringRef,
+                                                     llvm::StringRef name,
                                                      SemanticsNodeBlockId self)
       -> void {
-    out_ << "block_arg ";
+    out_ << name << " ";
     FormatLabel(self);
   }
 
@@ -287,14 +292,22 @@ class SemanticsIRFormatter {
   }
 
   template <>
+  auto FormatInstructionRHS<SemanticsNode::CrossReference>(
+      SemanticsNode, llvm::StringRef,
+      std::pair<SemanticsCrossReferenceIRId, SemanticsNodeId> args) -> void {
+    // TODO: Figure out a way to make this meaningful.
+    out_ << "  xref " << args.first << " " << args.second;
+  }
+
+  template <>
   auto FormatInstruction<SemanticsNode::StructTypeField>(
       SemanticsNodeId, SemanticsNode, llvm::StringRef,
       SemanticsStringId) -> void {}
 
   template <>
   auto FormatInstructionRHS<SemanticsNode::StructType>(
-      SemanticsNode, llvm::StringRef, SemanticsNodeBlockId types_id) -> void {
-    out_ << "struct_type {";
+      SemanticsNode, llvm::StringRef name, SemanticsNodeBlockId types_id) -> void {
+    out_ << name << " {";
     llvm::ListSeparator sep;
     for (auto field_id : semantics_ir_.GetNodeBlock(types_id)) {
       out_ << sep << ".";
@@ -322,10 +335,12 @@ class SemanticsIRFormatter {
     FormatArgs(args.second);
   }
 
-  // TODO: Replace this with custom formatting.
-  template<typename T>
-  auto FormatArg(T v) -> void {
+  auto FormatArg(SemanticsBoolValue v) -> void {
     out_ << v;
+  }
+
+  auto FormatArg(SemanticsBuiltinKind kind) -> void {
+    out_ << kind.label();
   }
 
   auto FormatArg(SemanticsFunctionId id) -> void {
@@ -334,6 +349,33 @@ class SemanticsIRFormatter {
 
   auto FormatArg(SemanticsIntegerLiteralId id) -> void {
     out_ << semantics_ir_.GetIntegerLiteral(id);
+  }
+
+  auto FormatArg(SemanticsMemberIndex index) -> void {
+    out_ << index;
+  }
+
+  // TODO: Should we be printing scopes inline, or should we have a separate
+  // step to print them like we do for functions?
+  auto FormatArg(SemanticsNameScopeId id) -> void {
+    // Name scopes aren't kept in any particular order. Sort the entries before
+    // we print them for stability and consistency.
+    std::vector<std::pair<SemanticsNodeId, SemanticsStringId>> entries;
+    for (auto [name_id, node_id] : semantics_ir_.GetNameScope(id)) {
+      entries.push_back({node_id, name_id});
+    }
+    llvm::sort(entries,
+               [](auto a, auto b) { return a.first.index < b.first.index; });
+
+    out_ << '{';
+    llvm::ListSeparator sep;
+    for (auto [node_id, name_id] : entries) {
+      out_ << sep << ".";
+      FormatString(name_id);
+      out_ << " = ";
+      FormatNodeName(node_id);
+    }
+    out_ << '}';
   }
 
   auto FormatArg(SemanticsNodeId id) -> void {
@@ -389,6 +431,8 @@ class SemanticsIRFormatter {
   }
 
   auto FormatGlobalName(SemanticsStringId id) -> void {
+    // TODO: Ensure the name is unique in the presence of name collisions
+    // across scopes.
     if (!id.is_valid()) {
       out_ << "invalid";
     } else {

@@ -54,10 +54,10 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   Namespace name_scope0
-// CHECK:STDOUT:   Namespace name_scope1
-// CHECK:STDOUT:   FunctionDeclaration @Wiz
-// CHECK:STDOUT:   FunctionDeclaration @Baz
+// CHECK:STDOUT:   %0 = Namespace {.Bar = %1}
+// CHECK:STDOUT:   %1 = Namespace {.Wiz = %2, .Baz = %3}
+// CHECK:STDOUT:   %2 = FunctionDeclaration @Wiz
+// CHECK:STDOUT:   %3 = FunctionDeclaration @Baz
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Wiz() {

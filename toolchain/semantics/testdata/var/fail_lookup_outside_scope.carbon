@@ -46,7 +46,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT:   %0 = FunctionDeclaration @Main
 // CHECK:STDOUT:   %y: i32 = VarStorage
 // CHECK:STDOUT:   Assign <error>, %y, <error>
 // CHECK:STDOUT: }

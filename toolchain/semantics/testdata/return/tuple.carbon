@@ -79,7 +79,7 @@
 // CHECK:STDOUT:   %2: type = TupleType {type, type}
 // CHECK:STDOUT:   %3: (type, type) as type = TupleValue {%0, %1}
 // CHECK:STDOUT:   %4: type = TupleType {i32, i32}
-// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT:   %5 = FunctionDeclaration @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> (i32, i32) as type {

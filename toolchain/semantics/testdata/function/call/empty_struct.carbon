@@ -68,8 +68,8 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %0: {} as Type = StructValue {}
-// CHECK:STDOUT:   FunctionDeclaration @Echo
-// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT:   %1 = FunctionDeclaration @Echo
+// CHECK:STDOUT:   %2 = FunctionDeclaration @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: {} as Type) -> {} as Type {

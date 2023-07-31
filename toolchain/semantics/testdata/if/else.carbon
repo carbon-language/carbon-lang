@@ -93,10 +93,10 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   FunctionDeclaration @F
-// CHECK:STDOUT:   FunctionDeclaration @G
-// CHECK:STDOUT:   FunctionDeclaration @H
-// CHECK:STDOUT:   FunctionDeclaration @If
+// CHECK:STDOUT:   %0 = FunctionDeclaration @F
+// CHECK:STDOUT:   %1 = FunctionDeclaration @G
+// CHECK:STDOUT:   %2 = FunctionDeclaration @H
+// CHECK:STDOUT:   %3 = FunctionDeclaration @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

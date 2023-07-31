@@ -127,10 +127,10 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   FunctionDeclaration @Run0
-// CHECK:STDOUT:   FunctionDeclaration @Run1
-// CHECK:STDOUT:   FunctionDeclaration @Run2
-// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT:   %0 = FunctionDeclaration @Run0
+// CHECK:STDOUT:   %1 = FunctionDeclaration @Run1
+// CHECK:STDOUT:   %2 = FunctionDeclaration @Run2
+// CHECK:STDOUT:   %3 = FunctionDeclaration @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run0() {

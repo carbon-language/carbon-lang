@@ -61,7 +61,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   FunctionDeclaration @If
+// CHECK:STDOUT:   %0 = FunctionDeclaration @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) -> i32 {

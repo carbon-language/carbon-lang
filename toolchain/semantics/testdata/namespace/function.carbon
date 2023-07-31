@@ -58,10 +58,10 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   Namespace name_scope0
-// CHECK:STDOUT:   FunctionDeclaration @Baz
-// CHECK:STDOUT:   FunctionDeclaration @Baz
-// CHECK:STDOUT:   FunctionDeclaration @Bar
+// CHECK:STDOUT:   %0 = Namespace {.Baz = %2}
+// CHECK:STDOUT:   %1 = FunctionDeclaration @Baz
+// CHECK:STDOUT:   %2 = FunctionDeclaration @Baz
+// CHECK:STDOUT:   %3 = FunctionDeclaration @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {

@@ -57,8 +57,8 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = struct_type {.a: i32}
-// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT:   %0: type = StructType {.a: i32}
+// CHECK:STDOUT:   %1 = FunctionDeclaration @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> {.a: i32} {

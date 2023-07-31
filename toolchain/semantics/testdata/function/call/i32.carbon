@@ -69,8 +69,8 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   FunctionDeclaration @Echo
-// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT:   %0 = FunctionDeclaration @Echo
+// CHECK:STDOUT:   %1 = FunctionDeclaration @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {

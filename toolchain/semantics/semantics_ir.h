@@ -129,7 +129,7 @@ class SemanticsIR {
   }
 
   // Returns the requested name scope.
-  auto GetNameScope(SemanticsNameScopeId scope_id)
+  auto GetNameScope(SemanticsNameScopeId scope_id) const
       -> const llvm::DenseMap<SemanticsStringId, SemanticsNodeId>& {
     return name_scopes_[scope_id.index];
   }

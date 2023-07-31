@@ -54,7 +54,7 @@
 // CHECK:STDOUT:   %x: i32 = VarStorage
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 0
 // CHECK:STDOUT:   Assign i32, %x, %0
-// CHECK:STDOUT:   FunctionDeclaration @Main
+// CHECK:STDOUT:   %1 = FunctionDeclaration @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

@@ -26,6 +26,9 @@ enum class SemanticsTypeFieldKind {
   Type,
   // The `type` field is a type argument to the node.
   Argument,
+  // The `type` field is unused, but this node still produces a value that may
+  // be referenced by other nodes.
+  UntypedValue,
 };
 
 // Whether a node is a terminator or part of the terminator sequence. The nodes

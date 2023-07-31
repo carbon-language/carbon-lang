@@ -49,7 +49,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   FunctionDeclaration @Bar
+// CHECK:STDOUT:   %0 = FunctionDeclaration @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar(%a: i32, %a: i32) {
