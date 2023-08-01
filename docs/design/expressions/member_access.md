@@ -14,7 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Member resolution](#member-resolution)
     -   [Package and namespace members](#package-and-namespace-members)
     -   [Lookup within values](#lookup-within-values)
-        -   [Templates and generics](#templates-and-generics)
+        -   [Constant bindings](#constant-bindings)
         -   [Lookup ambiguity](#lookup-ambiguity)
 -   [`impl` lookup](#impl-lookup)
 -   [Instance binding](#instance-binding)
@@ -140,10 +140,10 @@ overlapping and not entirely separable.
 If any of the above lookups ever looks for members of a facet binding, it should
 consider members of the facet type, treating the facet binding as an archetype.
 
-**Note:** If lookup is performed into a type that involves a template parameter,
+**Note:** If lookup is performed into a type that involves a template binding,
 the lookup will be performed both in the context of the template definition and
 in the context of the template instantiation, as described in
-[templates and generics](#templates-and-generics).
+[constant bindings](#constant-bindings).
 
 For a simple member access, the word is looked up in the following types:
 
@@ -197,12 +197,13 @@ fn CallGenericPrint(p: Point) {
 }
 ```
 
-#### Templates and generics
+#### Constant bindings
 
-If the value or type of the first operand depends on a template or generic
-parameter, the lookup is performed from a context where the value of that
-parameter is unknown. Evaluation of an expression involving the parameter may
-still succeed, but will result in a symbolic value involving that parameter.
+If the value or type of the first operand depends on a checked or template
+generic parameter, or in fact any constant binding, the lookup is performed from
+a context where the value of that parameter is unknown. Evaluation of an
+expression involving the parameter may still succeed, but will result in a
+symbolic value involving that parameter.
 
 ```
 class GenericWrapper(T:! type) {
@@ -228,14 +229,14 @@ fn G[template T:! type](x: TemplateWrapper(T)) -> T {
 > nothing. In any case, as described below, the lookup will be performed again
 > when `T` is known.
 
-If the value or type depends on any template parameters, the lookup is redone
-from a context where the values of those parameters are known, but where the
-values of any generic parameters are still unknown. The lookup results from
-these two contexts are [combined](#lookup-ambiguity).
+If the value or type depends on any template binding, the lookup is redone from
+a context where the values of those binding are known, but where the values of
+any symbolic bindings are still unknown. The lookup results from these two
+contexts are [combined](#lookup-ambiguity).
 
-**Note:** All lookups are done from a context where the values of any generic
-parameters that are in scope are unknown. Unlike for a template parameter, the
-actual value of a generic parameter never affects the result of member
+**Note:** All lookups are done from a context where the values of any symbolic
+bindings that are in scope are unknown. Unlike for a template binding, the
+actual value of a symbolic binding never affects the result of member
 resolution.
 
 ```carbon

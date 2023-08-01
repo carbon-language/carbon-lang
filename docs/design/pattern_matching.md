@@ -224,9 +224,22 @@ A `:!` can be used in place of `:` for a binding that is usable at compile time.
 -   _generic-pattern_ ::= `unused` `template`? _identifier_ `:!` _expression_
 -   _proper-pattern_ ::= _generic-pattern_
 
+**FIXME:** Maybe this should just be:
+
+-   _generic-pattern_ ::= `unused`? `template`? _identifier_ `:!` _expression_
+-   _generic-pattern_ ::= `template`? `_` `:!` _expression_
+-   _proper-pattern_ ::= _generic-pattern_
+
+**FIXME:** Or:
+
+-   _generic-pattern_ ::= `template`? _identifier_ `:!` _expression_
+-   _generic-pattern_ ::= `template`? `_` `:!` _expression_
+-   _generic-pattern_ ::= `unused` `template`? _identifier_ `:!` _expression_
+-   _proper-pattern_ ::= _generic-pattern_
+
 ```carbon
 // ✅ `F` takes a generic type parameter `T` and a parameter `x` of type `T`.
-fn F(T:! Type, x: T) {
+fn F(T:! type, x: T) {
   var v: T = x;
 }
 ```
@@ -256,7 +269,7 @@ The `auto` keyword is only permitted in specific contexts. Currently these are:
 -   As the type of a binding.
 
 It is anticipated that `auto` may be permitted in more contexts in the future,
-for example as a generic argument in a parameterized type that appears in a
+for example as a placeholder argument in a parameterized type that appears in a
 context where `auto` is allowed, such as `Vector(auto)` or `auto*`.
 
 When the type of a binding requires type deduction, the type is deduced against

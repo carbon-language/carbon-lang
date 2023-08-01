@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Code and comments](#code-and-comments)
 -   [Build modes](#build-modes)
 -   [Types are values](#types-are-values)
+    -   [Values usable as types](#values-usable-as-types)
 -   [Primitive types](#primitive-types)
     -   [`bool`](#bool)
     -   [Integer types](#integer-types)
@@ -380,8 +381,8 @@ The behavior of the Carbon compiler depends on the _build mode_:
 
 Expressions compute values in Carbon, and these values are always strongly typed
 much like in C++. However, an important difference from C++ is that types are
-themselves modeled as values; specifically, compile-time-constant values. This
-has a number of consequences:
+themselves modeled as values; specifically, compile-time-constant values of type
+`type`. This has a number of consequences:
 
 -   Names for types are in the same namespace shared with functions, variables,
     namespaces, and so on.
@@ -392,14 +393,43 @@ has a number of consequences:
 -   Function call syntax is used to specify parameters to a type, like
     `HashMap(String, i64)`.
 
-Some values, such as `()` and `{}`, may even be used as types, but only act like
-types when they are in a type position, like after a `:` in a variable
-declaration or the return type after a `->` in a function declaration. Any
-expression in a type position must be
-[a constants or symbolic value](#value-categories-and-value-phases) so the
-compiler can resolve whether the value can be used as a type. This also puts
-limits on how much operators can do different things for types. This is good for
-consistency, but is a significant restriction on Carbon's design.
+### Values usable as types
+
+A value used in a type position, like after a `:` in a variable declaration or
+the return type after a `->` in a function declaration, must be:
+
+-   [a constant value](#value-categories-and-value-phases), so the compiler can
+    evaluate it at compile time, and
+-   have a defined implicit conversion to type `type`.
+
+The actual type used is the result of the conversion to type `type`. Of course
+this includes values that already are of type `type`, but also allows some
+non-type values to be used in a type position.
+
+For example, the value `(bool, bool)` represents a [tuple](#tuples) of types,
+but is not itself a type, since it doesn't have type `type`. It does have a
+defined implicit conversion to type `type`, which results in the value
+`(bool, bool) as type`. This means `(bool, bool)` may be used in a type
+position. `(bool, bool) as type` is the type of the value `(true, false)` (among
+others), so this code is legal:
+
+```carbon
+var b: (bool, bool) = (true, false);`
+```
+
+There is some need to be careful here, since the declaration makes it look like
+the type of `b` is `(bool, bool)`, when in fact it is `(bool, bool) as type`.
+`(bool, bool) as type` and `(bool, bool)` are different values since they have
+different types: the first has type `type`, and the second has type
+`(type, type) as type`.
+
+In addition to the types of [tuples](#tuples), this also comes up with
+[struct types](#struct-types) and [facets](generics/terminology.md#facet).
+
+> References:
+>
+> -   Proposal
+>     [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
 
 ## Primitive types
 
@@ -973,10 +1003,11 @@ example through side effects of the destructor, copy, and move operations, but
 the program's correctness must not depend on which option the Carbon
 implementation chooses.
 
-A [generic binding](#checked-and-template-parameters) uses `:!` instead of a
+A [constant binding](#checked-and-template-parameters) uses `:!` instead of a
 colon (`:`) and can only match
-[constant or symbolic values](#value-categories-and-value-phases), not run-time
-values.
+[constant values](#value-categories-and-value-phases), not run-time values. A
+`template` keyword before the binding selects a template constant binding
+instead of a symbolic constant binding.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
@@ -2499,12 +2530,15 @@ fn C.G() {
 }
 ```
 
+**FIXME: "symbolic facet binding" is the technically correct combination of
+terms, but probably needs more context here.**
+
 [Member name lookup](expressions/member_access.md) follows a similar philosophy.
-If a [checked-generic type parameter](#checked-and-template-parameters) is known
-to implement multiple interfaces due to a constraint using
+If a [symbolic facet binding](#checked-and-template-parameters) is known to
+implement multiple interfaces due to a constraint using
 [`&`](#combining-constraints) or
 [`where` clauses](generics/details.md#where-constraints), member name lookup
-into that type will look in all of the interfaces. If it is found in multiple,
+into that facet will look in all of the interfaces. If it is found in multiple,
 the name must be disambiguated by qualifying using compound member access
 ([1](expressions/member_access.md),
 [2](generics/details.md#qualified-member-names-and-compound-member-access)). A
@@ -2568,7 +2602,7 @@ like `i32` and `bool` refer to types defined within this package, based on the
 Generics allow Carbon constructs like [functions](#functions) and
 [classes](#classes) to be written with compile-time parameters and apply
 generically to different types using those parameters. For example, this `Min`
-function has a type parameter `T` that can be any type that implements the
+function has a type\* parameter `T` that can be any type that implements the
 `Ordered` interface.
 
 ```carbon
@@ -2586,10 +2620,15 @@ Assert(Min(a, b) == 1);
 Assert(Min("abc", "xyz") == "abc");
 ```
 
-Since the `T` type parameter is in the deduced parameter list in square brackets
+Since the `T` parameter is in the deduced parameter list in square brackets
 (`[`...`]`) before the explicit parameter list in parentheses (`(`...`)`), the
 value of `T` is determined from the types of the explicit arguments instead of
 being passed as a separate explicit argument.
+
+(\*) Note: `T` here may be thought of as a type parameter, but its values are
+actually [facets](generics/terminology.md#facet), which are
+[values usable as types](#values-usable-as-types). The `T` in this example is
+not itself a type.
 
 > References: **TODO:** Revisit
 >
@@ -2600,6 +2639,8 @@ being passed as a separate explicit argument.
 >     [#553: Generics details part 1](https://github.com/carbon-language/carbon-lang/pull/553)
 > -   Proposal
 >     [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
+> -   Proposal
+>     [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
 
 ### Checked and template parameters
 
@@ -2608,12 +2649,11 @@ compile time. Generic parameters may either be _checked_ or _template_, and
 default to checked.
 
 "Checked" here means that the body of `Min` is type checked when the function is
-defined, independent of the specific type values `T` is instantiated with, and
-name lookup is delegated to the constraint on `T` (`Ordered` in this case). This
-type checking is equivalent to saying the function would pass type checking
-given any type `T` that implements the `Ordered` interface. Subsequent calls to
-`Min` only need to check that the deduced type value of `T` implements
-`Ordered`.
+defined, independent of the specific values `T` is instantiated with, and name
+lookup is delegated to the constraint on `T` (`Ordered` in this case). This type
+checking is equivalent to saying the function would pass type checking given any
+type `T` that implements the `Ordered` interface. Subsequent calls to `Min` only
+need to check that the deduced value of `T` implements `Ordered`.
 
 The parameter could alternatively be declared to be a _template_ generic
 parameter by prefixing with the `template` keyword, as in `template T:! type`.
@@ -2658,22 +2698,25 @@ class Array(template T:! type, template N:! i64)
     if N >= 0 and N < MaxArraySize / sizeof(T);
 ```
 
-Member lookup into a template type parameter is done in the actual type value
-provided by the caller, _in addition_ to any constraints. This means member name
-lookup and type checking for anything
-[dependent](generics/terminology.md#dependent-names) on the template parameter
-can't be completed until the template is instantiated with a specific concrete
-type. When the constraint is just `type`, this gives semantics similar to C++
-templates. Constraints can then be added incrementally, with the compiler
-verifying that the semantics stay the same. Once all constraints have been
-added, removing the word `template` to switch to a checked parameter is safe.
+Member lookup into a template parameter is done in the actual value provided by
+the caller, _in addition_ to any constraints. This means member name lookup and
+type checking for anything [dependent](generics/terminology.md#dependent-names)
+on the template parameter can't be completed until the template is instantiated
+with a specific concrete type. When the constraint is just `type`, this gives
+semantics similar to C++ templates. Constraints can then be added incrementally,
+with the compiler verifying that the semantics stay the same. Once all
+constraints have been added, removing the word `template` to switch to a checked
+parameter is safe.
 
 The [value phase](#value-categories-and-value-phases) of a checked parameter is
-a symbolic value whereas the value phase of a template parameter is constant.
+"symbolic constant" whereas the value phase of a template parameter is "template
+constant." A binding pattern using `:!` is a _constant binding pattern_; more
+specifically a _template binding pattern_ if it uses `template`, and a _symbolic
+binding pattern_ if it does not.
 
 Although checked generics are generally preferred, templates enable translation
 of code between C++ and Carbon, and address some cases where the type checking
-rigor of generics are problematic.
+rigor of checked generics are problematic.
 
 > References:
 >
@@ -2698,6 +2741,10 @@ interface Printable {
   fn Print[self: Self]();
 }
 ```
+
+An interface is kind of [facet type](generics/terminology.md#facet-type), and
+the values of this type are [facets](generics/terminology.md#facet), which are
+[values usable as types](#values-usable-as-types).
 
 In addition to function requirements, interfaces can contain:
 
