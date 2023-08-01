@@ -42,12 +42,12 @@ auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
 }
 
 void RuntimeScope::Print(llvm::raw_ostream& out) const {
-  out << "{";
+  out << "scope: [";
   llvm::ListSeparator sep;
   for (const auto& [value_node, value] : locals_) {
-    out << sep << value_node.base() << ": " << *value;
+    out << sep << "`" << value_node.base() << "`: `" << *value << "`";
   }
-  out << "}";
+  out << "]";
 }
 
 void RuntimeScope::Bind(ValueNodeView value_node, Address address) {
@@ -141,30 +141,29 @@ auto RuntimeScope::Capture(
 }
 
 void Action::Print(llvm::raw_ostream& out) const {
+  out << "pos-" << pos_ << " " << kind_string() << " `";
+
   switch (kind()) {
     case Action::Kind::LocationAction:
-      out << cast<LocationAction>(*this).expression() << " ";
+      out << cast<LocationAction>(*this).expression();
       break;
     case Action::Kind::ValueExpressionAction:
-      out << cast<ValueExpressionAction>(*this).expression() << " ";
+      out << cast<ValueExpressionAction>(*this).expression();
       break;
     case Action::Kind::ExpressionAction:
-      out << cast<ExpressionAction>(*this).expression() << " ";
+      out << cast<ExpressionAction>(*this).expression();
       break;
     case Action::Kind::WitnessAction:
-      out << *cast<WitnessAction>(*this).witness() << " ";
+      out << *cast<WitnessAction>(*this).witness();
       break;
     case Action::Kind::StatementAction:
       cast<StatementAction>(*this).statement().PrintDepth(1, out);
-      out << " ";
       break;
     case Action::Kind::DeclarationAction:
-      cast<DeclarationAction>(*this).declaration().Print(out);
-      out << " ";
+      cast<DeclarationAction>(*this).declaration().PrintID(out);
       break;
     case Action::Kind::TypeInstantiationAction:
       cast<TypeInstantiationAction>(*this).type()->Print(out);
-      out << " ";
       break;
     case Action::Kind::ScopeAction:
       break;
@@ -178,14 +177,14 @@ void Action::Print(llvm::raw_ostream& out) const {
       out << "destroy";
       break;
   }
-  out << "." << pos_ << ".";
+  out << "`";
   if (!results_.empty()) {
-    out << " [[";
+    out << " results: [";
     llvm::ListSeparator sep;
     for (const auto& result : results_) {
-      out << sep << *result;
+      out << sep << "`" << *result << "`";
     }
-    out << "]]";
+    out << "] ";
   }
   if (scope_.has_value()) {
     out << " " << *scope_;
