@@ -2,10 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <cstdint>
-#include <string>
-#include <utility>
-
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_node_kind.h"
