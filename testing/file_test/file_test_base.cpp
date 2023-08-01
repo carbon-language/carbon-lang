@@ -21,28 +21,10 @@ ABSL_FLAG(std::vector<std::string>, file_tests, {},
 
 namespace Carbon::Testing {
 
-// The length of the base directory.
-static int base_dir_len = 0;
-
 using ::testing::Eq;
 using ::testing::Matcher;
 using ::testing::MatchesRegex;
 using ::testing::StrEq;
-
-void FileTestBase::RegisterTests(
-    const char* fixture_label,
-    const llvm::SmallVector<std::filesystem::path>& paths,
-    std::function<FileTestBase*(const std::filesystem::path&)> factory) {
-  // Use RegisterTest instead of INSTANTIATE_TEST_CASE_P because of ordering
-  // issues between container initialization and test instantiation by
-  // InitGoogleTest.
-  for (const auto& path : paths) {
-    std::string test_name = path.string().substr(base_dir_len);
-    testing::RegisterTest(fixture_label, test_name.c_str(), nullptr,
-                          test_name.c_str(), __FILE__, __LINE__,
-                          [=]() { return factory(path); });
-  }
-}
 
 // Reads a file to string.
 static auto ReadFile(std::filesystem::path path) -> std::string {
@@ -373,18 +355,20 @@ auto main(int argc, char** argv) -> int {
   CARBON_CHECK(target_dir.consume_front("/"));
   target_dir = target_dir.substr(0, target_dir.rfind(":"));
   std::string base_dir = working_dir.string() + target_dir.str() + "/";
-  Carbon::Testing::base_dir_len = base_dir.size();
+
+  auto test_factory = Carbon::Testing::GetFileTestFactory();
 
   // Register tests based on their absolute path.
-  llvm::SmallVector<std::filesystem::path> paths;
   for (const auto& file_test : absl::GetFlag(FLAGS_file_tests)) {
     auto path = std::filesystem::absolute(file_test, ec);
     CARBON_CHECK(!ec) << file_test << ": " << ec.message();
     CARBON_CHECK(llvm::StringRef(path.string()).starts_with(base_dir))
         << "\n  " << path << "\n  should start with\n  " << base_dir;
-    paths.push_back(path);
+    std::string test_name = path.string().substr(base_dir.size());
+    testing::RegisterTest(test_factory.name, test_name.c_str(), nullptr,
+                          test_name.c_str(), __FILE__, __LINE__,
+                          [=]() { return test_factory.factory_fn(path); });
   }
-  Carbon::Testing::RegisterFileTests(paths);
 
   return RUN_ALL_TESTS();
 }

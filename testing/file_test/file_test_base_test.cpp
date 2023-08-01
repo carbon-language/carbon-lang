@@ -24,8 +24,7 @@ using ::testing::Matcher;
 
 class FileTestBaseTest : public FileTestBase {
  public:
-  explicit FileTestBaseTest(const std::filesystem::path& path)
-      : FileTestBase(path) {}
+  using FileTestBase::FileTestBase;
 
   static auto HasFilename(std::string filename) -> Matcher<TestFile> {
     return Field("filename", &TestFile::filename, Eq(filename));
@@ -92,9 +91,6 @@ class FileTestBaseTest : public FileTestBase {
 
 }  // namespace
 
-auto RegisterFileTests(const llvm::SmallVector<std::filesystem::path>& paths)
-    -> void {
-  FileTestBaseTest::RegisterTests<FileTestBaseTest>("FileTestBaseTest", paths);
-}
+CARBON_FILE_TEST_FACTORY(FileTestBaseTest);
 
 }  // namespace Carbon::Testing
