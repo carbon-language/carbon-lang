@@ -202,9 +202,9 @@ When the implementation of `ConvertibleToString` for `Song` is defined as
 internal, every member of `ConvertibleToString` is also a member of `Song`. This
 includes members of `ConvertibleToString` that are not explicitly named in the
 `impl` definition but have defaults. Whether the implementation is defined as
-[internal](terminology.md#internal-impl) or
-[external](terminology.md#external-impl), you may access the `ToString` function
-for a `Song` value `s` by a writing function call
+[internal](terminology.md#extending-an-impl) or
+[external](terminology.md#extending-an-impl), you may access the `ToString`
+function for a `Song` value `s` by a writing function call
 [using a qualified member access expression](terminology.md#qualified-member-access-expression),
 like `s.(ConvertibleToString.ToString)()`.
 
@@ -359,8 +359,8 @@ class Player {
 ### External impl
 
 Interfaces may also be implemented for a type
-[externally](terminology.md#external-impl), by using `impl` without `extend`. An
-external impl does not add the interface's methods to the type.
+[externally](terminology.md#extending-an-impl), by using `impl` without
+`extend`. An external impl does not add the interface's methods to the type.
 
 ```
 class Point2 {
@@ -597,7 +597,7 @@ var v: Point = AddAndScaleGeneric(a, w, 2.5);
 ```
 
 Here `T` is a type whose type is `Vector`. The `:!` syntax means that `T` is a
-_[generic parameter](terminology.md#generic-versus-template-parameters)_. That
+_[generic parameter](terminology.md#checked-versus-template-parameters)_. That
 means it must be known to the caller, but we will only use the information
 present in the signature of the function to type check the body of
 `AddAndScaleGeneric`'s definition. In this case, we know that any value of type
@@ -628,13 +628,13 @@ acts like a [supertype](https://en.wikipedia.org/wiki/Subtyping) of any `T`
 implementing `Vector`.
 
 For name lookup purposes, an archetype is considered to have
-[implemented its constraint internally](terminology.md#internal-impl). The only
-oddity is that the archetype may have different names for members than specific
-types `T` that implement interfaces from the constraint
-[externally](terminology.md#external-impl). This difference in names can also
-occur for supertypes in C++, for example members in a derived class can hide
-members in the base class with the same name, though it is not that common for
-it to come up in practice.
+[implemented its constraint internally](terminology.md#extending-an-impl). The
+only oddity is that the archetype may have different names for members than
+specific types `T` that implement interfaces from the constraint
+[externally](terminology.md#extending-an-impl). This difference in names can
+also occur for supertypes in C++, for example members in a derived class can
+hide members in the base class with the same name, though it is not that common
+for it to come up in practice.
 
 The behavior of calling `AddAndScaleGeneric` with a value of a specific type
 like `Point` is to set `T` to `Point` after all the names have been qualified.
@@ -648,8 +648,8 @@ fn AddAndScaleForPoint(a: Point, b: Point, s: Double) -> Point {
 
 This qualification gives a consistent interpretation to the body of the function
 even when the type supplied by the caller
-[implements the interface externally](terminology.md#external-impl), as `Point2`
-does:
+[implements the interface externally](terminology.md#extending-an-impl), as
+`Point2` does:
 
 ```
 // AddAndScaleGeneric with T = Point2
@@ -805,7 +805,7 @@ An interface's name may be used in a few different contexts:
 -   to define [an `impl` for a type](#implementing-interfaces),
 -   as a namespace name in
     [a qualified name](#qualified-member-names-and-compound-member-access), and
--   as a [type-of-type](terminology.md#type-of-type) for
+-   as a [type-of-type](terminology.md#facet-type) for
     [a generic type parameter](#generics).
 
 While interfaces are examples of type-of-types, type-of-types are a more general
@@ -813,7 +813,7 @@ concept, for which interfaces are a building block.
 
 ## Type-of-types
 
-A [type-of-type](terminology.md#type-of-type) consists of a set of requirements
+A [type-of-type](terminology.md#facet-type) consists of a set of requirements
 and a set of names. Requirements are typically a set of interfaces that a type
 must satisfy, though other kinds of requirements are added below. The names are
 aliases for qualified names in those interfaces.
@@ -883,7 +883,7 @@ whenever an interface may be. This includes all of these
     [a qualified name](#qualified-member-names-and-compound-member-access). For
     example, `VectorLegoFish.VAdd` refers to the same name as `Vector.Add`.
 -   A named constraint may be used as a
-    [type-of-type](terminology.md#type-of-type) for
+    [type-of-type](terminology.md#facet-type) for
     [a generic type parameter](#generics).
 
 We don't expect developers to directly define many named constraints, but other
@@ -1910,7 +1910,7 @@ fn Complex64.CloserToOrigin[self: Self](them: Self) -> bool {
 ### Use case: Accessing external names
 
 Consider a case where a function will call several functions from an interface
-that is [implemented externally](terminology.md#external-impl) for a type.
+that is [implemented externally](terminology.md#extending-an-impl) for a type.
 
 ```
 interface DrawingContext {
@@ -1924,9 +1924,10 @@ impl Window as DrawingContext { ... }
 ```
 
 An adapter can make that much more convenient by making a compatible type where
-the interface is [implemented internally](terminology.md#internal-impl). This
-avoids having to [qualify](terminology.md#qualified-member-access-expression)
-each call to methods in the interface.
+the interface is [implemented internally](terminology.md#extending-an-impl).
+This avoids having to
+[qualify](terminology.md#qualified-member-access-expression) each call to
+methods in the interface.
 
 ```
 class DrawInWindow {
@@ -2195,7 +2196,7 @@ class DynamicArray(T:! type) {
 ```
 
 For context, see
-["Interface type parameters and associated types" in the generics terminology document](terminology.md#interface-type-parameters-and-associated-types).
+["Interface type parameters and associated types" in the generics terminology document](terminology.md#interface-parameters-and-associated-constants).
 
 **Comparison with other languages:** Both
 [Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
@@ -2245,7 +2246,7 @@ interface at most once.
 If instead you want a family of related interfaces, one per possible value of a
 type parameter, multiple of which could be implemented for a single type, you
 would use
-[parameterized interfaces](terminology.md#interface-type-parameters-and-associated-types).
+[parameterized interfaces](terminology.md#interface-parameters-and-associated-constants).
 To write a parameterized version of the stack interface, instead of using
 associated types, write a parameter list after the name of the interface instead
 of the associated type declaration:
@@ -3166,8 +3167,8 @@ fn F[T:! Transitive](t: T) {
 A value of type `A`, such as the return value of `GetA()`, has the API of `P`.
 Any such value also implements `Q`, and since the compiler can see that by way
 of a single `where` equality, values of type `A` are treated as if they
-implement `Q` [externally](terminology.md#external-impl). However, the compiler
-will require a cast to `B` or `C` to see that the type implements `R`.
+implement `Q` [externally](terminology.md#extending-an-impl). However, the
+compiler will require a cast to `B` or `C` to see that the type implements `R`.
 
 ```
 fn TakesPQR[U:! P & Q & R](u: U);
@@ -3624,8 +3625,8 @@ In particular, the compiler should in general avoid monomorphizing to generate
 multiple instantiations of the function in this case.
 
 **Open question:** Should `TypeId` be
-[implemented externally](terminology.md#external-impl) for types to avoid name
-pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
+[implemented externally](terminology.md#extending-an-impl) for types to avoid
+name pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
 requests those capabilities?
 
 ### Destructor constraints
@@ -5695,9 +5696,9 @@ be [implied constraints](#implied-constraints) on the function's parameters.
 
 ### Specialization
 
-[Specialization](terminology.md#generic-specialization) is used to improve
-performance in specific cases when a general strategy would be inefficient. For
-example, you might use
+[Specialization](terminology.md#checked-generic-specialization) is used to
+improve performance in specific cases when a general strategy would be
+inefficient. For example, you might use
 [binary search](https://en.wikipedia.org/wiki/Binary_search_algorithm) for
 containers that support random access and keep their contents in sorted order
 but [linear search](https://en.wikipedia.org/wiki/Linear_search) in other cases.
