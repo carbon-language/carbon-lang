@@ -140,7 +140,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-This document goes into the details of the design of generic type parameters.
+This document goes into the details of the design of Carbon's
+[generics](terminology.md#generic-means-compile-time-parameterized), by which we
+mean parameterizing some language construct with compile-time parameters. These
+parameters can be types, [facets](terminology.md#facet), or other values.
 
 Imagine we want to write a function parameterized by a type argument. Maybe our
 function is `PrintToStdout` and let's say we want to operate on values that have
@@ -650,6 +653,8 @@ declaration of the `impl`.
 
 ## Generics
 
+FIXME: Generics -> Checked generics
+
 Here is a function that can accept values of any type that has implemented the
 `Vector` interface:
 
@@ -661,8 +666,9 @@ var v: Point_Extend = AddAndScaleGeneric(a, w, 2.5);
 ```
 
 Here `T` is a type whose type is `Vector`. The `:!` syntax means that `T` is a
-_[checked generic](terminology.md#checked-versus-template-parameters)_ binding.
-Since this specifically is in a function declaration, it marks a _checked
+_[constant binding](terminology.md#bindings)_, here specifically a _symbolic
+constant binding_. Since this binding pattern is in a function declaration, it
+marks a _checked
 [generic parameter](terminology.md#generic-means-compile-time-parameterized)_.
 That means it must be known to the caller, but we will only use the information
 present in the signature of the function to type check the body of
@@ -876,7 +882,7 @@ An interface's name may be used in a few different contexts:
 -   as a namespace name in
     [a qualified name](#qualified-member-names-and-compound-member-access), and
 -   as a [facet type](terminology.md#facet-type) for
-    [a generic type parameter](#generics).
+    [a facet binding](#generics).
 
 While interfaces are examples of facet types, facet types are a more general
 concept, for which interfaces are a building block.
@@ -953,7 +959,7 @@ whenever an interface may be. This includes all of these
     [a qualified name](#qualified-member-names-and-compound-member-access). For
     example, `VectorLegoFish.VAdd` refers to the same name as `Vector.Add`.
 -   A named constraint may be used as a [facet type](terminology.md#facet-type)
-    for [a generic type parameter](#generics).
+    for [a facet binding](#generics).
 
 We don't expect developers to directly define many named constraints, but other
 constructs we do expect them to use will be defined in terms of them. For
@@ -1716,7 +1722,7 @@ compiler provides it as
 
 ### Adapter compatibility
 
-Consider a type with a generic type parameter, like a hash map:
+Consider a type with a facet parameter, like a hash map:
 
 ```
 interface Hashable { ... }
@@ -4684,7 +4690,8 @@ The declaration of an interface implementation consists of:
 
 -   optional modifier keyword `final`,
 -   the keyword introducer `impl`,
--   an optional deduced parameter list in square brackets `[`...`]`,
+-   an optional `forall` followed by a deduced parameter list in square brackets
+    `[`...`]`,
 -   a type, including an optional parameter pattern,
 -   the keyword `as`, and
 -   a [facet type](#facet-types), including an optional

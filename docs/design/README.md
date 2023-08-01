@@ -653,14 +653,14 @@ means they cannot be modified and their address generally cannot be taken. The
 values of r-value expressions are broken down into three kinds, called _value
 phases_:
 
--   A _constant_ has a value known at compile time, and that value is available
-    during type checking, for example to use as the size of an array. These
-    include literals ([integer](#integer-literals),
+-   A _template constant_ has a value known at compile time, and that value is
+    available during type checking, for example to use as the size of an array.
+    These include literals ([integer](#integer-literals),
     [floating-point](#floating-point-literals), [string](#string-literals)),
     concrete type values (like `f64` or `Optional(i32*)`), expressions in terms
     of constants, and values of
     [`template` parameters](#checked-and-template-parameters).
--   A _symbolic value_ has a value that will be known at the code generation
+-   A _symbolic constant_ has a value that will be known at the code generation
     stage of compilation when
     [monomorphization](https://en.wikipedia.org/wiki/Monomorphization) happens,
     but is not known during type checking. This includes
@@ -668,19 +668,22 @@ phases_:
     expressions with checked-generic arguments, like `Optional(T*)`.
 -   A _runtime value_ has a dynamic value only known at runtime.
 
-Carbon will automatically convert a constant to a symbolic value, or any value
-to a runtime value:
+Carbon will automatically convert a template constant to a symbolic constant, or
+any value to a runtime value:
 
 ```mermaid
 graph TD;
-    A(constant)-->B(symbolic value)-->C(runtime value);
+    A(template constant)-->B(symbolic constant)-->C(runtime value);
     D(l-value)-->C;
 ```
 
-Constants convert to symbolic values and to runtime values. Symbolic values will
-generally convert into runtime values if an operation that inspects the value is
-performed on them. Runtime values will convert into constants or to symbolic
-values if constant evaluation of the runtime expression succeeds.
+Template constants convert to symbolic constants and to runtime values. Symbolic
+constants will generally convert into runtime values if an operation that
+inspects the value is performed on them. Runtime values will convert into
+constants if constant evaluation of the runtime expression succeeds.
+
+Template constants and symbolic constants are collectively called _constants_
+and correspond to declarations using `:!`.
 
 > **Note:** Conversion of runtime values to other phases is provisional, as are
 > the semantics of r-values. See pending proposal

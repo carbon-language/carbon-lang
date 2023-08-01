@@ -137,9 +137,8 @@ remaining cases we wish to support:
 Note that because a type is a value, and a facet type is a type, these cases are
 overlapping and not entirely separable.
 
-If any of the above lookups ever looks for members of a type parameter, it
-should consider members of the facet type, treating the type parameter as an
-archetype.
+If any of the above lookups ever looks for members of a facet binding, it should
+consider members of the facet type, treating the facet binding as an archetype.
 
 **Note:** If lookup is performed into a type that involves a template parameter,
 the lookup will be performed both in the context of the template definition and
@@ -150,8 +149,9 @@ For a simple member access, the word is looked up in the following types:
 
 -   If the first operand can be evaluated and evaluates to a type, that type.
 -   If the type of the first operand can be evaluated, that type.
--   If the type of the first operand is a generic type parameter, and the type
-    of that generic type parameter can be evaluated, that facet type.
+-   If the type of the first operand is a checked-generic facet binding, and the
+    type of that checked-generic facet binding can be evaluated, that facet
+    type.
 
 The results of these lookups are [combined](#lookup-ambiguity).
 
@@ -188,7 +188,7 @@ fn PrintPointTwice() {
   p.(Printable.Print)();
 }
 fn GenericPrint[T:! Printable](a: T) {
-  // ✅ OK, type of `a` is the type parameter `T`;
+  // ✅ OK, type of `a` is the facet binding `T`;
   // `Print` found in the type of `T`, namely `Printable`.
   a.Print();
 }
@@ -358,10 +358,10 @@ the member access expression, `V`:
     ```
 
 The appropriate `impl T as I` implementation is located. The program is invalid
-if no such `impl` exists. When `T` or `I` depends on a generic parameter, a
-suitable constraint must be specified to ensure that such an `impl` will exist.
-When `T` or `I` depends on a template parameter, this check is deferred until
-the argument for the template parameter is known.
+if no such `impl` exists. When `T` or `I` depends on a checked generic binding,
+a suitable constraint must be specified to ensure that such an `impl` will
+exist. When `T` or `I` depends on a template parameter, this check is deferred
+until the argument for the template parameter is known.
 
 `M` is replaced by the member of the `impl` that corresponds to `M`.
 

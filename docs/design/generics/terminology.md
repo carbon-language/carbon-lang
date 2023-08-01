@@ -21,6 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Definition checking](#definition-checking)
         -   [Complete definition checking](#complete-definition-checking)
         -   [Early versus late type checking](#early-versus-late-type-checking)
+-   [Bindings](#bindings)
 -   [Types and `type`](#types-and-type)
 -   [Facet type](#facet-type)
 -   [Facet](#facet)
@@ -280,15 +281,47 @@ typechecked once calling information is known. Late type checking delays
 complete definition checking. This occurs for
 [template-dependent](#dependent-names) values.
 
+## Bindings
+
+_Binding patterns_ associate a name with a type and a value. This is used to
+declare function parameters, in `let` and `var` declarations, as well as to
+declare [generic parameters](#generic-means-compile-time-parameterized). There
+are three kinds of binding patterns, corresponding to
+[the three value phases](/docs/design/README.md#value-categories-and-value-phases):
+
+-   A _runtime binding pattern_ binds to a dynamic value at runtime, and is
+    written using a `:`, as in `x: i32`.
+-   A _symbolic constant binding pattern_ or _symbolic binding pattern_ binds to
+    a compile-time value that is not known when type checking, and is used to
+    declare [checked generics](#checked-versus-template-parameters) parameters.
+    These binding use `:!`, as in `T:! type`.
+-   A _template constant binding pattern_ or _template binding pattern_ binds to
+    a compile-time value that is known when type checking, and is used to
+    declare [template](#checked-versus-template-parameters) parameters. These
+    bindings use the keyword `template` in addition to `:!`, as in
+    `template T:! type`.
+
+The last two binding patterns, which are about binding a compile-time value, are
+called _constant binding patterns_, and correspond to those binding patterns
+that use `:!`.
+
+The name being declared, which is the identifier to the left of the `:` or `:!`,
+is called a _binding_, or more specifically a _runtime binding_, _constant
+binding_, _symbolic binding_, or _template binding_. The expression to the right
+defining the type of the binding pattern is called the _binding type
+expression_, a kind of [type expression](#type-expression). For example, in
+`T:! Hashable`, `T` is the binding (a symbolic binding in this case), and
+`Hashable` is the binding type expression.
+
 ## Types and `type`
 
 A _type_ is a value of type `type`. Conversely, `type` is the type of all types.
 
-Expressions in type position, for example the return type of a function or the
-expression to the right of a `:` or `:!` in a binding, are implicitly cast to
-type `type`. This means that it is legal to put a value that is not a type where
-a type is expected, as long as it has an implicit conversion to `type` that may
-be performed at compile time.
+Expressions in type position, for example a [binding type expression](#bindings)
+or the return type of a function, are implicitly cast to type `type`. This means
+that it is legal to put a value that is not a type where a type is expected, as
+long as it has an implicit conversion to `type` that may be performed at compile
+time.
 
 ## Facet type
 
@@ -316,11 +349,11 @@ A _facet_ is a value of a [facet type](#facet-type). For example,
 types are facets, since [`type`](#types-and-type) is considered a facet type.
 Not all facets are types, though: `i32 as Hashable` is of type `Hashable` not
 `type`, so it is a facet that is not a type. However, in places where a type is
-expected, for example to the right of a `:` in a binding or after the `->` in a
-function declaration, there is an automatic implicit conversion to `type`. This
-means that a facet may be used in those positions. For example, the facet
-`i32 as Hashable` will implicitly convert to `(i32 as Hashable) as type`, which
-is `i32`, in those contexts.
+expected, for example in a [binding type expression](#bindings) or after the
+`->` in a function declaration, there is an automatic implicit conversion to
+`type`. This means that a facet may be used in those positions. For example, the
+facet `i32 as Hashable` will implicitly convert to `(i32 as Hashable) as type`,
+which is `i32`, in those contexts.
 
 ## Type expression
 
@@ -331,10 +364,11 @@ those cases, we are concerned with the type value after the implicit conversion.
 
 ## Facet binding
 
-We use the term _facet binding_ to refer to the name introduced by a `:!`
-binding pattern (with or without the `template` modifier) with a
-[facet type](#facet-type). In the binding pattern `T:! Hashable`,`T` is a facet
-binding, and the value of `T` is a [facet](#facet).
+We use the term _facet binding_ to refer to the name introduced by a
+[constant binding pattern](#bindings) (using `:!` with or without the `template`
+modifier) with a [facet type](#facet-type). In the binding pattern
+`T:! Hashable`, `T` is a facet binding, and the value of `T` is a
+[facet](#facet).
 
 ## Deduced parameter
 
