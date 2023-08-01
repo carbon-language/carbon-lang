@@ -79,9 +79,9 @@ static auto AddCheckLines(
   const auto* remaining_filenames = filenames.begin() + 1;
 
   // %t substitution means we may see TEST_TMPDIR in output.
-  char* temp = getenv("TEST_TMPDIR");
-  CARBON_CHECK(temp != nullptr);
-  llvm::StringRef temp_ref = temp;
+  char* tmpdir_env = getenv("TEST_TMPDIR");
+  CARBON_CHECK(tmpdir_env != nullptr);
+  llvm::StringRef tmpdir = tmpdir_env;
 
   llvm::SmallVector<llvm::StringRef> lines(llvm::split(output, '\n'));
   // It's typical that output ends with a newline, but we don't want to add a
@@ -96,8 +96,8 @@ static auto AddCheckLines(
                                            line.empty() ? "" : " ", line);
 
     // Ignore TEST_TMPDIR in output.
-    if (auto pos = check_line.find(temp_ref); pos != std::string::npos) {
-      check_line.replace(pos, temp_ref.size(), "{{.+}}");
+    if (auto pos = check_line.find(tmpdir); pos != std::string::npos) {
+      check_line.replace(pos, tmpdir.size(), "{{.+}}");
     }
 
     do_extra_check_replacements(check_line);

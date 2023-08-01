@@ -10,7 +10,10 @@ cc_library(
     name = "autoupdate",
     testonly = 1,
     srcs = ["autoupdate.cpp"],
-    hdrs = ["autoupdate.h"],
+    hdrs = [
+        "autoupdate.h",
+        "line.h",
+    ],
     deps = [
         "//common:check",
         "//common:ostream",

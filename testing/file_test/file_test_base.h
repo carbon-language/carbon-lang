@@ -36,7 +36,14 @@ namespace Carbon::Testing {
 //   // NOAUTOUPDATE
 //
 //   Controls whether the checks in the file will be autoupdated if --autoupdate
-//   is passed. Exactly one of these two markers must be present.
+//   is passed. Exactly one of these two markers must be present. If the file
+//   uses splits, AUTOUPDATE must currently be before any splits.
+//
+//   When autoupdating, CHECKs will be inserted starting below AUTOUPDATE. When
+//   a CHECK has line information, autoupdate will try to insert the CHECK
+//   immediately above the line it's associated with. When that happens, any
+//   following CHECK lines without line information will immediately follow,
+//   between the CHECK with line information and the associated line.
 //
 // - // ARGS: <arguments>
 //

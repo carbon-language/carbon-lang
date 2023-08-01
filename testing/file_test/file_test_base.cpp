@@ -183,9 +183,9 @@ auto FileTestBase::DoArgReplacements(
         break;
       }
       case 't': {
-        char* temp = getenv("TEST_TMPDIR");
-        CARBON_CHECK(temp != nullptr);
-        it->replace(percent, 2, llvm::formatv("{0}/temp_file", temp));
+        char* tmpdir = getenv("TEST_TMPDIR");
+        CARBON_CHECK(tmpdir != nullptr);
+        it->replace(percent, 2, llvm::formatv("{0}/temp_file", tmpdir));
         break;
       }
       default:
