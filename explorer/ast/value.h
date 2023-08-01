@@ -700,15 +700,6 @@ class FunctionType : public Value {
       return f(index, binding);
     }
 
-    inline friend auto operator==(const GenericParameter& lhs,
-                                  const GenericParameter& rhs) -> bool {
-      return lhs.index == rhs.index && lhs.binding == rhs.binding;
-    }
-    inline friend auto hash_value(const GenericParameter& parameter)
-        -> llvm::hash_code {
-      return llvm::hash_combine(parameter.index, parameter.binding);
-    }
-
     size_t index;
     Nonnull<const GenericBinding*> binding;
   };
@@ -718,14 +709,6 @@ class FunctionType : public Value {
     template <typename F>
     auto Decompose(F f) const {
       return f(addr_self, self_type);
-    }
-
-    inline friend auto operator==(const MethodSelf& lhs, const MethodSelf& rhs)
-        -> bool {
-      return lhs.addr_self == rhs.addr_self && lhs.self_type == rhs.self_type;
-    }
-    inline friend auto hash_value(const MethodSelf& self) -> llvm::hash_code {
-      return llvm::hash_combine(self.addr_self, self.self_type);
     }
 
     // True if `self` parameter uses an `addr` pattern.
@@ -757,9 +740,9 @@ class FunctionType : public Value {
         is_initializing_(is_initializing) {}
 
   struct ExceptSelf {
-    friend auto operator==(ExceptSelf, ExceptSelf) -> bool { return true; }
-    friend auto hash_value(ExceptSelf) -> llvm::hash_code {
-      return llvm::hash_combine(0);
+    template <typename F>
+    auto Decompose(F f) const {
+      return f();
     }
   };
   FunctionType(ExceptSelf, const FunctionType* clone)
@@ -1070,15 +1053,6 @@ struct ImplsConstraint {
     return f(type, interface);
   }
 
-  inline friend auto operator==(const ImplsConstraint& lhs,
-                                const ImplsConstraint& rhs) -> bool {
-    return lhs.type == rhs.type && lhs.interface == rhs.interface;
-  }
-  inline friend auto hash_value(const ImplsConstraint& constraint)
-      -> llvm::hash_code {
-    return llvm::hash_combine(constraint.type, constraint.interface);
-  }
-
   // The type that is required to implement the interface.
   Nonnull<const Value*> type;
   // The interface that is required to be implemented.
@@ -1090,19 +1064,6 @@ struct IntrinsicConstraint {
   template <typename F>
   auto Decompose(F f) const {
     return f(type, kind, arguments);
-  }
-
-  inline friend auto operator==(const IntrinsicConstraint& lhs,
-                                const IntrinsicConstraint& rhs) -> bool {
-    return lhs.type == rhs.type && lhs.kind == rhs.kind &&
-           lhs.arguments == rhs.arguments;
-  }
-  inline friend auto hash_value(const IntrinsicConstraint& constraint)
-      -> llvm::hash_code {
-    return llvm::hash_combine(
-        constraint.type, constraint.kind,
-        llvm::hash_combine_range(constraint.arguments.begin(),
-                                 constraint.arguments.end()));
   }
 
   // Print the intrinsic constraint.
@@ -1130,16 +1091,6 @@ struct EqualityConstraint {
     return f(values);
   }
 
-  inline friend auto operator==(const EqualityConstraint& lhs,
-                                const EqualityConstraint& rhs) -> bool {
-    return lhs.values == rhs.values;
-  }
-  inline friend auto hash_value(const EqualityConstraint& constraint)
-      -> llvm::hash_code {
-    return llvm::hash_combine_range(constraint.values.begin(),
-                                    constraint.values.end());
-  }
-
   // Visit the values in this equality constraint that are a single step away
   // from the given value according to this equality constraint. That is: if
   // `value` is identical to a value in `values`, then call the visitor on all
@@ -1164,22 +1115,6 @@ struct RewriteConstraint {
              converted_replacement);
   }
 
-  inline friend auto operator==(const RewriteConstraint& lhs,
-                                const RewriteConstraint& rhs) -> bool {
-    return lhs.constant == rhs.constant &&
-           lhs.unconverted_replacement == rhs.unconverted_replacement &&
-           lhs.unconverted_replacement_type ==
-               rhs.unconverted_replacement_type &&
-           lhs.converted_replacement == rhs.converted_replacement;
-  }
-  inline friend auto hash_value(const RewriteConstraint& constraint)
-      -> llvm::hash_code {
-    return llvm::hash_combine(constraint.constant,
-                              constraint.unconverted_replacement,
-                              constraint.unconverted_replacement_type,
-                              constraint.converted_replacement);
-  }
-
   // The associated constant value that is rewritten.
   Nonnull<const AssociatedConstant*> constant;
   // The replacement in its original type.
@@ -1195,13 +1130,6 @@ struct LookupContext {
   template <typename F>
   auto Decompose(F f) const {
     return f(context);
-  }
-
-  inline friend auto operator==(LookupContext lhs, LookupContext rhs) -> bool {
-    return lhs.context == rhs.context;
-  }
-  inline friend auto hash_value(LookupContext context) -> llvm::hash_code {
-    return llvm::hash_combine(context.context);
   }
 
   Nonnull<const Value*> context;

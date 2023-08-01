@@ -18,21 +18,6 @@
 
 namespace Carbon {
 
-// Adapter metafunction that converts T to a form that is usable as part of
-// a key in a hash map.
-//
-// ArgKey<T>::type must be implicitly convertible from T, equality-comparable,
-// and have a hash_value overload as defined in llvm/ADT/Hashing.h. This
-// should only be customized in cases where we cannot modify T itself to
-// satisfy those requirements.
-template <typename T, typename = void>
-struct ArgKey {
-  using type = T;
-};
-
-template <typename T>
-using ArgKeyType = typename ArgKey<T>::type;
-
 // Allocates and maintains ownership of arbitrary objects, so that their
 // lifetimes all end at the same time. It can also canonicalize the allocated
 // objects (see the documentation of New).
@@ -61,17 +46,19 @@ class Arena {
   // will canonicalize the allocated objects, meaning that two calls to this
   // method with the same T and equal arguments will return pointers to the same
   // object. If canonicalization is enabled, all types in Args... must be
-  // copyable, equality-comparable, and have a hash_value overload as defined in
-  // llvm/ADT/Hashing.h. If it's not possible to modify an argument type A to
-  // satisfy those requirements, the ArgKey<A> customization point can be used
-  // instead.
+  // canonicalizable, meaning that they are copyable, and either are
+  // equality-comparable and have a hash_value overload as defined in
+  // llvm/ADT/Hashing.h, or are `Decompose`able into canonicalizable values.
+  // Canonicalization also supports certain standard library types; in
+  // particular, std::vector<T> and std::optional<T> are canonicalizable if T
+  // is.
   //
   // Canonically-allocated objects must not be mutated, because those mutations
-  // would be visible to all users that happened to allocate a T object with
-  // the same constructor arguments. To help enforce this, the returned pointer
-  // will be const when canonicalization is enabled. Since that means there
-  // is no way to allocate a mutable instance of T, canonicalization should
-  // only be enabled for types that are inherently immutable.
+  // would be visible to all users that happened to allocate a T object with the
+  // same constructor arguments. To help enforce this, the returned pointer will
+  // be const when canonicalization is enabled. Since that means there is no way
+  // to allocate a mutable instance of T, canonicalization should only be
+  // enabled for types that are inherently immutable.
   //
   // Canonicalization does not guarantee that equal objects will be identical,
   // but it can substantially reduce the incidence of equal-but-not-identical
@@ -108,13 +95,200 @@ class Arena {
   template <typename T>
   class ArenaEntryTyped;
 
-  // Hash functor implemented in terms of hash_value (see llvm/ADT/Hashing.h).
-  struct LlvmHasher {
+  // FIXME clean up and document implementation details of canonicalization.
+
+  struct DummyCallback {
+    template <typename... Ts>
+    void operator()(const Ts&...);
+  };
+
+  template <typename T, typename = void>
+  struct IsDecomposable : public std::false_type {};
+
+  template <typename T>
+  struct IsDecomposable<
+      T,
+      std::void_t<decltype(std::declval<const T>().Decompose(DummyCallback{}))>>
+      : public std::true_type {};
+
+  static constexpr int MaxPriority = 10;
+  template <int N>
+  struct Priority : Priority<N + 1> {
+    static_assert(N < MaxPriority);
+  };
+
+  template <>
+  struct Priority<MaxPriority> {};
+
+  // Hash functor for tuples of canonicalizable types.
+  struct ArgsHash {
+    template <typename... Ts>
+    auto operator()(const std::tuple<Ts...>& t) const -> size_t {
+      return std::apply(
+          [](const auto&... elements) {
+            return CustomHashCombine(elements...);
+          },
+          t);
+    }
+
+    template <typename... Ts>
+    static auto CustomHashCombine(const Ts&... ts) -> llvm::hash_code {
+      return llvm::hash_combine(CustomHashValue(Priority<0>{}, ts)...);
+    }
+
+    template <typename Iterator>
+    static auto CustomHashCombineRange(Iterator begin, Iterator end)
+        -> llvm::hash_code {
+      llvm::hash_code result = llvm::hash_combine();
+      while (begin != end) {
+        result = CustomHashCombine(result, *begin);
+        ++begin;
+      }
+      return result;
+    }
+
     template <typename T>
-    auto operator()(const T& t) const -> size_t {
+    static constexpr auto IsLlvmHashable() -> bool {
+      using llvm::hash_value;
+      auto probe = [](const auto& t) -> decltype(hash_value(t)) {};
+      return std::is_invocable_r_v<llvm::hash_code, decltype(probe), const T&>;
+    }
+
+    template <typename T, typename = void>
+    struct IsCustomHashable;
+
+    // We have to exclude implicit conversions to avoid ambiguity, because
+    // hash_code is implicitly convertible from size_t.
+    template <typename T,
+              typename = std::enable_if_t<std::is_same_v<T, llvm::hash_code>>>
+    static auto CustomHashValue(Priority<0>, T code) -> llvm::hash_code {
+      return code;
+    }
+
+    template <typename T,
+              typename = std::enable_if_t<IsCustomHashable<T>::value>>
+    static auto CustomHashValue(Priority<0>, const std::vector<T>& v)
+        -> llvm::hash_code {
+      return CustomHashCombineRange(v.begin(), v.end());
+    }
+
+    // We need this because of optional<Decomposable> ctor parameters.
+    template <typename T,
+              typename = std::enable_if_t<IsCustomHashable<T>::value>>
+    static auto CustomHashValue(Priority<0>, const std::optional<T>& opt)
+        -> llvm::hash_code {
+      if (opt.has_value()) {
+        return CustomHashCombine(*opt);
+      } else {
+        return CustomHashCombine(std::nullopt);
+      }
+    }
+
+    static auto CustomHashValue(Priority<0>, std::nullopt_t)
+        -> llvm::hash_code {
+      return llvm::hash_combine();
+    }
+
+    template <typename T, typename = std::enable_if_t<IsLlvmHashable<T>()>>
+    static auto CustomHashValue(Priority<1>, const T& t) -> llvm::hash_code {
       using llvm::hash_value;
       return hash_value(t);
     }
+
+    template <typename T,
+              typename = std::enable_if_t<IsDecomposable<T>::value &&
+                                          std::is_copy_constructible_v<T>>>
+    static auto CustomHashValue(Priority<2>, const T& t) -> llvm::hash_code {
+      return t.Decompose([](auto&&... us) { return CustomHashCombine(us...); });
+    }
+
+    template <typename T, typename>
+    struct IsCustomHashable : public std::false_type {};
+
+    template <typename T>
+    struct IsCustomHashable<T, std::void_t<decltype(CustomHashValue(
+                                   Priority<0>{}, std::declval<const T>()))>>
+        : public std::true_type {};
+  };
+
+  struct ArgsEqual {
+    template <typename... Ts>
+    auto operator()(const std::tuple<Ts...>& lhs,
+                    const std::tuple<Ts...>& rhs) const -> bool {
+      return std::apply(
+          [&](const auto&... lhs_elements) {
+            return std::apply(
+                [&](const auto&... rhs_elements) {
+                  return (Equals(Priority<0>{}, lhs_elements, rhs_elements) &&
+                          ...);
+                },
+                rhs);
+          },
+          lhs);
+    }
+
+    template <typename T, typename = void>
+    struct SupportsEquals;
+
+    template <typename T, typename = std::enable_if_t<SupportsEquals<T>::value>>
+    static auto Equals(Priority<0>, const std::vector<T>& lhs,
+                       const std::vector<T>& rhs) -> bool {
+      if (lhs.size() != rhs.size()) {
+        return false;
+      }
+      auto lhs_it = lhs.begin();
+      auto rhs_it = rhs.begin();
+      while (lhs_it != lhs.end()) {
+        if (!Equals(Priority<0>{}, *lhs_it, *rhs_it)) {
+          return false;
+        }
+        ++lhs_it;
+        ++rhs_it;
+      }
+      return true;
+    }
+
+    template <typename T, typename = std::enable_if_t<SupportsEquals<T>::value>>
+    static auto Equals(Priority<0>, const std::optional<T>& lhs,
+                       const std::optional<T>& rhs) -> bool {
+      if (lhs.has_value() && rhs.has_value()) {
+        return Equals(Priority<0>{}, *lhs, *rhs);
+      } else {
+        return lhs.has_value() == rhs.has_value();
+      }
+    }
+
+    static auto Equals(Priority<0>, std::nullopt_t, std::nullopt_t) -> bool {
+      return true;
+    }
+
+    template <typename T,
+              typename = std::enable_if_t<std::is_convertible_v<
+                  decltype(std::declval<const T>() == std::declval<const T>()),
+                  bool>>>
+    static auto Equals(Priority<1>, const T& lhs, const T& rhs) -> bool {
+      return lhs == rhs;
+    }
+
+    template <typename T,
+              typename = std::enable_if_t<IsDecomposable<T>::value &&
+                                          std::is_copy_constructible_v<T>>>
+    static auto Equals(Priority<2>, const T& lhs, const T& rhs) -> bool {
+      return lhs.Decompose([&](auto&&... lhs_elements) {
+        return rhs.Decompose([&](auto&&... rhs_elements) {
+          return (Equals(Priority<0>{}, lhs_elements, rhs_elements) && ...);
+        });
+      });
+    }
+
+    template <typename T, typename>
+    struct SupportsEquals : public std::false_type {};
+
+    template <typename T>
+    struct SupportsEquals<
+        T, std::void_t<decltype(Equals(Priority<0>{}, std::declval<const T>(),
+                                       std::declval<const T>()))>>
+        : public std::true_type {};
   };
 
   // Factory metafunction for globally unique type IDs.
@@ -131,8 +305,8 @@ class Arena {
   // a non-null pointer to a T object constructed with those arguments.
   template <typename T, typename... Args>
   using CanonicalizationTable =
-      std::unordered_map<std::tuple<ArgKeyType<Args>...>, Nonnull<const T*>,
-                         LlvmHasher>;
+      std::unordered_map<std::tuple<Args...>, Nonnull<const T*>, ArgsHash,
+                         ArgsEqual>;
 
   // Allocates an object in the arena. Unlike New, this will always allocate
   // and construct a new object.
@@ -158,36 +332,6 @@ class Arena {
 // ---------------------------------------
 // Implementation details only below here.
 // ---------------------------------------
-
-template <>
-struct ArgKey<std::nullopt_t> {
-  using type = struct NulloptProxy {
-    NulloptProxy(std::nullopt_t) {}
-    friend auto operator==(NulloptProxy, NulloptProxy) -> bool { return true; }
-    friend auto hash_value(NulloptProxy) -> llvm::hash_code {
-      return llvm::hash_combine();
-    }
-  };
-};
-
-template <typename T>
-struct ArgKey<std::vector<T>> {
-  using type = class VectorProxy {
-   public:
-    VectorProxy(std::vector<T> vec) : vec_(std::move(vec)) {}
-    friend auto operator==(const VectorProxy& lhs, const VectorProxy& rhs) {
-      return lhs.vec_ == rhs.vec_;
-    }
-    friend auto hash_value(const VectorProxy& v) {
-      return llvm::hash_combine(
-          llvm::hash_combine_range(v.vec_.begin(), v.vec_.end()),
-          v.vec_.size());
-    }
-
-   private:
-    std::vector<T> vec_;
-  };
-};
 
 template <typename T, typename... Args,
           typename std::enable_if_t<std::is_constructible_v<T, Args...> &&
