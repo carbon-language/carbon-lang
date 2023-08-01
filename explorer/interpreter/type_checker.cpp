@@ -3854,7 +3854,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           for (size_t i = 0; i != params.size(); ++i) {
             // TODO: Should we disallow all other kinds of top-level params?
             if (const auto* binding = dyn_cast<GenericBinding>(params[i])) {
-              generic_parameters.push_back({i, binding});
+              generic_parameters.push_back({{}, i, binding});
             }
           }
 
@@ -5129,8 +5129,8 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
     CollectAndNumberGenericBindingsInPattern(&f->self_pattern(), all_bindings);
     CollectImplBindingsInPattern(&f->self_pattern(), impl_bindings);
     FunctionType::MethodSelf method_self_present = {
-        (f->self_pattern().kind() == PatternKind::AddrPattern),
-        &f->self_pattern().static_type()};
+        .addr_self = (f->self_pattern().kind() == PatternKind::AddrPattern),
+        .self_type = &f->self_pattern().static_type()};
     method_self = method_self_present;
   }
   // Type check the parameter pattern.
@@ -5153,7 +5153,7 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
     CollectAndNumberGenericBindingsInPattern(param_pattern, all_bindings);
 
     if (const auto* binding = dyn_cast<GenericBinding>(param_pattern)) {
-      generic_parameters.push_back({i, binding});
+      generic_parameters.push_back({.index = i, .binding = binding});
     } else {
       deduced_bindings.insert(deduced_bindings.end(),
                               all_bindings.begin() + old_size,

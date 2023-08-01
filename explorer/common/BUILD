@@ -24,6 +24,24 @@ cc_test(
 )
 
 cc_library(
+    name = "decompose",
+    hdrs = ["decompose.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "decompose_test",
+    srcs = ["decompose_test.cpp"],
+    deps = [
+        ":decompose",
+        "//testing/util:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "error_builders",
     hdrs = ["error_builders.h"],
     deps = [

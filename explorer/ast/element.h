@@ -11,6 +11,7 @@
 
 #include "common/ostream.h"
 #include "explorer/ast/ast_rtti.h"
+#include "explorer/common/decompose.h"
 #include "explorer/common/nonnull.h"
 #include "llvm/ADT/PointerUnion.h"
 
@@ -20,21 +21,13 @@ class Declaration;
 class Value;
 
 // A NamedValue represents a value with a name, such as a single struct field.
-struct NamedValue {
+struct NamedValue : HashFromDecompose<NamedValue> {
   NamedValue(std::string name, Nonnull<const Value*> value)
       : name(std::move(name)), value(value) {}
 
   template <typename F>
   auto Decompose(F f) const {
     return f(name, value);
-  }
-
-  inline friend auto operator==(const NamedValue& lhs, const NamedValue& rhs)
-      -> bool {
-    return lhs.name == rhs.name && lhs.value == rhs.value;
-  }
-  inline friend auto hash_value(const NamedValue& value) -> llvm::hash_code {
-    return llvm::hash_combine(value.name, value.value);
   }
 
   // The field name.
