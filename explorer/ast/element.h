@@ -29,6 +29,14 @@ struct NamedValue {
     return f(name, value);
   }
 
+  inline friend auto operator==(const NamedValue& lhs, const NamedValue& rhs)
+      -> bool {
+    return lhs.name == rhs.name && lhs.value == rhs.value;
+  }
+  inline friend auto hash_value(const NamedValue& value) -> llvm::hash_code {
+    return llvm::hash_combine(value.name, value.value);
+  }
+
   // The field name.
   std::string name;
 
