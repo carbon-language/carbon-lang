@@ -134,7 +134,7 @@ class FileTestBase : public testing::Test {
 
   const std::filesystem::path path_;
 };
-
+// A plain struct to aggregate a name and factory function for tests using this framework.
 struct FileTestFactory {
   // The test fixture name.
   const char* name;
