@@ -1708,8 +1708,9 @@ two methods `Distance` and `Offset`:
 The philosophy of inheritance support in Carbon is to focus on use cases where
 inheritance is a good match, and use other features for other cases. For
 example, [mixins](#mixins) for implementation reuse and [generics](#generics)
-for separating interface from implementation. This allows Carbon to move away
-from [multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance),
+for [separating interface from implementation](#interfaces-and-implementations).
+This allows Carbon to move away from
+[multiple inheritance](https://en.wikipedia.org/wiki/Multiple_inheritance),
 which doesn't have as efficient of an implementation strategy.
 
 Classes by default are
@@ -3546,7 +3547,7 @@ just values and [pointers](#pointer-types).
 Rust also shows the value of functions parameterized by lifetimes. Since
 lifetimes are only used to establish safety properties of the code, there is no
 reason to pay the cost of monomorphization for those parameters. So we need a
-[generics system](#generics) that can reason about code before it is
+[checked-generics system](#generics) that can reason about code before it is
 instantiated, unlike C++ templates.
 
 In conclusion, there are two patterns in how Carbon diverges from C++:

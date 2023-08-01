@@ -22,7 +22,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Avoiding name collisions](#avoiding-name-collisions)
     -   [Qualified member names and compound member access](#qualified-member-names-and-compound-member-access)
     -   [Access](#access)
--   [Generics](#generics)
+-   [Checked generics](#checked-generics)
     -   [Return type](#return-type)
     -   [Implementation model](#implementation-model)
 -   [Interfaces recap](#interfaces-recap)
@@ -184,8 +184,9 @@ member:
 The function expresses that the type argument is passed in
 [statically](terminology.md#static-dispatch-witness-table), basically generating
 a separate function body for every different type passed in, by using the
-"generic argument" syntax `:!`, see [the generics section](#generics) below. The
-interface contains enough information to
+"generic argument" syntax `:!`, see
+[the checked-generics section](#checked-generics) below. The interface contains
+enough information to
 [type and definition check](terminology.md#complete-definition-checking) the
 function body -- you can only call functions defined in the interface in the
 function body. Contrast this with making the type a template argument, where you
@@ -651,9 +652,7 @@ No access control modifiers are allowed on `impl` declarations, an `impl` is
 always visible to the intersection of the visibility of all names used in the
 declaration of the `impl`.
 
-## Generics
-
-FIXME: Generics -> Checked generics
+## Checked generics
 
 Here is a function that can accept values of any type that has implemented the
 `Vector` interface:
@@ -882,7 +881,7 @@ An interface's name may be used in a few different contexts:
 -   as a namespace name in
     [a qualified name](#qualified-member-names-and-compound-member-access), and
 -   as a [facet type](terminology.md#facet-type) for
-    [a facet binding](#generics).
+    [a facet binding](#checked-generics).
 
 While interfaces are examples of facet types, facet types are a more general
 concept, for which interfaces are a building block.
@@ -959,7 +958,7 @@ whenever an interface may be. This includes all of these
     [a qualified name](#qualified-member-names-and-compound-member-access). For
     example, `VectorLegoFish.VAdd` refers to the same name as `Vector.Add`.
 -   A named constraint may be used as a [facet type](terminology.md#facet-type)
-    for [a facet binding](#generics).
+    for [a facet binding](#checked-generics).
 
 We don't expect developers to directly define many named constraints, but other
 constructs we do expect them to use will be defined in terms of them. For
