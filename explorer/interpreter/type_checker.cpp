@@ -4761,7 +4761,7 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
         builder.Resolve(*this, binding.type().source_loc(), impl_scope));
     type = std::move(builder).Build();
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "resolved constraint type is `" << *type << "`\n";
+      *trace_stream_ << "--- resolved constraint type is `" << *type << "`\n";
     }
 
     BringImplBindingIntoScope(impl_binding, impl_scope);
@@ -5596,7 +5596,9 @@ auto TypeChecker::TypeCheckMixinDeclaration(
     BringPatternImplBindingsIntoScope(*mixin_decl->params(), mixin_scope);
   }
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << mixin_scope;
+    *trace_stream_ << "--- impl declarations for `" << mixin_decl->name()
+                   << "` (" << mixin_decl->source_loc() << ")\n";
+    *trace_stream_ << " +  " << mixin_scope;
   }
   for (Nonnull<Declaration*> m : mixin_decl->members()) {
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(m, mixin_scope, mixin_decl));
@@ -5862,7 +5864,10 @@ auto TypeChecker::TypeCheckConstraintTypeDeclaration(
                                       constraint_scope);
   }
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << constraint_scope;
+    *trace_stream_ << "--- impl declarations for `"
+                   << PrintAsID(*constraint_decl) << "` ("
+                   << constraint_decl->source_loc() << ")\n";
+    *trace_stream_ << " +  " << constraint_scope;
   }
   for (Nonnull<Declaration*> m : constraint_decl->members()) {
     CARBON_RETURN_IF_ERROR(
