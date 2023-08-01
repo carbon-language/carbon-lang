@@ -5,6 +5,7 @@
 #include <tree_sitter/api.h>
 #include <tree_sitter/parser.h>
 
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -35,19 +36,13 @@ auto main(int argc, char** argv) -> int {
   auto* parser = ts_parser_new();
   ts_parser_set_language(parser, tree_sitter_carbon());
 
-  std::vector<std::string> failed;
-  std::vector<std::string> skipped;
+  bool fail_tests = std::getenv("FAIL_TESTS") != nullptr;
+
+  std::vector<std::string> incorrect;
   for (int i = 1; i < argc; i++) {
     std::string file_path = argv[i];
     std::string source = ReadFile(file_path);
 
-    // `and` in where clauses is not parsed correctly.
-    // TODO: remove once where clause is implemented correctly.
-    if (source.find("where") != std::string::npos &&
-        source.find("and") != std::string::npos) {
-      skipped.push_back(file_path);
-      continue;
-    }
     auto* tree =
         ts_parser_parse_string(parser, nullptr, source.data(), source.size());
 
@@ -56,25 +51,27 @@ auto main(int argc, char** argv) -> int {
     char* node_debug = ts_node_string(root);
 
     std::cout << file_path << ":\n" << node_debug << "\n";
-    if (has_error) {
-      failed.push_back(file_path);
+    if (has_error ^ fail_tests) {
+      incorrect.push_back(file_path);
     }
 
     free(node_debug);
     ts_tree_delete(tree);
   }
   ts_parser_delete(parser);
-  for (const auto& file : skipped) {
-    std::cout << "SKIPPED " << file << "\n";
+  for (const auto& file : incorrect) {
+    if (fail_tests) {
+      std::cout << "INCORRECTLY PASSING " << file << "\n";
+    } else {
+      std::cout << "FAILED " << file << "\n";
+    }
   }
-  for (const auto& file : failed) {
-    std::cout << "FAILED " << file << "\n";
-  }
-  if (!skipped.empty()) {
-    std::cout << skipped.size() << " tests skipped.\n";
-  }
-  if (!failed.empty()) {
-    std::cout << failed.size() << " tests failing.\n";
+  if (!incorrect.empty()) {
+    if (fail_tests) {
+      std::cout << incorrect.size() << " tests incorrectly passing.\n";
+    } else {
+      std::cout << incorrect.size() << " tests failing.\n";
+    }
     return 1;
   }
 }

@@ -73,7 +73,7 @@ class Value {
   // `me_value`, otherwise pass `*this`.
   auto GetElement(Nonnull<Arena*> arena, const ElementPath& path,
                   SourceLocation source_loc,
-                  Nonnull<const Value*> me_value) const
+                  std::optional<Nonnull<const Value*>> me_value) const
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
@@ -94,38 +94,6 @@ class Value {
 
  private:
   const Kind kind_;
-};
-
-// Contains the result of the evaluation of an expression, including a value,
-// the original expression category, and an optional address if available.
-class ExpressionResult {
- public:
-  static auto Value(Nonnull<const Carbon::Value*> v) -> ExpressionResult {
-    return ExpressionResult(v, std::nullopt, ExpressionCategory::Value);
-  }
-  static auto Reference(Nonnull<const Carbon::Value*> v, Address address)
-      -> ExpressionResult {
-    return ExpressionResult(v, std::move(address),
-                            ExpressionCategory::Reference);
-  }
-  static auto Initializing(Nonnull<const Carbon::Value*> v, Address address)
-      -> ExpressionResult {
-    return ExpressionResult(v, std::move(address),
-                            ExpressionCategory::Initializing);
-  }
-
-  ExpressionResult(Nonnull<const Carbon::Value*> v,
-                   std::optional<Address> address, ExpressionCategory cat)
-      : value_(v), address_(std::move(address)), expr_cat_(cat) {}
-
-  auto value() const -> Nonnull<const Carbon::Value*> { return value_; }
-  auto address() const -> const std::optional<Address>& { return address_; }
-  auto expression_category() const -> ExpressionCategory { return expr_cat_; }
-
- private:
-  Nonnull<const Carbon::Value*> value_;
-  std::optional<Address> address_;
-  ExpressionCategory expr_cat_;
 };
 
 // Returns whether the fully-resolved kind that this value will eventually have
@@ -296,6 +264,64 @@ class LocationValue : public Value {
   Address value_;
 };
 
+// Contains the result of the evaluation of an expression, including a value,
+// the original expression category, and an optional address if available.
+class ExpressionResult {
+ public:
+  static auto Value(Nonnull<const Carbon::Value*> v) -> ExpressionResult {
+    return ExpressionResult(v, std::nullopt, ExpressionCategory::Value);
+  }
+  static auto Reference(Nonnull<const Carbon::Value*> v, Address address)
+      -> ExpressionResult {
+    return ExpressionResult(v, std::move(address),
+                            ExpressionCategory::Reference);
+  }
+  static auto Initializing(Nonnull<const Carbon::Value*> v, Address address)
+      -> ExpressionResult {
+    return ExpressionResult(v, std::move(address),
+                            ExpressionCategory::Initializing);
+  }
+
+  ExpressionResult(Nonnull<const Carbon::Value*> v,
+                   std::optional<Address> address, ExpressionCategory cat)
+      : value_(v), address_(std::move(address)), expr_cat_(cat) {}
+
+  auto value() const -> Nonnull<const Carbon::Value*> { return value_; }
+  auto address() const -> const std::optional<Address>& { return address_; }
+  auto expression_category() const -> ExpressionCategory { return expr_cat_; }
+
+ private:
+  Nonnull<const Carbon::Value*> value_;
+  std::optional<Address> address_;
+  ExpressionCategory expr_cat_;
+};
+
+// Represents the result of the evaluation of a reference expression, and
+// holds the resulting `Value*` and its `Address`.
+class ReferenceExpressionValue : public Value {
+ public:
+  ReferenceExpressionValue(Nonnull<const Value*> value, Address address)
+      : Value(Kind::ReferenceExpressionValue),
+        value_(value),
+        address_(std::move(address)) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::ReferenceExpressionValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(value_, address_);
+  }
+
+  auto value() const -> Nonnull<const Value*> { return value_; }
+  auto address() const -> const Address& { return address_; }
+
+ private:
+  Nonnull<const Value*> value_;
+  Address address_;
+};
+
 // A pointer value
 class PointerValue : public Value {
  public:
@@ -374,7 +400,8 @@ class NominalClassValue : public Value {
   // NominalClassValue*, that must be common to all NominalClassValue of the
   // same object. The pointee is updated, when `NominalClassValue`s are
   // constructed, to point to the `NominalClassValue` corresponding to the
-  // child-most class type.
+  // child-most class type. Sets *class_value_ptr = this, which corresponds to
+  // the static type of the value matching its dynamic type.
   NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
                     std::optional<Nonnull<const NominalClassValue*>> base,
                     Nonnull<const NominalClassValue** const> class_value_ptr);

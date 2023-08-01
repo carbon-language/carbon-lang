@@ -5,7 +5,7 @@
 // AUTOUPDATE
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
+// CHECK:STDOUT:   {name: str<invalid>, param_refs: block0, body: {block2}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -16,7 +16,8 @@
 // CHECK:STDOUT:   Baz,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
-// CHECK:STDOUT:   nodeEmptyTupleType,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
@@ -33,6 +34,8 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+1]]:4: Name Foo not found
+// CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+3]]:4: Name Foo not found
+// CHECK:STDERR: fn Foo.Baz() {
+// CHECK:STDERR:    ^
 fn Foo.Baz() {
 }

@@ -13,7 +13,7 @@ auto SemanticsHandleExpressionStatement(SemanticsContext& context,
   // Pop the expression without investigating its contents.
   // TODO: This will probably eventually need to do some "do not discard"
   // analysis.
-  context.node_stack().PopAndDiscardId();
+  context.node_stack().PopExpression();
   return true;
 }
 
@@ -42,7 +42,7 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
 
     context.AddNode(SemanticsNode::Return::Make(parse_node));
   } else {
-    auto arg = context.node_stack().Pop<SemanticsNodeId>();
+    auto arg = context.node_stack().PopExpression();
     context.node_stack()
         .PopAndDiscardSoloParseNode<ParseNodeKind::ReturnStatementStart>();
 

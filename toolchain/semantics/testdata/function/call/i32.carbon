@@ -21,7 +21,8 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
-// CHECK:STDOUT:   nodeEmptyTupleType,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},

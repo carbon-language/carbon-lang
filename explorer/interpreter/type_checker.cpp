@@ -91,6 +91,7 @@ static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ReferenceExpressionValue:
     case Value::Kind::BoolValue:
     case Value::Kind::TupleValue:
     case Value::Kind::StructValue:
@@ -151,6 +152,7 @@ static auto IsType(Nonnull<const Value*> value) -> bool {
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ReferenceExpressionValue:
     case Value::Kind::BoolValue:
     case Value::Kind::TupleValue:
     case Value::Kind::StructValue:
@@ -220,6 +222,7 @@ static auto ExpectCompleteType(SourceLocation source_loc,
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ReferenceExpressionValue:
     case Value::Kind::BoolValue:
     case Value::Kind::StructValue:
     case Value::Kind::TupleValue:
@@ -332,6 +335,7 @@ static auto TypeIsDeduceable(Nonnull<const Value*> type) -> bool {
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ReferenceExpressionValue:
     case Value::Kind::BoolValue:
     case Value::Kind::TupleValue:
     case Value::Kind::StructValue:
@@ -1534,6 +1538,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ReferenceExpressionValue:
     case Value::Kind::StructValue:
     case Value::Kind::TupleValue:
     case Value::Kind::NominalClassValue:
@@ -5286,57 +5291,58 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     class_decl->set_static_type(&self->static_type());
   }
 
-  // Find base class declaration, if any. Verify that is before any data member
-  // declarations, and there is at most one.
+  // Find base class declaration, if any. Right now, verify that it is first in
+  // the class. This avoids the problem identified in
+  // https://github.com/carbon-language/carbon-lang/issues/2994 where the base
+  // class expression could reference an earlier declaration in the class that
+  // hasn't been typechecked yet and therefore doesn't have its `static_type`
+  // set.
+
+  // TODO: Verify just that is before any data member declarations, and there is
+  // at most one, and delay remaining work (type checking, base class
+  // evaluation, etc.) until the `extend base` declaration is processed in
+  // order.
   std::optional<Nonnull<const NominalClassType*>> base_class;
-  bool after_data_member = false;
-  for (Nonnull<Declaration*> m : class_decl->members()) {
-    switch (m->kind()) {
-      case DeclarationKind::VariableDeclaration:
-      case DeclarationKind::MixDeclaration: {
-        after_data_member = true;
-        break;
+  if (!class_decl->members().empty()) {
+    Nonnull<Declaration*> m = class_decl->members()[0];
+    if (m->kind() == DeclarationKind::ExtendBaseDeclaration) {
+      Nonnull<Expression*> base_class_expr =
+          cast<ExtendBaseDeclaration>(*m).base_class();
+      CARBON_ASSIGN_OR_RETURN(const auto base_type,
+                              TypeCheckTypeExp(base_class_expr, class_scope));
+      if (base_type->kind() != Value::Kind::NominalClassType) {
+        return ProgramError(m->source_loc())
+               << "Unsupported base class type for class `"
+               << class_decl->name()
+               << "`. Only simple classes are currently supported as base "
+                  "class.";
       }
-      case DeclarationKind::ExtendBaseDeclaration: {
-        if (after_data_member) {
-          return ProgramError(m->source_loc())
-                 << "`extend base:` declaration must not be after `var` or "
-                    "`mix` declarations in a class.";
-        }
+      CARBON_RETURN_IF_ERROR(ExpectCompleteType(
+          base_class_expr->source_loc(), "base class declaration", base_type));
+
+      base_class = cast<NominalClassType>(base_type);
+      if (base_class.value()->declaration().extensibility() ==
+          ClassExtensibility::None) {
+        return ProgramError(m->source_loc())
+               << "Base class `" << base_class.value()->declaration().name()
+               << "` is `final` and cannot be inherited. Add the `base` or "
+                  "`abstract` class prefix to `"
+               << base_class.value()->declaration().name()
+               << "` to allow it to be inherited";
+      }
+      class_decl->set_base_type(base_class);
+    }
+    for (Nonnull<Declaration*> m : class_decl->members().drop_front()) {
+      if (m->kind() == DeclarationKind::ExtendBaseDeclaration) {
         if (base_class.has_value()) {
           return ProgramError(m->source_loc())
                  << "At most one `extend base:` declaration in a class.";
-        }
-        Nonnull<Expression*> base_class_expr =
-            cast<ExtendBaseDeclaration>(*m).base_class();
-        CARBON_ASSIGN_OR_RETURN(const auto base_type,
-                                TypeCheckTypeExp(base_class_expr, class_scope));
-        if (base_type->kind() != Value::Kind::NominalClassType) {
+        } else {
           return ProgramError(m->source_loc())
-                 << "Unsupported base class type for class `"
-                 << class_decl->name()
-                 << "`. Only simple classes are currently supported as base "
-                    "class.";
+                 << "`extend base:` declarations after the first declaration "
+                    "in the class are not yet supported";
         }
-        CARBON_RETURN_IF_ERROR(ExpectCompleteType(base_class_expr->source_loc(),
-                                                  "base class declaration",
-                                                  base_type));
-
-        base_class = cast<NominalClassType>(base_type);
-        if (base_class.value()->declaration().extensibility() ==
-            ClassExtensibility::None) {
-          return ProgramError(m->source_loc())
-                 << "Base class `" << base_class.value()->declaration().name()
-                 << "` is `final` and cannot be inherited. Add the `base` or "
-                    "`abstract` class prefix to `"
-                 << base_class.value()->declaration().name()
-                 << "` to allow it to be inherited";
-        }
-        class_decl->set_base_type(base_class);
-        break;
       }
-      default:
-        break;
     }
   }
 
@@ -6254,6 +6260,7 @@ static auto IsValidTypeForAliasTarget(Nonnull<const Value*> type) -> bool {
     case Value::Kind::BoundMethodValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ReferenceExpressionValue:
     case Value::Kind::BoolValue:
     case Value::Kind::StructValue:
     case Value::Kind::NominalClassValue:

@@ -21,6 +21,8 @@
 // CHECK:STDOUT:   node+2,
 // CHECK:STDOUT:   node+8,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, type: type0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, type: type0},
@@ -61,5 +63,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+1]]:37: Cannot implicitly convert from `{.a: i32}` to `{.a: i32, .b: i32}`.
+// CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+3]]:37: Cannot implicitly convert from `{.a: i32}` to `{.a: i32, .b: i32}`.
+// CHECK:STDERR: var x: {.a: i32, .b: i32} = {.a = 1};
+// CHECK:STDERR:                                     ^
 var x: {.a: i32, .b: i32} = {.a = 1};

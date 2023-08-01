@@ -19,6 +19,8 @@
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT:   nodeFloatingPointType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
@@ -37,6 +39,8 @@
 // CHECK:STDOUT: ]
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+1]]:13: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:13: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR:   return 1.0;
+  // CHECK:STDERR:             ^
   return 1.0;
 }

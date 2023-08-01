@@ -54,6 +54,10 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
     ),
     # tools/cpp/runfiles:runfiles.h -> tools/cpp/runfiles/runfiles.h
     "@bazel_tools": ExternalRepo(lambda x: re.sub(":", "/", x), "...", None),
+    # absl/flags:flag.h -> absl/flags/flag.h
+    "@com_google_absl": ExternalRepo(
+        lambda x: re.sub(":", "/", x), "...", None
+    ),
 }
 
 # TODO: proto rules are aspect-based and their generated files don't show up in

@@ -19,7 +19,8 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   node+0,
-// CHECK:STDOUT:   nodeEmptyTupleType,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StructType, arg0: block0, type: typeTypeType},

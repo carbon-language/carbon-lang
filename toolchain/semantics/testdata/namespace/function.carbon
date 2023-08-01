@@ -19,7 +19,11 @@
 // CHECK:STDOUT:   Bar,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
-// CHECK:STDOUT:   nodeEmptyTupleType,
+// CHECK:STDOUT:   node+6,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: Namespace, arg0: name_scope0},
@@ -28,7 +32,8 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
-// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1},
+// CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
+// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -49,6 +54,7 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 

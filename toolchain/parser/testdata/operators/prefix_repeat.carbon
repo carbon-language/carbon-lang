@@ -9,14 +9,16 @@
 // CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'NameExpression', text: 'n'},
-// CHECK:STDOUT:       {kind: 'PrefixOperator', text: '++', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'PrefixOperator', text: '++', subtree_size: 3},
-// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 4},
-// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 10},
+// CHECK:STDOUT:             {kind: 'NameExpression', text: 'n'},
+// CHECK:STDOUT:           {kind: 'PrefixOperator', text: '&', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'PrefixOperator', text: '*', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'PrefixOperator', text: '*', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'PrefixOperator', text: '*', subtree_size: 5},
+// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 6},
+// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 12},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
 fn F() {
-  ++++n;
+  ***&n;
 }

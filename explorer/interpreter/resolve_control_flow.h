@@ -7,6 +7,7 @@
 
 #include "explorer/ast/ast.h"
 #include "explorer/common/nonnull.h"
+#include "explorer/common/trace_stream.h"
 
 namespace Carbon {
 
@@ -14,7 +15,8 @@ namespace Carbon {
 // given AST.
 // On failure, `ast` is left in a partial state and should not be further
 // processed.
-auto ResolveControlFlow(AST& ast) -> ErrorOr<Success>;
+auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream, AST& ast)
+    -> ErrorOr<Success>;
 
 }  // namespace Carbon
 

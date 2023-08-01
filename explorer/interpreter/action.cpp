@@ -11,10 +11,12 @@
 #include <vector>
 
 #include "common/check.h"
+#include "common/error.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/value.h"
 #include "explorer/common/arena.h"
+#include "explorer/common/source_location.h"
 #include "explorer/interpreter/stack.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
@@ -25,12 +27,14 @@ using llvm::cast;
 
 RuntimeScope::RuntimeScope(RuntimeScope&& other) noexcept
     : locals_(std::move(other.locals_)),
+      bound_values_(std::move(other.bound_values_)),
       // To transfer ownership of other.allocations_, we have to empty it out.
       allocations_(std::exchange(other.allocations_, {})),
       heap_(other.heap_) {}
 
 auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
   locals_ = std::move(rhs.locals_);
+  bound_values_ = std::move(rhs.bound_values_);
   // To transfer ownership of rhs.allocations_, we have to empty it out.
   allocations_ = std::exchange(rhs.allocations_, {});
   heap_ = rhs.heap_;
@@ -52,6 +56,13 @@ void RuntimeScope::Bind(ValueNodeView value_node, Address address) {
       locals_.insert({value_node, heap_->arena().New<LocationValue>(address)})
           .second;
   CARBON_CHECK(success) << "Duplicate definition of " << value_node.base();
+}
+
+void RuntimeScope::BindAndPin(ValueNodeView value_node, Address address) {
+  Bind(value_node, address);
+  bool success = bound_values_.insert(&value_node.base()).second;
+  CARBON_CHECK(success) << "Duplicate pinned node for " << value_node.base();
+  heap_->BindValueToReference(value_node, address);
 }
 
 void RuntimeScope::BindLifetimeToScope(Address address) {
@@ -84,23 +95,35 @@ auto RuntimeScope::Initialize(ValueNodeView value_node,
 void RuntimeScope::Merge(RuntimeScope other) {
   CARBON_CHECK(heap_ == other.heap_);
   for (auto& element : other.locals_) {
-    CARBON_CHECK(locals_.count(element.first) == 0)
-        << "Duplicate definition of" << element.first;
-    locals_.insert(element);
+    bool success = locals_.insert(element).second;
+    CARBON_CHECK(success) << "Duplicate definition of " << element.first;
+  }
+  for (const auto* element : other.bound_values_) {
+    bool success = bound_values_.insert(element).second;
+    CARBON_CHECK(success) << "Duplicate bound value.";
   }
   allocations_.insert(allocations_.end(), other.allocations_.begin(),
                       other.allocations_.end());
   other.allocations_.clear();
 }
 
-auto RuntimeScope::Get(ValueNodeView value_node) const
-    -> std::optional<Nonnull<const Value*>> {
+auto RuntimeScope::Get(ValueNodeView value_node,
+                       SourceLocation source_loc) const
+    -> ErrorOr<std::optional<Nonnull<const Value*>>> {
   auto it = locals_.find(value_node);
-  if (it != locals_.end()) {
-    return it->second;
-  } else {
-    return std::nullopt;
+  if (it == locals_.end()) {
+    return {std::nullopt};
   }
+  if (bound_values_.contains(&value_node.base())) {
+    // Check if the bound value is still alive.
+    CARBON_CHECK(it->second->kind() == Value::Kind::LocationValue);
+    if (!heap_->is_bound_value_alive(
+            value_node, cast<LocationValue>(it->second)->address())) {
+      return ProgramError(source_loc)
+             << "Reference has changed since this value was bound.";
+    }
+  }
+  return {it->second};
 }
 
 auto RuntimeScope::Capture(
@@ -121,6 +144,9 @@ void Action::Print(llvm::raw_ostream& out) const {
   switch (kind()) {
     case Action::Kind::LocationAction:
       out << cast<LocationAction>(*this).expression() << " ";
+      break;
+    case Action::Kind::ValueExpressionAction:
+      out << cast<ValueExpressionAction>(*this).expression() << " ";
       break;
     case Action::Kind::ExpressionAction:
       out << cast<ExpressionAction>(*this).expression() << " ";

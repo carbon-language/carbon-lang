@@ -9,5 +9,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_library_skips_name.carbon:[[@LINE+1]]:9: Expected identifier after `package`.
+// CHECK:STDERR: fail_library_skips_name.carbon:[[@LINE+3]]:9: Expected identifier after `package`.
+// CHECK:STDERR: package library "Shapes" api;
+// CHECK:STDERR:         ^
 package library "Shapes" api;

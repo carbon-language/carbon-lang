@@ -20,6 +20,8 @@
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT:   node+7,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: StructType, arg0: block0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
@@ -54,5 +56,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+1]]:21: Cannot implicitly convert from `{.a: i32}` to `{} as Type`.
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:21: Cannot implicitly convert from `{.a: i32}` to `{} as Type`.
+// CHECK:STDERR: var x: {} = {.a = 1};
+// CHECK:STDERR:                     ^
 var x: {} = {.a = 1};

@@ -7,22 +7,13 @@
 
 #include "common/error.h"
 #include "explorer/common/trace_stream.h"
+#include "llvm/Support/VirtualFileSystem.h"
 
 namespace Carbon {
 
 // Parses and executes the input file, returning the program result on success.
-// This API is intended for use by main execution.
-auto ParseAndExecuteFile(std::string_view prelude_path,
-                         std::string_view input_file_name, bool parser_debug,
-                         Nonnull<TraceStream*> trace_stream,
-                         Nonnull<llvm::raw_ostream*> print_stream)
-    -> ErrorOr<int>;
-
-// Parses and executes the source, returning the program result on success.
-// Discards output.
-auto ParseAndExecute(std::string_view prelude_path,
-                     std::string_view input_file_name,
-                     std::string_view file_contents, bool parser_debug,
+auto ParseAndExecute(llvm::vfs::FileSystem& fs, std::string_view prelude_path,
+                     std::string_view input_file_name, bool parser_debug,
                      Nonnull<TraceStream*> trace_stream,
                      Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int>;
 

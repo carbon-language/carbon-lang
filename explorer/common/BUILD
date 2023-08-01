@@ -58,6 +58,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//explorer/common:nonnull",
+        "@llvm-project//llvm:Support",
     ],
 )
 

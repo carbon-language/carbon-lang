@@ -277,6 +277,9 @@ class ParserContext {
                                    ParseNodeKind parse_node_kind,
                                    bool skip_past_likely_end) -> void;
 
+  // Prints information for a stack dump.
+  auto PrintForStackDump(llvm::raw_ostream& output) const -> void;
+
   auto tree() const -> const ParseTree& { return *tree_; }
 
   auto tokens() const -> const TokenizedBuffer& { return *tokens_; }
@@ -295,6 +298,10 @@ class ParserContext {
   }
 
  private:
+  // Prints a single token for a stack dump. Used by PrintForStackDump.
+  auto PrintTokenForStackDump(llvm::raw_ostream& output,
+                              TokenizedBuffer::Token token) const -> void;
+
   ParseTree* tree_;
   TokenizedBuffer* tokens_;
   TokenDiagnosticEmitter* emitter_;

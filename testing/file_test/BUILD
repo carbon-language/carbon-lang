@@ -14,6 +14,8 @@ cc_library(
     deps = [
         "//common:check",
         "//testing/util:test_raw_ostream",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

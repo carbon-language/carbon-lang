@@ -19,6 +19,8 @@
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT:   node+3,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, type: type0},
@@ -47,5 +49,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+1]]:15: Cannot implicitly convert from `{.a: i32}` to `Type`.
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:15: Cannot implicitly convert from `{.a: i32}` to `type`.
+// CHECK:STDERR: var x: {.a = 1};
+// CHECK:STDERR:               ^
 var x: {.a = 1};

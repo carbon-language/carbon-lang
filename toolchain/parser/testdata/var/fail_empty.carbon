@@ -12,5 +12,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_empty.carbon:[[@LINE+1]]:4: Expected pattern in `var` declaration.
+// CHECK:STDERR: fail_empty.carbon:[[@LINE+3]]:4: Expected pattern in `var` declaration.
+// CHECK:STDERR: var;
+// CHECK:STDERR:    ^
 var;

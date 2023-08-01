@@ -39,6 +39,19 @@
   CARBON_PARSER_STATE_VARIANT(State, Variant1)                             \
   CARBON_PARSER_STATE_VARIANTS2(State, Variant2, Variant3)
 
+// Handles an index expression `a[0]`.
+//
+// Always:
+//   1. Expression
+//   2. IndexExpressionFinish
+CARBON_PARSER_STATE(IndexExpression)
+
+// Handles finishing the index expression.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE(IndexExpressionFinish)
+
 // Handles the `{` of a brace expression.
 //
 // If `CloseCurlyBrace`:
@@ -215,6 +228,13 @@ CARBON_PARSER_STATE(DeclarationScopeLoop)
 //   (state done)
 CARBON_PARSER_STATE_VARIANTS3(Period, Declaration, Expression, Struct)
 
+// Handles `->name` expressions. Identical to PeriodAsExpression except for the
+// leading token.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE(ArrowExpression)
+
 // Handles processing of an expression.
 //
 // If `If`:
@@ -250,8 +270,14 @@ CARBON_PARSER_STATE(ExpressionInPostfix)
 // If `Period`:
 //   1. PeriodAsExpression
 //   2. ExpressionInPostfixLoop
+// If `MinusGreater`:
+//   1. ArrowExpression
+//   2. ExpressionInPostfixLoop
 // If `OpenParen`:
 //   1. CallExpression
+//   2. ExpressionInPostfixLoop
+// If `OpenSquareBracket`:
+//   1. IndexExpressionStart
 //   2. ExpressionInPostfixLoop
 // Else:
 //   (state done)

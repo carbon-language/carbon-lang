@@ -8,8 +8,7 @@
 (comment) @comment
 (builtin_type) @type.builtin
 (bool_literal) @constant.builtin
-(escape_sequence) @constant.character.escape
-(string_literal) @string
+(string) @string
 (numeric_literal) @constant.builtin
 (numeric_type_literal) @type.builtin
 
@@ -17,7 +16,12 @@
 (function_declaration (declared_name (ident) @function))
 (call_expression (ident) @function)
 
-; TODO: add more specific rules
+(namespace_declaration (declared_name) @namespace)
+(interface_declaration (declared_name) @type)
+(constraint_declaration (declared_name) @type)
+(class_declaration (declared_name) @type)
+(choice_declaration (declared_name) @type)
+(binding_lhs) @variable
 
 ; upper case => type
 ((ident) @type

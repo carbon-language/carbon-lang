@@ -16,6 +16,7 @@
 
 #include "common/check.h"
 #include "common/error.h"
+#include "explorer/ast/address.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/element.h"
 #include "explorer/ast/expression.h"
@@ -47,12 +48,13 @@ static constexpr int64_t MaxStepsTaken = 1e6;
 static constexpr int64_t MaxArenaAllocated = 1e9;
 
 // Constructs an ActionStack suitable for the specified phase.
-static auto MakeTodo(Phase phase, Nonnull<Heap*> heap) -> ActionStack {
+static auto MakeTodo(Phase phase, Nonnull<Heap*> heap,
+                     Nonnull<TraceStream*> trace_stream) -> ActionStack {
   switch (phase) {
     case Phase::CompileTime:
-      return ActionStack();
+      return ActionStack(trace_stream);
     case Phase::RunTime:
-      return ActionStack(heap);
+      return ActionStack(trace_stream, heap);
   }
 }
 
@@ -68,8 +70,8 @@ class Interpreter {
               Nonnull<TraceStream*> trace_stream,
               Nonnull<llvm::raw_ostream*> print_stream)
       : arena_(arena),
-        heap_(arena),
-        todo_(MakeTodo(phase, &heap_)),
+        heap_(trace_stream, arena),
+        todo_(MakeTodo(phase, &heap_, trace_stream)),
         trace_stream_(trace_stream),
         print_stream_(print_stream),
         phase_(phase) {}
@@ -86,6 +88,8 @@ class Interpreter {
  private:
   auto Step() -> ErrorOr<Success>;
 
+  // State transitions for expressions value generation.
+  auto StepValueExp() -> ErrorOr<Success>;
   // State transitions for expressions.
   auto StepExp() -> ErrorOr<Success>;
   // State transitions for lvalues.
@@ -178,8 +182,6 @@ class Interpreter {
   auto CallDestructor(Nonnull<const DestructorDeclaration*> fun,
                       Nonnull<const Value*> receiver) -> ErrorOr<Success>;
 
-  void TraceState();
-
   auto phase() const -> Phase { return phase_; }
 
   Nonnull<Arena*> arena_;
@@ -202,10 +204,6 @@ class Interpreter {
 //
 // State Operations
 //
-
-void Interpreter::TraceState() {
-  *trace_stream_ << "{\nstack: " << todo_ << "\nmemory: " << heap_ << "\n}\n";
-}
 
 auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
                            const std::vector<Nonnull<const Value*>>& args,
@@ -260,8 +258,13 @@ auto Interpreter::EvalPrim(Operator op, Nonnull<const Value*> /*static_type*/,
                                     cast<BoolValue>(*args[1]).value());
     case Operator::Ptr:
       return arena_->New<PointerType>(args[0]);
-    case Operator::Deref:
-      return heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc);
+    case Operator::Deref: {
+      CARBON_ASSIGN_OR_RETURN(
+          const auto* value,
+          heap_.Read(cast<PointerValue>(*args[0]).address(), source_loc));
+      return arena_->New<ReferenceExpressionValue>(
+          value, cast<PointerValue>(*args[0]).address());
+    }
     case Operator::AddressOf:
       return arena_->New<PointerValue>(cast<LocationValue>(*args[0]).address());
     case Operator::As:
@@ -294,38 +297,38 @@ auto Interpreter::CreateStruct(const std::vector<FieldInitializer>& fields,
   return arena_->New<StructValue>(std::move(elements));
 }
 
-static auto InitializePlaceholderValue(
-    const ValueNodeView& value_node, ExpressionResult v,
-    std::optional<Nonnull<RuntimeScope*>> bindings) {
+static auto InitializePlaceholderValue(const ValueNodeView& value_node,
+                                       ExpressionResult v,
+                                       Nonnull<RuntimeScope*> bindings) {
   switch (value_node.expression_category()) {
     case ExpressionCategory::Reference:
       if (v.expression_category() == ExpressionCategory::Value ||
           v.expression_category() == ExpressionCategory::Reference) {
         // Build by copying from value or reference expression.
-        (*bindings)->Initialize(value_node, v.value());
+        bindings->Initialize(value_node, v.value());
       } else {
         // Location initialized by initializing expression, bind node to
         // address.
         CARBON_CHECK(v.address())
             << "Missing location from initializing expression";
-        (*bindings)->Bind(value_node, *v.address());
+        bindings->Bind(value_node, *v.address());
       }
       break;
     case ExpressionCategory::Value:
       if (v.expression_category() == ExpressionCategory::Value) {
-        // TODO: Ensure value expressions of temporaries are registered as
-        // allocation to allow us to reference it without the need for a copy.
-        (*bindings)->Initialize(value_node, v.value());
+        // We assume values are strictly nested for now.
+        bindings->BindValue(value_node, v.value());
       } else if (v.expression_category() == ExpressionCategory::Reference) {
-        // TODO: Prevent mutation, error on mutation, or copy
         // Bind the reference expression value directly.
-        (*bindings)->BindValue(value_node, v.value());
+        CARBON_CHECK(v.address())
+            << "Missing location from reference expression";
+        bindings->BindAndPin(value_node, *v.address());
       } else {
         // Location initialized by initializing expression, bind node to
         // address.
         CARBON_CHECK(v.address())
             << "Missing location from initializing expression";
-        (*bindings)->Bind(value_node, *v.address());
+        bindings->Bind(value_node, *v.address());
       }
       break;
     case ExpressionCategory::Initializing:
@@ -344,12 +347,23 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
                   << ExpressionCategoryToString(v.expression_category())
                   << " expression with value " << *v.value() << "\n";
   }
+  const auto make_expr_result =
+      [](Nonnull<const Value*> v) -> ExpressionResult {
+    if (const auto* expr_v = dyn_cast<ReferenceExpressionValue>(v)) {
+      return ExpressionResult::Reference(expr_v->value(), expr_v->address());
+    }
+    return ExpressionResult::Value(v);
+  };
+  if (v.value()->kind() == Value::Kind::ReferenceExpressionValue) {
+    return PatternMatch(p, make_expr_result(v.value()), source_loc, bindings,
+                        generic_args, trace_stream, arena);
+  }
   switch (p->kind()) {
     case Value::Kind::BindingPlaceholderValue: {
       CARBON_CHECK(bindings.has_value());
       const auto& placeholder = cast<BindingPlaceholderValue>(*p);
       if (placeholder.value_node().has_value()) {
-        InitializePlaceholderValue(*placeholder.value_node(), v, bindings);
+        InitializePlaceholderValue(*placeholder.value_node(), v, *bindings);
       }
       return true;
     }
@@ -377,9 +391,8 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
           CARBON_CHECK(p_tup.elements().size() == v_tup.elements().size());
           for (size_t i = 0; i < p_tup.elements().size(); ++i) {
             if (!PatternMatch(p_tup.elements()[i],
-                              ExpressionResult::Value(v_tup.elements()[i]),
-                              source_loc, bindings, generic_args, trace_stream,
-                              arena)) {
+                              make_expr_result(v_tup.elements()[i]), source_loc,
+                              bindings, generic_args, trace_stream, arena)) {
               return false;
             }
           }  // for
@@ -575,7 +588,7 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
             &cast<IndexExpression>(exp).object()));
 
       } else if (act.pos() == 1) {
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
+        return todo_.Spawn(std::make_unique<ValueExpressionAction>(
             &cast<IndexExpression>(exp).offset()));
       } else {
         //    { v :: [][i] :: C, E, F} :: S, H}
@@ -598,7 +611,7 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
       }
       if (act.pos() == 0) {
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(op.arguments()[0]));
+            std::make_unique<ValueExpressionAction>(op.arguments()[0]));
       } else {
         const auto& res = cast<PointerValue>(*act.results()[0]);
         return todo_.FinishAction(arena_->New<LocationValue>(res.address()));
@@ -632,10 +645,6 @@ auto Interpreter::StepLocation() -> ErrorOr<Success> {
 
 auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     -> ErrorOr<Nonnull<const Value*>> {
-  if (trace_stream_->is_enabled()) {
-    TraceState();
-  }
-
   todo_.BeginRecursiveAction();
   CARBON_RETURN_IF_ERROR(todo_.Spawn(std::move(action)));
   // Note that the only `RecursiveAction` we can encounter here is our own --
@@ -643,9 +652,6 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
   // action is finished and popped off the queue before returning to us.
   while (!isa<RecursiveAction>(todo_.CurrentAction())) {
     CARBON_RETURN_IF_ERROR(Step());
-    if (trace_stream_->is_enabled()) {
-      TraceState();
-    }
   }
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- recursive eval done\n";
@@ -1030,6 +1036,17 @@ auto Interpreter::Convert(Nonnull<const Value*> value,
       // parameterized types for pointers in function call parameters.
       return value;
     }
+    case Value::Kind::ReferenceExpressionValue: {
+      const auto* expr_value = cast<ReferenceExpressionValue>(value);
+      CARBON_ASSIGN_OR_RETURN(
+          Nonnull<const Value*> converted,
+          Convert(expr_value->value(), destination_type, source_loc));
+      if (converted == expr_value->value()) {
+        return expr_value;
+      } else {
+        return converted;
+      }
+    }
   }
 }
 
@@ -1097,7 +1114,9 @@ auto Interpreter::CallFunction(const CallExpression& call,
                << "` that has not been fully type-checked";
       }
 
-      RuntimeScope binding_scope(&heap_);
+      // Enter the binding scope to make any deduced arguments visible before
+      // we resolve the self type and parameter type.
+      auto& binding_scope = todo_.CurrentAction().scope().value();
 
       // Bring the deduced arguments and their witnesses into scope.
       for (const auto& [bind, val] : call.deduced_args()) {
@@ -1119,10 +1138,6 @@ auto Interpreter::CallFunction(const CallExpression& call,
         binding_scope.BindValue(impl_bind->original(), witness);
       }
 
-      // Enter the binding scope to make any deduced arguments visible before
-      // we resolve the self type and parameter type.
-      todo_.CurrentAction().StartScope(std::move(binding_scope));
-
       RuntimeScope function_scope(&heap_);
       BindingMap generic_args;
 
@@ -1141,25 +1156,25 @@ auto Interpreter::CallFunction(const CallExpression& call,
         } else {
           // Mutable self with `[addr self: Self*]`
           CARBON_CHECK(isa<AddrValue>(self_pattern));
-          CARBON_CHECK(PatternMatch(
+          bool success = PatternMatch(
               self_pattern, ExpressionResult::Value(method_val->receiver()),
               call.source_loc(), &function_scope, generic_args, trace_stream_,
-              this->arena_));
+              this->arena_);
+          CARBON_CHECK(success) << "Failed to bind addr self";
         }
       }
 
-      // TODO: Preserve expression category to allow appropriate binding in
-      // `PatternMatch`.
       CARBON_ASSIGN_OR_RETURN(
           Nonnull<const Value*> converted_args,
           Convert(arg, &function.param_pattern().static_type(),
                   call.source_loc()));
 
       // Bind the arguments to the parameters.
-      CARBON_CHECK(PatternMatch(&function.param_pattern().value(),
-                                ExpressionResult::Value(converted_args),
-                                call.source_loc(), &function_scope,
-                                generic_args, trace_stream_, this->arena_));
+      bool success = PatternMatch(&function.param_pattern().value(),
+                                  ExpressionResult::Value(converted_args),
+                                  call.source_loc(), &function_scope,
+                                  generic_args, trace_stream_, this->arena_);
+      CARBON_CHECK(success) << "Failed to bind arguments to parameters";
       return todo_.Spawn(std::make_unique<StatementAction>(*function.body(),
                                                            location_received),
                          std::move(function_scope));
@@ -1299,6 +1314,25 @@ auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
   }
 }
 
+auto Interpreter::StepValueExp() -> ErrorOr<Success> {
+  auto& act = cast<ValueExpressionAction>(todo_.CurrentAction());
+  if (act.pos() == 0) {
+    return todo_.Spawn(std::make_unique<ExpressionAction>(
+        &act.expression(), /*preserve_nested_categories=*/false,
+        act.location_received()));
+  } else {
+    CARBON_CHECK(act.results().size() == 1);
+    if (const auto* expr_value =
+            dyn_cast<ReferenceExpressionValue>(act.results()[0])) {
+      // Unwrap the ExpressionAction to only keep the resulting
+      // `Value*`.
+      return todo_.FinishAction(expr_value->value());
+    } else {
+      return todo_.FinishAction(act.results()[0]);
+    }
+  }
+}
+
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   auto& act = cast<ExpressionAction>(todo_.CurrentAction());
   const Expression& exp = act.expression();
@@ -1311,10 +1345,10 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
         // -> { { e :: [][i] :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
+        return todo_.Spawn(std::make_unique<ValueExpressionAction>(
             &cast<IndexExpression>(exp).object()));
       } else if (act.pos() == 1) {
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
+        return todo_.Spawn(std::make_unique<ValueExpressionAction>(
             &cast<IndexExpression>(exp).offset()));
       } else {
         //    { { v :: [][i] :: C, E, F} :: S, H}
@@ -1340,8 +1374,12 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
         //    H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
         // H}
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
-            cast<TupleLiteral>(exp).fields()[act.pos()]));
+        const auto* field = cast<TupleLiteral>(exp).fields()[act.pos()];
+        if (act.preserve_nested_categories()) {
+          return todo_.Spawn(std::make_unique<ExpressionAction>(field, false));
+        } else {
+          return todo_.Spawn(std::make_unique<ValueExpressionAction>(field));
+        }
       } else {
         return todo_.FinishAction(arena_->New<TupleValue>(act.results()));
       }
@@ -1349,7 +1387,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::StructLiteral: {
       const auto& literal = cast<StructLiteral>(exp);
       if (act.pos() < static_cast<int>(literal.fields().size())) {
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
+        return todo_.Spawn(std::make_unique<ValueExpressionAction>(
             &literal.fields()[act.pos()].expression()));
       } else {
         return todo_.FinishAction(
@@ -1359,7 +1397,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::SimpleMemberAccessExpression: {
       const auto& access = cast<SimpleMemberAccessExpression>(exp);
       if (auto rewrite = access.rewritten_form()) {
-        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(
+            *rewrite, act.preserve_nested_categories(),
+            act.location_received()));
       }
       if (act.pos() == 0) {
         // First, evaluate the first operand.
@@ -1367,8 +1407,8 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           return todo_.Spawn(
               std::make_unique<LocationAction>(&access.object()));
         } else {
-          return todo_.Spawn(
-              std::make_unique<ExpressionAction>(&access.object()));
+          return todo_.Spawn(std::make_unique<ExpressionAction>(
+              &access.object(), /*preserve_nested_categories=*/false));
         }
       } else {
         if (auto constant_value = access.constant_value()) {
@@ -1393,9 +1433,14 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               found_in_interface = cast<InterfaceType>(act.results().back());
             }
             std::optional<const Value*> type_result;
+            const auto* result =
+                act.results()[0]->kind() ==
+                        Value::Kind::ReferenceExpressionValue
+                    ? cast<ReferenceExpressionValue>(act.results()[0])->value()
+                    : act.results()[0];
             if (!isa<InterfaceType, NamedConstraintType, ConstraintType>(
-                    act.results()[0])) {
-              type_result = act.results()[0];
+                    result)) {
+              type_result = result;
             }
             MemberName* member_name = arena_->New<MemberName>(
                 type_result, found_in_interface, member_name_type->member());
@@ -1441,21 +1486,37 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
             ElementPath::Component member(&access.member(), found_in_interface,
                                           witness);
             const Value* aggregate;
+            std::optional<Nonnull<const Value*>> me_value;
+            std::optional<Address> lhs_address;
             if (access.is_type_access()) {
               aggregate = act.results().back();
             } else if (const auto* location =
                            dyn_cast<LocationValue>(act.results()[0])) {
+              lhs_address = location->address();
+              me_value = act.results()[0];
               CARBON_ASSIGN_OR_RETURN(
                   aggregate,
                   this->heap_.Read(location->address(), exp.source_loc()));
+            } else if (const auto* expr_value =
+                           dyn_cast<ReferenceExpressionValue>(
+                               act.results()[0])) {
+              lhs_address = expr_value->address();
+              aggregate = expr_value->value();
+              me_value = aggregate;
             } else {
               aggregate = act.results()[0];
+              me_value = aggregate;
             }
             CARBON_ASSIGN_OR_RETURN(
                 Nonnull<const Value*> member_value,
                 aggregate->GetElement(arena_, ElementPath(member),
-                                      exp.source_loc(), act.results()[0]));
-            return todo_.FinishAction(member_value);
+                                      exp.source_loc(), me_value));
+            if (lhs_address) {
+              return todo_.FinishAction(arena_->New<ReferenceExpressionValue>(
+                  member_value, lhs_address->ElementAddress(member.element())));
+            } else {
+              return todo_.FinishAction(member_value);
+            }
           }
         }
       }
@@ -1470,7 +1531,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               std::make_unique<LocationAction>(&access.object()));
         } else {
           return todo_.Spawn(
-              std::make_unique<ExpressionAction>(&access.object()));
+              std::make_unique<ValueExpressionAction>(&access.object()));
         }
       } else {
         if (auto constant_value = access.constant_value()) {
@@ -1563,7 +1624,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       const auto& access = cast<BaseAccessExpression>(exp);
       if (act.pos() == 0) {
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&access.object()));
+            std::make_unique<ValueExpressionAction>(&access.object()));
       } else {
         ElementPath::Component base_elt(&access.element(), std::nullopt,
                                         std::nullopt);
@@ -1584,6 +1645,10 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       if (const auto* location = dyn_cast<LocationValue>(value)) {
         CARBON_ASSIGN_OR_RETURN(
             value, heap_.Read(location->address(), exp.source_loc()));
+        if (ident.expression_category() == ExpressionCategory::Reference) {
+          return todo_.FinishAction(arena_->New<ReferenceExpressionValue>(
+              value, location->address()));
+        }
       }
       return todo_.FinishAction(value);
     }
@@ -1605,7 +1670,9 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::OperatorExpression: {
       const auto& op = cast<OperatorExpression>(exp);
       if (auto rewrite = op.rewritten_form()) {
-        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(
+            *rewrite, act.preserve_nested_categories(),
+            act.location_received()));
       }
       if (act.pos() != static_cast<int>(op.arguments().size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
@@ -1624,7 +1691,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
           }
           // No short-circuit, fall through to evaluate 2nd operand.
         }
-        return todo_.Spawn(std::make_unique<ExpressionAction>(arg));
+        return todo_.Spawn(std::make_unique<ValueExpressionAction>(arg));
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
@@ -1636,56 +1703,73 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     }
     case ExpressionKind::CallExpression: {
       const auto& call = cast<CallExpression>(exp);
-      unsigned int num_witnesses = call.witnesses().size();
+      CARBON_CHECK(call.argument().kind() == ExpressionKind::TupleLiteral);
+      const auto& args = cast<TupleLiteral>(call.argument());
+      const int num_args = args.fields().size();
+      const int num_witnesses = call.witnesses().size();
+      const int function_call_pos = 1 + num_args + num_witnesses;
       if (act.pos() == 0) {
         //    { {e1(e2) :: C, E, F} :: S, H}
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
+        act.StartScope(RuntimeScope(&heap_));
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&call.function()));
-      } else if (act.pos() == 1) {
-        //    { { v :: [](e) :: C, E, F} :: S, H}
-        // -> { { e :: v([]) :: C, E, F} :: S, H}
+            std::make_unique<ValueExpressionAction>(&call.function()));
+      } else if (act.pos() < 1 + num_args) {
+        const auto* field = args.fields()[act.pos() - 1];
+        std::optional<AllocationId> alloc;
+        if (field->expression_category() == ExpressionCategory::Initializing) {
+          alloc = heap_.AllocateValue(
+              arena_->New<UninitializedValue>(&field->static_type()));
+          act.scope()->BindLifetimeToScope(Address(*alloc));
+        }
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&call.argument()));
-      } else if (num_witnesses > 0 &&
-                 act.pos() < 2 + static_cast<int>(num_witnesses)) {
+            std::make_unique<ExpressionAction>(field, false, alloc));
+      } else if (act.pos() < function_call_pos) {
         auto iter = call.witnesses().begin();
-        std::advance(iter, act.pos() - 2);
+        std::advance(iter, act.pos() - 1 - num_args);
         return todo_.Spawn(std::make_unique<WitnessAction>(
             cast<Witness>(iter->second), call.source_loc()));
-      } else if (act.pos() == 2 + static_cast<int>(num_witnesses)) {
+      } else if (act.pos() == function_call_pos) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
+        // Prepare parameters tuple.
+        std::vector<Nonnull<const Value*>> param_values;
+        for (int i = 1; i <= num_args; ++i) {
+          param_values.push_back(act.results()[i]);
+        }
+        const auto* param_tuple = arena_->New<TupleValue>(param_values);
+        // Prepare witnesses.
         ImplWitnessMap witnesses;
         if (num_witnesses > 0) {
-          int i = 2;
+          int i = 1 + num_args;
           for (const auto& [impl_bind, impl_exp] : call.witnesses()) {
             witnesses[impl_bind] = act.results()[i];
             ++i;
           }
         }
-        return CallFunction(call, act.results()[0], act.results()[1],
+        return CallFunction(call, act.results()[0], param_tuple,
                             std::move(witnesses), act.location_received());
-      } else if (act.pos() == 3 + static_cast<int>(num_witnesses)) {
-        if (act.results().size() < 3 + num_witnesses) {
+      } else if (act.pos() == 1 + function_call_pos) {
+        if (static_cast<int>(act.results().size()) < 1 + function_call_pos) {
           // Control fell through without explicit return.
           return todo_.FinishAction(TupleValue::Empty());
         } else {
-          return todo_.FinishAction(
-              act.results()[2 + static_cast<int>(num_witnesses)]);
+          return todo_.FinishAction(act.results()[function_call_pos]);
         }
       } else {
-        CARBON_FATAL() << "in StepExp with Call pos " << act.pos();
+        CARBON_FATAL() << "in StepValueExp with Call pos " << act.pos();
       }
     }
     case ExpressionKind::IntrinsicExpression: {
       const auto& intrinsic = cast<IntrinsicExpression>(exp);
       if (auto rewrite = intrinsic.rewritten_form()) {
-        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(
+            *rewrite, act.preserve_nested_categories(),
+            act.location_received()));
       }
       if (act.pos() == 0) {
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&intrinsic.args()));
+            std::make_unique<ValueExpressionAction>(&intrinsic.args()));
       }
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       const auto& args = cast<TupleValue>(*act.results()[0]).elements();
@@ -1767,7 +1851,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               return todo_.Spawn(std::make_unique<DestroyAction>(
                   arena_->New<LocationValue>(obj_addr), child_class_value));
             } else {
-              heap_.Deallocate(obj_addr);
+              CARBON_RETURN_IF_ERROR(heap_.Deallocate(obj_addr));
               return todo_.FinishAction(TupleValue::Empty());
             }
           } else {
@@ -1775,7 +1859,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
               return todo_.Spawn(std::make_unique<DestroyAction>(
                   arena_->New<LocationValue>(ptr->address()), pointee));
             } else {
-              heap_.Deallocate(ptr->address());
+              CARBON_RETURN_IF_ERROR(heap_.Deallocate(ptr->address()));
               return todo_.FinishAction(TupleValue::Empty());
             }
           }
@@ -1971,10 +2055,10 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
       const auto& if_expr = cast<IfExpression>(exp);
       if (act.pos() == 0) {
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&if_expr.condition()));
+            std::make_unique<ValueExpressionAction>(&if_expr.condition()));
       } else if (act.pos() == 1) {
         const auto& condition = cast<BoolValue>(*act.results()[0]);
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
+        return todo_.Spawn(std::make_unique<ValueExpressionAction>(
             condition.value() ? &if_expr.then_expression()
                               : &if_expr.else_expression()));
       } else {
@@ -1985,15 +2069,18 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
     case ExpressionKind::WhereExpression: {
       auto rewrite = cast<WhereExpression>(exp).rewritten_form();
       CARBON_CHECK(rewrite) << "where expression should be rewritten";
-      return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+      return todo_.ReplaceWith(std::make_unique<ExpressionAction>(
+          *rewrite, act.preserve_nested_categories(), act.location_received()));
     }
     case ExpressionKind::BuiltinConvertExpression: {
       const auto& convert_expr = cast<BuiltinConvertExpression>(exp);
       if (auto rewrite = convert_expr.rewritten_form()) {
-        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(*rewrite));
+        return todo_.ReplaceWith(std::make_unique<ExpressionAction>(
+            *rewrite, act.preserve_nested_categories(),
+            act.location_received()));
       }
       if (act.pos() == 0) {
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
+        return todo_.Spawn(std::make_unique<ValueExpressionAction>(
             convert_expr.source_expression()));
       } else if (act.pos() == 1) {
         return todo_.Spawn(std::make_unique<TypeInstantiationAction>(
@@ -2096,7 +2183,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
         act.StartScope(RuntimeScope(&heap_));
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&match_stmt.expression()));
+            std::make_unique<ValueExpressionAction>(&match_stmt.expression()));
       } else {
         int clause_num = act.pos() - 1;
         if (clause_num >= static_cast<int>(match_stmt.clauses().size())) {
@@ -2129,8 +2216,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       const auto* loop_var = &cast<BindingPlaceholderValue>(
           cast<For>(stmt).variable_declaration().value());
       if (act.pos() == 0) {
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&cast<For>(stmt).loop_target()));
+        return todo_.Spawn(std::make_unique<ValueExpressionAction>(
+            &cast<For>(stmt).loop_target()));
       }
       if (act.pos() == 1) {
         const auto* source_array =
@@ -2185,8 +2272,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
         //    { { (while (e) s) :: C, E, F} :: S, H}
         // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
         act.Clear();
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&cast<While>(stmt).condition()));
+        return todo_.Spawn(std::make_unique<ValueExpressionAction>(
+            &cast<While>(stmt).condition()));
       } else {
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> condition,
@@ -2256,7 +2343,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
           todo_.MergeScope(std::move(scope));
         }
         return todo_.Spawn(std::make_unique<ExpressionAction>(
-            &definition.init(), init_location));
+            &definition.init(), /*preserve_nested_categories=*/false,
+            init_location));
       } else {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
@@ -2267,13 +2355,26 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             definition.has_init() ? definition.init().expression_category()
                                   : ExpressionCategory::Value;
         if (definition.has_init()) {
-          if (has_initializing_expr && init_location &&
-              heap_.is_initialized(*init_location)) {
-            const auto address = Address(*init_location);
+          Nonnull<const Value*> result = act.results()[0];
+          std::optional<Nonnull<const ReferenceExpressionValue*>> v_expr =
+              (result->kind() == Value::Kind::ReferenceExpressionValue)
+                  ? std::optional{cast<ReferenceExpressionValue>(result)}
+                  : std::nullopt;
+          const auto init_location = act.location_created();
+          v = v_expr ? (*v_expr)->value() : result;
+          if (expr_category == ExpressionCategory::Reference) {
+            CARBON_CHECK(v_expr) << "Expecting ReferenceExpressionValue from "
+                                    "reference expression";
+            v_location = (*v_expr)->address();
+            CARBON_CHECK(v_location)
+                << "Expecting a valid address from reference expression";
+          } else if (has_initializing_expr && init_location &&
+                     heap_.is_initialized(*init_location)) {
+            // Bind even if a conversion is necessary.
+            v_location = Address(*init_location);
             CARBON_ASSIGN_OR_RETURN(
-                v, heap_.Read(address, definition.source_loc()));
-            CARBON_CHECK(v == act.results()[0]);
-            v_location = address;
+                result, heap_.Read(*v_location, definition.source_loc()));
+            CARBON_CHECK(v == result);
           } else {
             // TODO: Prevent copies for Value expressions from Reference
             // expression, once able to prevent mutations.
@@ -2283,8 +2384,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
             }
             expr_category = ExpressionCategory::Value;
             const auto* dest_type = &definition.pattern().static_type();
-            CARBON_ASSIGN_OR_RETURN(
-                v, Convert(act.results()[0], dest_type, stmt.source_loc()));
+            CARBON_ASSIGN_OR_RETURN(v,
+                                    Convert(v, dest_type, stmt.source_loc()));
           }
         } else {
           v = arena_->New<UninitializedValue>(p);
@@ -2319,7 +2420,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         //    { {e :: C, E, F} :: S, H}
         // -> { {e :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
+        return todo_.Spawn(std::make_unique<ValueExpressionAction>(
             &cast<ExpressionStatement>(stmt).expression()));
       } else {
         return todo_.FinishAction();
@@ -2328,7 +2429,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       const auto& assign = cast<Assign>(stmt);
       if (auto rewrite = assign.rewritten_form()) {
         if (act.pos() == 0) {
-          return todo_.Spawn(std::make_unique<ExpressionAction>(*rewrite));
+          return todo_.Spawn(std::make_unique<ValueExpressionAction>(*rewrite));
         } else {
           return todo_.FinishAction();
         }
@@ -2340,7 +2441,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       } else if (act.pos() == 1) {
         //    { { a :: ([] = e) :: C, E, F} :: S, H}
         // -> { { e :: (a = []) :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<ExpressionAction>(&assign.rhs()));
+        return todo_.Spawn(
+            std::make_unique<ValueExpressionAction>(&assign.rhs()));
       } else {
         //    { { v :: (a = []) :: C, E, F} :: S, H}
         // -> { { C, E, F} :: S, H(a := v)}
@@ -2358,7 +2460,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       const auto& inc_dec = cast<IncrementDecrement>(stmt);
       if (act.pos() == 0) {
         return todo_.Spawn(
-            std::make_unique<ExpressionAction>(*inc_dec.rewritten_form()));
+            std::make_unique<ValueExpressionAction>(*inc_dec.rewritten_form()));
       } else {
         return todo_.FinishAction();
       }
@@ -2367,8 +2469,8 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         //    { {(if (e) then_stmt else else_stmt) :: C, E, F} :: S, H}
         // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
-        return todo_.Spawn(
-            std::make_unique<ExpressionAction>(&cast<If>(stmt).condition()));
+        return todo_.Spawn(std::make_unique<ValueExpressionAction>(
+            &cast<If>(stmt).condition()));
       } else if (act.pos() == 1) {
         CARBON_ASSIGN_OR_RETURN(
             Nonnull<const Value*> condition,
@@ -2418,7 +2520,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
       if (act.pos() == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
-        return todo_.Spawn(std::make_unique<ExpressionAction>(
+        return todo_.Spawn(std::make_unique<ValueExpressionAction>(
             &cast<ReturnExpression>(stmt).expression()));
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
@@ -2453,7 +2555,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
       if (var_decl.has_initializer()) {
         if (act.pos() == 0) {
           return todo_.Spawn(
-              std::make_unique<ExpressionAction>(&var_decl.initializer()));
+              std::make_unique<ValueExpressionAction>(&var_decl.initializer()));
         } else {
           CARBON_ASSIGN_OR_RETURN(
               Nonnull<const Value*> v,
@@ -2515,7 +2617,7 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
           const Address object = destroy_act.location()->address();
           const Address var_addr =
               object.ElementAddress(arena_->New<NamedElement>(var));
-          const auto v = heap_.Read(var_addr, SourceLocation("destructor", 1));
+          const auto v = heap_.Read(var_addr, var->source_loc());
           CARBON_CHECK(v.ok())
               << "Failed to read member `" << var->binding().name()
               << "` from class `" << class_decl.name() << "`";
@@ -2583,8 +2685,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
     }
     if (act.pos() % 2 == 0) {
       auto* location = arena_->New<LocationValue>(Address(allocation));
-      auto value =
-          heap_.Read(location->address(), SourceLocation("destructor", 1));
+      auto value = heap_.Read(location->address(), *cleanup.source_loc());
       // Step over uninitialized values.
       if (value.ok()) {
         return todo_.Spawn(std::make_unique<DestroyAction>(location, *value));
@@ -2592,7 +2693,7 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
         return todo_.RunAgain();
       }
     } else {
-      heap_.Deallocate(allocation);
+      CARBON_RETURN_IF_ERROR(heap_.Deallocate(allocation));
       return todo_.RunAgain();
     }
   }
@@ -2602,24 +2703,34 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
 
 // State transition.
 auto Interpreter::Step() -> ErrorOr<Success> {
+  Action& act = todo_.CurrentAction();
+
+  auto error_builder = [&] {
+    if (auto loc = act.source_loc()) {
+      return ProgramError(*loc);
+    }
+    return ErrorBuilder();
+  };
+
   // Check for various overflow conditions before stepping.
   if (todo_.size() > MaxTodoSize) {
-    return ProgramError(SourceLocation("overflow", 1))
+    return error_builder()
            << "stack overflow: too many interpreter actions on stack";
   }
   if (++steps_taken_ > MaxStepsTaken) {
-    return ProgramError(SourceLocation("overflow", 1))
+    return error_builder()
            << "possible infinite loop: too many interpreter steps executed";
   }
   if (arena_->allocated() > MaxArenaAllocated) {
-    return ProgramError(SourceLocation("overflow", 1))
-           << "out of memory: exceeded arena allocation limit";
+    return error_builder() << "out of memory: exceeded arena allocation limit";
   }
 
-  Action& act = todo_.CurrentAction();
   switch (act.kind()) {
     case Action::Kind::LocationAction:
       CARBON_RETURN_IF_ERROR(StepLocation());
+      break;
+    case Action::Kind::ValueExpressionAction:
+      CARBON_RETURN_IF_ERROR(StepValueExp());
       break;
     case Action::Kind::ExpressionAction:
       CARBON_RETURN_IF_ERROR(StepExp());
@@ -2652,15 +2763,9 @@ auto Interpreter::Step() -> ErrorOr<Success> {
 
 auto Interpreter::RunAllSteps(std::unique_ptr<Action> action)
     -> ErrorOr<Success> {
-  if (trace_stream_->is_enabled()) {
-    TraceState();
-  }
   todo_.Start(std::move(action));
   while (!todo_.empty()) {
     CARBON_RETURN_IF_ERROR(Step());
-    if (trace_stream_->is_enabled()) {
-      TraceState();
-    }
   }
   return Success();
 }
@@ -2688,7 +2793,7 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
   CARBON_CHECK(ast.main_call);
   set_file_ctx.update_source_loc(ast.main_call.value()->source_loc());
   CARBON_RETURN_IF_ERROR(interpreter.RunAllSteps(
-      std::make_unique<ExpressionAction>(*ast.main_call)));
+      std::make_unique<ValueExpressionAction>(*ast.main_call)));
 
   return cast<IntValue>(*interpreter.result()).value();
 }
@@ -2700,7 +2805,7 @@ auto InterpExp(Nonnull<const Expression*> e, Nonnull<Arena*> arena,
   Interpreter interpreter(Phase::CompileTime, arena, trace_stream,
                           print_stream);
   CARBON_RETURN_IF_ERROR(
-      interpreter.RunAllSteps(std::make_unique<ExpressionAction>(e)));
+      interpreter.RunAllSteps(std::make_unique<ValueExpressionAction>(e)));
   return interpreter.result();
 }
 

@@ -19,7 +19,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
@@ -91,6 +90,7 @@ struct NestedValueVisitor {
   auto Visit(ValueNodeView) -> bool { return true; }
   auto Visit(int) -> bool { return true; }
   auto Visit(Address) -> bool { return true; }
+  auto Visit(ExpressionCategory) -> bool { return true; }
   auto Visit(const std::string&) -> bool { return true; }
   auto Visit(Nonnull<const NominalClassValue**>) -> bool {
     // This is the pointer to the most-derived value within a class value,
@@ -127,6 +127,7 @@ NominalClassValue::NominalClassValue(
       inits_(inits),
       base_(base),
       class_value_ptr_(class_value_ptr) {
+  CARBON_CHECK(!base || (*base)->class_value_ptr() == class_value_ptr);
   // Update ancestors's class value to point to latest child.
   *class_value_ptr_ = this;
 }
@@ -172,7 +173,7 @@ static auto GetPositionalElement(Nonnull<const TupleValue*> tuple,
 static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                             const ElementPath::Component& field,
                             SourceLocation source_loc,
-                            Nonnull<const Value*> me_value)
+                            std::optional<Nonnull<const Value*>> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
   CARBON_CHECK(field.element()->kind() == ElementKind::NamedElement)
       << "Invalid element, expecting NamedElement";
@@ -198,7 +199,7 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
           mem_decl.has_value()) {
         const auto& fun_decl = cast<FunctionDeclaration>(**mem_decl);
         if (fun_decl.is_method()) {
-          return arena->New<BoundMethodValue>(&fun_decl, me_value,
+          return arena->New<BoundMethodValue>(&fun_decl, *me_value,
                                               &impl_witness->bindings());
         } else {
           // Class function.
@@ -242,7 +243,7 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
           // Found a method. Turn it into a bound method.
           const auto& m = cast<FunctionValue>(**func);
           if (m.declaration().virt_override() == VirtualOverride::None) {
-            return arena->New<BoundMethodValue>(&m.declaration(), me_value,
+            return arena->New<BoundMethodValue>(&m.declaration(), *me_value,
                                                 &class_type.bindings());
           }
           // Method is virtual, get child-most class value and perform vtable
@@ -305,7 +306,7 @@ static auto GetNamedElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 static auto GetElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
                        const ElementPath::Component& path_comp,
                        SourceLocation source_loc,
-                       Nonnull<const Value*> me_value)
+                       std::optional<Nonnull<const Value*>> me_value)
     -> ErrorOr<Nonnull<const Value*>> {
   switch (path_comp.element()->kind()) {
     case ElementKind::NamedElement:
@@ -334,7 +335,7 @@ static auto GetElement(Nonnull<Arena*> arena, Nonnull<const Value*> v,
 
 auto Value::GetElement(Nonnull<Arena*> arena, const ElementPath& path,
                        SourceLocation source_loc,
-                       Nonnull<const Value*> me_value) const
+                       std::optional<Nonnull<const Value*>> me_value) const
     -> ErrorOr<Nonnull<const Value*>> {
   Nonnull<const Value*> value(this);
   for (const ElementPath::Component& field : path.components_) {
@@ -374,15 +375,27 @@ static auto SetFieldImpl(
       if (auto inits = SetFieldImpl(arena, &object.inits(), path_begin,
                                     path_end, field_value, source_loc);
           inits.ok()) {
-        return arena->New<NominalClassValue>(
-            &object.type(), *inits, object.base(), object.class_value_ptr());
+        auto* class_value_ptr = arena->New<const NominalClassValue*>();
+        std::vector<const NominalClassValue*> base_path;
+        for (auto base = object.base(); base; base = (*base)->base()) {
+          base_path.push_back(*base);
+        }
+        std::optional<Nonnull<const NominalClassValue*>> base;
+        for (auto* base_path_elem : llvm::reverse(base_path)) {
+          base = arena->New<NominalClassValue>(&base_path_elem->type(),
+                                               &base_path_elem->inits(), base,
+                                               class_value_ptr);
+        }
+        return arena->New<NominalClassValue>(&object.type(), *inits, base,
+                                             class_value_ptr);
       } else if (object.base().has_value()) {
         auto new_base = SetFieldImpl(arena, object.base().value(), path_begin,
                                      path_end, field_value, source_loc);
         if (new_base.ok()) {
+          auto as_nominal_class_value = cast<NominalClassValue>(*new_base);
           return arena->New<NominalClassValue>(
-              &object.type(), &object.inits(),
-              cast<NominalClassValue>(*new_base), object.class_value_ptr());
+              &object.type(), &object.inits(), as_nominal_class_value,
+              as_nominal_class_value->class_value_ptr());
         }
       }
       // Failed to match, show full object content
@@ -566,6 +579,10 @@ void Value::Print(llvm::raw_ostream& out) const {
       break;
     case Value::Kind::LocationValue:
       out << "lval<" << cast<LocationValue>(*this).address() << ">";
+      break;
+    case Value::Kind::ReferenceExpressionValue:
+      out << "ref_expr<" << cast<ReferenceExpressionValue>(*this).address()
+          << ">";
       break;
     case Value::Kind::BoolType:
       out << "bool";
@@ -997,6 +1014,7 @@ auto TypeEqual(Nonnull<const Value*> t1, Nonnull<const Value*> t2,
     case Value::Kind::StringValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ReferenceExpressionValue:
     case Value::Kind::BindingPlaceholderValue:
     case Value::Kind::AddrValue:
     case Value::Kind::UninitializedValue:
@@ -1148,6 +1166,7 @@ auto ValueStructurallyEqual(
     case Value::Kind::AlternativeConstructorValue:
     case Value::Kind::PointerValue:
     case Value::Kind::LocationValue:
+    case Value::Kind::ReferenceExpressionValue:
     case Value::Kind::UninitializedValue:
     case Value::Kind::MemberName:
       // TODO: support pointer comparisons once we have a clearer distinction

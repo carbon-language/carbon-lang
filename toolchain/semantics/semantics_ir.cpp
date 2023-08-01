@@ -10,6 +10,7 @@
 #include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
+#include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
 
@@ -154,6 +155,24 @@ static auto PrintList(llvm::raw_ostream& out, llvm::StringLiteral name,
   out << "]\n";
 }
 
+template <typename T>
+static auto PrintBlock(llvm::raw_ostream& out, llvm::StringLiteral block_name,
+                       const llvm::SmallVector<T>& blocks) {
+  out << block_name << ": [\n";
+  for (const auto& block : blocks) {
+    out.indent(Indent);
+    out << "[\n";
+
+    for (const auto& node : block) {
+      out.indent(2 * Indent);
+      out << node << ",\n";
+    }
+    out.indent(Indent);
+    out << "],\n";
+  }
+  out << "]\n";
+}
+
 auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
     -> void {
   out << "cross_reference_irs_size: " << cross_reference_irs_.size() << "\n";
@@ -164,6 +183,8 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
   PrintList(out, "strings", strings_);
   PrintList(out, "types", types_);
 
+  PrintBlock(out, "type_blocks", type_blocks_);
+
   out << "nodes: [\n";
   for (int i = include_builtins ? 0 : SemanticsBuiltinKind::ValidCount;
        i < static_cast<int>(nodes_.size()); ++i) {
@@ -173,19 +194,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
   }
   out << "]\n";
 
-  out << "node_blocks: [\n";
-  for (const auto& node_block : node_blocks_) {
-    out.indent(Indent);
-    out << "[\n";
-
-    for (const auto& node : node_block) {
-      out.indent(2 * Indent);
-      out << node << ",\n";
-    }
-    out.indent(Indent);
-    out << "],\n";
-  }
-  out << "]\n";
+  PrintBlock(out, "node_blocks", node_blocks_);
 }
 
 auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
@@ -241,6 +250,29 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
         steps.push_back({.node_id = GetTypeAllowBuiltinTypes(node.type_id())});
         break;
       }
+      case SemanticsNodeKind::TupleType: {
+        auto refs = GetTypeBlock(node.GetAsTupleType());
+        if (refs.empty()) {
+          out << "() as type";
+          break;
+        } else if (step.index == 0) {
+          out << "(";
+        } else if (step.index < static_cast<int>(refs.size())) {
+          out << ", ";
+        } else {
+          // A tuple of one element has a comma to disambiguate from an
+          // expression.
+          if (step.index == 1) {
+            out << ",";
+          }
+          out << ") as type";
+          break;
+        }
+        steps.push_back({.node_id = step.node_id, .index = step.index + 1});
+        steps.push_back(
+            {.node_id = GetTypeAllowBuiltinTypes(refs[step.index])});
+        break;
+      }
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BindName:
@@ -262,6 +294,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::StructMemberAccess:
       case SemanticsNodeKind::StructValue:
       case SemanticsNodeKind::StubReference:
+      case SemanticsNodeKind::TupleValue:
       case SemanticsNodeKind::UnaryOperatorNot:
       case SemanticsNodeKind::VarStorage:
         // We don't need to handle stringification for nodes that don't show up
