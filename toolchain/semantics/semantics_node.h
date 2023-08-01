@@ -60,15 +60,6 @@ struct SemanticsFunctionId : public IndexBase {
   }
 };
 
-// The ID of a function.
-struct SemanticsDataStructureId : public IndexBase {
-  using IndexBase::IndexBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "ds";
-    IndexBase::Print(out);
-  }
-};
-
 // The ID of a cross-referenced IR.
 struct SemanticsCrossReferenceIRId : public IndexBase {
   using IndexBase::IndexBase;
