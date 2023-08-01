@@ -23,7 +23,7 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
   }
 
   auto base_type = context.semantics_ir().GetNode(
-      context.semantics_ir().GetType(base.type_id()));
+      context.semantics_ir().GetTypeAllowBuiltinTypes(base.type_id()));
 
   switch (base_type.kind()) {
     case SemanticsNodeKind::StructType: {
@@ -50,12 +50,14 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
       break;
     }
     default: {
-      CARBON_DIAGNOSTIC(QualifiedExpressionUnsupported, Error,
-                        "Type `{0}` does not support qualified expressions.",
-                        std::string);
-      context.emitter().Emit(
-          parse_node, QualifiedExpressionUnsupported,
-          context.semantics_ir().StringifyType(base.type_id()));
+      if (base.type_id() != SemanticsTypeId::Error) {
+        CARBON_DIAGNOSTIC(QualifiedExpressionUnsupported, Error,
+                          "Type `{0}` does not support qualified expressions.",
+                          std::string);
+        context.emitter().Emit(
+            parse_node, QualifiedExpressionUnsupported,
+            context.semantics_ir().StringifyType(base.type_id()));
+      }
       break;
     }
   }
