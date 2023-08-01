@@ -11,10 +11,10 @@
 // RUN: %{explorer} --parser_debug --trace_file=- -trace_phase=all -trace_file_context=prelude | %{FileCheck-allow-unmatched} --check-prefixes=NO-MAIN,PRELUDE
 // RUN: %{explorer} --parser_debug --trace_file=- -trace_phase=all -trace_file_context=all | %{FileCheck-allow-unmatched} --check-prefixes=MAIN,PRELUDE
 // RUN: %{explorer} --parser_debug --trace_file=- -trace_phase=all -trace_file_context=main,prelude | %{FileCheck-allow-unmatched} --check-prefixes=MAIN,PRELUDE
-// NO-PRELUDE-NOT:STDOUT: ** declaring interface As
-//        PRELUDE:STDOUT: ** declaring interface As
-// NO-MAIN-NOT:STDOUT: ** declaring function Main
-//        MAIN:STDOUT: ** declaring function Main
+// NO-PRELUDE-NOT:STDOUT: *** declaring `interface As` ({{.*}}/explorer/data/prelude.carbon:14)
+//        PRELUDE:STDOUT: *** declaring `interface As` ({{.*}}/explorer/data/prelude.carbon:14)
+// NO-MAIN-NOT:STDOUT: *** declaring function `Main` ({{.*}}/explorer/lit_testdata/trace_file_filters.carbon:31)
+//        MAIN:STDOUT: *** declaring function `Main` ({{.*}}/explorer/lit_testdata/trace_file_filters.carbon:31)
 // NO-PRELUDE-NOT:STDOUT: interface As {
 //        PRELUDE:STDOUT: interface As {
 // NO-MAIN-NOT:STDOUT: fn Main ()-> i32 {
