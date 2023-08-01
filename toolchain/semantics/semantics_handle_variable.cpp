@@ -4,7 +4,6 @@
 
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
-#include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
 

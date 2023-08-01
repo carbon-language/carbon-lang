@@ -145,6 +145,12 @@ auto LoweringHandleFunctionDeclaration(LoweringFunctionContext& /*context*/,
       << node;
 }
 
+auto LoweringHandleIndex(LoweringFunctionContext& /*context*/,
+                         SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
 auto LoweringHandleIntegerLiteral(LoweringFunctionContext& context,
                                   SemanticsNodeId node_id, SemanticsNode node)
     -> void {
@@ -154,12 +160,6 @@ auto LoweringHandleIntegerLiteral(LoweringFunctionContext& context,
   llvm::Value* v =
       llvm::ConstantInt::get(context.builder().getInt32Ty(), i.getSExtValue());
   context.SetLocal(node_id, v);
-}
-
-auto LoweringHandleIndex(LoweringFunctionContext& /*context*/,
-                         SemanticsNodeId /*node_id*/, SemanticsNode node)
-    -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
 auto LoweringHandleNamespace(LoweringFunctionContext& /*context*/,

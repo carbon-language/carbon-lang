@@ -37,7 +37,10 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_name_not_found.carbon:[[@LINE+3]]:14: Name a not found
+// CHECK:STDERR: fail_name_not_found.carbon:[[@LINE+6]]:14: Name a not found
 // CHECK:STDERR: var b: i32 = a[0];
 // CHECK:STDERR:              ^
+// CHECK:STDERR: fail_name_not_found.carbon:[[@LINE+3]]:17: Invalid index expression.
+// CHECK:STDERR: var b: i32 = a[0];
+// CHECK:STDERR:                 ^
 var b: i32 = a[0];

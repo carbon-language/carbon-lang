@@ -7,15 +7,16 @@
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT:   12,
-// CHECK:STDOUT:   6,
 // CHECK:STDOUT:   2,
+// CHECK:STDOUT:   3,
+// CHECK:STDOUT:   0,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   a,
 // CHECK:STDOUT:   b,
+// CHECK:STDOUT:   c,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   node+2,
@@ -49,7 +50,10 @@
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+13, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: node+15, type: type1},
+// CHECK:STDOUT:   {kind: VarStorage, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+17, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+17, arg1: nodeError, type: typeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -72,6 +76,9 @@
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:     node+18,
+// CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
@@ -83,8 +90,9 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_out_of_bound_access.carbon:[[@LINE+3]]:17: Index: 2 is out of bound 2.
-// CHECK:STDERR: var b: i32 = a[2];
+var a: (i32, i32) = (2, 3);
+var b: i32 = 0;
+// CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+3]]:17: Type cannot be determined in compile time.
+// CHECK:STDERR: var c: i32 = a[b];
 // CHECK:STDERR:                 ^
-var b: i32 = a[2];
+var c: i32 = a[b];
