@@ -254,17 +254,13 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
     SemanticsNodeId node_id;
     // The index into node_id to print. Not used by all types.
     int index = 0;
-    // Whether this step is printed in a context that will be coerced to `type`.
-    bool type_context = true;
 
     auto Next() const -> Step {
-      return {
-          .node_id = node_id, .index = index + 1, .type_context = type_context};
+      return {.node_id = node_id, .index = index + 1};
     }
   };
   auto outer_node_id = GetTypeAllowBuiltinTypes(type_id);
-  llvm::SmallVector<Step> steps = {
-      {.node_id = outer_node_id, .type_context = false}};
+  llvm::SmallVector<Step> steps = {{.node_id = outer_node_id}};
 
   while (!steps.empty()) {
     auto step = steps.pop_back_val();
@@ -280,12 +276,6 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       out << SemanticsBuiltinKind::FromInt(step.node_id.index).label();
       continue;
     }
-
-    auto print_as_type_if_needed = [&] {
-      if (!step.type_context) {
-        out << " as type";
-      }
-    };
 
     auto node = GetNode(step.node_id);
     switch (node.kind()) {
@@ -320,7 +310,6 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
         auto refs = GetNodeBlock(node.GetAsStructType());
         if (refs.empty()) {
           out << "{}";
-          print_as_type_if_needed();
           break;
         } else if (step.index == 0) {
           out << "{";
@@ -344,7 +333,6 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
         auto refs = GetTypeBlock(node.GetAsTupleType());
         if (refs.empty()) {
           out << "()";
-          print_as_type_if_needed();
           break;
         } else if (step.index == 0) {
           out << "(";
@@ -357,7 +345,6 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
             out << ",";
           }
           out << ")";
-          print_as_type_if_needed();
           break;
         }
         steps.push_back(step.Next());
@@ -397,6 +384,15 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::Invalid:
         llvm_unreachable("SemanticsNodeKind::Invalid is never used.");
     }
+  }
+
+  // For `{}` or any tuple type, we've printed a non-type expression, so add a
+  // conversion to type `type`.
+  auto outer_node = GetNode(outer_node_id);
+  if (outer_node.kind() == SemanticsNodeKind::TupleType ||
+      (outer_node.kind() == SemanticsNodeKind::StructType &&
+       GetNodeBlock(outer_node.GetAsStructType()).empty())) {
+    out << " as type";
   }
 
   return str;
