@@ -135,9 +135,11 @@ class FileTestBase : public testing::Test {
   const std::filesystem::path path_;
 };
 
+// Aggregate a name and factory function for tests using this framework.
 struct FileTestFactory {
   // The test fixture name.
   const char* name;
+
   // A factory function for tests.
   std::function<FileTestBase*(const std::filesystem::path& path)> factory_fn;
 };
@@ -147,9 +149,12 @@ struct FileTestFactory {
 // We can't use INSTANTIATE_TEST_CASE_P because of ordering issues between
 // container initialization and test instantiation by InitGoogleTest, but this
 // also allows us more flexibility in execution.
+//
+// The `CARBON_FILE_TEST_FACTOR` macro below provides a standard, convenient way
+// to implement this function.
 extern auto GetFileTestFactory() -> FileTestFactory;
 
-// Provides a standard way to implement GetFileTestFactory.
+// Provides a standard GetFileTestFactory implementation.
 #define CARBON_FILE_TEST_FACTORY(Name)                                         \
   auto GetFileTestFactory()->FileTestFactory {                                 \
     return {(#Name),                                                           \
