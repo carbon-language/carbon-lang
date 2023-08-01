@@ -706,6 +706,11 @@ auto Interpreter::EvalAssociatedConstant(
 auto Interpreter::InstantiateType(Nonnull<const Value*> type,
                                   SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "*** instantiating type `" << *type << "` (" << source_loc
+                   << ")\n";
+  }
+
   switch (type->kind()) {
     case Value::Kind::VariableType: {
       CARBON_ASSIGN_OR_RETURN(
