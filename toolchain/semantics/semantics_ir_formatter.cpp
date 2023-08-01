@@ -225,7 +225,8 @@ class SemanticsIRFormatter {
       -> void {
     out_ << "  ";
     FormatInstructionLHS(node_id, node);
-    FormatInstructionRHS<Kind>(node, name, args);
+    out_ << name;
+    FormatInstructionRHS<Kind>(node, args);
     out_ << "\n";
   }
 
@@ -243,9 +244,8 @@ class SemanticsIRFormatter {
   }
 
   template <typename Kind>
-  auto FormatInstructionRHS(SemanticsNode node, llvm::StringRef name,
-                            decltype(Kind::Get(node)) args) -> void {
-    out_ << name;
+  auto FormatInstructionRHS(SemanticsNode node, decltype(Kind::Get(node)) args)
+      -> void {
     if (node.kind().type_field_kind() == SemanticsTypeFieldKind::Argument) {
       FormatArgs(std::pair(node.type_id(), args));
     } else {
@@ -261,10 +261,9 @@ class SemanticsIRFormatter {
 
   template <>
   auto FormatInstructionRHS<SemanticsNode::BlockArg>(SemanticsNode,
-                                                     llvm::StringRef name,
                                                      SemanticsNodeBlockId self)
       -> void {
-    out_ << name << " ";
+    out_ << " ";
     FormatLabel(self);
   }
 
@@ -313,19 +312,19 @@ class SemanticsIRFormatter {
 
   template <>
   auto FormatInstructionRHS<SemanticsNode::Call>(
-      SemanticsNode, llvm::StringRef name,
-      std::pair<SemanticsNodeBlockId, SemanticsFunctionId> args) -> void {
-    out_ << name << " ";
+      SemanticsNode, std::pair<SemanticsNodeBlockId, SemanticsFunctionId> args)
+      -> void {
+    out_ << " ";
     FormatArg(args.second);
     FormatArg(args.first);
   }
 
   template <>
   auto FormatInstructionRHS<SemanticsNode::CrossReference>(
-      SemanticsNode, llvm::StringRef,
+      SemanticsNode,
       std::pair<SemanticsCrossReferenceIRId, SemanticsNodeId> args) -> void {
     // TODO: Figure out a way to make this meaningful.
-    out_ << "  xref " << args.first << " " << args.second;
+    out_ << " " << args.first << "." << args.second;
   }
 
   template <>
@@ -335,8 +334,8 @@ class SemanticsIRFormatter {
 
   template <>
   auto FormatInstructionRHS<SemanticsNode::StructType>(
-      SemanticsNode, llvm::StringRef name, SemanticsNodeBlockId types_id) -> void {
-    out_ << name << " {";
+      SemanticsNode, SemanticsNodeBlockId types_id) -> void {
+    out_ << " {";
     llvm::ListSeparator sep;
     for (auto field_id : semantics_ir_.GetNodeBlock(types_id)) {
       out_ << sep << ".";
