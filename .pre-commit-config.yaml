@@ -45,11 +45,11 @@ repos:
 
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: bf7a16254ec96b084a6caf3d435ec18f0f245cc7 # frozen: 23.3.0
+    rev: 193ee766ca496871f93621d6b58d57a6564ff81b # frozen: 23.7.0
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: 6fd1ced85fc139abd7f5ab4f3d78dab37592cd5e # frozen: v3.0.0-alpha.9-for-vscode
+    rev: efd8b1e16f05132acf6edcf2827eeab21e0e00db # frozen: v3.0.0
     hooks:
       - id: prettier
   - repo: local
@@ -71,14 +71,14 @@ repos:
         types_or: [c++, proto]
         language: python
         args: ['-i']
-        additional_dependencies: ['clang-format==16.0.0']
+        additional_dependencies: ['clang-format==16.0.6']
       - id: explorer-format-grammar
         name: Format the explorer grammar file
         entry: explorer/syntax/format_grammar.py
         language: python
         files: ^explorer/syntax/(lexer.lpp|parser.ypp)$
         pass_filenames: false
-        additional_dependencies: ['clang-format==16.0.0']
+        additional_dependencies: ['clang-format==16.0.6']
 
   - repo: local
     hooks:
@@ -122,7 +122,7 @@ repos:
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'bd424e49d4f0181d4c8b8909a8cd5ce9eb058044' # frozen: v1.3.0
+    rev: '6e63c9e9c65e1df04465cdcda0f2490e89291f58' # frozen: v1.4.1
     hooks:
       - id: mypy
         # Use setup.cfg to match the command line.
