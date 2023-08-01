@@ -475,7 +475,7 @@ auto SemanticsContext::CanonicalizeTypeImpl(SemanticsNodeKind kind,
   // could have been invalidated by a misbehaving `make_node`.
   void* check_insert_pos;
   auto* check_node =
-      canonical_type_nodes_.FindNodeOrInsertPos(canonical_id, insert_pos);
+      canonical_type_nodes_.FindNodeOrInsertPos(canonical_id, check_insert_pos);
   CARBON_CHECK(!check_node)
       << "Type was created recursively during canonicalization";
   CARBON_CHECK(insert_pos == check_insert_pos)
