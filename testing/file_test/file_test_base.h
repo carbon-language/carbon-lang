@@ -147,6 +147,9 @@ struct FileTestFactory {
 // We can't use INSTANTIATE_TEST_CASE_P because of ordering issues between
 // container initialization and test instantiation by InitGoogleTest, but this
 // also allows us more flexibility in execution.
+//
+// We provide a `CARBON_FILE_TEST_FACTOR` macro below that provides a common,
+// convenient way to implement this function.
 extern auto GetFileTestFactory() -> FileTestFactory;
 
 // Provides a standard way to implement GetFileTestFactory.
