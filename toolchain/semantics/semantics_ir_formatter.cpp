@@ -11,6 +11,10 @@ namespace {
 class NodeNamer {
  public:
   auto GetNameFor(SemanticsNodeId node_id) -> std::string {
+    if (!node_id.is_valid()) {
+      return "invalid";
+    }
+
     // Check for a builtin.
     if (node_id.index < SemanticsBuiltinKind::ValidCount) {
       return SemanticsBuiltinKind::FromInt(node_id.index).label().str();
@@ -25,6 +29,10 @@ class NodeNamer {
   }
 
   auto GetLabelFor(SemanticsNodeBlockId block_id) -> std::string {
+    if (!block_id.is_valid()) {
+      return "!invalid";
+    }
+
     auto it = labels.find(block_id);
     if (it == labels.end()) {
       // This should not happen in valid IR.
@@ -34,6 +42,10 @@ class NodeNamer {
   }
 
   auto AddBlockLabel(SemanticsNodeBlockId block_id) -> void {
+    if (!block_id.is_valid()) {
+      return;
+    }
+
     if (label_count == 0) {
       labels[block_id] = "!entry";
     } else {
@@ -44,6 +56,10 @@ class NodeNamer {
 
   auto CollectNamesInBlock(const SemanticsIR& semantics_ir,
                            SemanticsNodeBlockId block_id) -> void {
+    if (!block_id.is_valid()) {
+      return;
+    }
+
     // Use bound names where available.
     for (auto node_id : semantics_ir.GetNodeBlock(block_id)) {
       auto node = semantics_ir.GetNode(node_id);
@@ -110,10 +126,10 @@ class SemanticsIRFormatter {
     // TODO: Handle the case where there are multiple top-level node blocks.
     // For example, there may be branching in the initializer of a global or a
     // type expression.
-    {
+    if (auto block_id = semantics_ir_.top_node_block_id(); block_id.is_valid()) {
       NodeNameScope package_scope(*this);
-      package_scope.CollectNamesInBlock(semantics_ir_.top_node_block_id());
-      FormatCodeBlock(semantics_ir_.top_node_block_id());
+      package_scope.CollectNamesInBlock(block_id);
+      FormatCodeBlock(block_id);
     }
     out_ << "}\n";
 
@@ -174,6 +190,10 @@ class SemanticsIRFormatter {
   }
 
   auto FormatCodeBlock(SemanticsNodeBlockId block_id) -> void {
+    if (!block_id.is_valid()) {
+      return;
+    }
+
     for (const SemanticsNodeId node_id : semantics_ir_.GetNodeBlock(block_id)) {
       FormatInstruction(node_id);
     }
@@ -181,7 +201,7 @@ class SemanticsIRFormatter {
 
   auto FormatInstruction(SemanticsNodeId node_id) -> void {
     if (!node_id.is_valid()) {
-      out_ << "  InvalidInstruction\n";
+      out_ << "  invalid\n";
       return;
     }
 
