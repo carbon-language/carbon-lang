@@ -185,7 +185,7 @@ class SemanticsIRFormatter {
 
       out_ << "}\n";
     } else {
-      out_ << ";";
+      out_ << ";\n";
     }
   }
 
