@@ -25,7 +25,7 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
           SemanticsNode::BinaryOperatorAdd::Make(
               parse_node, context.semantics_ir().GetNode(lhs_id).type_id(),
               lhs_id, rhs_id));
-      break;
+      return true;
 
     case TokenKind::And:
     case TokenKind::Or: {
@@ -49,14 +49,12 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
           SemanticsNode::BlockArg::Make(
               parse_node, context.semantics_ir().GetNode(rhs_id).type_id(),
               resume_block_id));
-      break;
+      return true;
     }
 
     default:
       return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
   }
-
-  return true;
 }
 
 auto SemanticsHandlePostfixOperator(SemanticsContext& context,
@@ -71,17 +69,13 @@ auto SemanticsHandlePostfixOperator(SemanticsContext& context,
       context.AddNodeAndPush(
           parse_node,
           SemanticsNode::PointerType::Make(
-              parse_node,
-              context.CanonicalizeType(SemanticsNodeId::BuiltinTypeType),
-              inner_type_id));
-      break;
+              parse_node, SemanticsTypeId::TypeType, inner_type_id));
+      return true;
     }
 
     default:
-      return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
+      CARBON_FATAL() << "Unexpected postfix operator " << token_kind;
   }
-
-  return true;
 }
 
 auto SemanticsHandlePrefixOperator(SemanticsContext& context,
@@ -98,24 +92,30 @@ auto SemanticsHandlePrefixOperator(SemanticsContext& context,
           SemanticsNode::UnaryOperatorNot::Make(
               parse_node, context.semantics_ir().GetNode(value_id).type_id(),
               value_id));
-      break;
+      return true;
 
     case TokenKind::Const: {
+      // `const (const T)` is probably not what the developer intended.
+      // TODO: Detect `const (const T)*` and suggest moving the `*` inside the
+      // parentheses.
+      if (context.semantics_ir().GetNode(value_id).kind() ==
+          SemanticsNodeKind::ConstType) {
+        CARBON_DIAGNOSTIC(RepeatedConst, Warning,
+                          "`const` applied repeatedly to the same type has no "
+                          "additional effect.");
+        context.emitter().Emit(parse_node, RepeatedConst);
+      }
       auto inner_type_id = context.ExpressionAsType(parse_node, value_id);
       context.AddNodeAndPush(
           parse_node,
-          SemanticsNode::ConstType::Make(
-              parse_node,
-              context.CanonicalizeType(SemanticsNodeId::BuiltinTypeType),
-              inner_type_id));
-      break;
+          SemanticsNode::ConstType::Make(parse_node, SemanticsTypeId::TypeType,
+                                         inner_type_id));
+      return true;
     }
 
     default:
       return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
   }
-
-  return true;
 }
 
 auto SemanticsHandleShortCircuitOperand(SemanticsContext& context,
@@ -146,7 +146,7 @@ auto SemanticsHandleShortCircuitOperand(SemanticsContext& context,
       break;
 
     default:
-      CARBON_FATAL() << "Unexpected short-circuiting operator " << parse_node;
+      CARBON_FATAL() << "Unexpected short-circuiting operator " << token_kind;
   }
 
   // Create a block for the right-hand side and for the continuation.

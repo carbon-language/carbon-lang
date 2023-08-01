@@ -274,7 +274,8 @@ class SemanticsContext {
   //
   // `make_node()` is called to obtain a `SemanticsNodeId` that describes the
   // type. It is only called if the type does not already exist, so can be used
-  // to lazily build the `SemanticsNode`.
+  // to lazily build the `SemanticsNode`. `make_node()` is not permitted to
+  // directly or indirectly canonicalize any types.
   template <typename ProfileType, typename MakeNode>
   auto CanonicalizeTypeImpl(SemanticsNodeKind kind, ProfileType profile_type,
                             MakeNode make_node) -> SemanticsTypeId;

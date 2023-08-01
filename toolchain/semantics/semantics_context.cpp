@@ -469,6 +469,19 @@ auto SemanticsContext::CanonicalizeTypeImpl(SemanticsNodeKind kind,
   CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
   type_node_storage_.push_back(
       std::make_unique<TypeNode>(canonical_id, type_id));
+
+#ifndef NDEBUG
+  // In a debug build, check that our insertion position is still valid. It
+  // could have been invalidated by a misbehaving `make_node`.
+  void* check_insert_pos;
+  auto* check_node =
+      canonical_type_nodes_.FindNodeOrInsertPos(canonical_id, insert_pos);
+  CARBON_CHECK(!check_node)
+      << "Type was created recursively during canonicalization";
+  CARBON_CHECK(insert_pos == check_insert_pos)
+      << "Insertion position changed during canonicalization";
+#endif
+
   canonical_type_nodes_.InsertNode(type_node_storage_.back().get(), insert_pos);
   return type_id;
 }
@@ -497,7 +510,6 @@ auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
       CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
       return type_id;
     }
-
     case SemanticsNodeKind::ConstType: {
       return CanonicalizeTypeImpl(
           node.kind(), node_id, [&](llvm::FoldingSetNodeID& canonical_id) {
@@ -505,20 +517,17 @@ auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
                 GetUnqualifiedType(node.GetAsConstType()).index);
           });
     }
-
     case SemanticsNodeKind::PointerType: {
       return CanonicalizeTypeImpl(
           node.kind(), node_id, [&](llvm::FoldingSetNodeID& canonical_id) {
             canonical_id.AddInteger(node.GetAsPointerType().index);
           });
     }
-
     case SemanticsNodeKind::StructType:
     case SemanticsNodeKind::TupleType: {
       CARBON_FATAL() << "Type should have been canonizalized when created: "
                      << node;
     }
-
     default: {
       CARBON_FATAL() << "Unexpected non-canonical type node " << node;
     }
