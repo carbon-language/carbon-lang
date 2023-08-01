@@ -138,6 +138,7 @@ class FileTestBase : public testing::Test {
 struct FileTestFactory {
   // The test fixture name.
   const char* name;
+
   // A factory function for tests.
   std::function<FileTestBase*(const std::filesystem::path& path)> factory_fn;
 };
