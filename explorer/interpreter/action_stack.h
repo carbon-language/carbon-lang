@@ -112,7 +112,7 @@ class ActionStack {
   auto Pop() -> std::unique_ptr<Action> {
     auto popped_action = todo_.Pop();
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "(-) stack-pop: " << *popped_action << " ("
+      *trace_stream_ << "(-) stack-pop:  " << *popped_action << " ("
                      << popped_action->source_loc() << ")\n";
     }
     return popped_action;
