@@ -36,7 +36,7 @@
 // CHECK:STDOUT: ]
 
 
-// CHECK:STDERR: fail_access_into_invalid.carbon:[[@LINE+3]]:10: Name a not found
+// CHECK:STDERR: fail_access_into_invalid.carbon:[[@LINE+3]]:10: Name `a` not found
 // CHECK:STDERR: fn F() { a.b; }
 // CHECK:STDERR:          ^
 fn F() { a.b; }
