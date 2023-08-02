@@ -434,7 +434,7 @@ class SemanticsNode {
   auto parse_node() const -> ParseTree::Node { return parse_node_; }
   auto kind() const -> SemanticsNodeKind { return kind_; }
 
-  // Get the type of the value produced by evaluating this node.
+  // Gets the type of the value produced by evaluating this node.
   auto type_id() const -> SemanticsTypeId { return type_id_; }
 
   auto Print(llvm::raw_ostream& out) const -> void;
