@@ -130,6 +130,6 @@ where
 while
 
 // CHECK:STDOUT: { index: 61, kind:          'Identifier', line: {{ *}}[[@LINE+3]], column:  1, indent: 1, spelling: 'notakeyword', identifier: 0, has_trailing_space: true },
-// CHECK:STDOUT: { index: 62, kind:           'EndOfFile', line: {{ *}}[[@LINE+2]], column: {{[0-9]+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT: { index: 62, kind:           'EndOfFile', line: {{ *}}[[@LINE+2]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT: ]
 notakeyword

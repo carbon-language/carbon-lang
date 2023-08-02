@@ -238,6 +238,7 @@ file_test(
     tests = glob(["testdata/**/*.carbon"]),
     deps = [
         "//toolchain/driver:driver_file_test_base",
+        "@com_googlesource_code_re2//:re2",
         "@llvm-project//llvm:Support",
     ],
 )

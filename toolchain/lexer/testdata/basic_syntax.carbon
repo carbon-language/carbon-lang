@@ -18,6 +18,6 @@ fn run(String program) {
   // CHECK:STDOUT: { index:  9, kind:              'Semi', line: {{ *}}[[@LINE+1]], column: 14, indent: 3, spelling: ';', has_trailing_space: true },
   return True;
 // CHECK:STDOUT: { index: 10, kind:   'CloseCurlyBrace', line: {{ *}}[[@LINE+3]], column:  1, indent: 1, spelling: '}', opening_token: 6, has_trailing_space: true },
-// CHECK:STDOUT: { index: 11, kind:         'EndOfFile', line: {{ *}}[[@LINE+2]], column:  2, indent: 1, spelling: '' },
+// CHECK:STDOUT: { index: 11, kind:         'EndOfFile', line: {{ *}}[[@LINE+2]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT: ]
 }

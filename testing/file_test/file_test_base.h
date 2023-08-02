@@ -10,72 +10,17 @@
 
 #include <filesystem>
 #include <functional>
-#include <vector>
 
+#include "common/error.h"
+#include "common/ostream.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/raw_os_ostream.h"
-#include "llvm/Support/raw_ostream.h"
+#include "testing/file_test/autoupdate.h"
 
 namespace Carbon::Testing {
 
-// A framework for testing files. Children write
-// `CARBON_FILE_TEST_FACTORY(MyTest)` which is used to construct the tests.
-// `RunWithFiles` must also be implemented and will be called as part of
-// individual test executions. This framework includes a `main` implementation,
-// so users must not provide one.
-//
-// Settings in files are provided in comments, similar to `FileCheck` syntax.
-// `autoupdate_testdata.py` automatically constructs compatible CHECK:STDOUT:
-// and CHECK:STDERR: lines.
-//
-// Supported comment markers are:
-//
-// - // ARGS: <arguments>
-//
-//   Provides a space-separated list of arguments, which will be passed to
-//   RunWithFiles as test_args. These are intended for use by the command as
-//   arguments.
-//
-//   Supported replacements within arguments are:
-//
-//   - %s
-//
-//     Replaced with the list of files. Currently only allowed as a standalone
-//     argument, not a substring.
-//
-//   - %t
-//
-//     Replaced with `${TEST_TMPDIR}/temp_file`.
-//
-//   ARGS can be specified at most once. If not provided, the FileTestBase child
-//   is responsible for providing default arguments.
-//
-// - // SET-CHECK-SUBSET
-//
-//   By default, all lines of output must have a CHECK match. Adding this as a
-//   flag sets it so that non-matching lines are ignored. All provided
-//   CHECK:STDOUT: and CHECK:STDERR: lines must still have a match in output.
-//
-//   SET-CHECK-SUBSET can be specified at most once.
-//
-// - // --- <filename>
-//
-//   By default, all file content is provided to the test as a single file in
-//   test_files. Using this marker allows the file to be split into multiple
-//   files which will all be passed to test_files.
-//
-//   Files are not created on disk; it's expected the child will create an
-//   InMemoryFilesystem if needed.
-//
-// - // CHECK:STDOUT: <output line>
-//   // CHECK:STDERR: <output line>
-//
-//   These provides a match for output from the command. See SET-CHECK-SUBSET
-//   for how to change from full to subset matching of output.
-//
-//   Output line matchers may contain `[[@LINE+offset]` and
-//   `{{regex}}` syntaxes, similar to `FileCheck`.
+// A framework for testing files. See README.md for documentation.
 class FileTestBase : public testing::Test {
  public:
   struct TestFile {
@@ -94,38 +39,100 @@ class FileTestBase : public testing::Test {
     llvm::StringRef content;
   };
 
+  // Provided for child class convenience.
+  using LineNumberReplacement = FileTestLineNumberReplacement;
+
   explicit FileTestBase(std::filesystem::path path) : path_(std::move(path)) {}
 
-  // Implemented by children to run the test. Called by the TestBody
-  // implementation, which will validate stdout and stderr. The return value
-  // should be false when "fail_" is in the filename.
-  virtual auto RunWithFiles(const llvm::SmallVector<llvm::StringRef>& test_args,
-                            const llvm::SmallVector<TestFile>& test_files,
-                            llvm::raw_pwrite_stream& stdout,
-                            llvm::raw_pwrite_stream& stderr) -> bool = 0;
+  // Implemented by children to run the test. For example, TestBody validates
+  // stdout and stderr.
+  //
+  // Any test expectations should be called from ValidateRun, not Run.
+  //
+  // The return value should be an error if there was an abnormal error. It
+  // should be true if a binary would return EXIT_SUCCESS, and false for
+  // EXIT_FAILURE (which is a test success for `fail_*` tests).
+  virtual auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
+                   const llvm::SmallVector<TestFile>& test_files,
+                   llvm::raw_pwrite_stream& stdout,
+                   llvm::raw_pwrite_stream& stderr) -> ErrorOr<bool> = 0;
+
+  // Implemented by children to do post-Run test expectations. Only called when
+  // testing. Does not need to be provided if only CHECK test expectations are
+  // used.
+  virtual auto ValidateRun(const llvm::SmallVector<TestFile>& /*test_files*/)
+      -> void {}
 
   // Returns default arguments. Only called when a file doesn't set ARGS.
   virtual auto GetDefaultArgs() -> llvm::SmallVector<std::string> = 0;
+
+  // Returns replacement information for line numbers. See LineReplacement for
+  // construction.
+  virtual auto GetLineNumberReplacement(
+      llvm::ArrayRef<llvm::StringRef> filenames) -> LineNumberReplacement;
+
+  // Optionally allows children to provide extra replacements for autoupdate.
+  virtual auto DoExtraCheckReplacements(std::string& /*check_line*/) -> void {}
 
   // Runs a test and compares output. This keeps output split by line so that
   // issues are a little easier to identify by the different line.
   auto TestBody() -> void final;
 
+  // Runs the test and autoupdates checks. Returns true if updated.
+  auto Autoupdate() -> bool;
+
   // Returns the full path of the file being tested.
   auto path() -> const std::filesystem::path& { return path_; };
 
  private:
+  // Encapsulates test context generated by processing and running.
+  struct TestContext {
+    // The input test file content. Other parts may reference this.
+    std::string input_content;
+
+    // Lines which don't contain CHECKs, and thus need to be retained by
+    // autoupdate. Their line number in the file is attached.
+    //
+    // If there are splits, then the line is in the respective file. For N
+    // splits, there will be one vector for the parts of the input file which
+    // are not in any split, plus one vector per split file.
+    llvm::SmallVector<llvm::SmallVector<FileTestLine>> non_check_lines;
+
+    // Arguments for the test, generated from ARGS.
+    llvm::SmallVector<std::string> test_args;
+
+    // Files in the test, generated by content and splits.
+    llvm::SmallVector<TestFile> test_files;
+
+    // The location of the autoupdate marker, for autoupdated files.
+    std::optional<int> autoupdate_line_number;
+
+    // Whether checks are a subset, generated from SET-CHECK-SUBSET.
+    bool check_subset = false;
+
+    // stdout and stderr based on CHECK lines in the file.
+    llvm::SmallVector<testing::Matcher<std::string>> expected_stdout;
+    llvm::SmallVector<testing::Matcher<std::string>> expected_stderr;
+
+    // stdout and stderr from Run. 16 is arbitrary but a required value.
+    llvm::SmallString<16> stdout;
+    llvm::SmallString<16> stderr;
+
+    // Whether Run exited with success.
+    bool exit_with_success = false;
+  };
+
+  // Processes the test file and runs the test. Returns an error if something
+  // went wrong.
+  auto ProcessTestFileAndRun(TestContext& context) -> ErrorOr<Success>;
+
   // Does replacements in ARGS for %s and %t.
   auto DoArgReplacements(llvm::SmallVector<std::string>& test_args,
-                         const llvm::SmallVector<TestFile>& test_files) -> void;
+                         const llvm::SmallVector<TestFile>& test_files)
+      -> ErrorOr<Success>;
 
   // Processes the test input, producing test files and expected output.
-  auto ProcessTestFile(
-      llvm::StringRef file_content, llvm::SmallVector<std::string>& test_args,
-      llvm::SmallVector<TestFile>& test_files,
-      llvm::SmallVector<testing::Matcher<std::string>>& expected_stdout,
-      llvm::SmallVector<testing::Matcher<std::string>>& expected_stderr,
-      bool& check_subset) -> void;
+  auto ProcessTestFile(TestContext& context) -> ErrorOr<Success>;
 
   // Transforms an expectation on a given line from `FileCheck` syntax into a
   // standard regex matcher.
