@@ -325,8 +325,8 @@ time.
 
 ## Facet type
 
-> **TODO:** Documents using the obsolete term "type-of-type" should be
-> updated to say "facet type" instead.
+> **TODO:** Documents using the obsolete term "type-of-type" should be updated
+> to say "facet type" instead.
 
 A _facet type_ is a [type](#types-and-type) whose values are some subset of the
 values of `type`, determined by a set of [type constraints](#type-constraints):
@@ -360,17 +360,17 @@ which is `i32`, in those contexts.
 
 ## Type expression
 
-A _type expression_ is an expression that can be used as a type. In some
-cases, what is written in the source code is a value, like a [facet](#facet) or
-tuple of types, that is not a type but has an implicit conversion to `type`. In
-those cases, we are concerned with the type value after the implicit conversion.
+A _type expression_ is an expression that can be used as a type. In some cases,
+what is written in the source code is a value, like a [facet](#facet) or tuple
+of types, that is not a type but has an implicit conversion to `type`. In those
+cases, we are concerned with the type value after the implicit conversion.
 
 ## Facet binding
 
 We use the term _facet binding_ to refer to the name introduced by a
 [constant binding pattern](#bindings) (using `:!` with or without the `template`
-modifier) where the declared type is a [facet type](#facet-type). In the binding pattern
-`T:! Hashable`, `T` is a facet binding, and the value of `T` is a
+modifier) where the declared type is a [facet type](#facet-type). In the binding
+pattern `T:! Hashable`, `T` is a facet binding, and the value of `T` is a
 [facet](#facet).
 
 ## Deduced parameter
