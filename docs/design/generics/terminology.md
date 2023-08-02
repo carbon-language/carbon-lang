@@ -293,7 +293,7 @@ are three kinds of binding patterns, corresponding to
     written using a `:`, as in `x: i32`.
 -   A _symbolic constant binding pattern_ or _symbolic binding pattern_ binds to
     a compile-time value that is not known when type checking, and is used to
-    declare [checked generics](#checked-versus-template-parameters) parameters.
+    declare [checked generic](#checked-versus-template-parameters) parameters.
     These binding use `:!`, as in `T:! type`.
 -   A _template constant binding pattern_ or _template binding pattern_ binds to
     a compile-time value that is known when type checking, and is used to
@@ -843,8 +843,8 @@ DoAdd(apple, orange);
 ```
 
 The type of an interface parameters and associated constants is commonly a
-[facet type](#facet-type), but not always. For example, one might have an
-integer type and be used to specify the size of an array type.
+[facet type](#facet-type), but not always. For example, an interface parameter
+that specifies an array bound might have an integer type.
 
 ## Type constraints
 
