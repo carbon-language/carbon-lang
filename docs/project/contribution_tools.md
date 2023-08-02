@@ -130,7 +130,8 @@ These tools are essential for work on Carbon.
             outdated, and not be upgraded.
 -   Main tools
     -   [Bazel](https://www.bazel.build/)
-        -   NOTE: See [the bazelisk config](/.bazeliskrc) for a supported version.
+        -   NOTE: See [the bazelisk config](/.bazeliskrc) for a supported
+            version.
     -   [Bazelisk](https://docs.bazel.build/versions/master/install-bazelisk.html)
         (for macOS): Handles Bazel versions.
     -   [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/)
