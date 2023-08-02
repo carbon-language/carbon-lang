@@ -27,11 +27,11 @@
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+2, type: type0},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+4, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+4},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+7, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+7, arg1: node+2, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+7, arg1: node+2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

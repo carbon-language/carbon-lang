@@ -91,7 +91,8 @@ auto SemanticsContext::DiagnoseDuplicateName(ParseTree::Node parse_node,
 
 auto SemanticsContext::DiagnoseNameNotFound(ParseTree::Node parse_node,
                                             SemanticsStringId name_id) -> void {
-  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name {0} not found", llvm::StringRef);
+  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found",
+                    llvm::StringRef);
   emitter_->Emit(parse_node, NameNotFound, semantics_ir_->GetString(name_id));
 }
 
@@ -304,7 +305,7 @@ auto SemanticsContext::ImplicitAsForArgs(
         ImplicitAsKind::Incompatible) {
       CARBON_CHECK(diagnostic != nullptr) << "Should have validated first";
       CARBON_DIAGNOSTIC(CallArgTypeMismatch, Note,
-                        "Function cannot be used: Cannot implicityly convert "
+                        "Function cannot be used: Cannot implicitly convert "
                         "argument {0} from `{1}` to `{2}`.",
                         size_t, std::string, std::string);
       diagnostic->Note(param_parse_node, CallArgTypeMismatch, i,
@@ -537,8 +538,9 @@ auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
     auto refs = semantics_ir_->GetNodeBlock(refs_id);
     for (const auto& ref_id : refs) {
       auto ref = semantics_ir_->GetNode(ref_id);
-      canonical_id.AddInteger(ref.GetAsStructTypeField().index);
-      canonical_id.AddInteger(ref.type_id().index);
+      auto [name_id, type_id] = ref.GetAsStructTypeField();
+      canonical_id.AddInteger(name_id.index);
+      canonical_id.AddInteger(type_id.index);
     }
   };
   auto make_struct_node = [&] {

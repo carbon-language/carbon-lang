@@ -7,7 +7,6 @@
 // CHECK:STDOUT: source_filename = "empty_struct.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: %StructLiteralType = type {}
-// CHECK:STDOUT: %EmptyTupleType = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %StructLiteralType @Echo(%StructLiteralType %a) {
 // CHECK:STDOUT:   %StructLiteralValue = alloca %StructLiteralType, align 8
@@ -15,7 +14,7 @@
 // CHECK:STDOUT:   ret %StructLiteralType %1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Main() {
+// CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT:   %StructLiteralValue = alloca %StructLiteralType, align 8
 // CHECK:STDOUT:   %var = alloca %StructLiteralType, align 8
 // CHECK:STDOUT:   %StructLiteralValue1 = alloca %StructLiteralType, align 8

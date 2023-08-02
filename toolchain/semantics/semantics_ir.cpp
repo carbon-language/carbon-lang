@@ -325,8 +325,9 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
         break;
       }
       case SemanticsNodeKind::StructTypeField: {
-        out << "." << GetString(node.GetAsStructTypeField()) << ": ";
-        steps.push_back({.node_id = GetTypeAllowBuiltinTypes(node.type_id())});
+        auto [name_id, type_id] = node.GetAsStructTypeField();
+        out << "." << GetString(name_id) << ": ";
+        steps.push_back({.node_id = GetTypeAllowBuiltinTypes(type_id)});
         break;
       }
       case SemanticsNodeKind::TupleType: {

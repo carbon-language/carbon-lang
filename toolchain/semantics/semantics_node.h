@@ -286,7 +286,8 @@ class SemanticsNode {
     using FactoryBase<Kind, ArgTypes...>::Get;
   };
 
-  // Provides Get along with a Make that assumes a non-changing type.
+  // Provides Get along with a Make that assumes the node doesn't produce a
+  // typed value.
   template <KindTemplateEnum Kind, typename... ArgTypes>
   class FactoryNoType : public FactoryBase<Kind, ArgTypes...> {
    public:
@@ -306,9 +307,9 @@ class SemanticsNode {
     }
   };
 
-  using Assign = SemanticsNode::Factory<SemanticsNodeKind::Assign,
-                                        SemanticsNodeId /*lhs_id*/,
-                                        SemanticsNodeId /*rhs_id*/>;
+  using Assign = SemanticsNode::FactoryNoType<SemanticsNodeKind::Assign,
+                                              SemanticsNodeId /*lhs_id*/,
+                                              SemanticsNodeId /*rhs_id*/>;
 
   using BinaryOperatorAdd =
       SemanticsNode::Factory<SemanticsNodeKind::BinaryOperatorAdd,
@@ -393,8 +394,8 @@ class SemanticsNode {
 
   using Return = FactoryNoType<SemanticsNodeKind::Return>;
 
-  using ReturnExpression =
-      Factory<SemanticsNodeKind::ReturnExpression, SemanticsNodeId /*expr_id*/>;
+  using ReturnExpression = FactoryNoType<SemanticsNodeKind::ReturnExpression,
+                                         SemanticsNodeId /*expr_id*/>;
 
   using StringLiteral = Factory<SemanticsNodeKind::StringLiteral,
                                 SemanticsStringId /*string_id*/>;
@@ -406,8 +407,9 @@ class SemanticsNode {
   using StructType =
       Factory<SemanticsNodeKind::StructType, SemanticsNodeBlockId /*refs_id*/>;
 
-  using StructTypeField = Factory<SemanticsNodeKind::StructTypeField,
-                                  SemanticsStringId /*name_id*/>;
+  using StructTypeField =
+      FactoryNoType<SemanticsNodeKind::StructTypeField,
+                    SemanticsStringId /*name_id*/, SemanticsTypeId /*type_id*/>;
 
   using StructValue =
       Factory<SemanticsNodeKind::StructValue, SemanticsNodeBlockId /*refs_id*/>;
@@ -437,6 +439,8 @@ class SemanticsNode {
 
   auto parse_node() const -> ParseTree::Node { return parse_node_; }
   auto kind() const -> SemanticsNodeKind { return kind_; }
+
+  // Gets the type of the value produced by evaluating this node.
   auto type_id() const -> SemanticsTypeId { return type_id_; }
 
   auto Print(llvm::raw_ostream& out) const -> void;

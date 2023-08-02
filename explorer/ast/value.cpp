@@ -19,7 +19,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Error.h"
 
 namespace Carbon {
 
@@ -128,6 +127,7 @@ NominalClassValue::NominalClassValue(
       inits_(inits),
       base_(base),
       class_value_ptr_(class_value_ptr) {
+  CARBON_CHECK(!base || (*base)->class_value_ptr() == class_value_ptr);
   // Update ancestors's class value to point to latest child.
   *class_value_ptr_ = this;
 }
@@ -375,15 +375,27 @@ static auto SetFieldImpl(
       if (auto inits = SetFieldImpl(arena, &object.inits(), path_begin,
                                     path_end, field_value, source_loc);
           inits.ok()) {
-        return arena->New<NominalClassValue>(
-            &object.type(), *inits, object.base(), object.class_value_ptr());
+        auto* class_value_ptr = arena->New<const NominalClassValue*>();
+        std::vector<const NominalClassValue*> base_path;
+        for (auto base = object.base(); base; base = (*base)->base()) {
+          base_path.push_back(*base);
+        }
+        std::optional<Nonnull<const NominalClassValue*>> base;
+        for (auto* base_path_elem : llvm::reverse(base_path)) {
+          base = arena->New<NominalClassValue>(&base_path_elem->type(),
+                                               &base_path_elem->inits(), base,
+                                               class_value_ptr);
+        }
+        return arena->New<NominalClassValue>(&object.type(), *inits, base,
+                                             class_value_ptr);
       } else if (object.base().has_value()) {
         auto new_base = SetFieldImpl(arena, object.base().value(), path_begin,
                                      path_end, field_value, source_loc);
         if (new_base.ok()) {
+          auto as_nominal_class_value = cast<NominalClassValue>(*new_base);
           return arena->New<NominalClassValue>(
-              &object.type(), &object.inits(),
-              cast<NominalClassValue>(*new_base), object.class_value_ptr());
+              &object.type(), &object.inits(), as_nominal_class_value,
+              as_nominal_class_value->class_value_ptr());
         }
       }
       // Failed to match, show full object content

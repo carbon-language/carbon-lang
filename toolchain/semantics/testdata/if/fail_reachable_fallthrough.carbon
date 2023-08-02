@@ -35,7 +35,7 @@
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+0},
 // CHECK:STDOUT:   {kind: Branch, arg0: block6},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5},
 // CHECK:STDOUT:   {kind: Branch, arg0: block7},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+8, type: type0},
@@ -43,7 +43,7 @@
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block11, arg1: node+8},
 // CHECK:STDOUT:   {kind: Branch, arg0: block12},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+13, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+13},
 // CHECK:STDOUT:   {kind: Branch, arg0: block13},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+16, type: type0},
@@ -51,7 +51,7 @@
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block17, arg1: node+16},
 // CHECK:STDOUT:   {kind: Branch, arg0: block18},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+21, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+21},
 // CHECK:STDOUT:   {kind: Branch, arg0: block18},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [

@@ -137,6 +137,12 @@ auto ParserHandleExpressionInPostfixLoop(ParserContext& context) -> void {
       context.PushState(state);
       break;
     }
+    case TokenKind::OpenSquareBracket: {
+      context.PushState(state);
+      state.state = ParserState::IndexExpression;
+      context.PushState(state);
+      break;
+    }
     default: {
       if (state.has_error) {
         context.ReturnErrorOnState();

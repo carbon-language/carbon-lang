@@ -44,6 +44,7 @@ cc_library(
         "//explorer/ast",
         "//explorer/common:arena",
         "//explorer/common:nonnull",
+        "@llvm-project//llvm:Support",
     ],
 )
 

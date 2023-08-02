@@ -61,8 +61,7 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
           context.ImplicitAsRequired(parse_node, arg, callable.return_type_id);
     }
 
-    context.AddNode(SemanticsNode::ReturnExpression::Make(
-        parse_node, context.semantics_ir().GetNode(arg).type_id(), arg));
+    context.AddNode(SemanticsNode::ReturnExpression::Make(parse_node, arg));
   }
 
   // Switch to a new, unreachable, empty node block. This typically won't

@@ -7,13 +7,12 @@
 // CHECK:STDOUT: source_filename = "empty_tuple.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: %TupleLiteralType = type {}
-// CHECK:STDOUT: %EmptyTupleType = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define %TupleLiteralType @Echo(%TupleLiteralType %a) {
 // CHECK:STDOUT:   ret %TupleLiteralType %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Main() {
+// CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT:   %TupleLiteralValue = alloca %TupleLiteralType, align 8
 // CHECK:STDOUT:   %var = alloca %TupleLiteralType, align 8
 // CHECK:STDOUT:   %TupleLiteralValue1 = alloca %TupleLiteralType, align 8

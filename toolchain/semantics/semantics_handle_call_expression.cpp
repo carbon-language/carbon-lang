@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/semantics/semantics_context.h"
+#include "toolchain/semantics/semantics_node.h"
 
 namespace Carbon {
 
@@ -41,8 +42,14 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
                                          /*diagnostic=*/nullptr));
 
   // TODO: Propagate return types from callable.
+  SemanticsTypeId type_id = callable.return_type_id;
+  // For functions with an implicit return type, set the return type to empty
+  // tuple type.
+  if (type_id == SemanticsTypeId::Invalid) {
+    type_id = context.CanonicalizeTupleType(call_expr_parse_node, {});
+  }
   auto call_node_id = context.AddNode(SemanticsNode::Call::Make(
-      call_expr_parse_node, callable.return_type_id, refs_id, function_id));
+      call_expr_parse_node, type_id, refs_id, function_id));
 
   context.node_stack().Push(parse_node, call_node_id);
   return true;

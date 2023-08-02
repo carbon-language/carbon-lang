@@ -33,14 +33,24 @@ auto GetRunfilesFile(const std::string& file) -> ErrorOr<std::string> {
 }
 
 auto ParseAndExecuteProto(const Fuzzing::Carbon& carbon) -> ErrorOr<int> {
+  llvm::vfs::InMemoryFileSystem fs;
+
   const ErrorOr<std::string> prelude_path =
       GetRunfilesFile("carbon/explorer/data/prelude.carbon");
   // Can't do anything without a prelude, so it's a fatal error.
   CARBON_CHECK(prelude_path.ok()) << prelude_path.error();
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> prelude =
+      llvm::MemoryBuffer::getFile(*prelude_path);
+  CARBON_CHECK(!prelude.getError()) << prelude.getError().message();
+  CARBON_CHECK(fs.addFile("prelude.carbon", /*ModificationTime=*/0,
+                          std::move(*prelude)));
 
   const std::string source = ProtoToCarbon(carbon, /*maybe_add_main=*/true);
+  CARBON_CHECK(fs.addFile("fuzzer.carbon", /*ModificationTime=*/0,
+                          llvm::MemoryBuffer::getMemBuffer(source)));
+
   TraceStream trace_stream;
-  return ParseAndExecute(*prelude_path, "fuzzer.carbon", source,
+  return ParseAndExecute(fs, "prelude.carbon", "fuzzer.carbon",
                          /*parser_debug=*/false, &trace_stream, &llvm::nulls());
 }
 
