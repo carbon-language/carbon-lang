@@ -91,7 +91,8 @@ auto SemanticsContext::DiagnoseDuplicateName(ParseTree::Node parse_node,
 
 auto SemanticsContext::DiagnoseNameNotFound(ParseTree::Node parse_node,
                                             SemanticsStringId name_id) -> void {
-  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name {0} not found", llvm::StringRef);
+  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found",
+                    llvm::StringRef);
   emitter_->Emit(parse_node, NameNotFound, semantics_ir_->GetString(name_id));
 }
 
@@ -304,7 +305,7 @@ auto SemanticsContext::ImplicitAsForArgs(
         ImplicitAsKind::Incompatible) {
       CARBON_CHECK(diagnostic != nullptr) << "Should have validated first";
       CARBON_DIAGNOSTIC(CallArgTypeMismatch, Note,
-                        "Function cannot be used: Cannot implicityly convert "
+                        "Function cannot be used: Cannot implicitly convert "
                         "argument {0} from `{1}` to `{2}`.",
                         size_t, std::string, std::string);
       diagnostic->Note(param_parse_node, CallArgTypeMismatch, i,
