@@ -141,43 +141,33 @@ auto RuntimeScope::Capture(
 }
 
 void Action::Print(llvm::raw_ostream& out) const {
-  out << "pos-" << pos_ << " " << kind_string() << " `";
-
+  out << kind_string() << " pos: " << pos_ << " ";
   switch (kind()) {
     case Action::Kind::LocationAction:
-      out << cast<LocationAction>(*this).expression();
+      out << "`" << cast<LocationAction>(*this).expression() << "`";
       break;
     case Action::Kind::ValueExpressionAction:
-      out << cast<ValueExpressionAction>(*this).expression();
+      out << "`" << cast<ValueExpressionAction>(*this).expression() << "`";
       break;
     case Action::Kind::ExpressionAction:
-      out << cast<ExpressionAction>(*this).expression();
+      out << "`" << cast<ExpressionAction>(*this).expression() << "`";
       break;
     case Action::Kind::WitnessAction:
-      out << *cast<WitnessAction>(*this).witness();
+      out << "`" << *cast<WitnessAction>(*this).witness() << "`";
       break;
     case Action::Kind::StatementAction:
-      cast<StatementAction>(*this).statement().PrintDepth(1, out);
+      out << "`" << PrintAsID(cast<StatementAction>(*this).statement()) << "`";
       break;
     case Action::Kind::DeclarationAction:
-      cast<DeclarationAction>(*this).declaration().PrintID(out);
+      out << "`" << PrintAsID(cast<DeclarationAction>(*this).declaration())
+          << "`";
       break;
     case Action::Kind::TypeInstantiationAction:
-      cast<TypeInstantiationAction>(*this).type()->Print(out);
+      out << "`" << *cast<TypeInstantiationAction>(*this).type() << "`";
       break;
-    case Action::Kind::ScopeAction:
-      break;
-    case Action::Kind::RecursiveAction:
-      out << "recursive";
-      break;
-    case Action::Kind::CleanUpAction:
-      out << "clean up";
-      break;
-    case Action::Kind::DestroyAction:
-      out << "destroy";
+    default:
       break;
   }
-  out << "`";
   if (!results_.empty()) {
     out << " results: [";
     llvm::ListSeparator sep;
