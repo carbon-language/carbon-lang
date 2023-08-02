@@ -29,7 +29,7 @@
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: type0},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+2, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+2},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+8, type: type0},

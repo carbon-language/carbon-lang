@@ -32,11 +32,12 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
       // TODO: Do we need to optimize this with a lookup table for O(1)?
       for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
         auto ref = context.semantics_ir().GetNode(refs[i]);
-        if (name_id == ref.GetAsStructTypeField()) {
+        if (auto [field_name_id, field_type_id] = ref.GetAsStructTypeField();
+            name_id == field_name_id) {
           context.AddNodeAndPush(
               parse_node,
               SemanticsNode::StructMemberAccess::Make(
-                  parse_node, ref.type_id(), base_id, SemanticsMemberIndex(i)));
+                  parse_node, field_type_id, base_id, SemanticsMemberIndex(i)));
           return true;
         }
       }

@@ -32,10 +32,10 @@
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+5, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+7, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+7},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5},
 // CHECK:STDOUT:   {kind: Branch, arg0: block6},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
