@@ -31,7 +31,7 @@
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: type1},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type3},
@@ -39,7 +39,7 @@
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+8, type: type3},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+8},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
