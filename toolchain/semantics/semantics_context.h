@@ -268,17 +268,19 @@ class SemanticsContext {
   // Forms a canonical type ID for a type. This function is given two
   // callbacks:
   //
-  // `profile_type(id)` is called to determine the `FoldingSetNodeID id` for
-  // this type. The ID should be distinct for all distinct type values with the
-  // same `kind`.
+  // `profile_type(canonical_id)` is called to build a fingerprint for this
+  // type. The ID should be distinct for all distinct type values with the same
+  // `kind`.
   //
   // `make_node()` is called to obtain a `SemanticsNodeId` that describes the
   // type. It is only called if the type does not already exist, so can be used
   // to lazily build the `SemanticsNode`. `make_node()` is not permitted to
   // directly or indirectly canonicalize any types.
-  template <typename ProfileType, typename MakeNode>
-  auto CanonicalizeTypeImpl(SemanticsNodeKind kind, ProfileType profile_type,
-                            MakeNode make_node) -> SemanticsTypeId;
+  auto CanonicalizeTypeImpl(
+      SemanticsNodeKind kind,
+      llvm::function_ref<void(llvm::FoldingSetNodeID& canonical_id)>
+          profile_type,
+      llvm::function_ref<SemanticsNodeId()> make_node) -> SemanticsTypeId;
 
   // Forms a canonical type ID for an already-existing node describing a type.
   template <typename ProfileType>

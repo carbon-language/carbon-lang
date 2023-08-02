@@ -448,11 +448,10 @@ auto SemanticsContext::ParamOrArgSave(bool for_args) -> void {
   params_or_args.push_back(entry_node_id);
 }
 
-template <typename ProfileType, typename MakeNode>
-auto SemanticsContext::CanonicalizeTypeImpl(SemanticsNodeKind kind,
-                                            ProfileType profile_type,
-                                            MakeNode make_node)
-    -> SemanticsTypeId {
+auto SemanticsContext::CanonicalizeTypeImpl(
+    SemanticsNodeKind kind,
+    llvm::function_ref<void(llvm::FoldingSetNodeID& canonical_id)> profile_type,
+    llvm::function_ref<SemanticsNodeId()> make_node) -> SemanticsTypeId {
   llvm::FoldingSetNodeID canonical_id;
   kind.Profile(canonical_id);
   profile_type(canonical_id);
@@ -470,17 +469,14 @@ auto SemanticsContext::CanonicalizeTypeImpl(SemanticsNodeKind kind,
   type_node_storage_.push_back(
       std::make_unique<TypeNode>(canonical_id, type_id));
 
-#ifndef NDEBUG
   // In a debug build, check that our insertion position is still valid. It
   // could have been invalidated by a misbehaving `make_node`.
-  void* check_insert_pos;
-  auto* check_node =
-      canonical_type_nodes_.FindNodeOrInsertPos(canonical_id, check_insert_pos);
-  CARBON_CHECK(!check_node)
-      << "Type was created recursively during canonicalization";
-  CARBON_CHECK(insert_pos == check_insert_pos)
-      << "Insertion position changed during canonicalization";
-#endif
+  CARBON_DCHECK([&] {
+    void* check_insert_pos;
+    auto* check_node = canonical_type_nodes_.FindNodeOrInsertPos(
+        canonical_id, check_insert_pos);
+    return !check_node && insert_pos == check_insert_pos;
+  }()) << "Type was created recursively during canonicalization";
 
   canonical_type_nodes_.InsertNode(type_node_storage_.back().get(), insert_pos);
   return type_id;
