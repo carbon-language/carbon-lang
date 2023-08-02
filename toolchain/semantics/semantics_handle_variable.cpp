@@ -31,9 +31,8 @@ auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
     auto cast_value_id = context.ImplicitAsRequired(
         parse_node, expr_node_id,
         context.semantics_ir().GetNode(storage_id).type_id());
-    context.AddNode(SemanticsNode::Assign::Make(
-        parse_node, context.semantics_ir().GetNode(cast_value_id).type_id(),
-        storage_id, cast_value_id));
+    context.AddNode(
+        SemanticsNode::Assign::Make(parse_node, storage_id, cast_value_id));
   }
 
   context.node_stack()

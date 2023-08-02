@@ -476,8 +476,9 @@ auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
   llvm::FoldingSetNodeID canonical_id;
   for (const auto& ref_id : refs) {
     auto ref = semantics_ir_->GetNode(ref_id);
-    canonical_id.AddInteger(ref.GetAsStructTypeField().index);
-    canonical_id.AddInteger(ref.type_id().index);
+    auto [name_id, type_id] = ref.GetAsStructTypeField();
+    canonical_id.AddInteger(name_id.index);
+    canonical_id.AddInteger(type_id.index);
   }
 
   // If a struct with matching fields was already created, reuse it.

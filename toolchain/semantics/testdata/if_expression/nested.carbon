@@ -54,7 +54,7 @@
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block13, arg1: node+15},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block13, arg1: node+22},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block13, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+25, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+25},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
