@@ -36,9 +36,10 @@ auto SemanticsHandleIndexExpression(SemanticsContext& context,
     if (index_val >= static_cast<int>(type_block.size())) {
       CARBON_DIAGNOSTIC(OutOfBoundsAccess, Error,
                         "Index `{0}` is past the end of `{1}`.", int64_t,
-                        SemanticsNodeKind);
-      context.emitter().Emit(parse_node, OutOfBoundsAccess, index_val,
-                             name_type_node.kind());
+                        std::string);
+      context.emitter().Emit(
+          parse_node, OutOfBoundsAccess, index_val,
+          context.semantics_ir().StringifyType(name_node.type_id()));
     } else {
       context.AddNodeAndPush(parse_node, SemanticsNode::Index::Make(
                                              parse_node, type_block[index_val],
