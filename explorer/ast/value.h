@@ -739,11 +739,8 @@ class FunctionType : public Value {
         impl_bindings_(std::move(impl_bindings)),
         is_initializing_(is_initializing) {}
 
-  struct ExceptSelf {
-    friend auto operator==(ExceptSelf, ExceptSelf) -> bool { return true; }
-    friend auto hash_value(ExceptSelf) -> llvm::hash_code {
-      return llvm::hash_combine(0);
-    }
+  struct ExceptSelf : public HashFromDecompose<ExceptSelf> {
+    template <typename F> auto Decompose(F f) const { return f(); }
   };
   FunctionType(ExceptSelf, const FunctionType* clone)
       : FunctionType(std::nullopt, clone->parameters_,
