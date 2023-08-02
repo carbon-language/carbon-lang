@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: "HALLO WELT"
+// CHECK:STDERR: RUNTIME ERROR: /explorer/data/prelude.carbon:{{\d+}}: "HALLO WELT"
 
 package ExplorerTest api;
 

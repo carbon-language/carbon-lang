@@ -52,15 +52,11 @@ static auto SplitOutput(llvm::StringRef output)
 // Runs a test and compares output. This keeps output split by line so that
 // issues are a little easier to identify by the different line.
 auto FileTestBase::TestBody() -> void {
-  const char* src_dir = getenv("TEST_SRCDIR");
-  CARBON_CHECK(src_dir);
-  std::string test_file = path().lexically_relative(
-      std::filesystem::path(src_dir).append("carbon"));
   const char* target = getenv("TEST_TARGET");
   CARBON_CHECK(target);
   // This advice overrides the --file_tests flag provided by the file_test rule.
   llvm::errs() << "\nTo test this file alone, run:\n  bazel test " << target
-               << " --test_arg=--file_tests=" << test_file << "\n\n";
+               << " --test_arg=--file_tests=" << GetTestFilename() << "\n\n";
 
   TestContext context;
   auto run_result = ProcessTestFileAndRun(context);
@@ -86,10 +82,13 @@ auto FileTestBase::TestBody() -> void {
   }
 }
 
-auto FileTestBase::Autoupdate() -> bool {
+auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
   TestContext context;
   auto run_result = ProcessTestFileAndRun(context);
-  CARBON_CHECK(run_result.ok()) << run_result.error();
+  if (!run_result.ok()) {
+    return ErrorBuilder() << "Error updating " << GetTestFilename() << ": "
+                          << run_result.error();
+  }
   if (!context.autoupdate_line_number) {
     return false;
   }
@@ -120,8 +119,8 @@ auto FileTestBase::GetLineNumberReplacement(
     llvm::ArrayRef<llvm::StringRef> filenames) -> LineNumberReplacement {
   return {
       .has_file = true,
-      .pattern = llvm::formatv(R"(({0}):(\d+):)", llvm::join(filenames, "|")),
-      .sub_for_formatv = R"(\1:{0}:)"};
+      .pattern = llvm::formatv(R"(({0}):(\d+))", llvm::join(filenames, "|")),
+      .line_formatv = R"({0})"};
 }
 
 auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
@@ -258,15 +257,21 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
 
     // Process expectations when found.
     if (line_trimmed.consume_front("// CHECK")) {
-      llvm::SmallVector<Matcher<std::string>>* expected = nullptr;
-      if (line_trimmed.consume_front(":STDOUT:")) {
-        expected = &context.expected_stdout;
-      } else if (line_trimmed.consume_front(":STDERR:")) {
-        expected = &context.expected_stderr;
-      } else {
-        return ErrorBuilder() << "Unexpected CHECK in input: " << line.str();
+      // Don't build expectations when doing an autoupdate. We don't want to
+      // break the autoupdate on an invalid CHECK line.
+      if (!absl::GetFlag(FLAGS_autoupdate)) {
+        llvm::SmallVector<Matcher<std::string>>* expected = nullptr;
+        if (line_trimmed.consume_front(":STDOUT:")) {
+          expected = &context.expected_stdout;
+        } else if (line_trimmed.consume_front(":STDERR:")) {
+          expected = &context.expected_stderr;
+        } else {
+          return ErrorBuilder() << "Unexpected CHECK in input: " << line.str();
+        }
+        CARBON_ASSIGN_OR_RETURN(Matcher<std::string> check_matcher,
+                                TransformExpectation(line_index, line_trimmed));
+        expected->push_back(check_matcher);
       }
-      expected->push_back(TransformExpectation(line_index, line_trimmed));
     } else {
       context.non_check_lines.back().push_back(FileTestLine(line_index, line));
       if (line_trimmed.consume_front("// ARGS: ")) {
@@ -330,11 +335,13 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
 }
 
 auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
-    -> Matcher<std::string> {
+    -> ErrorOr<Matcher<std::string>> {
   if (in.empty()) {
-    return StrEq("");
+    return Matcher<std::string>{StrEq("")};
   }
-  CARBON_CHECK(in[0] == ' ') << "Malformated input: " << in;
+  if (in[0] != ' ') {
+    return ErrorBuilder() << "Malformated CHECK line: " << in;
+  }
   std::string str = in.substr(1).str();
   for (int pos = 0; pos < static_cast<int>(str.size());) {
     switch (str[pos]) {
@@ -364,18 +371,20 @@ auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
             line_keyword_cursor.consume_front("+");
             int offset;
             // consumeInteger returns true for errors, not false.
-            CARBON_CHECK(!line_keyword_cursor.consumeInteger(10, offset) &&
-                         line_keyword_cursor.consume_front("]]"))
-                << "Unexpected @LINE offset at `"
-                << line_keyword_cursor.substr(0, 5) << "` in: " << in;
+            if (line_keyword_cursor.consumeInteger(10, offset) ||
+                !line_keyword_cursor.consume_front("]]")) {
+              return ErrorBuilder()
+                     << "Unexpected @LINE offset at `"
+                     << line_keyword_cursor.substr(0, 5) << "` in: " << in;
+            }
             std::string int_str = llvm::Twine(line_index + offset).str();
             int remove_len = (line_keyword_cursor.data() - str.data()) - pos;
             str.replace(pos, remove_len, int_str);
             pos += int_str.size();
           } else {
-            CARBON_FATAL() << "Unexpected [[, should be {{\\[\\[}} at `"
-                           << line_keyword_cursor.substr(0, 5)
-                           << "` in: " << in;
+            return ErrorBuilder()
+                   << "Unexpected [[, should be {{\\[\\[}} at `"
+                   << line_keyword_cursor.substr(0, 5) << "` in: " << in;
           }
         } else {
           // Escape the `[`.
@@ -408,7 +417,14 @@ auto FileTestBase::TransformExpectation(int line_index, llvm::StringRef in)
     }
   }
 
-  return MatchesRegex(str);
+  return Matcher<std::string>{MatchesRegex(str)};
+}
+
+auto FileTestBase::GetTestFilename() -> std::string {
+  const char* src_dir = getenv("TEST_SRCDIR");
+  CARBON_CHECK(src_dir);
+  return path().lexically_relative(
+      std::filesystem::path(src_dir).append("carbon"));
 }
 
 }  // namespace Carbon::Testing
@@ -429,7 +445,7 @@ auto main(int argc, char** argv) -> int {
 
   // Configure the base directory for test names.
   const char* target = getenv("TEST_TARGET");
-  CARBON_CHECK(target != nullptr);
+  CARBON_CHECK(target);
   llvm::StringRef target_dir = target;
   std::error_code ec;
   std::filesystem::path working_dir = std::filesystem::current_path(ec);
@@ -450,7 +466,9 @@ auto main(int argc, char** argv) -> int {
     if (absl::GetFlag(FLAGS_autoupdate)) {
       std::unique_ptr<Carbon::Testing::FileTestBase> test(
           test_factory.factory_fn(path));
-      llvm::errs() << (test->Autoupdate() ? "!" : ".");
+      auto result = test->Autoupdate();
+      llvm::errs() << (result.ok() ? (*result ? "!" : ".")
+                                   : result.error().message());
     } else {
       std::string test_name = path.string().substr(base_dir.size());
       testing::RegisterTest(test_factory.name, test_name.c_str(), nullptr,
