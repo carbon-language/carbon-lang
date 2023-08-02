@@ -132,7 +132,7 @@ These tools are essential for work on Carbon.
     -   [Bazel](https://www.bazel.build/)
         -   NOTE: See [the bazelisk config](/.bazeliskrc) for a supported version.
     -   [Bazelisk](https://docs.bazel.build/versions/master/install-bazelisk.html)
-        (for macOS, Linux, Windows): Handles Bazel versions.
+        (for macOS): Handles Bazel versions.
     -   [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/)
         -   NOTE: Most LLVM 14+ installs should build Carbon. If you're having
             issues, see
