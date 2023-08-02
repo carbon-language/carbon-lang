@@ -465,9 +465,9 @@ requires.
 
 ### Extending an impl
 
-A type that _extends_ the implementation of an interface has all the named members
-of the interface as named members of the type. This means that the members of
-the interface are available by way of both
+A type that _extends_ the implementation of an interface has all the named
+members of the interface as named members of the type. This means that the
+members of the interface are available by way of both
 [simple member access and qualified member access expressions](#member-access).
 
 If a type implements an interface without extending, the members of the
