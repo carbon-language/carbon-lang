@@ -17,46 +17,43 @@ auto SemanticsHandleIndexExpressionStart(SemanticsContext& /*context*/,
 
 auto SemanticsHandleIndexExpression(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
-  auto ind_node_id = context.node_stack().PopExpression();
+  auto index_node_id = context.node_stack().PopExpression();
+  auto index_node = context.semantics_ir().GetNode(index_node_id);
   auto name_node_id = context.node_stack().PopExpression();
   auto name_node = context.semantics_ir().GetNode(name_node_id);
+  auto name_type_id =
+      context.semantics_ir().GetTypeAllowBuiltinTypes(name_node.type_id());
+  auto name_type_node = context.semantics_ir().GetNode(name_type_id);
 
-  if (context.semantics_ir().GetNode(ind_node_id).kind() ==
-      SemanticsNodeKind::VarStorage) {
+  if (name_type_node.kind() == SemanticsNodeKind::TupleType &&
+      index_node.kind() == SemanticsNodeKind::IntegerLiteral) {
+    auto index_val = context.semantics_ir()
+                         .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
+                         .getSExtValue();
+    auto type_block =
+        context.semantics_ir().GetTypeBlock(name_type_node.GetAsTupleType());
+
+    if (index_val >= static_cast<int>(type_block.size())) {
+      CARBON_DIAGNOSTIC(OutOfBoundsAccess, Error,
+                        "Index `{0}` is past the end of `{1}`.", int64_t,
+                        SemanticsNodeKind);
+      context.emitter().Emit(parse_node, OutOfBoundsAccess, index_val,
+                             name_type_node.kind());
+    } else {
+      context.AddNodeAndPush(parse_node, SemanticsNode::Index::Make(
+                                             parse_node, type_block[index_val],
+                                             name_node_id, index_node_id));
+      return true;
+    }
+  } else if (index_node.kind() != SemanticsNodeKind::IntegerLiteral) {
     CARBON_DIAGNOSTIC(NondeterministicType, Error,
                       "Type cannot be determined in compile time.");
     context.emitter().Emit(parse_node, NondeterministicType);
-  } else if (name_node.kind() != SemanticsNodeKind::VarStorage) {
+  } else if (name_type_node.kind() != SemanticsNodeKind::TupleType &&
+             name_type_id != SemanticsNodeId::BuiltinError) {
     CARBON_DIAGNOSTIC(InvalidIndexExpression, Error,
                       "Invalid index expression.");
     context.emitter().Emit(parse_node, InvalidIndexExpression);
-  } else {
-    auto name_type = context.semantics_ir().GetNode(
-        context.semantics_ir().GetType(name_node.type_id()));
-    auto cast_ind_id = context.ImplicitAsRequired(
-        parse_node, ind_node_id,
-        context.CanonicalizeType(SemanticsNodeId::BuiltinIntegerType));
-    auto cast_ind_node = context.semantics_ir().GetNode(cast_ind_id);
-
-    if (cast_ind_node.type_id() != SemanticsTypeId::Error &&
-        name_type.kind() == SemanticsNodeKind::TupleType) {
-      auto ind_val = context.semantics_ir()
-                         .GetIntegerLiteral(cast_ind_node.GetAsIntegerLiteral())
-                         .getSExtValue();
-      auto type_block_id = name_type.GetAsTupleType();
-      auto type_block = context.semantics_ir().GetTypeBlock(type_block_id);
-      if (ind_val >= static_cast<int>(type_block.size())) {
-        CARBON_DIAGNOSTIC(OutOfBoundsAccess, Error,
-                          "Index: {0} is out of bound {1}.", int64_t, int64_t);
-        context.emitter().Emit(parse_node, OutOfBoundsAccess, ind_val,
-                               static_cast<int>(type_block.size()));
-      } else {
-        context.AddNodeAndPush(parse_node, SemanticsNode::Index::Make(
-                                               parse_node, type_block[ind_val],
-                                               name_node_id, cast_ind_id));
-        return true;
-      }
-    }
   }
 
   context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinError);

@@ -85,7 +85,7 @@
 // CHECK:STDOUT: ]
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:19: Cannot implicitly convert from `f64` to `i32`.
+// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:19: Type cannot be determined in compile time.
 // CHECK:STDERR: var b: i32 = a[2.6];
 // CHECK:STDERR:                   ^
 var b: i32 = a[2.6];
