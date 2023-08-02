@@ -202,17 +202,17 @@ result will be discussed below). If `N` is known to be 2, we can rewrite that
 value by expanding the first component, yielding
 `(<Ts[0], 1>, <Ts[1], 1>, <i32, 1>, <Us[$I], M>)`.
 
-A pack component is _variadic_ if its arity is unknown, and _scalar_ if its
+A pack component is _variadic_ if its arity is unknown, and _singular_ if its
 arity is known to be 1 and does not refer to the pack index. In contexts where
-all pack components are known to be scalar, we will sometimes refer to them as
+all pack components are known to be singular, we will sometimes refer to them as
 "elements". Pack values are always assumed to be normalized, meaning that every
-component is either scalar or variadic. This is always possible because if the
+component is either singular or variadic. This is always possible because if the
 component's arity is known but not 1, we can expand it, which produces a
-sequence of scalar components by construction. The _shape_ of a pack is another
-pack, found by replacing all representatives with `()` and leaving the arities
-unchanged. A _pack type_ is the type of a pack, and can be represented as a pack
-value whose representatives are types. The type of a pack is found by replacing
-each of its representatives with the representative's type.
+sequence of singular components by construction. The _shape_ of a pack is
+another pack, found by replacing all representatives with `()` and leaving the
+arities unchanged. A _pack type_ is the type of a pack, and can be represented
+as a pack value whose representatives are types. The type of a pack is found by
+replacing each of its representatives with the representative's type.
 
 Even during symbolic evaluation, we need to maintain the structural equivalence
 between packs and tuples, so in this more generalized model, a tuple value
@@ -237,11 +237,11 @@ let (..., pack: [:][i32;]) = (1, 2, 3);
 let tuple: (..., [:][i32;]) = (1, 2, 3);
 ```
 
-Most operations that are defined on scalar values are defined on packs as well,
-with the following semantics: all operands that are packs must have the same
-shape, and the result of the operation will itself have the same shape as the
-operands. The representatives are computed by simultaneously iterating through
-the input packs and applying the non-pack version of the operation: the
+Most operations that are defined on singular values are defined on packs as
+well, with the following semantics: all operands that are packs must have the
+same shape, and the result of the operation will itself have the same shape as
+the operands. The representatives are computed by simultaneously iterating
+through the input packs and applying the non-pack version of the operation: the
 representative of the k'th output pack component is the result of replacing each
 input pack with the representative of its k'th component, and evaluating the
 resulting operation using the ordinary non-pack rules. Note that for these
@@ -265,7 +265,7 @@ elements:
 -   If the element is headed by `...,`, we evaluate its operand to produce a
     pack, and append its components to the result tuple.
 -   Otherwise, we evaluate the element expression to produce a value `V`, and
-    append a scalar component whose representative is `V`.
+    append a singular component whose representative is `V`.
 
 The `[:]` operator transforms a tuple into a pack, or an unknown tuple value
 into a pack of unknown values:
@@ -290,7 +290,7 @@ An identifier expression that names a variable whose type is a pack type behaves
 like a `[:]` expression whose operand is a variable of the corresponding tuple
 type. No other leaf AST node can evaluate to a pack value.
 
-A tuple cannot be indexed unless all of its components are scalar. There is no
+A tuple cannot be indexed unless all of its components are singular. There is no
 syntax for indexing into a pack.
 
 ## Pattern semantics
@@ -300,7 +300,7 @@ the general principle that pattern matching is the inverse of expression
 evaluation, so for example if the pattern `(..., [:]x: auto)` matches some
 scrutinee value `s`, the expression `(..., [:]x)` should be equal to `s`. These
 are run-time semantics, so all types are known constants, and any pack
-components in the scrutinee value are scalar.
+components in the scrutinee value are singular.
 
 There can be no more than one `...,` pattern in a tuple pattern. The N elements
 of the pattern before the `...,` expansion are matched with the first N elements
@@ -338,11 +338,11 @@ the types of expressions instead of the values of expressions. For example, for
 most operations, if any of the operands have a pack type, all pack-type operands
 must have the same shape, the type of the whole operation will have the same
 shape, and the component types are found by iterating through the input pack
-types component-wise, performing ordinary scalar type-checking for the
+types component-wise, performing ordinary singular type-checking for the
 operation.
 
 Typechecking a variadic pattern is much like typechecking a variadic expression:
-we proceed bottom-up, generalizing the scalar typechecking rules to apply
+we proceed bottom-up, generalizing the singular typechecking rules to apply
 component-wise to variadics, and so forth. The most notable difference is that
 patterns can contain name bindings, whose types are determined by symbolically
 evaluating the type portion of the binding.
@@ -455,30 +455,31 @@ components of the scrutinee value as "symbolic arguments". We will use the term
 "actual arguments" to refer to the elements of the scrutinee after
 monomorphization, so a single symbolic argument may correspond to any number of
 actual arguments, including zero (but only if the expression is variadic). We
-will refer to arguments as "scalar" if they have arity 1, and "variadic" if they
-have indeterminate arity (these are the only possibilities, because packs are
-normalized). Similarly, we will refer to the `...,` parameter as "variadic" and
-the other parameters as "scalar".
+will refer to arguments as "singular" if they have arity 1, and "variadic" if
+they have indeterminate arity (these are the only possibilities, because packs
+are normalized). Similarly, we will refer to the `...,` parameter as "variadic"
+and the other parameters as "singular".
 
-A pack pattern consists of $N$ leading scalar parameters, optionally followed by
-a variadic parameter headed by the `...,` operator, and then $M$ trailing scalar
-parameters. The scrutinee must have a pack type, and can have any number of
-scalar and variadic components, in any order.
+A pack pattern consists of $N$ leading singular parameters, optionally followed
+by a variadic parameter headed by the `...,` operator, and then $M$ trailing
+singular parameters. The scrutinee must have a pack type, and can have any
+number of singular and variadic components, in any order.
 
-There must be at least $N+M$ scalar symbolic arguments, because otherwise if all
-variadic symbolic arguments are empty, there will not be enough actual arguments
-to match all the scalar parameters. We will refer to the $N$'th scalar symbolic
-argument and the symbolic arguments before it as "leading symbolic arguments".
-Similarly, we will refer to the $M$'th-from-last scalar symbolic argument and
-the symbolic arguments after it as "trailing symbolic arguments", and any
-remaining symbolic arguments as "central symbolic arguments". A "leading actual
-argument" is an argument that was produced by rewriting a leading symbolic
-argument, and likewise for "central actual argument" and "trailing actual
-argument". Note that if there is no variadic parameter, $M$ is 0, and so all
-parameters, symbolic arguments, and actual arguments are leading.
+There must be at least $N+M$ singular symbolic arguments, because otherwise if
+all variadic symbolic arguments are empty, there will not be enough actual
+arguments to match all the singular parameters. We will refer to the $N$'th
+singular symbolic argument and the symbolic arguments before it as "leading
+symbolic arguments". Similarly, we will refer to the $M$'th-from-last singular
+symbolic argument and the symbolic arguments after it as "trailing symbolic
+arguments", and any remaining symbolic arguments as "central symbolic
+arguments". A "leading actual argument" is an argument that was produced by
+rewriting a leading symbolic argument, and likewise for "central actual
+argument" and "trailing actual argument". Note that if there is no variadic
+parameter, $M$ is 0, and so all parameters, symbolic arguments, and actual
+arguments are leading.
 
 By construction, there will always be at least $N$ leading actual arguments,
-because there are $N$ scalar leading symbolic arguments. Likewise, there will
+because there are $N$ singular leading symbolic arguments. Likewise, there will
 always be at least $M$ trailing actual arguments. As a result, a leading
 parameter can only match a leading actual argument, and so it can only match a
 leading symbolic argument, and likewise for trailing parameters. Consequently, a
@@ -486,7 +487,7 @@ leading symbolic argument cannot match a trailing parameter, a trailing symbolic
 argument cannot match a leading parameter, and a central symbolic argument can
 only match the variadic parameter.
 
-Consider the $i$'th scalar leading symbolic argument $E$. If all the variadic
+Consider the $i$'th singular leading symbolic argument $E$. If all the variadic
 symbolic arguments before it are empty, $E$ will match the $i$'th leading
 parameter, so $E$ cannot match any earlier parameter. If there are any earlier
 variadic symbolic arguments, $E$ can be made to match any later leading
@@ -497,7 +498,7 @@ made to match any later parameter, so it can only match the i'th leading
 parameter.
 
 Next, consider a variadic leading symbolic argument $E$ that comes before the
-$i$'th scalar leading symbolic argument, but not before any earlier scalar
+$i$'th singular leading symbolic argument, but not before any earlier singular
 symbolic argument. If $E$'s rewritten arity is sufficiently large, and all
 earlier variadic symbolic arguments are empty, it will simultaneously match the
 $i$'th leading parameter, all leading parameters after it, and the variadic
@@ -508,15 +509,15 @@ The same reasoning can be applied to trailing symbolic arguments, but with
 can only match the variadic parameter. In summary, we can identify the possible
 matches for a symbolic argument $E$ as follows:
 
--   If $E$ is leading, let $i$ be one more than the number of earlier scalar
+-   If $E$ is leading, let $i$ be one more than the number of earlier singular
     symbolic arguments:
-    -   If $E$ is scalar, and there are no earlier variadic argument
+    -   If $E$ is singular, and there are no earlier variadic argument
         expressions, then $E$ can only match the $i$'th leading parameter.
     -   Otherwise, $$ can match the $i$'th leading parameter, any later leading
         parameters, and the variadic parameter.
--   If $E$ is trailing, let $i$ be one more than the number of later scalar
+-   If $E$ is trailing, let $i$ be one more than the number of later singular
     symbolic arguments:
-    -   If $E$ is scalar, and there are no later variadic symbolic arguments,
+    -   If $E$ is singular, and there are no later variadic symbolic arguments,
         then $E$ can only match the i'th trailing parameter from the end.
     -   Otherwise, $E$ can match the $i$'th trailing parameter from the end, any
         earlier trailing parameters, and the variadic parameter.
