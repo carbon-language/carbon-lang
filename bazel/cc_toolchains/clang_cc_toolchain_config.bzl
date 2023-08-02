@@ -512,9 +512,6 @@ def _impl(ctx):
     # With clang 14 and lower, we expect it to be built with libc++ debug
     # support. In later LLVM versions, we expect the assertions define to work.
     # clang 17 deprecates LIBCPP_ENABLE_ASSERTIONS in favor of HARDENED_MODE.
-    # TODO(samkhn): Once LLVM makes ENABLE_ASSERTIONS equivalent to
-    # ENABLE_HARDENING, remove the HARDENED_MODE check
-    # https://github.com/llvm/llvm-project/blob/main/libcxx/include/__config
     if clang_version and clang_version <= 14:
         libcpp_debug_flags = ["-D_LIBCPP_DEBUG=1"]
     elif clang_version and clang_version <= 16:
