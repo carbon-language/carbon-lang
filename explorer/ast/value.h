@@ -740,8 +740,12 @@ class FunctionType : public Value {
         is_initializing_(is_initializing) {}
 
   struct ExceptSelf : public HashFromDecompose<ExceptSelf> {
-    template <typename F> auto Decompose(F f) const { return f(); }
+    template <typename F>
+    auto Decompose(F f) const {
+      return f();
+    }
   };
+
   FunctionType(ExceptSelf, const FunctionType* clone)
       : FunctionType(std::nullopt, clone->parameters_,
                      clone->generic_parameters_, clone->return_type_,
