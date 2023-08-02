@@ -517,10 +517,10 @@ def _impl(ctx):
     # https://github.com/llvm/llvm-project/blob/main/libcxx/include/__config
     if clang_version and clang_version <= 14:
         libcpp_debug_flags = ["-D_LIBCPP_DEBUG=1"]
-    elif clang_version and clang_version <= 17:
-        libcpp_debug_flags = ["-D_LIBCPP_ENABLE_HARDENED_MODE=1"]
-    else:
+    elif clang_version and clang_version <= 16:
         libcpp_debug_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=1"]
+    else:
+        libcpp_debug_flags = ["-D_LIBCPP_ENABLE_HARDENED_MODE=1"]
 
     linux_flags_feature = feature(
         name = "linux_flags",
