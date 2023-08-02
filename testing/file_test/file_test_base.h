@@ -79,7 +79,7 @@ class FileTestBase : public testing::Test {
   auto TestBody() -> void final;
 
   // Runs the test and autoupdates checks. Returns true if updated.
-  auto Autoupdate() -> bool;
+  auto Autoupdate() -> ErrorOr<bool>;
 
   // Returns the full path of the file being tested.
   auto path() -> const std::filesystem::path& { return path_; };
@@ -134,10 +134,13 @@ class FileTestBase : public testing::Test {
   // Processes the test input, producing test files and expected output.
   auto ProcessTestFile(TestContext& context) -> ErrorOr<Success>;
 
+  // Gets the test filename, relative to the target directory.
+  auto GetTestFilename() -> std::string;
+
   // Transforms an expectation on a given line from `FileCheck` syntax into a
   // standard regex matcher.
   static auto TransformExpectation(int line_index, llvm::StringRef in)
-      -> testing::Matcher<std::string>;
+      -> ErrorOr<testing::Matcher<std::string>>;
 
   const std::filesystem::path path_;
 };

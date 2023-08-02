@@ -4,6 +4,7 @@
 
 #include "absl/flags/flag.h"
 #include "explorer/main.h"
+#include "re2/re2.h"
 #include "testing/file_test/file_test_base.h"
 #include "testing/util/test_raw_ostream.h"
 
@@ -17,7 +18,13 @@ namespace {
 
 class ExplorerFileTest : public FileTestBase {
  public:
-  using FileTestBase::FileTestBase;
+  explicit ExplorerFileTest(std::filesystem::path path)
+      : FileTestBase(std::move(path)),
+        prelude_line_re_(R"(prelude.carbon:(\d+))"),
+        timing_re_(R"((Time elapsed in \w+: )\d+(ms))") {
+    CARBON_CHECK(prelude_line_re_.ok()) << prelude_line_re_.error();
+    CARBON_CHECK(timing_re_.ok()) << timing_re_.error();
+  }
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            const llvm::SmallVector<TestFile>& test_files,
@@ -52,13 +59,9 @@ class ExplorerFileTest : public FileTestBase {
       args.push_back(arg.data());
     }
 
-    // Trace output is only checked for a few tests.
-    bool check_trace_output =
-        path().string().find("trace_testdata/") != std::string::npos;
-
     int exit_code = ExplorerMain(
         args.size(), args.data(), /*install_path=*/"", PreludePath, stdout,
-        stderr, check_trace_output ? stdout : trace_stream_, fs);
+        stderr, check_trace_output() ? stdout : trace_stream_, fs);
 
     return exit_code == EXIT_SUCCESS;
   }
@@ -83,7 +86,37 @@ class ExplorerFileTest : public FileTestBase {
     return args;
   }
 
+  auto GetLineNumberReplacement(llvm::ArrayRef<llvm::StringRef> filenames)
+      -> LineNumberReplacement override {
+    if (check_trace_output()) {
+      return {.has_file = false,
+              .pattern = R"((DO NOT MATCH))",
+              // The `{{{{` becomes `{{`.
+              .line_formatv = "{{{{ *}}{0}"};
+    }
+    return FileTestBase::GetLineNumberReplacement(filenames);
+  }
+
+  auto DoExtraCheckReplacements(std::string& check_line) -> void override {
+    // Ignore the resulting column of EndOfFile because it's often the end of
+    // the CHECK comment.
+    RE2::GlobalReplace(&check_line, prelude_line_re_,
+                       R"(prelude.carbon:{{\\d+}})");
+    if (check_trace_output()) {
+      // Replace timings in trace output.
+      RE2::GlobalReplace(&check_line, timing_re_, R"(\1{{\\d+}}\2)");
+    }
+  }
+
+ private:
+  // Trace output is directly checked for a few tests.
+  auto check_trace_output() -> bool {
+    return path().string().find("/trace/") != std::string::npos;
+  }
+
   TestRawOstream trace_stream_;
+  RE2 prelude_line_re_;
+  RE2 timing_re_;
 };
 
 }  // namespace

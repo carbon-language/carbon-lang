@@ -24,9 +24,9 @@ class LexerFileTest : public DriverFileTestBase {
   auto GetLineNumberReplacement(llvm::ArrayRef<llvm::StringRef> /*filenames*/)
       -> LineNumberReplacement override {
     return {.has_file = false,
-            .pattern = R"(line: +(\d+))",
+            .pattern = R"(line: (\s*\d+))",
             // The `{{{{` becomes `{{`.
-            .sub_for_formatv = "line: {{{{ *}}{0}"};
+            .line_formatv = "{{{{ *}}{0}"};
   }
 
   auto DoExtraCheckReplacements(std::string& check_line) -> void override {

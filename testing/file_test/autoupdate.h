@@ -20,8 +20,8 @@ struct FileTestLineNumberReplacement {
   // should have a file and line group; otherwise, only a line group.
   std::string pattern;
 
-  // sub_for_formatv should provide {0} to substitute with [[@LINE...]] deltas.
-  std::string sub_for_formatv;
+  // line_formatv should provide {0} to substitute with [[@LINE...]] deltas.
+  std::string line_formatv;
 };
 
 // Automatically updates CHECKs in the provided file. Returns true if updated.
