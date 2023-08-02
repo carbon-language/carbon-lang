@@ -44,13 +44,13 @@
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+9, type: type1},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block3, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+11, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+11},
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block4, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type2},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+16, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+16, arg1: node+5, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+16, arg1: node+5},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

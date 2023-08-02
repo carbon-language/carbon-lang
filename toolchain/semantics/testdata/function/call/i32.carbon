@@ -28,14 +28,14 @@
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+0, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+0, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+5, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+7, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block6, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+9, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+9},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [

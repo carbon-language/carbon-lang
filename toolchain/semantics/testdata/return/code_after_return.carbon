@@ -30,7 +30,7 @@
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+4, arg1: node+5, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+6, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+6},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
