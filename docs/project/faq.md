@@ -461,7 +461,7 @@ migration of C++ code.
 References:
 
 -   [Generics: Goals: Better compiler experience](/docs/design/generics/goals.md#better-compiler-experience)
--   [Generics: Terminology: Generic versus template parameters](/docs/design/generics/terminology.md#generic-versus-template-parameters)
+-   [Generics: Terminology: Generic versus template parameters](/docs/design/generics/terminology.md#checked-versus-template-parameters)
 
 ### What is Carbon's memory model?
 

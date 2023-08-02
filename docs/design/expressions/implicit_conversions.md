@@ -184,8 +184,8 @@ var r: Base** = &p;
 
 ### Type-of-types
 
-A type `T` with [type-of-type](../generics/terminology.md#type-of-type) `TT1`
-can be implicitly converted to the type-of-type `TT2` if `T`
+A type `T` with [type-of-type](../generics/terminology.md#facet-type) `TT1` can
+be implicitly converted to the type-of-type `TT2` if `T`
 [satisfies the requirements](../generics/details.md#subtyping-between-type-of-types)
 of `TT2`.
 
