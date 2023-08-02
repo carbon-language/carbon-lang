@@ -20,76 +20,7 @@
 
 namespace Carbon::Testing {
 
-// A framework for testing files. Children write
-// `CARBON_FILE_TEST_FACTORY(MyTest)` which is used to construct the tests.
-// `Run` must also be implemented and will be called as part of individual test
-// executions. This framework includes a `main` implementation, so users must
-// not provide one.
-//
-// Settings in files are provided in comments, similar to `FileCheck` syntax.
-// `bazel run :file_test -- --autoupdate` automatically constructs compatible
-// CHECK:STDOUT: and CHECK:STDERR: lines.
-//
-// Supported comment markers are:
-//
-// - // AUTOUDPATE
-//   // NOAUTOUPDATE
-//
-//   Controls whether the checks in the file will be autoupdated if --autoupdate
-//   is passed. Exactly one of these two markers must be present. If the file
-//   uses splits, AUTOUPDATE must currently be before any splits.
-//
-//   When autoupdating, CHECKs will be inserted starting below AUTOUPDATE. When
-//   a CHECK has line information, autoupdate will try to insert the CHECK
-//   immediately above the line it's associated with. When that happens, any
-//   following CHECK lines without line information will immediately follow,
-//   between the CHECK with line information and the associated line.
-//
-// - // ARGS: <arguments>
-//
-//   Provides a space-separated list of arguments, which will be passed to
-//   RunWithFiles as test_args. These are intended for use by the command as
-//   arguments.
-//
-//   Supported replacements within arguments are:
-//
-//   - %s
-//
-//     Replaced with the list of files. Currently only allowed as a standalone
-//     argument, not a substring.
-//
-//   - %t
-//
-//     Replaced with `${TEST_TMPDIR}/temp_file`.
-//
-//   ARGS can be specified at most once. If not provided, the FileTestBase child
-//   is responsible for providing default arguments.
-//
-// - // SET-CHECK-SUBSET
-//
-//   By default, all lines of output must have a CHECK match. Adding this as a
-//   flag sets it so that non-matching lines are ignored. All provided
-//   CHECK:STDOUT: and CHECK:STDERR: lines must still have a match in output.
-//
-//   SET-CHECK-SUBSET can be specified at most once.
-//
-// - // --- <filename>
-//
-//   By default, all file content is provided to the test as a single file in
-//   test_files. Using this marker allows the file to be split into multiple
-//   files which will all be passed to test_files.
-//
-//   Files are not created on disk; it's expected the child will create an
-//   InMemoryFilesystem if needed.
-//
-// - // CHECK:STDOUT: <output line>
-//   // CHECK:STDERR: <output line>
-//
-//   These provides a match for output from the command. See SET-CHECK-SUBSET
-//   for how to change from full to subset matching of output.
-//
-//   Output line matchers may contain `[[@LINE+offset]` and
-//   `{{regex}}` syntaxes, similar to `FileCheck`.
+// A framework for testing files. See README.md for documentation.
 class FileTestBase : public testing::Test {
  public:
   struct TestFile {
