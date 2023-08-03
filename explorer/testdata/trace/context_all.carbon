@@ -19,4 +19,4 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ** declaring function Main
 // CHECK:STDOUT: interface As {
 // CHECK:STDOUT: fn Main ()-> i32 {
-// CHECK:STDOUT: --- step exp Main() .0. (<Main()>:0) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `Main()` (<Main()>:0) --->

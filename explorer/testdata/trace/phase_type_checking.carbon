@@ -25,11 +25,13 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ** declaring function Main
 // CHECK:STDOUT: checking TuplePattern ()
 // CHECK:STDOUT: checking IntTypeLiteral i32
-// CHECK:STDOUT: (+) stack-push: i32 .0.
-// CHECK:STDOUT: (+) stack-push: i32 .0.
-// CHECK:STDOUT: --- step exp i32 .0. (phase_type_checking.carbon:9) --->
-// CHECK:STDOUT: (-) stack-pop: i32 .0.
-// CHECK:STDOUT: (-) stack-pop: i32 .1. {{\[\[}}i32]]
+// CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9) --->
+// CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9)
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9) --->
+// CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `i32` results: [`i32`]  (phase_type_checking.carbon:9) --->
+// CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `i32` results: [`i32`]  (phase_type_checking.carbon:9)
 // CHECK:STDOUT: ** finished declaring function Main of type fn () -> i32
 // CHECK:STDOUT: checking FunctionDeclaration
 // CHECK:STDOUT: ** checking function Main

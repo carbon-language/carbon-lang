@@ -144,6 +144,8 @@ class Action {
   // object.
   auto kind() const -> Kind { return kind_; }
 
+  auto kind_string() const -> std::string_view;
+
   // The position or state of the action. Starts at 0 and is typically
   // incremented after each step.
   auto pos() const -> int { return pos_; }

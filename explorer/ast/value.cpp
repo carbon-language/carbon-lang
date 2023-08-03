@@ -97,7 +97,7 @@ struct NestedValueVisitor {
     // which is not "within" this value, so we shouldn't visit it.
     return true;
   }
-  auto Visit(const VTable&) -> bool { return true; }
+  auto Visit(const VTable*) -> bool { return true; }
 
   llvm::function_ref<bool(const Value*)> callback;
 };

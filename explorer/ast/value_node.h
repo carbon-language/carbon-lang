@@ -137,6 +137,11 @@ class ValueNodeView {
     return std::less<>()(lhs.base_, rhs.base_);
   }
 
+  friend auto hash_value(const ValueNodeView& view) -> llvm::hash_code {
+    using llvm::hash_value;
+    return hash_value(view.base_);
+  }
+
  private:
   Nonnull<const AstNode*> base_;
   std::function<std::optional<Nonnull<const Value*>>(const AstNode&)>
