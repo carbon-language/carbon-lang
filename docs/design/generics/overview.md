@@ -79,20 +79,20 @@ Summary of how Carbon generics work:
     more generally. They are used to avoid writing specialized, near-duplicate
     code for similar situations.
 -   The definition of a _checked_ generic is typechecked once, without having to
-    know the specific values of the generic parameters it is instantiated with.
-    Typechecking the definition of a checked generic requires a precise contract
-    specifying the requirements on the argument values.
+    know the specific argument values of the generic parameters it is
+    instantiated with. Typechecking the definition of a checked generic requires
+    a precise contract specifying the requirements on the argument values.
 -   For parameters that will be used as types, those requirements are written
     using _interfaces_. Interfaces have a name and describe methods, functions,
     and other entities for types to implement.
 -   Types must explicitly _implement_ interfaces to indicate that they support
-    its functionality. A given type may implement an interface at most once.
+    their functionality. A given type may implement an interface at most once.
 -   Implementations may be declared inline in the body of a class definition, or
     out-of-line.
 -   Types may _extend_ an implementation declared inline, in which case you can
     directly call the interface's methods on those types.
 -   Out-of-line implementations may be defined in the library defining the
-    interface rather than the type.
+    interface as an alternative to the type.
 -   Interfaces may be used as the type of a generic parameter. Interfaces are
     _facet types_, whose values are the subset of all types that implement the
     interface. Facet types in general specify the capabilities and requirements
@@ -103,12 +103,12 @@ Summary of how Carbon generics work:
     done with the declared restrictions expressed as the types of bindings in
     the declaration. Inside the body of a checked generic with a facet
     parameter, the API of the facet is just the names defined by the facet type.
--   _Deduced parameters_ are parameters whose values are determined by the
-    values and (most commonly) the types of the explicit arguments. Generic
-    facet parameters are typically deduced.
--   A function with a generic facet parameter can have the same function body as
-    an unparameterized one. Functions can freely mix checked, template, and
-    regular parameters.
+-   _Deduced parameters_ are parameters whose values are determined by the the
+    types of the explicit arguments. Generic facet parameters are typically
+    deduced.
+-   A function with a generic parameter can have the same function body as an
+    unparameterized one. Functions can freely mix checked, template, and regular
+    parameters.
 -   Interfaces can require other interfaces be implemented.
 -   Interfaces can [extend](terminology.md#extending-an-interface) required
     interfaces.
