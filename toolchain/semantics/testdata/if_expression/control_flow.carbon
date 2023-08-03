@@ -86,22 +86,23 @@
 // CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @A
-// CHECK:STDOUT:   %1 = FunctionDeclaration @B
-// CHECK:STDOUT:   %2 = FunctionDeclaration @F
+// CHECK:STDOUT:   %0 = fn_decl @A
+// CHECK:STDOUT:   %1 = fn_decl @B
+// CHECK:STDOUT:   %2 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   ReturnExpression %0
+// CHECK:STDOUT:   %0: i32 = int_value 1
+// CHECK:STDOUT:   ret %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   ReturnExpression %0
+// CHECK:STDOUT:   %0: i32 = int_value 2
+// CHECK:STDOUT:   ret %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {
@@ -109,16 +110,16 @@
 // CHECK:STDOUT:   if %b br !0 else br !1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %0: i32 = Call @A()
+// CHECK:STDOUT:   %0: i32 = call @A()
 // CHECK:STDOUT:   br !2(%0)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %1: i32 = Call @B()
+// CHECK:STDOUT:   %1: i32 = call @B()
 // CHECK:STDOUT:   br !2(%1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2:
-// CHECK:STDOUT:   %2: i32 = BlockArg !2
-// CHECK:STDOUT:   ReturnExpression %2
+// CHECK:STDOUT:   %2: i32 = block_arg !2
+// CHECK:STDOUT:   ret %2
 // CHECK:STDOUT: }
 
 fn A() -> i32 { return 1; }

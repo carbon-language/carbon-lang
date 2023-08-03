@@ -115,25 +115,26 @@
 // CHECK:STDOUT:     node+20,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = StubReference i32
-// CHECK:STDOUT:   %1: type = TupleType (type)
-// CHECK:STDOUT:   %2: (type,) = TupleValue (%0)
-// CHECK:STDOUT:   %3: type = TupleType (i32)
-// CHECK:STDOUT:   %4: type = StructType {.a: i32, .b: (i32,)}
-// CHECK:STDOUT:   %x: {.a: i32, .b: (i32,)} = VarStorage
-// CHECK:STDOUT:   %5: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %6: i32 = StubReference %5
-// CHECK:STDOUT:   %7: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   %8: i32 = StubReference %7
-// CHECK:STDOUT:   %9: (i32,) = TupleValue (%8)
-// CHECK:STDOUT:   %10: (i32,) = StubReference %9
-// CHECK:STDOUT:   %11: {.a: i32, .b: (i32,)} = StructValue (%6, %10)
-// CHECK:STDOUT:   Assign %x, %11
-// CHECK:STDOUT:   %12: type = StubReference i32
-// CHECK:STDOUT:   %13: (type,) = TupleValue (%12)
-// CHECK:STDOUT:   %y: {.a: i32, .b: (i32,)} = VarStorage
-// CHECK:STDOUT:   Assign %y, %x
+// CHECK:STDOUT:   %0: type = stub_reference i32
+// CHECK:STDOUT:   %1: type = tuple_type (type)
+// CHECK:STDOUT:   %2: (type,) = tuple_value (%0)
+// CHECK:STDOUT:   %3: type = tuple_type (i32)
+// CHECK:STDOUT:   %4: type = struct_type {.a: i32, .b: (i32,)}
+// CHECK:STDOUT:   %x: {.a: i32, .b: (i32,)} = var
+// CHECK:STDOUT:   %5: i32 = int_value 1
+// CHECK:STDOUT:   %6: i32 = stub_reference %5
+// CHECK:STDOUT:   %7: i32 = int_value 2
+// CHECK:STDOUT:   %8: i32 = stub_reference %7
+// CHECK:STDOUT:   %9: (i32,) = tuple_value (%8)
+// CHECK:STDOUT:   %10: (i32,) = stub_reference %9
+// CHECK:STDOUT:   %11: {.a: i32, .b: (i32,)} = struct_value (%6, %10)
+// CHECK:STDOUT:   assign %x, %11
+// CHECK:STDOUT:   %12: type = stub_reference i32
+// CHECK:STDOUT:   %13: (type,) = tuple_value (%12)
+// CHECK:STDOUT:   %y: {.a: i32, .b: (i32,)} = var
+// CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }
 
 var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};

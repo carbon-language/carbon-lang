@@ -50,18 +50,19 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %x: i32 = VarStorage
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   Assign %x, %0
-// CHECK:STDOUT:   %1 = FunctionDeclaration @Main
+// CHECK:STDOUT:   %x: i32 = var
+// CHECK:STDOUT:   %0: i32 = int_value 0
+// CHECK:STDOUT:   assign %x, %0
+// CHECK:STDOUT:   %1 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %y: i32 = VarStorage
-// CHECK:STDOUT:   Assign %y, <noderef 6>
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   %y: i32 = var
+// CHECK:STDOUT:   assign %y, <noderef 6>
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 
 var x: i32 = 0;

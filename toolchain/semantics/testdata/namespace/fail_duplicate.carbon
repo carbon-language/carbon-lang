@@ -42,20 +42,21 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = Namespace {.Baz = %1}
-// CHECK:STDOUT:   %1 = FunctionDeclaration @Baz
-// CHECK:STDOUT:   %2 = FunctionDeclaration invalid
+// CHECK:STDOUT:   %0 = namespace {.Baz = %1}
+// CHECK:STDOUT:   %1 = fn_decl @Baz
+// CHECK:STDOUT:   %2 = fn_decl invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn invalid() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 
 namespace Foo;

@@ -76,8 +76,9 @@
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @F
+// CHECK:STDOUT:   %0 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {
@@ -85,16 +86,16 @@
 // CHECK:STDOUT:   if %b br !0 else br !1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %0: i32 = BinaryOperatorAdd %n, %m
+// CHECK:STDOUT:   %0: i32 = add %n, %m
 // CHECK:STDOUT:   br !2(%0)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %1: i32 = BinaryOperatorAdd %m, %n
+// CHECK:STDOUT:   %1: i32 = add %m, %n
 // CHECK:STDOUT:   br !2(%1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2:
-// CHECK:STDOUT:   %2: i32 = BlockArg !2
-// CHECK:STDOUT:   ReturnExpression %2
+// CHECK:STDOUT:   %2: i32 = block_arg !2
+// CHECK:STDOUT:   ret %2
 // CHECK:STDOUT: }
 
 fn F(b: bool, n: i32, m: i32) -> i32 {

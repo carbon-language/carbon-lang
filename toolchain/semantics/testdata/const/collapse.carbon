@@ -60,17 +60,18 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = ConstType i32
-// CHECK:STDOUT:   %1: type = ConstType const i32
-// CHECK:STDOUT:   %2: type = PointerType const i32
-// CHECK:STDOUT:   %3: type = PointerType const i32*
-// CHECK:STDOUT:   %4 = FunctionDeclaration @F
+// CHECK:STDOUT:   %0: type = const_type i32
+// CHECK:STDOUT:   %1: type = const_type const i32
+// CHECK:STDOUT:   %2: type = ptr_type const i32
+// CHECK:STDOUT:   %3: type = ptr_type const i32*
+// CHECK:STDOUT:   %4 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const i32**) -> const i32** {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ReturnExpression %p
+// CHECK:STDOUT:   ret %p
 // CHECK:STDOUT: }
 
 // OK, `const (const i32)` is the same type as `const i32`.

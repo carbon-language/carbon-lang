@@ -84,20 +84,21 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = StructType {.a: f64, .b: i32}
-// CHECK:STDOUT:   %x: {.a: f64, .b: i32} = VarStorage
-// CHECK:STDOUT:   %1: f64 = RealLiteral 0e-1
-// CHECK:STDOUT:   %2: f64 = StubReference %1
-// CHECK:STDOUT:   %3: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %4: i32 = StubReference %3
-// CHECK:STDOUT:   %5: {.a: f64, .b: i32} = StructValue (%2, %4)
-// CHECK:STDOUT:   Assign %x, %5
-// CHECK:STDOUT:   %y: i32 = VarStorage
-// CHECK:STDOUT:   %6: i32 = StructMemberAccess %x, member1
-// CHECK:STDOUT:   Assign %y, %6
-// CHECK:STDOUT:   %z: i32 = VarStorage
-// CHECK:STDOUT:   Assign %z, %y
+// CHECK:STDOUT:   %0: type = struct_type {.a: f64, .b: i32}
+// CHECK:STDOUT:   %x: {.a: f64, .b: i32} = var
+// CHECK:STDOUT:   %1: f64 = real_value 0e-1
+// CHECK:STDOUT:   %2: f64 = stub_reference %1
+// CHECK:STDOUT:   %3: i32 = int_value 1
+// CHECK:STDOUT:   %4: i32 = stub_reference %3
+// CHECK:STDOUT:   %5: {.a: f64, .b: i32} = struct_value (%2, %4)
+// CHECK:STDOUT:   assign %x, %5
+// CHECK:STDOUT:   %y: i32 = var
+// CHECK:STDOUT:   %6: i32 = struct_mem_access %x, member1
+// CHECK:STDOUT:   assign %y, %6
+// CHECK:STDOUT:   %z: i32 = var
+// CHECK:STDOUT:   assign %z, %y
 // CHECK:STDOUT: }
 
 var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};

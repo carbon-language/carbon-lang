@@ -126,43 +126,44 @@
 // CHECK:STDOUT:     node+24,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @Run0
-// CHECK:STDOUT:   %1 = FunctionDeclaration @Run1
-// CHECK:STDOUT:   %2 = FunctionDeclaration @Run2
-// CHECK:STDOUT:   %3 = FunctionDeclaration @Main
+// CHECK:STDOUT:   %0 = fn_decl @Run0
+// CHECK:STDOUT:   %1 = fn_decl @Run1
+// CHECK:STDOUT:   %2 = fn_decl @Run2
+// CHECK:STDOUT:   %3 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run0() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run1(%a: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run2(%a: i32, %b: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %1: i32 = StubReference %0
-// CHECK:STDOUT:   %2: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   %3: i32 = StubReference %2
-// CHECK:STDOUT:   %4: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %5: i32 = StubReference %4
-// CHECK:STDOUT:   %6: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   %7: i32 = StubReference %6
-// CHECK:STDOUT:   %8: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %9: i32 = StubReference %8
-// CHECK:STDOUT:   %10: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   %11: i32 = StubReference %10
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   %0: i32 = int_value 1
+// CHECK:STDOUT:   %1: i32 = stub_reference %0
+// CHECK:STDOUT:   %2: i32 = int_value 0
+// CHECK:STDOUT:   %3: i32 = stub_reference %2
+// CHECK:STDOUT:   %4: i32 = int_value 1
+// CHECK:STDOUT:   %5: i32 = stub_reference %4
+// CHECK:STDOUT:   %6: i32 = int_value 0
+// CHECK:STDOUT:   %7: i32 = stub_reference %6
+// CHECK:STDOUT:   %8: i32 = int_value 1
+// CHECK:STDOUT:   %9: i32 = stub_reference %8
+// CHECK:STDOUT:   %10: i32 = int_value 0
+// CHECK:STDOUT:   %11: i32 = stub_reference %10
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 
 fn Run0() {}

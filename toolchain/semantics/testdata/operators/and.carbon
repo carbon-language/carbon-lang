@@ -71,37 +71,38 @@
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @F
-// CHECK:STDOUT:   %1 = FunctionDeclaration @G
-// CHECK:STDOUT:   %2 = FunctionDeclaration @And
+// CHECK:STDOUT:   %0 = fn_decl @F
+// CHECK:STDOUT:   %1 = fn_decl @G
+// CHECK:STDOUT:   %2 = fn_decl @And
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: bool = BoolLiteral true
-// CHECK:STDOUT:   ReturnExpression %0
+// CHECK:STDOUT:   %0: bool = bool_value true
+// CHECK:STDOUT:   ret %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: bool = BoolLiteral true
-// CHECK:STDOUT:   ReturnExpression %0
+// CHECK:STDOUT:   %0: bool = bool_value true
+// CHECK:STDOUT:   ret %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: bool = Call @F()
-// CHECK:STDOUT:   %1: bool = BoolLiteral false
+// CHECK:STDOUT:   %0: bool = call @F()
+// CHECK:STDOUT:   %1: bool = bool_value false
 // CHECK:STDOUT:   if %0 br !0 else br !1(%1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %2: bool = Call @G()
+// CHECK:STDOUT:   %2: bool = call @G()
 // CHECK:STDOUT:   br !1(%2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %3: bool = BlockArg !1
-// CHECK:STDOUT:   ReturnExpression %3
+// CHECK:STDOUT:   %3: bool = block_arg !1
+// CHECK:STDOUT:   ret %3
 // CHECK:STDOUT: }
 
 fn F() -> bool { return true; }

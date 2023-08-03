@@ -47,15 +47,16 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = StructType {}
-// CHECK:STDOUT:   %1: {} = StructValue ()
-// CHECK:STDOUT:   %x: {} = VarStorage
-// CHECK:STDOUT:   %2: {} = StructValue ()
-// CHECK:STDOUT:   Assign %x, %2
-// CHECK:STDOUT:   %3: {} = StructValue ()
-// CHECK:STDOUT:   %y: {} = VarStorage
-// CHECK:STDOUT:   Assign %y, %x
+// CHECK:STDOUT:   %0: type = struct_type {}
+// CHECK:STDOUT:   %1: {} = struct_value ()
+// CHECK:STDOUT:   %x: {} = var
+// CHECK:STDOUT:   %2: {} = struct_value ()
+// CHECK:STDOUT:   assign %x, %2
+// CHECK:STDOUT:   %3: {} = struct_value ()
+// CHECK:STDOUT:   %y: {} = var
+// CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }
 
 var x: {} = {};

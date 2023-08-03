@@ -46,12 +46,13 @@
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = StructType {.a: i32}
-// CHECK:STDOUT:   %x: {.a: i32} = VarStorage
-// CHECK:STDOUT:   %1: type = StructType {}
-// CHECK:STDOUT:   %2: {} = StructValue ()
-// CHECK:STDOUT:   Assign %x, <error>
+// CHECK:STDOUT:   %0: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %x: {.a: i32} = var
+// CHECK:STDOUT:   %1: type = struct_type {}
+// CHECK:STDOUT:   %2: {} = struct_value ()
+// CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:22: Cannot implicitly convert from `{} as type` to `{.a: i32}`.

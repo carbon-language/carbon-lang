@@ -89,24 +89,25 @@
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = StubReference i32
-// CHECK:STDOUT:   %1: type = StubReference i32
-// CHECK:STDOUT:   %2: type = TupleType (type, type)
-// CHECK:STDOUT:   %3: (type, type) = TupleValue (%0, %1)
-// CHECK:STDOUT:   %4: type = TupleType (i32, i32)
-// CHECK:STDOUT:   %x: (i32, i32) = VarStorage
-// CHECK:STDOUT:   %5: i32 = IntegerLiteral 4
-// CHECK:STDOUT:   %6: i32 = StubReference %5
-// CHECK:STDOUT:   %7: i32 = IntegerLiteral 102
-// CHECK:STDOUT:   %8: i32 = StubReference %7
-// CHECK:STDOUT:   %9: (i32, i32) = TupleValue (%6, %8)
-// CHECK:STDOUT:   Assign %x, %9
-// CHECK:STDOUT:   %10: type = StubReference i32
-// CHECK:STDOUT:   %11: type = StubReference i32
-// CHECK:STDOUT:   %12: (type, type) = TupleValue (%10, %11)
-// CHECK:STDOUT:   %y: (i32, i32) = VarStorage
-// CHECK:STDOUT:   Assign %y, %x
+// CHECK:STDOUT:   %0: type = stub_reference i32
+// CHECK:STDOUT:   %1: type = stub_reference i32
+// CHECK:STDOUT:   %2: type = tuple_type (type, type)
+// CHECK:STDOUT:   %3: (type, type) = tuple_value (%0, %1)
+// CHECK:STDOUT:   %4: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %x: (i32, i32) = var
+// CHECK:STDOUT:   %5: i32 = int_value 4
+// CHECK:STDOUT:   %6: i32 = stub_reference %5
+// CHECK:STDOUT:   %7: i32 = int_value 102
+// CHECK:STDOUT:   %8: i32 = stub_reference %7
+// CHECK:STDOUT:   %9: (i32, i32) = tuple_value (%6, %8)
+// CHECK:STDOUT:   assign %x, %9
+// CHECK:STDOUT:   %10: type = stub_reference i32
+// CHECK:STDOUT:   %11: type = stub_reference i32
+// CHECK:STDOUT:   %12: (type, type) = tuple_value (%10, %11)
+// CHECK:STDOUT:   %y: (i32, i32) = var
+// CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }
 
 var x: (i32, i32) = (4, 102);

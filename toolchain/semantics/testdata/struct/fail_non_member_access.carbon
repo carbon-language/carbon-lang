@@ -63,15 +63,16 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = StructType {.a: i32}
-// CHECK:STDOUT:   %x: {.a: i32} = VarStorage
-// CHECK:STDOUT:   %1: i32 = IntegerLiteral 4
-// CHECK:STDOUT:   %2: i32 = StubReference %1
-// CHECK:STDOUT:   %3: {.a: i32} = StructValue (%2)
-// CHECK:STDOUT:   Assign %x, %3
-// CHECK:STDOUT:   %y: i32 = VarStorage
-// CHECK:STDOUT:   Assign %y, <error>
+// CHECK:STDOUT:   %0: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %x: {.a: i32} = var
+// CHECK:STDOUT:   %1: i32 = int_value 4
+// CHECK:STDOUT:   %2: i32 = stub_reference %1
+// CHECK:STDOUT:   %3: {.a: i32} = struct_value (%2)
+// CHECK:STDOUT:   assign %x, %3
+// CHECK:STDOUT:   %y: i32 = var
+// CHECK:STDOUT:   assign %y, <error>
 // CHECK:STDOUT: }
 
 var x: {.a: i32} = {.a = 4};

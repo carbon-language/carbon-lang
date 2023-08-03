@@ -38,10 +38,11 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %x: i32 = VarStorage
-// CHECK:STDOUT:   %y: i32 = VarStorage
-// CHECK:STDOUT:   Assign %y, <error>
+// CHECK:STDOUT:   %x: i32 = var
+// CHECK:STDOUT:   %y: i32 = var
+// CHECK:STDOUT:   assign %y, <error>
 // CHECK:STDOUT: }
 
 var x: i32;

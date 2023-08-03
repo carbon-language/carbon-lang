@@ -49,7 +49,10 @@ class SemanticsNodeKind : public CARBON_ENUM_BASE(SemanticsNodeKind) {
 
   using EnumBase::Create;
 
-  /// Returns the meaning of the `type` field for this node kind.
+  // Returns the name to use for this node kind in Semantics IR.
+  [[nodiscard]] auto ir_name() const -> llvm::StringRef;
+
+  // Returns the meaning of the `type` field for this node kind.
   [[nodiscard]] auto type_field_kind() const -> SemanticsTypeFieldKind;
 
   // Returns whether this node kind is a code block terminator, such as an

@@ -45,16 +45,17 @@
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @Main
-// CHECK:STDOUT:   %y: i32 = VarStorage
-// CHECK:STDOUT:   Assign %y, <error>
+// CHECK:STDOUT:   %0 = fn_decl @Main
+// CHECK:STDOUT:   %y: i32 = var
+// CHECK:STDOUT:   assign %y, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x: i32 = VarStorage
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   %x: i32 = var
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 
 fn Main() {

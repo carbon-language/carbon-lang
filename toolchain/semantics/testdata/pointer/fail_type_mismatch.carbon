@@ -61,16 +61,17 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: {} = StructValue ()
-// CHECK:STDOUT:   %1: type = PointerType {}
-// CHECK:STDOUT:   %2: type = ConstType {}*
-// CHECK:STDOUT:   %3 = FunctionDeclaration @ConstMismatch
+// CHECK:STDOUT:   %0: {} = struct_value ()
+// CHECK:STDOUT:   %1: type = ptr_type {}
+// CHECK:STDOUT:   %2: type = const_type {}*
+// CHECK:STDOUT:   %3 = fn_decl @ConstMismatch
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ReturnExpression <error>
+// CHECK:STDOUT:   ret <error>
 // CHECK:STDOUT: }
 
 fn ConstMismatch(p: const {}*) -> const ({}*) {

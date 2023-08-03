@@ -49,13 +49,14 @@
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @Foo
+// CHECK:STDOUT:   %0 = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32, %b: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 
 fn Foo(a: i32, b: i32,) {}

@@ -60,21 +60,22 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @Run
-// CHECK:STDOUT:   %1 = FunctionDeclaration @Main
+// CHECK:STDOUT:   %0 = fn_decl @Run
+// CHECK:STDOUT:   %1 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run(%a: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: f64 = RealLiteral 10e-1
-// CHECK:STDOUT:   %1: f64 = StubReference %0
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   %0: f64 = real_value 10e-1
+// CHECK:STDOUT:   %1: f64 = stub_reference %0
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 
 fn Run(a: i32) {}

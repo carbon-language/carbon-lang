@@ -47,21 +47,22 @@
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @Foo
-// CHECK:STDOUT:   %1 = FunctionDeclaration @Main
+// CHECK:STDOUT:   %0 = fn_decl @Foo
+// CHECK:STDOUT:   %1 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: type = TupleType ()
-// CHECK:STDOUT:   %1: () = Call @Foo()
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   %0: type = tuple_type ()
+// CHECK:STDOUT:   %1: () = call @Foo()
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 
 fn Foo() {}

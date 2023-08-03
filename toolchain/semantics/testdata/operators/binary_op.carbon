@@ -41,16 +41,17 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @Main
+// CHECK:STDOUT:   %0 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 12
-// CHECK:STDOUT:   %1: i32 = IntegerLiteral 34
-// CHECK:STDOUT:   %2: i32 = BinaryOperatorAdd %0, %1
-// CHECK:STDOUT:   ReturnExpression %2
+// CHECK:STDOUT:   %0: i32 = int_value 12
+// CHECK:STDOUT:   %1: i32 = int_value 34
+// CHECK:STDOUT:   %2: i32 = add %0, %1
+// CHECK:STDOUT:   ret %2
 // CHECK:STDOUT: }
 
 fn Main() -> i32 {

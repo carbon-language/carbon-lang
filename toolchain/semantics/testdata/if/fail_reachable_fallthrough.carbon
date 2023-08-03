@@ -120,10 +120,11 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @If1
-// CHECK:STDOUT:   %1 = FunctionDeclaration @If2
-// CHECK:STDOUT:   %2 = FunctionDeclaration @If3
+// CHECK:STDOUT:   %0 = fn_decl @If1
+// CHECK:STDOUT:   %1 = fn_decl @If2
+// CHECK:STDOUT:   %2 = fn_decl @If3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If1(%b: bool) -> i32 {
@@ -131,8 +132,8 @@
 // CHECK:STDOUT:   if %b br !0 else br !1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   ReturnExpression %0
+// CHECK:STDOUT:   %0: i32 = int_value 1
+// CHECK:STDOUT:   ret %0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
 // CHECK:STDOUT:   br !2
@@ -148,8 +149,8 @@
 // CHECK:STDOUT:   br !2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   ReturnExpression %0
+// CHECK:STDOUT:   %0: i32 = int_value 2
+// CHECK:STDOUT:   ret %0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2:
 // CHECK:STDOUT: }
@@ -159,8 +160,8 @@
 // CHECK:STDOUT:   if %b br !0 else br !1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   ReturnExpression %0
+// CHECK:STDOUT:   %0: i32 = int_value 1
+// CHECK:STDOUT:   ret %0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
 // CHECK:STDOUT: }

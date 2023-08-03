@@ -53,23 +53,24 @@
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = Namespace {.Bar = %1}
-// CHECK:STDOUT:   %1 = Namespace {.Wiz = %2, .Baz = %3}
-// CHECK:STDOUT:   %2 = FunctionDeclaration @Wiz
-// CHECK:STDOUT:   %3 = FunctionDeclaration @Baz
+// CHECK:STDOUT:   %0 = namespace {.Bar = %1}
+// CHECK:STDOUT:   %1 = namespace {.Wiz = %2, .Baz = %3}
+// CHECK:STDOUT:   %2 = fn_decl @Wiz
+// CHECK:STDOUT:   %3 = fn_decl @Baz
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Wiz() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: type = TupleType ()
-// CHECK:STDOUT:   %1: () = Call @Wiz()
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   %0: type = tuple_type ()
+// CHECK:STDOUT:   %1: () = call @Wiz()
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 
 namespace Foo;

@@ -68,23 +68,24 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: () = TupleValue ()
-// CHECK:STDOUT:   %1 = FunctionDeclaration @Echo
-// CHECK:STDOUT:   %2 = FunctionDeclaration @Main
+// CHECK:STDOUT:   %0: () = tuple_value ()
+// CHECK:STDOUT:   %1 = fn_decl @Echo
+// CHECK:STDOUT:   %2 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: ()) -> () {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ReturnExpression %a
+// CHECK:STDOUT:   ret %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: () = TupleValue ()
-// CHECK:STDOUT:   %1: () = StubReference %0
-// CHECK:STDOUT:   %2: () = Call @Echo(%1)
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   %0: () = tuple_value ()
+// CHECK:STDOUT:   %1: () = stub_reference %0
+// CHECK:STDOUT:   %2: () = call @Echo(%1)
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 
 fn Echo(a: ()) -> () {

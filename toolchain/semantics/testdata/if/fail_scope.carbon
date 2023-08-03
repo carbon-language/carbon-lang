@@ -65,8 +65,9 @@
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @VarScope
+// CHECK:STDOUT:   %0 = fn_decl @VarScope
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @VarScope(%b: bool) -> i32 {
@@ -74,13 +75,13 @@
 // CHECK:STDOUT:   if %b br !0 else br !1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %n: i32 = VarStorage
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   Assign %n, %0
-// CHECK:STDOUT:   ReturnExpression %n
+// CHECK:STDOUT:   %n: i32 = var
+// CHECK:STDOUT:   %0: i32 = int_value 2
+// CHECK:STDOUT:   assign %n, %0
+// CHECK:STDOUT:   ret %n
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
-// CHECK:STDOUT:   ReturnExpression <error>
+// CHECK:STDOUT:   ret <error>
 // CHECK:STDOUT: }
 
 fn VarScope(b: bool) -> i32 {

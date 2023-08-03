@@ -37,14 +37,15 @@
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @Main
+// CHECK:STDOUT:   %0 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: f64 = RealLiteral 10e-1
-// CHECK:STDOUT:   ReturnExpression <error>
+// CHECK:STDOUT:   %0: f64 = real_value 10e-1
+// CHECK:STDOUT:   ret <error>
 // CHECK:STDOUT: }
 
 fn Main() -> i32 {

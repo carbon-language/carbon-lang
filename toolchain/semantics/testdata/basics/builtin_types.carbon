@@ -64,18 +64,19 @@
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %test_i32: i32 = VarStorage
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   Assign %test_i32, %0
-// CHECK:STDOUT:   %test_f64: f64 = VarStorage
-// CHECK:STDOUT:   %1: f64 = RealLiteral 1e-1
-// CHECK:STDOUT:   Assign %test_f64, %1
-// CHECK:STDOUT:   %test_str: String = VarStorage
-// CHECK:STDOUT:   %2: String = StringLiteral "Test"
-// CHECK:STDOUT:   Assign %test_str, %2
-// CHECK:STDOUT:   %test_type: type = VarStorage
-// CHECK:STDOUT:   Assign %test_type, i32
+// CHECK:STDOUT:   %test_i32: i32 = var
+// CHECK:STDOUT:   %0: i32 = int_value 0
+// CHECK:STDOUT:   assign %test_i32, %0
+// CHECK:STDOUT:   %test_f64: f64 = var
+// CHECK:STDOUT:   %1: f64 = real_value 1e-1
+// CHECK:STDOUT:   assign %test_f64, %1
+// CHECK:STDOUT:   %test_str: String = var
+// CHECK:STDOUT:   %2: String = string_value "Test"
+// CHECK:STDOUT:   assign %test_str, %2
+// CHECK:STDOUT:   %test_type: type = var
+// CHECK:STDOUT:   assign %test_type, i32
 // CHECK:STDOUT: }
 
 var test_i32: i32 = 0;

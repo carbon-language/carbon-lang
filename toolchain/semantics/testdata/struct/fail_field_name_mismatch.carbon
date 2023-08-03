@@ -59,14 +59,15 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = StructType {.a: i32}
-// CHECK:STDOUT:   %x: {.a: i32} = VarStorage
-// CHECK:STDOUT:   %1: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %2: i32 = StubReference %1
-// CHECK:STDOUT:   %3: type = StructType {.b: i32}
-// CHECK:STDOUT:   %4: {.b: i32} = StructValue (%2)
-// CHECK:STDOUT:   Assign %x, <error>
+// CHECK:STDOUT:   %0: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %x: {.a: i32} = var
+// CHECK:STDOUT:   %1: i32 = int_value 1
+// CHECK:STDOUT:   %2: i32 = stub_reference %1
+// CHECK:STDOUT:   %3: type = struct_type {.b: i32}
+// CHECK:STDOUT:   %4: {.b: i32} = struct_value (%2)
+// CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:28: Cannot implicitly convert from `{.b: i32}` to `{.a: i32}`.

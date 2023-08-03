@@ -40,12 +40,13 @@
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %test_i32: i32 = VarStorage
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %1: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   %2: i32 = BinaryOperatorAdd %0, %1
-// CHECK:STDOUT:   Assign %test_i32, %2
+// CHECK:STDOUT:   %test_i32: i32 = var
+// CHECK:STDOUT:   %0: i32 = int_value 1
+// CHECK:STDOUT:   %1: i32 = int_value 2
+// CHECK:STDOUT:   %2: i32 = add %0, %1
+// CHECK:STDOUT:   assign %test_i32, %2
 // CHECK:STDOUT: }
 
 var test_i32: i32 = ((1) + (2));

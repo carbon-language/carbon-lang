@@ -62,16 +62,17 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = StructType {}
-// CHECK:STDOUT:   %1: {} = StructValue ()
-// CHECK:STDOUT:   %2: type = StructType {.a: {}}
-// CHECK:STDOUT:   %x: {.a: {}} = VarStorage
-// CHECK:STDOUT:   %3: {} = StructValue ()
-// CHECK:STDOUT:   %4: {} = StubReference %3
-// CHECK:STDOUT:   %5: type = StructType {.b: {}}
-// CHECK:STDOUT:   %6: {.b: {}} = StructValue (%4)
-// CHECK:STDOUT:   Assign %x, <error>
+// CHECK:STDOUT:   %0: type = struct_type {}
+// CHECK:STDOUT:   %1: {} = struct_value ()
+// CHECK:STDOUT:   %2: type = struct_type {.a: {}}
+// CHECK:STDOUT:   %x: {.a: {}} = var
+// CHECK:STDOUT:   %3: {} = struct_value ()
+// CHECK:STDOUT:   %4: {} = stub_reference %3
+// CHECK:STDOUT:   %5: type = struct_type {.b: {}}
+// CHECK:STDOUT:   %6: {.b: {}} = struct_value (%4)
+// CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:28: Cannot implicitly convert from `{.b: {}}` to `{.a: {}}`.

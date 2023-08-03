@@ -60,8 +60,9 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @If
+// CHECK:STDOUT:   %0 = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) -> i32 {
@@ -69,12 +70,12 @@
 // CHECK:STDOUT:   if %b br !0 else br !1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   ReturnExpression %0
+// CHECK:STDOUT:   %0: i32 = int_value 1
+// CHECK:STDOUT:   ret %0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %1: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   ReturnExpression %1
+// CHECK:STDOUT:   %1: i32 = int_value 2
+// CHECK:STDOUT:   ret %1
 // CHECK:STDOUT: }
 
 fn If(b: bool) -> i32 {

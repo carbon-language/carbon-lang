@@ -60,15 +60,16 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = PointerType i32
-// CHECK:STDOUT:   %1: type = PointerType i32*
-// CHECK:STDOUT:   %2 = FunctionDeclaration @G
+// CHECK:STDOUT:   %0: type = ptr_type i32
+// CHECK:STDOUT:   %1: type = ptr_type i32*
+// CHECK:STDOUT:   %2 = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p: const i32**) -> i32** {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ReturnExpression <error>
+// CHECK:STDOUT:   ret <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:9: `const` applied repeatedly to the same type has no additional effect.

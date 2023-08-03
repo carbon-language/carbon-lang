@@ -122,12 +122,14 @@ class SemanticsIRFormatter {
       : semantics_ir_(semantics_ir), out_(out) {}
 
   auto Format() -> void {
-    // TODO: Include more information from the package declaration.
+    // TODO: Include information from the package declaration, once we fully
+    // support it.
     out_ << "package {\n";
     // TODO: Handle the case where there are multiple top-level node blocks.
     // For example, there may be branching in the initializer of a global or a
     // type expression.
-    if (auto block_id = semantics_ir_.top_node_block_id(); block_id.is_valid()) {
+    if (auto block_id = semantics_ir_.top_node_block_id();
+        block_id.is_valid()) {
       NodeNameScope package_scope(*this);
       package_scope.CollectNamesInBlock(block_id);
       FormatCodeBlock(block_id);
@@ -211,23 +213,20 @@ class SemanticsIRFormatter {
 
   auto FormatInstruction(SemanticsNodeId node_id, SemanticsNode node) -> void {
     switch (node.kind()) {
-#define CARBON_SEMANTICS_NODE_KIND(Name)                         \
-  case SemanticsNodeKind::Name:                                  \
-    FormatInstruction<SemanticsNode::Name>(node_id, node, #Name, \
-                                           node.GetAs##Name());  \
+#define CARBON_SEMANTICS_NODE_KIND(Name)                   \
+  case SemanticsNodeKind::Name:                            \
+    FormatInstruction<SemanticsNode::Name>(node_id, node); \
     break;
 #include "toolchain/semantics/semantics_node_kind.def"
     }
   }
 
   template <typename Kind>
-  auto FormatInstruction(SemanticsNodeId node_id, SemanticsNode node,
-                         llvm::StringRef name, decltype(Kind::Get(node)) args)
-      -> void {
+  auto FormatInstruction(SemanticsNodeId node_id, SemanticsNode node) -> void {
     out_ << "  ";
     FormatInstructionLHS(node_id, node);
-    out_ << name;
-    FormatInstructionRHS<Kind>(node, args);
+    out_ << node.kind().ir_name();
+    FormatInstructionRHS<Kind>(node);
     out_ << "\n";
   }
 
@@ -238,103 +237,102 @@ class SemanticsIRFormatter {
       out_ << ": ";
       FormatType(node.type_id());
       out_ << " = ";
-    } else if (node.kind().type_field_kind() == SemanticsTypeFieldKind::UntypedValue) {
+    } else if (node.kind().type_field_kind() ==
+               SemanticsTypeFieldKind::UntypedValue) {
       FormatNodeName(node_id);
       out_ << " = ";
     }
   }
 
   template <typename Kind>
-  auto FormatInstructionRHS(SemanticsNode node, decltype(Kind::Get(node)) args)
-      -> void {
-    FormatArgs(args);
+  auto FormatInstructionRHS(SemanticsNode node) -> void {
+    FormatArgs(Kind::Get(node));
   }
 
   // BindName is handled by the NodeNamer and doesn't appear in the output.
   template <>
-  auto FormatInstruction<SemanticsNode::BindName>(
-      SemanticsNodeId, SemanticsNode, llvm::StringRef,
-      std::pair<SemanticsStringId, SemanticsNodeId>) -> void {}
+  auto FormatInstruction<SemanticsNode::BindName>(SemanticsNodeId,
+                                                  SemanticsNode) -> void {}
 
   template <>
-  auto FormatInstructionRHS<SemanticsNode::BlockArg>(SemanticsNode,
-                                                     SemanticsNodeBlockId self)
+  auto FormatInstructionRHS<SemanticsNode::BlockArg>(SemanticsNode node)
       -> void {
     out_ << " ";
-    FormatLabel(self);
+    FormatLabel(node.GetAsBlockArg());
   }
 
   template <>
-  auto FormatInstruction<SemanticsNode::BranchIf>(
-      SemanticsNodeId, SemanticsNode, llvm::StringRef,
-      std::pair<SemanticsNodeBlockId, SemanticsNodeId> args) -> void {
+  auto FormatInstruction<SemanticsNode::BranchIf>(SemanticsNodeId,
+                                                  SemanticsNode node) -> void {
     if (!in_terminator_sequence) {
       out_ << "  ";
     }
+    auto [label_id, cond_id] = node.GetAsBranchIf();
     out_ << "if ";
-    FormatNodeName(args.second);
+    FormatNodeName(cond_id);
     out_ << " br ";
-    FormatLabel(args.first);
+    FormatLabel(label_id);
     out_ << " else ";
     in_terminator_sequence = true;
   }
 
   template <>
-  auto FormatInstruction<SemanticsNode::BranchWithArg>(
-      SemanticsNodeId, SemanticsNode, llvm::StringRef,
-      std::pair<SemanticsNodeBlockId, SemanticsNodeId> args) -> void {
+  auto FormatInstruction<SemanticsNode::BranchWithArg>(SemanticsNodeId,
+                                                       SemanticsNode node)
+      -> void {
     if (!in_terminator_sequence) {
       out_ << "  ";
     }
+    auto [label_id, arg_id] = node.GetAsBranchWithArg();
     out_ << "br ";
-    FormatLabel(args.first);
+    FormatLabel(label_id);
     out_ << "(";
-    FormatNodeName(args.second);
+    FormatNodeName(arg_id);
     out_ << ")\n";
     in_terminator_sequence = false;
   }
 
   template <>
-  auto FormatInstruction<SemanticsNode::Branch>(
-      SemanticsNodeId, SemanticsNode, llvm::StringRef,
-      SemanticsNodeBlockId target) -> void {
+  auto FormatInstruction<SemanticsNode::Branch>(SemanticsNodeId,
+                                                SemanticsNode node) -> void {
     if (!in_terminator_sequence) {
       out_ << "  ";
     }
     out_ << "br ";
-    FormatLabel(target);
+    FormatLabel(node.GetAsBranch());
     out_ << "\n";
     in_terminator_sequence = false;
   }
 
   template <>
-  auto FormatInstructionRHS<SemanticsNode::Call>(
-      SemanticsNode, std::pair<SemanticsNodeBlockId, SemanticsFunctionId> args)
-      -> void {
+  auto FormatInstructionRHS<SemanticsNode::Call>(SemanticsNode node) -> void {
     out_ << " ";
-    FormatArg(args.second);
-    FormatArg(args.first);
+    auto [args_id, callee_id] = node.GetAsCall();
+    FormatArg(callee_id);
+    FormatArg(args_id);
   }
 
   template <>
-  auto FormatInstructionRHS<SemanticsNode::CrossReference>(
-      SemanticsNode,
-      std::pair<SemanticsCrossReferenceIRId, SemanticsNodeId> args) -> void {
-    // TODO: Figure out a way to make this meaningful.
-    out_ << " " << args.first << "." << args.second;
+  auto FormatInstructionRHS<SemanticsNode::CrossReference>(SemanticsNode node)
+      -> void {
+    // TODO: Figure out a way to make this meaningful. We'll need some way to
+    // name cross-reference IRs, perhaps by the node ID of the import?
+    auto [xref_id, node_id] = node.GetAsCrossReference();
+    out_ << " " << xref_id << "." << node_id;
   }
 
+  // StructTypeFields are formatted as part of their StructType.
   template <>
-  auto FormatInstruction<SemanticsNode::StructTypeField>(
-      SemanticsNodeId, SemanticsNode, llvm::StringRef,
-      std::pair<SemanticsStringId, SemanticsTypeId>) -> void {}
+  auto FormatInstruction<SemanticsNode::StructTypeField>(SemanticsNodeId,
+                                                         SemanticsNode)
+      -> void {}
 
   template <>
-  auto FormatInstructionRHS<SemanticsNode::StructType>(
-      SemanticsNode, SemanticsNodeBlockId types_id) -> void {
+  auto FormatInstructionRHS<SemanticsNode::StructType>(SemanticsNode node)
+      -> void {
     out_ << " {";
     llvm::ListSeparator sep;
-    for (auto field_id : semantics_ir_.GetNodeBlock(types_id)) {
+    for (auto field_id : semantics_ir_.GetNodeBlock(node.GetAsStructType())) {
       out_ << sep << ".";
       auto [field_name_id, field_type_id] =
           semantics_ir_.GetNode(field_id).GetAsStructTypeField();

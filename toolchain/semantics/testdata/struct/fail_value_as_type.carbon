@@ -48,12 +48,13 @@
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %1: i32 = StubReference %0
-// CHECK:STDOUT:   %2: type = StructType {.a: i32}
-// CHECK:STDOUT:   %3: {.a: i32} = StructValue (%1)
-// CHECK:STDOUT:   %x: <error> = VarStorage
+// CHECK:STDOUT:   %0: i32 = int_value 1
+// CHECK:STDOUT:   %1: i32 = stub_reference %0
+// CHECK:STDOUT:   %2: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %3: {.a: i32} = struct_value (%1)
+// CHECK:STDOUT:   %x: <error> = var
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:15: Cannot implicitly convert from `{.a: i32}` to `type`.

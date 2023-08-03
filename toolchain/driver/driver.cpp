@@ -244,10 +244,11 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree done ***\n";
   if (dump_mode == DumpMode::RawSemanticsIR) {
     semantics_ir.Print(output_stream_, semantics_ir_include_builtins);
+    output_stream_ << "\n";
+    FormatSemanticsIR(semantics_ir, output_stream_);
     return !has_errors;
   }
   if (dump_mode == DumpMode::SemanticsIR) {
-    semantics_ir.Print(output_stream_, semantics_ir_include_builtins);
     FormatSemanticsIR(semantics_ir, output_stream_);
     return !has_errors;
   }

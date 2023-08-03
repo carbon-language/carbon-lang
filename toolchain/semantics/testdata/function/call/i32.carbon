@@ -68,24 +68,25 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @Echo
-// CHECK:STDOUT:   %1 = FunctionDeclaration @Main
+// CHECK:STDOUT:   %0 = fn_decl @Echo
+// CHECK:STDOUT:   %1 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ReturnExpression %a
+// CHECK:STDOUT:   ret %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b: i32 = VarStorage
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %1: i32 = StubReference %0
-// CHECK:STDOUT:   %2: i32 = Call @Echo(%1)
-// CHECK:STDOUT:   Assign %b, %2
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   %b: i32 = var
+// CHECK:STDOUT:   %0: i32 = int_value 1
+// CHECK:STDOUT:   %1: i32 = stub_reference %0
+// CHECK:STDOUT:   %2: i32 = call @Echo(%1)
+// CHECK:STDOUT:   assign %b, %2
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 
 fn Echo(a: i32) -> i32 {

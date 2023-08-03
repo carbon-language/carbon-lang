@@ -76,26 +76,27 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @Foo
-// CHECK:STDOUT:   %1 = FunctionDeclaration @Main
+// CHECK:STDOUT:   %0 = fn_decl @Foo
+// CHECK:STDOUT:   %1 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %1: i32 = StubReference %0
-// CHECK:STDOUT:   %2: type = TupleType ()
-// CHECK:STDOUT:   %3: () = Call @Foo(%1)
-// CHECK:STDOUT:   %4: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   %5: i32 = StubReference %4
-// CHECK:STDOUT:   %6: () = Call @Foo(%5)
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   %0: i32 = int_value 1
+// CHECK:STDOUT:   %1: i32 = stub_reference %0
+// CHECK:STDOUT:   %2: type = tuple_type ()
+// CHECK:STDOUT:   %3: () = call @Foo(%1)
+// CHECK:STDOUT:   %4: i32 = int_value 1
+// CHECK:STDOUT:   %5: i32 = stub_reference %4
+// CHECK:STDOUT:   %6: () = call @Foo(%5)
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 
 fn Foo(a: i32,) {}

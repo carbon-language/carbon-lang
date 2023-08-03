@@ -54,23 +54,24 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = FunctionDeclaration @Foo
-// CHECK:STDOUT:   %1 = FunctionDeclaration @Run
+// CHECK:STDOUT:   %0 = fn_decl @Foo
+// CHECK:STDOUT:   %1 = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: f64 = RealLiteral 10e-1
-// CHECK:STDOUT:   ReturnExpression %0
+// CHECK:STDOUT:   %0: f64 = real_value 10e-1
+// CHECK:STDOUT:   ret %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x: i32 = VarStorage
-// CHECK:STDOUT:   %0: f64 = Call @Foo()
-// CHECK:STDOUT:   Assign %x, <error>
-// CHECK:STDOUT:   Return
+// CHECK:STDOUT:   %x: i32 = var
+// CHECK:STDOUT:   %0: f64 = call @Foo()
+// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 
 fn Foo() -> f64 { return 1.0; }

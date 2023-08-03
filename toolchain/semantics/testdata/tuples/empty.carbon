@@ -49,15 +49,16 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = TupleType ()
-// CHECK:STDOUT:   %1: () = TupleValue ()
-// CHECK:STDOUT:   %x: () = VarStorage
-// CHECK:STDOUT:   %2: () = TupleValue ()
-// CHECK:STDOUT:   Assign %x, %2
-// CHECK:STDOUT:   %3: () = TupleValue ()
-// CHECK:STDOUT:   %y: () = VarStorage
-// CHECK:STDOUT:   Assign %y, %x
+// CHECK:STDOUT:   %0: type = tuple_type ()
+// CHECK:STDOUT:   %1: () = tuple_value ()
+// CHECK:STDOUT:   %x: () = var
+// CHECK:STDOUT:   %2: () = tuple_value ()
+// CHECK:STDOUT:   assign %x, %2
+// CHECK:STDOUT:   %3: () = tuple_value ()
+// CHECK:STDOUT:   %y: () = var
+// CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }
 
 var x: () = ();
