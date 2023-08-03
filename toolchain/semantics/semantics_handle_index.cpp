@@ -29,23 +29,24 @@ auto SemanticsHandleIndexExpression(SemanticsContext& context,
 
   if (name_type_node.kind() == SemanticsNodeKind::TupleType &&
       index_node.kind() == SemanticsNodeKind::IntegerLiteral) {
-    auto index_val = *(context.semantics_ir()
-                           .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
-                           .getRawData());
+    const auto& index_val = (context.semantics_ir().GetIntegerLiteral(
+        index_node.GetAsIntegerLiteral()));
     auto type_block =
         context.semantics_ir().GetTypeBlock(name_type_node.GetAsTupleType());
 
-    if (index_val >= static_cast<uint64_t>(type_block.size())) {
+    if (index_val.uge(static_cast<uint64_t>(type_block.size()))) {
       CARBON_DIAGNOSTIC(OutOfBoundsAccess, Error,
-                        "Index `{0}` is past the end of `{1}`.", uint64_t,
+                        "Index `{0}` is past the end of `{1}`.", llvm::APSInt,
                         std::string);
       context.emitter().Emit(
-          parse_node, OutOfBoundsAccess, index_val,
+          parse_node, OutOfBoundsAccess,
+          llvm::APSInt(index_val, /*isUnsigned=*/true),
           context.semantics_ir().StringifyType(name_node.type_id()));
     } else {
-      context.AddNodeAndPush(parse_node, SemanticsNode::Index::Make(
-                                             parse_node, type_block[index_val],
-                                             name_node_id, index_node_id));
+      context.AddNodeAndPush(
+          parse_node, SemanticsNode::Index::Make(
+                          parse_node, type_block[index_val.getZExtValue()],
+                          name_node_id, index_node_id));
       return true;
     }
   } else if (index_node.kind() != SemanticsNodeKind::IntegerLiteral) {
