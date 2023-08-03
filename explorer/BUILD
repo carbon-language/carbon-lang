@@ -51,6 +51,7 @@ cc_library(
         "//testing/file_test:file_test_base",
         "//testing/util:test_raw_ostream",
         "@com_google_absl//absl/flags:flag",
+        "@com_googlesource_code_re2//:re2",
     ],
 )
 
@@ -58,11 +59,11 @@ file_test(
     name = "file_test",
     size = "small",
     shard_count = 20,
-    tests = glob([
-        "testdata/**/*.carbon",
-        "trace_testdata/**/*.carbon",
-    ]),
-    deps = [":file_test_common"],
+    tests = glob(["testdata/**/*.carbon"]),
+    deps = [
+        ":file_test_common",
+        "@com_googlesource_code_re2//:re2",
+    ],
 )
 
 file_test(
@@ -71,14 +72,14 @@ file_test(
     args = ["--trace"],
     shard_count = 30,
     tests = glob(
-        # This omits trace_testdata because that's run with trace in the
-        # default mode.
         ["testdata/**/*.carbon"],
         exclude = [
             # `limits` tests check for various limit conditions (such as an
             # infinite loop). The tests collectively don't test tracing
             # because it creates substantial additional overhead.
             "testdata/limits/**",
+            # `trace` tests do tracing by default.
+            "testdata/trace/**",
             # Expensive tests to trace.
             "testdata/assoc_const/rewrite_large_type.carbon",
             "testdata/linked_list/typed_linked_list.carbon",

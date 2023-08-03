@@ -28,7 +28,7 @@
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+4, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -50,7 +50,7 @@ fn Main() {
   var x: i32;
 }
 
-// CHECK:STDERR: fail_lookup_outside_scope.carbon:[[@LINE+3]]:14: Name x not found
+// CHECK:STDERR: fail_lookup_outside_scope.carbon:[[@LINE+3]]:14: Name `x` not found
 // CHECK:STDERR: var y: i32 = x;
 // CHECK:STDERR:              ^
 var y: i32 = x;

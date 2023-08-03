@@ -25,7 +25,7 @@
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+0, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+0, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

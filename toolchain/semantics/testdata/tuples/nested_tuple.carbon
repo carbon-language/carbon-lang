@@ -63,7 +63,7 @@
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type2},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+18, type: type2},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block5, type: type4},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+10, arg1: node+20, type: type4},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+10, arg1: node+20},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

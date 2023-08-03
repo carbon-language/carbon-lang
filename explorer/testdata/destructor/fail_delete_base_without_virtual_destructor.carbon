@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: RUNTIME ERROR: {{.*}}/explorer/data/prelude.carbon:{{.*}}: Deallocating a derived class from base class pointer requires a virtual destructor
+// CHECK:STDERR: RUNTIME ERROR: /explorer/data/prelude.carbon:{{\d+}}: Deallocating a derived class from base class pointer requires a virtual destructor
 
 package ExplorerTest api;
 
