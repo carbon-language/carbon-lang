@@ -43,14 +43,29 @@ pointers to other design documents that dive deeper into individual topics.
 
 ## Goals
 
-The goal of Carbon generics is to provide an alternative to Carbon (or C++)
-templates. Generics in this form should provide many advantages, including:
+Carbon [generics](terminology.md#generic-means-compile-time-parameterized)
+supports generalizing code to apply to more situations by adding compile-time
+parameters, allowing
+[generic programming](https://en.wikipedia.org/wiki/Generic_programming). Carbon
+supports both
+[checked and template](terminology.md#checked-versus-template-parameters)
+generics.
+
+Template generics support a similar model as C++ templates, to help with interop
+and migration. They can be more convenient to write, and support some use cases,
+like [metaprogramming](https://en.wikipedia.org/wiki/Metaprogramming), that are
+difficult with checked generics.
+
+Checked generics are an alternative that has advantages including:
 
 -   Function calls and bodies are checked independently against the function
     signatures.
 -   Clearer and earlier error messages.
 -   Fast builds, particularly development builds.
 -   Support for both static and dynamic dispatch.
+
+Checked generics do have some restrictions, but are expected to be more
+appropriate at public API boundaries than templates.
 
 For more detail, see [the detailed discussion of generics goals](goals.md) and
 [generics terminology](terminology.md).
@@ -59,30 +74,40 @@ For more detail, see [the detailed discussion of generics goals](goals.md) and
 
 Summary of how Carbon generics work:
 
--   _Generics_ are parameterized functions and types that can apply generally.
-    They are used to avoid writing specialized, near-duplicate code for similar
-    situations.
--   Generics are written using _interfaces_ which have a name and describe
-    methods, functions, and other entities for types to implement.
+-   _Generics_ are compile-time parameterized functions, types, and other
+    language constructs. Those parameters allow a single definition to apply
+    more generally. They are used to avoid writing specialized, near-duplicate
+    code for similar situations.
+-   The definition of a _checked_ generic is typechecked once, without having to
+    know the specific values of the generic parameters it is instantiated with.
+    Typechecking the definition of a checked generic requires a precise contract
+    specifying the requirements on the argument values.
+-   For parameters that will be used as types, those requirements are written
+    using _interfaces_. Interfaces have a name and describe methods, functions,
+    and other entities for types to implement.
 -   Types must explicitly _implement_ interfaces to indicate that they support
     its functionality. A given type may implement an interface at most once.
 -   Implementations may be declared inline in the body of a class definition, or
     out-of-line.
--   Types may extend an implementation declared inline, in which case you can
+-   Types may _extend_ an implementation declared inline, in which case you can
     directly call the interface's methods on those types.
 -   Out-of-line implementations may be defined in the library defining the
-    interface.
--   Interfaces are used as the type of a generic type parameter, acting as a
-    _facet type_. Facet types in general specify the capabilities and
-    requirements of the type. Types define specific implementations of those
-    capabilities. Inside such a generic function, the API of the type is
-    [erased](terminology.md#type-erasure), except for the names defined in the
-    facet type.
+    interface rather than the type.
+-   Interfaces may be used as the type of a generic parameter. Interfaces are
+    _facet types_, whose values are the subset of all types that implement the
+    interface. Facet types in general specify the capabilities and requirements
+    of the type. The value of a interface is called a _facet_, and are not
+    types, but are usable as types.
+-   With a template generic, the concrete argument value used by the caller is
+    used for name lookup and typechecking. With checked generics, that is all
+    done with the declared restrictions expressed as the types of bindings in
+    the declaration. Inside the body of a checked generic with a facet
+    parameter, the API of the facet is just the names defined by the facet type.
 -   _Deduced parameters_ are parameters whose values are determined by the
-    values and (most commonly) the types of the explicit arguments. Generic type
-    parameters are typically deduced.
--   A function with a generic type parameter can have the same function body as
-    an unparameterized one. Functions can freely mix generic, template, and
+    values and (most commonly) the types of the explicit arguments. Generic
+    facet parameters are typically deduced.
+-   A function with a generic facet parameter can have the same function body as
+    an unparameterized one. Functions can freely mix checked, template, and
     regular parameters.
 -   Interfaces can require other interfaces be implemented.
 -   Interfaces can [extend](terminology.md#extending-an-interface) required
