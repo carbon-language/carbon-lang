@@ -89,7 +89,7 @@
 // CHECK:STDOUT:   %2: i32 = IntegerLiteral 35
 // CHECK:STDOUT:   %3: i32 = StubReference %2
 // CHECK:STDOUT:   %4: (i32, i32) as type = TupleValue (%1, %3)
-// CHECK:STDOUT:   ReturnExpression (i32, i32) as type, %4
+// CHECK:STDOUT:   ReturnExpression %4
 // CHECK:STDOUT: }
 
 

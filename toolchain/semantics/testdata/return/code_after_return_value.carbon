@@ -71,7 +71,7 @@
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   ReturnExpression i32, %0
+// CHECK:STDOUT:   ReturnExpression %0
 // CHECK:STDOUT: }
 
 fn F(b: bool) -> i32 {

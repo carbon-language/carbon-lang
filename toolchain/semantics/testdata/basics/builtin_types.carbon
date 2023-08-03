@@ -67,15 +67,15 @@
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %test_i32: i32 = VarStorage
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   Assign i32, %test_i32, %0
+// CHECK:STDOUT:   Assign %test_i32, %0
 // CHECK:STDOUT:   %test_f64: f64 = VarStorage
 // CHECK:STDOUT:   %1: f64 = RealLiteral 1e-1
-// CHECK:STDOUT:   Assign f64, %test_f64, %1
+// CHECK:STDOUT:   Assign %test_f64, %1
 // CHECK:STDOUT:   %test_str: String = VarStorage
 // CHECK:STDOUT:   %2: String = StringLiteral "Test"
-// CHECK:STDOUT:   Assign String, %test_str, %2
+// CHECK:STDOUT:   Assign %test_str, %2
 // CHECK:STDOUT:   %test_type: type = VarStorage
-// CHECK:STDOUT:   Assign type, %test_type, i32
+// CHECK:STDOUT:   Assign %test_type, i32
 // CHECK:STDOUT: }
 
 var test_i32: i32 = 0;

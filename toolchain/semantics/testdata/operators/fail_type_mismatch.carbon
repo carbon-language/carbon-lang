@@ -51,7 +51,7 @@
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 12
 // CHECK:STDOUT:   %1: f64 = RealLiteral 34e-1
 // CHECK:STDOUT:   %2: <error> = BinaryOperatorAdd <error>, %1
-// CHECK:STDOUT:   ReturnExpression <error>, %2
+// CHECK:STDOUT:   ReturnExpression %2
 // CHECK:STDOUT: }
 
 fn Main() -> i32 {

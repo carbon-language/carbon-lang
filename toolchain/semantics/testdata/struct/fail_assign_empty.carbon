@@ -50,8 +50,8 @@
 // CHECK:STDOUT:   %0: type = StructType {.a: i32}
 // CHECK:STDOUT:   %x: {.a: i32} = VarStorage
 // CHECK:STDOUT:   %1: type = StructType {}
-// CHECK:STDOUT:   %2: {} as Type = StructValue ()
-// CHECK:STDOUT:   Assign <error>, %x, <error>
+// CHECK:STDOUT:   %2: {} as type = StructValue ()
+// CHECK:STDOUT:   Assign %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:22: Cannot implicitly convert from `{} as type` to `{.a: i32}`.

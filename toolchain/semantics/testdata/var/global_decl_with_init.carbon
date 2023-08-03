@@ -38,7 +38,7 @@
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: i32 = VarStorage
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 0
-// CHECK:STDOUT:   Assign i32, %x, %0
+// CHECK:STDOUT:   Assign %x, %0
 // CHECK:STDOUT: }
 
 var x: i32 = 0;

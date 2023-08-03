@@ -82,13 +82,13 @@
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: bool = BoolLiteral true
-// CHECK:STDOUT:   ReturnExpression bool, %0
+// CHECK:STDOUT:   ReturnExpression %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: bool = BoolLiteral true
-// CHECK:STDOUT:   ReturnExpression bool, %0
+// CHECK:STDOUT:   ReturnExpression %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
@@ -104,7 +104,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
 // CHECK:STDOUT:   %4: bool = BlockArg !1
-// CHECK:STDOUT:   ReturnExpression bool, %4
+// CHECK:STDOUT:   ReturnExpression %4
 // CHECK:STDOUT: }
 
 fn F() -> bool { return true; }

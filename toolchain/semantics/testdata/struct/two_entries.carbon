@@ -90,9 +90,9 @@
 // CHECK:STDOUT:   %3: i32 = IntegerLiteral 2
 // CHECK:STDOUT:   %4: i32 = StubReference %3
 // CHECK:STDOUT:   %5: {.a: i32, .b: i32} = StructValue (%2, %4)
-// CHECK:STDOUT:   Assign {.a: i32, .b: i32}, %x, %5
+// CHECK:STDOUT:   Assign %x, %5
 // CHECK:STDOUT:   %y: {.a: i32, .b: i32} = VarStorage
-// CHECK:STDOUT:   Assign {.a: i32, .b: i32}, %y, %x
+// CHECK:STDOUT:   Assign %y, %x
 // CHECK:STDOUT: }
 
 var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};

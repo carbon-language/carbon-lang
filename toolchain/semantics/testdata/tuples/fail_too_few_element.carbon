@@ -83,7 +83,7 @@
 // CHECK:STDOUT:   %6: i32 = StubReference %5
 // CHECK:STDOUT:   %7: type = TupleType (i32)
 // CHECK:STDOUT:   %8: (i32,) as type = TupleValue (%6)
-// CHECK:STDOUT:   Assign <error>, %x, <error>
+// CHECK:STDOUT:   Assign %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_too_few_element.carbon:[[@LINE+3]]:26: Cannot implicitly convert from `(i32,) as type` to `(i32, i32) as type`.

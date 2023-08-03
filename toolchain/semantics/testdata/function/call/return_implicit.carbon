@@ -72,7 +72,7 @@
 // CHECK:STDOUT:   %1: () as type = TupleValue ()
 // CHECK:STDOUT:   %b: () as type = VarStorage
 // CHECK:STDOUT:   %2: () as type = Call @MakeImplicitEmptyTuple()
-// CHECK:STDOUT:   Assign () as type, %b, %2
+// CHECK:STDOUT:   Assign %b, %2
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

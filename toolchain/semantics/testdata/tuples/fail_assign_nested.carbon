@@ -159,6 +159,42 @@
 // CHECK:STDOUT:     node+29,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %0: type = StubReference i32
+// CHECK:STDOUT:   %1: type = StubReference i32
+// CHECK:STDOUT:   %2: type = TupleType (type, type)
+// CHECK:STDOUT:   %3: (type, type) as type = TupleValue (%0, %1)
+// CHECK:STDOUT:   %4: (type, type) as type = StubReference %3
+// CHECK:STDOUT:   %5: type = StubReference i32
+// CHECK:STDOUT:   %6: type = StubReference i32
+// CHECK:STDOUT:   %7: (type, type) as type = TupleValue (%5, %6)
+// CHECK:STDOUT:   %8: (type, type) as type = StubReference %7
+// CHECK:STDOUT:   %9: type = TupleType ((type, type) as type, (type, type) as type)
+// CHECK:STDOUT:   %10: ((type, type), (type, type)) as type = TupleValue (%4, %8)
+// CHECK:STDOUT:   %11: type = TupleType (i32, i32)
+// CHECK:STDOUT:   %12: type = TupleType ((i32, i32) as type, (i32, i32) as type)
+// CHECK:STDOUT:   %x: ((i32, i32), (i32, i32)) as type = VarStorage
+// CHECK:STDOUT:   %13: i32 = IntegerLiteral 1
+// CHECK:STDOUT:   %14: i32 = StubReference %13
+// CHECK:STDOUT:   %15: i32 = IntegerLiteral 2
+// CHECK:STDOUT:   %16: i32 = StubReference %15
+// CHECK:STDOUT:   %17: i32 = IntegerLiteral 3
+// CHECK:STDOUT:   %18: i32 = StubReference %17
+// CHECK:STDOUT:   %19: type = TupleType (i32, i32, i32)
+// CHECK:STDOUT:   %20: (i32, i32, i32) as type = TupleValue (%14, %16, %18)
+// CHECK:STDOUT:   %21: (i32, i32, i32) as type = StubReference %20
+// CHECK:STDOUT:   %22: i32 = IntegerLiteral 4
+// CHECK:STDOUT:   %23: i32 = StubReference %22
+// CHECK:STDOUT:   %24: i32 = IntegerLiteral 5
+// CHECK:STDOUT:   %25: i32 = StubReference %24
+// CHECK:STDOUT:   %26: i32 = IntegerLiteral 6
+// CHECK:STDOUT:   %27: i32 = StubReference %26
+// CHECK:STDOUT:   %28: (i32, i32, i32) as type = TupleValue (%23, %25, %27)
+// CHECK:STDOUT:   %29: (i32, i32, i32) as type = StubReference %28
+// CHECK:STDOUT:   %30: type = TupleType ((i32, i32, i32) as type, (i32, i32, i32) as type)
+// CHECK:STDOUT:   %31: ((i32, i32, i32), (i32, i32, i32)) as type = TupleValue (%21, %29)
+// CHECK:STDOUT:   Assign %x, <error>
+// CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:57: Cannot implicitly convert from `((i32, i32, i32), (i32, i32, i32)) as type` to `((i32, i32), (i32, i32)) as type`.
 // CHECK:STDERR: var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));

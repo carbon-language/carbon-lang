@@ -47,7 +47,7 @@
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: i32 = VarStorage
-// CHECK:STDOUT:   Assign <error>, %x, <error>
+// CHECK:STDOUT:   Assign %x, <error>
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

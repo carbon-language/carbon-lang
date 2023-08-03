@@ -84,11 +84,11 @@
 // CHECK:STDOUT:   %4: i32 = IntegerLiteral 4
 // CHECK:STDOUT:   %5: i32 = StubReference %4
 // CHECK:STDOUT:   %6: (i32,) as type = TupleValue (%5)
-// CHECK:STDOUT:   Assign (i32,) as type, %x, %6
+// CHECK:STDOUT:   Assign %x, %6
 // CHECK:STDOUT:   %7: type = StubReference i32
 // CHECK:STDOUT:   %8: (type,) as type = TupleValue (%7)
 // CHECK:STDOUT:   %y: (i32,) as type = VarStorage
-// CHECK:STDOUT:   Assign (i32,) as type, %y, %x
+// CHECK:STDOUT:   Assign %y, %x
 // CHECK:STDOUT: }
 
 var x: (i32,) = (4,);

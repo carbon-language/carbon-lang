@@ -132,7 +132,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   ReturnExpression i32, %0
+// CHECK:STDOUT:   ReturnExpression %0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
 // CHECK:STDOUT:   br !2
@@ -149,7 +149,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   ReturnExpression i32, %0
+// CHECK:STDOUT:   ReturnExpression %0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2:
 // CHECK:STDOUT: }
@@ -160,7 +160,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   ReturnExpression i32, %0
+// CHECK:STDOUT:   ReturnExpression %0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
 // CHECK:STDOUT: }

@@ -75,7 +75,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ReturnExpression i32, %a
+// CHECK:STDOUT:   ReturnExpression %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -84,7 +84,7 @@
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %1: i32 = StubReference %0
 // CHECK:STDOUT:   %2: i32 = Call @Echo(%1)
-// CHECK:STDOUT:   Assign i32, %b, %2
+// CHECK:STDOUT:   Assign %b, %2
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

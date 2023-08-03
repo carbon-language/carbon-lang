@@ -76,7 +76,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: () as type) -> () as type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ReturnExpression () as type, %a
+// CHECK:STDOUT:   ReturnExpression %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

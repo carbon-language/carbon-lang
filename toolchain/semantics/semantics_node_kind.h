@@ -24,8 +24,6 @@ enum class SemanticsTypeFieldKind {
   // The `type` field is the type that the node produces. This will be the type
   // field kind for every expression node.
   Type,
-  // The `type` field is a type argument to the node.
-  Argument,
   // The `type` field is unused, but this node still produces a value that may
   // be referenced by other nodes.
   UntypedValue,

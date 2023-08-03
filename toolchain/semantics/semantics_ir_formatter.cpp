@@ -72,9 +72,10 @@ class NodeNamer {
     // Sequentially number all remaining typed values.
     for (auto node_id : semantics_ir.GetNodeBlock(block_id)) {
       auto node = semantics_ir.GetNode(node_id);
-      if (node.kind().type_field_kind() == SemanticsTypeFieldKind::Type ||
-          node.kind().type_field_kind() ==
-              SemanticsTypeFieldKind::UntypedValue) {
+      if (node.kind() != SemanticsNodeKind::BindName &&
+          (node.kind().type_field_kind() == SemanticsTypeFieldKind::Type ||
+           node.kind().type_field_kind() ==
+               SemanticsTypeFieldKind::UntypedValue)) {
         auto& name = names[node_id];
         if (name.empty()) {
           names[node_id] = "%" + llvm::itostr(unnamed_count++);
@@ -246,11 +247,7 @@ class SemanticsIRFormatter {
   template <typename Kind>
   auto FormatInstructionRHS(SemanticsNode node, decltype(Kind::Get(node)) args)
       -> void {
-    if (node.kind().type_field_kind() == SemanticsTypeFieldKind::Argument) {
-      FormatArgs(std::pair(node.type_id(), args));
-    } else {
-      FormatArgs(args);
-    }
+    FormatArgs(args);
   }
 
   // BindName is handled by the NodeNamer and doesn't appear in the output.
@@ -330,7 +327,7 @@ class SemanticsIRFormatter {
   template <>
   auto FormatInstruction<SemanticsNode::StructTypeField>(
       SemanticsNodeId, SemanticsNode, llvm::StringRef,
-      SemanticsStringId) -> void {}
+      std::pair<SemanticsStringId, SemanticsTypeId>) -> void {}
 
   template <>
   auto FormatInstructionRHS<SemanticsNode::StructType>(
@@ -339,10 +336,11 @@ class SemanticsIRFormatter {
     llvm::ListSeparator sep;
     for (auto field_id : semantics_ir_.GetNodeBlock(types_id)) {
       out_ << sep << ".";
-      auto node = semantics_ir_.GetNode(field_id);
-      FormatString(node.GetAsStructTypeField());
+      auto [field_name_id, field_type_id] =
+          semantics_ir_.GetNode(field_id).GetAsStructTypeField();
+      FormatString(field_name_id);
       out_ << ": ";
-      FormatType(node.type_id());
+      FormatType(field_type_id);
     }
     out_ << "}";
   }

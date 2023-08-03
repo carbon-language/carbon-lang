@@ -66,7 +66,7 @@
 // CHECK:STDOUT:   %x: (i32,) as type = VarStorage
 // CHECK:STDOUT:   %4: type = StubReference i32
 // CHECK:STDOUT:   %5: (type,) as type = TupleValue (%4)
-// CHECK:STDOUT:   Assign <error>, %x, <error>
+// CHECK:STDOUT:   Assign %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_type_assign.carbon:[[@LINE+3]]:25: Cannot implicitly convert from `(type,) as type` to `(i32,) as type`.

@@ -76,11 +76,11 @@
 // CHECK:STDOUT: !0:
 // CHECK:STDOUT:   %n: i32 = VarStorage
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   Assign i32, %n, %0
-// CHECK:STDOUT:   ReturnExpression i32, %n
+// CHECK:STDOUT:   Assign %n, %0
+// CHECK:STDOUT:   ReturnExpression %n
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
-// CHECK:STDOUT:   ReturnExpression <error>, <error>
+// CHECK:STDOUT:   ReturnExpression <error>
 // CHECK:STDOUT: }
 
 fn VarScope(b: bool) -> i32 {

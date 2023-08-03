@@ -47,7 +47,7 @@
 // CHECK:STDOUT:   %1: () as type = TupleValue ()
 // CHECK:STDOUT:   %x: () as type = VarStorage
 // CHECK:STDOUT:   %2: i32 = IntegerLiteral 66
-// CHECK:STDOUT:   Assign <error>, %x, <error>
+// CHECK:STDOUT:   Assign %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:17: Cannot implicitly convert from `i32` to `() as type`.

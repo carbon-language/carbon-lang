@@ -49,7 +49,7 @@
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %0: type = StructType {.a: i32}
 // CHECK:STDOUT:   %x: {.a: i32} = VarStorage
-// CHECK:STDOUT:   Assign <error>, %x, <error>
+// CHECK:STDOUT:   Assign %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_type_assign.carbon:[[@LINE+3]]:29: Cannot implicitly convert from `type` to `{.a: i32}`.

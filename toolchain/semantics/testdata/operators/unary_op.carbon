@@ -52,7 +52,7 @@
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: bool = UnaryOperatorNot %b
-// CHECK:STDOUT:   ReturnExpression bool, %0
+// CHECK:STDOUT:   ReturnExpression %0
 // CHECK:STDOUT: }
 
 fn Not(b: bool) -> bool {

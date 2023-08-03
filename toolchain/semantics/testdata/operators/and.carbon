@@ -80,13 +80,13 @@
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: bool = BoolLiteral true
-// CHECK:STDOUT:   ReturnExpression bool, %0
+// CHECK:STDOUT:   ReturnExpression %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: bool = BoolLiteral true
-// CHECK:STDOUT:   ReturnExpression bool, %0
+// CHECK:STDOUT:   ReturnExpression %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
@@ -101,7 +101,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
 // CHECK:STDOUT:   %3: bool = BlockArg !1
-// CHECK:STDOUT:   ReturnExpression bool, %3
+// CHECK:STDOUT:   ReturnExpression %3
 // CHECK:STDOUT: }
 
 fn F() -> bool { return true; }

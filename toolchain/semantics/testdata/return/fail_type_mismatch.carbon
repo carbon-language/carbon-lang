@@ -44,7 +44,7 @@
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: f64 = RealLiteral 10e-1
-// CHECK:STDOUT:   ReturnExpression <error>, <error>
+// CHECK:STDOUT:   ReturnExpression <error>
 // CHECK:STDOUT: }
 
 fn Main() -> i32 {

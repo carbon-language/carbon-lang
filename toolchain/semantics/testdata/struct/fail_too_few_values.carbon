@@ -69,7 +69,7 @@
 // CHECK:STDOUT:   %2: i32 = StubReference %1
 // CHECK:STDOUT:   %3: type = StructType {.a: i32}
 // CHECK:STDOUT:   %4: {.a: i32} = StructValue (%2)
-// CHECK:STDOUT:   Assign <error>, %x, <error>
+// CHECK:STDOUT:   Assign %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_too_few_values.carbon:[[@LINE+3]]:37: Cannot implicitly convert from `{.a: i32}` to `{.a: i32, .b: i32}`.

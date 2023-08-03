@@ -94,7 +94,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2:
 // CHECK:STDOUT:   %2: i32 = BlockArg !2
-// CHECK:STDOUT:   ReturnExpression i32, %2
+// CHECK:STDOUT:   ReturnExpression %2
 // CHECK:STDOUT: }
 
 fn F(b: bool, n: i32, m: i32) -> i32 {

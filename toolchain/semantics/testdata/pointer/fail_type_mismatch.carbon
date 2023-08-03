@@ -61,6 +61,17 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %0: {} as type = StructValue ()
+// CHECK:STDOUT:   %1: type = PointerType {} as type
+// CHECK:STDOUT:   %2: type = ConstType {}*
+// CHECK:STDOUT:   %3 = FunctionDeclaration @ConstMismatch
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   ReturnExpression <error>
+// CHECK:STDOUT: }
 
 fn ConstMismatch(p: const {}*) -> const ({}*) {
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:11: Cannot implicitly convert from `const {}*` to `const ({}*)`.

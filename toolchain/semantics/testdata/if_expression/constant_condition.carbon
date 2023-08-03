@@ -118,13 +118,13 @@
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
-// CHECK:STDOUT:   ReturnExpression i32, %0
+// CHECK:STDOUT:   ReturnExpression %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 2
-// CHECK:STDOUT:   ReturnExpression i32, %0
+// CHECK:STDOUT:   ReturnExpression %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
@@ -142,7 +142,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2:
 // CHECK:STDOUT:   %3: i32 = BlockArg !2
-// CHECK:STDOUT:   ReturnExpression i32, %3
+// CHECK:STDOUT:   ReturnExpression %3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
@@ -160,7 +160,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2:
 // CHECK:STDOUT:   %3: i32 = BlockArg !2
-// CHECK:STDOUT:   ReturnExpression i32, %3
+// CHECK:STDOUT:   ReturnExpression %3
 // CHECK:STDOUT: }
 
 fn A() -> i32 { return 1; }

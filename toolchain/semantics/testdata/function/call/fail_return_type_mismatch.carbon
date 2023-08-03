@@ -62,14 +62,14 @@
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: f64 = RealLiteral 10e-1
-// CHECK:STDOUT:   ReturnExpression f64, %0
+// CHECK:STDOUT:   ReturnExpression %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: i32 = VarStorage
 // CHECK:STDOUT:   %0: f64 = Call @Foo()
-// CHECK:STDOUT:   Assign <error>, %x, <error>
+// CHECK:STDOUT:   Assign %x, <error>
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

@@ -75,6 +75,23 @@
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %0: type = PointerType i32
+// CHECK:STDOUT:   %1 = FunctionDeclaration @Ptr
+// CHECK:STDOUT:   %2: type = ConstType i32
+// CHECK:STDOUT:   %3: type = PointerType const i32
+// CHECK:STDOUT:   %4 = FunctionDeclaration @ConstPtr
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Ptr(%p: i32*) -> i32* {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   ReturnExpression %p
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @ConstPtr(%p: const i32*) -> const i32* {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   ReturnExpression %p
+// CHECK:STDOUT: }
 
 fn Ptr(p: i32*) -> i32* {
   return p;

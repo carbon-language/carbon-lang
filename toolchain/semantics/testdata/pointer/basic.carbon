@@ -54,6 +54,20 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %0 = FunctionDeclaration @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %n: i32 = VarStorage
+// CHECK:STDOUT:   %0: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   Assign %n, %0
+// CHECK:STDOUT:   %1: type = PointerType i32
+// CHECK:STDOUT:   %p: i32* = VarStorage
+// CHECK:STDOUT:   %2: i32 = IntegerLiteral 0
+// CHECK:STDOUT:   ReturnExpression %2
+// CHECK:STDOUT: }
 
 fn F() -> i32 {
   var n: i32 = 0;

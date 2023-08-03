@@ -66,7 +66,7 @@
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 3
 // CHECK:STDOUT:   %1: i32 = StubReference %0
 // CHECK:STDOUT:   %2: {.a: i32} = StructValue (%1)
-// CHECK:STDOUT:   ReturnExpression {.a: i32}, %2
+// CHECK:STDOUT:   ReturnExpression %2
 // CHECK:STDOUT: }
 
 fn Main() -> {.a: i32} {

@@ -45,7 +45,7 @@
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %1: i32 = IntegerLiteral 2
 // CHECK:STDOUT:   %2: i32 = BinaryOperatorAdd %0, %1
-// CHECK:STDOUT:   Assign i32, %test_i32, %2
+// CHECK:STDOUT:   Assign %test_i32, %2
 // CHECK:STDOUT: }
 
 var test_i32: i32 = ((1) + (2));

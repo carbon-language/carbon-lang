@@ -38,7 +38,7 @@
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: type = VarStorage
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 42
-// CHECK:STDOUT:   Assign <error>, %x, <error>
+// CHECK:STDOUT:   Assign %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+3]]:17: Cannot implicitly convert from `i32` to `type`.

@@ -67,7 +67,7 @@
 // CHECK:STDOUT:   %2: f64 = StubReference %1
 // CHECK:STDOUT:   %3: type = StructType {.b: f64}
 // CHECK:STDOUT:   %4: {.b: f64} = StructValue (%2)
-// CHECK:STDOUT:   Assign <error>, %x, <error>
+// CHECK:STDOUT:   Assign %x, <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+3]]:30: Cannot implicitly convert from `{.b: f64}` to `{.a: i32}`.
