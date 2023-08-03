@@ -52,7 +52,7 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
       return true;
     }
     case TokenKind::Equal: {
-      // TODO: handle complex assignment expression such as `a = a + 1`.
+      // TODO: handle complex assignment expression such as `a += 1`.
       // TODO: check if lhs node is assignable.
       context.ImplicitAsRequired(
           parse_node, rhs_id, context.semantics_ir().GetNode(lhs_id).type_id());
