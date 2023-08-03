@@ -4,13 +4,63 @@
 
 #include "toolchain/semantics/semantics_ir_formatter.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringSet.h"
+#include "llvm/Support/SaveAndRestore.h"
 
 namespace Carbon {
 
 namespace {
+// Assigns names to nodes, blocks, and scopes in the Semantics IR.
 class NodeNamer {
  public:
-  auto GetNameFor(SemanticsNodeId node_id) -> std::string {
+  enum class ScopeIndex : int {
+    None = -1,
+    Package = 0,
+  };
+
+  NodeNamer(const SemanticsIR& ir) {
+    nodes.resize(ir.nodes_size());
+    labels.resize(ir.node_blocks_size());
+    scopes.resize(1 + ir.functions_size());
+
+    // Build the package scope.
+    GetScopeInfo(ScopeIndex::Package).name = "package";
+    CollectNamesInBlock(ScopeIndex::Package, ir, ir.top_node_block_id());
+
+    // Build each function scope.
+    for (int i = 0; i != ir.functions_size(); ++i) {
+      auto fn_id = SemanticsFunctionId(i);
+      auto fn_scope = GetScopeFor(fn_id);
+      const auto& fn = ir.GetFunction(fn_id);
+      GetScopeInfo(fn_scope).name =
+          "@" + globals.AllocateName(fn.name_id.is_valid()
+                                         ? ir.GetString(fn.name_id).str()
+                                         : "");
+      CollectNamesInBlock(fn_scope, ir, fn.param_refs_id);
+      for (auto block_id : fn.body_block_ids) {
+        AddBlockLabel(fn_scope, block_id,
+                      block_id == fn.body_block_ids.front() ? "entry" : "");
+        CollectNamesInBlock(fn_scope, ir, block_id);
+      }
+    }
+  }
+
+  // Returns the scope index corresponding to a function.
+  auto GetScopeFor(SemanticsFunctionId fn_id) -> ScopeIndex {
+    return ScopeIndex(fn_id.index + 1);
+  }
+
+  // Returns the IR name to use for a function.
+  auto GetNameFor(SemanticsFunctionId fn_id) -> std::string {
+    if (!fn_id.is_valid()) {
+      return "invalid";
+    }
+    return GetScopeInfo(GetScopeFor(fn_id)).name;
+  }
+
+  // Returns the IR name to use for a node, when referenced from a given scope.
+  auto GetNameFor(ScopeIndex scope_idx, SemanticsNodeId node_id)
+      -> std::string {
     if (!node_id.is_valid()) {
       return "invalid";
     }
@@ -20,106 +70,133 @@ class NodeNamer {
       return SemanticsBuiltinKind::FromInt(node_id.index).label().str();
     }
 
-    auto it = names.find(node_id);
-    if (it == names.end()) {
+    auto& [node_scope, node_name] = nodes[node_id.index];
+    if (node_name.empty()) {
       // This should not happen in valid IR.
       return "<noderef " + llvm::itostr(node_id.index) + ">";
     }
-    return it->second;
+    if (node_scope == scope_idx) {
+      return node_name;
+    }
+    return GetScopeInfo(node_scope).name + "." + node_name;
   }
 
-  auto GetLabelFor(SemanticsNodeBlockId block_id) -> std::string {
+  // Returns the IR name to use for a label, when referenced from a given scope.
+  auto GetLabelFor(ScopeIndex scope_idx, SemanticsNodeBlockId block_id)
+      -> std::string {
     if (!block_id.is_valid()) {
       return "!invalid";
     }
 
-    auto it = labels.find(block_id);
-    if (it == labels.end()) {
+    auto& [label_scope, label_name] = labels[block_id.index];
+    if (label_name.empty()) {
       // This should not happen in valid IR.
       return "<nodeblockref " + llvm::itostr(block_id.index) + ">";
     }
-    return it->second;
+    if (label_scope == scope_idx) {
+      return label_name;
+    }
+    return GetScopeInfo(label_scope).name + "." + label_name;
   }
 
-  auto AddBlockLabel(SemanticsNodeBlockId block_id) -> void {
+ private:
+  // A space in which unique names can be allocated.
+  struct Namespace {
+    llvm::StringSet<> allocated;
+    int unnamed_count = 0;
+
+    auto AllocateName(std::string hint = "") -> std::string {
+      if (hint.empty()) {
+        return llvm::itostr(unnamed_count++);
+      }
+
+      if (allocated.insert(hint).second) {
+        return hint;
+      }
+
+      // Append numbers until we find an available name.
+      auto hint_size = hint.size();
+      std::string name = std::move(hint);
+      for (int counter = 0;; ++counter) {
+        name.resize(hint_size);
+        name += llvm::itostr(counter);
+        if (allocated.insert(name).second) {
+          return name;
+        }
+      }
+    }
+  };
+
+  // A named scope that contains named entities.
+  struct Scope {
+    std::string name;
+    Namespace nodes;
+    Namespace labels;
+  };
+
+  auto GetScopeInfo(ScopeIndex scope_idx) -> Scope& {
+    return scopes[(int)scope_idx];
+  }
+
+  auto AddBlockLabel(ScopeIndex scope_idx, SemanticsNodeBlockId block_id,
+                     std::string name = "") -> void {
     if (!block_id.is_valid()) {
       return;
     }
 
-    if (label_count == 0) {
-      labels[block_id] = "!entry";
-    } else {
-      labels[block_id] = "!" + llvm::itostr(label_count - 1);
-    }
-    ++label_count;
+    labels[block_id.index] = {
+        scope_idx,
+        "!" + GetScopeInfo(scope_idx).labels.AllocateName(std::move(name))};
   }
 
-  auto CollectNamesInBlock(const SemanticsIR& semantics_ir,
+  auto CollectNamesInBlock(ScopeIndex scope_idx,
+                           const SemanticsIR& semantics_ir,
                            SemanticsNodeBlockId block_id) -> void {
     if (!block_id.is_valid()) {
       return;
     }
+
+    Scope& scope = GetScopeInfo(scope_idx);
 
     // Use bound names where available.
     for (auto node_id : semantics_ir.GetNodeBlock(block_id)) {
       auto node = semantics_ir.GetNode(node_id);
       if (node.kind() == SemanticsNodeKind::BindName) {
         auto [name_id, named_node_id] = node.GetAsBindName();
-        names[named_node_id] = ("%" + semantics_ir.GetString(name_id)).str();
+        nodes[named_node_id.index] = {
+            scope_idx, "%" + scope.nodes.AllocateName(
+                                 semantics_ir.GetString(name_id).str())};
       }
     }
 
-    // Sequentially number all remaining typed values.
+    // Sequentially number all remaining values.
     for (auto node_id : semantics_ir.GetNodeBlock(block_id)) {
       auto node = semantics_ir.GetNode(node_id);
       if (node.kind() != SemanticsNodeKind::BindName &&
           (node.kind().type_field_kind() == SemanticsTypeFieldKind::Type ||
            node.kind().type_field_kind() ==
                SemanticsTypeFieldKind::UntypedValue)) {
-        auto& name = names[node_id];
-        if (name.empty()) {
-          names[node_id] = "%" + llvm::itostr(unnamed_count++);
+        auto& name = nodes[node_id.index];
+        if (name.second.empty()) {
+          name = {scope_idx, "%" + scope.nodes.AllocateName()};
         }
       }
     }
   }
 
- private:
-  llvm::DenseMap<SemanticsNodeId, std::string> names;
-  llvm::DenseMap<SemanticsNodeBlockId, std::string> labels;
-  int unnamed_count = 0;
-  int label_count = 0;
+  Namespace globals;
+  std::vector<std::pair<ScopeIndex, std::string>> nodes;
+  std::vector<std::pair<ScopeIndex, std::string>> labels;
+  std::vector<Scope> scopes;
 };
 }
 
+// Formatter for printing textual Semantics IR.
 class SemanticsIRFormatter {
  public:
-  class NodeNameScope {
-   public:
-    NodeNameScope(SemanticsIRFormatter& parent) : parent_(parent) {
-      CARBON_CHECK(!parent_.node_name_scope) << "multiple name scopes at once";
-      parent_.node_name_scope = &namer_;
-    }
-    ~NodeNameScope() {
-      parent_.node_name_scope = nullptr;
-    }
-
-    auto AddBlockLabel(SemanticsNodeBlockId block_id) -> void {
-      namer_.AddBlockLabel(block_id);
-    }
-
-    auto CollectNamesInBlock(SemanticsNodeBlockId block_id) -> void {
-      namer_.CollectNamesInBlock(parent_.semantics_ir_, block_id);
-    }
-
-   private:
-    SemanticsIRFormatter& parent_;
-    NodeNamer namer_;
-  };
-
   explicit SemanticsIRFormatter(const SemanticsIR& semantics_ir,
                                 llvm::raw_ostream& out)
-      : semantics_ir_(semantics_ir), out_(out) {}
+      : semantics_ir_(semantics_ir), out_(out), node_namer_(semantics_ir) {}
 
   auto Format() -> void {
     // TODO: Include information from the package declaration, once we fully
@@ -130,8 +207,8 @@ class SemanticsIRFormatter {
     // type expression.
     if (auto block_id = semantics_ir_.top_node_block_id();
         block_id.is_valid()) {
-      NodeNameScope package_scope(*this);
-      package_scope.CollectNamesInBlock(block_id);
+      llvm::SaveAndRestore package_scope(scope_,
+                                         NodeNamer::ScopeIndex::Package);
       FormatCodeBlock(block_id);
     }
     out_ << "}\n";
@@ -142,21 +219,13 @@ class SemanticsIRFormatter {
   }
 
   auto FormatFunction(SemanticsFunctionId id) -> void {
-    FormatFunction(semantics_ir_.GetFunction(id));
-  }
+    const SemanticsFunction& fn = semantics_ir_.GetFunction(id);
 
-  auto FormatFunction(const SemanticsFunction &fn) -> void {
     out_ << "\nfn ";
-    FormatGlobalName(fn.name_id);
+    FormatFunctionName(id);
     out_ << "(";
 
-    // Assign names to values and blocks in this function.
-    NodeNameScope function_scope(*this);
-    function_scope.CollectNamesInBlock(fn.param_refs_id);
-    for (auto block_id : fn.body_block_ids) {
-      function_scope.AddBlockLabel(block_id);
-      function_scope.CollectNamesInBlock(block_id);
-    }
+    llvm::SaveAndRestore function_scope(scope_, node_namer_.GetScopeFor(id));
 
     llvm::ListSeparator sep;
     for (const SemanticsNodeId param_id :
@@ -246,6 +315,7 @@ class SemanticsIRFormatter {
 
   template <typename Kind>
   auto FormatInstructionRHS(SemanticsNode node) -> void {
+    // By default, an instruction has a comma-separated argument list.
     FormatArgs(Kind::Get(node));
   }
 
@@ -368,7 +438,7 @@ class SemanticsIRFormatter {
   }
 
   auto FormatArg(SemanticsFunctionId id) -> void {
-    FormatGlobalName(semantics_ir_.GetFunction(id).name_id);
+    FormatFunctionName(id);
   }
 
   auto FormatArg(SemanticsIntegerLiteralId id) -> void {
@@ -403,7 +473,7 @@ class SemanticsIRFormatter {
   }
 
   auto FormatArg(SemanticsNodeId id) -> void {
-    out_ << node_name_scope->GetNameFor(id);
+    FormatNodeName(id);
   }
 
   auto FormatArg(SemanticsNodeBlockId id) -> void {
@@ -443,26 +513,19 @@ class SemanticsIRFormatter {
   }
 
   auto FormatNodeName(SemanticsNodeId id) -> void {
-    out_ << node_name_scope->GetNameFor(id);
+    out_ << node_namer_.GetNameFor(scope_, id);
   }
 
   auto FormatLabel(SemanticsNodeBlockId id) -> void {
-    out_ << node_name_scope->GetLabelFor(id);
+    out_ << node_namer_.GetLabelFor(scope_, id);
   }
 
   auto FormatString(SemanticsStringId id) -> void {
     out_ << semantics_ir_.GetString(id);
   }
 
-  auto FormatGlobalName(SemanticsStringId id) -> void {
-    // TODO: Ensure the name is unique in the presence of name collisions
-    // across scopes.
-    if (!id.is_valid()) {
-      out_ << "invalid";
-    } else {
-      out_ << '@';
-      FormatString(id);
-    }
+  auto FormatFunctionName(SemanticsFunctionId id) -> void {
+    out_ << node_namer_.GetNameFor(id);
   }
 
   auto FormatType(SemanticsTypeId id) -> void {
@@ -476,7 +539,8 @@ class SemanticsIRFormatter {
  private:
   const SemanticsIR& semantics_ir_;
   llvm::raw_ostream& out_;
-  NodeNamer* node_name_scope = nullptr;
+  NodeNamer node_namer_;
+  NodeNamer::ScopeIndex scope_ = NodeNamer::ScopeIndex::None;
   bool in_terminator_sequence = false;
 };
 

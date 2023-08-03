@@ -35,10 +35,10 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl invalid
+// CHECK:STDOUT:   %0 = fn_decl @0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn invalid() {
+// CHECK:STDOUT: fn @0() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }

@@ -53,7 +53,7 @@
 // CHECK:STDOUT:   %0 = fn_decl @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a: i32, %a: i32) {
+// CHECK:STDOUT: fn @Bar(%a: i32, %a0: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }

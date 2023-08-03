@@ -46,7 +46,7 @@
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %0 = namespace {.Baz = %1}
 // CHECK:STDOUT:   %1 = fn_decl @Baz
-// CHECK:STDOUT:   %2 = fn_decl invalid
+// CHECK:STDOUT:   %2 = fn_decl @0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
@@ -54,7 +54,7 @@
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn invalid() {
+// CHECK:STDOUT: fn @0() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }

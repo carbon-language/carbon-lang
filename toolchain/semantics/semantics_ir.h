@@ -90,7 +90,8 @@ class SemanticsIR {
   }
 
   // Returns the requested callable.
-  auto GetFunction(SemanticsFunctionId function_id) const -> SemanticsFunction {
+  auto GetFunction(SemanticsFunctionId function_id) const
+      -> const SemanticsFunction& {
     return functions_[function_id.index];
   }
 
@@ -266,6 +267,7 @@ class SemanticsIR {
 
   auto functions_size() const -> int { return functions_.size(); }
   auto nodes_size() const -> int { return nodes_.size(); }
+  auto node_blocks_size() const -> int { return node_blocks_.size(); }
 
   auto types() const -> const llvm::SmallVector<SemanticsNodeId>& {
     return types_;

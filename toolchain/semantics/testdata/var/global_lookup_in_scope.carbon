@@ -61,7 +61,7 @@
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %y: i32 = var
-// CHECK:STDOUT:   assign %y, <noderef 6>
+// CHECK:STDOUT:   assign %y, package.%x
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 
