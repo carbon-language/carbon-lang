@@ -42,12 +42,12 @@ auto RuntimeScope::operator=(RuntimeScope&& rhs) noexcept -> RuntimeScope& {
 }
 
 void RuntimeScope::Print(llvm::raw_ostream& out) const {
-  out << "{";
+  out << "scope: [";
   llvm::ListSeparator sep;
   for (const auto& [value_node, value] : locals_) {
-    out << sep << value_node.base() << ": " << *value;
+    out << sep << "`" << value_node.base() << "`: `" << *value << "`";
   }
-  out << "}";
+  out << "]";
 }
 
 void RuntimeScope::Bind(ValueNodeView value_node, Address address) {
@@ -141,54 +141,70 @@ auto RuntimeScope::Capture(
 }
 
 void Action::Print(llvm::raw_ostream& out) const {
+  out << kind_string() << " pos: " << pos_ << " ";
   switch (kind()) {
     case Action::Kind::LocationAction:
-      out << cast<LocationAction>(*this).expression() << " ";
+      out << "`" << cast<LocationAction>(*this).expression() << "`";
       break;
     case Action::Kind::ValueExpressionAction:
-      out << cast<ValueExpressionAction>(*this).expression() << " ";
+      out << "`" << cast<ValueExpressionAction>(*this).expression() << "`";
       break;
     case Action::Kind::ExpressionAction:
-      out << cast<ExpressionAction>(*this).expression() << " ";
+      out << "`" << cast<ExpressionAction>(*this).expression() << "`";
       break;
     case Action::Kind::WitnessAction:
-      out << *cast<WitnessAction>(*this).witness() << " ";
+      out << "`" << *cast<WitnessAction>(*this).witness() << "`";
       break;
     case Action::Kind::StatementAction:
-      cast<StatementAction>(*this).statement().PrintDepth(1, out);
-      out << " ";
+      out << "`" << PrintAsID(cast<StatementAction>(*this).statement()) << "`";
       break;
     case Action::Kind::DeclarationAction:
-      cast<DeclarationAction>(*this).declaration().Print(out);
-      out << " ";
+      out << "`" << PrintAsID(cast<DeclarationAction>(*this).declaration())
+          << "`";
       break;
     case Action::Kind::TypeInstantiationAction:
-      cast<TypeInstantiationAction>(*this).type()->Print(out);
-      out << " ";
+      out << "`" << *cast<TypeInstantiationAction>(*this).type() << "`";
       break;
-    case Action::Kind::ScopeAction:
-      break;
-    case Action::Kind::RecursiveAction:
-      out << "recursive";
-      break;
-    case Action::Kind::CleanUpAction:
-      out << "clean up";
-      break;
-    case Action::Kind::DestroyAction:
-      out << "destroy";
+    default:
       break;
   }
-  out << "." << pos_ << ".";
   if (!results_.empty()) {
-    out << " [[";
+    out << " results: [";
     llvm::ListSeparator sep;
     for (const auto& result : results_) {
-      out << sep << *result;
+      out << sep << "`" << *result << "`";
     }
-    out << "]]";
+    out << "] ";
   }
   if (scope_.has_value()) {
     out << " " << *scope_;
+  }
+}
+
+auto Action::kind_string() const -> std::string_view {
+  switch (kind()) {
+    case Action::Kind::LocationAction:
+      return "LocationAction";
+    case Action::Kind::ValueExpressionAction:
+      return "ValueExpressionAction";
+    case Action::Kind::ExpressionAction:
+      return "ExpressionAction";
+    case Action::Kind::WitnessAction:
+      return "WitnessAction";
+    case Action::Kind::StatementAction:
+      return "StatementAction";
+    case Action::Kind::DeclarationAction:
+      return "DeclarationAction";
+    case Action::Kind::TypeInstantiationAction:
+      return "TypeInstantiationAction";
+    case Action::Kind::ScopeAction:
+      return "ScopeAction";
+    case Action::Kind::RecursiveAction:
+      return "RecursiveAction";
+    case Action::Kind::CleanUpAction:
+      return "CleanUpAction";
+    case Action::Kind::DestroyAction:
+      return "DestroyAction";
   }
 }
 

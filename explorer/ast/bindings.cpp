@@ -8,6 +8,7 @@
 #include "explorer/ast/impl_binding.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/value.h"
+#include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
 
@@ -39,6 +40,18 @@ void Bindings::Add(Nonnull<const GenericBinding*> binding,
 auto Bindings::None() -> Nonnull<const Bindings*> {
   static Nonnull<const Bindings*> bindings = new Bindings;
   return bindings;
+}
+
+void Bindings::Print(llvm::raw_ostream& out) const {
+  out << "{";
+  llvm::ListSeparator sep;
+  for (const auto& [name, value] : args_) {
+    out << sep << *name << " -> " << *value;
+  }
+  for (const auto& [name, value] : witnesses_) {
+    out << sep << *name << " -> " << *value;
+  }
+  out << "}";
 }
 
 auto Bindings::SymbolicIdentity(

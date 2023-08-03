@@ -58,6 +58,7 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(Call, "call", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(ConstType, "const_type", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(FunctionDeclaration, "fn_decl", Untyped,
                                 NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(Index, "tuple_index", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(IntegerLiteral, "int_value", Typed,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Namespace, "namespace", Untyped, NotTerminator)

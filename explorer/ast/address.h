@@ -24,6 +24,13 @@ class AllocationId {
   AllocationId(const AllocationId&) = default;
   auto operator=(const AllocationId&) -> AllocationId& = default;
 
+  inline friend auto operator==(AllocationId lhs, AllocationId rhs) -> bool {
+    return lhs.index_ == rhs.index_;
+  }
+  inline friend auto hash_value(AllocationId id) {
+    return llvm::hash_combine(id.index_);
+  }
+
   // Prints a human-readable representation of *this to `out`.
   //
   // Currently that representation consists of an integer index.
@@ -79,6 +86,15 @@ class Address {
     Address address = *this;
     address.element_path_.RemoveTrailingBaseElements();
     return address;
+  }
+
+  inline friend auto operator==(const Address& lhs, const Address& rhs)
+      -> bool {
+    return lhs.allocation_ == rhs.allocation_ &&
+           lhs.element_path_ == rhs.element_path_;
+  }
+  inline friend auto hash_value(const Address& a) -> llvm::hash_code {
+    return llvm::hash_combine(a.allocation_, a.element_path_);
   }
 
  private:
