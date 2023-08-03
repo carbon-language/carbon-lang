@@ -145,6 +145,12 @@ auto LoweringHandleFunctionDeclaration(LoweringFunctionContext& /*context*/,
       << node;
 }
 
+auto LoweringHandleIndex(LoweringFunctionContext& /*context*/,
+                         SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
 auto LoweringHandleIntegerLiteral(LoweringFunctionContext& context,
                                   SemanticsNodeId node_id, SemanticsNode node)
     -> void {

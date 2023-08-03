@@ -227,6 +227,7 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::BranchWithArg:
     case SemanticsNodeKind::Call:
     case SemanticsNodeKind::FunctionDeclaration:
+    case SemanticsNodeKind::Index:
     case SemanticsNodeKind::IntegerLiteral:
     case SemanticsNodeKind::Invalid:
     case SemanticsNodeKind::Namespace:
@@ -365,6 +366,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::Call:
       case SemanticsNodeKind::CrossReference:
       case SemanticsNodeKind::FunctionDeclaration:
+      case SemanticsNodeKind::Index:
       case SemanticsNodeKind::IntegerLiteral:
       case SemanticsNodeKind::Namespace:
       case SemanticsNodeKind::RealLiteral:
