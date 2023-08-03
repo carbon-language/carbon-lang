@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/semantics/semantics_ir_formatter.h"
+
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/SaveAndRestore.h"
@@ -189,7 +190,7 @@ class NodeNamer {
   std::vector<std::pair<ScopeIndex, std::string>> labels;
   std::vector<Scope> scopes;
 };
-}
+}  // namespace
 
 // Formatter for printing textual Semantics IR.
 class SemanticsIRFormatter {
@@ -415,13 +416,13 @@ class SemanticsIRFormatter {
 
   auto FormatArgs(SemanticsNode::NoArgs) -> void {}
 
-  template<typename Arg1>
+  template <typename Arg1>
   auto FormatArgs(Arg1 arg) -> void {
     out_ << ' ';
     FormatArg(arg);
   }
 
-  template<typename Arg1, typename Arg2>
+  template <typename Arg1, typename Arg2>
   auto FormatArgs(std::pair<Arg1, Arg2> args) -> void {
     out_ << ' ';
     FormatArg(args.first);
@@ -429,25 +430,17 @@ class SemanticsIRFormatter {
     FormatArgs(args.second);
   }
 
-  auto FormatArg(SemanticsBoolValue v) -> void {
-    out_ << v;
-  }
+  auto FormatArg(SemanticsBoolValue v) -> void { out_ << v; }
 
-  auto FormatArg(SemanticsBuiltinKind kind) -> void {
-    out_ << kind.label();
-  }
+  auto FormatArg(SemanticsBuiltinKind kind) -> void { out_ << kind.label(); }
 
-  auto FormatArg(SemanticsFunctionId id) -> void {
-    FormatFunctionName(id);
-  }
+  auto FormatArg(SemanticsFunctionId id) -> void { FormatFunctionName(id); }
 
   auto FormatArg(SemanticsIntegerLiteralId id) -> void {
     out_ << semantics_ir_.GetIntegerLiteral(id);
   }
 
-  auto FormatArg(SemanticsMemberIndex index) -> void {
-    out_ << index;
-  }
+  auto FormatArg(SemanticsMemberIndex index) -> void { out_ << index; }
 
   // TODO: Should we be printing scopes inline, or should we have a separate
   // step to print them like we do for functions?
@@ -472,9 +465,7 @@ class SemanticsIRFormatter {
     out_ << '}';
   }
 
-  auto FormatArg(SemanticsNodeId id) -> void {
-    FormatNodeName(id);
-  }
+  auto FormatArg(SemanticsNodeId id) -> void { FormatNodeName(id); }
 
   auto FormatArg(SemanticsNodeBlockId id) -> void {
     out_ << '(';
@@ -488,7 +479,7 @@ class SemanticsIRFormatter {
 
   auto FormatArg(SemanticsRealLiteralId id) -> void {
     // TODO: Format with a `.` when the exponent is near zero.
-    const auto & real = semantics_ir_.GetRealLiteral(id);
+    const auto& real = semantics_ir_.GetRealLiteral(id);
     out_ << real.mantissa << (real.is_decimal ? 'e' : 'p') << real.exponent;
   }
 
@@ -498,9 +489,7 @@ class SemanticsIRFormatter {
     out_ << '"';
   }
 
-  auto FormatArg(SemanticsTypeId id) -> void {
-    FormatType(id);
-  }
+  auto FormatArg(SemanticsTypeId id) -> void { FormatType(id); }
 
   auto FormatArg(SemanticsTypeBlockId id) -> void {
     out_ << '(';

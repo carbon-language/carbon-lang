@@ -105,6 +105,7 @@ cc_library(
     ],
     deps = [
         ":semantics_ir",
+        ":semantics_node_kind",
         "@llvm-project//llvm:Support",
     ],
 )
