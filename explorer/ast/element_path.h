@@ -50,6 +50,17 @@ class ElementPath {
               std::optional<Nonnull<const Witness*>> witness)
         : element_(element), interface_(interface), witness_(witness) {}
 
+    inline friend auto operator==(const Component& lhs, const Component& rhs)
+        -> bool {
+      return lhs.element_ == rhs.element_ && lhs.interface_ == rhs.interface_ &&
+             lhs.witness_ == rhs.witness_;
+    }
+    inline friend auto hash_value(const Component& component)
+        -> llvm::hash_code {
+      return llvm::hash_combine(component.element_, component.interface_,
+                                component.witness_);
+    }
+
     auto element() const -> Nonnull<const Element*> { return element_; }
 
     auto IsNamed(std::string_view name) const -> bool {
@@ -81,6 +92,15 @@ class ElementPath {
   ElementPath(ElementPath&&) = default;
   auto operator=(const ElementPath&) -> ElementPath& = default;
   auto operator=(ElementPath&&) -> ElementPath& = default;
+
+  inline friend auto operator==(const ElementPath& lhs, const ElementPath& rhs)
+      -> bool {
+    return lhs.components_ == rhs.components_;
+  }
+  inline friend auto hash_value(const ElementPath& path) -> llvm::hash_code {
+    return llvm::hash_combine_range(path.components_.begin(),
+                                    path.components_.end());
+  }
 
   // Returns whether *this is empty.
   auto IsEmpty() const -> bool { return components_.empty(); }

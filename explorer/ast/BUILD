@@ -52,6 +52,7 @@ cc_library(
         "//common:indirect_value",
         "//common:ostream",
         "//explorer/common:arena",
+        "//explorer/common:decompose",
         "//explorer/common:error_builders",
         "//explorer/common:nonnull",
         "//explorer/common:source_location",
