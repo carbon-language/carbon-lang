@@ -40,17 +40,17 @@
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+6, type: type1},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block3, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+8, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+8},
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block4, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type2},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+12, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+4, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+4},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+15, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
 // CHECK:STDOUT:   {kind: Index, arg0: node+12, arg1: node+17, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+15, arg1: node+18, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+15, arg1: node+18},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

@@ -227,6 +227,7 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::BranchWithArg:
     case SemanticsNodeKind::Call:
     case SemanticsNodeKind::FunctionDeclaration:
+    case SemanticsNodeKind::Index:
     case SemanticsNodeKind::IntegerLiteral:
     case SemanticsNodeKind::Invalid:
     case SemanticsNodeKind::Namespace:

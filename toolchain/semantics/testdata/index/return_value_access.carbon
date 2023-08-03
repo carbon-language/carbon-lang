@@ -40,12 +40,12 @@
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+5, type: type1},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block4, type: type2},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+7, type: type2},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+7},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type2},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
 // CHECK:STDOUT:   {kind: Index, arg0: node+10, arg1: node+11, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+12, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+12},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
