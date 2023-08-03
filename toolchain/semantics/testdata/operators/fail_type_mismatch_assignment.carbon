@@ -30,7 +30,7 @@
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+3},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
-// CHECK:STDOUT:   {kind: Assignment, arg0: node+1, arg1: node+5},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+5},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -52,7 +52,7 @@
 
 fn Main() {
   var a: i32 = 3;
-  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+3]]:5: Cannot implicitly convert from `i32` to `f64`.
+  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+3]]:5: Cannot implicitly convert from `f64` to `i32`.
   // CHECK:STDERR:   a = 5.6;
   // CHECK:STDERR:     ^
   a = 5.6;

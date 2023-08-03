@@ -218,7 +218,6 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
       return 0;
 
     case SemanticsNodeKind::Assign:
-    case SemanticsNodeKind::Assignment:
     case SemanticsNodeKind::BinaryOperatorAdd:
     case SemanticsNodeKind::BindName:
     case SemanticsNodeKind::BlockArg:
@@ -355,7 +354,6 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
         break;
       }
       case SemanticsNodeKind::Assign:
-      case SemanticsNodeKind::Assignment:
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BindName:
       case SemanticsNodeKind::BlockArg:

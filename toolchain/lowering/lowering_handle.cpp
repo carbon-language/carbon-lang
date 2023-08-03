@@ -26,12 +26,6 @@ auto LoweringHandleAssign(LoweringFunctionContext& context,
                                 context.GetLocal(storage_id));
 }
 
-auto LoweringHandleAssignment(LoweringFunctionContext& /*context*/,
-                              SemanticsNodeId /*node_id*/, SemanticsNode node)
-    -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
-}
-
 auto LoweringHandleBinaryOperatorAdd(LoweringFunctionContext& /*context*/,
                                      SemanticsNodeId /*node_id*/,
                                      SemanticsNode node) -> void {

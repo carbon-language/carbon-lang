@@ -311,10 +311,6 @@ class SemanticsNode {
                                               SemanticsNodeId /*lhs_id*/,
                                               SemanticsNodeId /*rhs_id*/>;
 
-  using Assignment = SemanticsNode::FactoryNoType<SemanticsNodeKind::Assignment,
-                                                  SemanticsNodeId /*lhs_id*/,
-                                                  SemanticsNodeId /*rhs_id*/>;
-
   using BinaryOperatorAdd =
       SemanticsNode::Factory<SemanticsNodeKind::BinaryOperatorAdd,
                              SemanticsNodeId /*lhs_id*/,
