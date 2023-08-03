@@ -3,14 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// RUN: %{explorer} | %{FileCheck-strict}
-// RUN: %{explorer} --parser_debug --trace_file=- | %{FileCheck-allow-unmatched}
-// CHECK:STDOUT: Hello
 // CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
 fn Main() -> i32 {
-  Print("Hello");
   return 0;
 }

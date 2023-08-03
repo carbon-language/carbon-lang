@@ -149,12 +149,13 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
       llvm::SmallVector<llvm::Type*> subtypes;
       subtypes.reserve(refs.size());
       for (auto ref_id : refs) {
-        auto type_id = semantics_ir_->GetNode(ref_id).type_id();
+        auto [field_name_id, field_type_id] =
+            semantics_ir_->GetNode(ref_id).GetAsStructTypeField();
         // TODO: Handle recursive types. The restriction for builtins prevents
         // recursion while still letting them cache.
-        CARBON_CHECK(type_id.index < SemanticsBuiltinKind::ValidCount)
-            << type_id;
-        subtypes.push_back(GetType(type_id));
+        CARBON_CHECK(field_type_id.index < SemanticsBuiltinKind::ValidCount)
+            << field_type_id;
+        subtypes.push_back(GetType(field_type_id));
       }
       return llvm::StructType::create(*llvm_context_, subtypes,
                                       "StructLiteralType");

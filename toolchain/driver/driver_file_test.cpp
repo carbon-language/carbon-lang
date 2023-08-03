@@ -17,6 +17,13 @@ class DriverFileTest : public DriverFileTestBase {
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
     CARBON_FATAL() << "ARGS is always set in these tests";
   }
+
+  auto DoExtraCheckReplacements(std::string& check_line) -> void override {
+    // TODO: Disable token output, it's not interesting for these tests.
+    if (llvm::StringRef(check_line).starts_with("// CHECK:STDOUT: {")) {
+      check_line = "// CHECK:STDOUT: {{.*}}";
+    }
+  }
 };
 
 }  // namespace

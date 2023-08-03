@@ -24,7 +24,7 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: nodeError},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -42,7 +42,7 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: fail_init_with_self.carbon:[[@LINE+3]]:16: Name x not found
+  // CHECK:STDERR: fail_init_with_self.carbon:[[@LINE+3]]:16: Name `x` not found
   // CHECK:STDERR:   var x: i32 = x;
   // CHECK:STDERR:                ^
   var x: i32 = x;

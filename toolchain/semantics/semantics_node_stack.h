@@ -250,6 +250,7 @@ class SemanticsNodeStack {
       case ParseNodeKind::NameExpression:
       case ParseNodeKind::ParenExpression:
       case ParseNodeKind::PatternBinding:
+      case ParseNodeKind::PostfixOperator:
       case ParseNodeKind::PrefixOperator:
       case ParseNodeKind::ShortCircuitOperand:
       case ParseNodeKind::StructFieldValue:

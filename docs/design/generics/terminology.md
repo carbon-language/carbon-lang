@@ -122,7 +122,7 @@ Expected difference between checked and template parameters:
   <tr>
    <td>name lookup resolved for definitions in isolation ("early")
    </td>
-   <td>name lookup can use information from calls (name lookup may be "late")
+   <td>name lookup can use information from arguments (name lookup may be "late")
    </td>
   </tr>
   <tr>
@@ -293,7 +293,7 @@ are three kinds of binding patterns, corresponding to
     written using a `:`, as in `x: i32`.
 -   A _symbolic constant binding pattern_ or _symbolic binding pattern_ binds to
     a compile-time value that is not known when type checking, and is used to
-    declare [checked generics](#checked-versus-template-parameters) parameters.
+    declare [checked generic](#checked-versus-template-parameters) parameters.
     These binding use `:!`, as in `T:! type`.
 -   A _template constant binding pattern_ or _template binding pattern_ binds to
     a compile-time value that is known when type checking, and is used to
@@ -357,17 +357,17 @@ which is `i32`, in those contexts.
 
 ## Type expression
 
-A _type expression_ is an expression that is being used as a type. In some
-cases, what is written in the source code is a value, like a [facet](#facet) or
-tuple of types, that is not a type but has an implicit conversion to `type`. In
-those cases, we are concerned with the type value after the implicit conversion.
+A _type expression_ is an expression that can be used as a type. In some cases,
+what is written in the source code is a value, like a [facet](#facet) or tuple
+of types, that is not a type but has an implicit conversion to `type`. In those
+cases, we are concerned with the type value after the implicit conversion.
 
 ## Facet binding
 
 We use the term _facet binding_ to refer to the name introduced by a
 [constant binding pattern](#bindings) (using `:!` with or without the `template`
-modifier) with a [facet type](#facet-type). In the binding pattern
-`T:! Hashable`, `T` is a facet binding, and the value of `T` is a
+modifier) where the declared type is a [facet type](#facet-type). In the binding
+pattern `T:! Hashable`, `T` is a facet binding, and the value of `T` is a
 [facet](#facet).
 
 ## Deduced parameter
@@ -462,9 +462,9 @@ requires.
 
 ### Extending an impl
 
-A type that _extends_ the implementation an interface has all the named members
-of the interface as named members of the type. This means that the members of
-the interface are available by way of both
+A type that _extends_ the implementation of an interface has all the named
+members of the interface as named members of the type. This means that the
+members of the interface are available by way of both
 [simple member access and qualified member access expressions](#member-access).
 
 If a type implements an interface without extending, the members of the
@@ -840,8 +840,8 @@ DoAdd(apple, orange);
 ```
 
 The type of an interface parameters and associated constants is commonly a
-[facet type](#facet-type), but not always. For example, one might have an
-integer type and be used to specify the size of an array type.
+[facet type](#facet-type), but not always. For example, an interface parameter
+that specifies an array bound might have an integer type.
 
 ## Type constraints
 

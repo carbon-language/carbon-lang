@@ -197,6 +197,54 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
   PrintBlock(out, "node_blocks", node_blocks_);
 }
 
+// Map a node kind representing a type into an integer describing the
+// precedence of that type's syntax. Higher numbers correspond to higher
+// precedence.
+static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
+  switch (kind) {
+    case SemanticsNodeKind::Builtin:
+    case SemanticsNodeKind::StructType:
+    case SemanticsNodeKind::TupleType:
+      return 0;
+    case SemanticsNodeKind::ConstType:
+      return -1;
+    case SemanticsNodeKind::PointerType:
+      return -2;
+
+    case SemanticsNodeKind::CrossReference:
+      // TODO: Once we support stringification of cross-references, we'll need
+      // to determine the precedence of the target of the cross-reference. For
+      // now, all cross-references refer to builtin types from the prelude.
+      return 0;
+
+    case SemanticsNodeKind::Assign:
+    case SemanticsNodeKind::BinaryOperatorAdd:
+    case SemanticsNodeKind::BindName:
+    case SemanticsNodeKind::BlockArg:
+    case SemanticsNodeKind::BoolLiteral:
+    case SemanticsNodeKind::Branch:
+    case SemanticsNodeKind::BranchIf:
+    case SemanticsNodeKind::BranchWithArg:
+    case SemanticsNodeKind::Call:
+    case SemanticsNodeKind::FunctionDeclaration:
+    case SemanticsNodeKind::IntegerLiteral:
+    case SemanticsNodeKind::Invalid:
+    case SemanticsNodeKind::Namespace:
+    case SemanticsNodeKind::RealLiteral:
+    case SemanticsNodeKind::Return:
+    case SemanticsNodeKind::ReturnExpression:
+    case SemanticsNodeKind::StringLiteral:
+    case SemanticsNodeKind::StructMemberAccess:
+    case SemanticsNodeKind::StructTypeField:
+    case SemanticsNodeKind::StructValue:
+    case SemanticsNodeKind::StubReference:
+    case SemanticsNodeKind::TupleValue:
+    case SemanticsNodeKind::UnaryOperatorNot:
+    case SemanticsNodeKind::VarStorage:
+      CARBON_FATAL() << "GetTypePrecedence for non-type node kind " << kind;
+  }
+}
+
 auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
@@ -206,9 +254,13 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
     SemanticsNodeId node_id;
     // The index into node_id to print. Not used by all types.
     int index = 0;
+
+    auto Next() const -> Step {
+      return {.node_id = node_id, .index = index + 1};
+    }
   };
-  llvm::SmallVector<Step> steps = {
-      {.node_id = GetTypeAllowBuiltinTypes(type_id)}};
+  auto outer_node_id = GetTypeAllowBuiltinTypes(type_id);
+  llvm::SmallVector<Step> steps = {{.node_id = outer_node_id}};
 
   while (!steps.empty()) {
     auto step = steps.pop_back_val();
@@ -227,10 +279,37 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
 
     auto node = GetNode(step.node_id);
     switch (node.kind()) {
+      case SemanticsNodeKind::ConstType: {
+        if (step.index == 0) {
+          out << "const ";
+
+          // Add parentheses if required.
+          auto inner_type_node_id = GetType(node.GetAsConstType());
+          if (GetTypePrecedence(GetNode(inner_type_node_id).kind()) <
+              GetTypePrecedence(node.kind())) {
+            out << "(";
+            steps.push_back(step.Next());
+          }
+
+          steps.push_back({.node_id = inner_type_node_id});
+        } else if (step.index == 1) {
+          out << ")";
+        }
+        break;
+      }
+      case SemanticsNodeKind::PointerType: {
+        if (step.index == 0) {
+          steps.push_back(step.Next());
+          steps.push_back({.node_id = GetType(node.GetAsPointerType())});
+        } else if (step.index == 1) {
+          out << "*";
+        }
+        break;
+      }
       case SemanticsNodeKind::StructType: {
         auto refs = GetNodeBlock(node.GetAsStructType());
         if (refs.empty()) {
-          out << "{} as Type";
+          out << "{}";
           break;
         } else if (step.index == 0) {
           out << "{";
@@ -241,19 +320,20 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
           break;
         }
 
-        steps.push_back({.node_id = step.node_id, .index = step.index + 1});
+        steps.push_back(step.Next());
         steps.push_back({.node_id = refs[step.index]});
         break;
       }
       case SemanticsNodeKind::StructTypeField: {
-        out << "." << GetString(node.GetAsStructTypeField()) << ": ";
-        steps.push_back({.node_id = GetTypeAllowBuiltinTypes(node.type_id())});
+        auto [name_id, type_id] = node.GetAsStructTypeField();
+        out << "." << GetString(name_id) << ": ";
+        steps.push_back({.node_id = GetTypeAllowBuiltinTypes(type_id)});
         break;
       }
       case SemanticsNodeKind::TupleType: {
         auto refs = GetTypeBlock(node.GetAsTupleType());
         if (refs.empty()) {
-          out << "() as type";
+          out << "()";
           break;
         } else if (step.index == 0) {
           out << "(";
@@ -265,10 +345,10 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
           if (step.index == 1) {
             out << ",";
           }
-          out << ") as type";
+          out << ")";
           break;
         }
-        steps.push_back({.node_id = step.node_id, .index = step.index + 1});
+        steps.push_back(step.Next());
         steps.push_back(
             {.node_id = GetTypeAllowBuiltinTypes(refs[step.index])});
         break;
@@ -305,6 +385,15 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::Invalid:
         llvm_unreachable("SemanticsNodeKind::Invalid is never used.");
     }
+  }
+
+  // For `{}` or any tuple type, we've printed a non-type expression, so add a
+  // conversion to type `type`.
+  auto outer_node = GetNode(outer_node_id);
+  if (outer_node.kind() == SemanticsNodeKind::TupleType ||
+      (outer_node.kind() == SemanticsNodeKind::StructType &&
+       GetNodeBlock(outer_node.GetAsStructType()).empty())) {
+    out << " as type";
   }
 
   return str;

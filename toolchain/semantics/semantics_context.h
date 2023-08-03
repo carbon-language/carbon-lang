@@ -169,6 +169,9 @@ class SemanticsContext {
         ImplicitAsRequired(parse_node, value_id, SemanticsTypeId::TypeType));
   }
 
+  // Removes any top-level `const` qualifiers from a type.
+  auto GetUnqualifiedType(SemanticsTypeId type_id) -> SemanticsTypeId;
+
   // Starts handling parameters or arguments.
   auto ParamOrArgStart() -> void;
 
@@ -229,7 +232,7 @@ class SemanticsContext {
     Compatible,
   };
 
-  // A FoldingSet node for a struct or tuple type.
+  // A FoldingSet node for a type.
   class TypeNode : public llvm::FastFoldingSetNode {
    public:
     explicit TypeNode(const llvm::FoldingSetNodeID& node_id,
@@ -261,6 +264,30 @@ class SemanticsContext {
   // cast.
   auto ImplicitAsImpl(SemanticsNodeId value_id, SemanticsTypeId as_type_id,
                       SemanticsNodeId* output_value_id) -> ImplicitAsKind;
+
+  // Forms a canonical type ID for a type. This function is given two
+  // callbacks:
+  //
+  // `profile_type(canonical_id)` is called to build a fingerprint for this
+  // type. The ID should be distinct for all distinct type values with the same
+  // `kind`.
+  //
+  // `make_node()` is called to obtain a `SemanticsNodeId` that describes the
+  // type. It is only called if the type does not already exist, so can be used
+  // to lazily build the `SemanticsNode`. `make_node()` is not permitted to
+  // directly or indirectly canonicalize any types.
+  auto CanonicalizeTypeImpl(
+      SemanticsNodeKind kind,
+      llvm::function_ref<void(llvm::FoldingSetNodeID& canonical_id)>
+          profile_type,
+      llvm::function_ref<SemanticsNodeId()> make_node) -> SemanticsTypeId;
+
+  // Forms a canonical type ID for an already-existing node describing a type.
+  template <typename ProfileType>
+  auto CanonicalizeTypeImpl(SemanticsNodeKind kind, SemanticsNodeId node_id,
+                            ProfileType profile_type) -> SemanticsTypeId {
+    return CanonicalizeTypeImpl(kind, profile_type, [&] { return node_id; });
+  }
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
 
@@ -316,22 +343,16 @@ class SemanticsContext {
   llvm::DenseMap<SemanticsStringId, llvm::SmallVector<SemanticsNodeId>>
       name_lookup_;
 
-  // Tracks types which have been used, so that they aren't repeatedly added to
-  // SemanticsIR.
+  // Cache of the mapping from nodes to types, to avoid recomputing the folding
+  // set ID.
   llvm::DenseMap<SemanticsNodeId, SemanticsTypeId> canonical_types_;
 
-  // Tracks struct type literals which have been defined, so that they aren't
-  // repeatedly redefined.
-  llvm::FoldingSet<TypeNode> canonical_struct_types_;
+  // Tracks the canonical representation of types that have been defined.
+  llvm::FoldingSet<TypeNode> canonical_type_nodes_;
 
-  // Tracks tuple type literals which have been defined, so that they aren't
-  // repeatedly redefined.
-  llvm::FoldingSet<TypeNode> canonical_tuple_types_;
-
-  // Storage for the nodes in canonical_struct_types_ and
-  // canonical_tuple_types_. This stores in pointers so that FoldingSet can have
-  // stable pointers.
-  llvm::SmallVector<std::unique_ptr<TypeNode>> canonical_types_nodes_;
+  // Storage for the nodes in canonical_type_nodes_. This stores in pointers so
+  // that FoldingSet can have stable pointers.
+  llvm::SmallVector<std::unique_ptr<TypeNode>> type_node_storage_;
 };
 
 // Parse node handlers. Returns false for unrecoverable errors.
