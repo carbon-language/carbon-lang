@@ -299,7 +299,13 @@ class GenericBinding : public Pattern {
 
   // The index of this binding, which is the number of bindings that are in
   // scope at the point where this binding is declared.
-  auto index() const -> int { return *index_; }
+  auto index() const -> int {
+    if (index_) {
+      return *index_;
+    } else {
+      return 0;
+    }
+  }
 
   // Set the index of this binding. Should be called only during type-checking.
   void set_index(int index) {

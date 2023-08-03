@@ -415,8 +415,9 @@ auto ImplScope::TryResolveInterfaceHere(
 
 // TODO: Add indentation when printing the parents.
 void ImplScope::Print(llvm::raw_ostream& out) const {
-  llvm::ListSeparator sep;
-  out << "[";
+  llvm::ListSeparator sep(",\n    ");
+  out << " +  "
+      << "[";
   for (const ImplFact& impl : impl_facts_) {
     out << sep << "`" << *(impl.type) << "` as `" << *(impl.interface) << "`";
     if (impl.sort_key) {
@@ -432,7 +433,7 @@ void ImplScope::Print(llvm::raw_ostream& out) const {
   }
   out << "]\n";
   if (parent_scope_) {
-    out << " +  " << **parent_scope_;
+    out << **parent_scope_;
   }
 }
 

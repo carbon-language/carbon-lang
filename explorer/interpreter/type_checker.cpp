@@ -1031,7 +1031,7 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << "converting type `" << *converted_value
                      << "` to constraint `" << *destination_constraint
-                     << "` for `" << context << "` in scope " << impl_scope
+                     << "` for " << context << " in scope " << impl_scope
                      << "\n";
     }
     // Note, we discard the witness. We don't actually need it in order to
@@ -5265,7 +5265,7 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << "--- impl declarations for `" << PrintAsID(*f) << "` ("
                      << f->source_loc() << ")\n";
-      *trace_stream_ << " +  " << function_scope;
+      *trace_stream_ << function_scope;
     }
     CARBON_RETURN_IF_ERROR(TypeCheckStmt(*f->body(), function_scope));
     if (!f->return_term().is_omitted()) {
@@ -5371,7 +5371,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << "--- impl declarations for `" << class_decl->name()
                      << "` (" << class_decl->source_loc() << ")\n";
-      *trace_stream_ << " +  " << class_scope;
+      *trace_stream_ << class_scope;
     }
   }
 
@@ -5502,7 +5502,7 @@ auto TypeChecker::TypeCheckClassDeclaration(
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- impl declarations for `" << class_decl->name()
                    << "` (" << class_decl->source_loc() << ")\n";
-    *trace_stream_ << " +  " << class_scope;
+    *trace_stream_ << class_scope;
   }
   auto [it, inserted] =
       collected_members_.insert({class_decl, CollectedMembersMap()});
@@ -5536,7 +5536,7 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << "--- impl declarations for `" << mixin_decl->name()
                      << "` (" << mixin_decl->source_loc() << ")\n";
-      *trace_stream_ << " +  " << mixin_scope;
+      *trace_stream_ << mixin_scope;
     }
 
     Nonnull<ParameterizedEntityName*> param_name =
@@ -5598,7 +5598,7 @@ auto TypeChecker::TypeCheckMixinDeclaration(
   if (trace_stream_->is_enabled()) {
     *trace_stream_ << "--- impl declarations for `" << mixin_decl->name()
                    << "` (" << mixin_decl->source_loc() << ")\n";
-    *trace_stream_ << " +  " << mixin_scope;
+    *trace_stream_ << mixin_scope;
   }
   for (Nonnull<Declaration*> m : mixin_decl->members()) {
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(m, mixin_scope, mixin_decl));
@@ -5673,7 +5673,7 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
       *trace_stream_ << "--- impl declarations for `"
                      << PrintAsID(*constraint_decl) << "` ("
                      << constraint_decl->source_loc() << ")\n";
-      *trace_stream_ << " +  " << constraint_scope;
+      *trace_stream_ << constraint_scope;
     }
     CollectAndNumberGenericBindingsInPattern(*constraint_decl->params(),
                                              bindings);
@@ -5867,7 +5867,7 @@ auto TypeChecker::TypeCheckConstraintTypeDeclaration(
     *trace_stream_ << "--- impl declarations for `"
                    << PrintAsID(*constraint_decl) << "` ("
                    << constraint_decl->source_loc() << ")\n";
-    *trace_stream_ << " +  " << constraint_scope;
+    *trace_stream_ << constraint_scope;
   }
   for (Nonnull<Declaration*> m : constraint_decl->members()) {
     CARBON_RETURN_IF_ERROR(
@@ -6254,7 +6254,7 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << "--- impl declarations for `" << PrintAsID(*choice)
                      << "` (" << choice->source_loc() << ")\n";
-      *trace_stream_ << " +  " << choice_scope;
+      *trace_stream_ << choice_scope;
     }
   }
 
