@@ -10,9 +10,9 @@
 // Exactly one of these macros should be defined before including this header:
 // - CARBON_SEMANTICS_NODE_KIND(Name)
 //   Invoked for each kind of semantic node.
-// - CARBON_SEMANTICS_NODE_KIND_WITH_TYPE_FIELD_KIND(Name, TypeFieldKind)
-//   Invoked for each kind of semantic node, along with a description of how it
-//   will use its `type_id` field.
+// - CARBON_SEMANTICS_NODE_KIND_WITH_VALUE_KIND(Name, TypeFieldKind)
+//   Invoked for each kind of semantic node, along with information about
+//   whether the node produces a value, and if so, what kind of value.
 // - CARBON_SEMANTICS_NODE_KIND_WITH_TERMINATOR_KIND(Name, TerminatorKind)
 //   Invoked for each kind of semantic node, along with information about
 //   whether the node is a terminator node.
@@ -21,69 +21,68 @@
 //   to denote this node in textual Semantics IR.
 
 #if defined(CARBON_SEMANTICS_NODE_KIND)
-#define CARBON_SEMANTICS_NODE_KIND_IMPL(Name, IRName, TypeFieldKind, \
-                                        TerminatorKind)              \
+#define CARBON_SEMANTICS_NODE_KIND_IMPL(Name, IRName, ValueKind, \
+                                        TerminatorKind)          \
   CARBON_SEMANTICS_NODE_KIND(Name)
-#elif defined(CARBON_SEMANTICS_NODE_KIND_WITH_TYPE_FIELD_KIND)
-#define CARBON_SEMANTICS_NODE_KIND_IMPL(Name, IRName, TypeFieldKind, \
-                                        TerminatorKind)              \
-  CARBON_SEMANTICS_NODE_KIND_WITH_TYPE_FIELD_KIND(Name, TypeFieldKind)
+#elif defined(CARBON_SEMANTICS_NODE_KIND_WITH_VALUE_KIND)
+#define CARBON_SEMANTICS_NODE_KIND_IMPL(Name, IRName, ValueKind, \
+                                        TerminatorKind)          \
+  CARBON_SEMANTICS_NODE_KIND_WITH_VALUE_KIND(Name, ValueKind)
 #elif defined(CARBON_SEMANTICS_NODE_KIND_WITH_TERMINATOR_KIND)
-#define CARBON_SEMANTICS_NODE_KIND_IMPL(Name, IRName, TypeFieldKind, \
-                                        TerminatorKind)              \
+#define CARBON_SEMANTICS_NODE_KIND_IMPL(Name, IRName, ValueKind, \
+                                        TerminatorKind)          \
   CARBON_SEMANTICS_NODE_KIND_WITH_TERMINATOR_KIND(Name, TerminatorKind)
 #elif defined(CARBON_SEMANTICS_NODE_KIND_WITH_IR_NAME)
-#define CARBON_SEMANTICS_NODE_KIND_IMPL(Name, IRName, TypeFieldKind, \
-                                        TerminatorKind)              \
+#define CARBON_SEMANTICS_NODE_KIND_IMPL(Name, IRName, ValueKind, \
+                                        TerminatorKind)          \
   CARBON_SEMANTICS_NODE_KIND_WITH_IR_NAME(Name, IRName)
 #else
 #error "Must define the x-macro to use this file."
 #endif
 
-CARBON_SEMANTICS_NODE_KIND_IMPL(Invalid, "invalid", Unused, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(Invalid, "invalid", None, NotTerminator)
 
 // A cross-reference between IRs.
-CARBON_SEMANTICS_NODE_KIND_IMPL(CrossReference, "xref", Type, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(CrossReference, "xref", Typed, NotTerminator)
 
-CARBON_SEMANTICS_NODE_KIND_IMPL(Assign, "assign", Unused, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(BinaryOperatorAdd, "add", Type, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(BindName, "bind_name", Type, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(BlockArg, "block_arg", Type, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(BoolLiteral, "bool_value", Type, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(Branch, "br", Unused, Terminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(BranchIf, "br", Unused, TerminatorSequence)
-CARBON_SEMANTICS_NODE_KIND_IMPL(BranchWithArg, "br", Unused, Terminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(Builtin, "builtin", Type, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(Call, "call", Type, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(ConstType, "const_type", Type, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(FunctionDeclaration, "fn_decl", UntypedValue,
+CARBON_SEMANTICS_NODE_KIND_IMPL(Assign, "assign", None, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(BinaryOperatorAdd, "add", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(BindName, "bind_name", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(BlockArg, "block_arg", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(BoolLiteral, "bool_value", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(Branch, "br", None, Terminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(BranchIf, "br", None, TerminatorSequence)
+CARBON_SEMANTICS_NODE_KIND_IMPL(BranchWithArg, "br", None, Terminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(Builtin, "builtin", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(Call, "call", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(ConstType, "const_type", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(FunctionDeclaration, "fn_decl", Untyped,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(IntegerLiteral, "int_value", Type,
+CARBON_SEMANTICS_NODE_KIND_IMPL(IntegerLiteral, "int_value", Typed,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(Namespace, "namespace", UntypedValue,
+CARBON_SEMANTICS_NODE_KIND_IMPL(Namespace, "namespace", Untyped, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(PointerType, "ptr_type", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(RealLiteral, "real_value", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(Return, "ret", None, Terminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(ReturnExpression, "ret", None, Terminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(StringLiteral, "string_value", Typed,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(PointerType, "ptr_type", Type, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(RealLiteral, "real_value", Type, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(Return, "ret", Unused, Terminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(ReturnExpression, "ret", Unused, Terminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(StringLiteral, "string_value", Type,
+CARBON_SEMANTICS_NODE_KIND_IMPL(StructMemberAccess, "struct_mem_access", Typed,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(StructMemberAccess, "struct_mem_access", Type,
+CARBON_SEMANTICS_NODE_KIND_IMPL(StructType, "struct_type", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(StructTypeField, "struct_type_field", None,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(StructType, "struct_type", Type, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(StructTypeField, "struct_type_field", Unused,
+CARBON_SEMANTICS_NODE_KIND_IMPL(StructValue, "struct_value", Typed,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(StructValue, "struct_value", Type,
+CARBON_SEMANTICS_NODE_KIND_IMPL(StubReference, "stub_reference", Typed,
                                 NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(StubReference, "stub_reference", Type,
-                                NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(TupleType, "tuple_type", Type, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(TupleValue, "tuple_value", Type, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(UnaryOperatorNot, "not", Type, NotTerminator)
-CARBON_SEMANTICS_NODE_KIND_IMPL(VarStorage, "var", Type, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(TupleType, "tuple_type", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(TupleValue, "tuple_value", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(UnaryOperatorNot, "not", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(VarStorage, "var", Typed, NotTerminator)
 
 #undef CARBON_SEMANTICS_NODE_KIND
-#undef CARBON_SEMANTICS_NODE_KIND_WITH_TYPE_FIELD_KIND
+#undef CARBON_SEMANTICS_NODE_KIND_WITH_VALUE_KIND
 #undef CARBON_SEMANTICS_NODE_KIND_WITH_TERMINATOR_KIND
 #undef CARBON_SEMANTICS_NODE_KIND_WITH_IR_NAME
 #undef CARBON_SEMANTICS_NODE_KIND_IMPL

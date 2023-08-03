@@ -174,9 +174,7 @@ class NodeNamer {
     for (auto node_id : semantics_ir.GetNodeBlock(block_id)) {
       auto node = semantics_ir.GetNode(node_id);
       if (node.kind() != SemanticsNodeKind::BindName &&
-          (node.kind().type_field_kind() == SemanticsTypeFieldKind::Type ||
-           node.kind().type_field_kind() ==
-               SemanticsTypeFieldKind::UntypedValue)) {
+          node.kind().value_kind() != SemanticsNodeValueKind::None) {
         auto& name = nodes[node_id.index];
         if (name.second.empty()) {
           name = {scope_idx, "%" + scope.nodes.AllocateName()};
@@ -274,7 +272,7 @@ class SemanticsIRFormatter {
 
   auto FormatInstruction(SemanticsNodeId node_id) -> void {
     if (!node_id.is_valid()) {
-      out_ << "  invalid\n";
+      out_ << "  " << SemanticsNodeKind::Invalid.ir_name() << "\n";
       return;
     }
 
@@ -302,15 +300,19 @@ class SemanticsIRFormatter {
 
   auto FormatInstructionLHS(SemanticsNodeId node_id, SemanticsNode node)
       -> void {
-    if (node.kind().type_field_kind() == SemanticsTypeFieldKind::Type) {
-      FormatNodeName(node_id);
-      out_ << ": ";
-      FormatType(node.type_id());
-      out_ << " = ";
-    } else if (node.kind().type_field_kind() ==
-               SemanticsTypeFieldKind::UntypedValue) {
-      FormatNodeName(node_id);
-      out_ << " = ";
+    switch (node.kind().value_kind()) {
+      case SemanticsNodeValueKind::Typed:
+        FormatNodeName(node_id);
+        out_ << ": ";
+        FormatType(node.type_id());
+        out_ << " = ";
+        break;
+      case SemanticsNodeValueKind::Untyped:
+        FormatNodeName(node_id);
+        out_ << " = ";
+        break;
+      case SemanticsNodeValueKind::None:
+        break;
     }
   }
 
@@ -341,7 +343,7 @@ class SemanticsIRFormatter {
     auto [label_id, cond_id] = node.GetAsBranchIf();
     out_ << "if ";
     FormatNodeName(cond_id);
-    out_ << " br ";
+    out_ << " " << SemanticsNodeKind::Branch.ir_name() << " ";
     FormatLabel(label_id);
     out_ << " else ";
     in_terminator_sequence = true;
@@ -355,7 +357,7 @@ class SemanticsIRFormatter {
       out_ << "  ";
     }
     auto [label_id, arg_id] = node.GetAsBranchWithArg();
-    out_ << "br ";
+    out_ << SemanticsNodeKind::BranchWithArg.ir_name() << " ";
     FormatLabel(label_id);
     out_ << "(";
     FormatNodeName(arg_id);
@@ -369,7 +371,7 @@ class SemanticsIRFormatter {
     if (!in_terminator_sequence) {
       out_ << "  ";
     }
-    out_ << "br ";
+    out_ << SemanticsNodeKind::Branch.ir_name() << " ";
     FormatLabel(node.GetAsBranch());
     out_ << "\n";
     in_terminator_sequence = false;

@@ -20,10 +20,10 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(SemanticsNodeKind) = {
   return Table[AsInt()];
 }
 
-auto SemanticsNodeKind::type_field_kind() const -> SemanticsTypeFieldKind {
-  static constexpr SemanticsTypeFieldKind Table[] = {
-#define CARBON_SEMANTICS_NODE_KIND_WITH_TYPE_FIELD_KIND(Name, TypeFieldKind) \
-  SemanticsTypeFieldKind::TypeFieldKind,
+auto SemanticsNodeKind::value_kind() const -> SemanticsNodeValueKind {
+  static constexpr SemanticsNodeValueKind Table[] = {
+#define CARBON_SEMANTICS_NODE_KIND_WITH_VALUE_KIND(Name, ValueKind) \
+  SemanticsNodeValueKind::ValueKind,
 #include "toolchain/semantics/semantics_node_kind.def"
   };
   return Table[AsInt()];

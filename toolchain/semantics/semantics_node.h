@@ -281,7 +281,6 @@ class SemanticsNode {
   // Provide Get along with a Make that requires a type.
   template <KindTemplateEnum Kind, typename... ArgTypes>
   class Factory : public FactoryBase<Kind, ArgTypes...> {
-    // TODO: Add a static_assert that the type field kind is not Unused.
    public:
     using FactoryBase<Kind, ArgTypes...>::Make;
     using FactoryBase<Kind, ArgTypes...>::Get;
@@ -291,7 +290,6 @@ class SemanticsNode {
   // typed value.
   template <KindTemplateEnum Kind, typename... ArgTypes>
   class FactoryNoType : public FactoryBase<Kind, ArgTypes...> {
-    // TODO: Add a static_assert that the type field kind is Unused.
    public:
     static auto Make(ParseTree::Node parse_node, ArgTypes... args) {
       return FactoryBase<Kind, ArgTypes...>::Make(
