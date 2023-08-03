@@ -503,10 +503,7 @@ auto PatternMatch(Nonnull<const Value*> p, ExpressionResult v,
 auto Interpreter::StepLocation() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Expression& exp = cast<LocationAction>(act).expression();
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- step location " << exp << " ." << act.pos() << "."
-                   << " (" << exp.source_loc() << ") --->\n";
-  }
+
   switch (exp.kind()) {
     case ExpressionKind::IdentifierExpression: {
       //    { {x :: C, E, F} :: S, H}
@@ -1316,6 +1313,7 @@ auto Interpreter::StepInstantiateType() -> ErrorOr<Success> {
 
 auto Interpreter::StepValueExp() -> ErrorOr<Success> {
   auto& act = cast<ValueExpressionAction>(todo_.CurrentAction());
+
   if (act.pos() == 0) {
     return todo_.Spawn(std::make_unique<ExpressionAction>(
         &act.expression(), /*preserve_nested_categories=*/false,
@@ -1336,10 +1334,7 @@ auto Interpreter::StepValueExp() -> ErrorOr<Success> {
 auto Interpreter::StepExp() -> ErrorOr<Success> {
   auto& act = cast<ExpressionAction>(todo_.CurrentAction());
   const Expression& exp = act.expression();
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- step exp " << exp << " ." << act.pos() << "."
-                   << " (" << exp.source_loc() << ") --->\n";
-  }
+
   switch (exp.kind()) {
     case ExpressionKind::IndexExpression: {
       if (act.pos() == 0) {
@@ -2103,10 +2098,7 @@ auto Interpreter::StepExp() -> ErrorOr<Success> {
 auto Interpreter::StepWitness() -> ErrorOr<Success> {
   auto& act = cast<WitnessAction>(todo_.CurrentAction());
   const Witness* witness = act.witness();
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- step witness " << *witness << " ." << act.pos()
-                   << ". --->\n";
-  }
+
   switch (witness->kind()) {
     case Value::Kind::BindingWitness: {
       const ImplBinding* binding = cast<BindingWitness>(witness)->binding();
@@ -2169,12 +2161,7 @@ auto Interpreter::StepWitness() -> ErrorOr<Success> {
 auto Interpreter::StepStmt() -> ErrorOr<Success> {
   auto& act = cast<StatementAction>(todo_.CurrentAction());
   const Statement& stmt = act.statement();
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- step stmt ";
-    stmt.PrintDepth(1, trace_stream_->stream());
-    *trace_stream_ << " ." << act.pos() << ". "
-                   << "(" << stmt.source_loc() << ") --->\n";
-  }
+
   switch (stmt.kind()) {
     case StatementKind::Match: {
       const auto& match_stmt = cast<Match>(stmt);
@@ -2497,12 +2484,6 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
     case StatementKind::ReturnVar: {
       const auto& ret_var = cast<ReturnVar>(stmt);
       const ValueNodeView& value_node = ret_var.value_node();
-      if (trace_stream_->is_enabled()) {
-        *trace_stream_ << "--- step returned var "
-                       << cast<BindingPattern>(value_node.base()).name() << " ."
-                       << act.pos() << "."
-                       << " (" << stmt.source_loc() << ") --->\n";
-      }
       CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
                               todo_.ValueOfNode(value_node, stmt.source_loc()));
       if (const auto* location = dyn_cast<LocationValue>(value)) {
@@ -2543,12 +2524,7 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
 auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Declaration& decl = cast<DeclarationAction>(act).declaration();
-  if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- step decl ";
-    decl.PrintID(trace_stream_->stream());
-    *trace_stream_ << " ." << act.pos() << ". "
-                   << "(" << decl.source_loc() << ") --->\n";
-  }
+
   switch (decl.kind()) {
     case DeclarationKind::VariableDeclaration: {
       const auto& var_decl = cast<VariableDeclaration>(decl);
@@ -2596,6 +2572,7 @@ auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
 auto Interpreter::StepDestroy() -> ErrorOr<Success> {
   const Action& act = todo_.CurrentAction();
   const auto& destroy_act = cast<DestroyAction>(act);
+
   switch (destroy_act.value()->kind()) {
     case Value::Kind::NominalClassValue: {
       const auto* class_obj = cast<NominalClassValue>(destroy_act.value());
@@ -2676,6 +2653,7 @@ auto Interpreter::StepDestroy() -> ErrorOr<Success> {
 auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
   const Action& act = todo_.CurrentAction();
   const auto& cleanup = cast<CleanUpAction>(act);
+
   if (act.pos() < cleanup.allocations_count() * 2) {
     const size_t alloc_index = cleanup.allocations_count() - act.pos() / 2 - 1;
     auto allocation = act.scope()->allocations()[alloc_index];
@@ -2704,6 +2682,11 @@ auto Interpreter::StepCleanUp() -> ErrorOr<Success> {
 // State transition.
 auto Interpreter::Step() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
+
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- step " << act << " (" << act.source_loc()
+                   << ") --->\n";
+  }
 
   auto error_builder = [&] {
     if (auto loc = act.source_loc()) {
