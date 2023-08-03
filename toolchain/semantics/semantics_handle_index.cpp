@@ -29,8 +29,8 @@ auto SemanticsHandleIndexExpression(SemanticsContext& context,
 
   if (name_type_node.kind() == SemanticsNodeKind::TupleType &&
       index_node.kind() == SemanticsNodeKind::IntegerLiteral) {
-    const auto& index_val = (context.semantics_ir().GetIntegerLiteral(
-        index_node.GetAsIntegerLiteral()));
+    const auto& index_val = context.semantics_ir().GetIntegerLiteral(
+        index_node.GetAsIntegerLiteral());
     auto type_block =
         context.semantics_ir().GetTypeBlock(name_type_node.GetAsTupleType());
 
