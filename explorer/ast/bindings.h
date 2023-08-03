@@ -63,6 +63,9 @@ class Bindings {
     return f(args_, witnesses_);
   }
 
+  void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
+
   // Add a value, and perhaps a witness, for a generic binding.
   void Add(Nonnull<const GenericBinding*> binding, Nonnull<const Value*> value,
            std::optional<Nonnull<const Value*>> witness);

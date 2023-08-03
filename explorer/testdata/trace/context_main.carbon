@@ -53,11 +53,13 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ** declaring function Main
 // CHECK:STDOUT: checking TuplePattern ()
 // CHECK:STDOUT: checking IntTypeLiteral i32
-// CHECK:STDOUT: (+) stack-push: i32 .0.
-// CHECK:STDOUT: (+) stack-push: i32 .0.
-// CHECK:STDOUT: --- step exp i32 .0. (context_main.carbon:9) --->
-// CHECK:STDOUT: (-) stack-pop: i32 .0.
-// CHECK:STDOUT: (-) stack-pop: i32 .1. {{\[\[}}i32]]
+// CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `i32` (context_main.carbon:9)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `i32` (context_main.carbon:9) --->
+// CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `i32` (context_main.carbon:9)
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `i32` (context_main.carbon:9) --->
+// CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `i32` (context_main.carbon:9)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `i32` results: [`i32`]  (context_main.carbon:9) --->
+// CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `i32` results: [`i32`]  (context_main.carbon:9)
 // CHECK:STDOUT: ** finished declaring function Main of type fn () -> i32
 // CHECK:STDOUT: checking FunctionDeclaration
 // CHECK:STDOUT: ** checking function Main
@@ -93,64 +95,57 @@ fn Main() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ********** starting execution **********
 // CHECK:STDOUT: ********** initializing globals **********
-// CHECK:STDOUT: (+) stack-push: interface TestInterface {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:  .0.
-// CHECK:STDOUT: --- step decl interface TestInterface .0. (context_main.carbon:7) --->
-// CHECK:STDOUT: (-) stack-pop: interface TestInterface {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:  .0.
-// CHECK:STDOUT: (+) stack-push: fn Main ()-> i32 {
-// CHECK:STDOUT: {
-// CHECK:STDOUT: return 0;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:  .0.
-// CHECK:STDOUT: --- step decl fn Main .0. (context_main.carbon:11) --->
-// CHECK:STDOUT: (-) stack-pop: fn Main ()-> i32 {
-// CHECK:STDOUT: {
-// CHECK:STDOUT: return 0;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:  .0.
+// CHECK:STDOUT: (+) stack-push: DeclarationAction pos: 0 `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT: --- step DeclarationAction pos: 0 `interface TestInterface` (context_main.carbon:7) --->
+// CHECK:STDOUT: (-) stack-pop:  DeclarationAction pos: 0 `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT: (+) stack-push: DeclarationAction pos: 0 `fn Main` (context_main.carbon:11)
+// CHECK:STDOUT: --- step DeclarationAction pos: 0 `fn Main` (context_main.carbon:11) --->
+// CHECK:STDOUT: (-) stack-pop:  DeclarationAction pos: 0 `fn Main` (context_main.carbon:11)
 // CHECK:STDOUT: ********** calling main function **********
-// CHECK:STDOUT: (+) stack-push: Main() .0.
-// CHECK:STDOUT: (+) stack-push: Main() .0.
-// CHECK:STDOUT: --- step exp Main() .0. (<Main()>:0) --->
-// CHECK:STDOUT: (+) stack-push: Main .0.
-// CHECK:STDOUT: (+) stack-push: Main .0.
-// CHECK:STDOUT: --- step exp Main .0. (<Main()>:0) --->
-// CHECK:STDOUT: (-) stack-pop: Main .0.
-// CHECK:STDOUT: (-) stack-pop: Main .1. {{\[\[}}fun<Main>]]
-// CHECK:STDOUT: --- step exp Main() .1. (<Main()>:0) --->
+// CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `Main()` (<Main()>:0)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `Main()` (<Main()>:0) --->
+// CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `Main()` (<Main()>:0)
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `Main()` (<Main()>:0) --->
+// CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `Main` (<Main()>:0)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `Main` (<Main()>:0) --->
+// CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `Main` (<Main()>:0)
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `Main` (<Main()>:0) --->
+// CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `Main` (<Main()>:0)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `Main` results: [`fun<Main>`]  (<Main()>:0) --->
+// CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `Main` results: [`fun<Main>`]  (<Main()>:0)
+// CHECK:STDOUT: --- step ExpressionAction pos: 1 `Main()` results: [`fun<Main>`]  scope: [] (<Main()>:0) --->
 // CHECK:STDOUT: calling function: fun<Main>
 // CHECK:STDOUT: match pattern ()
 // CHECK:STDOUT: from value expression with value ()
-// CHECK:STDOUT: (+) stack-push: .0. {}
-// CHECK:STDOUT: (+) stack-push: {return 0;} .0.
-// CHECK:STDOUT: --- step stmt {return 0;} .0. (context_main.carbon:11) --->
-// CHECK:STDOUT: (+) stack-push: return 0; .0.
-// CHECK:STDOUT: --- step stmt return 0; .0. (context_main.carbon:10) --->
-// CHECK:STDOUT: (+) stack-push: 0 .0.
-// CHECK:STDOUT: (+) stack-push: 0 .0.
-// CHECK:STDOUT: --- step exp 0 .0. (context_main.carbon:10) --->
-// CHECK:STDOUT: (-) stack-pop: 0 .0.
-// CHECK:STDOUT: (-) stack-pop: 0 .1. {{\[\[}}0]]
-// CHECK:STDOUT: --- step stmt return 0; .1. (context_main.carbon:10) --->
-// CHECK:STDOUT: (-) stack-pop: return 0; .1. {{\[\[}}0]]
-// CHECK:STDOUT: (-) stack-pop: {return 0;} .1. {}
-// CHECK:STDOUT: (-) stack-pop: .0. {}
-// CHECK:STDOUT: (+) stack-push: clean up.0. {}
-// CHECK:STDOUT: (+) stack-push: clean up.0. {}
-// CHECK:STDOUT: (-) stack-pop: clean up.0. {}
-// CHECK:STDOUT: (-) stack-pop: clean up.0. {}
-// CHECK:STDOUT: --- step exp Main() .2. (<Main()>:0) --->
-// CHECK:STDOUT: (-) stack-pop: Main() .2. {{\[\[}}fun<Main>, 0]] {}
-// CHECK:STDOUT: (+) stack-push: clean up.0. {}
-// CHECK:STDOUT: (-) stack-pop: clean up.0. {}
-// CHECK:STDOUT: (-) stack-pop: Main() .1. {{\[\[}}0]]
+// CHECK:STDOUT: (+) stack-push: ScopeAction pos: 0  scope: [] (None)
+// CHECK:STDOUT: (+) stack-push: StatementAction pos: 0 `{return 0;}` (context_main.carbon:11)
+// CHECK:STDOUT: --- step StatementAction pos: 0 `{return 0;}` (context_main.carbon:11) --->
+// CHECK:STDOUT: (+) stack-push: StatementAction pos: 0 `return 0;` (context_main.carbon:10)
+// CHECK:STDOUT: --- step StatementAction pos: 0 `return 0;` (context_main.carbon:10) --->
+// CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `0` (context_main.carbon:10)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `0` (context_main.carbon:10) --->
+// CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `0` (context_main.carbon:10)
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `0` (context_main.carbon:10) --->
+// CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `0` (context_main.carbon:10)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `0` results: [`0`]  (context_main.carbon:10) --->
+// CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `0` results: [`0`]  (context_main.carbon:10)
+// CHECK:STDOUT: --- step StatementAction pos: 1 `return 0;` results: [`0`]  (context_main.carbon:10) --->
+// CHECK:STDOUT: (-) stack-pop:  StatementAction pos: 1 `return 0;` results: [`0`]  (context_main.carbon:10)
+// CHECK:STDOUT: (-) stack-pop:  StatementAction pos: 1 `{return 0;}` scope: [] (context_main.carbon:11)
+// CHECK:STDOUT: (-) stack-pop:  ScopeAction pos: 0  scope: [] (None)
+// CHECK:STDOUT: (+) stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: (+) stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: --- step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
+// CHECK:STDOUT: (-) stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: --- step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
+// CHECK:STDOUT: (-) stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: --- step ExpressionAction pos: 2 `Main()` results: [`fun<Main>`, `0`]  scope: [] (<Main()>:0) --->
+// CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 2 `Main()` results: [`fun<Main>`, `0`]  scope: [] (<Main()>:0)
+// CHECK:STDOUT: (+) stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: --- step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
+// CHECK:STDOUT: (-) stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `Main()` results: [`0`]  (<Main()>:0) --->
+// CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `Main()` results: [`0`]  (<Main()>:0)
 // CHECK:STDOUT: interpreter result: 0
 // CHECK:STDOUT: ********** printing timing **********
 // CHECK:STDOUT: Time elapsed in ExecProgram: {{\d+}}ms
