@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <cstdint>
+
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_node_kind.h"
@@ -27,15 +29,15 @@ auto SemanticsHandleIndexExpression(SemanticsContext& context,
 
   if (name_type_node.kind() == SemanticsNodeKind::TupleType &&
       index_node.kind() == SemanticsNodeKind::IntegerLiteral) {
-    auto index_val = context.semantics_ir()
-                         .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
-                         .getSExtValue();
+    auto index_val = *(context.semantics_ir()
+                           .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
+                           .getRawData());
     auto type_block =
         context.semantics_ir().GetTypeBlock(name_type_node.GetAsTupleType());
 
-    if (index_val >= static_cast<int>(type_block.size())) {
+    if (index_val >= static_cast<uint64_t>(type_block.size())) {
       CARBON_DIAGNOSTIC(OutOfBoundsAccess, Error,
-                        "Index `{0}` is past the end of `{1}`.", int64_t,
+                        "Index `{0}` is past the end of `{1}`.", uint64_t,
                         std::string);
       context.emitter().Emit(
           parse_node, OutOfBoundsAccess, index_val,
@@ -48,7 +50,7 @@ auto SemanticsHandleIndexExpression(SemanticsContext& context,
     }
   } else if (index_node.kind() != SemanticsNodeKind::IntegerLiteral) {
     CARBON_DIAGNOSTIC(NondeterministicType, Error,
-                      "Type cannot be determined in compile time.");
+                      "Type cannot be determined at compile time.");
     context.emitter().Emit(parse_node, NondeterministicType);
   } else if (name_type_node.kind() != SemanticsNodeKind::TupleType &&
              name_type_id != SemanticsNodeId::BuiltinError) {
