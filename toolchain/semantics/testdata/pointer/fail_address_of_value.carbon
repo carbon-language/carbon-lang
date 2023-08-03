@@ -57,7 +57,7 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, type: type0},
+// CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, arg1: type0},
 // CHECK:STDOUT:   {kind: StructType, arg0: block2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
@@ -82,7 +82,7 @@
 // CHECK:STDOUT:   {kind: PointerType, arg0: type9, type: typeTypeType},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+22, type: type10},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int3, type: type0},
-// CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, type: type0},
+// CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, arg1: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+25, type: type0},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block6, type: type1},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type1, type: typeTypeType},

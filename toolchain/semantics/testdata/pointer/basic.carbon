@@ -34,7 +34,7 @@
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+6, type: type1},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+1, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+8, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+8},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+10},
 // CHECK:STDOUT: ]
