@@ -94,16 +94,20 @@ fn Main() -> i32 {
 // CHECK:STDOUT: checking ExpressionPattern i32
 // CHECK:STDOUT: checking IntTypeLiteral i32
 // CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `i32` (full_trace.carbon:11)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `i32` (full_trace.carbon:11) --->
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `i32` (full_trace.carbon:11)
-// CHECK:STDOUT: --- step exp i32 .0. (full_trace.carbon:11) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `i32` (full_trace.carbon:11) --->
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `i32` (full_trace.carbon:11)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `i32` results: [`i32`]  (full_trace.carbon:11) --->
 // CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `i32` results: [`i32`]  (full_trace.carbon:11)
 // CHECK:STDOUT: finished checking tuple pattern field n: i32
 // CHECK:STDOUT: checking IntTypeLiteral i32
 // CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `i32` (full_trace.carbon:11)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `i32` (full_trace.carbon:11) --->
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `i32` (full_trace.carbon:11)
-// CHECK:STDOUT: --- step exp i32 .0. (full_trace.carbon:11) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `i32` (full_trace.carbon:11) --->
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `i32` (full_trace.carbon:11)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `i32` results: [`i32`]  (full_trace.carbon:11) --->
 // CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `i32` results: [`i32`]  (full_trace.carbon:11)
 // CHECK:STDOUT: ** finished declaring function Foo of type fn (i32,) -> i32
 // CHECK:STDOUT: checking FunctionDeclaration
@@ -123,9 +127,11 @@ fn Main() -> i32 {
 // CHECK:STDOUT: checking TuplePattern ()
 // CHECK:STDOUT: checking IntTypeLiteral i32
 // CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `i32` (full_trace.carbon:15)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `i32` (full_trace.carbon:15) --->
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `i32` (full_trace.carbon:15)
-// CHECK:STDOUT: --- step exp i32 .0. (full_trace.carbon:15) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `i32` (full_trace.carbon:15) --->
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `i32` (full_trace.carbon:15)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `i32` results: [`i32`]  (full_trace.carbon:15) --->
 // CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `i32` results: [`i32`]  (full_trace.carbon:15)
 // CHECK:STDOUT: ** finished declaring function Main of type fn () -> i32
 // CHECK:STDOUT: checking FunctionDeclaration
@@ -152,9 +158,11 @@ fn Main() -> i32 {
 // CHECK:STDOUT: checking ExpressionPattern i32, expecting i32
 // CHECK:STDOUT: checking IntTypeLiteral i32
 // CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `i32` (full_trace.carbon:16)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `i32` (full_trace.carbon:16) --->
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `i32` (full_trace.carbon:16)
-// CHECK:STDOUT: --- step exp i32 .0. (full_trace.carbon:16) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `i32` (full_trace.carbon:16) --->
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `i32` (full_trace.carbon:16)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `i32` results: [`i32`]  (full_trace.carbon:16) --->
 // CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `i32` results: [`i32`]  (full_trace.carbon:16)
 // CHECK:STDOUT: checking ReturnExpression return x;
 // CHECK:STDOUT: checking IdentifierExpression x
@@ -198,51 +206,56 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ********** starting execution **********
 // CHECK:STDOUT: ********** initializing globals **********
 // CHECK:STDOUT: (+) stack-push: DeclarationAction pos: 0 `interface TestInterface` (full_trace.carbon:7)
-// CHECK:STDOUT: --- step decl interface TestInterface .0. (full_trace.carbon:7) --->
+// CHECK:STDOUT: --- step DeclarationAction pos: 0 `interface TestInterface` (full_trace.carbon:7) --->
 // CHECK:STDOUT: (-) stack-pop:  DeclarationAction pos: 0 `interface TestInterface` (full_trace.carbon:7)
 // CHECK:STDOUT: (+) stack-push: DeclarationAction pos: 0 `namespace N` (full_trace.carbon:9)
-// CHECK:STDOUT: --- step decl namespace N .0. (full_trace.carbon:9) --->
+// CHECK:STDOUT: --- step DeclarationAction pos: 0 `namespace N` (full_trace.carbon:9) --->
 // CHECK:STDOUT: (-) stack-pop:  DeclarationAction pos: 0 `namespace N` (full_trace.carbon:9)
 // CHECK:STDOUT: (+) stack-push: DeclarationAction pos: 0 `fn N.Foo` (full_trace.carbon:13)
-// CHECK:STDOUT: --- step decl fn N.Foo .0. (full_trace.carbon:13) --->
+// CHECK:STDOUT: --- step DeclarationAction pos: 0 `fn N.Foo` (full_trace.carbon:13) --->
 // CHECK:STDOUT: (-) stack-pop:  DeclarationAction pos: 0 `fn N.Foo` (full_trace.carbon:13)
 // CHECK:STDOUT: (+) stack-push: DeclarationAction pos: 0 `fn Main` (full_trace.carbon:18)
-// CHECK:STDOUT: --- step decl fn Main .0. (full_trace.carbon:18) --->
+// CHECK:STDOUT: --- step DeclarationAction pos: 0 `fn Main` (full_trace.carbon:18) --->
 // CHECK:STDOUT: (-) stack-pop:  DeclarationAction pos: 0 `fn Main` (full_trace.carbon:18)
 // CHECK:STDOUT: ********** calling main function **********
 // CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `Main()` (<Main()>:0)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `Main()` (<Main()>:0) --->
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `Main()` (<Main()>:0)
-// CHECK:STDOUT: --- step exp Main() .0. (<Main()>:0) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `Main()` (<Main()>:0) --->
 // CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `Main` (<Main()>:0)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `Main` (<Main()>:0) --->
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `Main` (<Main()>:0)
-// CHECK:STDOUT: --- step exp Main .0. (<Main()>:0) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `Main` (<Main()>:0) --->
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `Main` (<Main()>:0)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `Main` results: [`fun<Main>`]  (<Main()>:0) --->
 // CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `Main` results: [`fun<Main>`]  (<Main()>:0)
-// CHECK:STDOUT: --- step exp Main() .1. (<Main()>:0) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 1 `Main()` results: [`fun<Main>`]  scope: [] (<Main()>:0) --->
 // CHECK:STDOUT: calling function: fun<Main>
 // CHECK:STDOUT: match pattern ()
 // CHECK:STDOUT: from value expression with value ()
 // CHECK:STDOUT: (+) stack-push: ScopeAction pos: 0  scope: [] (None)
 // CHECK:STDOUT: (+) stack-push: StatementAction pos: 0 `{var x: i32 = N.Foo(0);return x;}` (full_trace.carbon:18)
-// CHECK:STDOUT: --- step stmt {var x: i32 = N.Foo(0);return x;} .0. (full_trace.carbon:18) --->
+// CHECK:STDOUT: --- step StatementAction pos: 0 `{var x: i32 = N.Foo(0);return x;}` (full_trace.carbon:18) --->
 // CHECK:STDOUT: (+) stack-push: StatementAction pos: 0 `var x: i32 = N.Foo(0);` (full_trace.carbon:16)
-// CHECK:STDOUT: --- step stmt var x: i32 = N.Foo(0); .0. (full_trace.carbon:16) --->
+// CHECK:STDOUT: --- step StatementAction pos: 0 `var x: i32 = N.Foo(0);` (full_trace.carbon:16) --->
 // CHECK:STDOUT: (+) memory-alloc: #1 `Uninit<i32>` uninitialized
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `N.Foo(0)` (full_trace.carbon:16)
-// CHECK:STDOUT: --- step exp N.Foo(0) .0. (full_trace.carbon:16) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `N.Foo(0)` (full_trace.carbon:16) --->
 // CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `N.Foo` (full_trace.carbon:16)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `N.Foo` (full_trace.carbon:16) --->
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `N.Foo` (full_trace.carbon:16)
-// CHECK:STDOUT: --- step exp N.Foo .0. (full_trace.carbon:16) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `N.Foo` (full_trace.carbon:16) --->
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `N.Foo` (full_trace.carbon:16)
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `Foo` (full_trace.carbon:16)
-// CHECK:STDOUT: --- step exp Foo .0. (full_trace.carbon:16) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `Foo` (full_trace.carbon:16) --->
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `Foo` (full_trace.carbon:16)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `N.Foo` results: [`fun<N.Foo>`]  (full_trace.carbon:16) --->
 // CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `N.Foo` results: [`fun<N.Foo>`]  (full_trace.carbon:16)
-// CHECK:STDOUT: --- step exp N.Foo(0) .1. (full_trace.carbon:16) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 1 `N.Foo(0)` results: [`fun<N.Foo>`]  scope: [] (full_trace.carbon:16) --->
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `0` (full_trace.carbon:16)
-// CHECK:STDOUT: --- step exp 0 .0. (full_trace.carbon:16) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `0` (full_trace.carbon:16) --->
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `0` (full_trace.carbon:16)
-// CHECK:STDOUT: --- step exp N.Foo(0) .2. (full_trace.carbon:16) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 2 `N.Foo(0)` results: [`fun<N.Foo>`, `0`]  scope: [] (full_trace.carbon:16) --->
 // CHECK:STDOUT: calling function: fun<N.Foo>
 // CHECK:STDOUT: match pattern (Placeholder<n>,)
 // CHECK:STDOUT: from value expression with value (0,)
@@ -250,69 +263,87 @@ fn Main() -> i32 {
 // CHECK:STDOUT: from value expression with value 0
 // CHECK:STDOUT: (+) stack-push: ScopeAction pos: 0  scope: [`n: i32`: `0`] (None)
 // CHECK:STDOUT: (+) stack-push: StatementAction pos: 0 `{return (n + 1);}` (full_trace.carbon:13)
-// CHECK:STDOUT: --- step stmt {return (n + 1);} .0. (full_trace.carbon:13) --->
+// CHECK:STDOUT: --- step StatementAction pos: 0 `{return (n + 1);}` (full_trace.carbon:13) --->
 // CHECK:STDOUT: (+) stack-push: StatementAction pos: 0 `return (n + 1);` (full_trace.carbon:12)
-// CHECK:STDOUT: --- step stmt return (n + 1); .0. (full_trace.carbon:12) --->
+// CHECK:STDOUT: --- step StatementAction pos: 0 `return (n + 1);` (full_trace.carbon:12) --->
 // CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `(n + 1)` (full_trace.carbon:12)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `(n + 1)` (full_trace.carbon:12) --->
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `(n + 1)` (full_trace.carbon:12)
-// CHECK:STDOUT: --- step exp (n + 1) .0. (full_trace.carbon:12) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `(n + 1)` (full_trace.carbon:12) --->
 // CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `n` (full_trace.carbon:12)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `n` (full_trace.carbon:12) --->
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `n` (full_trace.carbon:12)
-// CHECK:STDOUT: --- step exp n .0. (full_trace.carbon:12) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `n` (full_trace.carbon:12) --->
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `n` (full_trace.carbon:12)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `n` results: [`0`]  (full_trace.carbon:12) --->
 // CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `n` results: [`0`]  (full_trace.carbon:12)
-// CHECK:STDOUT: --- step exp (n + 1) .1. (full_trace.carbon:12) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 1 `(n + 1)` results: [`0`]  (full_trace.carbon:12) --->
 // CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `1` (full_trace.carbon:12)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `1` (full_trace.carbon:12) --->
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `1` (full_trace.carbon:12)
-// CHECK:STDOUT: --- step exp 1 .0. (full_trace.carbon:12) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `1` (full_trace.carbon:12) --->
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `1` (full_trace.carbon:12)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `1` results: [`1`]  (full_trace.carbon:12) --->
 // CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `1` results: [`1`]  (full_trace.carbon:12)
-// CHECK:STDOUT: --- step exp (n + 1) .2. (full_trace.carbon:12) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 2 `(n + 1)` results: [`0`, `1`]  (full_trace.carbon:12) --->
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 2 `(n + 1)` results: [`0`, `1`]  (full_trace.carbon:12)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `(n + 1)` results: [`1`]  (full_trace.carbon:12) --->
 // CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `(n + 1)` results: [`1`]  (full_trace.carbon:12)
-// CHECK:STDOUT: --- step stmt return (n + 1); .1. (full_trace.carbon:12) --->
+// CHECK:STDOUT: --- step StatementAction pos: 1 `return (n + 1);` results: [`1`]  (full_trace.carbon:12) --->
 // CHECK:STDOUT: +++ memory-write: #1 `1`
 // CHECK:STDOUT: (-) stack-pop:  StatementAction pos: 1 `return (n + 1);` results: [`1`]  (full_trace.carbon:12)
 // CHECK:STDOUT: (-) stack-pop:  StatementAction pos: 1 `{return (n + 1);}` scope: [] (full_trace.carbon:13)
 // CHECK:STDOUT: (-) stack-pop:  ScopeAction pos: 0  scope: [`n: i32`: `0`] (None)
 // CHECK:STDOUT: (+) stack-push: CleanUpAction pos: 0  scope: [`n: i32`: `0`] (stack cleanup:1)
 // CHECK:STDOUT: (+) stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: --- step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
 // CHECK:STDOUT: (-) stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: --- step CleanUpAction pos: 0  scope: [`n: i32`: `0`] (stack cleanup:1) --->
 // CHECK:STDOUT: (-) stack-pop:  CleanUpAction pos: 0  scope: [`n: i32`: `0`] (stack cleanup:1)
-// CHECK:STDOUT: --- step exp N.Foo(0) .3. (full_trace.carbon:16) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 3 `N.Foo(0)` results: [`fun<N.Foo>`, `0`, `1`]  scope: [] (full_trace.carbon:16) --->
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 3 `N.Foo(0)` results: [`fun<N.Foo>`, `0`, `1`]  scope: [] (full_trace.carbon:16)
 // CHECK:STDOUT: (+) stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: --- step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
 // CHECK:STDOUT: (-) stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
-// CHECK:STDOUT: --- step stmt var x: i32 = N.Foo(0); .1. (full_trace.carbon:16) --->
+// CHECK:STDOUT: --- step StatementAction pos: 1 `var x: i32 = N.Foo(0);` results: [`1`]  (full_trace.carbon:16) --->
 // CHECK:STDOUT: +++ memory-read: #1 `1`
 // CHECK:STDOUT: match pattern Placeholder<x>
 // CHECK:STDOUT: from initializing expression with value 1
 // CHECK:STDOUT: (-) stack-pop:  StatementAction pos: 1 `var x: i32 = N.Foo(0);` results: [`1`]  (full_trace.carbon:16)
-// CHECK:STDOUT: --- step stmt {var x: i32 = N.Foo(0);return x;} .1. (full_trace.carbon:18) --->
+// CHECK:STDOUT: --- step StatementAction pos: 1 `{var x: i32 = N.Foo(0);return x;}` scope: [`x: i32`: `lval<Allocation(1)>`] (full_trace.carbon:18) --->
 // CHECK:STDOUT: (+) stack-push: StatementAction pos: 0 `return x;` (full_trace.carbon:17)
-// CHECK:STDOUT: --- step stmt return x; .0. (full_trace.carbon:17) --->
+// CHECK:STDOUT: --- step StatementAction pos: 0 `return x;` (full_trace.carbon:17) --->
 // CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `x` (full_trace.carbon:17)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 0 `x` (full_trace.carbon:17) --->
 // CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `x` (full_trace.carbon:17)
-// CHECK:STDOUT: --- step exp x .0. (full_trace.carbon:17) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 0 `x` (full_trace.carbon:17) --->
 // CHECK:STDOUT: +++ memory-read: #1 `1`
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `x` (full_trace.carbon:17)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `x` results: [`ref_expr<Allocation(1)>`]  (full_trace.carbon:17) --->
 // CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `x` results: [`ref_expr<Allocation(1)>`]  (full_trace.carbon:17)
-// CHECK:STDOUT: --- step stmt return x; .1. (full_trace.carbon:17) --->
+// CHECK:STDOUT: --- step StatementAction pos: 1 `return x;` results: [`1`]  (full_trace.carbon:17) --->
 // CHECK:STDOUT: (-) stack-pop:  StatementAction pos: 1 `return x;` results: [`1`]  (full_trace.carbon:17)
 // CHECK:STDOUT: (-) stack-pop:  StatementAction pos: 2 `{var x: i32 = N.Foo(0);return x;}` scope: [`x: i32`: `lval<Allocation(1)>`] (full_trace.carbon:18)
 // CHECK:STDOUT: (-) stack-pop:  ScopeAction pos: 0  scope: [] (None)
 // CHECK:STDOUT: (+) stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
 // CHECK:STDOUT: (+) stack-push: CleanUpAction pos: 0  scope: [`x: i32`: `lval<Allocation(1)>`] (stack cleanup:1)
+// CHECK:STDOUT: --- step CleanUpAction pos: 0  scope: [`x: i32`: `lval<Allocation(1)>`] (stack cleanup:1) --->
 // CHECK:STDOUT: +++ memory-read: #1 `1`
 // CHECK:STDOUT: (+) stack-push: DestroyAction pos: 0  (None)
+// CHECK:STDOUT: --- step DestroyAction pos: 0  (None) --->
 // CHECK:STDOUT: (-) stack-pop:  DestroyAction pos: 0  (None)
+// CHECK:STDOUT: --- step CleanUpAction pos: 1  scope: [`x: i32`: `lval<Allocation(1)>`] (stack cleanup:1) --->
 // CHECK:STDOUT: (-) memory-dealloc: #1 `1`
+// CHECK:STDOUT: --- step CleanUpAction pos: 2  scope: [`x: i32`: `lval<Allocation(1)>`] (stack cleanup:1) --->
 // CHECK:STDOUT: (-) stack-pop:  CleanUpAction pos: 2  scope: [`x: i32`: `lval<Allocation(1)>`] (stack cleanup:1)
+// CHECK:STDOUT: --- step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
 // CHECK:STDOUT: (-) stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
-// CHECK:STDOUT: --- step exp Main() .2. (<Main()>:0) --->
+// CHECK:STDOUT: --- step ExpressionAction pos: 2 `Main()` results: [`fun<Main>`, `1`]  scope: [] (<Main()>:0) --->
 // CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 2 `Main()` results: [`fun<Main>`, `1`]  scope: [] (<Main()>:0)
 // CHECK:STDOUT: (+) stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: --- step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
 // CHECK:STDOUT: (-) stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: --- step ValueExpressionAction pos: 1 `Main()` results: [`1`]  (<Main()>:0) --->
 // CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `Main()` results: [`1`]  (<Main()>:0)
 // CHECK:STDOUT: interpreter result: 1
 // CHECK:STDOUT: ********** printing timing **********
