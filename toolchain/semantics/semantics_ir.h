@@ -261,7 +261,8 @@ class SemanticsIR {
   }
 
   // Produces a string version of a type.
-  auto StringifyType(SemanticsTypeId type_id) const -> std::string;
+  auto StringifyType(SemanticsTypeId type_id,
+                     bool in_type_context = false) const -> std::string;
 
   auto functions_size() const -> int { return functions_.size(); }
   auto nodes_size() const -> int { return nodes_.size(); }

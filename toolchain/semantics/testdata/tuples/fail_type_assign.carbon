@@ -61,11 +61,11 @@
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %0: type = StubReference i32
 // CHECK:STDOUT:   %1: type = TupleType (type)
-// CHECK:STDOUT:   %2: (type,) as type = TupleValue (%0)
+// CHECK:STDOUT:   %2: (type,) = TupleValue (%0)
 // CHECK:STDOUT:   %3: type = TupleType (i32)
-// CHECK:STDOUT:   %x: (i32,) as type = VarStorage
+// CHECK:STDOUT:   %x: (i32,) = VarStorage
 // CHECK:STDOUT:   %4: type = StubReference i32
-// CHECK:STDOUT:   %5: (type,) as type = TupleValue (%4)
+// CHECK:STDOUT:   %5: (type,) = TupleValue (%4)
 // CHECK:STDOUT:   Assign %x, <error>
 // CHECK:STDOUT: }
 

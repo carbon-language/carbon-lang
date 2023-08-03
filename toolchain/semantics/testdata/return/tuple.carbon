@@ -77,18 +77,18 @@
 // CHECK:STDOUT:   %0: type = StubReference i32
 // CHECK:STDOUT:   %1: type = StubReference i32
 // CHECK:STDOUT:   %2: type = TupleType (type, type)
-// CHECK:STDOUT:   %3: (type, type) as type = TupleValue (%0, %1)
+// CHECK:STDOUT:   %3: (type, type) = TupleValue (%0, %1)
 // CHECK:STDOUT:   %4: type = TupleType (i32, i32)
 // CHECK:STDOUT:   %5 = FunctionDeclaration @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Main() -> (i32, i32) as type {
+// CHECK:STDOUT: fn @Main() -> (i32, i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 15
 // CHECK:STDOUT:   %1: i32 = StubReference %0
 // CHECK:STDOUT:   %2: i32 = IntegerLiteral 35
 // CHECK:STDOUT:   %3: i32 = StubReference %2
-// CHECK:STDOUT:   %4: (i32, i32) as type = TupleValue (%1, %3)
+// CHECK:STDOUT:   %4: (i32, i32) = TupleValue (%1, %3)
 // CHECK:STDOUT:   ReturnExpression %4
 // CHECK:STDOUT: }
 

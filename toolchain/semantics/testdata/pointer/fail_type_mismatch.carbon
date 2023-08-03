@@ -62,8 +62,8 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: {} as type = StructValue ()
-// CHECK:STDOUT:   %1: type = PointerType {} as type
+// CHECK:STDOUT:   %0: {} = StructValue ()
+// CHECK:STDOUT:   %1: type = PointerType {}
 // CHECK:STDOUT:   %2: type = ConstType {}*
 // CHECK:STDOUT:   %3 = FunctionDeclaration @ConstMismatch
 // CHECK:STDOUT: }

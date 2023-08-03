@@ -69,9 +69,9 @@
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: type = TupleType ()
-// CHECK:STDOUT:   %1: () as type = TupleValue ()
-// CHECK:STDOUT:   %b: () as type = VarStorage
-// CHECK:STDOUT:   %2: () as type = Call @MakeImplicitEmptyTuple()
+// CHECK:STDOUT:   %1: () = TupleValue ()
+// CHECK:STDOUT:   %b: () = VarStorage
+// CHECK:STDOUT:   %2: () = Call @MakeImplicitEmptyTuple()
 // CHECK:STDOUT:   Assign %b, %2
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }

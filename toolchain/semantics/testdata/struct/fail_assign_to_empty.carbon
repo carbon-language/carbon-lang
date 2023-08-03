@@ -57,8 +57,8 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %0: type = StructType {}
-// CHECK:STDOUT:   %1: {} as type = StructValue ()
-// CHECK:STDOUT:   %x: {} as type = VarStorage
+// CHECK:STDOUT:   %1: {} = StructValue ()
+// CHECK:STDOUT:   %x: {} = VarStorage
 // CHECK:STDOUT:   %2: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %3: i32 = StubReference %2
 // CHECK:STDOUT:   %4: type = StructType {.a: i32}

@@ -44,8 +44,8 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %0: type = TupleType ()
-// CHECK:STDOUT:   %1: () as type = TupleValue ()
-// CHECK:STDOUT:   %x: () as type = VarStorage
+// CHECK:STDOUT:   %1: () = TupleValue ()
+// CHECK:STDOUT:   %x: () = VarStorage
 // CHECK:STDOUT:   %2: i32 = IntegerLiteral 66
 // CHECK:STDOUT:   Assign %x, <error>
 // CHECK:STDOUT: }

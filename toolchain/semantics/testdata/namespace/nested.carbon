@@ -68,7 +68,7 @@
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %0: type = TupleType ()
-// CHECK:STDOUT:   %1: () as type = Call @Wiz()
+// CHECK:STDOUT:   %1: () = Call @Wiz()
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

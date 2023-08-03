@@ -248,7 +248,8 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
   }
 }
 
-auto SemanticsIR::StringifyType(SemanticsTypeId type_id) const -> std::string {
+auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
+                                bool in_type_context) const -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
@@ -391,12 +392,14 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) const -> std::string {
   }
 
   // For `{}` or any tuple type, we've printed a non-type expression, so add a
-  // conversion to type `type`.
-  auto outer_node = GetNode(outer_node_id);
-  if (outer_node.kind() == SemanticsNodeKind::TupleType ||
-      (outer_node.kind() == SemanticsNodeKind::StructType &&
-       GetNodeBlock(outer_node.GetAsStructType()).empty())) {
-    out << " as type";
+  // conversion to type `type` if it's not implied by the context.
+  if (!in_type_context) {
+    auto outer_node = GetNode(outer_node_id);
+    if (outer_node.kind() == SemanticsNodeKind::TupleType ||
+        (outer_node.kind() == SemanticsNodeKind::StructType &&
+         GetNodeBlock(outer_node.GetAsStructType()).empty())) {
+      out << " as type";
+    }
   }
 
   return str;

@@ -51,12 +51,12 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %0: type = TupleType ()
-// CHECK:STDOUT:   %1: () as type = TupleValue ()
-// CHECK:STDOUT:   %x: () as type = VarStorage
-// CHECK:STDOUT:   %2: () as type = TupleValue ()
+// CHECK:STDOUT:   %1: () = TupleValue ()
+// CHECK:STDOUT:   %x: () = VarStorage
+// CHECK:STDOUT:   %2: () = TupleValue ()
 // CHECK:STDOUT:   Assign %x, %2
-// CHECK:STDOUT:   %3: () as type = TupleValue ()
-// CHECK:STDOUT:   %y: () as type = VarStorage
+// CHECK:STDOUT:   %3: () = TupleValue ()
+// CHECK:STDOUT:   %y: () = VarStorage
 // CHECK:STDOUT:   Assign %y, %x
 // CHECK:STDOUT: }
 

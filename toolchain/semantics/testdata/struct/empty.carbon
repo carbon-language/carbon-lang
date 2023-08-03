@@ -49,12 +49,12 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %0: type = StructType {}
-// CHECK:STDOUT:   %1: {} as type = StructValue ()
-// CHECK:STDOUT:   %x: {} as type = VarStorage
-// CHECK:STDOUT:   %2: {} as type = StructValue ()
+// CHECK:STDOUT:   %1: {} = StructValue ()
+// CHECK:STDOUT:   %x: {} = VarStorage
+// CHECK:STDOUT:   %2: {} = StructValue ()
 // CHECK:STDOUT:   Assign %x, %2
-// CHECK:STDOUT:   %3: {} as type = StructValue ()
-// CHECK:STDOUT:   %y: {} as type = VarStorage
+// CHECK:STDOUT:   %3: {} = StructValue ()
+// CHECK:STDOUT:   %y: {} = VarStorage
 // CHECK:STDOUT:   Assign %y, %x
 // CHECK:STDOUT: }
 

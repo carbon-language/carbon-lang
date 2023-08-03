@@ -471,7 +471,7 @@ class SemanticsIRFormatter {
     if (!id.is_valid()) {
       out_ << "invalid";
     } else {
-      out_ << semantics_ir_.StringifyType(id);
+      out_ << semantics_ir_.StringifyType(id, /*in_type_context=*/true);
     }
   }
 

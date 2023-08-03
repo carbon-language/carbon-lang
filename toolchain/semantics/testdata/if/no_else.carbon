@@ -100,11 +100,11 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0:
 // CHECK:STDOUT:   %0: type = TupleType ()
-// CHECK:STDOUT:   %1: () as type = Call @F()
+// CHECK:STDOUT:   %1: () = Call @F()
 // CHECK:STDOUT:   br !1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %2: () as type = Call @G()
+// CHECK:STDOUT:   %2: () = Call @G()
 // CHECK:STDOUT:   Return
 // CHECK:STDOUT: }
 

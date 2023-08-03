@@ -64,12 +64,12 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %0: type = StructType {}
-// CHECK:STDOUT:   %1: {} as type = StructValue ()
-// CHECK:STDOUT:   %2: type = StructType {.a: {} as type}
+// CHECK:STDOUT:   %1: {} = StructValue ()
+// CHECK:STDOUT:   %2: type = StructType {.a: {}}
 // CHECK:STDOUT:   %x: {.a: {}} = VarStorage
-// CHECK:STDOUT:   %3: {} as type = StructValue ()
-// CHECK:STDOUT:   %4: {} as type = StubReference %3
-// CHECK:STDOUT:   %5: type = StructType {.b: {} as type}
+// CHECK:STDOUT:   %3: {} = StructValue ()
+// CHECK:STDOUT:   %4: {} = StubReference %3
+// CHECK:STDOUT:   %5: type = StructType {.b: {}}
 // CHECK:STDOUT:   %6: {.b: {}} = StructValue (%4)
 // CHECK:STDOUT:   Assign %x, <error>
 // CHECK:STDOUT: }

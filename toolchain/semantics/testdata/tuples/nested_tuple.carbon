@@ -113,23 +113,23 @@
 // CHECK:STDOUT:   %0: type = StubReference i32
 // CHECK:STDOUT:   %1: type = StubReference i32
 // CHECK:STDOUT:   %2: type = TupleType (type, type)
-// CHECK:STDOUT:   %3: (type, type) as type = TupleValue (%0, %1)
-// CHECK:STDOUT:   %4: (type, type) as type = StubReference %3
+// CHECK:STDOUT:   %3: (type, type) = TupleValue (%0, %1)
+// CHECK:STDOUT:   %4: (type, type) = StubReference %3
 // CHECK:STDOUT:   %5: type = StubReference i32
-// CHECK:STDOUT:   %6: type = TupleType ((type, type) as type, type)
-// CHECK:STDOUT:   %7: ((type, type), type) as type = TupleValue (%4, %5)
+// CHECK:STDOUT:   %6: type = TupleType ((type, type), type)
+// CHECK:STDOUT:   %7: ((type, type), type) = TupleValue (%4, %5)
 // CHECK:STDOUT:   %8: type = TupleType (i32, i32)
-// CHECK:STDOUT:   %9: type = TupleType ((i32, i32) as type, i32)
-// CHECK:STDOUT:   %x: ((i32, i32), i32) as type = VarStorage
+// CHECK:STDOUT:   %9: type = TupleType ((i32, i32), i32)
+// CHECK:STDOUT:   %x: ((i32, i32), i32) = VarStorage
 // CHECK:STDOUT:   %10: i32 = IntegerLiteral 12
 // CHECK:STDOUT:   %11: i32 = StubReference %10
 // CHECK:STDOUT:   %12: i32 = IntegerLiteral 76
 // CHECK:STDOUT:   %13: i32 = StubReference %12
-// CHECK:STDOUT:   %14: (i32, i32) as type = TupleValue (%11, %13)
-// CHECK:STDOUT:   %15: (i32, i32) as type = StubReference %14
+// CHECK:STDOUT:   %14: (i32, i32) = TupleValue (%11, %13)
+// CHECK:STDOUT:   %15: (i32, i32) = StubReference %14
 // CHECK:STDOUT:   %16: i32 = IntegerLiteral 6
 // CHECK:STDOUT:   %17: i32 = StubReference %16
-// CHECK:STDOUT:   %18: ((i32, i32), i32) as type = TupleValue (%15, %17)
+// CHECK:STDOUT:   %18: ((i32, i32), i32) = TupleValue (%15, %17)
 // CHECK:STDOUT:   Assign %x, %18
 // CHECK:STDOUT: }
 

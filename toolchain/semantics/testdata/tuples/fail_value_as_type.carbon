@@ -56,9 +56,9 @@
 // CHECK:STDOUT:   %0: i32 = IntegerLiteral 1
 // CHECK:STDOUT:   %1: i32 = StubReference %0
 // CHECK:STDOUT:   %2: type = TupleType (i32)
-// CHECK:STDOUT:   %3: (i32,) as type = TupleValue (%1)
+// CHECK:STDOUT:   %3: (i32,) = TupleValue (%1)
 // CHECK:STDOUT:   %4: type = TupleType (<error>)
-// CHECK:STDOUT:   %x: (<error>,) as type = VarStorage
+// CHECK:STDOUT:   %x: (<error>,) = VarStorage
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:12: Cannot implicitly convert from `i32` to `type`.
