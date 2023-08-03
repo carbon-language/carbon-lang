@@ -15,7 +15,6 @@
 // CHECK:STDOUT:   Foo,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
-// CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]

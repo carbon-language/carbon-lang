@@ -23,7 +23,7 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
   }
 
   auto base_type = context.semantics_ir().GetNode(
-      context.semantics_ir().GetType(base.type_id()));
+      context.semantics_ir().GetTypeAllowBuiltinTypes(base.type_id()));
 
   switch (base_type.kind()) {
     case SemanticsNodeKind::StructType: {
@@ -32,11 +32,12 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
       // TODO: Do we need to optimize this with a lookup table for O(1)?
       for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
         auto ref = context.semantics_ir().GetNode(refs[i]);
-        if (name_id == ref.GetAsStructTypeField()) {
+        if (auto [field_name_id, field_type_id] = ref.GetAsStructTypeField();
+            name_id == field_name_id) {
           context.AddNodeAndPush(
               parse_node,
               SemanticsNode::StructMemberAccess::Make(
-                  parse_node, ref.type_id(), base_id, SemanticsMemberIndex(i)));
+                  parse_node, field_type_id, base_id, SemanticsMemberIndex(i)));
           return true;
         }
       }
@@ -50,12 +51,14 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
       break;
     }
     default: {
-      CARBON_DIAGNOSTIC(QualifiedExpressionUnsupported, Error,
-                        "Type `{0}` does not support qualified expressions.",
-                        std::string);
-      context.emitter().Emit(
-          parse_node, QualifiedExpressionUnsupported,
-          context.semantics_ir().StringifyType(base.type_id()));
+      if (base.type_id() != SemanticsTypeId::Error) {
+        CARBON_DIAGNOSTIC(QualifiedExpressionUnsupported, Error,
+                          "Type `{0}` does not support qualified expressions.",
+                          std::string);
+        context.emitter().Emit(
+            parse_node, QualifiedExpressionUnsupported,
+            context.semantics_ir().StringifyType(base.type_id()));
+      }
       break;
     }
   }

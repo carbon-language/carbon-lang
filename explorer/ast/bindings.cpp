@@ -8,6 +8,7 @@
 #include "explorer/ast/impl_binding.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/value.h"
+#include "llvm/ADT/StringExtras.h"
 
 namespace Carbon {
 

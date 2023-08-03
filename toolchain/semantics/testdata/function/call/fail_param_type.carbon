@@ -20,7 +20,6 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
-// CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT:   nodeFloatingPointType,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
@@ -31,8 +30,8 @@
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
-// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type2},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+5, type: type2},
+// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+5, type: type1},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -68,7 +67,7 @@ fn Main() {
   // CHECK:STDERR: fail_param_type.carbon:[[@LINE+6]]:6: No matching callable was found.
   // CHECK:STDERR:   Run(1.0);
   // CHECK:STDERR:      ^
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-6]]:1: Function cannot be used: Cannot implicityly convert argument 0 from `f64` to `i32`.
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-6]]:1: Function cannot be used: Cannot implicitly convert argument 0 from `f64` to `i32`.
   // CHECK:STDERR: fn Run(a: i32) {}
   // CHECK:STDERR: ^
   Run(1.0);

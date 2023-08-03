@@ -27,3 +27,39 @@ cc_test(
         ":treesitter",
     ],
 )
+
+filegroup(
+    name = "string_testdata",
+    srcs = glob(
+        ["testdata/string/*.carbon"],
+        exclude = ["testdata/string/fail_*.carbon"],
+    ),
+)
+
+filegroup(
+    name = "string_fail_testdata",
+    srcs = glob(["testdata/string/fail_*.carbon"]),
+)
+
+cc_test(
+    name = "string_tests",
+    srcs = ["test_runner.cpp"],
+    args = ["$(locations :string_testdata)"],
+    data = [":string_testdata"],
+    deps = [
+        ":treesitter",
+    ],
+)
+
+cc_test(
+    name = "string_fail_tests",
+    srcs = ["test_runner.cpp"],
+    args = ["$(locations :string_fail_testdata)"],
+    data = [":string_fail_testdata"],
+    env = {
+        "FAIL_TESTS": "1",
+    },
+    deps = [
+        ":treesitter",
+    ],
+)

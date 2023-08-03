@@ -180,7 +180,7 @@ definition is required after seeing the call sites once all the
 [instantiations](terminology.md#instantiation) are known.
 
 Note: [Generics terminology](terminology.md) goes into more detail about the
-[differences between generics and templates](terminology.md#generic-versus-template-parameters).
+[differences between generics and templates](terminology.md#checked-versus-template-parameters).
 
 ### Implementing interfaces
 
@@ -259,7 +259,7 @@ specific type value assigned to `T` is not known when type checking the
 `SortVector` function. Instead it is the constraints on `T` that let the
 compiler know what operations may be performed on values of type `T`. Those
 constraints are represented by the type of `T`, a
-[**_type-of-type_**](terminology.md#type-of-type).
+[**_type-of-type_**](terminology.md#facet-type).
 
 In general, a type-of-type describes the capabilities of a type, while a type
 defines specific implementations of those capabilities. An interface, like
@@ -519,7 +519,7 @@ specific sort order.
 
 ### Interface input and output types
 
-[Associated types and interface parameters](terminology.md#interface-type-parameters-and-associated-types)
+[Associated types and interface parameters](terminology.md#interface-parameters-and-associated-constants)
 allow function signatures to vary with the implementing type. The biggest
 difference between these is that associated types ("output types") may be
 deduced from a type, and types can implement the same interface multiple times

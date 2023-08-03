@@ -60,12 +60,13 @@ class Bindings {
 
   explicit Bindings(CloneContext& context, const Bindings& other);
 
-  void Print(llvm::raw_ostream& out) const;
-
   template <typename F>
   auto Decompose(F f) const {
     return f(args_, witnesses_);
   }
+
+  void Print(llvm::raw_ostream& out) const;
+  LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
   // Add a value, and perhaps a witness, for a generic binding.
   void Add(Nonnull<const GenericBinding*> binding, Nonnull<const Value*> value,

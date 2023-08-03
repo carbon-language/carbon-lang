@@ -53,18 +53,18 @@ forward-looking.
 
 ## Background
 
-Carbon will support
-[generics](terminology.md#generic-versus-template-parameters) to support generic
-programming by way of
-[parameterization of language constructs](terminology.md#parameterized-language-constructs)
-with [early type checking](terminology.md#early-versus-late-type-checking) and
+Carbon will support both
+[checked and template generics](terminology.md#checked-versus-template-parameters)
+to support generic programming by way of
+[compile-time parameterization of language constructs](terminology.md#generic-means-compile-time-parameterized).
+
+Carbon's checked generics will feature
+[early type checking](terminology.md#early-versus-late-type-checking) and
 [complete definition checking](terminology.md#complete-definition-checking).
 
-This is in contrast with the
+Carbon's template generics, in contrast, will more closely follow the
 [compile-time duck typing](https://en.wikipedia.org/wiki/Duck_typing#Templates_or_generic_types)
-approach of C++ templates, and _in addition_ to
-[template support in Carbon](#relationship-to-templates), if we decide to
-support templates in Carbon beyond interoperability with C++ templates.
+approach of C++ templates.
 
 ### Generic parameters
 

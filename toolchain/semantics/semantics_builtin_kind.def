@@ -64,9 +64,6 @@ CARBON_SEMANTICS_BUILTIN_KIND(FloatingPointType, "f64")
 // The type of string values and String literals.
 CARBON_SEMANTICS_BUILTIN_KIND(StringType, "String")
 
-// The canonical empty tuple type.
-CARBON_SEMANTICS_BUILTIN_KIND(EmptyTupleType, "() as type")
-
 // Keep invalid last, so that we can use values as array indices without needing
 // an invalid entry.
 CARBON_SEMANTICS_BUILTIN_KIND_NAME(Invalid)

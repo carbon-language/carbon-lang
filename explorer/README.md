@@ -117,31 +117,6 @@ To explain this boilerplate:
         braces indicate a contained regular expression.
 -   The `package` is required in all test files, per normal Carbon syntax rules.
 
-### lit tests
-
-The [`lit_testdata/`](lit_testdata/) subdirectory includes other example
-programs.
-
-These tests make use of LLVM's
-[lit](https://llvm.org/docs/CommandGuide/lit.html) and
-[FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html).
-
-They share most of their header with those in `testdata`, with an additional
-`RUN` rule:
-
-```
-// RUN: %{explorer-run}
-// RUN: %{explorer-run-trace}
-```
-
-The `RUN` lines indicate two commands for `lit` to execute using the file: one
-without trace and debug output, one with.
-
--   `RUN:` will be followed by the `not` command when failure is expected. In
-    particular, `RUN: not %{explorer-run}`.
--   The full command is in `lit.cfg.py`; it will run explorer and pass results
-    to [`FileCheck`](https://llvm.org/docs/CommandGuide/FileCheck.html).
-
 ### Useful commands
 
 -   `./autoupdate_testdata.py` -- Updates expected output.
@@ -200,33 +175,71 @@ The following options can be passed as a comma-separated list to the
 
 ### State of the Program
 
-The state of the program is printed in the following format, which consists of
-two components: (1) a stack of actions and (2) a memory.
+The state of the program is represented by the memory and the stack. The memory
+is a mapping of addresses to values, and the stack is a list of actions.
 
-    {
-    stack: action1 ## action2 ## ...
-    memory: 0: valueA, 1: valueB, 2: valueC, ...
-    }
+The state of the program is constantly changing as the program executes. The
+memory is updated as objects are allocated and deallocated, and the stack is
+updated as actions are performed. The state of the program can be used to track
+the progress of the program and to debug the program.
+
+#### Memory
 
 The memory is a mapping of addresses to values. The memory is used to represent
-both heap-allocated objects and also mutable parts of the procedure call stack,
-for example, for local variables. When an address is deallocated, it stays in
-memory but `!!` is printed before its value.
+both heap-allocated objects and also mutable parts of the procedure call stack.
 
-The stack is list of actions separated by double pound signs (`##`). Each action
-has the format:
+1. **Memory Allocation** is printed as
 
-    syntax .position. [[ results ]] { scope }
+```
+(+) memory-alloc: #<allocation_index> `value` uninitialized?
+```
 
-which can have up to four parts.
+2. **Read Memory** is printed as
 
-1. The `syntax` for the part of the program to be executed such as an expression
-   or statement.
-2. The `position` of execution (an integer) for this action (each action can
-   take multiple steps to complete).
-3. The `results` from subexpressions of this part.
-4. The `scope` is the variables whose lifetimes are associated with this part of
-   the program.
+```
++++ memory-read: #<allocation_index> `value`
+```
+
+3. **Write Memory** is printed as
+
+```
++++ memory-write: #<allocation_index> `value`
+```
+
+4. **Memory Deallocation** is printed as
+
+```
+(+) memory-dealloc: #<allocation_index> `value`
+```
+
+`allocation_index` is used for locating an object within the heap. `value`
+represents the object inside heap that is accessed using `allocation_index`
+
+#### Stack (Action Stack)
+
+The stack is list of actions, push and pop changes in the stack are printed in
+the following format
+
+```
+(+) stack-push: <action> (<source location>)
+(+) stack-pop:  <action> (<source location>)
+```
+
+`action` is printed in the following format
+
+```
+ActionKind pos: <pos_count> `<syntax>` results: [<collected_results>]  scope: [<scope>]
+```
+
+1. `ActionKind`: The kind of an action. Examples: ExpressionAction,
+   DeclarationAction, etc.
+2. `pos_count`: The position of execution (an integer) for this action. Each
+   action can take multiple steps to complete.
+3. `syntax`: The syntax for the part of the program to be executed, such as an
+   expression or statement.
+4. `collected_results`: The results from subexpressions of this part.
+5. `scope`: The variables whose lifetimes are associated with this part of the
+   program.
 
 The stack always begins with a function call to `Main`.
 

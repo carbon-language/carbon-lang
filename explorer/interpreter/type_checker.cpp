@@ -3137,7 +3137,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                   // Remove `self` from type since now bound.
                   auto* function_type = cast<FunctionType>(field_type);
                   access.set_static_type(arena_->New<FunctionType>(
-                      FunctionType::ExceptSelf{}, *function_type));
+                      FunctionType::ExceptSelf{}, function_type));
                 }
                 access.set_expression_category(ExpressionCategory::Value);
                 break;
@@ -3220,7 +3220,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               // Remove `self` from type since now bound.
               auto* function_type = cast<FunctionType>(inst_member_type);
               access.set_static_type(arena_->New<FunctionType>(
-                  FunctionType::ExceptSelf{}, *function_type));
+                  FunctionType::ExceptSelf{}, function_type));
             }
           } else {
             access.set_static_type(inst_member_type);
@@ -3278,7 +3278,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
             // declarations to be member name types, rather than special-casing
             // member accesses that name them.
             access.set_static_type(
-                arena_->New<TypeOfMemberName>(NamedElement(result.member)));
+                arena_->New<TypeOfMemberName>(&access.member()));
             access.set_expression_category(ExpressionCategory::Value);
           } else {
             // This is a non-instance member whose value is found directly via
@@ -3307,7 +3307,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                 if (access.member_name() == field.name) {
                   access.set_member(arena_->New<NamedElement>(&field));
                   access.set_static_type(
-                      arena_->New<TypeOfMemberName>(NamedElement(&field)));
+                      arena_->New<TypeOfMemberName>(&access.member()));
                   access.set_expression_category(ExpressionCategory::Value);
                   return Success();
                 }
@@ -3379,7 +3379,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                     break;
                 }
                 access.set_static_type(
-                    arena_->New<TypeOfMemberName>(NamedElement(member)));
+                    arena_->New<TypeOfMemberName>(&access.member()));
                 access.set_expression_category(ExpressionCategory::Value);
                 return Success();
               } else {
@@ -3398,7 +3398,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
               access.set_member(arena_->New<NamedElement>(result.member));
               access.set_found_in_interface(result.interface);
               access.set_static_type(
-                  arena_->New<TypeOfMemberName>(NamedElement(result.member)));
+                  arena_->New<TypeOfMemberName>(&access.member()));
               access.set_expression_category(ExpressionCategory::Value);
               return Success();
             }
@@ -3526,7 +3526,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                                 Substitute(bindings_for_member(), member_type));
         auto* function_type = cast<FunctionType>(member_type);
         access.set_static_type(arena_->New<FunctionType>(
-            FunctionType::ExceptSelf{}, *function_type));
+            FunctionType::ExceptSelf{}, function_type));
         return Success();
       };
 
@@ -3574,7 +3574,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
       }
 
       access.set_static_type(
-          arena_->New<TypeOfMemberName>(member_name.member()));
+          arena_->New<TypeOfMemberName>(&access.member().member()));
       access.set_expression_category(ExpressionCategory::Value);
       return Success();
     }
@@ -3868,7 +3868,7 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
           for (size_t i = 0; i != params.size(); ++i) {
             // TODO: Should we disallow all other kinds of top-level params?
             if (const auto* binding = dyn_cast<GenericBinding>(params[i])) {
-              generic_parameters.push_back({i, binding});
+              generic_parameters.push_back({{}, i, binding});
             }
           }
 
@@ -5145,8 +5145,8 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
     CollectAndNumberGenericBindingsInPattern(&f->self_pattern(), all_bindings);
     CollectImplBindingsInPattern(&f->self_pattern(), impl_bindings);
     FunctionType::MethodSelf method_self_present = {
-        (f->self_pattern().kind() == PatternKind::AddrPattern),
-        &f->self_pattern().static_type()};
+        .addr_self = (f->self_pattern().kind() == PatternKind::AddrPattern),
+        .self_type = &f->self_pattern().static_type()};
     method_self = method_self_present;
   }
   // Type check the parameter pattern.
@@ -5169,7 +5169,7 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
     CollectAndNumberGenericBindingsInPattern(param_pattern, all_bindings);
 
     if (const auto* binding = dyn_cast<GenericBinding>(param_pattern)) {
-      generic_parameters.push_back({i, binding});
+      generic_parameters.push_back({.index = i, .binding = binding});
     } else {
       deduced_bindings.insert(deduced_bindings.end(),
                               all_bindings.begin() + old_size,
@@ -5294,7 +5294,7 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   // set the static type before we start processing them. We can't set the
   // constant value until later, but the base class declaration doesn't need it.
   self->set_static_type(arena_->New<TypeType>());
-  std::optional<Nonnull<ParameterizedEntityName*>> param_name;
+  std::optional<Nonnull<const ParameterizedEntityName*>> param_name;
   if (class_decl->type_params().has_value()) {
     // TODO: The `enclosing_bindings` should be tracked in the parameterized
     // entity name so that they can be included in the eventual type.
@@ -5462,9 +5462,9 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
 
   // For class declaration `class MyType(T:! type, U:! AnInterface)`, `Self`
   // should have the value `MyType(T, U)`.
-  Nonnull<NominalClassType*> self_type = arena_->New<NominalClassType>(
+  const auto* self_type = arena_->New<NominalClassType>(
       class_decl, Bindings::SymbolicIdentity(arena_, bindings), base_class,
-      std::move(class_vtable));
+      arena_->New<VTable>(std::move(class_vtable)));
   self->set_constant_value(self_type);
 
   // The declarations of the members may refer to the class, so we must set the
@@ -5539,14 +5539,13 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
       *trace_stream_ << mixin_scope;
     }
 
-    Nonnull<ParameterizedEntityName*> param_name =
+    const auto* param_name =
         arena_->New<ParameterizedEntityName>(mixin_decl, *mixin_decl->params());
     mixin_decl->set_static_type(
         arena_->New<TypeOfParameterizedEntityName>(param_name));
     mixin_decl->set_constant_value(param_name);
   } else {
-    Nonnull<MixinPseudoType*> mixin_type =
-        arena_->New<MixinPseudoType>(mixin_decl);
+    const auto* mixin_type = arena_->New<MixinPseudoType>(mixin_decl);
     mixin_decl->set_static_type(arena_->New<TypeOfMixinPseudoType>(mixin_type));
     mixin_decl->set_constant_value(mixin_type);
   }
@@ -5695,9 +5694,8 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
 
   // Set up the meaning of the declaration when used as an identifier.
   if (constraint_decl->params().has_value()) {
-    Nonnull<ParameterizedEntityName*> param_name =
-        arena_->New<ParameterizedEntityName>(constraint_decl,
-                                             *constraint_decl->params());
+    const auto* param_name = arena_->New<ParameterizedEntityName>(
+        constraint_decl, *constraint_decl->params());
     constraint_decl->set_static_type(
         arena_->New<TypeOfParameterizedEntityName>(param_name));
     constraint_decl->set_constant_value(param_name);
@@ -6267,7 +6265,7 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
   }
 
   if (choice->type_params().has_value()) {
-    Nonnull<ParameterizedEntityName*> param_name =
+    const auto* param_name =
         arena_->New<ParameterizedEntityName>(choice, *choice->type_params());
     choice->set_static_type(
         arena_->New<TypeOfParameterizedEntityName>(param_name));

@@ -6,15 +6,15 @@
 // CHECK:STDOUT: ; ModuleID = 'params_two_comma.carbon'
 // CHECK:STDOUT: source_filename = "params_two_comma.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %EmptyTupleType = type {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Foo(i32 %a, i32 %b) {
+// CHECK:STDOUT: define void @Foo(i32 %a, i32 %b) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define %EmptyTupleType @Main() {
-// CHECK:STDOUT:   %Foo = call %EmptyTupleType @Foo(i32 1, i32 2)
-// CHECK:STDOUT:   %Foo1 = call %EmptyTupleType @Foo(i32 1, i32 2)
+// CHECK:STDOUT: define void @Main() {
+// CHECK:STDOUT:   call void @Foo(i32 1, i32 2)
+// CHECK:STDOUT:   %TupleLiteralValue = alloca {}, align 8
+// CHECK:STDOUT:   call void @Foo(i32 1, i32 2)
+// CHECK:STDOUT:   %TupleLiteralValue1 = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 

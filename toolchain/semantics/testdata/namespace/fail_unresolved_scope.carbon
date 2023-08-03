@@ -16,7 +16,6 @@
 // CHECK:STDOUT:   Baz,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
-// CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
@@ -35,7 +34,7 @@
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+3]]:4: Name Foo not found
+// CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+3]]:4: Name `Foo` not found
 // CHECK:STDERR: fn Foo.Baz() {
 // CHECK:STDERR:    ^
 fn Foo.Baz() {
