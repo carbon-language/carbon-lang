@@ -24,7 +24,7 @@ pointers to other design documents that dive deeper into individual topics.
     -   [Facet types](#facet-types)
     -   [Generic functions](#generic-functions)
         -   [Deduced parameters](#deduced-parameters)
-        -   [Generic type parameters](#generic-type-parameters)
+        -   [Facet parameters](#facet-parameters)
     -   [Requiring or extending another interface](#requiring-or-extending-another-interface)
     -   [Combining interfaces](#combining-interfaces)
         -   [Named constraints](#named-constraints)
@@ -92,7 +92,8 @@ Summary of how Carbon generics work:
 -   Types may _extend_ an implementation declared inline, in which case you can
     directly call the interface's methods on those types.
 -   Out-of-line implementations may be defined in the library defining the
-    interface as an alternative to the type.
+    interface as an alternative to the type, or
+    [the library defining a type argument](#parameterized-impl-declarations).
 -   Interfaces may be used as the type of a generic parameter. Interfaces are
     _facet types_, whose values are the subset of all types that implement the
     interface. Facet types in general specify the capabilities and requirements
@@ -141,8 +142,9 @@ elements:
 fn SortVector(T:! Comparable, a: Vector(T)*) { ... }
 ```
 
-The syntax above adds a `!` to indicate that the parameter named `T` is generic
-and the caller will have to provide a value known at compile time.
+The syntax above adds a `!` to indicate that the parameter named `T` is
+compile-time. By default compile-time parameters are _checked_, the `template`
+keyword may be added to make it a _template generic_.
 
 Given an `i32` vector `iv`, `SortVector(i32, &iv)` is equivalent to
 `SortInt32Vector(&iv)`. Similarly for a `String` vector `sv`,
@@ -155,14 +157,16 @@ This ability to generalize makes `SortVector` a _generic_.
 ### Interfaces
 
 The `SortVector` function requires a definition of `Comparable`, with the goal
-that the compiler can:
+that the compiler can perform checking. This has two pieces:
 
--   completely type check a generic definition without information from where
-    it's called.
--   completely type check a call to a generic with information only from the
-    function's signature, and not from its body.
+-   definition checking: completely type check a checked-generic definition
+    without information from calls;
+-   encapsulation: completely type check a call to a generic with information
+    only from the function's signature, and not from its body. For Rust, this is
+    called
+    "[Rust's Golden Rule](https://steveklabnik.com/writing/rusts-golden-rule)."
 
-In this example, then, `Comparable` is an _interface_.
+In this example, `Comparable` is an _interface_.
 
 Interfaces describe all the requirements needed for the type `T`. Given that the
 compiler knows `T` satisfies those requirements, it can type check the body of
@@ -201,9 +205,9 @@ an interface.
 
 #### Contrast with templates
 
-Contrast these generics with a C++ template, where the compiler may be able to
-do some checking given a function definition, but more checking of the
-definition is required after seeing the call sites once all the
+Contrast these checked generics with a Carbon or C++ template, where the
+compiler may be able to do some checking given a function definition, but more
+checking of the definition is required after seeing the call sites once all the
 [instantiations](terminology.md#instantiation) are known.
 
 Note: [Generics terminology](terminology.md) goes into more detail about the
@@ -252,8 +256,9 @@ impl Song as Comparable {
 Implementations may be defined within the class definition itself or
 out-of-line. Implementations may optionally start with the `extend` keyword to
 say the members of the interface are also members of the class, which may only
-be used in a class scope. Otherwise, implementations may be defined in the
-library defining either the class or the interface.
+be used in a class scope. Out-of-line implementations may be defined in the
+library defining the class, the interface, or
+[a type argument](#parameterized-impl-declarations).
 
 #### Accessing members of interfaces
 
@@ -280,11 +285,11 @@ song.(Printable.Print)();
 
 To type check a function, the compiler needs to be able to verify that uses of a
 value match the capabilities of the value's type. In `SortVector`, the parameter
-`T` is a type, but that type is a generic parameter. That means that the
-specific type value assigned to `T` is not known when type checking the
-`SortVector` function. Instead it is the constraints on `T` that let the
-compiler know what operations may be performed on values of type `T`. Those
-constraints are represented by the type of `T`, a
+`T` is a type, but that type is a checked-generic, or _symbolic_, parameter.
+That means that the specific type value assigned to `T` is not known when type
+checking the `SortVector` function. Instead it is the constraints on `T` that
+let the compiler know what operations may be performed on values of type `T`.
+Those constraints are represented by the type of `T`, a
 [**_facet type_**](terminology.md#facet-type).
 
 In general, a facet type describes the capabilities of a type, while a type
@@ -340,9 +345,9 @@ call site.
 fn Illegal[T:! type, U:! type](x: T) -> U { ... }
 ```
 
-#### Generic type parameters
+#### Facet parameters
 
-A function with a generic type parameter can have the same function body as an
+A function with a facet parameter can have the same function body as an
 unparameterized one.
 
 ```
@@ -355,20 +360,23 @@ fn PrintIt(p: Song*) {
 }
 ```
 
-Inside the function body, you can treat the generic type parameter just like any
-other type. There is no need to refer to or access generic parameters
-differently because they are defined as generic, as long as you only refer to
-the names defined by [facet type](#facet-types) for the type parameter.
+Inside the function body, you can treat the facet parameter just like any other
+type. There is no need to refer to or access generic parameters differently
+because they are defined as generic, as long as you only refer to the names
+defined by [facet type](#facet-types) for the facet parameter.
 
 You may also refer to any of the methods of interfaces required by the facet
 type using a
-[qualified member access expression](#accessing-members-of-interfaces), as shown
-in the following sections.
+[qualified member access expression](#accessing-members-of-interfaces).
 
-A function can have a mix of generic, template, and regular parameters.
-Likewise, it's allowed to pass a template or generic value to a generic or
-regular parameter. _However, passing a generic value to a template parameter is
-future work._
+A function can have a mix of checked, template, and regular parameters. A
+checked parameter is defined using a symbolic binding pattern, a template
+parameter using a template binding pattern, and a regular parameter using a
+runtime binding pattern. Likewise, it's allowed to pass a symbolic or template
+binding or value to a generic or regular parameter. _We have decided to support
+passing a symbolic value to a template parameter, see
+[leads issue #2153: Checked generics calling templates](https://github.com/carbon-language/carbon-lang/issues/2153),
+but incorporating it into the design is future work._
 
 ### Requiring or extending another interface
 
@@ -487,7 +495,7 @@ fn CallItAll[T:! Combined](game_state: T*, int winner) {
 
 #### Type erasure
 
-Inside a generic function, the API of a type argument is
+Inside a generic function, the API of a facet argument is
 [erased](terminology.md#type-erasure) except for the names defined in the facet
 type. An equivalent model is to say an [archetype](terminology.md#archetype) is
 used for type checking and name lookup when the actual type is not known in that
@@ -567,9 +575,9 @@ interface Stack {
 ```
 
 `ElementType` is an associated constant of the interface `Stack`. Types that
-implement `Stack` give `ElementType` a specific value of some type implementing
-`Movable`. Functions that accept a type implementing `Stack` can deduce the
-`ElementType` from the stack type.
+implement `Stack` give `ElementType` a specific value that is some type (really,
+facet) implementing `Movable`. Functions that accept a type implementing `Stack`
+can deduce the `ElementType` from the stack type.
 
 ```
 // ✅ This is allowed, since the type of the stack will determine
@@ -616,7 +624,7 @@ fn CompileError[T:! type, U:! Equatable(T)](x: U) -> T;
 Facet types can be further constrained using a `where` clause:
 
 ```
-fn FindFirstPrime[T:! Container where .Element == i32]
+fn FindFirstPrime[T:! Container where .Element = i32]
     (c: T, i: i32) -> Optional(i32) {
   // The elements of `c` have type `T.Element`, which is `i32`.
   ...
@@ -649,8 +657,8 @@ parameters can have constraints to restrict when the implementation applies.
 When multiple implementations apply, there is a rule to pick which one is
 considered the most specific:
 
--   All type parameters in each `impl` declaration are replaced with question
-    marks `?`. This is called the type structure of the `impl` declaration.
+-   All parameters in each `impl` declaration are replaced with question marks
+    `?`. This is called the type structure of the `impl` declaration.
 -   Given two type structures, find the first difference when read from
     left-to-right. The one with a `?` is less specific, the one with a concrete
     type name in that position is more specific.
