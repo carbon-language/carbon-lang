@@ -93,7 +93,7 @@ These conversion steps combine to provide the transitive conversion table:
 
 |               From: | value                     | reference | initializing       |
 | ------------------: | ------------------------- | --------- | ------------------ |
-|        to **value** | ==                        | read      | materialize + read |
+|        to **value** | ==                        | bind      | materialize + bind |
 |    to **reference** | direct init + materialize | ==        | materialize        |
 | to **initializing** | direct init               | copy init | ==                 |
 
