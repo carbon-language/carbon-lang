@@ -67,6 +67,7 @@ CARBON_DIAGNOSTIC_KIND(UnaryOperatorHasWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnaryOperatorRequiresWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenAfterListElement)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedDeclaration)
+CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInIndex)
 
 // Package-related diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterPackage)
