@@ -71,11 +71,11 @@ There are three expression categories in Carbon:
 -   [_Reference expressions_](#reference-expressions) refer to _objects_ with
     _storage_ where a value may be read or written and the object's address can
     be taken.
--   [_Initializing expressions_](#initializing-expressions) require
-    storage to be provided implicitly when evaluating the expression. The
-    expression then initializes an object in that storage. These are used to
-    model function returns, which can construct the returned value directly in
-    the caller's storage.
+-   [_Initializing expressions_](#initializing-expressions) require storage to
+    be provided implicitly when evaluating the expression. The expression then
+    initializes an object in that storage. These are used to model function
+    returns, which can construct the returned value directly in the caller's
+    storage.
 
 Expressions in one category can be converted to any other category when needed.
 The primitive conversion steps used are:
@@ -91,11 +91,11 @@ The primitive conversion steps used are:
 
 These conversion steps combine to provide the transitive conversion table:
 
-|               From: | value                   | reference | initializing     |
-| ------------------: | ----------------------- | --------- | ---------------- |
-|        to **value** | ==                      | read      | materialize + read |
+|               From: | value                     | reference | initializing       |
+| ------------------: | ------------------------- | --------- | ------------------ |
+|        to **value** | ==                        | read      | materialize + read |
 |    to **reference** | direct init + materialize | ==        | materialize        |
-| to **initializing** | direct init             | copy init | ==               |
+| to **initializing** | direct init               | copy init | ==                 |
 
 Reference expressions formed through temporary materialization are called
 [_ephemeral reference expressions_](#ephemeral-reference-expressions) and have
@@ -347,8 +347,8 @@ allows immediately reading from the object's storage into a machine register or
 a copy if desired, but does not require that. The read of the underlying object
 can also be deferred until the value expression itself is used. Once an object
 is bound to a value expression in this way, any mutation to the object or its
-storage ends the lifetime of the value binding, and makes any use of the
-value expression an error.
+storage ends the lifetime of the value binding, and makes any use of the value
+expression an error.
 
 > Note: this is _not_ intended to ever become "undefined behavior", but instead
 > just "erroneous". We want to be able to detect and report such code as having

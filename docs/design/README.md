@@ -655,7 +655,8 @@ address of an object in memory in Carbon.
 
 ### Expression categories
 
-A Carbon expression produces a value or references an object. Every expression has a
+A Carbon expression produces a value or references an object. Every expression
+has a
 [category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
 similar to [C++](https://en.cppreference.com/w/cpp/language/value_category):
 
@@ -801,8 +802,8 @@ the only pointer [operations](#expressions) are:
 -   Dereference: given a pointer `p`, `*p` gives the value `p` points to as a
     [reference expression](#expression-categories). `p->m` is syntactic sugar
     for `(*p).m`.
--   Address-of: given a [reference expression](#expression-categories) `x`,
-    `&x` returns a pointer to `x`.
+-   Address-of: given a [reference expression](#expression-categories) `x`, `&x`
+    returns a pointer to `x`.
 
 There are no [null pointers](https://en.wikipedia.org/wiki/Null_pointer) in
 Carbon. To represent a pointer that may not refer to a valid object, use the
