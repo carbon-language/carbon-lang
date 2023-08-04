@@ -1595,7 +1595,7 @@ class MyDerivedClass {
 
 The properties of a type, whether type is abstract, base, or final, and whether
 the destructor is virtual or non-virtual, determines which
-[type-of-types](/docs/design/generics/terminology.md#type-of-type) it satisfies.
+[type-of-types](/docs/design/generics/terminology.md#facet-type) it satisfies.
 
 -   Non-abstract classes are `Concrete`. This means you can create local and
     member variables of this type. `Concrete` types have destructors that are
@@ -1623,7 +1623,7 @@ conform to the decision on
 | final    | any         | yes        | yes         | yes            |
 
 The compiler automatically determines which of these
-[type-of-types](/docs/design/generics/terminology.md#type-of-type) a given type
+[type-of-types](/docs/design/generics/terminology.md#facet-type) a given type
 satisfies. It is illegal to directly implement `Concrete`, `Deletable`, or
 `Destructible` directly. For more about these constraints, see
 ["destructor constraints" in the detailed generics design](/docs/design/generics/details.md#destructor-constraints).

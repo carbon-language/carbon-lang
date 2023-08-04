@@ -30,10 +30,10 @@
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+4, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+4},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+6, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
@@ -44,7 +44,7 @@
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+11},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+12},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block9, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+15, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+15},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

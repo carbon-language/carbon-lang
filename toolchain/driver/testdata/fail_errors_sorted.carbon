@@ -4,9 +4,8 @@
 //
 // ARGS: dump tokens %s
 //
-// TODO: Support autoupdate with ARGS.
-// NOAUTOUPDATE
 // TODO: Disable token output, it's not interesting for these tests.
+// AUTOUPDATE
 // CHECK:STDOUT: [
 // CHECK:STDOUT: {{.*}}
 // CHECK:STDOUT: {{.*}}

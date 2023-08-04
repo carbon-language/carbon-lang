@@ -244,12 +244,14 @@ class SemanticsNodeStack {
       case ParseNodeKind::CallExpression:
       case ParseNodeKind::CallExpressionStart:
       case ParseNodeKind::IfExpressionElse:
+      case ParseNodeKind::IndexExpression:
       case ParseNodeKind::InfixOperator:
       case ParseNodeKind::Literal:
       case ParseNodeKind::MemberAccessExpression:
       case ParseNodeKind::NameExpression:
       case ParseNodeKind::ParenExpression:
       case ParseNodeKind::PatternBinding:
+      case ParseNodeKind::PostfixOperator:
       case ParseNodeKind::PrefixOperator:
       case ParseNodeKind::ShortCircuitOperand:
       case ParseNodeKind::StructFieldValue:

@@ -45,7 +45,7 @@
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+7, type: type1},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block3, type: type3},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

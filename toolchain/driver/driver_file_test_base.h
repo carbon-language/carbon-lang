@@ -23,17 +23,16 @@ class DriverFileTestBase : public FileTestBase {
  public:
   using FileTestBase::FileTestBase;
 
-  auto RunWithFiles(const llvm::SmallVector<llvm::StringRef>& test_args,
-                    const llvm::SmallVector<TestFile>& test_files,
-                    llvm::raw_pwrite_stream& stdout,
-                    llvm::raw_pwrite_stream& stderr) -> bool override {
+  auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
+           const llvm::SmallVector<TestFile>& test_files,
+           llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
+      -> ErrorOr<bool> override {
     // Create the files in-memory.
     llvm::vfs::InMemoryFileSystem fs;
     for (const auto& test_file : test_files) {
       if (!fs.addFile(test_file.filename, /*ModificationTime=*/0,
                       llvm::MemoryBuffer::getMemBuffer(test_file.content))) {
-        ADD_FAILURE() << "File is repeated: " << test_file.filename;
-        return false;
+        return ErrorBuilder() << "File is repeated: " << test_file.filename;
       }
     }
 

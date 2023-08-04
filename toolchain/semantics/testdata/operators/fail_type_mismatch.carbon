@@ -27,7 +27,7 @@
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: nodeError, arg1: node+2, type: typeError},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3, type: typeError},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

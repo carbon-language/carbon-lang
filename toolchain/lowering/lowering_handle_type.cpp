@@ -6,6 +6,18 @@
 
 namespace Carbon {
 
+auto LoweringHandleConstType(LoweringFunctionContext& context,
+                             SemanticsNodeId node_id, SemanticsNode /*node*/)
+    -> void {
+  context.SetLocal(node_id, context.GetTypeAsValue());
+}
+
+auto LoweringHandlePointerType(LoweringFunctionContext& context,
+                               SemanticsNodeId node_id, SemanticsNode /*node*/)
+    -> void {
+  context.SetLocal(node_id, context.GetTypeAsValue());
+}
+
 auto LoweringHandleStructType(LoweringFunctionContext& context,
                               SemanticsNodeId node_id, SemanticsNode /*node*/)
     -> void {

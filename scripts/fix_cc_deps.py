@@ -58,6 +58,10 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
     "@com_google_absl": ExternalRepo(
         lambda x: re.sub(":", "/", x), "...", None
     ),
+    # :re2/re2.h -> re2/re2.h
+    "@com_googlesource_code_re2": ExternalRepo(
+        lambda x: re.sub(":", "", x), ":re2", None
+    ),
 }
 
 # TODO: proto rules are aspect-based and their generated files don't show up in
