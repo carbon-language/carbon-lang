@@ -367,6 +367,12 @@ roughly the same places as `const &`s in C++, but with added efficiency in the
 case where the values can usefully be kept in machine registers. We also
 specifically encourage a mental model of a `const &` with extra efficiency.
 
+The actual _representation_ of a value when bound, especially across function
+boundaries, is [customizable](#value-representation-and-customization) by the
+type. The defaults are based around preserving the baseline efficiency of C++'s
+`const &`, but potentially reading the value when that would be both correct and
+reliably more efficient, such as into a machine register.
+
 ### Comparison to C++ parameters
 
 While these are called "values" in Carbon, they are not related to "by-value"
@@ -378,166 +384,6 @@ Carbon's values are much closer to a `const &` in C++ with extra restrictions
 such as allowing copies under "as-if" and preventing taking the address.
 Combined, these restrictions allow implementation strategies such as in-register
 parameters.
-
-### Value representation and customization
-
-The representation of a value expression is especially important because it
-forms the calling convention used for the vast majority of function parameters
--- function inputs. Given this importance, it's important that it is predictable
-and customizable by the value's type. Similarly, while Carbon code must be
-correct with either a copy or a reference-based implementation, we want which
-implementation strategy is used to be a predictable and customizable property of
-the type of a value.
-
-A type can optionally control its value representation using a custom syntax
-similar to customizing its [destructor](/docs/design/classes.md#destructors).
-This syntax sets the representation to some type uses a keyword `value_rep` and
-can appear where a member declaration would be valid within the type:
-
-```carbon
-class SomeType {
-  value_rep = RepresentationType;
-}
-```
-
-**Open question:** The syntax for this is just placeholder, using a placeholder
-keyword. It isn't final at all and likely will need to change to read well.
-
-The provided representation type must be one of the following:
-
--   `const Self` -- this forces the use of a _copy_ of the object.
--   `const Self *` -- this forces the use of a [_pointer_](#pointers) to the
-    original object.
--   A custom type that is not `Self`, `const Self`, or a pointer to either.
-
-If the representation is `const Self` or `const Self *`, then the type fields
-will be accessible as [_value expressions_](#value-expressions) using the normal
-member access syntax for value expressions of a type. These will be implemented
-by either accessing a copy of the object in the non-pointer case or a pointer to
-the original object in the pointer case. A representation of `const Self`
-requires copying to be valid for the type. This provides the builtin
-functionality but allows explicitly controlling which representation should be
-used.
-
-If no customization is provided, the implementation will select one based on a
-set of heuristics. Some examples:
-
--   Non-copyable types and polymorphic types would use a `const Self*`.
--   Small objects that are trivially copied in a machine register would use
-    `const Self`.
-
-When a custom type is provided, it must not be `Self`, `const Self`, or a
-pointer to either. The type provided will be used on function call boundaries
-and as the implementation representation for `let` bindings and other value
-expressions referencing an object of the type. A specifier of `value_rep = T;`
-will require that the type containing that specifier satisfies the constraint
-`impls ReferenceImplicitAs where .T = T` using the following interface:
-
-```carbon
-interface ReferenceImplicitAs {
-  let T:! type;
-  fn Convert[addr self: const Self*]() -> T;
-}
-```
-
-Converting a reference expression into a value expression for such a type calls
-this customization point to form a representation object from the original
-reference expression.
-
-When using a custom representation type in this way, no fields are accessible
-through a value expression. Instead, only methods can be called using member
-access, as they simply bind the value expression to the `self` parameter.
-However, one important method can be called -- `.(ImplicitAs(T).Convert)()`.
-This implicitly converting a value expression for the type into its custom
-representation type. The customization of the representation above and
-`impls ReferenceImplicitAs where .T = T` causes the class to have a builtin
-`impl as ImplicitAs(T)` which converts to the representation type as a no-op,
-exposing the object created by calling `ReferenceImplicitAs.Convert` on the
-original reference expression, and preserved as a representation of the value
-expression.
-
-Here is a more complete example of code using these features:
-
-```carbon
-class StringView {
-  private var data_ptr: Char*;
-  private var size: i64;
-
-  fn Create(data_ptr: Char*, size: i64) -> StringView {
-    return {.data_ptr = data_ptr, .size = size};
-  }
-
-  // A typical readonly view of a string API...
-  fn ExampleMethod[self: Self]() { ... }
-}
-
-class String {
-  // Customize the value representation to be `StringView`.
-  value_rep = StringView;
-
-  private var data_ptr: Char*;
-  private var size: i64;
-
-  private var capacity: i64;
-
-  impl as ReferenceImplicitAs where .T = StringView {
-    fn Op[addr self: const Self*]() -> StringView {
-      // Because this is called on the String object prior to it becoming
-      // a value, we can access an SSO buffer or other interior pointers
-      // of `self`.
-      return StringView::Create(self->data_ptr, self->size);
-    }
-  }
-
-  // We can directly declare methods that take `self` as a `StringView` which
-  // will cause the caller to implicitly convert value expressions to
-  // `StringView` prior to calling.
-  fn ExampleMethod[self: StringView]() { self.ExampleMethod(); }
-
-  // Or we can use a value binding for `self` much like normal, but the
-  // implementation will be constrained because of the custom value rep.
-  fn ExampleMethod2[self: String]() {
-    // Error due to custom value rep:
-    self.data_ptr;
-
-    // Fine, this uses the builtin `ImplicitAs(StringView)`.
-    (self as StringView).ExampleMethod();
-  }
-
-  // Note that even though the `Self` type is `const` qualified here, this
-  // cannot be called on a `String` value! That would require us to convert to a
-  // `StringView` that does not track the extra data member.
-  fn Capacity[addr self: const Self*]() -> i64 {
-    return self->capacity;
-  }
-}
-```
-
-It is important to note that the _representation_ type of a value expression is
-just its representation and does not impact the name lookup or type. Name lookup
-and `impl` search occur for the same type regardless of the expression category.
-But once a particular method or function is selected, an implicit conversion can
-occur from the original type to the representation type as part of the parameter
-or receiver type. In fact, this conversion is the _only_ operation that can
-occur for a value whose type has a customized value representation.
-
-The example above also demonstrates the fundamental tradeoff made by customizing
-the value representation of a type in this way. While it provides a great deal
-of control, it may result in some surprising limitations. Above, a method that
-is classically available on a C++ `const std::string&` like querying the
-capacity cannot be implemented with the customized value representation because
-it loses access to this additional state. Carbon allows type authors to make an
-explicit choice about whether they want to work with a restricted API and
-leverage a custom value representation or not.
-
-**Open question:** Beyond the specific syntax used where we currently have a
-placeholder `value_rep = T;`, we need to explore exactly what the best
-relationship is with the customization point. For example, should this syntax
-immediately forward declare `impl as ReferenceImplicitAs where .T = T`, thereby
-allowing an out-of-line definition of the `Convert` method and `... where _` to
-pick up the associated type from the syntax. Alternatively, the syntactic marker
-might be integrated into the `impl` declaration for `ReferenceImplicitAs`
-itself.
 
 ### Polymorphic types
 
@@ -581,7 +427,8 @@ or point back to some original object. The C++ implementation already requires
 the ability to introduce copies or a temporary, which also serves the needs of
 interop.
 
-> **Future work:** when a type customizes its value representation, as currently
+> **Future work:** when a type customizes its
+> [value representation](#value-representation-and-customization), as currently
 > specified this will break the use of `const &` C++ APIs with such a value. We
 > should extend the rules around value representation customization to require
 > that either the representation type can be converted to (a copy) of the
@@ -996,6 +843,166 @@ functionality already proposed here or for [classes](/docs/design/classes.md):
 Perhaps more options will emerge as well. Again, the goal isn't to completely
 preclude pursuing this direction, but instead to try to ensure it is only
 pursued based on a real and concrete need, and the minimal extension is adopted.
+
+## Value representation and customization
+
+The representation of a value expression is especially important because it
+forms the calling convention used for the vast majority of function parameters
+-- function inputs. Given this importance, it's important that it is predictable
+and customizable by the value's type. Similarly, while Carbon code must be
+correct with either a copy or a reference-based implementation, we want which
+implementation strategy is used to be a predictable and customizable property of
+the type of a value.
+
+A type can optionally control its value representation using a custom syntax
+similar to customizing its [destructor](/docs/design/classes.md#destructors).
+This syntax sets the representation to some type uses a keyword `value_rep` and
+can appear where a member declaration would be valid within the type:
+
+```carbon
+class SomeType {
+  value_rep = RepresentationType;
+}
+```
+
+**Open question:** The syntax for this is just placeholder, using a placeholder
+keyword. It isn't final at all and likely will need to change to read well.
+
+The provided representation type must be one of the following:
+
+-   `const Self` -- this forces the use of a _copy_ of the object.
+-   `const Self *` -- this forces the use of a [_pointer_](#pointers) to the
+    original object.
+-   A custom type that is not `Self`, `const Self`, or a pointer to either.
+
+If the representation is `const Self` or `const Self *`, then the type fields
+will be accessible as [_value expressions_](#value-expressions) using the normal
+member access syntax for value expressions of a type. These will be implemented
+by either accessing a copy of the object in the non-pointer case or a pointer to
+the original object in the pointer case. A representation of `const Self`
+requires copying to be valid for the type. This provides the builtin
+functionality but allows explicitly controlling which representation should be
+used.
+
+If no customization is provided, the implementation will select one based on a
+set of heuristics. Some examples:
+
+-   Non-copyable types and polymorphic types would use a `const Self*`.
+-   Small objects that are trivially copied in a machine register would use
+    `const Self`.
+
+When a custom type is provided, it must not be `Self`, `const Self`, or a
+pointer to either. The type provided will be used on function call boundaries
+and as the implementation representation for `let` bindings and other value
+expressions referencing an object of the type. A specifier of `value_rep = T;`
+will require that the type containing that specifier satisfies the constraint
+`impls ReferenceImplicitAs where .T = T` using the following interface:
+
+```carbon
+interface ReferenceImplicitAs {
+  let T:! type;
+  fn Convert[addr self: const Self*]() -> T;
+}
+```
+
+Converting a reference expression into a value expression for such a type calls
+this customization point to form a representation object from the original
+reference expression.
+
+When using a custom representation type in this way, no fields are accessible
+through a value expression. Instead, only methods can be called using member
+access, as they simply bind the value expression to the `self` parameter.
+However, one important method can be called -- `.(ImplicitAs(T).Convert)()`.
+This implicitly converting a value expression for the type into its custom
+representation type. The customization of the representation above and
+`impls ReferenceImplicitAs where .T = T` causes the class to have a builtin
+`impl as ImplicitAs(T)` which converts to the representation type as a no-op,
+exposing the object created by calling `ReferenceImplicitAs.Convert` on the
+original reference expression, and preserved as a representation of the value
+expression.
+
+Here is a more complete example of code using these features:
+
+```carbon
+class StringView {
+  private var data_ptr: Char*;
+  private var size: i64;
+
+  fn Create(data_ptr: Char*, size: i64) -> StringView {
+    return {.data_ptr = data_ptr, .size = size};
+  }
+
+  // A typical readonly view of a string API...
+  fn ExampleMethod[self: Self]() { ... }
+}
+
+class String {
+  // Customize the value representation to be `StringView`.
+  value_rep = StringView;
+
+  private var data_ptr: Char*;
+  private var size: i64;
+
+  private var capacity: i64;
+
+  impl as ReferenceImplicitAs where .T = StringView {
+    fn Op[addr self: const Self*]() -> StringView {
+      // Because this is called on the String object prior to it becoming
+      // a value, we can access an SSO buffer or other interior pointers
+      // of `self`.
+      return StringView::Create(self->data_ptr, self->size);
+    }
+  }
+
+  // We can directly declare methods that take `self` as a `StringView` which
+  // will cause the caller to implicitly convert value expressions to
+  // `StringView` prior to calling.
+  fn ExampleMethod[self: StringView]() { self.ExampleMethod(); }
+
+  // Or we can use a value binding for `self` much like normal, but the
+  // implementation will be constrained because of the custom value rep.
+  fn ExampleMethod2[self: String]() {
+    // Error due to custom value rep:
+    self.data_ptr;
+
+    // Fine, this uses the builtin `ImplicitAs(StringView)`.
+    (self as StringView).ExampleMethod();
+  }
+
+  // Note that even though the `Self` type is `const` qualified here, this
+  // cannot be called on a `String` value! That would require us to convert to a
+  // `StringView` that does not track the extra data member.
+  fn Capacity[addr self: const Self*]() -> i64 {
+    return self->capacity;
+  }
+}
+```
+
+It is important to note that the _representation_ type of a value expression is
+just its representation and does not impact the name lookup or type. Name lookup
+and `impl` search occur for the same type regardless of the expression category.
+But once a particular method or function is selected, an implicit conversion can
+occur from the original type to the representation type as part of the parameter
+or receiver type. In fact, this conversion is the _only_ operation that can
+occur for a value whose type has a customized value representation.
+
+The example above also demonstrates the fundamental tradeoff made by customizing
+the value representation of a type in this way. While it provides a great deal
+of control, it may result in some surprising limitations. Above, a method that
+is classically available on a C++ `const std::string&` like querying the
+capacity cannot be implemented with the customized value representation because
+it loses access to this additional state. Carbon allows type authors to make an
+explicit choice about whether they want to work with a restricted API and
+leverage a custom value representation or not.
+
+**Open question:** Beyond the specific syntax used where we currently have a
+placeholder `value_rep = T;`, we need to explore exactly what the best
+relationship is with the customization point. For example, should this syntax
+immediately forward declare `impl as ReferenceImplicitAs where .T = T`, thereby
+allowing an out-of-line definition of the `Convert` method and `... where _` to
+pick up the associated type from the syntax. Alternatively, the syntactic marker
+might be integrated into the `impl` declaration for `ReferenceImplicitAs`
+itself.
 
 ## Alternatives considered
 
