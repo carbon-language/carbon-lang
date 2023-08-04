@@ -67,11 +67,11 @@ itself.
 There are three expression categories in Carbon:
 
 -   [_Value expressions_](#value-expressions) produce abstract, read-only
-    _values_ that cannot be modified or have its address taken.
+    _values_ that cannot be modified or have their address taken.
 -   [_Reference expressions_](#reference-expressions) refer to _objects_ with
     _storage_ where a value may be read or written and the object's address can
     be taken.
--   [_Initializing expressions_](#initializing-expressions) which require
+-   [_Initializing expressions_](#initializing-expressions) require
     storage to be provided implicitly when evaluating the expression. The
     expression then initializes an object in that storage. These are used to
     model function returns, which can construct the returned value directly in
@@ -93,8 +93,8 @@ These conversion steps combine to provide the transitive conversion table:
 
 |               From: | value                   | reference | initializing     |
 | ------------------: | ----------------------- | --------- | ---------------- |
-|        to **value** | ==                      | read      | temporary + read |
-|    to **reference** | direct init + temporary | ==        | temporary        |
+|        to **value** | ==                      | read      | materialize + read |
+|    to **reference** | direct init + materialize | ==        | materialize        |
 | to **initializing** | direct init             | copy init | ==               |
 
 Reference expressions formed through temporary materialization are called
@@ -168,7 +168,7 @@ to it to be initialized.
 fn MutateThing(ptr: i64*);
 
 fn Example() {
-  // `1` starts as a value expression, and the `let` binds a name to it.
+  // `1` starts as a value expression, which is what a `let` binding expects.
   let x: i64 = 1;
 
   // `2` also starts as a value expression, but the variable binding requires it
@@ -346,8 +346,8 @@ When forming a value expression from a reference expression, Carbon
 allows immediately reading from the object's storage into a machine register or
 a copy if desired, but does not require that. The read of the underlying object
 can also be deferred until the value expression itself is used. Once an object
-is bound to a value expression in this way, any mutation to the object or it's
-storage ends the lifetime of the value expression, and makes any use of the
+is bound to a value expression in this way, any mutation to the object or its
+storage ends the lifetime of the value binding, and makes any use of the
 value expression an error.
 
 > Note: this is _not_ intended to ever become "undefined behavior", but instead

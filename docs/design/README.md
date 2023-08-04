@@ -399,7 +399,7 @@ Some values, such as `()` and `{}`, may even be used as types, but only act like
 types when they are in a type position, like after a `:` in a variable
 declaration or the return type after a `->` in a function declaration. Any
 expression in a type position must be
-[a constants or symbolic value](#value-phases) so the compiler can resolve
+[a constant or symbolic value](#value-phases) so the compiler can resolve
 whether the value can be used as a type. This also puts limits on how much
 operators can do different things for types. This is good for consistency, but
 is a significant restriction on Carbon's design.
@@ -655,12 +655,12 @@ address of an object in memory in Carbon.
 
 ### Expression categories
 
-Carbon expressions produce values or reference objects. Every expression has a
+A Carbon expression produces a value or references an object. Every expression has a
 [category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
 similar to [C++](https://en.cppreference.com/w/cpp/language/value_category):
 
 -   [_Value expressions_](values.md#value-expressions) produce abstract,
-    read-only _values_ that cannot be modified or have its address taken.
+    read-only _values_ that cannot be modified or have their address taken.
 -   [_Reference expressions_](values.md#reference-expressions) refer to
     _objects_ with _storage_ where a value may be read or written and the
     object's address can be taken.
@@ -673,7 +673,7 @@ similar to [C++](https://en.cppreference.com/w/cpp/language/value_category):
 Expressions in one category can be converted to any other category when needed.
 The primitive conversion steps used are:
 
--   A _read_ converts a reference expression into a value expression.
+-   _Value binding_ converts a reference expression into a value expression.
 -   _Direct initialization_ converts a value expression into an initializing
     expression.
 -   _Copy initialization_ converts a reference expression into an initializing
@@ -798,10 +798,10 @@ not support
 [pointer arithmetic](<https://en.wikipedia.org/wiki/Pointer_(computer_programming)>);
 the only pointer [operations](#expressions) are:
 
--   Dereference: given a pointer `p`, `*p` gives the value `p` points to as an
+-   Dereference: given a pointer `p`, `*p` gives the value `p` points to as a
     [reference expression](#expression-categories). `p->m` is syntactic sugar
     for `(*p).m`.
--   Address-of: given an [reference expression](#expression-categories) `x`,
+-   Address-of: given a [reference expression](#expression-categories) `x`,
     `&x` returns a pointer to `x`.
 
 There are no [null pointers](https://en.wikipedia.org/wiki/Null_pointer) in
@@ -987,7 +987,7 @@ binding any name to it.
 Binding patterns default to _`let` bindings_. The `var` keyword is used to make
 it a _`var` binding_.
 
--   The result of a `let` binding is the name is bound to a
+-   A `let` binding binds a name to a value, so the name can be used as a
     [value expression](#expression-categories). This means the value cannot be
     modified, and its address generally cannot be taken.
 -   A `var` binding creates an object with dedicated storage, and so the name

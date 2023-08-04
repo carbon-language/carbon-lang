@@ -24,9 +24,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Carbon supports indexing using the conventional `a[i]` subscript syntax. When
 `a` is a
-[_durable reference expression_](/docs/design/values.md#durable-reference-expressions),
+[durable reference expression](/docs/design/values.md#durable-reference-expressions),
 the result of subscripting is also a durable reference expression, but when `a`
-is a [_value expression_](/docs/design/values.md#value-expressions), the result
+is a [value expression](/docs/design/values.md#value-expressions), the result
 can be a durable reference expression or a value expression, depending on which
 interface the type implements:
 

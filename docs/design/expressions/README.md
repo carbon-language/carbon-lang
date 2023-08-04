@@ -72,10 +72,10 @@ graph BT
     constType["const T"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
 
-    pointerType["T*"]
+    pointerType>"T*"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
 
-    pointer["*x<br>
+    pointer<"*x<br>
              &x<br>"]
     click pointer "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/pointer.md"
 
