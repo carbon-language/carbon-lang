@@ -24,7 +24,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Ephemeral reference expressions](#ephemeral-reference-expressions)
 -   [Value expressions](#value-expressions)
     -   [Comparison to C++ parameters](#comparison-to-c-parameters)
-    -   [Value representation and customization](#value-representation-and-customization)
     -   [Polymorphic types](#polymorphic-types)
     -   [Interop with C++ `const &` and `const` methods](#interop-with-c-const--and-const-methods)
     -   [Escape hatches for value addresses in Carbon](#escape-hatches-for-value-addresses-in-carbon)
@@ -38,6 +37,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Dereferencing customization](#dereferencing-customization)
 -   [`const`-qualified types](#const-qualified-types)
 -   [Lifetime overloading](#lifetime-overloading)
+-   [Value representation and customization](#value-representation-and-customization)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
