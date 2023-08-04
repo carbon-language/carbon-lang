@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+6]]:16: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fn Bar(a: i32, a: i32) {}
+// CHECK:STDERR:                ^
+// CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+3]]:8: Name is previously declared here.
+// CHECK:STDERR: fn Bar(a: i32, a: i32) {}
+// CHECK:STDERR:        ^
+fn Bar(a: i32, a: i32) {}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, body: {block4}}},
@@ -48,11 +57,3 @@
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+6]]:16: Duplicate name being declared in the same scope.
-// CHECK:STDERR: fn Bar(a: i32, a: i32) {}
-// CHECK:STDERR:                ^
-// CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+3]]:8: Name is previously declared here.
-// CHECK:STDERR: fn Bar(a: i32, a: i32) {}
-// CHECK:STDERR:        ^
-fn Bar(a: i32, a: i32) {}

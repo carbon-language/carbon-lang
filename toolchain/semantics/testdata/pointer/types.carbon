@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Ptr(p: i32*) -> i32* {
+  return p;
+}
+
+fn ConstPtr(p: const i32*) -> (const i32)* {
+  return p;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4}}},
@@ -75,11 +84,3 @@
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn Ptr(p: i32*) -> i32* {
-  return p;
-}
-
-fn ConstPtr(p: const i32*) -> (const i32)* {
-  return p;
-}

@@ -110,7 +110,8 @@ static auto AddCheckLines(
     const llvm::SmallVector<llvm::StringRef>& filenames,
     bool line_number_re_has_file, const RE2& line_number_re,
     std::function<void(std::string&)> do_extra_check_replacements,
-    llvm::SmallVector<llvm::SmallVector<CheckLine>>& check_lines) -> void {
+    llvm::SmallVector<llvm::SmallVector<CheckLine>>& check_lines,
+    int default_line_number = -1) -> void {
   if (output.empty()) {
     return;
   }
@@ -183,8 +184,8 @@ static auto AddCheckLines(
       }
     }
     // NOLINTNEXTLINE(google-runtime-int): API requirement.
-    long long line_number =
-        use_line_number ? ParseLineNumber(*use_line_number) : -1;
+    long long line_number = use_line_number ? ParseLineNumber(*use_line_number)
+                                            : default_line_number;
     check_lines[append_to].push_back(
         CheckLine(line_number, line_number_re_has_file,
                   use_line_number ? &line_number_re : nullptr, check_line));
@@ -198,7 +199,8 @@ auto AutoupdateFileTest(
     llvm::SmallVector<llvm::SmallVector<FileTestLine>>& non_check_lines,
     llvm::StringRef stdout, llvm::StringRef stderr,
     FileTestLineNumberReplacement line_number_replacement,
-    std::function<void(std::string&)> do_extra_check_replacements) -> bool {
+    std::function<void(std::string&)> do_extra_check_replacements,
+    bool stdout_at_end) -> bool {
   // Prepare CHECK lines.
   llvm::SmallVector<llvm::SmallVector<CheckLine>> check_lines;
   check_lines.resize(filenames.size());
@@ -206,10 +208,18 @@ auto AutoupdateFileTest(
   CARBON_CHECK(line_number_re.ok()) << "Invalid line replacement RE2: `"
                                     << line_number_replacement.pattern << "`";
 
-  AddCheckLines(stdout, "STDOUT", filenames, line_number_replacement.has_file,
-                line_number_re, do_extra_check_replacements, check_lines);
-  AddCheckLines(stderr, "STDERR", filenames, line_number_replacement.has_file,
-                line_number_re, do_extra_check_replacements, check_lines);
+  if (stdout_at_end) {
+    AddCheckLines(stderr, "STDERR", filenames, line_number_replacement.has_file,
+                  line_number_re, do_extra_check_replacements, check_lines);
+    AddCheckLines(stdout, "STDOUT", filenames, line_number_replacement.has_file,
+                  line_number_re, do_extra_check_replacements, check_lines,
+                  INT_MAX);
+  } else {
+    AddCheckLines(stdout, "STDOUT", filenames, line_number_replacement.has_file,
+                  line_number_re, do_extra_check_replacements, check_lines);
+    AddCheckLines(stderr, "STDERR", filenames, line_number_replacement.has_file,
+                  line_number_re, do_extra_check_replacements, check_lines);
+  }
 
   // All CHECK lines are suppressed until we reach AUTOUPDATE.
   bool reached_autoupdate = false;

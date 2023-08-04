@@ -112,7 +112,8 @@ auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
       path(), context.input_content, filenames, *context.autoupdate_line_number,
       context.non_check_lines, context.stdout, context.stderr,
       GetLineNumberReplacement(filenames_for_line_number),
-      [&](std::string& line) { DoExtraCheckReplacements(line); });
+      [&](std::string& line) { DoExtraCheckReplacements(line); },
+      CheckStdoutAtEnd());
 }
 
 auto FileTestBase::GetLineNumberReplacement(

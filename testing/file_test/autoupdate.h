@@ -32,7 +32,8 @@ auto AutoupdateFileTest(
     llvm::SmallVector<llvm::SmallVector<FileTestLine>>& non_check_lines,
     llvm::StringRef stdout, llvm::StringRef stderr,
     FileTestLineNumberReplacement line_number_replacement,
-    std::function<void(std::string&)> do_extra_check_replacements) -> bool;
+    std::function<void(std::string&)> do_extra_check_replacements,
+    bool stdout_at_end) -> bool;
 
 }  // namespace Carbon::Testing
 

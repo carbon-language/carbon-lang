@@ -81,6 +81,10 @@ class FileTestBase : public testing::Test {
   // Runs the test and autoupdates checks. Returns true if updated.
   auto Autoupdate() -> ErrorOr<bool>;
 
+  // Returns whether the CHECK lines for STDOUT should appear at the end of the
+  // file. If not, they will be ordered before CHECK lines for STDERR.
+  virtual auto CheckStdoutAtEnd() -> bool { return false; }
+
   // Returns the full path of the file being tested.
   auto path() -> const std::filesystem::path& { return path_; };
 

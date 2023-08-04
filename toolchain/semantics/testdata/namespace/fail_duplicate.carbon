@@ -3,6 +3,21 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+namespace Foo;
+
+fn Foo.Baz() {
+}
+
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:8: Duplicate name being declared in the same scope.
+// CHECK:STDERR: fn Foo.Baz() {
+// CHECK:STDERR:        ^
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE-6]]:1: Name is previously declared here.
+// CHECK:STDERR: fn Foo.Baz() {
+// CHECK:STDERR: ^
+fn Foo.Baz() {
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str1, param_refs: block0, body: {block2}}},
@@ -42,17 +57,3 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-namespace Foo;
-
-fn Foo.Baz() {
-}
-
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+6]]:8: Duplicate name being declared in the same scope.
-// CHECK:STDERR: fn Foo.Baz() {
-// CHECK:STDERR:        ^
-// CHECK:STDERR: fail_duplicate.carbon:[[@LINE-6]]:1: Name is previously declared here.
-// CHECK:STDERR: fn Foo.Baz() {
-// CHECK:STDERR: ^
-fn Foo.Baz() {
-}
