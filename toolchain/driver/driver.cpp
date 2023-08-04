@@ -155,9 +155,16 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     parse_tree_preorder = true;
   }
 
+  bool semantics_ir_include_raw = false;
+  if (dump_mode == DumpMode::SemanticsIR && !args.empty() &&
+      args.front() == "--include_raw") {
+    args = args.drop_front();
+    semantics_ir_include_raw = true;
+  }
+
   bool semantics_ir_include_builtins = false;
-  if (dump_mode == DumpMode::RawSemanticsIR && !args.empty() &&
-      args.front() == "--include_builtins") {
+  if ((dump_mode == DumpMode::RawSemanticsIR || semantics_ir_include_raw) &&
+      !args.empty() && args.front() == "--include_builtins") {
     args = args.drop_front();
     semantics_ir_include_builtins = true;
   }
@@ -244,11 +251,13 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree done ***\n";
   if (dump_mode == DumpMode::RawSemanticsIR) {
     semantics_ir.Print(output_stream_, semantics_ir_include_builtins);
-    output_stream_ << "\n";
-    FormatSemanticsIR(semantics_ir, output_stream_);
     return !has_errors;
   }
   if (dump_mode == DumpMode::SemanticsIR) {
+    if (semantics_ir_include_raw) {
+      semantics_ir.Print(output_stream_, semantics_ir_include_builtins);
+      output_stream_ << "\n";
+    }
     FormatSemanticsIR(semantics_ir, output_stream_);
     return !has_errors;
   }
