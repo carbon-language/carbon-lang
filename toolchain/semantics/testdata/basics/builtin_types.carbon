@@ -67,14 +67,14 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %test_i32: i32 = var
-// CHECK:STDOUT:   %0: i32 = int_value 0
-// CHECK:STDOUT:   assign %test_i32, %0
+// CHECK:STDOUT:   %82: i32 = int_value 0
+// CHECK:STDOUT:   assign %test_i32, %82
 // CHECK:STDOUT:   %test_f64: f64 = var
-// CHECK:STDOUT:   %1: f64 = real_value 1e-1
-// CHECK:STDOUT:   assign %test_f64, %1
+// CHECK:STDOUT:   %83: f64 = real_value 1e-1
+// CHECK:STDOUT:   assign %test_f64, %83
 // CHECK:STDOUT:   %test_str: String = var
-// CHECK:STDOUT:   %2: String = string_value "Test"
-// CHECK:STDOUT:   assign %test_str, %2
+// CHECK:STDOUT:   %84: String = string_value "Test"
+// CHECK:STDOUT:   assign %test_str, %84
 // CHECK:STDOUT:   %test_type: type = var
 // CHECK:STDOUT:   assign %test_type, i32
 // CHECK:STDOUT: }

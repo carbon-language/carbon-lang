@@ -79,28 +79,28 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = stub_reference i32
-// CHECK:STDOUT:   %1: type = tuple_type (type)
-// CHECK:STDOUT:   %2: (type,) = tuple_value (%0)
-// CHECK:STDOUT:   %3: type = tuple_type (i32)
-// CHECK:STDOUT:   %4 = fn_decl @F
-// CHECK:STDOUT:   %5 = fn_decl @Run
+// CHECK:STDOUT:   %106: type = stub_reference i32
+// CHECK:STDOUT:   %106.16: type = tuple_type (type)
+// CHECK:STDOUT:   %106.16.0: (type,) = tuple_value (%106)
+// CHECK:STDOUT:   %106.16.1: type = tuple_type (i32)
+// CHECK:STDOUT:   %106.1 = fn_decl @F
+// CHECK:STDOUT:   %108 = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> (i32,) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: i32 = int_value 0
-// CHECK:STDOUT:   %1: i32 = stub_reference %0
-// CHECK:STDOUT:   %2: (i32,) = tuple_value (%1)
-// CHECK:STDOUT:   ret %2
+// CHECK:STDOUT:   %106: i32 = int_value 0
+// CHECK:STDOUT:   %106.28: i32 = stub_reference %106
+// CHECK:STDOUT:   %106.30: (i32,) = tuple_value (%106.28)
+// CHECK:STDOUT:   ret %106.30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: (i32,) = call @F()
-// CHECK:STDOUT:   %1: i32 = int_value 0
-// CHECK:STDOUT:   %2: i32 = tuple_index %0, %1
-// CHECK:STDOUT:   ret %2
+// CHECK:STDOUT:   %109: (i32,) = call @F()
+// CHECK:STDOUT:   %109.14: i32 = int_value 0
+// CHECK:STDOUT:   %109.15: i32 = tuple_index %109, %109.14
+// CHECK:STDOUT:   ret %109.15
 // CHECK:STDOUT: }
 
 fn F() -> (i32,) { return (0,); }

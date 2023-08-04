@@ -122,48 +122,48 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @If1
-// CHECK:STDOUT:   %1 = fn_decl @If2
-// CHECK:STDOUT:   %2 = fn_decl @If3
+// CHECK:STDOUT:   %169 = fn_decl @If1
+// CHECK:STDOUT:   %179 = fn_decl @If2
+// CHECK:STDOUT:   %189 = fn_decl @If3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If1(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !0 else br !1
+// CHECK:STDOUT:   if %b br !171 else br !170
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %0: i32 = int_value 1
-// CHECK:STDOUT:   ret %0
+// CHECK:STDOUT: !171:
+// CHECK:STDOUT:   %171: i32 = int_value 1
+// CHECK:STDOUT:   ret %171
 // CHECK:STDOUT:
-// CHECK:STDOUT: !1:
-// CHECK:STDOUT:   br !2
+// CHECK:STDOUT: !170:
+// CHECK:STDOUT:   br !.0
 // CHECK:STDOUT:
-// CHECK:STDOUT: !2:
+// CHECK:STDOUT: !.0:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If2(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !0 else br !1
+// CHECK:STDOUT:   if %b br !180 else br !182
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0:
-// CHECK:STDOUT:   br !2
+// CHECK:STDOUT: !180:
+// CHECK:STDOUT:   br !.0
 // CHECK:STDOUT:
-// CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %0: i32 = int_value 2
-// CHECK:STDOUT:   ret %0
+// CHECK:STDOUT: !182:
+// CHECK:STDOUT:   %182: i32 = int_value 2
+// CHECK:STDOUT:   ret %182
 // CHECK:STDOUT:
-// CHECK:STDOUT: !2:
+// CHECK:STDOUT: !.0:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If3(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !0 else br !1
+// CHECK:STDOUT:   if %b br !191 else br !.0
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %0: i32 = int_value 1
-// CHECK:STDOUT:   ret %0
+// CHECK:STDOUT: !191:
+// CHECK:STDOUT:   %191: i32 = int_value 1
+// CHECK:STDOUT:   ret %191
 // CHECK:STDOUT:
-// CHECK:STDOUT: !1:
+// CHECK:STDOUT: !.0:
 // CHECK:STDOUT: }
 
 fn If1(b: bool) -> i32 {

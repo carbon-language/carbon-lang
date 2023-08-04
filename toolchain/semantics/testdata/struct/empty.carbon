@@ -49,12 +49,12 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = struct_type {}
-// CHECK:STDOUT:   %1: {} = struct_value ()
+// CHECK:STDOUT:   %62: type = struct_type {}
+// CHECK:STDOUT:   %62.9: {} = struct_value ()
 // CHECK:STDOUT:   %x: {} = var
-// CHECK:STDOUT:   %2: {} = struct_value ()
-// CHECK:STDOUT:   assign %x, %2
-// CHECK:STDOUT:   %3: {} = struct_value ()
+// CHECK:STDOUT:   %62.14: {} = struct_value ()
+// CHECK:STDOUT:   assign %x, %62.14
+// CHECK:STDOUT:   %63: {} = struct_value ()
 // CHECK:STDOUT:   %y: {} = var
 // CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }

@@ -54,17 +54,17 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @Main
+// CHECK:STDOUT:   %72 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: i32 = var
-// CHECK:STDOUT:   %0: i32 = int_value 0
-// CHECK:STDOUT:   assign %x, %0
-// CHECK:STDOUT:   %x0: i32 = var
-// CHECK:STDOUT:   %1: i32 = int_value 0
-// CHECK:STDOUT:   assign %x0, %1
+// CHECK:STDOUT:   %73: i32 = int_value 0
+// CHECK:STDOUT:   assign %x, %73
+// CHECK:STDOUT:   %.80: i32 = var
+// CHECK:STDOUT:   %80: i32 = int_value 0
+// CHECK:STDOUT:   assign %.80, %80
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 

@@ -48,10 +48,10 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %61: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: {.a: i32} = var
-// CHECK:STDOUT:   %1: type = struct_type {}
-// CHECK:STDOUT:   %2: {} = struct_value ()
+// CHECK:STDOUT:   %61.21: type = struct_type {}
+// CHECK:STDOUT:   %61.21.0: {} = struct_value ()
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }
 

@@ -45,16 +45,16 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @F
-// CHECK:STDOUT:   %1 = fn_decl @G
+// CHECK:STDOUT:   %61 = fn_decl @F
+// CHECK:STDOUT:   %63 = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: type = tuple_type ()
-// CHECK:STDOUT:   %1: () = call @F()
+// CHECK:STDOUT:   %63: type = tuple_type ()
+// CHECK:STDOUT:   %63.11: () = call @F()
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 

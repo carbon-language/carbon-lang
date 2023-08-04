@@ -48,7 +48,7 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %59: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: {.a: i32} = var
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

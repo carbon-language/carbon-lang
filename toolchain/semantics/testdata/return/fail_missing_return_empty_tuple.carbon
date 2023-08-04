@@ -39,9 +39,9 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = tuple_type ()
-// CHECK:STDOUT:   %1: () = tuple_value ()
-// CHECK:STDOUT:   %2 = fn_decl @F
+// CHECK:STDOUT:   %51: type = tuple_type ()
+// CHECK:STDOUT:   %51.12: () = tuple_value ()
+// CHECK:STDOUT:   %51.1 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> () {

@@ -118,46 +118,46 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @F
+// CHECK:STDOUT:   %163 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: bool, %b: bool, %c: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %a br !0 else br !4
+// CHECK:STDOUT:   if %a br !164 else br !164.44
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0:
-// CHECK:STDOUT:   if %b br !1 else br !2
+// CHECK:STDOUT: !164:
+// CHECK:STDOUT:   if %b br !164.30 else br !164.37
 // CHECK:STDOUT:
-// CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %0: i32 = int_value 1
-// CHECK:STDOUT:   br !3(%0)
+// CHECK:STDOUT: !164.30:
+// CHECK:STDOUT:   %164: i32 = int_value 1
+// CHECK:STDOUT:   br !164.20(%164)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !2:
-// CHECK:STDOUT:   %1: i32 = int_value 2
-// CHECK:STDOUT:   br !3(%1)
+// CHECK:STDOUT: !164.37:
+// CHECK:STDOUT:   %164.37: i32 = int_value 2
+// CHECK:STDOUT:   br !164.20(%164.37)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !3:
-// CHECK:STDOUT:   %2: i32 = block_arg !3
-// CHECK:STDOUT:   br !8(%2)
+// CHECK:STDOUT: !164.20:
+// CHECK:STDOUT:   %164.20: i32 = block_arg !164.20
+// CHECK:STDOUT:   br !164.10(%164.20)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !4:
-// CHECK:STDOUT:   if %c br !5 else br !6
+// CHECK:STDOUT: !164.44:
+// CHECK:STDOUT:   if %c br !164.54 else br !164.61
 // CHECK:STDOUT:
-// CHECK:STDOUT: !5:
-// CHECK:STDOUT:   %3: i32 = int_value 3
-// CHECK:STDOUT:   br !7(%3)
+// CHECK:STDOUT: !164.54:
+// CHECK:STDOUT:   %164.54: i32 = int_value 3
+// CHECK:STDOUT:   br !164.44.0(%164.54)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !6:
-// CHECK:STDOUT:   %4: i32 = int_value 4
-// CHECK:STDOUT:   br !7(%4)
+// CHECK:STDOUT: !164.61:
+// CHECK:STDOUT:   %164.61: i32 = int_value 4
+// CHECK:STDOUT:   br !164.44.0(%164.61)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !7:
-// CHECK:STDOUT:   %5: i32 = block_arg !7
-// CHECK:STDOUT:   br !8(%5)
+// CHECK:STDOUT: !164.44.0:
+// CHECK:STDOUT:   %164.44: i32 = block_arg !164.44.0
+// CHECK:STDOUT:   br !164.10(%164.44)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !8:
-// CHECK:STDOUT:   %6: i32 = block_arg !8
-// CHECK:STDOUT:   ret %6
+// CHECK:STDOUT: !164.10:
+// CHECK:STDOUT:   %164.10: i32 = block_arg !164.10
+// CHECK:STDOUT:   ret %164.10
 // CHECK:STDOUT: }
 
 fn F(a: bool, b: bool, c: bool) -> i32 {

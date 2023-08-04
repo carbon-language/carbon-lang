@@ -63,10 +63,10 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: {} = struct_value ()
-// CHECK:STDOUT:   %1: type = ptr_type {}
-// CHECK:STDOUT:   %2: type = const_type {}*
-// CHECK:STDOUT:   %3 = fn_decl @ConstMismatch
+// CHECK:STDOUT:   %77: {} = struct_value ()
+// CHECK:STDOUT:   %77.44: type = ptr_type {}
+// CHECK:STDOUT:   %77.35: type = const_type {}*
+// CHECK:STDOUT:   %77.1 = fn_decl @ConstMismatch
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {

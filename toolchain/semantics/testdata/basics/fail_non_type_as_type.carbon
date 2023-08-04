@@ -38,7 +38,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: type = var
-// CHECK:STDOUT:   %0: i32 = int_value 42
+// CHECK:STDOUT:   %48: i32 = int_value 42
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }
 

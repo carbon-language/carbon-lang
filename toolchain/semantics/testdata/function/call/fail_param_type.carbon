@@ -62,8 +62,8 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @Run
-// CHECK:STDOUT:   %1 = fn_decl @Main
+// CHECK:STDOUT:   %81 = fn_decl @Run
+// CHECK:STDOUT:   %83 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run(%a: i32) {
@@ -73,8 +73,8 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: f64 = real_value 10e-1
-// CHECK:STDOUT:   %1: f64 = stub_reference %0
+// CHECK:STDOUT:   %90: f64 = real_value 10e-1
+// CHECK:STDOUT:   %90.7: f64 = stub_reference %90
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 

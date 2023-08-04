@@ -62,12 +62,12 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %77: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: {.a: i32} = var
-// CHECK:STDOUT:   %1: f64 = real_value 10e-1
-// CHECK:STDOUT:   %2: f64 = stub_reference %1
-// CHECK:STDOUT:   %3: type = struct_type {.b: f64}
-// CHECK:STDOUT:   %4: {.b: f64} = struct_value (%2)
+// CHECK:STDOUT:   %77.26: f64 = real_value 10e-1
+// CHECK:STDOUT:   %77.24: f64 = stub_reference %77.26
+// CHECK:STDOUT:   %77.29: type = struct_type {.b: f64}
+// CHECK:STDOUT:   %77.29.0: {.b: f64} = struct_value (%77.24)
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }
 

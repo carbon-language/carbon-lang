@@ -62,9 +62,9 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = ptr_type i32
-// CHECK:STDOUT:   %1: type = ptr_type i32*
-// CHECK:STDOUT:   %2 = fn_decl @G
+// CHECK:STDOUT:   %78: type = ptr_type i32
+// CHECK:STDOUT:   %78.37: type = ptr_type i32*
+// CHECK:STDOUT:   %78.1 = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p: const i32**) -> i32** {

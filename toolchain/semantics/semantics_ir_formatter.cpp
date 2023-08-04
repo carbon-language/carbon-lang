@@ -4,6 +4,8 @@
 
 #include "toolchain/semantics/semantics_ir_formatter.h"
 
+#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/parser/parse_tree.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/SaveAndRestore.h"
@@ -19,29 +21,36 @@ class NodeNamer {
     Package = 0,
   };
 
-  NodeNamer(const SemanticsIR& ir) {
-    nodes.resize(ir.nodes_size());
-    labels.resize(ir.node_blocks_size());
-    scopes.resize(1 + ir.functions_size());
+  NodeNamer(const TokenizedBuffer& tokenized_buffer,
+            const ParseTree& parse_tree, const SemanticsIR& semantics_ir)
+      : tokenized_buffer_(tokenized_buffer),
+        parse_tree_(parse_tree),
+        semantics_ir_(semantics_ir) {
+    nodes.resize(semantics_ir.nodes_size());
+    labels.resize(semantics_ir.node_blocks_size());
+    scopes.resize(1 + semantics_ir.functions_size());
 
     // Build the package scope.
     GetScopeInfo(ScopeIndex::Package).name = "package";
-    CollectNamesInBlock(ScopeIndex::Package, ir, ir.top_node_block_id());
+    CollectNamesInBlock(ScopeIndex::Package, semantics_ir.top_node_block_id());
 
     // Build each function scope.
-    for (int i = 0; i != ir.functions_size(); ++i) {
+    for (int i = 0; i != semantics_ir.functions_size(); ++i) {
       auto fn_id = SemanticsFunctionId(i);
       auto fn_scope = GetScopeFor(fn_id);
-      const auto& fn = ir.GetFunction(fn_id);
+      const auto& fn = semantics_ir.GetFunction(fn_id);
       GetScopeInfo(fn_scope).name =
-          "@" + globals.AllocateName(fn.name_id.is_valid()
-                                         ? ir.GetString(fn.name_id).str()
-                                         : "");
-      CollectNamesInBlock(fn_scope, ir, fn.param_refs_id);
+          "@" +
+          globals.AllocateName(*this,
+                               /*TODO*/ ParseTree::Node::Invalid,
+                               fn.name_id.is_valid()
+                                   ? semantics_ir.GetString(fn.name_id).str()
+                                   : "");
+      CollectNamesInBlock(fn_scope, fn.param_refs_id);
       for (auto block_id : fn.body_block_ids) {
         AddBlockLabel(fn_scope, block_id,
                       block_id == fn.body_block_ids.front() ? "entry" : "");
-        CollectNamesInBlock(fn_scope, ir, block_id);
+        CollectNamesInBlock(fn_scope, block_id);
       }
     }
   }
@@ -106,20 +115,38 @@ class NodeNamer {
     llvm::StringSet<> allocated;
     int unnamed_count = 0;
 
-    auto AllocateName(std::string hint = "") -> std::string {
-      if (hint.empty()) {
-        return llvm::itostr(unnamed_count++);
+    auto AllocateName(const NodeNamer& namer, ParseTree::Node node,
+                      std::string name = "") -> std::string {
+      // Use the given name if it's available.
+      if (!name.empty() && allocated.insert(name).second) {
+        return name;
       }
 
-      if (allocated.insert(hint).second) {
-        return hint;
+      // Append location information to try to disambiguate.
+      if (node.is_valid()) {
+        if (!name.empty()) {
+          name = ".";
+        }
+
+        auto token = namer.parse_tree_.node_token(node);
+        name += llvm::itostr(namer.tokenized_buffer_.GetLineNumber(token));
+        if (allocated.insert(name).second) {
+          return name;
+        }
+        name += ".";
+        name += llvm::itostr(namer.tokenized_buffer_.GetColumnNumber(token));
+        if (allocated.insert(name).second) {
+          // TODO: Should we also add the column number to the first value on
+          // this line?
+          return name;
+        }
       }
 
       // Append numbers until we find an available name.
-      auto hint_size = hint.size();
-      std::string name = std::move(hint);
+      name += ".";
+      auto name_size_without_counter = name.size();
       for (int counter = 0;; ++counter) {
-        name.resize(hint_size);
+        name.resize(name_size_without_counter);
         name += llvm::itostr(counter);
         if (allocated.insert(name).second) {
           return name;
@@ -145,14 +172,18 @@ class NodeNamer {
       return;
     }
 
-    labels[block_id.index] = {
-        scope_idx,
-        "!" + GetScopeInfo(scope_idx).labels.AllocateName(std::move(name))};
+    ParseTree::Node parse_node = ParseTree::Node::Invalid;
+    if (auto& block = semantics_ir_.GetNodeBlock(block_id); !block.empty()) {
+      parse_node = semantics_ir_.GetNode(block.front()).parse_node();
+    }
+
+    labels[block_id.index] = {scope_idx,
+                              "!" + GetScopeInfo(scope_idx).labels.AllocateName(
+                                        *this, parse_node, std::move(name))};
   }
 
-  auto CollectNamesInBlock(ScopeIndex scope_idx,
-                           const SemanticsIR& semantics_ir,
-                           SemanticsNodeBlockId block_id) -> void {
+  auto CollectNamesInBlock(ScopeIndex scope_idx, SemanticsNodeBlockId block_id)
+      -> void {
     if (!block_id.is_valid()) {
       return;
     }
@@ -160,28 +191,34 @@ class NodeNamer {
     Scope& scope = GetScopeInfo(scope_idx);
 
     // Use bound names where available.
-    for (auto node_id : semantics_ir.GetNodeBlock(block_id)) {
-      auto node = semantics_ir.GetNode(node_id);
+    for (auto node_id : semantics_ir_.GetNodeBlock(block_id)) {
+      auto node = semantics_ir_.GetNode(node_id);
       if (node.kind() == SemanticsNodeKind::BindName) {
         auto [name_id, named_node_id] = node.GetAsBindName();
         nodes[named_node_id.index] = {
             scope_idx, "%" + scope.nodes.AllocateName(
-                                 semantics_ir.GetString(name_id).str())};
+                                 *this, node.parse_node(),
+                                 semantics_ir_.GetString(name_id).str())};
       }
     }
 
     // Sequentially number all remaining values.
-    for (auto node_id : semantics_ir.GetNodeBlock(block_id)) {
-      auto node = semantics_ir.GetNode(node_id);
+    for (auto node_id : semantics_ir_.GetNodeBlock(block_id)) {
+      auto node = semantics_ir_.GetNode(node_id);
       if (node.kind() != SemanticsNodeKind::BindName &&
           node.kind().value_kind() != SemanticsNodeValueKind::None) {
         auto& name = nodes[node_id.index];
         if (name.second.empty()) {
-          name = {scope_idx, "%" + scope.nodes.AllocateName()};
+          name = {scope_idx,
+                  "%" + scope.nodes.AllocateName(*this, node.parse_node())};
         }
       }
     }
   }
+
+  const TokenizedBuffer& tokenized_buffer_;
+  const ParseTree& parse_tree_;
+  const SemanticsIR& semantics_ir_;
 
   Namespace globals;
   std::vector<std::pair<ScopeIndex, std::string>> nodes;
@@ -193,9 +230,13 @@ class NodeNamer {
 // Formatter for printing textual Semantics IR.
 class SemanticsIRFormatter {
  public:
-  explicit SemanticsIRFormatter(const SemanticsIR& semantics_ir,
+  explicit SemanticsIRFormatter(const TokenizedBuffer& tokenized_buffer,
+                                const ParseTree& parse_tree,
+                                const SemanticsIR& semantics_ir,
                                 llvm::raw_ostream& out)
-      : semantics_ir_(semantics_ir), out_(out), node_namer_(semantics_ir) {}
+      : semantics_ir_(semantics_ir),
+        out_(out),
+        node_namer_(tokenized_buffer, parse_tree, semantics_ir) {}
 
   auto Format() -> void {
     // TODO: Include information from the package declaration, once we fully
@@ -535,8 +576,12 @@ class SemanticsIRFormatter {
   bool in_terminator_sequence = false;
 };
 
-auto FormatSemanticsIR(const SemanticsIR& ir, llvm::raw_ostream& out) -> void {
-  SemanticsIRFormatter(ir, out).Format();
+auto FormatSemanticsIR(const TokenizedBuffer& tokenized_buffer,
+                       const ParseTree& parse_tree,
+                       const SemanticsIR& semantics_ir, llvm::raw_ostream& out)
+    -> void {
+  SemanticsIRFormatter(tokenized_buffer, parse_tree, semantics_ir, out)
+      .Format();
 }
 
 }  // namespace Carbon

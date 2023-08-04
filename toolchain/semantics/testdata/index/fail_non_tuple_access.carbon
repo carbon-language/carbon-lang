@@ -41,13 +41,13 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @Main
+// CHECK:STDOUT:   %54 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: i32 = int_value 0
-// CHECK:STDOUT:   %1: i32 = int_value 1
+// CHECK:STDOUT:   %58: i32 = int_value 0
+// CHECK:STDOUT:   %58.5: i32 = int_value 1
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 

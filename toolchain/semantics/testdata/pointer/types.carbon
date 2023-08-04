@@ -77,11 +77,11 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = ptr_type i32
-// CHECK:STDOUT:   %1 = fn_decl @Ptr
-// CHECK:STDOUT:   %2: type = const_type i32
-// CHECK:STDOUT:   %3: type = ptr_type const i32
-// CHECK:STDOUT:   %4 = fn_decl @ConstPtr
+// CHECK:STDOUT:   %97: type = ptr_type i32
+// CHECK:STDOUT:   %97.1 = fn_decl @Ptr
+// CHECK:STDOUT:   %101: type = const_type i32
+// CHECK:STDOUT:   %101.42: type = ptr_type const i32
+// CHECK:STDOUT:   %101.1 = fn_decl @ConstPtr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Ptr(%p: i32*) -> i32* {

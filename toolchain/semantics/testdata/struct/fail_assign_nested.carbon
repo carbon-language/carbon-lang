@@ -64,14 +64,14 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = struct_type {}
-// CHECK:STDOUT:   %1: {} = struct_value ()
-// CHECK:STDOUT:   %2: type = struct_type {.a: {}}
+// CHECK:STDOUT:   %81: type = struct_type {}
+// CHECK:STDOUT:   %81.14: {} = struct_value ()
+// CHECK:STDOUT:   %81.15: type = struct_type {.a: {}}
 // CHECK:STDOUT:   %x: {.a: {}} = var
-// CHECK:STDOUT:   %3: {} = struct_value ()
-// CHECK:STDOUT:   %4: {} = stub_reference %3
-// CHECK:STDOUT:   %5: type = struct_type {.b: {}}
-// CHECK:STDOUT:   %6: {.b: {}} = struct_value (%4)
+// CHECK:STDOUT:   %81.26: {} = struct_value ()
+// CHECK:STDOUT:   %81.23: {} = stub_reference %81.26
+// CHECK:STDOUT:   %81.27: type = struct_type {.b: {}}
+// CHECK:STDOUT:   %81.27.0: {.b: {}} = struct_value (%81.23)
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }
 

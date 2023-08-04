@@ -70,9 +70,9 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: () = tuple_value ()
-// CHECK:STDOUT:   %1 = fn_decl @Echo
-// CHECK:STDOUT:   %2 = fn_decl @Main
+// CHECK:STDOUT:   %91: () = tuple_value ()
+// CHECK:STDOUT:   %91.1 = fn_decl @Echo
+// CHECK:STDOUT:   %95 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: ()) -> () {
@@ -82,9 +82,9 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: () = tuple_value ()
-// CHECK:STDOUT:   %1: () = stub_reference %0
-// CHECK:STDOUT:   %2: () = call @Echo(%1)
+// CHECK:STDOUT:   %96: () = tuple_value ()
+// CHECK:STDOUT:   %96.9: () = stub_reference %96
+// CHECK:STDOUT:   %96.7: () = call @Echo(%96.9)
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 

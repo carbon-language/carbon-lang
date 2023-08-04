@@ -58,8 +58,8 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @MakeImplicitEmptyTuple
-// CHECK:STDOUT:   %1 = fn_decl @Main
+// CHECK:STDOUT:   %80 = fn_decl @MakeImplicitEmptyTuple
+// CHECK:STDOUT:   %83 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeImplicitEmptyTuple() {
@@ -69,11 +69,11 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: type = tuple_type ()
-// CHECK:STDOUT:   %1: () = tuple_value ()
+// CHECK:STDOUT:   %84: type = tuple_type ()
+// CHECK:STDOUT:   %84.11: () = tuple_value ()
 // CHECK:STDOUT:   %b: () = var
-// CHECK:STDOUT:   %2: () = call @MakeImplicitEmptyTuple()
-// CHECK:STDOUT:   assign %b, %2
+// CHECK:STDOUT:   %84.37: () = call @MakeImplicitEmptyTuple()
+// CHECK:STDOUT:   assign %b, %84.37
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 

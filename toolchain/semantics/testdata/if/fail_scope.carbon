@@ -67,20 +67,20 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @VarScope
+// CHECK:STDOUT:   %87 = fn_decl @VarScope
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @VarScope(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !0 else br !1
+// CHECK:STDOUT:   if %b br !89 else br !95
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0:
+// CHECK:STDOUT: !89:
 // CHECK:STDOUT:   %n: i32 = var
-// CHECK:STDOUT:   %0: i32 = int_value 2
-// CHECK:STDOUT:   assign %n, %0
+// CHECK:STDOUT:   %89: i32 = int_value 2
+// CHECK:STDOUT:   assign %n, %89
 // CHECK:STDOUT:   ret %n
 // CHECK:STDOUT:
-// CHECK:STDOUT: !1:
+// CHECK:STDOUT: !95:
 // CHECK:STDOUT:   ret <error>
 // CHECK:STDOUT: }
 

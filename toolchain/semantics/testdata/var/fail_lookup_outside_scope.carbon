@@ -47,7 +47,7 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @Main
+// CHECK:STDOUT:   %61 = fn_decl @Main
 // CHECK:STDOUT:   %y: i32 = var
 // CHECK:STDOUT:   assign %y, <error>
 // CHECK:STDOUT: }

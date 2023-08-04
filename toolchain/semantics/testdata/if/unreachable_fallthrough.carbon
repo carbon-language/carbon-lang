@@ -62,20 +62,20 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @If
+// CHECK:STDOUT:   %81 = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !0 else br !1
+// CHECK:STDOUT:   if %b br !83 else br !85
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %0: i32 = int_value 1
-// CHECK:STDOUT:   ret %0
+// CHECK:STDOUT: !83:
+// CHECK:STDOUT:   %83: i32 = int_value 1
+// CHECK:STDOUT:   ret %83
 // CHECK:STDOUT:
-// CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %1: i32 = int_value 2
-// CHECK:STDOUT:   ret %1
+// CHECK:STDOUT: !85:
+// CHECK:STDOUT:   %85: i32 = int_value 2
+// CHECK:STDOUT:   ret %85
 // CHECK:STDOUT: }
 
 fn If(b: bool) -> i32 {

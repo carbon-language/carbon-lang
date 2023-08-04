@@ -80,9 +80,9 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @F
-// CHECK:STDOUT:   %1 = fn_decl @G
-// CHECK:STDOUT:   %2 = fn_decl @If
+// CHECK:STDOUT:   %112 = fn_decl @F
+// CHECK:STDOUT:   %113 = fn_decl @G
+// CHECK:STDOUT:   %115 = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -97,15 +97,15 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !0 else br !1
+// CHECK:STDOUT:   if %b br !117 else br !119
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %0: type = tuple_type ()
-// CHECK:STDOUT:   %1: () = call @F()
-// CHECK:STDOUT:   br !1
+// CHECK:STDOUT: !117:
+// CHECK:STDOUT:   %117: type = tuple_type ()
+// CHECK:STDOUT:   %117.6: () = call @F()
+// CHECK:STDOUT:   br !119
 // CHECK:STDOUT:
-// CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %2: () = call @G()
+// CHECK:STDOUT: !119:
+// CHECK:STDOUT:   %119: () = call @G()
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 

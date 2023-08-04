@@ -54,11 +54,11 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: i32 = int_value 1
-// CHECK:STDOUT:   %1: i32 = stub_reference %0
-// CHECK:STDOUT:   %2: type = tuple_type (i32)
-// CHECK:STDOUT:   %3: (i32,) = tuple_value (%1)
-// CHECK:STDOUT:   %4: type = tuple_type (<error>)
+// CHECK:STDOUT:   %68: i32 = int_value 1
+// CHECK:STDOUT:   %68.9: i32 = stub_reference %68
+// CHECK:STDOUT:   %68.12: type = tuple_type (i32)
+// CHECK:STDOUT:   %68.12.0: (i32,) = tuple_value (%68.9)
+// CHECK:STDOUT:   %68.12.1: type = tuple_type (<error>)
 // CHECK:STDOUT:   %x: (<error>,) = var
 // CHECK:STDOUT: }
 

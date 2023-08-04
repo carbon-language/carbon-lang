@@ -161,39 +161,39 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = stub_reference i32
-// CHECK:STDOUT:   %1: type = stub_reference i32
-// CHECK:STDOUT:   %2: type = tuple_type (type, type)
-// CHECK:STDOUT:   %3: (type, type) = tuple_value (%0, %1)
-// CHECK:STDOUT:   %4: (type, type) = stub_reference %3
-// CHECK:STDOUT:   %5: type = stub_reference i32
-// CHECK:STDOUT:   %6: type = stub_reference i32
-// CHECK:STDOUT:   %7: (type, type) = tuple_value (%5, %6)
-// CHECK:STDOUT:   %8: (type, type) = stub_reference %7
-// CHECK:STDOUT:   %9: type = tuple_type ((type, type), (type, type))
-// CHECK:STDOUT:   %10: ((type, type), (type, type)) = tuple_value (%4, %8)
-// CHECK:STDOUT:   %11: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %12: type = tuple_type ((i32, i32), (i32, i32))
+// CHECK:STDOUT:   %203: type = stub_reference i32
+// CHECK:STDOUT:   %203.15: type = stub_reference i32
+// CHECK:STDOUT:   %203.18: type = tuple_type (type, type)
+// CHECK:STDOUT:   %203.18.0: (type, type) = tuple_value (%203, %203.15)
+// CHECK:STDOUT:   %203.18.1: (type, type) = stub_reference %203.18.0
+// CHECK:STDOUT:   %203.22: type = stub_reference i32
+// CHECK:STDOUT:   %203.27: type = stub_reference i32
+// CHECK:STDOUT:   %203.30: (type, type) = tuple_value (%203.22, %203.27)
+// CHECK:STDOUT:   %203.30.0: (type, type) = stub_reference %203.30
+// CHECK:STDOUT:   %203.31: type = tuple_type ((type, type), (type, type))
+// CHECK:STDOUT:   %203.31.0: ((type, type), (type, type)) = tuple_value (%203.18.1, %203.30.0)
+// CHECK:STDOUT:   %203.18.2: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %203.31.1: type = tuple_type ((i32, i32), (i32, i32))
 // CHECK:STDOUT:   %x: ((i32, i32), (i32, i32)) = var
-// CHECK:STDOUT:   %13: i32 = int_value 1
-// CHECK:STDOUT:   %14: i32 = stub_reference %13
-// CHECK:STDOUT:   %15: i32 = int_value 2
-// CHECK:STDOUT:   %16: i32 = stub_reference %15
-// CHECK:STDOUT:   %17: i32 = int_value 3
-// CHECK:STDOUT:   %18: i32 = stub_reference %17
-// CHECK:STDOUT:   %19: type = tuple_type (i32, i32, i32)
-// CHECK:STDOUT:   %20: (i32, i32, i32) = tuple_value (%14, %16, %18)
-// CHECK:STDOUT:   %21: (i32, i32, i32) = stub_reference %20
-// CHECK:STDOUT:   %22: i32 = int_value 4
-// CHECK:STDOUT:   %23: i32 = stub_reference %22
-// CHECK:STDOUT:   %24: i32 = int_value 5
-// CHECK:STDOUT:   %25: i32 = stub_reference %24
-// CHECK:STDOUT:   %26: i32 = int_value 6
-// CHECK:STDOUT:   %27: i32 = stub_reference %26
-// CHECK:STDOUT:   %28: (i32, i32, i32) = tuple_value (%23, %25, %27)
-// CHECK:STDOUT:   %29: (i32, i32, i32) = stub_reference %28
-// CHECK:STDOUT:   %30: type = tuple_type ((i32, i32, i32), (i32, i32, i32))
-// CHECK:STDOUT:   %31: ((i32, i32, i32), (i32, i32, i32)) = tuple_value (%21, %29)
+// CHECK:STDOUT:   %203.37: i32 = int_value 1
+// CHECK:STDOUT:   %203.37.0: i32 = stub_reference %203.37
+// CHECK:STDOUT:   %203.40: i32 = int_value 2
+// CHECK:STDOUT:   %203.40.0: i32 = stub_reference %203.40
+// CHECK:STDOUT:   %203.43: i32 = int_value 3
+// CHECK:STDOUT:   %203.43.0: i32 = stub_reference %203.43
+// CHECK:STDOUT:   %203.44: type = tuple_type (i32, i32, i32)
+// CHECK:STDOUT:   %203.44.0: (i32, i32, i32) = tuple_value (%203.37.0, %203.40.0, %203.43.0)
+// CHECK:STDOUT:   %203.44.1: (i32, i32, i32) = stub_reference %203.44.0
+// CHECK:STDOUT:   %203.48: i32 = int_value 4
+// CHECK:STDOUT:   %203.48.0: i32 = stub_reference %203.48
+// CHECK:STDOUT:   %203.51: i32 = int_value 5
+// CHECK:STDOUT:   %203.51.0: i32 = stub_reference %203.51
+// CHECK:STDOUT:   %203.54: i32 = int_value 6
+// CHECK:STDOUT:   %203.54.0: i32 = stub_reference %203.54
+// CHECK:STDOUT:   %203.55: (i32, i32, i32) = tuple_value (%203.48.0, %203.51.0, %203.54.0)
+// CHECK:STDOUT:   %203.55.0: (i32, i32, i32) = stub_reference %203.55
+// CHECK:STDOUT:   %203.56: type = tuple_type ((i32, i32, i32), (i32, i32, i32))
+// CHECK:STDOUT:   %203.56.0: ((i32, i32, i32), (i32, i32, i32)) = tuple_value (%203.44.1, %203.55.0)
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }
 

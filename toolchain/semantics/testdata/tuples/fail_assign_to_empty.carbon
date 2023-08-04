@@ -44,10 +44,10 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = tuple_type ()
-// CHECK:STDOUT:   %1: () = tuple_value ()
+// CHECK:STDOUT:   %57: type = tuple_type ()
+// CHECK:STDOUT:   %57.9: () = tuple_value ()
 // CHECK:STDOUT:   %x: () = var
-// CHECK:STDOUT:   %2: i32 = int_value 66
+// CHECK:STDOUT:   %57.14: i32 = int_value 66
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }
 

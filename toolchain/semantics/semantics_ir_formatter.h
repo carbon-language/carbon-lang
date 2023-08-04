@@ -10,7 +10,10 @@
 
 namespace Carbon {
 
-auto FormatSemanticsIR(const SemanticsIR& ir, llvm::raw_ostream& out) -> void;
+auto FormatSemanticsIR(const TokenizedBuffer& tokenized_buffer,
+                       const ParseTree& parse_tree,
+                       const SemanticsIR& semantics_ir, llvm::raw_ostream& out)
+    -> void;
 
 }  // namespace Carbon
 

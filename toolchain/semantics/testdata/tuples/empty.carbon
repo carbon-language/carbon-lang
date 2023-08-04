@@ -51,12 +51,12 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = tuple_type ()
-// CHECK:STDOUT:   %1: () = tuple_value ()
+// CHECK:STDOUT:   %64: type = tuple_type ()
+// CHECK:STDOUT:   %64.9: () = tuple_value ()
 // CHECK:STDOUT:   %x: () = var
-// CHECK:STDOUT:   %2: () = tuple_value ()
-// CHECK:STDOUT:   assign %x, %2
-// CHECK:STDOUT:   %3: () = tuple_value ()
+// CHECK:STDOUT:   %64.14: () = tuple_value ()
+// CHECK:STDOUT:   assign %x, %64.14
+// CHECK:STDOUT:   %65: () = tuple_value ()
 // CHECK:STDOUT:   %y: () = var
 // CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }

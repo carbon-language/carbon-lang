@@ -68,8 +68,8 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @Foo
-// CHECK:STDOUT:   %1 = fn_decl @Main
+// CHECK:STDOUT:   %89 = fn_decl @Foo
+// CHECK:STDOUT:   %91 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {
@@ -79,10 +79,10 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: i32 = int_value 1
-// CHECK:STDOUT:   %1: i32 = stub_reference %0
-// CHECK:STDOUT:   %2: type = tuple_type ()
-// CHECK:STDOUT:   %3: () = call @Foo(%1)
+// CHECK:STDOUT:   %92: i32 = int_value 1
+// CHECK:STDOUT:   %92.7: i32 = stub_reference %92
+// CHECK:STDOUT:   %92.6: type = tuple_type ()
+// CHECK:STDOUT:   %92.6.0: () = call @Foo(%92.7)
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 

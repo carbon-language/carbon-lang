@@ -75,37 +75,37 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @F
-// CHECK:STDOUT:   %1 = fn_decl @G
-// CHECK:STDOUT:   %2 = fn_decl @Or
+// CHECK:STDOUT:   %111 = fn_decl @F
+// CHECK:STDOUT:   %112 = fn_decl @G
+// CHECK:STDOUT:   %114 = fn_decl @Or
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: bool = bool_value true
-// CHECK:STDOUT:   ret %0
+// CHECK:STDOUT:   %111: bool = bool_value true
+// CHECK:STDOUT:   ret %111
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: bool = bool_value true
-// CHECK:STDOUT:   ret %0
+// CHECK:STDOUT:   %112: bool = bool_value true
+// CHECK:STDOUT:   ret %112
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: bool = call @F()
-// CHECK:STDOUT:   %1: bool = not %0
-// CHECK:STDOUT:   %2: bool = bool_value true
-// CHECK:STDOUT:   if %1 br !0 else br !1(%2)
+// CHECK:STDOUT:   %115: bool = call @F()
+// CHECK:STDOUT:   %115.14: bool = not %115
+// CHECK:STDOUT:   %115.14.0: bool = bool_value true
+// CHECK:STDOUT:   if %115.14 br !115 else br !115.14(%115.14.0)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0:
-// CHECK:STDOUT:   %3: bool = call @G()
-// CHECK:STDOUT:   br !1(%3)
+// CHECK:STDOUT: !115:
+// CHECK:STDOUT:   %115.18: bool = call @G()
+// CHECK:STDOUT:   br !115.14(%115.18)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !1:
-// CHECK:STDOUT:   %4: bool = block_arg !1
-// CHECK:STDOUT:   ret %4
+// CHECK:STDOUT: !115.14:
+// CHECK:STDOUT:   %115.14.1: bool = block_arg !115.14
+// CHECK:STDOUT:   ret %115.14.1
 // CHECK:STDOUT: }
 
 fn F() -> bool { return true; }

@@ -68,9 +68,9 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: {} = struct_value ()
-// CHECK:STDOUT:   %1 = fn_decl @Echo
-// CHECK:STDOUT:   %2 = fn_decl @Main
+// CHECK:STDOUT:   %89: {} = struct_value ()
+// CHECK:STDOUT:   %89.1 = fn_decl @Echo
+// CHECK:STDOUT:   %93 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: {}) -> {} {
@@ -80,9 +80,9 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: {} = struct_value ()
-// CHECK:STDOUT:   %1: {} = stub_reference %0
-// CHECK:STDOUT:   %2: {} = call @Echo(%1)
+// CHECK:STDOUT:   %94: {} = struct_value ()
+// CHECK:STDOUT:   %94.9: {} = stub_reference %94
+// CHECK:STDOUT:   %94.7: {} = call @Echo(%94.9)
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 

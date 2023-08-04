@@ -111,27 +111,27 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = stub_reference i32
-// CHECK:STDOUT:   %1: type = stub_reference i32
-// CHECK:STDOUT:   %2: type = tuple_type (type, type)
-// CHECK:STDOUT:   %3: (type, type) = tuple_value (%0, %1)
-// CHECK:STDOUT:   %4: (type, type) = stub_reference %3
-// CHECK:STDOUT:   %5: type = stub_reference i32
-// CHECK:STDOUT:   %6: type = tuple_type ((type, type), type)
-// CHECK:STDOUT:   %7: ((type, type), type) = tuple_value (%4, %5)
-// CHECK:STDOUT:   %8: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %9: type = tuple_type ((i32, i32), i32)
+// CHECK:STDOUT:   %137: type = stub_reference i32
+// CHECK:STDOUT:   %137.15: type = stub_reference i32
+// CHECK:STDOUT:   %137.18: type = tuple_type (type, type)
+// CHECK:STDOUT:   %137.18.0: (type, type) = tuple_value (%137, %137.15)
+// CHECK:STDOUT:   %137.18.1: (type, type) = stub_reference %137.18.0
+// CHECK:STDOUT:   %137.21: type = stub_reference i32
+// CHECK:STDOUT:   %137.24: type = tuple_type ((type, type), type)
+// CHECK:STDOUT:   %137.24.0: ((type, type), type) = tuple_value (%137.18.1, %137.21)
+// CHECK:STDOUT:   %137.18.2: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %137.24.1: type = tuple_type ((i32, i32), i32)
 // CHECK:STDOUT:   %x: ((i32, i32), i32) = var
-// CHECK:STDOUT:   %10: i32 = int_value 12
-// CHECK:STDOUT:   %11: i32 = stub_reference %10
-// CHECK:STDOUT:   %12: i32 = int_value 76
-// CHECK:STDOUT:   %13: i32 = stub_reference %12
-// CHECK:STDOUT:   %14: (i32, i32) = tuple_value (%11, %13)
-// CHECK:STDOUT:   %15: (i32, i32) = stub_reference %14
-// CHECK:STDOUT:   %16: i32 = int_value 6
-// CHECK:STDOUT:   %17: i32 = stub_reference %16
-// CHECK:STDOUT:   %18: ((i32, i32), i32) = tuple_value (%15, %17)
-// CHECK:STDOUT:   assign %x, %18
+// CHECK:STDOUT:   %137.30: i32 = int_value 12
+// CHECK:STDOUT:   %137.30.0: i32 = stub_reference %137.30
+// CHECK:STDOUT:   %137.34: i32 = int_value 76
+// CHECK:STDOUT:   %137.34.0: i32 = stub_reference %137.34
+// CHECK:STDOUT:   %137.36: (i32, i32) = tuple_value (%137.30.0, %137.34.0)
+// CHECK:STDOUT:   %137.36.0: (i32, i32) = stub_reference %137.36
+// CHECK:STDOUT:   %137.39: i32 = int_value 6
+// CHECK:STDOUT:   %137.39.0: i32 = stub_reference %137.39
+// CHECK:STDOUT:   %137.40: ((i32, i32), i32) = tuple_value (%137.36.0, %137.39.0)
+// CHECK:STDOUT:   assign %x, %137.40
 // CHECK:STDOUT: }
 
 var x: ((i32, i32), i32) = ((12, 76), 6);

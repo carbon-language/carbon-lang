@@ -57,13 +57,13 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = struct_type {}
-// CHECK:STDOUT:   %1: {} = struct_value ()
+// CHECK:STDOUT:   %73: type = struct_type {}
+// CHECK:STDOUT:   %73.9: {} = struct_value ()
 // CHECK:STDOUT:   %x: {} = var
-// CHECK:STDOUT:   %2: i32 = int_value 1
-// CHECK:STDOUT:   %3: i32 = stub_reference %2
-// CHECK:STDOUT:   %4: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %5: {.a: i32} = struct_value (%3)
+// CHECK:STDOUT:   %73.19: i32 = int_value 1
+// CHECK:STDOUT:   %73.17: i32 = stub_reference %73.19
+// CHECK:STDOUT:   %73.20: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %73.20.0: {.a: i32} = struct_value (%73.17)
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }
 

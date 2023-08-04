@@ -49,17 +49,17 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @Main
+// CHECK:STDOUT:   %65 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: i32 = int_value 12
-// CHECK:STDOUT:   %1: f64 = real_value 34e-1
-// CHECK:STDOUT:   %2: <error> = add <error>, %1
-// CHECK:STDOUT:   %3: i32 = int_value 12
-// CHECK:STDOUT:   %4: <error> = add %2, %3
-// CHECK:STDOUT:   ret %4
+// CHECK:STDOUT:   %71: i32 = int_value 12
+// CHECK:STDOUT:   %71.15: f64 = real_value 34e-1
+// CHECK:STDOUT:   %71.13: <error> = add <error>, %71.15
+// CHECK:STDOUT:   %71.21: i32 = int_value 12
+// CHECK:STDOUT:   %71.19: <error> = add %71.13, %71.21
+// CHECK:STDOUT:   ret %71.19
 // CHECK:STDOUT: }
 
 fn Main() -> i32 {

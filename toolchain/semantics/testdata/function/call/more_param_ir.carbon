@@ -107,8 +107,8 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @Foo
-// CHECK:STDOUT:   %1 = fn_decl @Main
+// CHECK:STDOUT:   %138 = fn_decl @Foo
+// CHECK:STDOUT:   %140 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32, %b: i32, %c: i32) {
@@ -118,20 +118,20 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: i32 = int_value 1
-// CHECK:STDOUT:   %1: i32 = int_value 2
-// CHECK:STDOUT:   %2: i32 = add %0, %1
-// CHECK:STDOUT:   %3: i32 = int_value 3
-// CHECK:STDOUT:   %4: i32 = add %2, %3
-// CHECK:STDOUT:   %5: i32 = stub_reference %4
-// CHECK:STDOUT:   %6: i32 = int_value 4
-// CHECK:STDOUT:   %7: i32 = int_value 5
-// CHECK:STDOUT:   %8: i32 = add %6, %7
-// CHECK:STDOUT:   %9: i32 = stub_reference %8
-// CHECK:STDOUT:   %10: i32 = int_value 6
-// CHECK:STDOUT:   %11: i32 = stub_reference %10
-// CHECK:STDOUT:   %12: type = tuple_type ()
-// CHECK:STDOUT:   %13: () = call @Foo(%5, %9, %11)
+// CHECK:STDOUT:   %142: i32 = int_value 1
+// CHECK:STDOUT:   %142.11: i32 = int_value 2
+// CHECK:STDOUT:   %142.9: i32 = add %142, %142.11
+// CHECK:STDOUT:   %142.15: i32 = int_value 3
+// CHECK:STDOUT:   %142.13: i32 = add %142.9, %142.15
+// CHECK:STDOUT:   %142.13.0: i32 = stub_reference %142.13
+// CHECK:STDOUT:   %142.18: i32 = int_value 4
+// CHECK:STDOUT:   %142.22: i32 = int_value 5
+// CHECK:STDOUT:   %142.20: i32 = add %142.18, %142.22
+// CHECK:STDOUT:   %142.20.0: i32 = stub_reference %142.20
+// CHECK:STDOUT:   %142.25: i32 = int_value 6
+// CHECK:STDOUT:   %142.25.0: i32 = stub_reference %142.25
+// CHECK:STDOUT:   %142.6: type = tuple_type ()
+// CHECK:STDOUT:   %142.6.0: () = call @Foo(%142.13.0, %142.20.0, %142.25.0)
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 

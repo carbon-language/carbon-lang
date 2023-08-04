@@ -56,20 +56,20 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @Foo
-// CHECK:STDOUT:   %1 = fn_decl @Run
+// CHECK:STDOUT:   %77 = fn_decl @Foo
+// CHECK:STDOUT:   %79 = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: f64 = real_value 10e-1
-// CHECK:STDOUT:   ret %0
+// CHECK:STDOUT:   %77: f64 = real_value 10e-1
+// CHECK:STDOUT:   ret %77
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: i32 = var
-// CHECK:STDOUT:   %0: f64 = call @Foo()
+// CHECK:STDOUT:   %83: f64 = call @Foo()
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }

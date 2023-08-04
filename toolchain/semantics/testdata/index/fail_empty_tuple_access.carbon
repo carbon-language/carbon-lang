@@ -53,8 +53,8 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @F
-// CHECK:STDOUT:   %1 = fn_decl @Run
+// CHECK:STDOUT:   %73 = fn_decl @F
+// CHECK:STDOUT:   %75 = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -64,9 +64,9 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: type = tuple_type ()
-// CHECK:STDOUT:   %1: () = call @F()
-// CHECK:STDOUT:   %2: i32 = int_value 0
+// CHECK:STDOUT:   %79: type = tuple_type ()
+// CHECK:STDOUT:   %79.4: () = call @F()
+// CHECK:STDOUT:   %79.7: i32 = int_value 0
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 

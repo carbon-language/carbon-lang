@@ -258,7 +258,8 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
       semantics_ir.Print(output_stream_, semantics_ir_include_builtins);
       output_stream_ << "\n";
     }
-    FormatSemanticsIR(semantics_ir, output_stream_);
+    FormatSemanticsIR(tokenized_source, parse_tree, semantics_ir,
+                      output_stream_);
     return !has_errors;
   }
   CARBON_VLOG() << "semantics_ir: " << semantics_ir;

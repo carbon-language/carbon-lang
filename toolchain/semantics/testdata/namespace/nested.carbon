@@ -55,10 +55,10 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = namespace {.Bar = %1}
-// CHECK:STDOUT:   %1 = namespace {.Wiz = %2, .Baz = %3}
-// CHECK:STDOUT:   %2 = fn_decl @Wiz
-// CHECK:STDOUT:   %3 = fn_decl @Baz
+// CHECK:STDOUT:   %76 = namespace {.Bar = %77}
+// CHECK:STDOUT:   %77 = namespace {.Wiz = %79, .Baz = %82}
+// CHECK:STDOUT:   %79 = fn_decl @Wiz
+// CHECK:STDOUT:   %82 = fn_decl @Baz
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Wiz() {
@@ -68,8 +68,8 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %0: type = tuple_type ()
-// CHECK:STDOUT:   %1: () = call @Wiz()
+// CHECK:STDOUT:   %83: type = tuple_type ()
+// CHECK:STDOUT:   %83.14: () = call @Wiz()
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }
 

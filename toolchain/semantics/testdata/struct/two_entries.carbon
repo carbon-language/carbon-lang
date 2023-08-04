@@ -84,14 +84,14 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %99: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %x: {.a: i32, .b: i32} = var
-// CHECK:STDOUT:   %1: i32 = int_value 1
-// CHECK:STDOUT:   %2: i32 = stub_reference %1
-// CHECK:STDOUT:   %3: i32 = int_value 2
-// CHECK:STDOUT:   %4: i32 = stub_reference %3
-// CHECK:STDOUT:   %5: {.a: i32, .b: i32} = struct_value (%2, %4)
-// CHECK:STDOUT:   assign %x, %5
+// CHECK:STDOUT:   %99.35: i32 = int_value 1
+// CHECK:STDOUT:   %99.33: i32 = stub_reference %99.35
+// CHECK:STDOUT:   %99.43: i32 = int_value 2
+// CHECK:STDOUT:   %99.41: i32 = stub_reference %99.43
+// CHECK:STDOUT:   %99.44: {.a: i32, .b: i32} = struct_value (%99.33, %99.41)
+// CHECK:STDOUT:   assign %x, %99.44
 // CHECK:STDOUT:   %y: {.a: i32, .b: i32} = var
 // CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }

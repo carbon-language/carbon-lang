@@ -46,13 +46,13 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @Main
+// CHECK:STDOUT:   %60 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: i32 = var
-// CHECK:STDOUT:   %0: f64 = real_value 10e-1
+// CHECK:STDOUT:   %64: f64 = real_value 10e-1
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT:   ret
 // CHECK:STDOUT: }

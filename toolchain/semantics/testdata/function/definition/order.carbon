@@ -50,9 +50,9 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %0 = fn_decl @Foo
-// CHECK:STDOUT:   %1 = fn_decl @Bar
-// CHECK:STDOUT:   %2 = fn_decl @Baz
+// CHECK:STDOUT:   %73 = fn_decl @Foo
+// CHECK:STDOUT:   %74 = fn_decl @Bar
+// CHECK:STDOUT:   %75 = fn_decl @Baz
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
