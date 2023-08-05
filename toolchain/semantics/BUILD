@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
 load("//testing/file_test:rules.bzl", "file_test")
 
@@ -20,7 +21,10 @@ cc_library(
     srcs = ["semantics_node_kind.cpp"],
     hdrs = ["semantics_node_kind.h"],
     textual_hdrs = ["semantics_node_kind.def"],
-    deps = ["//common:enum_base"],
+    deps = [
+        "//common:enum_base",
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_library(
@@ -59,19 +63,22 @@ cc_library(
         "semantics_ir.cpp",
         "semantics_context.cpp",
         "semantics_node_block_stack.cpp",
+        "semantics_declaration_name_stack.cpp",
     ] +
-    # Glob handler files to avoid missing anyway.
+    # Glob handler files to avoid missing any.
     glob([
         "semantics_handle*.cpp",
     ]),
     hdrs = [
         "semantics_context.h",
+        "semantics_declaration_name_stack.h",
         "semantics_ir.h",
         "semantics_node_block_stack.h",
     ],
     deps = [
         ":semantics_builtin_kind",
         ":semantics_node",
+        ":semantics_node_kind",
         ":semantics_node_stack",
         "//common:check",
         "//common:ostream",
@@ -108,6 +115,17 @@ file_test(
     tests = glob(["testdata/**/*.carbon"]),
     deps = [
         "//toolchain/driver:driver_file_test_base",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_fuzz_test(
+    name = "semantics_fuzzer",
+    size = "small",
+    srcs = ["semantics_fuzzer.cpp"],
+    corpus = glob(["fuzzer_corpus/*"]),
+    deps = [
+        "//toolchain/driver",
         "@llvm-project//llvm:Support",
     ],
 )

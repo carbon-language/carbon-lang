@@ -21,13 +21,15 @@
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeBoolType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+4, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+4},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
 // CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+7, type: type0},
@@ -37,7 +39,7 @@
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block6, arg1: node+12},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block6, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+14, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+14},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

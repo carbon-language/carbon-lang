@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
+load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
 load("//testing/file_test:rules.bzl", "file_test")
 
@@ -238,6 +238,7 @@ file_test(
     tests = glob(["testdata/**/*.carbon"]),
     deps = [
         "//toolchain/driver:driver_file_test_base",
+        "@com_googlesource_code_re2//:re2",
         "@llvm-project//llvm:Support",
     ],
 )

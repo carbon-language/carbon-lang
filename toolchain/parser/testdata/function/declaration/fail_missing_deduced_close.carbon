@@ -16,7 +16,13 @@
 // CHECK:STDOUT: ]
 
 // Fix and uncomment this to test error handling.
-// CHECK:STDERR: fail_missing_deduced_close.carbon:[[@LINE+2]]:7: Closing symbol does not match most recent opening symbol.
-// CHECK:STDERR: fail_missing_deduced_close.carbon:[[@LINE+1]]:8: Expected parameter declaration.
+// CHECK:STDERR: fail_missing_deduced_close.carbon:[[@LINE+9]]:7: Closing symbol does not match most recent opening symbol.
+// CHECK:STDERR: fn Div[();
+// CHECK:STDERR:       ^
+// CHECK:STDERR: fail_missing_deduced_close.carbon:[[@LINE+6]]:8: Expected parameter declaration.
+// CHECK:STDERR: fn Div[();
+// CHECK:STDERR:        ^
+// CHECK:STDERR: fail_missing_deduced_close.carbon:[[@LINE+3]]:11: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: fn Div[();
+// CHECK:STDERR:           ^
 fn Div[();
-// CHECK:STDERR: fail_missing_deduced_close.carbon:[[@LINE+0]]:127: A `(` for parameters is required after deduced parameters.

@@ -41,6 +41,16 @@ struct AllocateTrait {
 using VTable =
     llvm::StringMap<std::pair<Nonnull<const CallableDeclaration*>, int>>;
 
+// Returns a pointer to an empty VTable that will never be deallocated.
+//
+// Using this instead of `new VTable()` avoids unnecessary allocations, and
+// takes better advantage of Arena canonicalization when a VTable pointer is
+// used as a constructor argument.
+inline auto EmptyVTable() -> Nonnull<const VTable*> {
+  static Nonnull<const VTable*> result = new VTable();
+  return result;
+}
+
 // Abstract base class of all AST nodes representing values.
 //
 // Value and its derived classes support LLVM-style RTTI, including
@@ -49,8 +59,14 @@ using VTable =
 // every concrete derived class must have a corresponding enumerator
 // in `Kind`; see https://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html for
 // details.
+//
+// Arena's canonicalization support is enabled for Value and all derived types.
+// As a result, all Values must be immutable, and all their constructor
+// arguments must be copyable, equality-comparable, and hashable. See
+// Arena's documentation for details.
 class Value {
  public:
+  using EnableCanonicalizedAllocation = void;
   enum class Kind {
 #define CARBON_VALUE_KIND(kind) kind,
 #include "explorer/ast/value_kinds.def"
@@ -73,7 +89,7 @@ class Value {
   // `me_value`, otherwise pass `*this`.
   auto GetElement(Nonnull<Arena*> arena, const ElementPath& path,
                   SourceLocation source_loc,
-                  Nonnull<const Value*> me_value) const
+                  std::optional<Nonnull<const Value*>> me_value) const
       -> ErrorOr<Nonnull<const Value*>>;
 
   // Returns a copy of *this, but with the sub-Value specified by `path`
@@ -94,38 +110,6 @@ class Value {
 
  private:
   const Kind kind_;
-};
-
-// Contains the result of the evaluation of an expression, including a value,
-// the original expression category, and an optional address if available.
-class ExpressionResult {
- public:
-  static auto Value(Nonnull<const Carbon::Value*> v) -> ExpressionResult {
-    return ExpressionResult(v, std::nullopt, ExpressionCategory::Value);
-  }
-  static auto Reference(Nonnull<const Carbon::Value*> v, Address address)
-      -> ExpressionResult {
-    return ExpressionResult(v, std::move(address),
-                            ExpressionCategory::Reference);
-  }
-  static auto Initializing(Nonnull<const Carbon::Value*> v, Address address)
-      -> ExpressionResult {
-    return ExpressionResult(v, std::move(address),
-                            ExpressionCategory::Initializing);
-  }
-
-  ExpressionResult(Nonnull<const Carbon::Value*> v,
-                   std::optional<Address> address, ExpressionCategory cat)
-      : value_(v), address_(std::move(address)), expr_cat_(cat) {}
-
-  auto value() const -> Nonnull<const Carbon::Value*> { return value_; }
-  auto address() const -> const std::optional<Address>& { return address_; }
-  auto expression_category() const -> ExpressionCategory { return expr_cat_; }
-
- private:
-  Nonnull<const Carbon::Value*> value_;
-  std::optional<Address> address_;
-  ExpressionCategory expr_cat_;
 };
 
 // Returns whether the fully-resolved kind that this value will eventually have
@@ -296,6 +280,64 @@ class LocationValue : public Value {
   Address value_;
 };
 
+// Contains the result of the evaluation of an expression, including a value,
+// the original expression category, and an optional address if available.
+class ExpressionResult {
+ public:
+  static auto Value(Nonnull<const Carbon::Value*> v) -> ExpressionResult {
+    return ExpressionResult(v, std::nullopt, ExpressionCategory::Value);
+  }
+  static auto Reference(Nonnull<const Carbon::Value*> v, Address address)
+      -> ExpressionResult {
+    return ExpressionResult(v, std::move(address),
+                            ExpressionCategory::Reference);
+  }
+  static auto Initializing(Nonnull<const Carbon::Value*> v, Address address)
+      -> ExpressionResult {
+    return ExpressionResult(v, std::move(address),
+                            ExpressionCategory::Initializing);
+  }
+
+  ExpressionResult(Nonnull<const Carbon::Value*> v,
+                   std::optional<Address> address, ExpressionCategory cat)
+      : value_(v), address_(std::move(address)), expr_cat_(cat) {}
+
+  auto value() const -> Nonnull<const Carbon::Value*> { return value_; }
+  auto address() const -> const std::optional<Address>& { return address_; }
+  auto expression_category() const -> ExpressionCategory { return expr_cat_; }
+
+ private:
+  Nonnull<const Carbon::Value*> value_;
+  std::optional<Address> address_;
+  ExpressionCategory expr_cat_;
+};
+
+// Represents the result of the evaluation of a reference expression, and
+// holds the resulting `Value*` and its `Address`.
+class ReferenceExpressionValue : public Value {
+ public:
+  ReferenceExpressionValue(Nonnull<const Value*> value, Address address)
+      : Value(Kind::ReferenceExpressionValue),
+        value_(value),
+        address_(std::move(address)) {}
+
+  static auto classof(const Value* value) -> bool {
+    return value->kind() == Kind::ReferenceExpressionValue;
+  }
+
+  template <typename F>
+  auto Decompose(F f) const {
+    return f(value_, address_);
+  }
+
+  auto value() const -> Nonnull<const Value*> { return value_; }
+  auto address() const -> const Address& { return address_; }
+
+ private:
+  Nonnull<const Value*> value_;
+  Address address_;
+};
+
 // A pointer value
 class PointerValue : public Value {
  public:
@@ -374,7 +416,8 @@ class NominalClassValue : public Value {
   // NominalClassValue*, that must be common to all NominalClassValue of the
   // same object. The pointee is updated, when `NominalClassValue`s are
   // constructed, to point to the `NominalClassValue` corresponding to the
-  // child-most class type.
+  // child-most class type. Sets *class_value_ptr = this, which corresponds to
+  // the static type of the value matching its dynamic type.
   NominalClassValue(Nonnull<const Value*> type, Nonnull<const Value*> inits,
                     std::optional<Nonnull<const NominalClassValue*>> base,
                     Nonnull<const NominalClassValue** const> class_value_ptr);
@@ -652,7 +695,7 @@ class FunctionType : public Value {
   // An explicit function parameter that is a `:!` binding:
   //
   //     fn MakeEmptyVector(T:! type) -> Vector(T);
-  struct GenericParameter {
+  struct GenericParameter : public HashFromDecompose<GenericParameter> {
     template <typename F>
     auto Decompose(F f) const {
       return f(index, binding);
@@ -663,7 +706,7 @@ class FunctionType : public Value {
   };
 
   // For methods with unbound `self` parameters.
-  struct MethodSelf {
+  struct MethodSelf : public HashFromDecompose<MethodSelf> {
     template <typename F>
     auto Decompose(F f) const {
       return f(addr_self, self_type);
@@ -697,11 +740,18 @@ class FunctionType : public Value {
         impl_bindings_(std::move(impl_bindings)),
         is_initializing_(is_initializing) {}
 
-  struct ExceptSelf {};
-  FunctionType(ExceptSelf, const FunctionType& clone)
-      : FunctionType(std::nullopt, clone.parameters_, clone.generic_parameters_,
-                     clone.return_type_, clone.deduced_bindings_,
-                     clone.impl_bindings_, clone.is_initializing_) {}
+  struct ExceptSelf : public HashFromDecompose<ExceptSelf> {
+    template <typename F>
+    auto Decompose(F f) const {
+      return f();
+    }
+  };
+
+  FunctionType(ExceptSelf, const FunctionType* clone)
+      : FunctionType(std::nullopt, clone->parameters_,
+                     clone->generic_parameters_, clone->return_type_,
+                     clone->deduced_bindings_, clone->impl_bindings_,
+                     clone->is_initializing_) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::FunctionType;
@@ -814,12 +864,13 @@ class NominalClassType : public Value {
   explicit NominalClassType(
       Nonnull<const ClassDeclaration*> declaration,
       Nonnull<const Bindings*> bindings,
-      std::optional<Nonnull<const NominalClassType*>> base, VTable class_vtable)
+      std::optional<Nonnull<const NominalClassType*>> base,
+      Nonnull<const VTable*> class_vtable)
       : Value(Kind::NominalClassType),
         declaration_(declaration),
         bindings_(bindings),
         base_(base),
-        vtable_(std::move(class_vtable)),
+        vtable_(class_vtable),
         hierarchy_level_(base ? (*base)->hierarchy_level() + 1 : 0) {}
 
   static auto classof(const Value* value) -> bool {
@@ -846,7 +897,7 @@ class NominalClassType : public Value {
     return bindings_->witnesses();
   }
 
-  auto vtable() const -> const VTable& { return vtable_; }
+  auto vtable() const -> const VTable& { return *vtable_; }
 
   // Returns how many levels from the top ancestor class it is. i.e. a class
   // with no base returns `0`, while a class with a `.base` and `.base.base`
@@ -866,7 +917,7 @@ class NominalClassType : public Value {
   Nonnull<const ClassDeclaration*> declaration_;
   Nonnull<const Bindings*> bindings_ = Bindings::None();
   const std::optional<Nonnull<const NominalClassType*>> base_;
-  const VTable vtable_;
+  Nonnull<const VTable*> vtable_;
   int hierarchy_level_;
 };
 
@@ -998,7 +1049,7 @@ class NamedConstraintType : public Value {
 };
 
 // A constraint that requires implementation of an interface.
-struct ImplsConstraint {
+struct ImplsConstraint : public HashFromDecompose<ImplsConstraint> {
   template <typename F>
   auto Decompose(F f) const {
     return f(type, interface);
@@ -1011,7 +1062,7 @@ struct ImplsConstraint {
 };
 
 // A constraint that requires an intrinsic property of a type.
-struct IntrinsicConstraint {
+struct IntrinsicConstraint : public HashFromDecompose<IntrinsicConstraint> {
   template <typename F>
   auto Decompose(F f) const {
     return f(type, kind, arguments);
@@ -1036,7 +1087,7 @@ struct IntrinsicConstraint {
 };
 
 // A constraint that a collection of values are known to be the same.
-struct EqualityConstraint {
+struct EqualityConstraint : public HashFromDecompose<EqualityConstraint> {
   template <typename F>
   auto Decompose(F f) const {
     return f(values);
@@ -1059,7 +1110,7 @@ struct EqualityConstraint {
 
 // A constraint indicating that access to an associated constant should be
 // replaced by another value.
-struct RewriteConstraint {
+struct RewriteConstraint : public HashFromDecompose<RewriteConstraint> {
   template <typename F>
   auto Decompose(F f) const {
     return f(constant, unconverted_replacement, unconverted_replacement_type,
@@ -1077,7 +1128,7 @@ struct RewriteConstraint {
 };
 
 // A context in which we might look up a name.
-struct LookupContext {
+struct LookupContext : public HashFromDecompose<LookupContext> {
   template <typename F>
   auto Decompose(F f) const {
     return f(context);
@@ -1419,11 +1470,11 @@ class MemberName : public Value {
  public:
   MemberName(std::optional<Nonnull<const Value*>> base_type,
              std::optional<Nonnull<const InterfaceType*>> interface,
-             NamedElement member)
+             Nonnull<const NamedElement*> member)
       : Value(Kind::MemberName),
         base_type_(base_type),
         interface_(interface),
-        member_(std::move(member)) {
+        member_(member) {
     CARBON_CHECK(base_type || interface)
         << "member name must be in a type, an interface, or both";
   }
@@ -1438,7 +1489,7 @@ class MemberName : public Value {
   }
 
   // Prints the member name or identifier.
-  void Print(llvm::raw_ostream& out) const { member_.Print(out); }
+  void Print(llvm::raw_ostream& out) const { member_->Print(out); }
 
   // The type for which `name` is a member or a member of an `impl`.
   auto base_type() const -> std::optional<Nonnull<const Value*>> {
@@ -1449,14 +1500,14 @@ class MemberName : public Value {
     return interface_;
   }
   // The member.
-  auto member() const -> const NamedElement& { return member_; }
+  auto member() const -> const NamedElement& { return *member_; }
   // The name of the member.
   auto name() const -> std::string_view { return member().name(); }
 
  private:
   std::optional<Nonnull<const Value*>> base_type_;
   std::optional<Nonnull<const InterfaceType*>> interface_;
-  NamedElement member_;
+  Nonnull<const NamedElement*> member_;
 };
 
 // A symbolic value representing an associated constant.
@@ -1595,8 +1646,8 @@ class TypeOfParameterizedEntityName : public Value {
 // as the member name in a compound member access.
 class TypeOfMemberName : public Value {
  public:
-  explicit TypeOfMemberName(NamedElement member)
-      : Value(Kind::TypeOfMemberName), member_(std::move(member)) {}
+  explicit TypeOfMemberName(Nonnull<const NamedElement*> member)
+      : Value(Kind::TypeOfMemberName), member_(member) {}
 
   static auto classof(const Value* value) -> bool {
     return value->kind() == Kind::TypeOfMemberName;
@@ -1609,10 +1660,10 @@ class TypeOfMemberName : public Value {
 
   // TODO: consider removing this or moving it elsewhere in the AST,
   // since it's arguably part of the expression value rather than its type.
-  auto member() const -> NamedElement { return member_; }
+  auto member() const -> const NamedElement& { return *member_; }
 
  private:
-  NamedElement member_;
+  Nonnull<const NamedElement*> member_;
 };
 
 // The type of a namespace name.

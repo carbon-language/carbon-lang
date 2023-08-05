@@ -18,19 +18,20 @@
 // CHECK:STDOUT:   x,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
-// CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: type1},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+3, type: type1},
-// CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+5, type: type1},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+7, type: type1},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+3},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+5, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+7},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -55,7 +56,11 @@
 
 fn Main() {
   var x: i32 = 0;
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+2]]:7: Duplicate name being declared in the same scope.
-  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-2]]:7: Name is previously declared here.
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE+6]]:7: Duplicate name being declared in the same scope.
+  // CHECK:STDERR:   var x: i32 = 0;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_duplicate_decl.carbon:[[@LINE-4]]:7: Name is previously declared here.
+  // CHECK:STDERR:   var x: i32 = 0;
+  // CHECK:STDERR:       ^
   var x: i32 = 0;
 }

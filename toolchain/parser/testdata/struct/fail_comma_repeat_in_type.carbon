@@ -23,5 +23,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_comma_repeat_in_type.carbon:[[@LINE+1]]:17: Expected `.field: field_type`.
+// CHECK:STDERR: fail_comma_repeat_in_type.carbon:[[@LINE+3]]:17: Expected `.field: field_type`.
+// CHECK:STDERR: var x: {.a: i32,,} = {};
+// CHECK:STDERR:                 ^
 var x: {.a: i32,,} = {};

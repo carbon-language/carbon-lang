@@ -10,5 +10,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_identifier_instead_of_sig.carbon:[[@LINE+1]]:8: `fn` requires a `(` for parameters.
+// CHECK:STDERR: fail_identifier_instead_of_sig.carbon:[[@LINE+3]]:8: `fn` requires a `(` for parameters.
+// CHECK:STDERR: fn foo bar;
+// CHECK:STDERR:        ^
 fn foo bar;

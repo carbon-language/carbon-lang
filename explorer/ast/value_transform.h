@@ -6,16 +6,35 @@
 #define CARBON_EXPLORER_AST_VALUE_TRANSFORM_H_
 
 #include "common/error.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/value.h"
 
 namespace Carbon {
 
+// Constructs a T instance by direct-list-initialization from the given
+// components (which must have been produced by Decompose).
+template <typename T, typename... Args>
+auto ConstructFromComponents(Args&&... args)
+    -> decltype(T{std::declval<Args>()...}) {
+  return T{std::forward<Args>(args)...};
+}
+
+// Overload of the above to accommodate the case where T is an aggregate and
+// has a CRTP base class, in which case the initializer list must start with
+// an empty initializer for the base class.
+template <typename T, typename... Args>
+auto ConstructFromComponents(Args&&... args)
+    -> decltype(T{{}, std::declval<Args>()...}) {
+  return T{{}, std::forward<Args>(args)...};
+}
+
 template <typename T, typename, typename... Args>
-constexpr bool is_list_constructible_impl = false;
+constexpr bool IsConstructibleFromComponentsImpl = false;
 
 template <typename T, typename... Args>
-constexpr bool is_list_constructible_impl<
-    T, decltype(T{std::declval<Args>()...}), Args...> = true;
+constexpr bool IsConstructibleFromComponentsImpl<
+    T, decltype(ConstructFromComponents<T>(std::declval<Args>()...)), Args...> =
+    true;
 
 // A no-op visitor used to implement `IsRecursivelyTransformable`. The
 // `operator()` function returns `true_type` if it's called with arguments that
@@ -23,9 +42,8 @@ constexpr bool is_list_constructible_impl<
 template <typename T>
 struct IsRecursivelyTransformableVisitor {
   template <typename... Args>
-  auto operator()(Args&&... args)
-      -> std::integral_constant<bool,
-                                is_list_constructible_impl<T, T, Args...>>;
+  auto operator()(Args&&... args) -> std::integral_constant<
+      bool, IsConstructibleFromComponentsImpl<T, T, Args...>>;
 };
 
 // A type trait that indicates whether `T` is transformable. A transformable
@@ -131,7 +149,8 @@ class TransformBase {
         if (unwrapper_.failed()) {
           return value;
         }
-        return T{decltype(transformed_elements)(transformed_elements)...};
+        return ConstructFromComponents<T>(
+            decltype(transformed_elements)(transformed_elements)...);
       }(TransformOrOriginal(elements)...);
     });
   }
@@ -237,6 +256,8 @@ class ValueTransform : public TransformBase<Derived, ResultUnwrapper> {
   }
 
   auto operator()(Address addr) -> Address { return addr; }
+
+  auto operator()(ExpressionCategory cat) -> ExpressionCategory { return cat; }
 
   auto operator()(ValueNodeView value_node) -> ValueNodeView {
     return value_node;

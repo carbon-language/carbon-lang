@@ -8,6 +8,7 @@
 #include <variant>
 
 #include "explorer/ast/ast.h"
+#include "explorer/common/source_location.h"
 #include "explorer/syntax/parser.h"  // from parser.ypp
 
 namespace Carbon {
@@ -18,8 +19,10 @@ class ParseAndLexContext {
  public:
   // Creates an instance analyzing the given input file.
   ParseAndLexContext(Nonnull<const std::string*> input_file_name,
-                     bool parser_debug)
-      : input_file_name_(input_file_name), parser_debug_(parser_debug) {}
+                     FileKind file_kind, bool parser_debug)
+      : input_file_name_(input_file_name),
+        file_kind_(file_kind),
+        parser_debug_(parser_debug) {}
 
   // Formats ands records a lexing oor parsing error. Returns an error token as
   // a convenience.
@@ -28,7 +31,8 @@ class ParseAndLexContext {
 
   auto source_loc() const -> SourceLocation {
     return SourceLocation(input_file_name_,
-                          static_cast<int>(current_token_position.begin.line));
+                          static_cast<int>(current_token_position.begin.line),
+                          file_kind_);
   }
 
   auto parser_debug() const -> bool { return parser_debug_; }
@@ -46,6 +50,9 @@ class ParseAndLexContext {
   // A path to the file processed, relative to the current working directory
   // when *this is called.
   Nonnull<const std::string*> input_file_name_;
+
+  // The kind of file being processed.
+  FileKind file_kind_;
 
   bool parser_debug_;
 

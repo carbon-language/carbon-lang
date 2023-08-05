@@ -34,7 +34,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
     }
   }
 
-  SourceLocation source_loc("<Main()>", 0);
+  SourceLocation source_loc("<Main()>", 0, FileKind::Main);
   ast.main_call = arena->New<CallExpression>(
       source_loc, arena->New<IdentifierExpression>(source_loc, "Main"),
       arena->New<TupleLiteral>(source_loc));
@@ -45,13 +45,13 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** resolving names **********\n";
   }
-  CARBON_RETURN_IF_ERROR(ResolveNames(ast));
+  CARBON_RETURN_IF_ERROR(ResolveNames(ast, trace_stream));
 
   set_prog_phase.update_phase(ProgramPhase::ControlFlowResolution);
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** resolving control flow **********\n";
   }
-  CARBON_RETURN_IF_ERROR(ResolveControlFlow(ast));
+  CARBON_RETURN_IF_ERROR(ResolveControlFlow(trace_stream, ast));
 
   set_prog_phase.update_phase(ProgramPhase::TypeChecking);
   if (trace_stream->is_enabled()) {
@@ -64,7 +64,7 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
   if (trace_stream->is_enabled()) {
     *trace_stream << "********** resolving unformed variables **********\n";
   }
-  CARBON_RETURN_IF_ERROR(ResolveUnformed(ast));
+  CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, ast));
 
   set_prog_phase.update_phase(ProgramPhase::Declarations);
   if (trace_stream->is_enabled()) {

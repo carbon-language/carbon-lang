@@ -29,6 +29,7 @@ enum PrecedenceLevel : int8_t {
   BitwiseXor,
   BitShift,
   // Type formation.
+  TypePrefix,
   TypePostfix,
   // Sentinel representing a type context.
   Type,
@@ -55,20 +56,25 @@ struct OperatorPriorityTable {
     // relationships.
     MarkHigherThan({Highest}, {TermPrefix});
     MarkHigherThan({TermPrefix}, {NumericPrefix, BitwisePrefix, LogicalPrefix,
-                                  NumericPostfix, TypePostfix});
+                                  NumericPostfix});
     MarkHigherThan({NumericPrefix, NumericPostfix},
                    {Modulo, Multiplicative, BitShift});
     MarkHigherThan({Multiplicative}, {Additive});
     MarkHigherThan({BitwisePrefix},
                    {BitwiseAnd, BitwiseOr, BitwiseXor, BitShift});
-    MarkHigherThan({TypePostfix}, {Type});
     MarkHigherThan(
-        {Modulo, Additive, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift, Type},
+        {Modulo, Additive, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
         {Relational});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
     MarkHigherThan({LogicalAnd, LogicalOr}, {If});
     MarkHigherThan({If}, {SimpleAssignment, CompoundAssignment});
     MarkHigherThan({SimpleAssignment, CompoundAssignment}, {Lowest});
+
+    // Types are mostly a separate precedence graph.
+    MarkHigherThan({Highest}, {TypePrefix});
+    MarkHigherThan({TypePrefix}, {TypePostfix});
+    MarkHigherThan({TypePostfix}, {Type});
+    MarkHigherThan({Type}, {If});
 
     // Compute the transitive closure of the above relationships: if we parse
     // `a $ b @ c` as `(a $ b) @ c` and parse `b @ c % d` as `(b @ c) % d`,
@@ -137,7 +143,9 @@ struct OperatorPriorityTable {
 
     // For prefix operators, RightFirst would mean `@@x` is `@(@x)` and
     // Ambiguous would mean it's an error. LeftFirst is meaningless. For now we
-    // allow all prefix operators to be repeated.
+    // allow all prefix operators other than `const` to be repeated.
+    //
+    // TODO: The design does not permit repeating most unary operators.
     for (PrecedenceLevel prefix :
          {TermPrefix, NumericPrefix, BitwisePrefix, LogicalPrefix, If}) {
       table[prefix][prefix] = OperatorPriority::RightFirst;
@@ -199,6 +207,7 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
     -> std::optional<PrecedenceGroup> {
   switch (kind) {
     case TokenKind::Star:
+    case TokenKind::Amp:
       return PrecedenceGroup(TermPrefix);
 
     case TokenKind::Not:
@@ -214,6 +223,9 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
 
     case TokenKind::If:
       return PrecedenceGroup(If);
+
+    case TokenKind::Const:
+      return PrecedenceGroup(TypePrefix);
 
     default:
       return std::nullopt;
@@ -288,6 +300,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
 
     // Prefix-only operators.
     case TokenKind::Not:
+    case TokenKind::Const:
       break;
 
     // Symbolic tokens that might be operators eventually.

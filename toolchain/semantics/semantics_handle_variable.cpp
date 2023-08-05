@@ -26,15 +26,13 @@ auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
   auto binding = context.semantics_ir().GetNode(binding_id);
   auto [name_id, storage_id] = binding.GetAsBindName();
   context.AddNameToLookup(binding.parse_node(), name_id, storage_id);
-
   // If there was an initializer, assign it to storage.
   if (has_init) {
     auto cast_value_id = context.ImplicitAsRequired(
         parse_node, expr_node_id,
         context.semantics_ir().GetNode(storage_id).type_id());
-    context.AddNode(SemanticsNode::Assign::Make(
-        parse_node, context.semantics_ir().GetNode(cast_value_id).type_id(),
-        storage_id, cast_value_id));
+    context.AddNode(
+        SemanticsNode::Assign::Make(parse_node, storage_id, cast_value_id));
   }
 
   context.node_stack()

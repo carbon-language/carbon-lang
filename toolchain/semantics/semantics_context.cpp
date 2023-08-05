@@ -6,17 +6,18 @@
 
 #include <utility>
 
+#include "common/check.h"
 #include "common/vlog.h"
 #include "toolchain/diagnostics/diagnostic_kind.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
+#include "toolchain/semantics/semantics_declaration_name_stack.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_node_block_stack.h"
+#include "toolchain/semantics/semantics_node_kind.h"
 
 namespace Carbon {
-
-CARBON_DIAGNOSTIC(NameNotFound, Error, "Name {0} not found", llvm::StringRef);
 
 SemanticsContext::SemanticsContext(const TokenizedBuffer& tokens,
                                    DiagnosticEmitter<ParseTree::Node>& emitter,
@@ -31,8 +32,8 @@ SemanticsContext::SemanticsContext(const TokenizedBuffer& tokens,
       node_stack_(parse_tree, vlog_stream),
       node_block_stack_("node_block_stack_", semantics_ir, vlog_stream),
       params_or_args_stack_("params_or_args_stack_", semantics_ir, vlog_stream),
-      args_type_info_stack_("args_type_info_stack_", semantics_ir,
-                            vlog_stream) {
+      args_type_info_stack_("args_type_info_stack_", semantics_ir, vlog_stream),
+      declaration_name_stack_(this) {
   // Inserts the "Error" and "Type" types as "used types" so that
   // canonicalization can skip them. We don't emit either for lowering.
   canonical_types_.insert(
@@ -75,10 +76,25 @@ auto SemanticsContext::AddNodeAndPush(ParseTree::Node parse_node,
   node_stack_.Push(parse_node, node_id);
 }
 
-CARBON_DIAGNOSTIC(NameDeclarationDuplicate, Error,
-                  "Duplicate name being declared in the same scope.");
-CARBON_DIAGNOSTIC(NameDeclarationPrevious, Note,
-                  "Name is previously declared here.");
+auto SemanticsContext::DiagnoseDuplicateName(ParseTree::Node parse_node,
+                                             SemanticsNodeId prev_def_id)
+    -> void {
+  CARBON_DIAGNOSTIC(NameDeclarationDuplicate, Error,
+                    "Duplicate name being declared in the same scope.");
+  CARBON_DIAGNOSTIC(NameDeclarationPrevious, Note,
+                    "Name is previously declared here.");
+  auto prev_def = semantics_ir_->GetNode(prev_def_id);
+  emitter_->Build(parse_node, NameDeclarationDuplicate)
+      .Note(prev_def.parse_node(), NameDeclarationPrevious)
+      .Emit();
+}
+
+auto SemanticsContext::DiagnoseNameNotFound(ParseTree::Node parse_node,
+                                            SemanticsStringId name_id) -> void {
+  CARBON_DIAGNOSTIC(NameNotFound, Error, "Name `{0}` not found",
+                    llvm::StringRef);
+  emitter_->Emit(parse_node, NameNotFound, semantics_ir_->GetString(name_id));
+}
 
 auto SemanticsContext::AddNameToLookup(ParseTree::Node name_node,
                                        SemanticsStringId name_id,
@@ -86,48 +102,7 @@ auto SemanticsContext::AddNameToLookup(ParseTree::Node name_node,
   if (current_scope().names.insert(name_id).second) {
     name_lookup_[name_id].push_back(target_id);
   } else {
-    auto prev_def_id = name_lookup_[name_id].back();
-    auto prev_def = semantics_ir_->GetNode(prev_def_id);
-    emitter_->Build(name_node, NameDeclarationDuplicate)
-        .Note(prev_def.parse_node(), NameDeclarationPrevious)
-        .Emit();
-  }
-}
-
-auto SemanticsContext::AddNameToLookup(DeclarationNameContext name_context,
-                                       SemanticsNodeId target_id) -> void {
-  switch (name_context.state) {
-    case DeclarationNameContext::State::Error:
-      // The name is invalid and a diagnostic has already been emitted.
-      return;
-
-    case DeclarationNameContext::State::New:
-      CARBON_FATAL() << "Name is missing, not expected to call AddNameToLookup "
-                        "(but that may change based on error handling).";
-
-    case DeclarationNameContext::State::Resolved:
-    case DeclarationNameContext::State::ResolvedNonScope: {
-      auto prev_def = semantics_ir_->GetNode(name_context.resolved_node_id);
-      emitter_->Build(name_context.parse_node, NameDeclarationDuplicate)
-          .Note(prev_def.parse_node(), NameDeclarationPrevious)
-          .Emit();
-      return;
-    }
-
-    case DeclarationNameContext::State::Unresolved:
-      if (name_context.target_scope_id == SemanticsNameScopeId::Invalid) {
-        AddNameToLookup(name_context.parse_node,
-                        name_context.unresolved_name_id, target_id);
-      } else {
-        bool success = semantics_ir_->AddNameScopeEntry(
-            name_context.target_scope_id, name_context.unresolved_name_id,
-            target_id);
-        CARBON_CHECK(success)
-            << "Duplicate names should have been resolved previously: "
-            << name_context.unresolved_name_id << " in "
-            << name_context.target_scope_id;
-      }
-      return;
+    DiagnoseDuplicateName(name_node, name_lookup_[name_id].back());
   }
 }
 
@@ -139,8 +114,7 @@ auto SemanticsContext::LookupName(ParseTree::Node parse_node,
     auto it = name_lookup_.find(name_id);
     if (it == name_lookup_.end()) {
       if (print_diagnostics) {
-        emitter_->Emit(parse_node, NameNotFound,
-                       semantics_ir_->GetString(name_id));
+        DiagnoseNameNotFound(parse_node, name_id);
       }
       return SemanticsNodeId::BuiltinError;
     }
@@ -154,8 +128,7 @@ auto SemanticsContext::LookupName(ParseTree::Node parse_node,
     auto it = scope.find(name_id);
     if (it == scope.end()) {
       if (print_diagnostics) {
-        emitter_->Emit(parse_node, NameNotFound,
-                       semantics_ir_->GetString(name_id));
+        DiagnoseNameNotFound(parse_node, name_id);
       }
       return SemanticsNodeId::BuiltinError;
     }
@@ -295,106 +268,6 @@ auto SemanticsContext::is_current_position_reachable() -> bool {
   }
 }
 
-auto SemanticsContext::PushDeclarationName() -> void {
-  declaration_name_stack_.push_back(
-      {.state = DeclarationNameContext::State::New,
-       .target_scope_id = SemanticsNameScopeId::Invalid,
-       .resolved_node_id = SemanticsNodeId::Invalid});
-}
-
-auto SemanticsContext::PopDeclarationName() -> DeclarationNameContext {
-  if (parse_tree_->node_kind(node_stack().PeekParseNode()) ==
-      ParseNodeKind::QualifiedDeclaration) {
-    // Any parts from a QualifiedDeclaration will already have been processed
-    // into the name.
-    node_stack_
-        .PopAndDiscardSoloParseNode<ParseNodeKind::QualifiedDeclaration>();
-  } else {
-    // The name had no qualifiers, so we need to process the node now.
-    auto [parse_node, node_or_name_id] =
-        node_stack_.PopExpressionWithParseNode();
-    ApplyDeclarationNameQualifier(parse_node, node_or_name_id);
-  }
-
-  return declaration_name_stack_.pop_back_val();
-}
-
-auto SemanticsContext::ApplyDeclarationNameQualifier(
-    ParseTree::Node parse_node, SemanticsNodeId node_or_name_id) -> void {
-  auto& name_context = declaration_name_stack_.back();
-  switch (name_context.state) {
-    case DeclarationNameContext::State::Error:
-      // Already in an error state, so return without examining.
-      return;
-
-    case DeclarationNameContext::State::Unresolved:
-      // Because more qualifiers were found, we diagnose that the earlier
-      // qualifier failed to resolve.
-      name_context.state = DeclarationNameContext::State::Error;
-      emitter_->Emit(name_context.parse_node, NameNotFound,
-                     semantics_ir_->GetString(name_context.unresolved_name_id));
-      return;
-
-    case DeclarationNameContext::State::ResolvedNonScope: {
-      // Because more qualifiers were found, we diagnose that the earlier
-      // qualifier didn't resolve to a scoped entity.
-      name_context.state = DeclarationNameContext::State::Error;
-      CARBON_DIAGNOSTIC(QualifiedDeclarationInNonScope, Error,
-                        "Declaration qualifiers are only allowed for entities "
-                        "that provide a scope.");
-      CARBON_DIAGNOSTIC(QualifiedDeclarationNonScopeEntity, Note,
-                        "Non-scope entity referenced here.");
-      emitter_->Build(parse_node, QualifiedDeclarationInNonScope)
-          .Note(name_context.parse_node, QualifiedDeclarationNonScopeEntity)
-          .Emit();
-      return;
-    }
-
-    case DeclarationNameContext::State::New:
-    case DeclarationNameContext::State::Resolved: {
-      name_context.parse_node = parse_node;
-      if (parse_tree().node_kind(name_context.parse_node) ==
-          ParseNodeKind::Name) {
-        // For identifier nodes, we need to perform a lookup on the identifier.
-        // This means the input node_id is actually a string ID.
-        SemanticsStringId name_id(node_or_name_id.index);
-        auto resolved_node_id = LookupName(name_context.parse_node, name_id,
-                                           name_context.target_scope_id,
-                                           /*print_diagnostics=*/false);
-        if (resolved_node_id == SemanticsNodeId::BuiltinError) {
-          // Invalid indicates an unresolved node. Store it and return.
-          name_context.state = DeclarationNameContext::State::Unresolved;
-          name_context.unresolved_name_id = name_id;
-          return;
-        } else {
-          // Store the resolved node and continue for the target scope update.
-          name_context.resolved_node_id = resolved_node_id;
-        }
-      } else {
-        // For other nodes, we expect a regular resolved node, for example a
-        // namespace or generic type. Store it and continue for the target scope
-        // update.
-        name_context.resolved_node_id = node_or_name_id;
-      }
-
-      // This will only be reached for resolved nodes. We update the target
-      // scope based on the resolved type.
-      auto resolved_node =
-          semantics_ir_->GetNode(name_context.resolved_node_id);
-      switch (resolved_node.kind()) {
-        case SemanticsNodeKind::Namespace:
-          name_context.state = DeclarationNameContext::State::Resolved;
-          name_context.target_scope_id = resolved_node.GetAsNamespace();
-          break;
-        default:
-          name_context.state = DeclarationNameContext::State::ResolvedNonScope;
-          break;
-      }
-      return;
-    }
-  }
-}
-
 auto SemanticsContext::ImplicitAsForArgs(
     SemanticsNodeBlockId arg_refs_id, ParseTree::Node param_parse_node,
     SemanticsNodeBlockId param_refs_id,
@@ -432,7 +305,7 @@ auto SemanticsContext::ImplicitAsForArgs(
         ImplicitAsKind::Incompatible) {
       CARBON_CHECK(diagnostic != nullptr) << "Should have validated first";
       CARBON_DIAGNOSTIC(CallArgTypeMismatch, Note,
-                        "Function cannot be used: Cannot implicityly convert "
+                        "Function cannot be used: Cannot implicitly convert "
                         "argument {0} from `{1}` to `{2}`.",
                         size_t, std::string, std::string);
       diagnostic->Note(param_parse_node, CallArgTypeMismatch, i,
@@ -502,11 +375,29 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     // Type doesn't need to change.
     return ImplicitAsKind::Identical;
   }
-
   if (as_type_id == SemanticsTypeId::TypeType) {
-    // TODO: When converting `()` to a type, the result is `() as Type`.
-    // Right now there is no tuple value support.
-
+    if (value.kind() == SemanticsNodeKind::TupleValue) {
+      auto tuple_block_id = value.GetAsTupleValue();
+      llvm::SmallVector<SemanticsTypeId> type_ids;
+      // If it is empty tuple type, we don't fetch anything.
+      if (tuple_block_id != SemanticsNodeBlockId::Empty) {
+        const auto& tuple_block = semantics_ir_->GetNodeBlock(tuple_block_id);
+        for (auto tuple_node_id : tuple_block) {
+          // TODO: Eventually ExpressionAsType will insert implicit cast
+          // instructions. When that happens, this will need to verify the full
+          // tuple conversion will work before calling it.
+          type_ids.push_back(
+              ExpressionAsType(value.parse_node(), tuple_node_id));
+        }
+      }
+      auto tuple_type_id =
+          CanonicalizeTupleType(value.parse_node(), std::move(type_ids));
+      if (output_value_id != nullptr) {
+        *output_value_id =
+            semantics_ir_->GetTypeAllowBuiltinTypes(tuple_type_id);
+      }
+      return ImplicitAsKind::Compatible;
+    }
     // When converting `{}` to a type, the result is `{} as Type`.
     if (value.kind() == SemanticsNodeKind::StructValue &&
         value.GetAsStructValue() == SemanticsNodeBlockId::Empty) {
@@ -542,72 +433,149 @@ auto SemanticsContext::ParamOrArgEnd(bool for_args, ParseNodeKind start_kind)
 }
 
 auto SemanticsContext::ParamOrArgSave(bool for_args) -> void {
-  SemanticsNodeId param_or_arg_id = SemanticsNodeId::Invalid;
+  auto [entry_parse_node, entry_node_id] =
+      node_stack_.PopExpressionWithParseNode();
   if (for_args) {
     // For an argument, we add a stub reference to the expression on the top of
     // the stack. There may not be anything on the IR prior to this.
-    auto [entry_parse_node, entry_node_id] =
-        node_stack_.PopExpressionWithParseNode();
-    param_or_arg_id = AddNode(SemanticsNode::StubReference::Make(
+    entry_node_id = AddNode(SemanticsNode::StubReference::Make(
         entry_parse_node, semantics_ir_->GetNode(entry_node_id).type_id(),
         entry_node_id));
-  } else {
-    // For a parameter, there should always be something in the IR.
-    node_stack_.PopAndIgnore();
-    auto ir_id = node_block_stack_.Peek();
-    CARBON_CHECK(ir_id.is_valid());
-    auto& ir = semantics_ir_->GetNodeBlock(ir_id);
-    CARBON_CHECK(!ir.empty()) << "Should have had a param";
-    param_or_arg_id = ir.back();
   }
 
   // Save the param or arg ID.
   auto& params_or_args =
       semantics_ir_->GetNodeBlock(params_or_args_stack_.PeekForAdd());
-  params_or_args.push_back(param_or_arg_id);
+  params_or_args.push_back(entry_node_id);
+}
+
+auto SemanticsContext::CanonicalizeTypeImpl(
+    SemanticsNodeKind kind,
+    llvm::function_ref<void(llvm::FoldingSetNodeID& canonical_id)> profile_type,
+    llvm::function_ref<SemanticsNodeId()> make_node) -> SemanticsTypeId {
+  llvm::FoldingSetNodeID canonical_id;
+  kind.Profile(canonical_id);
+  profile_type(canonical_id);
+
+  void* insert_pos;
+  auto* node =
+      canonical_type_nodes_.FindNodeOrInsertPos(canonical_id, insert_pos);
+  if (node != nullptr) {
+    return node->type_id();
+  }
+
+  auto node_id = make_node();
+  auto type_id = semantics_ir_->AddType(node_id);
+  CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
+  type_node_storage_.push_back(
+      std::make_unique<TypeNode>(canonical_id, type_id));
+
+  // In a debug build, check that our insertion position is still valid. It
+  // could have been invalidated by a misbehaving `make_node`.
+  CARBON_DCHECK([&] {
+    void* check_insert_pos;
+    auto* check_node = canonical_type_nodes_.FindNodeOrInsertPos(
+        canonical_id, check_insert_pos);
+    return !check_node && insert_pos == check_insert_pos;
+  }()) << "Type was created recursively during canonicalization";
+
+  canonical_type_nodes_.InsertNode(type_node_storage_.back().get(), insert_pos);
+  return type_id;
 }
 
 auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
     -> SemanticsTypeId {
+  auto node = semantics_ir_->GetNode(node_id);
+  if (node.kind() == SemanticsNodeKind::StubReference) {
+    node_id = node.GetAsStubReference();
+    CARBON_CHECK(semantics_ir_->GetNode(node_id).kind() !=
+                 SemanticsNodeKind::StubReference)
+        << "Stub reference should not point to another stub reference";
+  }
+
   auto it = canonical_types_.find(node_id);
   if (it != canonical_types_.end()) {
     return it->second;
   }
 
-  auto type_id = semantics_ir_->AddType(node_id);
-  CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
-  return type_id;
+  switch (node.kind()) {
+    case SemanticsNodeKind::Builtin:
+    case SemanticsNodeKind::CrossReference: {
+      // TODO: Cross-references should be canonicalized by looking at their
+      // target rather than treating them as new unique types.
+      auto type_id = semantics_ir_->AddType(node_id);
+      CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
+      return type_id;
+    }
+    case SemanticsNodeKind::ConstType: {
+      return CanonicalizeTypeImpl(
+          node.kind(), node_id, [&](llvm::FoldingSetNodeID& canonical_id) {
+            canonical_id.AddInteger(
+                GetUnqualifiedType(node.GetAsConstType()).index);
+          });
+    }
+    case SemanticsNodeKind::PointerType: {
+      return CanonicalizeTypeImpl(
+          node.kind(), node_id, [&](llvm::FoldingSetNodeID& canonical_id) {
+            canonical_id.AddInteger(node.GetAsPointerType().index);
+          });
+    }
+    case SemanticsNodeKind::StructType:
+    case SemanticsNodeKind::TupleType: {
+      CARBON_FATAL() << "Type should have been canonizalized when created: "
+                     << node;
+    }
+    default: {
+      CARBON_FATAL() << "Unexpected non-canonical type node " << node;
+    }
+  }
 }
 
 auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
                                               SemanticsNodeBlockId refs_id)
     -> SemanticsTypeId {
-  // Construct the field structure for lookup.
-  auto refs = semantics_ir_->GetNodeBlock(refs_id);
-  llvm::FoldingSetNodeID canonical_id;
-  for (const auto& ref_id : refs) {
-    auto ref = semantics_ir_->GetNode(ref_id);
-    canonical_id.AddInteger(ref.GetAsStructTypeField().index);
-    canonical_id.AddInteger(ref.type_id().index);
-  }
+  auto profile_struct = [&](llvm::FoldingSetNodeID& canonical_id) {
+    auto refs = semantics_ir_->GetNodeBlock(refs_id);
+    for (const auto& ref_id : refs) {
+      auto ref = semantics_ir_->GetNode(ref_id);
+      auto [name_id, type_id] = ref.GetAsStructTypeField();
+      canonical_id.AddInteger(name_id.index);
+      canonical_id.AddInteger(type_id.index);
+    }
+  };
+  auto make_struct_node = [&] {
+    return AddNode(SemanticsNode::StructType::Make(
+        parse_node, SemanticsTypeId::TypeType, refs_id));
+  };
+  return CanonicalizeTypeImpl(SemanticsNodeKind::StructType, profile_struct,
+                              make_struct_node);
+}
 
-  // If a struct with matching fields was already created, reuse it.
-  void* insert_pos;
-  auto* node =
-      canonical_struct_types_.FindNodeOrInsertPos(canonical_id, insert_pos);
-  if (node != nullptr) {
-    return node->type_id();
-  }
+auto SemanticsContext::CanonicalizeTupleType(
+    ParseTree::Node parse_node, llvm::SmallVector<SemanticsTypeId>&& type_ids)
+    -> SemanticsTypeId {
+  auto profile_tuple = [&](llvm::FoldingSetNodeID& canonical_id) {
+    for (const auto& type_id : type_ids) {
+      canonical_id.AddInteger(type_id.index);
+    }
+  };
+  auto make_tuple_node = [&] {
+    auto type_block_id = semantics_ir_->AddTypeBlock();
+    auto& type_block = semantics_ir_->GetTypeBlock(type_block_id);
+    type_block = std::move(type_ids);
+    return AddNode(SemanticsNode::TupleType::Make(
+        parse_node, SemanticsTypeId::TypeType, type_block_id));
+  };
+  return CanonicalizeTypeImpl(SemanticsNodeKind::TupleType, profile_tuple,
+                              make_tuple_node);
+}
 
-  // The struct doesn't already exist, so create and store it as canonical.
-  auto node_id = AddNode(SemanticsNode::StructType::Make(
-      parse_node, SemanticsTypeId::TypeType, refs_id));
-  auto type_id = semantics_ir_->AddType(node_id);
-  CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
-  canonical_struct_types_nodes_.push_back(
-      std::make_unique<StructTypeNode>(canonical_id, type_id));
-  canonical_struct_types_.InsertNode(canonical_struct_types_nodes_.back().get(),
-                                     insert_pos);
+auto SemanticsContext::GetUnqualifiedType(SemanticsTypeId type_id)
+    -> SemanticsTypeId {
+  SemanticsNode type_node =
+      semantics_ir_->GetNode(semantics_ir_->GetType(type_id));
+  if (type_node.kind() == SemanticsNodeKind::ConstType)
+    return type_node.GetAsConstType();
   return type_id;
 }
 

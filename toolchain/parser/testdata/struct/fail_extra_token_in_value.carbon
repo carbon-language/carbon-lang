@@ -24,5 +24,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_extra_token_in_value.carbon:[[@LINE+1]]:28: Expected `,` or `}`.
+// CHECK:STDERR: fail_extra_token_in_value.carbon:[[@LINE+3]]:28: Expected `,` or `}`.
+// CHECK:STDERR: var x: {.a: i32} = {.a = 0 banana};
+// CHECK:STDERR:                            ^
 var x: {.a: i32} = {.a = 0 banana};

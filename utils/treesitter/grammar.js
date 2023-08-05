@@ -18,24 +18,24 @@ function comma_sep(thing) {
 
 // This is based on toolchain/parser/precedence.cpp
 const PREC = {
-  TermPrefix: 11,
-  TermPostfix: 11,
-  NumericPrefix: 10,
-  NumericPostfix: 10,
-  Multiplicative: 9,
-  Additive: 8,
-  BitwisePrefix: 7,
-  BitwiseAnd: 6,
-  BitwiseOr: 6,
-  BitwiseXor: 6,
-  BitShift: 6,
-  TypePostfix: 5,
-  LogicalPrefix: 4,
-  Relational: 3,
-  LogicalAnd: 2,
-  LogicalOr: 2,
+  TermPrefix: 12,
+  TermPostfix: 12,
+  NumericPrefix: 11,
+  NumericPostfix: 11,
+  Multiplicative: 10,
+  Additive: 9,
+  BitwisePrefix: 8,
+  BitwiseAnd: 7,
+  BitwiseOr: 7,
+  BitwiseXor: 7,
+  BitShift: 7,
+  TypePostfix: 6,
+  LogicalPrefix: 5,
+  Relational: 4,
+  LogicalAnd: 3,
+  LogicalOr: 3,
+  IfExpression: 2,
   WhereClause: 1,
-  IfExpression: 1,
 };
 
 module.exports = grammar({
@@ -51,7 +51,7 @@ module.exports = grammar({
   extras: ($) => [/\s/, $.comment],
 
   // NOTE: This must match the order in src/scanner.c, names are not used for matching.
-  externals: ($) => [$.binary_star, $.postfix_star],
+  externals: ($) => [$.binary_star, $.postfix_star, $.string],
 
   rules: {
     source_file: ($) =>
@@ -63,7 +63,7 @@ module.exports = grammar({
 
     api_or_impl: ($) => choice('api', 'impl'),
 
-    library_path: ($) => seq('library', $.string_literal),
+    library_path: ($) => seq('library', $.string),
 
     package_directive: ($) =>
       seq('package', $.ident, optional($.library_path), $.api_or_impl, ';'),
@@ -124,34 +124,6 @@ module.exports = grammar({
       );
     },
 
-    _string_content: ($) => token.immediate(/[^\\"]+/),
-
-    escape_sequence: ($) =>
-      token.immediate(
-        seq(
-          '\\',
-          choice(
-            'n',
-            't',
-            'r',
-            "'",
-            '"',
-            '\\',
-            '0',
-            /x[0-9A-F]{2}/,
-            /u\{[0-9A-F]+\}/
-          )
-        )
-      ),
-
-    // TODO: multiline string
-    string_literal: ($) =>
-      seq(
-        '"',
-        repeat(choice($._string_content, $.escape_sequence)),
-        token.immediate('"')
-      ),
-
     array_literal: ($) =>
       seq(
         '[',
@@ -174,12 +146,12 @@ module.exports = grammar({
         $.bool_literal,
         $.numeric_literal,
         $.numeric_type_literal,
-        $.string_literal,
+        $.string,
         $.struct_literal,
         $.struct_type_literal
       ),
 
-    _binding_lhs: ($) => choice($.ident, '_'),
+    binding_lhs: ($) => choice($.ident, '_'),
 
     paren_pattern: ($) =>
       seq(
@@ -191,17 +163,18 @@ module.exports = grammar({
     _pattern_without_expression: ($) =>
       choice(
         'auto',
-        seq($._binding_lhs, ':', $._expression),
-        seq($._binding_lhs, ':!', $._expression),
-        seq('template', $._binding_lhs, ':!', $._expression),
+        seq($.binding_lhs, ':', $._expression),
+        seq($.binding_lhs, ':!', $._expression),
+        seq('template', $.binding_lhs, ':!', $._expression),
         seq('var', $._pattern),
         $.paren_pattern,
         // alternative patterns
         // example: Optional(i32).Some(x: i32)
-        seq($._expression, $.paren_pattern)
+        seq($._simple_expression, $.paren_pattern)
       ),
 
-    _pattern: ($) => choice($._pattern_without_expression, $._expression),
+    _pattern: ($) =>
+      choice($._pattern_without_expression, $._simple_expression),
 
     unary_prefix_expression: ($) => {
       const table = [
@@ -252,13 +225,14 @@ module.exports = grammar({
     // This should be non-associative but conflicts are not allowed in tree-sitter
     as_expression: ($) => prec.left(seq($._expression, 'as', $._expression)),
 
-    ref_expression: ($) => prec.right(PREC.TermPrefix, seq('&', $._expression)),
+    ref_expression: ($) =>
+      prec.right(PREC.TermPrefix, seq('&', $._simple_expression)),
 
     deref_expression: ($) =>
-      prec.right(PREC.TermPrefix, seq('*', $._expression)),
+      prec.right(PREC.TermPrefix, seq('*', $._simple_expression)),
 
     fn_type_expression: ($) =>
-      prec.left(seq('__Fn', $.paren_expression, '->', $._expression)),
+      prec.left(seq('__Fn', $.paren_expression, '->', $._simple_expression)),
 
     if_expression: ($) =>
       prec(
@@ -269,7 +243,10 @@ module.exports = grammar({
     paren_expression: ($) => seq('(', comma_sep($._expression), ')'),
 
     index_expression: ($) =>
-      prec(PREC.TermPostfix, seq($._expression, '[', $._expression, ']')),
+      prec(
+        PREC.TermPostfix,
+        seq($._simple_expression, '[', $._expression, ']')
+      ),
 
     designator: ($) => seq('.', choice('base', $.ident)),
 
@@ -277,7 +254,7 @@ module.exports = grammar({
       prec(
         PREC.TermPostfix,
         seq(
-          $._expression,
+          $._simple_expression,
           choice(
             '++',
             '--',
@@ -289,49 +266,52 @@ module.exports = grammar({
       ),
 
     where_clause: ($) =>
-      prec(
-        PREC.WhereClause,
-        choice(
-          seq($._expression, '==', $._expression),
-          seq($._expression, 'impls', $._expression),
-          seq($._expression, '=', $._expression),
-          // TODO: Fix conflict with logical and
-          prec.left(seq($.where_clause, 'and', $.where_clause))
+      choice(
+        seq($._simple_expression, '==', $._simple_expression),
+        seq($._simple_expression, 'impls', $._simple_expression),
+        seq($._simple_expression, '=', $._simple_expression),
+        prec.left(
+          PREC.WhereClause + 1,
+          seq($.where_clause, 'and', $.where_clause)
         )
       ),
 
     where_expression: ($) =>
-      prec.left(PREC.TermPostfix, seq($._expression, 'where', $.where_clause)),
+      prec.left(PREC.WhereClause, seq($._expression, 'where', $.where_clause)),
 
     call_expression: ($) =>
-      prec(PREC.TermPostfix, seq($._expression, $.paren_expression)),
+      prec(PREC.TermPostfix, seq($._simple_expression, $.paren_expression)),
 
     pointer_expression: ($) =>
-      prec(PREC.TypePostfix, seq($._expression, $.postfix_star)),
+      prec(PREC.TypePostfix, seq($._simple_expression, $.postfix_star)),
 
-    _expression: ($) =>
+    _simple_expression: ($) =>
       choice(
         $.array_literal,
-        $.as_expression,
-        $.binary_expression,
         $.builtin_type,
         $.call_expression,
         $.deref_expression,
         $.fn_type_expression,
         $.ident,
-        $.if_expression,
         $.index_expression,
         $.literal,
         $.paren_expression,
         $.pointer_expression,
         $.postfix_expression,
         $.ref_expression,
-        $.unary_prefix_expression,
-        $.where_expression,
         'self',
-        // TODO: Remove these two once `where` clauses don't use the expression rule
         '.Self',
         $.designator
+      ),
+
+    _expression: ($) =>
+      choice(
+        $.as_expression,
+        $.binary_expression,
+        $.if_expression,
+        $.unary_prefix_expression,
+        $.where_expression,
+        $._simple_expression
       ),
 
     var_declaration: ($) =>

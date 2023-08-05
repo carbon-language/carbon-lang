@@ -15,13 +15,10 @@ static auto BuildFunctionDeclaration(SemanticsContext& context)
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnType) {
     return_type_id = context.node_stack().Pop<ParseNodeKind::ReturnType>();
-  } else {
-    // Canonicalize the empty tuple for the implicit return.
-    context.CanonicalizeType(SemanticsNodeId::BuiltinEmptyTupleType);
   }
   SemanticsNodeBlockId param_refs_id =
       context.node_stack().Pop<ParseNodeKind::ParameterList>();
-  auto name_context = context.PopDeclarationName();
+  auto name_context = context.declaration_name_stack().Pop();
   auto fn_node = context.node_stack()
                      .PopForSoloParseNode<ParseNodeKind::FunctionIntroducer>();
 
@@ -36,7 +33,7 @@ static auto BuildFunctionDeclaration(SemanticsContext& context)
        .body_block_ids = {}});
   auto decl_id = context.AddNode(
       SemanticsNode::FunctionDeclaration::Make(fn_node, function_id));
-  context.AddNameToLookup(name_context, decl_id);
+  context.declaration_name_stack().AddNameToLookup(name_context, decl_id);
   return {function_id, decl_id};
 }
 
@@ -103,7 +100,7 @@ auto SemanticsHandleFunctionIntroducer(SemanticsContext& context,
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // A name should always follow.
-  context.PushDeclarationName();
+  context.declaration_name_stack().Push();
   return true;
 }
 

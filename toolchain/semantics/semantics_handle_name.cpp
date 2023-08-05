@@ -23,7 +23,7 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
   }
 
   auto base_type = context.semantics_ir().GetNode(
-      context.semantics_ir().GetType(base.type_id()));
+      context.semantics_ir().GetTypeAllowBuiltinTypes(base.type_id()));
 
   switch (base_type.kind()) {
     case SemanticsNodeKind::StructType: {
@@ -32,11 +32,12 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
       // TODO: Do we need to optimize this with a lookup table for O(1)?
       for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
         auto ref = context.semantics_ir().GetNode(refs[i]);
-        if (name_id == ref.GetAsStructTypeField()) {
+        if (auto [field_name_id, field_type_id] = ref.GetAsStructTypeField();
+            name_id == field_name_id) {
           context.AddNodeAndPush(
               parse_node,
               SemanticsNode::StructMemberAccess::Make(
-                  parse_node, ref.type_id(), base_id, SemanticsMemberIndex(i)));
+                  parse_node, field_type_id, base_id, SemanticsMemberIndex(i)));
           return true;
         }
       }
@@ -50,12 +51,14 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
       break;
     }
     default: {
-      CARBON_DIAGNOSTIC(QualifiedExpressionUnsupported, Error,
-                        "Type `{0}` does not support qualified expressions.",
-                        std::string);
-      context.emitter().Emit(
-          parse_node, QualifiedExpressionUnsupported,
-          context.semantics_ir().StringifyType(base.type_id()));
+      if (base.type_id() != SemanticsTypeId::Error) {
+        CARBON_DIAGNOSTIC(QualifiedExpressionUnsupported, Error,
+                          "Type `{0}` does not support qualified expressions.",
+                          std::string);
+        context.emitter().Emit(
+            parse_node, QualifiedExpressionUnsupported,
+            context.semantics_ir().StringifyType(base.type_id()));
+      }
       break;
     }
   }
@@ -63,6 +66,12 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
   // Should only be reached on error.
   context.node_stack().Push(parse_node, SemanticsNodeId::BuiltinError);
   return true;
+}
+
+auto SemanticsHandlePointerMemberAccessExpression(SemanticsContext& context,
+                                                  ParseTree::Node parse_node)
+    -> bool {
+  return context.TODO(parse_node, "HandlePointerMemberAccessExpression");
 }
 
 auto SemanticsHandleName(SemanticsContext& context, ParseTree::Node parse_node)
@@ -87,25 +96,34 @@ auto SemanticsHandleNameExpression(SemanticsContext& context,
 
 auto SemanticsHandleQualifiedDeclaration(SemanticsContext& context,
                                          ParseTree::Node parse_node) -> bool {
-  // The first two qualifiers in a chain will be a QualifiedDeclaration with two
-  // Identifier or expression children. Later qualifiers will have a
-  // QualifiedDeclaration as the first child, and an Identifier or expression as
-  // the second child.
-  auto [parse_node2, node_or_name_id2] =
-      context.node_stack().PopExpressionWithParseNode();
-  if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
-      ParseNodeKind::QualifiedDeclaration) {
-    // First QualifiedDeclaration in a chain.
-    auto [parse_node1, node_or_name_id1] =
-        context.node_stack().PopExpressionWithParseNode();
-    context.ApplyDeclarationNameQualifier(parse_node1, node_or_name_id1);
-    // Add the QualifiedDeclaration so that it can be used for bracketing.
-    context.node_stack().Push(parse_node);
+  auto pop_and_apply_first_child = [&]() {
+    if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) !=
+        ParseNodeKind::QualifiedDeclaration) {
+      // First QualifiedDeclaration in a chain.
+      auto [parse_node1, node_id1] =
+          context.node_stack().PopExpressionWithParseNode();
+      context.declaration_name_stack().ApplyExpressionQualifier(parse_node1,
+                                                                node_id1);
+      // Add the QualifiedDeclaration so that it can be used for bracketing.
+      context.node_stack().Push(parse_node);
+    } else {
+      // Nothing to do: the QualifiedDeclaration remains as a bracketing node
+      // for later QualifiedDeclarations.
+    }
+  };
+
+  ParseTree::Node parse_node2 = context.node_stack().PeekParseNode();
+  if (context.parse_tree().node_kind(parse_node2) == ParseNodeKind::Name) {
+    SemanticsStringId name_id2 =
+        context.node_stack().Pop<ParseNodeKind::Name>();
+    pop_and_apply_first_child();
+    context.declaration_name_stack().ApplyNameQualifier(parse_node2, name_id2);
   } else {
-    // Nothing to do: the QualifiedDeclaration remains as a bracketing node for
-    // later QualifiedDeclarations.
+    SemanticsNodeId node_id2 = context.node_stack().PopExpression();
+    pop_and_apply_first_child();
+    context.declaration_name_stack().ApplyExpressionQualifier(parse_node2,
+                                                              node_id2);
   }
-  context.ApplyDeclarationNameQualifier(parse_node2, node_or_name_id2);
 
   return true;
 }

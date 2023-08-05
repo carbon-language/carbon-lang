@@ -9,6 +9,35 @@ cc_library(
     hdrs = ["arena.h"],
     deps = [
         ":nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "arena_test",
+    srcs = ["arena_test.cpp"],
+    deps = [
+        ":arena",
+        "//testing/util:gtest_main",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "decompose",
+    hdrs = ["decompose.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "decompose_test",
+    srcs = ["decompose_test.cpp"],
+    deps = [
+        ":decompose",
+        "//testing/util:gtest_main",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -58,6 +87,7 @@ cc_library(
         "//common:check",
         "//common:ostream",
         "//explorer/common:nonnull",
+        "@llvm-project//llvm:Support",
     ],
 )
 

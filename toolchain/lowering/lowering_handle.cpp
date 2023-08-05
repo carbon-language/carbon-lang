@@ -123,9 +123,17 @@ auto LoweringHandleCall(LoweringFunctionContext& context,
   for (auto ref_id : context.semantics_ir().GetNodeBlock(refs_id)) {
     args.push_back(context.GetLocalLoaded(ref_id));
   }
-  auto* value =
-      context.builder().CreateCall(function, args, function->getName());
-  context.SetLocal(node_id, value);
+  if (function->getReturnType()->isVoidTy()) {
+    context.builder().CreateCall(function, args);
+    // TODO: use empty tuple type.
+    // TODO: don't create the empty tuple if the call does not get assigned.
+    context.SetLocal(node_id, context.builder().CreateAlloca(
+                                  llvm::StructType::get(context.llvm_context()),
+                                  /*ArraySize=*/nullptr, "TupleLiteralValue"));
+  } else {
+    context.SetLocal(node_id, context.builder().CreateCall(
+                                  function, args, function->getName()));
+  }
 }
 
 auto LoweringHandleFunctionDeclaration(LoweringFunctionContext& /*context*/,
@@ -135,6 +143,20 @@ auto LoweringHandleFunctionDeclaration(LoweringFunctionContext& /*context*/,
       << "Should not be encountered. If that changes, we may want to change "
          "higher-level logic to skip them rather than calling this. "
       << node;
+}
+
+auto LoweringHandleIndex(LoweringFunctionContext& context,
+                         SemanticsNodeId node_id, SemanticsNode node) -> void {
+  auto [tuple_node_id, index_node_id] = node.GetAsIndex();
+  auto* llvm_type =
+      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
+  auto index_node = context.semantics_ir().GetNode(index_node_id);
+  const auto index = context.semantics_ir()
+                         .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
+                         .getZExtValue();
+  auto* gep = context.builder().CreateStructGEP(
+      llvm_type, context.GetLocal(tuple_node_id), index, "Index");
+  context.SetLocal(node_id, gep);
 }
 
 auto LoweringHandleIntegerLiteral(LoweringFunctionContext& context,
@@ -199,20 +221,35 @@ auto LoweringHandleStructMemberAccess(LoweringFunctionContext& context,
       context.semantics_ir()
           .GetNode(context.semantics_ir().GetType(struct_type_id))
           .GetAsStructType());
-  auto member_name = context.semantics_ir().GetString(
+  auto [field_name_id, field_type_id] =
       context.semantics_ir()
           .GetNode(type_refs[member_index.index])
-          .GetAsStructTypeField());
+          .GetAsStructTypeField();
+  auto member_name = context.semantics_ir().GetString(field_name_id);
 
   auto* gep = context.builder().CreateStructGEP(
       llvm_type, context.GetLocal(struct_id), member_index.index, member_name);
   context.SetLocal(node_id, gep);
 }
 
-auto LoweringHandleStructType(LoweringFunctionContext& /*context*/,
-                              SemanticsNodeId /*node_id*/,
-                              SemanticsNode /*node*/) -> void {
-  // No action to take.
+auto LoweringHandleTupleValue(LoweringFunctionContext& context,
+                              SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  auto* llvm_type = context.GetType(node.type_id());
+  auto* alloca = context.builder().CreateAlloca(
+      llvm_type, /*ArraySize=*/nullptr, "TupleLiteralValue");
+  context.SetLocal(node_id, alloca);
+
+  auto refs = context.semantics_ir().GetNodeBlock(node.GetAsTupleValue());
+  auto type_refs = context.semantics_ir().GetTypeBlock(
+      context.semantics_ir()
+          .GetNode(context.semantics_ir().GetType(node.type_id()))
+          .GetAsTupleType());
+
+  for (int i = 0; i < static_cast<int>(type_refs.size()); ++i) {
+    auto* gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
+    context.builder().CreateStore(context.GetLocal(refs[i]), gep);
+  }
 }
 
 auto LoweringHandleStructTypeField(LoweringFunctionContext& /*context*/,
@@ -236,8 +273,9 @@ auto LoweringHandleStructValue(LoweringFunctionContext& context,
           .GetNode(context.semantics_ir().GetType(node.type_id()))
           .GetAsStructType());
   for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
-    auto member_name = context.semantics_ir().GetString(
-        context.semantics_ir().GetNode(type_refs[i]).GetAsStructTypeField());
+    auto [field_name_id, field_type_id] =
+        context.semantics_ir().GetNode(type_refs[i]).GetAsStructTypeField();
+    auto member_name = context.semantics_ir().GetString(field_name_id);
     auto* gep =
         context.builder().CreateStructGEP(llvm_type, alloca, i, member_name);
     context.builder().CreateStore(context.GetLocal(refs[i]), gep);

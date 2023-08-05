@@ -17,5 +17,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_type_no_designator.carbon:[[@LINE+1]]:9: Expected `.field: field_type` or `.field = value`.
+// CHECK:STDERR: fail_type_no_designator.carbon:[[@LINE+3]]:9: Expected `.field: field_type` or `.field = value`.
+// CHECK:STDERR: var x: {i32} = {};
+// CHECK:STDERR:         ^
 var x: {i32} = {};

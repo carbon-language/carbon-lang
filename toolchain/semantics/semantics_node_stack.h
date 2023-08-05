@@ -82,7 +82,8 @@ class SemanticsNodeStack {
     PopForSoloParseNode<RequiredParseKind>();
   }
 
-  // Pops the top of the stack and returns the parse_node and the ID.
+  // Pops an expression from the top of the stack and returns the parse_node and
+  // the ID.
   auto PopExpressionWithParseNode()
       -> std::pair<ParseTree::Node, SemanticsNodeId> {
     return PopWithParseNode<SemanticsNodeId>();
@@ -240,43 +241,46 @@ class SemanticsNodeStack {
   // Translate a parse node kind to the enum ID kind it should always provide.
   static constexpr auto ParseNodeKindToIdKind(ParseNodeKind kind) -> IdKind {
     switch (kind) {
-      case Carbon::ParseNodeKind::CallExpression:
-      case Carbon::ParseNodeKind::CallExpressionStart:
-      case Carbon::ParseNodeKind::IfExpressionElse:
-      case Carbon::ParseNodeKind::InfixOperator:
-      case Carbon::ParseNodeKind::Literal:
-      case Carbon::ParseNodeKind::MemberAccessExpression:
-      case Carbon::ParseNodeKind::NameExpression:
-      case Carbon::ParseNodeKind::ParenExpression:
-      case Carbon::ParseNodeKind::PatternBinding:
-      case Carbon::ParseNodeKind::PrefixOperator:
-      case Carbon::ParseNodeKind::ShortCircuitOperand:
-      case Carbon::ParseNodeKind::StructFieldValue:
-      case Carbon::ParseNodeKind::StructLiteral:
-      case Carbon::ParseNodeKind::StructTypeLiteral:
+      case ParseNodeKind::CallExpression:
+      case ParseNodeKind::CallExpressionStart:
+      case ParseNodeKind::IfExpressionElse:
+      case ParseNodeKind::IndexExpression:
+      case ParseNodeKind::InfixOperator:
+      case ParseNodeKind::Literal:
+      case ParseNodeKind::MemberAccessExpression:
+      case ParseNodeKind::NameExpression:
+      case ParseNodeKind::ParenExpression:
+      case ParseNodeKind::PatternBinding:
+      case ParseNodeKind::PostfixOperator:
+      case ParseNodeKind::PrefixOperator:
+      case ParseNodeKind::ShortCircuitOperand:
+      case ParseNodeKind::StructFieldValue:
+      case ParseNodeKind::StructLiteral:
+      case ParseNodeKind::StructFieldType:
+      case ParseNodeKind::StructTypeLiteral:
+      case ParseNodeKind::TupleLiteral:
         return IdKind::SemanticsNodeId;
-      case Carbon::ParseNodeKind::IfExpressionThen:
-      case Carbon::ParseNodeKind::IfStatementElse:
-      case Carbon::ParseNodeKind::ParameterList:
+      case ParseNodeKind::IfExpressionThen:
+      case ParseNodeKind::IfStatementElse:
+      case ParseNodeKind::ParameterList:
         return IdKind::SemanticsNodeBlockId;
-      case Carbon::ParseNodeKind::FunctionDefinitionStart:
+      case ParseNodeKind::FunctionDefinitionStart:
         return IdKind::SemanticsFunctionId;
-      case Carbon::ParseNodeKind::Name:
+      case ParseNodeKind::Name:
         return IdKind::SemanticsStringId;
-      case Carbon::ParseNodeKind::ReturnType:
+      case ParseNodeKind::ReturnType:
         return IdKind::SemanticsTypeId;
-      case Carbon::ParseNodeKind::CodeBlockStart:
-      case Carbon::ParseNodeKind::FunctionIntroducer:
-      case Carbon::ParseNodeKind::IfCondition:
-      case Carbon::ParseNodeKind::IfExpressionIf:
-      case Carbon::ParseNodeKind::ParameterListStart:
-      case Carbon::ParseNodeKind::ParenExpressionOrTupleLiteralStart:
-      case Carbon::ParseNodeKind::QualifiedDeclaration:
-      case Carbon::ParseNodeKind::ReturnStatementStart:
-      case Carbon::ParseNodeKind::StructFieldType:
-      case Carbon::ParseNodeKind::StructLiteralOrStructTypeLiteralStart:
-      case Carbon::ParseNodeKind::VariableInitializer:
-      case Carbon::ParseNodeKind::VariableIntroducer:
+      case ParseNodeKind::CodeBlockStart:
+      case ParseNodeKind::FunctionIntroducer:
+      case ParseNodeKind::IfCondition:
+      case ParseNodeKind::IfExpressionIf:
+      case ParseNodeKind::ParameterListStart:
+      case ParseNodeKind::ParenExpressionOrTupleLiteralStart:
+      case ParseNodeKind::QualifiedDeclaration:
+      case ParseNodeKind::ReturnStatementStart:
+      case ParseNodeKind::StructLiteralOrStructTypeLiteralStart:
+      case ParseNodeKind::VariableInitializer:
+      case ParseNodeKind::VariableIntroducer:
         return IdKind::SoloParseNode;
       default:
         return IdKind::Unused;
@@ -325,12 +329,6 @@ class SemanticsNodeStack {
 
   // Require a ParseNodeKind be mapped to a particular IdKind.
   auto RequireIdKind(ParseNodeKind parse_kind, IdKind id_kind) -> void {
-    // TODO: Name can be popped as a node_id by declaration name handling. Will
-    // refactor to remove this quirk.
-    if (parse_kind == ParseNodeKind::Name &&
-        id_kind == IdKind::SemanticsNodeId) {
-      return;
-    }
     CARBON_CHECK(ParseNodeKindToIdKind(parse_kind) == id_kind)
         << "Unexpected IdKind mapping for " << parse_kind;
   }

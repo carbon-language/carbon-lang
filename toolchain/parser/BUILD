@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
+load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
 load("//testing/file_test:rules.bzl", "file_test")
 
@@ -34,7 +34,7 @@ cc_library(
         "parser_context.cpp",
         "parser_context.h",
     ] +
-    # Glob handler files to avoid missing anyway.
+    # Glob handler files to avoid missing any.
     glob([
         "parser_handle_*.cpp",
     ]),
@@ -47,6 +47,7 @@ cc_library(
         "//common:error",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/common:pretty_stack_trace_function",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:token_kind",
         "//toolchain/lexer:tokenized_buffer",

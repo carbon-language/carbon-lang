@@ -21,7 +21,7 @@ using ::testing::ElementsAre;
 using ::testing::IsEmpty;
 using ::testing::Not;
 
-static constexpr SourceLocation DummyLoc("dummy", 0);
+static constexpr SourceLocation DummyLoc("dummy", 0, FileKind::Main);
 
 TEST(BlockContentsAreTest, BasicUsage) {
   Block empty_block(DummyLoc, {});

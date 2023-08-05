@@ -27,7 +27,9 @@
 // CHECK:STDOUT: ]
 
 interface Foo {
-  // CHECK:STDERR: fail_no_impl_allowed.carbon:[[@LINE+1]]:39: Method implementations are not allowed in interfaces.
+  // CHECK:STDERR: fail_no_impl_allowed.carbon:[[@LINE+3]]:39: Method implementations are not allowed in interfaces.
+  // CHECK:STDERR:   fn Add[self: Self](b: Self) -> Self {
+  // CHECK:STDERR:                                       ^
   fn Add[self: Self](b: Self) -> Self {
     print("You can't do that.");
   }
