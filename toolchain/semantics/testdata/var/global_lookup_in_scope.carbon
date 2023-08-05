@@ -62,7 +62,7 @@
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %y: i32 = var
 // CHECK:STDOUT:   assign %y, package.%x
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 var x: i32 = 0;

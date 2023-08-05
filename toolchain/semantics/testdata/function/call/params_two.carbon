@@ -86,7 +86,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32, %b: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -97,7 +97,7 @@
 // CHECK:STDOUT:   %106.10.0: i32 = stub_reference %106.10
 // CHECK:STDOUT:   %106.6: type = tuple_type ()
 // CHECK:STDOUT:   %106.6.0: () = call @Foo(%106.7, %106.10.0)
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn Foo(a: i32, b: i32) {}

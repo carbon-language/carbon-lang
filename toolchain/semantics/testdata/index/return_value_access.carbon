@@ -92,7 +92,7 @@
 // CHECK:STDOUT:   %106: i32 = int_value 0
 // CHECK:STDOUT:   %106.28: i32 = stub_reference %106
 // CHECK:STDOUT:   %106.30: (i32,) = tuple_value (%106.28)
-// CHECK:STDOUT:   ret %106.30
+// CHECK:STDOUT:   return %106.30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> i32 {
@@ -100,7 +100,7 @@
 // CHECK:STDOUT:   %109: (i32,) = call @F()
 // CHECK:STDOUT:   %109.14: i32 = int_value 0
 // CHECK:STDOUT:   %109.15: i32 = tuple_index %109, %109.14
-// CHECK:STDOUT:   ret %109.15
+// CHECK:STDOUT:   return %109.15
 // CHECK:STDOUT: }
 
 fn F() -> (i32,) { return (0,); }

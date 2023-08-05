@@ -49,7 +49,7 @@
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: i32 = var
 // CHECK:STDOUT:   assign %x, <error>
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn Main() {

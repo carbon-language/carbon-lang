@@ -96,13 +96,13 @@
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %125: i32 = int_value 1
-// CHECK:STDOUT:   ret %125
+// CHECK:STDOUT:   return %125
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %126: i32 = int_value 2
-// CHECK:STDOUT:   ret %126
+// CHECK:STDOUT:   return %126
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {
@@ -119,7 +119,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !129.10:
 // CHECK:STDOUT:   %129.10: i32 = block_arg !129.10
-// CHECK:STDOUT:   ret %129.10
+// CHECK:STDOUT:   return %129.10
 // CHECK:STDOUT: }
 
 fn A() -> i32 { return 1; }

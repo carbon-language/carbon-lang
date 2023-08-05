@@ -53,7 +53,7 @@
 // CHECK:STDOUT:   %x: i32 = var
 // CHECK:STDOUT:   %60: i32 = int_value 0
 // CHECK:STDOUT:   assign %x, %60
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn Main() {

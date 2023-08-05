@@ -133,7 +133,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !171:
 // CHECK:STDOUT:   %171: i32 = int_value 1
-// CHECK:STDOUT:   ret %171
+// CHECK:STDOUT:   return %171
 // CHECK:STDOUT:
 // CHECK:STDOUT: !170:
 // CHECK:STDOUT:   br !.0
@@ -150,7 +150,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !182:
 // CHECK:STDOUT:   %182: i32 = int_value 2
-// CHECK:STDOUT:   ret %182
+// CHECK:STDOUT:   return %182
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.0:
 // CHECK:STDOUT: }
@@ -161,7 +161,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !191:
 // CHECK:STDOUT:   %191: i32 = int_value 1
-// CHECK:STDOUT:   ret %191
+// CHECK:STDOUT:   return %191
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.0:
 // CHECK:STDOUT: }

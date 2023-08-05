@@ -81,13 +81,13 @@
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %108: bool = bool_value true
-// CHECK:STDOUT:   ret %108
+// CHECK:STDOUT:   return %108
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %109: bool = bool_value true
-// CHECK:STDOUT:   ret %109
+// CHECK:STDOUT:   return %109
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
@@ -102,7 +102,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !112.14:
 // CHECK:STDOUT:   %112.14.0: bool = block_arg !112.14
-// CHECK:STDOUT:   ret %112.14.0
+// CHECK:STDOUT:   return %112.14.0
 // CHECK:STDOUT: }
 
 fn F() -> bool { return true; }

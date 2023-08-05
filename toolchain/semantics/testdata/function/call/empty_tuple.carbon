@@ -77,7 +77,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: ()) -> () {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret %a
+// CHECK:STDOUT:   return %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -85,7 +85,7 @@
 // CHECK:STDOUT:   %96: () = tuple_value ()
 // CHECK:STDOUT:   %96.9: () = stub_reference %96
 // CHECK:STDOUT:   %96.7: () = call @Echo(%96.9)
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn Echo(a: ()) -> () {

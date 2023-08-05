@@ -67,7 +67,7 @@
 // CHECK:STDOUT:   %74: i32 = int_value 3
 // CHECK:STDOUT:   %74.14: i32 = stub_reference %74
 // CHECK:STDOUT:   %74.17: {.a: i32} = struct_value (%74.14)
-// CHECK:STDOUT:   ret %74.17
+// CHECK:STDOUT:   return %74.17
 // CHECK:STDOUT: }
 
 fn Main() -> {.a: i32} {

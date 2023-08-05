@@ -45,7 +45,7 @@
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %55: f64 = real_value 10e-1
-// CHECK:STDOUT:   ret <error>
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 
 fn Main() -> i32 {

@@ -48,7 +48,7 @@
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %58: i32 = int_value 0
 // CHECK:STDOUT:   %58.5: i32 = int_value 1
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn Main() {

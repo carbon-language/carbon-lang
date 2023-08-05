@@ -44,7 +44,7 @@
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %57: i32 = int_value 0
-// CHECK:STDOUT:   ret %57
+// CHECK:STDOUT:   return %57
 // CHECK:STDOUT: }
 
 fn Main() {

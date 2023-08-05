@@ -67,7 +67,7 @@
 // CHECK:STDOUT:   %75: type = ptr_type i32
 // CHECK:STDOUT:   %p: i32* = var
 // CHECK:STDOUT:   %82: i32 = int_value 0
-// CHECK:STDOUT:   ret %82
+// CHECK:STDOUT:   return %82
 // CHECK:STDOUT: }
 
 fn F() -> i32 {

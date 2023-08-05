@@ -53,7 +53,7 @@
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %60: bool = not %b
-// CHECK:STDOUT:   ret %60
+// CHECK:STDOUT:   return %60
 // CHECK:STDOUT: }
 
 fn Not(b: bool) -> bool {

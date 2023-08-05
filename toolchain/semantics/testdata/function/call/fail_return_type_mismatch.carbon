@@ -63,7 +63,7 @@
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %77: f64 = real_value 10e-1
-// CHECK:STDOUT:   ret %77
+// CHECK:STDOUT:   return %77
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -71,7 +71,7 @@
 // CHECK:STDOUT:   %x: i32 = var
 // CHECK:STDOUT:   %83: f64 = call @Foo()
 // CHECK:STDOUT:   assign %x, <error>
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn Foo() -> f64 { return 1.0; }

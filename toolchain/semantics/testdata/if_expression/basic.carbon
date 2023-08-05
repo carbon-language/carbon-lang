@@ -95,7 +95,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !102.10:
 // CHECK:STDOUT:   %102.10: i32 = block_arg !102.10
-// CHECK:STDOUT:   ret %102.10
+// CHECK:STDOUT:   return %102.10
 // CHECK:STDOUT: }
 
 fn F(b: bool, n: i32, m: i32) -> i32 {

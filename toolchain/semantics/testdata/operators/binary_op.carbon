@@ -51,7 +51,7 @@
 // CHECK:STDOUT:   %58: i32 = int_value 12
 // CHECK:STDOUT:   %58.15: i32 = int_value 34
 // CHECK:STDOUT:   %58.13: i32 = add %58, %58.15
-// CHECK:STDOUT:   ret %58.13
+// CHECK:STDOUT:   return %58.13
 // CHECK:STDOUT: }
 
 fn Main() -> i32 {

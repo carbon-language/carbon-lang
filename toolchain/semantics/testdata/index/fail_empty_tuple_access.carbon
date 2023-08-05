@@ -59,7 +59,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -67,7 +67,7 @@
 // CHECK:STDOUT:   %79: type = tuple_type ()
 // CHECK:STDOUT:   %79.4: () = call @F()
 // CHECK:STDOUT:   %79.7: i32 = int_value 0
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn F() {}

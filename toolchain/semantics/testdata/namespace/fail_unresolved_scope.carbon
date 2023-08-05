@@ -40,7 +40,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.0() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+3]]:4: Name `Foo` not found

@@ -72,7 +72,7 @@
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %79: i32 = int_value 0
-// CHECK:STDOUT:   ret %79
+// CHECK:STDOUT:   return %79
 // CHECK:STDOUT: }
 
 fn F(b: bool) -> i32 {

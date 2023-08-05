@@ -63,14 +63,14 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Wiz() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %83: type = tuple_type ()
 // CHECK:STDOUT:   %83.14: () = call @Wiz()
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 namespace Foo;

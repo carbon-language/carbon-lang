@@ -95,7 +95,7 @@
 // CHECK:STDOUT:   %104.46: {.a: f64, .b: i32} = struct_value (%104.33, %104.43)
 // CHECK:STDOUT:   assign %x, %104.46
 // CHECK:STDOUT:   %y: i32 = var
-// CHECK:STDOUT:   %105: i32 = struct_mem_access %x, member1
+// CHECK:STDOUT:   %105: i32 = struct_access %x, member1
 // CHECK:STDOUT:   assign %y, %105
 // CHECK:STDOUT:   %z: i32 = var
 // CHECK:STDOUT:   assign %z, %y

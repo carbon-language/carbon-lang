@@ -90,7 +90,7 @@
 // CHECK:STDOUT:   %98.15: i32 = int_value 35
 // CHECK:STDOUT:   %98.15.0: i32 = stub_reference %98.15
 // CHECK:STDOUT:   %98.17: (i32, i32) = tuple_value (%98.11, %98.15.0)
-// CHECK:STDOUT:   ret %98.17
+// CHECK:STDOUT:   return %98.17
 // CHECK:STDOUT: }
 
 

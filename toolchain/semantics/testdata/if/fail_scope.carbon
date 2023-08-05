@@ -78,10 +78,10 @@
 // CHECK:STDOUT:   %n: i32 = var
 // CHECK:STDOUT:   %89: i32 = int_value 2
 // CHECK:STDOUT:   assign %n, %89
-// CHECK:STDOUT:   ret %n
+// CHECK:STDOUT:   return %n
 // CHECK:STDOUT:
 // CHECK:STDOUT: !95:
-// CHECK:STDOUT:   ret <error>
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 
 fn VarScope(b: bool) -> i32 {

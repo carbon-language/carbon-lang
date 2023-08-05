@@ -55,7 +55,7 @@
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %63: type = tuple_type ()
 // CHECK:STDOUT:   %63.11: () = call @F()
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn F();

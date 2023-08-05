@@ -102,7 +102,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32, %b: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -118,7 +118,7 @@
 // CHECK:STDOUT:   %128.10: i32 = int_value 2
 // CHECK:STDOUT:   %128.10.0: i32 = stub_reference %128.10
 // CHECK:STDOUT:   %128.6: () = call @Foo(%128.7, %128.10.0)
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn Foo(a: i32, b: i32,) {}

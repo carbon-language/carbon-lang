@@ -68,14 +68,14 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run(%a: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %90: f64 = real_value 10e-1
 // CHECK:STDOUT:   %90.7: f64 = stub_reference %90
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn Run(a: i32) {}

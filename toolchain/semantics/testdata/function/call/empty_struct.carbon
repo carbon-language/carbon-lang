@@ -75,7 +75,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: {}) -> {} {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret %a
+// CHECK:STDOUT:   return %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -83,7 +83,7 @@
 // CHECK:STDOUT:   %94: {} = struct_value ()
 // CHECK:STDOUT:   %94.9: {} = stub_reference %94
 // CHECK:STDOUT:   %94.7: {} = call @Echo(%94.9)
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn Echo(a: {}) -> {} {

@@ -86,12 +86,12 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Ptr(%p: i32*) -> i32* {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret %p
+// CHECK:STDOUT:   return %p
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstPtr(%p: const i32*) -> const i32* {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret %p
+// CHECK:STDOUT:   return %p
 // CHECK:STDOUT: }
 
 fn Ptr(p: i32*) -> i32* {

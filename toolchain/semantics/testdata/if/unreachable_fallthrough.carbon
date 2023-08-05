@@ -71,11 +71,11 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: !83:
 // CHECK:STDOUT:   %83: i32 = int_value 1
-// CHECK:STDOUT:   ret %83
+// CHECK:STDOUT:   return %83
 // CHECK:STDOUT:
 // CHECK:STDOUT: !85:
 // CHECK:STDOUT:   %85: i32 = int_value 2
-// CHECK:STDOUT:   ret %85
+// CHECK:STDOUT:   return %85
 // CHECK:STDOUT: }
 
 fn If(b: bool) -> i32 {

@@ -71,7 +71,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret <error>
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 
 fn ConstMismatch(p: const {}*) -> const ({}*) {

@@ -54,7 +54,7 @@
 // CHECK:STDOUT:   %x: i32 = var
 // CHECK:STDOUT:   %64: f64 = real_value 10e-1
 // CHECK:STDOUT:   assign %x, <error>
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn Main() {

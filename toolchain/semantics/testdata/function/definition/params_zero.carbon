@@ -39,7 +39,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn Foo() {}

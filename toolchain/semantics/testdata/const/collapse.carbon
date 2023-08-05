@@ -71,7 +71,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const i32**) -> const i32** {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret %p
+// CHECK:STDOUT:   return %p
 // CHECK:STDOUT: }
 
 // OK, `const (const i32)` is the same type as `const i32`.

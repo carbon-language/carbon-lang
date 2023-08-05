@@ -69,7 +69,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p: const i32**) -> i32** {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret <error>
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:9: `const` applied repeatedly to the same type has no additional effect.

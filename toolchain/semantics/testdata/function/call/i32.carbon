@@ -76,7 +76,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret %a
+// CHECK:STDOUT:   return %a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -86,7 +86,7 @@
 // CHECK:STDOUT:   %97.21: i32 = stub_reference %97
 // CHECK:STDOUT:   %97.20: i32 = call @Echo(%97.21)
 // CHECK:STDOUT:   assign %b, %97.20
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn Echo(a: i32) -> i32 {

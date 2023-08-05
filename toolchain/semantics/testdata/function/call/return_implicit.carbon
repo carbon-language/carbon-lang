@@ -64,7 +64,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeImplicitEmptyTuple() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -74,7 +74,7 @@
 // CHECK:STDOUT:   %b: () = var
 // CHECK:STDOUT:   %84.37: () = call @MakeImplicitEmptyTuple()
 // CHECK:STDOUT:   assign %b, %84.37
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn MakeImplicitEmptyTuple() {

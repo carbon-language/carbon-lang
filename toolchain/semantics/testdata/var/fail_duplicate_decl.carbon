@@ -65,7 +65,7 @@
 // CHECK:STDOUT:   %.80: i32 = var
 // CHECK:STDOUT:   %80: i32 = int_value 0
 // CHECK:STDOUT:   assign %.80, %80
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 

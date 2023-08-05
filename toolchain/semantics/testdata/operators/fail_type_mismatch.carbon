@@ -52,7 +52,7 @@
 // CHECK:STDOUT:   %62: i32 = int_value 12
 // CHECK:STDOUT:   %62.15: f64 = real_value 34e-1
 // CHECK:STDOUT:   %62.13: <error> = add <error>, %62.15
-// CHECK:STDOUT:   ret %62.13
+// CHECK:STDOUT:   return %62.13
 // CHECK:STDOUT: }
 
 fn Main() -> i32 {

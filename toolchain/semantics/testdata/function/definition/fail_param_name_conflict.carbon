@@ -55,7 +55,7 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar(%a: i32, %.67: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 // CHECK:STDERR: fail_param_name_conflict.carbon:[[@LINE+6]]:16: Duplicate name being declared in the same scope.

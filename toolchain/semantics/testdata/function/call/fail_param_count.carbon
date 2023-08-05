@@ -136,17 +136,17 @@
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run0() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run1(%a: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run2(%a: i32, %b: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -163,7 +163,7 @@
 // CHECK:STDOUT:   %202.11.0: i32 = stub_reference %202.11
 // CHECK:STDOUT:   %217: i32 = int_value 0
 // CHECK:STDOUT:   %217.8: i32 = stub_reference %217
-// CHECK:STDOUT:   ret
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 
 fn Run0() {}
