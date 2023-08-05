@@ -41,9 +41,17 @@ void Bindings::Print(llvm::raw_ostream& out) const {
   std::vector<std::pair<Nonnull<const GenericBinding*>, Nonnull<const Value*>>>
       args(args_.begin(), args_.end());
 
-  std::stable_sort(args.begin(), args.end(), [](auto& a, auto& b) {
+  std::vector<std::pair<Nonnull<const ImplBinding*>, Nonnull<const Value*>>>
+      witnesses(witnesses_.begin(), witnesses_.end());
+
+  std::stable_sort(args.begin(), args.end(), [](const auto& a, const auto& b) {
     return a.first->index() < b.first->index();
   });
+
+  std::stable_sort(
+      witnesses.begin(), witnesses.end(), [](const auto& a, const auto& b) {
+        return a.first->type_var()->index() < b.first->type_var()->index();
+      });
 
   llvm::ListSeparator sep;
   out << " >  bindings args: [";
@@ -51,7 +59,7 @@ void Bindings::Print(llvm::raw_ostream& out) const {
     out << sep << "`" << *binding << "`: `" << *value << "`";
   }
   out << "]\n >  bindings witnesses: [";
-  for (const auto& [binding, value] : witnesses_) {
+  for (const auto& [binding, value] : witnesses) {
     out << sep << "`" << *binding << "`: `" << *value << "`";
   }
   out << "]";
