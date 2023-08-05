@@ -106,6 +106,8 @@ cc_library(
     deps = [
         ":semantics_ir",
         ":semantics_node_kind",
+        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/parser:parse_tree",
         "@llvm-project//llvm:Support",
     ],
 )

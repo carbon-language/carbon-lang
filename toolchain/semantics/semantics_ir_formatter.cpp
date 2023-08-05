@@ -4,11 +4,11 @@
 
 #include "toolchain/semantics/semantics_ir_formatter.h"
 
-#include "toolchain/lexer/tokenized_buffer.h"
-#include "toolchain/parser/parse_tree.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/parser/parse_tree.h"
 
 namespace Carbon {
 
