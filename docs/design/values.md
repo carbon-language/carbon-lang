@@ -411,6 +411,13 @@ This is still allowed to create a copy or to move, but it must not _slice_. Even
 if a copy is created, it must be a `Derived` object, even though this may limit
 the available implementation strategies.
 
+> **Future work:** The interaction between a
+> [custom value representation](#value-representation-and-customization) and a
+> value expression used with a polymorphic type needs to be fully captured.
+> Either it needs to restrict to a `const Self*` style representation (to
+> prevent slicing) or it needs to have a model for the semantics when a
+> different value representation is used.
+
 ### Interop with C++ `const &` and `const` methods
 
 While value expressions cannot have their address taken in Carbon, they should
@@ -421,11 +428,11 @@ create an untenable interop ergonomic barrier. However, this does create some
 additional constraints on value expressions and a way that their addresses can
 escape unexpectedly.
 
-Despite interop requiring an address to implement, C++ doesn't require that the
-address of a `const &` parameter is stable beyond the lifetime of the function,
-or point back to some original object. The C++ implementation already requires
-the ability to introduce copies or a temporary, which also serves the needs of
-interop.
+Despite interop requiring an address to implement, C++ allows `const &`
+parameters to bind to temporary objects where that address doesn't have much
+meaning and might not be valid once the called function returns. As a
+consequence, we don't expect C++ interfaces using a `const &` to misbehave in
+practice.
 
 > **Future work:** when a type customizes its
 > [value representation](#value-representation-and-customization), as currently
@@ -521,11 +528,10 @@ as the referent of the resulting ephemeral reference expression.
 
 ### Function calls and returns
 
-Functions with a return type and return statement in Carbon are called
-_returning functions_. Calls to these functions are modeled directly as
-initializing expressions -- they require storage as an input and when evaluated
-cause that storage to be initialized with an object. This means that when a
-function call is used to initialize some variable pattern as here:
+Function calls in Carbon are modeled directly as initializing expressions --
+they require storage as an input and when evaluated cause that storage to be
+initialized with an object. This means that when a function call is used to
+initialize some variable pattern as here:
 
 ```carbon
 fn CreateMyObject() -> MyType {
@@ -539,20 +545,22 @@ The `<return-expression>` in the `return` statement actually initializes the
 storage provided for `x`. There is no "copy" or other step.
 
 All `return` statement expressions are required to be initializing expressions
-and in fact initialize the storage provided to the returning function's call
-expression. This in turn causes the property to hold _transitively_ across an
-arbitrary number of function calls and returns. The storage is forwarded at each
-stage and initialized exactly once.
+and in fact initialize the storage provided to the function's call expression.
+This in turn causes the property to hold _transitively_ across an arbitrary
+number of function calls and returns. The storage is forwarded at each stage and
+initialized exactly once.
+
+Note that functions without a specified return type work exactly the same as
+functions with a `()` return type for the purpose of expression categories.
 
 #### Deferred initialization from values and references
 
-Carbon also makes the evaluation of returning function calls and return
-statements tightly linked in order to enable more efficiency improvements. It
-allows the actual initialization performed by the `return` statement with its
-expression to be deferred from within the body of the function to the caller
-initializer expression if it can simply propagate a value or reference
-expression to the caller that is guaranteed to be alive and available to the
-caller.
+Carbon also makes the evaluation of function calls and return statements tightly
+linked in order to enable more efficiency improvements. It allows the actual
+initialization performed by the `return` statement with its expression to be
+deferred from within the body of the function to the caller initializer
+expression if it can simply propagate a value or reference expression to the
+caller that is guaranteed to be alive and available to the caller.
 
 Consider the following code:
 
@@ -686,7 +694,9 @@ extensively in [#523] and are summarized in the
 
 Carbon also supports an infix `->` operation, much like C++. However, Carbon
 directly defines this as an exact rewrite to `*` and `.` so that `p->member`
-becomes `(*p).member` for example.
+becomes `(*p).member` for example. This means there is no overloaded or
+customizable `->` operator in Carbon the way there is in C++. Instead,
+customizing the behavior of `*p` in turn customizes the behavior of `p->`.
 
 **Future work:** As [#523] discusses, one of the primary challenges of the C++
 syntax is the composition of a prefix dereference operation and other postfix or

@@ -42,17 +42,25 @@ The syntax of these operators tries to mimic the most common appearance of
 
 ### Precedence
 
-Because these are type operators, they don't have any precedence relationship
-with non-type operators. `const` binds more tightly than `*` and can appear
-unparenthesized in an operand, despite being both a unary type and having
-whitespace separating it. This allows the syntax of a pointer to a `const i32`
-to be `const i32*`, which is intended to be familiar to C++ developers. Forming
-a `const` pointer type requires parentheses: `const (i32*)`.
+Because these are type operators, they don't have many precedence relationship
+with non-type operators.
+
+-   `const` binds more tightly than `*` and can appear unparenthesized in an
+    operand, despite being both a unary type and having whitespace separating
+    it.
+    -   This allows the syntax of a pointer to a `const i32` to be `const i32*`,
+        which is intended to be familiar to C++ developers.
+    -   Forming a `const` pointer type requires parentheses: `const (i32*)`.
+-   All type operators bind more tightly than `as` so they can be used in its
+    type operand.
+    -   This also allows a desirable transitive precedence with `if`:
+        `if condition then T* else U*`.
 
 ## Alternatives considered
 
 -   [Alternative pointer syntaxes](/proposals/p2006.md#alternative-pointer-syntaxes)
 -   [Alternative syntaxes for locals](/proposals/p2006.md#alternative-syntaxes-for-locals)
+-   [Make `const` a postfix rather than prefix operator](/proposals/p2006.md#make-const-a-postfix-rather-than-prefix-operator)
 
 ## References
 

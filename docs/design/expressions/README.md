@@ -75,7 +75,10 @@ graph BT
     pointerType>"T*"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
 
-    pointer<"*x<br>
+    %% FIXME: Need to switch unary operators from a left/right associativity to
+    %% a "repeated" marker, as we only have one direction for associativity and
+    %% that is wrong in this specific case.
+    pointer>"*x<br>
              &x<br>"]
     click pointer "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/pointer.md"
 
@@ -142,6 +145,7 @@ graph BT
 
     constType --> top
     pointerType --> constType
+    as --> pointerType
 
     memberAccess --> top
     pointer --> memberAccess
@@ -150,9 +154,9 @@ graph BT
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
     not -------> memberAccess
-    multiplication & modulo & as & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
+    as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
-    comparison --> modulo & addition & as & bitwise_and & bitwise_or & bitwise_xor & shift
+    comparison --> as & addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
     logicalOperand --> comparison & not
     and & or --> logicalOperand
     logicalExpression --> and & or

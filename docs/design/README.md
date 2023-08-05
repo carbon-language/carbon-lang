@@ -655,8 +655,8 @@ address of an object in memory in Carbon.
 
 ### Expression categories
 
-A Carbon expression produces a value or references an object. Every expression
-has a
+A Carbon expression produces a value, references an object, or initializes an
+object. Every expression has a
 [category](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>),
 similar to [C++](https://en.cppreference.com/w/cpp/language/value_category):
 
