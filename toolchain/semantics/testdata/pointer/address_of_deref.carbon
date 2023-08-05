@@ -3,14 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-
-fn F() -> i32 {
-  var n: i32 = 0;
-  var p: i32* = &n;
-
-  return *p;
-}
-
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
@@ -23,7 +15,6 @@ fn F() -> i32 {
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   F,
 // CHECK:STDOUT:   n,
-// CHECK:STDOUT:   p,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
@@ -38,12 +29,11 @@ fn F() -> i32 {
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+3},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
-// CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+6, type: type1},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+1, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+8},
 // CHECK:STDOUT:   {kind: Dereference, arg0: node+6, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+10},
+// CHECK:STDOUT:   {kind: AddressOf, arg0: node+7, type: type1},
+// CHECK:STDOUT:   {kind: Dereference, arg0: node+8, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+9},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -62,6 +52,10 @@ fn F() -> i32 {
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+
+fn F() -> i32 {
+  var n: i32 = 0;
+  return *&*&n;
+}

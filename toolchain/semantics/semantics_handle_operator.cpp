@@ -150,8 +150,26 @@ auto SemanticsHandlePrefixOperator(SemanticsContext& context,
               value_id));
       return true;
 
-    case TokenKind::Star:
-      return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
+    case TokenKind::Star: {
+      auto type_id = context.GetUnqualifiedType(
+          context.semantics_ir().GetNode(value_id).type_id());
+      auto type_node = context.semantics_ir().GetNode(
+          context.semantics_ir().GetTypeAllowBuiltinTypes(type_id));
+      auto result_type_id = SemanticsTypeId::Error;
+      if (type_node.kind() == SemanticsNodeKind::PointerType) {
+        result_type_id = type_node.GetAsPointerType();
+      } else {
+        CARBON_DIAGNOSTIC(DereferenceOfNonPointer, Error,
+                          "Cannot dereference operand of non-pointer type {0}.",
+                          std::string);
+        context.emitter().Emit(parse_node, DereferenceOfNonPointer,
+                               context.semantics_ir().StringifyType(type_id));
+      }
+      context.AddNodeAndPush(parse_node,
+                             SemanticsNode::Dereference::Make(
+                                 parse_node, result_type_id, value_id));
+      return true;
+    }
 
     default:
       return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
