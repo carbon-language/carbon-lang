@@ -1031,8 +1031,8 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
     if (trace_stream_->is_enabled()) {
       *trace_stream_ << "converting type `" << *converted_value
                      << "` to constraint `" << *destination_constraint
-                     << "` for " << context << " in scope:\n" << impl_scope
-                     << "\n";
+                     << "` for " << context << " in scope:\n"
+                     << impl_scope << "\n";
     }
     // Note, we discard the witness. We don't actually need it in order to
     // perform the conversion, but we do want to know it exists.
