@@ -90,8 +90,7 @@ class SemanticsIR {
   }
 
   // Returns the requested callable.
-  auto GetFunction(SemanticsFunctionId function_id) const
-      -> const SemanticsFunction& {
+  auto GetFunction(SemanticsFunctionId function_id) const -> SemanticsFunction {
     return functions_[function_id.index];
   }
 
@@ -218,18 +217,14 @@ class SemanticsIR {
   auto AddType(SemanticsNodeId node_id) -> SemanticsTypeId {
     SemanticsTypeId type_id(types_.size());
     types_.push_back(node_id);
-    if (node_id == SemanticsNodeId::BuiltinEmptyTupleType) {
-      CARBON_CHECK(!empty_tuple_type_id_.is_valid());
-      empty_tuple_type_id_ = type_id;
-    }
     return type_id;
   }
 
-  // Gets the node ID for a type. This doesn't handle TypeType or Error in
+  // Gets the node ID for a type. This doesn't handle TypeType or InvalidType in
   // order to avoid a check; callers that need that should use
   // GetTypeAllowBuiltinTypes.
   auto GetType(SemanticsTypeId type_id) const -> SemanticsNodeId {
-    // Double-check it's not called with TypeType or Error.
+    // Double-check it's not called with TypeType or InvalidType.
     CARBON_CHECK(type_id.index >= 0)
         << "Invalid argument for GetType: " << type_id;
     return types_[type_id.index];
@@ -246,6 +241,25 @@ class SemanticsIR {
     }
   }
 
+  // Adds an empty type block, returning an ID to reference it.
+  auto AddTypeBlock() -> SemanticsTypeBlockId {
+    SemanticsTypeBlockId id(type_blocks_.size());
+    type_blocks_.push_back({});
+    return id;
+  }
+
+  // Returns the requested type block.
+  auto GetTypeBlock(SemanticsTypeBlockId block_id) const
+      -> const llvm::SmallVector<SemanticsTypeId>& {
+    return type_blocks_[block_id.index];
+  }
+
+  // Returns the requested type block.
+  auto GetTypeBlock(SemanticsTypeBlockId block_id)
+      -> llvm::SmallVector<SemanticsTypeId>& {
+    return type_blocks_[block_id.index];
+  }
+
   // Produces a string version of a type.
   auto StringifyType(SemanticsTypeId type_id) -> std::string;
 
@@ -254,10 +268,6 @@ class SemanticsIR {
 
   auto types() const -> const llvm::SmallVector<SemanticsNodeId>& {
     return types_;
-  }
-
-  auto empty_tuple_type_id() const -> SemanticsTypeId {
-    return empty_tuple_type_id_;
   }
 
   // The node blocks, for direct mutation.
@@ -308,9 +318,8 @@ class SemanticsIR {
   // by lowering.
   llvm::SmallVector<SemanticsNodeId> types_;
 
-  // The type of the empty tuple. This is special-cased due to its use in
-  // implicit function returns.
-  SemanticsTypeId empty_tuple_type_id_ = SemanticsTypeId::Invalid;
+  // Storage for blocks within the IR. These reference entries in types_.
+  llvm::SmallVector<llvm::SmallVector<SemanticsTypeId>> type_blocks_;
 
   // All nodes. The first entries will always be cross-references to builtins,
   // at indices matching SemanticsBuiltinKind ordering.

@@ -18,13 +18,15 @@
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+2, arg1: node+3, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+4, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+4},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

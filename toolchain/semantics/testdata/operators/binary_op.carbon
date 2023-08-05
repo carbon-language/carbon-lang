@@ -19,12 +19,14 @@
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+1, arg1: node+2, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

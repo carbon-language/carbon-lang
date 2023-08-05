@@ -20,18 +20,19 @@
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeFloatingPointType,
-// CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
-// CHECK:STDOUT:   {kind: VarStorage, type: type2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+4, type: type2},
+// CHECK:STDOUT:   {kind: VarStorage, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+4, type: type1},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: nodeError},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -57,6 +58,8 @@
 fn Foo() -> f64 { return 1.0; }
 
 fn Run() {
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+1]]:21: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:21: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR:   var x: i32 = Foo();
+  // CHECK:STDERR:                     ^
   var x: i32 = Foo();
 }

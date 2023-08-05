@@ -21,6 +21,8 @@
 // CHECK:STDOUT:   nodeBoolType,
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+0, type: type0},
@@ -36,7 +38,7 @@
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block7, arg1: node+9},
 // CHECK:STDOUT:   {kind: BranchWithArg, arg0: block7, arg1: node+10},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block7, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+13, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+13},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [

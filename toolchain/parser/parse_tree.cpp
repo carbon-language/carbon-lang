@@ -11,53 +11,23 @@
 #include "common/error.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/PrettyStackTrace.h"
+#include "toolchain/common/pretty_stack_trace_function.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parser_context.h"
 
 namespace Carbon {
 
-class PrettyStackTraceParserContext : public llvm::PrettyStackTraceEntry {
- public:
-  explicit PrettyStackTraceParserContext(const ParserContext* context)
-      : context_(context) {}
-  ~PrettyStackTraceParserContext() override = default;
-
-  auto print(llvm::raw_ostream& output) const -> void override {
-    output << "Parser stack:\n";
-    for (int i = 0; i < static_cast<int>(context_->state_stack().size()); ++i) {
-      const auto& entry = context_->state_stack()[i];
-      output << "\t" << i << ".\t" << entry.state;
-      Print(output, entry.token);
-    }
-    output << "\tcursor\tposition_";
-    Print(output, *context_->position());
-  }
-
- private:
-  auto Print(llvm::raw_ostream& output, TokenizedBuffer::Token token) const
-      -> void {
-    auto line = context_->tokens().GetLine(token);
-    output << " @ " << context_->tokens().GetLineNumber(line) << ":"
-           << context_->tokens().GetColumnNumber(token) << ":"
-           << " token " << token << " : " << context_->tokens().GetKind(token)
-           << "\n";
-  }
-
-  const ParserContext* context_;
-};
-
 auto ParseTree::Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
                       llvm::raw_ostream* vlog_stream) -> ParseTree {
-  TokenizedBuffer::TokenLocationTranslator translator(
-      &tokens, /*last_line_lexed_to_column=*/nullptr);
+  TokenizedBuffer::TokenLocationTranslator translator(&tokens);
   TokenDiagnosticEmitter emitter(translator, consumer);
 
   // Delegate to the parser.
   ParseTree tree(tokens);
   ParserContext context(tree, tokens, emitter, vlog_stream);
-  PrettyStackTraceParserContext pretty_context(&context);
+  PrettyStackTraceFunction context_dumper(
+      [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
   context.PushState(ParserState::DeclarationScopeLoop);
 

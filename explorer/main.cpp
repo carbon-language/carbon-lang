@@ -17,6 +17,7 @@
 #include "common/error.h"
 #include "explorer/common/trace_stream.h"
 #include "explorer/parse_and_execute/parse_and_execute.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
@@ -32,7 +33,6 @@ namespace path = llvm::sys::path;
 auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
                   llvm::StringRef relative_prelude_path) -> int {
   llvm::setBugReportMsg(
-
       "Please report issues to "
       "https://github.com/carbon-language/carbon-lang/issues and include the "
       "crash backtrace.\n");
@@ -42,6 +42,20 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   // is piped to stdout.
   llvm::errs().tie(&llvm::outs());
 
+  std::string exe =
+      llvm::sys::fs::getMainExecutable(argv[0], static_for_main_addr);
+  llvm::StringRef install_path = path::parent_path(exe);
+
+  return ExplorerMain(argc, const_cast<const char**>(argv), install_path,
+                      relative_prelude_path, llvm::outs(), llvm::errs(),
+                      llvm::outs(), *llvm::vfs::getRealFileSystem());
+}
+
+auto ExplorerMain(int argc, const char** argv, llvm::StringRef install_path,
+                  llvm::StringRef relative_prelude_path,
+                  llvm::raw_ostream& out_stream, llvm::raw_ostream& err_stream,
+                  llvm::raw_ostream& out_stream_for_trace,
+                  llvm::vfs::FileSystem& fs) -> int {
   cl::opt<std::string> input_file_name(cl::Positional, cl::desc("<input file>"),
                                        cl::Required);
   cl::opt<bool> parser_debug("parser_debug",
@@ -50,7 +64,7 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
       "trace_file",
       cl::desc("Output file for tracing; set to `-` to output to stdout."));
 
-  cl::list<ProgramPhase> allowed_program_phases(
+  cl::list<ProgramPhase> trace_phases(
       "trace_phase",
       cl::desc("Select the program phases to include in the output. By "
                "default, only the execution trace will be added to the trace "
@@ -81,26 +95,26 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
                      "Include trace output for all phases.")),
       cl::CommaSeparated);
 
-  cl::list<FileContext> allowed_file_contexts(
+  enum class TraceFileContext { Main, Prelude, Import, All };
+  cl::list<TraceFileContext> trace_file_contexts(
       "trace_file_context",
       cl::desc("Select file contexts for which you want to include the trace "
                "output"),
       cl::values(
           clEnumValN(
-              FileContext::Main, "main",
+              TraceFileContext::Main, "main",
               "Include trace output for file containing the main function"),
-          clEnumValN(FileContext::Prelude, "prelude",
+          clEnumValN(TraceFileContext::Prelude, "prelude",
                      "Include trace output for prelude"),
-          clEnumValN(FileContext::Import, "import",
+          clEnumValN(TraceFileContext::Import, "import",
                      "Include trace output for imports"),
-          clEnumValN(FileContext::All, "all",
+          clEnumValN(TraceFileContext::All, "all",
                      "Include trace output for all files")),
       cl::CommaSeparated);
 
+  CARBON_CHECK(argc > 0);
+
   // Use the executable path as a base for the relative prelude path.
-  std::string exe =
-      llvm::sys::fs::getMainExecutable(argv[0], static_for_main_addr);
-  llvm::StringRef install_path = path::parent_path(exe);
   llvm::SmallString<256> default_prelude_file(install_path);
   path::append(default_prelude_file,
                path::begin(relative_prelude_path, path::Style::posix),
@@ -110,23 +124,51 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
                                          cl::init(default_prelude_file_str));
 
   cl::ParseCommandLineOptions(argc, argv);
+  auto reset_parser =
+      llvm::make_scope_exit([] { cl::ResetCommandLineParser(); });
 
   // Set up a stream for trace output.
   std::unique_ptr<llvm::raw_ostream> scoped_trace_stream;
   TraceStream trace_stream;
 
   if (!trace_file_name.empty()) {
-    // Adding allowed phases in the trace_stream
-    trace_stream.set_allowed_phases(allowed_program_phases);
-    trace_stream.set_allowed_file_contexts(allowed_file_contexts);
+    // Adding allowed phases in the trace_stream.
+    trace_stream.set_allowed_phases(trace_phases);
+
+    // Translate --trace_file_context setting into a list of FileKinds.
+    llvm::SmallVector<FileKind> trace_file_kinds = {FileKind::Unknown};
+    if (!trace_file_contexts.getNumOccurrences()) {
+      trace_file_kinds.push_back(FileKind::Main);
+    } else {
+      for (auto context : trace_file_contexts) {
+        switch (context) {
+          case TraceFileContext::Main:
+            trace_file_kinds.push_back(FileKind::Main);
+            break;
+          case TraceFileContext::Prelude:
+            trace_file_kinds.push_back(FileKind::Prelude);
+            break;
+          case TraceFileContext::Import:
+            trace_file_kinds.push_back(FileKind::Import);
+            break;
+          case TraceFileContext::All:
+            trace_file_kinds.push_back(FileKind::Main);
+            trace_file_kinds.push_back(FileKind::Prelude);
+            trace_file_kinds.push_back(FileKind::Import);
+            break;
+        }
+      }
+    }
+    trace_stream.set_allowed_file_kinds(trace_file_kinds);
+
     if (trace_file_name == "-") {
-      trace_stream.set_stream(&llvm::outs());
+      trace_stream.set_stream(&out_stream_for_trace);
     } else {
       std::error_code err;
       scoped_trace_stream =
           std::make_unique<llvm::raw_fd_ostream>(trace_file_name, err);
       if (err) {
-        llvm::errs() << err.message() << "\n";
+        err_stream << err.message() << "\n";
         return EXIT_FAILURE;
       }
       trace_stream.set_stream(scoped_trace_stream.get());
@@ -134,14 +176,14 @@ auto ExplorerMain(int argc, char** argv, void* static_for_main_addr,
   }
 
   ErrorOr<int> result =
-      ParseAndExecuteFile(prelude_file_name, input_file_name, parser_debug,
-                          &trace_stream, &llvm::outs());
+      ParseAndExecute(fs, prelude_file_name, input_file_name, parser_debug,
+                      &trace_stream, &out_stream);
   if (result.ok()) {
     // Print the return code to stdout.
-    llvm::outs() << "result: " << *result << "\n";
+    out_stream << "result: " << *result << "\n";
     return EXIT_SUCCESS;
   } else {
-    llvm::errs() << result.error() << "\n";
+    err_stream << result.error() << "\n";
     return EXIT_FAILURE;
   }
 }

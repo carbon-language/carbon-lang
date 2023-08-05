@@ -6,7 +6,6 @@
 
 #include <locale>
 
-#include "common/check.h"
 #include "common/error.h"
 #include "explorer/common/trace_stream.h"
 #include "explorer/interpreter/exec_program.h"
@@ -37,22 +36,22 @@ static auto PrintTimingOnExit(TraceStream* trace_stream, const char* label,
   return exit_scope_function;
 }
 
-static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
-                                  std::string_view prelude_path,
-                                  Nonnull<TraceStream*> trace_stream,
-                                  Nonnull<llvm::raw_ostream*> print_stream)
-    -> ErrorOr<int> {
+auto ParseAndExecute(llvm::vfs::FileSystem& fs, std::string_view prelude_path,
+                     std::string_view input_file_name, bool parser_debug,
+                     Nonnull<TraceStream*> trace_stream,
+                     Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int> {
   return RunWithExtraStack([&]() -> ErrorOr<int> {
     Arena arena;
     auto cursor = std::chrono::steady_clock::now();
 
-    ErrorOr<AST> parse_result = parse(&arena);
+    ErrorOr<AST> parse_result =
+        Parse(fs, &arena, input_file_name, FileKind::Main, parser_debug);
     auto print_parse_time = PrintTimingOnExit(trace_stream, "Parse", &cursor);
     if (!parse_result.ok()) {
       return ErrorBuilder() << "SYNTAX ERROR: " << parse_result.error();
     }
 
-    AddPrelude(prelude_path, &arena, &parse_result->declarations,
+    AddPrelude(fs, prelude_path, &arena, &parse_result->declarations,
                &parse_result->num_prelude_declarations);
     auto print_prelude_time =
         PrintTimingOnExit(trace_stream, "AddPrelude", &cursor);
@@ -85,28 +84,6 @@ static auto ParseAndExecuteHelper(std::function<ErrorOr<AST>(Arena*)> parse,
 
     return exec_result;
   });
-}
-
-auto ParseAndExecuteFile(std::string_view prelude_path,
-                         std::string_view input_file_name, bool parser_debug,
-                         Nonnull<TraceStream*> trace_stream,
-                         Nonnull<llvm::raw_ostream*> print_stream)
-    -> ErrorOr<int> {
-  auto parse = [&](Arena* arena) {
-    return Parse(arena, input_file_name, parser_debug);
-  };
-  return ParseAndExecuteHelper(parse, prelude_path, trace_stream, print_stream);
-}
-
-auto ParseAndExecute(std::string_view prelude_path,
-                     std::string_view input_file_name,
-                     std::string_view file_contents, bool parser_debug,
-                     Nonnull<TraceStream*> trace_stream,
-                     Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int> {
-  auto parse = [&](Arena* arena) {
-    return ParseFromString(arena, input_file_name, file_contents, parser_debug);
-  };
-  return ParseAndExecuteHelper(parse, prelude_path, trace_stream, print_stream);
 }
 
 }  // namespace Carbon

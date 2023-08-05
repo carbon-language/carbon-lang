@@ -13,7 +13,7 @@ namespace Carbon::Testing {
 namespace {
 
 TEST(ErrorBuildersTest, ProgramError) {
-  Error err = ProgramError(SourceLocation("x", 1)) << "test";
+  Error err = ProgramError(SourceLocation("x", 1, FileKind::Main)) << "test";
   EXPECT_EQ(err.location(), "x:1");
   EXPECT_EQ(err.message(), "test");
 

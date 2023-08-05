@@ -9,16 +9,16 @@ namespace Carbon {
 
 auto SemanticsHandleNamespaceStart(SemanticsContext& context,
                                    ParseTree::Node /*parse_node*/) -> bool {
-  context.PushDeclarationName();
+  context.declaration_name_stack().Push();
   return true;
 }
 
 auto SemanticsHandleNamespace(SemanticsContext& context,
                               ParseTree::Node parse_node) -> bool {
-  auto name_context = context.PopDeclarationName();
+  auto name_context = context.declaration_name_stack().Pop();
   auto namespace_id = context.AddNode(SemanticsNode::Namespace::Make(
       parse_node, context.semantics_ir().AddNameScope()));
-  context.AddNameToLookup(name_context, namespace_id);
+  context.declaration_name_stack().AddNameToLookup(name_context, namespace_id);
   return true;
 }
 

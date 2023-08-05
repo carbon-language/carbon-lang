@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
-load("//bazel/fuzzing:rules.bzl", "cc_fuzz_test")
+load("//testing/file_test:rules.bzl", "file_test")
+load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -23,6 +24,16 @@ cc_library(
         "//toolchain/semantics:semantics_ir",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Core",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+file_test(
+    name = "driver_file_test",
+    srcs = ["driver_file_test.cpp"],
+    tests = glob(["testdata/**/*.carbon"]),
+    deps = [
+        ":driver_file_test_base",
         "@llvm-project//llvm:Support",
     ],
 )

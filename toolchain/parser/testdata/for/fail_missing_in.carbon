@@ -30,7 +30,9 @@
 // CHECK:STDOUT: ]
 
 fn foo() {
-  // CHECK:STDERR: fail_missing_in.carbon:[[@LINE+1]]:19: Expected `in` after loop `var` declaration.
+  // CHECK:STDERR: fail_missing_in.carbon:[[@LINE+3]]:19: Expected `in` after loop `var` declaration.
+  // CHECK:STDERR:   for (var x: i32 y) {
+  // CHECK:STDERR:                   ^
   for (var x: i32 y) {
     Print(x);
   }

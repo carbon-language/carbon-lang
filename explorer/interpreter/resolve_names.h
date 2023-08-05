@@ -7,13 +7,15 @@
 
 #include "explorer/ast/ast.h"
 #include "explorer/common/arena.h"
+#include "explorer/common/trace_stream.h"
 
 namespace Carbon {
 
 // Resolves names (IdentifierExpressions) in the AST.
 // On failure, `ast` is left in a partial state and should not be further
 // processed.
-auto ResolveNames(AST& ast) -> ErrorOr<Success>;
+auto ResolveNames(AST& ast, Nonnull<TraceStream*> trace_stream)
+    -> ErrorOr<Success>;
 
 }  // namespace Carbon
 

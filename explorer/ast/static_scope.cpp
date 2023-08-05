@@ -6,7 +6,9 @@
 
 #include <optional>
 
+#include "common/ostream.h"
 #include "explorer/common/error_builders.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/Support/Error.h"
 
 namespace Carbon {
@@ -23,8 +25,30 @@ auto StaticScope::Add(std::string_view name, ValueNodeView entity,
     if (static_cast<int>(status) > static_cast<int>(it->second.status)) {
       it->second.status = status;
     }
+  } else {
+    if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "--- declared `" << name << "` as `" << entity
+                     << "` in `" << PrintAsID(*this) << "` ("
+                     << entity.base().source_loc() << ")\n";
+    }
   }
   return Success();
+}
+
+void StaticScope::Print(llvm::raw_ostream& out) const {
+  if (ast_node_) {
+    ast_node_.value()->Print(out);
+  } else {
+    *trace_stream_ << "package";
+  }
+}
+
+void StaticScope::PrintID(llvm::raw_ostream& out) const {
+  if (ast_node_) {
+    ast_node_.value()->PrintID(out);
+  } else {
+    *trace_stream_ << "package";
+  }
 }
 
 void StaticScope::MarkDeclared(std::string_view name) {
@@ -32,6 +56,11 @@ void StaticScope::MarkDeclared(std::string_view name) {
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
   if (it->second.status == NameStatus::KnownButNotDeclared) {
     it->second.status = NameStatus::DeclaredButNotUsable;
+    if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "--- marked `" << name
+                     << "` declared but not usable in `" << PrintAsID(*this)
+                     << "`\n";
+    }
   }
 }
 
@@ -39,6 +68,10 @@ void StaticScope::MarkUsable(std::string_view name) {
   auto it = declared_names_.find(name);
   CARBON_CHECK(it != declared_names_.end()) << name << " not found";
   it->second.status = NameStatus::Usable;
+  if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- marked `" << name << "` usable in `"
+                   << PrintAsID(*this) << "`\n";
+  }
 }
 
 auto StaticScope::Resolve(std::string_view name,
@@ -94,6 +127,15 @@ auto StaticScope::TryResolveHere(std::string_view name,
   if (it == declared_names_.end()) {
     return {std::nullopt};
   }
+
+  auto exit_scope_function = llvm::make_scope_exit([&]() {
+    if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "--- resolved `" << name << "` as `"
+                     << it->second.entity << "` in `" << PrintAsID(*this)
+                     << "` (" << source_loc << ")\n";
+    }
+  });
+
   if (allow_undeclared) {
     return {it->second.entity};
   }

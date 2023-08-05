@@ -15,7 +15,7 @@ auto SemanticsHandleIfConditionStart(SemanticsContext& /*context*/,
 auto SemanticsHandleIfCondition(SemanticsContext& context,
                                 ParseTree::Node parse_node) -> bool {
   // Convert the condition to `bool`.
-  auto cond_value_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto cond_value_id = context.node_stack().PopExpression();
   cond_value_id = context.ImplicitAsBool(parse_node, cond_value_id);
 
   // Create the then block and the else block, and branch to the right one. If

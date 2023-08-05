@@ -8,8 +8,8 @@ namespace Carbon {
 
 auto SemanticsHandleInfixOperator(SemanticsContext& context,
                                   ParseTree::Node parse_node) -> bool {
-  auto rhs_id = context.node_stack().Pop<SemanticsNodeId>();
-  auto lhs_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto rhs_id = context.node_stack().PopExpression();
+  auto lhs_id = context.node_stack().PopExpression();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
@@ -25,7 +25,7 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
           SemanticsNode::BinaryOperatorAdd::Make(
               parse_node, context.semantics_ir().GetNode(lhs_id).type_id(),
               lhs_id, rhs_id));
-      break;
+      return true;
 
     case TokenKind::And:
     case TokenKind::Or: {
@@ -49,24 +49,46 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
           SemanticsNode::BlockArg::Make(
               parse_node, context.semantics_ir().GetNode(rhs_id).type_id(),
               resume_block_id));
-      break;
+      return true;
     }
-
+    case TokenKind::Equal: {
+      // TODO: handle complex assignment expression such as `a += 1`.
+      // TODO: check if lhs node is assignable.
+      context.ImplicitAsRequired(
+          parse_node, rhs_id, context.semantics_ir().GetNode(lhs_id).type_id());
+      context.AddNodeAndPush(
+          parse_node, SemanticsNode::Assign::Make(parse_node, lhs_id, rhs_id));
+      return true;
+    }
     default:
       return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
   }
-
-  return true;
 }
 
 auto SemanticsHandlePostfixOperator(SemanticsContext& context,
                                     ParseTree::Node parse_node) -> bool {
-  return context.TODO(parse_node, "HandlePostfixOperator");
+  auto value_id = context.node_stack().PopExpression();
+
+  // Figure out the operator for the token.
+  auto token = context.parse_tree().node_token(parse_node);
+  switch (auto token_kind = context.tokens().GetKind(token)) {
+    case TokenKind::Star: {
+      auto inner_type_id = context.ExpressionAsType(parse_node, value_id);
+      context.AddNodeAndPush(
+          parse_node,
+          SemanticsNode::PointerType::Make(
+              parse_node, SemanticsTypeId::TypeType, inner_type_id));
+      return true;
+    }
+
+    default:
+      CARBON_FATAL() << "Unexpected postfix operator " << token_kind;
+  }
 }
 
 auto SemanticsHandlePrefixOperator(SemanticsContext& context,
                                    ParseTree::Node parse_node) -> bool {
-  auto value_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto value_id = context.node_stack().PopExpression();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
@@ -78,19 +100,36 @@ auto SemanticsHandlePrefixOperator(SemanticsContext& context,
           SemanticsNode::UnaryOperatorNot::Make(
               parse_node, context.semantics_ir().GetNode(value_id).type_id(),
               value_id));
-      break;
+      return true;
+
+    case TokenKind::Const: {
+      // `const (const T)` is probably not what the developer intended.
+      // TODO: Detect `const (const T)*` and suggest moving the `*` inside the
+      // parentheses.
+      if (context.semantics_ir().GetNode(value_id).kind() ==
+          SemanticsNodeKind::ConstType) {
+        CARBON_DIAGNOSTIC(RepeatedConst, Warning,
+                          "`const` applied repeatedly to the same type has no "
+                          "additional effect.");
+        context.emitter().Emit(parse_node, RepeatedConst);
+      }
+      auto inner_type_id = context.ExpressionAsType(parse_node, value_id);
+      context.AddNodeAndPush(
+          parse_node,
+          SemanticsNode::ConstType::Make(parse_node, SemanticsTypeId::TypeType,
+                                         inner_type_id));
+      return true;
+    }
 
     default:
       return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
   }
-
-  return true;
 }
 
 auto SemanticsHandleShortCircuitOperand(SemanticsContext& context,
                                         ParseTree::Node parse_node) -> bool {
   // Convert the condition to `bool`.
-  auto cond_value_id = context.node_stack().Pop<SemanticsNodeId>();
+  auto cond_value_id = context.node_stack().PopExpression();
   cond_value_id = context.ImplicitAsBool(parse_node, cond_value_id);
   auto bool_type_id = context.semantics_ir().GetNode(cond_value_id).type_id();
 
@@ -115,7 +154,7 @@ auto SemanticsHandleShortCircuitOperand(SemanticsContext& context,
       break;
 
     default:
-      CARBON_FATAL() << "Unexpected short-circuiting operator " << parse_node;
+      CARBON_FATAL() << "Unexpected short-circuiting operator " << token_kind;
   }
 
   // Create a block for the right-hand side and for the continuation.
