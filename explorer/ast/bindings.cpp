@@ -39,11 +39,7 @@ void Bindings::Add(Nonnull<const GenericBinding*> binding,
 
 void Bindings::Print(llvm::raw_ostream& out) const {
   std::vector<std::pair<Nonnull<const GenericBinding*>, Nonnull<const Value*>>>
-      args;
-
-  for (const auto& [binding, value] : args_) {
-    args.push_back({binding, value});
-  }
+      args(args_.begin(), args_.end());
 
   std::stable_sort(args.begin(), args.end(), [](auto& a, auto& b) {
     return a.first->index() < b.first->index();
