@@ -4,8 +4,6 @@
 
 #include "toolchain/semantics/semantics_node.h"
 
-#include "toolchain/semantics/semantics_builtin_kind.h"
-
 namespace Carbon {
 
 static auto PrintArgs(llvm::raw_ostream& /*out*/,

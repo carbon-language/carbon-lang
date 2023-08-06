@@ -50,6 +50,7 @@ TEST(SemanticsIRTest, YAML) {
           Pair("real_literals", Yaml::Sequence(IsEmpty())),
           Pair("strings", Yaml::Sequence(ElementsAre("x"))),
           Pair("types", Yaml::Sequence(ElementsAre(node_builtin))),
+          Pair("type_blocks", Yaml::Sequence(IsEmpty())),
           Pair("nodes",
                Yaml::Sequence(AllOf(
                    // kind is required, other parts are optional.

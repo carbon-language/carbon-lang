@@ -29,35 +29,36 @@
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
-// CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: Return},
-// CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+2, type: type1},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+2, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: Return},
-// CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+6, type: type1},
-// CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str4, arg1: node+8, type: type1},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+6, type: type0},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str4, arg1: node+8, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function3},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+13, type: type1},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+15, type: type1},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+17, type: type1},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int3, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+19, type: type1},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int4, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+21, type: type1},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int5, type: type1},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+23, type: type1},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+13, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+15, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+17, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int3, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+19, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int4, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+21, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int5, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+23, type: type0},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -131,24 +132,48 @@ fn Run1(a: i32) {}
 fn Run2(a: i32, b: i32) {}
 
 fn Main() {
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-6]]:1: Function cannot be used: Received 1 argument(s), but require 0 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:7: No matching callable was found.
+  // CHECK:STDERR:   Run0(1);
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-8]]:1: Function cannot be used: Received 1 argument(s), but require 0 argument(s).
+  // CHECK:STDERR: fn Run0() {}
+  // CHECK:STDERR: ^
   Run0(1);
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-9]]:1: Function cannot be used: Received 2 argument(s), but require 0 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:7: No matching callable was found.
+  // CHECK:STDERR:   Run0(0, 1);
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-15]]:1: Function cannot be used: Received 2 argument(s), but require 0 argument(s).
+  // CHECK:STDERR: fn Run0() {}
+  // CHECK:STDERR: ^
   Run0(0, 1);
 
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-12]]:1: Function cannot be used: Received 0 argument(s), but require 1 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:7: No matching callable was found.
+  // CHECK:STDERR:   Run1();
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-22]]:1: Function cannot be used: Received 0 argument(s), but require 1 argument(s).
+  // CHECK:STDERR: fn Run1(a: i32) {}
+  // CHECK:STDERR: ^
   Run1();
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-15]]:1: Function cannot be used: Received 2 argument(s), but require 1 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:7: No matching callable was found.
+  // CHECK:STDERR:   Run1(0, 1);
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-29]]:1: Function cannot be used: Received 2 argument(s), but require 1 argument(s).
+  // CHECK:STDERR: fn Run1(a: i32) {}
+  // CHECK:STDERR: ^
   Run1(0, 1);
 
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-18]]:1: Function cannot be used: Received 0 argument(s), but require 2 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:7: No matching callable was found.
+  // CHECK:STDERR:   Run2();
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-36]]:1: Function cannot be used: Received 0 argument(s), but require 2 argument(s).
+  // CHECK:STDERR: fn Run2(a: i32, b: i32) {}
+  // CHECK:STDERR: ^
   Run2();
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+2]]:7: No matching callable was found.
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-21]]:1: Function cannot be used: Received 1 argument(s), but require 2 argument(s).
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:7: No matching callable was found.
+  // CHECK:STDERR:   Run2(0);
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-43]]:1: Function cannot be used: Received 1 argument(s), but require 2 argument(s).
+  // CHECK:STDERR: fn Run2(a: i32, b: i32) {}
+  // CHECK:STDERR: ^
   Run2(0);
 }

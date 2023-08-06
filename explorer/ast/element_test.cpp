@@ -20,7 +20,7 @@ namespace Carbon::Testing {
 namespace {
 
 static auto FakeSourceLoc(int line_num) -> SourceLocation {
-  return SourceLocation("<test>", line_num);
+  return SourceLocation("<test>", line_num, FileKind::Main);
 }
 
 class ElementTest : public ::testing::Test {

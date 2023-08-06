@@ -218,7 +218,7 @@ class ParseTree {
                  bool preorder) const -> bool;
 
   // Depth-first postorder sequence of node implementation data.
-  llvm::SmallVector<NodeImpl, 0> node_impls_;
+  llvm::SmallVector<NodeImpl> node_impls_;
 
   TokenizedBuffer* tokens_;
 

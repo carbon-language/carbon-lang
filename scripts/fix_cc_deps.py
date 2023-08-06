@@ -54,6 +54,14 @@ EXTERNAL_REPOS: Dict[str, ExternalRepo] = {
     ),
     # tools/cpp/runfiles:runfiles.h -> tools/cpp/runfiles/runfiles.h
     "@bazel_tools": ExternalRepo(lambda x: re.sub(":", "/", x), "...", None),
+    # absl/flags:flag.h -> absl/flags/flag.h
+    "@com_google_absl": ExternalRepo(
+        lambda x: re.sub(":", "/", x), "...", None
+    ),
+    # :re2/re2.h -> re2/re2.h
+    "@com_googlesource_code_re2": ExternalRepo(
+        lambda x: re.sub(":", "", x), ":re2", None
+    ),
 }
 
 # TODO: proto rules are aspect-based and their generated files don't show up in
@@ -147,6 +155,8 @@ def get_rules(bazel: str, targets: str, keep_going: bool) -> Dict[str, Rule]:
             elif rule_class == "genrule":
                 if list_name == "outs":
                     outs = get_bazel_list(list_child, True)
+            elif rule_class == "tree_sitter_cc_library":
+                continue
             else:
                 exit(f"unexpected rule type: {rule_class}")
         rules[rule_name] = Rule(hdrs, srcs, deps, outs)

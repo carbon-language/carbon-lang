@@ -19,5 +19,7 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_no_colon_or_equals.carbon:[[@LINE+1]]:11: Expected `.field: field_type` or `.field = value`.
+// CHECK:STDERR: fail_no_colon_or_equals.carbon:[[@LINE+3]]:11: Expected `.field: field_type` or `.field = value`.
+// CHECK:STDERR: var x: {.a} = {};
+// CHECK:STDERR:           ^
 var x: {.a} = {};

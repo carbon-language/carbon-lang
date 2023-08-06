@@ -41,7 +41,7 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   // exhaust all memory, so bound the search space to using 2^17 bytes of
   // memory for the argument text itself.
   size_t arg_length_sum = 0;
-  llvm::SmallVector<int, 16> arg_lengths(num_args);
+  llvm::SmallVector<int> arg_lengths(num_args);
   for (int& arg_length : arg_lengths) {
     if (!Read(data, size, arg_length) || arg_length < 0) {
       return 0;
@@ -58,7 +58,7 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   }
 
   // Lastly, read the contents of each argument out of the data.
-  llvm::SmallVector<llvm::StringRef, 16> args;
+  llvm::SmallVector<llvm::StringRef> args;
   args.reserve(num_args);
   for (int arg_length : arg_lengths) {
     args.push_back(

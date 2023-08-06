@@ -7,6 +7,7 @@
 #include "common/argparse.h"
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -342,6 +343,9 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
                 << options.input_file_name << "' ***\n";
   auto source = SourceBuffer::CreateFromFile(fs_, options.input_file_name);
   CARBON_VLOG() << "*** SourceBuffer::CreateFromFile done ***\n";
+  // Require flushing the consumer before the source buffer is destroyed,
+  // because diagnostics may reference the buffer.
+  auto flush = llvm::make_scope_exit([&]() { consumer.Flush(); });
   if (!source.ok()) {
     error_stream_ << "ERROR: Unable to open input source file: "
                   << source.error();

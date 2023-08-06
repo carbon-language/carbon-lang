@@ -19,7 +19,7 @@ using ::testing::HasSubstr;
 using ::testing::Not;
 using ::testing::StrEq;
 
-constexpr Args::CommandInfo TestCommandInfo = {
+constexpr CommandLine::CommandInfo TestCommandInfo = {
     .name = "test",
     .help = "A test command.",
     .help_epilog = "TODO",
@@ -40,7 +40,7 @@ TEST(ArgParserTest, BasicCommand) {
   ssize_t integer_option = -1;
   llvm::StringRef string_option = "";
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args) {
-    return Args::Parse(
+    return CommandLine::Parse(
         args, llvm::errs(), llvm::errs(), TestCommandInfo, [&](auto& b) {
           b.AddFlag({.name = "flag"}, [&](auto& arg_b) { arg_b.Set(&flag); });
           b.AddIntegerOption({.name = "option1"},
@@ -52,7 +52,7 @@ TEST(ArgParserTest, BasicCommand) {
   };
 
   EXPECT_THAT(parse({"--flag", "--option2=value", "--option1=42"}),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_TRUE(flag);
   EXPECT_THAT(integer_option, Eq(42));
   EXPECT_THAT(string_option, StrEq("value"));
@@ -61,44 +61,46 @@ TEST(ArgParserTest, BasicCommand) {
 TEST(ArgParserTest, BooleanFlags) {
   bool flag = false;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Args::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
+    return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
       b.AddFlag({.name = "flag"}, [&](auto& arg_b) { arg_b.Set(&flag); });
       b.Do([] {});
     });
   };
 
   EXPECT_THAT(parse({"--no-flag"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_FALSE(flag);
 
   EXPECT_THAT(parse({"--flag", "--no-flag"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_FALSE(flag);
 
   EXPECT_THAT(parse({"--no-flag", "--flag"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_TRUE(flag);
 
   EXPECT_THAT(parse({"--no-flag", "--flag", "--flag=false"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_FALSE(flag);
 
   EXPECT_THAT(parse({"--no-flag", "--flag=true"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_TRUE(flag);
 
   EXPECT_THAT(parse({"--no-flag", "--flag=true", "--no-flag"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_FALSE(flag);
 
   TestRawOstream os;
-  EXPECT_THAT(parse({"--no-flag=true"}, os), Eq(Args::ParseResult::Error));
+  EXPECT_THAT(parse({"--no-flag=true"}, os),
+              Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(
       os.TakeStr(),
       StrEq("ERROR: Cannot specify a value when using a flag name prefixed "
             "with 'no-' -- that prefix implies a value of 'false'.\n"));
 
-  EXPECT_THAT(parse({"--no-flag=false"}, os), Eq(Args::ParseResult::Error));
+  EXPECT_THAT(parse({"--no-flag=false"}, os),
+              Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(
       os.TakeStr(),
       StrEq("ERROR: Cannot specify a value when using a flag name prefixed "
@@ -110,7 +112,7 @@ TEST(ArgParserTest, ArgDefaults) {
   ssize_t integer_option = -1;
   llvm::StringRef string_option = "";
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Args::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
+    return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
       b.AddFlag({.name = "flag"}, [&](auto& arg_b) {
         arg_b.Default(true);
         arg_b.Set(&flag);
@@ -127,19 +129,19 @@ TEST(ArgParserTest, ArgDefaults) {
     });
   };
 
-  EXPECT_THAT(parse({}, llvm::errs()), Eq(Args::ParseResult::Success));
+  EXPECT_THAT(parse({}, llvm::errs()), Eq(CommandLine::ParseResult::Success));
   EXPECT_TRUE(flag);
   EXPECT_THAT(integer_option, Eq(7));
   EXPECT_THAT(string_option, StrEq("default"));
 
   EXPECT_THAT(parse({"--option1", "--option2"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_TRUE(flag);
   EXPECT_THAT(integer_option, Eq(7));
   EXPECT_THAT(string_option, StrEq("default"));
 
   EXPECT_THAT(parse({"--option1=42", "--option2=explicit"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_TRUE(flag);
   EXPECT_THAT(integer_option, Eq(42));
   EXPECT_THAT(string_option, StrEq("explicit"));
@@ -147,7 +149,7 @@ TEST(ArgParserTest, ArgDefaults) {
   EXPECT_THAT(
       parse({"--option1=42", "--option2=explicit", "--option1", "--option2"},
             llvm::errs()),
-      Eq(Args::ParseResult::Success));
+      Eq(CommandLine::ParseResult::Success));
   EXPECT_TRUE(flag);
   EXPECT_THAT(integer_option, Eq(7));
   EXPECT_THAT(string_option, StrEq("default"));
@@ -158,7 +160,7 @@ TEST(ArgParserTest, ShortArgs) {
   bool example = false;
   ssize_t integer_option = -1;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Args::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
+    return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
       b.AddFlag({.name = "flag", .short_name = "f"},
                 [&](auto& arg_b) { arg_b.Set(&flag); });
       b.AddFlag({.name = "example", .short_name = "x"},
@@ -170,7 +172,7 @@ TEST(ArgParserTest, ShortArgs) {
   };
 
   EXPECT_THAT(parse({"-f", "-o=42", "-x"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_TRUE(flag);
   EXPECT_TRUE(example);
   EXPECT_THAT(integer_option, Eq(42));
@@ -178,7 +180,7 @@ TEST(ArgParserTest, ShortArgs) {
   flag = false;
   example = false;
   EXPECT_THAT(parse({"--option1=13", "-xfo=7"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_TRUE(flag);
   EXPECT_TRUE(example);
   EXPECT_THAT(integer_option, Eq(7));
@@ -190,7 +192,7 @@ TEST(ArgParserTest, PositionalArgs) {
   llvm::StringRef source_string;
   llvm::StringRef dest_string;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Args::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
+    return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
       b.AddFlag({.name = "flag"}, [&](auto& arg_b) { arg_b.Set(&flag); });
       b.AddStringOption({.name = "option"},
                         [&](auto& arg_b) { arg_b.Set(&string_option); });
@@ -208,23 +210,84 @@ TEST(ArgParserTest, PositionalArgs) {
 
   TestRawOstream os;
   EXPECT_THAT(parse({"--flag", "--option=x"}, os),
-              Eq(Args::ParseResult::Error));
+              Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(
       os.TakeStr(),
       StrEq("ERROR: Not all required positional arguments were provided. First "
             "missing and required positional argument: 'source'\n"));
 
   EXPECT_THAT(parse({"src", "--flag", "--option=value", "dst"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_TRUE(flag);
   EXPECT_THAT(string_option, StrEq("value"));
   EXPECT_THAT(source_string, StrEq("src"));
   EXPECT_THAT(dest_string, StrEq("dst"));
 
   EXPECT_THAT(parse({"src2", "--", "dst2"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(source_string, StrEq("src2"));
   EXPECT_THAT(dest_string, StrEq("dst2"));
+
+  EXPECT_THAT(parse({"-", "--", "-"}, llvm::errs()),
+              Eq(CommandLine::ParseResult::Success));
+  EXPECT_THAT(source_string, StrEq("-"));
+  EXPECT_THAT(dest_string, StrEq("-"));
+}
+
+TEST(ArgParserTest, PositionalAppendArgs) {
+  bool flag = false;
+  llvm::StringRef string_option = "";
+  llvm::SmallVector<llvm::StringRef> source_strings;
+  llvm::SmallVector<llvm::StringRef> dest_strings;
+  auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
+    return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
+      b.AddFlag({.name = "flag"}, [&](auto& arg_b) { arg_b.Set(&flag); });
+      b.AddStringOption({.name = "option"},
+                        [&](auto& arg_b) { arg_b.Set(&string_option); });
+      b.AddStringPositionalArg({.name = "sources"}, [&](auto& arg_b) {
+        arg_b.Append(&source_strings);
+        arg_b.Required(true);
+      });
+      b.AddStringPositionalArg({.name = "dest"}, [&](auto& arg_b) {
+        arg_b.Append(&dest_strings);
+        arg_b.Required(true);
+      });
+      b.Do([] {});
+    });
+  };
+
+  TestRawOstream os;
+  EXPECT_THAT(parse({"--flag", "--option=x"}, os),
+              Eq(CommandLine::ParseResult::Error));
+  EXPECT_THAT(
+      os.TakeStr(),
+      StrEq("ERROR: Not all required positional arguments were provided. First "
+            "missing and required positional argument: 'sources'\n"));
+
+  EXPECT_THAT(
+      parse({"src1", "--flag", "src2", "--option=value", "--", "--dst--"},
+            llvm::errs()),
+      Eq(CommandLine::ParseResult::Success));
+  EXPECT_TRUE(flag);
+  EXPECT_THAT(string_option, StrEq("value"));
+  EXPECT_THAT(source_strings, ElementsAre(StrEq("src1"), StrEq("src2")));
+  EXPECT_THAT(dest_strings, ElementsAre(StrEq("--dst--")));
+
+  source_strings.clear();
+  dest_strings.clear();
+  EXPECT_THAT(
+      parse({"--", "--src1--", "--src2--", "--", "dst1", "dst2"}, llvm::errs()),
+      Eq(CommandLine::ParseResult::Success));
+  EXPECT_THAT(source_strings,
+              ElementsAre(StrEq("--src1--"), StrEq("--src2--")));
+  EXPECT_THAT(dest_strings, ElementsAre(StrEq("dst1"), StrEq("dst2")));
+
+  source_strings.clear();
+  dest_strings.clear();
+  EXPECT_THAT(parse({"--", "--", "dst1", "dst2"}, llvm::errs()),
+              Eq(CommandLine::ParseResult::Success));
+  EXPECT_THAT(source_strings, ElementsAre());
+  EXPECT_THAT(dest_strings, ElementsAre(StrEq("dst1"), StrEq("dst2")));
 }
 
 TEST(ArgParserTest, BasicSubcommands) {
@@ -236,7 +299,7 @@ TEST(ArgParserTest, BasicSubcommands) {
   bool subsub_command = false;
 
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Args::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
+    return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
       b.AddSubcommand({.name = "sub1"}, [&](auto& sub_b) {
         sub_b.AddFlag({.name = "flag"}, [&](auto& arg_b) { arg_b.Set(&flag); });
         sub_b.AddStringOption({.name = "option"},
@@ -258,39 +321,40 @@ TEST(ArgParserTest, BasicSubcommands) {
   };
 
   TestRawOstream os;
-  EXPECT_THAT(parse({}, os), Eq(Args::ParseResult::Error));
+  EXPECT_THAT(parse({}, os), Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq("ERROR: No subcommand specified. Available "
                                   "subcommands: 'sub1', 'sub2', or 'help'\n"));
 
-  EXPECT_THAT(parse({"--flag"}, os), Eq(Args::ParseResult::Error));
+  EXPECT_THAT(parse({"--flag"}, os), Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq("ERROR: Unknown option '--flag'\n"));
 
-  EXPECT_THAT(parse({"sub3"}, os), Eq(Args::ParseResult::Error));
+  EXPECT_THAT(parse({"sub3"}, os), Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq("ERROR: Invalid subcommand 'sub3'. Available "
                                   "subcommands: 'sub1', 'sub2', or 'help'\n"));
 
-  EXPECT_THAT(parse({"--flag", "sub1"}, os), Eq(Args::ParseResult::Error));
+  EXPECT_THAT(parse({"--flag", "sub1"}, os),
+              Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq("ERROR: Unknown option '--flag'\n"));
 
   EXPECT_THAT(parse({"sub1", "--flag"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(subcommand, Eq(TestSubcommand::Sub1));
   EXPECT_TRUE(flag);
 
   EXPECT_THAT(parse({"sub2", "--option=value"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(subcommand, Eq(TestSubcommand::Sub2));
   EXPECT_THAT(option1, StrEq("value"));
 
   EXPECT_THAT(parse({"sub2", "--option=abc", "subsub42", "--option=xyz"}, os),
-              Eq(Args::ParseResult::Error));
+              Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(),
               StrEq("ERROR: Invalid subcommand 'subsub42'. Available "
                     "subcommands: 'subsub', or 'help'\n"));
 
   EXPECT_THAT(
       parse({"sub2", "--option=abc", "subsub", "--option=xyz"}, llvm::errs()),
-      Eq(Args::ParseResult::Success));
+      Eq(CommandLine::ParseResult::Success));
   EXPECT_TRUE(subsub_command);
   EXPECT_THAT(option1, StrEq("abc"));
   EXPECT_THAT(option2, StrEq("xyz"));
@@ -300,7 +364,7 @@ TEST(ArgParserTest, Appending) {
   llvm::SmallVector<ssize_t> integers;
   llvm::SmallVector<llvm::StringRef> strings;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Args::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
+    return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
       b.AddIntegerOption({.name = "int"},
                          [&](auto& arg_b) { arg_b.Append(&integers); });
       b.AddStringOption({.name = "str"},
@@ -309,22 +373,22 @@ TEST(ArgParserTest, Appending) {
     });
   };
 
-  EXPECT_THAT(parse({}, llvm::errs()), Eq(Args::ParseResult::Success));
+  EXPECT_THAT(parse({}, llvm::errs()), Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(integers, ElementsAre());
   EXPECT_THAT(strings, ElementsAre());
 
   EXPECT_THAT(parse({"--int=1", "--int=2", "--int=3"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(integers, ElementsAre(Eq(1), Eq(2), Eq(3)));
   EXPECT_THAT(strings, ElementsAre());
 
   EXPECT_THAT(parse({"--str=a", "--str=b", "--str=c"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(integers, ElementsAre(Eq(1), Eq(2), Eq(3)));
   EXPECT_THAT(strings, ElementsAre(StrEq("a"), StrEq("b"), StrEq("c")));
 
   EXPECT_THAT(parse({"--str=d", "--int=4", "--str=e"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(integers, ElementsAre(Eq(1), Eq(2), Eq(3), Eq(4)));
   EXPECT_THAT(strings, ElementsAre(StrEq("a"), StrEq("b"), StrEq("c"),
                                    StrEq("d"), StrEq("e")));
@@ -336,7 +400,7 @@ TEST(ArgParserTest, PositionalAppending) {
   llvm::SmallVector<llvm::StringRef> strings2;
   llvm::SmallVector<llvm::StringRef> strings3;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Args::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
+    return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
       b.AddStringOption({.name = "opt"},
                         [&](auto& arg_b) { arg_b.Append(&option_strings); });
       b.AddStringPositionalArg({.name = "s1"},
@@ -352,7 +416,7 @@ TEST(ArgParserTest, PositionalAppending) {
   EXPECT_THAT(parse({"a", "--opt=x", "b", "--opt=y", "--", "c", "--opt=z", "d",
                      "--", "e", "f"},
                     llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(option_strings, ElementsAre(StrEq("x"), StrEq("y")));
   EXPECT_THAT(strings1, ElementsAre(StrEq("a"), StrEq("b")));
   EXPECT_THAT(strings2, ElementsAre(StrEq("c"), StrEq("--opt=z"), StrEq("d")));
@@ -362,7 +426,7 @@ TEST(ArgParserTest, PositionalAppending) {
 TEST(ArgParserTest, OneOfOption) {
   ssize_t value = 0;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Args::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
+    return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
       b.AddOneOfOption({.name = "option"}, [&](auto& arg_b) {
         arg_b.SetOneOf(
             {
@@ -377,42 +441,43 @@ TEST(ArgParserTest, OneOfOption) {
   };
 
   EXPECT_THAT(parse({"--option=x"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(value, Eq(1));
 
   EXPECT_THAT(parse({"--option=y"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(value, Eq(2));
 
   EXPECT_THAT(parse({"--option=z"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(value, Eq(3));
 
   constexpr const char* ErrorStr =
       "ERROR: Option '--option={0}' has an invalid value '{0}'; valid values "
       "are: 'x', 'y', or 'z'\n";
   TestRawOstream os;
-  EXPECT_THAT(parse({"--option=a"}, os), Eq(Args::ParseResult::Error));
+  EXPECT_THAT(parse({"--option=a"}, os), Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::formatv(ErrorStr, "a")));
 
-  EXPECT_THAT(parse({"--option="}, os), Eq(Args::ParseResult::Error));
+  EXPECT_THAT(parse({"--option="}, os), Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::formatv(ErrorStr, "")));
 
-  EXPECT_THAT(parse({"--option=xx"}, os), Eq(Args::ParseResult::Error));
+  EXPECT_THAT(parse({"--option=xx"}, os), Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::formatv(ErrorStr, "xx")));
 
-  EXPECT_THAT(parse({"--option=\xFF"}, os), Eq(Args::ParseResult::Error));
+  EXPECT_THAT(parse({"--option=\xFF"}, os),
+              Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::formatv(ErrorStr, "\\FF")));
 
   EXPECT_THAT(parse({llvm::StringRef("--option=\0", 10)}, os),
-              Eq(Args::ParseResult::Error));
+              Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::formatv(ErrorStr, "\\00")));
 }
 
 TEST(ArgParserTest, OneOfOptionAppending) {
   llvm::SmallVector<ssize_t> values;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Args::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
+    return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
       b.AddOneOfOption({.name = "option"}, [&](auto& arg_b) {
         arg_b.AppendOneOf(
             {
@@ -426,15 +491,15 @@ TEST(ArgParserTest, OneOfOptionAppending) {
     });
   };
 
-  EXPECT_THAT(parse({}, llvm::errs()), Eq(Args::ParseResult::Success));
+  EXPECT_THAT(parse({}, llvm::errs()), Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(values, ElementsAre());
 
   EXPECT_THAT(parse({"--option=x", "--option=y", "--option=z"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(values, ElementsAre(Eq(1), Eq(2), Eq(3)));
 
   EXPECT_THAT(parse({"--option=y", "--option=y", "--option=x"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(values, ElementsAre(Eq(1), Eq(2), Eq(3), Eq(2), Eq(2), Eq(1)));
 }
 
@@ -448,7 +513,7 @@ TEST(ArgParserTest, RequiredArgs) {
   TestEnum enum_sub_option;
 
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Args::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
+    return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
       b.AddIntegerOption({.name = "opt1"}, [&](auto& arg_b) {
         arg_b.Required(true);
         arg_b.Set(&integer_option);
@@ -495,28 +560,28 @@ TEST(ArgParserTest, RequiredArgs) {
   constexpr const char* ErrorStr =
       "ERROR: Required option '{0}' not provided.\n";
   TestRawOstream os;
-  EXPECT_THAT(parse({}, os), Eq(Args::ParseResult::Error));
+  EXPECT_THAT(parse({}, os), Eq(CommandLine::ParseResult::Error));
   auto errors = os.TakeStr();
   EXPECT_THAT(errors, HasSubstr(llvm::formatv(ErrorStr, "--opt1")));
   EXPECT_THAT(errors, HasSubstr(llvm::formatv(ErrorStr, "--opt2")));
 
-  EXPECT_THAT(parse({"--opt2=xyz"}, os), Eq(Args::ParseResult::Error));
+  EXPECT_THAT(parse({"--opt2=xyz"}, os), Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::formatv(ErrorStr, "--opt1")));
 
   EXPECT_THAT(parse({"--opt2=xyz", "--opt1=42"}, llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(integer_option, Eq(42));
   EXPECT_THAT(string_option, StrEq("xyz"));
 
   EXPECT_THAT(parse({"--opt2=xyz", "--opt1=42", "sub2"}, os),
-              Eq(Args::ParseResult::Error));
+              Eq(CommandLine::ParseResult::Error));
   errors = os.TakeStr();
   EXPECT_THAT(errors, HasSubstr(llvm::formatv(ErrorStr, "--sub-opt1")));
   EXPECT_THAT(errors, HasSubstr(llvm::formatv(ErrorStr, "--sub-opt2")));
   EXPECT_THAT(errors, HasSubstr(llvm::formatv(ErrorStr, "--sub-opt3")));
 
   EXPECT_THAT(parse({"--opt2=xyz", "--opt1=42", "sub2", "--sub-opt3=b"}, os),
-              Eq(Args::ParseResult::Error));
+              Eq(CommandLine::ParseResult::Error));
   errors = os.TakeStr();
   EXPECT_THAT(errors, HasSubstr(llvm::formatv(ErrorStr, "--sub-opt1")));
   EXPECT_THAT(errors, HasSubstr(llvm::formatv(ErrorStr, "--sub-opt2")));
@@ -525,13 +590,13 @@ TEST(ArgParserTest, RequiredArgs) {
   EXPECT_THAT(parse({"--opt2=xyz", "--opt1=42", "sub2", "--sub-opt3=b",
                      "--sub-opt1=13"},
                     os),
-              Eq(Args::ParseResult::Error));
+              Eq(CommandLine::ParseResult::Error));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::formatv(ErrorStr, "--sub-opt2")));
 
   EXPECT_THAT(parse({"--opt2=xyz", "--opt1=42", "sub2", "--sub-opt3=b",
                      "--sub-opt1=13", "--sub-opt2=abc"},
                     llvm::errs()),
-              Eq(Args::ParseResult::Success));
+              Eq(CommandLine::ParseResult::Success));
   EXPECT_THAT(integer_option, Eq(42));
   EXPECT_THAT(string_option, StrEq("xyz"));
   EXPECT_THAT(subcommand, Eq(TestSubcommand::Sub2));
@@ -545,7 +610,7 @@ TEST(ArgParserTest, HelpAndVersion) {
   ssize_t storage = -1;
   llvm::StringRef string = "";
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Args::Parse(  // Force line break.
+    return CommandLine::Parse(  // Force line break.
         args, s, s,
         {
             .name = "test",
@@ -665,7 +730,7 @@ A hidden subcommand.
 
   TestRawOstream os;
   EXPECT_THAT(parse({"--flag", "--help"}, os),
-              Eq(Args::ParseResult::MetaSuccess));
+              Eq(CommandLine::ParseResult::MetaSuccess));
   std::string help_flag_output = os.TakeStr();
   EXPECT_THAT(help_flag_output, StrEq(llvm::StringRef(R"""(
 Test Command -- version 1.2.3
@@ -707,10 +772,11 @@ Closing remarks.
 
 )""")
                                           .ltrim('\n')));
-  EXPECT_THAT(parse({"help"}, os), Eq(Args::ParseResult::MetaSuccess));
+  EXPECT_THAT(parse({"help"}, os), Eq(CommandLine::ParseResult::MetaSuccess));
   EXPECT_THAT(os.TakeStr(), StrEq(help_flag_output));
 
-  EXPECT_THAT(parse({"--version"}, os), Eq(Args::ParseResult::MetaSuccess));
+  EXPECT_THAT(parse({"--version"}, os),
+              Eq(CommandLine::ParseResult::MetaSuccess));
   std::string version_flag_output = os.TakeStr();
   EXPECT_THAT(version_flag_output, StrEq(llvm::StringRef(R"""(
 Test Command -- version 1.2.3
@@ -719,11 +785,12 @@ Build timestamp: )""" __TIMESTAMP__ R"""(
 Build config: test-config-info
 )""")
                                              .ltrim('\n')));
-  EXPECT_THAT(parse({"version"}, os), Eq(Args::ParseResult::MetaSuccess));
+  EXPECT_THAT(parse({"version"}, os),
+              Eq(CommandLine::ParseResult::MetaSuccess));
   EXPECT_THAT(os.TakeStr(), StrEq(version_flag_output));
 
   EXPECT_THAT(parse({"--flag", "edit", "--option=42", "--help"}, os),
-              Eq(Args::ParseResult::MetaSuccess));
+              Eq(CommandLine::ParseResult::MetaSuccess));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::StringRef(R"""(
 Edit the widget.
 
@@ -749,7 +816,7 @@ That's all.
                                       .ltrim('\n')));
 
   EXPECT_THAT(parse({"--flag", "run", "--option=abc", "--help"}, os),
-              Eq(Args::ParseResult::MetaSuccess));
+              Eq(CommandLine::ParseResult::MetaSuccess));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::StringRef(R"""(
 Run wombats across the screen.
 
@@ -786,7 +853,7 @@ Or it won't, who knows.
 TEST(ArgParserTest, HelpMarkdownLike) {
   bool flag = false;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Args::Parse(  // Force line break.
+    return CommandLine::Parse(  // Force line break.
         args, s, s, {.name = "test"}, [&](auto& b) {
           b.AddFlag(
               {
@@ -817,7 +884,7 @@ x
   };
 
   TestRawOstream os;
-  EXPECT_THAT(parse({"--help"}, os), Eq(Args::ParseResult::MetaSuccess));
+  EXPECT_THAT(parse({"--help"}, os), Eq(CommandLine::ParseResult::MetaSuccess));
   EXPECT_THAT(os.TakeStr(), StrEq(llvm::StringRef(R"""(
 Usage:
   test [--flag]

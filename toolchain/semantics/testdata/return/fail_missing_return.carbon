@@ -17,6 +17,8 @@
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT: ]
@@ -31,5 +33,7 @@
 // CHECK:STDOUT: ]
 
 fn Main() -> i32 {
-// CHECK:STDERR: fail_missing_return.carbon:[[@LINE+1]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: fail_missing_return.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
 }

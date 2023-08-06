@@ -23,6 +23,7 @@ cc_library(
     hdrs = ["main.h"],
     deps = [
         "//common:error",
+        "//common:ostream",
         "//explorer/common:trace_stream",
         "//explorer/parse_and_execute",
         "@llvm-project//llvm:Support",
@@ -40,21 +41,51 @@ cc_binary(
     ],
 )
 
-file_test(
-    name = "file_test",
+cc_library(
+    name = "file_test_common",
+    testonly = 1,
     srcs = ["file_test.cpp"],
-    # Bazel limits sharding to 50. We have lots of tests, so this should
-    # maximize parallelism.
-    shard_count = 50,
-    tests = glob([
-        "testdata/**/*.carbon",
-        "trace_testdata/**/*.carbon",
-    ]),
     deps = [
-        "//explorer/parse_and_execute",
+        ":main",
+        "//common:check",
         "//testing/file_test:file_test_base",
         "//testing/util:test_raw_ostream",
+        "@com_google_absl//absl/flags:flag",
+        "@com_googlesource_code_re2//:re2",
     ],
+)
+
+file_test(
+    name = "file_test",
+    size = "small",
+    shard_count = 20,
+    tests = glob(["testdata/**/*.carbon"]),
+    deps = [
+        ":file_test_common",
+        "@com_googlesource_code_re2//:re2",
+    ],
+)
+
+file_test(
+    name = "file_test.trace",
+    size = "small",
+    args = ["--trace"],
+    shard_count = 30,
+    tests = glob(
+        ["testdata/**/*.carbon"],
+        exclude = [
+            # `limits` tests check for various limit conditions (such as an
+            # infinite loop). The tests collectively don't test tracing
+            # because it creates substantial additional overhead.
+            "testdata/limits/**",
+            # `trace` tests do tracing by default.
+            "testdata/trace/**",
+            # Expensive tests to trace.
+            "testdata/assoc_const/rewrite_large_type.carbon",
+            "testdata/linked_list/typed_linked_list.carbon",
+        ],
+    ),
+    deps = [":file_test_common"],
 )
 
 glob_sh_run(
@@ -79,4 +110,15 @@ filegroup(
     srcs = glob(["testdata/**/*.carbon"]),
     # Files are used for validating fuzzer completeness.
     visibility = ["//explorer/fuzzing:__pkg__"],
+)
+
+filegroup(
+    name = "treesitter_testdata",
+    srcs = glob(
+        ["testdata/**/*.carbon"],
+        exclude = [
+            "testdata/**/fail_*",
+        ],
+    ),
+    visibility = ["//utils/treesitter:__pkg__"],
 )

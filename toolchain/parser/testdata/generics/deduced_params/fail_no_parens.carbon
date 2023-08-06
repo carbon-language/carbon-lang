@@ -33,14 +33,22 @@
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+1]]:12: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:12: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: class Foo[];
+// CHECK:STDERR:            ^
 class Foo[];
 
-// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+1]]:18: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:18: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: class Foo[a: i32];
+// CHECK:STDERR:                  ^
 class Foo[a: i32];
 
-// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+1]]:17: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:17: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: interface Bar[] {}
+// CHECK:STDERR:                 ^
 interface Bar[] {}
 
-// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+1]]:23: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:23: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: interface Bar[a: i32] {}
+// CHECK:STDERR:                       ^
 interface Bar[a: i32] {}

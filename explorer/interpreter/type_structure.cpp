@@ -7,6 +7,7 @@
 #include <limits>
 
 #include "explorer/ast/declaration.h"
+#include "explorer/ast/expression_category.h"
 #include "explorer/ast/value.h"
 #include "llvm/ADT/StringExtras.h"
 
@@ -76,13 +77,14 @@ struct TypeStructureBuilder {
   // Ignore values that can't contain holes.
   void Visit(int) {}
   void Visit(std::string_view) {}
+  void Visit(ExpressionCategory) {}
   void Visit(Nonnull<const AstNode*>) {}
   void Visit(const ValueNodeView&) {}
   void Visit(const Address&) {}
-  void Visit(const VTable&) {}
+  void Visit(const VTable*) {}
   void Visit(const FunctionType::GenericParameter&) {}
   void Visit(const FunctionType::MethodSelf&) {}
-  void Visit(const NamedElement&) {}
+  void Visit(const NamedElement*) {}
 
   // Constraint types can contain mentions of VariableTypes, but they aren't
   // deducible so it's not important to look for them.

@@ -84,11 +84,11 @@ class TokenizedBuffer::Lexer {
 
   Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
       : buffer_(&buffer),
-        translator_(&buffer, &current_column_),
+        translator_(&buffer),
         emitter_(translator_, consumer),
-        token_translator_(&buffer, &current_column_),
+        token_translator_(&buffer),
         token_emitter_(token_translator_, consumer),
-        current_line_(buffer.AddLine({0, 0, 0})),
+        current_line_(buffer.AddLine(LineInfo(0))),
         current_line_info_(&buffer.GetLineInfo(current_line_)) {}
 
   // Perform the necessary bookkeeping to step past a newline at the current
@@ -97,7 +97,7 @@ class TokenizedBuffer::Lexer {
     current_line_info_->length = current_column_;
 
     current_line_ = buffer_->AddLine(
-        {current_line_info_->start + current_column_ + 1, 0, 0});
+        LineInfo(current_line_info_->start + current_column_ + 1));
     current_line_info_ = &buffer_->GetLineInfo(current_line_);
     current_column_ = 0;
     set_indent_ = false;
@@ -543,7 +543,7 @@ class TokenizedBuffer::Lexer {
   int current_column_ = 0;
   bool set_indent_ = false;
 
-  llvm::SmallVector<Token, 8> open_groups_;
+  llvm::SmallVector<Token> open_groups_;
 };
 
 auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
@@ -897,8 +897,6 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   const auto* line_it = std::partition_point(
       buffer_->line_infos_.begin(), buffer_->line_infos_.end(),
       [offset](const LineInfo& line) { return line.start <= offset; });
-  bool incomplete_line_info = last_line_lexed_to_column_ != nullptr &&
-                              line_it == buffer_->line_infos_.end();
 
   // Step back one line to find the line containing the given position.
   CARBON_CHECK(line_it != buffer_->line_infos_.begin())
@@ -907,23 +905,27 @@ auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
   int line_number = line_it - buffer_->line_infos_.begin();
   int column_number = offset - line_it->start;
 
-  // We might still be lexing the last line. If so, check to see if there are
-  // any newline characters between the position we've finished lexing up to
-  // and the given location.
-  if (incomplete_line_info && column_number > *last_line_lexed_to_column_) {
-    column_number = *last_line_lexed_to_column_;
-    for (int64_t i = line_it->start + *last_line_lexed_to_column_; i != offset;
-         ++i) {
-      if (buffer_->source_->text()[i] == '\n') {
-        ++line_number;
-        column_number = 0;
-      } else {
-        ++column_number;
-      }
+  // Start by grabbing the line from the buffer. If the line isn't fully lexed,
+  // the length will be npos and the line will be grabbed from the known start
+  // to the end of the buffer; we'll then adjust the length.
+  llvm::StringRef line =
+      buffer_->source_->text().substr(line_it->start, line_it->length);
+  if (line_it->length == static_cast<int32_t>(llvm::StringRef::npos)) {
+    CARBON_CHECK(line.take_front(column_number).count('\n') == 0)
+        << "Currently we assume no unlexed newlines prior to the error column, "
+           "but there was one when erroring at "
+        << buffer_->source_->filename() << ":" << line_number << ":"
+        << column_number;
+    // Look for the next newline since we don't know the length. We can start at
+    // the column because prior newlines will have been lexed.
+    auto end_newline_pos = line.find('\n', column_number);
+    if (end_newline_pos != llvm::StringRef::npos) {
+      line = line.take_front(end_newline_pos);
     }
   }
 
-  return {.file_name = buffer_->source_->filename().str(),
+  return {.file_name = buffer_->source_->filename(),
+          .line = line,
           .line_number = line_number + 1,
           .column_number = column_number + 1};
 }
@@ -939,8 +941,7 @@ auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
-  return SourceBufferLocationTranslator(buffer_, last_line_lexed_to_column_)
-      .GetLocation(token_start);
+  return SourceBufferLocationTranslator(buffer_).GetLocation(token_start);
 }
 
 }  // namespace Carbon

@@ -21,6 +21,8 @@
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT:   nodeFloatingPointType,
 // CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
+// CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
@@ -28,7 +30,7 @@
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: nodeError, arg1: node+2, type: typeError},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+3, arg1: node+4, type: typeError},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5, type: typeError},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -49,6 +51,8 @@
 fn Main() -> i32 {
   // The following line has two mismatches, but after the first, it shouldn't
   // keep erroring.
-  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+1]]:13: Cannot implicitly convert from `i32` to `f64`.
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+3]]:13: Cannot implicitly convert from `i32` to `f64`.
+  // CHECK:STDERR:   return 12 + 3.4 + 12;
+  // CHECK:STDERR:             ^
   return 12 + 3.4 + 12;
 }

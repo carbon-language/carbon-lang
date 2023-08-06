@@ -16,13 +16,14 @@
 // CHECK:STDOUT:   Main,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
-// CHECK:STDOUT:   nodeEmptyTupleType,
 // CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT: ]
+// CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1, type: type1},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -37,7 +38,11 @@
 // CHECK:STDOUT: ]
 
 fn Main() {
-  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE+2]]:11: No return expression should be provided in this context.
-  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE-2]]:1: There was no return type provided.
+  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE+6]]:11: No return expression should be provided in this context.
+  // CHECK:STDERR:   return 0;
+  // CHECK:STDERR:           ^
+  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE-4]]:1: There was no return type provided.
+  // CHECK:STDERR: fn Main() {
+  // CHECK:STDERR: ^
   return 0;
 }

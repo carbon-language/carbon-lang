@@ -24,8 +24,11 @@ cc_library(
     srcs = [
         "lowering_context.cpp",
         "lowering_function_context.cpp",
-        "lowering_handle.cpp",
-    ],
+    ] +
+    # Glob handler files to avoid missing any.
+    glob([
+        "lowering_handle*.cpp",
+    ]),
     hdrs = [
         "lowering_context.h",
         "lowering_function_context.h",

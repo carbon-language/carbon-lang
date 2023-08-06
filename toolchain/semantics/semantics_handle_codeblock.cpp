@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/semantics/semantics_context.h"
-#include "toolchain/semantics/semantics_node.h"
 
 namespace Carbon {
 
@@ -17,7 +16,7 @@ auto SemanticsHandleCodeBlockStart(SemanticsContext& context,
 auto SemanticsHandleCodeBlock(SemanticsContext& context,
                               ParseTree::Node /*parse_node*/) -> bool {
   context.PopScope();
-  context.node_stack().PopForSoloParseNode(ParseNodeKind::CodeBlockStart);
+  context.node_stack().PopForSoloParseNode<ParseNodeKind::CodeBlockStart>();
   return true;
 }
 

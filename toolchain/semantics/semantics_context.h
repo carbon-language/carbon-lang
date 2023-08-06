@@ -10,6 +10,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parser/parse_tree.h"
+#include "toolchain/semantics/semantics_declaration_name_stack.h"
 #include "toolchain/semantics/semantics_ir.h"
 #include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_node_block_stack.h"
@@ -20,83 +21,6 @@ namespace Carbon {
 // Context and shared functionality for semantics handlers.
 class SemanticsContext {
  public:
-  // Context for declaration name construction, tracked in
-  // declaration_name_stack_.
-  //
-  // A qualified declaration name will consist of entries which are either
-  // Identifiers or full expressions. Expressions are expected to resolve to
-  // types, such as how `fn Vector(i32).Clear() { ... }` uses the expression
-  // `Vector(i32)` to indicate the type whose member is being declared.
-  // Identifiers such as `Clear` will be resolved to a name if possible, for
-  // example when declaring things that are in a non-generic type or namespace,
-  // and are otherwise marked as an unresolved identifier.
-  //
-  // Unresolved identifiers are valid if and only if they are the last step of a
-  // qualified name; all resolved qualifiers must resolve to an entity with
-  // members, such as a namespace. Resolved identifiers in the last step will
-  // occur for both out-of-line definitions and new declarations, depending on
-  // context.
-  //
-  // Example state transitions:
-  //
-  // ```
-  // // New -> Unresolved, because `MyNamespace` is newly declared.
-  // namespace MyNamespace;
-  //
-  // // New -> Resolved -> Unresolved, because `MyType` is newly declared.
-  // class MyNamespace.MyType;
-  //
-  // // New -> Resolved -> Resolved, because `MyType` was forward declared.
-  // class MyNamespace.MyType {
-  //   // New -> Unresolved, because `DoSomething` is newly declared.
-  //   fn DoSomething();
-  // }
-  //
-  // // New -> Resolved -> Resolved -> ResolvedNonScope, because `DoSomething`
-  // // is forward declared in `MyType`, but is not a scope itself.
-  // fn MyNamespace.MyType.DoSomething() { ... }
-  // ```
-  struct DeclarationNameContext {
-    enum class State {
-      // A new context which has not processed any parts of the qualifier.
-      New,
-
-      // A node ID has been resolved, whether through an identifier or
-      // expression. This provided a new scope, such as a type.
-      Resolved,
-
-      // A node ID has been resolved, whether through an identifier or
-      // expression. It did not provide a new scope, so must be the final part,
-      // such as an out-of-line function definition.
-      ResolvedNonScope,
-
-      // An identifier didn't resolve.
-      Unresolved,
-
-      // An error has occurred, such as an additional qualifier past an
-      // unresolved name. No new diagnostics should be emitted.
-      Error,
-    };
-
-    State state = State::New;
-
-    // The scope which qualified names are added to. For unqualified names,
-    // this will be Invalid to indicate the current scope should be used.
-    SemanticsNameScopeId target_scope_id = SemanticsNameScopeId::Invalid;
-
-    // The last parse node used.
-    ParseTree::Node parse_node = ParseTree::Node::Invalid;
-
-    union {
-      // The ID of a resolved qualifier, including both identifiers and
-      // expressions. Invalid indicates resolution failed.
-      SemanticsNodeId resolved_node_id = SemanticsNodeId::Invalid;
-
-      // The ID of an unresolved identifier.
-      SemanticsStringId unresolved_name_id;
-    };
-  };
-
   // Stores references for work.
   explicit SemanticsContext(const TokenizedBuffer& tokens,
                             DiagnosticEmitter<ParseTree::Node>& emitter,
@@ -124,15 +48,19 @@ class SemanticsContext {
   auto AddNameToLookup(ParseTree::Node name_node, SemanticsStringId name_id,
                        SemanticsNodeId target_id) -> void;
 
-  // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(DeclarationNameContext name_context,
-                       SemanticsNodeId target_id) -> void;
-
   // Performs name lookup in a specified scope, returning the referenced node.
   // If scope_id is invalid, uses the current contextual scope.
   auto LookupName(ParseTree::Node parse_node, SemanticsStringId name_id,
                   SemanticsNameScopeId scope_id, bool print_diagnostics)
       -> SemanticsNodeId;
+
+  // Prints a diagnostic for a duplicate name.
+  auto DiagnoseDuplicateName(ParseTree::Node parse_node,
+                             SemanticsNodeId prev_def_id) -> void;
+
+  // Prints a diagnostic for a missing name.
+  auto DiagnoseNameNotFound(ParseTree::Node parse_node,
+                            SemanticsStringId name_id) -> void;
 
   // Pushes a new scope onto scope_stack_.
   auto PushScope() -> void;
@@ -182,20 +110,6 @@ class SemanticsContext {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
-  // Pushes processing of a new declaration name, which will be used
-  // contextually.
-  auto PushDeclarationName() -> void;
-
-  // Pops the current declaration name processing, returning the final context
-  // for adding the name to lookup. This also pops the final name node from the
-  // node stack, which will be applied to the declaration name if appropriate.
-  auto PopDeclarationName() -> DeclarationNameContext;
-
-  // Applies an entry from the node stack to the top of the declaration name
-  // stack.
-  auto ApplyDeclarationNameQualifier(ParseTree::Node parse_node,
-                                     SemanticsNodeId node_or_name_id) -> void;
-
   // Runs ImplicitAsImpl for a set of arguments and parameters.
   //
   // This will eventually need to support checking against multiple possible
@@ -233,13 +147,30 @@ class SemanticsContext {
   auto CanonicalizeStructType(ParseTree::Node parse_node,
                               SemanticsNodeBlockId refs_id) -> SemanticsTypeId;
 
+  // Handles canonicalization of tuple types. This may create a new tuple type
+  // if the `type_ids` doesn't match an existing tuple type.
+  auto CanonicalizeTupleType(ParseTree::Node parse_node,
+                             llvm::SmallVector<SemanticsTypeId>&& type_ids)
+      -> SemanticsTypeId;
+
   // Converts an expression for use as a type.
   // TODO: This should eventually return a type ID.
   auto ExpressionAsType(ParseTree::Node parse_node, SemanticsNodeId value_id)
       -> SemanticsTypeId {
+    auto node = semantics_ir_->GetNode(value_id);
+    if (node.kind() == SemanticsNodeKind::StubReference) {
+      value_id = node.GetAsStubReference();
+      CARBON_CHECK(semantics_ir_->GetNode(value_id).kind() !=
+                   SemanticsNodeKind::StubReference)
+          << "Stub reference should not point to another stub reference";
+    }
+
     return CanonicalizeType(
         ImplicitAsRequired(parse_node, value_id, SemanticsTypeId::TypeType));
   }
+
+  // Removes any top-level `const` qualifiers from a type.
+  auto GetUnqualifiedType(SemanticsTypeId type_id) -> SemanticsTypeId;
 
   // Starts handling parameters or arguments.
   auto ParamOrArgStart() -> void;
@@ -286,6 +217,10 @@ class SemanticsContext {
     return return_scope_stack_;
   }
 
+  auto declaration_name_stack() -> SemanticsDeclarationNameStack& {
+    return declaration_name_stack_;
+  }
+
  private:
   // For CanImplicitAs, the detected conversion to apply.
   enum ImplicitAsKind {
@@ -297,11 +232,11 @@ class SemanticsContext {
     Compatible,
   };
 
-  // A FoldingSet node for a struct type.
-  class StructTypeNode : public llvm::FastFoldingSetNode {
+  // A FoldingSet node for a type.
+  class TypeNode : public llvm::FastFoldingSetNode {
    public:
-    explicit StructTypeNode(const llvm::FoldingSetNodeID& node_id,
-                            SemanticsTypeId type_id)
+    explicit TypeNode(const llvm::FoldingSetNodeID& node_id,
+                      SemanticsTypeId type_id)
         : llvm::FastFoldingSetNode(node_id), type_id_(type_id) {}
 
     auto type_id() -> SemanticsTypeId { return type_id_; }
@@ -329,6 +264,30 @@ class SemanticsContext {
   // cast.
   auto ImplicitAsImpl(SemanticsNodeId value_id, SemanticsTypeId as_type_id,
                       SemanticsNodeId* output_value_id) -> ImplicitAsKind;
+
+  // Forms a canonical type ID for a type. This function is given two
+  // callbacks:
+  //
+  // `profile_type(canonical_id)` is called to build a fingerprint for this
+  // type. The ID should be distinct for all distinct type values with the same
+  // `kind`.
+  //
+  // `make_node()` is called to obtain a `SemanticsNodeId` that describes the
+  // type. It is only called if the type does not already exist, so can be used
+  // to lazily build the `SemanticsNode`. `make_node()` is not permitted to
+  // directly or indirectly canonicalize any types.
+  auto CanonicalizeTypeImpl(
+      SemanticsNodeKind kind,
+      llvm::function_ref<void(llvm::FoldingSetNodeID& canonical_id)>
+          profile_type,
+      llvm::function_ref<SemanticsNodeId()> make_node) -> SemanticsTypeId;
+
+  // Forms a canonical type ID for an already-existing node describing a type.
+  template <typename ProfileType>
+  auto CanonicalizeTypeImpl(SemanticsNodeKind kind, SemanticsNodeId node_id,
+                            ProfileType profile_type) -> SemanticsTypeId {
+    return CanonicalizeTypeImpl(kind, profile_type, [&] { return node_id; });
+  }
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
 
@@ -372,9 +331,8 @@ class SemanticsContext {
   // A stack for scope context.
   llvm::SmallVector<ScopeStackEntry> scope_stack_;
 
-  // A stack for declaration name context. See DeclarationNameContext for
-  // details.
-  llvm::SmallVector<DeclarationNameContext> declaration_name_stack_;
+  // The stack used for qualified declaration name construction.
+  SemanticsDeclarationNameStack declaration_name_stack_;
 
   // Maps identifiers to name lookup results. Values are a stack of name lookup
   // results in the ancestor scopes. This offers constant-time lookup of names,
@@ -385,18 +343,16 @@ class SemanticsContext {
   llvm::DenseMap<SemanticsStringId, llvm::SmallVector<SemanticsNodeId>>
       name_lookup_;
 
-  // Tracks types which have been used, so that they aren't repeatedly added to
-  // SemanticsIR.
+  // Cache of the mapping from nodes to types, to avoid recomputing the folding
+  // set ID.
   llvm::DenseMap<SemanticsNodeId, SemanticsTypeId> canonical_types_;
 
-  // Tracks struct type literals which have been defined, so that they aren't
-  // repeatedly redefined.
-  llvm::FoldingSet<StructTypeNode> canonical_struct_types_;
+  // Tracks the canonical representation of types that have been defined.
+  llvm::FoldingSet<TypeNode> canonical_type_nodes_;
 
-  // Storage for the nodes in canonical_struct_types_. This stores in pointers
-  // so that canonical_struct_types_ can have stable pointers.
-  llvm::SmallVector<std::unique_ptr<StructTypeNode>>
-      canonical_struct_types_nodes_;
+  // Storage for the nodes in canonical_type_nodes_. This stores in pointers so
+  // that FoldingSet can have stable pointers.
+  llvm::SmallVector<std::unique_ptr<TypeNode>> type_node_storage_;
 };
 
 // Parse node handlers. Returns false for unrecoverable errors.
