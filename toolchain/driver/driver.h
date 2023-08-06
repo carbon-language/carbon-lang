@@ -45,7 +45,7 @@ class Driver {
   struct CompileOptions;
 
   auto ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)
-      -> Args::ParseResult;
+      -> CommandLine::ParseResult;
   auto Compile(const CompileOptions& options) -> bool;
 
   llvm::vfs::FileSystem& fs_;

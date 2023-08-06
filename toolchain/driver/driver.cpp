@@ -27,7 +27,7 @@
 namespace Carbon {
 
 struct Driver::CompileOptions {
-  static constexpr Args::CommandInfo Info = {
+  static constexpr CommandLine::CommandInfo Info = {
       .name = "compile",
       .help = R"""(
 Compile Carbon source code.
@@ -72,7 +72,7 @@ can be written to standard output as these phases progress.
     return out;
   }
 
-  void Build(Args::CommandBuilder& b) {
+  void Build(CommandLine::CommandBuilder& b) {
     b.AddStringPositionalArg(
         {
             .name = "FILE",
@@ -257,7 +257,7 @@ Dump the generated assembly to stdout after codegen.
 };
 
 struct Driver::Options {
-  static constexpr Args::CommandInfo Info = {
+  static constexpr CommandLine::CommandInfo Info = {
       .name = "carbon",
       // TODO: Setup more detailed version information and use that here.
       .version = R"""(
@@ -280,7 +280,7 @@ For questions, issues, or bug reports, please use our GitHub project:
     Compile,
   };
 
-  void Build(Args::CommandBuilder& b) {
+  void Build(CommandLine::CommandBuilder& b) {
     b.AddFlag(
         {
             .name = "verbose",
@@ -304,17 +304,17 @@ For questions, issues, or bug reports, please use our GitHub project:
 };
 
 auto Driver::ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)
-    -> Args::ParseResult {
-  return Args::Parse(args, output_stream_, error_stream_, Options::Info,
+    -> CommandLine::ParseResult {
+  return CommandLine::Parse(args, output_stream_, error_stream_, Options::Info,
                      [&](auto& b) { options.Build(b); });
 }
 
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   Options options;
-  Args::ParseResult result = ParseArgs(args, options);
-  if (result == Args::ParseResult::Error) {
+  CommandLine::ParseResult result = ParseArgs(args, options);
+  if (result == CommandLine::ParseResult::Error) {
     return false;
-  } else if (result == Args::ParseResult::MetaSuccess) {
+  } else if (result == CommandLine::ParseResult::MetaSuccess) {
     return true;
   }
 
@@ -345,7 +345,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   CARBON_VLOG() << "*** SourceBuffer::CreateFromFile done ***\n";
   // Require flushing the consumer before the source buffer is destroyed,
   // because diagnostics may reference the buffer.
-  auto flush = llvm::make_scope_exit([&]() { consumer.Flush(); });
+  auto flush = llvm::make_scope_exit([&]() { consumer->Flush(); });
   if (!source.ok()) {
     error_stream_ << "ERROR: Unable to open input source file: "
                   << source.error();
