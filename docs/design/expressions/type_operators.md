@@ -46,7 +46,7 @@ Because these are type operators, they don't have many precedence relationship
 with non-type operators.
 
 -   `const` binds more tightly than `*` and can appear unparenthesized in an
-    operand, despite being both a unary type and having whitespace separating
+    operand, despite being both a unary operator and having whitespace separating
     it.
     -   This allows the syntax of a pointer to a `const i32` to be `const i32*`,
         which is intended to be familiar to C++ developers.
