@@ -51,7 +51,15 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
               resume_block_id));
       return true;
     }
-
+    case TokenKind::Equal: {
+      // TODO: handle complex assignment expression such as `a += 1`.
+      // TODO: check if lhs node is assignable.
+      context.ImplicitAsRequired(
+          parse_node, rhs_id, context.semantics_ir().GetNode(lhs_id).type_id());
+      context.AddNodeAndPush(
+          parse_node, SemanticsNode::Assign::Make(parse_node, lhs_id, rhs_id));
+      return true;
+    }
     default:
       return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
   }

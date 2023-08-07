@@ -151,6 +151,20 @@ auto LoweringHandleFunctionDeclaration(LoweringFunctionContext& /*context*/,
       << node;
 }
 
+auto LoweringHandleIndex(LoweringFunctionContext& context,
+                         SemanticsNodeId node_id, SemanticsNode node) -> void {
+  auto [tuple_node_id, index_node_id] = node.GetAsIndex();
+  auto* llvm_type =
+      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
+  auto index_node = context.semantics_ir().GetNode(index_node_id);
+  const auto index = context.semantics_ir()
+                         .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
+                         .getZExtValue();
+  auto* gep = context.builder().CreateStructGEP(
+      llvm_type, context.GetLocal(tuple_node_id), index, "Index");
+  context.SetLocal(node_id, gep);
+}
+
 auto LoweringHandleIntegerLiteral(LoweringFunctionContext& context,
                                   SemanticsNodeId node_id, SemanticsNode node)
     -> void {
