@@ -462,6 +462,12 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
         continue;
       }
 
+      case SemanticsNodeKind::Index: {
+        auto [base_id, index_id] = node.GetAsIndex();
+        node_id = base_id;
+        continue;
+      }
+
       case SemanticsNodeKind::StubReference: {
         node_id = node.GetAsStubReference();
         continue;

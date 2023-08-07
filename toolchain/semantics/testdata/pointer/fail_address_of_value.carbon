@@ -11,6 +11,7 @@
 // CHECK:STDOUT:   {name: str5, param_refs: block0, body: {block7}}},
 // CHECK:STDOUT:   {name: str6, param_refs: block0, body: {block8}}},
 // CHECK:STDOUT:   {name: str7, param_refs: block0, body: {block9}}},
+// CHECK:STDOUT:   {name: str8, param_refs: block0, body: {block10}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -19,6 +20,9 @@
 // CHECK:STDOUT:   5,
 // CHECK:STDOUT:   1,
 // CHECK:STDOUT:   1,
+// CHECK:STDOUT:   1,
+// CHECK:STDOUT:   2,
+// CHECK:STDOUT:   0,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT:   {mantissa: 10, exponent: -1, is_decimal: 1},
@@ -32,6 +36,7 @@
 // CHECK:STDOUT:   AddressOfOperator,
 // CHECK:STDOUT:   AddressOfCall,
 // CHECK:STDOUT:   AddressOfType,
+// CHECK:STDOUT:   AddressOfTupleElementValue,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
@@ -111,6 +116,16 @@
 // CHECK:STDOUT:   {kind: PointerType, arg0: type13, type: typeTypeType},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+52, type: type12},
 // CHECK:STDOUT:   {kind: Return},
+// CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function6},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int6, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+56, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int7, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+58, type: type0},
+// CHECK:STDOUT:   {kind: TupleValue, arg0: block11, type: type9},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int8, type: type0},
+// CHECK:STDOUT:   {kind: Index, arg0: node+60, arg1: node+61, type: type0},
+// CHECK:STDOUT:   {kind: AddressOf, arg0: node+62, type: type2},
+// CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -124,6 +139,7 @@
 // CHECK:STDOUT:     node+32,
 // CHECK:STDOUT:     node+44,
 // CHECK:STDOUT:     node+48,
+// CHECK:STDOUT:     node+55,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
@@ -192,6 +208,21 @@
 // CHECK:STDOUT:     node+53,
 // CHECK:STDOUT:     node+54,
 // CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+56,
+// CHECK:STDOUT:     node+57,
+// CHECK:STDOUT:     node+58,
+// CHECK:STDOUT:     node+59,
+// CHECK:STDOUT:     node+60,
+// CHECK:STDOUT:     node+61,
+// CHECK:STDOUT:     node+62,
+// CHECK:STDOUT:     node+63,
+// CHECK:STDOUT:     node+64,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+57,
+// CHECK:STDOUT:     node+59,
+// CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 
 fn G() -> i32;
@@ -256,4 +287,11 @@ fn AddressOfType() {
   // CHECK:STDERR:   &(const i32*);
   // CHECK:STDERR:   ^
   &(const i32*);
+}
+
+fn AddressOfTupleElementValue() {
+  // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: Cannot take the address of non-reference expression.
+  // CHECK:STDERR:   &((1, 2)[0]);
+  // CHECK:STDERR:   ^
+  &((1, 2)[0]);
 }
