@@ -2,13 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// AUTOUPDATE:STDERR
 
 // CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:28: Cannot implicitly convert from `{.b: {}}` to `{.a: {}}`.
 // CHECK:STDERR: var x: {.a: {}} = {.b = {}};
 // CHECK:STDERR:                            ^
 var x: {.a: {}} = {.b = {}};
 
+// AUTOUPDATE:STDOUT
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]

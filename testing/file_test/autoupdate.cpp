@@ -195,12 +195,11 @@ static auto AddCheckLines(
 auto AutoupdateFileTest(
     const std::filesystem::path& file_test_path, llvm::StringRef input_content,
     const llvm::SmallVector<llvm::StringRef>& filenames,
-    int autoupdate_line_number,
+    int autoupdate_stdout_line_number, int autoupdate_stderr_line_number,
     llvm::SmallVector<llvm::SmallVector<FileTestLine>>& non_check_lines,
     llvm::StringRef stdout, llvm::StringRef stderr,
     FileTestLineNumberReplacement line_number_replacement,
-    std::function<void(std::string&)> do_extra_check_replacements,
-    bool stdout_at_end) -> bool {
+    std::function<void(std::string&)> do_extra_check_replacements) -> bool {
   // Prepare CHECK lines.
   llvm::SmallVector<llvm::SmallVector<CheckLine>> check_lines;
   check_lines.resize(filenames.size());
@@ -208,21 +207,21 @@ auto AutoupdateFileTest(
   CARBON_CHECK(line_number_re.ok()) << "Invalid line replacement RE2: `"
                                     << line_number_replacement.pattern << "`";
 
-  if (stdout_at_end) {
-    AddCheckLines(stderr, "STDERR", filenames, line_number_replacement.has_file,
-                  line_number_re, do_extra_check_replacements, check_lines);
+  if (autoupdate_stdout_line_number <= autoupdate_stderr_line_number) {
     AddCheckLines(stdout, "STDOUT", filenames, line_number_replacement.has_file,
                   line_number_re, do_extra_check_replacements, check_lines,
-                  INT_MAX);
-  } else {
-    AddCheckLines(stdout, "STDOUT", filenames, line_number_replacement.has_file,
-                  line_number_re, do_extra_check_replacements, check_lines);
+                  autoupdate_stdout_line_number + 1);
     AddCheckLines(stderr, "STDERR", filenames, line_number_replacement.has_file,
-                  line_number_re, do_extra_check_replacements, check_lines);
+                  line_number_re, do_extra_check_replacements, check_lines,
+                  autoupdate_stderr_line_number + 1);
+  } else {
+    AddCheckLines(stderr, "STDERR", filenames, line_number_replacement.has_file,
+                  line_number_re, do_extra_check_replacements, check_lines,
+                  autoupdate_stderr_line_number + 1);
+    AddCheckLines(stdout, "STDOUT", filenames, line_number_replacement.has_file,
+                  line_number_re, do_extra_check_replacements, check_lines,
+                  autoupdate_stdout_line_number + 1);
   }
-
-  // All CHECK lines are suppressed until we reach AUTOUPDATE.
-  bool reached_autoupdate = false;
 
   // Stitch together content.
   llvm::SmallVector<const FileTestLineBase*> new_lines;
@@ -243,18 +242,12 @@ auto AutoupdateFileTest(
         continue;
       }
 
-      if (reached_autoupdate) {
-        for (; check_line != check_file.end() &&
-               check_line->line_number() <= non_check_line.line_number();
-             ++check_line) {
-          new_lines.push_back(check_line);
-          check_line->SetOutputLine(non_check_line.indent(),
-                                    ++output_line_number);
-        }
-      } else if (autoupdate_line_number == non_check_line.line_number()) {
-        // This is the AUTOUPDATE line, so we'll print it, then start printing
-        // CHECK lines.
-        reached_autoupdate = true;
+      for (; check_line != check_file.end() &&
+             check_line->line_number() <= non_check_line.line_number();
+           ++check_line) {
+        new_lines.push_back(check_line);
+        check_line->SetOutputLine(non_check_line.indent(),
+                                  ++output_line_number);
       }
       new_lines.push_back(&non_check_line);
       CARBON_CHECK(
@@ -262,9 +255,6 @@ auto AutoupdateFileTest(
               .insert({non_check_line.line_number(), ++output_line_number})
               .second);
     }
-
-    // This should always be true after the first file is processed.
-    CARBON_CHECK(reached_autoupdate);
 
     // Print remaining check lines which -- for whatever reason -- come after
     // all original lines.

@@ -2,12 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// AUTOUPDATE:STDERR
 
 fn F(a: bool, b: bool, c: bool) -> i32 {
   return if a then if b then 1 else 2 else if c then 3 else 4;
 }
 
+// AUTOUPDATE:STDOUT
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4, block5, block7, block8, block9, block6, block10, block11, block12, block13}}},

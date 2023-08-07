@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// AUTOUPDATE:STDERR
 
 fn Foo(a: i32, b: i32, c: i32) {}
 
@@ -11,6 +11,7 @@ fn Main() {
   Foo(1 + 2 + 3, 4 + 5, 6);
 }
 
+// AUTOUPDATE:STDOUT
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, body: {block4}}},

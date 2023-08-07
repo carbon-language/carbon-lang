@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// AUTOUPDATE:STDERR
 
 fn Main() -> i32 {
   // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+3]]:9: Must return a i32.
@@ -11,6 +11,7 @@ fn Main() -> i32 {
   return;
 }
 
+// AUTOUPDATE:STDOUT
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},

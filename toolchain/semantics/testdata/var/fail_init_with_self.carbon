@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// AUTOUPDATE:STDERR
 
 fn Main() {
   // CHECK:STDERR: fail_init_with_self.carbon:[[@LINE+3]]:16: Name `x` not found
@@ -11,6 +11,7 @@ fn Main() {
   var x: i32 = x;
 }
 
+// AUTOUPDATE:STDOUT
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},

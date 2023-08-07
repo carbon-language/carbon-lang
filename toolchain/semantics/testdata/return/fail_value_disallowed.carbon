@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// AUTOUPDATE:STDERR
 
 fn Main() {
   // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE+6]]:11: No return expression should be provided in this context.
@@ -14,6 +14,7 @@ fn Main() {
   return 0;
 }
 
+// AUTOUPDATE:STDOUT
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},

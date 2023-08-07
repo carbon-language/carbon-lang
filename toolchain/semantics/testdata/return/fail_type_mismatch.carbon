@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// AUTOUPDATE:STDERR
 
 fn Main() -> i32 {
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:13: Cannot implicitly convert from `f64` to `i32`.
@@ -11,6 +11,7 @@ fn Main() -> i32 {
   return 1.0;
 }
 
+// AUTOUPDATE:STDOUT
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},

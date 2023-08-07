@@ -75,26 +75,27 @@ Supported comment markers are:
 
 -   ```
     // AUTOUDPATE
+    // AUTOUDPATE:STDOUT
+    // AUTOUDPATE:STDERR
     // NOAUTOUPDATE
     ```
 
     Controls whether the checks in the file will be autoupdated if --autoupdate
-    is passed. Exactly one of these two markers must be present. If the file
-    uses splits, AUTOUPDATE must currently be before any splits.
+    is passed. AUTOUPDATE is equivalent to AUTOUPDATE:STDOUT followed by
+    AUTOUPDATE:STDERR. A test must specify either NOAUTOUPDATE or both
+    AUTOUPDATE markers. If the file uses splits, the AUTOUPDATE markers must
+    currently be before any splits.
 
-    When autoupdating, CHECKs will be inserted starting below AUTOUPDATE. When a
-    CHECK has line information, autoupdate will try to insert the CHECK
-    immediately above the line it's associated with. When that happens, any
-    following CHECK lines without line information will immediately follow,
-    between the CHECK with line information and the associated line.
+    When autoupdating, CHECKs will be inserted starting below the corresponding
+    AUTOUPDATE. When a CHECK has line information, autoupdate will try to insert
+    the CHECK immediately above the line it's associated with. When that
+    happens, any following CHECK lines without line information will immediately
+    follow, between the CHECK with line information and the associated line.
 
-    By default, all `STDOUT` check lines are ordered before all `STDERR` check
-    lines, so unless a `STDOUT` line references a line number, all `STDOUT`
-    check lines will appear immediately after the `AUTOUPDATE` marker. This
-    behavior can be customized by returning true from an override of
-    `FileTestBase::CheckStdoutAtEnd`, in which case the `STDERR` check lines
-    will appear starting from the `AUTOUPDATE` marker and the `STDOUT` check
-    lines will be written to the end of the file.
+    CHECK lines are not reordered or interleaved. If the STDOUT marker is first
+    in the file or the plain AUTOUPDATE marker is used, all STDOUT CHECKs will
+    precede all STDERR CHECKs, and if the STDERR marker is first in the file,
+    all STDERR CHECKs will precede all STDOUT CHECKs.
 
 -   `// ARGS: <arguments>`
 

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// AUTOUPDATE:STDERR
 
 var a: (i32, i32) = (12, 6);
 // CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:19: Type cannot be determined at compile time.
@@ -10,6 +10,7 @@ var a: (i32, i32) = (12, 6);
 // CHECK:STDERR:                   ^
 var b: i32 = a[2.6];
 
+// AUTOUPDATE:STDOUT
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]

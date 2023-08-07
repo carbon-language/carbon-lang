@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// AUTOUPDATE:STDERR
 
 namespace Foo;
 namespace Foo.Bar;
@@ -14,6 +14,7 @@ fn Foo.Bar.Baz() {
   Foo.Bar.Wiz();
 }
 
+// AUTOUPDATE:STDOUT
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str2, param_refs: block0, body: {block2}}},

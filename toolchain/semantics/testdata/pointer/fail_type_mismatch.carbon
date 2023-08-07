@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// AUTOUPDATE:STDERR
 
 fn ConstMismatch(p: const {}*) -> const ({}*) {
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:11: Cannot implicitly convert from `const {}*` to `const ({}*)`.
@@ -11,6 +11,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
   return p;
 }
 
+// AUTOUPDATE:STDOUT
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type4, body: {block4}}},

@@ -17,8 +17,6 @@ class SemanticsFileTest : public DriverFileTestBase {
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
     return {"dump", "semantics-ir", "%s"};
   }
-
-  auto CheckStdoutAtEnd() -> bool override { return true; }
 };
 
 }  // namespace

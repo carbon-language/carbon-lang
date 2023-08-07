@@ -28,12 +28,11 @@ struct FileTestLineNumberReplacement {
 auto AutoupdateFileTest(
     const std::filesystem::path& file_test_path, llvm::StringRef input_content,
     const llvm::SmallVector<llvm::StringRef>& filenames,
-    int autoupdate_line_number,
+    int autoupdate_stdout_line_number, int autoupdate_stderr_line_number,
     llvm::SmallVector<llvm::SmallVector<FileTestLine>>& non_check_lines,
     llvm::StringRef stdout, llvm::StringRef stderr,
     FileTestLineNumberReplacement line_number_replacement,
-    std::function<void(std::string&)> do_extra_check_replacements,
-    bool stdout_at_end) -> bool;
+    std::function<void(std::string&)> do_extra_check_replacements) -> bool;
 
 }  // namespace Carbon::Testing
 

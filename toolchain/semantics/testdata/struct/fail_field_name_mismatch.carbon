@@ -2,13 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// AUTOUPDATE:STDERR
 
 // CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:28: Cannot implicitly convert from `{.b: i32}` to `{.a: i32}`.
 // CHECK:STDERR: var x: {.a: i32} = {.b = 1};
 // CHECK:STDERR:                            ^
 var x: {.a: i32} = {.b = 1};
 
+// AUTOUPDATE:STDOUT
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]

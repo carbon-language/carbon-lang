@@ -89,7 +89,10 @@ auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
     return ErrorBuilder() << "Error updating " << GetTestFilename() << ": "
                           << run_result.error();
   }
-  if (!context.autoupdate_line_number) {
+
+  CARBON_CHECK(context.autoupdate_stdout_line_number.has_value() ==
+               context.autoupdate_stderr_line_number.has_value());
+  if (!context.autoupdate_stdout_line_number) {
     return false;
   }
 
@@ -109,11 +112,12 @@ auto FileTestBase::Autoupdate() -> ErrorOr<bool> {
   }
 
   return AutoupdateFileTest(
-      path(), context.input_content, filenames, *context.autoupdate_line_number,
-      context.non_check_lines, context.stdout, context.stderr,
+      path(), context.input_content, filenames,
+      *context.autoupdate_stdout_line_number,
+      *context.autoupdate_stderr_line_number, context.non_check_lines,
+      context.stdout, context.stderr,
       GetLineNumberReplacement(filenames_for_line_number),
-      [&](std::string& line) { DoExtraCheckReplacements(line); },
-      CheckStdoutAtEnd());
+      [&](std::string& line) { DoExtraCheckReplacements(line); });
 }
 
 auto FileTestBase::GetLineNumberReplacement(
@@ -204,8 +208,8 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
   // (which may be never).
   bool found_content_pre_split = false;
 
-  // Whether either AUTOUDPATE or NOAUTOUPDATE was found.
-  bool found_autoupdate = false;
+  // Whether NOAUTOUPDATE was found.
+  bool found_noautoupdate = false;
 
   // The index in the current test file. Will be reset on splits.
   int line_index = 0;
@@ -224,7 +228,8 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
 
     static constexpr llvm::StringLiteral SplitPrefix = "// ---";
     if (line_trimmed.consume_front(SplitPrefix)) {
-      if (!found_autoupdate) {
+      if (!found_noautoupdate && !(context.autoupdate_stdout_line_number &&
+                                   context.autoupdate_stderr_line_number)) {
         // If there's a split, all output is appended at the end of each file
         // before AUTOUPDATE. We may want to change that, but it's not necessary
         // to handle right now.
@@ -288,15 +293,35 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
           return ErrorBuilder()
                  << "ARGS was specified multiple times: " << line.str();
         }
-      } else if (line_trimmed == "// AUTOUPDATE" ||
-                 line_trimmed == "// NOAUTOUPDATE") {
-        if (found_autoupdate) {
-          return ErrorBuilder()
-                 << "Multiple AUTOUPDATE/NOAUTOUPDATE settings found";
+      } else if (line_trimmed == "// NOAUTOUPDATE") {
+        if (found_noautoupdate) {
+          return ErrorBuilder() << "Multiple NOAUTOUPDATE settings found";
         }
-        found_autoupdate = true;
-        if (line_trimmed == "// AUTOUPDATE") {
-          context.autoupdate_line_number = line_index;
+        found_noautoupdate = true;
+      } else if (line_trimmed.consume_front("// AUTOUPDATE")) {
+        bool update_stdout = line_trimmed.empty() || line_trimmed == ":STDOUT";
+        bool update_stderr = line_trimmed.empty() || line_trimmed == ":STDERR";
+        if (!update_stdout && !update_stderr) {
+          return ErrorBuilder()
+                 << "Invalid AUTOUPDATE setting found: expected AUTOUPDATE, "
+                    "AUTOUPDATE:STDOUT, or AUTOUPDATE:STDERR";
+        }
+        bool stdout_conflict =
+            update_stdout && context.autoupdate_stdout_line_number;
+        bool stderr_conflict =
+            update_stderr && context.autoupdate_stderr_line_number;
+        if (stdout_conflict || stderr_conflict) {
+          return ErrorBuilder() << "Multiple AUTOUPDATE"
+                                << ((stdout_conflict && stderr_conflict) ? ""
+                                    : stdout_conflict ? ":STDOUT"
+                                                      : ":STDERR")
+                                << " settings found";
+        }
+        if (update_stdout) {
+          context.autoupdate_stdout_line_number = line_index;
+        }
+        if (update_stderr) {
+          context.autoupdate_stderr_line_number = line_index;
         }
       } else if (line_trimmed == "// SET-CHECK-SUBSET") {
         if (!context.check_subset) {
@@ -309,7 +334,14 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
     }
   }
 
-  if (!found_autoupdate) {
+  if (found_noautoupdate && (context.autoupdate_stdout_line_number ||
+                             context.autoupdate_stderr_line_number)) {
+    return ErrorBuilder()
+           << "Inconsistent AUTOUPDATE/NOAUTOUPDATE settings found";
+  }
+
+  if (!found_noautoupdate && !(context.autoupdate_stdout_line_number &&
+                               context.autoupdate_stderr_line_number)) {
     return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting";
   }
 

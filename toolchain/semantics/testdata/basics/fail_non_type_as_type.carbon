@@ -2,13 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// AUTOUPDATE:STDERR
 
 // CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+3]]:17: Cannot implicitly convert from `i32` to `type`.
 // CHECK:STDERR: var x: type = 42;
 // CHECK:STDERR:                 ^
 var x: type = 42;
 
+// AUTOUPDATE:STDOUT
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]

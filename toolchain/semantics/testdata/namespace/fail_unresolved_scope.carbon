@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// AUTOUPDATE
+// AUTOUPDATE:STDERR
 
 // CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+3]]:4: Name `Foo` not found
 // CHECK:STDERR: fn Foo.Baz() {
@@ -10,6 +10,7 @@
 fn Foo.Baz() {
 }
 
+// AUTOUPDATE:STDOUT
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str<invalid>, param_refs: block0, body: {block2}}},
