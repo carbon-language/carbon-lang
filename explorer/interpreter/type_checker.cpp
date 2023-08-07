@@ -6044,10 +6044,10 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 
   // Bring the deduced parameters into scope.
   for (Nonnull<GenericBinding*> deduced : impl_decl->deduced_parameters()) {
-    generic_bindings.push_back(deduced);
     CARBON_RETURN_IF_ERROR(
         TypeCheckPattern(deduced, PatternRequirements::Irrefutable,
                          std::nullopt, impl_scope, ExpressionCategory::Value));
+    CollectAndNumberGenericBindingsInPattern(deduced, generic_bindings);
     CollectImplBindingsInPattern(deduced, impl_bindings);
   }
   impl_decl->set_impl_bindings(impl_bindings);
