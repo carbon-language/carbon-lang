@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "explorer/ast/ast_node.h"
 #include "explorer/ast/ast_rtti.h"
@@ -300,11 +301,8 @@ class GenericBinding : public Pattern {
   // The index of this binding, which is the number of bindings that are in
   // scope at the point where this binding is declared.
   auto index() const -> int {
-    if (index_) {
-      return *index_;
-    } else {
-      return 0;
-    }
+    CARBON_CHECK(index_);
+    return *index_;
   }
 
   // Set the index of this binding. Should be called only during type-checking.
