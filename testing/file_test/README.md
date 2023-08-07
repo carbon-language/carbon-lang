@@ -88,6 +88,14 @@ Supported comment markers are:
     following CHECK lines without line information will immediately follow,
     between the CHECK with line information and the associated line.
 
+    By default, all `STDOUT` check lines are ordered before all `STDERR` check
+    lines, so unless a `STDOUT` line references a line number, all `STDOUT`
+    check lines will appear immediately after the `AUTOUPDATE` marker. This
+    behavior can be customized by returning true from an override of
+    `FileTestBase::CheckStdoutAtEnd`, in which case the `STDERR` check lines
+    will appear starting from the `AUTOUPDATE` marker and the `STDOUT` check
+    lines will be written to the end of the file.
+
 -   `// ARGS: <arguments>`
 
     Provides a space-separated list of arguments, which will be passed to
