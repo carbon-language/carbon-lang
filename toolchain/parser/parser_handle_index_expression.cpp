@@ -23,7 +23,7 @@ auto ParserHandleIndexExpressionFinish(ParserContext& context) -> void {
     CARBON_DIAGNOSTIC(UnexpectedTokenInIndex, Error,
                       "Unexpected token in index expression");
     context.emitter().Emit(*context.position(), UnexpectedTokenInIndex);
-    context.ReturnErrorOnState();
+    state.has_error = true;
     context.SkipTo(*context.FindNextOf({TokenKind::CloseSquareBracket}));
   }
   context.AddNode(ParseNodeKind::IndexExpression,
