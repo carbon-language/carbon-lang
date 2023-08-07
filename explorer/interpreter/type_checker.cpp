@@ -4,7 +4,6 @@
 
 #include "explorer/interpreter/type_checker.h"
 
-#include <algorithm>
 #include <deque>
 #include <iterator>
 #include <map>
@@ -13,7 +12,6 @@
 #include <string>
 #include <string_view>
 #include <tuple>
-#include <unordered_set>
 #include <vector>
 
 #include "common/check.h"
@@ -26,14 +24,12 @@
 #include "explorer/ast/value_transform.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
-#include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
 #include "explorer/common/trace_stream.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
 #include "explorer/interpreter/type_structure.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
