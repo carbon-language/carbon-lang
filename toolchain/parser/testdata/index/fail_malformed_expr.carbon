@@ -12,12 +12,12 @@
 // CHECK:STDOUT:       {kind: 'NameExpression', text: 't'},
 // CHECK:STDOUT:     {kind: 'IndexExpressionStart', text: '[', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'Literal', text: '0'},
-// CHECK:STDOUT:   {kind: 'IndexExpression', text: ']', subtree_size: 4},
-// CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', has_error: yes, subtree_size: 10},
+// CHECK:STDOUT:   {kind: 'IndexExpression', text: ']', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 10},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
 
-// CHECK:STDERR: fail_malformed_expr.carbon:[[@LINE+3]]:17: Unexpected token in index expression
+// CHECK:STDERR: fail_malformed_expr.carbon:[[@LINE+3]]:17: Unexpected tokens before `]`.
 // CHECK:STDERR: var v: i32 = t[0,];
 // CHECK:STDERR:                 ^
 var v: i32 = t[0,];

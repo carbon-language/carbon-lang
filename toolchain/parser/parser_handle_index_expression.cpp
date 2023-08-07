@@ -19,16 +19,9 @@ auto ParserHandleIndexExpression(ParserContext& context) -> void {
 
 auto ParserHandleIndexExpressionFinish(ParserContext& context) -> void {
   auto state = context.PopState();
-  if (!context.PositionIs(TokenKind::CloseSquareBracket)) {
-    CARBON_DIAGNOSTIC(UnexpectedTokenInIndex, Error,
-                      "Unexpected token in index expression");
-    context.emitter().Emit(*context.position(), UnexpectedTokenInIndex);
-    state.has_error = true;
-    context.SkipTo(*context.FindNextOf({TokenKind::CloseSquareBracket}));
-  }
-  context.AddNode(ParseNodeKind::IndexExpression,
-                  context.ConsumeChecked(TokenKind::CloseSquareBracket),
-                  state.subtree_start, state.has_error);
+
+  context.ConsumeAndAddCloseSymbol(state.token, state,
+                                   ParseNodeKind::IndexExpression);
 }
 
 }  // namespace Carbon

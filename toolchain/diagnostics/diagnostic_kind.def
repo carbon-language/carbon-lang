@@ -50,7 +50,7 @@ CARBON_DIAGNOSTIC_KIND(WrongRealLiteralExponent)
 // ============================================================================
 
 CARBON_DIAGNOSTIC_KIND(BinaryOperatorRequiresWhitespace)
-CARBON_DIAGNOSTIC_KIND(ExpectedCloseParen)
+CARBON_DIAGNOSTIC_KIND(ExpectedCloseSymbol)
 CARBON_DIAGNOSTIC_KIND(ExpectedCodeBlock)
 CARBON_DIAGNOSTIC_KIND(ExpectedExpression)
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterDotOrArrow)
@@ -67,7 +67,6 @@ CARBON_DIAGNOSTIC_KIND(UnaryOperatorHasWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnaryOperatorRequiresWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenAfterListElement)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedDeclaration)
-CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInIndex)
 
 // Package-related diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierAfterPackage)
