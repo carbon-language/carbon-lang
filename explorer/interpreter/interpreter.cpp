@@ -450,7 +450,7 @@ auto Interpreter::EvalRecursively(std::unique_ptr<Action> action)
     CARBON_RETURN_IF_ERROR(Step());
   }
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- recursive eval done\n";
+    trace_stream_->End() << "recursive eval done\n";
   }
   Nonnull<const Value*> result =
       cast<RecursiveAction>(todo_.CurrentAction()).results()[0];
@@ -886,7 +886,7 @@ auto Interpreter::CallFunction(const CallExpression& call,
                                std::optional<AllocationId> location_received)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "calling function: " << *fun << "\n";
+    trace_stream_->Call() << "calling function: " << *fun << "\n";
   }
   switch (fun->kind()) {
     case Value::Kind::AlternativeConstructorValue: {
@@ -2484,8 +2484,8 @@ auto Interpreter::Step() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- step " << act << " (" << act.source_loc()
-                   << ") --->\n";
+    trace_stream_->Start() << "step " << act << " (" << act.source_loc()
+                         << ") --->\n";
   }
 
   auto error_builder = [&] {
