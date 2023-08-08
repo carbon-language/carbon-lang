@@ -111,7 +111,7 @@ static auto AddCheckLines(
     bool line_number_re_has_file, const RE2& line_number_re,
     std::function<void(std::string&)> do_extra_check_replacements,
     llvm::SmallVector<llvm::SmallVector<CheckLine>>& check_lines,
-    int default_line_number = -1) -> void {
+    int minimum_line_number) -> void {
   if (output.empty()) {
     return;
   }
@@ -183,11 +183,11 @@ static auto AddCheckLines(
         use_line_number = match_line_number;
       }
     }
-    // NOLINTNEXTLINE(google-runtime-int): API requirement.
-    long long line_number = use_line_number ? ParseLineNumber(*use_line_number)
-                                            : default_line_number;
+    int desired_line_number =
+        std::max(minimum_line_number,
+                 use_line_number ? ParseLineNumber(*use_line_number) : 0);
     check_lines[append_to].push_back(
-        CheckLine(line_number, line_number_re_has_file,
+        CheckLine(desired_line_number, line_number_re_has_file,
                   use_line_number ? &line_number_re : nullptr, check_line));
   }
 }
