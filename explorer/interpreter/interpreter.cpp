@@ -2485,7 +2485,7 @@ auto Interpreter::Step() -> ErrorOr<Success> {
 
   if (trace_stream_->is_enabled()) {
     trace_stream_->Start() << "step " << act << " (" << act.source_loc()
-                         << ") --->\n";
+                           << ") --->\n";
   }
 
   auto error_builder = [&] {
