@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// NOTE: Move to its own directory when more tests are added.
+fn F() {
+  a.b.f(c.d, (e)).g();
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'F'},
@@ -31,8 +37,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 25},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// NOTE: Move to its own directory when more tests are added.
-fn F() {
-  a.b.f(c.d, (e)).g();
-}

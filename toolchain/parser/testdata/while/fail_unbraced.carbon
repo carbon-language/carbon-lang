@@ -4,6 +4,15 @@
 //
 // TODO: This should have an error.
 // AUTOUPDATE
+
+fn F() {
+  while (a)
+    // CHECK:STDERR: fail_unbraced.carbon:[[@LINE+3]]:5: Expected braced code block.
+    // CHECK:STDERR:     break;
+    // CHECK:STDERR:     ^
+    break;
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'F'},
@@ -21,11 +30,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-fn F() {
-  while (a)
-    // CHECK:STDERR: fail_unbraced.carbon:[[@LINE+3]]:5: Expected braced code block.
-    // CHECK:STDERR:     break;
-    // CHECK:STDERR:     ^
-    break;
-}

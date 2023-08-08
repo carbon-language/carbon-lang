@@ -3,12 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: [
-// CHECK:STDOUT: {kind: 'EmptyDeclaration', text: ';', has_error: yes},
-// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT: ]
 
 // CHECK:STDERR: fail_no_intro_with_semi.carbon:[[@LINE+3]]:1: Unrecognized declaration introducer.
 // CHECK:STDERR: foo;
 // CHECK:STDERR: ^
 foo;
+
+// CHECK:STDOUT: [
+// CHECK:STDOUT: {kind: 'EmptyDeclaration', text: ';', has_error: yes},
+// CHECK:STDOUT: {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT: ]

@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+class Foo(a: i32);
+
+interface Bar(a: i32) {}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:   {kind: 'Name', text: 'Foo'},
@@ -23,7 +28,3 @@
 // CHECK:STDOUT: {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-class Foo(a: i32);
-
-interface Bar(a: i32) {}

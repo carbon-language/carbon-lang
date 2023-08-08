@@ -3,6 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+
+fn Foo() {}
+
+fn Bar(a: ()) -> () { return a; }
+
+fn Main() {
+  var x: () = Bar(Foo());
+}
+
 // CHECK:STDOUT: ; ModuleID = 'implicit_empty_tuple_as_arg.carbon'
 // CHECK:STDOUT: source_filename = "implicit_empty_tuple_as_arg.carbon"
 // CHECK:STDOUT:
@@ -26,12 +36,3 @@
 // CHECK:STDOUT:   store %TupleLiteralType %Bar, ptr %var, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-
-fn Foo() {}
-
-fn Bar(a: ()) -> () { return a; }
-
-fn Main() {
-  var x: () = Bar(Foo());
-}

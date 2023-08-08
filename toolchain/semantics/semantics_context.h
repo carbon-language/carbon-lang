@@ -153,6 +153,10 @@ class SemanticsContext {
                              llvm::SmallVector<SemanticsTypeId>&& type_ids)
       -> SemanticsTypeId;
 
+  // Returns a pointer type whose pointee type is `pointee_type_id`.
+  auto GetPointerType(ParseTree::Node parse_node,
+                      SemanticsTypeId pointee_type_id) -> SemanticsTypeId;
+
   // Converts an expression for use as a type.
   // TODO: This should eventually return a type ID.
   auto ExpressionAsType(ParseTree::Node parse_node, SemanticsNodeId value_id)
@@ -282,12 +286,9 @@ class SemanticsContext {
           profile_type,
       llvm::function_ref<SemanticsNodeId()> make_node) -> SemanticsTypeId;
 
-  // Forms a canonical type ID for an already-existing node describing a type.
-  template <typename ProfileType>
-  auto CanonicalizeTypeImpl(SemanticsNodeKind kind, SemanticsNodeId node_id,
-                            ProfileType profile_type) -> SemanticsTypeId {
-    return CanonicalizeTypeImpl(kind, profile_type, [&] { return node_id; });
-  }
+  // Forms a canonical type ID for a type. If the type is new, adds the node to
+  // the current block.
+  auto CanonicalizeTypeAndAddNodeIfNew(SemanticsNode node) -> SemanticsTypeId;
 
   auto current_scope() -> ScopeStackEntry& { return scope_stack_.back(); }
 

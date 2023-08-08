@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn DoNothing(a: i32) {}
+
+fn Main() {
+  var a: i32 = 0;
+  DoNothing(a);
+}
+
 // CHECK:STDOUT: ; ModuleID = 'var_param.carbon'
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
@@ -18,10 +26,3 @@
 // CHECK:STDOUT:   %TupleLiteralValue = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-fn DoNothing(a: i32) {}
-
-fn Main() {
-  var a: i32 = 0;
-  DoNothing(a);
-}

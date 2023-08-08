@@ -3,16 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: 1
-// CHECK:STDOUT: i32.Hash
-// CHECK:STDOUT: 0
-// CHECK:STDOUT: Potato.(Hashable.Hash)
-// CHECK:STDOUT: 1
-// CHECK:STDOUT: Potato.Hash
-// CHECK:STDOUT: 2
-// CHECK:STDOUT: Potato.Hash
-// CHECK:STDOUT: 2
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -90,3 +80,14 @@ fn Main() -> i32 {
   Print("{0}", I(g));
   return 0;
 }
+
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: i32.Hash
+// CHECK:STDOUT: 0
+// CHECK:STDOUT: Potato.(Hashable.Hash)
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: Potato.Hash
+// CHECK:STDOUT: 2
+// CHECK:STDOUT: Potato.Hash
+// CHECK:STDOUT: 2
+// CHECK:STDOUT: result: 0

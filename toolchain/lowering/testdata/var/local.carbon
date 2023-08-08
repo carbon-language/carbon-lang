@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Run() -> i32 {
+  var x: i32 = 1;
+  return x;
+}
+
 // CHECK:STDOUT: ; ModuleID = 'local.carbon'
 // CHECK:STDOUT: source_filename = "local.carbon"
 // CHECK:STDOUT:
@@ -12,8 +18,3 @@
 // CHECK:STDOUT:   %1 = load i32, ptr %var, align 4
 // CHECK:STDOUT:   ret i32 %1
 // CHECK:STDOUT: }
-
-fn Run() -> i32 {
-  var x: i32 = 1;
-  return x;
-}

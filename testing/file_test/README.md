@@ -84,9 +84,12 @@ Supported comment markers are:
 
     When autoupdating, CHECKs will be inserted starting below AUTOUPDATE. When a
     CHECK has line information, autoupdate will try to insert the CHECK
-    immediately above the line it's associated with. When that happens, any
-    following CHECK lines without line information will immediately follow,
-    between the CHECK with line information and the associated line.
+    immediately next to the line it's associated with, with stderr CHECKs
+    preceding the line and stdout CHECKs following the line. When that happens,
+    any subsequent CHECK lines without line information will immediately follow.
+    As an exception, if no STDOUT check line refers to any line in the test, all
+    STDOUT check lines are placed at the end of the file instead of immediately
+    after AUTOUPDATE.
 
 -   `// ARGS: <arguments>`
 

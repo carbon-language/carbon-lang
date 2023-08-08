@@ -4,10 +4,6 @@
 //
 // This doesn't test trace ouptut because it's too slow.
 // AUTOUPDATE
-// CHECK:STDOUT: String list length is: 7
-// CHECK:STDOUT: This is a String Entry 4
-// CHECK:STDOUT: Value 1337
-// CHECK:STDOUT: result: 0
 package ExplorerTest api;
 
 class Node(T:! type) {
@@ -141,3 +137,8 @@ fn Main() -> i32 {
   Print("Value {0}", value);
   return 0;
 }
+
+// CHECK:STDOUT: String list length is: 7
+// CHECK:STDOUT: This is a String Entry 4
+// CHECK:STDOUT: Value 1337
+// CHECK:STDOUT: result: 0

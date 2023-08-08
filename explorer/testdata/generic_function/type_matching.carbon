@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -14,3 +13,5 @@ fn fst[T:! type](x: T, y: T) -> T {
 fn Main() -> i32 {
   return fst(0, 1);
 }
+
+// CHECK:STDOUT: result: 0

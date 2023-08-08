@@ -3,6 +3,17 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() {}
+fn G() {}
+
+fn If(b: bool) {
+  if (b) {
+    F();
+  }
+  G();
+}
+
 // CHECK:STDOUT: ; ModuleID = 'no_else.carbon'
 // CHECK:STDOUT: source_filename = "no_else.carbon"
 // CHECK:STDOUT:
@@ -27,13 +38,3 @@
 // CHECK:STDOUT:   %TupleLiteralValue1 = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-fn F() {}
-fn G() {}
-
-fn If(b: bool) {
-  if (b) {
-    F();
-  }
-  G();
-}

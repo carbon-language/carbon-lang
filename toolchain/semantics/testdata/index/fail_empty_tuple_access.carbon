@@ -3,6 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() {}
+
+fn Run() {
+  // CHECK:STDERR: fail_empty_tuple_access.carbon:[[@LINE+3]]:8: Index `0` is past the end of `() as type`.
+  // CHECK:STDERR:   F()[0];
+  // CHECK:STDERR:        ^
+  F()[0];
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
@@ -51,12 +61,3 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn F() {}
-
-fn Run() {
-  // CHECK:STDERR: fail_empty_tuple_access.carbon:[[@LINE+3]]:8: Index `0` is past the end of `() as type`.
-  // CHECK:STDERR:   F()[0];
-  // CHECK:STDERR:        ^
-  F()[0];
-}

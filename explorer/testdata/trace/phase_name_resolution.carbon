@@ -14,6 +14,7 @@ fn Main() -> i32 {
 // conflicts.
 // ARGS: --trace_file=- --trace_phase=name_resolution %s
 // AUTOUPDATE
+
 // CHECK:STDOUT: ********** resolving names **********
 // CHECK:STDOUT: --- declared `TestInterface` as `interface TestInterface` in `package` (phase_name_resolution.carbon:7)
 // CHECK:STDOUT: --- declared `Main` as `fn Main` in `package` (phase_name_resolution.carbon:11)

@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Or(b: bool, c: bool) -> bool {
+  // Note that in this case, we must generate an empty block so that the `phi`
+  // has two distinct predecessors.
+  return b or c;
+}
+
 // CHECK:STDOUT: ; ModuleID = 'or_empty_block.carbon'
 // CHECK:STDOUT: source_filename = "or_empty_block.carbon"
 // CHECK:STDOUT:
@@ -17,9 +24,3 @@
 // CHECK:STDOUT:   %4 = phi i1 [ true, %0 ], [ %c, %2 ]
 // CHECK:STDOUT:   ret i1 %4
 // CHECK:STDOUT: }
-
-fn Or(b: bool, c: bool) -> bool {
-  // Note that in this case, we must generate an empty block so that the `phi`
-  // has two distinct predecessors.
-  return b or c;
-}

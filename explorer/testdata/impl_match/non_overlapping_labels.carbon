@@ -3,10 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: T as Iface
-// CHECK:STDOUT: T as Iface
-// CHECK:STDOUT: A as Iface
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -44,3 +40,8 @@ fn Main() -> i32 {
   c.(Iface.F)();
   return 0;
 }
+
+// CHECK:STDOUT: T as Iface
+// CHECK:STDOUT: T as Iface
+// CHECK:STDOUT: A as Iface
+// CHECK:STDOUT: result: 0

@@ -3,6 +3,17 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+namespace Foo;
+namespace Foo.Bar;
+
+fn Foo.Bar.Wiz() {
+}
+
+fn Foo.Bar.Baz() {
+  Foo.Bar.Wiz();
+}
+
 // CHECK:STDOUT: ; ModuleID = 'nested.carbon'
 // CHECK:STDOUT: source_filename = "nested.carbon"
 // CHECK:STDOUT:
@@ -15,13 +26,3 @@
 // CHECK:STDOUT:   %TupleLiteralValue = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-namespace Foo;
-namespace Foo.Bar;
-
-fn Foo.Bar.Wiz() {
-}
-
-fn Foo.Bar.Baz() {
-  Foo.Bar.Wiz();
-}

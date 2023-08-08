@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn MakeImplicitEmptyTuple() {
+}
+
+fn Main() {
+  var b: () = MakeImplicitEmptyTuple();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
@@ -56,10 +64,3 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn MakeImplicitEmptyTuple() {
-}
-
-fn Main() {
-  var b: () = MakeImplicitEmptyTuple();
-}

@@ -4,7 +4,6 @@
 
 #include "explorer/interpreter/type_checker.h"
 
-#include <algorithm>
 #include <deque>
 #include <iterator>
 #include <map>
@@ -13,7 +12,6 @@
 #include <string>
 #include <string_view>
 #include <tuple>
-#include <unordered_set>
 #include <vector>
 
 #include "common/check.h"
@@ -26,15 +24,14 @@
 #include "explorer/ast/value_transform.h"
 #include "explorer/common/arena.h"
 #include "explorer/common/error_builders.h"
-#include "explorer/common/nonnull.h"
 #include "explorer/common/source_location.h"
 #include "explorer/common/trace_stream.h"
 #include "explorer/interpreter/impl_scope.h"
 #include "explorer/interpreter/interpreter.h"
 #include "explorer/interpreter/pattern_analysis.h"
+#include "explorer/interpreter/pattern_match.h"
 #include "explorer/interpreter/type_structure.h"
-#include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/STLExtras.h"
+#include "explorer/interpreter/type_utils.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/TinyPtrVector.h"
@@ -79,134 +76,6 @@ static auto ExpectPointerType(SourceLocation source_loc,
                                     << "actual: " << *actual;
   }
   return Success();
-}
-
-// Returns whether the value is a type whose values are themselves known to be
-// types.
-static auto IsTypeOfType(Nonnull<const Value*> value) -> bool {
-  switch (value->kind()) {
-    case Value::Kind::IntValue:
-    case Value::Kind::DestructorValue:
-    case Value::Kind::FunctionValue:
-    case Value::Kind::BoundMethodValue:
-    case Value::Kind::PointerValue:
-    case Value::Kind::LocationValue:
-    case Value::Kind::ReferenceExpressionValue:
-    case Value::Kind::BoolValue:
-    case Value::Kind::TupleValue:
-    case Value::Kind::StructValue:
-    case Value::Kind::NominalClassValue:
-    case Value::Kind::AlternativeValue:
-    case Value::Kind::BindingPlaceholderValue:
-    case Value::Kind::AddrValue:
-    case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::StringValue:
-    case Value::Kind::UninitializedValue:
-    case Value::Kind::ImplWitness:
-    case Value::Kind::BindingWitness:
-    case Value::Kind::ConstraintWitness:
-    case Value::Kind::ConstraintImplWitness:
-    case Value::Kind::ParameterizedEntityName:
-    case Value::Kind::MemberName:
-      // These are values, not types.
-      return false;
-    case Value::Kind::IntType:
-    case Value::Kind::BoolType:
-    case Value::Kind::FunctionType:
-    case Value::Kind::PointerType:
-    case Value::Kind::StructType:
-    case Value::Kind::NominalClassType:
-    case Value::Kind::MixinPseudoType:
-    case Value::Kind::ChoiceType:
-    case Value::Kind::StringType:
-    case Value::Kind::StaticArrayType:
-    case Value::Kind::TupleType:
-    case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfParameterizedEntityName:
-    case Value::Kind::TypeOfMemberName:
-    case Value::Kind::TypeOfNamespaceName:
-      // These are types whose values are not types.
-      return false;
-    case Value::Kind::AutoType:
-    case Value::Kind::VariableType:
-    case Value::Kind::AssociatedConstant:
-      // A value of one of these types could be a type, but isn't known to be.
-      return false;
-    case Value::Kind::TypeType:
-    case Value::Kind::InterfaceType:
-    case Value::Kind::NamedConstraintType:
-    case Value::Kind::ConstraintType:
-      // A value of one of these types is itself always a type.
-      return true;
-  }
-}
-
-// Returns whether the value is a type value, such as might be a valid type for
-// a syntactic pattern. This includes types involving `auto`. Use
-// `TypeContainsAuto` to determine if a type involves `auto`.
-static auto IsType(Nonnull<const Value*> value) -> bool {
-  switch (value->kind()) {
-    case Value::Kind::IntValue:
-    case Value::Kind::FunctionValue:
-    case Value::Kind::DestructorValue:
-    case Value::Kind::BoundMethodValue:
-    case Value::Kind::PointerValue:
-    case Value::Kind::LocationValue:
-    case Value::Kind::ReferenceExpressionValue:
-    case Value::Kind::BoolValue:
-    case Value::Kind::TupleValue:
-    case Value::Kind::StructValue:
-    case Value::Kind::NominalClassValue:
-    case Value::Kind::AlternativeValue:
-    case Value::Kind::BindingPlaceholderValue:
-    case Value::Kind::AddrValue:
-    case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::StringValue:
-    case Value::Kind::UninitializedValue:
-    case Value::Kind::ImplWitness:
-    case Value::Kind::BindingWitness:
-    case Value::Kind::ConstraintWitness:
-    case Value::Kind::ConstraintImplWitness:
-    case Value::Kind::ParameterizedEntityName:
-    case Value::Kind::MemberName:
-      return false;
-    case Value::Kind::IntType:
-    case Value::Kind::BoolType:
-    case Value::Kind::TypeType:
-    case Value::Kind::PointerType:
-    case Value::Kind::FunctionType:
-    case Value::Kind::StructType:
-    case Value::Kind::TupleType:
-    case Value::Kind::NominalClassType:
-    case Value::Kind::InterfaceType:
-    case Value::Kind::NamedConstraintType:
-    case Value::Kind::ConstraintType:
-    case Value::Kind::ChoiceType:
-    case Value::Kind::VariableType:
-    case Value::Kind::StringType:
-    case Value::Kind::StaticArrayType:
-    case Value::Kind::AutoType:
-      return true;
-    case Value::Kind::TypeOfParameterizedEntityName:
-    case Value::Kind::TypeOfMemberName:
-    case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfNamespaceName:
-      // These aren't first-class types, but they are still types.
-      return true;
-    case Value::Kind::AssociatedConstant: {
-      // An associated type is an associated constant whose type is a
-      // type-of-type.
-      const auto& assoc = cast<AssociatedConstant>(*value);
-      // TODO: Should we substitute in the arguments? Given
-      //   interface I(T:! type) { let V:! T; }
-      // ... is T.(I(type).V) considered to be a type?
-      return IsTypeOfType(&assoc.constant().static_type());
-    }
-    case Value::Kind::MixinPseudoType:
-      // Mixin type is a second-class type that cannot be used
-      // within a type annotation expression.
-      return false;
-  }
 }
 
 // Expect that a type is complete. Issue a diagnostic if not.
@@ -323,88 +192,12 @@ static auto ExpectConcreteType(SourceLocation source_loc,
   return Success();
 }
 
-// Returns whether *value represents the type of a Carbon value, as
-// opposed to a type pattern or a non-type value.
-static auto TypeIsDeduceable(Nonnull<const Value*> type) -> bool {
-  CARBON_CHECK(IsType(type)) << "expected a type, but found " << *type;
-
-  switch (type->kind()) {
-    case Value::Kind::IntValue:
-    case Value::Kind::FunctionValue:
-    case Value::Kind::DestructorValue:
-    case Value::Kind::BoundMethodValue:
-    case Value::Kind::PointerValue:
-    case Value::Kind::LocationValue:
-    case Value::Kind::ReferenceExpressionValue:
-    case Value::Kind::BoolValue:
-    case Value::Kind::TupleValue:
-    case Value::Kind::StructValue:
-    case Value::Kind::NominalClassValue:
-    case Value::Kind::AlternativeValue:
-    case Value::Kind::BindingPlaceholderValue:
-    case Value::Kind::AddrValue:
-    case Value::Kind::AlternativeConstructorValue:
-    case Value::Kind::StringValue:
-    case Value::Kind::UninitializedValue:
-    case Value::Kind::ImplWitness:
-    case Value::Kind::BindingWitness:
-    case Value::Kind::ConstraintWitness:
-    case Value::Kind::ConstraintImplWitness:
-    case Value::Kind::ParameterizedEntityName:
-    case Value::Kind::MemberName:
-    case Value::Kind::MixinPseudoType:
-      CARBON_FATAL() << "non-type value";
-    case Value::Kind::IntType:
-    case Value::Kind::BoolType:
-    case Value::Kind::TypeType:
-    case Value::Kind::VariableType:
-    case Value::Kind::StringType:
-    case Value::Kind::TypeOfMixinPseudoType:
-    case Value::Kind::TypeOfParameterizedEntityName:
-    case Value::Kind::TypeOfMemberName:
-    case Value::Kind::TypeOfNamespaceName:
-      // These types do not contain other types.
-      return false;
-    case Value::Kind::FunctionType:
-    case Value::Kind::NominalClassType:
-    case Value::Kind::InterfaceType:
-    case Value::Kind::NamedConstraintType:
-    case Value::Kind::ConstraintType:
-    case Value::Kind::ChoiceType:
-    case Value::Kind::AssociatedConstant:
-      // These types can contain other types, but those types can't involve
-      // `auto`.
-      return false;
-    case Value::Kind::AutoType:
-      return true;
-    case Value::Kind::StructType:
-      return llvm::any_of(
-          llvm::map_range(cast<StructType>(type)->fields(),
-                          [](const NamedValue& v) { return v.value; }),
-          TypeIsDeduceable);
-    case Value::Kind::TupleType:
-      return llvm::any_of(cast<TupleType>(type)->elements(), TypeIsDeduceable);
-    case Value::Kind::PointerType:
-      return TypeIsDeduceable(&cast<PointerType>(type)->pointee_type());
-    case Value::Kind::StaticArrayType:
-      const auto* array_type = cast<StaticArrayType>(type);
-      return !array_type->has_size() ||
-             TypeIsDeduceable(&array_type->element_type());
-  }
-}
-
 // Returns whether `type` is a placeholder type, which is a second-class type
 // that cannot be the type of a binding but can be the type of an expression.
 static auto IsPlaceholderType(Nonnull<const Value*> type) -> bool {
   CARBON_CHECK(IsType(type)) << "expected a type, but found " << *type;
   return isa<TypeOfParameterizedEntityName, TypeOfMemberName,
              TypeOfMixinPseudoType, TypeOfNamespaceName>(type);
-}
-
-// Returns whether `value` is a concrete type, which would be valid as the
-// static type of an expression. This is currently any type other than `auto`.
-static auto IsNonDeduceableType(Nonnull<const Value*> value) -> bool {
-  return IsType(value) && !TypeIsDeduceable(value);
 }
 
 static auto ExpectResolvedBindingType(const BindingPattern& binding,
@@ -793,8 +586,8 @@ auto TypeChecker::BuildBuiltinConversion(Nonnull<Expression*> source,
   Nonnull<const Value*> source_type = &source->static_type();
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "building builtin conversion from " << *source_type
-                   << " to " << *destination << "\n";
+    *trace_stream_ << "*** building builtin conversion from `" << *source_type
+                   << "` to `" << *destination << "`\n";
   }
 
   // Build a simple conversion that the interpreter can perform directly.
@@ -1029,9 +822,10 @@ auto TypeChecker::ImplicitlyConvert(std::string_view context,
     destination = destination_constraint;
 
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "converting type " << *converted_value
-                     << " to constraint " << *destination_constraint << " for "
-                     << context << " in scope " << impl_scope << "\n";
+      *trace_stream_ << "converting type `" << *converted_value
+                     << "` to constraint `" << *destination_constraint
+                     << "` for " << context << " in scope:\n"
+                     << impl_scope << "\n";
     }
     // Note, we discard the witness. We don't actually need it in order to
     // perform the conversion, but we do want to know it exists.
@@ -1105,7 +899,8 @@ auto TypeChecker::IsIntrinsicConstraintSatisfied(
                               constraint.arguments[0], impl_scope,
                               /*allow_user_defined_conversions=*/true));
       if (trace_stream_->is_enabled()) {
-        *trace_stream_ << constraint << " evaluated to " << convertible << "\n";
+        *trace_stream_ << "--- `" << constraint << "` evaluated to `"
+                       << convertible << "`\n";
       }
       return convertible;
   }
@@ -1228,12 +1023,12 @@ class TypeChecker::ArgumentDeduction {
         deduced_bindings_in_order_(bindings_to_deduce),
         trace_stream_(trace_stream) {
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "performing argument deduction for bindings: ";
+      *trace_stream_ << "*** performing argument deduction for bindings: [";
       llvm::ListSeparator sep;
       for (const auto* binding : bindings_to_deduce) {
-        *trace_stream_ << sep << *binding;
+        *trace_stream_ << sep << "`" << *binding << "`";
       }
-      *trace_stream_ << "\n";
+      *trace_stream_ << "]\n";
     }
     for (const auto* binding : bindings_to_deduce) {
       deduced_values_.insert({binding, {}});
@@ -1302,7 +1097,7 @@ auto TypeChecker::ArgumentDeduction::Deduce(Nonnull<const Value*> param,
                                             bool allow_implicit_conversion)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "deducing " << *param << " from " << *arg << "\n";
+    *trace_stream_ << "*** deducing `" << *param << "` from `" << *arg << "`\n";
   }
 
   // If param is the name of a variable we're deducing, then deduce it.
@@ -1632,8 +1427,8 @@ auto TypeChecker::ArgumentDeduction::Finish(
     CARBON_ASSIGN_OR_RETURN(Nonnull<const Value*> value,
                             type_checker.InterpExp(arg));
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "evaluated generic parameter " << *binding << " as "
-                     << *value << "\n";
+      *trace_stream_ << "--- evaluated generic parameter `" << *binding
+                     << "` as `" << *value << "`\n";
     }
 
     // Find a witness for the binding if needed.
@@ -1683,15 +1478,15 @@ auto TypeChecker::ArgumentDeduction::Finish(
   }
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "deduction succeeded with results: {";
+    *trace_stream_ << "--> deduction succeeded with results: [";
     llvm::ListSeparator sep;
     for (const auto& [binding, val] : bindings.args()) {
-      *trace_stream_ << sep << *binding << " = " << *val;
+      *trace_stream_ << sep << "`" << *binding << "` = `" << *val << "`";
     }
     for (const auto& [binding, val] : bindings.witnesses()) {
-      *trace_stream_ << sep << *binding << " = " << *val;
+      *trace_stream_ << sep << "`" << *binding << "` = `" << *val << "`";
     }
-    *trace_stream_ << "}\n";
+    *trace_stream_ << "]\n";
   }
 
   return {std::move(bindings)};
@@ -1856,8 +1651,8 @@ class TypeChecker::ConstraintTypeBuilder {
       -> ErrorOr<Success> {
     if (type_checker.trace_stream_->is_enabled()) {
       *type_checker.trace_stream_
-          << "merging " << *constraint << " into constraint with "
-          << *constraint->self_binding() << " ~> " << *self << "\n";
+          << "*** merging `" << *constraint << "` into constraint with `"
+          << *constraint->self_binding() << "` ~> `" << *self << "`\n";
     }
 
     // First substitute into the impl bindings to form the full witness for
@@ -2112,9 +1907,9 @@ class TypeChecker::ConstraintTypeBuilder {
     std::deque<Nonnull<RewriteConstraint*>> rewrite_queue;
     for (auto& rewrite : rewrite_constraints_) {
       if (type_checker.trace_stream_->is_enabled()) {
-        *type_checker.trace_stream_ << "initial rewrite of "
-                                    << *rewrite.constant << " is "
-                                    << *rewrite.converted_replacement << "\n";
+        *type_checker.trace_stream_ << "--- initial rewrite of `"
+                                    << *rewrite.constant << "` is `"
+                                    << *rewrite.converted_replacement << "`\n";
       }
       rewrite_queue.push_back(&rewrite);
     }
@@ -2151,9 +1946,9 @@ class TypeChecker::ConstraintTypeBuilder {
 
       if (!ValueEqual(rebuilt, rewrite->converted_replacement, std::nullopt)) {
         if (type_checker.trace_stream_->is_enabled()) {
-          *type_checker.trace_stream_ << "rewrote rewrite of "
-                                      << *rewrite->constant << " to "
-                                      << *rebuilt << "\n";
+          *type_checker.trace_stream_ << "--- rewrote rewrite of `"
+                                      << *rewrite->constant << "` to `"
+                                      << *rebuilt << "`\n";
         }
         rewrite->converted_replacement = rebuilt;
         // Now we've rewritten this rewrite, we might find more rewrites apply
@@ -2161,8 +1956,9 @@ class TypeChecker::ConstraintTypeBuilder {
         rewrite_queue.push_back(rewrite);
       } else {
         if (type_checker.trace_stream_->is_enabled()) {
-          *type_checker.trace_stream_ << "rewrite of " << *rewrite->constant
-                                      << " converged to " << *rebuilt << "\n";
+          *type_checker.trace_stream_
+              << "--- rewrite of `" << *rewrite->constant << "` converged to `"
+              << *rebuilt << "`\n";
         }
       }
     }
@@ -2311,8 +2107,16 @@ auto TypeChecker::Substitute(const Bindings& bindings,
   CARBON_ASSIGN_OR_RETURN(const auto* result, SubstituteImpl(bindings, type));
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "substitution of " << bindings << "\n  old: " << *type
-                   << "\n  new: " << *result << "\n";
+    *trace_stream_ << "->+ substitution of [";
+    llvm::ListSeparator sep(", ");
+    for (const auto& [name, value] : bindings.args()) {
+      *trace_stream_ << sep << "`" << *name << "` -> `" << *value << "`";
+    }
+    for (const auto& [name, value] : bindings.witnesses()) {
+      *trace_stream_ << sep << "`" << *name << "` -> `" << *value << "`";
+    }
+    *trace_stream_ << "]\n -  old: `" << *type << "`\n +  new: `" << *result
+                   << "`\n";
   }
   return result;
 }
@@ -2340,8 +2144,8 @@ class TypeChecker::SubstituteTransform
     if (it == bindings_.args().end()) {
       if (const auto* trace_stream = type_checker_->trace_stream_;
           trace_stream->is_enabled()) {
-        *trace_stream << "substitution: no value for binding " << *var_type
-                      << ", leaving alone\n";
+        *trace_stream << "--- substitution: no value for binding `" << *var_type
+                      << "`, leaving alone\n";
       }
       return var_type;
     } else {
@@ -2356,8 +2160,8 @@ class TypeChecker::SubstituteTransform
     if (it == bindings_.witnesses().end()) {
       if (const auto* trace_stream = type_checker_->trace_stream_;
           trace_stream->is_enabled()) {
-        *trace_stream << "substitution: no value for binding " << *witness
-                      << ", leaving alone\n";
+        *trace_stream << "--- substitution: no value for binding `" << *witness
+                      << "`, leaving alone\n";
       }
       return witness;
     } else {
@@ -2483,9 +2287,9 @@ class TypeChecker::SubstituteTransform
       }
       if (const auto* trace_stream = type_checker_->trace_stream_;
           trace_stream->is_enabled()) {
-        *trace_stream << "substitution: self of constraint " << *constraint
-                      << " is substituted, new type of type is "
-                      << *type_of_type << "\n";
+        *trace_stream << "--- substitution: self of constraint `" << *constraint
+                      << "` is substituted, new type of type is `"
+                      << *type_of_type << "`\n";
       }
       // TODO: Should we keep any part of the old constraint -- rewrites,
       // equality constraints, etc?
@@ -2500,7 +2304,7 @@ class TypeChecker::SubstituteTransform
     Nonnull<const ConstraintType*> new_constraint = std::move(builder).Build();
     if (const auto* trace_stream = type_checker_->trace_stream_;
         trace_stream->is_enabled()) {
-      *trace_stream << "substitution: " << *constraint << " => "
+      *trace_stream << "--- substitution: " << *constraint << " => "
                     << *new_constraint << "\n";
     }
     return new_constraint;
@@ -2549,7 +2353,7 @@ auto TypeChecker::RefineWitness(Nonnull<const Witness*> witness,
   }
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "could not refine " << *witness << "\n";
+    *trace_stream_ << "--x could not refine `" << *witness << "`\n";
   }
   return witness;
 }
@@ -2572,10 +2376,11 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
   MatchingImplSet::Match match(&matching_impl_set_, &impl, impl_type, &iface);
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "MatchImpl: looking for " << *impl_type << " as " << iface
-                   << "\n";
-    *trace_stream_ << "checking " << *impl.type << " as "
-                   << *impl.interface << "\n";
+    *trace_stream_ << "\n========\tMatch Impl\t========\n";
+    *trace_stream_ << "*** looking for `" << *impl_type << "` as `" << iface
+                   << "`\n";
+    *trace_stream_ << "*** checking `" << *impl.type << "` as `"
+                   << *impl.interface << "` (" << source_loc << ")\n";
   }
 
   ArgumentDeduction deduction(source_loc, "match", impl.deduced, trace_stream_);
@@ -2584,7 +2389,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
                            /*allow_implicit_conversion=*/false);
       !e.ok()) {
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "type does not match: " << e.error() << "\n";
+      *trace_stream_ << "--! type does not match: " << e.error() << "\n";
     }
     return {std::nullopt};
   }
@@ -2593,7 +2398,7 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
           impl.interface, &iface, /*allow_implicit_conversion=*/false);
       !e.ok()) {
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "interface does not match: " << e.error() << "\n";
+      *trace_stream_ << "--! interface does not match: " << e.error() << "\n";
     }
     return {std::nullopt};
   }
@@ -2609,13 +2414,13 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
                        /*diagnose_deduction_failure=*/false));
   if (!bindings_or_error) {
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "impl does not match\n";
+      *trace_stream_ << "--! impl does not match\n";
     }
     return {std::nullopt};
   } else {
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "matched with " << *impl.type << " as "
-                     << *impl.interface << "\n\n";
+      *trace_stream_ << "==> matched with `" << *impl.type << "` as `"
+                     << *impl.interface << "`\n\n";
     }
     CARBON_ASSIGN_OR_RETURN(
         const auto* subst_witness,
@@ -2968,12 +2773,13 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
                                    const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "checking " << e->kind() << " " << *e;
-    *trace_stream_ << "\n";
+    *trace_stream_ << "*** checking " << e->kind() << " `" << *e << "` ("
+                   << e->source_loc() << ")\n";
   }
   if (e->is_type_checked()) {
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "expression has already been type-checked\n";
+      *trace_stream_ << "--- expression `" << *e
+                     << "` has already been type-checked\n";
     }
     return Success();
   }
@@ -3820,9 +3626,10 @@ auto TypeChecker::TypeCheckExpImpl(Nonnull<Expression*> e,
         case Value::Kind::FunctionType: {
           const auto& fun_t = cast<FunctionType>(call.function().static_type());
           if (trace_stream_->is_enabled()) {
-            *trace_stream_ << "checking call to function of type " << fun_t
-                           << "\nwith arguments of type: "
-                           << call.argument().static_type() << "\n";
+            *trace_stream_ << "*** checking call to function of type `" << fun_t
+                           << "` with arguments of type `"
+                           << call.argument().static_type() << "` ("
+                           << call.source_loc() << ")\n";
           }
           CARBON_RETURN_IF_ERROR(DeduceCallBindings(
               call, &fun_t.parameters(), fun_t.generic_parameters(),
@@ -4459,34 +4266,16 @@ auto TypeChecker::TypeCheckWhereClause(Nonnull<WhereClause*> clause,
   }
 }
 
-// Returns the list size for type deduction.
-static auto GetSize(Nonnull<const Value*> from) -> size_t {
-  switch (from->kind()) {
-    case Value::Kind::TupleType:
-    case Value::Kind::TupleValue: {
-      const auto& from_tup = cast<TupleValueBase>(*from);
-      return from_tup.elements().size();
-    }
-    case Value::Kind::StaticArrayType: {
-      const auto& from_arr = cast<StaticArrayType>(*from);
-      CARBON_CHECK(from_arr.has_size());
-      return from_arr.size();
-    }
-    default:
-      return 0;
-  }
-}
-
 auto TypeChecker::TypeCheckPattern(
     Nonnull<Pattern*> p, PatternRequirements requirements,
     std::optional<Nonnull<const Value*>> expected, ImplScope& impl_scope,
     ExpressionCategory enclosing_expression_category) -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "checking " << p->kind() << " " << *p;
+    *trace_stream_ << "*** checking " << p->kind() << " `" << *p << "`";
     if (expected) {
-      *trace_stream_ << ", expecting " << **expected;
+      *trace_stream_ << ", expecting `" << **expected << "`";
     }
-    *trace_stream_ << "\n";
+    *trace_stream_ << " (" << p->source_loc() << ")\n";
   }
   switch (p->kind()) {
     case PatternKind::AutoPattern:
@@ -4609,8 +4398,8 @@ auto TypeChecker::TypeCheckPattern(
                                                 expected_field_type, impl_scope,
                                                 enclosing_expression_category));
         if (trace_stream_->is_enabled()) {
-          *trace_stream_ << "finished checking tuple pattern field " << *field
-                         << "\n";
+          *trace_stream_ << "*** finished checking tuple pattern field `"
+                         << *field << "` (" << field->source_loc() << ")\n";
         }
         field_types.push_back(&field->static_type());
         field_patterns.push_back(&field->value());
@@ -4740,14 +4529,14 @@ auto TypeChecker::TypeCheckGenericBinding(GenericBinding& binding,
         builder.AddAndSubstitute(*this, constraint, symbolic_value, witness,
                                  Bindings(), /*add_lookup_contexts=*/true));
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "resolving constraint type for " << binding << " from "
-                     << *constraint << "\n";
+      *trace_stream_ << "*** resolving constraint type for `" << binding
+                     << "` from `" << *constraint << "`\n";
     }
     CARBON_RETURN_IF_ERROR(
         builder.Resolve(*this, binding.type().source_loc(), impl_scope));
     type = std::move(builder).Build();
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "resolved constraint type is " << *type << "\n";
+      *trace_stream_ << "--- resolved constraint type is `" << *type << "`\n";
     }
 
     BringImplBindingIntoScope(impl_binding, impl_scope);
@@ -4790,7 +4579,8 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                 const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "checking " << s->kind() << " " << *s << "\n";
+    *trace_stream_ << "*** checking " << s->kind() << " `" << PrintAsID(*s)
+                   << "` (" << s->source_loc() << ")\n";
   }
   switch (s->kind()) {
     case StatementKind::Match: {
@@ -5106,7 +4896,8 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   const auto name = GetName(*f);
   CARBON_CHECK(name) << "Unexpected missing name for `" << *f << "`.";
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** declaring function " << *name << "\n";
+    *trace_stream_ << "*** declaring function `" << *name << "` ("
+                   << f->source_loc() << ")\n";
   }
   ImplScope function_scope(scope_info.innermost_scope);
   std::vector<Nonnull<const GenericBinding*>> all_bindings =
@@ -5223,8 +5014,9 @@ auto TypeChecker::DeclareCallableDeclaration(Nonnull<CallableDeclaration*> f,
   }
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished declaring function " << *name << " of type "
-                   << f->static_type() << "\n";
+    *trace_stream_ << "*** finished declaring function `" << *name
+                   << "` of type `" << f->static_type() << "` ("
+                   << f->source_loc() << ")\n";
   }
   return Success();
 }
@@ -5235,7 +5027,8 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
   auto name = GetName(*f);
   CARBON_CHECK(name) << "Unexpected missing name for `" << *f << "`.";
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** checking function " << *name << "\n";
+    *trace_stream_ << "*** checking function `" << *name << "` ("
+                   << f->source_loc() << ")\n";
   }
   // If f->return_term().is_auto(), the function body was already
   // type checked in DeclareFunctionDeclaration.
@@ -5245,6 +5038,8 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
     BringImplBindingsIntoScope(
         cast<FunctionType>(f->static_type()).impl_bindings(), function_scope);
     if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "--- impl declarations for `" << PrintAsID(*f) << "` ("
+                     << f->source_loc() << ")\n";
       *trace_stream_ << function_scope;
     }
     CARBON_RETURN_IF_ERROR(TypeCheckStmt(*f->body(), function_scope));
@@ -5254,7 +5049,8 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
     }
   }
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished checking function " << *name << "\n";
+    *trace_stream_ << "*** finished checking function `" << *name << "` ("
+                   << f->source_loc() << ")\n";
   }
   return Success();
 }
@@ -5263,7 +5059,8 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                                           const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** declaring class " << class_decl->name() << "\n";
+    *trace_stream_ << "*** declaring class `" << class_decl->name() << "` ("
+                   << class_decl->source_loc() << ")\n";
   }
   Nonnull<SelfDeclaration*> self = class_decl->self();
   ImplScope class_scope(scope_info.innermost_scope);
@@ -5347,6 +5144,8 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                          std::nullopt, class_scope, ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(type_params, bindings);
     if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "--- impl declarations for `" << class_decl->name()
+                     << "` (" << class_decl->source_loc() << ")\n";
       *trace_stream_ << class_scope;
     }
   }
@@ -5458,8 +5257,8 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
   }
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished declaring class " << class_decl->name()
-                   << "\n";
+    *trace_stream_ << "*** finished declaring class `" << class_decl->name()
+                   << "` (" << class_decl->source_loc() << ")\n";
   }
   return Success();
 }
@@ -5468,13 +5267,16 @@ auto TypeChecker::TypeCheckClassDeclaration(
     Nonnull<ClassDeclaration*> class_decl, const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** checking class " << class_decl->name() << "\n";
+    *trace_stream_ << "*** checking class `" << class_decl->name() << "` ("
+                   << class_decl->source_loc() << ")\n";
   }
   ImplScope class_scope(&impl_scope);
   if (class_decl->type_params().has_value()) {
     BringPatternImplBindingsIntoScope(*class_decl->type_params(), class_scope);
   }
   if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- impl declarations for `" << class_decl->name()
+                   << "` (" << class_decl->source_loc() << ")\n";
     *trace_stream_ << class_scope;
   }
   auto [it, inserted] =
@@ -5486,8 +5288,8 @@ auto TypeChecker::TypeCheckClassDeclaration(
     CARBON_RETURN_IF_ERROR(CollectMember(class_decl, m));
   }
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished checking class " << class_decl->name()
-                   << "\n";
+    *trace_stream_ << "*** finished checking class `" << class_decl->name()
+                   << "` (" << class_decl->source_loc() << ")\n";
   }
   return Success();
 }
@@ -5497,7 +5299,8 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
                                           const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** declaring mixin " << mixin_decl->name() << "\n";
+    *trace_stream_ << "*** declaring mixin `" << mixin_decl->name() << "` ("
+                   << mixin_decl->source_loc() << ")\n";
   }
   ImplScope mixin_scope(scope_info.innermost_scope);
 
@@ -5506,6 +5309,8 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
         *mixin_decl->params(), PatternRequirements::Irrefutable, std::nullopt,
         mixin_scope, ExpressionCategory::Value));
     if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "--- impl declarations for `" << mixin_decl->name()
+                     << "` (" << mixin_decl->source_loc() << ")\n";
       *trace_stream_ << mixin_scope;
     }
 
@@ -5531,8 +5336,8 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
   }
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished declaring mixin " << mixin_decl->name()
-                   << "\n";
+    *trace_stream_ << "*** finished declaring mixin `" << mixin_decl->name()
+                   << "` (" << mixin_decl->source_loc() << ")\n";
   }
   return Success();
 }
@@ -5551,19 +5356,22 @@ auto TypeChecker::TypeCheckMixinDeclaration(
   if (!inserted) {
     // This declaration has already been type checked before
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "** skipped checking mixin " << mixin_decl->name()
-                     << "\n";
+      *trace_stream_ << ">>> skipped checking mixin `" << mixin_decl->name()
+                     << "` (" << mixin_decl->source_loc() << ")\n";
     }
     return Success();
   }
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** checking mixin " << mixin_decl->name() << "\n";
+    *trace_stream_ << "*** checking mixin `" << mixin_decl->name() << "` ("
+                   << mixin_decl->source_loc() << ")\n";
   }
   ImplScope mixin_scope(&impl_scope);
   if (mixin_decl->params().has_value()) {
     BringPatternImplBindingsIntoScope(*mixin_decl->params(), mixin_scope);
   }
   if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- impl declarations for `" << mixin_decl->name()
+                   << "` (" << mixin_decl->source_loc() << ")\n";
     *trace_stream_ << mixin_scope;
   }
   for (Nonnull<Declaration*> m : mixin_decl->members()) {
@@ -5571,8 +5379,8 @@ auto TypeChecker::TypeCheckMixinDeclaration(
     CARBON_RETURN_IF_ERROR(CollectMember(mixin_decl, m));
   }
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished checking mixin " << mixin_decl->name()
-                   << "\n";
+    *trace_stream_ << "*** finished checking mixin `" << mixin_decl->name()
+                   << "` (" << mixin_decl->source_loc() << ")\n";
   }
   return Success();
 }
@@ -5587,7 +5395,8 @@ auto TypeChecker::TypeCheckMixDeclaration(
     std::optional<Nonnull<const Declaration*>> enclosing_decl)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** checking " << *mix_decl << "\n";
+    *trace_stream_ << "*** checking MixDeclaration `" << PrintAsID(*mix_decl)
+                   << "` (" << mix_decl->source_loc() << ")\n";
   }
   // TODO(darshal): Check if the imports (interface mentioned in the 'for'
   // clause) of the mixin being mixed are being impl'd in the enclosed
@@ -5607,7 +5416,8 @@ auto TypeChecker::TypeCheckMixDeclaration(
   }
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished checking " << *mix_decl << "\n";
+    *trace_stream_ << "*** finished checking `" << PrintAsID(*mix_decl) << "` ("
+                   << mix_decl->source_loc() << ")\n";
   }
 
   return Success();
@@ -5622,9 +5432,8 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
   bool is_interface = isa<InterfaceDeclaration>(constraint_decl);
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** declaring ";
-    constraint_decl->PrintID(trace_stream_->stream());
-    *trace_stream_ << "\n";
+    *trace_stream_ << "*** declaring `" << PrintAsID(*constraint_decl) << "` ("
+                   << constraint_decl->source_loc() << ")\n";
   }
   ImplScope constraint_scope(scope_info.innermost_scope);
 
@@ -5635,6 +5444,9 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
         *constraint_decl->params(), PatternRequirements::Irrefutable,
         std::nullopt, constraint_scope, ExpressionCategory::Value));
     if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "--- impl declarations for `"
+                     << PrintAsID(*constraint_decl) << "` ("
+                     << constraint_decl->source_loc() << ")\n";
       *trace_stream_ << constraint_scope;
     }
     CollectAndNumberGenericBindingsInPattern(*constraint_decl->params(),
@@ -5806,9 +5618,8 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
   constraint_decl->set_constraint_type(std::move(builder).Build());
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished declaring ";
-    constraint_decl->PrintID(trace_stream_->stream());
-    *trace_stream_ << "\n";
+    *trace_stream_ << "*** finished declaring `" << PrintAsID(*constraint_decl)
+                   << "` (" << constraint_decl->source_loc() << ")\n";
   }
   return Success();
 }
@@ -5817,9 +5628,8 @@ auto TypeChecker::TypeCheckConstraintTypeDeclaration(
     Nonnull<ConstraintTypeDeclaration*> constraint_decl,
     const ImplScope& impl_scope) -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** checking ";
-    constraint_decl->PrintID(trace_stream_->stream());
-    *trace_stream_ << "\n";
+    *trace_stream_ << "*** checking `" << PrintAsID(*constraint_decl) << "` ("
+                   << constraint_decl->source_loc() << ")\n";
   }
   ImplScope constraint_scope(&impl_scope);
   if (constraint_decl->params().has_value()) {
@@ -5827,6 +5637,9 @@ auto TypeChecker::TypeCheckConstraintTypeDeclaration(
                                       constraint_scope);
   }
   if (trace_stream_->is_enabled()) {
+    *trace_stream_ << "--- impl declarations for `"
+                   << PrintAsID(*constraint_decl) << "` ("
+                   << constraint_decl->source_loc() << ")\n";
     *trace_stream_ << constraint_scope;
   }
   for (Nonnull<Declaration*> m : constraint_decl->members()) {
@@ -5834,9 +5647,8 @@ auto TypeChecker::TypeCheckConstraintTypeDeclaration(
         TypeCheckDeclaration(m, constraint_scope, constraint_decl));
   }
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished checking ";
-    constraint_decl->PrintID(trace_stream_->stream());
-    *trace_stream_ << "\n";
+    *trace_stream_ << "*** finished checking `" << PrintAsID(*constraint_decl)
+                   << "` (" << constraint_decl->source_loc() << ")\n";
   }
   return Success();
 }
@@ -5986,7 +5798,8 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                          bool is_template_instantiation)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "declaring " << *impl_decl << "\n";
+    *trace_stream_ << "*** declaring `" << PrintAsID(*impl_decl) << "` ("
+                   << impl_decl->source_loc() << ")\n";
   }
 
   if (!IsTemplateSaturated(impl_decl->deduced_parameters())) {
@@ -6006,10 +5819,10 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
 
   // Bring the deduced parameters into scope.
   for (Nonnull<GenericBinding*> deduced : impl_decl->deduced_parameters()) {
-    generic_bindings.push_back(deduced);
     CARBON_RETURN_IF_ERROR(
         TypeCheckPattern(deduced, PatternRequirements::Irrefutable,
                          std::nullopt, impl_scope, ExpressionCategory::Value));
+    CollectAndNumberGenericBindingsInPattern(deduced, generic_bindings);
     CollectImplBindingsInPattern(deduced, impl_bindings);
   }
   impl_decl->set_impl_bindings(impl_bindings);
@@ -6056,15 +5869,17 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
                                  builder.GetSelfWitness(), Bindings(),
                                  /*add_lookup_contexts=*/true));
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "resolving impls constraint type for " << *impl_decl
-                     << " from " << *implemented_constraint << "\n";
+      *trace_stream_ << "*** resolving impls constraint type for `"
+                     << PrintAsID(*impl_decl) << "` from `"
+                     << *implemented_constraint << "` ("
+                     << impl_decl->source_loc() << ")\n";
     }
     CARBON_RETURN_IF_ERROR(builder.Resolve(
         *this, impl_decl->interface().source_loc(), impl_scope));
     constraint_type = std::move(builder).Build();
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "resolving impls constraint type as "
-                     << *constraint_type << "\n";
+      *trace_stream_ << "*** resolving impls constraint type as `"
+                     << *constraint_type << "`\n";
     }
     impl_decl->set_constraint_type(constraint_type);
   }
@@ -6121,8 +5936,8 @@ auto TypeChecker::DeclareImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
   }
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished declaring impl " << *impl_decl->impl_type()
-                   << " as " << impl_decl->interface() << "\n";
+    *trace_stream_ << "*** finished declaring impl `" << *impl_decl->impl_type()
+                   << "` as `" << impl_decl->interface() << "`\n";
   }
   return Success();
 }
@@ -6160,13 +5975,15 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
     -> ErrorOr<Success> {
   if (!IsTemplateSaturated(impl_decl->deduced_parameters())) {
     if (trace_stream_->is_enabled()) {
-      *trace_stream_ << "deferring checking templated " << *impl_decl << "\n";
+      *trace_stream_ << "*** deferring checking templated `" << *impl_decl
+                     << "` (" << impl_decl->source_loc() << ")\n";
     }
     return Success();
   }
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "checking " << *impl_decl << "\n";
+    *trace_stream_ << "*** checking ImplDeclaration `" << PrintAsID(*impl_decl)
+                   << "` (" << impl_decl->source_loc() << ")\n";
   }
 
   Nonnull<const Value*> self = *impl_decl->self()->constant_value();
@@ -6190,7 +6007,8 @@ auto TypeChecker::TypeCheckImplDeclaration(Nonnull<ImplDeclaration*> impl_decl,
     CARBON_RETURN_IF_ERROR(TypeCheckDeclaration(m, member_scope, impl_decl));
   }
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "finished checking impl\n";
+    *trace_stream_ << "*** finished checking impl `" << PrintAsID(*impl_decl)
+                   << "` (" << impl_decl->source_loc() << ")\n";
   }
   return Success();
 }
@@ -6207,6 +6025,8 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                          choice_scope, ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(type_params, bindings);
     if (trace_stream_->is_enabled()) {
+      *trace_stream_ << "--- impl declarations for `" << PrintAsID(*choice)
+                     << "` (" << choice->source_loc() << ")\n";
       *trace_stream_ << choice_scope;
     }
   }
@@ -6332,8 +6152,7 @@ auto TypeChecker::TypeCheck(AST& ast) -> ErrorOr<Success> {
   llvm::SaveAndRestore<decltype(top_level_impl_scope_)>
       set_top_level_impl_scope(top_level_impl_scope_, &impl_scope);
 
-  for (int i = 0; i < static_cast<int>(ast.declarations.size()); ++i) {
-    auto* declaration = ast.declarations[i];
+  for (auto declaration : ast.declarations) {
     set_file_ctx.update_source_loc(declaration->source_loc());
     CARBON_RETURN_IF_ERROR(
         DeclareDeclaration(declaration, top_level_scope_info));
@@ -6352,7 +6171,8 @@ auto TypeChecker::TypeCheckDeclaration(
     std::optional<Nonnull<const Declaration*>> enclosing_decl)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "checking " << d->kind() << "\n";
+    *trace_stream_ << "*** checking " << d->kind() << " `" << PrintAsID(*d)
+                   << "` (" << d->source_loc() << ")\n";
   }
   switch (d->kind()) {
     case DeclarationKind::NamespaceDeclaration:
@@ -6672,8 +6492,12 @@ auto TypeChecker::InstantiateImplDeclaration(
   CARBON_CHECK(IsTemplateSaturated(*bindings));
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "instantiating " << *old_impl;
+    *trace_stream_ << "*** instantiating `" << PrintAsID(*old_impl) << "` ("
+                   << old_impl->source_loc() << ")\n";
+    *trace_stream_ << *bindings << "\n";
   }
+
+  SetFileContext set_file_context(*trace_stream_, old_impl->source_loc());
 
   auto it = templates_.find(old_impl);
   CARBON_CHECK(it != templates_.end());

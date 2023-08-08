@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 4
 
 package ExplorerTest api;
 
@@ -23,3 +22,5 @@ class IntLike {
 fn Main() -> i32 {
   return Holder(IntLike.Make()).Get();
 }
+
+// CHECK:STDOUT: result: 4
