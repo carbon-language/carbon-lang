@@ -90,8 +90,9 @@ Supported comment markers are:
 
     STDERR checks are placed before the line they refer to if possible, and
     otherwise as early in the file as possible. STDOUT check lines are placed
-    after the line they refer to if possible, and otherwise at the end of the
-    file.
+    after the line they refer to if possible, and otherwise as early in the file
+    as possible, except that if no STDOUT check line refers to any line in the
+    test, all STDOUT check lines are placed at the end of the file.
 
 -   `// ARGS: <arguments>`
 

@@ -239,15 +239,9 @@ auto AutoupdateFileTest(
       }
     };
 
-    int first_stdout_line = INT_MAX;
-    for (auto* stdout_it = stdout_check_line;
-         stdout_it != stdout_check_file.end(); ++stdout_it) {
-      if (stdout_it->line_number() != -1) {
-        first_stdout_line =
-            std::max(stdout_it->line_number(), autoupdate_line_number);
-        break;
-      }
-    }
+    bool any_attached_stdout_lines = std::any_of(
+        stdout_check_file.begin(), stdout_check_file.end(),
+        [&](const CheckLine& line) { return line.line_number() != -1; });
 
     // Looping through the original file, print check lines preceding each
     // original line.
@@ -280,7 +274,7 @@ auto AutoupdateFileTest(
 
       // STDOUT check lines are placed after the line they refer to, or at the
       // end of the file if none of them refers to a line.
-      if (non_check_line.line_number() >= first_stdout_line) {
+      if (reached_autoupdate && any_attached_stdout_lines) {
         add_check_lines(stdout_check_file, stdout_check_line,
                         non_check_line.line_number(), non_check_line.indent());
       }

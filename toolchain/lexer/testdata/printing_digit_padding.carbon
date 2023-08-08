@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: [
 
 ;
-// CHECK:STDOUT: [
-// CHECK:STDOUT: { index: 0, kind:      'Semi', line: {{ *}}[[@LINE-2]], column:  1, indent: 1, spelling: ';', has_trailing_space: true },
+// CHECK:STDOUT: { index: 0, kind:      'Semi', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: ';', has_trailing_space: true },
 
 // Test digit padding with values of 9, 10, and 11.
         ;;;

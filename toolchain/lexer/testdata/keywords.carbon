@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: [
 
 
 abstract
-// CHECK:STDOUT: [
-// CHECK:STDOUT: { index:  0, kind:            'Abstract', line: {{ *}}[[@LINE-2]], column:  1, indent: 1, spelling: 'abstract', has_trailing_space: true },
+// CHECK:STDOUT: { index:  0, kind:            'Abstract', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'abstract', has_trailing_space: true },
 adapt
 // CHECK:STDOUT: { index:  1, kind:               'Adapt', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'adapt', has_trailing_space: true },
 addr
