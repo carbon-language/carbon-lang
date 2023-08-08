@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// TODO: The `const` in the return type should not be necessary.
+fn F(p: const (const (const i32*)*)) -> const i32 {
+  return **p;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4}}},
@@ -64,8 +70,3 @@
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-// TODO: The `const` in the return type should not be necessary.
-fn F(p: const (const (const i32*)*)) -> const i32 {
-  return **p;
-}

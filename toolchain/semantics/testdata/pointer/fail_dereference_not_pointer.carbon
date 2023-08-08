@@ -3,6 +3,22 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Deref(n: i32) {
+  // CHECK:STDERR: fail_dereference_not_pointer.carbon:[[@LINE+3]]:3: Cannot dereference operand of non-pointer type `i32`.
+  // CHECK:STDERR:   *n;
+  // CHECK:STDERR:   ^
+  *n;
+  // CHECK:STDERR: fail_dereference_not_pointer.carbon:[[@LINE+3]]:3: Cannot dereference operand of non-pointer type `() as type`.
+  // CHECK:STDERR:   *();
+  // CHECK:STDERR:   ^
+  *();
+  // CHECK:STDERR: fail_dereference_not_pointer.carbon:[[@LINE+3]]:3: Cannot dereference operand of non-pointer type `{} as type`.
+  // CHECK:STDERR:   *{};
+  // CHECK:STDERR:   ^
+  *{};
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, body: {block4}}},
@@ -61,18 +77,3 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn Deref(n: i32) {
-  // CHECK:STDERR: fail_dereference_not_pointer.carbon:[[@LINE+3]]:3: Cannot dereference operand of non-pointer type `i32`.
-  // CHECK:STDERR:   *n;
-  // CHECK:STDERR:   ^
-  *n;
-  // CHECK:STDERR: fail_dereference_not_pointer.carbon:[[@LINE+3]]:3: Cannot dereference operand of non-pointer type `() as type`.
-  // CHECK:STDERR:   *();
-  // CHECK:STDERR:   ^
-  *();
-  // CHECK:STDERR: fail_dereference_not_pointer.carbon:[[@LINE+3]]:3: Cannot dereference operand of non-pointer type `{} as type`.
-  // CHECK:STDERR:   *{};
-  // CHECK:STDERR:   ^
-  *{};
-}
