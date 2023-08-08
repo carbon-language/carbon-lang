@@ -5,7 +5,6 @@
 // AUTOUPDATE
 // CHECK:STDOUT: [
 
-
 abstract
 // CHECK:STDOUT: { index:  0, kind:            'Abstract', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'abstract', has_trailing_space: true },
 adapt

@@ -4,19 +4,19 @@
 //
 // An autoupdate wants to put the CHECK in the middle of the block string.
 // NOAUTOUPDATE
+// CHECK:STDOUT: [
 
 // CHECK:STDERR: fail_block_string_second_line.carbon:[[@LINE+4]]:3: Only whitespace is permitted before the closing `'''` of a multi-line string.
 // CHECK:STDERR:   error here: '''
 // CHECK:STDERR:   ^
 var s: String = '''
   error here: '''
-// CHECK:STDOUT: [
-// CHECK:STDOUT: { index: 0, kind:               'Var', line: {{ *}}[[@LINE-3]], column:  1, indent: 1, spelling: 'var', has_trailing_space: true },
-// CHECK:STDOUT: { index: 1, kind:        'Identifier', line: {{ *}}[[@LINE-4]], column:  5, indent: 1, spelling: 's', identifier: 0 },
-// CHECK:STDOUT: { index: 2, kind:             'Colon', line: {{ *}}[[@LINE-5]], column:  6, indent: 1, spelling: ':', has_trailing_space: true },
-// CHECK:STDOUT: { index: 3, kind: 'StringTypeLiteral', line: {{ *}}[[@LINE-6]], column:  8, indent: 1, spelling: 'String', has_trailing_space: true },
-// CHECK:STDOUT: { index: 4, kind:             'Equal', line: {{ *}}[[@LINE-7]], column: 15, indent: 1, spelling: '=', has_trailing_space: true },
-// CHECK:STDOUT: { index: 5, kind:     'StringLiteral', line: {{ *}}[[@LINE-8]], column: 17, indent: 1, spelling: ''''
+// CHECK:STDOUT: { index: 0, kind:               'Var', line: {{ *}}[[@LINE-2]], column:  1, indent: 1, spelling: 'var', has_trailing_space: true },
+// CHECK:STDOUT: { index: 1, kind:        'Identifier', line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: 's', identifier: 0 },
+// CHECK:STDOUT: { index: 2, kind:             'Colon', line: {{ *}}[[@LINE-4]], column:  6, indent: 1, spelling: ':', has_trailing_space: true },
+// CHECK:STDOUT: { index: 3, kind: 'StringTypeLiteral', line: {{ *}}[[@LINE-5]], column:  8, indent: 1, spelling: 'String', has_trailing_space: true },
+// CHECK:STDOUT: { index: 4, kind:             'Equal', line: {{ *}}[[@LINE-6]], column: 15, indent: 1, spelling: '=', has_trailing_space: true },
+// CHECK:STDOUT: { index: 5, kind:     'StringLiteral', line: {{ *}}[[@LINE-7]], column: 17, indent: 1, spelling: ''''
 // CHECK:STDOUT:   error here: '''', value: `error here: `, has_trailing_space: true },
 
 // CHECK:STDOUT: { index: 6, kind:         'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
