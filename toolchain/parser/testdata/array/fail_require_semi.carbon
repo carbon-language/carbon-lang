@@ -3,19 +3,20 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_require_semi.carbon:[[@LINE+3]]:12: Invalid array declaration. Expected Semi.
+// CHECK:STDERR: var x: [i32];
+// CHECK:STDERR:            ^
+var x: [i32];
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'x'},
 // CHECK:STDOUT:         {kind: 'ArrayExpressionStart', text: '['},
 // CHECK:STDOUT:         {kind: 'Literal', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'ArrayExpressionSemi', text: ']', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ArrayExpression', text: ']', subtree_size: 4},
-// CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', has_error: yes, subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'ArrayExpression', text: ']', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:   {kind: 'PatternBinding', text: ':', subtree_size: 6},
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 8},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_require_semi.carbon:[[@LINE+3]]:12: Invalid array declaration. Expected Semi.
-// CHECK:STDERR: var x: [i32];
-// CHECK:STDERR:            ^
-var x: [i32];

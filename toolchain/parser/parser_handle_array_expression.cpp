@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/lexer/token_kind.h"
+#include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parser_context.h"
 #include "toolchain/parser/parser_state.h"
 
@@ -20,21 +22,20 @@ auto ParserHandleArrayExpression(ParserContext& context) -> void {
 
 auto ParserHandleArrayExpressionSemi(ParserContext& context) -> void {
   auto state = context.PopState();
-  if (context.PositionKind() != TokenKind::Semi) {
+  auto semi = context.ConsumeIf(TokenKind::Semi);
+  if (!semi) {
     context.AddNode(ParseNodeKind::ArrayExpressionSemi, *context.position(),
                     state.subtree_start, true);
     CARBON_DIAGNOSTIC(ExpectedArraySemi, Error,
                       "Invalid array declaration. Expected Semi.");
     context.emitter().Emit(*context.position(), ExpectedArraySemi);
-    context.ReturnErrorOnState();
+    state.has_error = true;
   } else {
-    context.AddNode(ParseNodeKind::ArrayExpressionSemi,
-                    context.ConsumeChecked(TokenKind::Semi),
+    context.AddNode(ParseNodeKind::ArrayExpressionSemi, *semi,
                     state.subtree_start, state.has_error);
   }
   state.state = ParserState::ArrayExpressionFinish;
   context.PushState(state);
-
   if (!context.PositionIs(TokenKind::CloseSquareBracket)) {
     context.PushState(ParserState::Expression);
   }
@@ -42,9 +43,9 @@ auto ParserHandleArrayExpressionSemi(ParserContext& context) -> void {
 
 auto ParserHandleArrayExpressionFinish(ParserContext& context) -> void {
   auto state = context.PopState();
-  context.AddNode(ParseNodeKind::ArrayExpression,
-                  context.ConsumeChecked(TokenKind::CloseSquareBracket),
-                  state.subtree_start, state.has_error);
+  context.ConsumeAndAddCloseSymbol(
+      *(TokenizedBuffer::TokenIterator(state.token)), state,
+      ParseNodeKind::ArrayExpression);
 }
 
 }  // namespace Carbon
