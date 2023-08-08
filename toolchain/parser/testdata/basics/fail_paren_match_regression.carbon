@@ -3,6 +3,18 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+6]]:5: Expected pattern in `var` declaration.
+// CHECK:STDERR: var = (foo {})
+// CHECK:STDERR:     ^
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+3]]:12: Expected `,` or `)`.
+// CHECK:STDERR: var = (foo {})
+// CHECK:STDERR:            ^
+var = (foo {})
+
+// CHECK:STDERR: fail_paren_match_regression.carbon:29:19: `var` declarations must end with a `;`.
+// CHECK:STDERR: // CHECK:STDOUT: ]
+// CHECK:STDERR:                   ^
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: '=', has_error: yes},
@@ -15,14 +27,3 @@
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: 'var', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+9]]:5: Expected pattern in `var` declaration.
-// CHECK:STDERR: var = (foo {})
-// CHECK:STDERR:     ^
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+6]]:12: Expected `,` or `)`.
-// CHECK:STDERR: var = (foo {})
-// CHECK:STDERR:            ^
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+3]]:15: `var` declarations must end with a `;`.
-// CHECK:STDERR: var = (foo {})
-// CHECK:STDERR:               ^
-var = (foo {})

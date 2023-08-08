@@ -88,6 +88,11 @@ Supported comment markers are:
     following CHECK lines without line information will immediately follow,
     between the CHECK with line information and the associated line.
 
+    STDERR checks are placed before the line they refer to if possible, and
+    otherwise as early in the file as possible. STDOUT check lines are placed
+    after the line they refer to if possible, and otherwise at the end of the
+    file.
+
 -   `// ARGS: <arguments>`
 
     Provides a space-separated list of arguments, which will be passed to

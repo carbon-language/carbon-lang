@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Run() -> i32 {
+  ((i32,), );
+  return 0;
+}
+
 // CHECK:STDOUT: ; ModuleID = 'nested_tuple.carbon'
 // CHECK:STDOUT: source_filename = "nested_tuple.carbon"
 // CHECK:STDOUT:
@@ -18,8 +24,3 @@
 // CHECK:STDOUT:   store ptr %TupleLiteralValue, ptr %2, align 8
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
-
-fn Run() -> i32 {
-  ((i32,), );
-  return 0;
-}

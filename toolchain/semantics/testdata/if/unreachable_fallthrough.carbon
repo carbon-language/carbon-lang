@@ -3,6 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn If(b: bool) -> i32 {
+  if (b) {
+    return 1;
+  } else {
+    return 2;
+  }
+  // Missing return here is OK.
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4, block5, block6}}},
@@ -60,12 +70,3 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn If(b: bool) -> i32 {
-  if (b) {
-    return 1;
-  } else {
-    return 2;
-  }
-  // Missing return here is OK.
-}

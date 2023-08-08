@@ -3,6 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Foo() -> f64 { return 1.0; }
+
+fn Run() {
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:21: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR:   var x: i32 = Foo();
+  // CHECK:STDERR:                     ^
+  var x: i32 = Foo();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
@@ -54,12 +64,3 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn Foo() -> f64 { return 1.0; }
-
-fn Run() {
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:21: Cannot implicitly convert from `f64` to `i32`.
-  // CHECK:STDERR:   var x: i32 = Foo();
-  // CHECK:STDERR:                     ^
-  var x: i32 = Foo();
-}

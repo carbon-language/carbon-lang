@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var a: (i32, i32) = (12, 6);
+// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:19: Type cannot be determined at compile time.
+// CHECK:STDERR: var b: i32 = a[2.6];
+// CHECK:STDERR:                   ^
+var b: i32 = a[2.6];
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -83,9 +90,3 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:19: Type cannot be determined at compile time.
-// CHECK:STDERR: var b: i32 = a[2.6];
-// CHECK:STDERR:                   ^
-var b: i32 = a[2.6];

@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Echo(a: ()) -> () {
+  return a;
+}
+
+fn Main() {
+  var b: () = Echo(());
+}
+
 // CHECK:STDOUT: ; ModuleID = 'empty_tuple.carbon'
 // CHECK:STDOUT: source_filename = "empty_tuple.carbon"
 // CHECK:STDOUT:
@@ -21,11 +30,3 @@
 // CHECK:STDOUT:   store %TupleLiteralType %Echo, ptr %var, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-fn Echo(a: ()) -> () {
-  return a;
-}
-
-fn Main() {
-  var b: () = Echo(());
-}

@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var x: {.a: f64} = {.a = 4.0};
+// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+3]]:15: Type `{.a: f64}` does not have a member `b`.
+// CHECK:STDERR: var y: i32 = x.b;
+// CHECK:STDERR:               ^
+var y: i32 = x.b;
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -64,9 +71,3 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-var x: {.a: f64} = {.a = 4.0};
-// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+3]]:15: Type `{.a: f64}` does not have a member `b`.
-// CHECK:STDERR: var y: i32 = x.b;
-// CHECK:STDERR:               ^
-var y: i32 = x.b;

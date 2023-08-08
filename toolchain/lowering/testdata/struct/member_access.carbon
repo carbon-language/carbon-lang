@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Run() -> i32 {
+  var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
+  var y: i32 = x.b;
+  var z: i32 = y;
+  return 0;
+}
+
 // CHECK:STDOUT: ; ModuleID = 'member_access.carbon'
 // CHECK:STDOUT: source_filename = "member_access.carbon"
 // CHECK:STDOUT:
@@ -26,10 +34,3 @@
 // CHECK:STDOUT:   store i32 %3, ptr %var3, align 4
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
-
-fn Run() -> i32 {
-  var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
-  var y: i32 = x.b;
-  var z: i32 = y;
-  return 0;
-}

@@ -3,9 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: structs equal: 0
-// CHECK:STDOUT: structs not equal: 1
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -29,3 +26,7 @@ fn Main() -> i32 {
   Print("structs not equal: {0}", if x != y then 1 else 0);
   return 0;
 }
+
+// CHECK:STDOUT: structs equal: 0
+// CHECK:STDOUT: structs not equal: 1
+// CHECK:STDOUT: result: 0

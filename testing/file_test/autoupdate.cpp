@@ -78,10 +78,12 @@ class CheckLine : public FileTestLineBase {
 
       // Calculate the offset from the CHECK line to the new line number
       // (possibly with new CHECK lines added, or some removed).
-      // NOLINTNEXTLINE(google-runtime-int): API requirement.
       auto remapped =
           output_line_remap.find(ParseLineNumber(matched_line_number));
-      CARBON_CHECK(remapped != output_line_remap.end());
+      if (remapped == output_line_remap.end()) {
+        // Line didn't actually exist in the output.
+        return;
+      }
       int offset = remapped->second - output_line_number_;
 
       // Update the line offset in the CHECK line.
@@ -182,9 +184,7 @@ static auto AddCheckLines(
         use_line_number = match_line_number;
       }
     }
-    // NOLINTNEXTLINE(google-runtime-int): API requirement.
-    long long line_number =
-        use_line_number ? ParseLineNumber(*use_line_number) : -1;
+    int line_number = use_line_number ? ParseLineNumber(*use_line_number) : -1;
     check_lines[append_to].push_back(
         CheckLine(line_number, line_number_re_has_file,
                   use_line_number ? &line_number_re : nullptr, check_line));
@@ -199,28 +199,59 @@ auto AutoupdateFileTest(
     llvm::StringRef stdout, llvm::StringRef stderr,
     FileTestLineNumberReplacement line_number_replacement,
     std::function<void(std::string&)> do_extra_check_replacements) -> bool {
-  // Prepare CHECK lines.
-  llvm::SmallVector<llvm::SmallVector<CheckLine>> check_lines;
-  check_lines.resize(filenames.size());
   RE2 line_number_re(line_number_replacement.pattern);
   CARBON_CHECK(line_number_re.ok()) << "Invalid line replacement RE2: `"
                                     << line_number_replacement.pattern << "`";
 
+  // Prepare CHECK lines.
+  llvm::SmallVector<llvm::SmallVector<CheckLine>> stdout_check_lines;
+  stdout_check_lines.resize(filenames.size());
   AddCheckLines(stdout, "STDOUT", filenames, line_number_replacement.has_file,
-                line_number_re, do_extra_check_replacements, check_lines);
+                line_number_re, do_extra_check_replacements,
+                stdout_check_lines);
+
+  llvm::SmallVector<llvm::SmallVector<CheckLine>> stderr_check_lines;
+  stderr_check_lines.resize(filenames.size());
   AddCheckLines(stderr, "STDERR", filenames, line_number_replacement.has_file,
-                line_number_re, do_extra_check_replacements, check_lines);
+                line_number_re, do_extra_check_replacements,
+                stderr_check_lines);
 
   // All CHECK lines are suppressed until we reach AUTOUPDATE.
   bool reached_autoupdate = false;
 
+  FileTestLine blank_line(-1, "");
+
   // Stitch together content.
   llvm::SmallVector<const FileTestLineBase*> new_lines;
-  for (auto [filename, non_check_file, check_file] :
-       llvm::zip(filenames, non_check_lines, check_lines)) {
+  for (auto [filename, non_check_file, stdout_check_file, stderr_check_file] :
+       llvm::zip(filenames, non_check_lines, stdout_check_lines,
+                 stderr_check_lines)) {
     llvm::DenseMap<int, int> output_line_remap;
     int output_line_number = 0;
-    auto* check_line = check_file.begin();
+    auto* stdout_check_line = stdout_check_file.begin();
+    auto* stderr_check_line = stderr_check_file.begin();
+
+    // Add all check lines from the given vector until we reach a check line
+    // attached to a line later than `to_line_number`.
+    auto add_check_lines = [&](const llvm::SmallVector<CheckLine>& lines,
+                               CheckLine*& line, int to_line_number,
+                               llvm::StringRef indent) {
+      for (; line != lines.end() && line->line_number() <= to_line_number;
+           ++line) {
+        new_lines.push_back(line);
+        line->SetOutputLine(indent, ++output_line_number);
+      }
+    };
+
+    int first_stdout_line = INT_MAX;
+    for (auto* stdout_it = stdout_check_line;
+         stdout_it != stdout_check_file.end(); ++stdout_it) {
+      if (stdout_it->line_number() != -1) {
+        first_stdout_line =
+            std::max(stdout_it->line_number(), autoupdate_line_number);
+        break;
+      }
+    }
 
     // Looping through the original file, print check lines preceding each
     // original line.
@@ -233,24 +264,30 @@ auto AutoupdateFileTest(
         continue;
       }
 
+      // STDERR check lines are placed before the line they refer to, or as
+      // early as possible if they don't refer to a line. Include all STDERR
+      // lines until we find one that wants to go later in the file.
       if (reached_autoupdate) {
-        for (; check_line != check_file.end() &&
-               check_line->line_number() <= non_check_line.line_number();
-             ++check_line) {
-          new_lines.push_back(check_line);
-          check_line->SetOutputLine(non_check_line.indent(),
-                                    ++output_line_number);
-        }
+        add_check_lines(stderr_check_file, stderr_check_line,
+                        non_check_line.line_number(), non_check_line.indent());
       } else if (autoupdate_line_number == non_check_line.line_number()) {
         // This is the AUTOUPDATE line, so we'll print it, then start printing
         // CHECK lines.
         reached_autoupdate = true;
       }
+
       new_lines.push_back(&non_check_line);
       CARBON_CHECK(
           output_line_remap
               .insert({non_check_line.line_number(), ++output_line_number})
               .second);
+
+      // STDOUT check lines are placed after the line they refer to, or at the
+      // end of the file if none of them refers to a line.
+      if (non_check_line.line_number() >= first_stdout_line) {
+        add_check_lines(stdout_check_file, stdout_check_line,
+                        non_check_line.line_number(), non_check_line.indent());
+      }
     }
 
     // This should always be true after the first file is processed.
@@ -258,15 +295,29 @@ auto AutoupdateFileTest(
 
     // Print remaining check lines which -- for whatever reason -- come after
     // all original lines.
-    for (; check_line != check_file.end(); ++check_line) {
-      new_lines.push_back(check_line);
-      check_line->SetOutputLine("", ++output_line_number);
+    if (stderr_check_line != stderr_check_file.end() ||
+        stdout_check_line != stdout_check_file.end()) {
+      // Ensure there's a blank line before any trailing CHECKs.
+      if (!new_lines.empty()) {
+        std::string str;
+        llvm::raw_string_ostream out(str);
+        new_lines.back()->Print(out);
+        if (!str.empty()) {
+          new_lines.push_back(&blank_line);
+          ++output_line_number;
+        }
+      }
+
+      add_check_lines(stderr_check_file, stderr_check_line, INT_MAX, "");
+      add_check_lines(stdout_check_file, stdout_check_line, INT_MAX, "");
     }
 
     // Update all remapped lines in CHECK output.
-    for (auto& offset_check_line : check_file) {
-      offset_check_line.RemapLineNumbers(output_line_remap,
-                                         line_number_replacement.line_formatv);
+    for (auto* check_file : {&stdout_check_file, &stderr_check_file}) {
+      for (auto& offset_check_line : *check_file) {
+        offset_check_line.RemapLineNumbers(
+            output_line_remap, line_number_replacement.line_formatv);
+      }
     }
   }
 

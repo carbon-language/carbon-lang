@@ -3,6 +3,19 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+interface Foo {
+  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:13: Expected parameter declaration.
+  // CHECK:STDERR:   fn Sub[me Self](b: Self) -> Self;
+  // CHECK:STDERR:             ^
+  fn Sub[me Self](b: Self) -> Self;
+
+  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:10: Expected parameter declaration.
+  // CHECK:STDERR:   fn Mul[Self](b: Self) -> Self;
+  // CHECK:STDERR:          ^
+  fn Mul[Self](b: Self) -> Self;
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'Foo'},
@@ -40,15 +53,3 @@
 // CHECK:STDOUT: {kind: 'InterfaceDefinition', text: '}', subtree_size: 34},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-interface Foo {
-  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:13: Expected parameter declaration.
-  // CHECK:STDERR:   fn Sub[me Self](b: Self) -> Self;
-  // CHECK:STDERR:             ^
-  fn Sub[me Self](b: Self) -> Self;
-
-  // CHECK:STDERR: fail_self_param_syntax.carbon:[[@LINE+3]]:10: Expected parameter declaration.
-  // CHECK:STDERR:   fn Mul[Self](b: Self) -> Self;
-  // CHECK:STDERR:          ^
-  fn Mul[Self](b: Self) -> Self;
-}

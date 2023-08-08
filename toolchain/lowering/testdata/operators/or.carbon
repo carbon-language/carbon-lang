@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() -> bool { return true; }
+fn G() -> bool { return true; }
+
+fn Or() -> bool {
+  return F() or G();
+}
+
 // CHECK:STDOUT: ; ModuleID = 'or.carbon'
 // CHECK:STDOUT: source_filename = "or.carbon"
 // CHECK:STDOUT:
@@ -27,10 +35,3 @@
 // CHECK:STDOUT:   %4 = phi i1 [ true, %0 ], [ %G, %2 ]
 // CHECK:STDOUT:   ret i1 %4
 // CHECK:STDOUT: }
-
-fn F() -> bool { return true; }
-fn G() -> bool { return true; }
-
-fn Or() -> bool {
-  return F() or G();
-}

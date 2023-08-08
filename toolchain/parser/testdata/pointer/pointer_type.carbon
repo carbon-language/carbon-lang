@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F(p: i32*) -> i32* {
+  return p;
+}
+
+var T: type = if true then i32* else f64*;
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'F'},
@@ -36,9 +43,3 @@
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 14},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-fn F(p: i32*) -> i32* {
-  return p;
-}
-
-var T: type = if true then i32* else f64*;

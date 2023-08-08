@@ -14,6 +14,7 @@ fn Main() -> i32 {
 // conflicts.
 // ARGS: --trace_file=- --trace_phase=timing %s
 // AUTOUPDATE
+
 // CHECK:STDOUT: ********** printing timing **********
 // CHECK:STDOUT: Time elapsed in ExecProgram: {{\d+}}ms
 // CHECK:STDOUT: Time elapsed in AnalyzeProgram: {{\d+}}ms

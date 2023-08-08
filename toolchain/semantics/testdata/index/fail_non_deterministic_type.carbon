@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var a: (i32, i32) = (2, 3);
+var b: i32 = 0;
+// CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+3]]:17: Type cannot be determined at compile time.
+// CHECK:STDERR: var c: i32 = a[b];
+// CHECK:STDERR:                 ^
+var c: i32 = a[b];
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -89,10 +97,3 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-var a: (i32, i32) = (2, 3);
-var b: i32 = 0;
-// CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+3]]:17: Type cannot be determined at compile time.
-// CHECK:STDERR: var c: i32 = a[b];
-// CHECK:STDERR:                 ^
-var c: i32 = a[b];

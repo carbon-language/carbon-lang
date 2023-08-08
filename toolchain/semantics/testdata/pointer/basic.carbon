@@ -3,6 +3,19 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() -> i32 {
+  var n: i32 = 0;
+  var p: i32*;
+
+  // TODO: Test taking address and dereference.
+  // p = &n;
+  // *p = 1;
+  // return *p;
+
+  return 0;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
@@ -54,15 +67,3 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn F() -> i32 {
-  var n: i32 = 0;
-  var p: i32*;
-
-  // TODO: Test taking address and dereference.
-  // p = &n;
-  // *p = 1;
-  // return *p;
-
-  return 0;
-}

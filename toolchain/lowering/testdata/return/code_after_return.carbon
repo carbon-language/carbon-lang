@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() {}
+
+fn Main() {
+  return;
+  F();
+}
+
 // CHECK:STDOUT: ; ModuleID = 'code_after_return.carbon'
 // CHECK:STDOUT: source_filename = "code_after_return.carbon"
 // CHECK:STDOUT:
@@ -13,10 +21,3 @@
 // CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-fn F() {}
-
-fn Main() {
-  return;
-  F();
-}

@@ -14,6 +14,7 @@ fn Main() -> i32 {
 // conflicts.
 // ARGS: --trace_file=- --trace_phase=type_checking %s
 // AUTOUPDATE
+
 // CHECK:STDOUT: ********** type checking **********
 // CHECK:STDOUT: ** declaring interface TestInterface
 // CHECK:STDOUT: ** finished declaring interface TestInterface

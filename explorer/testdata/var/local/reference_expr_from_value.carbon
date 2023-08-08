@@ -3,12 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: 0: Heap{}, 1: C{}
-// CHECK:STDOUT: Initialize c from value expression
-// CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: C{}
-// CHECK:STDOUT: c destroyed
-// CHECK:STDOUT: c destroyed
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -30,3 +24,10 @@ fn Main() -> i32 {
   FromValueExpression();
   return 0;
 }
+
+// CHECK:STDOUT: 0: Heap{}, 1: C{}
+// CHECK:STDOUT: Initialize c from value expression
+// CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: C{}
+// CHECK:STDOUT: c destroyed
+// CHECK:STDOUT: c destroyed
+// CHECK:STDOUT: result: 0

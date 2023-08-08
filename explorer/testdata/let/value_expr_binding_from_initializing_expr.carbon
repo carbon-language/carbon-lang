@@ -3,13 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: Bind from c initializing expression
-// CHECK:STDOUT: 0: Heap{}, 1: !Uninit<class C>
-// CHECK:STDOUT: 0: Heap{}, 1: C{}
-// CHECK:STDOUT: Binding scope end
-// CHECK:STDOUT: c destroyed
-// CHECK:STDOUT: 0: Heap{}, 1: !!C{}
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -37,3 +30,11 @@ fn Main() -> i32 {
   heap.PrintAllocs();
   return 0;
 }
+
+// CHECK:STDOUT: Bind from c initializing expression
+// CHECK:STDOUT: 0: Heap{}, 1: !Uninit<class C>
+// CHECK:STDOUT: 0: Heap{}, 1: C{}
+// CHECK:STDOUT: Binding scope end
+// CHECK:STDOUT: c destroyed
+// CHECK:STDOUT: 0: Heap{}, 1: !!C{}
+// CHECK:STDOUT: result: 0
