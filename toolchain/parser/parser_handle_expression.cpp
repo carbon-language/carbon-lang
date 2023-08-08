@@ -88,6 +88,11 @@ auto ParserHandleExpressionInPostfix(ParserContext& context) -> void {
       context.PushState(ParserState::ParenExpression);
       break;
     }
+    case TokenKind::OpenSquareBracket: {
+      context.PushState(state);
+      context.PushState(ParserState::ArrayExpression);
+      break;
+    }
     case TokenKind::SelfValueIdentifier: {
       context.AddLeafNode(ParseNodeKind::SelfValueName, context.Consume());
       context.PushState(state);
@@ -115,9 +120,7 @@ auto ParserHandleExpressionInPostfixLoop(ParserContext& context) -> void {
   // This is a cyclic state that repeats, so this state is typically pushed back
   // on.
   auto state = context.PopState();
-
   state.token = *context.position();
-
   switch (context.PositionKind()) {
     case TokenKind::Period: {
       context.PushState(state);
@@ -156,6 +159,7 @@ auto ParserHandleExpressionLoop(ParserContext& context) -> void {
   auto state = context.PopState();
 
   auto operator_kind = context.PositionKind();
+
   auto trailing_operator = PrecedenceGroup::ForTrailing(
       operator_kind, context.IsTrailingOperatorInfix());
   if (!trailing_operator) {
