@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var a: (i32,) = (12,);
+var b: (i32,) = a;
+// CHECK:STDERR: fail_large_index.carbon:[[@LINE+3]]:35: Index `295147905179352825855` is past the end of `(i32,) as type`.
+// CHECK:STDERR: var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
+// CHECK:STDERR:                                   ^
+var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -85,10 +93,3 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-var a: (i32,) = (12,);
-var b: (i32,) = a;
-// CHECK:STDERR: fail_large_index.carbon:[[@LINE+3]]:35: Index `295147905179352825855` is past the end of `(i32,) as type`.
-// CHECK:STDERR: var c: i32 = b[0xFFFFFFFFFFFFFFFFF];
-// CHECK:STDERR:                                   ^
-var c: i32 = b[0xFFFFFFFFFFFFFFFFF];

@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() -> bool { return true; }
+fn G() -> bool { return true; }
+
+fn And() -> bool {
+  return F() and G();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
@@ -71,10 +79,3 @@
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn F() -> bool { return true; }
-fn G() -> bool { return true; }
-
-fn And() -> bool {
-  return F() and G();
-}

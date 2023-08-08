@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// OK, `const (const i32)` is the same type as `const i32`.
+// CHECK:STDERR: collapse.carbon:[[@LINE+3]]:25: `const` applied repeatedly to the same type has no additional effect.
+// CHECK:STDERR: fn F(p: const i32**) -> const (const i32)** {
+// CHECK:STDERR:                         ^
+fn F(p: const i32**) -> const (const i32)** {
+  return p;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type3, body: {block4}}},
@@ -60,11 +69,3 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-// OK, `const (const i32)` is the same type as `const i32`.
-// CHECK:STDERR: collapse.carbon:[[@LINE+3]]:25: `const` applied repeatedly to the same type has no additional effect.
-// CHECK:STDERR: fn F(p: const i32**) -> const (const i32)** {
-// CHECK:STDERR:                         ^
-fn F(p: const i32**) -> const (const i32)** {
-  return p;
-}

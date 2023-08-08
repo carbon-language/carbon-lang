@@ -3,11 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: HALLO WELT 0
-// CHECK:STDOUT: HALLO WELT 1
-// CHECK:STDOUT: HALLO WELT 2
-// CHECK:STDOUT: HALLO WELT 3
-// CHECK:STDOUT: result: 4
 
 package ExplorerTest api;
 
@@ -20,3 +15,9 @@ fn Main() -> i32 {
   }
   return count;
 }
+
+// CHECK:STDOUT: HALLO WELT 0
+// CHECK:STDOUT: HALLO WELT 1
+// CHECK:STDOUT: HALLO WELT 2
+// CHECK:STDOUT: HALLO WELT 3
+// CHECK:STDOUT: result: 4

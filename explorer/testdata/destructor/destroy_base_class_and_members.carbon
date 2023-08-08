@@ -3,16 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: Destroying 0 (C)
-// CHECK:STDOUT: Destroying 1
-// CHECK:STDOUT: Destroying 2
-// CHECK:STDOUT: Destroying 3 (B)
-// CHECK:STDOUT: Destroying 4
-// CHECK:STDOUT: Destroying 5
-// CHECK:STDOUT: Destroying 6 (A)
-// CHECK:STDOUT: Destroying 7
-// CHECK:STDOUT: Destroying 8
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -57,3 +47,14 @@ fn Main() -> i32 {
   var c: C = C.Make();
   return 0;
 }
+
+// CHECK:STDOUT: Destroying 0 (C)
+// CHECK:STDOUT: Destroying 1
+// CHECK:STDOUT: Destroying 2
+// CHECK:STDOUT: Destroying 3 (B)
+// CHECK:STDOUT: Destroying 4
+// CHECK:STDOUT: Destroying 5
+// CHECK:STDOUT: Destroying 6 (A)
+// CHECK:STDOUT: Destroying 7
+// CHECK:STDOUT: Destroying 8
+// CHECK:STDOUT: result: 0

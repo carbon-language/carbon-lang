@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Echo(a: {}) -> {} {
+  return {};
+}
+
+fn Main() {
+  var b: {} = Echo({});
+}
+
 // CHECK:STDOUT: ; ModuleID = 'empty_struct.carbon'
 // CHECK:STDOUT: source_filename = "empty_struct.carbon"
 // CHECK:STDOUT:
@@ -23,11 +32,3 @@
 // CHECK:STDOUT:   store %StructLiteralType %Echo, ptr %var, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-fn Echo(a: {}) -> {} {
-  return {};
-}
-
-fn Main() {
-  var b: {} = Echo({});
-}

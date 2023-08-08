@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Main() {
+  var a: i32 = 12;
+  a = 9;
+  var b: (i32, i32);
+  b = (1, 2);
+}
+
 // CHECK:STDOUT: ; ModuleID = 'assignment.carbon'
 // CHECK:STDOUT: source_filename = "assignment.carbon"
 // CHECK:STDOUT:
@@ -28,10 +36,3 @@
 // CHECK:STDOUT:   store %TupleLiteralType.0 %5, ptr %var1, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-fn Main() {
-  var a: i32 = 12;
-  a = 9;
-  var b: (i32, i32);
-  b = (1, 2);
-}

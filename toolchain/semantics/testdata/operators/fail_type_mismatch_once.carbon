@@ -3,6 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Main() -> i32 {
+  // The following line has two mismatches, but after the first, it shouldn't
+  // keep erroring.
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+3]]:13: Cannot implicitly convert from `i32` to `f64`.
+  // CHECK:STDERR:   return 12 + 3.4 + 12;
+  // CHECK:STDERR:             ^
+  return 12 + 3.4 + 12;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
@@ -47,12 +57,3 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn Main() -> i32 {
-  // The following line has two mismatches, but after the first, it shouldn't
-  // keep erroring.
-  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+3]]:13: Cannot implicitly convert from `i32` to `f64`.
-  // CHECK:STDERR:   return 12 + 3.4 + 12;
-  // CHECK:STDERR:             ^
-  return 12 + 3.4 + 12;
-}

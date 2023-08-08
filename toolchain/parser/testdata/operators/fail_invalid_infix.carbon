@@ -3,6 +3,23 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+3]]:19: Expected expression.
+// CHECK:STDERR: var a: i32 = n == ;
+// CHECK:STDERR:                   ^
+var a: i32 = n == ;
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+3]]:14: Expected expression.
+// CHECK:STDERR: var b: i32 = == n;
+// CHECK:STDERR:              ^
+var b: i32 = == n;
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+6]]:14: Expected expression.
+// CHECK:STDERR: var c: i32 = == ;
+// CHECK:STDERR:              ^
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+3]]:17: Expected expression.
+// CHECK:STDERR: var c: i32 = == ;
+// CHECK:STDERR:                 ^
+var c: i32 = == ;
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'a'},
@@ -33,19 +50,3 @@
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 9},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+3]]:19: Expected expression.
-// CHECK:STDERR: var a: i32 = n == ;
-// CHECK:STDERR:                   ^
-var a: i32 = n == ;
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+3]]:14: Expected expression.
-// CHECK:STDERR: var b: i32 = == n;
-// CHECK:STDERR:              ^
-var b: i32 = == n;
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+6]]:14: Expected expression.
-// CHECK:STDERR: var c: i32 = == ;
-// CHECK:STDERR:              ^
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+3]]:17: Expected expression.
-// CHECK:STDERR: var c: i32 = == ;
-// CHECK:STDERR:                 ^
-var c: i32 = == ;

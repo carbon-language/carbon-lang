@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: recover_postfix_space_before_comma.carbon:[[@LINE+3]]:18: Whitespace is not allowed before this unary operator.
+// CHECK:STDERR: var n: i8 = F(i8 *, 0);
+// CHECK:STDERR:                  ^
+var n: i8 = F(i8 *, 0);
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'n'},
@@ -19,8 +25,3 @@
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 13},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: recover_postfix_space_before_comma.carbon:[[@LINE+3]]:18: Whitespace is not allowed before this unary operator.
-// CHECK:STDERR: var n: i8 = F(i8 *, 0);
-// CHECK:STDERR:                  ^
-var n: i8 = F(i8 *, 0);

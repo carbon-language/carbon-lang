@@ -4,6 +4,7 @@
 //
 // ARGS: dump objcode --target_triple=x86_64-unknown-linux-gnu --output_file=%t %s
 // AUTOUPDATE
-// CHECK:STDOUT: Success: Object file is generated!
 
 fn Main() -> i32 { return 0; }
+
+// CHECK:STDOUT: Success: Object file is generated!

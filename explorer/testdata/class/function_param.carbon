@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -19,3 +18,5 @@ fn GetX(p: Point) -> i32 {
 fn Main() -> i32 {
   return GetX({.x = 1, .y = 2}) - 1;
 }
+
+// CHECK:STDOUT: result: 0

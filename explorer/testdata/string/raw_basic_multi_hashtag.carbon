@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -17,3 +16,5 @@ fn CompareStr(s: String) -> i32 {
 fn Main() -> i32 {
   return CompareStr(#####"str"#####);
 }
+
+// CHECK:STDOUT: result: 0

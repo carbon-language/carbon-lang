@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_comma_repeat_in_type.carbon:[[@LINE+3]]:17: Expected `.field: field_type`.
+// CHECK:STDERR: var x: {.a: i32,,} = {};
+// CHECK:STDERR:                 ^
+var x: {.a: i32,,} = {};
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'x'},
@@ -22,8 +28,3 @@
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 16},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_comma_repeat_in_type.carbon:[[@LINE+3]]:17: Expected `.field: field_type`.
-// CHECK:STDERR: var x: {.a: i32,,} = {};
-// CHECK:STDERR:                 ^
-var x: {.a: i32,,} = {};

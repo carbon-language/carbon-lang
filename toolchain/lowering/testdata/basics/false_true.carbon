@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() -> bool {
+  return false;
+}
+
+fn T() -> bool {
+  return true;
+}
+
 // CHECK:STDOUT: ; ModuleID = 'false_true.carbon'
 // CHECK:STDOUT: source_filename = "false_true.carbon"
 // CHECK:STDOUT:
@@ -13,11 +22,3 @@
 // CHECK:STDOUT: define i1 @T() {
 // CHECK:STDOUT:   ret i1 true
 // CHECK:STDOUT: }
-
-fn F() -> bool {
-  return false;
-}
-
-fn T() -> bool {
-  return true;
-}

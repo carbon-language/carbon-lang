@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() -> i32 { return 1; }
+fn G() -> i32 { return 2; }
+
+fn Select(b: bool) -> i32 {
+  return if b then F() else G();
+}
+
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -29,10 +37,3 @@
 // CHECK:STDOUT:   %4 = phi i32 [ %F, %1 ], [ %G, %2 ]
 // CHECK:STDOUT:   ret i32 %4
 // CHECK:STDOUT: }
-
-fn F() -> i32 { return 1; }
-fn G() -> i32 { return 2; }
-
-fn Select(b: bool) -> i32 {
-  return if b then F() else G();
-}
