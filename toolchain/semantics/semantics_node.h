@@ -380,6 +380,9 @@ class SemanticsNode {
       FactoryNoType<SemanticsNodeKind::FunctionDeclaration,
                     SemanticsFunctionId /*function_id*/>;
 
+  using Index = Factory<SemanticsNodeKind::Index, SemanticsNodeId /*tuple_id*/,
+                        SemanticsNodeId /*index*/>;
+
   using IntegerLiteral = Factory<SemanticsNodeKind::IntegerLiteral,
                                  SemanticsIntegerLiteralId /*integer_id*/>;
 
