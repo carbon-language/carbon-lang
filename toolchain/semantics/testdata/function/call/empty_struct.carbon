@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Echo(a: {}) -> {} {
+  return a;
+}
+
+fn Main() {
+  Echo({});
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type0, body: {block4}}},
@@ -66,11 +75,3 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn Echo(a: {}) -> {} {
-  return a;
-}
-
-fn Main() {
-  Echo({});
-}

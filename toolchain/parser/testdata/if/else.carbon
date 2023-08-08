@@ -3,6 +3,22 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() {
+  if (a) {
+    if (b) {
+      c;
+    } else {
+      d;
+    }
+  } else {
+    e;
+  }
+  if (x) { f; }
+  else if (x) { g; }
+  else { h; }
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'F'},
@@ -58,18 +74,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 52},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-fn F() {
-  if (a) {
-    if (b) {
-      c;
-    } else {
-      d;
-    }
-  } else {
-    e;
-  }
-  if (x) { f; }
-  else if (x) { g; }
-  else { h; }
-}

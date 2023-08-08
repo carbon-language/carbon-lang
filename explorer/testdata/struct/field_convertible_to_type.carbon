@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 3
 
 package ExplorerTest api;
 
@@ -18,3 +17,5 @@ fn Main() -> TypeLike.Make() {
   var x: {.a: TypeLike.Make(), .b: TypeLike.Make()} = {.a = 1, .b = 2};
   return x.a + x.b;
 }
+
+// CHECK:STDOUT: result: 3

@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn G(p: i32*);
+
+fn F() {
+  var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+  // TODO: The lowering here is incorrect: we're incorrectly loading `s.b`.
+  G(&s.b);
+}
+
 // CHECK:STDOUT: ; ModuleID = 'address_of_field.carbon'
 // CHECK:STDOUT: source_filename = "address_of_field.carbon"
 // CHECK:STDOUT:
@@ -25,11 +34,3 @@
 // CHECK:STDOUT:   %TupleLiteralValue = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-fn G(p: i32*);
-
-fn F() {
-  var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-  // TODO: The lowering here is incorrect: we're incorrectly loading `s.b`.
-  G(&s.b);
-}

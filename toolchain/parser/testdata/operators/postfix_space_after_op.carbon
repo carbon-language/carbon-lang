@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var v: type = i8* ;
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'v'},
@@ -14,5 +17,3 @@
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 8},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-var v: type = i8* ;

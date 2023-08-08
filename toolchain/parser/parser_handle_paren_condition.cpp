@@ -32,13 +32,17 @@ auto ParserHandleParenConditionAsWhile(ParserContext& context) -> void {
 auto ParserHandleParenConditionFinishAsIf(ParserContext& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseParen(state, ParseNodeKind::IfCondition);
+  context.ConsumeAndAddCloseSymbol(
+      *(TokenizedBuffer::TokenIterator(state.token) + 1), state,
+      ParseNodeKind::IfCondition);
 }
 
 auto ParserHandleParenConditionFinishAsWhile(ParserContext& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseParen(state, ParseNodeKind::WhileCondition);
+  context.ConsumeAndAddCloseSymbol(
+      *(TokenizedBuffer::TokenIterator(state.token) + 1), state,
+      ParseNodeKind::WhileCondition);
 }
 
 }  // namespace Carbon

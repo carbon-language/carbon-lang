@@ -3,6 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+interface Foo {
+  // CHECK:STDERR: fail_no_impl_allowed.carbon:[[@LINE+3]]:39: Method implementations are not allowed in interfaces.
+  // CHECK:STDERR:   fn Add[self: Self](b: Self) -> Self {
+  // CHECK:STDERR:                                       ^
+  fn Add[self: Self](b: Self) -> Self {
+    print("You can't do that.");
+  }
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'Foo'},
@@ -25,12 +35,3 @@
 // CHECK:STDOUT: {kind: 'InterfaceDefinition', text: '}', subtree_size: 19},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-interface Foo {
-  // CHECK:STDERR: fail_no_impl_allowed.carbon:[[@LINE+3]]:39: Method implementations are not allowed in interfaces.
-  // CHECK:STDERR:   fn Add[self: Self](b: Self) -> Self {
-  // CHECK:STDERR:                                       ^
-  fn Add[self: Self](b: Self) -> Self {
-    print("You can't do that.");
-  }
-}

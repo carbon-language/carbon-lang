@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var v: i32 = 0;
+var w: i32;
+fn F() {
+  var s: String = "hello";
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'v'},
@@ -31,9 +38,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 13},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-var v: i32 = 0;
-var w: i32;
-fn F() {
-  var s: String = "hello";
-}

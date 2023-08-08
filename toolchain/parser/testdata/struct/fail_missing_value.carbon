@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:12: Expected expression.
+// CHECK:STDERR: var x: {.a=} = {};
+// CHECK:STDERR:            ^
+var x: {.a=} = {};
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'x'},
@@ -19,8 +25,3 @@
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 13},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:12: Expected expression.
-// CHECK:STDERR: var x: {.a=} = {};
-// CHECK:STDERR:            ^
-var x: {.a=} = {};

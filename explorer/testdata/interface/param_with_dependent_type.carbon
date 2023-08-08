@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 42
 
 package ExplorerTest api;
 
@@ -18,3 +17,5 @@ impl () as HasValueParam(i32, 5) {
 fn Main() -> i32 {
   return ().(HasValueParam(i32, 5).Go)();
 }
+
+// CHECK:STDOUT: result: 42

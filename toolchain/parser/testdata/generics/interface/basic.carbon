@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+interface Foo {
+  fn Add[self: Self](b: Self) -> Self;
+  fn Add[self: foo](b: Self) -> Self;
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'Foo'},
@@ -40,8 +46,3 @@
 // CHECK:STDOUT: {kind: 'InterfaceDefinition', text: '}', subtree_size: 34},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-interface Foo {
-  fn Add[self: Self](b: Self) -> Self;
-  fn Add[self: foo](b: Self) -> Self;
-}

@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Foo() {}
+
+fn Main() {
+  Foo();
+}
+
 // CHECK:STDOUT: ; ModuleID = 'params_zero.carbon'
 // CHECK:STDOUT: source_filename = "params_zero.carbon"
 // CHECK:STDOUT:
@@ -15,9 +22,3 @@
 // CHECK:STDOUT:   %TupleLiteralValue = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-fn Foo() {}
-
-fn Main() {
-  Foo();
-}

@@ -3,6 +3,23 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F(param: i32) {
+  var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
+
+  var p: {.a: i32, .b: i32}* = &s;
+  var q: i32* = &s.a;
+  var r: i32* = &s.b;
+
+  var t: (i32, i32) = (1, 2);
+  var t0: i32* = &t[0];
+  var t1: i32* = &t[1];
+
+  // TODO: Once we start treating parameters as `let` bindings by default, we
+  // should reject this, but `fn F(var n: i32)` should still work.
+  var param_addr: i32* = &param;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, body: {block4}}},
@@ -222,19 +239,3 @@
 // CHECK:STDOUT:     node+45,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn F(param: i32) {
-  var s: {.a: i32, .b: i32} = {.a = 1, .b = 2};
-
-  var p: {.a: i32, .b: i32}* = &s;
-  var q: i32* = &s.a;
-  var r: i32* = &s.b;
-
-  var t: (i32, i32) = (1, 2);
-  var t0: i32* = &t[0];
-  var t1: i32* = &t[1];
-
-  // TODO: Once we start treating parameters as `let` bindings by default, we
-  // should reject this, but `fn F(var n: i32)` should still work.
-  var param_addr: i32* = &param;
-}

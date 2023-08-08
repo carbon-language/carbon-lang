@@ -3,12 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: MemberF.F
-// CHECK:STDOUT: ImplF.(HasF.F)
-// CHECK:STDOUT: BothFs.(HasF.F)
-// CHECK:STDOUT: BothFs.F
-// CHECK:STDOUT: BothFs.F
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -73,3 +67,10 @@ fn Main() -> i32 {
   both.(CallF(ImplKind.UnconstrainedTemplate).DoIt)();
   return 0;
 }
+
+// CHECK:STDOUT: MemberF.F
+// CHECK:STDOUT: ImplF.(HasF.F)
+// CHECK:STDOUT: BothFs.(HasF.F)
+// CHECK:STDOUT: BothFs.F
+// CHECK:STDOUT: BothFs.F
+// CHECK:STDOUT: result: 0

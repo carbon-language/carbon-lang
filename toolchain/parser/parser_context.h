@@ -112,10 +112,13 @@ class ParserContext {
   auto ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
                               ParseNodeKind start_kind) -> void;
 
-  // Parses a close paren token corresponding to the given open paren token,
-  // possibly skipping forward and diagnosing if necessary. Creates a parse node
-  // of the specified close kind.
-  auto ConsumeAndAddCloseParen(StateStackEntry state, ParseNodeKind close_kind)
+  // Parses a closing symbol corresponding to the opening symbol
+  // `expected_open`, possibly skipping forward and diagnosing if necessary.
+  // Creates a parse node of the specified close kind. If `expected_open` is not
+  // an opening symbol, the parse node will be associated with `state.token`,
+  // no input will be consumed, and no diagnostic will be emitted.
+  auto ConsumeAndAddCloseSymbol(TokenizedBuffer::Token expected_open,
+                                StateStackEntry state, ParseNodeKind close_kind)
       -> void;
 
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf

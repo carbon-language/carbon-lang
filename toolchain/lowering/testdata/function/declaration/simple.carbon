@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F(n: i32);
+
+fn G(n: i32) { F(n); }
+
 // CHECK:STDOUT: ; ModuleID = 'simple.carbon'
 // CHECK:STDOUT: source_filename = "simple.carbon"
 // CHECK:STDOUT:
@@ -13,7 +18,3 @@
 // CHECK:STDOUT:   %TupleLiteralValue = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-fn F(n: i32);
-
-fn G(n: i32) { F(n); }

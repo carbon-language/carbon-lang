@@ -14,6 +14,7 @@ fn Main() -> i32 {
 // conflicts.
 // ARGS: --trace_file=- --trace_phase=unformed_variables_resolution %s
 // AUTOUPDATE
+
 // CHECK:STDOUT: ********** resolving unformed variables **********
 // CHECK:STDOUT: *** resolving-unformed in decl `interface TestInterface` (phase_unformed_variables_resolution.carbon:7)
 // CHECK:STDOUT: *** resolving-unformed in decl `fn Main` (phase_unformed_variables_resolution.carbon:11)

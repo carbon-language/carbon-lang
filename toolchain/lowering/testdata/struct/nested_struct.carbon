@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Run() -> i32 {
+  {.b = {.a: i32}};
+  return 0;
+}
+
 // CHECK:STDOUT: ; ModuleID = 'nested_struct.carbon'
 // CHECK:STDOUT: source_filename = "nested_struct.carbon"
 // CHECK:STDOUT:
@@ -14,8 +20,3 @@
 // CHECK:STDOUT:   store {} zeroinitializer, ptr %b, align 1
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
-
-fn Run() -> i32 {
-  {.b = {.a: i32}};
-  return 0;
-}

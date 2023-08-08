@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: recover_prefix_space.carbon:[[@LINE+3]]:13: Whitespace is not allowed after this unary operator.
+// CHECK:STDERR: var n: i8 = - n;
+// CHECK:STDERR:             ^
+var n: i8 = - n;
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'n'},
@@ -14,8 +20,3 @@
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 8},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: recover_prefix_space.carbon:[[@LINE+3]]:13: Whitespace is not allowed after this unary operator.
-// CHECK:STDERR: var n: i8 = - n;
-// CHECK:STDERR:             ^
-var n: i8 = - n;

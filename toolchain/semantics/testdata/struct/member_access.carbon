@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
+var y: i32 = x.b;
+var z: i32 = y;
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -84,7 +89,3 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
-var y: i32 = x.b;
-var z: i32 = y;

@@ -14,6 +14,7 @@ fn Main() -> i32 {
 // conflicts.
 // ARGS: --trace_file=- --trace_phase=execution %s
 // AUTOUPDATE
+
 // CHECK:STDOUT: ********** starting execution **********
 // CHECK:STDOUT: ********** initializing globals **********
 // CHECK:STDOUT: (+) stack-push: DeclarationAction pos: 0 `interface TestInterface` (phase_execution.carbon:7)
