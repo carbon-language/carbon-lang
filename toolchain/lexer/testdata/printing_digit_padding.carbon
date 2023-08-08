@@ -14,5 +14,5 @@
         // CHECK:STDOUT: { index: 2, kind:      'Semi', line: {{ *}}[[@LINE-2]], column: 10, indent: 9, spelling: ';' },
         // CHECK:STDOUT: { index: 3, kind:      'Semi', line: {{ *}}[[@LINE-3]], column: 11, indent: 9, spelling: ';', has_trailing_space: true },
 
-// CHECK:STDOUT: { index: 4, kind: 'EndOfFile', line: 18, column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT: { index: 4, kind: 'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT: ]

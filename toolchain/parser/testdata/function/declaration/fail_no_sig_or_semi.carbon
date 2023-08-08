@@ -6,7 +6,7 @@
 
 fn foo
 
-// CHECK:STDERR: fail_no_sig_or_semi.carbon:17:19: `fn` requires a `(` for parameters.
+// CHECK:STDERR: fail_no_sig_or_semi.carbon:[[@LINE+8]]:19: `fn` requires a `(` for parameters.
 // CHECK:STDERR: // CHECK:STDOUT: ]
 // CHECK:STDERR:                   ^
 // CHECK:STDOUT: [

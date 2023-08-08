@@ -132,5 +132,5 @@ while
 notakeyword
 // CHECK:STDOUT: { index: 61, kind:          'Identifier', line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: 'notakeyword', identifier: 0, has_trailing_space: true },
 
-// CHECK:STDOUT: { index: 62, kind:           'EndOfFile', line: 136, column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT: { index: 62, kind:           'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT: ]

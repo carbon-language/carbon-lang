@@ -13,7 +13,7 @@
 // CHECK:STDERR:        ^
 fn Div[();
 
-// CHECK:STDERR: fail_missing_deduced_close.carbon:29:19: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: fail_missing_deduced_close.carbon:[[@LINE+13]]:19: A `(` for parameters is required after deduced parameters.
 // CHECK:STDERR: // CHECK:STDOUT: ]
 // CHECK:STDERR:                   ^
 // CHECK:STDOUT: [

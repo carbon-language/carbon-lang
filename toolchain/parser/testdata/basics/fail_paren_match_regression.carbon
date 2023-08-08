@@ -12,7 +12,7 @@
 // CHECK:STDERR:            ^
 var = (foo {})
 
-// CHECK:STDERR: fail_paren_match_regression.carbon:29:19: `var` declarations must end with a `;`.
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+14]]:19: `var` declarations must end with a `;`.
 // CHECK:STDERR: // CHECK:STDOUT: ]
 // CHECK:STDERR:                   ^
 // CHECK:STDOUT: [

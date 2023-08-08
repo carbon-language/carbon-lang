@@ -6,7 +6,7 @@
 
 package Geometry api
 
-// CHECK:STDERR: fail_no_semi.carbon:18:19: `package` declarations must end with a `;`.
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+9]]:19: `package` declarations must end with a `;`.
 // CHECK:STDERR: // CHECK:STDOUT: ]
 // CHECK:STDERR:                   ^
 // CHECK:STDOUT: [

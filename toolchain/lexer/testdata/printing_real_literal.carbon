@@ -8,5 +8,5 @@
 // CHECK:STDOUT: [
 // CHECK:STDOUT: { index: 0, kind: 'RealLiteral', line: {{ *}}[[@LINE-2]], column:  1, indent: 1, spelling: '2.5', value: `25*10^-1`, has_trailing_space: true },
 
-// CHECK:STDOUT: { index: 1, kind:   'EndOfFile', line: 12, column: {{ *\d+}}, indent: 1, spelling: '' },
+// CHECK:STDOUT: { index: 1, kind:   'EndOfFile', line: {{ *}}[[@LINE+1]], column: {{ *\d+}}, indent: 1, spelling: '' },
 // CHECK:STDOUT: ]

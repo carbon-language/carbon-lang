@@ -11,7 +11,7 @@ interface Bar Baz {}
 
 interface Foo
 
-// CHECK:STDERR: fail_missing_open_curly.carbon:25:19: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition.
+// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+11]]:19: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition.
 // CHECK:STDERR: // CHECK:STDOUT: ]
 // CHECK:STDERR:                   ^
 // CHECK:STDOUT: [

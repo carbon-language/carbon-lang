@@ -10,6 +10,7 @@
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLFunctionalExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "re2/re2.h"
@@ -52,8 +53,8 @@ class CheckLine : public FileTestLineBase {
 
   // When the location of all lines in a file are known, we can set the line
   // offset based on the target line.
-  auto RemapLineNumbers(const llvm::DenseMap<int, int>& output_line_remap,
-                        const std::string& line_formatv) -> void {
+  auto RemapLineNumbers(const std::string& line_formatv,
+                        llvm::function_ref<int(int)> line_remap) -> void {
     // Only need to do remappings when there's a regex.
     if (!line_number_re_) {
       return;
@@ -78,13 +79,8 @@ class CheckLine : public FileTestLineBase {
 
       // Calculate the offset from the CHECK line to the new line number
       // (possibly with new CHECK lines added, or some removed).
-      auto remapped =
-          output_line_remap.find(ParseLineNumber(matched_line_number));
-      if (remapped == output_line_remap.end()) {
-        // Line didn't actually exist in the output.
-        return;
-      }
-      int offset = remapped->second - output_line_number_;
+      int new_line_number = line_remap(ParseLineNumber(matched_line_number));
+      int offset = new_line_number - output_line_number_;
 
       // Update the line offset in the CHECK line.
       const char* offset_prefix = offset < 0 ? "" : "+";
@@ -315,8 +311,27 @@ auto AutoupdateFileTest(
     // Update all remapped lines in CHECK output.
     for (auto* check_file : {&stdout_check_file, &stderr_check_file}) {
       for (auto& offset_check_line : *check_file) {
+        int last_non_check_line = non_check_file.back().line_number();
         offset_check_line.RemapLineNumbers(
-            output_line_remap, line_number_replacement.line_formatv);
+            line_number_replacement.line_formatv, [&](int old_line_number) {
+              // Map old non-check lines to their new line numbers.
+              auto remapped = output_line_remap.find(old_line_number);
+              if (remapped != output_line_remap.end()) {
+                return remapped->second;
+              }
+
+              // Map any reference to a line past the final non-check line to
+              // the new end-of-file. We assume that any such reference is
+              // referring to the end of file, not to some specific CHECK
+              // comment.
+              if (old_line_number > last_non_check_line) {
+                return output_line_number;
+              }
+
+              // Line didn't get remapped; maybe it refers to a CHECK line.
+              // We can't express that as an offset, just leave it as-is.
+              return old_line_number;
+            });
       }
     }
   }
