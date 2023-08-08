@@ -84,3 +84,28 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7: type = stub_reference i32
+// CHECK:STDOUT:   %7.16: type = tuple_type (type)
+// CHECK:STDOUT:   %7.16.0: (type,) = tuple_value (%7)
+// CHECK:STDOUT:   %7.16.1: type = tuple_type (i32)
+// CHECK:STDOUT:   %7.1 = fn_decl @F
+// CHECK:STDOUT:   %9 = fn_decl @Run
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> (i32,) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %7: i32 = int_value 0
+// CHECK:STDOUT:   %7.28: i32 = stub_reference %7
+// CHECK:STDOUT:   %7.30: (i32,) = tuple_value (%7.28)
+// CHECK:STDOUT:   return %7.30
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %10: (i32,) = call @F()
+// CHECK:STDOUT:   %10.14: i32 = int_value 0
+// CHECK:STDOUT:   %10.15: i32 = tuple_index %10, %10.14
+// CHECK:STDOUT:   return %10.15
+// CHECK:STDOUT: }

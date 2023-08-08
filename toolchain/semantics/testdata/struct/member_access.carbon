@@ -89,3 +89,19 @@ var z: i32 = y;
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7: type = struct_type {.a: f64, .b: i32}
+// CHECK:STDOUT:   %x: {.a: f64, .b: i32} = var
+// CHECK:STDOUT:   %7.35: f64 = real_value 0e-1
+// CHECK:STDOUT:   %7.33: f64 = stub_reference %7.35
+// CHECK:STDOUT:   %7.45: i32 = int_value 1
+// CHECK:STDOUT:   %7.43: i32 = stub_reference %7.45
+// CHECK:STDOUT:   %7.46: {.a: f64, .b: i32} = struct_value (%7.33, %7.43)
+// CHECK:STDOUT:   assign %x, %7.46
+// CHECK:STDOUT:   %y: i32 = var
+// CHECK:STDOUT:   %8: i32 = struct_access %x, member1
+// CHECK:STDOUT:   assign %y, %8
+// CHECK:STDOUT:   %z: i32 = var
+// CHECK:STDOUT:   assign %z, %y
+// CHECK:STDOUT: }

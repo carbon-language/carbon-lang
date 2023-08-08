@@ -81,3 +81,24 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7 = fn_decl @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !8 else br !8.33
+// CHECK:STDOUT:
+// CHECK:STDOUT: !8:
+// CHECK:STDOUT:   %8: i32 = add %n, %m
+// CHECK:STDOUT:   br !8.10(%8)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !8.33:
+// CHECK:STDOUT:   %8.33: i32 = add %m, %n
+// CHECK:STDOUT:   br !8.10(%8.33)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !8.10:
+// CHECK:STDOUT:   %8.10: i32 = block_arg !8.10
+// CHECK:STDOUT:   return %8.10
+// CHECK:STDOUT: }

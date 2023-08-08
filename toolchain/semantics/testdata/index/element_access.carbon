@@ -92,3 +92,23 @@ var c: i32 = b[0];
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7: type = stub_reference i32
+// CHECK:STDOUT:   %7.13: type = tuple_type (type)
+// CHECK:STDOUT:   %7.13.0: (type,) = tuple_value (%7)
+// CHECK:STDOUT:   %7.13.1: type = tuple_type (i32)
+// CHECK:STDOUT:   %a: (i32,) = var
+// CHECK:STDOUT:   %7.18: i32 = int_value 12
+// CHECK:STDOUT:   %7.18.0: i32 = stub_reference %7.18
+// CHECK:STDOUT:   %7.21: (i32,) = tuple_value (%7.18.0)
+// CHECK:STDOUT:   assign %a, %7.21
+// CHECK:STDOUT:   %8: type = stub_reference i32
+// CHECK:STDOUT:   %8.13: (type,) = tuple_value (%8)
+// CHECK:STDOUT:   %b: (i32,) = var
+// CHECK:STDOUT:   assign %b, %a
+// CHECK:STDOUT:   %c: i32 = var
+// CHECK:STDOUT:   %9: i32 = int_value 0
+// CHECK:STDOUT:   %9.17: i32 = tuple_index %b, %9
+// CHECK:STDOUT:   assign %c, %9.17
+// CHECK:STDOUT: }

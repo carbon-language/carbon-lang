@@ -58,3 +58,12 @@ var x: (1, );
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %10: i32 = int_value 1
+// CHECK:STDOUT:   %10.9: i32 = stub_reference %10
+// CHECK:STDOUT:   %10.12: type = tuple_type (i32)
+// CHECK:STDOUT:   %10.12.0: (i32,) = tuple_value (%10.9)
+// CHECK:STDOUT:   %10.12.1: type = tuple_type (<error>)
+// CHECK:STDOUT:   %x: (<error>,) = var
+// CHECK:STDOUT: }

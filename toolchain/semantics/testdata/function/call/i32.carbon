@@ -77,3 +77,23 @@ fn Main() {
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7 = fn_decl @Echo
+// CHECK:STDOUT:   %11 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Echo(%a: i32) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return %a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %b: i32 = var
+// CHECK:STDOUT:   %12: i32 = int_value 1
+// CHECK:STDOUT:   %12.21: i32 = stub_reference %12
+// CHECK:STDOUT:   %12.20: i32 = call @Echo(%12.21)
+// CHECK:STDOUT:   assign %b, %12.20
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

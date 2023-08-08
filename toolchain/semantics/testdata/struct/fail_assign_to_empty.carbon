@@ -61,3 +61,14 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %10: type = struct_type {}
+// CHECK:STDOUT:   %10.9: {} = struct_value ()
+// CHECK:STDOUT:   %x: {} = var
+// CHECK:STDOUT:   %10.19: i32 = int_value 1
+// CHECK:STDOUT:   %10.17: i32 = stub_reference %10.19
+// CHECK:STDOUT:   %10.20: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %10.20.0: {.a: i32} = struct_value (%10.17)
+// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT: }

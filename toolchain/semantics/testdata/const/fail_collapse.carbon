@@ -71,3 +71,14 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %10: type = ptr_type i32
+// CHECK:STDOUT:   %10.37: type = ptr_type i32*
+// CHECK:STDOUT:   %10.1 = fn_decl @G
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G(%p: const i32**) -> i32** {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }

@@ -77,3 +77,13 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7 = fn_decl @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%b: bool) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %8: i32 = int_value 0
+// CHECK:STDOUT:   return %8
+// CHECK:STDOUT: }

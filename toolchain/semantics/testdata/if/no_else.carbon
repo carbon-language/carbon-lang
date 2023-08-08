@@ -89,3 +89,33 @@ fn If(b: bool) {
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7 = fn_decl @F
+// CHECK:STDOUT:   %8 = fn_decl @G
+// CHECK:STDOUT:   %10 = fn_decl @If
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @If(%b: bool) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !12 else br !14
+// CHECK:STDOUT:
+// CHECK:STDOUT: !12:
+// CHECK:STDOUT:   %12: type = tuple_type ()
+// CHECK:STDOUT:   %12.6: () = call @F()
+// CHECK:STDOUT:   br !14
+// CHECK:STDOUT:
+// CHECK:STDOUT: !14:
+// CHECK:STDOUT:   %14: () = call @G()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

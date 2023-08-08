@@ -53,3 +53,14 @@ var y: () = x;
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7: type = tuple_type ()
+// CHECK:STDOUT:   %7.9: () = tuple_value ()
+// CHECK:STDOUT:   %x: () = var
+// CHECK:STDOUT:   %7.14: () = tuple_value ()
+// CHECK:STDOUT:   assign %x, %7.14
+// CHECK:STDOUT:   %8: () = tuple_value ()
+// CHECK:STDOUT:   %y: () = var
+// CHECK:STDOUT:   assign %y, %x
+// CHECK:STDOUT: }

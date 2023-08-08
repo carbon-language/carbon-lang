@@ -89,3 +89,21 @@ var b: i32 = a[2];
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7: type = stub_reference i32
+// CHECK:STDOUT:   %7.14: type = stub_reference i32
+// CHECK:STDOUT:   %7.17: type = tuple_type (type, type)
+// CHECK:STDOUT:   %7.17.0: (type, type) = tuple_value (%7, %7.14)
+// CHECK:STDOUT:   %7.17.1: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %a: (i32, i32) = var
+// CHECK:STDOUT:   %7.22: i32 = int_value 12
+// CHECK:STDOUT:   %7.22.0: i32 = stub_reference %7.22
+// CHECK:STDOUT:   %7.26: i32 = int_value 6
+// CHECK:STDOUT:   %7.26.0: i32 = stub_reference %7.26
+// CHECK:STDOUT:   %7.27: (i32, i32) = tuple_value (%7.22.0, %7.26.0)
+// CHECK:STDOUT:   assign %a, %7.27
+// CHECK:STDOUT:   %b: i32 = var
+// CHECK:STDOUT:   %11: i32 = int_value 2
+// CHECK:STDOUT:   assign %b, <error>
+// CHECK:STDOUT: }

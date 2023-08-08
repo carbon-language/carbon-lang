@@ -70,3 +70,17 @@ var test_type: type = i32;
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %test_i32: i32 = var
+// CHECK:STDOUT:   %7: i32 = int_value 0
+// CHECK:STDOUT:   assign %test_i32, %7
+// CHECK:STDOUT:   %test_f64: f64 = var
+// CHECK:STDOUT:   %8: f64 = real_value 1e-1
+// CHECK:STDOUT:   assign %test_f64, %8
+// CHECK:STDOUT:   %test_str: String = var
+// CHECK:STDOUT:   %9: String = string_value "Test"
+// CHECK:STDOUT:   assign %test_str, %9
+// CHECK:STDOUT:   %test_type: type = var
+// CHECK:STDOUT:   assign %test_type, i32
+// CHECK:STDOUT: }

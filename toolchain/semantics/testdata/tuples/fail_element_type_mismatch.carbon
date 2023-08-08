@@ -86,3 +86,19 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %10: type = stub_reference i32
+// CHECK:STDOUT:   %10.14: type = stub_reference i32
+// CHECK:STDOUT:   %10.17: type = tuple_type (type, type)
+// CHECK:STDOUT:   %10.17.0: (type, type) = tuple_value (%10, %10.14)
+// CHECK:STDOUT:   %10.17.1: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %x: (i32, i32) = var
+// CHECK:STDOUT:   %10.22: i32 = int_value 2
+// CHECK:STDOUT:   %10.22.0: i32 = stub_reference %10.22
+// CHECK:STDOUT:   %10.25: f64 = real_value 6589e-2
+// CHECK:STDOUT:   %10.25.0: f64 = stub_reference %10.25
+// CHECK:STDOUT:   %10.30: type = tuple_type (i32, f64)
+// CHECK:STDOUT:   %10.30.0: (i32, f64) = tuple_value (%10.22.0, %10.25.0)
+// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT: }

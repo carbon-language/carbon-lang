@@ -106,3 +106,43 @@ fn If(b: bool) {
 // CHECK:STDOUT:     node+17,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7 = fn_decl @F
+// CHECK:STDOUT:   %8 = fn_decl @G
+// CHECK:STDOUT:   %9 = fn_decl @H
+// CHECK:STDOUT:   %11 = fn_decl @If
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @H() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @If(%b: bool) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !13 else br !15
+// CHECK:STDOUT:
+// CHECK:STDOUT: !13:
+// CHECK:STDOUT:   %13: type = tuple_type ()
+// CHECK:STDOUT:   %13.6: () = call @F()
+// CHECK:STDOUT:   br !17
+// CHECK:STDOUT:
+// CHECK:STDOUT: !15:
+// CHECK:STDOUT:   %15: () = call @G()
+// CHECK:STDOUT:   br !17
+// CHECK:STDOUT:
+// CHECK:STDOUT: !17:
+// CHECK:STDOUT:   %17: () = call @H()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

@@ -79,3 +79,22 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %8: type = stub_reference i32
+// CHECK:STDOUT:   %8.20: type = stub_reference i32
+// CHECK:STDOUT:   %8.23: type = tuple_type (type, type)
+// CHECK:STDOUT:   %8.23.0: (type, type) = tuple_value (%8, %8.20)
+// CHECK:STDOUT:   %8.23.1: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %8.1 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> (i32, i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %9: i32 = int_value 15
+// CHECK:STDOUT:   %9.11: i32 = stub_reference %9
+// CHECK:STDOUT:   %9.15: i32 = int_value 35
+// CHECK:STDOUT:   %9.15.0: i32 = stub_reference %9.15
+// CHECK:STDOUT:   %9.17: (i32, i32) = tuple_value (%9.11, %9.15.0)
+// CHECK:STDOUT:   return %9.17
+// CHECK:STDOUT: }

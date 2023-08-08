@@ -79,3 +79,36 @@ fn And() -> bool {
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7 = fn_decl @F
+// CHECK:STDOUT:   %8 = fn_decl @G
+// CHECK:STDOUT:   %10 = fn_decl @And
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %7: bool = bool_value true
+// CHECK:STDOUT:   return %7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %8: bool = bool_value true
+// CHECK:STDOUT:   return %8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @And() -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %11: bool = call @F()
+// CHECK:STDOUT:   %11.14: bool = bool_value false
+// CHECK:STDOUT:   if %11 br !11 else br !11.14(%11.14)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !11:
+// CHECK:STDOUT:   %11.19: bool = call @G()
+// CHECK:STDOUT:   br !11.14(%11.19)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !11.14:
+// CHECK:STDOUT:   %11.14.0: bool = block_arg !11.14
+// CHECK:STDOUT:   return %11.14.0
+// CHECK:STDOUT: }

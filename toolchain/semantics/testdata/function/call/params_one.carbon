@@ -73,3 +73,22 @@ fn Main() {
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7 = fn_decl @Foo
+// CHECK:STDOUT:   %9 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo(%a: i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %10: i32 = int_value 1
+// CHECK:STDOUT:   %10.7: i32 = stub_reference %10
+// CHECK:STDOUT:   %10.6: type = tuple_type ()
+// CHECK:STDOUT:   %10.6.0: () = call @Foo(%10.7)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

@@ -48,3 +48,15 @@ fn Main() {
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %x: i32 = var
+// CHECK:STDOUT:   %8: i32 = int_value 0
+// CHECK:STDOUT:   assign %x, %8
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

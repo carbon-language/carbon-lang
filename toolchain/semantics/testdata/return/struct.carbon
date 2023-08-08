@@ -61,3 +61,16 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %7.1 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> {.a: i32} {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %8: i32 = int_value 3
+// CHECK:STDOUT:   %8.14: i32 = stub_reference %8
+// CHECK:STDOUT:   %8.17: {.a: i32} = struct_value (%8.14)
+// CHECK:STDOUT:   return %8.17
+// CHECK:STDOUT: }

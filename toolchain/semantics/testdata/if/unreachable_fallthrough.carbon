@@ -70,3 +70,20 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7 = fn_decl @If
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @If(%b: bool) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !9 else br !11
+// CHECK:STDOUT:
+// CHECK:STDOUT: !9:
+// CHECK:STDOUT:   %9: i32 = int_value 1
+// CHECK:STDOUT:   return %9
+// CHECK:STDOUT:
+// CHECK:STDOUT: !11:
+// CHECK:STDOUT:   %11: i32 = int_value 2
+// CHECK:STDOUT:   return %11
+// CHECK:STDOUT: }

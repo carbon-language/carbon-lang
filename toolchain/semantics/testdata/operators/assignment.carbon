@@ -54,3 +54,17 @@ fn Main() {
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a: i32 = var
+// CHECK:STDOUT:   %8: i32 = int_value 12
+// CHECK:STDOUT:   assign %a, %8
+// CHECK:STDOUT:   %9: i32 = int_value -7
+// CHECK:STDOUT:   assign %a, %9
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

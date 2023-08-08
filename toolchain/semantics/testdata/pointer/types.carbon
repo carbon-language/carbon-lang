@@ -84,3 +84,21 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7: type = ptr_type i32
+// CHECK:STDOUT:   %7.1 = fn_decl @Ptr
+// CHECK:STDOUT:   %11: type = const_type i32
+// CHECK:STDOUT:   %11.42: type = ptr_type const i32
+// CHECK:STDOUT:   %11.1 = fn_decl @ConstPtr
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Ptr(%p: i32*) -> i32* {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return %p
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @ConstPtr(%p: const i32*) -> const i32* {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return %p
+// CHECK:STDOUT: }

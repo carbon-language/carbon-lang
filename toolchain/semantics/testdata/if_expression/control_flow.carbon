@@ -94,3 +94,38 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7 = fn_decl @A
+// CHECK:STDOUT:   %8 = fn_decl @B
+// CHECK:STDOUT:   %10 = fn_decl @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %7: i32 = int_value 1
+// CHECK:STDOUT:   return %7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %8: i32 = int_value 2
+// CHECK:STDOUT:   return %8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%b: bool) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !11 else br !11.30
+// CHECK:STDOUT:
+// CHECK:STDOUT: !11:
+// CHECK:STDOUT:   %11: i32 = call @A()
+// CHECK:STDOUT:   br !11.10(%11)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !11.30:
+// CHECK:STDOUT:   %11.30: i32 = call @B()
+// CHECK:STDOUT:   br !11.10(%11.30)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !11.10:
+// CHECK:STDOUT:   %11.10: i32 = block_arg !11.10
+// CHECK:STDOUT:   return %11.10
+// CHECK:STDOUT: }

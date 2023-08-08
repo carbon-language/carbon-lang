@@ -66,3 +66,13 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %10: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %x: {.a: i32} = var
+// CHECK:STDOUT:   %10.26: f64 = real_value 10e-1
+// CHECK:STDOUT:   %10.24: f64 = stub_reference %10.26
+// CHECK:STDOUT:   %10.29: type = struct_type {.b: f64}
+// CHECK:STDOUT:   %10.29.0: {.b: f64} = struct_value (%10.24)
+// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT: }

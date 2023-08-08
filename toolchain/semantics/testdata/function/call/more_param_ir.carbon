@@ -113,3 +113,32 @@ fn Main() {
 // CHECK:STDOUT:     node+20,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7 = fn_decl @Foo
+// CHECK:STDOUT:   %9 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo(%a: i32, %b: i32, %c: i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %11: i32 = int_value 1
+// CHECK:STDOUT:   %11.11: i32 = int_value 2
+// CHECK:STDOUT:   %11.9: i32 = add %11, %11.11
+// CHECK:STDOUT:   %11.15: i32 = int_value 3
+// CHECK:STDOUT:   %11.13: i32 = add %11.9, %11.15
+// CHECK:STDOUT:   %11.13.0: i32 = stub_reference %11.13
+// CHECK:STDOUT:   %11.18: i32 = int_value 4
+// CHECK:STDOUT:   %11.22: i32 = int_value 5
+// CHECK:STDOUT:   %11.20: i32 = add %11.18, %11.22
+// CHECK:STDOUT:   %11.20.0: i32 = stub_reference %11.20
+// CHECK:STDOUT:   %11.25: i32 = int_value 6
+// CHECK:STDOUT:   %11.25.0: i32 = stub_reference %11.25
+// CHECK:STDOUT:   %11.6: type = tuple_type ()
+// CHECK:STDOUT:   %11.6.0: () = call @Foo(%11.13.0, %11.20.0, %11.25.0)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

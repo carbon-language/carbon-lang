@@ -77,3 +77,22 @@ fn Main() {
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7: () = tuple_value ()
+// CHECK:STDOUT:   %7.1 = fn_decl @Echo
+// CHECK:STDOUT:   %11 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Echo(%a: ()) -> () {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return %a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %12: () = tuple_value ()
+// CHECK:STDOUT:   %12.9: () = stub_reference %12
+// CHECK:STDOUT:   %12.7: () = call @Echo(%12.9)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

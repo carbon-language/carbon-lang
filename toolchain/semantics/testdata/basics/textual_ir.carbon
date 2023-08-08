@@ -6,6 +6,11 @@
 //
 // Just check that the raw IR format isn't included in `dump semantics-ir` mode.
 // AUTOUPDATE
+
+fn Foo() {
+  return;
+}
+
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %18 = fn_decl @Foo
 // CHECK:STDOUT: }
@@ -14,7 +19,3 @@
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-
-fn Foo() {
-  return;
-}

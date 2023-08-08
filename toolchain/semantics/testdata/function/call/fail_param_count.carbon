@@ -178,3 +178,42 @@ fn Main() {
 // CHECK:STDOUT:     node+24,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %7 = fn_decl @Run0
+// CHECK:STDOUT:   %8 = fn_decl @Run1
+// CHECK:STDOUT:   %9 = fn_decl @Run2
+// CHECK:STDOUT:   %11 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run0() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run1(%a: i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run2(%a: i32, %b: i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %18: i32 = int_value 1
+// CHECK:STDOUT:   %18.8: i32 = stub_reference %18
+// CHECK:STDOUT:   %25: i32 = int_value 0
+// CHECK:STDOUT:   %25.8: i32 = stub_reference %25
+// CHECK:STDOUT:   %25.11: i32 = int_value 1
+// CHECK:STDOUT:   %25.11.0: i32 = stub_reference %25.11
+// CHECK:STDOUT:   %40: i32 = int_value 0
+// CHECK:STDOUT:   %40.8: i32 = stub_reference %40
+// CHECK:STDOUT:   %40.11: i32 = int_value 1
+// CHECK:STDOUT:   %40.11.0: i32 = stub_reference %40.11
+// CHECK:STDOUT:   %55: i32 = int_value 0
+// CHECK:STDOUT:   %55.8: i32 = stub_reference %55
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
