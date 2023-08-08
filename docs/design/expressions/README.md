@@ -72,14 +72,11 @@ graph BT
     constType["const T"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
 
-    pointerType>"T*"]
+    pointerType{"T*"}
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
 
-    %% FIXME: Need to switch unary operators from a left/right associativity to
-    %% a "repeated" marker, as we only have one direction for associativity and
-    %% that is wrong in this specific case.
-    pointer>"*x<br>
-             &x<br>"]
+    pointer{"*x<br>
+             &x<br>"}
     click pointer "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/pointer.md"
 
     negation["-x"]
@@ -178,8 +175,8 @@ The diagram's attributes are:
     -   Precedence edges are transitive. For example, `or --> == --> as` means
         that `or` is lower precedence than `as`.
 
--   When an expression is composed from a single precedence group, the
-    interpretation is determined by the
+-   When a binary operator expression is composed from a single precedence
+    group, the interpretation is determined by the
     [associativity](https://en.wikipedia.org/wiki/Operator_associativity) of the
     precedence group:
 
@@ -191,6 +188,21 @@ The diagram's attributes are:
 
     -   For example, `+` and `-` are left-associative and in the same precedence
         group, so `a + b + c - d` is treated as `((a + b) + c) - d`.
+
+    -   Note that in Carbon, we currently only have left-associative operators.
+        Unlike C++ and other languages, [assignment](/docs/design/assignment.md)
+        isn't a right-associative operator, it uses its own statement.
+
+-   When a unary operator expression is composed from a single precedence group,
+    it can allow unparenthesized repetition or not:
+
+    ```mermaid
+    graph TD
+        non["Non-repeating"]
+        repeating{"Repeating"}
+    ```
+
+    This is analogous to associativity for binary operators.
 
 ## Names
 
