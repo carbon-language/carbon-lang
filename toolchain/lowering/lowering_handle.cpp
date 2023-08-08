@@ -142,6 +142,12 @@ auto LoweringHandleCall(LoweringFunctionContext& context,
   }
 }
 
+auto LoweringHandleDereference(LoweringFunctionContext& context,
+                               SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  context.SetLocal(node_id, context.GetLocal(node.GetAsDereference()));
+}
+
 auto LoweringHandleFunctionDeclaration(LoweringFunctionContext& /*context*/,
                                        SemanticsNodeId /*node_id*/,
                                        SemanticsNode node) -> void {

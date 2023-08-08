@@ -360,7 +360,11 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
   auto value = semantics_ir_->GetNode(value_id);
   auto value_type_id = value.type_id();
   if (value_type_id == SemanticsTypeId::Error) {
-    return ImplicitAsKind::Identical;
+    // Although the source type is invalid, this still changes the value.
+    if (output_value_id != nullptr) {
+      *output_value_id = SemanticsNodeId::BuiltinError;
+    }
+    return ImplicitAsKind::Compatible;
   }
 
   if (as_type_id == SemanticsTypeId::Error) {
@@ -603,7 +607,7 @@ auto SemanticsContext::GetPointerType(ParseTree::Node parse_node,
 auto SemanticsContext::GetUnqualifiedType(SemanticsTypeId type_id)
     -> SemanticsTypeId {
   SemanticsNode type_node =
-      semantics_ir_->GetNode(semantics_ir_->GetType(type_id));
+      semantics_ir_->GetNode(semantics_ir_->GetTypeAllowBuiltinTypes(type_id));
   if (type_node.kind() == SemanticsNodeKind::ConstType)
     return type_node.GetAsConstType();
   return type_id;
