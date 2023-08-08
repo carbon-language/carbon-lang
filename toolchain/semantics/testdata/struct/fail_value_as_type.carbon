@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:15: Cannot implicitly convert from `{.a: i32}` to `type`.
+// CHECK:STDERR: var x: {.a = 1};
+// CHECK:STDERR:               ^
+var x: {.a = 1};
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -48,16 +54,3 @@
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %63: i32 = int_value 1
-// CHECK:STDOUT:   %63.12: i32 = stub_reference %63
-// CHECK:STDOUT:   %63.15: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %63.15.0: {.a: i32} = struct_value (%63.12)
-// CHECK:STDOUT:   %x: <error> = var
-// CHECK:STDOUT: }
-
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:15: Cannot implicitly convert from `{.a: i32}` to `type`.
-// CHECK:STDERR: var x: {.a = 1};
-// CHECK:STDERR:               ^
-var x: {.a = 1};

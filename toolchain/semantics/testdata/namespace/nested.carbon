@@ -3,6 +3,17 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+namespace Foo;
+namespace Foo.Bar;
+
+fn Foo.Bar.Wiz() {
+}
+
+fn Foo.Bar.Baz() {
+  Foo.Bar.Wiz();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str2, param_refs: block0, body: {block2}}},
@@ -53,32 +64,3 @@
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %76 = namespace {.Bar = %77}
-// CHECK:STDOUT:   %77 = namespace {.Wiz = %79, .Baz = %82}
-// CHECK:STDOUT:   %79 = fn_decl @Wiz
-// CHECK:STDOUT:   %82 = fn_decl @Baz
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Wiz() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Baz() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %83: type = tuple_type ()
-// CHECK:STDOUT:   %83.14: () = call @Wiz()
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-
-namespace Foo;
-namespace Foo.Bar;
-
-fn Foo.Bar.Wiz() {
-}
-
-fn Foo.Bar.Baz() {
-  Foo.Bar.Wiz();
-}

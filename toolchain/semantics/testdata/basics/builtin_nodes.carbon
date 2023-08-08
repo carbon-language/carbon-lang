@@ -5,6 +5,7 @@
 // ARGS: dump raw-semantics-ir --include_builtins %s
 //
 // AUTOUPDATE
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]

@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var x: {.a: f64} = {.a = 4.0};
+// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+3]]:15: Type `{.a: f64}` does not have a member `b`.
+// CHECK:STDERR: var y: i32 = x.b;
+// CHECK:STDERR:               ^
+var y: i32 = x.b;
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -64,20 +71,3 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %79: type = struct_type {.a: f64}
-// CHECK:STDOUT:   %x: {.a: f64} = var
-// CHECK:STDOUT:   %79.26: f64 = real_value 40e-1
-// CHECK:STDOUT:   %79.24: f64 = stub_reference %79.26
-// CHECK:STDOUT:   %79.29: {.a: f64} = struct_value (%79.24)
-// CHECK:STDOUT:   assign %x, %79.29
-// CHECK:STDOUT:   %y: i32 = var
-// CHECK:STDOUT:   assign %y, <error>
-// CHECK:STDOUT: }
-
-var x: {.a: f64} = {.a = 4.0};
-// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+3]]:15: Type `{.a: f64}` does not have a member `b`.
-// CHECK:STDERR: var y: i32 = x.b;
-// CHECK:STDERR:               ^
-var y: i32 = x.b;

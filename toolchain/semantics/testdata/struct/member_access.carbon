@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
+var y: i32 = x.b;
+var z: i32 = y;
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -84,23 +89,3 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %104: type = struct_type {.a: f64, .b: i32}
-// CHECK:STDOUT:   %x: {.a: f64, .b: i32} = var
-// CHECK:STDOUT:   %104.35: f64 = real_value 0e-1
-// CHECK:STDOUT:   %104.33: f64 = stub_reference %104.35
-// CHECK:STDOUT:   %104.45: i32 = int_value 1
-// CHECK:STDOUT:   %104.43: i32 = stub_reference %104.45
-// CHECK:STDOUT:   %104.46: {.a: f64, .b: i32} = struct_value (%104.33, %104.43)
-// CHECK:STDOUT:   assign %x, %104.46
-// CHECK:STDOUT:   %y: i32 = var
-// CHECK:STDOUT:   %105: i32 = struct_access %x, member1
-// CHECK:STDOUT:   assign %y, %105
-// CHECK:STDOUT:   %z: i32 = var
-// CHECK:STDOUT:   assign %z, %y
-// CHECK:STDOUT: }
-
-var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
-var y: i32 = x.b;
-var z: i32 = y;

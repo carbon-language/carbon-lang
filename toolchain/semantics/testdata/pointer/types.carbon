@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Ptr(p: i32*) -> i32* {
+  return p;
+}
+
+fn ConstPtr(p: const i32*) -> (const i32)* {
+  return p;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4}}},
@@ -75,29 +84,3 @@
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %97: type = ptr_type i32
-// CHECK:STDOUT:   %97.1 = fn_decl @Ptr
-// CHECK:STDOUT:   %101: type = const_type i32
-// CHECK:STDOUT:   %101.42: type = ptr_type const i32
-// CHECK:STDOUT:   %101.1 = fn_decl @ConstPtr
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Ptr(%p: i32*) -> i32* {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return %p
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConstPtr(%p: const i32*) -> const i32* {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return %p
-// CHECK:STDOUT: }
-
-fn Ptr(p: i32*) -> i32* {
-  return p;
-}
-
-fn ConstPtr(p: const i32*) -> (const i32)* {
-  return p;
-}

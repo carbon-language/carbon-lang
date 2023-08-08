@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:57: Cannot implicitly convert from `((i32, i32, i32), (i32, i32, i32)) as type` to `((i32, i32), (i32, i32)) as type`.
+// CHECK:STDERR: var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
+// CHECK:STDERR:                                                         ^
+var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -159,45 +165,3 @@
 // CHECK:STDOUT:     node+29,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %203: type = stub_reference i32
-// CHECK:STDOUT:   %203.15: type = stub_reference i32
-// CHECK:STDOUT:   %203.18: type = tuple_type (type, type)
-// CHECK:STDOUT:   %203.18.0: (type, type) = tuple_value (%203, %203.15)
-// CHECK:STDOUT:   %203.18.1: (type, type) = stub_reference %203.18.0
-// CHECK:STDOUT:   %203.22: type = stub_reference i32
-// CHECK:STDOUT:   %203.27: type = stub_reference i32
-// CHECK:STDOUT:   %203.30: (type, type) = tuple_value (%203.22, %203.27)
-// CHECK:STDOUT:   %203.30.0: (type, type) = stub_reference %203.30
-// CHECK:STDOUT:   %203.31: type = tuple_type ((type, type), (type, type))
-// CHECK:STDOUT:   %203.31.0: ((type, type), (type, type)) = tuple_value (%203.18.1, %203.30.0)
-// CHECK:STDOUT:   %203.18.2: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %203.31.1: type = tuple_type ((i32, i32), (i32, i32))
-// CHECK:STDOUT:   %x: ((i32, i32), (i32, i32)) = var
-// CHECK:STDOUT:   %203.37: i32 = int_value 1
-// CHECK:STDOUT:   %203.37.0: i32 = stub_reference %203.37
-// CHECK:STDOUT:   %203.40: i32 = int_value 2
-// CHECK:STDOUT:   %203.40.0: i32 = stub_reference %203.40
-// CHECK:STDOUT:   %203.43: i32 = int_value 3
-// CHECK:STDOUT:   %203.43.0: i32 = stub_reference %203.43
-// CHECK:STDOUT:   %203.44: type = tuple_type (i32, i32, i32)
-// CHECK:STDOUT:   %203.44.0: (i32, i32, i32) = tuple_value (%203.37.0, %203.40.0, %203.43.0)
-// CHECK:STDOUT:   %203.44.1: (i32, i32, i32) = stub_reference %203.44.0
-// CHECK:STDOUT:   %203.48: i32 = int_value 4
-// CHECK:STDOUT:   %203.48.0: i32 = stub_reference %203.48
-// CHECK:STDOUT:   %203.51: i32 = int_value 5
-// CHECK:STDOUT:   %203.51.0: i32 = stub_reference %203.51
-// CHECK:STDOUT:   %203.54: i32 = int_value 6
-// CHECK:STDOUT:   %203.54.0: i32 = stub_reference %203.54
-// CHECK:STDOUT:   %203.55: (i32, i32, i32) = tuple_value (%203.48.0, %203.51.0, %203.54.0)
-// CHECK:STDOUT:   %203.55.0: (i32, i32, i32) = stub_reference %203.55
-// CHECK:STDOUT:   %203.56: type = tuple_type ((i32, i32, i32), (i32, i32, i32))
-// CHECK:STDOUT:   %203.56.0: ((i32, i32, i32), (i32, i32, i32)) = tuple_value (%203.44.1, %203.55.0)
-// CHECK:STDOUT:   assign %x, <error>
-// CHECK:STDOUT: }
-
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:57: Cannot implicitly convert from `((i32, i32, i32), (i32, i32, i32)) as type` to `((i32, i32), (i32, i32)) as type`.
-// CHECK:STDERR: var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
-// CHECK:STDERR:                                                         ^
-var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));

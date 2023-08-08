@@ -3,6 +3,19 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F(b: bool) -> i32 {
+  return 0;
+
+  // Exercise various forms of control flow to check that we still consider the
+  // end of the function unreachable after them.
+  var n: i32 = if b then 1 else 2;
+  if (b and (b or b)) { }
+  if (b) { } else { }
+
+  // Unreachable, no error on missing return.
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4}}},
@@ -64,25 +77,3 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %78 = fn_decl @F
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%b: bool) -> i32 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %79: i32 = int_value 0
-// CHECK:STDOUT:   return %79
-// CHECK:STDOUT: }
-
-fn F(b: bool) -> i32 {
-  return 0;
-
-  // Exercise various forms of control flow to check that we still consider the
-  // end of the function unreachable after them.
-  var n: i32 = if b then 1 else 2;
-  if (b and (b or b)) { }
-  if (b) { } else { }
-
-  // Unreachable, no error on missing return.
-}

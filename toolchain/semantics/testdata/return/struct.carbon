@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Main() -> {.a: i32} {
+  return {.a = 3};
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type1, body: {block3}}},
@@ -56,20 +61,3 @@
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %73: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %73.1 = fn_decl @Main
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Main() -> {.a: i32} {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %74: i32 = int_value 3
-// CHECK:STDOUT:   %74.14: i32 = stub_reference %74
-// CHECK:STDOUT:   %74.17: {.a: i32} = struct_value (%74.14)
-// CHECK:STDOUT:   return %74.17
-// CHECK:STDOUT: }
-
-fn Main() -> {.a: i32} {
-  return {.a = 3};
-}

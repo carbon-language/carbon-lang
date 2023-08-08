@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F(a: bool, b: bool, c: bool) -> i32 {
+  return if a then if b then 1 else 2 else if c then 3 else 4;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4, block5, block7, block8, block9, block6, block10, block11, block12, block13}}},
@@ -116,50 +121,3 @@
 // CHECK:STDOUT:     node+26,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %163 = fn_decl @F
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a: bool, %b: bool, %c: bool) -> i32 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %a br !164 else br !164.44
-// CHECK:STDOUT:
-// CHECK:STDOUT: !164:
-// CHECK:STDOUT:   if %b br !164.30 else br !164.37
-// CHECK:STDOUT:
-// CHECK:STDOUT: !164.30:
-// CHECK:STDOUT:   %164: i32 = int_value 1
-// CHECK:STDOUT:   br !164.20(%164)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !164.37:
-// CHECK:STDOUT:   %164.37: i32 = int_value 2
-// CHECK:STDOUT:   br !164.20(%164.37)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !164.20:
-// CHECK:STDOUT:   %164.20: i32 = block_arg !164.20
-// CHECK:STDOUT:   br !164.10(%164.20)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !164.44:
-// CHECK:STDOUT:   if %c br !164.54 else br !164.61
-// CHECK:STDOUT:
-// CHECK:STDOUT: !164.54:
-// CHECK:STDOUT:   %164.54: i32 = int_value 3
-// CHECK:STDOUT:   br !164.44.0(%164.54)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !164.61:
-// CHECK:STDOUT:   %164.61: i32 = int_value 4
-// CHECK:STDOUT:   br !164.44.0(%164.61)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !164.44.0:
-// CHECK:STDOUT:   %164.44: i32 = block_arg !164.44.0
-// CHECK:STDOUT:   br !164.10(%164.44)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !164.10:
-// CHECK:STDOUT:   %164.10: i32 = block_arg !164.10
-// CHECK:STDOUT:   return %164.10
-// CHECK:STDOUT: }
-
-fn F(a: bool, b: bool, c: bool) -> i32 {
-  return if a then if b then 1 else 2 else if c then 3 else 4;
-}

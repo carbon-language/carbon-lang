@@ -3,6 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Foo() -> f64 { return 1.0; }
+
+fn Run() {
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:21: Cannot implicitly convert from `f64` to `i32`.
+  // CHECK:STDERR:   var x: i32 = Foo();
+  // CHECK:STDERR:                     ^
+  var x: i32 = Foo();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
@@ -54,31 +64,3 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %77 = fn_decl @Foo
-// CHECK:STDOUT:   %79 = fn_decl @Run
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo() -> f64 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %77: f64 = real_value 10e-1
-// CHECK:STDOUT:   return %77
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x: i32 = var
-// CHECK:STDOUT:   %83: f64 = call @Foo()
-// CHECK:STDOUT:   assign %x, <error>
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-
-fn Foo() -> f64 { return 1.0; }
-
-fn Run() {
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:21: Cannot implicitly convert from `f64` to `i32`.
-  // CHECK:STDERR:   var x: i32 = Foo();
-  // CHECK:STDERR:                     ^
-  var x: i32 = Foo();
-}

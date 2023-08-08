@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+3]]:30: Cannot implicitly convert from `{.b: f64}` to `{.a: i32}`.
+// CHECK:STDERR: var x: {.a: i32} = {.b = 1.0};
+// CHECK:STDERR:                              ^
+var x: {.a: i32} = {.b = 1.0};
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -60,18 +66,3 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %77: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %x: {.a: i32} = var
-// CHECK:STDOUT:   %77.26: f64 = real_value 10e-1
-// CHECK:STDOUT:   %77.24: f64 = stub_reference %77.26
-// CHECK:STDOUT:   %77.29: type = struct_type {.b: f64}
-// CHECK:STDOUT:   %77.29.0: {.b: f64} = struct_value (%77.24)
-// CHECK:STDOUT:   assign %x, <error>
-// CHECK:STDOUT: }
-
-// CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+3]]:30: Cannot implicitly convert from `{.b: f64}` to `{.a: i32}`.
-// CHECK:STDERR: var x: {.a: i32} = {.b = 1.0};
-// CHECK:STDERR:                              ^
-var x: {.a: i32} = {.b = 1.0};

@@ -3,6 +3,20 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+namespace Foo;
+
+// Never called, just here to help catch bugs in name lookup.
+fn Baz() {
+}
+
+fn Foo.Baz() {
+}
+
+fn Bar() {
+  Foo.Baz();
+}
+
 // CHECK:STDOUT: ; ModuleID = 'function.carbon'
 // CHECK:STDOUT: source_filename = "function.carbon"
 // CHECK:STDOUT:
@@ -19,16 +33,3 @@
 // CHECK:STDOUT:   %TupleLiteralValue = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-namespace Foo;
-
-// Never called, just here to help catch bugs in name lookup.
-fn Baz() {
-}
-
-fn Foo.Baz() {
-}
-
-fn Bar() {
-  Foo.Baz();
-}

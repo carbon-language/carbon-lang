@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:12: Cannot implicitly convert from `i32` to `type`.
+// CHECK:STDERR: var x: (1, );
+// CHECK:STDERR:            ^
+var x: (1, );
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -52,17 +58,3 @@
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %68: i32 = int_value 1
-// CHECK:STDOUT:   %68.9: i32 = stub_reference %68
-// CHECK:STDOUT:   %68.12: type = tuple_type (i32)
-// CHECK:STDOUT:   %68.12.0: (i32,) = tuple_value (%68.9)
-// CHECK:STDOUT:   %68.12.1: type = tuple_type (<error>)
-// CHECK:STDOUT:   %x: (<error>,) = var
-// CHECK:STDOUT: }
-
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:12: Cannot implicitly convert from `i32` to `type`.
-// CHECK:STDERR: var x: (1, );
-// CHECK:STDERR:            ^
-var x: (1, );

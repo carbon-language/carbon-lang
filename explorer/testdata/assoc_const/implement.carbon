@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 2
 
 package ExplorerTest api;
 
@@ -20,3 +19,5 @@ class Point {
 fn Main() -> i32 {
   return Point.(Vector.Dim);
 }
+
+// CHECK:STDOUT: result: 2

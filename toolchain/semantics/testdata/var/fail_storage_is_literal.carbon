@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Main() {
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: Cannot implicitly convert from `i32` to `type`.
+  // CHECK:STDERR:   var x: 1 = 1;
+  // CHECK:STDERR:          ^
+  var x: 1 = 1;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
@@ -46,23 +54,3 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %63 = fn_decl @Main
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Main() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %67: i32 = int_value 1
-// CHECK:STDOUT:   %x: <error> = var
-// CHECK:STDOUT:   %67.14: i32 = int_value 1
-// CHECK:STDOUT:   assign %x, <error>
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-
-fn Main() {
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: Cannot implicitly convert from `i32` to `type`.
-  // CHECK:STDERR:   var x: 1 = 1;
-  // CHECK:STDERR:          ^
-  var x: 1 = 1;
-}

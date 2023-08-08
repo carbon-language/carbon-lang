@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+class Foo {
+  fn Make() -> Self { return {.x = 0}; }
+
+  fn Baz[self: Self]() -> i32 { return self.x; }
+
+  fn Modify[addr self: Self*]() { self->x = 1; }
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'Foo'},
@@ -63,11 +72,3 @@
 // CHECK:STDOUT: {kind: 'ClassDefinition', text: '}', subtree_size: 57},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-class Foo {
-  fn Make() -> Self { return {.x = 0}; }
-
-  fn Baz[self: Self]() -> i32 { return self.x; }
-
-  fn Modify[addr self: Self*]() { self->x = 1; }
-}

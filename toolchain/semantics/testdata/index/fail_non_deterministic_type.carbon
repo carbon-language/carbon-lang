@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var a: (i32, i32) = (2, 3);
+var b: i32 = 0;
+// CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+3]]:17: Type cannot be determined at compile time.
+// CHECK:STDERR: var c: i32 = a[b];
+// CHECK:STDERR:                 ^
+var c: i32 = a[b];
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -89,30 +97,3 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %113: type = stub_reference i32
-// CHECK:STDOUT:   %113.14: type = stub_reference i32
-// CHECK:STDOUT:   %113.17: type = tuple_type (type, type)
-// CHECK:STDOUT:   %113.17.0: (type, type) = tuple_value (%113, %113.14)
-// CHECK:STDOUT:   %113.17.1: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %a: (i32, i32) = var
-// CHECK:STDOUT:   %113.22: i32 = int_value 2
-// CHECK:STDOUT:   %113.22.0: i32 = stub_reference %113.22
-// CHECK:STDOUT:   %113.25: i32 = int_value 3
-// CHECK:STDOUT:   %113.25.0: i32 = stub_reference %113.25
-// CHECK:STDOUT:   %113.26: (i32, i32) = tuple_value (%113.22.0, %113.25.0)
-// CHECK:STDOUT:   assign %a, %113.26
-// CHECK:STDOUT:   %b: i32 = var
-// CHECK:STDOUT:   %114: i32 = int_value 0
-// CHECK:STDOUT:   assign %b, %114
-// CHECK:STDOUT:   %c: i32 = var
-// CHECK:STDOUT:   assign %c, <error>
-// CHECK:STDOUT: }
-
-var a: (i32, i32) = (2, 3);
-var b: i32 = 0;
-// CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+3]]:17: Type cannot be determined at compile time.
-// CHECK:STDERR: var c: i32 = a[b];
-// CHECK:STDERR:                 ^
-var c: i32 = a[b];

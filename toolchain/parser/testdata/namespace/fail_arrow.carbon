@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+namespace Foo;
+
+// CHECK:STDERR: fail_arrow.carbon:[[@LINE+3]]:7: `fn` requires a `(` for parameters.
+// CHECK:STDERR: fn Foo->Bar() {}
+// CHECK:STDERR:       ^
+fn Foo->Bar() {}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:   {kind: 'Name', text: 'Foo'},
@@ -17,10 +25,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 8},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-namespace Foo;
-
-// CHECK:STDERR: fail_arrow.carbon:[[@LINE+3]]:7: `fn` requires a `(` for parameters.
-// CHECK:STDERR: fn Foo->Bar() {}
-// CHECK:STDERR:       ^
-fn Foo->Bar() {}

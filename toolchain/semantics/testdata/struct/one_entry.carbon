@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var x: {.a: i32} = {.a = 4};
+var y: {.a: i32} = x;
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -67,17 +71,3 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %82: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %x: {.a: i32} = var
-// CHECK:STDOUT:   %82.26: i32 = int_value 4
-// CHECK:STDOUT:   %82.24: i32 = stub_reference %82.26
-// CHECK:STDOUT:   %82.27: {.a: i32} = struct_value (%82.24)
-// CHECK:STDOUT:   assign %x, %82.27
-// CHECK:STDOUT:   %y: {.a: i32} = var
-// CHECK:STDOUT:   assign %y, %x
-// CHECK:STDOUT: }
-
-var x: {.a: i32} = {.a = 4};
-var y: {.a: i32} = x;

@@ -3,6 +3,17 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() {}
+fn G() {}
+
+fn If(b: bool) {
+  if (b) {
+    F();
+  }
+  G();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
@@ -78,43 +89,3 @@
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %112 = fn_decl @F
-// CHECK:STDOUT:   %113 = fn_decl @G
-// CHECK:STDOUT:   %115 = fn_decl @If
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @If(%b: bool) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !117 else br !119
-// CHECK:STDOUT:
-// CHECK:STDOUT: !117:
-// CHECK:STDOUT:   %117: type = tuple_type ()
-// CHECK:STDOUT:   %117.6: () = call @F()
-// CHECK:STDOUT:   br !119
-// CHECK:STDOUT:
-// CHECK:STDOUT: !119:
-// CHECK:STDOUT:   %119: () = call @G()
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-
-fn F() {}
-fn G() {}
-
-fn If(b: bool) {
-  if (b) {
-    F();
-  }
-  G();
-}

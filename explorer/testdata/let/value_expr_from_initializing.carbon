@@ -3,13 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: Initialize c from initializing expression (return <expr>)
-// CHECK:STDOUT: 0: Heap{}, 1: !Uninit<class C>, 2: C{}
-// CHECK:STDOUT: Object created, returning
-// CHECK:STDOUT: c destroyed
-// CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: !!C{}
-// CHECK:STDOUT: c destroyed
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -36,3 +29,11 @@ fn Main() -> i32 {
   FromInitializingExpression_ReturnExpr();
   return 0;
 }
+
+// CHECK:STDOUT: Initialize c from initializing expression (return <expr>)
+// CHECK:STDOUT: 0: Heap{}, 1: !Uninit<class C>, 2: C{}
+// CHECK:STDOUT: Object created, returning
+// CHECK:STDOUT: c destroyed
+// CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: !!C{}
+// CHECK:STDOUT: c destroyed
+// CHECK:STDOUT: result: 0

@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var x: {.a: i32} = {.a = 4};
+// CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+3]]:15: Type `{.a: i32}` does not have a member `b`.
+// CHECK:STDERR: var y: i32 = x.b;
+// CHECK:STDERR:               ^
+var y: i32 = x.b;
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -63,20 +70,3 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %78: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %x: {.a: i32} = var
-// CHECK:STDOUT:   %78.26: i32 = int_value 4
-// CHECK:STDOUT:   %78.24: i32 = stub_reference %78.26
-// CHECK:STDOUT:   %78.27: {.a: i32} = struct_value (%78.24)
-// CHECK:STDOUT:   assign %x, %78.27
-// CHECK:STDOUT:   %y: i32 = var
-// CHECK:STDOUT:   assign %y, <error>
-// CHECK:STDOUT: }
-
-var x: {.a: i32} = {.a = 4};
-// CHECK:STDERR: fail_non_member_access.carbon:[[@LINE+3]]:15: Type `{.a: i32}` does not have a member `b`.
-// CHECK:STDERR: var y: i32 = x.b;
-// CHECK:STDERR:               ^
-var y: i32 = x.b;

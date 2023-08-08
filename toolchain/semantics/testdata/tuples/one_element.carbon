@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var x: (i32,) = (4,);
+var y: (i32,) = x;
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -75,22 +79,3 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %95: type = stub_reference i32
-// CHECK:STDOUT:   %95.13: type = tuple_type (type)
-// CHECK:STDOUT:   %95.13.0: (type,) = tuple_value (%95)
-// CHECK:STDOUT:   %95.13.1: type = tuple_type (i32)
-// CHECK:STDOUT:   %x: (i32,) = var
-// CHECK:STDOUT:   %95.18: i32 = int_value 4
-// CHECK:STDOUT:   %95.18.0: i32 = stub_reference %95.18
-// CHECK:STDOUT:   %95.20: (i32,) = tuple_value (%95.18.0)
-// CHECK:STDOUT:   assign %x, %95.20
-// CHECK:STDOUT:   %96: type = stub_reference i32
-// CHECK:STDOUT:   %96.13: (type,) = tuple_value (%96)
-// CHECK:STDOUT:   %y: (i32,) = var
-// CHECK:STDOUT:   assign %y, %x
-// CHECK:STDOUT: }
-
-var x: (i32,) = (4,);
-var y: (i32,) = x;

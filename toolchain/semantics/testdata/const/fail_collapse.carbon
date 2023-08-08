@@ -3,6 +3,17 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:9: `const` applied repeatedly to the same type has no additional effect.
+// CHECK:STDERR: fn G(p: const (const i32)**) -> i32** {
+// CHECK:STDERR:         ^
+fn G(p: const (const i32)**) -> i32** {
+  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:11: Cannot implicitly convert from `const i32**` to `i32**`.
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:           ^
+  return p;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type5, body: {block4}}},
@@ -60,24 +71,3 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %78: type = ptr_type i32
-// CHECK:STDOUT:   %78.37: type = ptr_type i32*
-// CHECK:STDOUT:   %78.1 = fn_decl @G
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p: const i32**) -> i32** {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return <error>
-// CHECK:STDOUT: }
-
-// CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:9: `const` applied repeatedly to the same type has no additional effect.
-// CHECK:STDERR: fn G(p: const (const i32)**) -> i32** {
-// CHECK:STDERR:         ^
-fn G(p: const (const i32)**) -> i32** {
-  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:11: Cannot implicitly convert from `const i32**` to `i32**`.
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:           ^
-  return p;
-}

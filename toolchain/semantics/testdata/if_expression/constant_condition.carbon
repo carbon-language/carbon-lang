@@ -3,6 +3,18 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn A() -> i32 { return 1; }
+fn B() -> i32 { return 2; }
+
+fn F() -> i32 {
+  return if true then A() else B();
+}
+
+fn G() -> i32 {
+  return if false then A() else B();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
@@ -108,69 +120,3 @@
 // CHECK:STDOUT:     node+25,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %167 = fn_decl @A
-// CHECK:STDOUT:   %168 = fn_decl @B
-// CHECK:STDOUT:   %170 = fn_decl @F
-// CHECK:STDOUT:   %174 = fn_decl @G
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() -> i32 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %167: i32 = int_value 1
-// CHECK:STDOUT:   return %167
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @B() -> i32 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %168: i32 = int_value 2
-// CHECK:STDOUT:   return %168
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> i32 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %171: bool = bool_value true
-// CHECK:STDOUT:   if %171 br !171 else br !171.33
-// CHECK:STDOUT:
-// CHECK:STDOUT: !171:
-// CHECK:STDOUT:   %171.24: i32 = call @A()
-// CHECK:STDOUT:   br !171.10(%171.24)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !171.33:
-// CHECK:STDOUT:   %171.33: i32 = call @B()
-// CHECK:STDOUT:   br !171.10(%171.33)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !171.10:
-// CHECK:STDOUT:   %171.10: i32 = block_arg !171.10
-// CHECK:STDOUT:   return %171.10
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> i32 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %175: bool = bool_value false
-// CHECK:STDOUT:   if %175 br !175 else br !175.34
-// CHECK:STDOUT:
-// CHECK:STDOUT: !175:
-// CHECK:STDOUT:   %175.25: i32 = call @A()
-// CHECK:STDOUT:   br !175.10(%175.25)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !175.34:
-// CHECK:STDOUT:   %175.34: i32 = call @B()
-// CHECK:STDOUT:   br !175.10(%175.34)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !175.10:
-// CHECK:STDOUT:   %175.10: i32 = block_arg !175.10
-// CHECK:STDOUT:   return %175.10
-// CHECK:STDOUT: }
-
-fn A() -> i32 { return 1; }
-fn B() -> i32 { return 2; }
-
-fn F() -> i32 {
-  return if true then A() else B();
-}
-
-fn G() -> i32 {
-  return if false then A() else B();
-}

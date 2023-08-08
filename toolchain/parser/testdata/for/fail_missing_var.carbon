@@ -3,6 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn foo() {
+  // CHECK:STDERR: fail_missing_var.carbon:[[@LINE+3]]:8: Expected `var` declaration.
+  // CHECK:STDERR:   for (x: i32 in y) {
+  // CHECK:STDERR:        ^
+  for (x: i32 in y) {
+    Print(x);
+  }
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'foo'},
@@ -23,12 +33,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 17},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-fn foo() {
-  // CHECK:STDERR: fail_missing_var.carbon:[[@LINE+3]]:8: Expected `var` declaration.
-  // CHECK:STDERR:   for (x: i32 in y) {
-  // CHECK:STDERR:        ^
-  for (x: i32 in y) {
-    Print(x);
-  }
-}

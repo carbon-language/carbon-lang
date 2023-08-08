@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F(b: bool, n: i32, m: i32) -> i32 {
+  return if b then n + m else m + n;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4, block5, block6, block7}}},
@@ -76,28 +81,3 @@
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %101 = fn_decl @F
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !102 else br !102.33
-// CHECK:STDOUT:
-// CHECK:STDOUT: !102:
-// CHECK:STDOUT:   %102: i32 = add %n, %m
-// CHECK:STDOUT:   br !102.10(%102)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !102.33:
-// CHECK:STDOUT:   %102.33: i32 = add %m, %n
-// CHECK:STDOUT:   br !102.10(%102.33)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !102.10:
-// CHECK:STDOUT:   %102.10: i32 = block_arg !102.10
-// CHECK:STDOUT:   return %102.10
-// CHECK:STDOUT: }
-
-fn F(b: bool, n: i32, m: i32) -> i32 {
-  return if b then n + m else m + n;
-}

@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:28: Cannot implicitly convert from `{.b: {}}` to `{.a: {}}`.
+// CHECK:STDERR: var x: {.a: {}} = {.b = {}};
+// CHECK:STDERR:                            ^
+var x: {.a: {}} = {.b = {}};
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -62,20 +68,3 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %81: type = struct_type {}
-// CHECK:STDOUT:   %81.14: {} = struct_value ()
-// CHECK:STDOUT:   %81.15: type = struct_type {.a: {}}
-// CHECK:STDOUT:   %x: {.a: {}} = var
-// CHECK:STDOUT:   %81.26: {} = struct_value ()
-// CHECK:STDOUT:   %81.23: {} = stub_reference %81.26
-// CHECK:STDOUT:   %81.27: type = struct_type {.b: {}}
-// CHECK:STDOUT:   %81.27.0: {.b: {}} = struct_value (%81.23)
-// CHECK:STDOUT:   assign %x, <error>
-// CHECK:STDOUT: }
-
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:28: Cannot implicitly convert from `{.b: {}}` to `{.a: {}}`.
-// CHECK:STDERR: var x: {.a: {}} = {.b = {}};
-// CHECK:STDERR:                            ^
-var x: {.a: {}} = {.b = {}};

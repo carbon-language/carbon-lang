@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn ConstMismatch(p: const {}*) -> const ({}*) {
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:11: Cannot implicitly convert from `const {}*` to `const ({}*)`.
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:           ^
+  return p;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type4, body: {block4}}},
@@ -61,22 +69,3 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %77: {} = struct_value ()
-// CHECK:STDOUT:   %77.44: type = ptr_type {}
-// CHECK:STDOUT:   %77.35: type = const_type {}*
-// CHECK:STDOUT:   %77.1 = fn_decl @ConstMismatch
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return <error>
-// CHECK:STDOUT: }
-
-fn ConstMismatch(p: const {}*) -> const ({}*) {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:11: Cannot implicitly convert from `const {}*` to `const ({}*)`.
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:           ^
-  return p;
-}

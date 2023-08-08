@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var x: i32;
+// CHECK:STDERR: fail_qualifier_unsupported.carbon:[[@LINE+3]]:15: Type `i32` does not support qualified expressions.
+// CHECK:STDERR: var y: i32 = x.b;
+// CHECK:STDERR:               ^
+var y: i32 = x.b;
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -38,15 +45,3 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %x: i32 = var
-// CHECK:STDOUT:   %y: i32 = var
-// CHECK:STDOUT:   assign %y, <error>
-// CHECK:STDOUT: }
-
-var x: i32;
-// CHECK:STDERR: fail_qualifier_unsupported.carbon:[[@LINE+3]]:15: Type `i32` does not support qualified expressions.
-// CHECK:STDERR: var y: i32 = x.b;
-// CHECK:STDERR:               ^
-var y: i32 = x.b;

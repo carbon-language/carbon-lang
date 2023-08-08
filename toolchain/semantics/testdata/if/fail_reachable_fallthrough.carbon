@@ -3,6 +3,36 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn If1(b: bool) -> i32 {
+  if (b) {
+    return 1;
+  } else {
+  }
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
+}
+
+fn If2(b: bool) -> i32 {
+  if (b) {
+  } else {
+    return 2;
+  }
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
+}
+
+fn If3(b: bool) -> i32 {
+  if (b) {
+    return 1;
+  }
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4, block5, block6, block7}}},
@@ -120,77 +150,3 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %169 = fn_decl @If1
-// CHECK:STDOUT:   %179 = fn_decl @If2
-// CHECK:STDOUT:   %189 = fn_decl @If3
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @If1(%b: bool) -> i32 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !171 else br !170
-// CHECK:STDOUT:
-// CHECK:STDOUT: !171:
-// CHECK:STDOUT:   %171: i32 = int_value 1
-// CHECK:STDOUT:   return %171
-// CHECK:STDOUT:
-// CHECK:STDOUT: !170:
-// CHECK:STDOUT:   br !.0
-// CHECK:STDOUT:
-// CHECK:STDOUT: !.0:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @If2(%b: bool) -> i32 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !180 else br !182
-// CHECK:STDOUT:
-// CHECK:STDOUT: !180:
-// CHECK:STDOUT:   br !.0
-// CHECK:STDOUT:
-// CHECK:STDOUT: !182:
-// CHECK:STDOUT:   %182: i32 = int_value 2
-// CHECK:STDOUT:   return %182
-// CHECK:STDOUT:
-// CHECK:STDOUT: !.0:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @If3(%b: bool) -> i32 {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !191 else br !.0
-// CHECK:STDOUT:
-// CHECK:STDOUT: !191:
-// CHECK:STDOUT:   %191: i32 = int_value 1
-// CHECK:STDOUT:   return %191
-// CHECK:STDOUT:
-// CHECK:STDOUT: !.0:
-// CHECK:STDOUT: }
-
-fn If1(b: bool) -> i32 {
-  if (b) {
-    return 1;
-  } else {
-  }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-}
-
-fn If2(b: bool) -> i32 {
-  if (b) {
-  } else {
-    return 2;
-  }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-}
-
-fn If3(b: bool) -> i32 {
-  if (b) {
-    return 1;
-  }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-}

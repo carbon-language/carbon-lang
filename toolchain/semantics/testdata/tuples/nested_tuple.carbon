@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var x: ((i32, i32), i32) = ((12, 76), 6);
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -109,29 +112,3 @@
 // CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %137: type = stub_reference i32
-// CHECK:STDOUT:   %137.15: type = stub_reference i32
-// CHECK:STDOUT:   %137.18: type = tuple_type (type, type)
-// CHECK:STDOUT:   %137.18.0: (type, type) = tuple_value (%137, %137.15)
-// CHECK:STDOUT:   %137.18.1: (type, type) = stub_reference %137.18.0
-// CHECK:STDOUT:   %137.21: type = stub_reference i32
-// CHECK:STDOUT:   %137.24: type = tuple_type ((type, type), type)
-// CHECK:STDOUT:   %137.24.0: ((type, type), type) = tuple_value (%137.18.1, %137.21)
-// CHECK:STDOUT:   %137.18.2: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %137.24.1: type = tuple_type ((i32, i32), i32)
-// CHECK:STDOUT:   %x: ((i32, i32), i32) = var
-// CHECK:STDOUT:   %137.30: i32 = int_value 12
-// CHECK:STDOUT:   %137.30.0: i32 = stub_reference %137.30
-// CHECK:STDOUT:   %137.34: i32 = int_value 76
-// CHECK:STDOUT:   %137.34.0: i32 = stub_reference %137.34
-// CHECK:STDOUT:   %137.36: (i32, i32) = tuple_value (%137.30.0, %137.34.0)
-// CHECK:STDOUT:   %137.36.0: (i32, i32) = stub_reference %137.36
-// CHECK:STDOUT:   %137.39: i32 = int_value 6
-// CHECK:STDOUT:   %137.39.0: i32 = stub_reference %137.39
-// CHECK:STDOUT:   %137.40: ((i32, i32), i32) = tuple_value (%137.36.0, %137.39.0)
-// CHECK:STDOUT:   assign %x, %137.40
-// CHECK:STDOUT: }
-
-var x: ((i32, i32), i32) = ((12, 76), 6);

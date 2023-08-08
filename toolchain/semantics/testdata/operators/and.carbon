@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() -> bool { return true; }
+fn G() -> bool { return true; }
+
+fn And() -> bool {
+  return F() and G();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
@@ -71,43 +79,3 @@
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %108 = fn_decl @F
-// CHECK:STDOUT:   %109 = fn_decl @G
-// CHECK:STDOUT:   %111 = fn_decl @And
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> bool {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %108: bool = bool_value true
-// CHECK:STDOUT:   return %108
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> bool {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %109: bool = bool_value true
-// CHECK:STDOUT:   return %109
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @And() -> bool {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %112: bool = call @F()
-// CHECK:STDOUT:   %112.14: bool = bool_value false
-// CHECK:STDOUT:   if %112 br !112 else br !112.14(%112.14)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !112:
-// CHECK:STDOUT:   %112.19: bool = call @G()
-// CHECK:STDOUT:   br !112.14(%112.19)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !112.14:
-// CHECK:STDOUT:   %112.14.0: bool = block_arg !112.14
-// CHECK:STDOUT:   return %112.14.0
-// CHECK:STDOUT: }
-
-fn F() -> bool { return true; }
-fn G() -> bool { return true; }
-
-fn And() -> bool {
-  return F() and G();
-}

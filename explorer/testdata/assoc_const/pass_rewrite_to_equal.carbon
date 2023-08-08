@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 1
 
 package ExplorerTest api;
 
@@ -30,3 +29,5 @@ impl (i32, i32) as Container where .Element = i32 {
 fn Main() -> i32 {
   return B((1, 2));
 }
+
+// CHECK:STDOUT: result: 1

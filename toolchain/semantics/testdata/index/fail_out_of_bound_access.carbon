@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var a: (i32, i32) = (12, 6);
+// CHECK:STDERR: fail_out_of_bound_access.carbon:[[@LINE+3]]:17: Index `2` is past the end of `(i32, i32) as type`.
+// CHECK:STDERR: var b: i32 = a[2];
+// CHECK:STDERR:                 ^
+var b: i32 = a[2];
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -82,27 +89,3 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %104: type = stub_reference i32
-// CHECK:STDOUT:   %104.14: type = stub_reference i32
-// CHECK:STDOUT:   %104.17: type = tuple_type (type, type)
-// CHECK:STDOUT:   %104.17.0: (type, type) = tuple_value (%104, %104.14)
-// CHECK:STDOUT:   %104.17.1: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %a: (i32, i32) = var
-// CHECK:STDOUT:   %104.22: i32 = int_value 12
-// CHECK:STDOUT:   %104.22.0: i32 = stub_reference %104.22
-// CHECK:STDOUT:   %104.26: i32 = int_value 6
-// CHECK:STDOUT:   %104.26.0: i32 = stub_reference %104.26
-// CHECK:STDOUT:   %104.27: (i32, i32) = tuple_value (%104.22.0, %104.26.0)
-// CHECK:STDOUT:   assign %a, %104.27
-// CHECK:STDOUT:   %b: i32 = var
-// CHECK:STDOUT:   %108: i32 = int_value 2
-// CHECK:STDOUT:   assign %b, <error>
-// CHECK:STDOUT: }
-
-var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_out_of_bound_access.carbon:[[@LINE+3]]:17: Index `2` is past the end of `(i32, i32) as type`.
-// CHECK:STDERR: var b: i32 = a[2];
-// CHECK:STDERR:                 ^
-var b: i32 = a[2];

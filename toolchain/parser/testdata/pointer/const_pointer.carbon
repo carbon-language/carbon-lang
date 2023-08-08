@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn A() -> const i32* { return A(); }
+fn B() -> (const i32)* { return B(); }
+fn C() -> const (i32*) { return C(); }
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'A'},
@@ -55,7 +60,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 17},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-fn A() -> const i32* { return A(); }
-fn B() -> (const i32)* { return B(); }
-fn C() -> const (i32*) { return C(); }

@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var a: (i32, i32) = (12, 6);
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: Semantics TODO: Handle -
+// CHECK:STDERR: var b: i32 = a[-10];
+// CHECK:STDERR:                ^
+var b: i32 = a[-10];
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -80,12 +87,3 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT: }
-
-var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: Semantics TODO: Handle -
-// CHECK:STDERR: var b: i32 = a[-10];
-// CHECK:STDERR:                ^
-var b: i32 = a[-10];

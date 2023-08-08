@@ -3,6 +3,20 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() {}
+fn G() {}
+fn H() {}
+
+fn If(b: bool) {
+  if (b) {
+    F();
+  } else {
+    G();
+  }
+  H();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
@@ -92,56 +106,3 @@
 // CHECK:STDOUT:     node+17,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %136 = fn_decl @F
-// CHECK:STDOUT:   %137 = fn_decl @G
-// CHECK:STDOUT:   %138 = fn_decl @H
-// CHECK:STDOUT:   %140 = fn_decl @If
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @H() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @If(%b: bool) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !142 else br !144
-// CHECK:STDOUT:
-// CHECK:STDOUT: !142:
-// CHECK:STDOUT:   %142: type = tuple_type ()
-// CHECK:STDOUT:   %142.6: () = call @F()
-// CHECK:STDOUT:   br !146
-// CHECK:STDOUT:
-// CHECK:STDOUT: !144:
-// CHECK:STDOUT:   %144: () = call @G()
-// CHECK:STDOUT:   br !146
-// CHECK:STDOUT:
-// CHECK:STDOUT: !146:
-// CHECK:STDOUT:   %146: () = call @H()
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-
-fn F() {}
-fn G() {}
-fn H() {}
-
-fn If(b: bool) {
-  if (b) {
-    F();
-  } else {
-    G();
-  }
-  H();
-}

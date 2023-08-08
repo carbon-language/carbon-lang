@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Foo(a: i32, b: i32,) {}
+
+fn Main() {
+  Foo(1, 2);
+  Foo(1, 2,);
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, body: {block4}}},
@@ -94,36 +102,3 @@
 // CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %124 = fn_decl @Foo
-// CHECK:STDOUT:   %126 = fn_decl @Main
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a: i32, %b: i32) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Main() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %127: i32 = int_value 1
-// CHECK:STDOUT:   %127.7: i32 = stub_reference %127
-// CHECK:STDOUT:   %127.10: i32 = int_value 2
-// CHECK:STDOUT:   %127.10.0: i32 = stub_reference %127.10
-// CHECK:STDOUT:   %127.6: type = tuple_type ()
-// CHECK:STDOUT:   %127.6.0: () = call @Foo(%127.7, %127.10.0)
-// CHECK:STDOUT:   %128: i32 = int_value 1
-// CHECK:STDOUT:   %128.7: i32 = stub_reference %128
-// CHECK:STDOUT:   %128.10: i32 = int_value 2
-// CHECK:STDOUT:   %128.10.0: i32 = stub_reference %128.10
-// CHECK:STDOUT:   %128.6: () = call @Foo(%128.7, %128.10.0)
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-
-fn Foo(a: i32, b: i32,) {}
-
-fn Main() {
-  Foo(1, 2);
-  Foo(1, 2,);
-}

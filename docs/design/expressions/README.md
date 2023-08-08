@@ -61,9 +61,23 @@ graph BT
     unqualifiedName["x"]
     click unqualifiedName "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/README.md#unqualified-names"
 
+    top((" "))
+
     memberAccess>"x.y<br>
-                    x.(...)"]
+                  x.(...)<br>
+                  x->y<br>
+                  x->(...)"]
     click memberAccess "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/member_access.md"
+
+    constType["const T"]
+    click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
+
+    pointerType{"T*"}
+    click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
+
+    pointer{"*x<br>
+             &x<br>"}
+    click pointer "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/pointer.md"
 
     negation["-x"]
     click negation "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
@@ -124,15 +138,22 @@ graph BT
 
     expressionEnd["x;"]
 
-    memberAccess --> parens & braces & unqualifiedName
-    negation --> memberAccess
-    complement --> memberAccess
+    top --> parens & braces & unqualifiedName
+
+    constType --> top
+    pointerType --> constType
+    as --> pointerType
+
+    memberAccess --> top
+    pointer --> memberAccess
+    negation --> pointer
+    complement --> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
-    not -----> memberAccess
-    multiplication & modulo & as & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
+    not -------> memberAccess
+    as & multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
     addition --> multiplication
-    comparison --> modulo & addition & as & bitwise_and & bitwise_or & bitwise_xor & shift
+    comparison --> as & addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
     logicalOperand --> comparison & not
     and & or --> logicalOperand
     logicalExpression --> and & or
@@ -154,8 +175,8 @@ The diagram's attributes are:
     -   Precedence edges are transitive. For example, `or --> == --> as` means
         that `or` is lower precedence than `as`.
 
--   When an expression is composed from a single precedence group, the
-    interpretation is determined by the
+-   When a binary operator expression is composed from a single precedence
+    group, the interpretation is determined by the
     [associativity](https://en.wikipedia.org/wiki/Operator_associativity) of the
     precedence group:
 
@@ -168,6 +189,21 @@ The diagram's attributes are:
     -   For example, `+` and `-` are left-associative and in the same precedence
         group, so `a + b + c - d` is treated as `((a + b) + c) - d`.
 
+    -   Note that in Carbon, we currently only have left-associative operators.
+        Unlike C++ and other languages, [assignment](/docs/design/assignment.md)
+        isn't a right-associative operator, it uses its own statement.
+
+-   When a unary operator expression is composed from a single precedence group,
+    it can allow unparenthesized repetition or not:
+
+    ```mermaid
+    graph TD
+        non["Non-repeating"]
+        repeating{"Repeating"}
+    ```
+
+    This is analogous to associativity for binary operators.
+
 ## Names
 
 ### Unqualified names
@@ -179,12 +215,14 @@ keyword and is not preceded by a period (`.`).
 
 ### Qualified names and member access
 
-A _qualified name_ is a word that appears immediately after a period. Qualified
-names appear in the following contexts:
+A _qualified name_ is a word that appears immediately after a period or
+rightward arrow. Qualified names appear in the following contexts:
 
 -   [Designators](/docs/design/classes.md#literals): `.` _word_
 -   [Simple member access expressions](member_access.md): _expression_ `.`
     _word_
+-   [Simple pointer member access expressions](member_access.md): _expression_
+    `->` _word_
 
 ```
 var x: auto = {.hello = 1, .world = 2};
@@ -194,6 +232,10 @@ var x: auto = {.hello = 1, .world = 2};
 x.hello = x.world;
   ^^^^^     ^^^^^ qualified name
 ^^^^^^^   ^^^^^^^ member access expression
+
+x.hello = (&x)->world;
+                ^^^^^ qualified name
+          ^^^^^^^^^^^ pointer member access expression
 ```
 
 Qualified names refer to members of an entity determined by the context in which
@@ -231,6 +273,7 @@ complex than a single _word_, a compound member access expression can be used,
 with parentheses around the member name:
 
 -   _expression_ `.` `(` _expression_ `)`
+-   _expression_ `->` `(` _expression_ `)`
 
 ```
 interface I { fn F[self: Self](); }
@@ -241,34 +284,40 @@ impl X as I { fn F[self: Self]() {} }
 fn Q(x: X) { x.(I.F)(); }
 ```
 
+Either simple or compound member access can be part of a _pointer_ member access
+expression when an `->` is used instead of a `.`, where _expression_ `->` _..._
+is syntactic sugar for `(` `*` _expression_ `)` `.` _..._.
+
 ## Operators
 
 Most expressions are modeled as operators:
 
-| Category   | Operator                        | Syntax    | Function                                                              |
-| ---------- | ------------------------------- | --------- | --------------------------------------------------------------------- |
-| Arithmetic | [`-`](arithmetic.md) (unary)    | `-x`      | The negation of `x`.                                                  |
-| Bitwise    | [`^`](bitwise.md) (unary)       | `^x`      | The bitwise complement of `x`.                                        |
-| Arithmetic | [`+`](arithmetic.md)            | `x + y`   | The sum of `x` and `y`.                                               |
-| Arithmetic | [`-`](arithmetic.md) (binary)   | `x - y`   | The difference of `x` and `y`.                                        |
-| Arithmetic | [`*`](arithmetic.md)            | `x * y`   | The product of `x` and `y`.                                           |
-| Arithmetic | [`/`](arithmetic.md)            | `x / y`   | `x` divided by `y`, or the quotient thereof.                          |
-| Arithmetic | [`%`](arithmetic.md)            | `x % y`   | `x` modulo `y`.                                                       |
-| Bitwise    | [`&`](bitwise.md)               | `x & y`   | The bitwise AND of `x` and `y`.                                       |
-| Bitwise    | [`\|`](bitwise.md)              | `x \| y`  | The bitwise OR of `x` and `y`.                                        |
-| Bitwise    | [`^`](bitwise.md) (binary)      | `x ^ y`   | The bitwise XOR of `x` and `y`.                                       |
-| Bitwise    | [`<<`](bitwise.md)              | `x << y`  | `x` bit-shifted left `y` places.                                      |
-| Bitwise    | [`>>`](bitwise.md)              | `x >> y`  | `x` bit-shifted right `y` places.                                     |
-| Conversion | [`as`](as_expressions.md)       | `x as T`  | Converts the value `x` to the type `T`.                               |
-| Comparison | [`==`](comparison_operators.md) | `x == y`  | Equality: `true` if `x` is equal to `y`.                              |
-| Comparison | [`!=`](comparison_operators.md) | `x != y`  | Inequality: `true` if `x` is not equal to `y`.                        |
-| Comparison | [`<`](comparison_operators.md)  | `x < y`   | Less than: `true` if `x` is less than `y`.                            |
-| Comparison | [`<=`](comparison_operators.md) | `x <= y`  | Less than or equal: `true` if `x` is less than or equal to `y`.       |
-| Comparison | [`>`](comparison_operators.md)  | `x > y`   | Greater than: `true` if `x` is greater than to `y`.                   |
-| Comparison | [`>=`](comparison_operators.md) | `x >= y`  | Greater than or equal: `true` if `x` is greater than or equal to `y`. |
-| Logical    | [`and`](logical_operators.md)   | `x and y` | A short-circuiting logical AND: `true` if both operands are `true`.   |
-| Logical    | [`or`](logical_operators.md)    | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.    |
-| Logical    | [`not`](logical_operators.md)   | `not x`   | Logical NOT: `true` if the operand is `false`.                        |
+| Category   | Operator                            | Syntax    | Function                                                              |
+| ---------- | ----------------------------------- | --------- | --------------------------------------------------------------------- |
+| Pointer    | [`*`](pointer_operators.md) (unary) | `*x`      | Pointer dereference: the object pointed to by `x`.                    |
+| Pointer    | [`&`](pointer_operators.md) (unary) | `&x`      | Address-of: a pointer to the object `x`.                              |
+| Arithmetic | [`-`](arithmetic.md) (unary)        | `-x`      | The negation of `x`.                                                  |
+| Bitwise    | [`^`](bitwise.md) (unary)           | `^x`      | The bitwise complement of `x`.                                        |
+| Arithmetic | [`+`](arithmetic.md)                | `x + y`   | The sum of `x` and `y`.                                               |
+| Arithmetic | [`-`](arithmetic.md) (binary)       | `x - y`   | The difference of `x` and `y`.                                        |
+| Arithmetic | [`*`](arithmetic.md)                | `x * y`   | The product of `x` and `y`.                                           |
+| Arithmetic | [`/`](arithmetic.md)                | `x / y`   | `x` divided by `y`, or the quotient thereof.                          |
+| Arithmetic | [`%`](arithmetic.md)                | `x % y`   | `x` modulo `y`.                                                       |
+| Bitwise    | [`&`](bitwise.md)                   | `x & y`   | The bitwise AND of `x` and `y`.                                       |
+| Bitwise    | [`\|`](bitwise.md)                  | `x \| y`  | The bitwise OR of `x` and `y`.                                        |
+| Bitwise    | [`^`](bitwise.md) (binary)          | `x ^ y`   | The bitwise XOR of `x` and `y`.                                       |
+| Bitwise    | [`<<`](bitwise.md)                  | `x << y`  | `x` bit-shifted left `y` places.                                      |
+| Bitwise    | [`>>`](bitwise.md)                  | `x >> y`  | `x` bit-shifted right `y` places.                                     |
+| Conversion | [`as`](as_expressions.md)           | `x as T`  | Converts the value `x` to the type `T`.                               |
+| Comparison | [`==`](comparison_operators.md)     | `x == y`  | Equality: `true` if `x` is equal to `y`.                              |
+| Comparison | [`!=`](comparison_operators.md)     | `x != y`  | Inequality: `true` if `x` is not equal to `y`.                        |
+| Comparison | [`<`](comparison_operators.md)      | `x < y`   | Less than: `true` if `x` is less than `y`.                            |
+| Comparison | [`<=`](comparison_operators.md)     | `x <= y`  | Less than or equal: `true` if `x` is less than or equal to `y`.       |
+| Comparison | [`>`](comparison_operators.md)      | `x > y`   | Greater than: `true` if `x` is greater than to `y`.                   |
+| Comparison | [`>=`](comparison_operators.md)     | `x >= y`  | Greater than or equal: `true` if `x` is greater than or equal to `y`. |
+| Logical    | [`and`](logical_operators.md)       | `x and y` | A short-circuiting logical AND: `true` if both operands are `true`.   |
+| Logical    | [`or`](logical_operators.md)        | `x or y`  | A short-circuiting logical OR: `true` if either operand is `true`.    |
+| Logical    | [`not`](logical_operators.md)       | `not x`   | Logical NOT: `true` if the operand is `false`.                        |
 
 The binary arithmetic and bitwise operators also have
 [compound assignment](/docs/design/assignment.md) forms. These are statements

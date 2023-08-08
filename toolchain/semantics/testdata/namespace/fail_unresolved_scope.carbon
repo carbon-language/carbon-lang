@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+3]]:4: Name `Foo` not found
+// CHECK:STDERR: fn Foo.Baz() {
+// CHECK:STDERR:    ^
+fn Foo.Baz() {
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str<invalid>, param_refs: block0, body: {block2}}},
@@ -33,18 +40,3 @@
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-// CHECK:STDOUT:
-// CHECK:STDOUT: package {
-// CHECK:STDOUT:   %49 = fn_decl @.0
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @.0() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-
-// CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+3]]:4: Name `Foo` not found
-// CHECK:STDERR: fn Foo.Baz() {
-// CHECK:STDERR:    ^
-fn Foo.Baz() {
-}

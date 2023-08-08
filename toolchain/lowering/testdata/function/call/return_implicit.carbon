@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+
+fn MakeImplicitEmptyTuple() {
+}
+
+fn Main() {
+  var b: () = MakeImplicitEmptyTuple();
+}
+
 // CHECK:STDOUT: ; ModuleID = 'return_implicit.carbon'
 // CHECK:STDOUT: source_filename = "return_implicit.carbon"
 // CHECK:STDOUT:
@@ -21,11 +30,3 @@
 // CHECK:STDOUT:   store %TupleLiteralType %1, ptr %var, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-
-fn MakeImplicitEmptyTuple() {
-}
-
-fn Main() {
-  var b: () = MakeImplicitEmptyTuple();
-}
