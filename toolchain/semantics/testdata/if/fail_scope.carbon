@@ -79,19 +79,19 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %7 = fn_decl @VarScope
+// CHECK:STDOUT:   %.L7 = fn_decl @VarScope
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @VarScope(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !9 else br !15
+// CHECK:STDOUT:   if %b br !.L9 else br !.L15
 // CHECK:STDOUT:
-// CHECK:STDOUT: !9:
+// CHECK:STDOUT: !.L9:
 // CHECK:STDOUT:   %n: i32 = var
-// CHECK:STDOUT:   %9: i32 = int_value 2
-// CHECK:STDOUT:   assign %n, %9
+// CHECK:STDOUT:   %.L9: i32 = int_value 2
+// CHECK:STDOUT:   assign %n, %.L9
 // CHECK:STDOUT:   return %n
 // CHECK:STDOUT:
-// CHECK:STDOUT: !15:
+// CHECK:STDOUT: !.L15:
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

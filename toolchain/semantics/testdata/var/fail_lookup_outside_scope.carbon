@@ -57,7 +57,7 @@ var y: i32 = x;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %7 = fn_decl @Main
+// CHECK:STDOUT:   %.L7 = fn_decl @Main
 // CHECK:STDOUT:   %y: i32 = var
 // CHECK:STDOUT:   assign %y, <error>
 // CHECK:STDOUT: }

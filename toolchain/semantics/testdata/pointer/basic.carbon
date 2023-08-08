@@ -69,16 +69,16 @@ fn F() -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %7 = fn_decl @F
+// CHECK:STDOUT:   %.L7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n: i32 = var
-// CHECK:STDOUT:   %8: i32 = int_value 0
-// CHECK:STDOUT:   assign %n, %8
-// CHECK:STDOUT:   %9: type = ptr_type i32
+// CHECK:STDOUT:   %.L8: i32 = int_value 0
+// CHECK:STDOUT:   assign %n, %.L8
+// CHECK:STDOUT:   %.L9: type = ptr_type i32
 // CHECK:STDOUT:   %p: i32* = var
-// CHECK:STDOUT:   %16: i32 = int_value 0
-// CHECK:STDOUT:   return %16
+// CHECK:STDOUT:   %.L16: i32 = int_value 0
+// CHECK:STDOUT:   return %.L16
 // CHECK:STDOUT: }

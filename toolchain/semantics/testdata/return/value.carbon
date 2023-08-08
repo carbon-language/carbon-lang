@@ -43,11 +43,11 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %7 = fn_decl @Main
+// CHECK:STDOUT:   %.L7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %8: i32 = int_value 0
-// CHECK:STDOUT:   return %8
+// CHECK:STDOUT:   %.L8: i32 = int_value 0
+// CHECK:STDOUT:   return %.L8
 // CHECK:STDOUT: }

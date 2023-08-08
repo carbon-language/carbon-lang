@@ -12,7 +12,7 @@ fn Foo() {
 }
 
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %18 = fn_decl @Foo
+// CHECK:STDOUT:   %.L10 = fn_decl @Foo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {

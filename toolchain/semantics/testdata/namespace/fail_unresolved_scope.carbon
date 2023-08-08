@@ -42,7 +42,7 @@ fn Foo.Baz() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %10 = fn_decl @.0
+// CHECK:STDOUT:   %.L10 = fn_decl @.0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.0() {

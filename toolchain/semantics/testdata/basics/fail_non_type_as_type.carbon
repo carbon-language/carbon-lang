@@ -44,6 +44,6 @@ var x: type = 42;
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: type = var
-// CHECK:STDOUT:   %10: i32 = int_value 42
+// CHECK:STDOUT:   %.L10: i32 = int_value 42
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

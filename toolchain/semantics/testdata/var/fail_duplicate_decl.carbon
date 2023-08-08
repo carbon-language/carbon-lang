@@ -67,16 +67,16 @@ fn Main() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %8 = fn_decl @Main
+// CHECK:STDOUT:   %.L8 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: i32 = var
-// CHECK:STDOUT:   %9: i32 = int_value 0
-// CHECK:STDOUT:   assign %x, %9
-// CHECK:STDOUT:   %.16: i32 = var
-// CHECK:STDOUT:   %16: i32 = int_value 0
-// CHECK:STDOUT:   assign %.16, %16
+// CHECK:STDOUT:   %.L9: i32 = int_value 0
+// CHECK:STDOUT:   assign %x, %.L9
+// CHECK:STDOUT:   %x.L16: i32 = var
+// CHECK:STDOUT:   %.L16: i32 = int_value 0
+// CHECK:STDOUT:   assign %x.L16, %.L16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

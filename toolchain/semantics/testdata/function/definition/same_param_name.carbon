@@ -66,8 +66,8 @@ fn Bar(a: i32) {}
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %7 = fn_decl @Foo
-// CHECK:STDOUT:   %8 = fn_decl @Bar
+// CHECK:STDOUT:   %.L7 = fn_decl @Foo
+// CHECK:STDOUT:   %.L8 = fn_decl @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32) {

@@ -43,7 +43,7 @@ fn F() { a.b; }
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %11 = fn_decl @F
+// CHECK:STDOUT:   %.L11 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

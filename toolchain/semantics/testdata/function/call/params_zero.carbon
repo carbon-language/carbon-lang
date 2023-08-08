@@ -56,8 +56,8 @@ fn Main() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %7 = fn_decl @Foo
-// CHECK:STDOUT:   %9 = fn_decl @Main
+// CHECK:STDOUT:   %.L7 = fn_decl @Foo
+// CHECK:STDOUT:   %.L9 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() {
@@ -67,7 +67,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %10: type = tuple_type ()
-// CHECK:STDOUT:   %10.6: () = call @Foo()
+// CHECK:STDOUT:   %.L10: type = tuple_type ()
+// CHECK:STDOUT:   %.L10.6: () = call @Foo()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

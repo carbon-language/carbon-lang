@@ -55,12 +55,12 @@ var y: () = x;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %7: type = tuple_type ()
-// CHECK:STDOUT:   %7.9: () = tuple_value ()
+// CHECK:STDOUT:   %.L7: type = tuple_type ()
+// CHECK:STDOUT:   %.L7.9: () = tuple_value ()
 // CHECK:STDOUT:   %x: () = var
-// CHECK:STDOUT:   %7.14: () = tuple_value ()
-// CHECK:STDOUT:   assign %x, %7.14
-// CHECK:STDOUT:   %8: () = tuple_value ()
+// CHECK:STDOUT:   %.L7.14: () = tuple_value ()
+// CHECK:STDOUT:   assign %x, %.L7.14
+// CHECK:STDOUT:   %.L8: () = tuple_value ()
 // CHECK:STDOUT:   %y: () = var
 // CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }

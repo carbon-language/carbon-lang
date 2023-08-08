@@ -53,12 +53,12 @@ var y: {} = x;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %7: type = struct_type {}
-// CHECK:STDOUT:   %7.9: {} = struct_value ()
+// CHECK:STDOUT:   %.L7: type = struct_type {}
+// CHECK:STDOUT:   %.L7.9: {} = struct_value ()
 // CHECK:STDOUT:   %x: {} = var
-// CHECK:STDOUT:   %7.14: {} = struct_value ()
-// CHECK:STDOUT:   assign %x, %7.14
-// CHECK:STDOUT:   %8: {} = struct_value ()
+// CHECK:STDOUT:   %.L7.14: {} = struct_value ()
+// CHECK:STDOUT:   assign %x, %.L7.14
+// CHECK:STDOUT:   %.L8: {} = struct_value ()
 // CHECK:STDOUT:   %y: {} = var
 // CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }

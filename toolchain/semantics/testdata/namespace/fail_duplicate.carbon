@@ -59,9 +59,9 @@ fn Foo.Baz() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %7 = namespace {.Baz = %9}
-// CHECK:STDOUT:   %9 = fn_decl @Baz
-// CHECK:STDOUT:   %18 = fn_decl @.0
+// CHECK:STDOUT:   %.L7 = namespace {.Baz = %.L9}
+// CHECK:STDOUT:   %.L9 = fn_decl @Baz
+// CHECK:STDOUT:   %.L18 = fn_decl @.0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {

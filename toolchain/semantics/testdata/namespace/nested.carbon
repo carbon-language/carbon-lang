@@ -66,10 +66,10 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %7 = namespace {.Bar = %8}
-// CHECK:STDOUT:   %8 = namespace {.Wiz = %10, .Baz = %13}
-// CHECK:STDOUT:   %10 = fn_decl @Wiz
-// CHECK:STDOUT:   %13 = fn_decl @Baz
+// CHECK:STDOUT:   %.L7 = namespace {.Bar = %.L8}
+// CHECK:STDOUT:   %.L8 = namespace {.Wiz = %.L10, .Baz = %.L13}
+// CHECK:STDOUT:   %.L10 = fn_decl @Wiz
+// CHECK:STDOUT:   %.L13 = fn_decl @Baz
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Wiz() {
@@ -79,7 +79,7 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %14: type = tuple_type ()
-// CHECK:STDOUT:   %14.14: () = call @Wiz()
+// CHECK:STDOUT:   %.L14: type = tuple_type ()
+// CHECK:STDOUT:   %.L14.14: () = call @Wiz()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -124,11 +124,8 @@ class NodeNamer {
 
       // Append location information to try to disambiguate.
       if (node.is_valid()) {
-        if (!name.empty()) {
-          name = ".";
-        }
-
         auto token = namer.parse_tree_.node_token(node);
+        name += ".L";
         name += llvm::itostr(namer.tokenized_buffer_.GetLineNumber(token));
         if (allocated.insert(name).second) {
           return name;

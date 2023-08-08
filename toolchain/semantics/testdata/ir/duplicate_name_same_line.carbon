@@ -4,27 +4,25 @@
 //
 // AUTOUPDATE
 
-fn Main() {
-  var a: i32 = 12;
-  a = 9;
-}
+fn A() { var n: i32 = 1; if (true) { var n: i32 = 2; } }
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2, block3, block4}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT:   12,
-// CHECK:STDOUT:   -7,
+// CHECK:STDOUT:   1,
+// CHECK:STDOUT:   2,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
-// CHECK:STDOUT:   Main,
-// CHECK:STDOUT:   a,
+// CHECK:STDOUT:   A,
+// CHECK:STDOUT:   n,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
+// CHECK:STDOUT:   nodeBoolType,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
@@ -34,8 +32,14 @@ fn Main() {
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+3},
+// CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type1},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block3, arg1: node+5},
+// CHECK:STDOUT:   {kind: Branch, arg0: block4},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+8, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+5},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+8, arg1: node+10},
+// CHECK:STDOUT:   {kind: Branch, arg0: block4},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -53,18 +57,36 @@ fn Main() {
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+13,
+// CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L7 = fn_decl @Main
+// CHECK:STDOUT:   %.L7 = fn_decl @A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a: i32 = var
-// CHECK:STDOUT:   %.L8: i32 = int_value 12
-// CHECK:STDOUT:   assign %a, %.L8
-// CHECK:STDOUT:   %.L9: i32 = int_value -7
-// CHECK:STDOUT:   assign %a, %.L9
+// CHECK:STDOUT:   %n: i32 = var
+// CHECK:STDOUT:   %.L7: i32 = int_value 1
+// CHECK:STDOUT:   assign %n, %.L7
+// CHECK:STDOUT:   %.L7.30: bool = bool_value true
+// CHECK:STDOUT:   if %.L7.30 br !.L7 else br !.L7.56
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.L7:
+// CHECK:STDOUT:   %n.L7: i32 = var
+// CHECK:STDOUT:   %.L7.51: i32 = int_value 2
+// CHECK:STDOUT:   assign %n.L7, %.L7.51
+// CHECK:STDOUT:   br !.L7.56
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.L7.56:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

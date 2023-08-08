@@ -73,10 +73,10 @@ fn Bar() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %7 = namespace {.Baz = %13}
-// CHECK:STDOUT:   %10 = fn_decl @Baz
-// CHECK:STDOUT:   %13 = fn_decl @Baz.0
-// CHECK:STDOUT:   %16 = fn_decl @Bar
+// CHECK:STDOUT:   %.L7 = namespace {.Baz = %.L13}
+// CHECK:STDOUT:   %.L10 = fn_decl @Baz
+// CHECK:STDOUT:   %.L13 = fn_decl @Baz.0
+// CHECK:STDOUT:   %.L16 = fn_decl @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
@@ -91,7 +91,7 @@ fn Bar() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %17: type = tuple_type ()
-// CHECK:STDOUT:   %17.10: () = call @Baz.0()
+// CHECK:STDOUT:   %.L17: type = tuple_type ()
+// CHECK:STDOUT:   %.L17.10: () = call @Baz.0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

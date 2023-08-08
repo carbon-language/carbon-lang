@@ -50,15 +50,15 @@ fn G() { F(); }
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %7 = fn_decl @F
-// CHECK:STDOUT:   %9 = fn_decl @G
+// CHECK:STDOUT:   %.L7 = fn_decl @F
+// CHECK:STDOUT:   %.L9 = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %9: type = tuple_type ()
-// CHECK:STDOUT:   %9.11: () = call @F()
+// CHECK:STDOUT:   %.L9: type = tuple_type ()
+// CHECK:STDOUT:   %.L9.11: () = call @F()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

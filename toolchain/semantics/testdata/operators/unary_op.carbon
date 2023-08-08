@@ -52,11 +52,11 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %7 = fn_decl @Not
+// CHECK:STDOUT:   %.L7 = fn_decl @Not
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Not(%b: bool) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %8: bool = not %b
-// CHECK:STDOUT:   return %8
+// CHECK:STDOUT:   %.L8: bool = not %b
+// CHECK:STDOUT:   return %.L8
 // CHECK:STDOUT: }
