@@ -74,9 +74,9 @@ CHECK:STDOUT: and CHECK:STDERR: lines.
 Supported comment markers are:
 
 -   ```
-    // AUTOUDPATE
-    // AUTOUDPATE:STDOUT
-    // AUTOUDPATE:STDERR
+    // AUTOUPDATE
+    // AUTOUPDATE:STDOUT
+    // AUTOUPDATE:STDERR
     // NOAUTOUPDATE
     ```
 
