@@ -360,7 +360,11 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
   auto value = semantics_ir_->GetNode(value_id);
   auto value_type_id = value.type_id();
   if (value_type_id == SemanticsTypeId::Error) {
-    return ImplicitAsKind::Identical;
+    // Although the source type is invalid, this still changes the value.
+    if (output_value_id != nullptr) {
+      *output_value_id = SemanticsNodeId::BuiltinError;
+    }
+    return ImplicitAsKind::Compatible;
   }
 
   if (as_type_id == SemanticsTypeId::Error) {

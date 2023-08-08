@@ -159,11 +159,21 @@ auto SemanticsHandlePrefixOperator(SemanticsContext& context,
       if (type_node.kind() == SemanticsNodeKind::PointerType) {
         result_type_id = type_node.GetAsPointerType();
       } else {
-        CARBON_DIAGNOSTIC(DereferenceOfNonPointer, Error,
-                          "Cannot dereference operand of non-pointer type {0}.",
-                          std::string);
-        context.emitter().Emit(parse_node, DereferenceOfNonPointer,
-                               context.semantics_ir().StringifyType(type_id));
+        CARBON_DIAGNOSTIC(
+            DereferenceOfNonPointer, Error,
+            "Cannot dereference operand of non-pointer type `{0}`.",
+            std::string);
+        auto builder = context.emitter().Build(
+            parse_node, DereferenceOfNonPointer,
+            context.semantics_ir().StringifyType(type_id));
+        // TODO: Check for any facet here, rather than only a type.
+        if (type_id == SemanticsTypeId::TypeType) {
+          CARBON_DIAGNOSTIC(
+              DereferenceOfType, Note,
+              "To form a pointer type, write the `*` after the pointee type.");
+          builder.Note(parse_node, DereferenceOfType);
+        }
+        builder.Emit();
       }
       context.AddNodeAndPush(parse_node,
                              SemanticsNode::Dereference::Make(
