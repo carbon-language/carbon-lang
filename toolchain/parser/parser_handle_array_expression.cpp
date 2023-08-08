@@ -13,9 +13,9 @@ namespace Carbon {
 auto ParserHandleArrayExpression(ParserContext& context) -> void {
   auto state = context.PopState();
   state.state = ParserState::ArrayExpressionSemi;
-  context.AddNode(ParseNodeKind::ArrayExpressionStart,
-                  context.ConsumeChecked(TokenKind::OpenSquareBracket),
-                  state.subtree_start, state.has_error);
+  context.AddLeafNode(ParseNodeKind::ArrayExpressionStart,
+                      context.ConsumeChecked(TokenKind::OpenSquareBracket),
+                      state.has_error);
   context.PushState(state);
   context.PushState(ParserState::Expression);
 }
@@ -26,8 +26,7 @@ auto ParserHandleArrayExpressionSemi(ParserContext& context) -> void {
   if (!semi) {
     context.AddNode(ParseNodeKind::ArrayExpressionSemi, *context.position(),
                     state.subtree_start, true);
-    CARBON_DIAGNOSTIC(ExpectedArraySemi, Error,
-                      "Invalid array declaration. Expected Semi.");
+    CARBON_DIAGNOSTIC(ExpectedArraySemi, Error, "Expected `;` in array type.");
     context.emitter().Emit(*context.position(), ExpectedArraySemi);
     state.has_error = true;
   } else {
