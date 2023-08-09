@@ -110,23 +110,22 @@ class TraceStream {
 
   // These functions can be used for adding line prefixes in the trace output.
   auto Indent() const -> llvm::raw_ostream& { return *this << "    "; }
-  auto Start() const -> llvm::raw_ostream& { return *this << ">>> "; }
-  auto End() const -> llvm::raw_ostream& { return *this << "--- "; }
-  auto Call() const -> llvm::raw_ostream& { return *this << " >> "; }
-  auto Match() const -> llvm::raw_ostream& { return *this << " == "; }
-  auto Result() const -> llvm::raw_ostream& { return *this << " -> "; }
+  auto Start() const -> llvm::raw_ostream& { return *this << "->> "; }
+  auto End() const -> llvm::raw_ostream& { return *this << "<<- "; }
+  auto Call() const -> llvm::raw_ostream& { return *this << "-() "; }
+  auto Match() const -> llvm::raw_ostream& { return *this << "=== "; }
+  auto Result() const -> llvm::raw_ostream& { return *this << "==> "; }
   auto Add() const -> llvm::raw_ostream& { return *this << " +  "; }
   auto Remove() const -> llvm::raw_ostream& { return *this << " -  "; }
-  auto Read() const -> llvm::raw_ostream& { return *this << " <- "; }
-  auto Write() const -> llvm::raw_ostream& { return *this << " -> "; }
-  auto Allocate() const -> llvm::raw_ostream& { return *this << " ++ "; }
-  auto Deallocate() const -> llvm::raw_ostream& { return *this << " -- "; }
-  auto Substitute() const -> llvm::raw_ostream& { return *this << "->+  "; }
-  auto Push() const -> llvm::raw_ostream& { return *this << " ++ "; }
-  auto Pop() const -> llvm::raw_ostream& { return *this << " -- "; }
-  auto Deduction() const -> llvm::raw_ostream& { return *this << " -* "; }
-  auto Not() const -> llvm::raw_ostream& { return *this << " -! "; }
-  auto Skip() const -> llvm::raw_ostream& { return *this << " >> "; }
+  auto Read() const -> llvm::raw_ostream& { return *this << "<-- "; }
+  auto Write() const -> llvm::raw_ostream& { return *this << "--> "; }
+  auto Allocate() const -> llvm::raw_ostream& { return *this << "++# "; }
+  auto Deallocate() const -> llvm::raw_ostream& { return *this << "--# "; }
+  auto Substitute() const -> llvm::raw_ostream& { return *this << "->+ "; }
+  auto Push() const -> llvm::raw_ostream& { return *this << ">[] "; }
+  auto Pop() const -> llvm::raw_ostream& { return *this << "<[] "; }
+  auto Not() const -> llvm::raw_ostream& { return *this << "-!- "; }
+  auto Skip() const -> llvm::raw_ostream& { return *this << ">>> "; }
 
  private:
   bool in_prelude_ = false;
