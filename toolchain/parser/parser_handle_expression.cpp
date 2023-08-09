@@ -159,7 +159,6 @@ auto ParserHandleExpressionLoop(ParserContext& context) -> void {
   auto state = context.PopState();
 
   auto operator_kind = context.PositionKind();
-
   auto trailing_operator = PrecedenceGroup::ForTrailing(
       operator_kind, context.IsTrailingOperatorInfix());
   if (!trailing_operator) {
