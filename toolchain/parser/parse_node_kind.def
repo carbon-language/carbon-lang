@@ -115,7 +115,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ParameterListComma, 0)
 CARBON_PARSE_NODE_KIND_BRACKET(ParameterList, ParameterListStart)
 CARBON_PARSE_NODE_KIND_BRACKET(DeducedParameterList, DeducedParameterListStart)
 
-// An array type, such as `[Type; Literal]`
+// An array type, such as  `[i32; 3]` or `[i32;]`:
 //     ArrayExpressionStart
 //     _external_: type expression
 //   ArrayExpressionSemi
@@ -127,7 +127,7 @@ CARBON_PARSE_NODE_KIND_CHILD_COUNT(ArrayExpressionStart, 0)
 CARBON_PARSE_NODE_KIND_CHILD_COUNT(ArrayExpressionSemi, 2)
 CARBON_PARSE_NODE_KIND_BRACKET(ArrayExpression, ArrayExpressionSemi)
 
-// A pattern binding, such as `[i32; 3]` or `[i32;]`:
+// A pattern binding, such as `name: Type`:
 //   Name
 //   _external_: type expression
 // [Generic]PatternBinding
