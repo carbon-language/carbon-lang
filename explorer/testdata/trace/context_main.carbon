@@ -25,32 +25,32 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ********** resolving names **********
-// CHECK:STDOUT: --- declared `TestInterface` as `interface TestInterface` in `package` (context_main.carbon:7)
-// CHECK:STDOUT: --- declared `Main` as `fn Main` in `package` (context_main.carbon:11)
-// CHECK:STDOUT: ** resolving decl `interface TestInterface` (context_main.carbon:7)
-// CHECK:STDOUT: --- marked `TestInterface` declared but not usable in `package`
-// CHECK:STDOUT: --- marked `TestInterface` usable in `package`
-// CHECK:STDOUT: --- declared `Self` as `Self` in `interface TestInterface` (context_main.carbon:7)
-// CHECK:STDOUT: ** finished resolving decl `interface TestInterface` (context_main.carbon:7)
-// CHECK:STDOUT: ** resolving decl `fn Main` (context_main.carbon:11)
-// CHECK:STDOUT: --- marked `Main` declared but not usable in `package`
-// CHECK:STDOUT: --- marked `Main` usable in `package`
-// CHECK:STDOUT: ** resolving stmt `{return 0;}` (context_main.carbon:11)
-// CHECK:STDOUT: ** resolving stmt `return 0;` (context_main.carbon:10)
-// CHECK:STDOUT: ** finished resolving stmt `return 0;` (context_main.carbon:10)
-// CHECK:STDOUT: ** finished resolving stmt `{return 0;}` (context_main.carbon:11)
-// CHECK:STDOUT: ** finished resolving decl `fn Main` (context_main.carbon:11)
-// CHECK:STDOUT: --- resolved `Main` as `fn Main` in `package` (<Main()>:0)
+// CHECK:STDOUT: ==> declared `TestInterface` as `interface TestInterface` in `package` (context_main.carbon:7)
+// CHECK:STDOUT: ==> declared `Main` as `fn Main` in `package` (context_main.carbon:11)
+// CHECK:STDOUT: ->> resolving decl `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT: ==> marked `TestInterface` declared but not usable in `package`
+// CHECK:STDOUT: ==> marked `TestInterface` usable in `package`
+// CHECK:STDOUT: ==> declared `Self` as `Self` in `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT: <<- finished resolving decl `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT: ->> resolving decl `fn Main` (context_main.carbon:11)
+// CHECK:STDOUT: ==> marked `Main` declared but not usable in `package`
+// CHECK:STDOUT: ==> marked `Main` usable in `package`
+// CHECK:STDOUT: ->> resolving stmt `{return 0;}` (context_main.carbon:11)
+// CHECK:STDOUT: ->> resolving stmt `return 0;` (context_main.carbon:10)
+// CHECK:STDOUT: <<- finished resolving stmt `return 0;` (context_main.carbon:10)
+// CHECK:STDOUT: <<- finished resolving stmt `{return 0;}` (context_main.carbon:11)
+// CHECK:STDOUT: <<- finished resolving decl `fn Main` (context_main.carbon:11)
+// CHECK:STDOUT: ==> resolved `Main` as `fn Main` in `package` (<Main()>:0)
 // CHECK:STDOUT: ********** resolving control flow **********
-// CHECK:STDOUT: --- flow-resolved return statement `return 0;` in `fn Main` (context_main.carbon:10)
+// CHECK:STDOUT: ==> flow-resolved return statement `return 0;` in `fn Main` (context_main.carbon:10)
 // CHECK:STDOUT: ********** type checking **********
-// CHECK:STDOUT: >>> declaring `interface TestInterface` (context_main.carbon:7)
-// CHECK:STDOUT: --- finished declaring `interface TestInterface` (context_main.carbon:7)
-// CHECK:STDOUT: >>> checking InterfaceDeclaration `interface TestInterface` (context_main.carbon:7)
-// CHECK:STDOUT: >>> checking `interface TestInterface` (context_main.carbon:7)
-// CHECK:STDOUT: --- impl declarations for `interface TestInterface` (context_main.carbon:7)
-// CHECK:STDOUT:  +  []
-// CHECK:STDOUT:  +  [`bool` as `interface EqWith(U = bool)`,
+// CHECK:STDOUT: ->> declaring `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT: <<- finished declaring `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT: ->> checking InterfaceDeclaration `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT: ->> checking `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT: ==> impl declarations for `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT:     []
+// CHECK:STDOUT:     [`bool` as `interface EqWith(U = bool)`,
 // CHECK:STDOUT:     `i32` as `interface EqWith(U = i32)`,
 // CHECK:STDOUT:     `String` as `interface EqWith(U = String)`,
 // CHECK:STDOUT:     `i32` as `interface CompareWith(U = i32)`,
@@ -97,23 +97,23 @@ fn Main() -> i32 {
 // CHECK:STDOUT:     `T` as `interface BitXorAssignWith(U = U)` [0; 1, 1, 0],
 // CHECK:STDOUT:     `T` as `interface LeftShiftAssignWith(U = U)` [0; 1, 1, 0],
 // CHECK:STDOUT:     `T` as `interface RightShiftAssignWith(U = U)` [0; 1, 1, 0]]
-// CHECK:STDOUT: --- finished checking `interface TestInterface` (context_main.carbon:7)
-// CHECK:STDOUT: >>> declaring function `Main` (context_main.carbon:11)
-// CHECK:STDOUT: >>> checking TuplePattern `()` (context_main.carbon:9)
-// CHECK:STDOUT: >>> checking IntTypeLiteral `i32` (context_main.carbon:9)
-// CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `i32` (context_main.carbon:9)
-// CHECK:STDOUT: >>> step ValueExpressionAction pos: 0 `i32` (context_main.carbon:9) --->
-// CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `i32` (context_main.carbon:9)
-// CHECK:STDOUT: >>> step ExpressionAction pos: 0 `i32` (context_main.carbon:9) --->
-// CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `i32` (context_main.carbon:9)
-// CHECK:STDOUT: >>> step ValueExpressionAction pos: 1 `i32` results: [`i32`]  (context_main.carbon:9) --->
-// CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `i32` results: [`i32`]  (context_main.carbon:9)
-// CHECK:STDOUT: >>> finished declaring function `Main` of type `fn () -> i32` (context_main.carbon:11)
-// CHECK:STDOUT: >>> checking FunctionDeclaration `fn Main` (context_main.carbon:11)
-// CHECK:STDOUT: >>> checking function `Main` (context_main.carbon:11)
-// CHECK:STDOUT: --- impl declarations for `fn Main` (context_main.carbon:11)
-// CHECK:STDOUT:  +  []
-// CHECK:STDOUT:  +  [`bool` as `interface EqWith(U = bool)`,
+// CHECK:STDOUT: <<- finished checking `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT: ->> declaring function `Main` (context_main.carbon:11)
+// CHECK:STDOUT: ->> checking TuplePattern `()` (context_main.carbon:9)
+// CHECK:STDOUT: ->> checking IntTypeLiteral `i32` (context_main.carbon:9)
+// CHECK:STDOUT: >[] stack-push: ValueExpressionAction pos: 0 `i32` (context_main.carbon:9)
+// CHECK:STDOUT: ->> step ValueExpressionAction pos: 0 `i32` (context_main.carbon:9) --->
+// CHECK:STDOUT: >[] stack-push: ExpressionAction pos: 0 `i32` (context_main.carbon:9)
+// CHECK:STDOUT: ->> step ExpressionAction pos: 0 `i32` (context_main.carbon:9) --->
+// CHECK:STDOUT: <[] stack-pop:  ExpressionAction pos: 0 `i32` (context_main.carbon:9)
+// CHECK:STDOUT: ->> step ValueExpressionAction pos: 1 `i32` results: [`i32`]  (context_main.carbon:9) --->
+// CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `i32` results: [`i32`]  (context_main.carbon:9)
+// CHECK:STDOUT: ->> finished declaring function `Main` of type `fn () -> i32` (context_main.carbon:11)
+// CHECK:STDOUT: ->> checking FunctionDeclaration `fn Main` (context_main.carbon:11)
+// CHECK:STDOUT: ->> checking function `Main` (context_main.carbon:11)
+// CHECK:STDOUT: ==> impl declarations for `fn Main` (context_main.carbon:11)
+// CHECK:STDOUT:     []
+// CHECK:STDOUT:     [`bool` as `interface EqWith(U = bool)`,
 // CHECK:STDOUT:     `i32` as `interface EqWith(U = i32)`,
 // CHECK:STDOUT:     `String` as `interface EqWith(U = String)`,
 // CHECK:STDOUT:     `i32` as `interface CompareWith(U = i32)`,
@@ -160,21 +160,21 @@ fn Main() -> i32 {
 // CHECK:STDOUT:     `T` as `interface BitXorAssignWith(U = U)` [0; 1, 1, 0],
 // CHECK:STDOUT:     `T` as `interface LeftShiftAssignWith(U = U)` [0; 1, 1, 0],
 // CHECK:STDOUT:     `T` as `interface RightShiftAssignWith(U = U)` [0; 1, 1, 0]]
-// CHECK:STDOUT: >>> checking Block `{return 0;}` (context_main.carbon:11)
-// CHECK:STDOUT: >>> checking ReturnExpression `return 0;` (context_main.carbon:10)
-// CHECK:STDOUT: >>> checking IntLiteral `0` (context_main.carbon:10)
-// CHECK:STDOUT: >>> finished checking function `Main` (context_main.carbon:11)
-// CHECK:STDOUT: >>> checking CallExpression `Main()` (<Main()>:0)
-// CHECK:STDOUT: >>> checking IdentifierExpression `Main` (<Main()>:0)
-// CHECK:STDOUT: >>> checking TupleLiteral `()` (<Main()>:0)
-// CHECK:STDOUT: >>> checking call to function of type `fn () -> i32` with arguments of type `()` (<Main()>:0)
-// CHECK:STDOUT: >>> performing argument deduction for bindings: []
-// CHECK:STDOUT:  -* deduction succeeded with results: []
+// CHECK:STDOUT: ->> checking Block `{return 0;}` (context_main.carbon:11)
+// CHECK:STDOUT: ->> checking ReturnExpression `return 0;` (context_main.carbon:10)
+// CHECK:STDOUT: ->> checking IntLiteral `0` (context_main.carbon:10)
+// CHECK:STDOUT: ->> finished checking function `Main` (context_main.carbon:11)
+// CHECK:STDOUT: ->> checking CallExpression `Main()` (<Main()>:0)
+// CHECK:STDOUT: ->> checking IdentifierExpression `Main` (<Main()>:0)
+// CHECK:STDOUT: ->> checking TupleLiteral `()` (<Main()>:0)
+// CHECK:STDOUT: ->> checking call to function of type `fn () -> i32` with arguments of type `()` (<Main()>:0)
+// CHECK:STDOUT: ->> performing argument deduction for bindings: []
+// CHECK:STDOUT: ==> deduction succeeded with results: []
 // CHECK:STDOUT: ********** resolving unformed variables **********
-// CHECK:STDOUT: *** resolving-unformed in decl `interface TestInterface` (context_main.carbon:7)
-// CHECK:STDOUT: *** resolving-unformed in decl `fn Main` (context_main.carbon:11)
-// CHECK:STDOUT: *** resolving-unformed in stmt `{return 0;}` (context_main.carbon:11)
-// CHECK:STDOUT: *** resolving-unformed in stmt `return 0;` (context_main.carbon:10)
+// CHECK:STDOUT: ->> resolving-unformed in decl `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT: ->> resolving-unformed in decl `fn Main` (context_main.carbon:11)
+// CHECK:STDOUT: ->> resolving-unformed in stmt `{return 0;}` (context_main.carbon:11)
+// CHECK:STDOUT: ->> resolving-unformed in stmt `return 0;` (context_main.carbon:10)
 // CHECK:STDOUT: ********** printing declarations **********
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
@@ -186,57 +186,57 @@ fn Main() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ********** starting execution **********
 // CHECK:STDOUT: ********** initializing globals **********
-// CHECK:STDOUT: (+) stack-push: DeclarationAction pos: 0 `interface TestInterface` (context_main.carbon:7)
-// CHECK:STDOUT: >>> step DeclarationAction pos: 0 `interface TestInterface` (context_main.carbon:7) --->
-// CHECK:STDOUT: (-) stack-pop:  DeclarationAction pos: 0 `interface TestInterface` (context_main.carbon:7)
-// CHECK:STDOUT: (+) stack-push: DeclarationAction pos: 0 `fn Main` (context_main.carbon:11)
-// CHECK:STDOUT: >>> step DeclarationAction pos: 0 `fn Main` (context_main.carbon:11) --->
-// CHECK:STDOUT: (-) stack-pop:  DeclarationAction pos: 0 `fn Main` (context_main.carbon:11)
+// CHECK:STDOUT: >[] stack-push: DeclarationAction pos: 0 `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT: ->> step DeclarationAction pos: 0 `interface TestInterface` (context_main.carbon:7) --->
+// CHECK:STDOUT: <[] stack-pop:  DeclarationAction pos: 0 `interface TestInterface` (context_main.carbon:7)
+// CHECK:STDOUT: >[] stack-push: DeclarationAction pos: 0 `fn Main` (context_main.carbon:11)
+// CHECK:STDOUT: ->> step DeclarationAction pos: 0 `fn Main` (context_main.carbon:11) --->
+// CHECK:STDOUT: <[] stack-pop:  DeclarationAction pos: 0 `fn Main` (context_main.carbon:11)
 // CHECK:STDOUT: ********** calling main function **********
-// CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `Main()` (<Main()>:0)
-// CHECK:STDOUT: >>> step ValueExpressionAction pos: 0 `Main()` (<Main()>:0) --->
-// CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `Main()` (<Main()>:0)
-// CHECK:STDOUT: >>> step ExpressionAction pos: 0 `Main()` (<Main()>:0) --->
-// CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `Main` (<Main()>:0)
-// CHECK:STDOUT: >>> step ValueExpressionAction pos: 0 `Main` (<Main()>:0) --->
-// CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `Main` (<Main()>:0)
-// CHECK:STDOUT: >>> step ExpressionAction pos: 0 `Main` (<Main()>:0) --->
-// CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `Main` (<Main()>:0)
-// CHECK:STDOUT: >>> step ValueExpressionAction pos: 1 `Main` results: [`fun<Main>`]  (<Main()>:0) --->
-// CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `Main` results: [`fun<Main>`]  (<Main()>:0)
-// CHECK:STDOUT: >>> step ExpressionAction pos: 1 `Main()` results: [`fun<Main>`]  scope: [] (<Main()>:0) --->
-// CHECK:STDOUT:  >> calling function: fun<Main>
+// CHECK:STDOUT: >[] stack-push: ValueExpressionAction pos: 0 `Main()` (<Main()>:0)
+// CHECK:STDOUT: ->> step ValueExpressionAction pos: 0 `Main()` (<Main()>:0) --->
+// CHECK:STDOUT: >[] stack-push: ExpressionAction pos: 0 `Main()` (<Main()>:0)
+// CHECK:STDOUT: ->> step ExpressionAction pos: 0 `Main()` (<Main()>:0) --->
+// CHECK:STDOUT: >[] stack-push: ValueExpressionAction pos: 0 `Main` (<Main()>:0)
+// CHECK:STDOUT: ->> step ValueExpressionAction pos: 0 `Main` (<Main()>:0) --->
+// CHECK:STDOUT: >[] stack-push: ExpressionAction pos: 0 `Main` (<Main()>:0)
+// CHECK:STDOUT: ->> step ExpressionAction pos: 0 `Main` (<Main()>:0) --->
+// CHECK:STDOUT: <[] stack-pop:  ExpressionAction pos: 0 `Main` (<Main()>:0)
+// CHECK:STDOUT: ->> step ValueExpressionAction pos: 1 `Main` results: [`fun<Main>`]  (<Main()>:0) --->
+// CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `Main` results: [`fun<Main>`]  (<Main()>:0)
+// CHECK:STDOUT: ->> step ExpressionAction pos: 1 `Main()` results: [`fun<Main>`]  scope: [] (<Main()>:0) --->
+// CHECK:STDOUT: -() calling function: fun<Main>
 // CHECK:STDOUT: match pattern ()
 // CHECK:STDOUT: from value expression with value ()
-// CHECK:STDOUT: (+) stack-push: ScopeAction pos: 0  scope: [] (None)
-// CHECK:STDOUT: (+) stack-push: StatementAction pos: 0 `{return 0;}` (context_main.carbon:11)
-// CHECK:STDOUT: >>> step StatementAction pos: 0 `{return 0;}` (context_main.carbon:11) --->
-// CHECK:STDOUT: (+) stack-push: StatementAction pos: 0 `return 0;` (context_main.carbon:10)
-// CHECK:STDOUT: >>> step StatementAction pos: 0 `return 0;` (context_main.carbon:10) --->
-// CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `0` (context_main.carbon:10)
-// CHECK:STDOUT: >>> step ValueExpressionAction pos: 0 `0` (context_main.carbon:10) --->
-// CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `0` (context_main.carbon:10)
-// CHECK:STDOUT: >>> step ExpressionAction pos: 0 `0` (context_main.carbon:10) --->
-// CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `0` (context_main.carbon:10)
-// CHECK:STDOUT: >>> step ValueExpressionAction pos: 1 `0` results: [`0`]  (context_main.carbon:10) --->
-// CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `0` results: [`0`]  (context_main.carbon:10)
-// CHECK:STDOUT: >>> step StatementAction pos: 1 `return 0;` results: [`0`]  (context_main.carbon:10) --->
-// CHECK:STDOUT: (-) stack-pop:  StatementAction pos: 1 `return 0;` results: [`0`]  (context_main.carbon:10)
-// CHECK:STDOUT: (-) stack-pop:  StatementAction pos: 1 `{return 0;}` scope: [] (context_main.carbon:11)
-// CHECK:STDOUT: (-) stack-pop:  ScopeAction pos: 0  scope: [] (None)
-// CHECK:STDOUT: (+) stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
-// CHECK:STDOUT: (+) stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
-// CHECK:STDOUT: >>> step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
-// CHECK:STDOUT: (-) stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
-// CHECK:STDOUT: >>> step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
-// CHECK:STDOUT: (-) stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
-// CHECK:STDOUT: >>> step ExpressionAction pos: 2 `Main()` results: [`fun<Main>`, `0`]  scope: [] (<Main()>:0) --->
-// CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 2 `Main()` results: [`fun<Main>`, `0`]  scope: [] (<Main()>:0)
-// CHECK:STDOUT: (+) stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
-// CHECK:STDOUT: >>> step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
-// CHECK:STDOUT: (-) stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
-// CHECK:STDOUT: >>> step ValueExpressionAction pos: 1 `Main()` results: [`0`]  (<Main()>:0) --->
-// CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `Main()` results: [`0`]  (<Main()>:0)
+// CHECK:STDOUT: >[] stack-push: ScopeAction pos: 0  scope: [] (None)
+// CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `{return 0;}` (context_main.carbon:11)
+// CHECK:STDOUT: ->> step StatementAction pos: 0 `{return 0;}` (context_main.carbon:11) --->
+// CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `return 0;` (context_main.carbon:10)
+// CHECK:STDOUT: ->> step StatementAction pos: 0 `return 0;` (context_main.carbon:10) --->
+// CHECK:STDOUT: >[] stack-push: ValueExpressionAction pos: 0 `0` (context_main.carbon:10)
+// CHECK:STDOUT: ->> step ValueExpressionAction pos: 0 `0` (context_main.carbon:10) --->
+// CHECK:STDOUT: >[] stack-push: ExpressionAction pos: 0 `0` (context_main.carbon:10)
+// CHECK:STDOUT: ->> step ExpressionAction pos: 0 `0` (context_main.carbon:10) --->
+// CHECK:STDOUT: <[] stack-pop:  ExpressionAction pos: 0 `0` (context_main.carbon:10)
+// CHECK:STDOUT: ->> step ValueExpressionAction pos: 1 `0` results: [`0`]  (context_main.carbon:10) --->
+// CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `0` results: [`0`]  (context_main.carbon:10)
+// CHECK:STDOUT: ->> step StatementAction pos: 1 `return 0;` results: [`0`]  (context_main.carbon:10) --->
+// CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `return 0;` results: [`0`]  (context_main.carbon:10)
+// CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `{return 0;}` scope: [] (context_main.carbon:11)
+// CHECK:STDOUT: <[] stack-pop:  ScopeAction pos: 0  scope: [] (None)
+// CHECK:STDOUT: >[] stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: >[] stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: ->> step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
+// CHECK:STDOUT: <[] stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: ->> step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
+// CHECK:STDOUT: <[] stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: ->> step ExpressionAction pos: 2 `Main()` results: [`fun<Main>`, `0`]  scope: [] (<Main()>:0) --->
+// CHECK:STDOUT: <[] stack-pop:  ExpressionAction pos: 2 `Main()` results: [`fun<Main>`, `0`]  scope: [] (<Main()>:0)
+// CHECK:STDOUT: >[] stack-push: CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: ->> step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
+// CHECK:STDOUT: <[] stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
+// CHECK:STDOUT: ->> step ValueExpressionAction pos: 1 `Main()` results: [`0`]  (<Main()>:0) --->
+// CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `Main()` results: [`0`]  (<Main()>:0)
 // CHECK:STDOUT: interpreter result: 0
 // CHECK:STDOUT: ********** printing timing **********
 // CHECK:STDOUT: Time elapsed in ExecProgram: {{\d+}}ms

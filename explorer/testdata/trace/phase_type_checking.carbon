@@ -16,13 +16,13 @@ fn Main() -> i32 {
 // AUTOUPDATE
 
 // CHECK:STDOUT: ********** type checking **********
-// CHECK:STDOUT: >>> declaring `interface TestInterface` (phase_type_checking.carbon:7)
-// CHECK:STDOUT: --- finished declaring `interface TestInterface` (phase_type_checking.carbon:7)
-// CHECK:STDOUT: >>> checking InterfaceDeclaration `interface TestInterface` (phase_type_checking.carbon:7)
-// CHECK:STDOUT: >>> checking `interface TestInterface` (phase_type_checking.carbon:7)
-// CHECK:STDOUT: --- impl declarations for `interface TestInterface` (phase_type_checking.carbon:7)
-// CHECK:STDOUT:  +  []
-// CHECK:STDOUT:  +  [`bool` as `interface EqWith(U = bool)`,
+// CHECK:STDOUT: ->> declaring `interface TestInterface` (phase_type_checking.carbon:7)
+// CHECK:STDOUT: <<- finished declaring `interface TestInterface` (phase_type_checking.carbon:7)
+// CHECK:STDOUT: ->> checking InterfaceDeclaration `interface TestInterface` (phase_type_checking.carbon:7)
+// CHECK:STDOUT: ->> checking `interface TestInterface` (phase_type_checking.carbon:7)
+// CHECK:STDOUT: ==> impl declarations for `interface TestInterface` (phase_type_checking.carbon:7)
+// CHECK:STDOUT:     []
+// CHECK:STDOUT:     [`bool` as `interface EqWith(U = bool)`,
 // CHECK:STDOUT:     `i32` as `interface EqWith(U = i32)`,
 // CHECK:STDOUT:     `String` as `interface EqWith(U = String)`,
 // CHECK:STDOUT:     `i32` as `interface CompareWith(U = i32)`,
@@ -69,23 +69,23 @@ fn Main() -> i32 {
 // CHECK:STDOUT:     `T` as `interface BitXorAssignWith(U = U)` [0; 1, 1, 0],
 // CHECK:STDOUT:     `T` as `interface LeftShiftAssignWith(U = U)` [0; 1, 1, 0],
 // CHECK:STDOUT:     `T` as `interface RightShiftAssignWith(U = U)` [0; 1, 1, 0]]
-// CHECK:STDOUT: --- finished checking `interface TestInterface` (phase_type_checking.carbon:7)
-// CHECK:STDOUT: >>> declaring function `Main` (phase_type_checking.carbon:11)
-// CHECK:STDOUT: >>> checking TuplePattern `()` (phase_type_checking.carbon:9)
-// CHECK:STDOUT: >>> checking IntTypeLiteral `i32` (phase_type_checking.carbon:9)
-// CHECK:STDOUT: (+) stack-push: ValueExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9)
-// CHECK:STDOUT: >>> step ValueExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9) --->
-// CHECK:STDOUT: (+) stack-push: ExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9)
-// CHECK:STDOUT: >>> step ExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9) --->
-// CHECK:STDOUT: (-) stack-pop:  ExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9)
-// CHECK:STDOUT: >>> step ValueExpressionAction pos: 1 `i32` results: [`i32`]  (phase_type_checking.carbon:9) --->
-// CHECK:STDOUT: (-) stack-pop:  ValueExpressionAction pos: 1 `i32` results: [`i32`]  (phase_type_checking.carbon:9)
-// CHECK:STDOUT: >>> finished declaring function `Main` of type `fn () -> i32` (phase_type_checking.carbon:11)
-// CHECK:STDOUT: >>> checking FunctionDeclaration `fn Main` (phase_type_checking.carbon:11)
-// CHECK:STDOUT: >>> checking function `Main` (phase_type_checking.carbon:11)
-// CHECK:STDOUT: --- impl declarations for `fn Main` (phase_type_checking.carbon:11)
-// CHECK:STDOUT:  +  []
-// CHECK:STDOUT:  +  [`bool` as `interface EqWith(U = bool)`,
+// CHECK:STDOUT: <<- finished checking `interface TestInterface` (phase_type_checking.carbon:7)
+// CHECK:STDOUT: ->> declaring function `Main` (phase_type_checking.carbon:11)
+// CHECK:STDOUT: ->> checking TuplePattern `()` (phase_type_checking.carbon:9)
+// CHECK:STDOUT: ->> checking IntTypeLiteral `i32` (phase_type_checking.carbon:9)
+// CHECK:STDOUT: >[] stack-push: ValueExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9)
+// CHECK:STDOUT: ->> step ValueExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9) --->
+// CHECK:STDOUT: >[] stack-push: ExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9)
+// CHECK:STDOUT: ->> step ExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9) --->
+// CHECK:STDOUT: <[] stack-pop:  ExpressionAction pos: 0 `i32` (phase_type_checking.carbon:9)
+// CHECK:STDOUT: ->> step ValueExpressionAction pos: 1 `i32` results: [`i32`]  (phase_type_checking.carbon:9) --->
+// CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `i32` results: [`i32`]  (phase_type_checking.carbon:9)
+// CHECK:STDOUT: ->> finished declaring function `Main` of type `fn () -> i32` (phase_type_checking.carbon:11)
+// CHECK:STDOUT: ->> checking FunctionDeclaration `fn Main` (phase_type_checking.carbon:11)
+// CHECK:STDOUT: ->> checking function `Main` (phase_type_checking.carbon:11)
+// CHECK:STDOUT: ==> impl declarations for `fn Main` (phase_type_checking.carbon:11)
+// CHECK:STDOUT:     []
+// CHECK:STDOUT:     [`bool` as `interface EqWith(U = bool)`,
 // CHECK:STDOUT:     `i32` as `interface EqWith(U = i32)`,
 // CHECK:STDOUT:     `String` as `interface EqWith(U = String)`,
 // CHECK:STDOUT:     `i32` as `interface CompareWith(U = i32)`,
@@ -132,14 +132,14 @@ fn Main() -> i32 {
 // CHECK:STDOUT:     `T` as `interface BitXorAssignWith(U = U)` [0; 1, 1, 0],
 // CHECK:STDOUT:     `T` as `interface LeftShiftAssignWith(U = U)` [0; 1, 1, 0],
 // CHECK:STDOUT:     `T` as `interface RightShiftAssignWith(U = U)` [0; 1, 1, 0]]
-// CHECK:STDOUT: >>> checking Block `{return 0;}` (phase_type_checking.carbon:11)
-// CHECK:STDOUT: >>> checking ReturnExpression `return 0;` (phase_type_checking.carbon:10)
-// CHECK:STDOUT: >>> checking IntLiteral `0` (phase_type_checking.carbon:10)
-// CHECK:STDOUT: >>> finished checking function `Main` (phase_type_checking.carbon:11)
-// CHECK:STDOUT: >>> checking CallExpression `Main()` (<Main()>:0)
-// CHECK:STDOUT: >>> checking IdentifierExpression `Main` (<Main()>:0)
-// CHECK:STDOUT: >>> checking TupleLiteral `()` (<Main()>:0)
-// CHECK:STDOUT: >>> checking call to function of type `fn () -> i32` with arguments of type `()` (<Main()>:0)
-// CHECK:STDOUT: >>> performing argument deduction for bindings: []
-// CHECK:STDOUT:  -* deduction succeeded with results: []
+// CHECK:STDOUT: ->> checking Block `{return 0;}` (phase_type_checking.carbon:11)
+// CHECK:STDOUT: ->> checking ReturnExpression `return 0;` (phase_type_checking.carbon:10)
+// CHECK:STDOUT: ->> checking IntLiteral `0` (phase_type_checking.carbon:10)
+// CHECK:STDOUT: ->> finished checking function `Main` (phase_type_checking.carbon:11)
+// CHECK:STDOUT: ->> checking CallExpression `Main()` (<Main()>:0)
+// CHECK:STDOUT: ->> checking IdentifierExpression `Main` (<Main()>:0)
+// CHECK:STDOUT: ->> checking TupleLiteral `()` (<Main()>:0)
+// CHECK:STDOUT: ->> checking call to function of type `fn () -> i32` with arguments of type `()` (<Main()>:0)
+// CHECK:STDOUT: ->> performing argument deduction for bindings: []
+// CHECK:STDOUT: ==> deduction succeeded with results: []
 // CHECK:STDOUT: result: 0
