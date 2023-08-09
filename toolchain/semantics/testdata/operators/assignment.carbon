@@ -18,11 +18,13 @@ fn Main() {
 
   var p: i32* = &a;
   *p = 5;
+
+  *(if true then p else &a) = 10;
 }
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2, block8, block9, block10}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   12,
@@ -38,6 +40,7 @@ fn Main() {
 // CHECK:STDOUT:   3,
 // CHECK:STDOUT:   4,
 // CHECK:STDOUT:   5,
+// CHECK:STDOUT:   10,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
 // CHECK:STDOUT: ]
@@ -54,6 +57,7 @@ fn Main() {
 // CHECK:STDOUT:   node+11,
 // CHECK:STDOUT:   node+30,
 // CHECK:STDOUT:   node+47,
+// CHECK:STDOUT:   nodeBoolType,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT:   [
@@ -121,6 +125,16 @@ fn Main() {
 // CHECK:STDOUT:   {kind: Dereference, arg0: node+48, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int12, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+52, arg1: node+53},
+// CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type5},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block8, arg1: node+55},
+// CHECK:STDOUT:   {kind: Branch, arg0: block9},
+// CHECK:STDOUT:   {kind: AddressOf, arg0: node+1, type: type4},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block10, arg1: node+48},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block10, arg1: node+58},
+// CHECK:STDOUT:   {kind: BlockArg, arg0: block10, type: type4},
+// CHECK:STDOUT:   {kind: Dereference, arg0: node+61, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int13, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+62, arg1: node+63},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -183,6 +197,8 @@ fn Main() {
 // CHECK:STDOUT:     node+53,
 // CHECK:STDOUT:     node+54,
 // CHECK:STDOUT:     node+55,
+// CHECK:STDOUT:     node+56,
+// CHECK:STDOUT:     node+57,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+7,
@@ -203,5 +219,19 @@ fn Main() {
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+35,
 // CHECK:STDOUT:     node+38,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+59,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+58,
+// CHECK:STDOUT:     node+60,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+61,
+// CHECK:STDOUT:     node+62,
+// CHECK:STDOUT:     node+63,
+// CHECK:STDOUT:     node+64,
+// CHECK:STDOUT:     node+65,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
