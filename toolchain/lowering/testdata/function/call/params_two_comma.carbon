@@ -20,8 +20,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
 // CHECK:STDOUT:   call void @Foo(i32 1, i32 2)
-// CHECK:STDOUT:   %TupleLiteralValue = alloca {}, align 8
+// CHECK:STDOUT:   %call.result = alloca {}, align 8
 // CHECK:STDOUT:   call void @Foo(i32 1, i32 2)
-// CHECK:STDOUT:   %TupleLiteralValue1 = alloca {}, align 8
+// CHECK:STDOUT:   %call.result1 = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
