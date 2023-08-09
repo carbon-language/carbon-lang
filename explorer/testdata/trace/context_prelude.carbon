@@ -15,5 +15,5 @@ fn Main() -> i32 {
 // ARGS: --trace_file=- --trace_phase=all --trace_file_context=prelude %s
 // NOAUTOUPDATE
 // SET-CHECK-SUBSET
-// CHECK:STDOUT: *** declaring `interface As` (prelude.carbon:14)
+// CHECK:STDOUT: ->> declaring `interface As` (prelude.carbon:14)
 // CHECK:STDOUT: interface As {

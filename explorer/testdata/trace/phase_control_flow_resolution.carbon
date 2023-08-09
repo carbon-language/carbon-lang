@@ -16,5 +16,5 @@ fn Main() -> i32 {
 // AUTOUPDATE
 
 // CHECK:STDOUT: ********** resolving control flow **********
-// CHECK:STDOUT: --- flow-resolved return statement `return 0;` in `fn Main` (phase_control_flow_resolution.carbon:10)
+// CHECK:STDOUT: ==> flow-resolved return statement `return 0;` in `fn Main` (phase_control_flow_resolution.carbon:10)
 // CHECK:STDOUT: result: 0

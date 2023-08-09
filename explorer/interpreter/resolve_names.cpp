@@ -577,8 +577,8 @@ auto NameResolver::ResolveNamesImpl(Statement& statement,
                                     StaticScope& enclosing_scope)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** resolving stmt `" << PrintAsID(statement) << "` ("
-                   << statement.source_loc() << ")\n";
+    trace_stream_->Start() << "resolving stmt `" << PrintAsID(statement)
+                           << "` (" << statement.source_loc() << ")\n";
   }
   switch (statement.kind()) {
     case StatementKind::ExpressionStatement:
@@ -690,9 +690,8 @@ auto NameResolver::ResolveNamesImpl(Statement& statement,
   }
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished resolving stmt `";
-    statement.PrintID(trace_stream_->stream());
-    *trace_stream_ << "` (" << statement.source_loc() << ")\n";
+    trace_stream_->End() << "finished resolving stmt `" << PrintAsID(statement)
+                         << "` (" << statement.source_loc() << ")\n";
   }
 
   return Success();
@@ -732,9 +731,8 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
                                     ResolveFunctionBodies bodies)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** resolving decl `";
-    declaration.PrintID(trace_stream_->stream());
-    *trace_stream_ << "` (" << declaration.source_loc() << ")\n";
+    trace_stream_->Start() << "resolving decl `" << PrintAsID(declaration)
+                           << "` (" << declaration.source_loc() << ")\n";
   }
 
   switch (declaration.kind()) {
@@ -951,9 +949,9 @@ auto NameResolver::ResolveNamesImpl(Declaration& declaration,
   }
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "** finished resolving decl `";
-    declaration.PrintID(trace_stream_->stream());
-    *trace_stream_ << "` (" << declaration.source_loc() << ")\n";
+    trace_stream_->End() << "finished resolving decl `"
+                         << PrintAsID(declaration) << "` ("
+                         << declaration.source_loc() << ")\n";
   }
 
   return Success();
