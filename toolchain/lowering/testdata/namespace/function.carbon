@@ -30,6 +30,6 @@ fn Bar() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Bar() {
 // CHECK:STDOUT:   call void @Baz.1()
-// CHECK:STDOUT:   %TupleLiteralValue = alloca {}, align 8
+// CHECK:STDOUT:   %call.result = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

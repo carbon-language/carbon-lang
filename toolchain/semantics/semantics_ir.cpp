@@ -227,6 +227,7 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::BranchIf:
     case SemanticsNodeKind::BranchWithArg:
     case SemanticsNodeKind::Call:
+    case SemanticsNodeKind::Dereference:
     case SemanticsNodeKind::FunctionDeclaration:
     case SemanticsNodeKind::Index:
     case SemanticsNodeKind::IntegerLiteral:
@@ -368,6 +369,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::BranchWithArg:
       case SemanticsNodeKind::Builtin:
       case SemanticsNodeKind::Call:
+      case SemanticsNodeKind::Dereference:
       case SemanticsNodeKind::CrossReference:
       case SemanticsNodeKind::FunctionDeclaration:
       case SemanticsNodeKind::Index:
@@ -481,6 +483,7 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
         // struct/tuple value construction.
         return SemanticsExpressionCategory::Value;
 
+      case SemanticsNodeKind::Dereference:
       case SemanticsNodeKind::VarStorage:
         return SemanticsExpressionCategory::DurableReference;
     }

@@ -161,8 +161,7 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
             << field_type_id;
         subtypes.push_back(GetType(field_type_id));
       }
-      return llvm::StructType::create(*llvm_context_, subtypes,
-                                      "StructLiteralType");
+      return llvm::StructType::get(*llvm_context_, subtypes);
     }
     case SemanticsNodeKind::TupleType: {
       // TODO: Investigate special-casing handling of empty tuples so that they
@@ -175,8 +174,7 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
       for (auto ref_id : refs) {
         subtypes.push_back(GetType(ref_id));
       }
-      return llvm::StructType::create(*llvm_context_, subtypes,
-                                      "TupleLiteralType");
+      return llvm::StructType::get(*llvm_context_, subtypes);
     }
     default: {
       CARBON_FATAL() << "Cannot use node as type: " << node_id;

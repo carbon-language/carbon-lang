@@ -379,6 +379,9 @@ class SemanticsNode {
     using FactoryBase::Get;
   };
 
+  using Dereference =
+      Factory<SemanticsNodeKind::Dereference, SemanticsNodeId /*pointer_id*/>;
+
   using FunctionDeclaration =
       FactoryNoType<SemanticsNodeKind::FunctionDeclaration,
                     SemanticsFunctionId /*function_id*/>;
