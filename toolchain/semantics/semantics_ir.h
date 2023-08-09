@@ -261,7 +261,10 @@ class SemanticsIR {
     return type_blocks_[block_id.index];
   }
 
-  // Produces a string version of a type.
+  // Produces a string version of a type. If `in_type_context` is false, an
+  // explicit conversion to type `type` will be added in cases where the type
+  // expression would otherwise have a different type, such as a tuple or
+  // struct type.
   auto StringifyType(SemanticsTypeId type_id,
                      bool in_type_context = false) const -> std::string;
 

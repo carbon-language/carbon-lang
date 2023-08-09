@@ -42,7 +42,9 @@ class NodeNamer {
       const auto& fn = semantics_ir.GetFunction(fn_id);
       GetScopeInfo(fn_scope).name = globals.AllocateName(
           *this,
-          /*TODO*/ ParseTree::Node::Invalid,
+          // TODO: Provide a location for the function for use as a
+          // disambiguator.
+          ParseTree::Node::Invalid,
           fn.name_id.is_valid() ? semantics_ir.GetString(fn.name_id).str()
                                 : "");
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
@@ -82,7 +84,7 @@ class NodeNamer {
     auto& [node_scope, node_name] = nodes[node_id.index];
     if (!node_name) {
       // This should not happen in valid IR.
-      return "<noderef " + llvm::itostr(node_id.index) + ">";
+      return "<unexpected noderef " + llvm::itostr(node_id.index) + ">";
     }
     if (node_scope == scope_idx) {
       return node_name;
@@ -100,7 +102,7 @@ class NodeNamer {
     auto& [label_scope, label_name] = labels[block_id.index];
     if (!label_name) {
       // This should not happen in valid IR.
-      return "<nodeblockref " + llvm::itostr(block_id.index) + ">";
+      return "<unexpected nodeblockref " + llvm::itostr(block_id.index) + ">";
     }
     if (label_scope == scope_idx) {
       return label_name;
