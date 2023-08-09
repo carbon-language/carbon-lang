@@ -1479,7 +1479,7 @@ auto TypeChecker::ArgumentDeduction::Finish(
   }
 
   if (trace_stream_->is_enabled()) {
-    trace_stream_->Deduction() << "deduction succeeded with results: [";
+    trace_stream_->Result() << "deduction succeeded with results: [";
     llvm::ListSeparator sep;
     for (const auto& [binding, val] : bindings.args()) {
       *trace_stream_ << sep << "`" << *binding << "` = `" << *val << "`";
@@ -5041,8 +5041,8 @@ auto TypeChecker::TypeCheckCallableDeclaration(Nonnull<CallableDeclaration*> f,
     BringImplBindingsIntoScope(
         cast<FunctionType>(f->static_type()).impl_bindings(), function_scope);
     if (trace_stream_->is_enabled()) {
-      trace_stream_->End() << "impl declarations for `" << PrintAsID(*f)
-                           << "` (" << f->source_loc() << ")\n";
+      trace_stream_->Result() << "impl declarations for `" << PrintAsID(*f)
+                              << "` (" << f->source_loc() << ")\n";
       *trace_stream_ << function_scope;
     }
     CARBON_RETURN_IF_ERROR(TypeCheckStmt(*f->body(), function_scope));
@@ -5147,8 +5147,8 @@ auto TypeChecker::DeclareClassDeclaration(Nonnull<ClassDeclaration*> class_decl,
                          std::nullopt, class_scope, ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(type_params, bindings);
     if (trace_stream_->is_enabled()) {
-      trace_stream_->End() << "impl declarations for `" << class_decl->name()
-                           << "` (" << class_decl->source_loc() << ")\n";
+      trace_stream_->Result() << "impl declarations for `" << class_decl->name()
+                              << "` (" << class_decl->source_loc() << ")\n";
       *trace_stream_ << class_scope;
     }
   }
@@ -5278,8 +5278,8 @@ auto TypeChecker::TypeCheckClassDeclaration(
     BringPatternImplBindingsIntoScope(*class_decl->type_params(), class_scope);
   }
   if (trace_stream_->is_enabled()) {
-    trace_stream_->End() << "impl declarations for `" << class_decl->name()
-                         << "` (" << class_decl->source_loc() << ")\n";
+    trace_stream_->Result() << "impl declarations for `" << class_decl->name()
+                            << "` (" << class_decl->source_loc() << ")\n";
     *trace_stream_ << class_scope;
   }
   auto [it, inserted] =
@@ -5312,8 +5312,8 @@ auto TypeChecker::DeclareMixinDeclaration(Nonnull<MixinDeclaration*> mixin_decl,
         *mixin_decl->params(), PatternRequirements::Irrefutable, std::nullopt,
         mixin_scope, ExpressionCategory::Value));
     if (trace_stream_->is_enabled()) {
-      trace_stream_->End() << "impl declarations for `" << mixin_decl->name()
-                           << "` (" << mixin_decl->source_loc() << ")\n";
+      trace_stream_->Result() << "impl declarations for `" << mixin_decl->name()
+                              << "` (" << mixin_decl->source_loc() << ")\n";
       *trace_stream_ << mixin_scope;
     }
 
@@ -5373,8 +5373,8 @@ auto TypeChecker::TypeCheckMixinDeclaration(
     BringPatternImplBindingsIntoScope(*mixin_decl->params(), mixin_scope);
   }
   if (trace_stream_->is_enabled()) {
-    trace_stream_->End() << "impl declarations for `" << mixin_decl->name()
-                         << "` (" << mixin_decl->source_loc() << ")\n";
+    trace_stream_->Result() << "impl declarations for `" << mixin_decl->name()
+                            << "` (" << mixin_decl->source_loc() << ")\n";
     *trace_stream_ << mixin_scope;
   }
   for (Nonnull<Declaration*> m : mixin_decl->members()) {
@@ -5448,9 +5448,9 @@ auto TypeChecker::DeclareConstraintTypeDeclaration(
         *constraint_decl->params(), PatternRequirements::Irrefutable,
         std::nullopt, constraint_scope, ExpressionCategory::Value));
     if (trace_stream_->is_enabled()) {
-      trace_stream_->End() << "impl declarations for `"
-                           << PrintAsID(*constraint_decl) << "` ("
-                           << constraint_decl->source_loc() << ")\n";
+      trace_stream_->Result()
+          << "impl declarations for `" << PrintAsID(*constraint_decl) << "` ("
+          << constraint_decl->source_loc() << ")\n";
       *trace_stream_ << constraint_scope;
     }
     CollectAndNumberGenericBindingsInPattern(*constraint_decl->params(),
@@ -5642,9 +5642,9 @@ auto TypeChecker::TypeCheckConstraintTypeDeclaration(
                                       constraint_scope);
   }
   if (trace_stream_->is_enabled()) {
-    trace_stream_->End() << "impl declarations for `"
-                         << PrintAsID(*constraint_decl) << "` ("
-                         << constraint_decl->source_loc() << ")\n";
+    trace_stream_->Result()
+        << "impl declarations for `" << PrintAsID(*constraint_decl) << "` ("
+        << constraint_decl->source_loc() << ")\n";
     *trace_stream_ << constraint_scope;
   }
   for (Nonnull<Declaration*> m : constraint_decl->members()) {
@@ -6032,8 +6032,8 @@ auto TypeChecker::DeclareChoiceDeclaration(Nonnull<ChoiceDeclaration*> choice,
                          choice_scope, ExpressionCategory::Value));
     CollectAndNumberGenericBindingsInPattern(type_params, bindings);
     if (trace_stream_->is_enabled()) {
-      trace_stream_->End() << "impl declarations for `" << PrintAsID(*choice)
-                           << "` (" << choice->source_loc() << ")\n";
+      trace_stream_->Result() << "impl declarations for `" << PrintAsID(*choice)
+                              << "` (" << choice->source_loc() << ")\n";
       *trace_stream_ << choice_scope;
     }
   }
