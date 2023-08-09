@@ -114,25 +114,25 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L7: type = stub_reference i32
-// CHECK:STDOUT:   %.L7.15: type = stub_reference i32
-// CHECK:STDOUT:   %.L7.18: type = tuple_type (type, type)
-// CHECK:STDOUT:   %.L7.18.0: (type, type) = tuple_value (%.L7, %.L7.15)
-// CHECK:STDOUT:   %.L7.18.1: (type, type) = stub_reference %.L7.18.0
-// CHECK:STDOUT:   %.L7.21: type = stub_reference i32
-// CHECK:STDOUT:   %.L7.24: type = tuple_type ((type, type), type)
-// CHECK:STDOUT:   %.L7.24.0: ((type, type), type) = tuple_value (%.L7.18.1, %.L7.21)
-// CHECK:STDOUT:   %.L7.18.2: type = tuple_type (i32, i32)
-// CHECK:STDOUT:   %.L7.24.1: type = tuple_type ((i32, i32), i32)
+// CHECK:STDOUT:   %(7:10): type = stub_reference i32
+// CHECK:STDOUT:   %(7:15): type = stub_reference i32
+// CHECK:STDOUT:   %(7:18)₁: type = tuple_type (type, type)
+// CHECK:STDOUT:   %(7:18)₂: (type, type) = tuple_value (%(7:10), %(7:15))
+// CHECK:STDOUT:   %(7:18)₃: (type, type) = stub_reference %(7:18)₂
+// CHECK:STDOUT:   %(7:21): type = stub_reference i32
+// CHECK:STDOUT:   %(7:24)₁: type = tuple_type ((type, type), type)
+// CHECK:STDOUT:   %(7:24)₂: ((type, type), type) = tuple_value (%(7:18)₃, %(7:21))
+// CHECK:STDOUT:   %(7:18)₄: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %(7:24)₃: type = tuple_type ((i32, i32), i32)
 // CHECK:STDOUT:   %x: ((i32, i32), i32) = var
-// CHECK:STDOUT:   %.L7.30: i32 = int_value 12
-// CHECK:STDOUT:   %.L7.30.0: i32 = stub_reference %.L7.30
-// CHECK:STDOUT:   %.L7.34: i32 = int_value 76
-// CHECK:STDOUT:   %.L7.34.0: i32 = stub_reference %.L7.34
-// CHECK:STDOUT:   %.L7.36: (i32, i32) = tuple_value (%.L7.30.0, %.L7.34.0)
-// CHECK:STDOUT:   %.L7.36.0: (i32, i32) = stub_reference %.L7.36
-// CHECK:STDOUT:   %.L7.39: i32 = int_value 6
-// CHECK:STDOUT:   %.L7.39.0: i32 = stub_reference %.L7.39
-// CHECK:STDOUT:   %.L7.40: ((i32, i32), i32) = tuple_value (%.L7.36.0, %.L7.39.0)
-// CHECK:STDOUT:   assign %x, %.L7.40
+// CHECK:STDOUT:   %(7:30)₁: i32 = int_value 12
+// CHECK:STDOUT:   %(7:30)₂: i32 = stub_reference %(7:30)₁
+// CHECK:STDOUT:   %(7:34)₁: i32 = int_value 76
+// CHECK:STDOUT:   %(7:34)₂: i32 = stub_reference %(7:34)₁
+// CHECK:STDOUT:   %(7:36)₁: (i32, i32) = tuple_value (%(7:30)₂, %(7:34)₂)
+// CHECK:STDOUT:   %(7:36)₂: (i32, i32) = stub_reference %(7:36)₁
+// CHECK:STDOUT:   %(7:39)₁: i32 = int_value 6
+// CHECK:STDOUT:   %(7:39)₂: i32 = stub_reference %(7:39)₁
+// CHECK:STDOUT:   %(7:40): ((i32, i32), i32) = tuple_value (%(7:36)₂, %(7:39)₂)
+// CHECK:STDOUT:   assign %x, %(7:40)
 // CHECK:STDOUT: }

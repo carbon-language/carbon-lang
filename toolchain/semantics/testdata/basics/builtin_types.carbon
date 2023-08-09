@@ -73,14 +73,14 @@ var test_type: type = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %test_i32: i32 = var
-// CHECK:STDOUT:   %.L7: i32 = int_value 0
-// CHECK:STDOUT:   assign %test_i32, %.L7
+// CHECK:STDOUT:   %(7:21): i32 = int_value 0
+// CHECK:STDOUT:   assign %test_i32, %(7:21)
 // CHECK:STDOUT:   %test_f64: f64 = var
-// CHECK:STDOUT:   %.L8: f64 = real_value 1e-1
-// CHECK:STDOUT:   assign %test_f64, %.L8
+// CHECK:STDOUT:   %(8:21): f64 = real_value 1e-1
+// CHECK:STDOUT:   assign %test_f64, %(8:21)
 // CHECK:STDOUT:   %test_str: String = var
-// CHECK:STDOUT:   %.L9: String = string_value "Test"
-// CHECK:STDOUT:   assign %test_str, %.L9
+// CHECK:STDOUT:   %(9:24): String = string_value "Test"
+// CHECK:STDOUT:   assign %test_str, %(9:24)
 // CHECK:STDOUT:   %test_type: type = var
 // CHECK:STDOUT:   assign %test_type, i32
 // CHECK:STDOUT: }

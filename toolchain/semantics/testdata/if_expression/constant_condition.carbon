@@ -122,56 +122,56 @@ fn G() -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L7 = fn_decl @A
-// CHECK:STDOUT:   %.L8 = fn_decl @B
-// CHECK:STDOUT:   %.L10 = fn_decl @F
-// CHECK:STDOUT:   %.L14 = fn_decl @G
+// CHECK:STDOUT:   %(7:1) = fn_decl @A
+// CHECK:STDOUT:   %(8:1) = fn_decl @B
+// CHECK:STDOUT:   %(10:1) = fn_decl @F
+// CHECK:STDOUT:   %(14:1) = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.L7: i32 = int_value 1
-// CHECK:STDOUT:   return %.L7
+// CHECK:STDOUT:   %(7:24): i32 = int_value 1
+// CHECK:STDOUT:   return %(7:24)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.L8: i32 = int_value 2
-// CHECK:STDOUT:   return %.L8
+// CHECK:STDOUT:   %(8:24): i32 = int_value 2
+// CHECK:STDOUT:   return %(8:24)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.L11: bool = bool_value true
-// CHECK:STDOUT:   if %.L11 br !.L11 else br !.L11.33
+// CHECK:STDOUT:   %(11:13): bool = bool_value true
+// CHECK:STDOUT:   if %(11:13) br !(11:24) else br !(11:33)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.L11:
-// CHECK:STDOUT:   %.L11.24: i32 = call @A()
-// CHECK:STDOUT:   br !.L11.10(%.L11.24)
+// CHECK:STDOUT: !(11:24):
+// CHECK:STDOUT:   %(11:24): i32 = call @A()
+// CHECK:STDOUT:   br !(11:10)(%(11:24))
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.L11.33:
-// CHECK:STDOUT:   %.L11.33: i32 = call @B()
-// CHECK:STDOUT:   br !.L11.10(%.L11.33)
+// CHECK:STDOUT: !(11:33):
+// CHECK:STDOUT:   %(11:33): i32 = call @B()
+// CHECK:STDOUT:   br !(11:10)(%(11:33))
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.L11.10:
-// CHECK:STDOUT:   %.L11.10: i32 = block_arg !.L11.10
-// CHECK:STDOUT:   return %.L11.10
+// CHECK:STDOUT: !(11:10):
+// CHECK:STDOUT:   %(11:10): i32 = block_arg !(11:10)
+// CHECK:STDOUT:   return %(11:10)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.L15: bool = bool_value false
-// CHECK:STDOUT:   if %.L15 br !.L15 else br !.L15.34
+// CHECK:STDOUT:   %(15:13): bool = bool_value false
+// CHECK:STDOUT:   if %(15:13) br !(15:25) else br !(15:34)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.L15:
-// CHECK:STDOUT:   %.L15.25: i32 = call @A()
-// CHECK:STDOUT:   br !.L15.10(%.L15.25)
+// CHECK:STDOUT: !(15:25):
+// CHECK:STDOUT:   %(15:25): i32 = call @A()
+// CHECK:STDOUT:   br !(15:10)(%(15:25))
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.L15.34:
-// CHECK:STDOUT:   %.L15.34: i32 = call @B()
-// CHECK:STDOUT:   br !.L15.10(%.L15.34)
+// CHECK:STDOUT: !(15:34):
+// CHECK:STDOUT:   %(15:34): i32 = call @B()
+// CHECK:STDOUT:   br !(15:10)(%(15:34))
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.L15.10:
-// CHECK:STDOUT:   %.L15.10: i32 = block_arg !.L15.10
-// CHECK:STDOUT:   return %.L15.10
+// CHECK:STDOUT: !(15:10):
+// CHECK:STDOUT:   %(15:10): i32 = block_arg !(15:10)
+// CHECK:STDOUT:   return %(15:10)
 // CHECK:STDOUT: }

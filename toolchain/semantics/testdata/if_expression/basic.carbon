@@ -83,22 +83,22 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L7 = fn_decl @F
+// CHECK:STDOUT:   %(7:1) = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !.L8 else br !.L8.33
+// CHECK:STDOUT:   if %b br !(8:22) else br !(8:33)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.L8:
-// CHECK:STDOUT:   %.L8: i32 = add %n, %m
-// CHECK:STDOUT:   br !.L8.10(%.L8)
+// CHECK:STDOUT: !(8:22):
+// CHECK:STDOUT:   %(8:22): i32 = add %n, %m
+// CHECK:STDOUT:   br !(8:10)(%(8:22))
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.L8.33:
-// CHECK:STDOUT:   %.L8.33: i32 = add %m, %n
-// CHECK:STDOUT:   br !.L8.10(%.L8.33)
+// CHECK:STDOUT: !(8:33):
+// CHECK:STDOUT:   %(8:33): i32 = add %m, %n
+// CHECK:STDOUT:   br !(8:10)(%(8:33))
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.L8.10:
-// CHECK:STDOUT:   %.L8.10: i32 = block_arg !.L8.10
-// CHECK:STDOUT:   return %.L8.10
+// CHECK:STDOUT: !(8:10):
+// CHECK:STDOUT:   %(8:10): i32 = block_arg !(8:10)
+// CHECK:STDOUT:   return %(8:10)
 // CHECK:STDOUT: }

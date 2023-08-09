@@ -31,7 +31,8 @@ class NodeNamer {
     scopes.resize(1 + semantics_ir.functions_size());
 
     // Build the package scope.
-    GetScopeInfo(ScopeIndex::Package).name = "package";
+    GetScopeInfo(ScopeIndex::Package).name =
+        globals.AddNameUnchecked("package");
     CollectNamesInBlock(ScopeIndex::Package, semantics_ir.top_node_block_id());
 
     // Build each function scope.
@@ -39,13 +40,11 @@ class NodeNamer {
       auto fn_id = SemanticsFunctionId(i);
       auto fn_scope = GetScopeFor(fn_id);
       const auto& fn = semantics_ir.GetFunction(fn_id);
-      GetScopeInfo(fn_scope).name =
-          "@" +
-          globals.AllocateName(*this,
-                               /*TODO*/ ParseTree::Node::Invalid,
-                               fn.name_id.is_valid()
-                                   ? semantics_ir.GetString(fn.name_id).str()
-                                   : "");
+      GetScopeInfo(fn_scope).name = globals.AllocateName(
+          *this,
+          /*TODO*/ ParseTree::Node::Invalid,
+          fn.name_id.is_valid() ? semantics_ir.GetString(fn.name_id).str()
+                                : "");
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
       for (auto block_id : fn.body_block_ids) {
         AddBlockLabel(fn_scope, block_id,
@@ -61,7 +60,7 @@ class NodeNamer {
   }
 
   // Returns the IR name to use for a function.
-  auto GetNameFor(SemanticsFunctionId fn_id) -> std::string {
+  auto GetNameFor(SemanticsFunctionId fn_id) -> llvm::StringRef {
     if (!fn_id.is_valid()) {
       return "invalid";
     }
@@ -81,14 +80,14 @@ class NodeNamer {
     }
 
     auto& [node_scope, node_name] = nodes[node_id.index];
-    if (node_name.empty()) {
+    if (!node_name) {
       // This should not happen in valid IR.
       return "<noderef " + llvm::itostr(node_id.index) + ">";
     }
     if (node_scope == scope_idx) {
       return node_name;
     }
-    return GetScopeInfo(node_scope).name + "." + node_name;
+    return (GetScopeInfo(node_scope).name.str() + "." + node_name.str()).str();
   }
 
   // Returns the IR name to use for a label, when referenced from a given scope.
@@ -99,54 +98,124 @@ class NodeNamer {
     }
 
     auto& [label_scope, label_name] = labels[block_id.index];
-    if (label_name.empty()) {
+    if (!label_name) {
       // This should not happen in valid IR.
       return "<nodeblockref " + llvm::itostr(block_id.index) + ">";
     }
     if (label_scope == scope_idx) {
       return label_name;
     }
-    return GetScopeInfo(label_scope).name + "." + label_name;
+    return (GetScopeInfo(label_scope).name.str() + "." + label_name.str())
+        .str();
   }
 
  private:
   // A space in which unique names can be allocated.
   struct Namespace {
-    llvm::StringSet<> allocated;
+    // A result of a name lookup.
+    struct NameResult;
+
+    // A name in a namespace, which might be redirected to refer to another name
+    // for disambiguation purposes.
+    class Name {
+     public:
+      Name() : value_(nullptr) {}
+      explicit Name(llvm::StringMapIterator<NameResult> it) : value_(&*it) {}
+
+      explicit operator bool() const { return value_; }
+
+      auto str() const -> llvm::StringRef {
+        llvm::StringMapEntry<NameResult>* value = value_;
+        CARBON_CHECK(value) << "cannot print a null name";
+        while (value->second.ambiguous && value->second.fallback) {
+          value = value->second.fallback.value_;
+        }
+        return value->first();
+      }
+
+      operator llvm::StringRef() const { return str(); }
+      operator llvm::Twine() const { return str(); }
+      operator std::string() const { return str().str(); }
+
+      auto SetFallback(Name name) -> void { value_->second.fallback = name; }
+
+      auto SetAmbiguous() -> void { value_->second.ambiguous = true; }
+
+     private:
+      llvm::StringMapEntry<NameResult>* value_;
+    };
+
+    struct NameResult {
+      bool ambiguous = false;
+      Name fallback = Name();
+    };
+
+    char prefix;
+    llvm::StringMap<NameResult> allocated = {};
     int unnamed_count = 0;
 
+    auto AddNameUnchecked(llvm::StringRef name) -> Name {
+      return Name(allocated.insert({name, NameResult()}).first);
+    }
+
     auto AllocateName(const NodeNamer& namer, ParseTree::Node node,
-                      std::string name = "") -> std::string {
+                      std::string name = "") -> Name {
+      name.insert(0, 1, prefix);
+
+      // The best (shortest) name for this node so far, and the current name
+      // for it.
+      Name best;
+      Name current;
+
+      // Add `name` as a name for this entity.
+      auto add_name = [&](bool mark_ambiguous = true) {
+        auto [it, added] = allocated.insert({name, NameResult()});
+        Name new_name = Name(it);
+
+        if (!added) {
+          if (mark_ambiguous) {
+            // This name was allocated for a different node. Mark it as
+            // ambiguous and keep looking for a name for this node.
+            new_name.SetAmbiguous();
+          }
+        } else {
+          if (!best) {
+            best = new_name;
+          } else {
+            current.SetFallback(new_name);
+          }
+          current = new_name;
+        }
+        return added;
+      };
+
       // Use the given name if it's available.
-      if (!name.empty() && allocated.insert(name).second) {
-        return name;
+      if (name.size() > 1) {
+        add_name();
       }
 
       // Append location information to try to disambiguate.
       if (node.is_valid()) {
         auto token = namer.parse_tree_.node_token(node);
-        name += ".L";
+        name += "(";
         name += llvm::itostr(namer.tokenized_buffer_.GetLineNumber(token));
-        if (allocated.insert(name).second) {
-          return name;
-        }
-        name += ".";
+        name += ":";
         name += llvm::itostr(namer.tokenized_buffer_.GetColumnNumber(token));
-        if (allocated.insert(name).second) {
-          // TODO: Should we also add the column number to the first value on
-          // this line?
-          return name;
-        }
+        name += ")";
+        add_name();
       }
 
       // Append numbers until we find an available name.
-      name += ".";
       auto name_size_without_counter = name.size();
-      for (int counter = 0;; ++counter) {
+      for (int counter = 1;; ++counter) {
         name.resize(name_size_without_counter);
-        name += llvm::itostr(counter);
-        if (allocated.insert(name).second) {
-          return name;
+        for (char c : llvm::itostr(counter)) {
+          static constexpr llvm::StringRef subscripts[] = {
+              "₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"};
+          name += subscripts[c - '0'];
+        }
+        if (add_name(/*mark_ambiguous=*/false)) {
+          return best;
         }
       }
     }
@@ -154,9 +223,9 @@ class NodeNamer {
 
   // A named scope that contains named entities.
   struct Scope {
-    std::string name;
-    Namespace nodes;
-    Namespace labels;
+    Namespace::Name name;
+    Namespace nodes = {.prefix = '%'};
+    Namespace labels = {.prefix = '!'};
   };
 
   auto GetScopeInfo(ScopeIndex scope_idx) -> Scope& {
@@ -175,8 +244,8 @@ class NodeNamer {
     }
 
     labels[block_id.index] = {scope_idx,
-                              "!" + GetScopeInfo(scope_idx).labels.AllocateName(
-                                        *this, parse_node, std::move(name))};
+                              GetScopeInfo(scope_idx).labels.AllocateName(
+                                  *this, parse_node, std::move(name))};
   }
 
   auto CollectNamesInBlock(ScopeIndex scope_idx, SemanticsNodeBlockId block_id)
@@ -193,9 +262,9 @@ class NodeNamer {
       if (node.kind() == SemanticsNodeKind::BindName) {
         auto [name_id, named_node_id] = node.GetAsBindName();
         nodes[named_node_id.index] = {
-            scope_idx, "%" + scope.nodes.AllocateName(
-                                 *this, node.parse_node(),
-                                 semantics_ir_.GetString(name_id).str())};
+            scope_idx,
+            scope.nodes.AllocateName(*this, node.parse_node(),
+                                     semantics_ir_.GetString(name_id).str())};
       }
     }
 
@@ -205,9 +274,9 @@ class NodeNamer {
       if (node.kind() != SemanticsNodeKind::BindName &&
           node.kind().value_kind() != SemanticsNodeValueKind::None) {
         auto& name = nodes[node_id.index];
-        if (name.second.empty()) {
+        if (!name.second) {
           name = {scope_idx,
-                  "%" + scope.nodes.AllocateName(*this, node.parse_node())};
+                  scope.nodes.AllocateName(*this, node.parse_node())};
         }
       }
     }
@@ -217,9 +286,9 @@ class NodeNamer {
   const ParseTree& parse_tree_;
   const SemanticsIR& semantics_ir_;
 
-  Namespace globals;
-  std::vector<std::pair<ScopeIndex, std::string>> nodes;
-  std::vector<std::pair<ScopeIndex, std::string>> labels;
+  Namespace globals = {.prefix = '@'};
+  std::vector<std::pair<ScopeIndex, Namespace::Name>> nodes;
+  std::vector<std::pair<ScopeIndex, Namespace::Name>> labels;
   std::vector<Scope> scopes;
 };
 }  // namespace

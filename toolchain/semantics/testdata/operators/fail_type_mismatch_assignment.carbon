@@ -60,15 +60,15 @@ fn Main() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L7 = fn_decl @Main
+// CHECK:STDOUT:   %(7:1) = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a: i32 = var
-// CHECK:STDOUT:   %.L8: i32 = int_value 3
-// CHECK:STDOUT:   assign %a, %.L8
-// CHECK:STDOUT:   %.L12: f64 = real_value 56e-1
-// CHECK:STDOUT:   assign %a, %.L12
+// CHECK:STDOUT:   %(8:16): i32 = int_value 3
+// CHECK:STDOUT:   assign %a, %(8:16)
+// CHECK:STDOUT:   %(12:7): f64 = real_value 56e-1
+// CHECK:STDOUT:   assign %a, %(12:7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

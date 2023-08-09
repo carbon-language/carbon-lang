@@ -91,17 +91,17 @@ var z: i32 = y;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L7: type = struct_type {.a: f64, .b: i32}
+// CHECK:STDOUT:   %(7:25): type = struct_type {.a: f64, .b: i32}
 // CHECK:STDOUT:   %x: {.a: f64, .b: i32} = var
-// CHECK:STDOUT:   %.L7.35: f64 = real_value 0e-1
-// CHECK:STDOUT:   %.L7.33: f64 = stub_reference %.L7.35
-// CHECK:STDOUT:   %.L7.45: i32 = int_value 1
-// CHECK:STDOUT:   %.L7.43: i32 = stub_reference %.L7.45
-// CHECK:STDOUT:   %.L7.46: {.a: f64, .b: i32} = struct_value (%.L7.33, %.L7.43)
-// CHECK:STDOUT:   assign %x, %.L7.46
+// CHECK:STDOUT:   %(7:35): f64 = real_value 0e-1
+// CHECK:STDOUT:   %(7:33): f64 = stub_reference %(7:35)
+// CHECK:STDOUT:   %(7:45): i32 = int_value 1
+// CHECK:STDOUT:   %(7:43): i32 = stub_reference %(7:45)
+// CHECK:STDOUT:   %(7:46): {.a: f64, .b: i32} = struct_value (%(7:33), %(7:43))
+// CHECK:STDOUT:   assign %x, %(7:46)
 // CHECK:STDOUT:   %y: i32 = var
-// CHECK:STDOUT:   %.L8: i32 = struct_access %x, member1
-// CHECK:STDOUT:   assign %y, %.L8
+// CHECK:STDOUT:   %(8:15): i32 = struct_access %x, member1
+// CHECK:STDOUT:   assign %y, %(8:15)
 // CHECK:STDOUT:   %z: i32 = var
 // CHECK:STDOUT:   assign %z, %y
 // CHECK:STDOUT: }

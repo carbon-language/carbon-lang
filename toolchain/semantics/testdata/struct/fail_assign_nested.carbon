@@ -70,13 +70,13 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L10: type = struct_type {}
-// CHECK:STDOUT:   %.L10.14: {} = struct_value ()
-// CHECK:STDOUT:   %.L10.15: type = struct_type {.a: {}}
+// CHECK:STDOUT:   %(10:14)₁: type = struct_type {}
+// CHECK:STDOUT:   %(10:14)₂: {} = struct_value ()
+// CHECK:STDOUT:   %(10:15): type = struct_type {.a: {}}
 // CHECK:STDOUT:   %x: {.a: {}} = var
-// CHECK:STDOUT:   %.L10.26: {} = struct_value ()
-// CHECK:STDOUT:   %.L10.23: {} = stub_reference %.L10.26
-// CHECK:STDOUT:   %.L10.27: type = struct_type {.b: {}}
-// CHECK:STDOUT:   %.L10.27.0: {.b: {}} = struct_value (%.L10.23)
+// CHECK:STDOUT:   %(10:26): {} = struct_value ()
+// CHECK:STDOUT:   %(10:23): {} = stub_reference %(10:26)
+// CHECK:STDOUT:   %(10:27)₁: type = struct_type {.b: {}}
+// CHECK:STDOUT:   %(10:27)₂: {.b: {}} = struct_value (%(10:23))
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

@@ -47,11 +47,11 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L7 = fn_decl @Main
+// CHECK:STDOUT:   %(7:1) = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.L11: f64 = real_value 10e-1
+// CHECK:STDOUT:   %(11:10): f64 = real_value 10e-1
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

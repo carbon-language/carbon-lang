@@ -91,9 +91,9 @@ fn If(b: bool) {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L7 = fn_decl @F
-// CHECK:STDOUT:   %.L8 = fn_decl @G
-// CHECK:STDOUT:   %.L10 = fn_decl @If
+// CHECK:STDOUT:   %(7:1) = fn_decl @F
+// CHECK:STDOUT:   %(8:1) = fn_decl @G
+// CHECK:STDOUT:   %(10:1) = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -108,14 +108,14 @@ fn If(b: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !.L12 else br !.L14
+// CHECK:STDOUT:   if %b br !(12:6) else br !(14:4)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.L12:
-// CHECK:STDOUT:   %.L12: type = tuple_type ()
-// CHECK:STDOUT:   %.L12.6: () = call @F()
-// CHECK:STDOUT:   br !.L14
+// CHECK:STDOUT: !(12:6):
+// CHECK:STDOUT:   %(12:6)₁: type = tuple_type ()
+// CHECK:STDOUT:   %(12:6)₂: () = call @F()
+// CHECK:STDOUT:   br !(14:4)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.L14:
-// CHECK:STDOUT:   %.L14: () = call @G()
+// CHECK:STDOUT: !(14:4):
+// CHECK:STDOUT:   %(14:4): () = call @G()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

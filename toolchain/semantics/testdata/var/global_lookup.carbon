@@ -49,8 +49,8 @@ var y: i32 = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: i32 = var
-// CHECK:STDOUT:   %.L7: i32 = int_value 0
-// CHECK:STDOUT:   assign %x, %.L7
+// CHECK:STDOUT:   %(7:14): i32 = int_value 0
+// CHECK:STDOUT:   assign %x, %(7:14)
 // CHECK:STDOUT:   %y: i32 = var
 // CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }

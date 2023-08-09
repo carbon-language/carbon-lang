@@ -56,14 +56,14 @@ fn Main() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L7 = fn_decl @Main
+// CHECK:STDOUT:   %(7:1) = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.L11: i32 = int_value 1
+// CHECK:STDOUT:   %(11:10): i32 = int_value 1
 // CHECK:STDOUT:   %x: <error> = var
-// CHECK:STDOUT:   %.L11.14: i32 = int_value 1
+// CHECK:STDOUT:   %(11:14): i32 = int_value 1
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -83,35 +83,35 @@ fn Or() -> bool {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L7 = fn_decl @F
-// CHECK:STDOUT:   %.L8 = fn_decl @G
-// CHECK:STDOUT:   %.L10 = fn_decl @Or
+// CHECK:STDOUT:   %(7:1) = fn_decl @F
+// CHECK:STDOUT:   %(8:1) = fn_decl @G
+// CHECK:STDOUT:   %(10:1) = fn_decl @Or
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.L7: bool = bool_value true
-// CHECK:STDOUT:   return %.L7
+// CHECK:STDOUT:   %(7:25): bool = bool_value true
+// CHECK:STDOUT:   return %(7:25)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.L8: bool = bool_value true
-// CHECK:STDOUT:   return %.L8
+// CHECK:STDOUT:   %(8:25): bool = bool_value true
+// CHECK:STDOUT:   return %(8:25)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.L11: bool = call @F()
-// CHECK:STDOUT:   %.L11.14: bool = not %.L11
-// CHECK:STDOUT:   %.L11.14.0: bool = bool_value true
-// CHECK:STDOUT:   if %.L11.14 br !.L11 else br !.L11.14(%.L11.14.0)
+// CHECK:STDOUT:   %(11:11): bool = call @F()
+// CHECK:STDOUT:   %(11:14)₁: bool = not %(11:11)
+// CHECK:STDOUT:   %(11:14)₂: bool = bool_value true
+// CHECK:STDOUT:   if %(11:14)₁ br !(11:18) else br !(11:14)(%(11:14)₂)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.L11:
-// CHECK:STDOUT:   %.L11.18: bool = call @G()
-// CHECK:STDOUT:   br !.L11.14(%.L11.18)
+// CHECK:STDOUT: !(11:18):
+// CHECK:STDOUT:   %(11:18): bool = call @G()
+// CHECK:STDOUT:   br !(11:14)(%(11:18))
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.L11.14:
-// CHECK:STDOUT:   %.L11.14.1: bool = block_arg !.L11.14
-// CHECK:STDOUT:   return %.L11.14.1
+// CHECK:STDOUT: !(11:14):
+// CHECK:STDOUT:   %(11:14)₃: bool = block_arg !(11:14)
+// CHECK:STDOUT:   return %(11:14)₃
 // CHECK:STDOUT: }

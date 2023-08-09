@@ -66,12 +66,12 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L10: type = stub_reference i32
-// CHECK:STDOUT:   %.L10.14: type = tuple_type (type)
-// CHECK:STDOUT:   %.L10.14.0: (type,) = tuple_value (%.L10)
-// CHECK:STDOUT:   %.L10.14.1: type = tuple_type (i32)
+// CHECK:STDOUT:   %(10:9): type = stub_reference i32
+// CHECK:STDOUT:   %(10:14)₁: type = tuple_type (type)
+// CHECK:STDOUT:   %(10:14)₂: (type,) = tuple_value (%(10:9))
+// CHECK:STDOUT:   %(10:14)₃: type = tuple_type (i32)
 // CHECK:STDOUT:   %x: (i32,) = var
-// CHECK:STDOUT:   %.L10.19: type = stub_reference i32
-// CHECK:STDOUT:   %.L10.24: (type,) = tuple_value (%.L10.19)
+// CHECK:STDOUT:   %(10:19): type = stub_reference i32
+// CHECK:STDOUT:   %(10:24): (type,) = tuple_value (%(10:19))
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

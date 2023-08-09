@@ -79,11 +79,11 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L7 = fn_decl @F
+// CHECK:STDOUT:   %(7:1) = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.L8: i32 = int_value 0
-// CHECK:STDOUT:   return %.L8
+// CHECK:STDOUT:   %(8:10): i32 = int_value 0
+// CHECK:STDOUT:   return %(8:10)
 // CHECK:STDOUT: }

@@ -54,9 +54,9 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L10: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %(10:16): type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: {.a: i32} = var
-// CHECK:STDOUT:   %.L10.21: type = struct_type {}
-// CHECK:STDOUT:   %.L10.21.0: {} = struct_value ()
+// CHECK:STDOUT:   %(10:21)₁: type = struct_type {}
+// CHECK:STDOUT:   %(10:21)₂: {} = struct_value ()
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

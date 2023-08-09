@@ -70,11 +70,11 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L10: type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %(10:25): type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %x: {.a: i32, .b: i32} = var
-// CHECK:STDOUT:   %.L10.35: i32 = int_value 1
-// CHECK:STDOUT:   %.L10.33: i32 = stub_reference %.L10.35
-// CHECK:STDOUT:   %.L10.36: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %.L10.36.0: {.a: i32} = struct_value (%.L10.33)
+// CHECK:STDOUT:   %(10:35): i32 = int_value 1
+// CHECK:STDOUT:   %(10:33): i32 = stub_reference %(10:35)
+// CHECK:STDOUT:   %(10:36)₁: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %(10:36)₂: {.a: i32} = struct_value (%(10:33))
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

@@ -71,10 +71,10 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.L7: {} = struct_value ()
-// CHECK:STDOUT:   %.L7.44: type = ptr_type {}
-// CHECK:STDOUT:   %.L7.35: type = const_type {}*
-// CHECK:STDOUT:   %.L7.1 = fn_decl @ConstMismatch
+// CHECK:STDOUT:   %(7:43): {} = struct_value ()
+// CHECK:STDOUT:   %(7:44): type = ptr_type {}
+// CHECK:STDOUT:   %(7:35): type = const_type {}*
+// CHECK:STDOUT:   %(7:1) = fn_decl @ConstMismatch
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {
