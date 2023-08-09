@@ -60,5 +60,5 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %.loc11_10: i32 = int_value 12
 // CHECK:STDOUT:   %.loc11_15: f64 = real_value 34e-1
 // CHECK:STDOUT:   %.loc11_13: <error> = add <error>, %.loc11_15
-// CHECK:STDOUT:   return %.loc11_13
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
