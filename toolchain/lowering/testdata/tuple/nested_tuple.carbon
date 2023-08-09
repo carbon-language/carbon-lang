@@ -12,15 +12,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'nested_tuple.carbon'
 // CHECK:STDOUT: source_filename = "nested_tuple.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %TupleLiteralType = type { {} }
-// CHECK:STDOUT: %TupleLiteralType.0 = type { %TupleLiteralType }
+// CHECK:STDOUT: %type = type {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Run() {
-// CHECK:STDOUT:   %TupleLiteralValue = alloca %TupleLiteralType, align 8
-// CHECK:STDOUT:   %1 = getelementptr inbounds %TupleLiteralType, ptr %TupleLiteralValue, i32 0, i32 0
-// CHECK:STDOUT:   store {} zeroinitializer, ptr %1, align 1
-// CHECK:STDOUT:   %TupleLiteralValue1 = alloca %TupleLiteralType.0, align 8
-// CHECK:STDOUT:   %2 = getelementptr inbounds %TupleLiteralType.0, ptr %TupleLiteralValue1, i32 0, i32 0
-// CHECK:STDOUT:   store ptr %TupleLiteralValue, ptr %2, align 8
+// CHECK:STDOUT:   %tuple = alloca { %type }, align 8
+// CHECK:STDOUT:   %1 = getelementptr inbounds { %type }, ptr %tuple, i32 0, i32 0
+// CHECK:STDOUT:   store %type zeroinitializer, ptr %1, align 1
+// CHECK:STDOUT:   %tuple1 = alloca { { %type } }, align 8
+// CHECK:STDOUT:   %2 = getelementptr inbounds { { %type } }, ptr %tuple1, i32 0, i32 0
+// CHECK:STDOUT:   store ptr %tuple, ptr %2, align 8
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }
