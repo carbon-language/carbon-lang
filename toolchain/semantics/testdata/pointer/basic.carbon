@@ -6,14 +6,9 @@
 
 fn F() -> i32 {
   var n: i32 = 0;
-  var p: i32*;
+  var p: i32* = &n;
 
-  // TODO: Test taking address and dereference.
-  // p = &n;
-  // *p = 1;
-  // return *p;
-
-  return 0;
+  return *p;
 }
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
@@ -21,7 +16,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT:   0,
 // CHECK:STDOUT:   0,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
@@ -46,8 +40,10 @@ fn F() -> i32 {
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+6, type: type1},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+8},
+// CHECK:STDOUT:   {kind: AddressOf, arg0: node+1, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+8},
+// CHECK:STDOUT:   {kind: Dereference, arg0: node+6, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+10},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -65,6 +61,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:

@@ -15,6 +15,6 @@ fn G(n: i32) { F(n); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @G(i32 %n) {
 // CHECK:STDOUT:   call void @F(i32 %n)
-// CHECK:STDOUT:   %TupleLiteralValue = alloca {}, align 8
+// CHECK:STDOUT:   %call.result = alloca {}, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

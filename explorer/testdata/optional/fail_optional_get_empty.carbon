@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDERR: RUNTIME ERROR: /explorer/data/prelude.carbon:{{\d+}}: "Attempted to unwrap empty Optional"
+// CHECK:STDERR: RUNTIME ERROR: prelude.carbon:{{\d+}}: "Attempted to unwrap empty Optional"
 
 package ExplorerTest api;
 

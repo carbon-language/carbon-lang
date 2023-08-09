@@ -220,6 +220,7 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
       // now, all cross-references refer to builtin types from the prelude.
       return 0;
 
+    case SemanticsNodeKind::AddressOf:
     case SemanticsNodeKind::Assign:
     case SemanticsNodeKind::BinaryOperatorAdd:
     case SemanticsNodeKind::BindName:
@@ -229,6 +230,7 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::BranchIf:
     case SemanticsNodeKind::BranchWithArg:
     case SemanticsNodeKind::Call:
+    case SemanticsNodeKind::Dereference:
     case SemanticsNodeKind::FunctionDeclaration:
     case SemanticsNodeKind::Index:
     case SemanticsNodeKind::IntegerLiteral:
@@ -289,7 +291,8 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
           out << "const ";
 
           // Add parentheses if required.
-          auto inner_type_node_id = GetType(node.GetAsConstType());
+          auto inner_type_node_id =
+              GetTypeAllowBuiltinTypes(node.GetAsConstType());
           if (GetTypePrecedence(GetNode(inner_type_node_id).kind()) <
               GetTypePrecedence(node.kind())) {
             out << "(";
@@ -305,7 +308,8 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
       case SemanticsNodeKind::PointerType: {
         if (step.index == 0) {
           steps.push_back(step.Next());
-          steps.push_back({.node_id = GetType(node.GetAsPointerType())});
+          steps.push_back(
+              {.node_id = GetTypeAllowBuiltinTypes(node.GetAsPointerType())});
         } else if (step.index == 1) {
           out << "*";
         }
@@ -358,6 +362,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
             {.node_id = GetTypeAllowBuiltinTypes(refs[step.index])});
         break;
       }
+      case SemanticsNodeKind::AddressOf:
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BindName:
@@ -368,6 +373,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
       case SemanticsNodeKind::BranchWithArg:
       case SemanticsNodeKind::Builtin:
       case SemanticsNodeKind::Call:
+      case SemanticsNodeKind::Dereference:
       case SemanticsNodeKind::CrossReference:
       case SemanticsNodeKind::FunctionDeclaration:
       case SemanticsNodeKind::Index:
@@ -405,6 +411,89 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
   }
 
   return str;
+}
+
+auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
+                                    SemanticsNodeId node_id)
+    -> SemanticsExpressionCategory {
+  const SemanticsIR* ir = &semantics_ir;
+  while (true) {
+    auto node = ir->GetNode(node_id);
+    switch (node.kind()) {
+      case SemanticsNodeKind::Invalid:
+      case SemanticsNodeKind::Assign:
+      case SemanticsNodeKind::Branch:
+      case SemanticsNodeKind::BranchIf:
+      case SemanticsNodeKind::BranchWithArg:
+      case SemanticsNodeKind::FunctionDeclaration:
+      case SemanticsNodeKind::Namespace:
+      case SemanticsNodeKind::Return:
+      case SemanticsNodeKind::ReturnExpression:
+      case SemanticsNodeKind::StructTypeField:
+        return SemanticsExpressionCategory::NotExpression;
+
+      case SemanticsNodeKind::CrossReference: {
+        auto [xref_id, xref_node_id] = node.GetAsCrossReference();
+        ir = &semantics_ir.GetCrossReferenceIR(xref_id);
+        node_id = xref_node_id;
+        continue;
+      }
+
+      case SemanticsNodeKind::Call:
+        // TODO: This should eventually be Initializing.
+        return SemanticsExpressionCategory::Value;
+
+      case SemanticsNodeKind::BindName: {
+        auto [name_id, value_id] = node.GetAsBindName();
+        node_id = value_id;
+        continue;
+      }
+
+      case SemanticsNodeKind::AddressOf:
+      case SemanticsNodeKind::BinaryOperatorAdd:
+      case SemanticsNodeKind::BlockArg:
+      case SemanticsNodeKind::BoolLiteral:
+      case SemanticsNodeKind::Builtin:
+      case SemanticsNodeKind::ConstType:
+      case SemanticsNodeKind::IntegerLiteral:
+      case SemanticsNodeKind::PointerType:
+      case SemanticsNodeKind::RealLiteral:
+      case SemanticsNodeKind::StringLiteral:
+      case SemanticsNodeKind::StructType:
+      case SemanticsNodeKind::TupleType:
+      case SemanticsNodeKind::UnaryOperatorNot:
+        return SemanticsExpressionCategory::Value;
+
+      case SemanticsNodeKind::StructMemberAccess: {
+        auto [base_id, member_index] = node.GetAsStructMemberAccess();
+        node_id = base_id;
+        continue;
+      }
+
+      case SemanticsNodeKind::Index: {
+        auto [base_id, index_id] = node.GetAsIndex();
+        node_id = base_id;
+        continue;
+      }
+
+      case SemanticsNodeKind::StubReference: {
+        node_id = node.GetAsStubReference();
+        continue;
+      }
+
+      case SemanticsNodeKind::StructValue:
+      case SemanticsNodeKind::TupleValue:
+        // TODO: Eventually these will depend on the context in which the value
+        // is used, and could be either Value or Initializing. We may want
+        // different node kinds for a struct/tuple initializer versus a
+        // struct/tuple value construction.
+        return SemanticsExpressionCategory::Value;
+
+      case SemanticsNodeKind::Dereference:
+      case SemanticsNodeKind::VarStorage:
+        return SemanticsExpressionCategory::DurableReference;
+    }
+  }
 }
 
 }  // namespace Carbon

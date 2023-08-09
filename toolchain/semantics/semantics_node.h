@@ -307,6 +307,9 @@ class SemanticsNode {
     }
   };
 
+  using AddressOf = SemanticsNode::Factory<SemanticsNodeKind::AddressOf,
+                                           SemanticsNodeId /*lvalue_id*/>;
+
   using Assign = SemanticsNode::FactoryNoType<SemanticsNodeKind::Assign,
                                               SemanticsNodeId /*lhs_id*/,
                                               SemanticsNodeId /*rhs_id*/>;
@@ -375,6 +378,9 @@ class SemanticsNode {
     }
     using FactoryBase::Get;
   };
+
+  using Dereference =
+      Factory<SemanticsNodeKind::Dereference, SemanticsNodeId /*pointer_id*/>;
 
   using FunctionDeclaration =
       FactoryNoType<SemanticsNodeKind::FunctionDeclaration,

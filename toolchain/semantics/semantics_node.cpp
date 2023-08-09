@@ -20,7 +20,7 @@ static auto PrintArgs(llvm::raw_ostream& out, std::pair<T0, T1> args) -> void {
   out << ", arg1: " << args.second;
 }
 
-void SemanticsNode::Print(llvm::raw_ostream& out) const {
+auto SemanticsNode::Print(llvm::raw_ostream& out) const -> void {
   out << "{kind: " << kind_;
   switch (kind_) {
 #define CARBON_SEMANTICS_NODE_KIND(Name) \
