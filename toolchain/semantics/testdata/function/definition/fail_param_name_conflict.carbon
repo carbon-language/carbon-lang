@@ -59,10 +59,10 @@ fn Bar(a: i32, a: i32) {}
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(13:1) = fn_decl @Bar
+// CHECK:STDOUT:   %.loc13 = fn_decl @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a(13:8): i32, %a(13:16): i32) {
+// CHECK:STDOUT: fn @Bar(%a.loc13_8: i32, %a.loc13_16: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

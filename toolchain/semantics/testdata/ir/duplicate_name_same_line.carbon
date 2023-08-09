@@ -70,23 +70,23 @@ fn A() { var n: i32 = 1; if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:1) = fn_decl @A
+// CHECK:STDOUT:   %.loc7 = fn_decl @A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n(7:14): i32 = var
-// CHECK:STDOUT:   %(7:23): i32 = int_value 1
-// CHECK:STDOUT:   assign %n(7:14), %(7:23)
-// CHECK:STDOUT:   %(7:30): bool = bool_value true
-// CHECK:STDOUT:   if %(7:30) br !(7:42) else br !(7:56)
+// CHECK:STDOUT:   %n.loc7_14: i32 = var
+// CHECK:STDOUT:   %.loc7_23: i32 = int_value 1
+// CHECK:STDOUT:   assign %n.loc7_14, %.loc7_23
+// CHECK:STDOUT:   %.loc7_30: bool = bool_value true
+// CHECK:STDOUT:   if %.loc7_30 br !.loc7_42 else br !.loc7_56
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(7:42):
-// CHECK:STDOUT:   %n(7:42): i32 = var
-// CHECK:STDOUT:   %(7:51): i32 = int_value 2
-// CHECK:STDOUT:   assign %n(7:42), %(7:51)
-// CHECK:STDOUT:   br !(7:56)
+// CHECK:STDOUT: !.loc7_42:
+// CHECK:STDOUT:   %n.loc7_42: i32 = var
+// CHECK:STDOUT:   %.loc7_51: i32 = int_value 2
+// CHECK:STDOUT:   assign %n.loc7_42, %.loc7_51
+// CHECK:STDOUT:   br !.loc7_56
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(7:56):
+// CHECK:STDOUT: !.loc7_56:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

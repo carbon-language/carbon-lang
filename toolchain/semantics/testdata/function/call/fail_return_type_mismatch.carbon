@@ -66,20 +66,20 @@ fn Run() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:1) = fn_decl @Foo
-// CHECK:STDOUT:   %(9:1) = fn_decl @Run
+// CHECK:STDOUT:   %.loc7 = fn_decl @Foo
+// CHECK:STDOUT:   %.loc9 = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %(7:26): f64 = real_value 10e-1
-// CHECK:STDOUT:   return %(7:26)
+// CHECK:STDOUT:   %.loc7: f64 = real_value 10e-1
+// CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: i32 = var
-// CHECK:STDOUT:   %(13:19): f64 = call @Foo()
+// CHECK:STDOUT:   %.loc13: f64 = call @Foo()
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

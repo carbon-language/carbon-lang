@@ -49,11 +49,11 @@ fn Main() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:1) = fn_decl @Main
+// CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %(14:10): i32 = int_value 0
-// CHECK:STDOUT:   return %(14:10)
+// CHECK:STDOUT:   %.loc14: i32 = int_value 0
+// CHECK:STDOUT:   return %.loc14
 // CHECK:STDOUT: }

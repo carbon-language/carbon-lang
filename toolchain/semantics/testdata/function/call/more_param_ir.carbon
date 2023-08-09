@@ -115,8 +115,8 @@ fn Main() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:1) = fn_decl @Foo
-// CHECK:STDOUT:   %(9:1) = fn_decl @Main
+// CHECK:STDOUT:   %.loc7 = fn_decl @Foo
+// CHECK:STDOUT:   %.loc9 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a: i32, %b: i32, %c: i32) {
@@ -126,19 +126,19 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %(11:7): i32 = int_value 1
-// CHECK:STDOUT:   %(11:11): i32 = int_value 2
-// CHECK:STDOUT:   %(11:9): i32 = add %(11:7), %(11:11)
-// CHECK:STDOUT:   %(11:15): i32 = int_value 3
-// CHECK:STDOUT:   %(11:13)₁: i32 = add %(11:9), %(11:15)
-// CHECK:STDOUT:   %(11:13)₂: i32 = stub_reference %(11:13)₁
-// CHECK:STDOUT:   %(11:18): i32 = int_value 4
-// CHECK:STDOUT:   %(11:22): i32 = int_value 5
-// CHECK:STDOUT:   %(11:20)₁: i32 = add %(11:18), %(11:22)
-// CHECK:STDOUT:   %(11:20)₂: i32 = stub_reference %(11:20)₁
-// CHECK:STDOUT:   %(11:25)₁: i32 = int_value 6
-// CHECK:STDOUT:   %(11:25)₂: i32 = stub_reference %(11:25)₁
-// CHECK:STDOUT:   %(11:6)₁: type = tuple_type ()
-// CHECK:STDOUT:   %(11:6)₂: () = call @Foo(%(11:13)₂, %(11:20)₂, %(11:25)₂)
+// CHECK:STDOUT:   %.loc11_7: i32 = int_value 1
+// CHECK:STDOUT:   %.loc11_11: i32 = int_value 2
+// CHECK:STDOUT:   %.loc11_9: i32 = add %.loc11_7, %.loc11_11
+// CHECK:STDOUT:   %.loc11_15: i32 = int_value 3
+// CHECK:STDOUT:   %.loc11_13.1: i32 = add %.loc11_9, %.loc11_15
+// CHECK:STDOUT:   %.loc11_13.2: i32 = stub_reference %.loc11_13.1
+// CHECK:STDOUT:   %.loc11_18: i32 = int_value 4
+// CHECK:STDOUT:   %.loc11_22: i32 = int_value 5
+// CHECK:STDOUT:   %.loc11_20.1: i32 = add %.loc11_18, %.loc11_22
+// CHECK:STDOUT:   %.loc11_20.2: i32 = stub_reference %.loc11_20.1
+// CHECK:STDOUT:   %.loc11_25.1: i32 = int_value 6
+// CHECK:STDOUT:   %.loc11_25.2: i32 = stub_reference %.loc11_25.1
+// CHECK:STDOUT:   %.loc11_6.1: type = tuple_type ()
+// CHECK:STDOUT:   %.loc11_6.2: () = call @Foo(%.loc11_13.2, %.loc11_20.2, %.loc11_25.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

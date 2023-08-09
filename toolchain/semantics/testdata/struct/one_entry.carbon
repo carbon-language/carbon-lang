@@ -73,12 +73,12 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:16): type = struct_type {.a: i32}
+// CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: {.a: i32} = var
-// CHECK:STDOUT:   %(7:26): i32 = int_value 4
-// CHECK:STDOUT:   %(7:24): i32 = stub_reference %(7:26)
-// CHECK:STDOUT:   %(7:27): {.a: i32} = struct_value (%(7:24))
-// CHECK:STDOUT:   assign %x, %(7:27)
+// CHECK:STDOUT:   %.loc7_26: i32 = int_value 4
+// CHECK:STDOUT:   %.loc7_24: i32 = stub_reference %.loc7_26
+// CHECK:STDOUT:   %.loc7_27: {.a: i32} = struct_value (%.loc7_24)
+// CHECK:STDOUT:   assign %x, %.loc7_27
 // CHECK:STDOUT:   %y: {.a: i32} = var
 // CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }

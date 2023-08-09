@@ -42,10 +42,10 @@ fn Foo.Baz() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(10:1) = fn_decl @₁
+// CHECK:STDOUT:   %.loc10 = fn_decl @.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @₁() {
+// CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

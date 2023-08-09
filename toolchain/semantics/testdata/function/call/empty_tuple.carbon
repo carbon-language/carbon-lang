@@ -79,9 +79,9 @@ fn Main() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:20): () = tuple_value ()
-// CHECK:STDOUT:   %(7:1) = fn_decl @Echo
-// CHECK:STDOUT:   %(11:1) = fn_decl @Main
+// CHECK:STDOUT:   %.loc7_20: () = tuple_value ()
+// CHECK:STDOUT:   %.loc7_1 = fn_decl @Echo
+// CHECK:STDOUT:   %.loc11 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Echo(%a: ()) -> () {
@@ -91,8 +91,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %(12:9)₁: () = tuple_value ()
-// CHECK:STDOUT:   %(12:9)₂: () = stub_reference %(12:9)₁
-// CHECK:STDOUT:   %(12:7): () = call @Echo(%(12:9)₂)
+// CHECK:STDOUT:   %.loc12_9.1: () = tuple_value ()
+// CHECK:STDOUT:   %.loc12_9.2: () = stub_reference %.loc12_9.1
+// CHECK:STDOUT:   %.loc12_7: () = call @Echo(%.loc12_9.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -123,44 +123,44 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:1) = fn_decl @F
+// CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a: bool, %b: bool, %c: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %a br !(8:20)₁ else br !(8:44)₁
+// CHECK:STDOUT:   if %a br !.loc8_20.1 else br !.loc8_44.1
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(8:20)₁:
-// CHECK:STDOUT:   if %b br !(8:30) else br !(8:37)
+// CHECK:STDOUT: !.loc8_20.1:
+// CHECK:STDOUT:   if %b br !.loc8_30 else br !.loc8_37
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(8:30):
-// CHECK:STDOUT:   %(8:30): i32 = int_value 1
-// CHECK:STDOUT:   br !(8:20)₂(%(8:30))
+// CHECK:STDOUT: !.loc8_30:
+// CHECK:STDOUT:   %.loc8_30: i32 = int_value 1
+// CHECK:STDOUT:   br !.loc8_20.2(%.loc8_30)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(8:37):
-// CHECK:STDOUT:   %(8:37): i32 = int_value 2
-// CHECK:STDOUT:   br !(8:20)₂(%(8:37))
+// CHECK:STDOUT: !.loc8_37:
+// CHECK:STDOUT:   %.loc8_37: i32 = int_value 2
+// CHECK:STDOUT:   br !.loc8_20.2(%.loc8_37)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(8:20)₂:
-// CHECK:STDOUT:   %(8:20): i32 = block_arg !(8:20)₂
-// CHECK:STDOUT:   br !(8:10)(%(8:20))
+// CHECK:STDOUT: !.loc8_20.2:
+// CHECK:STDOUT:   %.loc8_20: i32 = block_arg !.loc8_20.2
+// CHECK:STDOUT:   br !.loc8_10(%.loc8_20)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(8:44)₁:
-// CHECK:STDOUT:   if %c br !(8:54) else br !(8:61)
+// CHECK:STDOUT: !.loc8_44.1:
+// CHECK:STDOUT:   if %c br !.loc8_54 else br !.loc8_61
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(8:54):
-// CHECK:STDOUT:   %(8:54): i32 = int_value 3
-// CHECK:STDOUT:   br !(8:44)₂(%(8:54))
+// CHECK:STDOUT: !.loc8_54:
+// CHECK:STDOUT:   %.loc8_54: i32 = int_value 3
+// CHECK:STDOUT:   br !.loc8_44.2(%.loc8_54)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(8:61):
-// CHECK:STDOUT:   %(8:61): i32 = int_value 4
-// CHECK:STDOUT:   br !(8:44)₂(%(8:61))
+// CHECK:STDOUT: !.loc8_61:
+// CHECK:STDOUT:   %.loc8_61: i32 = int_value 4
+// CHECK:STDOUT:   br !.loc8_44.2(%.loc8_61)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(8:44)₂:
-// CHECK:STDOUT:   %(8:44): i32 = block_arg !(8:44)₂
-// CHECK:STDOUT:   br !(8:10)(%(8:44))
+// CHECK:STDOUT: !.loc8_44.2:
+// CHECK:STDOUT:   %.loc8_44: i32 = block_arg !.loc8_44.2
+// CHECK:STDOUT:   br !.loc8_10(%.loc8_44)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(8:10):
-// CHECK:STDOUT:   %(8:10): i32 = block_arg !(8:10)
-// CHECK:STDOUT:   return %(8:10)
+// CHECK:STDOUT: !.loc8_10:
+// CHECK:STDOUT:   %.loc8_10: i32 = block_arg !.loc8_10
+// CHECK:STDOUT:   return %.loc8_10
 // CHECK:STDOUT: }

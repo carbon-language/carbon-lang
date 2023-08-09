@@ -63,12 +63,12 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(10:9)₁: type = struct_type {}
-// CHECK:STDOUT:   %(10:9)₂: {} = struct_value ()
+// CHECK:STDOUT:   %.loc10_9.1: type = struct_type {}
+// CHECK:STDOUT:   %.loc10_9.2: {} = struct_value ()
 // CHECK:STDOUT:   %x: {} = var
-// CHECK:STDOUT:   %(10:19): i32 = int_value 1
-// CHECK:STDOUT:   %(10:17): i32 = stub_reference %(10:19)
-// CHECK:STDOUT:   %(10:20)₁: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %(10:20)₂: {.a: i32} = struct_value (%(10:17))
+// CHECK:STDOUT:   %.loc10_19: i32 = int_value 1
+// CHECK:STDOUT:   %.loc10_17: i32 = stub_reference %.loc10_19
+// CHECK:STDOUT:   %.loc10_20.1: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %.loc10_20.2: {.a: i32} = struct_value (%.loc10_17)
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

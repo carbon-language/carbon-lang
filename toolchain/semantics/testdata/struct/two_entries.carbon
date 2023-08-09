@@ -88,14 +88,14 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:25): type = struct_type {.a: i32, .b: i32}
+// CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %x: {.a: i32, .b: i32} = var
-// CHECK:STDOUT:   %(7:35): i32 = int_value 1
-// CHECK:STDOUT:   %(7:33): i32 = stub_reference %(7:35)
-// CHECK:STDOUT:   %(7:43): i32 = int_value 2
-// CHECK:STDOUT:   %(7:41): i32 = stub_reference %(7:43)
-// CHECK:STDOUT:   %(7:44): {.a: i32, .b: i32} = struct_value (%(7:33), %(7:41))
-// CHECK:STDOUT:   assign %x, %(7:44)
+// CHECK:STDOUT:   %.loc7_35: i32 = int_value 1
+// CHECK:STDOUT:   %.loc7_33: i32 = stub_reference %.loc7_35
+// CHECK:STDOUT:   %.loc7_43: i32 = int_value 2
+// CHECK:STDOUT:   %.loc7_41: i32 = stub_reference %.loc7_43
+// CHECK:STDOUT:   %.loc7_44: {.a: i32, .b: i32} = struct_value (%.loc7_33, %.loc7_41)
+// CHECK:STDOUT:   assign %x, %.loc7_44
 // CHECK:STDOUT:   %y: {.a: i32, .b: i32} = var
 // CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }

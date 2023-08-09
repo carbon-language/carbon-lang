@@ -59,15 +59,15 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:1) = fn_decl @Main
+// CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %(13:10): i32 = int_value 12
-// CHECK:STDOUT:   %(13:15): f64 = real_value 34e-1
-// CHECK:STDOUT:   %(13:13): <error> = add <error>, %(13:15)
-// CHECK:STDOUT:   %(13:21): i32 = int_value 12
-// CHECK:STDOUT:   %(13:19): <error> = add %(13:13), %(13:21)
-// CHECK:STDOUT:   return %(13:19)
+// CHECK:STDOUT:   %.loc13_10: i32 = int_value 12
+// CHECK:STDOUT:   %.loc13_15: f64 = real_value 34e-1
+// CHECK:STDOUT:   %.loc13_13: <error> = add <error>, %.loc13_15
+// CHECK:STDOUT:   %.loc13_21: i32 = int_value 12
+// CHECK:STDOUT:   %.loc13_19: <error> = add %.loc13_13, %.loc13_21
+// CHECK:STDOUT:   return %.loc13_19
 // CHECK:STDOUT: }

@@ -59,9 +59,9 @@ fn Foo.Baz() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:14) = namespace {.Baz = %(9:1)}
-// CHECK:STDOUT:   %(9:1) = fn_decl @Baz
-// CHECK:STDOUT:   %(18:1) = fn_decl @₁
+// CHECK:STDOUT:   %.loc7 = namespace {.Baz = %.loc9}
+// CHECK:STDOUT:   %.loc9 = fn_decl @Baz
+// CHECK:STDOUT:   %.loc18 = fn_decl @.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz() {
@@ -69,7 +69,7 @@ fn Foo.Baz() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @₁() {
+// CHECK:STDOUT: fn @.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

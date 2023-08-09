@@ -50,9 +50,9 @@ var x: () = (66);
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(10:9)₁: type = tuple_type ()
-// CHECK:STDOUT:   %(10:9)₂: () = tuple_value ()
+// CHECK:STDOUT:   %.loc10_9.1: type = tuple_type ()
+// CHECK:STDOUT:   %.loc10_9.2: () = tuple_value ()
 // CHECK:STDOUT:   %x: () = var
-// CHECK:STDOUT:   %(10:14): i32 = int_value 66
+// CHECK:STDOUT:   %.loc10_14: i32 = int_value 66
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

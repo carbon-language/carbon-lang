@@ -71,11 +71,11 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(11:32): type = const_type i32
-// CHECK:STDOUT:   %(11:25): type = const_type const i32
-// CHECK:STDOUT:   %(11:42): type = ptr_type const i32
-// CHECK:STDOUT:   %(11:43): type = ptr_type const i32*
-// CHECK:STDOUT:   %(11:1) = fn_decl @F
+// CHECK:STDOUT:   %.loc11_32: type = const_type i32
+// CHECK:STDOUT:   %.loc11_25: type = const_type const i32
+// CHECK:STDOUT:   %.loc11_42: type = ptr_type const i32
+// CHECK:STDOUT:   %.loc11_43: type = ptr_type const i32*
+// CHECK:STDOUT:   %.loc11_1 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const i32**) -> const i32** {

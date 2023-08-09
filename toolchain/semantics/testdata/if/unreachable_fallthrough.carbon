@@ -72,18 +72,18 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:1) = fn_decl @If
+// CHECK:STDOUT:   %.loc7 = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !(9:12) else br !(11:12)
+// CHECK:STDOUT:   if %b br !.loc9 else br !.loc11
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(9:12):
-// CHECK:STDOUT:   %(9:12): i32 = int_value 1
-// CHECK:STDOUT:   return %(9:12)
+// CHECK:STDOUT: !.loc9:
+// CHECK:STDOUT:   %.loc9: i32 = int_value 1
+// CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(11:12):
-// CHECK:STDOUT:   %(11:12): i32 = int_value 2
-// CHECK:STDOUT:   return %(11:12)
+// CHECK:STDOUT: !.loc11:
+// CHECK:STDOUT:   %.loc11: i32 = int_value 2
+// CHECK:STDOUT:   return %.loc11
 // CHECK:STDOUT: }

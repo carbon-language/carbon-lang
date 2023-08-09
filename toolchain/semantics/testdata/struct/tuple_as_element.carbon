@@ -121,22 +121,22 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:23): type = stub_reference i32
-// CHECK:STDOUT:   %(7:27)₁: type = tuple_type (type)
-// CHECK:STDOUT:   %(7:27)₂: (type,) = tuple_value (%(7:23))
-// CHECK:STDOUT:   %(7:27)₃: type = tuple_type (i32)
-// CHECK:STDOUT:   %(7:28): type = struct_type {.a: i32, .b: (i32,)}
+// CHECK:STDOUT:   %.loc7_23: type = stub_reference i32
+// CHECK:STDOUT:   %.loc7_27.1: type = tuple_type (type)
+// CHECK:STDOUT:   %.loc7_27.2: (type,) = tuple_value (%.loc7_23)
+// CHECK:STDOUT:   %.loc7_27.3: type = tuple_type (i32)
+// CHECK:STDOUT:   %.loc7_28: type = struct_type {.a: i32, .b: (i32,)}
 // CHECK:STDOUT:   %x: {.a: i32, .b: (i32,)} = var
-// CHECK:STDOUT:   %(7:38): i32 = int_value 1
-// CHECK:STDOUT:   %(7:36): i32 = stub_reference %(7:38)
-// CHECK:STDOUT:   %(7:47)₁: i32 = int_value 2
-// CHECK:STDOUT:   %(7:47)₂: i32 = stub_reference %(7:47)₁
-// CHECK:STDOUT:   %(7:49): (i32,) = tuple_value (%(7:47)₂)
-// CHECK:STDOUT:   %(7:44): (i32,) = stub_reference %(7:49)
-// CHECK:STDOUT:   %(7:50): {.a: i32, .b: (i32,)} = struct_value (%(7:36), %(7:44))
-// CHECK:STDOUT:   assign %x, %(7:50)
-// CHECK:STDOUT:   %(8:23): type = stub_reference i32
-// CHECK:STDOUT:   %(8:27): (type,) = tuple_value (%(8:23))
+// CHECK:STDOUT:   %.loc7_38: i32 = int_value 1
+// CHECK:STDOUT:   %.loc7_36: i32 = stub_reference %.loc7_38
+// CHECK:STDOUT:   %.loc7_47.1: i32 = int_value 2
+// CHECK:STDOUT:   %.loc7_47.2: i32 = stub_reference %.loc7_47.1
+// CHECK:STDOUT:   %.loc7_49: (i32,) = tuple_value (%.loc7_47.2)
+// CHECK:STDOUT:   %.loc7_44: (i32,) = stub_reference %.loc7_49
+// CHECK:STDOUT:   %.loc7_50: {.a: i32, .b: (i32,)} = struct_value (%.loc7_36, %.loc7_44)
+// CHECK:STDOUT:   assign %x, %.loc7_50
+// CHECK:STDOUT:   %.loc8_23: type = stub_reference i32
+// CHECK:STDOUT:   %.loc8_27: (type,) = tuple_value (%.loc8_23)
 // CHECK:STDOUT:   %y: {.a: i32, .b: (i32,)} = var
 // CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }

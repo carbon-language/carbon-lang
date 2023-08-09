@@ -81,17 +81,17 @@ var y: (i32,) = x;
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:9): type = stub_reference i32
-// CHECK:STDOUT:   %(7:13)₁: type = tuple_type (type)
-// CHECK:STDOUT:   %(7:13)₂: (type,) = tuple_value (%(7:9))
-// CHECK:STDOUT:   %(7:13)₃: type = tuple_type (i32)
+// CHECK:STDOUT:   %.loc7_9: type = stub_reference i32
+// CHECK:STDOUT:   %.loc7_13.1: type = tuple_type (type)
+// CHECK:STDOUT:   %.loc7_13.2: (type,) = tuple_value (%.loc7_9)
+// CHECK:STDOUT:   %.loc7_13.3: type = tuple_type (i32)
 // CHECK:STDOUT:   %x: (i32,) = var
-// CHECK:STDOUT:   %(7:18)₁: i32 = int_value 4
-// CHECK:STDOUT:   %(7:18)₂: i32 = stub_reference %(7:18)₁
-// CHECK:STDOUT:   %(7:20): (i32,) = tuple_value (%(7:18)₂)
-// CHECK:STDOUT:   assign %x, %(7:20)
-// CHECK:STDOUT:   %(8:9): type = stub_reference i32
-// CHECK:STDOUT:   %(8:13): (type,) = tuple_value (%(8:9))
+// CHECK:STDOUT:   %.loc7_18.1: i32 = int_value 4
+// CHECK:STDOUT:   %.loc7_18.2: i32 = stub_reference %.loc7_18.1
+// CHECK:STDOUT:   %.loc7_20: (i32,) = tuple_value (%.loc7_18.2)
+// CHECK:STDOUT:   assign %x, %.loc7_20
+// CHECK:STDOUT:   %.loc8_9: type = stub_reference i32
+// CHECK:STDOUT:   %.loc8_13: (type,) = tuple_value (%.loc8_9)
 // CHECK:STDOUT:   %y: (i32,) = var
 // CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }

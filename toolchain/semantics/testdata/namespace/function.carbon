@@ -73,25 +73,25 @@ fn Bar() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:14) = namespace {.Baz = %(13:1)}
-// CHECK:STDOUT:   %(10:1) = fn_decl @Baz₁
-// CHECK:STDOUT:   %(13:1) = fn_decl @Baz₂
-// CHECK:STDOUT:   %(16:1) = fn_decl @Bar
+// CHECK:STDOUT:   %.loc7 = namespace {.Baz = %.loc13}
+// CHECK:STDOUT:   %.loc10 = fn_decl @Baz.1
+// CHECK:STDOUT:   %.loc13 = fn_decl @Baz.2
+// CHECK:STDOUT:   %.loc16 = fn_decl @Bar
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Baz₁() {
+// CHECK:STDOUT: fn @Baz.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Baz₂() {
+// CHECK:STDOUT: fn @Baz.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %(17:10)₁: type = tuple_type ()
-// CHECK:STDOUT:   %(17:10)₂: () = call @Baz₂()
+// CHECK:STDOUT:   %.loc17_10.1: type = tuple_type ()
+// CHECK:STDOUT:   %.loc17_10.2: () = call @Baz.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

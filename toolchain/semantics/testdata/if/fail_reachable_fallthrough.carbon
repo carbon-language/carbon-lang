@@ -152,46 +152,46 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %(7:1) = fn_decl @If1
-// CHECK:STDOUT:   %(17:1) = fn_decl @If2
-// CHECK:STDOUT:   %(27:1) = fn_decl @If3
+// CHECK:STDOUT:   %.loc7 = fn_decl @If1
+// CHECK:STDOUT:   %.loc17 = fn_decl @If2
+// CHECK:STDOUT:   %.loc27 = fn_decl @If3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If1(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !(9:12) else br !(8:3)
+// CHECK:STDOUT:   if %b br !.loc9 else br !.loc8
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(9:12):
-// CHECK:STDOUT:   %(9:12): i32 = int_value 1
-// CHECK:STDOUT:   return %(9:12)
+// CHECK:STDOUT: !.loc9:
+// CHECK:STDOUT:   %.loc9: i32 = int_value 1
+// CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(8:3):
-// CHECK:STDOUT:   br !₁
+// CHECK:STDOUT: !.loc8:
+// CHECK:STDOUT:   br !.1
 // CHECK:STDOUT:
-// CHECK:STDOUT: !₁:
+// CHECK:STDOUT: !.1:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If2(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !(18:3) else br !(20:12)
+// CHECK:STDOUT:   if %b br !.loc18 else br !.loc20
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(18:3):
-// CHECK:STDOUT:   br !₁
+// CHECK:STDOUT: !.loc18:
+// CHECK:STDOUT:   br !.1
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(20:12):
-// CHECK:STDOUT:   %(20:12): i32 = int_value 2
-// CHECK:STDOUT:   return %(20:12)
+// CHECK:STDOUT: !.loc20:
+// CHECK:STDOUT:   %.loc20: i32 = int_value 2
+// CHECK:STDOUT:   return %.loc20
 // CHECK:STDOUT:
-// CHECK:STDOUT: !₁:
+// CHECK:STDOUT: !.1:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If3(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !(29:12) else br !₁
+// CHECK:STDOUT:   if %b br !.loc29 else br !.1
 // CHECK:STDOUT:
-// CHECK:STDOUT: !(29:12):
-// CHECK:STDOUT:   %(29:12): i32 = int_value 1
-// CHECK:STDOUT:   return %(29:12)
+// CHECK:STDOUT: !.loc29:
+// CHECK:STDOUT:   %.loc29: i32 = int_value 1
+// CHECK:STDOUT:   return %.loc29
 // CHECK:STDOUT:
-// CHECK:STDOUT: !₁:
+// CHECK:STDOUT: !.1:
 // CHECK:STDOUT: }

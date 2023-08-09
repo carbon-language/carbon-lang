@@ -150,7 +150,7 @@ class NodeNamer {
       Name fallback = Name();
     };
 
-    char prefix;
+    llvm::StringRef prefix;
     llvm::StringMap<NameResult> allocated = {};
     int unnamed_count = 0;
 
@@ -160,8 +160,6 @@ class NodeNamer {
 
     auto AllocateName(const NodeNamer& namer, ParseTree::Node node,
                       std::string name = "") -> Name {
-      name.insert(0, 1, prefix);
-
       // The best (shortest) name for this node so far, and the current name
       // for it.
       Name best;
@@ -189,31 +187,32 @@ class NodeNamer {
         return added;
       };
 
-      // Use the given name if it's available.
-      if (name.size() > 1) {
+      // All names start with the prefix.
+      name.insert(0, prefix.data(), prefix.size());
+
+      // Use the given name if it's available and not just the prefix.
+      if (name.size() > prefix.size()) {
         add_name();
       }
 
       // Append location information to try to disambiguate.
       if (node.is_valid()) {
         auto token = namer.parse_tree_.node_token(node);
-        name += "(";
+        name += ".loc";
         name += llvm::itostr(namer.tokenized_buffer_.GetLineNumber(token));
-        name += ":";
+        add_name();
+
+        name += "_";
         name += llvm::itostr(namer.tokenized_buffer_.GetColumnNumber(token));
-        name += ")";
         add_name();
       }
 
       // Append numbers until we find an available name.
+      name += ".";
       auto name_size_without_counter = name.size();
       for (int counter = 1;; ++counter) {
         name.resize(name_size_without_counter);
-        for (char c : llvm::itostr(counter)) {
-          static constexpr llvm::StringRef subscripts[] = {
-              "₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"};
-          name += subscripts[c - '0'];
-        }
+        name += llvm::itostr(counter);
         if (add_name(/*mark_ambiguous=*/false)) {
           return best;
         }
@@ -224,8 +223,8 @@ class NodeNamer {
   // A named scope that contains named entities.
   struct Scope {
     Namespace::Name name;
-    Namespace nodes = {.prefix = '%'};
-    Namespace labels = {.prefix = '!'};
+    Namespace nodes = {.prefix = "%"};
+    Namespace labels = {.prefix = "!"};
   };
 
   auto GetScopeInfo(ScopeIndex scope_idx) -> Scope& {
@@ -286,7 +285,7 @@ class NodeNamer {
   const ParseTree& parse_tree_;
   const SemanticsIR& semantics_ir_;
 
-  Namespace globals = {.prefix = '@'};
+  Namespace globals = {.prefix = "@"};
   std::vector<std::pair<ScopeIndex, Namespace::Name>> nodes;
   std::vector<std::pair<ScopeIndex, Namespace::Name>> labels;
   std::vector<Scope> scopes;
