@@ -7,6 +7,7 @@
 fn F() {
   var a: i32;
   // Assignment can only appear as an expression statement, not as a subexpression.
+  // TODO: Produce the "can only be used as a complete statement" diagnostic in each of these cases.
   // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:10: Expected `,` or `)`.
   // CHECK:STDERR:   1 + (a = 1);
   // CHECK:STDERR:          ^
