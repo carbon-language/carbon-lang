@@ -12,13 +12,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Statically sized arrays](#statically-sized-arrays)
 -   [Basics](#basics)
--   [Syntactic semantics](#syntactic-semantics)
--   [Reified semantics and pack values](#reified-semantics-and-pack-values)
--   [Pattern semantics](#pattern-semantics)
--   [Typechecking](#typechecking)
-    -   [Pattern matching](#pattern-matching)
-        -   [Identifying potential matchings](#identifying-potential-matchings)
-        -   [The type-checking algorithm](#the-type-checking-algorithm)
+-   [Run-time expression and statement semantics](#run-time-expression-and-statement-semantics)
+-   [Typechecking expressions and statements](#typechecking-expressions-and-statements)
+    -   [Generalized tuple types](#generalized-tuple-types)
+    -   [Iterative typechecking](#iterative-typechecking)
+    -   [In-place typechecking](#in-place-typechecking)
+-   [Run-time pattern semantics](#run-time-pattern-semantics)
+-   [Typechecking pattern matching](#typechecking-pattern-matching)
+    -   [Identifying potential matchings](#identifying-potential-matchings)
+    -   [The type-checking algorithm](#the-type-checking-algorithm)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -72,7 +74,9 @@ fn Zip[ElementTypes:! [type;]]
 same precedence as `,`, `and`, and `or`, respectively. They are single tokens,
 and may not contain internal whitespace. `...{` is an opening delimiter that
 forms a balanced pair with `}`, and can contain any number of statements. An AST
-rooted at any of these operations is called a _pack expansion_.
+rooted at any of these operations is called a _pack expansion_. The operand of
+`...,`, `...and`, or `...or`, or the contents of the block delimited by
+`...{ }`, is called the _expansion body_.
 
 A pack expansion must contain one or more _expansion arguments_. These are
 usually marked by the `[:]` operator, but can also be unmarked usages of names
@@ -98,275 +102,219 @@ outer expansion's arguments. For example,
 of writing the parameter list of `Zip` to avoid giving `vectors` a pack type. We
 may further relax the restriction on nesting in the future.
 
-There are two complementary models for the meaning of pack expansions, the
-_syntactic_ model and the _reified_ model. In the syntactic model, we treat a
-pack expansion as being rewritten during monomorphization as a series of copies
-of the pack expansion, where in each copy, each expansion argument is replaced
-with one of its elements. In the reified model, we define the semantics in terms
-of _pack values_, which are created by the `[:]` operator and consumed by
-`...,`, `...and`, `...or`, and `...{`, and we generalize most non-variadic
-operations to apply element-wise to packs.
+A pack expansion can be thought of as a kind of loop, where the expansion body
+is implicitly parameterized by an integer value called the _pack index_, which
+ranges from 0 to one less than the arity of the expansion. The pack index is
+implicitly used as a subscript on the expansion arguments. This is easiest to
+see with `...{}`. For example, if `a`, `x`, and `y` are tuples of size 3, then
+this code:
 
-Both models work well for run-time expression evaluation, and should be
-equivalent in that context. The syntactic model provides a unified description
-of run-time expression and statement semantics, but is difficult to apply to
-symbolic computation, such as type checking and pattern matching. On the other
-hand, the reified model works well for symbolic computation and expression
-evaluation, but does not naturally extend to statement semantics.
+```carbon
+...{
+  let product: auto = [:]x * [:]y;
+  [:]a += product;
+}
+```
 
-We will rely primarily on the reified model, with two exceptions:
+is roughly equivalent to
 
--   We will use the syntactic model to describe the run-time semantics of `...{`
-    expansions, because it's not clear how to describe the semantics of
-    statements using the reified model, and it's difficult to bridge between the
-    two models within a single pack expansion.
--   We will sometimes use the syntactic model when describing the run-time
-    semantics of expressions, because expressions inside `...{` expansions must
-    use that model, and because run-time expressions in other expansions will
-    likely be implemented using that model.
+```carbon
+for (let template i:! i32 in (0, 1, 2)) {
+  let product: auto = x[i] * y[i];
+  a[i] += product;
+}
+```
 
-Type-checking and pattern-matching will always use the reified model, because
-they are inherently symbolic.
+Notice, however, that this notional rewritten form is not valid Carbon code,
+because the expressions `x[i]`, `y[i]`, and `z[i]` may have different types
+depending on the value of `i`.
 
-> **Open question:** Can we unify these two models? In particular, it seems
-> possible that we could generalize the reified model to cover statements, such
-> that the syntactic model can be derived from it as a special case. The "pack
-> index" introduced below may provide a path: the syntactic model seems to
-> consist of instantiating a series of copies of the code, where the symbolic
-> pack index is replaced with successive integer constants.
+`...and` and `...or` can likewise be interpreted as looping constructs, although
+the rewrite is less straightforward because Carbon doesn't have a way to write a
+loop in an expression context. An expression like `...and F([:]x, [:]y)` can be
+thought of as evaluating to the value of `result` after executing the following
+code fragment:
 
-## Syntactic semantics
+```
+var result: bool = true;
+for (let i:! i32 in (0, 1, 2)) {
+  result = result && F(x[i], y[i]);
+  if (result == false) { break; }
+}
+```
 
-In the syntactic model, the semantics of packs and pack expansions are specified
-in terms of a procedure for rewriting an AST rooted at `...{`, `...,`, `...and`,
-or `...or` to an equivalent AST that does not. This rewrite takes place at the
-same time as monomorphization of generic functions, which means that all names
-are resolved, all typable entities have known types, and all symbolic constants
-have known values.
+`...,` can't be modeled in terms of a code rewrite, because it evaluates to a
+sequence of values rather than a singular value, but it is still fundamentally
+iterative, as will be seen in the next section.
 
-A pack expansion with arity N is rewritten to N instances of the expansion,
-where in the Kth instance, every expansion argument is replaced by the Kth
-element of that argument. The details of the rewrite vary slightly depending on
-the root node of the expansion:
+## Run-time expression and statement semantics
 
--   In a `...{` expansion, each instance uses a `{` in place of the opening
-    `...{`.
--   In a `...,`, `...and`, or `...or` expansion, each instance has the expansion
-    operator removed, and the instances are joined using the corresponding
-    non-expansion operator.
+In all of the following, N is the arity of the pack expansion being discussed,
+and `$I` is a notional variable representing the pack index. These are run-time
+semantics, so the value of N is a known integer constant. Although the value of
+`$I` can vary during execution, it is nevertheless treated as a constant; for
+example, it can be used to index a tuple.
 
-An `...and` expansion with arity 0 is rewritten to `true` and an `...or`
-expansion with arity 0 is rewritten to `false` (the identities of the respective
-logical operations). A `...,` expansion with arity 0 is rewritten to `,`, and
-any `,` immediately before or after the expansion is removed.
+A statement of the form "`...{` _block-contents_ `}`" is evaluated by executing
+_block-contents_ N times, with `$I` ranging from 0 to N - 1.
 
-## Reified semantics and pack values
+An expression of the form "`...and` _operand_" is evaluated as follows: a
+notional `bool` variable `$R` is initialized to `true`, and then "`$R = $R and`
+_operand_" is executed up to N times, with `$I` ranging from 0 to N - 1. If at
+any point `$R` becomes false, this iteration is terminated early. The final
+value of `$R` is the value of the expression.
 
-We can intuitively think of packs as being much like tuples. For every tuple
-value there is a corresponding pack value, and the other way around, but the two
-values are not identical, because they support different operations. In
-particular, there is no way to access a specific element of a pack, whereas
-that's almost the only operation that tuples support.
+An expression of the form "`...or` _operand_" is evaluated the same way, but
+with `or` in place of `and`, and `true` and `false` transposed.
 
-We typically think of tuples as fixed-size sequences of elements, but in order
-to support variadics, we need to be able to reason symbolically about packs and
-tuples that contain subsequences of an indeterminate number of elements that
-share a common structure. For example, in a function with deduced parameters
+An expression of the form "`...,` _operand_" evaluates to a sequence of N
+values, where the k'th value is the value of _operand_ where `$I` is equal to
+k - 1.
+
+An expression of the form "`[:]` _argument_" evaluates to "_argument_ `[$I]`".
+
+An identifier expression that names a binding of pack type evaluates to the
+`$I`th value that it was bound to (indexed from zero).
+
+## Typechecking expressions and statements
+
+### Generalized tuple types
+
+The `...,` operator lets us form tuples out of sequences whose size is not known
+during typechecking. For example, in a function with deduced parameters
 `[N:! SizeType, M:! SizeType, Ts:! [type; N], Us:! [type; M]]`, the type
 `(..., [:]Ts, i32, ..., Optional([:]Us))` is a tuple whose elements are an
 indeterminate number of types, followed by `i32`, followed by a different
 indeterminate number of types that all have the form `Optional(U)` for some type
-`U`. Consequently, we need to represent tuples and packs in a more general way
-during symbolic evaluation, by saying that a pack or tuple consists of a
-sequence of _pack components_.
+`U`. We can't represent this as an explicit list of element types until the
+values of `M` and `N` are known, so we need a more general representation for
+tuple types.
 
-A pack component consists of a value called the _representative_, and an arity,
-both of which may be symbolic. As their name suggests, pack components cannot
-occur on their own, but only as part of an enclosing pack (or tuple). Pack
-components have no literal syntax in Carbon, but for purposes of illustration we
-will use the notation `<V, N>` to represent a pack component with representative
-V and arity N. There is a special symbolic variable called the _pack index_,
-which can only be used in the representative of a pack component, and only as
-the subscript of an indexing expression on a tuple or statically sized array.
-The pack index is used solely as a placeholder, and never has a value. We will
-use `$I` to represent it for purposes of illustration. _Expanding_ a component C
-with arity N (where N is a known constant) means replacing it with N components
-that have arity 1, where the representative of the k'th such component is a copy
-of the representative of C, where every usage of the pack index is replaced with
-k-1.
-
-For example, continuing the earlier example, the expression
-`(..., [:]Ts, i32, ..., Optional([:]Us))` symbolically evaluates to
-`(<Ts[$I], N>, <i32, 1>, <Us[$I], M>)` (the language rules leading to this
-result will be discussed below). If `N` is known to be 2, we can rewrite that
-value by expanding the first component, yielding
-`(<Ts[0], 1>, <Ts[1], 1>, <i32, 1>, <Us[$I], M>)`.
+In this model, a tuple type consists of a sequence of _pack components_, and a
+pack component consists of a type called the _representative_, and an arity,
+both of which may be symbolic. Pack components have no literal syntax in Carbon,
+but for purposes of illustration we will use the notation `<V, N>` to represent
+a pack component with representative V and arity N. There is a special symbolic
+variable called the _pack index_, which can only be used in the representative
+of a pack component, and only as the subscript of an indexing expression on a
+tuple or statically sized array. The pack index is used solely as a placeholder,
+and never has a value. We will use `$I` to represent it for purposes of
+illustration. So, continuing the earlier example, the type expression
+`(..., [:]Ts, i32, ..., Optional([:]Us))` symbolically evaluates to a tuple type
+consisting of three pack components: `<Ts[$I], N>`, `<i32, 1>`, and
+`<Optional(Us[$I]), M>`.
 
 A pack component is _variadic_ if its arity is unknown, and _singular_ if its
-arity is known to be 1 and does not refer to the pack index. In contexts where
-all pack components are known to be singular, we will sometimes refer to them as
-"elements". Pack values are always assumed to be normalized, meaning that every
-component is either singular or variadic. This is always possible because if the
-component's arity is known but not 1, we can expand it, which produces a
-sequence of singular components by construction. The _shape_ of a pack is
-another pack, found by replacing all representatives with `()` and leaving the
-arities unchanged. A _pack type_ is the type of a pack, and can be represented
-as a pack value whose representatives are types. The type of a pack is found by
-replacing each of its representatives with the representative's type.
+arity is known to be 1 and its representative does not refer to the pack index.
+In contexts where all pack components are known to be singular, we will
+sometimes refer to them as "elements". Pack values are always assumed to be
+normalized, meaning that every component is either singular or variadic. This is
+always possible because if a component's arity is known to be some fixed value N
+other than 1, we can replace it with N singular components. The _shape_ of a
+tuple type is the sequence of arities of its components, so the shape of
+`(..., [:]Ts, i32, ..., Optional([:]Us))` is `(N, 1, M)`.
 
-Even during symbolic evaluation, we need to maintain the structural equivalence
-between packs and tuples, so in this more generalized model, a tuple value
-consists of a sequence of pack components. Name bindings can have pack types,
-but only if they are local to a single function. Note that by construction,
-bindings with pack types always have an explicit `[:]` operator in their type
-expression:
+In order to index into a tuple, all of the components of its type must be
+singular, so that we can determine the type of the indexing expression.
 
-```carbon
-fn F(array: [i32;]) {
-  // ✅ Allowed: `pack` is local to `F`.
-  let (..., pack: [:][i32;]) = (..., [:]array);
+### Iterative typechecking
 
-  // ❌ Forbidden: `auto` can't deduce a pack type.
-  let (..., pack: auto) = (..., [:]array);
-}
+Without loss of generality, we can assume that every expansion argument is a
+tuple: if it has an array type `[T; N]`, we can treat it as having a tuple type
+consisting of N repetitions of `T`, and if it has a pack type `P`, we can treat
+it as having the tuple type `(..., P)`.
 
-// ❌ Forbidden: `pack` is not function-local.
-let (..., pack: [:][i32;]) = (1, 2, 3);
+Since the run-time semantics of an expansion are defined in terms of a notional
+rewritten form where we simultaneously iterate over the expansion arguments, in
+principle we can typecheck the expansion by typechecking the rewritten form.
+However, the rewritten form usually would not typecheck as ordinary Carbon code,
+because the expansion arguments can have different types on different
+iterations. Furthermore, the difference in types can propagate through
+expressions: if `x[$I]` and `y[$I]` can have different types for different
+values of `$I`, then so can `x[$I] * y[$I]`.
 
-// ✅ Allowed: `tuple` doesn't have a pack type.
-let tuple: (..., [:][i32;]) = (1, 2, 3);
-```
+In effect, we have to typecheck the loop body separately for each set of element
+types in the set of expansion arguments (in other words, for each possible value
+of `$I`). We can't literally do that at typechecking time, because the expansion
+argument types are represented as sequences of pack components that may not be
+singular. However, if all expansion arguments have the same shape, the unknown
+arities of the components become irrelevant: typechecking will behave exactly
+the same on each iteration within a component, so we only need to check once for
+each set of components.
 
-Most operations that are defined on singular values are defined on packs as
-well, with the following semantics: all operands that are packs must have the
-same shape, and the result of the operation will itself have the same shape as
-the operands. The representatives are computed by simultaneously iterating
-through the input packs and applying the non-pack version of the operation: the
-representative of the k'th output pack component is the result of replacing each
-input pack with the representative of its k'th component, and evaluating the
-resulting operation using the ordinary non-pack rules. Note that for these
-purposes a tuple value does not behave like a pack value.
+### In-place typechecking
 
-For example, if `x` is a pack with the value `<p, N>, <42, 1>`, and `y` is a
-pack with the value `<q, N>, <10, 1>`, then we can evaluate `x + y + 1` as
-follows: the output will be a pack whose shape is the same as the input packs,
-namely `<(), N>, <(), 1>`. To find the first representative, we evaluate the
-expression `x + y + 1`, but with the first representative of `x` in place of
-`x`, and likewise for `y`, yielding `p + q + 1`. To find the second
-representative, we perform the same substitution with the second representatives
-of `x` and `y`, yielding `42 + 10 + 1` = `53`. Thus, `x + y + 1` evaluates to
-`<p + q + 1, N>, <53, 1>`.
+It is generally preferable if the type system avoids typechecking the same code
+more than once, and assigns a single type to each expression. Similarly, it is
+generally preferable if the type system is expressed solely in terms of code the
+user wrote; for example, it's harder to give good diagnostics for type errors
+that occur in a compiler-generated rewrite.
 
-If a tuple literal does not contain `...,`, its evaluation follows the rules for
-arbitrary operations described in the previous paragraph. If it does contain
-`...,`, the result is a tuple value formed by iterating through the literal
-elements:
+We can do that here by saying that within a pack expansion, each expression has
+a _pack type_ which represents the sequence of types that the expression takes
+on in each iteration. Like a generalized tuple type, a pack type consists of a
+sequence of pack components, and all pack types in an expansion will have the
+same shape as the expansion arguments. We can then "vectorize" typechecking,
+computing the representative types of each expression from the representative
+types of its sub-expressions according to the ordinary non-variadic rules for
+that kind of expression.
 
--   If the element is headed by `...,`, we evaluate its operand to produce a
-    pack, and append its components to the result tuple.
--   Otherwise, we evaluate the element expression to produce a value `V`, and
-    append a singular component whose representative is `V`.
+We can then abstract out the rewrites by stating their implicit type
+requirements as explicit rules:
 
-The `[:]` operator transforms a tuple into a pack, or an unknown tuple value
-into a pack of unknown values:
+-   An expression of the form "`...and` _operand_" or "`...or` _operand_" has
+    type `bool`. _operand_ must have a pack type whose representatives are all
+    implicitly convertible to `bool`.
+-   The type of a tuple literal is computed from the types of its
+    comma-separated elements, as follows:
+    -   If the element has the form "`...,` _operand_", the pack components of
+        the type of _operand_ are appended to the literal's type.
+    -   Otherwise, the type of the element is appended to the literal's type.
 
--   When the operand is a tuple value, the result is a pack value that's
-    identical to the tuple value.
--   When the operand is a symbolic variable `X` whose type is a tuple, the
-    result is a pack with the same shape as the tuple. Each pack component's
-    representative is `X[$I]`, and its type is the representative of the
-    corresponding component of the tuple.
+Note that this "vectorized" approach to typechecking does not change the
+run-time semantics: the iterations of a pack expansion are still sequenced one
+after another. As a result, a pack type is never the type of any run-time value.
 
-For these purposes, an array type `[T; N]` is treated as a tuple type
-`(..., [:][T; N])`, so:
+## Run-time pattern semantics
 
--   When the operand is an array type `[T; N]`, the result is a pack consisting
-    of a single component with representative `T` and arity `N`.
--   When the operand is a symbolic variable `X` with type `[T; N]`, the result
-    is a pack consisting of a single pack component whose representative is
-    `X[$I]`, and whose arity is `N`.
-
-An identifier expression that names a variable whose type is a pack type behaves
-like a `[:]` expression whose operand is a variable of the corresponding tuple
-type. No other leaf AST node can evaluate to a pack value.
-
-A tuple cannot be indexed unless all of its components are singular. There is no
-syntax for indexing into a pack.
-
-## Pattern semantics
-
-Pack expansions can also appear in patterns. The semantics are chosen to follow
-the general principle that pattern matching is the inverse of expression
+`,...` expansions can also appear in patterns. The semantics are chosen to
+follow the general principle that pattern matching is the inverse of expression
 evaluation, so for example if the pattern `(..., [:]x: auto)` matches some
 scrutinee value `s`, the expression `(..., [:]x)` should be equal to `s`. These
-are run-time semantics, so all types are known constants, and any pack
-components in the scrutinee value are singular.
+are run-time semantics, so all types are known constants, and all tuple elements
+are singular.
 
-There can be no more than one `...,` pattern in a tuple pattern. The N elements
-of the pattern before the `...,` expansion are matched with the first N elements
-of the scrutinee, and the M elements of the pattern after the `...,` expansion
-are matched with the last M elements of the scrutinee. If the scrutinee does not
-have at least N + M elements, the pattern does not match. The operand of the
-`...,` pattern is matched with the sub-pack consisting of any remaining
-scrutinee elements.
+A tuple pattern can contain no more than one subpattern of the form "`...,`
+_operand_". When such a subpattern is present, the N elements of the pattern
+before the `...,` expansion are matched with the first N elements of the
+scrutinee, and the M elements of the pattern after the `...,` expansion are
+matched with the last M elements of the scrutinee. If the scrutinee does not
+have at least N + M elements, the pattern does not match.
 
-If a name binding pattern has a pack type, it is bound to a pack consisting of
-the K scrutinee values that it is matched against. Otherwise, if the pattern is
-inside a pack expansion, the program is ill-formed, because the name would be
-bound multiple times. For example, in `(..., (foo: i32, bar: [:]Ts))`,
-`foo: i32` is ill-formed because it would match a value like
-`((1, "foo"), (2, "bar"), (3, "baz"))`, and bind the name `foo` to `1`, `2`, and
-`3` simultaneously, which is nonsensical.
+The remaining elements of the scrutinee are iteratively matched against
+_operand_, in order. In each iteration, `$I` is equal to the index of the
+scrutinee element being matched.
 
-A _pack argument pattern_ consists of a `[:]` token and a single operand
-pattern. The scrutinee must be a pack, and the pack argument pattern matches if
-the operand pattern matches a tuple consisting of the elements of the scrutinee
-pack.
+In the context of such an iterative pattern match, a name binding pattern binds
+the name to each of the scrutinee values, in order.
 
-Other kinds of patterns cannot have a pack type or pack-type operands, and
-cannot match a pack scrutinee.
+A pattern of the form `[:]` _subpattern_ matches the `$I`th element of
+_subpattern_ against the current (`$I`th) scrutinee. Consequently, _subpattern_
+must be a kind of pattern that has elements. Specifically, it must be one of:
 
-> **Future work:** It is probably possible to define a rule that generalizes
-> other kinds of patterns to support variadics. However, we don't yet have
-> motivating use cases for that, and it appears that in many if not most cases
-> such patterns would be refutable, which substantially limits their usefulness.
+-   An expression pattern that evaluates to an array or tuple.
+-   A tuple literal pattern.
+-   A binding pattern with an array or tuple type.
 
-## Typechecking
+In the last case, we treat the binding pattern as if it were a sequence of
+binding patterns that bind values to the elements of the array/tuple.
 
-Variadic typechecking for expressions follows the reified model, but applied to
-the types of expressions instead of the values of expressions. For example, for
-most operations, if any of the operands have a pack type, all pack-type operands
-must have the same shape, the type of the whole operation will have the same
-shape, and the component types are found by iterating through the input pack
-types component-wise, performing ordinary singular type-checking for the
-operation.
-
-Typechecking a variadic pattern is much like typechecking a variadic expression:
-we proceed bottom-up, generalizing the singular typechecking rules to apply
-component-wise to variadics, and so forth. The most notable difference is that
-patterns can contain name bindings, whose types are determined by symbolically
-evaluating the type portion of the binding.
-
-Variadic statements always use the syntactic model at run-time, but we cannot
-use that model at typechecking time because the rewrites in that model haven't
-happened yet. Instead, we generalize the rules for typechecking expressions to
-support statements as well, by treating statements as having types, in a
-restricted way: the type of a statement is either `()` or a pack where all
-representatives are `()`. In other words, statements have types, but they only
-carry information about pack shape.
-
-With that in place, we can apply essentially the same rule: if any of the child
-AST nodes has a pack type, all child nodes with pack type must have the same
-shape. If the parent statement is a `...{}` block, it will have type `()` (and
-there must be at least one child with a pack type), and otherwise its type will
-be the shape of the pack-type children (or `()` if there are none).
-
-### Pattern matching
+## Typechecking pattern matching
 
 Typechecking for a pattern matching operation proceeds in three phases:
 
-1. The pattern is typechecked, and assigned a type.
-2. The scrutinee expression is typechecked, and assigned a type.
+1. The scrutinee expression is typechecked, and assigned a type.
+2. The pattern is typechecked, and assigned a type.
 3. The scrutinee type is checked against the pattern type.
 
 If the pattern appears in a context that requires it to be irrefutable, such as
@@ -376,11 +324,17 @@ ensures that the pattern can match _some_ possible value of the scrutinee
 expression. For simplicity, we currently only support variadic pattern matching
 in contexts that require irrefutability.
 
-> **Future work:** specify rules for refutable matching of variadics, for
+> **Future work:** Specify rules for refutable matching of variadics, for
 > example to support C++-style recursive variadics.
 
-Phases 1 and 2 were described earlier, so we only need to describe phase 3. We
-will focus on the forms of symbolic type that are most relevant to variadics:
+Expression typechecking (phase 1) was described earlier. Pattern typechecking
+(phase 2) behaves just like expression typechecking, because pattern syntax is
+essentially expression syntax extended with binding patterns (which are easy to
+accommodate because they declare their types explicitly). The remainder of this
+section will focus on matching the scrutinee type against the pattern type
+(phase 3).
+
+We will focus on the forms of symbolic type that are most relevant to variadics:
 array types, tuple types, and pack types.
 
 An array type pattern `[T; N]` matches an array type scrutinee `[U; M]` if `T`
@@ -445,7 +399,7 @@ starting with `Q` (corresponding to the cases where `x` and/or `z` are empty).
 Extending the type system to support deduction that splits into multiple cases
 would add a fearsome amount of complexity to the type system.
 
-#### Identifying potential matchings
+### Identifying potential matchings
 
 Our solution will rely on being able to identify which pattern pack components
 can potentially match which scrutinee pack components. We can do so as follows:
@@ -523,7 +477,7 @@ matches for a symbolic argument $E$ as follows:
         earlier trailing parameters, and the variadic parameter.
 -   Otherwise, $E$ can only match the variadic parameter.
 
-#### The type-checking algorithm
+### The type-checking algorithm
 
 In order to avoid type deduction that splits into multiple cases, we require
 that if the variadic parameter's type involves a deduced value that is used in
