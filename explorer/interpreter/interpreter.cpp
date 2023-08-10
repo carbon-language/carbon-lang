@@ -503,8 +503,8 @@ auto Interpreter::InstantiateType(Nonnull<const Value*> type,
                                   SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "*** instantiating type `" << *type << "` (" << source_loc
-                   << ")\n";
+    trace_stream_->Start() << "instantiating type `" << *type << "` ("
+                           << source_loc << ")\n";
   }
 
   switch (type->kind()) {
