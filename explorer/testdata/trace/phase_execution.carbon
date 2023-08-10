@@ -19,9 +19,23 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ********** initializing globals **********
 // CHECK:STDOUT: >[] stack-push: DeclarationAction pos: 0 `interface TestInterface` (phase_execution.carbon:7)
 // CHECK:STDOUT: ->> step DeclarationAction pos: 0 `interface TestInterface` (phase_execution.carbon:7) --->
+// CHECK:STDOUT: *** declaration at (phase_execution.carbon:7)
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: interface TestInterface {
+// CHECK:STDOUT: }
+// CHECK:STDOUT: ```
 // CHECK:STDOUT: <[] stack-pop:  DeclarationAction pos: 0 `interface TestInterface` (phase_execution.carbon:7)
 // CHECK:STDOUT: >[] stack-push: DeclarationAction pos: 0 `fn Main` (phase_execution.carbon:11)
 // CHECK:STDOUT: ->> step DeclarationAction pos: 0 `fn Main` (phase_execution.carbon:11) --->
+// CHECK:STDOUT: *** declaration at (phase_execution.carbon:11)
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: fn Main ()-> i32 {
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return 0;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: }
+// CHECK:STDOUT: ```
 // CHECK:STDOUT: <[] stack-pop:  DeclarationAction pos: 0 `fn Main` (phase_execution.carbon:11)
 // CHECK:STDOUT: ********** calling main function **********
 // CHECK:STDOUT: >[] stack-push: ValueExpressionAction pos: 0 `Main()` (<Main()>:0)
@@ -42,8 +56,19 @@ fn Main() -> i32 {
 // CHECK:STDOUT: >[] stack-push: ScopeAction pos: 0  scope: [] (None)
 // CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `{return 0;}` (phase_execution.carbon:11)
 // CHECK:STDOUT: ->> step StatementAction pos: 0 `{return 0;}` (phase_execution.carbon:11) --->
+// CHECK:STDOUT: *** statement at (phase_execution.carbon:11)
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: {
+// CHECK:STDOUT: return 0;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ```
 // CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `return 0;` (phase_execution.carbon:10)
 // CHECK:STDOUT: ->> step StatementAction pos: 0 `return 0;` (phase_execution.carbon:10) --->
+// CHECK:STDOUT: *** statement at (phase_execution.carbon:10)
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: return 0;
+// CHECK:STDOUT: ```
 // CHECK:STDOUT: >[] stack-push: ValueExpressionAction pos: 0 `0` (phase_execution.carbon:10)
 // CHECK:STDOUT: ->> step ValueExpressionAction pos: 0 `0` (phase_execution.carbon:10) --->
 // CHECK:STDOUT: >[] stack-push: ExpressionAction pos: 0 `0` (phase_execution.carbon:10)
@@ -52,6 +77,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ->> step ValueExpressionAction pos: 1 `0` results: [`0`]  (phase_execution.carbon:10) --->
 // CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `0` results: [`0`]  (phase_execution.carbon:10)
 // CHECK:STDOUT: ->> step StatementAction pos: 1 `return 0;` results: [`0`]  (phase_execution.carbon:10) --->
+// CHECK:STDOUT: *** statement at (phase_execution.carbon:10)
+// CHECK:STDOUT: ```
+// CHECK:STDOUT: return 0;
+// CHECK:STDOUT: ```
 // CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `return 0;` results: [`0`]  (phase_execution.carbon:10)
 // CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `{return 0;}` scope: [] (phase_execution.carbon:11)
 // CHECK:STDOUT: <[] stack-pop:  ScopeAction pos: 0  scope: [] (None)
