@@ -525,7 +525,7 @@ auto SemanticsContext::CanonicalizeTypeImpl(
   return type_id;
 }
 
-// Compute a fingerprint for a tuple type, for use as a key in a folding set.`
+// Compute a fingerprint for a tuple type, for use as a key in a folding set.
 static auto ProfileTupleType(const llvm::SmallVector<SemanticsTypeId>& type_ids,
                              llvm::FoldingSetNodeID& canonical_id) -> void {
   for (const auto& type_id : type_ids) {
