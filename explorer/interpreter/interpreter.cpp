@@ -1962,6 +1962,11 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
   auto& act = cast<StatementAction>(todo_.CurrentAction());
   const Statement& stmt = act.statement();
 
+  if (trace_stream_->is_enabled()) {
+    trace_stream_->Source() << "statement at (" << stmt.source_loc() << ")\n";
+    *trace_stream_ << "```\n" << stmt << "\n```\n";
+  }
+
   switch (stmt.kind()) {
     case StatementKind::Match: {
       const auto& match_stmt = cast<Match>(stmt);
@@ -2324,6 +2329,11 @@ auto Interpreter::StepStmt() -> ErrorOr<Success> {
 auto Interpreter::StepDeclaration() -> ErrorOr<Success> {
   Action& act = todo_.CurrentAction();
   const Declaration& decl = cast<DeclarationAction>(act).declaration();
+
+  if (trace_stream_->is_enabled()) {
+    trace_stream_->Source() << "declaration at (" << decl.source_loc() << ")\n";
+    *trace_stream_ << "```\n" << decl << "```\n";
+  }
 
   switch (decl.kind()) {
     case DeclarationKind::VariableDeclaration: {
