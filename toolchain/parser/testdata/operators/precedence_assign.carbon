@@ -9,6 +9,7 @@ fn F(c: bool) {
   var b: i32;
   var p: i32*;
   *p = if c then 1 else 2;
+  // These are valid to _parse_ even though rejected semantically.
   (if c then a else b) += if c then 1 else 2;
   ++if c then a else b;
 }
