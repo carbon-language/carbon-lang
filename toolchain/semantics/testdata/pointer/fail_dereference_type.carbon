@@ -4,9 +4,6 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_dereference_type.carbon:[[@LINE+9]]:8: Parentheses are required around this unary `*` operator.
-// CHECK:STDERR: var p: *i32;
-// CHECK:STDERR:        ^
 // CHECK:STDERR: fail_dereference_type.carbon:[[@LINE+6]]:8: Cannot dereference operand of non-pointer type `type`.
 // CHECK:STDERR: var p: *i32;
 // CHECK:STDERR:        ^
