@@ -58,11 +58,11 @@ This example illustrates many of the key concepts of variadics:
 // returns a vector of tuples where the i'th element of the vector is
 // a tuple of the i'th elements of the input vectors.
 fn Zip[ElementTypes:! [type;]]
-      (..., vectors: Vector([:]ElementTypes))
+      (..., each vector: Vector([:]ElementTypes))
       -> Vector((..., [:]ElementTypes)) {
-  var iters: auto = (..., vectors.Begin());
+  var iters: auto = (..., (each vector).Begin());
   var result: Vector((..., [:]ElementTypes));
-  while (...and [:]iters != vectors.End()) {
+  while (...and [:]iters != (each vector).End()) {
     result.push_back((..., *[:]iters));
     ...{ ([:]iters)++; }
   }
@@ -78,12 +78,8 @@ rooted at any of these operations is called a _pack expansion_. The operand of
 `...,`, `...and`, or `...or`, or the contents of the block delimited by
 `...{ }`, is called the _expansion body_.
 
-A pack expansion must contain one or more _expansion arguments_. These are
-usually marked by the `[:]` operator, but can also be unmarked usages of names
-that have `[:]` in the type (called pack types). For example, in the body of
-`Zip`, the loop condition `...and [:]iters != vectors.End()` is a pack expansion
-with two arguments: `[:]iters` is explicitly marked as an argument, and
-`vectors` is an argument because its type is `Vector([:]ElementTypes)`.
+A pack expansion must contain one or more _expansion arguments_, which are
+marked by `each` or `[:]`.
 
 The _arity_ of an expansion argument is a compile-time value representing the
 number of elements it evaluates to. Every pack expansion must contain at least
@@ -94,13 +90,13 @@ pattern. In particular, this means that the expansion arguments of a `...{`
 expansion must be expressions.
 
 > **Open question:** Is it possible to drop that requirement, and support code
-> like `let [:]x: ElementTypes = *[:]iters;` within a `...{` expansion?
+> like `let each x: ElementTypes = *[:]iters;` within a `...{` expansion?
 
 Pack expansions can be nested only if the inner expansion is within one of the
 outer expansion's arguments. For example,
 `(..., [:]vectors: (..., Vector([:]ElementTypes)))`, which is an alternative way
-of writing the parameter list of `Zip` to avoid giving `vectors` a pack type. We
-may further relax the restriction on nesting in the future.
+of writing the parameter list of `Zip` to avoid using an `each` binding in the
+signature. We may further relax the restriction on nesting in the future.
 
 A pack expansion can be thought of as a kind of loop, where the expansion body
 is implicitly parameterized by an integer value called the _pack index_, which
@@ -147,6 +143,13 @@ for (let i:! i32 in (0, 1, 2)) {
 sequence of values rather than a singular value, but it is still fundamentally
 iterative, as will be seen in the next section.
 
+A binding pattern that begins with `each` declares a _variadic binding_. A
+variadic binding pattern must occur inside a pack expansion, and binds the name
+to one value for each iteration of the expansion. The name declared by a
+variadic binding can only be used inside a pack expansion, where it acts as an
+expansion argument whose elements are the bound values. It must be prefixed by
+`each` at the point of use.
+
 ## Run-time expression and statement semantics
 
 In all of the following, N is the arity of the pack expansion being discussed,
@@ -173,8 +176,9 @@ k - 1.
 
 An expression of the form "`[:]` _argument_" evaluates to "_argument_ `[$I]`".
 
-An identifier expression that names a binding of pack type evaluates to the
-`$I`th value that it was bound to (indexed from zero).
+An expression of the form "`each` _identifier_", where _identifier_ names a
+variadic binding, evaluates to the `$I`th value that it was bound to (indexed
+from zero).
 
 ## Typechecking expressions and statements
 
@@ -220,9 +224,9 @@ singular, so that we can determine the type of the indexing expression.
 ### Iterative typechecking
 
 Without loss of generality, we can assume that every expansion argument is a
-tuple: if it has an array type `[T; N]`, we can treat it as having a tuple type
-consisting of N repetitions of `T`, and if it has a pack type `P`, we can treat
-it as having the tuple type `(..., P)`.
+tuple: if it has an array type `[T; N]`, or if it's a variadic binding with
+declared type `T` and arity N, we can treat it as having a generalized tuple
+type with one component, `<T, N>`.
 
 Since the run-time semantics of an expansion are defined in terms of a notional
 rewritten form where we simultaneously iterate over the expansion arguments, in
@@ -295,8 +299,8 @@ The remaining elements of the scrutinee are iteratively matched against
 _operand_, in order. In each iteration, `$I` is equal to the index of the
 scrutinee element being matched.
 
-In the context of such an iterative pattern match, a name binding pattern binds
-the name to each of the scrutinee values, in order.
+A variadic binding pattern binds the name to each of the scrutinee values, in
+order.
 
 A pattern of the form `[:]` _subpattern_ matches the `$I`th element of
 _subpattern_ against the current (`$I`th) scrutinee. Consequently, _subpattern_
