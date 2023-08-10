@@ -37,9 +37,10 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   {kind: StructValue, arg0: block4, type: type1},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+7},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, arg1: type0},
+// CHECK:STDOUT:   {kind: StructType, arg0: block5, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+10, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+10, arg1: node+2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+11, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+11, arg1: node+2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -57,6 +58,7 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
@@ -79,6 +81,7 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   %.loc7_24: i32 = stub_reference %.loc7_26
 // CHECK:STDOUT:   %.loc7_27: {.a: i32} = struct_value (%.loc7_24)
 // CHECK:STDOUT:   assign %x, %.loc7_27
+// CHECK:STDOUT:   %.loc8: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %y: {.a: i32} = var
 // CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }
