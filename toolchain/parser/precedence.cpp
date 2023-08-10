@@ -18,7 +18,6 @@ enum PrecedenceLevel : int8_t {
   TermPrefix,
   // Numeric.
   NumericPrefix,
-  NumericPostfix,
   Modulo,
   Multiplicative,
   Additive,
@@ -31,8 +30,8 @@ enum PrecedenceLevel : int8_t {
   // Type formation.
   TypePrefix,
   TypePostfix,
-  // Sentinel representing a type context.
-  Type,
+  // Casts.
+  As,
   // Logical.
   LogicalPrefix,
   Relational,
@@ -41,8 +40,7 @@ enum PrecedenceLevel : int8_t {
   // Conditional.
   If,
   // Assignment.
-  SimpleAssignment,
-  CompoundAssignment,
+  Assignment,
   // Sentinel representing a context in which any operator can appear.
   Lowest,
 };
@@ -54,27 +52,24 @@ struct OperatorPriorityTable {
   constexpr OperatorPriorityTable() : table() {
     // Start with a list of <higher precedence>, <lower precedence>
     // relationships.
-    MarkHigherThan({Highest}, {TermPrefix});
-    MarkHigherThan({TermPrefix}, {NumericPrefix, BitwisePrefix, LogicalPrefix,
-                                  NumericPostfix});
-    MarkHigherThan({NumericPrefix, NumericPostfix},
-                   {Modulo, Multiplicative, BitShift});
+    MarkHigherThan({Highest}, {TermPrefix, LogicalPrefix});
+    MarkHigherThan({TermPrefix}, {NumericPrefix, BitwisePrefix});
+    MarkHigherThan({NumericPrefix, BitwisePrefix},
+                   {As, Multiplicative, Modulo, BitwiseAnd, BitwiseOr,
+                    BitwiseXor, BitShift});
     MarkHigherThan({Multiplicative}, {Additive});
-    MarkHigherThan({BitwisePrefix},
-                   {BitwiseAnd, BitwiseOr, BitwiseXor, BitShift});
     MarkHigherThan(
-        {Modulo, Additive, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
+        {As, Additive, Modulo, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
         {Relational});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
     MarkHigherThan({LogicalAnd, LogicalOr}, {If});
-    MarkHigherThan({If}, {SimpleAssignment, CompoundAssignment});
-    MarkHigherThan({SimpleAssignment, CompoundAssignment}, {Lowest});
+    MarkHigherThan({If}, {Assignment});
+    MarkHigherThan({Assignment}, {Lowest});
 
     // Types are mostly a separate precedence graph.
     MarkHigherThan({Highest}, {TypePrefix});
     MarkHigherThan({TypePrefix}, {TypePostfix});
-    MarkHigherThan({TypePostfix}, {Type});
-    MarkHigherThan({Type}, {If});
+    MarkHigherThan({TypePostfix}, {As});
 
     // Compute the transitive closure of the above relationships: if we parse
     // `a $ b @ c` as `(a $ b) @ c` and parse `b @ c % d` as `(b @ c) % d`,
@@ -142,17 +137,13 @@ struct OperatorPriorityTable {
     // Associativity rules occupy the diagonal
 
     // For prefix operators, RightFirst would mean `@@x` is `@(@x)` and
-    // Ambiguous would mean it's an error. LeftFirst is meaningless. For now we
-    // allow all prefix operators other than `const` to be repeated.
-    //
-    // TODO: The design does not permit repeating most unary operators.
-    for (PrecedenceLevel prefix :
-         {TermPrefix, NumericPrefix, BitwisePrefix, LogicalPrefix, If}) {
+    // Ambiguous would mean it's an error. LeftFirst is meaningless.
+    for (PrecedenceLevel prefix : {TermPrefix, If}) {
       table[prefix][prefix] = OperatorPriority::RightFirst;
     }
 
     // Postfix operators are symmetric with prefix operators.
-    for (PrecedenceLevel postfix : {NumericPostfix, TypePostfix}) {
+    for (PrecedenceLevel postfix : {TypePostfix}) {
       table[postfix][postfix] = OperatorPriority::LeftFirst;
     }
 
@@ -164,12 +155,7 @@ struct OperatorPriorityTable {
       table[assoc][assoc] = OperatorPriority::LeftFirst;
     }
 
-    // Assignment is given right-to-left associativity in order to support
-    // chained assignment.
-    table[SimpleAssignment][SimpleAssignment] = OperatorPriority::RightFirst;
-
-    // For other operators, there isn't an obvious answer and we require
-    // explicit parentheses.
+    // For other operators, we require explicit parentheses.
   }
 
   constexpr void ConsistencyCheck() {
@@ -196,11 +182,15 @@ auto PrecedenceGroup::ForPostfixExpression() -> PrecedenceGroup {
 }
 
 auto PrecedenceGroup::ForTopLevelExpression() -> PrecedenceGroup {
+  return PrecedenceGroup(If);
+}
+
+auto PrecedenceGroup::ForExpressionStatement() -> PrecedenceGroup {
   return PrecedenceGroup(Lowest);
 }
 
 auto PrecedenceGroup::ForType() -> PrecedenceGroup {
-  return PrecedenceGroup(Type);
+  return ForTopLevelExpression();
 }
 
 auto PrecedenceGroup::ForLeading(TokenKind kind)
@@ -214,9 +204,11 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
       return PrecedenceGroup(LogicalPrefix);
 
     case TokenKind::Minus:
+      return PrecedenceGroup(NumericPrefix);
+
     case TokenKind::MinusMinus:
     case TokenKind::PlusPlus:
-      return PrecedenceGroup(NumericPrefix);
+      return PrecedenceGroup(Assignment);
 
     case TokenKind::Caret:
       return PrecedenceGroup(BitwisePrefix);
@@ -237,7 +229,6 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
   switch (kind) {
     // Assignment operators.
     case TokenKind::Equal:
-      return Trailing{.level = SimpleAssignment, .is_binary = true};
     case TokenKind::PlusEqual:
     case TokenKind::MinusEqual:
     case TokenKind::StarEqual:
@@ -248,7 +239,7 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
     case TokenKind::CaretEqual:
     case TokenKind::GreaterGreaterEqual:
     case TokenKind::LessLessEqual:
-      return Trailing{.level = CompoundAssignment, .is_binary = true};
+      return Trailing{.level = Assignment, .is_binary = true};
 
     // Logical operators.
     case TokenKind::And:
@@ -293,14 +284,15 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
       return infix ? Trailing{.level = Multiplicative, .is_binary = true}
                    : Trailing{.level = TypePostfix, .is_binary = false};
 
-    // Postfix operators.
-    case TokenKind::MinusMinus:
-    case TokenKind::PlusPlus:
-      return Trailing{.level = NumericPostfix, .is_binary = false};
+    // Cast operator.
+    case TokenKind::As:
+      return Trailing{.level = As, .is_binary = true};
 
     // Prefix-only operators.
-    case TokenKind::Not:
     case TokenKind::Const:
+    case TokenKind::MinusMinus:
+    case TokenKind::Not:
+    case TokenKind::PlusPlus:
       break;
 
     // Symbolic tokens that might be operators eventually.

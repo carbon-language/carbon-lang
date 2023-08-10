@@ -5,7 +5,7 @@
 // AUTOUPDATE
 
 fn F() {
-  n++++;
+  i32****;
 }
 
 // CHECK:STDOUT: [
@@ -14,10 +14,12 @@ fn F() {
 // CHECK:STDOUT:       {kind: 'ParameterListStart', text: '('},
 // CHECK:STDOUT:     {kind: 'ParameterList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:   {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'NameExpression', text: 'n'},
-// CHECK:STDOUT:       {kind: 'PostfixOperator', text: '++', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'PostfixOperator', text: '++', subtree_size: 3},
-// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 4},
-// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 10},
+// CHECK:STDOUT:             {kind: 'Literal', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'PostfixOperator', text: '*', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'PostfixOperator', text: '*', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'PostfixOperator', text: '*', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'PostfixOperator', text: '*', subtree_size: 5},
+// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 6},
+// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 12},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
