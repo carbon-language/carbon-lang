@@ -20,7 +20,7 @@ namespace {
 //   naming section here.
 // - Consider harmonizing `FooLiteral` vs. `foo_value` node names vs.
 //   IR names.
-//   - Also consider representing these as just `value` or `literal` 
+//   - Also consider representing these as just `value` or `literal`
 //     in the IR and using the type to distinguish.
 // - Add block names based on the control flow construct names (`for`,
 //   `if`, `then`, `else`, ...). Either base this on the semantics or
