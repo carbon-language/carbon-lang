@@ -256,6 +256,7 @@ fn F(param: i32) {
 // CHECK:STDOUT:   %.loc8_43: i32 = stub_reference %.loc8_45
 // CHECK:STDOUT:   %.loc8_46: {.a: i32, .b: i32} = struct_value (%.loc8_35, %.loc8_43)
 // CHECK:STDOUT:   assign %s, %.loc8_46
+// CHECK:STDOUT:   %.loc10_27: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %.loc10_28: type = ptr_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %p: {.a: i32, .b: i32}* = var
 // CHECK:STDOUT:   %.loc10_32: {.a: i32, .b: i32}* = address_of %s

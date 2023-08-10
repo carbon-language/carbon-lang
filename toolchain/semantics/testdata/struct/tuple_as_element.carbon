@@ -139,6 +139,7 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   assign %x, %.loc7_50
 // CHECK:STDOUT:   %.loc8_23: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_27: (type,) = tuple_value (%.loc8_23)
+// CHECK:STDOUT:   %.loc8_28: type = struct_type {.a: i32, .b: (i32,)}
 // CHECK:STDOUT:   %y: {.a: i32, .b: (i32,)} = var
 // CHECK:STDOUT:   assign %y, %x
 // CHECK:STDOUT: }
