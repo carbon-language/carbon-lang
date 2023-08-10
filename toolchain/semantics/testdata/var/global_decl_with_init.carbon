@@ -38,3 +38,9 @@ var x: i32 = 0;
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %x: i32 = var
+// CHECK:STDOUT:   %.loc7: i32 = int_value 0
+// CHECK:STDOUT:   assign %x, %.loc7
+// CHECK:STDOUT: }

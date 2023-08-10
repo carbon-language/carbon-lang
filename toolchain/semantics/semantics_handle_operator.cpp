@@ -9,7 +9,7 @@ namespace Carbon {
 auto SemanticsHandleInfixOperator(SemanticsContext& context,
                                   ParseTree::Node parse_node) -> bool {
   auto rhs_id = context.node_stack().PopExpression();
-  auto lhs_id = context.node_stack().PopExpression();
+  auto [lhs_node, lhs_id] = context.node_stack().PopExpressionWithParseNode();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
@@ -53,7 +53,12 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
     }
     case TokenKind::Equal: {
       // TODO: handle complex assignment expression such as `a += 1`.
-      // TODO: check if lhs node is assignable.
+      if (GetSemanticsExpressionCategory(context.semantics_ir(), lhs_id) !=
+          SemanticsExpressionCategory::DurableReference) {
+        CARBON_DIAGNOSTIC(AssignmentToNonAssignable, Error,
+                          "Expression is not assignable.");
+        context.emitter().Emit(lhs_node, AssignmentToNonAssignable);
+      }
       context.ImplicitAsRequired(
           parse_node, rhs_id, context.semantics_ir().GetNode(lhs_id).type_id());
       context.AddNodeAndPush(

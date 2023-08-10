@@ -69,3 +69,15 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7_43: {} = struct_value ()
+// CHECK:STDOUT:   %.loc7_44: type = ptr_type {}
+// CHECK:STDOUT:   %.loc7_35: type = const_type {}*
+// CHECK:STDOUT:   %.loc7_1 = fn_decl @ConstMismatch
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }

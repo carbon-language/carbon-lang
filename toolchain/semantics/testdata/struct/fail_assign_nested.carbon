@@ -68,3 +68,15 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc10_14.1: type = struct_type {}
+// CHECK:STDOUT:   %.loc10_14.2: {} = struct_value ()
+// CHECK:STDOUT:   %.loc10_15: type = struct_type {.a: {}}
+// CHECK:STDOUT:   %x: {.a: {}} = var
+// CHECK:STDOUT:   %.loc10_26: {} = struct_value ()
+// CHECK:STDOUT:   %.loc10_23: {} = stub_reference %.loc10_26
+// CHECK:STDOUT:   %.loc10_27.1: type = struct_type {.b: {}}
+// CHECK:STDOUT:   %.loc10_27.2: {.b: {}} = struct_value (%.loc10_23)
+// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT: }

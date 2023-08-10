@@ -102,7 +102,8 @@ class SemanticsIR {
   }
 
   // Returns the requested callable.
-  auto GetFunction(SemanticsFunctionId function_id) const -> SemanticsFunction {
+  auto GetFunction(SemanticsFunctionId function_id) const
+      -> const SemanticsFunction& {
     return functions_[function_id.index];
   }
 
@@ -141,7 +142,7 @@ class SemanticsIR {
   }
 
   // Returns the requested name scope.
-  auto GetNameScope(SemanticsNameScopeId scope_id)
+  auto GetNameScope(SemanticsNameScopeId scope_id) const
       -> const llvm::DenseMap<SemanticsStringId, SemanticsNodeId>& {
     return name_scopes_[scope_id.index];
   }
@@ -272,11 +273,16 @@ class SemanticsIR {
     return type_blocks_[block_id.index];
   }
 
-  // Produces a string version of a type.
-  auto StringifyType(SemanticsTypeId type_id) -> std::string;
+  // Produces a string version of a type. If `in_type_context` is false, an
+  // explicit conversion to type `type` will be added in cases where the type
+  // expression would otherwise have a different type, such as a tuple or
+  // struct type.
+  auto StringifyType(SemanticsTypeId type_id,
+                     bool in_type_context = false) const -> std::string;
 
   auto functions_size() const -> int { return functions_.size(); }
   auto nodes_size() const -> int { return nodes_.size(); }
+  auto node_blocks_size() const -> int { return node_blocks_.size(); }
 
   auto types() const -> const llvm::SmallVector<SemanticsNodeId>& {
     return types_;

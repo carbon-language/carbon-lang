@@ -33,3 +33,7 @@ var x: i32;
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %x: i32 = var
+// CHECK:STDOUT: }

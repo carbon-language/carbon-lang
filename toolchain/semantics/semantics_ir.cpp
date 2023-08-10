@@ -5,6 +5,9 @@
 #include "toolchain/semantics/semantics_ir.h"
 
 #include "common/check.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/common/pretty_stack_trace_function.h"
 #include "toolchain/parser/parse_tree_node_location_translator.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
@@ -250,7 +253,8 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
   }
 }
 
-auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
+auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
+                                bool in_type_context) const -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
@@ -405,13 +409,15 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
   }
 
   // For `{}` or any tuple type, we've printed a non-type expression, so add a
-  // conversion to type `type`.
-  auto outer_node = GetNode(outer_node_id);
-  if (outer_node.kind() == SemanticsNodeKind::TupleType ||
-      outer_node.kind() == SemanticsNodeKind::ArrayType ||
-      (outer_node.kind() == SemanticsNodeKind::StructType &&
-       GetNodeBlock(outer_node.GetAsStructType()).empty())) {
-    out << " as type";
+  // conversion to type `type` if it's not implied by the context.
+  if (!in_type_context) {
+    auto outer_node = GetNode(outer_node_id);
+    if (outer_node.kind() == SemanticsNodeKind::TupleType ||
+        outer_node.kind() == SemanticsNodeKind::ArrayType ||
+        (outer_node.kind() == SemanticsNodeKind::StructType &&
+         GetNodeBlock(outer_node.GetAsStructType()).empty())) {
+      out << " as type";
+    }
   }
 
   return str;

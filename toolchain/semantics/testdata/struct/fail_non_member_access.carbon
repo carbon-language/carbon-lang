@@ -70,3 +70,14 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %x: {.a: i32} = var
+// CHECK:STDOUT:   %.loc7_26: i32 = int_value 4
+// CHECK:STDOUT:   %.loc7_24: i32 = stub_reference %.loc7_26
+// CHECK:STDOUT:   %.loc7_27: {.a: i32} = struct_value (%.loc7_24)
+// CHECK:STDOUT:   assign %x, %.loc7_27
+// CHECK:STDOUT:   %y: i32 = var
+// CHECK:STDOUT:   assign %y, <error>
+// CHECK:STDOUT: }
