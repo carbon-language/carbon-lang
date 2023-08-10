@@ -49,7 +49,7 @@ namespace Carbon {
 // removed. Only a leaf command can contain positional arguments.
 //
 // _Value_: The value parameter provided to an argument. For options, this is
-// provided after an `=`s and the option name. For positional arguments, the
+// provided after an `=` and the option name. For positional arguments, the
 // value is the only thing provided. The string of the value is parsed according
 // to the kind of argument with fairly simple rules. See the argument builders
 // for more details.
