@@ -270,7 +270,7 @@ class NodeNamer {
 
   // Finds and adds a suitable block label for the given semantics node.
   auto AddBlockLabel(ScopeIndex scope_idx, SemanticsNodeBlockId block_id,
-                     SemanticsNode node) {
+                     SemanticsNode node) -> void {
     llvm::StringRef name;
     switch (parse_tree_.node_kind(node.parse_node())) {
       case ParseNodeKind::IfExpressionIf:
@@ -305,6 +305,15 @@ class NodeNamer {
       case ParseNodeKind::IfStatement:
         name = "if.cont";
         break;
+
+      case ParseNodeKind::ShortCircuitOperand: {
+        bool is_rhs = node.kind() == SemanticsNodeKind::BranchIf;
+        bool is_and = tokenized_buffer_.GetKind(
+            parse_tree_.node_token(node.parse_node())) == TokenKind::And;
+        name = is_and ? (is_rhs ? "and.rhs" : "and.cont")
+                      : (is_rhs ? "or.rhs" : "or.cont");
+        break;
+      }
 
       default:
         break;
