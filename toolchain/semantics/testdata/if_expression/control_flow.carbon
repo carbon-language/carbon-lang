@@ -115,17 +115,17 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !.loc11_21 else br !.loc11_30
+// CHECK:STDOUT:   if %b br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc11_21:
+// CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %.loc11_21: i32 = call @A()
-// CHECK:STDOUT:   br !.loc11_10(%.loc11_21)
+// CHECK:STDOUT:   br !if.expr.cont(%.loc11_21)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc11_30:
+// CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %.loc11_30: i32 = call @B()
-// CHECK:STDOUT:   br !.loc11_10(%.loc11_30)
+// CHECK:STDOUT:   br !if.expr.cont(%.loc11_30)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc11_10:
-// CHECK:STDOUT:   %.loc11_10: i32 = block_arg !.loc11_10
+// CHECK:STDOUT: !if.expr.cont:
+// CHECK:STDOUT:   %.loc11_10: i32 = block_arg !if.expr.cont
 // CHECK:STDOUT:   return %.loc11_10
 // CHECK:STDOUT: }
