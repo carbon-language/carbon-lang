@@ -202,6 +202,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
 // precedence.
 static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
   switch (kind) {
+    case SemanticsNodeKind::ArrayType:
     case SemanticsNodeKind::Builtin:
     case SemanticsNodeKind::StructType:
     case SemanticsNodeKind::TupleType:
@@ -218,6 +219,7 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
       return 0;
 
     case SemanticsNodeKind::AddressOf:
+    case SemanticsNodeKind::ArrayValue:
     case SemanticsNodeKind::Assign:
     case SemanticsNodeKind::BinaryOperatorAdd:
     case SemanticsNodeKind::BindName:
@@ -335,6 +337,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
         steps.push_back({.node_id = GetTypeAllowBuiltinTypes(type_id)});
         break;
       }
+      case SemanticsNodeKind::ArrayType:
       case SemanticsNodeKind::TupleType: {
         auto refs = GetTypeBlock(node.GetAsTupleType());
         if (refs.empty()) {
@@ -359,6 +362,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
         break;
       }
       case SemanticsNodeKind::AddressOf:
+      case SemanticsNodeKind::ArrayValue:
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BindName:
@@ -399,6 +403,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
   // conversion to type `type`.
   auto outer_node = GetNode(outer_node_id);
   if (outer_node.kind() == SemanticsNodeKind::TupleType ||
+      outer_node.kind() == SemanticsNodeKind::ArrayType ||
       (outer_node.kind() == SemanticsNodeKind::StructType &&
        GetNodeBlock(outer_node.GetAsStructType()).empty())) {
     out << " as type";
@@ -444,6 +449,7 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
       }
 
       case SemanticsNodeKind::AddressOf:
+      case SemanticsNodeKind::ArrayType:
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BlockArg:
       case SemanticsNodeKind::BoolLiteral:
@@ -475,6 +481,7 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
         continue;
       }
 
+      case SemanticsNodeKind::ArrayValue:
       case SemanticsNodeKind::StructValue:
       case SemanticsNodeKind::TupleValue:
         // TODO: Eventually these will depend on the context in which the value

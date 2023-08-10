@@ -379,6 +379,7 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     // Type doesn't need to change.
     return ImplicitAsKind::Identical;
   }
+
   if (as_type_id == SemanticsTypeId::TypeType) {
     if (value.kind() == SemanticsNodeKind::TupleValue) {
       auto tuple_block_id = value.GetAsTupleValue();
@@ -499,6 +500,18 @@ static auto ProfileTupleType(const llvm::SmallVector<SemanticsTypeId>& type_ids,
 static auto ProfileType(SemanticsContext& semantics_context, SemanticsNode node,
                         llvm::FoldingSetNodeID& canonical_id) -> void {
   switch (node.kind()) {
+    case SemanticsNodeKind::ArrayType: {
+      auto [bound_id, type_id] = node.GetAsArrayType();
+      auto t = semantics_context.CanonicalizeType(type_id);
+      auto bound_value = semantics_context.semantics_ir()
+                             .GetIntegerLiteral(semantics_context.semantics_ir()
+                                                    .GetNode(bound_id)
+                                                    .GetAsIntegerLiteral())
+                             .getZExtValue();
+      canonical_id.AddInteger(bound_value);
+      canonical_id.AddInteger(t.index);
+      break;
+    }
     case SemanticsNodeKind::Builtin:
       canonical_id.AddInteger(node.GetAsBuiltin().AsInt());
       break;

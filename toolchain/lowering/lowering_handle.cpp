@@ -24,6 +24,18 @@ auto LoweringHandleAddressOf(LoweringFunctionContext& context,
   context.SetLocal(node_id, context.GetLocal(node.GetAsAddressOf()));
 }
 
+auto LoweringHandleArrayType(LoweringFunctionContext& /*context*/,
+                             SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
+auto LoweringHandleArrayValue(LoweringFunctionContext& /*context*/,
+                              SemanticsNodeId /*node_id*/, SemanticsNode node)
+    -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
+}
+
 auto LoweringHandleAssign(LoweringFunctionContext& context,
                           SemanticsNodeId /*node_id*/, SemanticsNode node)
     -> void {
@@ -262,6 +274,12 @@ auto LoweringHandleTupleValue(LoweringFunctionContext& context,
     auto* gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
     context.builder().CreateStore(context.GetLocal(refs[i]), gep);
   }
+}
+
+auto LoweringHandleTupleValueToArrayType(LoweringFunctionContext& /*context*/,
+                                         SemanticsNodeId /*node_id*/,
+                                         SemanticsNode node) -> void {
+  CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
 auto LoweringHandleStructTypeField(LoweringFunctionContext& /*context*/,
