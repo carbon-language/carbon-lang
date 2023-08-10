@@ -313,7 +313,7 @@ class SemanticsNode {
   using ArrayType =
       SemanticsNode::Factory<SemanticsNodeKind::ArrayType,
                              SemanticsNodeId /*bound_node_id*/,
-                             SemanticsNodeId /*array_element_type_id*/>;
+                             SemanticsTypeId /*array_element_type_id*/>;
 
   using ArrayValue = Factory<SemanticsNodeKind::ArrayValue,
                              SemanticsNodeId /*tuple_value_id*/>;

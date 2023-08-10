@@ -380,6 +380,43 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     return ImplicitAsKind::Identical;
   }
 
+  auto array_type = semantics_ir_->GetTypeAllowBuiltinTypes(as_type_id);
+  auto array_node = semantics_ir_->GetNode(array_type);
+  if (array_node.kind() == SemanticsNodeKind::ArrayType) {
+    auto [bound_node_id, element_type_id] = array_node.GetAsArrayType();
+    if (semantics_ir_
+            ->GetNode(semantics_ir_->GetTypeAllowBuiltinTypes(value_type_id))
+            .kind() == SemanticsNodeKind::TupleType) {
+      auto tuple_type_block_id =
+          semantics_ir_
+              ->GetNode(semantics_ir_->GetTypeAllowBuiltinTypes(value_type_id))
+              .GetAsTupleType();
+      auto type_block = semantics_ir_->GetTypeBlock(tuple_type_block_id);
+      if (type_block.size() == semantics_ir_->GetArrayBound(bound_node_id)) {
+        for (auto type : type_block) {
+          if (type != element_type_id) {
+            if (output_value_id != nullptr) {
+              *output_value_id = SemanticsNodeId::BuiltinError;
+            }
+            return ImplicitAsKind::Incompatible;
+          }
+        }
+        auto array_value_type = CanonicalizeType(array_type);
+        AddNode(SemanticsNode::ArrayValue::Make(value.parse_node(),
+                                                array_value_type, value_id));
+        if (output_value_id != nullptr) {
+          *output_value_id =
+              semantics_ir_->GetTypeAllowBuiltinTypes(array_value_type);
+        }
+        return ImplicitAsKind::Compatible;
+      }
+    }
+    if (output_value_id != nullptr) {
+      *output_value_id = SemanticsNodeId::BuiltinError;
+    }
+    return ImplicitAsKind::Incompatible;
+  }
+
   if (as_type_id == SemanticsTypeId::TypeType) {
     if (value.kind() == SemanticsNodeKind::TupleValue) {
       auto tuple_block_id = value.GetAsTupleValue();
@@ -488,7 +525,7 @@ auto SemanticsContext::CanonicalizeTypeImpl(
   return type_id;
 }
 
-// Compute a fingerprint for a tuple type, for use as a key in a folding set.
+// Compute a fingerprint for a tuple type, for use as a key in a folding set.`
 static auto ProfileTupleType(const llvm::SmallVector<SemanticsTypeId>& type_ids,
                              llvm::FoldingSetNodeID& canonical_id) -> void {
   for (const auto& type_id : type_ids) {
@@ -501,15 +538,10 @@ static auto ProfileType(SemanticsContext& semantics_context, SemanticsNode node,
                         llvm::FoldingSetNodeID& canonical_id) -> void {
   switch (node.kind()) {
     case SemanticsNodeKind::ArrayType: {
-      auto [bound_id, type_id] = node.GetAsArrayType();
-      auto t = semantics_context.CanonicalizeType(type_id);
-      auto bound_value = semantics_context.semantics_ir()
-                             .GetIntegerLiteral(semantics_context.semantics_ir()
-                                                    .GetNode(bound_id)
-                                                    .GetAsIntegerLiteral())
-                             .getZExtValue();
-      canonical_id.AddInteger(bound_value);
-      canonical_id.AddInteger(t.index);
+      auto [bound_id, element_type_id] = node.GetAsArrayType();
+      canonical_id.AddInteger(
+          semantics_context.semantics_ir().GetArrayBound(bound_id));
+      canonical_id.AddInteger(element_type_id.index);
       break;
     }
     case SemanticsNodeKind::Builtin:

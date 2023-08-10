@@ -31,9 +31,9 @@ auto SemanticsHandleArrayExpression(SemanticsContext& context,
         bound_node.GetAsIntegerLiteral());
     if (!bound_value.isNegative()) {
       context.AddNodeAndPush(
-          parse_node,
-          SemanticsNode::ArrayType::Make(parse_node, SemanticsTypeId::TypeType,
-                                         bound_node_id, element_type_node_id));
+          parse_node, SemanticsNode::ArrayType::Make(
+                          parse_node, SemanticsTypeId::TypeType, bound_node_id,
+                          context.CanonicalizeType(element_type_node_id)));
       return true;
     }
   }

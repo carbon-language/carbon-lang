@@ -284,6 +284,12 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
 
     auto node = GetNode(step.node_id);
     switch (node.kind()) {
+      case SemanticsNodeKind::ArrayType: {
+        auto [bound_id, type_id] = node.GetAsArrayType();
+        out << "array [" << StringifyType(type_id) << "; "
+            << GetArrayBound(bound_id) << "]";
+        break;
+      }
       case SemanticsNodeKind::ConstType: {
         if (step.index == 0) {
           out << "const ";
@@ -337,7 +343,6 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
         steps.push_back({.node_id = GetTypeAllowBuiltinTypes(type_id)});
         break;
       }
-      case SemanticsNodeKind::ArrayType:
       case SemanticsNodeKind::TupleType: {
         auto refs = GetTypeBlock(node.GetAsTupleType());
         if (refs.empty()) {

@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_CONTEXT_H_
 #define CARBON_TOOLCHAIN_SEMANTICS_SEMANTICS_CONTEXT_H_
 
+#include <cstdint>
+
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
