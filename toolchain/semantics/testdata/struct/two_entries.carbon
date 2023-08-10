@@ -44,9 +44,10 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   {kind: Assign, arg0: node+3, arg1: node+11},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, arg1: type0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, arg1: type0},
+// CHECK:STDOUT:   {kind: StructType, arg0: block5, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+15, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+15, arg1: node+3},
+// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+16, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+16, arg1: node+3},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -68,6 +69,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,

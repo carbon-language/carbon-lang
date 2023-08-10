@@ -60,9 +60,10 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block8, type: type1},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, arg1: type2},
+// CHECK:STDOUT:   {kind: StructType, arg0: block7, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type3},
-// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+23, type: type3},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+23, arg1: node+7},
+// CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+24, type: type3},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+24, arg1: node+7},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -92,6 +93,7 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:     node+23,
 // CHECK:STDOUT:     node+24,
 // CHECK:STDOUT:     node+25,
+// CHECK:STDOUT:     node+26,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
