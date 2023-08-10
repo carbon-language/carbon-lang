@@ -4582,6 +4582,12 @@ auto TypeChecker::TypeCheckStmt(Nonnull<Statement*> s,
                                 const ImplScope& impl_scope)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
+    trace_stream_->Source()
+        << "type checking stmt at (" << s->source_loc() << ")\n";
+    *trace_stream_ << "```\n" << *s << "\n```\n";
+  }
+
+  if (trace_stream_->is_enabled()) {
     trace_stream_->Start() << "checking " << s->kind() << " `" << PrintAsID(*s)
                            << "` (" << s->source_loc() << ")\n";
   }
@@ -6178,6 +6184,12 @@ auto TypeChecker::TypeCheckDeclaration(
     std::optional<Nonnull<const Declaration*>> enclosing_decl)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
+    trace_stream_->Source()
+        << "type checking declaration at (" << d->source_loc() << ")\n";
+    *trace_stream_ << "```\n" << *d << "\n```\n";
+  }
+
+  if (trace_stream_->is_enabled()) {
     trace_stream_->Start() << "checking " << d->kind() << " `" << PrintAsID(*d)
                            << "` (" << d->source_loc() << ")\n";
   }
@@ -6269,6 +6281,12 @@ auto TypeChecker::TypeCheckDeclaration(
 auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
                                      const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
+  if (trace_stream_->is_enabled()) {
+    trace_stream_->Source()
+        << "declaration at (" << d->source_loc() << ")\n";
+    *trace_stream_ << "```\n" << *d << "\n```\n";
+  }
+
   switch (d->kind()) {
     case DeclarationKind::NamespaceDeclaration: {
       auto& namespace_decl = cast<NamespaceDeclaration>(*d);
