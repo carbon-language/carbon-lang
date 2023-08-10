@@ -32,6 +32,7 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+2, type: type1},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, arg1: type0},
+// CHECK:STDOUT:   {kind: StructType, arg0: block3, type: typeTypeType},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -44,6 +45,7 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
@@ -52,3 +54,10 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %x: {.a: i32} = var
+// CHECK:STDOUT:   %.loc10_28: type = struct_type {.a: i32}
+// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT: }

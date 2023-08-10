@@ -46,7 +46,7 @@ auto ParserHandleStatement(ParserContext& context) -> void {
     }
     default: {
       context.PushState(ParserState::ExpressionStatementFinish);
-      context.PushState(ParserState::Expression);
+      context.PushStateForExpression(PrecedenceGroup::ForExpressionStatement());
       break;
     }
   }

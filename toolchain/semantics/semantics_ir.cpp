@@ -5,6 +5,9 @@
 #include "toolchain/semantics/semantics_ir.h"
 
 #include "common/check.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/common/pretty_stack_trace_function.h"
 #include "toolchain/parser/parse_tree_node_location_translator.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
@@ -229,7 +232,6 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::Call:
     case SemanticsNodeKind::Dereference:
     case SemanticsNodeKind::FunctionDeclaration:
-    case SemanticsNodeKind::Index:
     case SemanticsNodeKind::IntegerLiteral:
     case SemanticsNodeKind::Invalid:
     case SemanticsNodeKind::Namespace:
@@ -237,10 +239,11 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::Return:
     case SemanticsNodeKind::ReturnExpression:
     case SemanticsNodeKind::StringLiteral:
-    case SemanticsNodeKind::StructMemberAccess:
+    case SemanticsNodeKind::StructAccess:
     case SemanticsNodeKind::StructTypeField:
     case SemanticsNodeKind::StructValue:
     case SemanticsNodeKind::StubReference:
+    case SemanticsNodeKind::TupleIndex:
     case SemanticsNodeKind::TupleValue:
     case SemanticsNodeKind::UnaryOperatorNot:
     case SemanticsNodeKind::VarStorage:
@@ -248,7 +251,8 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
   }
 }
 
-auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
+auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
+                                bool in_type_context) const -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
@@ -372,16 +376,16 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::Dereference:
       case SemanticsNodeKind::CrossReference:
       case SemanticsNodeKind::FunctionDeclaration:
-      case SemanticsNodeKind::Index:
       case SemanticsNodeKind::IntegerLiteral:
       case SemanticsNodeKind::Namespace:
       case SemanticsNodeKind::RealLiteral:
       case SemanticsNodeKind::Return:
       case SemanticsNodeKind::ReturnExpression:
       case SemanticsNodeKind::StringLiteral:
-      case SemanticsNodeKind::StructMemberAccess:
+      case SemanticsNodeKind::StructAccess:
       case SemanticsNodeKind::StructValue:
       case SemanticsNodeKind::StubReference:
+      case SemanticsNodeKind::TupleIndex:
       case SemanticsNodeKind::TupleValue:
       case SemanticsNodeKind::UnaryOperatorNot:
       case SemanticsNodeKind::VarStorage:
@@ -396,12 +400,14 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
   }
 
   // For `{}` or any tuple type, we've printed a non-type expression, so add a
-  // conversion to type `type`.
-  auto outer_node = GetNode(outer_node_id);
-  if (outer_node.kind() == SemanticsNodeKind::TupleType ||
-      (outer_node.kind() == SemanticsNodeKind::StructType &&
-       GetNodeBlock(outer_node.GetAsStructType()).empty())) {
-    out << " as type";
+  // conversion to type `type` if it's not implied by the context.
+  if (!in_type_context) {
+    auto outer_node = GetNode(outer_node_id);
+    if (outer_node.kind() == SemanticsNodeKind::TupleType ||
+        (outer_node.kind() == SemanticsNodeKind::StructType &&
+         GetNodeBlock(outer_node.GetAsStructType()).empty())) {
+      out << " as type";
+    }
   }
 
   return str;
@@ -458,14 +464,14 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
       case SemanticsNodeKind::UnaryOperatorNot:
         return SemanticsExpressionCategory::Value;
 
-      case SemanticsNodeKind::StructMemberAccess: {
-        auto [base_id, member_index] = node.GetAsStructMemberAccess();
+      case SemanticsNodeKind::StructAccess: {
+        auto [base_id, member_index] = node.GetAsStructAccess();
         node_id = base_id;
         continue;
       }
 
-      case SemanticsNodeKind::Index: {
-        auto [base_id, index_id] = node.GetAsIndex();
+      case SemanticsNodeKind::TupleIndex: {
+        auto [base_id, index_id] = node.GetAsTupleIndex();
         node_id = base_id;
         continue;
       }

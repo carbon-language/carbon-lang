@@ -108,9 +108,9 @@ auto SemanticsHandleStructTypeLiteral(SemanticsContext& context,
   CARBON_CHECK(refs_id != SemanticsNodeBlockId::Empty)
       << "{} is handled by StructLiteral.";
 
-  auto type_id = context.CanonicalizeStructType(parse_node, refs_id);
-  context.node_stack().Push(parse_node,
-                            context.semantics_ir().GetType(type_id));
+  context.AddNodeAndPush(parse_node,
+                         SemanticsNode::StructType::Make(
+                             parse_node, SemanticsTypeId::TypeType, refs_id));
   return true;
 }
 

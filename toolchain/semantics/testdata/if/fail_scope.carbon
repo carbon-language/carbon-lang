@@ -77,3 +77,21 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @VarScope
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @VarScope(%b: bool) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !.loc9 else br !.loc15
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc9:
+// CHECK:STDOUT:   %n: i32 = var
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 2
+// CHECK:STDOUT:   assign %n, %.loc9
+// CHECK:STDOUT:   return %n
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc15:
+// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }

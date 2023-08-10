@@ -44,3 +44,13 @@ fn F() -> () {
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7_12.1: type = tuple_type ()
+// CHECK:STDOUT:   %.loc7_12.2: () = tuple_value ()
+// CHECK:STDOUT:   %.loc7_1 = fn_decl @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> () {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT: }

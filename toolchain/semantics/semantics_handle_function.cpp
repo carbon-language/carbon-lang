@@ -27,7 +27,11 @@ static auto BuildFunctionDeclaration(SemanticsContext& context)
 
   // Add the callable.
   auto function_id = context.semantics_ir().AddFunction(
-      {.name_id = name_context.unresolved_name_id,
+      {.name_id =
+           name_context.state ==
+                   SemanticsDeclarationNameStack::Context::State::Unresolved
+               ? name_context.unresolved_name_id
+               : SemanticsStringId(SemanticsStringId::InvalidIndex),
        .param_refs_id = param_refs_id,
        .return_type_id = return_type_id,
        .body_block_ids = {}});

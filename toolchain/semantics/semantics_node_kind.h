@@ -17,6 +17,19 @@ CARBON_DEFINE_RAW_ENUM_CLASS(SemanticsNodeKind, uint8_t) {
 #include "toolchain/semantics/semantics_node_kind.def"
 };
 
+// Whether a node produces or represents a value, and if so, what kind of value.
+enum class SemanticsNodeValueKind {
+  // This node doesn't produce a value, and shouldn't be referenced by other
+  // nodes.
+  None,
+  // This node represents an untyped value. It may be referenced by other nodes
+  // expecting this kind of value.
+  Untyped,
+  // This node represents an expression or expression-like construct that
+  // produces a value of the type indicated by its `type_id` field.
+  Typed,
+};
+
 // Whether a node is a terminator or part of the terminator sequence. The nodes
 // in a block appear in the order NotTerminator, then TerminatorSequence, then
 // Terminator, which is also the numerical order of these values.
@@ -36,6 +49,12 @@ class SemanticsNodeKind : public CARBON_ENUM_BASE(SemanticsNodeKind) {
 #include "toolchain/semantics/semantics_node_kind.def"
 
   using EnumBase::Create;
+
+  // Returns the name to use for this node kind in Semantics IR.
+  [[nodiscard]] auto ir_name() const -> llvm::StringRef;
+
+  // Returns whether this kind of node is expected to produce a value.
+  [[nodiscard]] auto value_kind() const -> SemanticsNodeValueKind;
 
   // Returns whether this node kind is a code block terminator, such as an
   // unconditional branch instruction, or part of the termination sequence,

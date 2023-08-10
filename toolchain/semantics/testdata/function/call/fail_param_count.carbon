@@ -178,3 +178,42 @@ fn Main() {
 // CHECK:STDOUT:     node+24,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @Run0
+// CHECK:STDOUT:   %.loc8 = fn_decl @Run1
+// CHECK:STDOUT:   %.loc9 = fn_decl @Run2
+// CHECK:STDOUT:   %.loc11 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run0() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run1(%a: i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run2(%a: i32, %b: i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc18_8.1: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc18_8.2: i32 = stub_reference %.loc18_8.1
+// CHECK:STDOUT:   %.loc25_8.1: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc25_8.2: i32 = stub_reference %.loc25_8.1
+// CHECK:STDOUT:   %.loc25_11.1: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc25_11.2: i32 = stub_reference %.loc25_11.1
+// CHECK:STDOUT:   %.loc40_8.1: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc40_8.2: i32 = stub_reference %.loc40_8.1
+// CHECK:STDOUT:   %.loc40_11.1: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc40_11.2: i32 = stub_reference %.loc40_11.1
+// CHECK:STDOUT:   %.loc55_8.1: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc55_8.2: i32 = stub_reference %.loc55_8.1
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

@@ -11,9 +11,26 @@ CARBON_DEFINE_ENUM_CLASS_NAMES(SemanticsNodeKind) = {
 #include "toolchain/semantics/semantics_node_kind.def"
 };
 
+// Returns the name to use for this node kind in Semantics IR.
+[[nodiscard]] auto SemanticsNodeKind::ir_name() const -> llvm::StringRef {
+  static constexpr llvm::StringRef Table[] = {
+#define CARBON_SEMANTICS_NODE_KIND_WITH_IR_NAME(Name, IR_Name) IR_Name,
+#include "toolchain/semantics/semantics_node_kind.def"
+  };
+  return Table[AsInt()];
+}
+
+auto SemanticsNodeKind::value_kind() const -> SemanticsNodeValueKind {
+  static constexpr SemanticsNodeValueKind Table[] = {
+#define CARBON_SEMANTICS_NODE_KIND_WITH_VALUE_KIND(Name, ValueKind) \
+  SemanticsNodeValueKind::ValueKind,
+#include "toolchain/semantics/semantics_node_kind.def"
+  };
+  return Table[AsInt()];
+}
+
 auto SemanticsNodeKind::terminator_kind() const -> SemanticsTerminatorKind {
   static constexpr SemanticsTerminatorKind Table[] = {
-#define CARBON_SEMANTICS_NODE_KIND(Name) SemanticsTerminatorKind::NotTerminator,
 #define CARBON_SEMANTICS_NODE_KIND_WITH_TERMINATOR_KIND(Name, TerminatorKind) \
   SemanticsTerminatorKind::TerminatorKind,
 #include "toolchain/semantics/semantics_node_kind.def"

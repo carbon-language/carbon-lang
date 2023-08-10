@@ -81,3 +81,37 @@ fn Or() -> bool {
 // CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %.loc8 = fn_decl @G
+// CHECK:STDOUT:   %.loc10 = fn_decl @Or
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7: bool = bool_literal true
+// CHECK:STDOUT:   return %.loc7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc8: bool = bool_literal true
+// CHECK:STDOUT:   return %.loc8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Or() -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_11: bool = call @F()
+// CHECK:STDOUT:   %.loc11_14.1: bool = not %.loc11_11
+// CHECK:STDOUT:   %.loc11_14.2: bool = bool_literal true
+// CHECK:STDOUT:   if %.loc11_14.1 br !.loc11_18 else br !.loc11_14(%.loc11_14.2)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc11_18:
+// CHECK:STDOUT:   %.loc11_18: bool = call @G()
+// CHECK:STDOUT:   br !.loc11_14(%.loc11_18)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc11_14:
+// CHECK:STDOUT:   %.loc11_14.3: bool = block_arg !.loc11_14
+// CHECK:STDOUT:   return %.loc11_14.3
+// CHECK:STDOUT: }

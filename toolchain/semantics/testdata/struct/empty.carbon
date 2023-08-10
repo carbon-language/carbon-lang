@@ -51,3 +51,14 @@ var y: {} = x;
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7_9.1: type = struct_type {}
+// CHECK:STDOUT:   %.loc7_9.2: {} = struct_value ()
+// CHECK:STDOUT:   %x: {} = var
+// CHECK:STDOUT:   %.loc7_14: {} = struct_value ()
+// CHECK:STDOUT:   assign %x, %.loc7_14
+// CHECK:STDOUT:   %.loc8: {} = struct_value ()
+// CHECK:STDOUT:   %y: {} = var
+// CHECK:STDOUT:   assign %y, %x
+// CHECK:STDOUT: }

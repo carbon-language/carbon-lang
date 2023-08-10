@@ -54,3 +54,16 @@ fn Main() {
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_10: i32 = int_literal 1
+// CHECK:STDOUT:   %x: <error> = var
+// CHECK:STDOUT:   %.loc11_14: i32 = int_literal 1
+// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

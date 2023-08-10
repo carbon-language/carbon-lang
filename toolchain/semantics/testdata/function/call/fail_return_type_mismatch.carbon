@@ -64,3 +64,22 @@ fn Run() {
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @Foo
+// CHECK:STDOUT:   %.loc9 = fn_decl @Run
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo() -> f64 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7: f64 = real_literal 10e-1
+// CHECK:STDOUT:   return %.loc7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %x: i32 = var
+// CHECK:STDOUT:   %.loc13: f64 = call @Foo()
+// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

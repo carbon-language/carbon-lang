@@ -61,3 +61,21 @@ fn Run() {
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %.loc9 = fn_decl @Run
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13_4.1: type = tuple_type ()
+// CHECK:STDOUT:   %.loc13_4.2: () = call @F()
+// CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

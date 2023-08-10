@@ -71,3 +71,27 @@ fn Bar() {
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = namespace {.Baz = %.loc13}
+// CHECK:STDOUT:   %.loc10 = fn_decl @Baz.1
+// CHECK:STDOUT:   %.loc13 = fn_decl @Baz.2
+// CHECK:STDOUT:   %.loc16 = fn_decl @Bar
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Baz.1() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Baz.2() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bar() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc17_10.1: type = tuple_type ()
+// CHECK:STDOUT:   %.loc17_10.2: () = call @Baz.2()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

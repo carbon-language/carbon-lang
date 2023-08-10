@@ -60,3 +60,20 @@ fn F() -> i32 {
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %n: i32 = var
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0
+// CHECK:STDOUT:   assign %n, %.loc8
+// CHECK:STDOUT:   %.loc9_13.1: type = ptr_type i32
+// CHECK:STDOUT:   %.loc9_13.2: i32* = address_of %n
+// CHECK:STDOUT:   %.loc9_12: i32 = dereference %.loc9_13.2
+// CHECK:STDOUT:   %.loc9_11: i32* = address_of %.loc9_12
+// CHECK:STDOUT:   %.loc9_10: i32 = dereference %.loc9_11
+// CHECK:STDOUT:   return %.loc9_10
+// CHECK:STDOUT: }
