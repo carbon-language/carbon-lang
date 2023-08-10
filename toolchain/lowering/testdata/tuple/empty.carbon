@@ -13,17 +13,15 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'empty.carbon'
 // CHECK:STDOUT: source_filename = "empty.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %TupleLiteralType = type {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Run() {
-// CHECK:STDOUT:   %TupleLiteralValue = alloca %TupleLiteralType, align 8
-// CHECK:STDOUT:   %var = alloca %TupleLiteralType, align 8
-// CHECK:STDOUT:   %TupleLiteralValue1 = alloca %TupleLiteralType, align 8
-// CHECK:STDOUT:   %1 = load %TupleLiteralType, ptr %TupleLiteralValue1, align 1
-// CHECK:STDOUT:   store %TupleLiteralType %1, ptr %var, align 1
-// CHECK:STDOUT:   %TupleLiteralValue2 = alloca %TupleLiteralType, align 8
-// CHECK:STDOUT:   %var3 = alloca %TupleLiteralType, align 8
-// CHECK:STDOUT:   %2 = load %TupleLiteralType, ptr %var, align 1
-// CHECK:STDOUT:   store %TupleLiteralType %2, ptr %var3, align 1
+// CHECK:STDOUT:   %tuple = alloca {}, align 8
+// CHECK:STDOUT:   %var = alloca {}, align 8
+// CHECK:STDOUT:   %tuple1 = alloca {}, align 8
+// CHECK:STDOUT:   %1 = load {}, ptr %tuple1, align 1
+// CHECK:STDOUT:   store {} %1, ptr %var, align 1
+// CHECK:STDOUT:   %tuple2 = alloca {}, align 8
+// CHECK:STDOUT:   %var3 = alloca {}, align 8
+// CHECK:STDOUT:   %2 = load {}, ptr %var, align 1
+// CHECK:STDOUT:   store {} %2, ptr %var3, align 1
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

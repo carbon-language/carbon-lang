@@ -15,18 +15,16 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'return_implicit.carbon'
 // CHECK:STDOUT: source_filename = "return_implicit.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %TupleLiteralType = type {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: define void @MakeImplicitEmptyTuple() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Main() {
-// CHECK:STDOUT:   %TupleLiteralValue = alloca %TupleLiteralType, align 8
-// CHECK:STDOUT:   %var = alloca %TupleLiteralType, align 8
+// CHECK:STDOUT:   %tuple = alloca {}, align 8
+// CHECK:STDOUT:   %var = alloca {}, align 8
 // CHECK:STDOUT:   call void @MakeImplicitEmptyTuple()
-// CHECK:STDOUT:   %TupleLiteralValue1 = alloca {}, align 8
-// CHECK:STDOUT:   %1 = load %TupleLiteralType, ptr %TupleLiteralValue1, align 1
-// CHECK:STDOUT:   store %TupleLiteralType %1, ptr %var, align 1
+// CHECK:STDOUT:   %call.result = alloca {}, align 8
+// CHECK:STDOUT:   %1 = load {}, ptr %call.result, align 1
+// CHECK:STDOUT:   store {} %1, ptr %var, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }

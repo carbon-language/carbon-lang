@@ -16,20 +16,20 @@ fn Main() -> i32 {
 // AUTOUPDATE
 
 // CHECK:STDOUT: ********** resolving names **********
-// CHECK:STDOUT: --- declared `TestInterface` as `interface TestInterface` in `package` (phase_name_resolution.carbon:7)
-// CHECK:STDOUT: --- declared `Main` as `fn Main` in `package` (phase_name_resolution.carbon:11)
-// CHECK:STDOUT: ** resolving decl `interface TestInterface` (phase_name_resolution.carbon:7)
-// CHECK:STDOUT: --- marked `TestInterface` declared but not usable in `package`
-// CHECK:STDOUT: --- marked `TestInterface` usable in `package`
-// CHECK:STDOUT: --- declared `Self` as `Self` in `interface TestInterface` (phase_name_resolution.carbon:7)
-// CHECK:STDOUT: ** finished resolving decl `interface TestInterface` (phase_name_resolution.carbon:7)
-// CHECK:STDOUT: ** resolving decl `fn Main` (phase_name_resolution.carbon:11)
-// CHECK:STDOUT: --- marked `Main` declared but not usable in `package`
-// CHECK:STDOUT: --- marked `Main` usable in `package`
-// CHECK:STDOUT: ** resolving stmt `{return 0;}` (phase_name_resolution.carbon:11)
-// CHECK:STDOUT: ** resolving stmt `return 0;` (phase_name_resolution.carbon:10)
-// CHECK:STDOUT: ** finished resolving stmt `return 0;` (phase_name_resolution.carbon:10)
-// CHECK:STDOUT: ** finished resolving stmt `{return 0;}` (phase_name_resolution.carbon:11)
-// CHECK:STDOUT: ** finished resolving decl `fn Main` (phase_name_resolution.carbon:11)
-// CHECK:STDOUT: --- resolved `Main` as `fn Main` in `package` (<Main()>:0)
+// CHECK:STDOUT: ==> declared `TestInterface` as `interface TestInterface` in `package` (phase_name_resolution.carbon:7)
+// CHECK:STDOUT: ==> declared `Main` as `fn Main` in `package` (phase_name_resolution.carbon:11)
+// CHECK:STDOUT: ->> resolving decl `interface TestInterface` (phase_name_resolution.carbon:7)
+// CHECK:STDOUT: ==> marked `TestInterface` declared but not usable in `package`
+// CHECK:STDOUT: ==> marked `TestInterface` usable in `package`
+// CHECK:STDOUT: ==> declared `Self` as `Self` in `interface TestInterface` (phase_name_resolution.carbon:7)
+// CHECK:STDOUT: <<- finished resolving decl `interface TestInterface` (phase_name_resolution.carbon:7)
+// CHECK:STDOUT: ->> resolving decl `fn Main` (phase_name_resolution.carbon:11)
+// CHECK:STDOUT: ==> marked `Main` declared but not usable in `package`
+// CHECK:STDOUT: ==> marked `Main` usable in `package`
+// CHECK:STDOUT: ->> resolving stmt `{return 0;}` (phase_name_resolution.carbon:11)
+// CHECK:STDOUT: ->> resolving stmt `return 0;` (phase_name_resolution.carbon:10)
+// CHECK:STDOUT: <<- finished resolving stmt `return 0;` (phase_name_resolution.carbon:10)
+// CHECK:STDOUT: <<- finished resolving stmt `{return 0;}` (phase_name_resolution.carbon:11)
+// CHECK:STDOUT: <<- finished resolving decl `fn Main` (phase_name_resolution.carbon:11)
+// CHECK:STDOUT: ==> resolved `Main` as `fn Main` in `package` (<Main()>:0)
 // CHECK:STDOUT: result: 0

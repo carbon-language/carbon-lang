@@ -13,17 +13,15 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'empty.carbon'
 // CHECK:STDOUT: source_filename = "empty.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %StructLiteralType = type {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @Run() {
-// CHECK:STDOUT:   %StructLiteralValue = alloca %StructLiteralType, align 8
-// CHECK:STDOUT:   %var = alloca %StructLiteralType, align 8
-// CHECK:STDOUT:   %StructLiteralValue1 = alloca %StructLiteralType, align 8
-// CHECK:STDOUT:   %1 = load %StructLiteralType, ptr %StructLiteralValue1, align 1
-// CHECK:STDOUT:   store %StructLiteralType %1, ptr %var, align 1
-// CHECK:STDOUT:   %StructLiteralValue2 = alloca %StructLiteralType, align 8
-// CHECK:STDOUT:   %var3 = alloca %StructLiteralType, align 8
-// CHECK:STDOUT:   %2 = load %StructLiteralType, ptr %var, align 1
-// CHECK:STDOUT:   store %StructLiteralType %2, ptr %var3, align 1
+// CHECK:STDOUT:   %struct = alloca {}, align 8
+// CHECK:STDOUT:   %var = alloca {}, align 8
+// CHECK:STDOUT:   %struct1 = alloca {}, align 8
+// CHECK:STDOUT:   %1 = load {}, ptr %struct1, align 1
+// CHECK:STDOUT:   store {} %1, ptr %var, align 1
+// CHECK:STDOUT:   %struct2 = alloca {}, align 8
+// CHECK:STDOUT:   %var3 = alloca {}, align 8
+// CHECK:STDOUT:   %2 = load {}, ptr %var, align 1
+// CHECK:STDOUT:   store {} %2, ptr %var3, align 1
 // CHECK:STDOUT:   ret i32 0
 // CHECK:STDOUT: }

@@ -9,7 +9,7 @@ namespace Carbon {
 auto SemanticsHandleInfixOperator(SemanticsContext& context,
                                   ParseTree::Node parse_node) -> bool {
   auto rhs_id = context.node_stack().PopExpression();
-  auto lhs_id = context.node_stack().PopExpression();
+  auto [lhs_node, lhs_id] = context.node_stack().PopExpressionWithParseNode();
 
   // Figure out the operator for the token.
   auto token = context.parse_tree().node_token(parse_node);
@@ -53,7 +53,12 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
     }
     case TokenKind::Equal: {
       // TODO: handle complex assignment expression such as `a += 1`.
-      // TODO: check if lhs node is assignable.
+      if (GetSemanticsExpressionCategory(context.semantics_ir(), lhs_id) !=
+          SemanticsExpressionCategory::DurableReference) {
+        CARBON_DIAGNOSTIC(AssignmentToNonAssignable, Error,
+                          "Expression is not assignable.");
+        context.emitter().Emit(lhs_node, AssignmentToNonAssignable);
+      }
       context.ImplicitAsRequired(
           parse_node, rhs_id, context.semantics_ir().GetNode(lhs_id).type_id());
       context.AddNodeAndPush(
@@ -150,8 +155,36 @@ auto SemanticsHandlePrefixOperator(SemanticsContext& context,
               value_id));
       return true;
 
-    case TokenKind::Star:
-      return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));
+    case TokenKind::Star: {
+      auto type_id = context.GetUnqualifiedType(
+          context.semantics_ir().GetNode(value_id).type_id());
+      auto type_node = context.semantics_ir().GetNode(
+          context.semantics_ir().GetTypeAllowBuiltinTypes(type_id));
+      auto result_type_id = SemanticsTypeId::Error;
+      if (type_node.kind() == SemanticsNodeKind::PointerType) {
+        result_type_id = type_node.GetAsPointerType();
+      } else {
+        CARBON_DIAGNOSTIC(
+            DereferenceOfNonPointer, Error,
+            "Cannot dereference operand of non-pointer type `{0}`.",
+            std::string);
+        auto builder = context.emitter().Build(
+            parse_node, DereferenceOfNonPointer,
+            context.semantics_ir().StringifyType(type_id));
+        // TODO: Check for any facet here, rather than only a type.
+        if (type_id == SemanticsTypeId::TypeType) {
+          CARBON_DIAGNOSTIC(
+              DereferenceOfType, Note,
+              "To form a pointer type, write the `*` after the pointee type.");
+          builder.Note(parse_node, DereferenceOfType);
+        }
+        builder.Emit();
+      }
+      context.AddNodeAndPush(parse_node,
+                             SemanticsNode::Dereference::Make(
+                                 parse_node, result_type_id, value_id));
+      return true;
+    }
 
     default:
       return context.TODO(parse_node, llvm::formatv("Handle {0}", token_kind));

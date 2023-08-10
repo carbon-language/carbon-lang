@@ -50,6 +50,7 @@ CARBON_DIAGNOSTIC_KIND(WrongRealLiteralExponent)
 // ============================================================================
 
 CARBON_DIAGNOSTIC_KIND(BinaryOperatorRequiresWhitespace)
+CARBON_DIAGNOSTIC_KIND(ExpectedArraySemi)
 CARBON_DIAGNOSTIC_KIND(ExpectedCloseSymbol)
 CARBON_DIAGNOSTIC_KIND(ExpectedCodeBlock)
 CARBON_DIAGNOSTIC_KIND(ExpectedExpression)
@@ -98,6 +99,9 @@ CARBON_DIAGNOSTIC_KIND(SemanticsTodo)
 
 CARBON_DIAGNOSTIC_KIND(AddressOfEphemeralReference)
 CARBON_DIAGNOSTIC_KIND(AddressOfNonReference)
+CARBON_DIAGNOSTIC_KIND(AssignmentToNonAssignable)
+CARBON_DIAGNOSTIC_KIND(DereferenceOfNonPointer)
+CARBON_DIAGNOSTIC_KIND(DereferenceOfType)
 CARBON_DIAGNOSTIC_KIND(NameNotFound)
 CARBON_DIAGNOSTIC_KIND(NameDeclarationDuplicate)
 CARBON_DIAGNOSTIC_KIND(NameDeclarationPrevious)

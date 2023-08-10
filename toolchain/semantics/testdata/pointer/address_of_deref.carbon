@@ -4,11 +4,9 @@
 //
 // AUTOUPDATE
 
-fn Main() -> i32 {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:13: Cannot implicitly convert from `i32` to `f64`.
-  // CHECK:STDERR:   return 12 + 3.4;
-  // CHECK:STDERR:             ^
-  return 12 + 3.4;
+fn F() -> i32 {
+  var n: i32 = 0;
+  return *&*&n;
 }
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
@@ -16,26 +14,32 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT:   12,
+// CHECK:STDOUT:   0,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
-// CHECK:STDOUT:   {mantissa: 34, exponent: -1, is_decimal: 1},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
-// CHECK:STDOUT:   Main,
+// CHECK:STDOUT:   F,
+// CHECK:STDOUT:   n,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
-// CHECK:STDOUT:   nodeFloatingPointType,
+// CHECK:STDOUT:   node+5,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: nodeError, arg1: node+2, type: typeError},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+3},
+// CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
+// CHECK:STDOUT:   {kind: AddressOf, arg0: node+1, type: type1},
+// CHECK:STDOUT:   {kind: Dereference, arg0: node+6, type: type0},
+// CHECK:STDOUT:   {kind: AddressOf, arg0: node+7, type: type1},
+// CHECK:STDOUT:   {kind: Dereference, arg0: node+8, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+9},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -48,5 +52,11 @@ fn Main() -> i32 {
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
