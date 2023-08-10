@@ -36,9 +36,9 @@ This example illustrates many of the key concepts of variadics:
 fn Zip[each ElementType:! type]
       (..., each vector: Vector(each ElementType))
       -> Vector((..., each ElementType)) {
-  var iters: auto = (..., (each vector).Begin());
+  var iters: auto = (..., each vector.Begin());
   var result: Vector((..., each ElementType));
-  while (...and [:]iters != (each vector).End()) {
+  while (...and [:]iters != each vector.End()) {
     result.push_back((..., *[:]iters));
     ...{ ([:]iters)++; }
   }
@@ -55,7 +55,9 @@ rooted at any of these operations is called a _pack expansion_. The operand of
 `...{ }`, is called the _expansion body_.
 
 A pack expansion must contain one or more _expansion arguments_, which are
-marked by `each` or `[:]`.
+marked by `[:]` or `each`. `[:]` is a prefix unary expression operator with the
+same precedence as `*`. The operand of `each` is always an identifier name, not
+an expression, so it does not have a precedence.
 
 The _arity_ of an expansion argument is a compile-time value representing the
 number of elements it evaluates to. Every pack expansion must contain at least
