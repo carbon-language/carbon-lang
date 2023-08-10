@@ -6282,8 +6282,7 @@ auto TypeChecker::DeclareDeclaration(Nonnull<Declaration*> d,
                                      const ScopeInfo& scope_info)
     -> ErrorOr<Success> {
   if (trace_stream_->is_enabled()) {
-    trace_stream_->Source()
-        << "declaration at (" << d->source_loc() << ")\n";
+    trace_stream_->Source() << "declaration at (" << d->source_loc() << ")\n";
     *trace_stream_ << "```\n" << *d << "\n```\n";
   }
 
