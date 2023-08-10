@@ -193,6 +193,7 @@ class NodeNamer {
           if (!best) {
             best = new_name;
           } else {
+            CARBON_CHECK(current);
             current.SetFallback(new_name);
           }
           current = new_name;
