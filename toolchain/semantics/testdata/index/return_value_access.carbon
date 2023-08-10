@@ -84,3 +84,28 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7_12: type = stub_reference i32
+// CHECK:STDOUT:   %.loc7_16.1: type = tuple_type (type)
+// CHECK:STDOUT:   %.loc7_16.2: (type,) = tuple_value (%.loc7_12)
+// CHECK:STDOUT:   %.loc7_16.3: type = tuple_type (i32)
+// CHECK:STDOUT:   %.loc7_1 = fn_decl @F
+// CHECK:STDOUT:   %.loc9 = fn_decl @Run
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> (i32,) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7_28.1: i32 = int_value 0
+// CHECK:STDOUT:   %.loc7_28.2: i32 = stub_reference %.loc7_28.1
+// CHECK:STDOUT:   %.loc7_30: (i32,) = tuple_value (%.loc7_28.2)
+// CHECK:STDOUT:   return %.loc7_30
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10_11: (i32,) = call @F()
+// CHECK:STDOUT:   %.loc10_14: i32 = int_value 0
+// CHECK:STDOUT:   %.loc10_15: i32 = tuple_index %.loc10_11, %.loc10_14
+// CHECK:STDOUT:   return %.loc10_15
+// CHECK:STDOUT: }

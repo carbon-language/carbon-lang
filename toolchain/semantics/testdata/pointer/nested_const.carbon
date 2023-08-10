@@ -70,3 +70,15 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc8_41: type = const_type i32
+// CHECK:STDOUT:   %.loc8_1 = fn_decl @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%p: const (const (const i32*)*)) -> const i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc9_11: const (const i32*) = dereference %p
+// CHECK:STDOUT:   %.loc9_10: const i32 = dereference %.loc9_11
+// CHECK:STDOUT:   return %.loc9_10
+// CHECK:STDOUT: }

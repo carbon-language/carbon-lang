@@ -57,3 +57,17 @@ fn Main() -> i32 {
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13_10: i32 = int_value 12
+// CHECK:STDOUT:   %.loc13_15: f64 = real_value 34e-1
+// CHECK:STDOUT:   %.loc13_13: <error> = add <error>, %.loc13_15
+// CHECK:STDOUT:   %.loc13_21: i32 = int_value 12
+// CHECK:STDOUT:   %.loc13_19: <error> = add <error>, %.loc13_21
+// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }
