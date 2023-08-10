@@ -41,7 +41,7 @@ enum class ProgramPhase {
 // disproprotionate amount of time to log, so we try to avoid it.
 class TraceStream {
  public:
-  explicit TraceStream() {}
+  explicit TraceStream() = default;
 
   // Returns true if tracing is currently enabled.
   auto is_enabled() const -> bool {
@@ -126,6 +126,7 @@ class TraceStream {
   auto Pop() const -> llvm::raw_ostream& { return *this << "<[] "; }
   auto Not() const -> llvm::raw_ostream& { return *this << "-!- "; }
   auto Skip() const -> llvm::raw_ostream& { return *this << ">>> "; }
+  auto Source() const -> llvm::raw_ostream& { return *this << "*** "; }
 
  private:
   bool in_prelude_ = false;
