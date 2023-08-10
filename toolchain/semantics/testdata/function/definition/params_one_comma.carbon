@@ -46,3 +46,12 @@ fn Foo(a: i32,) {}
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @Foo
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo(%a: i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

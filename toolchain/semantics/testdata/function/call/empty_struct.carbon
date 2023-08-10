@@ -75,3 +75,22 @@ fn Main() {
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7_20: {} = struct_value ()
+// CHECK:STDOUT:   %.loc7_1 = fn_decl @Echo
+// CHECK:STDOUT:   %.loc11 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Echo(%a: {}) -> {} {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return %a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc12_9.1: {} = struct_value ()
+// CHECK:STDOUT:   %.loc12_9.2: {} = stub_reference %.loc12_9.1
+// CHECK:STDOUT:   %.loc12_7: {} = call @Echo(%.loc12_9.2)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

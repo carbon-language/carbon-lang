@@ -102,3 +102,29 @@ fn Main() {
 // CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @Foo
+// CHECK:STDOUT:   %.loc9 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Foo(%a: i32, %b: i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc10_7.1: i32 = int_value 1
+// CHECK:STDOUT:   %.loc10_7.2: i32 = stub_reference %.loc10_7.1
+// CHECK:STDOUT:   %.loc10_10.1: i32 = int_value 2
+// CHECK:STDOUT:   %.loc10_10.2: i32 = stub_reference %.loc10_10.1
+// CHECK:STDOUT:   %.loc10_6.1: type = tuple_type ()
+// CHECK:STDOUT:   %.loc10_6.2: () = call @Foo(%.loc10_7.2, %.loc10_10.2)
+// CHECK:STDOUT:   %.loc11_7.1: i32 = int_value 1
+// CHECK:STDOUT:   %.loc11_7.2: i32 = stub_reference %.loc11_7.1
+// CHECK:STDOUT:   %.loc11_10.1: i32 = int_value 2
+// CHECK:STDOUT:   %.loc11_10.2: i32 = stub_reference %.loc11_10.1
+// CHECK:STDOUT:   %.loc11_6: () = call @Foo(%.loc11_7.2, %.loc11_10.2)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

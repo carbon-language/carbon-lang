@@ -46,3 +46,15 @@ fn Main() -> i32 {
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc8_10: i32 = int_value 12
+// CHECK:STDOUT:   %.loc8_15: i32 = int_value 34
+// CHECK:STDOUT:   %.loc8_13: i32 = add %.loc8_10, %.loc8_15
+// CHECK:STDOUT:   return %.loc8_13
+// CHECK:STDOUT: }

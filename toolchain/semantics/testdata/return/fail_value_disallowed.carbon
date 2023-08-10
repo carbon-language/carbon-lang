@@ -47,3 +47,13 @@ fn Main() {
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc14: i32 = int_value 0
+// CHECK:STDOUT:   return %.loc14
+// CHECK:STDOUT: }

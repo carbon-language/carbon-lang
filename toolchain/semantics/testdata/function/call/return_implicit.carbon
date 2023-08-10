@@ -64,3 +64,23 @@ fn Main() {
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @MakeImplicitEmptyTuple
+// CHECK:STDOUT:   %.loc10 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MakeImplicitEmptyTuple() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_11.1: type = tuple_type ()
+// CHECK:STDOUT:   %.loc11_11.2: () = tuple_value ()
+// CHECK:STDOUT:   %b: () = var
+// CHECK:STDOUT:   %.loc11_37: () = call @MakeImplicitEmptyTuple()
+// CHECK:STDOUT:   assign %b, %.loc11_37
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

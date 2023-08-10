@@ -50,3 +50,13 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @Not
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Not(%b: bool) -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc8: bool = not %b
+// CHECK:STDOUT:   return %.loc8
+// CHECK:STDOUT: }
