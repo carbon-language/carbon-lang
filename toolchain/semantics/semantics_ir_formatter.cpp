@@ -87,7 +87,7 @@ class NodeNamer {
       return "<unexpected noderef " + llvm::itostr(node_id.index) + ">";
     }
     if (node_scope == scope_idx) {
-      return node_name;
+      return node_name.str().str();
     }
     return (GetScopeInfo(node_scope).name.str() + "." + node_name.str()).str();
   }
@@ -105,7 +105,7 @@ class NodeNamer {
       return "<unexpected nodeblockref " + llvm::itostr(block_id.index) + ">";
     }
     if (label_scope == scope_idx) {
-      return label_name;
+      return label_name.str().str();
     }
     return (GetScopeInfo(label_scope).name.str() + "." + label_name.str())
         .str();
@@ -136,8 +136,6 @@ class NodeNamer {
       }
 
       operator llvm::StringRef() const { return str(); }
-      operator llvm::Twine() const { return str(); }
-      operator std::string() const { return str().str(); }
 
       auto SetFallback(Name name) -> void { value_->second.fallback = name; }
 
@@ -190,7 +188,7 @@ class NodeNamer {
       };
 
       // All names start with the prefix.
-      name.insert(0, prefix.data(), prefix.size());
+      name.insert(0, prefix);
 
       // Use the given name if it's available and not just the prefix.
       if (name.size() > prefix.size()) {
@@ -200,12 +198,12 @@ class NodeNamer {
       // Append location information to try to disambiguate.
       if (node.is_valid()) {
         auto token = namer.parse_tree_.node_token(node);
-        name += ".loc";
-        name += llvm::itostr(namer.tokenized_buffer_.GetLineNumber(token));
+        llvm::raw_string_ostream(name)
+            << ".loc" << namer.tokenized_buffer_.GetLineNumber(token);
         add_name();
 
-        name += "_";
-        name += llvm::itostr(namer.tokenized_buffer_.GetColumnNumber(token));
+        llvm::raw_string_ostream(name)
+            << "_" << namer.tokenized_buffer_.GetColumnNumber(token);
         add_name();
       }
 
@@ -214,7 +212,7 @@ class NodeNamer {
       auto name_size_without_counter = name.size();
       for (int counter = 1;; ++counter) {
         name.resize(name_size_without_counter);
-        name += llvm::itostr(counter);
+        llvm::raw_string_ostream(name) << counter;
         if (add_name(/*mark_ambiguous=*/false)) {
           return best;
         }
@@ -257,7 +255,9 @@ class NodeNamer {
 
     Scope& scope = GetScopeInfo(scope_idx);
 
-    // Use bound names where available.
+    // Use bound names where available. The BindName node appears after the node
+    // that it's giving a name to, so we need to do this before assigning
+    // fallback names.
     for (auto node_id : semantics_ir_.GetNodeBlock(block_id)) {
       auto node = semantics_ir_.GetNode(node_id);
       if (node.kind() == SemanticsNodeKind::BindName) {
@@ -431,6 +431,9 @@ class SemanticsIRFormatter {
   }
 
   // BindName is handled by the NodeNamer and doesn't appear in the output.
+  // These nodes are currently used simply to give a name to another node, and
+  // are never referenced themselves.
+  // TODO: Include BindName nodes in the output if we start referring to them.
   template <>
   auto FormatInstruction<SemanticsNode::BindName>(SemanticsNodeId,
                                                   SemanticsNode) -> void {}
