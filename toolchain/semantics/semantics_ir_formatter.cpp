@@ -308,8 +308,8 @@ class NodeNamer {
 
       case ParseNodeKind::ShortCircuitOperand: {
         bool is_rhs = node.kind() == SemanticsNodeKind::BranchIf;
-        bool is_and = tokenized_buffer_.GetKind(
-            parse_tree_.node_token(node.parse_node())) == TokenKind::And;
+        bool is_and = tokenized_buffer_.GetKind(parse_tree_.node_token(
+                          node.parse_node())) == TokenKind::And;
         name = is_and ? (is_rhs ? "and.rhs" : "and.cont")
                       : (is_rhs ? "or.rhs" : "or.cont");
         break;
