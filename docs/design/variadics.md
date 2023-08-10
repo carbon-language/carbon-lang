@@ -10,7 +10,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Statically sized arrays](#statically-sized-arrays)
 -   [Basics](#basics)
 -   [Run-time expression and statement semantics](#run-time-expression-and-statement-semantics)
 -   [Typechecking expressions and statements](#typechecking-expressions-and-statements)
@@ -26,29 +25,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## Statically sized arrays
-
-`[T; N]` is the type of a statically-sized array of `N` objects of type `T`, and
-`[T;]` is a symbolic type expression (like `auto`) that deduces to the type
-`[T; N]` for some `N`. Consequently, for purposes of symbolic evaluation and
-typechecking, we will assume that all statically-sized array types have a size,
-although that size may be a symbolic value rather than a constant.
-
-A tuple of `N` elements of type `T` can be implicitly converted to `[T; N]`, and
-an array of type `[T; N]` can be implicitly converted to a tuple of `N` elements
-of type `T`. These conversions are combined transitively with the implicit
-conversions among tuples, and implicit conversions from tuples of types to tuple
-types. As a result, if `T` is a type of types, `[T; N]` is usable as a tuple
-type.
-
-We do not support deducing the element type of an array, as in
-`fn F[T:! type](array: [T;]);`, because there is no way to deduce the type of an
-array of size 0, and the variadic use cases we are focusing on do not give the
-caller a way to bypass deduction with an explicit cast.
-
-> **TODO:** Complete the design of statically-sized arrays, and move it to a
-> separate document.
-
 ## Basics
 
 This example illustrates many of the key concepts of variadics:
@@ -57,11 +33,11 @@ This example illustrates many of the key concepts of variadics:
 // Takes an arbitrary number of vectors with arbitrary element types, and
 // returns a vector of tuples where the i'th element of the vector is
 // a tuple of the i'th elements of the input vectors.
-fn Zip[ElementTypes:! [type;]]
-      (..., each vector: Vector([:]ElementTypes))
-      -> Vector((..., [:]ElementTypes)) {
+fn Zip[each ElementType:! type]
+      (..., each vector: Vector(each ElementType))
+      -> Vector((..., each ElementType)) {
   var iters: auto = (..., (each vector).Begin());
-  var result: Vector((..., [:]ElementTypes));
+  var result: Vector((..., each ElementType));
   while (...and [:]iters != (each vector).End()) {
     result.push_back((..., *[:]iters));
     ...{ ([:]iters)++; }
@@ -144,11 +120,12 @@ sequence of values rather than a singular value, but it is still fundamentally
 iterative, as will be seen in the next section.
 
 A binding pattern that begins with `each` declares a _variadic binding_. A
-variadic binding pattern must occur inside a pack expansion, and binds the name
-to one value for each iteration of the expansion. The name declared by a
-variadic binding can only be used inside a pack expansion, where it acts as an
-expansion argument whose elements are the bound values. It must be prefixed by
-`each` at the point of use.
+variadic binding pattern must occur inside a pack expansion, or as a deduced
+parameter that is deduced from a usage inside a pack expansion. In either case,
+it binds the name to one value for each iteration of the expansion. The name
+declared by a variadic binding can only be used inside a pack expansion, where
+it acts as an expansion argument whose elements are the bound values. It must be
+prefixed by `each` at the point of use.
 
 ## Run-time expression and statement semantics
 
@@ -185,28 +162,34 @@ from zero).
 ### Generalized tuple types
 
 The `...,` operator lets us form tuples out of sequences whose size is not known
-during typechecking. For example, in a function with deduced parameters
-`[N:! SizeType, M:! SizeType, Ts:! [type; N], Us:! [type; M]]`, the type
-`(..., [:]Ts, i32, ..., Optional([:]Us))` is a tuple whose elements are an
-indeterminate number of types, followed by `i32`, followed by a different
-indeterminate number of types that all have the form `Optional(U)` for some type
-`U`. We can't represent this as an explicit list of element types until the
-values of `M` and `N` are known, so we need a more general representation for
-tuple types.
+during typechecking. For example, in this code:
+
+```carbon
+fn F[each T:! type](x: (..., each i32), ..., each y: Optional(each T)) {
+  let z: auto = (..., [:]x, 0 as f32, each y);
+}
+```
+
+The type of `z` is a tuple whose elements are an indeterminate number of
+repetitions of `i32`, followed by `f32`, followed by a different indeterminate
+number of types that all have the form `Optional(T)` for some type `T`. We can't
+represent this as an explicit list of element types until those indeterminate
+numbers are known, so we need a more general representation for tuple types.
 
 In this model, a tuple type consists of a sequence of _pack components_, and a
 pack component consists of a type called the _representative_, and an arity,
-both of which may be symbolic. Pack components have no literal syntax in Carbon,
-but for purposes of illustration we will use the notation `<V, N>` to represent
-a pack component with representative V and arity N. There is a special symbolic
-variable called the _pack index_, which can only be used in the representative
-of a pack component, and only as the subscript of an indexing expression on a
-tuple or statically sized array. The pack index is used solely as a placeholder,
-and never has a value. We will use `$I` to represent it for purposes of
-illustration. So, continuing the earlier example, the type expression
-`(..., [:]Ts, i32, ..., Optional([:]Us))` symbolically evaluates to a tuple type
-consisting of three pack components: `<Ts[$I], N>`, `<i32, 1>`, and
-`<Optional(Us[$I]), M>`.
+both of which may be symbolic. There is a special symbolic variable called the
+_pack index_, which can only be used in the representative of a pack component,
+and only as the subscript of an indexing expression on a tuple. The pack index
+is used solely as a placeholder, and never has a value. There are also symbolic
+variables representing the arity of every variadic binding. For purposes of
+illustration, the notation `<V, N>` represents a pack component with
+representative V and arity N, `$I` represents the pack index, and given a
+variadic binding `B`, `|B|` represents the arity of `B`, and `B/$I` represents
+the `$I`th value bound by `B`.
+
+So, continuing the earlier example, the type of `z` is represented symbolically
+as `(<i32, Sizeof(x)>, <f32, 1>, <Optional(T/$I), |T|>)`.
 
 A pack component is _variadic_ if its arity is unknown, and _singular_ if its
 arity is known to be 1 and its representative does not refer to the pack index.
@@ -215,8 +198,8 @@ sometimes refer to them as "elements". Pack values are always assumed to be
 normalized, meaning that every component is either singular or variadic. This is
 always possible because if a component's arity is known to be some fixed value N
 other than 1, we can replace it with N singular components. The _shape_ of a
-tuple type is the sequence of arities of its components, so the shape of
-`(..., [:]Ts, i32, ..., Optional([:]Us))` is `(N, 1, M)`.
+tuple type is the sequence of arities of its components, so the shape of the
+type of `z` is `(Sizeof(x), 1, |T|)`.
 
 In order to index into a tuple, all of the components of its type must be
 singular, so that we can determine the type of the indexing expression.
@@ -224,9 +207,8 @@ singular, so that we can determine the type of the indexing expression.
 ### Iterative typechecking
 
 Without loss of generality, we can assume that every expansion argument is a
-tuple: if it has an array type `[T; N]`, or if it's a variadic binding with
-declared type `T` and arity N, we can treat it as having a generalized tuple
-type with one component, `<T, N>`.
+tuple: if it's a variadic binding with declared type `T` and arity N, we can
+treat it as having a generalized tuple type with one component, `<T, N>`.
 
 Since the run-time semantics of an expansion are defined in terms of a notional
 rewritten form where we simultaneously iterate over the expansion arguments, in
@@ -306,12 +288,12 @@ A pattern of the form `[:]` _subpattern_ matches the `$I`th element of
 _subpattern_ against the current (`$I`th) scrutinee. Consequently, _subpattern_
 must be a kind of pattern that has elements. Specifically, it must be one of:
 
--   An expression pattern that evaluates to an array or tuple.
+-   An expression pattern that evaluates to a tuple.
 -   A tuple literal pattern.
--   A binding pattern with an array or tuple type.
+-   A binding pattern with a tuple type.
 
 In the last case, we treat the binding pattern as if it were a sequence of
-binding patterns that bind values to the elements of the array/tuple.
+binding patterns that bind values to the elements of the tuple.
 
 ## Typechecking pattern matching
 
@@ -334,21 +316,12 @@ in contexts that require irrefutability.
 Expression typechecking (phase 1) was described earlier. Pattern typechecking
 (phase 2) behaves just like expression typechecking, because pattern syntax is
 essentially expression syntax extended with binding patterns (which are easy to
-accommodate because they declare their types explicitly). The remainder of this
-section will focus on matching the scrutinee type against the pattern type
-(phase 3).
+accommodate because they declare their types explicitly).
 
-We will focus on the forms of symbolic type that are most relevant to variadics:
-array types, tuple types, and pack types.
-
-An array type pattern `[T; N]` matches an array type scrutinee `[U; M]` if `T`
-matches `U` and `N` matches `M`. It can also match a tuple scrutinee type if the
-tuple's pack component patterns all match `T`, and the sum of the tuple's pack
-component arities matches `N`.
-
-A tuple type pattern matches an array type scrutinee `[T; N]` if it matches the
-corresponding tuple type `(..., [:][T; N])`. A tuple type pattern matches a
-tuple type scrutinee if the corresponding pack types match.
+The remainder of this section will focus on matching the scrutinee type against
+the pattern type (phase 3). Our focus will be on pack types, because a tuple
+type pattern matches a tuple type scrutinee if the corresponding pack types
+match, and other kinds of types are largely unaffected by variadics.
 
 Pack types only match with other pack types. In particular, `auto` never matches
 a pack type, in order to ensure that named packs are always syntactically marked
@@ -359,18 +332,19 @@ component will match with, or the other way around. For example, consider the
 following code:
 
 ```carbon
-fn F(a: i32, ..., [:]b: [i32;], c: i32);
+fn F(a: i32, ..., each b: i32, c: i32);
 
-fn G(..., [:]x: [i32;]) {
-  F(1, 2, ..., [:]x);
+fn G(..., each x: i32) {
+  F(1, 2, ..., each x);
 }
 ```
 
-If `x` is empty, the `2` will match with `c`, and otherwise the `2` will match
-with an element of `b`. Similarly, if `x` is not empty, its last element will
-match `c`, and the remaining elements (if any) will match elements of `b`.
-However, at type-checking time we don't know the size of `x` yet, so we don't
-know which will occur. On the other hand, the `1` will always match `a`.
+If `G` is called with no arguments, the `2` will match with `c`, and otherwise
+the `2` will match with an element of `b`. Similarly, if `G` is called with one
+or more arguments, the last argument will match `c`, and the remaining elements
+(if any) will match values from `b`. However, at type-checking time we don't
+know how many arguments the caller will pass, so we don't know which will occur.
+On the other hand, the `1` will always match `a`.
 
 In general, we want type checking to fail if any possible monomorphization of
 the generic code would fail to typecheck. In this case that means we want type
@@ -385,23 +359,22 @@ arguments, which is only a factor of $\sqrt{n}$ away from exponential.
 Introducing type deduction further complicates the situation. For example:
 
 ```carbon
-fn H[Ts:! [type;]](a: i32, ..., [:]b: Ts, c: String) -> (..., [:]Ts);
+fn H[each T:! type](a: i32, ..., each b: each T, c: String) -> (..., each T);
 
 external impl P as ImplicitAs(i32);
 external impl Q as ImplicitAs(String);
 
-fn I(x: [i32;], y: [f32;], z: [String;]) {
-  var result: auto = H(..., [:]x, {} as P, ..., [:]y, {} as Q, ..., [:]z);
+fn I(each x: i32, each y: f32, each z: String) {
+  var result: auto = H(..., each x, {} as P, ..., each y, {} as Q, ..., each z);
 }
 ```
 
 Here, the deduced type of `result` can have one of four different forms. The
-most general case is
-`(..., [:][i32;], P, ..., [:][f32;], Q, ..., [:][String;])`, and the other three
-cases are formed by omitting the prefix ending with `P` and/or the suffix
-starting with `Q` (corresponding to the cases where `x` and/or `z` are empty).
-Extending the type system to support deduction that splits into multiple cases
-would add a fearsome amount of complexity to the type system.
+most general case is `(<i32, |x|>, <P, 1>, <f32, |y|>, <Q, 1>, <String, |z|>)`,
+and the other three cases are formed by omitting the first two and/or last two
+components (corresponding to the cases where `x` and/or `z` do not match any
+arguments). Extending the type system to support deduction that splits into
+multiple cases would add a fearsome amount of complexity to the type system.
 
 ### Identifying potential matchings
 
@@ -493,11 +466,9 @@ single result.
 
 > **Open question:** Is that restriction too strict? If so, is it possible to
 > forbid only situations that would actually cause type deduction to split into
-> multiple cases. As well as being much less restrictive, that would avoid the
-> need to give special treatment to deduced arrays that are used only once. It
-> would still disallow cases like the call to `H` above, but that call seems
-> unnatural for reasons that seem closely related to the fact that its type
-> splits into cases.
+> multiple cases. It would still disallow cases like the call to `H` above, but
+> that call seems unnatural for reasons that seem closely related to the fact
+> that its type splits into cases.
 
 To avoid a combinatorial explosion, we will use a much more tractable
 conservative approximation of the precise algorithm. We type-check each
