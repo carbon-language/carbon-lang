@@ -83,7 +83,7 @@ class SemanticsIR {
   auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
 
   // Returns array bound value from the bound node.
-  auto GetArrayBound(SemanticsNodeId bound_id) -> uint64_t {
+  auto GetArrayBound(SemanticsNodeId bound_id) const -> uint64_t {
     return GetIntegerLiteral(GetNode(bound_id).GetAsIntegerLiteral())
         .getZExtValue();
   }
