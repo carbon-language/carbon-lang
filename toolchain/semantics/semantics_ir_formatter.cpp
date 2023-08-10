@@ -22,11 +22,6 @@ namespace {
 //   IR names.
 //   - Also consider representing these as just `value` or `literal`
 //     in the IR and using the type to distinguish.
-// - Add block names based on the control flow construct names (`for`,
-//   `if`, `then`, `else`, ...). Either base this on the semantics or
-//   just on the keywords used to build that control flow -- little
-//   or no harm to getting it wrong. Tools will also want to be able
-//   to query the construct that resulted in control flow.
 class NodeNamer {
  public:
   enum class ScopeIndex : int {
