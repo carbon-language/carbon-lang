@@ -7,7 +7,6 @@
 
 #include <bitset>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -132,7 +131,6 @@ class TraceStream {
   // Format utility methods
   void Heading(llvm::StringRef heading) const {
     CARBON_CHECK(is_enabled() && stream_);
-    std::stringstream stream;
     const std::string stars = "* * * * * * * * * *";
     const std::string dashed_line(stars.size() * 2 + heading.size() + 4, '-');
     **stream_ << stars << "  " << heading << "  " << stars << "\n"
@@ -141,7 +139,6 @@ class TraceStream {
 
   void SubHeading(llvm::StringRef heading) const {
     CARBON_CHECK(is_enabled() && stream_);
-    std::stringstream stream;
     const std::string stars = "- - - - -";
     const std::string dashed_line(stars.size() * 2 + heading.size() + 4, '-');
     **stream_ << stars << "  " << heading << "  " << stars << "\n"
