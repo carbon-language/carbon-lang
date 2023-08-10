@@ -51,7 +51,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type2},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
-// CHECK:STDOUT:   {kind: Index, arg0: node+10, arg1: node+11, type: type1},
+// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+10, arg1: node+11, type: type1},
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+12},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -96,7 +96,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> (i32,) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_28.1: i32 = int_value 0
+// CHECK:STDOUT:   %.loc7_28.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_28.2: i32 = stub_reference %.loc7_28.1
 // CHECK:STDOUT:   %.loc7_30: (i32,) = tuple_value (%.loc7_28.2)
 // CHECK:STDOUT:   return %.loc7_30
@@ -105,7 +105,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: fn @Run() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_11: (i32,) = call @F()
-// CHECK:STDOUT:   %.loc10_14: i32 = int_value 0
+// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc10_15: i32 = tuple_index %.loc10_11, %.loc10_14
 // CHECK:STDOUT:   return %.loc10_15
 // CHECK:STDOUT: }

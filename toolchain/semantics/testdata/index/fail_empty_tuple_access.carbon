@@ -76,6 +76,6 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc13_4.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc13_4.2: () = call @F()
-// CHECK:STDOUT:   %.loc13_7: i32 = int_value 0
+// CHECK:STDOUT:   %.loc13_7: i32 = int_literal 0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

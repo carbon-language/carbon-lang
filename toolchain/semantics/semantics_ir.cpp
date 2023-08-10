@@ -232,7 +232,6 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::Call:
     case SemanticsNodeKind::Dereference:
     case SemanticsNodeKind::FunctionDeclaration:
-    case SemanticsNodeKind::Index:
     case SemanticsNodeKind::IntegerLiteral:
     case SemanticsNodeKind::Invalid:
     case SemanticsNodeKind::Namespace:
@@ -240,10 +239,11 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::Return:
     case SemanticsNodeKind::ReturnExpression:
     case SemanticsNodeKind::StringLiteral:
-    case SemanticsNodeKind::StructMemberAccess:
+    case SemanticsNodeKind::StructAccess:
     case SemanticsNodeKind::StructTypeField:
     case SemanticsNodeKind::StructValue:
     case SemanticsNodeKind::StubReference:
+    case SemanticsNodeKind::TupleIndex:
     case SemanticsNodeKind::TupleValue:
     case SemanticsNodeKind::UnaryOperatorNot:
     case SemanticsNodeKind::VarStorage:
@@ -376,16 +376,16 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
       case SemanticsNodeKind::Dereference:
       case SemanticsNodeKind::CrossReference:
       case SemanticsNodeKind::FunctionDeclaration:
-      case SemanticsNodeKind::Index:
       case SemanticsNodeKind::IntegerLiteral:
       case SemanticsNodeKind::Namespace:
       case SemanticsNodeKind::RealLiteral:
       case SemanticsNodeKind::Return:
       case SemanticsNodeKind::ReturnExpression:
       case SemanticsNodeKind::StringLiteral:
-      case SemanticsNodeKind::StructMemberAccess:
+      case SemanticsNodeKind::StructAccess:
       case SemanticsNodeKind::StructValue:
       case SemanticsNodeKind::StubReference:
+      case SemanticsNodeKind::TupleIndex:
       case SemanticsNodeKind::TupleValue:
       case SemanticsNodeKind::UnaryOperatorNot:
       case SemanticsNodeKind::VarStorage:
@@ -464,14 +464,14 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
       case SemanticsNodeKind::UnaryOperatorNot:
         return SemanticsExpressionCategory::Value;
 
-      case SemanticsNodeKind::StructMemberAccess: {
-        auto [base_id, member_index] = node.GetAsStructMemberAccess();
+      case SemanticsNodeKind::StructAccess: {
+        auto [base_id, member_index] = node.GetAsStructAccess();
         node_id = base_id;
         continue;
       }
 
-      case SemanticsNodeKind::Index: {
-        auto [base_id, index_id] = node.GetAsIndex();
+      case SemanticsNodeKind::TupleIndex: {
+        auto [base_id, index_id] = node.GetAsTupleIndex();
         node_id = base_id;
         continue;
       }

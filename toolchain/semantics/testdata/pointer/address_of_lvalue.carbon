@@ -94,13 +94,13 @@ fn F(param: i32) {
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type3},
 // CHECK:STDOUT:   {kind: BindName, arg0: str6, arg1: node+25, type: type3},
-// CHECK:STDOUT:   {kind: StructMemberAccess, arg0: node+6, arg1: member0, type: type0},
+// CHECK:STDOUT:   {kind: StructAccess, arg0: node+6, arg1: member0, type: type0},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+27, type: type3},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+25, arg1: node+28},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type3},
 // CHECK:STDOUT:   {kind: BindName, arg0: str7, arg1: node+31, type: type3},
-// CHECK:STDOUT:   {kind: StructMemberAccess, arg0: node+6, arg1: member1, type: type0},
+// CHECK:STDOUT:   {kind: StructAccess, arg0: node+6, arg1: member1, type: type0},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+33, type: type3},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+31, arg1: node+34},
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
@@ -120,14 +120,14 @@ fn F(param: i32) {
 // CHECK:STDOUT:   {kind: VarStorage, type: type3},
 // CHECK:STDOUT:   {kind: BindName, arg0: str9, arg1: node+50, type: type3},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int4, type: type0},
-// CHECK:STDOUT:   {kind: Index, arg0: node+41, arg1: node+52, type: type0},
+// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+41, arg1: node+52, type: type0},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+53, type: type3},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+50, arg1: node+54},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type3},
 // CHECK:STDOUT:   {kind: BindName, arg0: str10, arg1: node+57, type: type3},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int5, type: type0},
-// CHECK:STDOUT:   {kind: Index, arg0: node+41, arg1: node+59, type: type0},
+// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+41, arg1: node+59, type: type0},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+60, type: type3},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+57, arg1: node+61},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
@@ -250,9 +250,9 @@ fn F(param: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_27: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %s: {.a: i32, .b: i32} = var
-// CHECK:STDOUT:   %.loc8_37: i32 = int_value 1
+// CHECK:STDOUT:   %.loc8_37: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc8_35: i32 = stub_reference %.loc8_37
-// CHECK:STDOUT:   %.loc8_45: i32 = int_value 2
+// CHECK:STDOUT:   %.loc8_45: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc8_43: i32 = stub_reference %.loc8_45
 // CHECK:STDOUT:   %.loc8_46: {.a: i32, .b: i32} = struct_value (%.loc8_35, %.loc8_43)
 // CHECK:STDOUT:   assign %s, %.loc8_46
@@ -277,21 +277,21 @@ fn F(param: i32) {
 // CHECK:STDOUT:   %.loc14_19.2: (type, type) = tuple_value (%.loc14_11, %.loc14_16)
 // CHECK:STDOUT:   %.loc14_19.3: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %t: (i32, i32) = var
-// CHECK:STDOUT:   %.loc14_24.1: i32 = int_value 1
+// CHECK:STDOUT:   %.loc14_24.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc14_24.2: i32 = stub_reference %.loc14_24.1
-// CHECK:STDOUT:   %.loc14_27.1: i32 = int_value 2
+// CHECK:STDOUT:   %.loc14_27.1: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc14_27.2: i32 = stub_reference %.loc14_27.1
 // CHECK:STDOUT:   %.loc14_28: (i32, i32) = tuple_value (%.loc14_24.2, %.loc14_27.2)
 // CHECK:STDOUT:   assign %t, %.loc14_28
 // CHECK:STDOUT:   %.loc15_14: type = ptr_type i32
 // CHECK:STDOUT:   %t0: i32* = var
-// CHECK:STDOUT:   %.loc15_21: i32 = int_value 0
+// CHECK:STDOUT:   %.loc15_21: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc15_22: i32 = tuple_index %t, %.loc15_21
 // CHECK:STDOUT:   %.loc15_18: i32* = address_of %.loc15_22
 // CHECK:STDOUT:   assign %t0, %.loc15_18
 // CHECK:STDOUT:   %.loc16_14: type = ptr_type i32
 // CHECK:STDOUT:   %t1: i32* = var
-// CHECK:STDOUT:   %.loc16_21: i32 = int_value 1
+// CHECK:STDOUT:   %.loc16_21: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc16_22: i32 = tuple_index %t, %.loc16_21
 // CHECK:STDOUT:   %.loc16_18: i32* = address_of %.loc16_22
 // CHECK:STDOUT:   assign %t1, %.loc16_18
