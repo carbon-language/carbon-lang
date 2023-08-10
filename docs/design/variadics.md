@@ -38,9 +38,9 @@ fn Zip[each ElementType:! type]
       -> Vector((..., each ElementType)) {
   var iters: auto = (..., each vector.Begin());
   var result: Vector((..., each ElementType));
-  while (...and [:]iters != each vector.End()) {
-    result.push_back((..., *[:]iters));
-    ...{ ([:]iters)++; }
+  while (...and expand iters != each vector.End()) {
+    result.push_back((..., *expand iters));
+    ...{ (expand iters)++; }
   }
   return result;
 }
@@ -55,9 +55,9 @@ rooted at any of these operations is called a _pack expansion_. The operand of
 `...{ }`, is called the _expansion body_.
 
 A pack expansion must contain one or more _expansion arguments_, which are
-marked by `[:]` or `each`. `[:]` is a prefix unary expression operator with the
-same precedence as `*`. The operand of `each` is always an identifier name, not
-an expression, so it does not have a precedence.
+marked by `expand` or `each`. `expand` is a prefix unary expression operator
+with the same precedence as `*`. The operand of `each` is always an identifier
+name, not an expression, so it does not have a precedence.
 
 The _arity_ of an expansion argument is a compile-time value representing the
 number of elements it evaluates to. Every pack expansion must contain at least
@@ -68,13 +68,14 @@ pattern. In particular, this means that the expansion arguments of a `...{`
 expansion must be expressions.
 
 > **Open question:** Is it possible to drop that requirement, and support code
-> like `let each x: ElementTypes = *[:]iters;` within a `...{` expansion?
+> like `let each x: ElementTypes = *expand iters;` within a `...{` expansion?
 
 Pack expansions can be nested only if the inner expansion is within one of the
 outer expansion's arguments. For example,
-`(..., [:]vectors: (..., Vector([:]ElementTypes)))`, which is an alternative way
-of writing the parameter list of `Zip` to avoid using an `each` binding in the
-signature. We may further relax the restriction on nesting in the future.
+`(..., expand vectors: (..., Vector(expand ElementTypes)))`, which is an
+alternative way of writing the parameter list of `Zip` to avoid using an `each`
+binding in the signature. We may further relax the restriction on nesting in the
+future.
 
 A pack expansion can be thought of as a kind of loop, where the expansion body
 is implicitly parameterized by an integer value called the _pack index_, which
@@ -85,8 +86,8 @@ this code:
 
 ```carbon
 ...{
-  let product: auto = [:]x * [:]y;
-  [:]a += product;
+  let product: auto = expand x * expand y;
+  expand a += product;
 }
 ```
 
@@ -105,9 +106,9 @@ depending on the value of `i`.
 
 `...and` and `...or` can likewise be interpreted as looping constructs, although
 the rewrite is less straightforward because Carbon doesn't have a way to write a
-loop in an expression context. An expression like `...and F([:]x, [:]y)` can be
-thought of as evaluating to the value of `result` after executing the following
-code fragment:
+loop in an expression context. An expression like `...and F(expand x, expand y)`
+can be thought of as evaluating to the value of `result` after executing the
+following code fragment:
 
 ```
 var result: bool = true;
@@ -153,7 +154,8 @@ An expression of the form "`...,` _operand_" evaluates to a sequence of N
 values, where the k'th value is the value of _operand_ where `$I` is equal to
 k - 1.
 
-An expression of the form "`[:]` _argument_" evaluates to "_argument_ `[$I]`".
+An expression of the form "`expand` _argument_" evaluates to "_argument_
+`[$I]`".
 
 An expression of the form "`each` _identifier_", where _identifier_ names a
 variadic binding, evaluates to the `$I`th value that it was bound to (indexed
@@ -168,7 +170,7 @@ during typechecking. For example, in this code:
 
 ```carbon
 fn F[each T:! type](x: (..., each i32), ..., each y: Optional(each T)) {
-  let z: auto = (..., [:]x, 0 as f32, each y);
+  let z: auto = (..., expand x, 0 as f32, each y);
 }
 ```
 
@@ -267,10 +269,10 @@ after another. As a result, a pack type is never the type of any run-time value.
 
 `,...` expansions can also appear in patterns. The semantics are chosen to
 follow the general principle that pattern matching is the inverse of expression
-evaluation, so for example if the pattern `(..., [:]x: auto)` matches some
-scrutinee value `s`, the expression `(..., [:]x)` should be equal to `s`. These
-are run-time semantics, so all types are known constants, and all tuple elements
-are singular.
+evaluation, so for example if the pattern `(..., expand x: auto)` matches some
+scrutinee value `s`, the expression `(..., expand x)` should be equal to `s`.
+These are run-time semantics, so all types are known constants, and all tuple
+elements are singular.
 
 A tuple pattern can contain no more than one subpattern of the form "`...,`
 _operand_". When such a subpattern is present, the N elements of the pattern
@@ -286,7 +288,7 @@ scrutinee element being matched.
 A variadic binding pattern binds the name to each of the scrutinee values, in
 order.
 
-A pattern of the form `[:]` _subpattern_ matches the `$I`th element of
+A pattern of the form `expand` _subpattern_ matches the `$I`th element of
 _subpattern_ against the current (`$I`th) scrutinee. Consequently, _subpattern_
 must be a kind of pattern that has elements. Specifically, it must be one of:
 
