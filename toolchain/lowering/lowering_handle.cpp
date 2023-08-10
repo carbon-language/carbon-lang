@@ -276,12 +276,6 @@ auto LoweringHandleTupleValue(LoweringFunctionContext& context,
   }
 }
 
-auto LoweringHandleTupleValueToArrayType(LoweringFunctionContext& /*context*/,
-                                         SemanticsNodeId /*node_id*/,
-                                         SemanticsNode node) -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
-}
-
 auto LoweringHandleStructTypeField(LoweringFunctionContext& /*context*/,
                                    SemanticsNodeId /*node_id*/,
                                    SemanticsNode /*node*/) -> void {
