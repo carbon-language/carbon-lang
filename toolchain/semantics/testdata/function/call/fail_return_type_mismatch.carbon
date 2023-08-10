@@ -72,7 +72,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: f64 = real_value 10e-1
+// CHECK:STDOUT:   %.loc7: f64 = real_literal 10e-1
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

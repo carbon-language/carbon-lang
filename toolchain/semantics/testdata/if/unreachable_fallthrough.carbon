@@ -80,10 +80,10 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b br !.loc9 else br !.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc9:
-// CHECK:STDOUT:   %.loc9: i32 = int_value 1
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 1
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc11:
-// CHECK:STDOUT:   %.loc11: i32 = int_value 2
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 2
 // CHECK:STDOUT:   return %.loc11
 // CHECK:STDOUT: }

@@ -60,7 +60,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: i32 = var
-// CHECK:STDOUT:   %.loc7: i32 = int_value 0
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 0
 // CHECK:STDOUT:   assign %x, %.loc7
 // CHECK:STDOUT:   %.loc9 = fn_decl @Main
 // CHECK:STDOUT: }

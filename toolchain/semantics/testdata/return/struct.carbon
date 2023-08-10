@@ -69,7 +69,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> {.a: i32} {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_16: i32 = int_value 3
+// CHECK:STDOUT:   %.loc8_16: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc8_14: i32 = stub_reference %.loc8_16
 // CHECK:STDOUT:   %.loc8_17: {.a: i32} = struct_value (%.loc8_14)
 // CHECK:STDOUT:   return %.loc8_17

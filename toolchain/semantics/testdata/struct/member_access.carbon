@@ -47,7 +47,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   {kind: Assign, arg0: node+3, arg1: node+11},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+13, type: type1},
-// CHECK:STDOUT:   {kind: StructMemberAccess, arg0: node+3, arg1: member1, type: type1},
+// CHECK:STDOUT:   {kind: StructAccess, arg0: node+3, arg1: member1, type: type1},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: node+15},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str4, arg1: node+17, type: type1},
@@ -93,9 +93,9 @@ var z: i32 = y;
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc7_25: type = struct_type {.a: f64, .b: i32}
 // CHECK:STDOUT:   %x: {.a: f64, .b: i32} = var
-// CHECK:STDOUT:   %.loc7_35: f64 = real_value 0e-1
+// CHECK:STDOUT:   %.loc7_35: f64 = real_literal 0e-1
 // CHECK:STDOUT:   %.loc7_33: f64 = stub_reference %.loc7_35
-// CHECK:STDOUT:   %.loc7_45: i32 = int_value 1
+// CHECK:STDOUT:   %.loc7_45: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_43: i32 = stub_reference %.loc7_45
 // CHECK:STDOUT:   %.loc7_46: {.a: f64, .b: i32} = struct_value (%.loc7_33, %.loc7_43)
 // CHECK:STDOUT:   assign %x, %.loc7_46

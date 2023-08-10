@@ -103,13 +103,13 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: i32 = int_value 1
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_value 2
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 2
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
