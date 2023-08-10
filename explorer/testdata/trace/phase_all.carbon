@@ -22,7 +22,8 @@ fn Main() -> i32 {
 // ARGS: --trace_file=- --trace_phase=all %s
 // AUTOUPDATE
 
-// CHECK:STDOUT: ********** source program **********
+// CHECK:STDOUT: * * * * * * * * * *  source program  * * * * * * * * * *
+// CHECK:STDOUT: --------------------------------------------------------
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: namespace N;fn Foo (n: i32)-> i32 {
@@ -38,7 +39,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ********** resolving names **********
+// CHECK:STDOUT: * * * * * * * * * *  resolving names  * * * * * * * * * *
+// CHECK:STDOUT: ---------------------------------------------------------
 // CHECK:STDOUT: ==> declared `TestInterface` as `interface TestInterface` in `package` (phase_all.carbon:7)
 // CHECK:STDOUT: ==> declared `N` as `namespace N` in `package` (phase_all.carbon:9)
 // CHECK:STDOUT: ==> resolved `N` as `namespace N` in `package` (phase_all.carbon:11)
@@ -78,10 +80,12 @@ fn Main() -> i32 {
 // CHECK:STDOUT: <<- finished resolving stmt `{var x: i32 = N.Foo(0);return x;}` (phase_all.carbon:18)
 // CHECK:STDOUT: <<- finished resolving decl `fn Main` (phase_all.carbon:18)
 // CHECK:STDOUT: ==> resolved `Main` as `fn Main` in `package` (<Main()>:0)
-// CHECK:STDOUT: ********** resolving control flow **********
+// CHECK:STDOUT: * * * * * * * * * *  resolving control flow  * * * * * * * * * *
+// CHECK:STDOUT: ----------------------------------------------------------------
 // CHECK:STDOUT: ==> flow-resolved return statement `return (n + 1);` in `fn N.Foo` (phase_all.carbon:12)
 // CHECK:STDOUT: ==> flow-resolved return statement `return x;` in `fn Main` (phase_all.carbon:17)
-// CHECK:STDOUT: ********** type checking **********
+// CHECK:STDOUT: * * * * * * * * * *  type checking  * * * * * * * * * *
+// CHECK:STDOUT: -------------------------------------------------------
 // CHECK:STDOUT: *** declaration at (phase_all.carbon:7)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: interface TestInterface {
@@ -397,7 +401,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ->> checking call to function of type `fn () -> i32` with arguments of type `()` (<Main()>:0)
 // CHECK:STDOUT: ->> performing argument deduction for bindings: []
 // CHECK:STDOUT: ==> deduction succeeded with results: []
-// CHECK:STDOUT: ********** resolving unformed variables **********
+// CHECK:STDOUT: * * * * * * * * * *  resolving unformed variables  * * * * * * * * * *
+// CHECK:STDOUT: ----------------------------------------------------------------------
 // CHECK:STDOUT: ->> resolving-unformed in decl `interface TestInterface` (phase_all.carbon:7)
 // CHECK:STDOUT: ->> resolving-unformed in decl `namespace N` (phase_all.carbon:9)
 // CHECK:STDOUT: ->> resolving-unformed in decl `fn N.Foo` (phase_all.carbon:13)
@@ -410,7 +415,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ==> add init `x` (phase_all.carbon:16)
 // CHECK:STDOUT: ->> resolving-unformed in stmt `return x;` (phase_all.carbon:17)
 // CHECK:STDOUT: ==> check `x` (phase_all.carbon:17)
-// CHECK:STDOUT: ********** printing declarations **********
+// CHECK:STDOUT: * * * * * * * * * *  printing declarations  * * * * * * * * * *
+// CHECK:STDOUT: ---------------------------------------------------------------
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: namespace N;fn Foo (n: i32)-> i32 {
@@ -426,8 +432,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: }
-// CHECK:STDOUT: ********** starting execution **********
-// CHECK:STDOUT: ********** initializing globals **********
+// CHECK:STDOUT: * * * * * * * * * *  starting execution  * * * * * * * * * *
+// CHECK:STDOUT: ------------------------------------------------------------
+// CHECK:STDOUT: - - - - -  initializing globals  - - - - -
+// CHECK:STDOUT: ------------------------------------------
 // CHECK:STDOUT: >[] stack-push: DeclarationAction pos: 0 `interface TestInterface` (phase_all.carbon:7)
 // CHECK:STDOUT: ->> step DeclarationAction pos: 0 `interface TestInterface` (phase_all.carbon:7) --->
 // CHECK:STDOUT: *** declaration at (phase_all.carbon:7)
@@ -467,7 +475,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: <[] stack-pop:  DeclarationAction pos: 0 `fn Main` (phase_all.carbon:18)
-// CHECK:STDOUT: ********** calling main function **********
+// CHECK:STDOUT: - - - - -  calling main function  - - - - -
+// CHECK:STDOUT: -------------------------------------------
 // CHECK:STDOUT: >[] stack-push: ValueExpressionAction pos: 0 `Main()` (<Main()>:0)
 // CHECK:STDOUT: ->> step ValueExpressionAction pos: 0 `Main()` (<Main()>:0) --->
 // CHECK:STDOUT: >[] stack-push: ExpressionAction pos: 0 `Main()` (<Main()>:0)
@@ -642,8 +651,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT: <[] stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
 // CHECK:STDOUT: ->> step ValueExpressionAction pos: 1 `Main()` results: [`1`]  (<Main()>:0) --->
 // CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `Main()` results: [`1`]  (<Main()>:0)
-// CHECK:STDOUT: interpreter result: 1
-// CHECK:STDOUT: ********** printing timing **********
+// CHECK:STDOUT: ==> interpreter result: 1
+// CHECK:STDOUT: * * * * * * * * * *  printing timing  * * * * * * * * * *
+// CHECK:STDOUT: ---------------------------------------------------------
 // CHECK:STDOUT: Time elapsed in ExecProgram: {{\d+}}ms
 // CHECK:STDOUT: Time elapsed in AnalyzeProgram: {{\d+}}ms
 // CHECK:STDOUT: Time elapsed in AddPrelude: {{\d+}}ms

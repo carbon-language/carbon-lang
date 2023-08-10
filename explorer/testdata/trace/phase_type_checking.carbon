@@ -15,7 +15,8 @@ fn Main() -> i32 {
 // ARGS: --trace_file=- --trace_phase=type_checking %s
 // AUTOUPDATE
 
-// CHECK:STDOUT: ********** type checking **********
+// CHECK:STDOUT: * * * * * * * * * *  type checking  * * * * * * * * * *
+// CHECK:STDOUT: -------------------------------------------------------
 // CHECK:STDOUT: *** declaration at (phase_type_checking.carbon:7)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: interface TestInterface {
