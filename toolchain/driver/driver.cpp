@@ -205,6 +205,14 @@ postorder.
         [&](auto& arg_b) { arg_b.Set(&preorder_parse_tree); });
     b.AddFlag(
         {
+            .name = "dump-raw-semantics-ir",
+            .help = R"""(
+Dump the raw JSON structure of semantics IR to stdout when built.
+)""",
+        },
+        [&](auto& arg_b) { arg_b.Set(&dump_semantics_ir); });
+    b.AddFlag(
+        {
             .name = "dump-semantics-ir",
             .help = R"""(
 Dump the semantics IR to stdout when built.
@@ -249,6 +257,7 @@ Dump the generated assembly to stdout after codegen.
   bool force_obj_output = false;
   bool dump_tokens = false;
   bool dump_parse_tree = false;
+  bool dump_raw_semantics_ir = false;
   bool dump_semantics_ir = false;
   bool dump_llvm_ir = false;
   bool dump_asm = false;
@@ -270,7 +279,7 @@ all of the core behavior of the toolchain, including compilation, linking, and
 developer tools. Each of these has its own subcommand, and you can pass a
 specific subcommand to the `help` subcommand to get details about is usage.
 )""",
-      .help_epilog = R"""(
+      .help_epilogue = R"""(
 For questions, issues, or bug reports, please use our GitHub project:
 
   https://github.com/carbon-language/carbon-lang
@@ -421,18 +430,16 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
       builtin_ir, tokenized_source, parse_tree, *consumer, vlog_stream_);
   has_errors |= semantics_ir.has_errors();
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree done ***\n";
-  if (options.dump_semantics_ir) {
+  if (options.dump_raw_semantics_ir) {
     consumer->Flush();
     semantics_ir.Print(output_stream_, options.builtin_semantics_ir);
-  }
-  if (dump_mode == DumpMode::SemanticsIR) {
-    if (semantics_ir_include_raw) {
-      semantics_ir.Print(output_stream_, semantics_ir_include_builtins);
+    if (options.dump_semantics_ir) {
       output_stream_ << "\n";
     }
+  }
+  if (options.dump_semantics_ir) {
     FormatSemanticsIR(tokenized_source, parse_tree, semantics_ir,
                       output_stream_);
-    return !has_errors;
   }
   CARBON_VLOG() << "semantics_ir: " << semantics_ir;
   if (options.phase == Phase::Syntax) {
