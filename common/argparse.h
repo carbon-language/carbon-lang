@@ -692,7 +692,7 @@ struct CommandLine::Arg {
   bool is_help_hidden = false;
 
   // Meta action storage, only populated if this argument causes a meta action.
-  ActionT meta_action = {};
+  ActionT meta_action;
 
   // Storage options depending on the kind.
   union {
@@ -733,7 +733,7 @@ struct CommandLine::Command {
 
   CommandInfo info;
   Command* parent;
-  ActionT action = {};
+  ActionT action;
   Kind kind = Kind::Invalid;
 
   bool is_help_hidden = false;

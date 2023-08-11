@@ -942,7 +942,7 @@ auto CommandLine::Parser::ParseArg(const Arg& arg, bool short_spelling,
 auto CommandLine::Parser::SplitValue(llvm::StringRef& unparsed_arg)
     -> std::optional<llvm::StringRef> {
   // Split out a value if present.
-  std::optional<llvm::StringRef> value = {};
+  std::optional<llvm::StringRef> value;
   auto index = unparsed_arg.find('=');
   if (index != llvm::StringRef::npos) {
     value = unparsed_arg.substr(index + 1);
