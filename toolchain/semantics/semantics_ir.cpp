@@ -290,8 +290,13 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
     switch (node.kind()) {
       case SemanticsNodeKind::ArrayType: {
         auto [bound_id, type_id] = node.GetAsArrayType();
-        out << "array [" << StringifyType(type_id) << "; "
-            << GetArrayBound(bound_id) << "]";
+        if (step.index == 0) {
+          out << "[";
+          steps.push_back(step.Next());
+          steps.push_back({.node_id = GetTypeAllowBuiltinTypes(type_id)});
+        } else if (step.index == 1) {
+          out << "; " << GetArrayBoundValue(bound_id) << "]";
+        }
         break;
       }
       case SemanticsNodeKind::ConstType: {
@@ -413,7 +418,6 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
   if (!in_type_context) {
     auto outer_node = GetNode(outer_node_id);
     if (outer_node.kind() == SemanticsNodeKind::TupleType ||
-        outer_node.kind() == SemanticsNodeKind::ArrayType ||
         (outer_node.kind() == SemanticsNodeKind::StructType &&
          GetNodeBlock(outer_node.GetAsStructType()).empty())) {
       out << " as type";

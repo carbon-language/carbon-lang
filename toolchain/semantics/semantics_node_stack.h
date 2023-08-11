@@ -271,6 +271,7 @@ class SemanticsNodeStack {
         return IdKind::SemanticsStringId;
       case ParseNodeKind::ReturnType:
         return IdKind::SemanticsTypeId;
+      case ParseNodeKind::ArrayExpressionSemi:
       case ParseNodeKind::CodeBlockStart:
       case ParseNodeKind::FunctionIntroducer:
       case ParseNodeKind::IfCondition:

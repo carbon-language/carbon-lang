@@ -57,7 +57,7 @@ fn Run() {
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+12, type: type3},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type2},
 // CHECK:STDOUT:   {kind: ArrayValue, arg0: node+14, type: type3},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+11},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+15},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -116,9 +116,9 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_16: i32 = int_value 1
 // CHECK:STDOUT:   %.loc10_17: type = array_type %.loc10_16, i32
-// CHECK:STDOUT:   %t: array [i32; 1] = var
+// CHECK:STDOUT:   %t: [i32; 1] = var
 // CHECK:STDOUT:   %.loc10_22.1: (i32,) = call @F()
-// CHECK:STDOUT:   %.loc10_22.2: array [i32; 1] = array_value %.loc10_22.1
-// CHECK:STDOUT:   assign %t, %.loc10_17
+// CHECK:STDOUT:   %.loc10_22.2: [i32; 1] = array_value %.loc10_22.1
+// CHECK:STDOUT:   assign %t, %.loc10_22.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

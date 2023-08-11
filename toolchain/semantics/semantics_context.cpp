@@ -380,41 +380,28 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
     return ImplicitAsKind::Identical;
   }
 
-  auto array_type = semantics_ir_->GetTypeAllowBuiltinTypes(as_type_id);
-  auto array_node = semantics_ir_->GetNode(array_type);
-  if (array_node.kind() == SemanticsNodeKind::ArrayType) {
-    auto [bound_node_id, element_type_id] = array_node.GetAsArrayType();
-    if (semantics_ir_
-            ->GetNode(semantics_ir_->GetTypeAllowBuiltinTypes(value_type_id))
-            .kind() == SemanticsNodeKind::TupleType) {
-      auto tuple_type_block_id =
-          semantics_ir_
-              ->GetNode(semantics_ir_->GetTypeAllowBuiltinTypes(value_type_id))
-              .GetAsTupleType();
-      auto type_block = semantics_ir_->GetTypeBlock(tuple_type_block_id);
-      if (type_block.size() == semantics_ir_->GetArrayBound(bound_node_id)) {
-        for (auto type : type_block) {
-          if (type != element_type_id) {
-            if (output_value_id != nullptr) {
-              *output_value_id = SemanticsNodeId::BuiltinError;
-            }
-            return ImplicitAsKind::Incompatible;
-          }
-        }
-        auto array_value_type = CanonicalizeType(array_type);
-        AddNode(SemanticsNode::ArrayValue::Make(value.parse_node(),
-                                                array_value_type, value_id));
+  auto as_type = semantics_ir_->GetTypeAllowBuiltinTypes(as_type_id);
+  auto as_type_node = semantics_ir_->GetNode(as_type);
+  if (as_type_node.kind() == SemanticsNodeKind::ArrayType) {
+    auto [bound_node_id, element_type_id] = as_type_node.GetAsArrayType();
+    // To resolve lambda issue.
+    auto element_type = element_type_id;
+    auto value_type_node = semantics_ir_->GetNode(
+        semantics_ir_->GetTypeAllowBuiltinTypes(value_type_id));
+    if (value_type_node.kind() == SemanticsNodeKind::TupleType) {
+      auto tuple_type_block_id = value_type_node.GetAsTupleType();
+      const auto& type_block = semantics_ir_->GetTypeBlock(tuple_type_block_id);
+      if (type_block.size() ==
+              semantics_ir_->GetArrayBoundValue(bound_node_id) &&
+          std::all_of(type_block.begin(), type_block.end(),
+                      [&](auto type) { return type == element_type; })) {
         if (output_value_id != nullptr) {
-          *output_value_id =
-              semantics_ir_->GetTypeAllowBuiltinTypes(array_value_type);
+          *output_value_id = AddNode(SemanticsNode::ArrayValue::Make(
+              value.parse_node(), as_type_id, value_id));
         }
         return ImplicitAsKind::Compatible;
       }
     }
-    if (output_value_id != nullptr) {
-      *output_value_id = SemanticsNodeId::BuiltinError;
-    }
-    return ImplicitAsKind::Incompatible;
   }
 
   if (as_type_id == SemanticsTypeId::TypeType) {
@@ -540,7 +527,7 @@ static auto ProfileType(SemanticsContext& semantics_context, SemanticsNode node,
     case SemanticsNodeKind::ArrayType: {
       auto [bound_id, element_type_id] = node.GetAsArrayType();
       canonical_id.AddInteger(
-          semantics_context.semantics_ir().GetArrayBound(bound_id));
+          semantics_context.semantics_ir().GetArrayBoundValue(bound_id));
       canonical_id.AddInteger(element_type_id.index);
       break;
     }

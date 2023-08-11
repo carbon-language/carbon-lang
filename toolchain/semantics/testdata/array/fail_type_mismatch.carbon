@@ -4,7 +4,7 @@
 //
 // AUTOUPDATE
 
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:27: Cannot implicitly convert from `(i32, f64) as type` to `array [i32; 2] as type`.
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:27: Cannot implicitly convert from `(i32, f64) as type` to `[i32; 2]`.
 // CHECK:STDERR: var a: [i32; 2] = (1, 2.5);
 // CHECK:STDERR:                           ^
 var a: [i32; 2] = (1, 2.5);
@@ -72,7 +72,7 @@ var a: [i32; 2] = (1, 2.5);
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc10_14: i32 = int_value 2
 // CHECK:STDOUT:   %.loc10_15: type = array_type %.loc10_14, i32
-// CHECK:STDOUT:   %a: array [i32; 2] = var
+// CHECK:STDOUT:   %a: [i32; 2] = var
 // CHECK:STDOUT:   %.loc10_20.1: i32 = int_value 1
 // CHECK:STDOUT:   %.loc10_20.2: i32 = stub_reference %.loc10_20.1
 // CHECK:STDOUT:   %.loc10_23.1: f64 = real_value 25e-1
