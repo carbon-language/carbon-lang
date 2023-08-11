@@ -79,7 +79,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc7_16: type = struct_type {.a: f64}
 // CHECK:STDOUT:   %x: {.a: f64} = var
-// CHECK:STDOUT:   %.loc7_26: f64 = real_value 40e-1
+// CHECK:STDOUT:   %.loc7_26: f64 = real_literal 40e-1
 // CHECK:STDOUT:   %.loc7_24: f64 = stub_reference %.loc7_26
 // CHECK:STDOUT:   %.loc7_29.1: {.a: f64} = struct_value (%.loc7_24)
 // CHECK:STDOUT:   %.loc7_29.2: {.a: f64} = initialize_from %.loc7_29.1

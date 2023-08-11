@@ -15,7 +15,8 @@ fn Main() -> i32 {
 // ARGS: --trace_file=- --trace_phase=name_resolution %s
 // AUTOUPDATE
 
-// CHECK:STDOUT: ********** resolving names **********
+// CHECK:STDOUT: * * * * * * * * * *  resolving names  * * * * * * * * * *
+// CHECK:STDOUT: ---------------------------------------------------------
 // CHECK:STDOUT: ==> declared `TestInterface` as `interface TestInterface` in `package` (phase_name_resolution.carbon:7)
 // CHECK:STDOUT: ==> declared `Main` as `fn Main` in `package` (phase_name_resolution.carbon:11)
 // CHECK:STDOUT: ->> resolving decl `interface TestInterface` (phase_name_resolution.carbon:7)

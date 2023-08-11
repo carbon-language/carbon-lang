@@ -93,9 +93,9 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> (i32, i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9_11.1: i32 = int_value 15
+// CHECK:STDOUT:   %.loc9_11.1: i32 = int_literal 15
 // CHECK:STDOUT:   %.loc9_11.2: i32 = stub_reference %.loc9_11.1
-// CHECK:STDOUT:   %.loc9_15.1: i32 = int_value 35
+// CHECK:STDOUT:   %.loc9_15.1: i32 = int_literal 35
 // CHECK:STDOUT:   %.loc9_15.2: i32 = stub_reference %.loc9_15.1
 // CHECK:STDOUT:   %.loc9_17.1: (i32, i32) = tuple_value (%.loc9_11.2, %.loc9_15.2)
 // CHECK:STDOUT:   %.loc9_17.2: (i32, i32) = initialize_from %.loc9_17.1

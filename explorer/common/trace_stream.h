@@ -128,6 +128,23 @@ class TraceStream {
   auto Skip() const -> llvm::raw_ostream& { return *this << ">>> "; }
   auto Source() const -> llvm::raw_ostream& { return *this << "*** "; }
 
+  // Format utility methods
+  void Heading(llvm::StringRef heading) const {
+    CARBON_CHECK(is_enabled() && stream_);
+    const std::string stars = "* * * * * * * * * *";
+    const std::string dashed_line(stars.size() * 2 + heading.size() + 4, '-');
+    **stream_ << stars << "  " << heading << "  " << stars << "\n"
+              << dashed_line << "\n";
+  }
+
+  void SubHeading(llvm::StringRef heading) const {
+    CARBON_CHECK(is_enabled() && stream_);
+    const std::string stars = "- - - - -";
+    const std::string dashed_line(stars.size() * 2 + heading.size() + 4, '-');
+    **stream_ << stars << "  " << heading << "  " << stars << "\n"
+              << dashed_line << "\n";
+  }
+
  private:
   bool in_prelude_ = false;
   ProgramPhase current_phase_ = ProgramPhase::Unknown;

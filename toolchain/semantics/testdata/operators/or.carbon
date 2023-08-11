@@ -34,57 +34,51 @@ fn Or() -> bool {
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+1, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+2},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+5, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+6},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+4},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+9, type: type0},
+// CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+7, type: type0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type0},
-// CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+10},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block6, arg1: node+11},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+8},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block6, arg1: node+9},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block6, arg1: node+14},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block6, arg1: node+12},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block6, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+16, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+17},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+14},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+15,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+16,
-// CHECK:STDOUT:     node+17,
-// CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -96,23 +90,21 @@ fn Or() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_25.1: bool = bool_value true
-// CHECK:STDOUT:   %.loc7_25.2: bool = initialize_from %.loc7_25.1
-// CHECK:STDOUT:   return %.loc7_25.2
+// CHECK:STDOUT:   %.loc7: bool = bool_literal true
+// CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_25.1: bool = bool_value true
-// CHECK:STDOUT:   %.loc8_25.2: bool = initialize_from %.loc8_25.1
-// CHECK:STDOUT:   return %.loc8_25.2
+// CHECK:STDOUT:   %.loc8: bool = bool_literal true
+// CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_11: bool = call @F()
 // CHECK:STDOUT:   %.loc11_14.1: bool = not %.loc11_11
-// CHECK:STDOUT:   %.loc11_14.2: bool = bool_value true
+// CHECK:STDOUT:   %.loc11_14.2: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc11_14.1 br !.loc11_18 else br !.loc11_14(%.loc11_14.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc11_18:
@@ -121,6 +113,5 @@ fn Or() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc11_14:
 // CHECK:STDOUT:   %.loc11_14.3: bool = block_arg !.loc11_14
-// CHECK:STDOUT:   %.loc11_14.4: bool = initialize_from %.loc11_14.3
-// CHECK:STDOUT:   return %.loc11_14.4
+// CHECK:STDOUT:   return %.loc11_14.3
 // CHECK:STDOUT: }

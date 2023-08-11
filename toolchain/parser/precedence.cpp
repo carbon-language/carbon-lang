@@ -17,6 +17,7 @@ enum PrecedenceLevel : int8_t {
   // Terms.
   TermPrefix,
   // Numeric.
+  IncrementDecrement,
   NumericPrefix,
   Modulo,
   Multiplicative,
@@ -53,7 +54,8 @@ struct OperatorPriorityTable {
     // Start with a list of <higher precedence>, <lower precedence>
     // relationships.
     MarkHigherThan({Highest}, {TermPrefix, LogicalPrefix});
-    MarkHigherThan({TermPrefix}, {NumericPrefix, BitwisePrefix});
+    MarkHigherThan({TermPrefix},
+                   {NumericPrefix, BitwisePrefix, IncrementDecrement});
     MarkHigherThan({NumericPrefix, BitwisePrefix},
                    {As, Multiplicative, Modulo, BitwiseAnd, BitwiseOr,
                     BitwiseXor, BitShift});
@@ -64,7 +66,7 @@ struct OperatorPriorityTable {
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
     MarkHigherThan({LogicalAnd, LogicalOr}, {If});
     MarkHigherThan({If}, {Assignment});
-    MarkHigherThan({Assignment}, {Lowest});
+    MarkHigherThan({Assignment, IncrementDecrement}, {Lowest});
 
     // Types are mostly a separate precedence graph.
     MarkHigherThan({Highest}, {TypePrefix});
@@ -208,7 +210,7 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
 
     case TokenKind::MinusMinus:
     case TokenKind::PlusPlus:
-      return PrecedenceGroup(Assignment);
+      return PrecedenceGroup(IncrementDecrement);
 
     case TokenKind::Caret:
       return PrecedenceGroup(BitwisePrefix);

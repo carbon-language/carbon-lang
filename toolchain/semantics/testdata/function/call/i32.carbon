@@ -99,7 +99,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b: i32 = var
-// CHECK:STDOUT:   %.loc12_21.1: i32 = int_value 1
+// CHECK:STDOUT:   %.loc12_21.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_21.2: i32 = stub_reference %.loc12_21.1
 // CHECK:STDOUT:   %.loc12_20.1: i32 = call @Echo(%.loc12_21.2)
 // CHECK:STDOUT:   %.loc12_20.2: i32 = initialize_from %.loc12_20.1

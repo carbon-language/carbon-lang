@@ -85,6 +85,9 @@ graph BT
     complement["^x"]
     click complement "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
 
+    incDec["++x;<br>--x;"]
+    click incDec "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/assignment.md"
+
     unary((" "))
 
     as["x as T"]
@@ -136,7 +139,12 @@ graph BT
     if>"if x then y else z"]
     click if "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/if.md"
 
-    expressionEnd["x;"]
+    insideParens["(...)"]
+
+    assignment["x = y;<br>x $= y;"]
+    click assignment "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/assignment.md"
+
+    expressionStatement["x;"]
 
     top --> parens & braces & unqualifiedName
 
@@ -146,8 +154,7 @@ graph BT
 
     memberAccess --> top
     pointer --> memberAccess
-    negation --> pointer
-    complement --> pointer
+    negation & complement & incDec --> pointer
     unary --> negation & complement
     %% Use a longer arrow here to put `not` next to `and` and `or`.
     not -------> memberAccess
@@ -157,7 +164,8 @@ graph BT
     logicalOperand --> comparison & not
     and & or --> logicalOperand
     logicalExpression --> and & or
-    if & expressionEnd --> logicalExpression
+    if & expressionStatement --> logicalExpression
+    insideParens & assignment --> if
 ```
 
 The diagram's attributes are:

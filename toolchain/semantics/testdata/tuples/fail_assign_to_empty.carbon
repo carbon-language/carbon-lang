@@ -34,8 +34,7 @@ var x: () = (66);
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+2, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, type: typeError},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+5},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -47,7 +46,6 @@ var x: () = (66);
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -55,7 +53,6 @@ var x: () = (66);
 // CHECK:STDOUT:   %.loc10_9.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc10_9.2: () = tuple_value ()
 // CHECK:STDOUT:   %x: () = var
-// CHECK:STDOUT:   %.loc10_14: i32 = int_value 66
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>
-// CHECK:STDOUT:   assign %x, %.1
+// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 66
+// CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT: }

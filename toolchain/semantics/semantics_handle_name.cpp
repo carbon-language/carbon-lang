@@ -43,7 +43,7 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
             name_id == field_name_id) {
           context.AddNodeAndPush(
               parse_node,
-              SemanticsNode::StructMemberAccess::Make(
+              SemanticsNode::StructAccess::Make(
                   parse_node, field_type_id, base_id, SemanticsMemberIndex(i)));
           return true;
         }

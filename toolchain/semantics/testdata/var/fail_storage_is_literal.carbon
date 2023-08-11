@@ -36,8 +36,7 @@ fn Main() {
 // CHECK:STDOUT:   {kind: VarStorage, type: typeError},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: typeError},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, type: typeError},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+5},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: nodeError},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -53,7 +52,6 @@ fn Main() {
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -63,10 +61,9 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_10: i32 = int_value 1
+// CHECK:STDOUT:   %.loc11_10: i32 = int_literal 1
 // CHECK:STDOUT:   %x: <error> = var
-// CHECK:STDOUT:   %.loc11_14: i32 = int_value 1
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>
-// CHECK:STDOUT:   assign %x, %.1
+// CHECK:STDOUT:   %.loc11_14: i32 = int_literal 1
+// CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
