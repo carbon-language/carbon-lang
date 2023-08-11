@@ -22,7 +22,7 @@ using ::testing::StrEq;
 constexpr CommandLine::CommandInfo TestCommandInfo = {
     .name = "test",
     .help = "A test command.",
-    .help_epilog = "TODO",
+    .help_epilogue = "TODO",
 };
 
 enum class TestEnum {
@@ -37,7 +37,7 @@ enum class TestSubcommand {
 
 TEST(ArgParserTest, BasicCommand) {
   bool flag = false;
-  ssize_t integer_option = -1;
+  int integer_option = -1;
   llvm::StringRef string_option = "";
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args) {
     return CommandLine::Parse(
@@ -109,7 +109,7 @@ TEST(ArgParserTest, BooleanFlags) {
 
 TEST(ArgParserTest, ArgDefaults) {
   bool flag = false;
-  ssize_t integer_option = -1;
+  int integer_option = -1;
   llvm::StringRef string_option = "";
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
     return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
@@ -158,7 +158,7 @@ TEST(ArgParserTest, ArgDefaults) {
 TEST(ArgParserTest, ShortArgs) {
   bool flag = false;
   bool example = false;
-  ssize_t integer_option = -1;
+  int integer_option = -1;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
     return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
       b.AddFlag({.name = "flag", .short_name = "f"},
@@ -166,6 +166,11 @@ TEST(ArgParserTest, ShortArgs) {
       b.AddFlag({.name = "example", .short_name = "x"},
                 [&](auto& arg_b) { arg_b.Set(&example); });
       b.AddIntegerOption({.name = "option1", .short_name = "o"},
+                         [&](auto& arg_b) {
+                           arg_b.Default(123);
+                           arg_b.Set(&integer_option);
+                         });
+      b.AddIntegerOption({.name = "option2", .short_name = "z"},
                          [&](auto& arg_b) { arg_b.Set(&integer_option); });
       b.Do([] {});
     });
@@ -179,11 +184,24 @@ TEST(ArgParserTest, ShortArgs) {
 
   flag = false;
   example = false;
-  EXPECT_THAT(parse({"--option1=13", "-xfo=7"}, llvm::errs()),
+  EXPECT_THAT(parse({"--option1=13", "-xfo"}, llvm::errs()),
               Eq(CommandLine::ParseResult::Success));
   EXPECT_TRUE(flag);
   EXPECT_TRUE(example);
-  EXPECT_THAT(integer_option, Eq(7));
+  EXPECT_THAT(integer_option, Eq(123));
+
+  TestRawOstream os;
+  EXPECT_THAT(parse({"-xzf"}, os), Eq(CommandLine::ParseResult::Error));
+  EXPECT_THAT(os.TakeStr(),
+              StrEq("ERROR: Option '-z' (short for '--option2') requires a "
+                    "value to be provided and none was.\n"));
+
+  EXPECT_THAT(parse({"-xz=123"}, os), Eq(CommandLine::ParseResult::Error));
+  EXPECT_THAT(
+      os.TakeStr(),
+      StrEq("ERROR: Cannot provide a value to the group of multiple short "
+            "options '-xz=...'; values must be provided to a single option, "
+            "using either the short or long spelling.\n"));
 }
 
 TEST(ArgParserTest, PositionalArgs) {
@@ -361,7 +379,7 @@ TEST(ArgParserTest, BasicSubcommands) {
 }
 
 TEST(ArgParserTest, Appending) {
-  llvm::SmallVector<ssize_t> integers;
+  llvm::SmallVector<int> integers;
   llvm::SmallVector<llvm::StringRef> strings;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
     return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
@@ -424,7 +442,7 @@ TEST(ArgParserTest, PositionalAppending) {
 }
 
 TEST(ArgParserTest, OneOfOption) {
-  ssize_t value = 0;
+  int value = 0;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
     return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
       b.AddOneOfOption({.name = "option"}, [&](auto& arg_b) {
@@ -475,7 +493,7 @@ TEST(ArgParserTest, OneOfOption) {
 }
 
 TEST(ArgParserTest, OneOfOptionAppending) {
-  llvm::SmallVector<ssize_t> values;
+  llvm::SmallVector<int> values;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
     return CommandLine::Parse(args, s, s, TestCommandInfo, [&](auto& b) {
       b.AddOneOfOption({.name = "option"}, [&](auto& arg_b) {
@@ -504,11 +522,11 @@ TEST(ArgParserTest, OneOfOptionAppending) {
 }
 
 TEST(ArgParserTest, RequiredArgs) {
-  ssize_t integer_option;
+  int integer_option;
   llvm::StringRef string_option;
 
   TestSubcommand subcommand;
-  ssize_t integer_sub_option;
+  int integer_sub_option;
   llvm::StringRef string_sub_option;
   TestEnum enum_sub_option;
 
@@ -607,7 +625,7 @@ TEST(ArgParserTest, RequiredArgs) {
 
 TEST(ArgParserTest, HelpAndVersion) {
   bool flag = false;
-  ssize_t storage = -1;
+  int storage = -1;
   llvm::StringRef string = "";
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
     return CommandLine::Parse(  // Force line break.
@@ -624,7 +642,7 @@ A test command.
 
 Lots more information about the test command.
 )""",
-            .help_epilog = R"""(
+            .help_epilogue = R"""(
 Closing remarks.
 )""",
         },
@@ -657,7 +675,7 @@ Edit the widget.
 
 This will take the provided widgets and edit them.
 )""",
-                  .help_epilog = R"""(
+                  .help_epilogue = R"""(
 That's all.
 )""",
               },
@@ -681,7 +699,7 @@ Run wombats across the screen.
 
 This will cause several wombats to run across your screen.
 )""",
-                  .help_epilog = R"""(
+                  .help_epilogue = R"""(
 Or it won't, who knows.
 )""",
               },

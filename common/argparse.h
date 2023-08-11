@@ -105,7 +105,7 @@ namespace Carbon {
 //   value formats are supported:
 //   - Arbitrary strings
 //   - Integers as parsed by `llvm::StringRef` and whose value fits in an
-//     `ssize_t`.
+//     `int`.
 //   - One of a fixed set of strings
 //
 // - Options may be parsed multiple times, and the behavior can be configured:
@@ -130,12 +130,11 @@ namespace Carbon {
 //   - The short name can only specify the positive or `true` value for flags.
 //     There is no negative form of short names.
 //   - Short names are parsed after a single `-`, such as `-v`.
-//   - Any number of short names may be grouped after `-`, such as `-xyz`: this
-//     is three options, `x`, `y`, and `z`.
-//   - Short options may include a value after an `=`, but only the last short
-//     option of a group may receive a value. Other short options must have a
-//     default value that will be used. Typically this is used for a set of
-//     flags that are all set to `true`.
+//   - Any number of short names for boolean flags or options with default
+//     values may be grouped after `-`, such as `-xyz`: this is three options,
+//     `x`, `y`, and `z`.
+//   - Short options may include a value after an `=`, but not when grouped with
+//     other short options.
 //
 // - Options are parsed from any argument until either a subcommand switches to
 //   that subcommand's options or a `--` argument ends all option parsing to
@@ -356,7 +355,7 @@ class IntegerArgBuilder : public ArgBuilder {
   // below, this value will be used whenever the argument occurs without an
   // explicit value, but unless the argument is parsed nothing will be
   // appended.
-  void Default(ssize_t integer_value);
+  void Default(int integer_value);
 
   // Configures the argument to store a parsed value in the provided storage.
   // Each time the argument is parsed, it will write a new value to this
@@ -364,7 +363,7 @@ class IntegerArgBuilder : public ArgBuilder {
   //
   // Exactly one of this method or `Append` below must be configured for the
   // argument.
-  void Set(ssize_t* integer);
+  void Set(int* integer);
 
   // Configures the argument to append a parsed value to the provided
   // container. Each time the argument is parsed, a new value will be
@@ -372,7 +371,7 @@ class IntegerArgBuilder : public ArgBuilder {
   //
   // Exactly one of this method or `Set` above must be configured for the
   // argument.
-  void Append(llvm::SmallVectorImpl<ssize_t>* sequence);
+  void Append(llvm::SmallVectorImpl<int>* sequence);
 
  private:
   using ArgBuilder::ArgBuilder;
@@ -573,11 +572,11 @@ struct CommandInfo {
   // users, but can be customized in cases where necessary.
   llvm::StringRef usage = "";
 
-  // An optional epilog multi-line block of text appended to the help display
+  // An optional epilogue multi-line block of text appended to the help display
   // for this command. It is only used for this command's dedicated help, but
   // can contain extra, custom guidance that is especially useful to have at
   // the very end of the output.
-  llvm::StringRef help_epilog = "";
+  llvm::StringRef help_epilogue = "";
 };
 
 // Commands are classified based on the action they result in when run.
@@ -699,11 +698,11 @@ struct CommandLine::Arg {
   union {
     // Singular argument storage pointers.
     bool* flag_storage;
-    ssize_t* integer_storage;
+    int* integer_storage;
     llvm::StringRef* string_storage;
 
     // Appending argument storage pointers.
-    llvm::SmallVectorImpl<ssize_t>* integer_sequence;
+    llvm::SmallVectorImpl<int>* integer_sequence;
     llvm::SmallVectorImpl<llvm::StringRef>* string_sequence;
 
     // One-of information.
@@ -716,7 +715,7 @@ struct CommandLine::Arg {
   // Default values depending on the kind.
   union {
     bool default_flag;
-    ssize_t default_integer;
+    int default_integer;
     llvm::StringRef default_string;
     struct {
       DefaultActionT default_action;
@@ -739,9 +738,9 @@ struct CommandLine::Command {
 
   bool is_help_hidden = false;
 
-  llvm::SmallVector<std::unique_ptr<Arg>> options = {};
-  llvm::SmallVector<std::unique_ptr<Arg>> positional_args = {};
-  llvm::SmallVector<std::unique_ptr<Command>> subcommands = {};
+  llvm::SmallVector<std::unique_ptr<Arg>> options;
+  llvm::SmallVector<std::unique_ptr<Arg>> positional_args;
+  llvm::SmallVector<std::unique_ptr<Command>> subcommands;
 };
 
 template <typename T>
@@ -816,7 +815,7 @@ void CommandLine::OneOfArgBuilder::OneOfImpl(
   // by index.
   new (&arg_.value_action) Arg::ValueActionT(
       [values, match](const Arg& arg, llvm::StringRef value_string) -> bool {
-        for (ssize_t i = 0; i < static_cast<ssize_t>(N); ++i) {
+        for (int i = 0; i < static_cast<int>(N); ++i) {
           if (value_string == arg.value_strings[i]) {
             match(values[i]);
             return true;
