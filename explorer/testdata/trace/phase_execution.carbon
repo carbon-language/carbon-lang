@@ -16,8 +16,10 @@ fn Main() -> i32 {
 // ARGS: --trace_file=- --trace_phase=execution %s
 // AUTOUPDATE
 
-// CHECK:STDOUT: ********** starting execution **********
-// CHECK:STDOUT: ********** initializing globals **********
+// CHECK:STDOUT: * * * * * * * * * *  starting execution  * * * * * * * * * *
+// CHECK:STDOUT: ------------------------------------------------------------
+// CHECK:STDOUT: - - - - -  initializing globals  - - - - -
+// CHECK:STDOUT: ------------------------------------------
 // CHECK:STDOUT: >[] stack-push: DeclarationAction pos: 0 `class T` (phase_execution.carbon:7)
 // CHECK:STDOUT: ->> step DeclarationAction pos: 0 `class T` (phase_execution.carbon:7) --->
 // CHECK:STDOUT: *** declaration at (phase_execution.carbon:7)
@@ -39,7 +41,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: <[] stack-pop:  DeclarationAction pos: 0 `fn Main` (phase_execution.carbon:12)
-// CHECK:STDOUT: ********** calling main function **********
+// CHECK:STDOUT: - - - - -  calling main function  - - - - -
+// CHECK:STDOUT: -------------------------------------------
 // CHECK:STDOUT: >[] stack-push: ValueExpressionAction pos: 0 `Main()` (<Main()>:0)
 // CHECK:STDOUT: ->> step ValueExpressionAction pos: 0 `Main()` (<Main()>:0) --->
 // CHECK:STDOUT: >[] stack-push: ExpressionAction pos: 0 `Main()` (<Main()>:0)
