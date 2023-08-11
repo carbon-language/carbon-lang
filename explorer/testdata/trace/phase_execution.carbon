@@ -225,5 +225,5 @@ fn Main() -> i32 {
 // CHECK:STDOUT: <[] stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
 // CHECK:STDOUT: ->> step ValueExpressionAction pos: 1 `Main()` results: [`0`]  (<Main()>:0) --->
 // CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `Main()` results: [`0`]  (<Main()>:0)
-// CHECK:STDOUT: interpreter result: 0
+// CHECK:STDOUT: ==> interpreter result: 0
 // CHECK:STDOUT: result: 0

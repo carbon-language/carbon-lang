@@ -2378,7 +2378,8 @@ auto TypeChecker::MatchImpl(const InterfaceType& iface,
   MatchingImplSet::Match match(&matching_impl_set_, &impl, impl_type, &iface);
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "\n========\tMatch Impl\t========\n";
+    *trace_stream_ << "\n";
+    trace_stream_->SubHeading("match impl");
     trace_stream_->Start() << "looking for `" << *impl_type << "` as `" << iface
                            << "`\n";
     trace_stream_->Start() << "checking `" << *impl.type << "` as `"

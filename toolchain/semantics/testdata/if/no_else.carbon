@@ -108,14 +108,14 @@ fn If(b: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !.loc12 else br !.loc14
+// CHECK:STDOUT:   if %b br !if.then else br !if.else
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc12:
+// CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %.loc12_6.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc12_6.2: () = call @F()
-// CHECK:STDOUT:   br !.loc14
+// CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc14:
+// CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %.loc14: () = call @G()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

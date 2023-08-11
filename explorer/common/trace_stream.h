@@ -8,6 +8,7 @@
 #include <bitset>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "common/check.h"
@@ -127,6 +128,23 @@ class TraceStream {
   auto Not() const -> llvm::raw_ostream& { return *this << "-!- "; }
   auto Skip() const -> llvm::raw_ostream& { return *this << ">>> "; }
   auto Source() const -> llvm::raw_ostream& { return *this << "*** "; }
+
+  // Format utility methods
+  void Heading(std::string_view heading) const {
+    CARBON_CHECK(is_enabled() && stream_);
+    const std::string_view stars = "* * * * * * * * * *";
+    const std::string dashed_line(stars.size() * 2 + heading.size() + 4, '-');
+    **stream_ << stars << "  " << heading << "  " << stars << "\n"
+              << dashed_line << "\n";
+  }
+
+  void SubHeading(std::string_view heading) const {
+    CARBON_CHECK(is_enabled() && stream_);
+    const std::string_view dashes = "- - - - -";
+    const std::string dashed_line(dashes.size() * 2 + heading.size() + 4, '-');
+    **stream_ << dashes << "  " << heading << "  " << dashes << "\n"
+              << dashed_line << "\n";
+  }
 
  private:
   bool in_prelude_ = false;

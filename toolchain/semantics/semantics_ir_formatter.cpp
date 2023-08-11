@@ -20,11 +20,6 @@ namespace {
 //   naming section here.
 // - Consider representing literals as just `literal` in the IR and using the
 //   type to distinguish.
-// - Add block names based on the control flow construct names (`for`,
-//   `if`, `then`, `else`, ...). Either base this on the semantics or
-//   just on the keywords used to build that control flow -- little
-//   or no harm to getting it wrong. Tools will also want to be able
-//   to query the construct that resulted in control flow.
 class NodeNamer {
  public:
   enum class ScopeIndex : int {
@@ -51,18 +46,22 @@ class NodeNamer {
       auto fn_id = SemanticsFunctionId(i);
       auto fn_scope = GetScopeFor(fn_id);
       const auto& fn = semantics_ir.GetFunction(fn_id);
+      // TODO: Provide a location for the function for use as a
+      // disambiguator.
+      auto fn_loc = ParseTree::Node::Invalid;
       GetScopeInfo(fn_scope).name = globals.AllocateName(
-          *this,
-          // TODO: Provide a location for the function for use as a
-          // disambiguator.
-          ParseTree::Node::Invalid,
+          *this, fn_loc,
           fn.name_id.is_valid() ? semantics_ir.GetString(fn.name_id).str()
                                 : "");
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
+      if (!fn.body_block_ids.empty()) {
+        AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
+      }
       for (auto block_id : fn.body_block_ids) {
-        AddBlockLabel(fn_scope, block_id,
-                      block_id == fn.body_block_ids.front() ? "entry" : "");
         CollectNamesInBlock(fn_scope, block_id);
+      }
+      for (auto block_id : fn.body_block_ids) {
+        AddBlockLabel(fn_scope, block_id);
       }
     }
   }
@@ -244,19 +243,77 @@ class NodeNamer {
   }
 
   auto AddBlockLabel(ScopeIndex scope_idx, SemanticsNodeBlockId block_id,
-                     std::string name = "") -> void {
-    if (!block_id.is_valid()) {
+                     std::string name = "",
+                     ParseTree::Node parse_node = ParseTree::Node::Invalid)
+      -> void {
+    if (!block_id.is_valid() || labels[block_id.index].second) {
       return;
     }
 
-    ParseTree::Node parse_node = ParseTree::Node::Invalid;
-    if (auto& block = semantics_ir_.GetNodeBlock(block_id); !block.empty()) {
-      parse_node = semantics_ir_.GetNode(block.front()).parse_node();
+    if (parse_node == ParseTree::Node::Invalid) {
+      if (auto& block = semantics_ir_.GetNodeBlock(block_id); !block.empty()) {
+        parse_node = semantics_ir_.GetNode(block.front()).parse_node();
+      }
     }
 
     labels[block_id.index] = {scope_idx,
                               GetScopeInfo(scope_idx).labels.AllocateName(
                                   *this, parse_node, std::move(name))};
+  }
+
+  // Finds and adds a suitable block label for the given semantics node that
+  // represents some kind of branch.
+  auto AddBlockLabel(ScopeIndex scope_idx, SemanticsNodeBlockId block_id,
+                     SemanticsNode node) -> void {
+    llvm::StringRef name;
+    switch (parse_tree_.node_kind(node.parse_node())) {
+      case ParseNodeKind::IfExpressionIf:
+        switch (node.kind()) {
+          case SemanticsNodeKind::BranchIf:
+            name = "if.expr.then";
+            break;
+          case SemanticsNodeKind::Branch:
+            name = "if.expr.else";
+            break;
+          case SemanticsNodeKind::BranchWithArg:
+            name = "if.expr.result";
+            break;
+          default:
+            break;
+        }
+        break;
+
+      case ParseNodeKind::IfCondition:
+        switch (node.kind()) {
+          case SemanticsNodeKind::BranchIf:
+            name = "if.then";
+            break;
+          case SemanticsNodeKind::Branch:
+            name = "if.else";
+            break;
+          default:
+            break;
+        }
+        break;
+
+      case ParseNodeKind::IfStatement:
+        name = "if.done";
+        break;
+
+      case ParseNodeKind::ShortCircuitOperand: {
+        bool is_rhs = node.kind() == SemanticsNodeKind::BranchIf;
+        bool is_and = tokenized_buffer_.GetKind(parse_tree_.node_token(
+                          node.parse_node())) == TokenKind::And;
+        name = is_and ? (is_rhs ? "and.rhs" : "and.result")
+                      : (is_rhs ? "or.rhs" : "or.result");
+        break;
+      }
+
+      default:
+        break;
+    }
+
+    AddBlockLabel(scope_idx, block_id, name.str(), node.parse_node());
   }
 
   auto CollectNamesInBlock(ScopeIndex scope_idx, SemanticsNodeBlockId block_id)
@@ -272,12 +329,32 @@ class NodeNamer {
     // fallback names.
     for (auto node_id : semantics_ir_.GetNodeBlock(block_id)) {
       auto node = semantics_ir_.GetNode(node_id);
-      if (node.kind() == SemanticsNodeKind::BindName) {
-        auto [name_id, named_node_id] = node.GetAsBindName();
-        nodes[named_node_id.index] = {
-            scope_idx,
-            scope.nodes.AllocateName(*this, node.parse_node(),
-                                     semantics_ir_.GetString(name_id).str())};
+      switch (node.kind()) {
+        case SemanticsNodeKind::BindName: {
+          auto [name_id, named_node_id] = node.GetAsBindName();
+          nodes[named_node_id.index] = {
+              scope_idx,
+              scope.nodes.AllocateName(*this, node.parse_node(),
+                                       semantics_ir_.GetString(name_id).str())};
+          break;
+        }
+        case SemanticsNodeKind::Branch: {
+          auto dest_id = node.GetAsBranch();
+          AddBlockLabel(scope_idx, dest_id, node);
+          break;
+        }
+        case SemanticsNodeKind::BranchIf: {
+          auto [dest_id, cond_id] = node.GetAsBranchIf();
+          AddBlockLabel(scope_idx, dest_id, node);
+          break;
+        }
+        case SemanticsNodeKind::BranchWithArg: {
+          auto [dest_id, arg_id] = node.GetAsBranchWithArg();
+          AddBlockLabel(scope_idx, dest_id, node);
+          break;
+        }
+        default:
+          break;
       }
     }
 

@@ -9,9 +9,8 @@ fn F(c: bool) {
   var b: i32;
   var p: i32*;
   *p = if c then 1 else 2;
-  // These are valid to _parse_ even though rejected semantically.
+  // This is valid to _parse_ even though rejected semantically.
   (if c then a else b) += if c then 1 else 2;
-  ++if c then a else b;
 }
 
 // CHECK:STDOUT: [
@@ -65,14 +64,6 @@ fn F(c: bool) {
 // CHECK:STDOUT:       {kind: 'IfExpressionElse', text: 'else', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'InfixOperator', text: '+=', subtree_size: 15},
 // CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 16},
-// CHECK:STDOUT:           {kind: 'NameExpression', text: 'c'},
-// CHECK:STDOUT:         {kind: 'IfExpressionIf', text: 'if', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'NameExpression', text: 'a'},
-// CHECK:STDOUT:         {kind: 'IfExpressionThen', text: 'then', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'NameExpression', text: 'b'},
-// CHECK:STDOUT:       {kind: 'IfExpressionElse', text: 'else', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'PrefixOperator', text: '++', subtree_size: 7},
-// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 8},
-// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 59},
+// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 51},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
