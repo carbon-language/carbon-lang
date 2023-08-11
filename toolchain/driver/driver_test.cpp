@@ -52,7 +52,7 @@ TEST_F(DriverTest, FullCommandErrors) {
 TEST_F(DriverTest, DumpTokens) {
   auto file = CreateTestFile("Hello World");
   EXPECT_TRUE(driver_.RunCommand(
-      {"compile", "--phase=tokenize", "--dump-tokens", file}));
+      {"compile", "--phase=lex", "--dump-tokens", file}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   auto tokenized_text = test_output_stream_.TakeStr();
 

@@ -34,7 +34,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   if (!driver.RunCommand({"compile", "--phase=parse", TestFileName})) {
     return 0;
   }
-  driver.RunCommand({"compile", "--phase=syntax", TestFileName});
+  driver.RunCommand({"compile", "--phase=check", TestFileName});
   return 0;
 }
 

@@ -44,9 +44,9 @@ can be written to standard output as these phases progress.
   };
 
   enum class Phase {
-    Tokenize,
+    Lex,
     Parse,
-    Syntax,
+    Check,
     Lower,
     CodeGen,
   };
@@ -54,14 +54,14 @@ can be written to standard output as these phases progress.
   friend auto operator<<(llvm::raw_ostream& out, Phase phase)
       -> llvm::raw_ostream& {
     switch (phase) {
-      case Phase::Tokenize:
-        out << "tokenize";
+      case Phase::Lex:
+        out << "lex";
         break;
       case Phase::Parse:
         out << "parse";
         break;
-      case Phase::Syntax:
-        out << "syntax";
+      case Phase::Check:
+        out << "check";
         break;
       case Phase::Lower:
         out << "lower";
@@ -98,9 +98,9 @@ compile, lower, and generate machine code.
         [&](auto& arg_b) {
           arg_b.SetOneOf(
               {
-                  arg_b.OneOfValue("tokenize", Phase::Tokenize),
+                  arg_b.OneOfValue("lex", Phase::Lex),
                   arg_b.OneOfValue("parse", Phase::Parse),
-                  arg_b.OneOfValue("syntax", Phase::Syntax),
+                  arg_b.OneOfValue("check", Phase::Check),
                   arg_b.OneOfValue("lower", Phase::Lower),
                   arg_b.OneOfValue("codegen", Phase::CodeGen).Default(true),
               },
@@ -367,7 +367,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
 
   using Phase = CompileOptions::Phase;
   switch (options.phase) {
-    case Phase::Tokenize:
+    case Phase::Lex:
       if (options.dump_parse_tree) {
         error_stream_ << "ERROR: Requested dumping the parse tree but compile "
                          "phase is limited to '"
@@ -383,7 +383,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
         has_errors = true;
       }
       [[clang::fallthrough]];
-    case Phase::Syntax:
+    case Phase::Check:
       if (options.dump_llvm_ir) {
         error_stream_ << "ERROR: Requested dumping the LLVM IR but compile "
                          "phase is limited to '"
@@ -407,7 +407,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     output_stream_ << tokenized_source;
   }
   CARBON_VLOG() << "tokenized_buffer: " << tokenized_source;
-  if (options.phase == Phase::Tokenize) {
+  if (options.phase == Phase::Lex) {
     return !has_errors;
   }
 
@@ -442,7 +442,7 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
                       output_stream_);
   }
   CARBON_VLOG() << "semantics_ir: " << semantics_ir;
-  if (options.phase == Phase::Syntax) {
+  if (options.phase == Phase::Check) {
     return !has_errors;
   }
 
