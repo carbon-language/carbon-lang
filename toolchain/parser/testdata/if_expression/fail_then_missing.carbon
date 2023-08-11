@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() {
+  // CHECK:STDERR: fail_then_missing.carbon:[[@LINE+3]]:23: Expected `then` after `if` condition.
+  // CHECK:STDERR:   var n: i32 = if true;
+  // CHECK:STDERR:                       ^
+  var n: i32 = if true;
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'F'},
@@ -23,10 +31,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 17},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-fn F() {
-  // CHECK:STDERR: fail_then_missing.carbon:[[@LINE+3]]:23: Expected `then` after `if` condition.
-  // CHECK:STDERR:   var n: i32 = if true;
-  // CHECK:STDERR:                       ^
-  var n: i32 = if true;
-}

@@ -89,23 +89,24 @@ auto ParserContext::ConsumeAndAddOpenParen(TokenizedBuffer::Token default_token,
   }
 }
 
-auto ParserContext::ConsumeAndAddCloseParen(StateStackEntry state,
-                                            ParseNodeKind close_kind) -> void {
-  // state.token should point at the introducer, with the paren one after the
-  // introducer.
-  auto expected_paren = *(TokenizedBuffer::TokenIterator(state.token) + 1);
+auto ParserContext::ConsumeAndAddCloseSymbol(
+    TokenizedBuffer::Token expected_open, StateStackEntry state,
+    ParseNodeKind close_kind) -> void {
+  TokenKind open_token_kind = tokens().GetKind(expected_open);
 
-  if (tokens().GetKind(expected_paren) != TokenKind::OpenParen) {
+  if (!open_token_kind.is_opening_symbol()) {
     AddNode(close_kind, state.token, state.subtree_start, /*has_error=*/true);
-  } else if (auto close_token = ConsumeIf(TokenKind::CloseParen)) {
+  } else if (auto close_token = ConsumeIf(open_token_kind.closing_symbol())) {
     AddNode(close_kind, *close_token, state.subtree_start, state.has_error);
   } else {
-    // TODO: Include the location of the matching open_paren in the diagnostic.
-    CARBON_DIAGNOSTIC(ExpectedCloseParen, Error,
-                      "Unexpected tokens before `)`.");
-    emitter_->Emit(*position_, ExpectedCloseParen);
+    // TODO: Include the location of the matching opening delimiter in the
+    // diagnostic.
+    CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
+                      "Unexpected tokens before `{0}`.", llvm::StringRef);
+    emitter_->Emit(*position_, ExpectedCloseSymbol,
+                   open_token_kind.closing_symbol().fixed_spelling());
 
-    SkipTo(tokens().GetMatchedClosingToken(expected_paren));
+    SkipTo(tokens().GetMatchedClosingToken(expected_open));
     AddNode(close_kind, Consume(), state.subtree_start, /*has_error=*/true);
   }
 }

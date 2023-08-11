@@ -29,9 +29,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 A _qualified name_ is a [word](../lexical_conventions/words.md) that is preceded
-by a period. The name is found within a contextually determined entity:
+by a period or a rightward arrow. The name is found within a contextually
+determined entity:
 
 -   In a member access expression, this is the entity preceding the period.
+-   In a pointer member access expression, this is the entity pointed to by the
+    pointer preceding the rightward arrow.
 -   For a designator in a struct literal, the name is introduced as a member of
     the struct type.
 
@@ -43,10 +46,12 @@ A member access expression is either a _simple_ member access expression of the
 form:
 
 -   _member-access-expression_ ::= _expression_ `.` _word_
+-   _member-access-expression_ ::= _expression_ `->` _word_
 
 or a _compound_ member access of the form:
 
 -   _member-access-expression_ ::= _expression_ `.` `(` _expression_ `)`
+-   _member-access-expression_ ::= _expression_ `->` `(` _expression_ `)`
 
 Compound member accesses allow specifying a qualified member name.
 
@@ -66,13 +71,25 @@ class Cog {
 fn GrowSomeCogs() {
   var cog1: Cog = Cog.Make(1);
   var cog2: Cog = cog1.Make(2);
+  var cog_pointer: Cog* = &cog2;
   let cog1_size: i32 = cog1.size;
   cog1.Grow(1.5);
   cog2.(Cog.Grow)(cog1_size as f64);
   cog1.(Widget.Grow)(1.1);
   cog2.(Widgets.Cog.(Widgets.Widget.Grow))(1.9);
+  cog_pointer->Grow(0.75);
+  cog_pointer->(Widget.Grow)(1.2);
 }
 ```
+
+Pointer member access expressions are those using a `->` instead of a `.` and
+their semantics are exactly what would result from first dereferencing the
+expression preceding the `->` and then forming a member access expression using
+a `.`. For example, a simple pointer member access expression _expression_ `->`
+_word_ becomes `(` `*` _expression_ `)` `.` _word_. More details on this syntax
+and semantics can be found in the [pointers](/docs/design/values.md#pointers)
+design. The rest of this document describes the semantics using `.` alone for
+simplicity.
 
 A member access expression is processed using the following steps:
 

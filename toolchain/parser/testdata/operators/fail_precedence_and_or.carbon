@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() {
+  // CHECK:STDERR: fail_precedence_and_or.carbon:[[@LINE+3]]:11: Parentheses are required to disambiguate operator precedence.
+  // CHECK:STDERR:   a and b or c;
+  // CHECK:STDERR:           ^
+  a and b or c;
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'F'},
@@ -20,10 +28,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-fn F() {
-  // CHECK:STDERR: fail_precedence_and_or.carbon:[[@LINE+3]]:11: Parentheses are required to disambiguate operator precedence.
-  // CHECK:STDERR:   a and b or c;
-  // CHECK:STDERR:           ^
-  a and b or c;
-}

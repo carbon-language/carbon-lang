@@ -41,7 +41,7 @@ enum class ProgramPhase {
 // disproprotionate amount of time to log, so we try to avoid it.
 class TraceStream {
  public:
-  explicit TraceStream() {}
+  explicit TraceStream() = default;
 
   // Returns true if tracing is currently enabled.
   auto is_enabled() const -> bool {
@@ -103,9 +103,46 @@ class TraceStream {
   // Outputs a trace message. Requires is_enabled.
   template <typename T>
   auto operator<<(T&& message) const -> llvm::raw_ostream& {
-    CARBON_CHECK(is_enabled());
+    CARBON_CHECK(is_enabled() && stream_);
     **stream_ << message;
     return **stream_;
+  }
+
+  // These functions can be used for adding line prefixes in the trace output.
+  auto Indent() const -> llvm::raw_ostream& { return *this << "    "; }
+  auto Start() const -> llvm::raw_ostream& { return *this << "->> "; }
+  auto End() const -> llvm::raw_ostream& { return *this << "<<- "; }
+  auto Call() const -> llvm::raw_ostream& { return *this << "-() "; }
+  auto Match() const -> llvm::raw_ostream& { return *this << "=== "; }
+  auto Result() const -> llvm::raw_ostream& { return *this << "==> "; }
+  auto Add() const -> llvm::raw_ostream& { return *this << " +  "; }
+  auto Remove() const -> llvm::raw_ostream& { return *this << " -  "; }
+  auto Read() const -> llvm::raw_ostream& { return *this << "<-- "; }
+  auto Write() const -> llvm::raw_ostream& { return *this << "--> "; }
+  auto Allocate() const -> llvm::raw_ostream& { return *this << "++# "; }
+  auto Deallocate() const -> llvm::raw_ostream& { return *this << "--# "; }
+  auto Substitute() const -> llvm::raw_ostream& { return *this << "->+ "; }
+  auto Push() const -> llvm::raw_ostream& { return *this << ">[] "; }
+  auto Pop() const -> llvm::raw_ostream& { return *this << "<[] "; }
+  auto Not() const -> llvm::raw_ostream& { return *this << "-!- "; }
+  auto Skip() const -> llvm::raw_ostream& { return *this << ">>> "; }
+  auto Source() const -> llvm::raw_ostream& { return *this << "*** "; }
+
+  // Format utility methods
+  void Heading(llvm::StringRef heading) const {
+    CARBON_CHECK(is_enabled() && stream_);
+    const std::string stars = "* * * * * * * * * *";
+    const std::string dashed_line(stars.size() * 2 + heading.size() + 4, '-');
+    **stream_ << stars << "  " << heading << "  " << stars << "\n"
+              << dashed_line << "\n";
+  }
+
+  void SubHeading(llvm::StringRef heading) const {
+    CARBON_CHECK(is_enabled() && stream_);
+    const std::string stars = "- - - - -";
+    const std::string dashed_line(stars.size() * 2 + heading.size() + 4, '-');
+    **stream_ << stars << "  " << heading << "  " << stars << "\n"
+              << dashed_line << "\n";
   }
 
  private:

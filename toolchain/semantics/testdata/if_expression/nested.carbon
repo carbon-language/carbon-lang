@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F(a: bool, b: bool, c: bool) -> i32 {
+  return if a then if b then 1 else 2 else if c then 3 else 4;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4, block5, block7, block8, block9, block6, block10, block11, block12, block13}}},
@@ -116,7 +121,46 @@
 // CHECK:STDOUT:     node+26,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn F(a: bool, b: bool, c: bool) -> i32 {
-  return if a then if b then 1 else 2 else if c then 3 else 4;
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%a: bool, %b: bool, %c: bool) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %a br !.loc8_20.1 else br !.loc8_44.1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc8_20.1:
+// CHECK:STDOUT:   if %b br !.loc8_30 else br !.loc8_37
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc8_30:
+// CHECK:STDOUT:   %.loc8_30: i32 = int_literal 1
+// CHECK:STDOUT:   br !.loc8_20.2(%.loc8_30)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc8_37:
+// CHECK:STDOUT:   %.loc8_37: i32 = int_literal 2
+// CHECK:STDOUT:   br !.loc8_20.2(%.loc8_37)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc8_20.2:
+// CHECK:STDOUT:   %.loc8_20: i32 = block_arg !.loc8_20.2
+// CHECK:STDOUT:   br !.loc8_10(%.loc8_20)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc8_44.1:
+// CHECK:STDOUT:   if %c br !.loc8_54 else br !.loc8_61
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc8_54:
+// CHECK:STDOUT:   %.loc8_54: i32 = int_literal 3
+// CHECK:STDOUT:   br !.loc8_44.2(%.loc8_54)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc8_61:
+// CHECK:STDOUT:   %.loc8_61: i32 = int_literal 4
+// CHECK:STDOUT:   br !.loc8_44.2(%.loc8_61)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc8_44.2:
+// CHECK:STDOUT:   %.loc8_44: i32 = block_arg !.loc8_44.2
+// CHECK:STDOUT:   br !.loc8_10(%.loc8_44)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc8_10:
+// CHECK:STDOUT:   %.loc8_10: i32 = block_arg !.loc8_10
+// CHECK:STDOUT:   return %.loc8_10
+// CHECK:STDOUT: }

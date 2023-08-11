@@ -77,9 +77,10 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
       }
 
       if (trace_stream->is_enabled()) {
-        *trace_stream << "--- flow-resolved return statement `" << *statement
-                      << "` in `" << PrintAsID(*((*function)->declaration))
-                      << "` (" << statement->source_loc() << ")\n";
+        trace_stream->Result()
+            << "flow-resolved return statement `" << *statement << "` in `"
+            << PrintAsID(*((*function)->declaration)) << "` ("
+            << statement->source_loc() << ")\n";
       }
 
       return Success();
@@ -92,8 +93,9 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
       cast<Break>(*statement).set_loop(*loop);
 
       if (trace_stream->is_enabled()) {
-        *trace_stream << "--- flow-resolved break statement `" << *statement
-                      << "` for `" << PrintAsID(**loop) << "`\n";
+        trace_stream->Result()
+            << "flow-resolved break statement `" << *statement << "` for `"
+            << PrintAsID(**loop) << "`\n";
       }
 
       return Success();
@@ -105,9 +107,9 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
       cast<Continue>(*statement).set_loop(*loop);
 
       if (trace_stream->is_enabled()) {
-        *trace_stream << "--- flow-resolved continue statement `" << *statement
-                      << "` in `" << PrintAsID(**loop) << "` ("
-                      << statement->source_loc() << ")\n";
+        trace_stream->Result()
+            << "flow-resolved continue statement `" << *statement << "` in `"
+            << PrintAsID(**loop) << "` (" << statement->source_loc() << ")\n";
       }
 
       return Success();
@@ -134,9 +136,9 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
           trace_stream, &cast<For>(*statement).body(), statement, function));
 
       if (trace_stream->is_enabled()) {
-        *trace_stream << "--- flow-resolved for statement `"
-                      << PrintAsID(*statement) << "` ("
-                      << statement->source_loc() << ")\n";
+        trace_stream->Result()
+            << "flow-resolved for statement `" << PrintAsID(*statement) << "` ("
+            << statement->source_loc() << ")\n";
       }
 
       return Success();
@@ -146,9 +148,9 @@ static auto ResolveControlFlow(Nonnull<TraceStream*> trace_stream,
           trace_stream, &cast<While>(*statement).body(), statement, function));
 
       if (trace_stream->is_enabled()) {
-        *trace_stream << "--- flow-resolved while statement `"
-                      << PrintAsID(*statement) << "` ("
-                      << statement->source_loc() << ")\n";
+        trace_stream->Result()
+            << "flow-resolved while statement `" << PrintAsID(*statement)
+            << "` (" << statement->source_loc() << ")\n";
       }
 
       return Success();

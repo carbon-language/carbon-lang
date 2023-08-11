@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn A() -> i32 { return 1; }
+fn B() -> i32 { return 2; }
+
+fn F(b: bool) -> i32 {
+  return if b then A() else B();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
@@ -86,10 +94,38 @@
 // CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn A() -> i32 { return 1; }
-fn B() -> i32 { return 2; }
-
-fn F(b: bool) -> i32 {
-  return if b then A() else B();
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @A
+// CHECK:STDOUT:   %.loc8 = fn_decl @B
+// CHECK:STDOUT:   %.loc10 = fn_decl @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1
+// CHECK:STDOUT:   return %.loc7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 2
+// CHECK:STDOUT:   return %.loc8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%b: bool) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !.loc11_21 else br !.loc11_30
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc11_21:
+// CHECK:STDOUT:   %.loc11_21: i32 = call @A()
+// CHECK:STDOUT:   br !.loc11_10(%.loc11_21)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc11_30:
+// CHECK:STDOUT:   %.loc11_30: i32 = call @B()
+// CHECK:STDOUT:   br !.loc11_10(%.loc11_30)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc11_10:
+// CHECK:STDOUT:   %.loc11_10: i32 = block_arg !.loc11_10
+// CHECK:STDOUT:   return %.loc11_10
+// CHECK:STDOUT: }

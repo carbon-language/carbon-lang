@@ -95,6 +95,23 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "semantics_ir_formatter",
+    srcs = [
+        "semantics_ir_formatter.cpp",
+    ],
+    hdrs = [
+        "semantics_ir_formatter.h",
+    ],
+    deps = [
+        ":semantics_ir",
+        ":semantics_node_kind",
+        "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/parser:parse_tree",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
     name = "semantics_ir_test",
     size = "small",

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 12
 
 package Foo api;
 interface A {
@@ -27,3 +26,5 @@ fn Main() -> i32 {
   var w: X = {.n = 2};
   return v.(C.F)() + X.(C.G)(w);
 }
+
+// CHECK:STDOUT: result: 12

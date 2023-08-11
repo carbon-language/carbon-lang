@@ -48,14 +48,20 @@ class SourceLocation {
   auto file_kind() const -> FileKind { return file_kind_; }
 
   void Print(llvm::raw_ostream& out) const {
-    out << filename_ << ":" << line_num_;
+    if (file_kind_ == FileKind::Prelude) {
+      out << llvm::StringRef(filename_).rsplit("/").second << ":" << line_num_;
+    } else {
+      out << filename_ << ":" << line_num_;
+    }
   }
+
   auto ToString() const -> std::string {
     std::string result;
     llvm::raw_string_ostream out(result);
     Print(out);
     return result;
   }
+
   LLVM_DUMP_METHOD void Dump() const { Print(llvm::errs()); }
 
  private:

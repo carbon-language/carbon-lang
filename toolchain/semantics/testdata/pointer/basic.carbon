@@ -3,12 +3,19 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() -> i32 {
+  var n: i32 = 0;
+  var p: i32* = &n;
+
+  return *p;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
-// CHECK:STDOUT:   0,
 // CHECK:STDOUT:   0,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
@@ -33,8 +40,10 @@
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+6, type: type1},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+8},
+// CHECK:STDOUT:   {kind: AddressOf, arg0: node+1, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+8},
+// CHECK:STDOUT:   {kind: Dereference, arg0: node+6, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+10},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -52,17 +61,24 @@
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn F() -> i32 {
-  var n: i32 = 0;
-  var p: i32*;
-
-  // TODO: Test taking address and dereference.
-  // p = &n;
-  // *p = 1;
-  // return *p;
-
-  return 0;
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %n: i32 = var
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0
+// CHECK:STDOUT:   assign %n, %.loc8
+// CHECK:STDOUT:   %.loc9_13: type = ptr_type i32
+// CHECK:STDOUT:   %p: i32* = var
+// CHECK:STDOUT:   %.loc9_17: i32* = address_of %n
+// CHECK:STDOUT:   assign %p, %.loc9_17
+// CHECK:STDOUT:   %.loc11: i32 = dereference %p
+// CHECK:STDOUT:   return %.loc11
+// CHECK:STDOUT: }

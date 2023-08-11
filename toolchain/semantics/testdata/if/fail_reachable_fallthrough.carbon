@@ -3,6 +3,36 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn If1(b: bool) -> i32 {
+  if (b) {
+    return 1;
+  } else {
+  }
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
+}
+
+fn If2(b: bool) -> i32 {
+  if (b) {
+  } else {
+    return 2;
+  }
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
+}
+
+fn If3(b: bool) -> i32 {
+  if (b) {
+    return 1;
+  }
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4, block5, block6, block7}}},
@@ -120,32 +150,48 @@
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn If1(b: bool) -> i32 {
-  if (b) {
-    return 1;
-  } else {
-  }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-}
-
-fn If2(b: bool) -> i32 {
-  if (b) {
-  } else {
-    return 2;
-  }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-}
-
-fn If3(b: bool) -> i32 {
-  if (b) {
-    return 1;
-  }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: Missing `return` at end of function with declared return type.
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @If1
+// CHECK:STDOUT:   %.loc17 = fn_decl @If2
+// CHECK:STDOUT:   %.loc27 = fn_decl @If3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @If1(%b: bool) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !.loc9 else br !.loc8
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc9:
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 1
+// CHECK:STDOUT:   return %.loc9
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc8:
+// CHECK:STDOUT:   br !.1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.1:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @If2(%b: bool) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !.loc18 else br !.loc20
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc18:
+// CHECK:STDOUT:   br !.1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc20:
+// CHECK:STDOUT:   %.loc20: i32 = int_literal 2
+// CHECK:STDOUT:   return %.loc20
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.1:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @If3(%b: bool) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !.loc29 else br !.1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc29:
+// CHECK:STDOUT:   %.loc29: i32 = int_literal 1
+// CHECK:STDOUT:   return %.loc29
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.1:
+// CHECK:STDOUT: }

@@ -82,6 +82,12 @@ class SemanticsIR {
   }
   auto Print(llvm::raw_ostream& out, bool include_builtins) const -> void;
 
+  // Returns the requested IR.
+  auto GetCrossReferenceIR(SemanticsCrossReferenceIRId xref_id) const
+      -> const SemanticsIR& {
+    return *cross_reference_irs_[xref_id.index];
+  }
+
   // Adds a callable, returning an ID to reference it.
   auto AddFunction(SemanticsFunction function) -> SemanticsFunctionId {
     SemanticsFunctionId id(functions_.size());
@@ -90,7 +96,8 @@ class SemanticsIR {
   }
 
   // Returns the requested callable.
-  auto GetFunction(SemanticsFunctionId function_id) const -> SemanticsFunction {
+  auto GetFunction(SemanticsFunctionId function_id) const
+      -> const SemanticsFunction& {
     return functions_[function_id.index];
   }
 
@@ -129,7 +136,7 @@ class SemanticsIR {
   }
 
   // Returns the requested name scope.
-  auto GetNameScope(SemanticsNameScopeId scope_id)
+  auto GetNameScope(SemanticsNameScopeId scope_id) const
       -> const llvm::DenseMap<SemanticsStringId, SemanticsNodeId>& {
     return name_scopes_[scope_id.index];
   }
@@ -260,11 +267,16 @@ class SemanticsIR {
     return type_blocks_[block_id.index];
   }
 
-  // Produces a string version of a type.
-  auto StringifyType(SemanticsTypeId type_id) -> std::string;
+  // Produces a string version of a type. If `in_type_context` is false, an
+  // explicit conversion to type `type` will be added in cases where the type
+  // expression would otherwise have a different type, such as a tuple or
+  // struct type.
+  auto StringifyType(SemanticsTypeId type_id,
+                     bool in_type_context = false) const -> std::string;
 
   auto functions_size() const -> int { return functions_.size(); }
   auto nodes_size() const -> int { return nodes_.size(); }
+  auto node_blocks_size() const -> int { return node_blocks_.size(); }
 
   auto types() const -> const llvm::SmallVector<SemanticsNodeId>& {
     return types_;
@@ -331,6 +343,30 @@ class SemanticsIR {
   // The top node block ID.
   SemanticsNodeBlockId top_node_block_id_ = SemanticsNodeBlockId::Invalid;
 };
+
+// The expression category of a semantics node. See /docs/design/values.md for
+// details.
+enum class SemanticsExpressionCategory {
+  // This node does not correspond to an expression, and as such has no
+  // category.
+  NotExpression,
+  // This node represents a value expression.
+  Value,
+  // This node represents a durable reference expression, that denotes an
+  // object that outlives the current full expression context.
+  DurableReference,
+  // This node represents an ephemeral reference expression, that denotes an
+  // object that does not outlive the current full expression context.
+  EphemeralReference,
+  // This node represents an initializing expression, that describes how to
+  // initialize an object.
+  Initializing,
+};
+
+// Returns the expression category for a node.
+auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
+                                    SemanticsNodeId node_id)
+    -> SemanticsExpressionCategory;
 
 }  // namespace Carbon
 

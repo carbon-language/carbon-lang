@@ -3,14 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: Allocate B
-// CHECK:STDOUT: DESTRUCTOR B
-// CHECK:STDOUT: DESTRUCTOR A
-// CHECK:STDOUT: Delete B
-// CHECK:STDOUT: DESTRUCTOR B
-// CHECK:STDOUT: DESTRUCTOR A
-// CHECK:STDOUT: Return
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -41,3 +33,12 @@ fn Main() -> i32 {
   Print("Return");
   return 0;
 }
+
+// CHECK:STDOUT: Allocate B
+// CHECK:STDOUT: DESTRUCTOR B
+// CHECK:STDOUT: DESTRUCTOR A
+// CHECK:STDOUT: Delete B
+// CHECK:STDOUT: DESTRUCTOR B
+// CHECK:STDOUT: DESTRUCTOR A
+// CHECK:STDOUT: Return
+// CHECK:STDOUT: result: 0

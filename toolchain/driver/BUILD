@@ -22,6 +22,7 @@ cc_library(
         "//toolchain/lowering:lower_to_llvm",
         "//toolchain/parser:parse_tree",
         "//toolchain/semantics:semantics_ir",
+        "//toolchain/semantics:semantics_ir_formatter",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",

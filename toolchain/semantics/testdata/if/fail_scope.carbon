@@ -3,6 +3,18 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn VarScope(b: bool) -> i32 {
+  if (b) {
+    var n: i32 = 2;
+    return n;
+  }
+  // CHECK:STDERR: fail_scope.carbon:[[@LINE+3]]:10: Name `n` not found
+  // CHECK:STDERR:   return n;
+  // CHECK:STDERR:          ^
+  return n;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4, block5, block6}}},
@@ -65,14 +77,21 @@
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn VarScope(b: bool) -> i32 {
-  if (b) {
-    var n: i32 = 2;
-    return n;
-  }
-  // CHECK:STDERR: fail_scope.carbon:[[@LINE+3]]:10: Name `n` not found
-  // CHECK:STDERR:   return n;
-  // CHECK:STDERR:          ^
-  return n;
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @VarScope
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @VarScope(%b: bool) -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !.loc9 else br !.loc15
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc9:
+// CHECK:STDOUT:   %n: i32 = var
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 2
+// CHECK:STDOUT:   assign %n, %.loc9
+// CHECK:STDOUT:   return %n
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc15:
+// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }

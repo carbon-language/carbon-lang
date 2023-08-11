@@ -3,6 +3,17 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() {}
+fn G() {}
+
+fn If(b: bool) {
+  if (b) {
+    F();
+  }
+  G();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
@@ -78,13 +89,33 @@
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn F() {}
-fn G() {}
-
-fn If(b: bool) {
-  if (b) {
-    F();
-  }
-  G();
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %.loc8 = fn_decl @G
+// CHECK:STDOUT:   %.loc10 = fn_decl @If
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @If(%b: bool) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   if %b br !.loc12 else br !.loc14
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc12:
+// CHECK:STDOUT:   %.loc12_6.1: type = tuple_type ()
+// CHECK:STDOUT:   %.loc12_6.2: () = call @F()
+// CHECK:STDOUT:   br !.loc14
+// CHECK:STDOUT:
+// CHECK:STDOUT: !.loc14:
+// CHECK:STDOUT:   %.loc14: () = call @G()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

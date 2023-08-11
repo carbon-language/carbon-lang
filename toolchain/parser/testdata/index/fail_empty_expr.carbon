@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_empty_expr.carbon:[[@LINE+3]]:16: Expected expression.
+// CHECK:STDERR: var v: i32 = t[];
+// CHECK:STDERR:                ^
+var v: i32 = t[];
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'v'},
@@ -16,8 +22,3 @@
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 10},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_empty_expr.carbon:[[@LINE+3]]:16: Expected expression.
-// CHECK:STDERR: var v: i32 = t[];
-// CHECK:STDERR:                ^
-var v: i32 = t[];

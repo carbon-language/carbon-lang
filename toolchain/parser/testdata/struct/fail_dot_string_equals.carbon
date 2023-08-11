@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_dot_string_equals.carbon:[[@LINE+3]]:10: Expected identifier after `.`.
+// CHECK:STDERR: var x: {."hello" = 0, .y = 4} = {};
+// CHECK:STDERR:          ^
+var x: {."hello" = 0, .y = 4} = {};
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'x'},
@@ -24,8 +30,3 @@
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 18},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_dot_string_equals.carbon:[[@LINE+3]]:10: Expected identifier after `.`.
-// CHECK:STDERR: var x: {."hello" = 0, .y = 4} = {};
-// CHECK:STDERR:          ^
-var x: {."hello" = 0, .y = 4} = {};

@@ -19,6 +19,7 @@
 #include "toolchain/lowering/lower_to_llvm.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
+#include "toolchain/semantics/semantics_ir_formatter.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
@@ -116,6 +117,7 @@ auto Driver::RunHelpSubcommand(DiagnosticConsumer& /*consumer*/,
 enum class DumpMode {
   TokenizedBuffer,
   ParseTree,
+  RawSemanticsIR,
   SemanticsIR,
   LLVMIR,
   Assembly,
@@ -133,6 +135,7 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
   auto dump_mode = llvm::StringSwitch<DumpMode>(args.front())
                        .Case("tokens", DumpMode::TokenizedBuffer)
                        .Case("parse-tree", DumpMode::ParseTree)
+                       .Case("raw-semantics-ir", DumpMode::RawSemanticsIR)
                        .Case("semantics-ir", DumpMode::SemanticsIR)
                        .Case("llvm-ir", DumpMode::LLVMIR)
                        .Case("assembly", DumpMode::Assembly)
@@ -152,9 +155,16 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
     parse_tree_preorder = true;
   }
 
-  bool semantics_ir_include_builtins = false;
+  bool semantics_ir_include_raw = false;
   if (dump_mode == DumpMode::SemanticsIR && !args.empty() &&
-      args.front() == "--include_builtins") {
+      args.front() == "--include_raw") {
+    args = args.drop_front();
+    semantics_ir_include_raw = true;
+  }
+
+  bool semantics_ir_include_builtins = false;
+  if ((dump_mode == DumpMode::RawSemanticsIR || semantics_ir_include_raw) &&
+      !args.empty() && args.front() == "--include_builtins") {
     args = args.drop_front();
     semantics_ir_include_builtins = true;
   }
@@ -239,8 +249,17 @@ auto Driver::RunDumpSubcommand(DiagnosticConsumer& consumer,
       builtin_ir, tokenized_source, parse_tree, consumer, vlog_stream_);
   has_errors |= semantics_ir.has_errors();
   CARBON_VLOG() << "*** SemanticsIR::MakeFromParseTree done ***\n";
-  if (dump_mode == DumpMode::SemanticsIR) {
+  if (dump_mode == DumpMode::RawSemanticsIR) {
     semantics_ir.Print(output_stream_, semantics_ir_include_builtins);
+    return !has_errors;
+  }
+  if (dump_mode == DumpMode::SemanticsIR) {
+    if (semantics_ir_include_raw) {
+      semantics_ir.Print(output_stream_, semantics_ir_include_builtins);
+      output_stream_ << "\n";
+    }
+    FormatSemanticsIR(tokenized_source, parse_tree, semantics_ir,
+                      output_stream_);
     return !has_errors;
   }
   CARBON_VLOG() << "semantics_ir: " << semantics_ir;

@@ -3,11 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Foo(a: i32, b: i32) {}
+
 // CHECK:STDOUT: ; ModuleID = 'params_two.carbon'
 // CHECK:STDOUT: source_filename = "params_two.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Foo(i32 %a, i32 %b) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
-
-fn Foo(a: i32, b: i32) {}
