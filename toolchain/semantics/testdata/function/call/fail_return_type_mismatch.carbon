@@ -15,8 +15,8 @@ fn Run() {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
-// CHECK:STDOUT:   {name: str1, param_refs: block0, body: {block3}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, return_slot: node+0, body: {block3}}},
+// CHECK:STDOUT:   {name: str1, param_refs: block0, body: {block4}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -35,16 +35,17 @@ fn Run() {
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+1, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+2},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+2, arg1: node+0, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+5, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+6, type: type1},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, type: typeError},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+8},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+6, type: typeError},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+9},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -52,20 +53,23 @@ fn Run() {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -74,10 +78,10 @@ fn Run() {
 // CHECK:STDOUT:   %.loc9 = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo() -> f64 {
+// CHECK:STDOUT: fn @Foo() -> %return: f64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_26.1: f64 = real_literal 10e-1
-// CHECK:STDOUT:   %.loc7_26.2: f64 = initialize_from %.loc7_26.1
+// CHECK:STDOUT:   %.loc7_26.2: f64 = initialize_from %.loc7_26.1, %return
 // CHECK:STDOUT:   return %.loc7_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -85,7 +89,7 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: i32 = var
 // CHECK:STDOUT:   %.loc13: f64 = call @Foo()
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %x
 // CHECK:STDOUT:   assign %x, %.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

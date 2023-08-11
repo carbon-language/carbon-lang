@@ -33,7 +33,7 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+2, type: type1},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, arg1: type0},
 // CHECK:STDOUT:   {kind: StructType, arg0: block3, type: typeTypeType},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+2, type: typeError},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+6},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -61,6 +61,6 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: {.a: i32} = var
 // CHECK:STDOUT:   %.loc10_28: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %x
 // CHECK:STDOUT:   assign %x, %.1
 // CHECK:STDOUT: }

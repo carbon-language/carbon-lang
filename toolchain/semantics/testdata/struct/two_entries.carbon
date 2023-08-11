@@ -41,7 +41,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, arg1: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+8, type: type0},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block4, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+11, type: type1},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+11, arg1: node+3, type: type1},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+3, arg1: node+12},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str1, arg1: type0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, arg1: type0},
@@ -49,7 +49,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+17, type: type1},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+3, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+19, type: type1},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+19, arg1: node+17, type: type1},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+17, arg1: node+20},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -103,11 +103,11 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc7_43: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc7_41: i32 = stub_reference %.loc7_43
 // CHECK:STDOUT:   %.loc7_44.1: {.a: i32, .b: i32} = struct_value (%.loc7_33, %.loc7_41)
-// CHECK:STDOUT:   %.loc7_44.2: {.a: i32, .b: i32} = initialize_from %.loc7_44.1
+// CHECK:STDOUT:   %.loc7_44.2: {.a: i32, .b: i32} = initialize_from %.loc7_44.1, %x
 // CHECK:STDOUT:   assign %x, %.loc7_44.2
 // CHECK:STDOUT:   %.loc8: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %y: {.a: i32, .b: i32} = var
 // CHECK:STDOUT:   %.loc7_5.1: {.a: i32, .b: i32} = value_binding %x
-// CHECK:STDOUT:   %.loc7_5.2: {.a: i32, .b: i32} = initialize_from %.loc7_5.1
+// CHECK:STDOUT:   %.loc7_5.2: {.a: i32, .b: i32} = initialize_from %.loc7_5.1, %y
 // CHECK:STDOUT:   assign %y, %.loc7_5.2
 // CHECK:STDOUT: }

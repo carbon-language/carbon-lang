@@ -29,7 +29,7 @@ var x: type = 42;
 // CHECK:STDOUT:   {kind: VarStorage, type: typeTypeType},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+0, type: typeError},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+3},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -47,6 +47,6 @@ var x: type = 42;
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: type = var
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 42
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %x
 // CHECK:STDOUT:   assign %x, %.1
 // CHECK:STDOUT: }

@@ -13,9 +13,9 @@ fn And() -> bool {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
-// CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type0, body: {block3}}},
-// CHECK:STDOUT:   {name: str2, param_refs: block0, return_type: type0, body: {block4, block5, block6}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, return_slot: node+0, body: {block3}}},
+// CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type0, return_slot: node+5, body: {block5}}},
+// CHECK:STDOUT:   {name: str2, param_refs: block0, return_type: type0, return_slot: node+10, body: {block7, block8, block9}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -32,57 +32,69 @@ fn And() -> bool {
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: nodes: [
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+1, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+2},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+2, arg1: node+0, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+3},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+5, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+6},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+7, arg1: node+5, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+8},
+// CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: false, type: type0},
-// CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+9},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block6, arg1: node+10},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block8, arg1: node+12},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+13},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block6, arg1: node+13},
-// CHECK:STDOUT:   {kind: BlockArg, arg0: block6, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+15, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+16},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+16},
+// CHECK:STDOUT:   {kind: BlockArg, arg0: block9, type: type0},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+18, arg1: node+10, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+19},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
-// CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+7,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
-// CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
-// CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+18,
+// CHECK:STDOUT:     node+19,
+// CHECK:STDOUT:     node+20,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -92,21 +104,21 @@ fn And() -> bool {
 // CHECK:STDOUT:   %.loc10 = fn_decl @And
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> bool {
+// CHECK:STDOUT: fn @F() -> %return: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_25.1: bool = bool_literal true
-// CHECK:STDOUT:   %.loc7_25.2: bool = initialize_from %.loc7_25.1
+// CHECK:STDOUT:   %.loc7_25.2: bool = initialize_from %.loc7_25.1, %return
 // CHECK:STDOUT:   return %.loc7_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> bool {
+// CHECK:STDOUT: fn @G() -> %return: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_25.1: bool = bool_literal true
-// CHECK:STDOUT:   %.loc8_25.2: bool = initialize_from %.loc8_25.1
+// CHECK:STDOUT:   %.loc8_25.2: bool = initialize_from %.loc8_25.1, %return
 // CHECK:STDOUT:   return %.loc8_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @And() -> bool {
+// CHECK:STDOUT: fn @And() -> %return: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_11: bool = call @F()
 // CHECK:STDOUT:   %.loc11_14.1: bool = bool_literal false
@@ -118,6 +130,6 @@ fn And() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
 // CHECK:STDOUT:   %.loc11_14.2: bool = block_arg !and.result
-// CHECK:STDOUT:   %.loc11_14.3: bool = initialize_from %.loc11_14.2
+// CHECK:STDOUT:   %.loc11_14.3: bool = initialize_from %.loc11_14.2, %return
 // CHECK:STDOUT:   return %.loc11_14.3
 // CHECK:STDOUT: }

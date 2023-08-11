@@ -9,7 +9,9 @@ namespace Carbon {
 auto LoweringHandleInitializeFrom(LoweringFunctionContext& context,
                                   SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  context.SetLocal(node_id, context.GetLocal(node.GetAsInitializeFrom()));
+  // TODO: If the value representation is indirect, perform the copy.
+  auto [init_value_id, target_id] = node.GetAsInitializeFrom();
+  context.SetLocal(node_id, context.GetLocal(init_value_id));
 }
 
 auto LoweringHandleMaterializeTemporary(LoweringFunctionContext& context,

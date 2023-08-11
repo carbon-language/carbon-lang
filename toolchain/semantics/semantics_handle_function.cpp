@@ -11,10 +11,14 @@ namespace Carbon {
 // definition syntax.
 static auto BuildFunctionDeclaration(SemanticsContext& context)
     -> std::pair<SemanticsFunctionId, SemanticsNodeId> {
-  SemanticsTypeId return_type_id = SemanticsTypeId::Invalid;
+  auto return_type_id = SemanticsTypeId::Invalid;
+  auto return_slot_id = SemanticsNodeId::Invalid;
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnType) {
-    return_type_id = context.node_stack().Pop<ParseNodeKind::ReturnType>();
+    return_slot_id = context.node_stack().Pop<ParseNodeKind::ReturnType>();
+    // TODO: Consider removing return_type_id from SemanticsFunction, as it can
+    // be derived from the return_slot_id.
+    return_type_id = context.semantics_ir().GetNode(return_slot_id).type_id();
   }
   SemanticsNodeBlockId param_refs_id =
       context.node_stack().Pop<ParseNodeKind::ParameterList>();
@@ -34,6 +38,7 @@ static auto BuildFunctionDeclaration(SemanticsContext& context)
                : SemanticsStringId(SemanticsStringId::InvalidIndex),
        .param_refs_id = param_refs_id,
        .return_type_id = return_type_id,
+       .return_slot_id = return_slot_id,
        .body_block_ids = {}});
   auto decl_id = context.AddNode(
       SemanticsNode::FunctionDeclaration::Make(fn_node, function_id));
@@ -113,8 +118,16 @@ auto SemanticsHandleReturnType(SemanticsContext& context,
   // Propagate the type expression.
   auto [type_parse_node, type_node_id] =
       context.node_stack().PopExpressionWithParseNode();
-  auto cast_node_id = context.ExpressionAsType(type_parse_node, type_node_id);
-  context.node_stack().Push(parse_node, cast_node_id);
+  auto type_id = context.ExpressionAsType(type_parse_node, type_node_id);
+  // TODO: Like the function parameters, the return slot is added to an
+  // unreferenced node block. We should either stop constructing this block or
+  // store it somewhere.
+  //
+  // See also SemanticsHandleParameterList.
+  context.node_block_stack().Push();
+  context.AddNodeAndPush(parse_node,
+                         SemanticsNode::VarStorage::Make(parse_node, type_id));
+  context.node_block_stack().Pop();
   return true;
 }
 

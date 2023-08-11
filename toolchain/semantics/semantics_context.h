@@ -111,19 +111,22 @@ class SemanticsContext {
   auto is_current_position_reachable() -> bool;
 
   // Convert the given expression to an initializing expression of the same
-  // type.
-  auto ConvertToInitializingExpression(SemanticsNodeId expr_id)
+  // type. `target_id` is a reference expression describing the object that is
+  // initialized.
+  auto ConvertToInitializingExpression(SemanticsNodeId expr_id,
+                                       SemanticsNodeId target_id)
       -> SemanticsNodeId;
 
   // Convert the given expression to a value expression of the same type.
   auto ConvertToValueExpression(SemanticsNodeId expr_id) -> SemanticsNodeId;
 
-  // Converts `value_id` to an initializing expression of type `type_id`.
-  auto ConvertToInitializerOfType(ParseTree::Node parse_node,
-                                  SemanticsNodeId value_id,
-                                  SemanticsTypeId type_id) -> SemanticsNodeId {
+  // Performs initialization of `target_id` from `value_id`. Returns the
+  // converted initializer value.
+  auto Initialize(ParseTree::Node parse_node, SemanticsNodeId target_id,
+                  SemanticsNodeId value_id) -> SemanticsNodeId {
+    auto type_id = semantics_ir().GetNode(target_id).type_id();
     return ConvertToInitializingExpression(
-        ImplicitAsRequired(parse_node, value_id, type_id));
+        ImplicitAsRequired(parse_node, value_id, type_id), target_id);
   }
 
   // Converts `value_id` to a value expression of type `type_id`.
@@ -285,6 +288,10 @@ class SemanticsContext {
 
     // TODO: This likely needs to track things which need to be destructed.
   };
+
+  // Marks the initializer `init_id` as initializing `target_id`.
+  auto MarkInitializerFor(SemanticsNodeId target_id, SemanticsNodeId init_id)
+      -> void;
 
   // Runs ImplicitAs behavior to convert `value` to `as_type`, returning the
   // result type. The result will be the node to use to replace `value`.

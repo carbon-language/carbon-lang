@@ -15,7 +15,7 @@ fn If(b: bool) -> i32 {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, body: {block4, block5, block6}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, return_slot: node+2, body: {block5, block6, block7}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   1,
@@ -36,16 +36,17 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+0, type: type0},
+// CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
-// CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+3},
-// CHECK:STDOUT:   {kind: Branch, arg0: block6},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block6, arg1: node+4},
+// CHECK:STDOUT:   {kind: Branch, arg0: block7},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+6, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+7},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+7, arg1: node+2, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+8},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+9, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+10},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+10, arg1: node+2, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+11},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -62,18 +63,21 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -81,18 +85,18 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc7 = fn_decl @If
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @If(%b: bool) -> i32 {
+// CHECK:STDOUT: fn @If(%b: bool) -> %return: i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7: bool = value_binding %b
 // CHECK:STDOUT:   if %.loc7 br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %.loc9_12.1: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc9_12.2: i32 = initialize_from %.loc9_12.1
+// CHECK:STDOUT:   %.loc9_12.2: i32 = initialize_from %.loc9_12.1, %return
 // CHECK:STDOUT:   return %.loc9_12.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %.loc11_12.1: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc11_12.2: i32 = initialize_from %.loc11_12.1
+// CHECK:STDOUT:   %.loc11_12.2: i32 = initialize_from %.loc11_12.1, %return
 // CHECK:STDOUT:   return %.loc11_12.2
 // CHECK:STDOUT: }

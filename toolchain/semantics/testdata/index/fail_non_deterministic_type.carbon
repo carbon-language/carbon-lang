@@ -54,16 +54,16 @@ var c: i32 = a[b];
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+9, type: type1},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block3, type: type2},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+11, type: type2},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+11, arg1: node+5, type: type2},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+12},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+14, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+16, type: type1},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+16, arg1: node+14, type: type1},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+14, arg1: node+17},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+19, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+19, type: typeError},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+19, arg1: node+21},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -116,13 +116,13 @@ var c: i32 = a[b];
 // CHECK:STDOUT:   %.loc7_25.1: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc7_25.2: i32 = stub_reference %.loc7_25.1
 // CHECK:STDOUT:   %.loc7_26.1: (i32, i32) = tuple_value (%.loc7_22.2, %.loc7_25.2)
-// CHECK:STDOUT:   %.loc7_26.2: (i32, i32) = initialize_from %.loc7_26.1
+// CHECK:STDOUT:   %.loc7_26.2: (i32, i32) = initialize_from %.loc7_26.1, %a
 // CHECK:STDOUT:   assign %a, %.loc7_26.2
 // CHECK:STDOUT:   %b: i32 = var
 // CHECK:STDOUT:   %.loc8_14.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc8_14.2: i32 = initialize_from %.loc8_14.1
+// CHECK:STDOUT:   %.loc8_14.2: i32 = initialize_from %.loc8_14.1, %b
 // CHECK:STDOUT:   assign %b, %.loc8_14.2
 // CHECK:STDOUT:   %c: i32 = var
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %c
 // CHECK:STDOUT:   assign %c, %.1
 // CHECK:STDOUT: }

@@ -26,7 +26,7 @@ var x: i32 = 0;
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+2, type: type0},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+2, arg1: node+0, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+3},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -44,6 +44,6 @@ var x: i32 = 0;
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: i32 = var
 // CHECK:STDOUT:   %.loc7_14.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc7_14.2: i32 = initialize_from %.loc7_14.1
+// CHECK:STDOUT:   %.loc7_14.2: i32 = initialize_from %.loc7_14.1, %x
 // CHECK:STDOUT:   assign %x, %.loc7_14.2
 // CHECK:STDOUT: }

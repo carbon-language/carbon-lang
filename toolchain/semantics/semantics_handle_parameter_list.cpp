@@ -27,6 +27,8 @@ auto SemanticsHandleParameterList(SemanticsContext& context,
   // Note, the underlying issue is that the LLVM IR has nowhere clear to emit,
   // so changing storage would require addressing that problem. For comparison
   // with function calls, the IR needs to be emitted prior to the call.
+  //
+  // The same applies to the return slot. See also SemanticsHandleReturnType.
   context.node_block_stack().Pop();
 
   context.PopScope();

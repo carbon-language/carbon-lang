@@ -387,7 +387,8 @@ class SemanticsNode {
                     SemanticsFunctionId /*function_id*/>;
 
   using InitializeFrom =
-      Factory<SemanticsNodeKind::InitializeFrom, SemanticsNodeId /*value_id*/>;
+      Factory<SemanticsNodeKind::InitializeFrom, SemanticsNodeId /*value_id*/,
+              SemanticsNodeId /*target_id*/>;
 
   using IntegerLiteral = Factory<SemanticsNodeKind::IntegerLiteral,
                                  SemanticsIntegerLiteralId /*integer_id*/>;

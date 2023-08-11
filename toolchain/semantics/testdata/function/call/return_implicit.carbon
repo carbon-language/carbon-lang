@@ -41,7 +41,7 @@ fn Main() {
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+5, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+7, type: type0},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+7, arg1: node+5, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+8},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
@@ -83,7 +83,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_11.2: () = tuple_value ()
 // CHECK:STDOUT:   %b: () = var
 // CHECK:STDOUT:   %.loc11_37.1: () = call @MakeImplicitEmptyTuple()
-// CHECK:STDOUT:   %.loc11_37.2: () = initialize_from %.loc11_37.1
+// CHECK:STDOUT:   %.loc11_37.2: () = initialize_from %.loc11_37.1, %b
 // CHECK:STDOUT:   assign %b, %.loc11_37.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

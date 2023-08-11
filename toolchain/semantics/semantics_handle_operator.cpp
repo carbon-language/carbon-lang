@@ -60,8 +60,7 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
                           "Expression is not assignable.");
         context.emitter().Emit(lhs_node, AssignmentToNonAssignable);
       }
-      rhs_id = context.ConvertToInitializerOfType(
-          parse_node, rhs_id, context.semantics_ir().GetNode(lhs_id).type_id());
+      rhs_id = context.Initialize(parse_node, lhs_id, rhs_id);
       context.AddNodeAndPush(
           parse_node, SemanticsNode::Assign::Make(parse_node, lhs_id, rhs_id));
       return true;

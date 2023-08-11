@@ -22,6 +22,9 @@ struct SemanticsFunction {
     if (return_type_id.is_valid()) {
       out << ", return_type: " << return_type_id;
     }
+    if (return_slot_id.is_valid()) {
+      out << ", return_slot: " << return_slot_id;
+    }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(
           ", body: {{{0}}}",
@@ -36,6 +39,10 @@ struct SemanticsFunction {
   SemanticsNodeBlockId param_refs_id;
   // The return type. This will be invalid if the return type wasn't specified.
   SemanticsTypeId return_type_id;
+  // The storage for the return value, which is a reference expression whose
+  // type is the return type of the function. Will be invalid if the return type
+  // wasn't specified.
+  SemanticsNodeId return_slot_id;
   // A list of the statically reachable code blocks in the body of the
   // function, in lexical order. The first block is the entry block. This will
   // be empty for declarations that don't have a visible definition.

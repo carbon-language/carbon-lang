@@ -57,8 +57,7 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
           .Note(fn_node.parse_node(), ReturnStatementImplicitNote)
           .Emit();
     } else {
-      arg = context.ConvertToInitializerOfType(parse_node, arg,
-                                               callable.return_type_id);
+      arg = context.Initialize(parse_node, callable.return_slot_id, arg);
     }
 
     context.AddNode(SemanticsNode::ReturnExpression::Make(parse_node, arg));

@@ -253,6 +253,7 @@ class SemanticsNodeStack {
       case ParseNodeKind::PatternBinding:
       case ParseNodeKind::PostfixOperator:
       case ParseNodeKind::PrefixOperator:
+      case ParseNodeKind::ReturnType:
       case ParseNodeKind::ShortCircuitOperand:
       case ParseNodeKind::StructFieldValue:
       case ParseNodeKind::StructLiteral:
@@ -268,8 +269,6 @@ class SemanticsNodeStack {
         return IdKind::SemanticsFunctionId;
       case ParseNodeKind::Name:
         return IdKind::SemanticsStringId;
-      case ParseNodeKind::ReturnType:
-        return IdKind::SemanticsTypeId;
       case ParseNodeKind::CodeBlockStart:
       case ParseNodeKind::FunctionIntroducer:
       case ParseNodeKind::IfCondition:

@@ -54,6 +54,13 @@ class NodeNamer {
           fn.name_id.is_valid() ? semantics_ir.GetString(fn.name_id).str()
                                 : "");
       CollectNamesInBlock(fn_scope, fn.param_refs_id);
+      if (fn.return_slot_id.is_valid()) {
+        nodes[fn.return_slot_id.index] = {
+            fn_scope,
+            GetScopeInfo(fn_scope).nodes.AllocateName(
+                *this, semantics_ir.GetNode(fn.return_slot_id).parse_node(),
+                "return")};
+      }
       if (!fn.body_block_ids.empty()) {
         AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
       }
@@ -436,6 +443,8 @@ class SemanticsIRFormatter {
     out_ << ")";
     if (fn.return_type_id.is_valid()) {
       out_ << " -> ";
+      FormatNodeName(fn.return_slot_id);
+      out_ << ": ";
       FormatType(fn.return_type_id);
     }
 

@@ -268,8 +268,8 @@ auto SemanticsContext::is_current_position_reachable() -> bool {
   }
 }
 
-auto SemanticsContext::ConvertToInitializingExpression(SemanticsNodeId expr_id)
-    -> SemanticsNodeId {
+auto SemanticsContext::ConvertToInitializingExpression(
+    SemanticsNodeId expr_id, SemanticsNodeId target_id) -> SemanticsNodeId {
   SemanticsNode expr = semantics_ir().GetNode(expr_id);
   switch (GetSemanticsExpressionCategory(semantics_ir(), expr_id)) {
     case SemanticsExpressionCategory::NotExpression:
@@ -291,9 +291,10 @@ auto SemanticsContext::ConvertToInitializingExpression(SemanticsNodeId expr_id)
       // TODO: For class types, use an interface to determine how to perform
       // this operation.
       return AddNode(SemanticsNode::InitializeFrom::Make(
-          expr.parse_node(), expr.type_id(), expr_id));
+          expr.parse_node(), expr.type_id(), expr_id, target_id));
 
     case SemanticsExpressionCategory::Initializing:
+      MarkInitializerFor(expr_id, target_id);
       return expr_id;
   }
 }
@@ -306,12 +307,16 @@ auto SemanticsContext::ConvertToValueExpression(SemanticsNodeId expr_id)
       CARBON_FATAL() << "Converting non-expression node " << expr
                      << " to value expression";
 
-    case SemanticsExpressionCategory::Initializing:
+    case SemanticsExpressionCategory::Initializing: {
       // TODO: For class types, use an interface to determine how to perform
       // this operation.
-      expr_id = AddNode(SemanticsNode::MaterializeTemporary::Make(
+      auto temp_id = AddNode(SemanticsNode::MaterializeTemporary::Make(
           expr.parse_node(), expr.type_id(), expr_id));
+      // TODO: The temporary materialization appears later in the IR than the
+      // expression that initializes it.
+      MarkInitializerFor(expr_id, temp_id);
       [[fallthrough]];
+    }
 
     case SemanticsExpressionCategory::DurableReference:
     case SemanticsExpressionCategory::EphemeralReference:
@@ -321,6 +326,36 @@ auto SemanticsContext::ConvertToValueExpression(SemanticsNodeId expr_id)
 
     case SemanticsExpressionCategory::Value:
       return expr_id;
+  }
+}
+
+auto SemanticsContext::MarkInitializerFor(SemanticsNodeId init_id,
+                                          SemanticsNodeId target_id) -> void {
+  SemanticsNode init = semantics_ir().GetNode(init_id);
+  CARBON_CHECK(GetSemanticsExpressionCategory(semantics_ir(), init_id) ==
+               SemanticsExpressionCategory::Initializing)
+      << "initialization from non-initializing node " << init;
+  (void)target_id;
+  while (true) {
+    switch (init.kind()) {
+      default:
+        CARBON_FATAL() << "Initialization from unexpected node " << init;
+
+      case SemanticsNodeKind::Call:
+      case SemanticsNodeKind::StructAccess:
+      case SemanticsNodeKind::StructValue:
+      case SemanticsNodeKind::TupleIndex:
+      case SemanticsNodeKind::TupleValue:
+        CARBON_FATAL() << init << " is not modeled as initializing yet";
+
+      case SemanticsNodeKind::StubReference: {
+        init_id = init.GetAsStubReference();
+        continue;
+      }
+
+      case SemanticsNodeKind::InitializeFrom:
+        CARBON_FATAL() << init << " should be created with a destination";
+    }
   }
 }
 

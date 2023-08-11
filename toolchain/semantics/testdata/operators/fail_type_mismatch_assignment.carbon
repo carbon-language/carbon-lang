@@ -37,10 +37,10 @@ fn Main() {
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+3, type: type0},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+3, arg1: node+1, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+4},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+1, type: typeError},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+7},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
@@ -71,10 +71,10 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a: i32 = var
 // CHECK:STDOUT:   %.loc8_16.1: i32 = int_literal 3
-// CHECK:STDOUT:   %.loc8_16.2: i32 = initialize_from %.loc8_16.1
+// CHECK:STDOUT:   %.loc8_16.2: i32 = initialize_from %.loc8_16.1, %a
 // CHECK:STDOUT:   assign %a, %.loc8_16.2
 // CHECK:STDOUT:   %.loc12: f64 = real_literal 56e-1
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %a
 // CHECK:STDOUT:   assign %a, %.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

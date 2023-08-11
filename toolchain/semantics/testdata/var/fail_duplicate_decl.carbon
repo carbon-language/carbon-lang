@@ -40,12 +40,12 @@ fn Main() {
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+3, type: type0},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+3, arg1: node+1, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+4},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+6, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+8, type: type0},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+8, arg1: node+6, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+9},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
@@ -78,11 +78,11 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.loc9: i32 = var
 // CHECK:STDOUT:   %.loc9_16.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc9_16.2: i32 = initialize_from %.loc9_16.1
+// CHECK:STDOUT:   %.loc9_16.2: i32 = initialize_from %.loc9_16.1, %x.loc9
 // CHECK:STDOUT:   assign %x.loc9, %.loc9_16.2
 // CHECK:STDOUT:   %x.loc16: i32 = var
 // CHECK:STDOUT:   %.loc16_16.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc16_16.2: i32 = initialize_from %.loc16_16.1
+// CHECK:STDOUT:   %.loc16_16.2: i32 = initialize_from %.loc16_16.1, %x.loc16
 // CHECK:STDOUT:   assign %x.loc16, %.loc16_16.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

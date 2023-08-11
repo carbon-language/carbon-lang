@@ -32,7 +32,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+2, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+2, type: typeError},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+4},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -51,6 +51,6 @@ var y: i32 = x.b;
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: i32 = var
 // CHECK:STDOUT:   %y: i32 = var
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %y
 // CHECK:STDOUT:   assign %y, %.1
 // CHECK:STDOUT: }

@@ -31,7 +31,7 @@ fn A() { var n: i32 = 1; if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+3, type: type0},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+3, arg1: node+1, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+4},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type1},
 // CHECK:STDOUT:   {kind: BranchIf, arg0: block3, arg1: node+6},
@@ -39,7 +39,7 @@ fn A() { var n: i32 = 1; if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+9, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+11, type: type0},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+11, arg1: node+9, type: type0},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+9, arg1: node+12},
 // CHECK:STDOUT:   {kind: Branch, arg0: block4},
 // CHECK:STDOUT:   {kind: Return},
@@ -81,7 +81,7 @@ fn A() { var n: i32 = 1; if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.loc7_14: i32 = var
 // CHECK:STDOUT:   %.loc7_23.1: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc7_23.2: i32 = initialize_from %.loc7_23.1
+// CHECK:STDOUT:   %.loc7_23.2: i32 = initialize_from %.loc7_23.1, %n.loc7_14
 // CHECK:STDOUT:   assign %n.loc7_14, %.loc7_23.2
 // CHECK:STDOUT:   %.loc7_30: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc7_30 br !if.then else br !if.else
@@ -89,7 +89,7 @@ fn A() { var n: i32 = 1; if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %n.loc7_42: i32 = var
 // CHECK:STDOUT:   %.loc7_51.1: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc7_51.2: i32 = initialize_from %.loc7_51.1
+// CHECK:STDOUT:   %.loc7_51.2: i32 = initialize_from %.loc7_51.1, %n.loc7_42
 // CHECK:STDOUT:   assign %n.loc7_42, %.loc7_51.2
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:

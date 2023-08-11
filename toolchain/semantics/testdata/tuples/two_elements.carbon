@@ -48,7 +48,7 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+9, type: type1},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block3, type: type2},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+11, type: type2},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+11, arg1: node+5, type: type2},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+12},
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
@@ -56,7 +56,7 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   {kind: VarStorage, type: type2},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+17, type: type2},
 // CHECK:STDOUT:   {kind: ValueBinding, arg0: node+5, type: type2},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+19, type: type2},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+19, arg1: node+17, type: type2},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+17, arg1: node+20},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -112,13 +112,13 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc7_25.1: i32 = int_literal 102
 // CHECK:STDOUT:   %.loc7_25.2: i32 = stub_reference %.loc7_25.1
 // CHECK:STDOUT:   %.loc7_28.1: (i32, i32) = tuple_value (%.loc7_22.2, %.loc7_25.2)
-// CHECK:STDOUT:   %.loc7_28.2: (i32, i32) = initialize_from %.loc7_28.1
+// CHECK:STDOUT:   %.loc7_28.2: (i32, i32) = initialize_from %.loc7_28.1, %x
 // CHECK:STDOUT:   assign %x, %.loc7_28.2
 // CHECK:STDOUT:   %.loc8_9: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_14: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_17: (type, type) = tuple_value (%.loc8_9, %.loc8_14)
 // CHECK:STDOUT:   %y: (i32, i32) = var
 // CHECK:STDOUT:   %.loc7_5.1: (i32, i32) = value_binding %x
-// CHECK:STDOUT:   %.loc7_5.2: (i32, i32) = initialize_from %.loc7_5.1
+// CHECK:STDOUT:   %.loc7_5.2: (i32, i32) = initialize_from %.loc7_5.1, %y
 // CHECK:STDOUT:   assign %y, %.loc7_5.2
 // CHECK:STDOUT: }
