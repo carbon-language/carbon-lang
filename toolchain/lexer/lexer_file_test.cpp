@@ -18,7 +18,7 @@ class LexerFileTest : public DriverFileTestBase {
         end_of_file_re_((R"((EndOfFile.*column: )( *\d+))")) {}
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
-    return {"dump", "tokens", "%s"};
+    return {"compile", "--phase=lex", "--dump-tokens", "%s"};
   }
 
   auto GetLineNumberReplacement(llvm::ArrayRef<llvm::StringRef> /*filenames*/)
