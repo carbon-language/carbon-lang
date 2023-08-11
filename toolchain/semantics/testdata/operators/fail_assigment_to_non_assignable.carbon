@@ -82,8 +82,8 @@ fn Main() {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
-// CHECK:STDOUT:   node+12,
-// CHECK:STDOUT:   node+41,
+// CHECK:STDOUT:   node+14,
+// CHECK:STDOUT:   node+49,
 // CHECK:STDOUT:   nodeBoolType,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
@@ -97,73 +97,86 @@ fn Main() {
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+3},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+3, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+2, arg1: node+4},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+6},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+7, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+8},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int3, type: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+8, type: type0},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int4, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+10, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int4, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+12, type: type0},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block3, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int5, type: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+14, type: type0},
-// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int6, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+16, type: type0},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int6, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+18, type: type0},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block4, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: node+18},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+20, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+15, arg1: node+21},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+20, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+23, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int7, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+20, arg1: node+22},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+20, type: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+20, type: type0},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+25, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+23, arg1: node+26},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+23, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+28, type: type0},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+23, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+30, type: type0},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block5, type: type1},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int8, type: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+27, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+33, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int9, type: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+29, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+35, type: type0},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block6, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+26, arg1: node+31},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+37, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+32, arg1: node+38},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
-// CHECK:STDOUT:   {kind: Assign, arg0: nodeIntegerType, arg1: node+33},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+40, type: typeTypeType},
+// CHECK:STDOUT:   {kind: Assign, arg0: nodeIntegerType, arg1: node+41},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int10, type: type0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str3, arg1: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+35, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+43, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int11, type: type0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str4, arg1: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+38, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+46, type: type0},
 // CHECK:STDOUT:   {kind: StructType, arg0: block7, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block8, type: type2},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int12, type: type0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str3, arg1: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+43, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+51, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int13, type: type0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str4, arg1: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+46, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+54, type: type0},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block10, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+42, arg1: node+49},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+57, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+50, arg1: node+58},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type3},
-// CHECK:STDOUT:   {kind: BranchIf, arg0: block11, arg1: node+51},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block11, arg1: node+60},
 // CHECK:STDOUT:   {kind: Branch, arg0: block12},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int14, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int15, type: type0},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block13, arg1: node+54},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block13, arg1: node+55},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block13, arg1: node+63},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block13, arg1: node+64},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block13, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int16, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+58, arg1: node+59},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+68, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+67, arg1: node+69},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
-// CHECK:STDOUT:   {kind: BindName, arg0: str5, arg1: node+61, type: type0},
+// CHECK:STDOUT:   {kind: BindName, arg0: str5, arg1: node+71, type: type0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type3},
-// CHECK:STDOUT:   {kind: BranchIf, arg0: block14, arg1: node+63},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block14, arg1: node+73},
 // CHECK:STDOUT:   {kind: Branch, arg0: block15},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block16, arg1: node+61},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block16, arg1: node+61},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+71, type: type0},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+71, type: type0},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block16, arg1: node+76},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block16, arg1: node+77},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block16, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int17, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+68, arg1: node+69},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+81, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+80, arg1: node+82},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -208,8 +221,10 @@ fn Main() {
 // CHECK:STDOUT:     node+33,
 // CHECK:STDOUT:     node+34,
 // CHECK:STDOUT:     node+35,
+// CHECK:STDOUT:     node+36,
 // CHECK:STDOUT:     node+37,
 // CHECK:STDOUT:     node+38,
+// CHECK:STDOUT:     node+39,
 // CHECK:STDOUT:     node+40,
 // CHECK:STDOUT:     node+41,
 // CHECK:STDOUT:     node+42,
@@ -220,32 +235,31 @@ fn Main() {
 // CHECK:STDOUT:     node+49,
 // CHECK:STDOUT:     node+50,
 // CHECK:STDOUT:     node+51,
-// CHECK:STDOUT:     node+52,
 // CHECK:STDOUT:     node+53,
+// CHECK:STDOUT:     node+54,
+// CHECK:STDOUT:     node+56,
+// CHECK:STDOUT:     node+57,
+// CHECK:STDOUT:     node+58,
+// CHECK:STDOUT:     node+59,
+// CHECK:STDOUT:     node+60,
+// CHECK:STDOUT:     node+61,
+// CHECK:STDOUT:     node+62,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+24,
-// CHECK:STDOUT:     node+25,
+// CHECK:STDOUT:     node+29,
+// CHECK:STDOUT:     node+31,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+28,
-// CHECK:STDOUT:     node+30,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+34,
 // CHECK:STDOUT:     node+36,
-// CHECK:STDOUT:     node+39,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+37,
-// CHECK:STDOUT:     node+40,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+44,
@@ -256,34 +270,46 @@ fn Main() {
 // CHECK:STDOUT:     node+48,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+54,
+// CHECK:STDOUT:     node+52,
+// CHECK:STDOUT:     node+55,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+53,
 // CHECK:STDOUT:     node+56,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+55,
-// CHECK:STDOUT:     node+57,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+58,
-// CHECK:STDOUT:     node+59,
-// CHECK:STDOUT:     node+60,
-// CHECK:STDOUT:     node+61,
-// CHECK:STDOUT:     node+62,
 // CHECK:STDOUT:     node+63,
-// CHECK:STDOUT:     node+64,
 // CHECK:STDOUT:     node+65,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+64,
 // CHECK:STDOUT:     node+66,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+67,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+68,
 // CHECK:STDOUT:     node+69,
 // CHECK:STDOUT:     node+70,
 // CHECK:STDOUT:     node+71,
+// CHECK:STDOUT:     node+72,
+// CHECK:STDOUT:     node+73,
+// CHECK:STDOUT:     node+74,
+// CHECK:STDOUT:     node+75,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+76,
+// CHECK:STDOUT:     node+78,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+77,
+// CHECK:STDOUT:     node+79,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+80,
+// CHECK:STDOUT:     node+81,
+// CHECK:STDOUT:     node+82,
+// CHECK:STDOUT:     node+83,
+// CHECK:STDOUT:     node+84,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -297,11 +323,13 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc13_3: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc13_7: i32 = int_literal 2
-// CHECK:STDOUT:   assign %.loc13_3, %.loc13_7
+// CHECK:STDOUT:   %.loc13_7.1: i32 = int_literal 2
+// CHECK:STDOUT:   %.loc13_7.2: i32 = initialize_from %.loc13_7.1
+// CHECK:STDOUT:   assign %.loc13_3, %.loc13_7.2
 // CHECK:STDOUT:   %.loc17_4: i32 = call @F()
-// CHECK:STDOUT:   %.loc17_9: i32 = int_literal 1
-// CHECK:STDOUT:   assign %.loc17_4, %.loc17_9
+// CHECK:STDOUT:   %.loc17_9.1: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc17_9.2: i32 = initialize_from %.loc17_9.1
+// CHECK:STDOUT:   assign %.loc17_4, %.loc17_9.2
 // CHECK:STDOUT:   %.loc21_4.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc21_4.2: i32 = stub_reference %.loc21_4.1
 // CHECK:STDOUT:   %.loc21_7.1: i32 = int_literal 2
@@ -312,22 +340,28 @@ fn Main() {
 // CHECK:STDOUT:   %.loc21_13.2: i32 = stub_reference %.loc21_13.1
 // CHECK:STDOUT:   %.loc21_16.1: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc21_16.2: i32 = stub_reference %.loc21_16.1
-// CHECK:STDOUT:   %.loc21_17: (i32, i32) = tuple_value (%.loc21_13.2, %.loc21_16.2)
-// CHECK:STDOUT:   assign %.loc21_8.2, %.loc21_17
+// CHECK:STDOUT:   %.loc21_17.1: (i32, i32) = tuple_value (%.loc21_13.2, %.loc21_16.2)
+// CHECK:STDOUT:   %.loc21_17.2: (i32, i32) = initialize_from %.loc21_17.1
+// CHECK:STDOUT:   assign %.loc21_8.2, %.loc21_17.2
 // CHECK:STDOUT:   %n: i32 = var
-// CHECK:STDOUT:   %.loc22: i32 = int_literal 0
-// CHECK:STDOUT:   assign %n, %.loc22
-// CHECK:STDOUT:   %.loc26_4: i32 = stub_reference %n
-// CHECK:STDOUT:   %.loc26_7: i32 = stub_reference %n
+// CHECK:STDOUT:   %.loc22_16.1: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc22_16.2: i32 = initialize_from %.loc22_16.1
+// CHECK:STDOUT:   assign %n, %.loc22_16.2
+// CHECK:STDOUT:   %.loc22_7.1: i32 = value_binding %n
+// CHECK:STDOUT:   %.loc26_4: i32 = stub_reference %.loc22_7.1
+// CHECK:STDOUT:   %.loc22_7.2: i32 = value_binding %n
+// CHECK:STDOUT:   %.loc26_7: i32 = stub_reference %.loc22_7.2
 // CHECK:STDOUT:   %.loc26_8: (i32, i32) = tuple_value (%.loc26_4, %.loc26_7)
 // CHECK:STDOUT:   %.loc26_13.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc26_13.2: i32 = stub_reference %.loc26_13.1
 // CHECK:STDOUT:   %.loc26_16.1: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc26_16.2: i32 = stub_reference %.loc26_16.1
-// CHECK:STDOUT:   %.loc26_17: (i32, i32) = tuple_value (%.loc26_13.2, %.loc26_16.2)
-// CHECK:STDOUT:   assign %.loc26_8, %.loc26_17
-// CHECK:STDOUT:   %.loc30: type = ptr_type i32
-// CHECK:STDOUT:   assign i32, %.loc30
+// CHECK:STDOUT:   %.loc26_17.1: (i32, i32) = tuple_value (%.loc26_13.2, %.loc26_16.2)
+// CHECK:STDOUT:   %.loc26_17.2: (i32, i32) = initialize_from %.loc26_17.1
+// CHECK:STDOUT:   assign %.loc26_8, %.loc26_17.2
+// CHECK:STDOUT:   %.loc30_12.1: type = ptr_type i32
+// CHECK:STDOUT:   %.loc30_12.2: type = initialize_from %.loc30_12.1
+// CHECK:STDOUT:   assign i32, %.loc30_12.2
 // CHECK:STDOUT:   %.loc34_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc34_7: i32 = stub_reference %.loc34_9
 // CHECK:STDOUT:   %.loc34_17: i32 = int_literal 2
@@ -338,8 +372,9 @@ fn Main() {
 // CHECK:STDOUT:   %.loc34_26: i32 = stub_reference %.loc34_28
 // CHECK:STDOUT:   %.loc34_36: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc34_34: i32 = stub_reference %.loc34_36
-// CHECK:STDOUT:   %.loc34_37: {.x: i32, .y: i32} = struct_value (%.loc34_26, %.loc34_34)
-// CHECK:STDOUT:   assign %.loc34_18.2, %.loc34_37
+// CHECK:STDOUT:   %.loc34_37.1: {.x: i32, .y: i32} = struct_value (%.loc34_26, %.loc34_34)
+// CHECK:STDOUT:   %.loc34_37.2: {.x: i32, .y: i32} = initialize_from %.loc34_37.1
+// CHECK:STDOUT:   assign %.loc34_18.2, %.loc34_37.2
 // CHECK:STDOUT:   %.loc38_7: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc38_7 br !if.expr.then.loc38 else br !if.expr.else.loc38
 // CHECK:STDOUT:
@@ -353,21 +388,25 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc38:
 // CHECK:STDOUT:   %.loc38_4: i32 = block_arg !if.expr.result.loc38
-// CHECK:STDOUT:   %.loc38_29: i32 = int_literal 3
-// CHECK:STDOUT:   assign %.loc38_4, %.loc38_29
+// CHECK:STDOUT:   %.loc38_29.1: i32 = int_literal 3
+// CHECK:STDOUT:   %.loc38_29.2: i32 = initialize_from %.loc38_29.1
+// CHECK:STDOUT:   assign %.loc38_4, %.loc38_29.2
 // CHECK:STDOUT:   %a: i32 = var
 // CHECK:STDOUT:   %.loc45_7: bool = bool_literal true
 // CHECK:STDOUT:   if %.loc45_7 br !if.expr.then.loc45 else br !if.expr.else.loc45
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc45:
-// CHECK:STDOUT:   br !if.expr.result.loc45(%a)
+// CHECK:STDOUT:   %.loc41_7.1: i32 = value_binding %a
+// CHECK:STDOUT:   br !if.expr.result.loc45(%.loc41_7.1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc45:
-// CHECK:STDOUT:   br !if.expr.result.loc45(%a)
+// CHECK:STDOUT:   %.loc41_7.2: i32 = value_binding %a
+// CHECK:STDOUT:   br !if.expr.result.loc45(%.loc41_7.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc45:
 // CHECK:STDOUT:   %.loc45_4: i32 = block_arg !if.expr.result.loc45
-// CHECK:STDOUT:   %.loc45_29: i32 = int_literal 10
-// CHECK:STDOUT:   assign %.loc45_4, %.loc45_29
+// CHECK:STDOUT:   %.loc45_29.1: i32 = int_literal 10
+// CHECK:STDOUT:   %.loc45_29.2: i32 = initialize_from %.loc45_29.1
+// CHECK:STDOUT:   assign %.loc45_4, %.loc45_29.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

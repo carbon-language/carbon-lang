@@ -28,7 +28,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: nodes: [
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+1, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+2},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -39,6 +40,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -48,6 +50,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_literal 0
-// CHECK:STDOUT:   return %.loc8
+// CHECK:STDOUT:   %.loc8_10.1: i32 = int_literal 0
+// CHECK:STDOUT:   %.loc8_10.2: i32 = initialize_from %.loc8_10.1
+// CHECK:STDOUT:   return %.loc8_10.2
 // CHECK:STDOUT: }
