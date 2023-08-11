@@ -32,7 +32,9 @@ auto SemanticsHandleArrayExpression(SemanticsContext& context,
   }
 
   auto bound_node_id = context.node_stack().PopExpression();
-  context.node_stack().PopAndIgnore();
+  context.node_stack()
+      .PopAndDiscardSoloParseNode<ParseNodeKind::ArrayExpressionSemi>();
+  ;
   auto element_type_node_id = context.node_stack().PopExpression();
   auto bound_node = context.semantics_ir().GetNode(bound_node_id);
   if (bound_node.kind() == SemanticsNodeKind::IntegerLiteral) {
