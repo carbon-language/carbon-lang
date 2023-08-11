@@ -341,32 +341,32 @@ fn Main() {
 // CHECK:STDOUT:   %.loc34_37: {.x: i32, .y: i32} = struct_value (%.loc34_26, %.loc34_34)
 // CHECK:STDOUT:   assign %.loc34_18.2, %.loc34_37
 // CHECK:STDOUT:   %.loc38_7: bool = bool_literal true
-// CHECK:STDOUT:   if %.loc38_7 br !.loc38_17 else br !.loc38_24
+// CHECK:STDOUT:   if %.loc38_7 br !if.expr.then.loc38 else br !if.expr.else.loc38
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc38_17:
+// CHECK:STDOUT: !if.expr.then.loc38:
 // CHECK:STDOUT:   %.loc38_17: i32 = int_literal 1
-// CHECK:STDOUT:   br !.loc38_4(%.loc38_17)
+// CHECK:STDOUT:   br !if.expr.result.loc38(%.loc38_17)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc38_24:
+// CHECK:STDOUT: !if.expr.else.loc38:
 // CHECK:STDOUT:   %.loc38_24: i32 = int_literal 2
-// CHECK:STDOUT:   br !.loc38_4(%.loc38_24)
+// CHECK:STDOUT:   br !if.expr.result.loc38(%.loc38_24)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc38_4:
-// CHECK:STDOUT:   %.loc38_4: i32 = block_arg !.loc38_4
+// CHECK:STDOUT: !if.expr.result.loc38:
+// CHECK:STDOUT:   %.loc38_4: i32 = block_arg !if.expr.result.loc38
 // CHECK:STDOUT:   %.loc38_29: i32 = int_literal 3
 // CHECK:STDOUT:   assign %.loc38_4, %.loc38_29
 // CHECK:STDOUT:   %a: i32 = var
 // CHECK:STDOUT:   %.loc45_7: bool = bool_literal true
-// CHECK:STDOUT:   if %.loc45_7 br !.loc45_4.1 else br !.loc45_4.2
+// CHECK:STDOUT:   if %.loc45_7 br !if.expr.then.loc45 else br !if.expr.else.loc45
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc45_4.1:
-// CHECK:STDOUT:   br !.loc45_4.3(%a)
+// CHECK:STDOUT: !if.expr.then.loc45:
+// CHECK:STDOUT:   br !if.expr.result.loc45(%a)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc45_4.2:
-// CHECK:STDOUT:   br !.loc45_4.3(%a)
+// CHECK:STDOUT: !if.expr.else.loc45:
+// CHECK:STDOUT:   br !if.expr.result.loc45(%a)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc45_4.3:
-// CHECK:STDOUT:   %.loc45_4: i32 = block_arg !.loc45_4.3
+// CHECK:STDOUT: !if.expr.result.loc45:
+// CHECK:STDOUT:   %.loc45_4: i32 = block_arg !if.expr.result.loc45
 // CHECK:STDOUT:   %.loc45_29: i32 = int_literal 10
 // CHECK:STDOUT:   assign %.loc45_4, %.loc45_29
 // CHECK:STDOUT:   return

@@ -143,35 +143,35 @@ fn G() -> i32 {
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_13: bool = bool_literal true
-// CHECK:STDOUT:   if %.loc11_13 br !.loc11_24 else br !.loc11_33
+// CHECK:STDOUT:   if %.loc11_13 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc11_24:
+// CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %.loc11_24: i32 = call @A()
-// CHECK:STDOUT:   br !.loc11_10(%.loc11_24)
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_24)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc11_33:
+// CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %.loc11_33: i32 = call @B()
-// CHECK:STDOUT:   br !.loc11_10(%.loc11_33)
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_33)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc11_10:
-// CHECK:STDOUT:   %.loc11_10: i32 = block_arg !.loc11_10
+// CHECK:STDOUT: !if.expr.result:
+// CHECK:STDOUT:   %.loc11_10: i32 = block_arg !if.expr.result
 // CHECK:STDOUT:   return %.loc11_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_13: bool = bool_literal false
-// CHECK:STDOUT:   if %.loc15_13 br !.loc15_25 else br !.loc15_34
+// CHECK:STDOUT:   if %.loc15_13 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc15_25:
+// CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %.loc15_25: i32 = call @A()
-// CHECK:STDOUT:   br !.loc15_10(%.loc15_25)
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_25)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc15_34:
+// CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %.loc15_34: i32 = call @B()
-// CHECK:STDOUT:   br !.loc15_10(%.loc15_34)
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_34)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc15_10:
-// CHECK:STDOUT:   %.loc15_10: i32 = block_arg !.loc15_10
+// CHECK:STDOUT: !if.expr.result:
+// CHECK:STDOUT:   %.loc15_10: i32 = block_arg !if.expr.result
 // CHECK:STDOUT:   return %.loc15_10
 // CHECK:STDOUT: }

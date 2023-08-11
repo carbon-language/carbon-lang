@@ -131,18 +131,18 @@ fn If(b: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If(%b: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !.loc13 else br !.loc15
+// CHECK:STDOUT:   if %b br !if.then else br !if.else
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc13:
+// CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %.loc13_6.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc13_6.2: () = call @F()
-// CHECK:STDOUT:   br !.loc17
+// CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc15:
+// CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %.loc15: () = call @G()
-// CHECK:STDOUT:   br !.loc17
+// CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc17:
+// CHECK:STDOUT: !if.done:
 // CHECK:STDOUT:   %.loc17: () = call @H()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
