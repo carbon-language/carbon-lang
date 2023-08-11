@@ -106,7 +106,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> (i32,) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_28.1: i32 = int_value 0
+// CHECK:STDOUT:   %.loc7_28.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc7_28.2: i32 = stub_reference %.loc7_28.1
 // CHECK:STDOUT:   %.loc7_30: (i32,) = tuple_value (%.loc7_28.2)
 // CHECK:STDOUT:   return %.loc7_30
@@ -114,7 +114,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_16: i32 = int_value 1
+// CHECK:STDOUT:   %.loc10_16: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_17: type = array_type %.loc10_16, i32
 // CHECK:STDOUT:   %t: [i32; 1] = var
 // CHECK:STDOUT:   %.loc10_22.1: (i32,) = call @F()
