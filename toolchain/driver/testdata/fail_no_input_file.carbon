@@ -2,9 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: dump assembly --target_triple=x86_687-unknown-linux-gnu %s
-// No autoupdate because the message comes from LLVM.
-// NOAUTOUPDATE
-// CHECK:STDERR: ERROR: Invalid -target_triple:{{.*}}
+// ARGS: compile --target=x86_64-unknown-linux-gnu --output=%t
+// AUTOUPDATE
+// CHECK:STDERR: ERROR: Not all required positional arguments were provided. First missing and required positional argument: 'FILE'
 
 fn Main() -> i32 { return 0; }
