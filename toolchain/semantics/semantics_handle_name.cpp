@@ -12,6 +12,13 @@ auto SemanticsHandleMemberAccessExpression(SemanticsContext& context,
   SemanticsStringId name_id = context.node_stack().Pop<ParseNodeKind::Name>();
 
   auto base_id = context.node_stack().PopExpression();
+
+  // Materialize a temporary for the base expression if necessary.
+  if (GetSemanticsExpressionCategory(context.semantics_ir(), base_id) ==
+      SemanticsExpressionCategory::Initializing) {
+    base_id = context.ConvertToValueExpression(base_id);
+  }
+
   auto base = context.semantics_ir().GetNode(base_id);
   if (base.kind() == SemanticsNodeKind::Namespace) {
     // For a namespace, just resolve the name.

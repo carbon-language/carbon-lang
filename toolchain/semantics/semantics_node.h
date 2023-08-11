@@ -389,8 +389,14 @@ class SemanticsNode {
   using Index = Factory<SemanticsNodeKind::Index, SemanticsNodeId /*tuple_id*/,
                         SemanticsNodeId /*index*/>;
 
+  using InitializeFrom =
+      Factory<SemanticsNodeKind::InitializeFrom, SemanticsNodeId /*value_id*/>;
+
   using IntegerLiteral = Factory<SemanticsNodeKind::IntegerLiteral,
                                  SemanticsIntegerLiteralId /*integer_id*/>;
+
+  using MaterializeTemporary = Factory<SemanticsNodeKind::MaterializeTemporary,
+                                       SemanticsNodeId /*initializer_id*/>;
 
   using Namespace = FactoryNoType<SemanticsNodeKind::Namespace,
                                   SemanticsNameScopeId /*name_scope_id*/>;
@@ -434,6 +440,9 @@ class SemanticsNode {
 
   using UnaryOperatorNot = Factory<SemanticsNodeKind::UnaryOperatorNot,
                                    SemanticsNodeId /*operand_id*/>;
+
+  using ValueBinding =
+      Factory<SemanticsNodeKind::ValueBinding, SemanticsNodeId /*value_id*/>;
 
   using VarStorage = Factory<SemanticsNodeKind::VarStorage>;
   SemanticsNode()

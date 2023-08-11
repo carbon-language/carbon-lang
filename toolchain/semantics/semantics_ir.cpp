@@ -233,8 +233,10 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::Dereference:
     case SemanticsNodeKind::FunctionDeclaration:
     case SemanticsNodeKind::Index:
+    case SemanticsNodeKind::InitializeFrom:
     case SemanticsNodeKind::IntegerLiteral:
     case SemanticsNodeKind::Invalid:
+    case SemanticsNodeKind::MaterializeTemporary:
     case SemanticsNodeKind::Namespace:
     case SemanticsNodeKind::RealLiteral:
     case SemanticsNodeKind::Return:
@@ -246,6 +248,7 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::StubReference:
     case SemanticsNodeKind::TupleValue:
     case SemanticsNodeKind::UnaryOperatorNot:
+    case SemanticsNodeKind::ValueBinding:
     case SemanticsNodeKind::VarStorage:
       CARBON_FATAL() << "GetTypePrecedence for non-type node kind " << kind;
   }
@@ -373,11 +376,13 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
       case SemanticsNodeKind::BranchWithArg:
       case SemanticsNodeKind::Builtin:
       case SemanticsNodeKind::Call:
-      case SemanticsNodeKind::Dereference:
       case SemanticsNodeKind::CrossReference:
+      case SemanticsNodeKind::Dereference:
       case SemanticsNodeKind::FunctionDeclaration:
       case SemanticsNodeKind::Index:
+      case SemanticsNodeKind::InitializeFrom:
       case SemanticsNodeKind::IntegerLiteral:
+      case SemanticsNodeKind::MaterializeTemporary:
       case SemanticsNodeKind::Namespace:
       case SemanticsNodeKind::RealLiteral:
       case SemanticsNodeKind::Return:
@@ -388,6 +393,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
       case SemanticsNodeKind::StubReference:
       case SemanticsNodeKind::TupleValue:
       case SemanticsNodeKind::UnaryOperatorNot:
+      case SemanticsNodeKind::ValueBinding:
       case SemanticsNodeKind::VarStorage:
         // We don't need to handle stringification for nodes that don't show up
         // in errors, but make it clear what's going on so that it's clearer
@@ -462,6 +468,7 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
       case SemanticsNodeKind::StructType:
       case SemanticsNodeKind::TupleType:
       case SemanticsNodeKind::UnaryOperatorNot:
+      case SemanticsNodeKind::ValueBinding:
         return SemanticsExpressionCategory::Value;
 
       case SemanticsNodeKind::StructMemberAccess: {
@@ -489,9 +496,15 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
         // struct/tuple value construction.
         return SemanticsExpressionCategory::Value;
 
+      case SemanticsNodeKind::InitializeFrom:
+        return SemanticsExpressionCategory::Initializing;
+
       case SemanticsNodeKind::Dereference:
       case SemanticsNodeKind::VarStorage:
         return SemanticsExpressionCategory::DurableReference;
+
+      case SemanticsNodeKind::MaterializeTemporary:
+        return SemanticsExpressionCategory::EphemeralReference;
     }
   }
 }

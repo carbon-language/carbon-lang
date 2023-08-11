@@ -110,6 +110,38 @@ class SemanticsContext {
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
 
+  // Convert the given expression to an initializing expression of the same
+  // type.
+  auto ConvertToInitializingExpression(SemanticsNodeId expr_id)
+      -> SemanticsNodeId;
+
+  // Convert the given expression to a value expression of the same type.
+  auto ConvertToValueExpression(SemanticsNodeId expr_id) -> SemanticsNodeId;
+
+  // Converts `value_id` to an initializing expression of type `type_id`.
+  auto ConvertToInitializerOfType(ParseTree::Node parse_node,
+                                  SemanticsNodeId value_id,
+                                  SemanticsTypeId type_id) -> SemanticsNodeId {
+    return ConvertToInitializingExpression(
+        ImplicitAsRequired(parse_node, value_id, type_id));
+  }
+
+  // Converts `value_id` to a value expression of type `type_id`.
+  auto ConvertToValueOfType(ParseTree::Node parse_node,
+                            SemanticsNodeId value_id, SemanticsTypeId type_id)
+      -> SemanticsNodeId {
+    return ConvertToValueExpression(
+        ImplicitAsRequired(parse_node, value_id, type_id));
+  }
+
+  // Converts `value_id` to a value expression of type `bool`.
+  auto ConvertToBoolValue(ParseTree::Node parse_node, SemanticsNodeId value_id)
+      -> SemanticsNodeId {
+    return ConvertToValueOfType(
+        parse_node, value_id,
+        CanonicalizeType(SemanticsNodeId::BuiltinBoolType));
+  }
+
   // Runs ImplicitAsImpl for a set of arguments and parameters.
   //
   // This will eventually need to support checking against multiple possible
@@ -128,10 +160,6 @@ class SemanticsContext {
   // unsupported.
   auto ImplicitAsRequired(ParseTree::Node parse_node, SemanticsNodeId value_id,
                           SemanticsTypeId as_type_id) -> SemanticsNodeId;
-
-  // Runs ImplicitAsRequired for a conversion to `bool`.
-  auto ImplicitAsBool(ParseTree::Node parse_node, SemanticsNodeId value_id)
-      -> SemanticsNodeId;
 
   // Canonicalizes a type which is tracked as a single node.
   // TODO: This should eventually return a type ID.
@@ -170,7 +198,7 @@ class SemanticsContext {
     }
 
     return CanonicalizeType(
-        ImplicitAsRequired(parse_node, value_id, SemanticsTypeId::TypeType));
+        ConvertToValueOfType(parse_node, value_id, SemanticsTypeId::TypeType));
   }
 
   // Removes any top-level `const` qualifiers from a type.

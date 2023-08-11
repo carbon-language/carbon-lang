@@ -49,6 +49,11 @@ auto SemanticsHandleStructFieldValue(SemanticsContext& context,
       context.node_stack().PopExpressionWithParseNode();
   SemanticsStringId name_id = context.node_stack().Pop<ParseNodeKind::Name>();
 
+  // Convert the operand to a value.
+  // TODO: We need to decide how struct literals interact with expression
+  // categories.
+  value_node_id = context.ConvertToValueExpression(value_node_id);
+
   // Store the name for the type.
   auto type_block_id = context.args_type_info_stack().PeekForAdd();
   context.semantics_ir().AddNode(

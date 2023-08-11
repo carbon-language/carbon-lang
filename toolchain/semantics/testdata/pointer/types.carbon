@@ -29,8 +29,8 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT:   node+0,
-// CHECK:STDOUT:   node+6,
-// CHECK:STDOUT:   node+7,
+// CHECK:STDOUT:   node+8,
+// CHECK:STDOUT:   node+9,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT: ]
@@ -40,15 +40,19 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: type1},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+1},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+1, type: type1},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+5, type: type1},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+6},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type3},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+8, type: type3},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+10, type: type3},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type2, type: typeTypeType},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+8},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+10, type: type3},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+15, type: type3},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+16},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -64,24 +68,28 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
-// CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:     node+13,
+// CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+13,
+// CHECK:STDOUT:     node+15,
+// CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:     node+17,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -95,10 +103,14 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Ptr(%p: i32*) -> i32* {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return %p
+// CHECK:STDOUT:   %.loc7_8.1: i32* = value_binding %p
+// CHECK:STDOUT:   %.loc7_8.2: i32* = initialize_from %.loc7_8.1
+// CHECK:STDOUT:   return %.loc7_8.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstPtr(%p: const i32*) -> const i32* {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return %p
+// CHECK:STDOUT:   %.loc11_13.1: const i32* = value_binding %p
+// CHECK:STDOUT:   %.loc11_13.2: const i32* = initialize_from %.loc11_13.1
+// CHECK:STDOUT:   return %.loc11_13.2
 // CHECK:STDOUT: }

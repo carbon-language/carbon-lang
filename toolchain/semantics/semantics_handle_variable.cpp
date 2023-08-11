@@ -28,7 +28,7 @@ auto SemanticsHandleVariableDeclaration(SemanticsContext& context,
   context.AddNameToLookup(binding.parse_node(), name_id, storage_id);
   // If there was an initializer, assign it to storage.
   if (has_init) {
-    auto cast_value_id = context.ImplicitAsRequired(
+    auto cast_value_id = context.ConvertToInitializerOfType(
         parse_node, expr_node_id,
         context.semantics_ir().GetNode(storage_id).type_id());
     context.AddNode(

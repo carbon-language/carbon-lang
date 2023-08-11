@@ -35,7 +35,8 @@ fn Main() {
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+1, type: type0},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: nodeError},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+1, arg1: node+4},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -50,6 +51,7 @@ fn Main() {
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -61,6 +63,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: i32 = var
 // CHECK:STDOUT:   %.loc11: f64 = real_value 10e-1
-// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error>
+// CHECK:STDOUT:   assign %x, %.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

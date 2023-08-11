@@ -42,12 +42,15 @@ var y: (i32,) = x;
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type1},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+6, type: type1},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block3, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+8},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+8, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+9},
 // CHECK:STDOUT:   {kind: StubReference, arg0: nodeIntegerType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block4, type: type0},
 // CHECK:STDOUT:   {kind: VarStorage, type: type2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+12, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: node+4},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+13, type: type2},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+4, type: type2},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+15, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: node+16},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -68,6 +71,9 @@ var y: (i32,) = x;
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:     node+15,
+// CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:     node+17,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
@@ -76,7 +82,7 @@ var y: (i32,) = x;
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -88,10 +94,13 @@ var y: (i32,) = x;
 // CHECK:STDOUT:   %x: (i32,) = var
 // CHECK:STDOUT:   %.loc7_18.1: i32 = int_value 4
 // CHECK:STDOUT:   %.loc7_18.2: i32 = stub_reference %.loc7_18.1
-// CHECK:STDOUT:   %.loc7_20: (i32,) = tuple_value (%.loc7_18.2)
-// CHECK:STDOUT:   assign %x, %.loc7_20
+// CHECK:STDOUT:   %.loc7_20.1: (i32,) = tuple_value (%.loc7_18.2)
+// CHECK:STDOUT:   %.loc7_20.2: (i32,) = initialize_from %.loc7_20.1
+// CHECK:STDOUT:   assign %x, %.loc7_20.2
 // CHECK:STDOUT:   %.loc8_9: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_13: (type,) = tuple_value (%.loc8_9)
 // CHECK:STDOUT:   %y: (i32,) = var
-// CHECK:STDOUT:   assign %y, %x
+// CHECK:STDOUT:   %.loc7_5.1: (i32,) = value_binding %x
+// CHECK:STDOUT:   %.loc7_5.2: (i32,) = initialize_from %.loc7_5.1
+// CHECK:STDOUT:   assign %y, %.loc7_5.2
 // CHECK:STDOUT: }

@@ -17,8 +17,9 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
     case TokenKind::Plus:
       // TODO: This should search for a compatible interface. For now, it's a
       // very trivial check of validity on the operation.
-      lhs_id = context.ImplicitAsRequired(
+      lhs_id = context.ConvertToValueOfType(
           parse_node, lhs_id, context.semantics_ir().GetNode(rhs_id).type_id());
+      rhs_id = context.ConvertToValueExpression(rhs_id);
 
       context.AddNodeAndPush(
           parse_node,
@@ -32,7 +33,7 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
       // The first operand is wrapped in a ShortCircuitOperand, which we
       // already handled by creating a RHS block and a resumption block, which
       // are the current block and its enclosing block.
-      rhs_id = context.ImplicitAsBool(parse_node, rhs_id);
+      rhs_id = context.ConvertToBoolValue(parse_node, rhs_id);
 
       // When the second operand is evaluated, the result of `and` and `or` is
       // its value.
@@ -59,7 +60,7 @@ auto SemanticsHandleInfixOperator(SemanticsContext& context,
                           "Expression is not assignable.");
         context.emitter().Emit(lhs_node, AssignmentToNonAssignable);
       }
-      context.ImplicitAsRequired(
+      rhs_id = context.ConvertToInitializerOfType(
           parse_node, rhs_id, context.semantics_ir().GetNode(lhs_id).type_id());
       context.AddNodeAndPush(
           parse_node, SemanticsNode::Assign::Make(parse_node, lhs_id, rhs_id));
@@ -147,7 +148,7 @@ auto SemanticsHandlePrefixOperator(SemanticsContext& context,
     }
 
     case TokenKind::Not:
-      value_id = context.ImplicitAsBool(parse_node, value_id);
+      value_id = context.ConvertToBoolValue(parse_node, value_id);
       context.AddNodeAndPush(
           parse_node,
           SemanticsNode::UnaryOperatorNot::Make(
@@ -180,6 +181,7 @@ auto SemanticsHandlePrefixOperator(SemanticsContext& context,
         }
         builder.Emit();
       }
+      value_id = context.ConvertToValueExpression(value_id);
       context.AddNodeAndPush(parse_node,
                              SemanticsNode::Dereference::Make(
                                  parse_node, result_type_id, value_id));
@@ -195,7 +197,7 @@ auto SemanticsHandleShortCircuitOperand(SemanticsContext& context,
                                         ParseTree::Node parse_node) -> bool {
   // Convert the condition to `bool`.
   auto cond_value_id = context.node_stack().PopExpression();
-  cond_value_id = context.ImplicitAsBool(parse_node, cond_value_id);
+  cond_value_id = context.ConvertToBoolValue(parse_node, cond_value_id);
   auto bool_type_id = context.semantics_ir().GetNode(cond_value_id).type_id();
 
   // Compute the branch value: the condition for `and`, inverted for `or`.

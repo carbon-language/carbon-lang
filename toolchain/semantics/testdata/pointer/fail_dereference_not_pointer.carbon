@@ -33,8 +33,8 @@ fn Deref(n: i32) {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: types: [
 // CHECK:STDOUT:   nodeIntegerType,
-// CHECK:STDOUT:   node+4,
-// CHECK:STDOUT:   node+7,
+// CHECK:STDOUT:   node+5,
+// CHECK:STDOUT:   node+8,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT:   [
@@ -44,13 +44,14 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+0, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: Dereference, arg0: node+0, type: typeError},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
+// CHECK:STDOUT:   {kind: Dereference, arg0: node+3, type: typeError},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type1},
-// CHECK:STDOUT:   {kind: Dereference, arg0: node+5, type: typeError},
+// CHECK:STDOUT:   {kind: Dereference, arg0: node+6, type: typeError},
 // CHECK:STDOUT:   {kind: StructType, arg0: block0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block0, type: type2},
-// CHECK:STDOUT:   {kind: Dereference, arg0: node+8, type: typeError},
+// CHECK:STDOUT:   {kind: Dereference, arg0: node+9, type: typeError},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -75,6 +76,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -84,7 +86,8 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Deref(%n: i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11: <error> = dereference %n
+// CHECK:STDOUT:   %.loc7: i32 = value_binding %n
+// CHECK:STDOUT:   %.loc11: <error> = dereference %.loc7
 // CHECK:STDOUT:   %.loc15_5.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc15_5.2: () = tuple_value ()
 // CHECK:STDOUT:   %.loc15_3: <error> = dereference %.loc15_5.2

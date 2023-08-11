@@ -36,18 +36,22 @@ var test_type: type = i32;
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: BindName, arg0: str0, arg1: node+0, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+2},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+2, type: type0},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+0, arg1: node+3},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+4, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+5, type: type1},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+4, arg1: node+6},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+7, type: type1},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+8},
 // CHECK:STDOUT:   {kind: VarStorage, type: type2},
-// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+8, type: type2},
+// CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+10, type: type2},
 // CHECK:STDOUT:   {kind: StringLiteral, arg0: str3, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+8, arg1: node+10},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+12, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+10, arg1: node+13},
 // CHECK:STDOUT:   {kind: VarStorage, type: typeTypeType},
-// CHECK:STDOUT:   {kind: BindName, arg0: str4, arg1: node+12, type: typeTypeType},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+12, arg1: nodeIntegerType},
+// CHECK:STDOUT:   {kind: BindName, arg0: str4, arg1: node+15, type: typeTypeType},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeIntegerType, type: typeTypeType},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+15, arg1: node+17},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -68,19 +72,27 @@ var test_type: type = i32;
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:     node+15,
+// CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %test_i32: i32 = var
-// CHECK:STDOUT:   %.loc7: i32 = int_value 0
-// CHECK:STDOUT:   assign %test_i32, %.loc7
+// CHECK:STDOUT:   %.loc7_21.1: i32 = int_value 0
+// CHECK:STDOUT:   %.loc7_21.2: i32 = initialize_from %.loc7_21.1
+// CHECK:STDOUT:   assign %test_i32, %.loc7_21.2
 // CHECK:STDOUT:   %test_f64: f64 = var
-// CHECK:STDOUT:   %.loc8: f64 = real_value 1e-1
-// CHECK:STDOUT:   assign %test_f64, %.loc8
+// CHECK:STDOUT:   %.loc8_21.1: f64 = real_value 1e-1
+// CHECK:STDOUT:   %.loc8_21.2: f64 = initialize_from %.loc8_21.1
+// CHECK:STDOUT:   assign %test_f64, %.loc8_21.2
 // CHECK:STDOUT:   %test_str: String = var
-// CHECK:STDOUT:   %.loc9: String = string_value "Test"
-// CHECK:STDOUT:   assign %test_str, %.loc9
+// CHECK:STDOUT:   %.loc9_24.1: String = string_value "Test"
+// CHECK:STDOUT:   %.loc9_24.2: String = initialize_from %.loc9_24.1
+// CHECK:STDOUT:   assign %test_str, %.loc9_24.2
 // CHECK:STDOUT:   %test_type: type = var
-// CHECK:STDOUT:   assign %test_type, i32
+// CHECK:STDOUT:   %.1: type = initialize_from i32
+// CHECK:STDOUT:   assign %test_type, %.1
 // CHECK:STDOUT: }

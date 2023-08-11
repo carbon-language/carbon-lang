@@ -53,11 +53,13 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type1},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+9, type: type1},
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block3, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+11},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+11, type: type2},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+12},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
-// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+13, type: type1},
+// CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+14, type: type1},
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type3},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: nodeError},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+14, arg1: node+17},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -80,6 +82,8 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:     node+16,
+// CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
@@ -102,9 +106,11 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %.loc7_22.2: i32 = stub_reference %.loc7_22.1
 // CHECK:STDOUT:   %.loc7_26.1: i32 = int_value 6
 // CHECK:STDOUT:   %.loc7_26.2: i32 = stub_reference %.loc7_26.1
-// CHECK:STDOUT:   %.loc7_27: (i32, i32) = tuple_value (%.loc7_22.2, %.loc7_26.2)
-// CHECK:STDOUT:   assign %a, %.loc7_27
+// CHECK:STDOUT:   %.loc7_27.1: (i32, i32) = tuple_value (%.loc7_22.2, %.loc7_26.2)
+// CHECK:STDOUT:   %.loc7_27.2: (i32, i32) = initialize_from %.loc7_27.1
+// CHECK:STDOUT:   assign %a, %.loc7_27.2
 // CHECK:STDOUT:   %b: i32 = var
 // CHECK:STDOUT:   %.loc11: f64 = real_value 26e-1
-// CHECK:STDOUT:   assign %b, <error>
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error>
+// CHECK:STDOUT:   assign %b, %.1
 // CHECK:STDOUT: }

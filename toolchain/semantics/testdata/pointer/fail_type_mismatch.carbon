@@ -43,7 +43,8 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   {kind: PointerType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type3, type: typeTypeType},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+10},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -67,6 +68,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -79,5 +81,6 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error>
+// CHECK:STDOUT:   return %.1
 // CHECK:STDOUT: }

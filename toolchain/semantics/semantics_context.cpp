@@ -268,6 +268,62 @@ auto SemanticsContext::is_current_position_reachable() -> bool {
   }
 }
 
+auto SemanticsContext::ConvertToInitializingExpression(SemanticsNodeId expr_id)
+    -> SemanticsNodeId {
+  SemanticsNode expr = semantics_ir().GetNode(expr_id);
+  switch (GetSemanticsExpressionCategory(semantics_ir(), expr_id)) {
+    case SemanticsExpressionCategory::NotExpression:
+      CARBON_FATAL() << "Converting non-expression node " << expr
+                     << " to initializing expression";
+
+    case SemanticsExpressionCategory::DurableReference:
+    case SemanticsExpressionCategory::EphemeralReference:
+      // The design uses a custom "copy initialization" process here. We model
+      // that as value binding followed by direct initialization.
+      //
+      // TODO: Determine whether this is observably different from the design,
+      // and change either the toolchain or the design so they match.
+      expr_id = AddNode(SemanticsNode::ValueBinding::Make(
+          expr.parse_node(), expr.type_id(), expr_id));
+      [[fallthrough]];
+
+    case SemanticsExpressionCategory::Value:
+      // TODO: For class types, use an interface to determine how to perform
+      // this operation.
+      return AddNode(SemanticsNode::InitializeFrom::Make(
+          expr.parse_node(), expr.type_id(), expr_id));
+
+    case SemanticsExpressionCategory::Initializing:
+      return expr_id;
+  }
+}
+
+auto SemanticsContext::ConvertToValueExpression(SemanticsNodeId expr_id)
+    -> SemanticsNodeId {
+  SemanticsNode expr = semantics_ir().GetNode(expr_id);
+  switch (GetSemanticsExpressionCategory(semantics_ir(), expr_id)) {
+    case SemanticsExpressionCategory::NotExpression:
+      CARBON_FATAL() << "Converting non-expression node " << expr
+                     << " to value expression";
+
+    case SemanticsExpressionCategory::Initializing:
+      // TODO: For class types, use an interface to determine how to perform
+      // this operation.
+      expr_id = AddNode(SemanticsNode::MaterializeTemporary::Make(
+          expr.parse_node(), expr.type_id(), expr_id));
+      [[fallthrough]];
+
+    case SemanticsExpressionCategory::DurableReference:
+    case SemanticsExpressionCategory::EphemeralReference:
+      // TODO: Support types with custom value representations.
+      return AddNode(SemanticsNode::ValueBinding::Make(
+          expr.parse_node(), expr.type_id(), expr_id));
+
+    case SemanticsExpressionCategory::Value:
+      return expr_id;
+  }
+}
+
 auto SemanticsContext::ImplicitAsForArgs(
     SemanticsNodeBlockId arg_refs_id, ParseTree::Node param_parse_node,
     SemanticsNodeBlockId param_refs_id,
@@ -314,6 +370,13 @@ auto SemanticsContext::ImplicitAsForArgs(
                        semantics_ir_->StringifyType(as_type_id));
       return false;
     }
+
+    // TODO: Convert to the proper expression category. For now, we assume
+    // parameters are all `let` bindings.
+    if (!diagnostic) {
+      // TODO: Insert the conversion in the proper place in the node block.
+      arg_refs[i] = ConvertToValueExpression(value_id);
+    }
   }
 
   return true;
@@ -338,13 +401,6 @@ auto SemanticsContext::ImplicitAsRequired(ParseTree::Node parse_node,
         .Emit();
   }
   return output_value_id;
-}
-
-auto SemanticsContext::ImplicitAsBool(ParseTree::Node parse_node,
-                                      SemanticsNodeId value_id)
-    -> SemanticsNodeId {
-  return ImplicitAsRequired(parse_node, value_id,
-                            CanonicalizeType(SemanticsNodeId::BuiltinBoolType));
 }
 
 auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,

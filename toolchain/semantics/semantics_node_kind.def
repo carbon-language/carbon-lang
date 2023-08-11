@@ -62,8 +62,12 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(Dereference, "dereference", Typed,
 CARBON_SEMANTICS_NODE_KIND_IMPL(FunctionDeclaration, "fn_decl", Untyped,
                                 NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Index, "tuple_index", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(InitializeFrom, "initialize_from", Typed,
+                                NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(IntegerLiteral, "int_value", Typed,
                                 NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(MaterializeTemporary, "materialize_temporary",
+                                Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Namespace, "namespace", Untyped, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(PointerType, "ptr_type", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(RealLiteral, "real_value", Typed, NotTerminator)
@@ -83,6 +87,8 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(StubReference, "stub_reference", Typed,
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleType, "tuple_type", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(TupleValue, "tuple_value", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(UnaryOperatorNot, "not", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(ValueBinding, "value_binding", Typed,
+                                NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(VarStorage, "var", Typed, NotTerminator)
 
 #undef CARBON_SEMANTICS_NODE_KIND

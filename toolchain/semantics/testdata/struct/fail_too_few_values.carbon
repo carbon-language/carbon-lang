@@ -40,7 +40,8 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+5, type: type0},
 // CHECK:STDOUT:   {kind: StructType, arg0: block3, type: typeTypeType},
 // CHECK:STDOUT:   {kind: StructValue, arg0: block4, type: type2},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+3, arg1: nodeError},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+3, arg1: node+10},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -56,6 +57,7 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:     node+10,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
@@ -76,5 +78,6 @@ var x: {.a: i32, .b: i32} = {.a = 1};
 // CHECK:STDOUT:   %.loc10_33: i32 = stub_reference %.loc10_35
 // CHECK:STDOUT:   %.loc10_36.1: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %.loc10_36.2: {.a: i32} = struct_value (%.loc10_33)
-// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error>
+// CHECK:STDOUT:   assign %x, %.1
 // CHECK:STDOUT: }

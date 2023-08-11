@@ -40,7 +40,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: nodeError, arg1: node+2, type: typeError},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: nodeError, arg1: node+4, type: typeError},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, type: typeError},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+6},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -55,6 +56,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -69,5 +71,6 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %.loc13_13: <error> = add <error>, %.loc13_15
 // CHECK:STDOUT:   %.loc13_21: i32 = int_value 12
 // CHECK:STDOUT:   %.loc13_19: <error> = add <error>, %.loc13_21
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error>
+// CHECK:STDOUT:   return %.1
 // CHECK:STDOUT: }
