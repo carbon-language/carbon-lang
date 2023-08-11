@@ -46,6 +46,8 @@ CARBON_SEMANTICS_NODE_KIND_IMPL(Invalid, "invalid", None, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(CrossReference, "xref", Typed, NotTerminator)
 
 CARBON_SEMANTICS_NODE_KIND_IMPL(AddressOf, "address_of", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(ArrayType, "array_type", Typed, NotTerminator)
+CARBON_SEMANTICS_NODE_KIND_IMPL(ArrayValue, "array_value", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(Assign, "assign", None, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(BinaryOperatorAdd, "add", Typed, NotTerminator)
 CARBON_SEMANTICS_NODE_KIND_IMPL(BindName, "bind_name", Typed, NotTerminator)

@@ -205,6 +205,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
 // precedence.
 static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
   switch (kind) {
+    case SemanticsNodeKind::ArrayType:
     case SemanticsNodeKind::Builtin:
     case SemanticsNodeKind::StructType:
     case SemanticsNodeKind::TupleType:
@@ -221,6 +222,7 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
       return 0;
 
     case SemanticsNodeKind::AddressOf:
+    case SemanticsNodeKind::ArrayValue:
     case SemanticsNodeKind::Assign:
     case SemanticsNodeKind::BinaryOperatorAdd:
     case SemanticsNodeKind::BindName:
@@ -286,6 +288,17 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
 
     auto node = GetNode(step.node_id);
     switch (node.kind()) {
+      case SemanticsNodeKind::ArrayType: {
+        auto [bound_id, type_id] = node.GetAsArrayType();
+        if (step.index == 0) {
+          out << "[";
+          steps.push_back(step.Next());
+          steps.push_back({.node_id = GetTypeAllowBuiltinTypes(type_id)});
+        } else if (step.index == 1) {
+          out << "; " << GetArrayBoundValue(bound_id) << "]";
+        }
+        break;
+      }
       case SemanticsNodeKind::ConstType: {
         if (step.index == 0) {
           out << "const ";
@@ -363,6 +376,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
         break;
       }
       case SemanticsNodeKind::AddressOf:
+      case SemanticsNodeKind::ArrayValue:
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BindName:
@@ -450,6 +464,7 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
       }
 
       case SemanticsNodeKind::AddressOf:
+      case SemanticsNodeKind::ArrayType:
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BlockArg:
       case SemanticsNodeKind::BoolLiteral:
@@ -481,6 +496,7 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
         continue;
       }
 
+      case SemanticsNodeKind::ArrayValue:
       case SemanticsNodeKind::StructValue:
       case SemanticsNodeKind::TupleValue:
         // TODO: Eventually these will depend on the context in which the value
