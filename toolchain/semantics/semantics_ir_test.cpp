@@ -33,7 +33,7 @@ TEST(SemanticsIRTest, YAML) {
   TestRawOstream print_stream;
   Driver d(fs, print_stream, llvm::errs());
   d.RunCommand(
-      {"compile", "--phase=syntax", "--dump-semantics-ir", "test.carbon"});
+      {"compile", "--phase=check", "--dump-raw-semantics-ir", "test.carbon"});
 
   // Matches the ID of a node. The numbers may change because of builtin
   // cross-references, so this code is only doing loose structural checks.

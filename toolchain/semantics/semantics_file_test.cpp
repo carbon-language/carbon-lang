@@ -15,8 +15,10 @@ class SemanticsFileTest : public DriverFileTestBase {
   using DriverFileTestBase::DriverFileTestBase;
 
   auto GetDefaultArgs() -> llvm::SmallVector<std::string> override {
-    // TODO: Remove the "--include_raw" once the textual IR format stabilizes.
-    return {"dump", "semantics-ir", "--include_raw", "%s"};
+    // TODO: Remove the "--dump-raw-semantics-ir" once the textual IR format
+    // stabilizes.
+    return {"compile", "--phase=check", "--dump-raw-semantics-ir",
+            "--dump-semantics-ir", "%s"};
   }
 };
 

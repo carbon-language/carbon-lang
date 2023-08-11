@@ -210,7 +210,7 @@ postorder.
 Dump the raw JSON structure of semantics IR to stdout when built.
 )""",
         },
-        [&](auto& arg_b) { arg_b.Set(&dump_semantics_ir); });
+        [&](auto& arg_b) { arg_b.Set(&dump_raw_semantics_ir); });
     b.AddFlag(
         {
             .name = "dump-semantics-ir",
