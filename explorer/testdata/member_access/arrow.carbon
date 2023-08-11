@@ -3,11 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: 1
-// CHECK:STDOUT: 1
-// CHECK:STDOUT: 1
-// CHECK:STDOUT: 1
-// CHECK:STDOUT: result: 0
 
 package Foo api;
 class X {
@@ -23,3 +18,9 @@ fn Main() -> i32 {
   Print("{0}", p->(X.F)());
   return 0;
 }
+
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: 1
+// CHECK:STDOUT: result: 0

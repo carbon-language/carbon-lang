@@ -22,6 +22,7 @@
 #include "toolchain/lowering/lower_to_llvm.h"
 #include "toolchain/parser/parse_tree.h"
 #include "toolchain/semantics/semantics_ir.h"
+#include "toolchain/semantics/semantics_ir_formatter.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
@@ -423,6 +424,15 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   if (options.dump_semantics_ir) {
     consumer->Flush();
     semantics_ir.Print(output_stream_, options.builtin_semantics_ir);
+  }
+  if (dump_mode == DumpMode::SemanticsIR) {
+    if (semantics_ir_include_raw) {
+      semantics_ir.Print(output_stream_, semantics_ir_include_builtins);
+      output_stream_ << "\n";
+    }
+    FormatSemanticsIR(tokenized_source, parse_tree, semantics_ir,
+                      output_stream_);
+    return !has_errors;
   }
   CARBON_VLOG() << "semantics_ir: " << semantics_ir;
   if (options.phase == Phase::Syntax) {

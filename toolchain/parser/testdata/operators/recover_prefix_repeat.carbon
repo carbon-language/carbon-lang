@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: recover_prefix_repeat.carbon:[[@LINE+3]]:17: Parentheses are required around this unary `const` operator.
+// CHECK:STDERR: fn F() -> const const i32* {
+// CHECK:STDERR:                 ^
+fn F() -> const const i32* {
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'F'},
@@ -17,9 +24,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 11},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: recover_prefix_repeat.carbon:[[@LINE+3]]:17: Parentheses are required around this unary `const` operator.
-// CHECK:STDERR: fn F() -> const const i32* {
-// CHECK:STDERR:                 ^
-fn F() -> const const i32* {
-}

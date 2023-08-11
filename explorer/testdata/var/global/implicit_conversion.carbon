@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 5
 
 package ExplorerTest api;
 
@@ -19,3 +18,5 @@ var a: A = 5;
 fn Main() -> i32 {
   return a.n;
 }
+
+// CHECK:STDOUT: result: 5

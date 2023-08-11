@@ -70,8 +70,8 @@ auto FlowFacts::TakeAction(Nonnull<const AstNode*> node, ActionType action,
   }
 
   if (trace_stream_->is_enabled()) {
-    *trace_stream_ << "--- " << action_type_string(action) << " `" << name
-                   << "` (" << source_loc << ")\n";
+    trace_stream_->Result() << action_type_string(action) << " `" << name
+                            << "` (" << source_loc << ")\n";
   }
 
   return Success();
@@ -255,8 +255,9 @@ static auto ResolveUnformedImpl(Nonnull<TraceStream*> trace_stream,
                                 FlowFacts::ActionType action)
     -> ErrorOr<Success> {
   if (trace_stream->is_enabled()) {
-    *trace_stream << "*** resolving-unformed in stmt `" << PrintAsID(*statement)
-                  << "` (" << statement->source_loc() << ")\n";
+    trace_stream->Start() << "resolving-unformed in stmt `"
+                          << PrintAsID(*statement) << "` ("
+                          << statement->source_loc() << ")\n";
   }
   switch (statement->kind()) {
     case StatementKind::Block: {
@@ -407,9 +408,9 @@ static auto ResolveUnformed(Nonnull<TraceStream*> trace_stream,
   SetFileContext set_file_ctx(*trace_stream, declaration->source_loc());
 
   if (trace_stream->is_enabled()) {
-    *trace_stream << "*** resolving-unformed in decl `"
-                  << PrintAsID(*declaration) << "` ("
-                  << declaration->source_loc() << ")\n";
+    trace_stream->Start() << "resolving-unformed in decl `"
+                          << PrintAsID(*declaration) << "` ("
+                          << declaration->source_loc() << ")\n";
   }
   switch (declaration->kind()) {
     // Checks formed/unformed state intraprocedurally.

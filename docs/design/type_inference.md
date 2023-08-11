@@ -22,7 +22,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 [Type inference](https://en.wikipedia.org/wiki/Type_inference) occurs in Carbon
 when the `auto` keyword is used. This may occur in
-[variable declarations](variables.md) or [function declarations](functions.md).
+[variable declarations](values.md#binding-patterns-and-local-variables-with-let-and-var)
+or [function declarations](functions.md).
 
 At present, type inference is very simple: given the expression which generates
 the value to be used for type inference, the inferred type is the precise type
@@ -30,7 +31,8 @@ of that expression. For example, the inferred type for `auto` in
 `fn Foo(x: i64) -> auto { return x; }` is `i64`.
 
 Type inference is currently supported for [function return types](functions.md)
-and [declared variable types](variables.md).
+and
+[declared variable types](values.md#binding-patterns-and-local-variables-with-let-and-var).
 
 ## Open questions
 

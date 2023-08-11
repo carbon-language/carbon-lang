@@ -3,6 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// TODO: We try to form (n*)*p and reject due to missing parentheses
+// before we notice the missing whitespace around the second `*`.
+// It'd be better to (somehow) form n*(*p) and reject due to the missing
+// whitespace around the first `*`.
+// CHECK:STDERR: fail_star_star_no_space.carbon:[[@LINE+3]]:16: `var` declarations must end with a `;`.
+// CHECK:STDERR: var n: i8 = n**p;
+// CHECK:STDERR:                ^
+var n: i8 = n**p;
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'n'},
@@ -15,12 +25,3 @@
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', has_error: yes, subtree_size: 9},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// TODO: We try to form (n*)*p and reject due to missing parentheses
-// before we notice the missing whitespace around the second `*`.
-// It'd be better to (somehow) form n*(*p) and reject due to the missing
-// whitespace around the first `*`.
-// CHECK:STDERR: fail_star_star_no_space.carbon:[[@LINE+3]]:16: `var` declarations must end with a `;`.
-// CHECK:STDERR: var n: i8 = n**p;
-// CHECK:STDERR:                ^
-var n: i8 = n**p;

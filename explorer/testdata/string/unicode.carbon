@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -17,3 +16,5 @@ fn CompareStr(s: String) -> i32 {
 fn Main() -> i32 {
   return CompareStr("\u{0048}\u{0045}\u{004C}\u{004C}\u{004F} \u{0057}\u{004F}\u{0052}\u{004C}\u{0044}\u{0021}\u{21}");
 }
+
+// CHECK:STDOUT: result: 0

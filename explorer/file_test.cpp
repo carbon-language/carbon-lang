@@ -31,7 +31,7 @@ class ExplorerFileTest : public FileTestBase {
            llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
       -> ErrorOr<bool> override {
     // Create the files in-memory.
-    llvm::vfs::InMemoryFileSystem fs(new llvm::vfs::InMemoryFileSystem());
+    llvm::vfs::InMemoryFileSystem fs;
     for (const auto& test_file : test_files) {
       if (!fs.addFile(test_file.filename, /*ModificationTime=*/0,
                       llvm::MemoryBuffer::getMemBuffer(test_file.content))) {

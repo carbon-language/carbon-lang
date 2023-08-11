@@ -7,6 +7,9 @@
 #include <initializer_list>
 #include <memory>
 
+#include "llvm/ADT/Sequence.h"
+#include "llvm/Support/FormatVariadic.h"
+
 namespace Carbon {
 
 auto CommandLine::operator<<(llvm::raw_ostream& output, ParseResult result)
@@ -267,9 +270,9 @@ void CommandLine::MetaPrinter::PrintHelp(const Command& command) const {
   PrintHelpPositionalArgs(command);
   PrintHelpOptions(command);
 
-  if (!info.help_epilog.empty()) {
+  if (!info.help_epilogue.empty()) {
     out_ << "\n";
-    PrintTextBlock("", info.help_epilog);
+    PrintTextBlock("", info.help_epilogue);
   }
 
   // End with a blank line for the long help to make it easier to separate from
@@ -341,7 +344,7 @@ void CommandLine::MetaPrinter::PrintTextBlock(llvm::StringRef indent,
   llvm::SmallVector<llvm::StringRef, 128> input_lines;
   text.split(input_lines, "\n");
 
-  for (ssize_t i = 0, size = input_lines.size(); i < size;) {
+  for (int i = 0, size = input_lines.size(); i < size;) {
     if (input_lines[i].empty()) {
       // Blank lines are preserved.
       out_ << "\n";
@@ -443,7 +446,7 @@ void CommandLine::MetaPrinter::PrintArgLongValues(
   out_ << indent << "Possible values:\n";
   // TODO: It would be good to add help text for each value and then print it
   // here.
-  for (int i = 0, size = arg.value_strings.size(); i < size; ++i) {
+  for (int i : llvm::seq<int>(0, arg.value_strings.size())) {
     llvm::StringRef value_string = arg.value_strings[i];
     out_ << indent << "- " << value_string;
     if (arg.has_default && i == arg.default_value_index) {
@@ -556,7 +559,7 @@ void CommandLine::MetaPrinter::PrintRawUsage(const Command& command,
 
     if (!command.positional_args.empty()) {
       bool open_optional = false;
-      for (size_t i = 0; i < command.positional_args.size(); ++i) {
+      for (int i : llvm::seq<int>(0, command.positional_args.size())) {
         out_ << " ";
         if (i != 0 && command.positional_args[i - 1]->is_append) {
           out_ << "-- ";
@@ -706,8 +709,9 @@ class CommandLine::Parser {
   auto ParseIntegerArgValue(const Arg& arg, llvm::StringRef value) -> bool;
   auto ParseStringArgValue(const Arg& arg, llvm::StringRef value) -> bool;
   auto ParseOneOfArgValue(const Arg& arg, llvm::StringRef value) -> bool;
-  auto ParseArg(const Arg& arg, std::optional<llvm::StringRef> value,
-                bool negated_name = false) -> bool;
+  auto ParseArg(const Arg& arg, bool short_spelling,
+                std::optional<llvm::StringRef> value, bool negated_name = false)
+      -> bool;
 
   auto SplitValue(llvm::StringRef& unparsed_arg)
       -> std::optional<llvm::StringRef>;
@@ -741,7 +745,7 @@ class CommandLine::Parser {
   ShortOptionTableT short_option_table_;
   SubcommandMapT subcommand_map_;
 
-  ssize_t positional_arg_index = 0;
+  int positional_arg_index = 0;
   bool appending_to_positional_arg = false;
 
   ActionT arg_meta_action_;
@@ -831,7 +835,7 @@ auto CommandLine::Parser::ParseIntegerArgValue(const Arg& arg,
                                                llvm::StringRef value) -> bool {
   CARBON_CHECK(arg.kind == Arg::Kind::Integer)
       << "Incorrect kind: " << arg.kind;
-  ssize_t integer_value;
+  int integer_value;
   // Note that this method returns *true* on error!
   if (value.getAsInteger(/*Radix=*/0, integer_value)) {
     errors_ << "ERROR: Cannot parse value for option '--" << arg.info.name
@@ -878,7 +882,7 @@ auto CommandLine::Parser::ParseOneOfArgValue(const Arg& arg,
   return true;
 }
 
-auto CommandLine::Parser::ParseArg(const Arg& arg,
+auto CommandLine::Parser::ParseArg(const Arg& arg, bool short_spelling,
                                    std::optional<llvm::StringRef> value,
                                    bool negated_name) -> bool {
   // If this argument has a meta action, replace the current meta action with
@@ -895,6 +899,10 @@ auto CommandLine::Parser::ParseArg(const Arg& arg,
     return ParseFlag(arg, value);
   }
 
+  auto name =
+      llvm::formatv(short_spelling ? "'-{0}' (short for '--{1}')" : "'--{1}'",
+                    arg.info.short_name, arg.info.name);
+
   if (!value) {
     // We can't have a positional argument without a value, so we know this is
     // an option and handle it as such.
@@ -903,8 +911,8 @@ auto CommandLine::Parser::ParseArg(const Arg& arg,
       return true;
     }
     if (!arg.has_default) {
-      errors_ << "ERROR: Option '--" << arg.info.name
-              << "' requires a value to be provided and none was.\n";
+      errors_ << "ERROR: Option " << name
+              << " requires a value to be provided and none was.\n";
       return false;
     }
     SetOptionDefault(arg);
@@ -920,8 +928,8 @@ auto CommandLine::Parser::ParseArg(const Arg& arg,
     case Arg::Kind::OneOf:
       return ParseOneOfArgValue(arg, *value);
     case Arg::Kind::MetaActionOnly:
-      errors_ << "ERROR: Option '--" << arg.info.name
-              << "' cannot be used with a value, and '" << *value
+      errors_ << "ERROR: Option " << name
+              << " cannot be used with a value, and '" << *value
               << "' was provided.\n";
       // TODO: improve message
       return false;
@@ -934,7 +942,7 @@ auto CommandLine::Parser::ParseArg(const Arg& arg,
 auto CommandLine::Parser::SplitValue(llvm::StringRef& unparsed_arg)
     -> std::optional<llvm::StringRef> {
   // Split out a value if present.
-  std::optional<llvm::StringRef> value = {};
+  std::optional<llvm::StringRef> value;
   auto index = unparsed_arg.find('=');
   if (index != llvm::StringRef::npos) {
     value = unparsed_arg.substr(index + 1);
@@ -966,7 +974,7 @@ auto CommandLine::Parser::ParseLongOption(llvm::StringRef unparsed_arg)
 
   // Parse this specific option and any value.
   const Arg& option = *option_it->second.getPointer();
-  return ParseArg(option, value, negated_name);
+  return ParseArg(option, /*short_spelling=*/false, value, negated_name);
 }
 
 auto CommandLine::Parser::ParseShortOptionSeq(llvm::StringRef unparsed_arg)
@@ -976,9 +984,16 @@ auto CommandLine::Parser::ParseShortOptionSeq(llvm::StringRef unparsed_arg)
 
   unparsed_arg = unparsed_arg.drop_front();
   std::optional<llvm::StringRef> value = SplitValue(unparsed_arg);
+  if (value && unparsed_arg.size() != 1) {
+    errors_ << "ERROR: Cannot provide a value to the group of multiple short "
+               "options '-"
+            << unparsed_arg
+            << "=...'; values must be provided to a single option, using "
+               "either the short or long spelling.\n";
+    return false;
+  }
 
-  for (ssize_t i = 0, size = unparsed_arg.size(); i < size; ++i) {
-    unsigned char c = unparsed_arg[i];
+  for (unsigned char c : unparsed_arg) {
     auto* arg_entry = short_option_table_[c];
     if (!arg_entry) {
       errors_ << "ERROR: Unknown short option '" << c << "'\n";
@@ -989,7 +1004,7 @@ auto CommandLine::Parser::ParseShortOptionSeq(llvm::StringRef unparsed_arg)
 
     // Parse the argument, including the value if this is the last.
     const Arg& arg = *arg_entry->getPointer();
-    if (!ParseArg(arg, (i == size - 1) ? value : std::nullopt)) {
+    if (!ParseArg(arg, /*short_spelling=*/true, value)) {
       return false;
     }
   }
@@ -1056,7 +1071,7 @@ auto CommandLine::Parser::ParsePositionalArg(llvm::StringRef unparsed_arg)
     ++positional_arg_index;
   }
 
-  return ParseArg(arg, unparsed_arg);
+  return ParseArg(arg, /*short_spelling=*/false, unparsed_arg);
 }
 
 auto CommandLine::Parser::ParseSubcommand(llvm::StringRef unparsed_arg)
@@ -1287,18 +1302,18 @@ void CommandLine::FlagBuilder::Default(bool flag_value) {
 
 void CommandLine::FlagBuilder::Set(bool* flag) { arg_.flag_storage = flag; }
 
-void CommandLine::IntegerArgBuilder::Default(ssize_t integer_value) {
+void CommandLine::IntegerArgBuilder::Default(int integer_value) {
   arg_.has_default = true;
   arg_.default_integer = integer_value;
 }
 
-void CommandLine::IntegerArgBuilder::Set(ssize_t* integer) {
+void CommandLine::IntegerArgBuilder::Set(int* integer) {
   arg_.is_append = false;
   arg_.integer_storage = integer;
 }
 
 void CommandLine::IntegerArgBuilder::Append(
-    llvm::SmallVectorImpl<ssize_t>* sequence) {
+    llvm::SmallVectorImpl<int>* sequence) {
   arg_.is_append = true;
   arg_.integer_sequence = sequence;
 }

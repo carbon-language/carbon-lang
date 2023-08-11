@@ -3,5 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
 // CHECK:STDOUT: ; ModuleID = 'empty.carbon'
 // CHECK:STDOUT: source_filename = "empty.carbon"

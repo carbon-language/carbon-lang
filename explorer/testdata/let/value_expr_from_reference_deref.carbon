@@ -3,11 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: ptr<Allocation(1)>
-// CHECK:STDOUT: Initialize c from reference expression from deferenced pointer
-// CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: ptr<Allocation(1)>
-// CHECK:STDOUT: c destroyed
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -30,3 +25,9 @@ fn Main() -> i32 {
   FromReferenceExpressionDeref();
   return 0;
 }
+
+// CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: ptr<Allocation(1)>
+// CHECK:STDOUT: Initialize c from reference expression from deferenced pointer
+// CHECK:STDOUT: 0: Heap{}, 1: C{}, 2: ptr<Allocation(1)>
+// CHECK:STDOUT: c destroyed
+// CHECK:STDOUT: result: 0

@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() {
+  return x
+// CHECK:STDERR: fail_expr_no_semi.carbon:[[@LINE+3]]:1: `return` statements must end with a `;`.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'F'},
@@ -15,10 +23,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-fn F() {
-  return x
-// CHECK:STDERR: fail_expr_no_semi.carbon:[[@LINE+3]]:1: `return` statements must end with a `;`.
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-}

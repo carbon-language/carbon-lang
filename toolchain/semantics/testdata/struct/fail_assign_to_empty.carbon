@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:21: Cannot implicitly convert from `{.a: i32}` to `{} as type`.
+// CHECK:STDERR: var x: {} = {.a = 1};
+// CHECK:STDERR:                     ^
+var x: {} = {.a = 1};
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -55,8 +61,14 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:21: Cannot implicitly convert from `{.a: i32}` to `{} as type`.
-// CHECK:STDERR: var x: {} = {.a = 1};
-// CHECK:STDERR:                     ^
-var x: {} = {.a = 1};
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc10_9.1: type = struct_type {}
+// CHECK:STDOUT:   %.loc10_9.2: {} = struct_value ()
+// CHECK:STDOUT:   %x: {} = var
+// CHECK:STDOUT:   %.loc10_19: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc10_17: i32 = stub_reference %.loc10_19
+// CHECK:STDOUT:   %.loc10_20.1: type = struct_type {.a: i32}
+// CHECK:STDOUT:   %.loc10_20.2: {.a: i32} = struct_value (%.loc10_17)
+// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT: }

@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() {
+  // CHECK:STDERR: fail_else_expr_missing.carbon:[[@LINE+3]]:35: Expected expression.
+  // CHECK:STDERR:   var n: i32 = if true then 1 else;
+  // CHECK:STDERR:                                   ^
+  var n: i32 = if true then 1 else;
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'F'},
@@ -24,10 +32,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 18},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-fn F() {
-  // CHECK:STDERR: fail_else_expr_missing.carbon:[[@LINE+3]]:35: Expected expression.
-  // CHECK:STDERR:   var n: i32 = if true then 1 else;
-  // CHECK:STDERR:                                   ^
-  var n: i32 = if true then 1 else;
-}

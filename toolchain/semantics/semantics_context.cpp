@@ -360,7 +360,11 @@ auto SemanticsContext::ImplicitAsImpl(SemanticsNodeId value_id,
   auto value = semantics_ir_->GetNode(value_id);
   auto value_type_id = value.type_id();
   if (value_type_id == SemanticsTypeId::Error) {
-    return ImplicitAsKind::Identical;
+    // Although the source type is invalid, this still changes the value.
+    if (output_value_id != nullptr) {
+      *output_value_id = SemanticsNodeId::BuiltinError;
+    }
+    return ImplicitAsKind::Compatible;
   }
 
   if (as_type_id == SemanticsTypeId::Error) {
@@ -483,81 +487,104 @@ auto SemanticsContext::CanonicalizeTypeImpl(
   return type_id;
 }
 
+// Compute a fingerprint for a tuple type, for use as a key in a folding set.
+static auto ProfileTupleType(const llvm::SmallVector<SemanticsTypeId>& type_ids,
+                             llvm::FoldingSetNodeID& canonical_id) -> void {
+  for (const auto& type_id : type_ids) {
+    canonical_id.AddInteger(type_id.index);
+  }
+}
+
+// Compute a fingerprint for a type, for use as a key in a folding set.
+static auto ProfileType(SemanticsContext& semantics_context, SemanticsNode node,
+                        llvm::FoldingSetNodeID& canonical_id) -> void {
+  switch (node.kind()) {
+    case SemanticsNodeKind::Builtin:
+      canonical_id.AddInteger(node.GetAsBuiltin().AsInt());
+      break;
+    case SemanticsNodeKind::CrossReference: {
+      // TODO: Cross-references should be canonicalized by looking at their
+      // target rather than treating them as new unique types.
+      auto [xref_id, node_id] = node.GetAsCrossReference();
+      canonical_id.AddInteger(xref_id.index);
+      canonical_id.AddInteger(node_id.index);
+      break;
+    }
+    case SemanticsNodeKind::ConstType:
+      canonical_id.AddInteger(
+          semantics_context.GetUnqualifiedType(node.GetAsConstType()).index);
+      break;
+    case SemanticsNodeKind::PointerType:
+      canonical_id.AddInteger(node.GetAsPointerType().index);
+      break;
+    case SemanticsNodeKind::StructType: {
+      auto refs =
+          semantics_context.semantics_ir().GetNodeBlock(node.GetAsStructType());
+      for (const auto& ref_id : refs) {
+        auto ref = semantics_context.semantics_ir().GetNode(ref_id);
+        auto [name_id, type_id] = ref.GetAsStructTypeField();
+        canonical_id.AddInteger(name_id.index);
+        canonical_id.AddInteger(type_id.index);
+      }
+      break;
+    }
+    case SemanticsNodeKind::StubReference: {
+      // We rely on stub references not referring to each other to ensure we
+      // only recurse once here.
+      auto inner =
+          semantics_context.semantics_ir().GetNode(node.GetAsStubReference());
+      CARBON_CHECK(inner.kind() != SemanticsNodeKind::StubReference)
+          << "A stub reference should never refer to another stub reference.";
+      ProfileType(semantics_context, inner, canonical_id);
+      break;
+    }
+    case SemanticsNodeKind::TupleType:
+      ProfileTupleType(
+          semantics_context.semantics_ir().GetTypeBlock(node.GetAsTupleType()),
+          canonical_id);
+      break;
+    default:
+      CARBON_FATAL() << "Unexpected type node " << node;
+  }
+}
+
+auto SemanticsContext::CanonicalizeTypeAndAddNodeIfNew(SemanticsNode node)
+    -> SemanticsTypeId {
+  auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
+    ProfileType(*this, node, canonical_id);
+  };
+  auto make_node = [&] { return AddNode(node); };
+  return CanonicalizeTypeImpl(node.kind(), profile_node, make_node);
+}
+
 auto SemanticsContext::CanonicalizeType(SemanticsNodeId node_id)
     -> SemanticsTypeId {
-  auto node = semantics_ir_->GetNode(node_id);
-  if (node.kind() == SemanticsNodeKind::StubReference) {
-    node_id = node.GetAsStubReference();
-    CARBON_CHECK(semantics_ir_->GetNode(node_id).kind() !=
-                 SemanticsNodeKind::StubReference)
-        << "Stub reference should not point to another stub reference";
-  }
-
   auto it = canonical_types_.find(node_id);
   if (it != canonical_types_.end()) {
     return it->second;
   }
 
-  switch (node.kind()) {
-    case SemanticsNodeKind::Builtin:
-    case SemanticsNodeKind::CrossReference: {
-      // TODO: Cross-references should be canonicalized by looking at their
-      // target rather than treating them as new unique types.
-      auto type_id = semantics_ir_->AddType(node_id);
-      CARBON_CHECK(canonical_types_.insert({node_id, type_id}).second);
-      return type_id;
-    }
-    case SemanticsNodeKind::ConstType: {
-      return CanonicalizeTypeImpl(
-          node.kind(), node_id, [&](llvm::FoldingSetNodeID& canonical_id) {
-            canonical_id.AddInteger(
-                GetUnqualifiedType(node.GetAsConstType()).index);
-          });
-    }
-    case SemanticsNodeKind::PointerType: {
-      return CanonicalizeTypeImpl(
-          node.kind(), node_id, [&](llvm::FoldingSetNodeID& canonical_id) {
-            canonical_id.AddInteger(node.GetAsPointerType().index);
-          });
-    }
-    case SemanticsNodeKind::StructType:
-    case SemanticsNodeKind::TupleType: {
-      CARBON_FATAL() << "Type should have been canonizalized when created: "
-                     << node;
-    }
-    default: {
-      CARBON_FATAL() << "Unexpected non-canonical type node " << node;
-    }
-  }
+  auto node = semantics_ir_->GetNode(node_id);
+  auto profile_node = [&](llvm::FoldingSetNodeID& canonical_id) {
+    ProfileType(*this, node, canonical_id);
+  };
+  auto make_node = [&] { return node_id; };
+  return CanonicalizeTypeImpl(node.kind(), profile_node, make_node);
 }
 
 auto SemanticsContext::CanonicalizeStructType(ParseTree::Node parse_node,
                                               SemanticsNodeBlockId refs_id)
     -> SemanticsTypeId {
-  auto profile_struct = [&](llvm::FoldingSetNodeID& canonical_id) {
-    auto refs = semantics_ir_->GetNodeBlock(refs_id);
-    for (const auto& ref_id : refs) {
-      auto ref = semantics_ir_->GetNode(ref_id);
-      auto [name_id, type_id] = ref.GetAsStructTypeField();
-      canonical_id.AddInteger(name_id.index);
-      canonical_id.AddInteger(type_id.index);
-    }
-  };
-  auto make_struct_node = [&] {
-    return AddNode(SemanticsNode::StructType::Make(
-        parse_node, SemanticsTypeId::TypeType, refs_id));
-  };
-  return CanonicalizeTypeImpl(SemanticsNodeKind::StructType, profile_struct,
-                              make_struct_node);
+  return CanonicalizeTypeAndAddNodeIfNew(SemanticsNode::StructType::Make(
+      parse_node, SemanticsTypeId::TypeType, refs_id));
 }
 
 auto SemanticsContext::CanonicalizeTupleType(
     ParseTree::Node parse_node, llvm::SmallVector<SemanticsTypeId>&& type_ids)
     -> SemanticsTypeId {
+  // Defer allocating a SemanticsTypeBlockId until we know this is a new type.
   auto profile_tuple = [&](llvm::FoldingSetNodeID& canonical_id) {
-    for (const auto& type_id : type_ids) {
-      canonical_id.AddInteger(type_id.index);
-    }
+    ProfileTupleType(type_ids, canonical_id);
   };
   auto make_tuple_node = [&] {
     auto type_block_id = semantics_ir_->AddTypeBlock();
@@ -570,10 +597,17 @@ auto SemanticsContext::CanonicalizeTupleType(
                               make_tuple_node);
 }
 
+auto SemanticsContext::GetPointerType(ParseTree::Node parse_node,
+                                      SemanticsTypeId pointee_type_id)
+    -> SemanticsTypeId {
+  return CanonicalizeTypeAndAddNodeIfNew(SemanticsNode::PointerType::Make(
+      parse_node, SemanticsTypeId::TypeType, pointee_type_id));
+}
+
 auto SemanticsContext::GetUnqualifiedType(SemanticsTypeId type_id)
     -> SemanticsTypeId {
   SemanticsNode type_node =
-      semantics_ir_->GetNode(semantics_ir_->GetType(type_id));
+      semantics_ir_->GetNode(semantics_ir_->GetTypeAllowBuiltinTypes(type_id));
   if (type_node.kind() == SemanticsNodeKind::ConstType)
     return type_node.GetAsConstType();
   return type_id;
