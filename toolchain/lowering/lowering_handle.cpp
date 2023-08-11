@@ -157,9 +157,10 @@ auto LoweringHandleFunctionDeclaration(LoweringFunctionContext& /*context*/,
       << node;
 }
 
-auto LoweringHandleIndex(LoweringFunctionContext& context,
-                         SemanticsNodeId node_id, SemanticsNode node) -> void {
-  auto [tuple_node_id, index_node_id] = node.GetAsIndex();
+auto LoweringHandleTupleIndex(LoweringFunctionContext& context,
+                              SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  auto [tuple_node_id, index_node_id] = node.GetAsTupleIndex();
   auto* llvm_type =
       context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
   auto index_node = context.semantics_ir().GetNode(index_node_id);
@@ -221,10 +222,10 @@ auto LoweringHandleStringLiteral(LoweringFunctionContext& /*context*/,
   CARBON_FATAL() << "TODO: Add support: " << node;
 }
 
-auto LoweringHandleStructMemberAccess(LoweringFunctionContext& context,
-                                      SemanticsNodeId node_id,
-                                      SemanticsNode node) -> void {
-  auto [struct_id, member_index] = node.GetAsStructMemberAccess();
+auto LoweringHandleStructAccess(LoweringFunctionContext& context,
+                                SemanticsNodeId node_id, SemanticsNode node)
+    -> void {
+  auto [struct_id, member_index] = node.GetAsStructAccess();
   auto struct_type_id = context.semantics_ir().GetNode(struct_id).type_id();
   auto* llvm_type = context.GetType(struct_type_id);
 

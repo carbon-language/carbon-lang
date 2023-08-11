@@ -53,8 +53,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_10: i32 = int_value 12
-// CHECK:STDOUT:   %.loc8_15: i32 = int_value 34
+// CHECK:STDOUT:   %.loc8_10: i32 = int_literal 12
+// CHECK:STDOUT:   %.loc8_15: i32 = int_literal 34
 // CHECK:STDOUT:   %.loc8_13: i32 = add %.loc8_10, %.loc8_15
 // CHECK:STDOUT:   return %.loc8_13
 // CHECK:STDOUT: }

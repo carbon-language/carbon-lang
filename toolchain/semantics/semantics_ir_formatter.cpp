@@ -18,10 +18,8 @@ namespace {
 // TODOs / future work ideas:
 // - Add a documentation file for the textual format and link to the
 //   naming section here.
-// - Consider harmonizing `FooLiteral` vs. `foo_value` node names vs.
-//   IR names.
-//   - Also consider representing these as just `value` or `literal`
-//     in the IR and using the type to distinguish.
+// - Consider representing literals as just `literal` in the IR and using the
+//   type to distinguish.
 class NodeNamer {
  public:
   enum class ScopeIndex : int {

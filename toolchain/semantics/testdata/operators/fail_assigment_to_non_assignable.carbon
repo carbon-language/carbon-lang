@@ -296,78 +296,78 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_3: i32 = int_value 1
-// CHECK:STDOUT:   %.loc13_7: i32 = int_value 2
+// CHECK:STDOUT:   %.loc13_3: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc13_7: i32 = int_literal 2
 // CHECK:STDOUT:   assign %.loc13_3, %.loc13_7
 // CHECK:STDOUT:   %.loc17_4: i32 = call @F()
-// CHECK:STDOUT:   %.loc17_9: i32 = int_value 1
+// CHECK:STDOUT:   %.loc17_9: i32 = int_literal 1
 // CHECK:STDOUT:   assign %.loc17_4, %.loc17_9
-// CHECK:STDOUT:   %.loc21_4.1: i32 = int_value 1
+// CHECK:STDOUT:   %.loc21_4.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc21_4.2: i32 = stub_reference %.loc21_4.1
-// CHECK:STDOUT:   %.loc21_7.1: i32 = int_value 2
+// CHECK:STDOUT:   %.loc21_7.1: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc21_7.2: i32 = stub_reference %.loc21_7.1
 // CHECK:STDOUT:   %.loc21_8.1: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %.loc21_8.2: (i32, i32) = tuple_value (%.loc21_4.2, %.loc21_7.2)
-// CHECK:STDOUT:   %.loc21_13.1: i32 = int_value 3
+// CHECK:STDOUT:   %.loc21_13.1: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc21_13.2: i32 = stub_reference %.loc21_13.1
-// CHECK:STDOUT:   %.loc21_16.1: i32 = int_value 4
+// CHECK:STDOUT:   %.loc21_16.1: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc21_16.2: i32 = stub_reference %.loc21_16.1
 // CHECK:STDOUT:   %.loc21_17: (i32, i32) = tuple_value (%.loc21_13.2, %.loc21_16.2)
 // CHECK:STDOUT:   assign %.loc21_8.2, %.loc21_17
 // CHECK:STDOUT:   %n: i32 = var
-// CHECK:STDOUT:   %.loc22: i32 = int_value 0
+// CHECK:STDOUT:   %.loc22: i32 = int_literal 0
 // CHECK:STDOUT:   assign %n, %.loc22
 // CHECK:STDOUT:   %.loc26_4: i32 = stub_reference %n
 // CHECK:STDOUT:   %.loc26_7: i32 = stub_reference %n
 // CHECK:STDOUT:   %.loc26_8: (i32, i32) = tuple_value (%.loc26_4, %.loc26_7)
-// CHECK:STDOUT:   %.loc26_13.1: i32 = int_value 1
+// CHECK:STDOUT:   %.loc26_13.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc26_13.2: i32 = stub_reference %.loc26_13.1
-// CHECK:STDOUT:   %.loc26_16.1: i32 = int_value 2
+// CHECK:STDOUT:   %.loc26_16.1: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc26_16.2: i32 = stub_reference %.loc26_16.1
 // CHECK:STDOUT:   %.loc26_17: (i32, i32) = tuple_value (%.loc26_13.2, %.loc26_16.2)
 // CHECK:STDOUT:   assign %.loc26_8, %.loc26_17
 // CHECK:STDOUT:   %.loc30: type = ptr_type i32
 // CHECK:STDOUT:   assign i32, %.loc30
-// CHECK:STDOUT:   %.loc34_9: i32 = int_value 1
+// CHECK:STDOUT:   %.loc34_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc34_7: i32 = stub_reference %.loc34_9
-// CHECK:STDOUT:   %.loc34_17: i32 = int_value 2
+// CHECK:STDOUT:   %.loc34_17: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc34_15: i32 = stub_reference %.loc34_17
 // CHECK:STDOUT:   %.loc34_18.1: type = struct_type {.x: i32, .y: i32}
 // CHECK:STDOUT:   %.loc34_18.2: {.x: i32, .y: i32} = struct_value (%.loc34_7, %.loc34_15)
-// CHECK:STDOUT:   %.loc34_28: i32 = int_value 3
+// CHECK:STDOUT:   %.loc34_28: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc34_26: i32 = stub_reference %.loc34_28
-// CHECK:STDOUT:   %.loc34_36: i32 = int_value 4
+// CHECK:STDOUT:   %.loc34_36: i32 = int_literal 4
 // CHECK:STDOUT:   %.loc34_34: i32 = stub_reference %.loc34_36
 // CHECK:STDOUT:   %.loc34_37: {.x: i32, .y: i32} = struct_value (%.loc34_26, %.loc34_34)
 // CHECK:STDOUT:   assign %.loc34_18.2, %.loc34_37
-// CHECK:STDOUT:   %.loc38_7: bool = bool_value true
-// CHECK:STDOUT:   if %.loc38_7 br !if.expr.then.loc38 else br !if.expr.else.loc38
+// CHECK:STDOUT:   %.loc38_7: bool = bool_literal true
+// CHECK:STDOUT:   if %.loc38_7 br !.loc38_17 else br !.loc38_24
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc38:
-// CHECK:STDOUT:   %.loc38_17: i32 = int_value 1
-// CHECK:STDOUT:   br !if.expr.result.loc38(%.loc38_17)
+// CHECK:STDOUT: !.loc38_17:
+// CHECK:STDOUT:   %.loc38_17: i32 = int_literal 1
+// CHECK:STDOUT:   br !.loc38_4(%.loc38_17)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc38:
-// CHECK:STDOUT:   %.loc38_24: i32 = int_value 2
-// CHECK:STDOUT:   br !if.expr.result.loc38(%.loc38_24)
+// CHECK:STDOUT: !.loc38_24:
+// CHECK:STDOUT:   %.loc38_24: i32 = int_literal 2
+// CHECK:STDOUT:   br !.loc38_4(%.loc38_24)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc38:
-// CHECK:STDOUT:   %.loc38_4: i32 = block_arg !if.expr.result.loc38
-// CHECK:STDOUT:   %.loc38_29: i32 = int_value 3
+// CHECK:STDOUT: !.loc38_4:
+// CHECK:STDOUT:   %.loc38_4: i32 = block_arg !.loc38_4
+// CHECK:STDOUT:   %.loc38_29: i32 = int_literal 3
 // CHECK:STDOUT:   assign %.loc38_4, %.loc38_29
 // CHECK:STDOUT:   %a: i32 = var
-// CHECK:STDOUT:   %.loc45_7: bool = bool_value true
-// CHECK:STDOUT:   if %.loc45_7 br !if.expr.then.loc45 else br !if.expr.else.loc45
+// CHECK:STDOUT:   %.loc45_7: bool = bool_literal true
+// CHECK:STDOUT:   if %.loc45_7 br !.loc45_4.1 else br !.loc45_4.2
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc45:
-// CHECK:STDOUT:   br !if.expr.result.loc45(%a)
+// CHECK:STDOUT: !.loc45_4.1:
+// CHECK:STDOUT:   br !.loc45_4.3(%a)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc45:
-// CHECK:STDOUT:   br !if.expr.result.loc45(%a)
+// CHECK:STDOUT: !.loc45_4.2:
+// CHECK:STDOUT:   br !.loc45_4.3(%a)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc45:
-// CHECK:STDOUT:   %.loc45_4: i32 = block_arg !if.expr.result.loc45
-// CHECK:STDOUT:   %.loc45_29: i32 = int_value 10
+// CHECK:STDOUT: !.loc45_4.3:
+// CHECK:STDOUT:   %.loc45_4: i32 = block_arg !.loc45_4.3
+// CHECK:STDOUT:   %.loc45_29: i32 = int_literal 10
 // CHECK:STDOUT:   assign %.loc45_4, %.loc45_29
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

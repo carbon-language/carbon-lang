@@ -97,11 +97,11 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_7.1: i32 = int_value 1
+// CHECK:STDOUT:   %.loc10_7.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc10_7.2: i32 = stub_reference %.loc10_7.1
 // CHECK:STDOUT:   %.loc10_6.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc10_6.2: () = call @Foo(%.loc10_7.2)
-// CHECK:STDOUT:   %.loc11_7.1: i32 = int_value 1
+// CHECK:STDOUT:   %.loc11_7.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc11_7.2: i32 = stub_reference %.loc11_7.1
 // CHECK:STDOUT:   %.loc11_6: () = call @Foo(%.loc11_7.2)
 // CHECK:STDOUT:   return

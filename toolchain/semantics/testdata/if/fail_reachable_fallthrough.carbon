@@ -159,39 +159,39 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If1(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !if.then else br !if.else
+// CHECK:STDOUT:   if %b br !.loc9 else br !.loc8
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc9: i32 = int_value 1
+// CHECK:STDOUT: !.loc9:
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 1
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   br !if.done
+// CHECK:STDOUT: !.loc8:
+// CHECK:STDOUT:   br !.1
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.done:
+// CHECK:STDOUT: !.1:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If2(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !if.then else br !if.else
+// CHECK:STDOUT:   if %b br !.loc18 else br !.loc20
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   br !if.done
+// CHECK:STDOUT: !.loc18:
+// CHECK:STDOUT:   br !.1
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc20: i32 = int_value 2
+// CHECK:STDOUT: !.loc20:
+// CHECK:STDOUT:   %.loc20: i32 = int_literal 2
 // CHECK:STDOUT:   return %.loc20
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.done:
+// CHECK:STDOUT: !.1:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If3(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   if %b br !if.then else br !if.else
+// CHECK:STDOUT:   if %b br !.loc29 else br !.1
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc29: i32 = int_value 1
+// CHECK:STDOUT: !.loc29:
+// CHECK:STDOUT:   %.loc29: i32 = int_literal 1
 // CHECK:STDOUT:   return %.loc29
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.else:
+// CHECK:STDOUT: !.1:
 // CHECK:STDOUT: }

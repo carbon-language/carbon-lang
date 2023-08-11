@@ -125,13 +125,13 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:   %.loc7_18.4: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %.loc7_24.3: type = tuple_type ((i32, i32), i32)
 // CHECK:STDOUT:   %x: ((i32, i32), i32) = var
-// CHECK:STDOUT:   %.loc7_30.1: i32 = int_value 12
+// CHECK:STDOUT:   %.loc7_30.1: i32 = int_literal 12
 // CHECK:STDOUT:   %.loc7_30.2: i32 = stub_reference %.loc7_30.1
-// CHECK:STDOUT:   %.loc7_34.1: i32 = int_value 76
+// CHECK:STDOUT:   %.loc7_34.1: i32 = int_literal 76
 // CHECK:STDOUT:   %.loc7_34.2: i32 = stub_reference %.loc7_34.1
 // CHECK:STDOUT:   %.loc7_36.1: (i32, i32) = tuple_value (%.loc7_30.2, %.loc7_34.2)
 // CHECK:STDOUT:   %.loc7_36.2: (i32, i32) = stub_reference %.loc7_36.1
-// CHECK:STDOUT:   %.loc7_39.1: i32 = int_value 6
+// CHECK:STDOUT:   %.loc7_39.1: i32 = int_literal 6
 // CHECK:STDOUT:   %.loc7_39.2: i32 = stub_reference %.loc7_39.1
 // CHECK:STDOUT:   %.loc7_40: ((i32, i32), i32) = tuple_value (%.loc7_36.2, %.loc7_39.2)
 // CHECK:STDOUT:   assign %x, %.loc7_40

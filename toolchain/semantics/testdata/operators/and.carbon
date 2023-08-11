@@ -88,27 +88,27 @@ fn And() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: bool = bool_value true
+// CHECK:STDOUT:   %.loc7: bool = bool_literal true
 // CHECK:STDOUT:   return %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: bool = bool_value true
+// CHECK:STDOUT:   %.loc8: bool = bool_literal true
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_11: bool = call @F()
-// CHECK:STDOUT:   %.loc11_14.1: bool = bool_value false
-// CHECK:STDOUT:   if %.loc11_11 br !and.rhs else br !and.result(%.loc11_14.1)
+// CHECK:STDOUT:   %.loc11_14.1: bool = bool_literal false
+// CHECK:STDOUT:   if %.loc11_11 br !.loc11_19 else br !.loc11_14(%.loc11_14.1)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !and.rhs:
+// CHECK:STDOUT: !.loc11_19:
 // CHECK:STDOUT:   %.loc11_19: bool = call @G()
-// CHECK:STDOUT:   br !and.result(%.loc11_19)
+// CHECK:STDOUT:   br !.loc11_14(%.loc11_19)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !and.result:
-// CHECK:STDOUT:   %.loc11_14.2: bool = block_arg !and.result
+// CHECK:STDOUT: !.loc11_14:
+// CHECK:STDOUT:   %.loc11_14.2: bool = block_arg !.loc11_14
 // CHECK:STDOUT:   return %.loc11_14.2
 // CHECK:STDOUT: }

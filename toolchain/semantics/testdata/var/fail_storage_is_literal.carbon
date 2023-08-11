@@ -61,9 +61,9 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_10: i32 = int_value 1
+// CHECK:STDOUT:   %.loc11_10: i32 = int_literal 1
 // CHECK:STDOUT:   %x: <error> = var
-// CHECK:STDOUT:   %.loc11_14: i32 = int_value 1
+// CHECK:STDOUT:   %.loc11_14: i32 = int_literal 1
 // CHECK:STDOUT:   assign %x, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

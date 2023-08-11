@@ -86,7 +86,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16_7.1: f64 = real_value 10e-1
+// CHECK:STDOUT:   %.loc16_7.1: f64 = real_literal 10e-1
 // CHECK:STDOUT:   %.loc16_7.2: f64 = stub_reference %.loc16_7.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

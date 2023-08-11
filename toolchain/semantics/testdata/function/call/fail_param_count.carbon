@@ -203,17 +203,17 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_8.1: i32 = int_value 1
+// CHECK:STDOUT:   %.loc18_8.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc18_8.2: i32 = stub_reference %.loc18_8.1
-// CHECK:STDOUT:   %.loc25_8.1: i32 = int_value 0
+// CHECK:STDOUT:   %.loc25_8.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc25_8.2: i32 = stub_reference %.loc25_8.1
-// CHECK:STDOUT:   %.loc25_11.1: i32 = int_value 1
+// CHECK:STDOUT:   %.loc25_11.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc25_11.2: i32 = stub_reference %.loc25_11.1
-// CHECK:STDOUT:   %.loc40_8.1: i32 = int_value 0
+// CHECK:STDOUT:   %.loc40_8.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc40_8.2: i32 = stub_reference %.loc40_8.1
-// CHECK:STDOUT:   %.loc40_11.1: i32 = int_value 1
+// CHECK:STDOUT:   %.loc40_11.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc40_11.2: i32 = stub_reference %.loc40_11.1
-// CHECK:STDOUT:   %.loc55_8.1: i32 = int_value 0
+// CHECK:STDOUT:   %.loc55_8.1: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc55_8.2: i32 = stub_reference %.loc55_8.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
