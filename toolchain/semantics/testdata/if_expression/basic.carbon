@@ -36,20 +36,14 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str3, arg1: node+4, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+0, type: type0},
-// CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+7},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block5, arg1: node+0},
 // CHECK:STDOUT:   {kind: Branch, arg0: block6},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+2, type: type1},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+4, type: type1},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+10, arg1: node+11, type: type1},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+4, type: type1},
-// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+2, type: type1},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+13, arg1: node+14, type: type1},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block7, arg1: node+12},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block7, arg1: node+15},
+// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+2, arg1: node+4, type: type1},
+// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+4, arg1: node+2, type: type1},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block7, arg1: node+9},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block7, arg1: node+10},
 // CHECK:STDOUT:   {kind: BlockArg, arg0: block7, type: type1},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+18, type: type1},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+19},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+13},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -73,24 +67,18 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+9,
+// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+10,
-// CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:     node+12,
-// CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
-// CHECK:STDOUT:     node+15,
-// CHECK:STDOUT:     node+17,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+18,
-// CHECK:STDOUT:     node+19,
-// CHECK:STDOUT:     node+20,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -100,23 +88,17 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool, %n: i32, %m: i32) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_6: bool = value_binding %b
-// CHECK:STDOUT:   if %.loc7_6 br !.loc7_15 else br !.loc7_23
+// CHECK:STDOUT:   if %b br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc7_15:
-// CHECK:STDOUT:   %.loc7_15.1: i32 = value_binding %n
-// CHECK:STDOUT:   %.loc7_23.1: i32 = value_binding %m
-// CHECK:STDOUT:   %.loc8_22: i32 = add %.loc7_15.1, %.loc7_23.1
-// CHECK:STDOUT:   br !.loc8(%.loc8_22)
+// CHECK:STDOUT: !if.expr.then:
+// CHECK:STDOUT:   %.loc8_22: i32 = add %n, %m
+// CHECK:STDOUT:   br !if.expr.result(%.loc8_22)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc7_23:
-// CHECK:STDOUT:   %.loc7_23.2: i32 = value_binding %m
-// CHECK:STDOUT:   %.loc7_15.2: i32 = value_binding %n
-// CHECK:STDOUT:   %.loc8_33: i32 = add %.loc7_23.2, %.loc7_15.2
-// CHECK:STDOUT:   br !.loc8(%.loc8_33)
+// CHECK:STDOUT: !if.expr.else:
+// CHECK:STDOUT:   %.loc8_33: i32 = add %m, %n
+// CHECK:STDOUT:   br !if.expr.result(%.loc8_33)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc8:
-// CHECK:STDOUT:   %.loc8_10.1: i32 = block_arg !.loc8
-// CHECK:STDOUT:   %.loc8_10.2: i32 = initialize_from %.loc8_10.1
-// CHECK:STDOUT:   return %.loc8_10.2
+// CHECK:STDOUT: !if.expr.result:
+// CHECK:STDOUT:   %.loc8_10: i32 = block_arg !if.expr.result
+// CHECK:STDOUT:   return %.loc8_10
 // CHECK:STDOUT: }
