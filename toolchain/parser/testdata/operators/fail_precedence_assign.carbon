@@ -23,6 +23,10 @@ fn F() {
   // CHECK:STDERR:   a + ++a;
   // CHECK:STDERR:       ^
   a + ++a;
+  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+3]]:5: Parentheses are required around this unary `if` operator.
+  // CHECK:STDERR:   ++if c then a else b;
+  // CHECK:STDERR:     ^
+  ++if c then a else b;
 }
 
 // CHECK:STDOUT: [
@@ -56,6 +60,14 @@ fn F() {
 // CHECK:STDOUT:       {kind: 'PrefixOperator', text: '++', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'InfixOperator', text: '+', subtree_size: 4},
 // CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 5},
-// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 31},
+// CHECK:STDOUT:           {kind: 'NameExpression', text: 'c'},
+// CHECK:STDOUT:         {kind: 'IfExpressionIf', text: 'if', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'NameExpression', text: 'a'},
+// CHECK:STDOUT:         {kind: 'IfExpressionThen', text: 'then', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'NameExpression', text: 'b'},
+// CHECK:STDOUT:       {kind: 'IfExpressionElse', text: 'else', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'PrefixOperator', text: '++', subtree_size: 7},
+// CHECK:STDOUT:   {kind: 'ExpressionStatement', text: ';', subtree_size: 8},
+// CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 39},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]

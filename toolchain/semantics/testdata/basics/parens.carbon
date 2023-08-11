@@ -46,8 +46,8 @@ var test_i32: i32 = ((1) + (2));
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %test_i32: i32 = var
-// CHECK:STDOUT:   %.loc7_23: i32 = int_value 1
-// CHECK:STDOUT:   %.loc7_29: i32 = int_value 2
+// CHECK:STDOUT:   %.loc7_23: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc7_29: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc7_26: i32 = add %.loc7_23, %.loc7_29
 // CHECK:STDOUT:   assign %test_i32, %.loc7_26
 // CHECK:STDOUT: }

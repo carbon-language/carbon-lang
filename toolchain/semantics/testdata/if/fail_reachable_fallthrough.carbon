@@ -162,7 +162,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b br !.loc9 else br !.loc8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc9:
-// CHECK:STDOUT:   %.loc9: i32 = int_value 1
+// CHECK:STDOUT:   %.loc9: i32 = int_literal 1
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc8:
@@ -179,7 +179,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   br !.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc20:
-// CHECK:STDOUT:   %.loc20: i32 = int_value 2
+// CHECK:STDOUT:   %.loc20: i32 = int_literal 2
 // CHECK:STDOUT:   return %.loc20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.1:
@@ -190,7 +190,7 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b br !.loc29 else br !.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc29:
-// CHECK:STDOUT:   %.loc29: i32 = int_value 1
+// CHECK:STDOUT:   %.loc29: i32 = int_literal 1
 // CHECK:STDOUT:   return %.loc29
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.1:

@@ -394,9 +394,6 @@ class SemanticsNode {
       FactoryNoType<SemanticsNodeKind::FunctionDeclaration,
                     SemanticsFunctionId /*function_id*/>;
 
-  using Index = Factory<SemanticsNodeKind::Index, SemanticsNodeId /*tuple_id*/,
-                        SemanticsNodeId /*index*/>;
-
   using IntegerLiteral = Factory<SemanticsNodeKind::IntegerLiteral,
                                  SemanticsIntegerLiteralId /*integer_id*/>;
 
@@ -417,9 +414,9 @@ class SemanticsNode {
   using StringLiteral = Factory<SemanticsNodeKind::StringLiteral,
                                 SemanticsStringId /*string_id*/>;
 
-  using StructMemberAccess = Factory<SemanticsNodeKind::StructMemberAccess,
-                                     SemanticsNodeId /*struct_id*/,
-                                     SemanticsMemberIndex /*ref_index*/>;
+  using StructAccess =
+      Factory<SemanticsNodeKind::StructAccess, SemanticsNodeId /*struct_id*/,
+              SemanticsMemberIndex /*ref_index*/>;
 
   using StructType =
       Factory<SemanticsNodeKind::StructType, SemanticsNodeBlockId /*refs_id*/>;
@@ -433,6 +430,10 @@ class SemanticsNode {
 
   using StubReference =
       Factory<SemanticsNodeKind::StubReference, SemanticsNodeId /*node_id*/>;
+
+  using TupleIndex =
+      Factory<SemanticsNodeKind::TupleIndex, SemanticsNodeId /*tuple_id*/,
+              SemanticsNodeId /*index*/>;
 
   using TupleType =
       Factory<SemanticsNodeKind::TupleType, SemanticsTypeBlockId /*refs_id*/>;

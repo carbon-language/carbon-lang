@@ -84,6 +84,6 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b: bool) -> i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: i32 = int_value 0
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0
 // CHECK:STDOUT:   return %.loc8
 // CHECK:STDOUT: }

@@ -134,11 +134,11 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   if %b br !.loc8_30 else br !.loc8_37
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc8_30:
-// CHECK:STDOUT:   %.loc8_30: i32 = int_value 1
+// CHECK:STDOUT:   %.loc8_30: i32 = int_literal 1
 // CHECK:STDOUT:   br !.loc8_20.2(%.loc8_30)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc8_37:
-// CHECK:STDOUT:   %.loc8_37: i32 = int_value 2
+// CHECK:STDOUT:   %.loc8_37: i32 = int_literal 2
 // CHECK:STDOUT:   br !.loc8_20.2(%.loc8_37)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc8_20.2:
@@ -149,11 +149,11 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   if %c br !.loc8_54 else br !.loc8_61
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc8_54:
-// CHECK:STDOUT:   %.loc8_54: i32 = int_value 3
+// CHECK:STDOUT:   %.loc8_54: i32 = int_literal 3
 // CHECK:STDOUT:   br !.loc8_44.2(%.loc8_54)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc8_61:
-// CHECK:STDOUT:   %.loc8_61: i32 = int_value 4
+// CHECK:STDOUT:   %.loc8_61: i32 = int_literal 4
 // CHECK:STDOUT:   br !.loc8_44.2(%.loc8_61)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc8_44.2:

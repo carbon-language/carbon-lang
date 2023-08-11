@@ -126,17 +126,17 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_7: i32 = int_value 1
-// CHECK:STDOUT:   %.loc11_11: i32 = int_value 2
+// CHECK:STDOUT:   %.loc11_7: i32 = int_literal 1
+// CHECK:STDOUT:   %.loc11_11: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc11_9: i32 = add %.loc11_7, %.loc11_11
-// CHECK:STDOUT:   %.loc11_15: i32 = int_value 3
+// CHECK:STDOUT:   %.loc11_15: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc11_13.1: i32 = add %.loc11_9, %.loc11_15
 // CHECK:STDOUT:   %.loc11_13.2: i32 = stub_reference %.loc11_13.1
-// CHECK:STDOUT:   %.loc11_18: i32 = int_value 4
-// CHECK:STDOUT:   %.loc11_22: i32 = int_value 5
+// CHECK:STDOUT:   %.loc11_18: i32 = int_literal 4
+// CHECK:STDOUT:   %.loc11_22: i32 = int_literal 5
 // CHECK:STDOUT:   %.loc11_20.1: i32 = add %.loc11_18, %.loc11_22
 // CHECK:STDOUT:   %.loc11_20.2: i32 = stub_reference %.loc11_20.1
-// CHECK:STDOUT:   %.loc11_25.1: i32 = int_value 6
+// CHECK:STDOUT:   %.loc11_25.1: i32 = int_literal 6
 // CHECK:STDOUT:   %.loc11_25.2: i32 = stub_reference %.loc11_25.1
 // CHECK:STDOUT:   %.loc11_6.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc11_6.2: () = call @Foo(%.loc11_13.2, %.loc11_20.2, %.loc11_25.2)

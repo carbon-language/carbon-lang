@@ -73,7 +73,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: fn @F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n: i32 = var
-// CHECK:STDOUT:   %.loc8: i32 = int_value 0
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 0
 // CHECK:STDOUT:   assign %n, %.loc8
 // CHECK:STDOUT:   %.loc9_13: type = ptr_type i32
 // CHECK:STDOUT:   %p: i32* = var
