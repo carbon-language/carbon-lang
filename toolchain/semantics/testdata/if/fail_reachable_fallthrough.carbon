@@ -166,9 +166,9 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   br !if.cont
+// CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.cont:
+// CHECK:STDOUT: !if.done:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If2(%b: bool) -> i32 {
@@ -176,13 +176,13 @@ fn If3(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   br !if.cont
+// CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %.loc20: i32 = int_value 2
 // CHECK:STDOUT:   return %.loc20
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.cont:
+// CHECK:STDOUT: !if.done:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @If3(%b: bool) -> i32 {

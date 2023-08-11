@@ -92,13 +92,13 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %.loc8_22: i32 = add %n, %m
-// CHECK:STDOUT:   br !if.expr.cont(%.loc8_22)
+// CHECK:STDOUT:   br !if.expr.result(%.loc8_22)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %.loc8_33: i32 = add %m, %n
-// CHECK:STDOUT:   br !if.expr.cont(%.loc8_33)
+// CHECK:STDOUT:   br !if.expr.result(%.loc8_33)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.cont:
-// CHECK:STDOUT:   %.loc8_10: i32 = block_arg !if.expr.cont
+// CHECK:STDOUT: !if.expr.result:
+// CHECK:STDOUT:   %.loc8_10: i32 = block_arg !if.expr.result
 // CHECK:STDOUT:   return %.loc8_10
 // CHECK:STDOUT: }

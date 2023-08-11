@@ -102,13 +102,13 @@ fn And() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_11: bool = call @F()
 // CHECK:STDOUT:   %.loc11_14.1: bool = bool_value false
-// CHECK:STDOUT:   if %.loc11_11 br !and.rhs else br !and.cont(%.loc11_14.1)
+// CHECK:STDOUT:   if %.loc11_11 br !and.rhs else br !and.result(%.loc11_14.1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
 // CHECK:STDOUT:   %.loc11_19: bool = call @G()
-// CHECK:STDOUT:   br !and.cont(%.loc11_19)
+// CHECK:STDOUT:   br !and.result(%.loc11_19)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !and.cont:
-// CHECK:STDOUT:   %.loc11_14.2: bool = block_arg !and.cont
+// CHECK:STDOUT: !and.result:
+// CHECK:STDOUT:   %.loc11_14.2: bool = block_arg !and.result
 // CHECK:STDOUT:   return %.loc11_14.2
 // CHECK:STDOUT: }

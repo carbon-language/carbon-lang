@@ -105,13 +105,13 @@ fn Or() -> bool {
 // CHECK:STDOUT:   %.loc11_11: bool = call @F()
 // CHECK:STDOUT:   %.loc11_14.1: bool = not %.loc11_11
 // CHECK:STDOUT:   %.loc11_14.2: bool = bool_value true
-// CHECK:STDOUT:   if %.loc11_14.1 br !or.rhs else br !or.cont(%.loc11_14.2)
+// CHECK:STDOUT:   if %.loc11_14.1 br !or.rhs else br !or.result(%.loc11_14.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:
 // CHECK:STDOUT:   %.loc11_18: bool = call @G()
-// CHECK:STDOUT:   br !or.cont(%.loc11_18)
+// CHECK:STDOUT:   br !or.result(%.loc11_18)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !or.cont:
-// CHECK:STDOUT:   %.loc11_14.3: bool = block_arg !or.cont
+// CHECK:STDOUT: !or.result:
+// CHECK:STDOUT:   %.loc11_14.3: bool = block_arg !or.result
 // CHECK:STDOUT:   return %.loc11_14.3
 // CHECK:STDOUT: }

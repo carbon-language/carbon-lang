@@ -345,14 +345,14 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc38:
 // CHECK:STDOUT:   %.loc38_17: i32 = int_value 1
-// CHECK:STDOUT:   br !if.expr.cont.loc38(%.loc38_17)
+// CHECK:STDOUT:   br !if.expr.result.loc38(%.loc38_17)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc38:
 // CHECK:STDOUT:   %.loc38_24: i32 = int_value 2
-// CHECK:STDOUT:   br !if.expr.cont.loc38(%.loc38_24)
+// CHECK:STDOUT:   br !if.expr.result.loc38(%.loc38_24)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.cont.loc38:
-// CHECK:STDOUT:   %.loc38_4: i32 = block_arg !if.expr.cont.loc38
+// CHECK:STDOUT: !if.expr.result.loc38:
+// CHECK:STDOUT:   %.loc38_4: i32 = block_arg !if.expr.result.loc38
 // CHECK:STDOUT:   %.loc38_29: i32 = int_value 3
 // CHECK:STDOUT:   assign %.loc38_4, %.loc38_29
 // CHECK:STDOUT:   %a: i32 = var
@@ -360,13 +360,13 @@ fn Main() {
 // CHECK:STDOUT:   if %.loc45_7 br !if.expr.then.loc45 else br !if.expr.else.loc45
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc45:
-// CHECK:STDOUT:   br !if.expr.cont.loc45(%a)
+// CHECK:STDOUT:   br !if.expr.result.loc45(%a)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc45:
-// CHECK:STDOUT:   br !if.expr.cont.loc45(%a)
+// CHECK:STDOUT:   br !if.expr.result.loc45(%a)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.cont.loc45:
-// CHECK:STDOUT:   %.loc45_4: i32 = block_arg !if.expr.cont.loc45
+// CHECK:STDOUT: !if.expr.result.loc45:
+// CHECK:STDOUT:   %.loc45_4: i32 = block_arg !if.expr.result.loc45
 // CHECK:STDOUT:   %.loc45_29: i32 = int_value 10
 // CHECK:STDOUT:   assign %.loc45_4, %.loc45_29
 // CHECK:STDOUT:   return

@@ -292,14 +292,14 @@ fn Main() {
 // CHECK:STDOUT:   if %.loc22_8 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   br !if.expr.cont(%p)
+// CHECK:STDOUT:   br !if.expr.result(%p)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %.loc22_25: i32* = address_of %a
-// CHECK:STDOUT:   br !if.expr.cont(%.loc22_25)
+// CHECK:STDOUT:   br !if.expr.result(%.loc22_25)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.cont:
-// CHECK:STDOUT:   %.loc22_5: i32* = block_arg !if.expr.cont
+// CHECK:STDOUT: !if.expr.result:
+// CHECK:STDOUT:   %.loc22_5: i32* = block_arg !if.expr.result
 // CHECK:STDOUT:   %.loc22_3: i32 = dereference %.loc22_5
 // CHECK:STDOUT:   %.loc22_31: i32 = int_value 10
 // CHECK:STDOUT:   assign %.loc22_3, %.loc22_31

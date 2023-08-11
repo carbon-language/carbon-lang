@@ -136,13 +136,13 @@ fn If(b: bool) {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %.loc13_6.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc13_6.2: () = call @F()
-// CHECK:STDOUT:   br !if.cont
+// CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %.loc15: () = call @G()
-// CHECK:STDOUT:   br !if.cont
+// CHECK:STDOUT:   br !if.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.cont:
+// CHECK:STDOUT: !if.done:
 // CHECK:STDOUT:   %.loc17: () = call @H()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

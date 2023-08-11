@@ -147,14 +147,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %.loc11_24: i32 = call @A()
-// CHECK:STDOUT:   br !if.expr.cont(%.loc11_24)
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_24)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %.loc11_33: i32 = call @B()
-// CHECK:STDOUT:   br !if.expr.cont(%.loc11_33)
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_33)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.cont:
-// CHECK:STDOUT:   %.loc11_10: i32 = block_arg !if.expr.cont
+// CHECK:STDOUT: !if.expr.result:
+// CHECK:STDOUT:   %.loc11_10: i32 = block_arg !if.expr.result
 // CHECK:STDOUT:   return %.loc11_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -165,13 +165,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %.loc15_25: i32 = call @A()
-// CHECK:STDOUT:   br !if.expr.cont(%.loc15_25)
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_25)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %.loc15_34: i32 = call @B()
-// CHECK:STDOUT:   br !if.expr.cont(%.loc15_34)
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_34)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.cont:
-// CHECK:STDOUT:   %.loc15_10: i32 = block_arg !if.expr.cont
+// CHECK:STDOUT: !if.expr.result:
+// CHECK:STDOUT:   %.loc15_10: i32 = block_arg !if.expr.result
 // CHECK:STDOUT:   return %.loc15_10
 // CHECK:STDOUT: }

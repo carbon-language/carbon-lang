@@ -135,32 +135,32 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8_20:
 // CHECK:STDOUT:   %.loc8_30: i32 = int_value 1
-// CHECK:STDOUT:   br !if.expr.cont.loc8_20(%.loc8_30)
+// CHECK:STDOUT:   br !if.expr.result.loc8_20(%.loc8_30)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc8_20:
 // CHECK:STDOUT:   %.loc8_37: i32 = int_value 2
-// CHECK:STDOUT:   br !if.expr.cont.loc8_20(%.loc8_37)
+// CHECK:STDOUT:   br !if.expr.result.loc8_20(%.loc8_37)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.cont.loc8_20:
-// CHECK:STDOUT:   %.loc8_20: i32 = block_arg !if.expr.cont.loc8_20
-// CHECK:STDOUT:   br !if.expr.cont.loc8_10(%.loc8_20)
+// CHECK:STDOUT: !if.expr.result.loc8_20:
+// CHECK:STDOUT:   %.loc8_20: i32 = block_arg !if.expr.result.loc8_20
+// CHECK:STDOUT:   br !if.expr.result.loc8_10(%.loc8_20)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc8_10:
 // CHECK:STDOUT:   if %c br !if.expr.then.loc8_44 else br !if.expr.else.loc8_44
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8_44:
 // CHECK:STDOUT:   %.loc8_54: i32 = int_value 3
-// CHECK:STDOUT:   br !if.expr.cont.loc8_44(%.loc8_54)
+// CHECK:STDOUT:   br !if.expr.result.loc8_44(%.loc8_54)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc8_44:
 // CHECK:STDOUT:   %.loc8_61: i32 = int_value 4
-// CHECK:STDOUT:   br !if.expr.cont.loc8_44(%.loc8_61)
+// CHECK:STDOUT:   br !if.expr.result.loc8_44(%.loc8_61)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.cont.loc8_44:
-// CHECK:STDOUT:   %.loc8_44: i32 = block_arg !if.expr.cont.loc8_44
-// CHECK:STDOUT:   br !if.expr.cont.loc8_10(%.loc8_44)
+// CHECK:STDOUT: !if.expr.result.loc8_44:
+// CHECK:STDOUT:   %.loc8_44: i32 = block_arg !if.expr.result.loc8_44
+// CHECK:STDOUT:   br !if.expr.result.loc8_10(%.loc8_44)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.cont.loc8_10:
-// CHECK:STDOUT:   %.loc8_10: i32 = block_arg !if.expr.cont.loc8_10
+// CHECK:STDOUT: !if.expr.result.loc8_10:
+// CHECK:STDOUT:   %.loc8_10: i32 = block_arg !if.expr.result.loc8_10
 // CHECK:STDOUT:   return %.loc8_10
 // CHECK:STDOUT: }

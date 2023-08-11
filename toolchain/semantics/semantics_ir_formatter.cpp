@@ -263,7 +263,8 @@ class NodeNamer {
                                   *this, parse_node, std::move(name))};
   }
 
-  // Finds and adds a suitable block label for the given semantics node.
+  // Finds and adds a suitable block label for the given semantics node that
+  // represents some kind of branch.
   auto AddBlockLabel(ScopeIndex scope_idx, SemanticsNodeBlockId block_id,
                      SemanticsNode node) -> void {
     llvm::StringRef name;
@@ -277,7 +278,7 @@ class NodeNamer {
             name = "if.expr.else";
             break;
           case SemanticsNodeKind::BranchWithArg:
-            name = "if.expr.cont";
+            name = "if.expr.result";
             break;
           default:
             break;
@@ -298,15 +299,15 @@ class NodeNamer {
         break;
 
       case ParseNodeKind::IfStatement:
-        name = "if.cont";
+        name = "if.done";
         break;
 
       case ParseNodeKind::ShortCircuitOperand: {
         bool is_rhs = node.kind() == SemanticsNodeKind::BranchIf;
         bool is_and = tokenized_buffer_.GetKind(parse_tree_.node_token(
                           node.parse_node())) == TokenKind::And;
-        name = is_and ? (is_rhs ? "and.rhs" : "and.cont")
-                      : (is_rhs ? "or.rhs" : "or.cont");
+        name = is_and ? (is_rhs ? "and.rhs" : "and.result")
+                      : (is_rhs ? "or.rhs" : "or.result");
         break;
       }
 
