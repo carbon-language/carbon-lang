@@ -15,7 +15,8 @@ fn Main() -> i32 {
 // ARGS: --trace_file=- --trace_phase=timing %s
 // AUTOUPDATE
 
-// CHECK:STDOUT: ********** printing timing **********
+// CHECK:STDOUT: * * * * * * * * * *  printing timing  * * * * * * * * * *
+// CHECK:STDOUT: ---------------------------------------------------------
 // CHECK:STDOUT: Time elapsed in ExecProgram: {{\d+}}ms
 // CHECK:STDOUT: Time elapsed in AnalyzeProgram: {{\d+}}ms
 // CHECK:STDOUT: Time elapsed in AddPrelude: {{\d+}}ms

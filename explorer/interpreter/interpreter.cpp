@@ -502,6 +502,11 @@ auto Interpreter::EvalAssociatedConstant(
 auto Interpreter::InstantiateType(Nonnull<const Value*> type,
                                   SourceLocation source_loc)
     -> ErrorOr<Nonnull<const Value*>> {
+  if (trace_stream_->is_enabled()) {
+    trace_stream_->Start() << "instantiating type `" << *type << "` ("
+                           << source_loc << ")\n";
+  }
+
   switch (type->kind()) {
     case Value::Kind::VariableType: {
       CARBON_ASSIGN_OR_RETURN(
@@ -2568,7 +2573,7 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
                    Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int> {
   Interpreter interpreter(Phase::RunTime, arena, trace_stream, print_stream);
   if (trace_stream->is_enabled()) {
-    *trace_stream << "********** initializing globals **********\n";
+    trace_stream->SubHeading("initializing globals");
   }
 
   SetFileContext set_file_ctx(*trace_stream,
@@ -2580,7 +2585,7 @@ auto InterpProgram(const AST& ast, Nonnull<Arena*> arena,
   }
 
   if (trace_stream->is_enabled()) {
-    *trace_stream << "********** calling main function **********\n";
+    trace_stream->SubHeading("calling main function");
   }
 
   CARBON_CHECK(ast.main_call);
