@@ -119,7 +119,7 @@ TEST_F(DriverTest, CompileCommandErrors) {
   auto empty_file = CreateTestFile("");
   EXPECT_FALSE(
       driver_.RunCommand({"compile", "--output=/dev/empty", empty_file}));
-  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR: "));
+  EXPECT_THAT(test_error_stream_.TakeStr(), ContainsRegex("ERROR: .*/dev/empty.*"));
 }
 
 TEST_F(DriverTest, DumpTokens) {
