@@ -503,10 +503,12 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     CARBON_VLOG() << "Writing output to: " << output_file_name << "\n";
 
     std::error_code ec;
-    llvm::raw_fd_ostream output_file(options.output_file_name, ec,
+    llvm::raw_fd_ostream output_file(output_file_name, ec,
                                      llvm::sys::fs::OF_None);
     if (ec) {
-      error_stream_ << "ERROR: Could not open file: " << ec.message() << "\n";
+      error_stream_ << "ERROR: Could not open output file '"
+                    << output_file_name << "': " << ec.message()
+                    << "\n";
       return false;
     }
     if (options.asm_output) {
