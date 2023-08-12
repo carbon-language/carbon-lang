@@ -445,10 +445,6 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
         continue;
       }
 
-      case SemanticsNodeKind::Call:
-        // TODO: This should eventually be Initializing.
-        return SemanticsExpressionCategory::Value;
-
       case SemanticsNodeKind::BindName: {
         auto [name_id, value_id] = node.GetAsBindName();
         node_id = value_id;
@@ -496,6 +492,7 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
         // struct/tuple value construction.
         return SemanticsExpressionCategory::Value;
 
+      case SemanticsNodeKind::Call:
       case SemanticsNodeKind::InitializeFrom:
         return SemanticsExpressionCategory::Initializing;
 

@@ -136,6 +136,6 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:   %.loc7_39.1: i32 = int_literal 6
 // CHECK:STDOUT:   %.loc7_39.2: i32 = stub_reference %.loc7_39.1
 // CHECK:STDOUT:   %.loc7_40.1: ((i32, i32), i32) = tuple_value (%.loc7_36.2, %.loc7_39.2)
-// CHECK:STDOUT:   %.loc7_40.2: ((i32, i32), i32) = initialize_from %.loc7_40.1, %x
+// CHECK:STDOUT:   %.loc7_40.2: ((i32, i32), i32) = initialize_from %.loc7_40.1 to %x
 // CHECK:STDOUT:   assign %x, %.loc7_40.2
 // CHECK:STDOUT: }

@@ -44,6 +44,6 @@ var x: i32 = 0;
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: i32 = var
 // CHECK:STDOUT:   %.loc7_14.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc7_14.2: i32 = initialize_from %.loc7_14.1, %x
+// CHECK:STDOUT:   %.loc7_14.2: i32 = initialize_from %.loc7_14.1 to %x
 // CHECK:STDOUT:   assign %x, %.loc7_14.2
 // CHECK:STDOUT: }

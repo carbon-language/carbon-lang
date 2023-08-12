@@ -78,6 +78,6 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %.loc8_16: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc8_14: i32 = stub_reference %.loc8_16
 // CHECK:STDOUT:   %.loc8_17.1: {.a: i32} = struct_value (%.loc8_14)
-// CHECK:STDOUT:   %.loc8_17.2: {.a: i32} = initialize_from %.loc8_17.1, %return
+// CHECK:STDOUT:   %.loc8_17.2: {.a: i32} = initialize_from %.loc8_17.1 to %return
 // CHECK:STDOUT:   return %.loc8_17.2
 // CHECK:STDOUT: }

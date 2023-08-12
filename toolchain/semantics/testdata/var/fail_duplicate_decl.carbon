@@ -78,11 +78,11 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.loc9: i32 = var
 // CHECK:STDOUT:   %.loc9_16.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc9_16.2: i32 = initialize_from %.loc9_16.1, %x.loc9
+// CHECK:STDOUT:   %.loc9_16.2: i32 = initialize_from %.loc9_16.1 to %x.loc9
 // CHECK:STDOUT:   assign %x.loc9, %.loc9_16.2
 // CHECK:STDOUT:   %x.loc16: i32 = var
 // CHECK:STDOUT:   %.loc16_16.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc16_16.2: i32 = initialize_from %.loc16_16.1, %x.loc16
+// CHECK:STDOUT:   %.loc16_16.2: i32 = initialize_from %.loc16_16.1 to %x.loc16
 // CHECK:STDOUT:   assign %x.loc16, %.loc16_16.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -51,6 +51,6 @@ var y: i32 = x.b;
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: i32 = var
 // CHECK:STDOUT:   %y: i32 = var
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %y
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %y
 // CHECK:STDOUT:   assign %y, %.1
 // CHECK:STDOUT: }

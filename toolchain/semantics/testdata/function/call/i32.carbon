@@ -47,8 +47,7 @@ fn Main() {
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int0, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+10, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block7, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+12, arg1: node+8, type: type0},
-// CHECK:STDOUT:   {kind: Assign, arg0: node+8, arg1: node+13},
+// CHECK:STDOUT:   {kind: Assign, arg0: node+8, arg1: node+12},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -81,10 +80,10 @@ fn Main() {
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
-// CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+11,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -96,7 +95,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Echo(%a: i32) -> %return: i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_9.1: i32 = value_binding %a
-// CHECK:STDOUT:   %.loc7_9.2: i32 = initialize_from %.loc7_9.1, %return
+// CHECK:STDOUT:   %.loc7_9.2: i32 = initialize_from %.loc7_9.1 to %return
 // CHECK:STDOUT:   return %.loc7_9.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -105,8 +104,7 @@ fn Main() {
 // CHECK:STDOUT:   %b: i32 = var
 // CHECK:STDOUT:   %.loc12_21.1: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc12_21.2: i32 = stub_reference %.loc12_21.1
-// CHECK:STDOUT:   %.loc12_20.1: i32 = call @Echo(%.loc12_21.2)
-// CHECK:STDOUT:   %.loc12_20.2: i32 = initialize_from %.loc12_20.1, %b
-// CHECK:STDOUT:   assign %b, %.loc12_20.2
+// CHECK:STDOUT:   %.loc12_20: i32 = call @Echo(%.loc12_21.2) to %b
+// CHECK:STDOUT:   assign %b, %.loc12_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

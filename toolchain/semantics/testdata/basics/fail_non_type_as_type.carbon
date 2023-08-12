@@ -47,6 +47,6 @@ var x: type = 42;
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: type = var
 // CHECK:STDOUT:   %.loc10: i32 = int_literal 42
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %x
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %x
 // CHECK:STDOUT:   assign %x, %.1
 // CHECK:STDOUT: }

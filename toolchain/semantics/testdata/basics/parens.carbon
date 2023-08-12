@@ -51,6 +51,6 @@ var test_i32: i32 = ((1) + (2));
 // CHECK:STDOUT:   %.loc7_23: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc7_29: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc7_26.1: i32 = add %.loc7_23, %.loc7_29
-// CHECK:STDOUT:   %.loc7_26.2: i32 = initialize_from %.loc7_26.1, %test_i32
+// CHECK:STDOUT:   %.loc7_26.2: i32 = initialize_from %.loc7_26.1 to %test_i32
 // CHECK:STDOUT:   assign %test_i32, %.loc7_26.2
 // CHECK:STDOUT: }

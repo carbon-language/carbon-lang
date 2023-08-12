@@ -44,6 +44,7 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+6, type: type0},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -62,6 +63,7 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -81,5 +83,6 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14_14.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc14_14.2: () = call @Wiz()
+// CHECK:STDOUT:   %.loc14_14.3: () = materialize_temporary %.loc14_14.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

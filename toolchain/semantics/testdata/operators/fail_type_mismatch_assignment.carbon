@@ -71,10 +71,10 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a: i32 = var
 // CHECK:STDOUT:   %.loc8_16.1: i32 = int_literal 3
-// CHECK:STDOUT:   %.loc8_16.2: i32 = initialize_from %.loc8_16.1, %a
+// CHECK:STDOUT:   %.loc8_16.2: i32 = initialize_from %.loc8_16.1 to %a
 // CHECK:STDOUT:   assign %a, %.loc8_16.2
 // CHECK:STDOUT:   %.loc12: f64 = real_literal 56e-1
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %a
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %a
 // CHECK:STDOUT:   assign %a, %.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

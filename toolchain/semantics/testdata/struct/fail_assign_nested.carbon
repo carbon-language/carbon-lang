@@ -80,6 +80,6 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   %.loc10_23: {} = stub_reference %.loc10_26
 // CHECK:STDOUT:   %.loc10_27.1: type = struct_type {.b: {}}
 // CHECK:STDOUT:   %.loc10_27.2: {.b: {}} = struct_value (%.loc10_23)
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %x
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %x
 // CHECK:STDOUT:   assign %x, %.1
 // CHECK:STDOUT: }

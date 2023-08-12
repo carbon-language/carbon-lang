@@ -61,7 +61,7 @@ var y: i32 = x;
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT:   %y: i32 = var
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %y
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %y
 // CHECK:STDOUT:   assign %y, %.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

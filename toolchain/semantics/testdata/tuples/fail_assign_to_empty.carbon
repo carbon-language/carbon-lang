@@ -56,6 +56,6 @@ var x: () = (66);
 // CHECK:STDOUT:   %.loc10_9.2: () = tuple_value ()
 // CHECK:STDOUT:   %x: () = var
 // CHECK:STDOUT:   %.loc10_14: i32 = int_literal 66
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %x
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %x
 // CHECK:STDOUT:   assign %x, %.1
 // CHECK:STDOUT: }

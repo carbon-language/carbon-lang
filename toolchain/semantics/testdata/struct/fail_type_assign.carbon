@@ -61,6 +61,6 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   %.loc10_16: type = struct_type {.a: i32}
 // CHECK:STDOUT:   %x: {.a: i32} = var
 // CHECK:STDOUT:   %.loc10_28: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %x
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %x
 // CHECK:STDOUT:   assign %x, %.1
 // CHECK:STDOUT: }

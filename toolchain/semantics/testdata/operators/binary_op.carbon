@@ -62,6 +62,6 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %.loc8_10: i32 = int_literal 12
 // CHECK:STDOUT:   %.loc8_15: i32 = int_literal 34
 // CHECK:STDOUT:   %.loc8_13.1: i32 = add %.loc8_10, %.loc8_15
-// CHECK:STDOUT:   %.loc8_13.2: i32 = initialize_from %.loc8_13.1, %return
+// CHECK:STDOUT:   %.loc8_13.2: i32 = initialize_from %.loc8_13.1 to %return
 // CHECK:STDOUT:   return %.loc8_13.2
 // CHECK:STDOUT: }

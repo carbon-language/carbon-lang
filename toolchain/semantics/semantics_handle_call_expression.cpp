@@ -44,9 +44,17 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
   // TODO: Propagate return types from callable.
   SemanticsTypeId type_id = callable.return_type_id;
   // For functions with an implicit return type, set the return type to empty
-  // tuple type.
+  // tuple type. Otherwise, add a location for the return slot to the arguments.
+  // The actual return slot location will be filled in by
+  // `SemanticsContext::MarkInitializerFor`.
   if (type_id == SemanticsTypeId::Invalid) {
     type_id = context.CanonicalizeTupleType(call_expr_parse_node, {});
+  } else {
+    if (refs_id == SemanticsNodeBlockId::Empty) {
+      refs_id = context.semantics_ir().AddNodeBlock();
+    }
+    context.semantics_ir().GetNodeBlock(refs_id).push_back(
+        SemanticsNodeId::Invalid);
   }
   auto call_node_id = context.AddNode(SemanticsNode::Call::Make(
       call_expr_parse_node, type_id, refs_id, function_id));

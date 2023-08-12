@@ -95,6 +95,6 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %.loc9_11.2: const (const i32*) = value_binding %.loc9_11.1
 // CHECK:STDOUT:   %.loc9_10.1: const i32 = dereference %.loc9_11.2
 // CHECK:STDOUT:   %.loc9_10.2: const i32 = value_binding %.loc9_10.1
-// CHECK:STDOUT:   %.loc9_10.3: const i32 = initialize_from %.loc9_10.2, %return
+// CHECK:STDOUT:   %.loc9_10.3: const i32 = initialize_from %.loc9_10.2 to %return
 // CHECK:STDOUT:   return %.loc9_10.3
 // CHECK:STDOUT: }

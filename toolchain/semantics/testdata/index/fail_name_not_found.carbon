@@ -63,7 +63,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b: i32 = var
 // CHECK:STDOUT:   %.loc11: i32 = int_literal 0
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %b
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %b
 // CHECK:STDOUT:   assign %b, %.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

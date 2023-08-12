@@ -51,8 +51,10 @@ fn If(b: bool) {
 // CHECK:STDOUT:   {kind: Branch, arg0: block8},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type1},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+11, type: type1},
 // CHECK:STDOUT:   {kind: Branch, arg0: block8},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type1},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+14, type: type1},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -85,10 +87,12 @@ fn If(b: bool) {
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:     node+15,
+// CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -116,9 +120,11 @@ fn If(b: bool) {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %.loc12_6.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc12_6.2: () = call @F()
+// CHECK:STDOUT:   %.loc12_6.3: () = materialize_temporary %.loc12_6.2
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.loc14: () = call @G()
+// CHECK:STDOUT:   %.loc14_4.1: () = call @G()
+// CHECK:STDOUT:   %.loc14_4.2: () = materialize_temporary %.loc14_4.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

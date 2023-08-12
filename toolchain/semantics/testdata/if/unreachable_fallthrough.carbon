@@ -92,11 +92,11 @@ fn If(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %.loc9_12.1: i32 = int_literal 1
-// CHECK:STDOUT:   %.loc9_12.2: i32 = initialize_from %.loc9_12.1, %return
+// CHECK:STDOUT:   %.loc9_12.2: i32 = initialize_from %.loc9_12.1 to %return
 // CHECK:STDOUT:   return %.loc9_12.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %.loc11_12.1: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc11_12.2: i32 = initialize_from %.loc11_12.1, %return
+// CHECK:STDOUT:   %.loc11_12.2: i32 = initialize_from %.loc11_12.1 to %return
 // CHECK:STDOUT:   return %.loc11_12.2
 // CHECK:STDOUT: }

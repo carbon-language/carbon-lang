@@ -59,6 +59,6 @@ fn Main() -> i32 {
 // CHECK:STDOUT: fn @Main() -> %return: i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11: f64 = real_literal 10e-1
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %return
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %return
 // CHECK:STDOUT:   return %.1
 // CHECK:STDOUT: }

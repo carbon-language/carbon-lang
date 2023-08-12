@@ -86,6 +86,6 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p: const i32**) -> %return: i32** {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %return
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %return
 // CHECK:STDOUT:   return %.1
 // CHECK:STDOUT: }

@@ -85,6 +85,6 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstMismatch(%p: const {}*) -> %return: const ({}*) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %return
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %return
 // CHECK:STDOUT:   return %.1
 // CHECK:STDOUT: }

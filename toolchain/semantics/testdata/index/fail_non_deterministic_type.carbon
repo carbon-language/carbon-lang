@@ -116,13 +116,13 @@ var c: i32 = a[b];
 // CHECK:STDOUT:   %.loc7_25.1: i32 = int_literal 3
 // CHECK:STDOUT:   %.loc7_25.2: i32 = stub_reference %.loc7_25.1
 // CHECK:STDOUT:   %.loc7_26.1: (i32, i32) = tuple_value (%.loc7_22.2, %.loc7_25.2)
-// CHECK:STDOUT:   %.loc7_26.2: (i32, i32) = initialize_from %.loc7_26.1, %a
+// CHECK:STDOUT:   %.loc7_26.2: (i32, i32) = initialize_from %.loc7_26.1 to %a
 // CHECK:STDOUT:   assign %a, %.loc7_26.2
 // CHECK:STDOUT:   %b: i32 = var
 // CHECK:STDOUT:   %.loc8_14.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc8_14.2: i32 = initialize_from %.loc8_14.1, %b
+// CHECK:STDOUT:   %.loc8_14.2: i32 = initialize_from %.loc8_14.1 to %b
 // CHECK:STDOUT:   assign %b, %.loc8_14.2
 // CHECK:STDOUT:   %c: i32 = var
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %c
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %c
 // CHECK:STDOUT:   assign %c, %.1
 // CHECK:STDOUT: }

@@ -65,11 +65,11 @@ var y: () = x;
 // CHECK:STDOUT:   %.loc7_9.2: () = tuple_value ()
 // CHECK:STDOUT:   %x: () = var
 // CHECK:STDOUT:   %.loc7_14.1: () = tuple_value ()
-// CHECK:STDOUT:   %.loc7_14.2: () = initialize_from %.loc7_14.1, %x
+// CHECK:STDOUT:   %.loc7_14.2: () = initialize_from %.loc7_14.1 to %x
 // CHECK:STDOUT:   assign %x, %.loc7_14.2
 // CHECK:STDOUT:   %.loc8: () = tuple_value ()
 // CHECK:STDOUT:   %y: () = var
 // CHECK:STDOUT:   %.loc7_5.1: () = value_binding %x
-// CHECK:STDOUT:   %.loc7_5.2: () = initialize_from %.loc7_5.1, %y
+// CHECK:STDOUT:   %.loc7_5.2: () = initialize_from %.loc7_5.1 to %y
 // CHECK:STDOUT:   assign %y, %.loc7_5.2
 // CHECK:STDOUT: }

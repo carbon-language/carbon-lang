@@ -103,11 +103,11 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc7_43: i32 = int_literal 2
 // CHECK:STDOUT:   %.loc7_41: i32 = stub_reference %.loc7_43
 // CHECK:STDOUT:   %.loc7_44.1: {.a: i32, .b: i32} = struct_value (%.loc7_33, %.loc7_41)
-// CHECK:STDOUT:   %.loc7_44.2: {.a: i32, .b: i32} = initialize_from %.loc7_44.1, %x
+// CHECK:STDOUT:   %.loc7_44.2: {.a: i32, .b: i32} = initialize_from %.loc7_44.1 to %x
 // CHECK:STDOUT:   assign %x, %.loc7_44.2
 // CHECK:STDOUT:   %.loc8: type = struct_type {.a: i32, .b: i32}
 // CHECK:STDOUT:   %y: {.a: i32, .b: i32} = var
 // CHECK:STDOUT:   %.loc7_5.1: {.a: i32, .b: i32} = value_binding %x
-// CHECK:STDOUT:   %.loc7_5.2: {.a: i32, .b: i32} = initialize_from %.loc7_5.1, %y
+// CHECK:STDOUT:   %.loc7_5.2: {.a: i32, .b: i32} = initialize_from %.loc7_5.1 to %y
 // CHECK:STDOUT:   assign %y, %.loc7_5.2
 // CHECK:STDOUT: }

@@ -79,7 +79,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n: i32 = var
 // CHECK:STDOUT:   %.loc8_16.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc8_16.2: i32 = initialize_from %.loc8_16.1, %n
+// CHECK:STDOUT:   %.loc8_16.2: i32 = initialize_from %.loc8_16.1 to %n
 // CHECK:STDOUT:   assign %n, %.loc8_16.2
 // CHECK:STDOUT:   %.loc9_13.1: type = ptr_type i32
 // CHECK:STDOUT:   %.loc9_13.2: i32* = address_of %n
@@ -87,6 +87,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc9_11: i32* = address_of %.loc9_12
 // CHECK:STDOUT:   %.loc9_10.1: i32 = dereference %.loc9_11
 // CHECK:STDOUT:   %.loc9_10.2: i32 = value_binding %.loc9_10.1
-// CHECK:STDOUT:   %.loc9_10.3: i32 = initialize_from %.loc9_10.2, %return
+// CHECK:STDOUT:   %.loc9_10.3: i32 = initialize_from %.loc9_10.2 to %return
 // CHECK:STDOUT:   return %.loc9_10.3
 // CHECK:STDOUT: }

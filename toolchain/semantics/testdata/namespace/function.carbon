@@ -48,6 +48,7 @@ fn Bar() {
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
 // CHECK:STDOUT:   {kind: TupleType, arg0: typeBlock0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+7, type: type0},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -69,6 +70,7 @@ fn Bar() {
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+8,
+// CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -93,5 +95,6 @@ fn Bar() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc17_10.1: type = tuple_type ()
 // CHECK:STDOUT:   %.loc17_10.2: () = call @Baz.2()
+// CHECK:STDOUT:   %.loc17_10.3: () = materialize_temporary %.loc17_10.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

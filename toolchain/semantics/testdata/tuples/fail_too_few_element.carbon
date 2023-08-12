@@ -92,6 +92,6 @@ var x: (i32, i32) = (2, );
 // CHECK:STDOUT:   %.loc10_22.2: i32 = stub_reference %.loc10_22.1
 // CHECK:STDOUT:   %.loc10_25.1: type = tuple_type (i32)
 // CHECK:STDOUT:   %.loc10_25.2: (i32,) = tuple_value (%.loc10_22.2)
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %x
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %x
 // CHECK:STDOUT:   assign %x, %.1
 // CHECK:STDOUT: }

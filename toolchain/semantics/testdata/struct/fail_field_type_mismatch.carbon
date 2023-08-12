@@ -76,6 +76,6 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:   %.loc10_24: f64 = stub_reference %.loc10_26
 // CHECK:STDOUT:   %.loc10_29.1: type = struct_type {.b: f64}
 // CHECK:STDOUT:   %.loc10_29.2: {.b: f64} = struct_value (%.loc10_24)
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %x
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %x
 // CHECK:STDOUT:   assign %x, %.1
 // CHECK:STDOUT: }

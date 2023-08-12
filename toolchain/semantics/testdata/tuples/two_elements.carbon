@@ -112,13 +112,13 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %.loc7_25.1: i32 = int_literal 102
 // CHECK:STDOUT:   %.loc7_25.2: i32 = stub_reference %.loc7_25.1
 // CHECK:STDOUT:   %.loc7_28.1: (i32, i32) = tuple_value (%.loc7_22.2, %.loc7_25.2)
-// CHECK:STDOUT:   %.loc7_28.2: (i32, i32) = initialize_from %.loc7_28.1, %x
+// CHECK:STDOUT:   %.loc7_28.2: (i32, i32) = initialize_from %.loc7_28.1 to %x
 // CHECK:STDOUT:   assign %x, %.loc7_28.2
 // CHECK:STDOUT:   %.loc8_9: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_14: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_17: (type, type) = tuple_value (%.loc8_9, %.loc8_14)
 // CHECK:STDOUT:   %y: (i32, i32) = var
 // CHECK:STDOUT:   %.loc7_5.1: (i32, i32) = value_binding %x
-// CHECK:STDOUT:   %.loc7_5.2: (i32, i32) = initialize_from %.loc7_5.1, %y
+// CHECK:STDOUT:   %.loc7_5.2: (i32, i32) = initialize_from %.loc7_5.1 to %y
 // CHECK:STDOUT:   assign %y, %.loc7_5.2
 // CHECK:STDOUT: }

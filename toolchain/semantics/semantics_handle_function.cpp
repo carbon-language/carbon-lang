@@ -115,18 +115,20 @@ auto SemanticsHandleFunctionIntroducer(SemanticsContext& context,
 
 auto SemanticsHandleReturnType(SemanticsContext& context,
                                ParseTree::Node parse_node) -> bool {
+  // TODO: Like the function parameters, the return slot and any conversion
+  // nodes needed for its type are added to an unreferenced node block. We
+  // should either stop constructing this block or store it somewhere.
+  //
+  // See also SemanticsHandleParameterList.
+  context.node_block_stack().Push();
+
   // Propagate the type expression.
   auto [type_parse_node, type_node_id] =
       context.node_stack().PopExpressionWithParseNode();
   auto type_id = context.ExpressionAsType(type_parse_node, type_node_id);
-  // TODO: Like the function parameters, the return slot is added to an
-  // unreferenced node block. We should either stop constructing this block or
-  // store it somewhere.
-  //
-  // See also SemanticsHandleParameterList.
-  context.node_block_stack().Push();
   context.AddNodeAndPush(parse_node,
                          SemanticsNode::VarStorage::Make(parse_node, type_id));
+
   context.node_block_stack().Pop();
   return true;
 }

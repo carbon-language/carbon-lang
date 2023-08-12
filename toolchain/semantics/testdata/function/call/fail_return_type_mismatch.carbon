@@ -43,7 +43,7 @@ fn Run() {
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str2, arg1: node+6, type: type1},
-// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
+// CHECK:STDOUT:   {kind: Call, arg0: block5, arg1: function0, type: type0},
 // CHECK:STDOUT:   {kind: InitializeFrom, arg0: nodeError, arg1: node+6, type: typeError},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+6, arg1: node+9},
 // CHECK:STDOUT:   {kind: Return},
@@ -71,6 +71,9 @@ fn Run() {
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node<invalid>,
+// CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
@@ -81,15 +84,15 @@ fn Run() {
 // CHECK:STDOUT: fn @Foo() -> %return: f64 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_26.1: f64 = real_literal 10e-1
-// CHECK:STDOUT:   %.loc7_26.2: f64 = initialize_from %.loc7_26.1, %return
+// CHECK:STDOUT:   %.loc7_26.2: f64 = initialize_from %.loc7_26.1 to %return
 // CHECK:STDOUT:   return %.loc7_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: i32 = var
-// CHECK:STDOUT:   %.loc13: f64 = call @Foo()
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %x
+// CHECK:STDOUT:   %.loc13: f64 = call @Foo() to invalid
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %x
 // CHECK:STDOUT:   assign %x, %.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

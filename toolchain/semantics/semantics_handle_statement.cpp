@@ -10,10 +10,7 @@ namespace Carbon {
 auto SemanticsHandleExpressionStatement(SemanticsContext& context,
                                         ParseTree::Node /*parse_node*/)
     -> bool {
-  // Pop the expression without investigating its contents.
-  // TODO: This will probably eventually need to do some "do not discard"
-  // analysis.
-  context.node_stack().PopExpression();
+  context.HandleDiscardedExpression(context.node_stack().PopExpression());
   return true;
 }
 

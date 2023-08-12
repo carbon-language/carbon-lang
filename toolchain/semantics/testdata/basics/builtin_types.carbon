@@ -82,17 +82,17 @@ var test_type: type = i32;
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %test_i32: i32 = var
 // CHECK:STDOUT:   %.loc7_21.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc7_21.2: i32 = initialize_from %.loc7_21.1, %test_i32
+// CHECK:STDOUT:   %.loc7_21.2: i32 = initialize_from %.loc7_21.1 to %test_i32
 // CHECK:STDOUT:   assign %test_i32, %.loc7_21.2
 // CHECK:STDOUT:   %test_f64: f64 = var
 // CHECK:STDOUT:   %.loc8_21.1: f64 = real_literal 1e-1
-// CHECK:STDOUT:   %.loc8_21.2: f64 = initialize_from %.loc8_21.1, %test_f64
+// CHECK:STDOUT:   %.loc8_21.2: f64 = initialize_from %.loc8_21.1 to %test_f64
 // CHECK:STDOUT:   assign %test_f64, %.loc8_21.2
 // CHECK:STDOUT:   %test_str: String = var
 // CHECK:STDOUT:   %.loc9_24.1: String = string_literal "Test"
-// CHECK:STDOUT:   %.loc9_24.2: String = initialize_from %.loc9_24.1, %test_str
+// CHECK:STDOUT:   %.loc9_24.2: String = initialize_from %.loc9_24.1 to %test_str
 // CHECK:STDOUT:   assign %test_str, %.loc9_24.2
 // CHECK:STDOUT:   %test_type: type = var
-// CHECK:STDOUT:   %.1: type = initialize_from i32, %test_type
+// CHECK:STDOUT:   %.1: type = initialize_from i32 to %test_type
 // CHECK:STDOUT:   assign %test_type, %.1
 // CHECK:STDOUT: }

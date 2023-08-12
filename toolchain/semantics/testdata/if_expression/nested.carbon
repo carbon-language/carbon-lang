@@ -177,6 +177,6 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc8_10:
 // CHECK:STDOUT:   %.loc8_10.1: i32 = block_arg !if.expr.result.loc8_10
-// CHECK:STDOUT:   %.loc8_10.2: i32 = initialize_from %.loc8_10.1, %return
+// CHECK:STDOUT:   %.loc8_10.2: i32 = initialize_from %.loc8_10.1 to %return
 // CHECK:STDOUT:   return %.loc8_10.2
 // CHECK:STDOUT: }

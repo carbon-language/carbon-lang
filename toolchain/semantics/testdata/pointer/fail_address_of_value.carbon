@@ -40,7 +40,7 @@ fn AddressOfOperator() {
   // CHECK:STDERR:   &(1 + 1);
   // CHECK:STDERR:   ^
   &(1 + 1);
-  // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: Cannot take the address of non-reference expression.
+  // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+3]]:3: Cannot take the address of a temporary object.
   // CHECK:STDERR:   &H().a;
   // CHECK:STDERR:   ^
   &H().a;
@@ -81,9 +81,9 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type1, return_slot: node+4},
 // CHECK:STDOUT:   {name: str3, param_refs: block0, body: {block5}}},
 // CHECK:STDOUT:   {name: str5, param_refs: block0, body: {block9}}},
-// CHECK:STDOUT:   {name: str6, param_refs: block0, body: {block10}}},
-// CHECK:STDOUT:   {name: str7, param_refs: block0, body: {block11}}},
-// CHECK:STDOUT:   {name: str8, param_refs: block0, body: {block12}}},
+// CHECK:STDOUT:   {name: str6, param_refs: block0, body: {block11}}},
+// CHECK:STDOUT:   {name: str7, param_refs: block0, body: {block13}}},
+// CHECK:STDOUT:   {name: str8, param_refs: block0, body: {block14}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   0,
@@ -123,8 +123,8 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:   node+23,
 // CHECK:STDOUT:   node+25,
 // CHECK:STDOUT:   node+31,
-// CHECK:STDOUT:   node+51,
-// CHECK:STDOUT:   node+53,
+// CHECK:STDOUT:   node+52,
+// CHECK:STDOUT:   node+54,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT:   [
@@ -172,33 +172,34 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int5, type: type0},
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+35, arg1: node+36, type: type0},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: node+37, type: type2},
-// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type1},
-// CHECK:STDOUT:   {kind: StructAccess, arg0: node+39, arg1: member0, type: type0},
-// CHECK:STDOUT:   {kind: AddressOf, arg0: node+40, type: type2},
+// CHECK:STDOUT:   {kind: Call, arg0: block10, arg1: function1, type: type1},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+39, type: type1},
+// CHECK:STDOUT:   {kind: StructAccess, arg0: node+40, arg1: member0, type: type0},
+// CHECK:STDOUT:   {kind: AddressOf, arg0: node+41, type: type2},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: true, type: type3},
-// CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+42, type: type3},
-// CHECK:STDOUT:   {kind: AddressOf, arg0: node+43, type: type4},
+// CHECK:STDOUT:   {kind: UnaryOperatorNot, arg0: node+43, type: type3},
+// CHECK:STDOUT:   {kind: AddressOf, arg0: node+44, type: type4},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function4},
-// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
-// CHECK:STDOUT:   {kind: AddressOf, arg0: node+47, type: type2},
+// CHECK:STDOUT:   {kind: Call, arg0: block12, arg1: function0, type: type0},
+// CHECK:STDOUT:   {kind: AddressOf, arg0: node+48, type: type2},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function5},
 // CHECK:STDOUT:   {kind: PointerType, arg0: typeTypeType, type: typeTypeType},
 // CHECK:STDOUT:   {kind: AddressOf, arg0: nodeIntegerType, type: type12},
 // CHECK:STDOUT:   {kind: ConstType, arg0: type0, type: typeTypeType},
 // CHECK:STDOUT:   {kind: PointerType, arg0: type13, type: typeTypeType},
-// CHECK:STDOUT:   {kind: AddressOf, arg0: node+54, type: type12},
+// CHECK:STDOUT:   {kind: AddressOf, arg0: node+55, type: type12},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function6},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int6, type: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+58, type: type0},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+59, type: type0},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int7, type: type0},
-// CHECK:STDOUT:   {kind: StubReference, arg0: node+60, type: type0},
-// CHECK:STDOUT:   {kind: TupleValue, arg0: block13, type: type9},
+// CHECK:STDOUT:   {kind: StubReference, arg0: node+61, type: type0},
+// CHECK:STDOUT:   {kind: TupleValue, arg0: block15, type: type9},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int8, type: type0},
-// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+62, arg1: node+63, type: type0},
-// CHECK:STDOUT:   {kind: AddressOf, arg0: node+64, type: type2},
+// CHECK:STDOUT:   {kind: TupleIndex, arg0: node+63, arg1: node+64, type: type0},
+// CHECK:STDOUT:   {kind: AddressOf, arg0: node+65, type: type2},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -214,9 +215,9 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+34,
-// CHECK:STDOUT:     node+46,
-// CHECK:STDOUT:     node+50,
-// CHECK:STDOUT:     node+57,
+// CHECK:STDOUT:     node+47,
+// CHECK:STDOUT:     node+51,
+// CHECK:STDOUT:     node+58,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+2,
@@ -274,22 +275,28 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:     node+43,
 // CHECK:STDOUT:     node+44,
 // CHECK:STDOUT:     node+45,
+// CHECK:STDOUT:     node+46,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+47,
+// CHECK:STDOUT:     node+40,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+48,
 // CHECK:STDOUT:     node+49,
+// CHECK:STDOUT:     node+50,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+51,
+// CHECK:STDOUT:     node<invalid>,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+52,
 // CHECK:STDOUT:     node+53,
 // CHECK:STDOUT:     node+54,
 // CHECK:STDOUT:     node+55,
 // CHECK:STDOUT:     node+56,
+// CHECK:STDOUT:     node+57,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+58,
 // CHECK:STDOUT:     node+59,
 // CHECK:STDOUT:     node+60,
 // CHECK:STDOUT:     node+61,
@@ -298,10 +305,11 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:     node+64,
 // CHECK:STDOUT:     node+65,
 // CHECK:STDOUT:     node+66,
+// CHECK:STDOUT:     node+67,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+59,
-// CHECK:STDOUT:     node+61,
+// CHECK:STDOUT:     node+60,
+// CHECK:STDOUT:     node+62,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -356,8 +364,9 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:   %.loc42_9: i32 = int_literal 1
 // CHECK:STDOUT:   %.loc42_7: i32 = add %.loc42_5, %.loc42_9
 // CHECK:STDOUT:   %.loc42_3: i32* = address_of %.loc42_7
-// CHECK:STDOUT:   %.loc46_5: {.a: i32} = call @H()
-// CHECK:STDOUT:   %.loc46_7: i32 = struct_access %.loc46_5, member0
+// CHECK:STDOUT:   %.loc46_5.1: {.a: i32} = call @H() to %.loc46_5.2
+// CHECK:STDOUT:   %.loc46_5.2: {.a: i32} = materialize_temporary %.loc46_5.1
+// CHECK:STDOUT:   %.loc46_7: i32 = struct_access %.loc46_5.2, member0
 // CHECK:STDOUT:   %.loc46_3: i32* = address_of %.loc46_7
 // CHECK:STDOUT:   %.loc50_9: bool = bool_literal true
 // CHECK:STDOUT:   %.loc50_5: bool = not %.loc50_9
@@ -367,7 +376,7 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfCall() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc57_5: i32 = call @G()
+// CHECK:STDOUT:   %.loc57_5: i32 = call @G() to invalid
 // CHECK:STDOUT:   %.loc57_3: i32* = address_of %.loc57_5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

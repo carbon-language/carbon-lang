@@ -60,7 +60,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x: i32 = var
 // CHECK:STDOUT:   %.loc8_16.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc8_16.2: i32 = initialize_from %.loc8_16.1, %x
+// CHECK:STDOUT:   %.loc8_16.2: i32 = initialize_from %.loc8_16.1 to %x
 // CHECK:STDOUT:   assign %x, %.loc8_16.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

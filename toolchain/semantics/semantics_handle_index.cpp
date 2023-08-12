@@ -22,6 +22,7 @@ auto SemanticsHandleIndexExpression(SemanticsContext& context,
   auto index_node_id = context.node_stack().PopExpression();
   auto index_node = context.semantics_ir().GetNode(index_node_id);
   auto name_node_id = context.node_stack().PopExpression();
+  name_node_id = context.MaterializeIfInitializing(name_node_id);
   auto name_node = context.semantics_ir().GetNode(name_node_id);
   auto name_type_id =
       context.semantics_ir().GetTypeAllowBuiltinTypes(name_node.type_id());

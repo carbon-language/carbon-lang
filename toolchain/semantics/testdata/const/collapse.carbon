@@ -89,6 +89,6 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT: fn @F(%p: const i32**) -> %return: const i32** {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_6.1: const i32** = value_binding %p
-// CHECK:STDOUT:   %.loc11_6.2: const i32** = initialize_from %.loc11_6.1, %return
+// CHECK:STDOUT:   %.loc11_6.2: const i32** = initialize_from %.loc11_6.1 to %return
 // CHECK:STDOUT:   return %.loc11_6.2
 // CHECK:STDOUT: }

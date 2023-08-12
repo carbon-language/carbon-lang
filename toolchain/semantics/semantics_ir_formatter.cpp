@@ -335,6 +335,9 @@ class NodeNamer {
     // that it's giving a name to, so we need to do this before assigning
     // fallback names.
     for (auto node_id : semantics_ir_.GetNodeBlock(block_id)) {
+      if (!node_id.is_valid()) {
+        continue;
+      }
       auto node = semantics_ir_.GetNode(node_id);
       switch (node.kind()) {
         case SemanticsNodeKind::BindName: {
@@ -367,6 +370,9 @@ class NodeNamer {
 
     // Sequentially number all remaining values.
     for (auto node_id : semantics_ir_.GetNodeBlock(block_id)) {
+      if (!node_id.is_valid()) {
+        continue;
+      }
       auto node = semantics_ir_.GetNode(node_id);
       if (node.kind() != SemanticsNodeKind::BindName &&
           node.kind().value_kind() != SemanticsNodeValueKind::None) {
@@ -434,6 +440,10 @@ class SemanticsIRFormatter {
     for (const SemanticsNodeId param_id :
          semantics_ir_.GetNodeBlock(fn.param_refs_id)) {
       out_ << sep;
+      if (!param_id.is_valid()) {
+        out_ << "invalid";
+        continue;
+      }
       auto param = semantics_ir_.GetNode(param_id);
       auto [name_id, node_id] = param.GetAsBindName();
       FormatNodeName(node_id);
@@ -591,7 +601,29 @@ class SemanticsIRFormatter {
     out_ << " ";
     auto [args_id, callee_id] = node.GetAsCall();
     FormatArg(callee_id);
-    FormatArg(args_id);
+
+    llvm::ArrayRef<SemanticsNodeId> args = semantics_ir_.GetNodeBlock(args_id);
+
+    bool has_return_slot =
+        semantics_ir_.GetFunction(callee_id).return_slot_id.is_valid();
+    SemanticsNodeId return_slot_id = SemanticsNodeId::Invalid;
+    if (has_return_slot) {
+      return_slot_id = args.back();
+      args = args.drop_back();
+    }
+
+    llvm::ListSeparator sep;
+    out_ << '(';
+    for (auto node_id : args) {
+      out_ << sep;
+      FormatArg(node_id);
+    }
+    out_ << ')';
+
+    if (has_return_slot) {
+      out_ << " to ";
+      FormatArg(return_slot_id);
+    }
   }
 
   template <>
@@ -601,6 +633,16 @@ class SemanticsIRFormatter {
     // name cross-reference IRs, perhaps by the node ID of the import?
     auto [xref_id, node_id] = node.GetAsCrossReference();
     out_ << " " << xref_id << "." << node_id;
+  }
+
+  template <>
+  auto FormatInstructionRHS<SemanticsNode::InitializeFrom>(SemanticsNode node)
+      -> void {
+    auto [init_id, target_id] = node.GetAsInitializeFrom();
+    out_ << " ";
+    FormatArg(init_id);
+    out_ << " to ";
+    FormatArg(target_id);
   }
 
   // StructTypeFields are formatted as part of their StructType.

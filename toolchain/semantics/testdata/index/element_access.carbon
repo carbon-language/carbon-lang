@@ -112,18 +112,18 @@ var c: i32 = b[0];
 // CHECK:STDOUT:   %.loc7_18.1: i32 = int_literal 12
 // CHECK:STDOUT:   %.loc7_18.2: i32 = stub_reference %.loc7_18.1
 // CHECK:STDOUT:   %.loc7_21.1: (i32,) = tuple_value (%.loc7_18.2)
-// CHECK:STDOUT:   %.loc7_21.2: (i32,) = initialize_from %.loc7_21.1, %a
+// CHECK:STDOUT:   %.loc7_21.2: (i32,) = initialize_from %.loc7_21.1 to %a
 // CHECK:STDOUT:   assign %a, %.loc7_21.2
 // CHECK:STDOUT:   %.loc8_9: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_13: (type,) = tuple_value (%.loc8_9)
 // CHECK:STDOUT:   %b: (i32,) = var
 // CHECK:STDOUT:   %.loc7_5.1: (i32,) = value_binding %a
-// CHECK:STDOUT:   %.loc7_5.2: (i32,) = initialize_from %.loc7_5.1, %b
+// CHECK:STDOUT:   %.loc7_5.2: (i32,) = initialize_from %.loc7_5.1 to %b
 // CHECK:STDOUT:   assign %b, %.loc7_5.2
 // CHECK:STDOUT:   %c: i32 = var
 // CHECK:STDOUT:   %.loc9_16: i32 = int_literal 0
 // CHECK:STDOUT:   %.loc9_17.1: i32 = tuple_index %b, %.loc9_16
 // CHECK:STDOUT:   %.loc9_17.2: i32 = value_binding %.loc9_17.1
-// CHECK:STDOUT:   %.loc9_17.3: i32 = initialize_from %.loc9_17.2, %c
+// CHECK:STDOUT:   %.loc9_17.3: i32 = initialize_from %.loc9_17.2 to %c
 // CHECK:STDOUT:   assign %c, %.loc9_17.3
 // CHECK:STDOUT: }

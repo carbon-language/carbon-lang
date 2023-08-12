@@ -104,13 +104,13 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %n: i32 = var
 // CHECK:STDOUT:   %.loc9_18.1: i32 = int_literal 2
-// CHECK:STDOUT:   %.loc9_18.2: i32 = initialize_from %.loc9_18.1, %n
+// CHECK:STDOUT:   %.loc9_18.2: i32 = initialize_from %.loc9_18.1 to %n
 // CHECK:STDOUT:   assign %n, %.loc9_18.2
 // CHECK:STDOUT:   %.loc9_9.1: i32 = value_binding %n
-// CHECK:STDOUT:   %.loc9_9.2: i32 = initialize_from %.loc9_9.1, %return
+// CHECK:STDOUT:   %.loc9_9.2: i32 = initialize_from %.loc9_9.1 to %return
 // CHECK:STDOUT:   return %.loc9_9.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %return
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %return
 // CHECK:STDOUT:   return %.1
 // CHECK:STDOUT: }

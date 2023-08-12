@@ -67,7 +67,7 @@ fn Main() {
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %x: i32 = var
 // CHECK:STDOUT:   %.loc7_14.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc7_14.2: i32 = initialize_from %.loc7_14.1, %x
+// CHECK:STDOUT:   %.loc7_14.2: i32 = initialize_from %.loc7_14.1 to %x
 // CHECK:STDOUT:   assign %x, %.loc7_14.2
 // CHECK:STDOUT:   %.loc9 = fn_decl @Main
 // CHECK:STDOUT: }
@@ -76,7 +76,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %y: i32 = var
 // CHECK:STDOUT:   %.loc7_5.1: i32 = value_binding package.%x
-// CHECK:STDOUT:   %.loc7_5.2: i32 = initialize_from %.loc7_5.1, %y
+// CHECK:STDOUT:   %.loc7_5.2: i32 = initialize_from %.loc7_5.1 to %y
 // CHECK:STDOUT:   assign %y, %.loc7_5.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

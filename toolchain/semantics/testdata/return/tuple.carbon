@@ -61,7 +61,6 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
@@ -69,6 +68,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
@@ -91,7 +91,6 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %.loc8_20: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_23.1: type = tuple_type (type, type)
 // CHECK:STDOUT:   %.loc8_23.2: (type, type) = tuple_value (%.loc8_15, %.loc8_20)
-// CHECK:STDOUT:   %.loc8_23.3: type = tuple_type (i32, i32)
 // CHECK:STDOUT:   %.loc8_1 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -102,6 +101,6 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %.loc9_15.1: i32 = int_literal 35
 // CHECK:STDOUT:   %.loc9_15.2: i32 = stub_reference %.loc9_15.1
 // CHECK:STDOUT:   %.loc9_17.1: (i32, i32) = tuple_value (%.loc9_11.2, %.loc9_15.2)
-// CHECK:STDOUT:   %.loc9_17.2: (i32, i32) = initialize_from %.loc9_17.1, %return
+// CHECK:STDOUT:   %.loc9_17.2: (i32, i32) = initialize_from %.loc9_17.1 to %return
 // CHECK:STDOUT:   return %.loc9_17.2
 // CHECK:STDOUT: }

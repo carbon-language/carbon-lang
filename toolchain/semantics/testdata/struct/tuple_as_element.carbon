@@ -142,13 +142,13 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %.loc7_49: (i32,) = tuple_value (%.loc7_47.2)
 // CHECK:STDOUT:   %.loc7_44: (i32,) = stub_reference %.loc7_49
 // CHECK:STDOUT:   %.loc7_50.1: {.a: i32, .b: (i32,)} = struct_value (%.loc7_36, %.loc7_44)
-// CHECK:STDOUT:   %.loc7_50.2: {.a: i32, .b: (i32,)} = initialize_from %.loc7_50.1, %x
+// CHECK:STDOUT:   %.loc7_50.2: {.a: i32, .b: (i32,)} = initialize_from %.loc7_50.1 to %x
 // CHECK:STDOUT:   assign %x, %.loc7_50.2
 // CHECK:STDOUT:   %.loc8_23: type = stub_reference i32
 // CHECK:STDOUT:   %.loc8_27: (type,) = tuple_value (%.loc8_23)
 // CHECK:STDOUT:   %.loc8_28: type = struct_type {.a: i32, .b: (i32,)}
 // CHECK:STDOUT:   %y: {.a: i32, .b: (i32,)} = var
 // CHECK:STDOUT:   %.loc7_5.1: {.a: i32, .b: (i32,)} = value_binding %x
-// CHECK:STDOUT:   %.loc7_5.2: {.a: i32, .b: (i32,)} = initialize_from %.loc7_5.1, %y
+// CHECK:STDOUT:   %.loc7_5.2: {.a: i32, .b: (i32,)} = initialize_from %.loc7_5.1 to %y
 // CHECK:STDOUT:   assign %y, %.loc7_5.2
 // CHECK:STDOUT: }

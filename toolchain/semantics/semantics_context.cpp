@@ -299,30 +299,43 @@ auto SemanticsContext::ConvertToInitializingExpression(
   }
 }
 
+auto SemanticsContext::MaterializeTemporary(SemanticsNodeId init_id)
+    -> SemanticsNodeId {
+  SemanticsNode init = semantics_ir().GetNode(init_id);
+  CARBON_CHECK(GetSemanticsExpressionCategory(semantics_ir(), init_id) ==
+               SemanticsExpressionCategory::Initializing)
+      << "can only materialize initializing initessions, found " << init;
+
+  auto temporary_id = AddNode(SemanticsNode::MaterializeTemporary::Make(
+      init.parse_node(), init.type_id(), init_id));
+  // TODO: The temporary materialization appears later in the IR than the
+  // initession that initializes it.
+  MarkInitializerFor(init_id, temporary_id);
+  return temporary_id;
+}
+
 auto SemanticsContext::ConvertToValueExpression(SemanticsNodeId expr_id)
     -> SemanticsNodeId {
-  SemanticsNode expr = semantics_ir().GetNode(expr_id);
   switch (GetSemanticsExpressionCategory(semantics_ir(), expr_id)) {
     case SemanticsExpressionCategory::NotExpression:
-      CARBON_FATAL() << "Converting non-expression node " << expr
+      CARBON_FATAL() << "Converting non-expression node "
+                     << semantics_ir().GetNode(expr_id)
                      << " to value expression";
 
     case SemanticsExpressionCategory::Initializing: {
       // TODO: For class types, use an interface to determine how to perform
       // this operation.
-      auto temp_id = AddNode(SemanticsNode::MaterializeTemporary::Make(
-          expr.parse_node(), expr.type_id(), expr_id));
-      // TODO: The temporary materialization appears later in the IR than the
-      // expression that initializes it.
-      MarkInitializerFor(expr_id, temp_id);
+      expr_id = MaterializeTemporary(expr_id);
       [[fallthrough]];
     }
 
     case SemanticsExpressionCategory::DurableReference:
-    case SemanticsExpressionCategory::EphemeralReference:
+    case SemanticsExpressionCategory::EphemeralReference: {
       // TODO: Support types with custom value representations.
+      SemanticsNode expr = semantics_ir().GetNode(expr_id);
       return AddNode(SemanticsNode::ValueBinding::Make(
           expr.parse_node(), expr.type_id(), expr_id));
+    }
 
     case SemanticsExpressionCategory::Value:
       return expr_id;
@@ -331,20 +344,16 @@ auto SemanticsContext::ConvertToValueExpression(SemanticsNodeId expr_id)
 
 auto SemanticsContext::MarkInitializerFor(SemanticsNodeId init_id,
                                           SemanticsNodeId target_id) -> void {
-  SemanticsNode init = semantics_ir().GetNode(init_id);
-  CARBON_CHECK(GetSemanticsExpressionCategory(semantics_ir(), init_id) ==
-               SemanticsExpressionCategory::Initializing)
-      << "initialization from non-initializing node " << init;
-  (void)target_id;
   while (true) {
+    SemanticsNode init = semantics_ir().GetNode(init_id);
+    CARBON_CHECK(GetSemanticsExpressionCategory(semantics_ir(), init_id) ==
+                 SemanticsExpressionCategory::Initializing)
+        << "initialization from non-initializing node " << init;
     switch (init.kind()) {
       default:
         CARBON_FATAL() << "Initialization from unexpected node " << init;
 
-      case SemanticsNodeKind::Call:
-      case SemanticsNodeKind::StructAccess:
       case SemanticsNodeKind::StructValue:
-      case SemanticsNodeKind::TupleIndex:
       case SemanticsNodeKind::TupleValue:
         CARBON_FATAL() << init << " is not modeled as initializing yet";
 
@@ -353,10 +362,34 @@ auto SemanticsContext::MarkInitializerFor(SemanticsNodeId init_id,
         continue;
       }
 
+      case SemanticsNodeKind::Call: {
+        // If the callee has a return slot, point it at our target.
+        // TODO: Consider treating calls to functions without a return slot as
+        // value expressions, to avoid materializing unused temporaries.
+        auto [refs_id, callee_id] = init.GetAsCall();
+        if (semantics_ir().GetFunction(callee_id).return_slot_id.is_valid()) {
+          auto& refs = semantics_ir().GetNodeBlock(refs_id);
+          CARBON_CHECK(!refs.back().is_valid())
+              << "return slot for function call set multiple times, have "
+              << init << ", new return slot is " << target_id;
+          refs.back() = target_id;
+        }
+        return;
+      }
+
       case SemanticsNodeKind::InitializeFrom:
         CARBON_FATAL() << init << " should be created with a destination";
     }
   }
+}
+
+auto SemanticsContext::HandleDiscardedExpression(SemanticsNodeId expr_id)
+    -> void {
+  // If we discard an initializing expression, materialize it first.
+  expr_id = MaterializeIfInitializing(expr_id);
+
+  // TODO: This will eventually need to do some "do not discard" analysis.
+  (void)expr_id;
 }
 
 auto SemanticsContext::ImplicitAsForArgs(

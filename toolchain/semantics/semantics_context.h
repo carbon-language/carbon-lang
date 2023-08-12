@@ -117,6 +117,16 @@ class SemanticsContext {
                                        SemanticsNodeId target_id)
       -> SemanticsNodeId;
 
+  // Converts the given expression to an ephemeral reference to a temporary if
+  // it is an initializing expression.
+  auto MaterializeIfInitializing(SemanticsNodeId expr_id) -> SemanticsNodeId {
+    if (GetSemanticsExpressionCategory(semantics_ir(), expr_id) ==
+        SemanticsExpressionCategory::Initializing) {
+      return MaterializeTemporary(expr_id);
+    }
+    return expr_id;
+  }
+
   // Convert the given expression to a value expression of the same type.
   auto ConvertToValueExpression(SemanticsNodeId expr_id) -> SemanticsNodeId;
 
@@ -144,6 +154,9 @@ class SemanticsContext {
         parse_node, value_id,
         CanonicalizeType(SemanticsNodeId::BuiltinBoolType));
   }
+
+  // Handles an expression whose result is discarded.
+  auto HandleDiscardedExpression(SemanticsNodeId id) -> void;
 
   // Runs ImplicitAsImpl for a set of arguments and parameters.
   //
@@ -288,6 +301,10 @@ class SemanticsContext {
 
     // TODO: This likely needs to track things which need to be destructed.
   };
+
+  // Materializes a temporary to store the result of initializing expression
+  // `init_id`.
+  auto MaterializeTemporary(SemanticsNodeId init_id) -> SemanticsNodeId;
 
   // Marks the initializer `init_id` as initializing `target_id`.
   auto MarkInitializerFor(SemanticsNodeId target_id, SemanticsNodeId init_id)

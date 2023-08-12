@@ -82,9 +82,9 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %.loc7_26: f64 = real_literal 40e-1
 // CHECK:STDOUT:   %.loc7_24: f64 = stub_reference %.loc7_26
 // CHECK:STDOUT:   %.loc7_29.1: {.a: f64} = struct_value (%.loc7_24)
-// CHECK:STDOUT:   %.loc7_29.2: {.a: f64} = initialize_from %.loc7_29.1, %x
+// CHECK:STDOUT:   %.loc7_29.2: {.a: f64} = initialize_from %.loc7_29.1 to %x
 // CHECK:STDOUT:   assign %x, %.loc7_29.2
 // CHECK:STDOUT:   %y: i32 = var
-// CHECK:STDOUT:   %.1: <error> = initialize_from <error>, %y
+// CHECK:STDOUT:   %.1: <error> = initialize_from <error> to %y
 // CHECK:STDOUT:   assign %y, %.1
 // CHECK:STDOUT: }

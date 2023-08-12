@@ -55,6 +55,6 @@ fn Main() -> i32 {
 // CHECK:STDOUT: fn @Main() -> %return: i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_10.1: i32 = int_literal 0
-// CHECK:STDOUT:   %.loc8_10.2: i32 = initialize_from %.loc8_10.1, %return
+// CHECK:STDOUT:   %.loc8_10.2: i32 = initialize_from %.loc8_10.1 to %return
 // CHECK:STDOUT:   return %.loc8_10.2
 // CHECK:STDOUT: }

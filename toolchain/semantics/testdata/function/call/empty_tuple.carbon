@@ -48,6 +48,7 @@ fn Main() {
 // CHECK:STDOUT:   {kind: TupleValue, arg0: block0, type: type0},
 // CHECK:STDOUT:   {kind: StubReference, arg0: node+11, type: type0},
 // CHECK:STDOUT:   {kind: Call, arg0: block7, arg1: function0, type: type0},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+13, type: type0},
 // CHECK:STDOUT:   {kind: Return},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -80,9 +81,11 @@ fn Main() {
 // CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -95,7 +98,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Echo(%a: ()) -> %return: () {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_9.1: () = value_binding %a
-// CHECK:STDOUT:   %.loc7_9.2: () = initialize_from %.loc7_9.1, %return
+// CHECK:STDOUT:   %.loc7_9.2: () = initialize_from %.loc7_9.1 to %return
 // CHECK:STDOUT:   return %.loc7_9.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -103,6 +106,7 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_9.1: () = tuple_value ()
 // CHECK:STDOUT:   %.loc12_9.2: () = stub_reference %.loc12_9.1
-// CHECK:STDOUT:   %.loc12_7: () = call @Echo(%.loc12_9.2)
+// CHECK:STDOUT:   %.loc12_7.1: () = call @Echo(%.loc12_9.2) to %.loc12_7.2
+// CHECK:STDOUT:   %.loc12_7.2: () = materialize_temporary %.loc12_7.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

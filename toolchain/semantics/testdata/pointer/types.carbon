@@ -112,13 +112,13 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT: fn @Ptr(%p: i32*) -> %return: i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_8.1: i32* = value_binding %p
-// CHECK:STDOUT:   %.loc7_8.2: i32* = initialize_from %.loc7_8.1, %return
+// CHECK:STDOUT:   %.loc7_8.2: i32* = initialize_from %.loc7_8.1 to %return
 // CHECK:STDOUT:   return %.loc7_8.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstPtr(%p: const i32*) -> %return: const i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_13.1: const i32* = value_binding %p
-// CHECK:STDOUT:   %.loc11_13.2: const i32* = initialize_from %.loc11_13.1, %return
+// CHECK:STDOUT:   %.loc11_13.2: const i32* = initialize_from %.loc11_13.1 to %return
 // CHECK:STDOUT:   return %.loc11_13.2
 // CHECK:STDOUT: }

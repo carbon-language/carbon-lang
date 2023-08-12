@@ -15,7 +15,7 @@ fn And() -> bool {
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, return_slot: node+0, body: {block3}}},
 // CHECK:STDOUT:   {name: str1, param_refs: block0, return_type: type0, return_slot: node+5, body: {block5}}},
-// CHECK:STDOUT:   {name: str2, param_refs: block0, return_type: type0, return_slot: node+10, body: {block7, block8, block9}}},
+// CHECK:STDOUT:   {name: str2, param_refs: block0, return_type: type0, return_slot: node+10, body: {block7, block9, block10}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -44,15 +44,19 @@ fn And() -> bool {
 // CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+8},
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
-// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function0, type: type0},
+// CHECK:STDOUT:   {kind: Call, arg0: block8, arg1: function0, type: type0},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+12, type: type0},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+13, type: type0},
 // CHECK:STDOUT:   {kind: BoolLiteral, arg0: false, type: type0},
-// CHECK:STDOUT:   {kind: BranchIf, arg0: block8, arg1: node+12},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+13},
-// CHECK:STDOUT:   {kind: Call, arg0: block0, arg1: function1, type: type0},
-// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block9, arg1: node+16},
-// CHECK:STDOUT:   {kind: BlockArg, arg0: block9, type: type0},
-// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+18, arg1: node+10, type: type0},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+19},
+// CHECK:STDOUT:   {kind: BranchIf, arg0: block9, arg1: node+14},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block10, arg1: node+15},
+// CHECK:STDOUT:   {kind: Call, arg0: block11, arg1: function1, type: type0},
+// CHECK:STDOUT:   {kind: MaterializeTemporary, arg0: node+18, type: type0},
+// CHECK:STDOUT:   {kind: ValueBinding, arg0: node+19, type: type0},
+// CHECK:STDOUT:   {kind: BranchWithArg, arg0: block10, arg1: node+20},
+// CHECK:STDOUT:   {kind: BlockArg, arg0: block10, type: type0},
+// CHECK:STDOUT:   {kind: InitializeFrom, arg0: node+22, arg1: node+10, type: type0},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+23},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -86,15 +90,25 @@ fn And() -> bool {
 // CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+15,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+16,
 // CHECK:STDOUT:     node+17,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+13,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+18,
 // CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:     node+20,
+// CHECK:STDOUT:     node+21,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+22,
+// CHECK:STDOUT:     node+23,
+// CHECK:STDOUT:     node+24,
+// CHECK:STDOUT:   ],
+// CHECK:STDOUT:   [
+// CHECK:STDOUT:     node+19,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
@@ -107,29 +121,33 @@ fn And() -> bool {
 // CHECK:STDOUT: fn @F() -> %return: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_25.1: bool = bool_literal true
-// CHECK:STDOUT:   %.loc7_25.2: bool = initialize_from %.loc7_25.1, %return
+// CHECK:STDOUT:   %.loc7_25.2: bool = initialize_from %.loc7_25.1 to %return
 // CHECK:STDOUT:   return %.loc7_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_25.1: bool = bool_literal true
-// CHECK:STDOUT:   %.loc8_25.2: bool = initialize_from %.loc8_25.1, %return
+// CHECK:STDOUT:   %.loc8_25.2: bool = initialize_from %.loc8_25.1 to %return
 // CHECK:STDOUT:   return %.loc8_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> %return: bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_11: bool = call @F()
+// CHECK:STDOUT:   %.loc11_11.1: bool = call @F() to %.loc11_11.2
+// CHECK:STDOUT:   %.loc11_11.2: bool = materialize_temporary %.loc11_11.1
+// CHECK:STDOUT:   %.loc11_11.3: bool = value_binding %.loc11_11.2
 // CHECK:STDOUT:   %.loc11_14.1: bool = bool_literal false
-// CHECK:STDOUT:   if %.loc11_11 br !and.rhs else br !and.result(%.loc11_14.1)
+// CHECK:STDOUT:   if %.loc11_11.3 br !and.rhs else br !and.result(%.loc11_14.1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
-// CHECK:STDOUT:   %.loc11_19: bool = call @G()
-// CHECK:STDOUT:   br !and.result(%.loc11_19)
+// CHECK:STDOUT:   %.loc11_19.1: bool = call @G() to %.loc11_19.2
+// CHECK:STDOUT:   %.loc11_19.2: bool = materialize_temporary %.loc11_19.1
+// CHECK:STDOUT:   %.loc11_19.3: bool = value_binding %.loc11_19.2
+// CHECK:STDOUT:   br !and.result(%.loc11_19.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
 // CHECK:STDOUT:   %.loc11_14.2: bool = block_arg !and.result
-// CHECK:STDOUT:   %.loc11_14.3: bool = initialize_from %.loc11_14.2, %return
+// CHECK:STDOUT:   %.loc11_14.3: bool = initialize_from %.loc11_14.2 to %return
 // CHECK:STDOUT:   return %.loc11_14.3
 // CHECK:STDOUT: }

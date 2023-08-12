@@ -125,10 +125,21 @@ auto LoweringHandleCall(LoweringFunctionContext& context,
                         SemanticsNodeId node_id, SemanticsNode node) -> void {
   auto [refs_id, function_id] = node.GetAsCall();
   auto* function = context.GetFunction(function_id);
+
+  llvm::ArrayRef<SemanticsNodeId> arg_ids =
+      context.semantics_ir().GetNodeBlock(refs_id);
+  if (context.semantics_ir()
+          .GetFunction(function_id)
+          .return_slot_id.is_valid()) {
+    // TODO: Pass the return slot into the function.
+    arg_ids = arg_ids.drop_back();
+  }
+
   std::vector<llvm::Value*> args;
-  for (auto ref_id : context.semantics_ir().GetNodeBlock(refs_id)) {
+  for (auto ref_id : arg_ids) {
     args.push_back(context.GetLocalLoaded(ref_id));
   }
+
   if (function->getReturnType()->isVoidTy()) {
     context.builder().CreateCall(function, args);
     // TODO: use empty tuple type.

@@ -67,6 +67,6 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7: bool = value_binding %b
 // CHECK:STDOUT:   %.loc8_10.1: bool = not %.loc7
-// CHECK:STDOUT:   %.loc8_10.2: bool = initialize_from %.loc8_10.1, %return
+// CHECK:STDOUT:   %.loc8_10.2: bool = initialize_from %.loc8_10.1 to %return
 // CHECK:STDOUT:   return %.loc8_10.2
 // CHECK:STDOUT: }
