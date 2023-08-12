@@ -53,8 +53,8 @@ cc_test(
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
         "@com_google_googletest//:gtest",
-        "@llvm-project//llvm:Support",
         "@llvm-project//llvm:Object",
+        "@llvm-project//llvm:Support",
     ],
 )
 

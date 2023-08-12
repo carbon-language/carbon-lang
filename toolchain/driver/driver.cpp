@@ -316,7 +316,7 @@ For questions, issues, or bug reports, please use our GitHub project:
 auto Driver::ParseArgs(llvm::ArrayRef<llvm::StringRef> args, Options& options)
     -> CommandLine::ParseResult {
   return CommandLine::Parse(args, output_stream_, error_stream_, Options::Info,
-                     [&](auto& b) { options.Build(b); });
+                            [&](auto& b) { options.Build(b); });
 }
 
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
@@ -506,9 +506,8 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
     llvm::raw_fd_ostream output_file(output_file_name, ec,
                                      llvm::sys::fs::OF_None);
     if (ec) {
-      error_stream_ << "ERROR: Could not open output file '"
-                    << output_file_name << "': " << ec.message()
-                    << "\n";
+      error_stream_ << "ERROR: Could not open output file '" << output_file_name
+                    << "': " << ec.message() << "\n";
       return false;
     }
     if (options.asm_output) {

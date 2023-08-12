@@ -11,8 +11,8 @@
 #include <fstream>
 #include <utility>
 
-#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/SourceMgr.h"
@@ -23,8 +23,8 @@
 namespace Carbon::Testing {
 namespace {
 
-using ::testing::ElementsAre;
 using ::testing::ContainsRegex;
+using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::StrEq;
@@ -54,7 +54,7 @@ class DriverTest : public testing::Test {
                 llvm::MemoryBuffer::getMemBuffer(text));
     return file_name;
   }
-  
+
   auto ScopedTempWorkingDir() {
     // Save our current working directory.
     std::error_code ec;
@@ -63,13 +63,13 @@ class DriverTest : public testing::Test {
 
     const auto* unit_test = ::testing::UnitTest::GetInstance();
     const auto* test_info = unit_test->current_test_info();
-    std::filesystem::path test_dir =
-        test_tmpdir_.append(llvm::formatv("{0}_{1}", test_info->test_suite_name(),
-                                    test_info->name())
-                          .str());
+    std::filesystem::path test_dir = test_tmpdir_.append(
+        llvm::formatv("{0}_{1}", test_info->test_suite_name(),
+                      test_info->name())
+            .str());
     std::filesystem::create_directory(test_dir, ec);
-    CARBON_CHECK(!ec) << "Could not create test working dir '"
-                      << test_dir << "': " << ec.message();
+    CARBON_CHECK(!ec) << "Could not create test working dir '" << test_dir
+                      << "': " << ec.message();
     std::filesystem::current_path(test_dir, ec);
     CARBON_CHECK(!ec) << "Could not change the current working dir to '"
                       << test_dir << "': " << ec.message();
@@ -79,9 +79,8 @@ class DriverTest : public testing::Test {
       CARBON_CHECK(!ec) << "Could not change the current working dir to '"
                         << original_dir << "': " << ec.message();
       std::filesystem::remove_all(test_dir, ec);
-      CARBON_CHECK(!ec) << "Could not remove the test working dir '"
-                        << test_dir << "': " << ec.message();
-
+      CARBON_CHECK(!ec) << "Could not remove the test working dir '" << test_dir
+                        << "': " << ec.message();
     });
   }
 
@@ -119,13 +118,14 @@ TEST_F(DriverTest, CompileCommandErrors) {
   auto empty_file = CreateTestFile("");
   EXPECT_FALSE(
       driver_.RunCommand({"compile", "--output=/dev/empty", empty_file}));
-  EXPECT_THAT(test_error_stream_.TakeStr(), ContainsRegex("ERROR: .*/dev/empty.*"));
+  EXPECT_THAT(test_error_stream_.TakeStr(),
+              ContainsRegex("ERROR: .*/dev/empty.*"));
 }
 
 TEST_F(DriverTest, DumpTokens) {
   auto file = CreateTestFile("Hello World");
-  EXPECT_TRUE(driver_.RunCommand(
-      {"compile", "--phase=lex", "--dump-tokens", file}));
+  EXPECT_TRUE(
+      driver_.RunCommand({"compile", "--phase=lex", "--dump-tokens", file}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   auto tokenized_text = test_output_stream_.TakeStr();
 
@@ -174,10 +174,12 @@ TEST_F(DriverTest, StdoutOutput) {
   EXPECT_THAT(test_output_stream_.TakeStr(),
               ContainsRegex("\\.file\\s+\"test.carbon\""));
 
-  EXPECT_TRUE(driver_.RunCommand({"compile", "--output=-", "--force-obj-output", "test.carbon"}));
+  EXPECT_TRUE(driver_.RunCommand(
+      {"compile", "--output=-", "--force-obj-output", "test.carbon"}));
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
   std::string output = test_output_stream_.TakeStr();
-  auto result = llvm::object::createBinary(llvm::MemoryBufferRef(output, "test_output"));
+  auto result =
+      llvm::object::createBinary(llvm::MemoryBufferRef(output, "test_output"));
   if (auto error = result.takeError()) {
     FAIL() << toString(std::move(error));
   }
