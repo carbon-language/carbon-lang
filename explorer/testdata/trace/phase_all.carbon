@@ -490,8 +490,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `Main` results: [`fun<Main>`]  (<Main()>:0)
 // CHECK:STDOUT: ->> step ExpressionAction pos: 1 `Main()` results: [`fun<Main>`]  scope: [] (<Main()>:0) --->
 // CHECK:STDOUT: -() calling function: fun<Main>
-// CHECK:STDOUT: match pattern ()
-// CHECK:STDOUT: from value expression with value ()
+// CHECK:STDOUT: === match pattern `()`
+// CHECK:STDOUT:     from value expression with value `()`
 // CHECK:STDOUT: >[] stack-push: ScopeAction pos: 0  scope: [] (None)
 // CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `{var x: i32 = N.Foo(0);return x;}` (phase_all.carbon:18)
 // CHECK:STDOUT: ->> step StatementAction pos: 0 `{var x: i32 = N.Foo(0);return x;}` (phase_all.carbon:18) --->
@@ -528,10 +528,10 @@ fn Main() -> i32 {
 // CHECK:STDOUT: <[] stack-pop:  ExpressionAction pos: 0 `0` (phase_all.carbon:16)
 // CHECK:STDOUT: ->> step ExpressionAction pos: 2 `N.Foo(0)` results: [`fun<N.Foo>`, `0`]  scope: [] (phase_all.carbon:16) --->
 // CHECK:STDOUT: -() calling function: fun<N.Foo>
-// CHECK:STDOUT: match pattern (Placeholder<n>,)
-// CHECK:STDOUT: from value expression with value (0,)
-// CHECK:STDOUT: match pattern Placeholder<n>
-// CHECK:STDOUT: from value expression with value 0
+// CHECK:STDOUT: === match pattern `(Placeholder<n>,)`
+// CHECK:STDOUT:     from value expression with value `(0,)`
+// CHECK:STDOUT: === match pattern `Placeholder<n>`
+// CHECK:STDOUT:     from value expression with value `0`
 // CHECK:STDOUT: >[] stack-push: ScopeAction pos: 0  scope: [`n: i32`: `0`] (None)
 // CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `{return (n + 1);}` (phase_all.carbon:13)
 // CHECK:STDOUT: ->> step StatementAction pos: 0 `{return (n + 1);}` (phase_all.carbon:13) --->
@@ -597,8 +597,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: var x: i32 = N.Foo(0);
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: <-- memory-read: #1 `1`
-// CHECK:STDOUT: match pattern Placeholder<x>
-// CHECK:STDOUT: from initializing expression with value 1
+// CHECK:STDOUT: === match pattern `Placeholder<x>`
+// CHECK:STDOUT:     from initializing expression with value `1`
 // CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `var x: i32 = N.Foo(0);` results: [`1`]  (phase_all.carbon:16)
 // CHECK:STDOUT: ->> step StatementAction pos: 1 `{var x: i32 = N.Foo(0);return x;}` scope: [`x: i32`: `lval<Allocation(1)>`] (phase_all.carbon:18) --->
 // CHECK:STDOUT: *** statement at (phase_all.carbon:18)

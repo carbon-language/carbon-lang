@@ -272,8 +272,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `Main` results: [`fun<Main>`]  (<Main()>:0)
 // CHECK:STDOUT: ->> step ExpressionAction pos: 1 `Main()` results: [`fun<Main>`]  scope: [] (<Main()>:0) --->
 // CHECK:STDOUT: -() calling function: fun<Main>
-// CHECK:STDOUT: match pattern ()
-// CHECK:STDOUT: from value expression with value ()
+// CHECK:STDOUT: === match pattern `()`
+// CHECK:STDOUT:     from value expression with value `()`
 // CHECK:STDOUT: >[] stack-push: ScopeAction pos: 0  scope: [] (None)
 // CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `{return 0;}` (context_main.carbon:11)
 // CHECK:STDOUT: ->> step StatementAction pos: 0 `{return 0;}` (context_main.carbon:11) --->
