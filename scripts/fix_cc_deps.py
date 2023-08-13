@@ -253,7 +253,7 @@ def main() -> None:
     print("Building header map...")
     header_to_rule_map: Dict[str, Set[str]] = {
         "gmock/gmock.h": {"@com_google_googletest//:gtest"},
-        "gtest/gtest.h": {"@com_google_googletest//:gtest"}
+        "gtest/gtest.h": {"@com_google_googletest//:gtest"},
     }
     map_headers(header_to_rule_map, carbon_rules)
     map_headers(header_to_rule_map, external_rules)
