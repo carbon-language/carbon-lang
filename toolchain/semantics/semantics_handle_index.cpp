@@ -27,6 +27,23 @@ auto SemanticsHandleIndexExpression(SemanticsContext& context,
       context.semantics_ir().GetTypeAllowBuiltinTypes(name_node.type_id());
   auto name_type_node = context.semantics_ir().GetNode(name_type_id);
 
+  index_node.kind().Print(llvm::outs());
+  llvm::outs() << "\nHello\n\n";
+
+  if (name_type_node.kind() == SemanticsNodeKind::ArrayType) {
+    auto [bound_id, type_id] = name_type_node.GetAsArrayType();
+    auto bound_val = context.semantics_ir().GetArrayBoundValue(bound_id);
+    if (index_node.kind() == SemanticsNodeKind::IntegerLiteral) {
+      const auto& index_val = context.semantics_ir().GetIntegerLiteral(
+          index_node.GetAsIntegerLiteral());
+      if (!index_val.uge(bound_val)) {
+        context.AddNodeAndPush(
+            parse_node, SemanticsNode::ArrayIndex::Make(
+                            parse_node, type_id, name_node_id, index_node_id));
+        return true;
+      }
+    }
+  }
   if (name_type_node.kind() == SemanticsNodeKind::TupleType &&
       index_node.kind() == SemanticsNodeKind::IntegerLiteral) {
     const auto& index_val = context.semantics_ir().GetIntegerLiteral(

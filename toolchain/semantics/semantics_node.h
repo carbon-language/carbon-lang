@@ -310,6 +310,10 @@ class SemanticsNode {
   using AddressOf = SemanticsNode::Factory<SemanticsNodeKind::AddressOf,
                                            SemanticsNodeId /*lvalue_id*/>;
 
+  using ArrayIndex =
+      Factory<SemanticsNodeKind::ArrayIndex, SemanticsNodeId /*array_id*/,
+              SemanticsNodeId /*index*/>;
+
   using ArrayType =
       SemanticsNode::Factory<SemanticsNodeKind::ArrayType,
                              SemanticsNodeId /*bound_node_id*/,
