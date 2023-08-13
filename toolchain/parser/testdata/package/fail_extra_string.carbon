@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_extra_string.carbon:[[@LINE+3]]:27: Expected a `api` or `impl`.
+// CHECK:STDERR: package Foo library "bar" "baz";
+// CHECK:STDERR:                           ^
+package Foo library "bar" "baz";
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'PackageIntroducer', text: 'package'},
 // CHECK:STDOUT:   {kind: 'Name', text: 'Foo'},
@@ -11,8 +17,3 @@
 // CHECK:STDOUT: {kind: 'PackageDirective', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_extra_string.carbon:[[@LINE+3]]:27: Expected a `api` or `impl`.
-// CHECK:STDERR: package Foo library "bar" "baz";
-// CHECK:STDERR:                           ^
-package Foo library "bar" "baz";

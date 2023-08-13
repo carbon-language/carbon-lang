@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+  // CHECK:STDERR: fail_skip_indented_newline_until_outdent.carbon:[[@LINE+3]]:6: `fn` introducer should be followed by a name.
+  // CHECK:STDERR:   fn (x,
+  // CHECK:STDERR:      ^
+  fn (x,
+      y,
+      z)
+fn F();
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:   {kind: 'InvalidParse', text: '('},
@@ -14,11 +23,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDeclaration', text: ';', subtree_size: 5},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-  // CHECK:STDERR: fail_skip_indented_newline_until_outdent.carbon:[[@LINE+3]]:6: `fn` introducer should be followed by a name.
-  // CHECK:STDERR:   fn (x,
-  // CHECK:STDERR:      ^
-  fn (x,
-      y,
-      z)
-fn F();

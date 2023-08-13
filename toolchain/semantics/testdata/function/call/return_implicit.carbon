@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn MakeImplicitEmptyTuple() {
+}
+
+fn Main() {
+  var b: () = MakeImplicitEmptyTuple();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, body: {block2}}},
@@ -56,10 +64,23 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn MakeImplicitEmptyTuple() {
-}
-
-fn Main() {
-  var b: () = MakeImplicitEmptyTuple();
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @MakeImplicitEmptyTuple
+// CHECK:STDOUT:   %.loc10 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MakeImplicitEmptyTuple() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_11.1: type = tuple_type ()
+// CHECK:STDOUT:   %.loc11_11.2: () = tuple_value ()
+// CHECK:STDOUT:   %b: () = var
+// CHECK:STDOUT:   %.loc11_37: () = call @MakeImplicitEmptyTuple()
+// CHECK:STDOUT:   assign %b, %.loc11_37
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

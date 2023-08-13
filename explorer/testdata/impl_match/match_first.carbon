@@ -3,15 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: XYZ: 1
-// CHECK:STDOUT: XY: 1
-// CHECK:STDOUT: XZ: 1
-// CHECK:STDOUT: YZ: 2
-// CHECK:STDOUT: JustX: 1
-// CHECK:STDOUT: JustY: 2
-// CHECK:STDOUT: JustZ: 3
-// CHECK:STDOUT: None: 4
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -66,3 +57,13 @@ fn Main() -> i32 {
   Print("None: {0}", None.(A.Which)());
   return 0;
 }
+
+// CHECK:STDOUT: XYZ: 1
+// CHECK:STDOUT: XY: 1
+// CHECK:STDOUT: XZ: 1
+// CHECK:STDOUT: YZ: 2
+// CHECK:STDOUT: JustX: 1
+// CHECK:STDOUT: JustY: 2
+// CHECK:STDOUT: JustZ: 3
+// CHECK:STDOUT: None: 4
+// CHECK:STDOUT: result: 0

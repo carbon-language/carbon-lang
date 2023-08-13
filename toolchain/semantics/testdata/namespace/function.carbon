@@ -3,6 +3,20 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+namespace Foo;
+
+// Never called, just here to help catch bugs in name lookup.
+fn Baz() {
+}
+
+fn Foo.Baz() {
+}
+
+fn Bar() {
+  Foo.Baz();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str1, param_refs: block0, body: {block2}}},
@@ -57,16 +71,27 @@
 // CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-namespace Foo;
-
-// Never called, just here to help catch bugs in name lookup.
-fn Baz() {
-}
-
-fn Foo.Baz() {
-}
-
-fn Bar() {
-  Foo.Baz();
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = namespace {.Baz = %.loc13}
+// CHECK:STDOUT:   %.loc10 = fn_decl @Baz.1
+// CHECK:STDOUT:   %.loc13 = fn_decl @Baz.2
+// CHECK:STDOUT:   %.loc16 = fn_decl @Bar
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Baz.1() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Baz.2() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bar() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc17_10.1: type = tuple_type ()
+// CHECK:STDOUT:   %.loc17_10.2: () = call @Baz.2()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

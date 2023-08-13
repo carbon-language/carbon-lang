@@ -307,6 +307,17 @@ class SemanticsNode {
     }
   };
 
+  using AddressOf = SemanticsNode::Factory<SemanticsNodeKind::AddressOf,
+                                           SemanticsNodeId /*lvalue_id*/>;
+
+  using ArrayType =
+      SemanticsNode::Factory<SemanticsNodeKind::ArrayType,
+                             SemanticsNodeId /*bound_node_id*/,
+                             SemanticsTypeId /*array_element_type_id*/>;
+
+  using ArrayValue = Factory<SemanticsNodeKind::ArrayValue,
+                             SemanticsNodeId /*tuple_value_id*/>;
+
   using Assign = SemanticsNode::FactoryNoType<SemanticsNodeKind::Assign,
                                               SemanticsNodeId /*lhs_id*/,
                                               SemanticsNodeId /*rhs_id*/>;
@@ -376,6 +387,9 @@ class SemanticsNode {
     using FactoryBase::Get;
   };
 
+  using Dereference =
+      Factory<SemanticsNodeKind::Dereference, SemanticsNodeId /*pointer_id*/>;
+
   using FunctionDeclaration =
       FactoryNoType<SemanticsNodeKind::FunctionDeclaration,
                     SemanticsFunctionId /*function_id*/>;
@@ -400,9 +414,9 @@ class SemanticsNode {
   using StringLiteral = Factory<SemanticsNodeKind::StringLiteral,
                                 SemanticsStringId /*string_id*/>;
 
-  using StructMemberAccess = Factory<SemanticsNodeKind::StructMemberAccess,
-                                     SemanticsNodeId /*struct_id*/,
-                                     SemanticsMemberIndex /*ref_index*/>;
+  using StructAccess =
+      Factory<SemanticsNodeKind::StructAccess, SemanticsNodeId /*struct_id*/,
+              SemanticsMemberIndex /*ref_index*/>;
 
   using StructType =
       Factory<SemanticsNodeKind::StructType, SemanticsNodeBlockId /*refs_id*/>;
@@ -416,6 +430,10 @@ class SemanticsNode {
 
   using StubReference =
       Factory<SemanticsNodeKind::StubReference, SemanticsNodeId /*node_id*/>;
+
+  using TupleIndex =
+      Factory<SemanticsNodeKind::TupleIndex, SemanticsNodeId /*tuple_id*/,
+              SemanticsNodeId /*index*/>;
 
   using TupleType =
       Factory<SemanticsNodeKind::TupleType, SemanticsTypeBlockId /*refs_id*/>;

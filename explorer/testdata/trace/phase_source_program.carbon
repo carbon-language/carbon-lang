@@ -14,7 +14,9 @@ fn Main() -> i32 {
 // conflicts.
 // ARGS: --trace_file=- --trace_phase=source_program %s
 // AUTOUPDATE
-// CHECK:STDOUT: ********** source program **********
+
+// CHECK:STDOUT: * * * * * * * * * *  source program  * * * * * * * * * *
+// CHECK:STDOUT: --------------------------------------------------------
 // CHECK:STDOUT: interface TestInterface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: fn Main ()-> i32 {

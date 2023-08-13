@@ -3,9 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: t1 == t2: 1
-// CHECK:STDOUT: t1 != t2: 0
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -26,3 +23,7 @@ fn Main() -> i32 {
   Print("t1 != t2: {0}", if t1 != t2 then 1 else 0);
   return 0;
 }
+
+// CHECK:STDOUT: t1 == t2: 1
+// CHECK:STDOUT: t1 != t2: 0
+// CHECK:STDOUT: result: 0

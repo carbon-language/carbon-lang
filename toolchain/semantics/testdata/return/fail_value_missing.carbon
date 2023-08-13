@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Main() -> i32 {
+  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+3]]:9: Must return a i32.
+  // CHECK:STDERR:   return;
+  // CHECK:STDERR:         ^
+  return;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
@@ -33,10 +41,12 @@
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn Main() -> i32 {
-  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+3]]:9: Must return a i32.
-  // CHECK:STDERR:   return;
-  // CHECK:STDERR:         ^
-  return;
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }

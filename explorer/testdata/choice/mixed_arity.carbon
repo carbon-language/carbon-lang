@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 25
 
 package ExplorerTest api;
 
@@ -34,3 +33,5 @@ fn Main() -> i32 {
   var l: List = List.Make(5);
   return l.Sum(10);
 }
+
+// CHECK:STDOUT: result: 25

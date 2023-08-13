@@ -3,15 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: strings less: 1
-// CHECK:STDOUT: ints less: 0
-// CHECK:STDOUT: strings less eq: 1
-// CHECK:STDOUT: ints less eq: 1
-// CHECK:STDOUT: strings greater: 0
-// CHECK:STDOUT: ints greater: 0
-// CHECK:STDOUT: strings greater eq: 0
-// CHECK:STDOUT: ints greater eq: 1
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -26,3 +17,13 @@ fn Main() -> i32 {
   Print("ints greater eq: {0}", if 1 >= 1 then 1 else 0);
   return 0;
 }
+
+// CHECK:STDOUT: strings less: 1
+// CHECK:STDOUT: ints less: 0
+// CHECK:STDOUT: strings less eq: 1
+// CHECK:STDOUT: ints less eq: 1
+// CHECK:STDOUT: strings greater: 0
+// CHECK:STDOUT: ints greater: 0
+// CHECK:STDOUT: strings greater eq: 0
+// CHECK:STDOUT: ints greater eq: 1
+// CHECK:STDOUT: result: 0

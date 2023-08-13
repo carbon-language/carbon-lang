@@ -78,7 +78,7 @@ auto ParseAndExecute(llvm::vfs::FileSystem& fs, std::string_view prelude_path,
     auto print_trace_timing_heading = llvm::make_scope_exit([=]() {
       SetProgramPhase set_prog_phase(*trace_stream, ProgramPhase::Timing);
       if (trace_stream->is_enabled()) {
-        *trace_stream << "********** printing timing **********\n";
+        trace_stream->Heading("printing timing");
       }
     });
 

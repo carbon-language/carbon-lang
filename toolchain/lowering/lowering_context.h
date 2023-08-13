@@ -35,8 +35,7 @@ class LoweringContext {
   auto GetType(SemanticsTypeId type_id) -> llvm::Type* {
     // InvalidType should not be passed in.
     if (type_id == SemanticsTypeId::TypeType) {
-      // `type` is lowered to an empty LLVM StructType.
-      return llvm::StructType::get(llvm_context());
+      return GetTypeType();
     }
     CARBON_CHECK(type_id.index >= 0) << type_id;
     return types_[type_id.index];
@@ -44,7 +43,7 @@ class LoweringContext {
 
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Value* {
-    return llvm::ConstantStruct::getAnon(llvm_context(), {});
+    return llvm::ConstantStruct::get(GetTypeType());
   }
 
   auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
@@ -65,6 +64,15 @@ class LoweringContext {
   // caller.
   auto BuildType(SemanticsNodeId node_id) -> llvm::Type*;
 
+  // Returns the empty LLVM struct type used to represent the type `type`.
+  auto GetTypeType() -> llvm::StructType* {
+    if (!type_type_) {
+      // `type` is lowered to an empty LLVM StructType.
+      type_type_ = llvm::StructType::create(*llvm_context_, {}, "type");
+    }
+    return type_type_;
+  }
+
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
   std::unique_ptr<llvm::Module> llvm_module_;
@@ -81,6 +89,9 @@ class LoweringContext {
 
   // Provides lowered versions of types.
   llvm::SmallVector<llvm::Type*> types_;
+
+  // Lowered version of the builtin type `type`.
+  llvm::StructType* type_type_ = nullptr;
 };
 
 }  // namespace Carbon

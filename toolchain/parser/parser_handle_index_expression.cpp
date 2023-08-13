@@ -19,9 +19,9 @@ auto ParserHandleIndexExpression(ParserContext& context) -> void {
 
 auto ParserHandleIndexExpressionFinish(ParserContext& context) -> void {
   auto state = context.PopState();
-  context.AddNode(ParseNodeKind::IndexExpression,
-                  context.ConsumeChecked(TokenKind::CloseSquareBracket),
-                  state.subtree_start, state.has_error);
+
+  context.ConsumeAndAddCloseSymbol(state.token, state,
+                                   ParseNodeKind::IndexExpression);
 }
 
 }  // namespace Carbon

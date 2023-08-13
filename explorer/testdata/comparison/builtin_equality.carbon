@@ -3,31 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: bool: 1
-// CHECK:STDOUT: bool: 1
-// CHECK:STDOUT: bool: 1
-// CHECK:STDOUT: bool: 1
-// CHECK:STDOUT: bool: 1
-// CHECK:STDOUT: bool: 1
-// CHECK:STDOUT: bool: 1
-// CHECK:STDOUT: bool: 1
-// CHECK:STDOUT: string: 1
-// CHECK:STDOUT: string: 1
-// CHECK:STDOUT: string: 1
-// CHECK:STDOUT: string: 1
-// CHECK:STDOUT: string: 1
-// CHECK:STDOUT: string: 1
-// CHECK:STDOUT: string: 1
-// CHECK:STDOUT: string: 1
-// CHECK:STDOUT: int: 1
-// CHECK:STDOUT: int: 1
-// CHECK:STDOUT: int: 1
-// CHECK:STDOUT: int: 1
-// CHECK:STDOUT: int: 1
-// CHECK:STDOUT: int: 1
-// CHECK:STDOUT: int: 1
-// CHECK:STDOUT: int: 1
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -54,3 +29,29 @@ fn Main() -> i32 {
   CompareAll("int: {0}", 1, 2);
   return 0;
 }
+
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: bool: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: string: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: int: 1
+// CHECK:STDOUT: result: 0

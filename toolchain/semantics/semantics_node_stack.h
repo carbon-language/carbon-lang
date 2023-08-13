@@ -241,9 +241,11 @@ class SemanticsNodeStack {
   // Translate a parse node kind to the enum ID kind it should always provide.
   static constexpr auto ParseNodeKindToIdKind(ParseNodeKind kind) -> IdKind {
     switch (kind) {
+      case ParseNodeKind::ArrayExpression:
       case ParseNodeKind::CallExpression:
       case ParseNodeKind::CallExpressionStart:
       case ParseNodeKind::IfExpressionElse:
+      case ParseNodeKind::IndexExpression:
       case ParseNodeKind::InfixOperator:
       case ParseNodeKind::Literal:
       case ParseNodeKind::MemberAccessExpression:
@@ -269,6 +271,7 @@ class SemanticsNodeStack {
         return IdKind::SemanticsStringId;
       case ParseNodeKind::ReturnType:
         return IdKind::SemanticsTypeId;
+      case ParseNodeKind::ArrayExpressionSemi:
       case ParseNodeKind::CodeBlockStart:
       case ParseNodeKind::FunctionIntroducer:
       case ParseNodeKind::IfCondition:

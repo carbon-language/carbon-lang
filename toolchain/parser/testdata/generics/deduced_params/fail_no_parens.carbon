@@ -3,6 +3,27 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:12: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: class Foo[];
+// CHECK:STDERR:            ^
+class Foo[];
+
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:18: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: class Foo[a: i32];
+// CHECK:STDERR:                  ^
+class Foo[a: i32];
+
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:17: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: interface Bar[] {}
+// CHECK:STDERR:                 ^
+interface Bar[] {}
+
+// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:23: A `(` for parameters is required after deduced parameters.
+// CHECK:STDERR: interface Bar[a: i32] {}
+// CHECK:STDERR:                       ^
+interface Bar[a: i32] {}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:   {kind: 'Name', text: 'Foo'},
@@ -32,23 +53,3 @@
 // CHECK:STDOUT: {kind: 'InterfaceDeclaration', text: 'interface', has_error: yes, subtree_size: 8},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:12: A `(` for parameters is required after deduced parameters.
-// CHECK:STDERR: class Foo[];
-// CHECK:STDERR:            ^
-class Foo[];
-
-// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:18: A `(` for parameters is required after deduced parameters.
-// CHECK:STDERR: class Foo[a: i32];
-// CHECK:STDERR:                  ^
-class Foo[a: i32];
-
-// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:17: A `(` for parameters is required after deduced parameters.
-// CHECK:STDERR: interface Bar[] {}
-// CHECK:STDERR:                 ^
-interface Bar[] {}
-
-// CHECK:STDERR: fail_no_parens.carbon:[[@LINE+3]]:23: A `(` for parameters is required after deduced parameters.
-// CHECK:STDERR: interface Bar[a: i32] {}
-// CHECK:STDERR:                       ^
-interface Bar[a: i32] {}

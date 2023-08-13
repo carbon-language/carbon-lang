@@ -3,6 +3,24 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() {
+  while (a) {
+    if (b) {
+      break
+    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:5: `break` statements must end with a `;`.
+    // CHECK:STDERR:     }
+    // CHECK:STDERR:     ^
+    }
+    if (c) {
+      continue
+    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:5: `continue` statements must end with a `;`.
+    // CHECK:STDERR:     }
+    // CHECK:STDERR:     ^
+    }
+  }
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'F'},
@@ -34,20 +52,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 28},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-fn F() {
-  while (a) {
-    if (b) {
-      break
-    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:5: `break` statements must end with a `;`.
-    // CHECK:STDERR:     }
-    // CHECK:STDERR:     ^
-    }
-    if (c) {
-      continue
-    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:5: `continue` statements must end with a `;`.
-    // CHECK:STDERR:     }
-    // CHECK:STDERR:     ^
-    }
-  }
-}

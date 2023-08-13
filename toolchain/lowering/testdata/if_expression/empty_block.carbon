@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Select(b: bool, c: bool, d: bool) -> i32 {
+  return if b then if c then 1 else 2 else if d then 3 else 4;
+}
+
 // CHECK:STDOUT: ; ModuleID = 'empty_block.carbon'
 // CHECK:STDOUT: source_filename = "empty_block.carbon"
 // CHECK:STDOUT:
@@ -39,7 +44,3 @@
 // CHECK:STDOUT:   %12 = phi i32 [ %5, %4 ], [ %10, %9 ]
 // CHECK:STDOUT:   ret i32 %12
 // CHECK:STDOUT: }
-
-fn Select(b: bool, c: bool, d: bool) -> i32 {
-  return if b then if c then 1 else 2 else if d then 3 else 4;
-}

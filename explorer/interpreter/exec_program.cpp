@@ -27,10 +27,12 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
   SetFileContext set_file_ctx(*trace_stream, std::nullopt);
 
   if (trace_stream->is_enabled()) {
-    *trace_stream << "********** source program **********\n";
-    for (int i = ast.num_prelude_declarations;
-         i < static_cast<int>(ast.declarations.size()); ++i) {
-      *trace_stream << *ast.declarations[i];
+    trace_stream->Heading("source program");
+    for (auto& declaration : ast.declarations) {
+      set_file_ctx.update_source_loc(declaration->source_loc());
+      if (trace_stream->is_enabled()) {
+        *trace_stream << *declaration;
+      }
     }
   }
 
@@ -43,32 +45,32 @@ auto AnalyzeProgram(Nonnull<Arena*> arena, AST ast,
   // (particularly templates) may require more passes.
   set_prog_phase.update_phase(ProgramPhase::NameResolution);
   if (trace_stream->is_enabled()) {
-    *trace_stream << "********** resolving names **********\n";
+    trace_stream->Heading("resolving names");
   }
   CARBON_RETURN_IF_ERROR(ResolveNames(ast, trace_stream));
 
   set_prog_phase.update_phase(ProgramPhase::ControlFlowResolution);
   if (trace_stream->is_enabled()) {
-    *trace_stream << "********** resolving control flow **********\n";
+    trace_stream->Heading("resolving control flow");
   }
   CARBON_RETURN_IF_ERROR(ResolveControlFlow(trace_stream, ast));
 
   set_prog_phase.update_phase(ProgramPhase::TypeChecking);
   if (trace_stream->is_enabled()) {
-    *trace_stream << "********** type checking **********\n";
+    trace_stream->Heading("type checking");
   }
   CARBON_RETURN_IF_ERROR(
       TypeChecker(arena, trace_stream, print_stream).TypeCheck(ast));
 
   set_prog_phase.update_phase(ProgramPhase::UnformedVariableResolution);
   if (trace_stream->is_enabled()) {
-    *trace_stream << "********** resolving unformed variables **********\n";
+    trace_stream->Heading("resolving unformed variables");
   }
   CARBON_RETURN_IF_ERROR(ResolveUnformed(trace_stream, ast));
 
   set_prog_phase.update_phase(ProgramPhase::Declarations);
   if (trace_stream->is_enabled()) {
-    *trace_stream << "********** printing declarations **********\n";
+    trace_stream->Heading("printing declarations");
     for (auto& declaration : ast.declarations) {
       set_file_ctx.update_source_loc(declaration->source_loc());
       if (trace_stream->is_enabled()) {
@@ -84,13 +86,14 @@ auto ExecProgram(Nonnull<Arena*> arena, AST ast,
                  Nonnull<llvm::raw_ostream*> print_stream) -> ErrorOr<int> {
   SetProgramPhase set_program_phase(*trace_stream, ProgramPhase::Execution);
   if (trace_stream->is_enabled()) {
-    *trace_stream << "********** starting execution **********\n";
+    trace_stream->Heading("starting execution");
   }
   CARBON_ASSIGN_OR_RETURN(
       auto interpreter_result,
       InterpProgram(ast, arena, trace_stream, print_stream));
   if (trace_stream->is_enabled()) {
-    *trace_stream << "interpreter result: " << interpreter_result << "\n";
+    trace_stream->Result() << "interpreter result: " << interpreter_result
+                           << "\n";
   }
   return interpreter_result;
 }
