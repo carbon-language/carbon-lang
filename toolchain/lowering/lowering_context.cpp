@@ -147,11 +147,7 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
     case SemanticsNodeKind::ArrayType: {
       auto [bound_node_id, type_id] = node.GetAsArrayType();
       auto bound_value = semantics_ir_->GetArrayBoundValue(bound_node_id);
-      llvm::SmallVector<llvm::Type*> subtypes;
-      subtypes.reserve(bound_value);
-      for (uint64_t i = 0; i < bound_value; i++) {
-        subtypes.push_back(GetType(type_id));
-      }
+      llvm::SmallVector<llvm::Type*> subtypes(bound_value, GetType(type_id));
       return llvm::StructType::get(*llvm_context_, subtypes);
     }
     case SemanticsNodeKind::ConstType:
