@@ -4,8 +4,6 @@
 
 #include "toolchain/lowering/lowering_context.h"
 
-#include <cstdint>
-
 #include "common/vlog.h"
 #include "toolchain/lowering/lowering_function_context.h"
 #include "toolchain/semantics/semantics_ir.h"
