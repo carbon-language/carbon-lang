@@ -23,7 +23,7 @@ class TraceStream;
 
 // Enumerates the phases of the program used for tracing and controlling which
 // program phases are included for tracing.
-// Members shold be in sequence in which the phases are traced.
+// Members should be in sequence in which the phases are traced.
 enum class ProgramPhase {
   SourceProgram,               // Phase for the source program.
   NameResolution,              // Phase for name resolution.
