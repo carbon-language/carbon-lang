@@ -2,8 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <cstdint>
-
+#include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_context.h"
 #include "toolchain/semantics/semantics_node.h"
 #include "toolchain/semantics/semantics_node_kind.h"
@@ -27,38 +26,40 @@ auto SemanticsHandleIndexExpression(SemanticsContext& context,
       context.semantics_ir().GetTypeAllowBuiltinTypes(name_node.type_id());
   auto name_type_node = context.semantics_ir().GetNode(name_type_id);
 
-  index_node.kind().Print(llvm::outs());
-  llvm::outs() << "\nHello\n\n";
-
   if (name_type_node.kind() == SemanticsNodeKind::ArrayType) {
     auto [bound_id, type_id] = name_type_node.GetAsArrayType();
-    auto bound_val = context.semantics_ir().GetArrayBoundValue(bound_id);
     if (index_node.kind() == SemanticsNodeKind::IntegerLiteral) {
       const auto& index_val = context.semantics_ir().GetIntegerLiteral(
           index_node.GetAsIntegerLiteral());
-      if (!index_val.uge(bound_val)) {
+      if (index_val.uge(context.semantics_ir().GetArrayBoundValue(bound_id))) {
+        context.DiagnoseOutOfBounds(parse_node, index_val, name_node);
+      } else {
         context.AddNodeAndPush(
             parse_node, SemanticsNode::ArrayIndex::Make(
                             parse_node, type_id, name_node_id, index_node_id));
         return true;
       }
+    } else if (SemanticsBuiltinKind::FromInt(
+                   context.semantics_ir()
+                       .GetTypeAllowBuiltinTypes(index_node.type_id())
+                       .index) ==
+               Internal::SemanticsBuiltinKindRawEnum::IntegerType) {
+      context.AddNodeAndPush(
+          parse_node, SemanticsNode::ArrayIndex::Make(
+                          parse_node, type_id, name_node_id, index_node_id));
+      return true;
+    } else if (name_type_id != SemanticsNodeId::BuiltinError) {
+      context.DiagnoseUndeterministicType(parse_node);
     }
-  }
-  if (name_type_node.kind() == SemanticsNodeKind::TupleType &&
-      index_node.kind() == SemanticsNodeKind::IntegerLiteral) {
+  } else if (name_type_node.kind() == SemanticsNodeKind::TupleType &&
+             index_node.kind() == SemanticsNodeKind::IntegerLiteral) {
     const auto& index_val = context.semantics_ir().GetIntegerLiteral(
         index_node.GetAsIntegerLiteral());
     auto type_block =
         context.semantics_ir().GetTypeBlock(name_type_node.GetAsTupleType());
 
     if (index_val.uge(static_cast<uint64_t>(type_block.size()))) {
-      CARBON_DIAGNOSTIC(OutOfBoundsAccess, Error,
-                        "Index `{0}` is past the end of `{1}`.", llvm::APSInt,
-                        std::string);
-      context.emitter().Emit(
-          parse_node, OutOfBoundsAccess,
-          llvm::APSInt(index_val, /*isUnsigned=*/true),
-          context.semantics_ir().StringifyType(name_node.type_id()));
+      context.DiagnoseOutOfBounds(parse_node, index_val, name_node);
     } else {
       context.AddNodeAndPush(
           parse_node, SemanticsNode::TupleIndex::Make(
@@ -67,10 +68,9 @@ auto SemanticsHandleIndexExpression(SemanticsContext& context,
       return true;
     }
   } else if (index_node.kind() != SemanticsNodeKind::IntegerLiteral) {
-    CARBON_DIAGNOSTIC(NondeterministicType, Error,
-                      "Type cannot be determined at compile time.");
-    context.emitter().Emit(parse_node, NondeterministicType);
-  } else if (name_type_node.kind() != SemanticsNodeKind::TupleType &&
+    context.DiagnoseUndeterministicType(parse_node);
+  } else if ((name_type_node.kind() != SemanticsNodeKind::TupleType ||
+              name_type_node.kind() != SemanticsNodeKind::ArrayType) &&
              name_type_id != SemanticsNodeId::BuiltinError) {
     CARBON_DIAGNOSTIC(InvalidIndexExpression, Error,
                       "Invalid index expression.");
