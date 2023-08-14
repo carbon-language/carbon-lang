@@ -5,6 +5,9 @@
 #include "toolchain/semantics/semantics_ir.h"
 
 #include "common/check.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/common/pretty_stack_trace_function.h"
 #include "toolchain/parser/parse_tree_node_location_translator.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
@@ -202,6 +205,7 @@ auto SemanticsIR::Print(llvm::raw_ostream& out, bool include_builtins) const
 // precedence.
 static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
   switch (kind) {
+    case SemanticsNodeKind::ArrayType:
     case SemanticsNodeKind::Builtin:
     case SemanticsNodeKind::StructType:
     case SemanticsNodeKind::TupleType:
@@ -217,6 +221,8 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
       // now, all cross-references refer to builtin types from the prelude.
       return 0;
 
+    case SemanticsNodeKind::AddressOf:
+    case SemanticsNodeKind::ArrayValue:
     case SemanticsNodeKind::Assign:
     case SemanticsNodeKind::BinaryOperatorAdd:
     case SemanticsNodeKind::BindName:
@@ -226,8 +232,8 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::BranchIf:
     case SemanticsNodeKind::BranchWithArg:
     case SemanticsNodeKind::Call:
+    case SemanticsNodeKind::Dereference:
     case SemanticsNodeKind::FunctionDeclaration:
-    case SemanticsNodeKind::Index:
     case SemanticsNodeKind::IntegerLiteral:
     case SemanticsNodeKind::Invalid:
     case SemanticsNodeKind::Namespace:
@@ -235,10 +241,11 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
     case SemanticsNodeKind::Return:
     case SemanticsNodeKind::ReturnExpression:
     case SemanticsNodeKind::StringLiteral:
-    case SemanticsNodeKind::StructMemberAccess:
+    case SemanticsNodeKind::StructAccess:
     case SemanticsNodeKind::StructTypeField:
     case SemanticsNodeKind::StructValue:
     case SemanticsNodeKind::StubReference:
+    case SemanticsNodeKind::TupleIndex:
     case SemanticsNodeKind::TupleValue:
     case SemanticsNodeKind::UnaryOperatorNot:
     case SemanticsNodeKind::VarStorage:
@@ -246,7 +253,8 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
   }
 }
 
-auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
+auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
+                                bool in_type_context) const -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
@@ -280,12 +288,24 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
 
     auto node = GetNode(step.node_id);
     switch (node.kind()) {
+      case SemanticsNodeKind::ArrayType: {
+        auto [bound_id, type_id] = node.GetAsArrayType();
+        if (step.index == 0) {
+          out << "[";
+          steps.push_back(step.Next());
+          steps.push_back({.node_id = GetTypeAllowBuiltinTypes(type_id)});
+        } else if (step.index == 1) {
+          out << "; " << GetArrayBoundValue(bound_id) << "]";
+        }
+        break;
+      }
       case SemanticsNodeKind::ConstType: {
         if (step.index == 0) {
           out << "const ";
 
           // Add parentheses if required.
-          auto inner_type_node_id = GetType(node.GetAsConstType());
+          auto inner_type_node_id =
+              GetTypeAllowBuiltinTypes(node.GetAsConstType());
           if (GetTypePrecedence(GetNode(inner_type_node_id).kind()) <
               GetTypePrecedence(node.kind())) {
             out << "(";
@@ -301,7 +321,8 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::PointerType: {
         if (step.index == 0) {
           steps.push_back(step.Next());
-          steps.push_back({.node_id = GetType(node.GetAsPointerType())});
+          steps.push_back(
+              {.node_id = GetTypeAllowBuiltinTypes(node.GetAsPointerType())});
         } else if (step.index == 1) {
           out << "*";
         }
@@ -354,6 +375,8 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
             {.node_id = GetTypeAllowBuiltinTypes(refs[step.index])});
         break;
       }
+      case SemanticsNodeKind::AddressOf:
+      case SemanticsNodeKind::ArrayValue:
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
       case SemanticsNodeKind::BindName:
@@ -364,18 +387,19 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
       case SemanticsNodeKind::BranchWithArg:
       case SemanticsNodeKind::Builtin:
       case SemanticsNodeKind::Call:
+      case SemanticsNodeKind::Dereference:
       case SemanticsNodeKind::CrossReference:
       case SemanticsNodeKind::FunctionDeclaration:
-      case SemanticsNodeKind::Index:
       case SemanticsNodeKind::IntegerLiteral:
       case SemanticsNodeKind::Namespace:
       case SemanticsNodeKind::RealLiteral:
       case SemanticsNodeKind::Return:
       case SemanticsNodeKind::ReturnExpression:
       case SemanticsNodeKind::StringLiteral:
-      case SemanticsNodeKind::StructMemberAccess:
+      case SemanticsNodeKind::StructAccess:
       case SemanticsNodeKind::StructValue:
       case SemanticsNodeKind::StubReference:
+      case SemanticsNodeKind::TupleIndex:
       case SemanticsNodeKind::TupleValue:
       case SemanticsNodeKind::UnaryOperatorNot:
       case SemanticsNodeKind::VarStorage:
@@ -390,15 +414,102 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id) -> std::string {
   }
 
   // For `{}` or any tuple type, we've printed a non-type expression, so add a
-  // conversion to type `type`.
-  auto outer_node = GetNode(outer_node_id);
-  if (outer_node.kind() == SemanticsNodeKind::TupleType ||
-      (outer_node.kind() == SemanticsNodeKind::StructType &&
-       GetNodeBlock(outer_node.GetAsStructType()).empty())) {
-    out << " as type";
+  // conversion to type `type` if it's not implied by the context.
+  if (!in_type_context) {
+    auto outer_node = GetNode(outer_node_id);
+    if (outer_node.kind() == SemanticsNodeKind::TupleType ||
+        (outer_node.kind() == SemanticsNodeKind::StructType &&
+         GetNodeBlock(outer_node.GetAsStructType()).empty())) {
+      out << " as type";
+    }
   }
 
   return str;
+}
+
+auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
+                                    SemanticsNodeId node_id)
+    -> SemanticsExpressionCategory {
+  const SemanticsIR* ir = &semantics_ir;
+  while (true) {
+    auto node = ir->GetNode(node_id);
+    switch (node.kind()) {
+      case SemanticsNodeKind::Invalid:
+      case SemanticsNodeKind::Assign:
+      case SemanticsNodeKind::Branch:
+      case SemanticsNodeKind::BranchIf:
+      case SemanticsNodeKind::BranchWithArg:
+      case SemanticsNodeKind::FunctionDeclaration:
+      case SemanticsNodeKind::Namespace:
+      case SemanticsNodeKind::Return:
+      case SemanticsNodeKind::ReturnExpression:
+      case SemanticsNodeKind::StructTypeField:
+        return SemanticsExpressionCategory::NotExpression;
+
+      case SemanticsNodeKind::CrossReference: {
+        auto [xref_id, xref_node_id] = node.GetAsCrossReference();
+        ir = &semantics_ir.GetCrossReferenceIR(xref_id);
+        node_id = xref_node_id;
+        continue;
+      }
+
+      case SemanticsNodeKind::Call:
+        // TODO: This should eventually be Initializing.
+        return SemanticsExpressionCategory::Value;
+
+      case SemanticsNodeKind::BindName: {
+        auto [name_id, value_id] = node.GetAsBindName();
+        node_id = value_id;
+        continue;
+      }
+
+      case SemanticsNodeKind::AddressOf:
+      case SemanticsNodeKind::ArrayType:
+      case SemanticsNodeKind::BinaryOperatorAdd:
+      case SemanticsNodeKind::BlockArg:
+      case SemanticsNodeKind::BoolLiteral:
+      case SemanticsNodeKind::Builtin:
+      case SemanticsNodeKind::ConstType:
+      case SemanticsNodeKind::IntegerLiteral:
+      case SemanticsNodeKind::PointerType:
+      case SemanticsNodeKind::RealLiteral:
+      case SemanticsNodeKind::StringLiteral:
+      case SemanticsNodeKind::StructType:
+      case SemanticsNodeKind::TupleType:
+      case SemanticsNodeKind::UnaryOperatorNot:
+        return SemanticsExpressionCategory::Value;
+
+      case SemanticsNodeKind::StructAccess: {
+        auto [base_id, member_index] = node.GetAsStructAccess();
+        node_id = base_id;
+        continue;
+      }
+
+      case SemanticsNodeKind::TupleIndex: {
+        auto [base_id, index_id] = node.GetAsTupleIndex();
+        node_id = base_id;
+        continue;
+      }
+
+      case SemanticsNodeKind::StubReference: {
+        node_id = node.GetAsStubReference();
+        continue;
+      }
+
+      case SemanticsNodeKind::ArrayValue:
+      case SemanticsNodeKind::StructValue:
+      case SemanticsNodeKind::TupleValue:
+        // TODO: Eventually these will depend on the context in which the value
+        // is used, and could be either Value or Initializing. We may want
+        // different node kinds for a struct/tuple initializer versus a
+        // struct/tuple value construction.
+        return SemanticsExpressionCategory::Value;
+
+      case SemanticsNodeKind::Dereference:
+      case SemanticsNodeKind::VarStorage:
+        return SemanticsExpressionCategory::DurableReference;
+    }
+  }
 }
 
 }  // namespace Carbon

@@ -117,7 +117,9 @@ cc_library(
         ":action",
         ":action_stack",
         ":heap",
+        ":pattern_match",
         ":stack",
+        ":type_utils",
         "//common:check",
         "//common:error",
         "//common:ostream",
@@ -205,8 +207,10 @@ cc_library(
         ":dictionary",
         ":interpreter",
         ":pattern_analysis",
+        ":pattern_match",
         ":stack_space",
         ":type_structure",
+        ":type_utils",
         "//common:check",
         "//common:enum_base",
         "//common:error",
@@ -265,6 +269,40 @@ cc_library(
         "//explorer/ast",
         "//explorer/ast:expression_category",
         "//explorer/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "type_utils",
+    srcs = [
+        "type_utils.cpp",
+    ],
+    hdrs = [
+        "type_utils.h",
+    ],
+    deps = [
+        "//explorer/ast",
+        "//explorer/common:nonnull",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "pattern_match",
+    srcs = [
+        "pattern_match.cpp",
+    ],
+    hdrs = [
+        "pattern_match.h",
+    ],
+    deps = [
+        ":action",
+        "//explorer/ast",
+        "//explorer/common:arena",
+        "//explorer/common:nonnull",
+        "//explorer/common:source_location",
+        "//explorer/common:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )

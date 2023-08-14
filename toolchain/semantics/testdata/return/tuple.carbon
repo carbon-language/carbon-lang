@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+
+fn Main() -> (i32, i32) {
+  return (15, 35);
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type2, body: {block3}}},
@@ -73,8 +79,22 @@
 // CHECK:STDOUT:     node+9,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-
-fn Main() -> (i32, i32) {
-  return (15, 35);
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc8_15: type = stub_reference i32
+// CHECK:STDOUT:   %.loc8_20: type = stub_reference i32
+// CHECK:STDOUT:   %.loc8_23.1: type = tuple_type (type, type)
+// CHECK:STDOUT:   %.loc8_23.2: (type, type) = tuple_value (%.loc8_15, %.loc8_20)
+// CHECK:STDOUT:   %.loc8_23.3: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %.loc8_1 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> (i32, i32) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc9_11.1: i32 = int_literal 15
+// CHECK:STDOUT:   %.loc9_11.2: i32 = stub_reference %.loc9_11.1
+// CHECK:STDOUT:   %.loc9_15.1: i32 = int_literal 35
+// CHECK:STDOUT:   %.loc9_15.2: i32 = stub_reference %.loc9_15.1
+// CHECK:STDOUT:   %.loc9_17: (i32, i32) = tuple_value (%.loc9_11.2, %.loc9_15.2)
+// CHECK:STDOUT:   return %.loc9_17
+// CHECK:STDOUT: }

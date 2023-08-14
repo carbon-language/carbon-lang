@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Not(b: bool) -> bool {
+  return not b;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type0, body: {block4}}},
@@ -45,7 +50,13 @@
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn Not(b: bool) -> bool {
-  return not b;
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @Not
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Not(%b: bool) -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc8: bool = not %b
+// CHECK:STDOUT:   return %.loc8
+// CHECK:STDOUT: }

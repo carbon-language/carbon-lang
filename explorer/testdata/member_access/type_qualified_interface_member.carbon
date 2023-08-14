@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 42
 
 package Foo api;
 interface HasDefault {
@@ -15,3 +14,5 @@ impl i32 as HasDefault {
 fn Main() -> i32 {
   return i32.(HasDefault.Default)();
 }
+
+// CHECK:STDOUT: result: 42

@@ -33,28 +33,18 @@ TEST(PrecedenceTest, OperatorsAreRecognized) {
 
   EXPECT_TRUE(PrecedenceGroup::ForTrailing(TokenKind::Minus, true)->is_binary);
   EXPECT_FALSE(
-      PrecedenceGroup::ForTrailing(TokenKind::MinusMinus, false)->is_binary);
+      PrecedenceGroup::ForTrailing(TokenKind::MinusMinus, false).has_value());
 }
 
 TEST(PrecedenceTest, InfixVsPostfix) {
-  // A trailing `-` is always infix; a trailing `--` is always postfix.
-  EXPECT_TRUE(PrecedenceGroup::ForTrailing(TokenKind::Minus, false)->is_binary);
-  EXPECT_FALSE(
-      PrecedenceGroup::ForTrailing(TokenKind::MinusMinus, true)->is_binary);
+  // A trailing `-` is always binary, even when written with whitespace that
+  // suggests it's postfix.
+  EXPECT_TRUE(PrecedenceGroup::ForTrailing(TokenKind::Minus, /*infix*/ false)
+                  ->is_binary);
 
   // A trailing `*` is interpreted based on context.
   EXPECT_TRUE(PrecedenceGroup::ForTrailing(TokenKind::Star, true)->is_binary);
   EXPECT_FALSE(PrecedenceGroup::ForTrailing(TokenKind::Star, false)->is_binary);
-
-  // Postfix `*` can appear in type contexts; infix `*` cannot.
-  EXPECT_THAT(PrecedenceGroup::GetPriority(
-                  PrecedenceGroup::ForTrailing(TokenKind::Star, true)->level,
-                  PrecedenceGroup::ForType()),
-              Eq(OperatorPriority::Ambiguous));
-  EXPECT_THAT(PrecedenceGroup::GetPriority(
-                  PrecedenceGroup::ForTrailing(TokenKind::Star, false)->level,
-                  PrecedenceGroup::ForType()),
-              Eq(OperatorPriority::LeftFirst));
 
   // Infix `*` can appear in `+` contexts; postfix `*` cannot.
   EXPECT_THAT(PrecedenceGroup::GetPriority(
@@ -69,17 +59,13 @@ TEST(PrecedenceTest, InfixVsPostfix) {
 
 TEST(PrecedenceTest, Associativity) {
   EXPECT_THAT(PrecedenceGroup::ForLeading(TokenKind::Minus)->GetAssociativity(),
+              Eq(Associativity::None));
+  EXPECT_THAT(PrecedenceGroup::ForLeading(TokenKind::Star)->GetAssociativity(),
               Eq(Associativity::RightToLeft));
-  EXPECT_THAT(PrecedenceGroup::ForTrailing(TokenKind::PlusPlus, false)
-                  ->level.GetAssociativity(),
-              Eq(Associativity::LeftToRight));
   EXPECT_THAT(PrecedenceGroup::ForTrailing(TokenKind::Plus, true)
                   ->level.GetAssociativity(),
               Eq(Associativity::LeftToRight));
   EXPECT_THAT(PrecedenceGroup::ForTrailing(TokenKind::Equal, true)
-                  ->level.GetAssociativity(),
-              Eq(Associativity::RightToLeft));
-  EXPECT_THAT(PrecedenceGroup::ForTrailing(TokenKind::PlusEqual, true)
                   ->level.GetAssociativity(),
               Eq(Associativity::None));
 }
@@ -134,7 +120,7 @@ TEST(PrecedenceTest, IncomparableOperators) {
                   *PrecedenceGroup::ForLeading(TokenKind::Minus)),
               Eq(OperatorPriority::Ambiguous));
   EXPECT_THAT(PrecedenceGroup::GetPriority(
-                  *PrecedenceGroup::ForLeading(TokenKind::Minus),
+                  *PrecedenceGroup::ForLeading(TokenKind::Not),
                   PrecedenceGroup::ForTrailing(TokenKind::Amp, true)->level),
               Eq(OperatorPriority::Ambiguous));
   EXPECT_THAT(

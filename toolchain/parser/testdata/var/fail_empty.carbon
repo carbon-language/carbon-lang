@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_empty.carbon:[[@LINE+3]]:4: Expected pattern in `var` declaration.
+// CHECK:STDERR: var;
+// CHECK:STDERR:    ^
+var;
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: ';', has_error: yes},
@@ -11,8 +17,3 @@
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 5},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_empty.carbon:[[@LINE+3]]:4: Expected pattern in `var` declaration.
-// CHECK:STDERR: var;
-// CHECK:STDERR:    ^
-var;

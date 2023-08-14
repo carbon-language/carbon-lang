@@ -44,7 +44,7 @@ auto SemanticsHandleIndexExpression(SemanticsContext& context,
           context.semantics_ir().StringifyType(name_node.type_id()));
     } else {
       context.AddNodeAndPush(
-          parse_node, SemanticsNode::Index::Make(
+          parse_node, SemanticsNode::TupleIndex::Make(
                           parse_node, type_block[index_val.getZExtValue()],
                           name_node_id, index_node_id));
       return true;

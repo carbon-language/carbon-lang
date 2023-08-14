@@ -3,11 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: A(T) as B(i32)
-// CHECK:STDOUT: A(T) as B(U)
-// CHECK:STDOUT: A(i32) as B(T)
-// CHECK:STDOUT: A(i32) as B(T)
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -42,3 +37,9 @@ fn Main() -> i32 {
   G(b);
   return 0;
 }
+
+// CHECK:STDOUT: A(T) as B(i32)
+// CHECK:STDOUT: A(T) as B(U)
+// CHECK:STDOUT: A(i32) as B(T)
+// CHECK:STDOUT: A(i32) as B(T)
+// CHECK:STDOUT: result: 0

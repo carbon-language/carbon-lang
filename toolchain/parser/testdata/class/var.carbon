@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+class Foo {
+  var x: i32;
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'Foo'},
@@ -15,7 +20,3 @@
 // CHECK:STDOUT: {kind: 'ClassDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-class Foo {
-  var x: i32;
-}

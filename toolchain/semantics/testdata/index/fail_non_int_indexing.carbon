@@ -3,6 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+var a: (i32, i32) = (12, 6);
+// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:19: Type cannot be determined at compile time.
+// CHECK:STDERR: var b: i32 = a[2.6];
+// CHECK:STDERR:                   ^
+var b: i32 = a[2.6];
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -83,9 +90,21 @@
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:19: Type cannot be determined at compile time.
-// CHECK:STDERR: var b: i32 = a[2.6];
-// CHECK:STDERR:                   ^
-var b: i32 = a[2.6];
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7_9: type = stub_reference i32
+// CHECK:STDOUT:   %.loc7_14: type = stub_reference i32
+// CHECK:STDOUT:   %.loc7_17.1: type = tuple_type (type, type)
+// CHECK:STDOUT:   %.loc7_17.2: (type, type) = tuple_value (%.loc7_9, %.loc7_14)
+// CHECK:STDOUT:   %.loc7_17.3: type = tuple_type (i32, i32)
+// CHECK:STDOUT:   %a: (i32, i32) = var
+// CHECK:STDOUT:   %.loc7_22.1: i32 = int_literal 12
+// CHECK:STDOUT:   %.loc7_22.2: i32 = stub_reference %.loc7_22.1
+// CHECK:STDOUT:   %.loc7_26.1: i32 = int_literal 6
+// CHECK:STDOUT:   %.loc7_26.2: i32 = stub_reference %.loc7_26.1
+// CHECK:STDOUT:   %.loc7_27: (i32, i32) = tuple_value (%.loc7_22.2, %.loc7_26.2)
+// CHECK:STDOUT:   assign %a, %.loc7_27
+// CHECK:STDOUT:   %b: i32 = var
+// CHECK:STDOUT:   %.loc11: f64 = real_literal 26e-1
+// CHECK:STDOUT:   assign %b, <error>
+// CHECK:STDOUT: }

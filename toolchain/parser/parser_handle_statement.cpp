@@ -46,7 +46,7 @@ auto ParserHandleStatement(ParserContext& context) -> void {
     }
     default: {
       context.PushState(ParserState::ExpressionStatementFinish);
-      context.PushState(ParserState::Expression);
+      context.PushStateForExpression(PrecedenceGroup::ForExpressionStatement());
       break;
     }
   }
@@ -118,7 +118,9 @@ auto ParserHandleStatementForHeaderIn(ParserContext& context) -> void {
 auto ParserHandleStatementForHeaderFinish(ParserContext& context) -> void {
   auto state = context.PopState();
 
-  context.ConsumeAndAddCloseParen(state, ParseNodeKind::ForHeader);
+  context.ConsumeAndAddCloseSymbol(
+      *(TokenizedBuffer::TokenIterator(state.token) + 1), state,
+      ParseNodeKind::ForHeader);
 
   context.PushState(ParserState::CodeBlock);
 }

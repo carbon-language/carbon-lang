@@ -3,22 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: ; ModuleID = 'function.carbon'
-// CHECK:STDOUT: source_filename = "function.carbon"
-// CHECK:STDOUT:
-// CHECK:STDOUT: define void @Baz() {
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define void @Baz.1() {
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define void @Bar() {
-// CHECK:STDOUT:   call void @Baz.1()
-// CHECK:STDOUT:   %TupleLiteralValue = alloca {}, align 8
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
 
 namespace Foo;
 
@@ -32,3 +16,20 @@ fn Foo.Baz() {
 fn Bar() {
   Foo.Baz();
 }
+
+// CHECK:STDOUT: ; ModuleID = 'function.carbon'
+// CHECK:STDOUT: source_filename = "function.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @Baz() {
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @Baz.1() {
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @Bar() {
+// CHECK:STDOUT:   call void @Baz.1()
+// CHECK:STDOUT:   %call.result = alloca {}, align 8
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }

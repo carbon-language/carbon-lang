@@ -337,7 +337,7 @@ contribute.
 
 You can also directly:
 
--   [Contribute the language design](CONTRIBUTING.md#contributing-to-the-language-design):
+-   [Contribute to the language design](CONTRIBUTING.md#contributing-to-the-language-design):
     feedback on design, new design proposal
 -   [Contribute to the language implementation](CONTRIBUTING.md#contributing-to-the-language-implementation)
     -   [Carbon Explorer](/explorer/): bug report, bug fix, language feature

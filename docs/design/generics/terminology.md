@@ -287,7 +287,7 @@ _Binding patterns_ associate a name with a type and a value. This is used to
 declare function parameters, in `let` and `var` declarations, as well as to
 declare [generic parameters](#generic-means-compile-time-parameterized). There
 are three kinds of binding patterns, corresponding to
-[the three value phases](/docs/design/README.md#value-categories-and-value-phases):
+[the three value phases](/docs/design/README.md#value-phases):
 
 -   A _runtime binding pattern_ binds to a dynamic value at runtime, and is
     written using a `:`, as in `x: i32`.

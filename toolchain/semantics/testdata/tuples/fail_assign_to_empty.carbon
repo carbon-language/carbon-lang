@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:17: Cannot implicitly convert from `i32` to `() as type`.
+// CHECK:STDERR: var x: () = (66);
+// CHECK:STDERR:                 ^
+var x: () = (66);
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT: ]
@@ -42,8 +48,11 @@
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:17: Cannot implicitly convert from `i32` to `() as type`.
-// CHECK:STDERR: var x: () = (66);
-// CHECK:STDERR:                 ^
-var x: () = (66);
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc10_9.1: type = tuple_type ()
+// CHECK:STDOUT:   %.loc10_9.2: () = tuple_value ()
+// CHECK:STDOUT:   %x: () = var
+// CHECK:STDOUT:   %.loc10_14: i32 = int_literal 66
+// CHECK:STDOUT:   assign %x, <error>
+// CHECK:STDOUT: }

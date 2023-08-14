@@ -3,6 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn foo() {
+  // CHECK:STDERR: fail_missing_in.carbon:[[@LINE+3]]:19: Expected `in` after loop `var` declaration.
+  // CHECK:STDERR:   for (var x: i32 y) {
+  // CHECK:STDERR:                   ^
+  for (var x: i32 y) {
+    Print(x);
+  }
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'foo'},
@@ -28,12 +38,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 22},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-fn foo() {
-  // CHECK:STDERR: fail_missing_in.carbon:[[@LINE+3]]:19: Expected `in` after loop `var` declaration.
-  // CHECK:STDERR:   for (var x: i32 y) {
-  // CHECK:STDERR:                   ^
-  for (var x: i32 y) {
-    Print(x);
-  }
-}

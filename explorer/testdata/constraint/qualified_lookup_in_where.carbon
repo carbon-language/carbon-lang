@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 122
 
 package ExplorerTest api;
 
@@ -20,3 +19,5 @@ fn GetAB(T:! B where .Self impls A) -> i32 {
 fn Main() -> i32 {
   return GetAB(i32);
 }
+
+// CHECK:STDOUT: result: 122

@@ -3,10 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: Class D
-// CHECK:STDOUT: d.value = 2
-// CHECK:STDOUT: d.GetValue() = 2
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -37,3 +33,8 @@ fn Main() -> i32 {
   Print("d.GetValue() = {0}", d.GetValue());
   return 0;
 }
+
+// CHECK:STDOUT: Class D
+// CHECK:STDOUT: d.value = 2
+// CHECK:STDOUT: d.GetValue() = 2
+// CHECK:STDOUT: result: 0

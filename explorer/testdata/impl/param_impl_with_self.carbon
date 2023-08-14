@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 0
 
 package ExplorerTest api;
 
@@ -43,3 +42,5 @@ fn Main() -> i32 {
   var r: Point(i32) = Sum(p, q);
   return r.x - r.y;
 }
+
+// CHECK:STDOUT: result: 0

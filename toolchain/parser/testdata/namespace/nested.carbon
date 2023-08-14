@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+namespace Foo;
+namespace Foo.Bar;
+
+fn Foo.Bar.Baz() {
+  Foo.Bar.Wiz();
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'NamespaceStart', text: 'namespace'},
 // CHECK:STDOUT:   {kind: 'Name', text: 'Foo'},
@@ -32,10 +40,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', subtree_size: 18},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-namespace Foo;
-namespace Foo.Bar;
-
-fn Foo.Bar.Baz() {
-  Foo.Bar.Wiz();
-}

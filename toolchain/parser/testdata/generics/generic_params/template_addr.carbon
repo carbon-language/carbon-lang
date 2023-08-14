@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn foo(template addr a:! i32);
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:   {kind: 'Name', text: 'foo'},
@@ -16,5 +19,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDeclaration', text: ';', subtree_size: 10},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-fn foo(template addr a:! i32);

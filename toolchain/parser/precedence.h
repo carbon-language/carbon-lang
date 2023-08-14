@@ -38,15 +38,20 @@ class PrecedenceGroup {
   PrecedenceGroup() = delete;
 
   // Get the sentinel precedence level for a postfix expression. All operators
-  // should have lower precedence than this.
+  // have lower precedence than this.
   static auto ForPostfixExpression() -> PrecedenceGroup;
 
-  // Get the sentinel precedence level for a top-level expression context. All
-  // operators should have higher precedence than this.
+  // Get the precedence level for a top-level or parenthesized expression. All
+  // expression operators have higher precedence than this.
   static auto ForTopLevelExpression() -> PrecedenceGroup;
 
+  // Get the sentinel precedence level for a statement context. All operators,
+  // including statement operators like `=` and `++`, have higher precedence
+  // than this.
+  static auto ForExpressionStatement() -> PrecedenceGroup;
+
   // Get the precedence level at which to parse a type expression. All type
-  // operators should have higher precedence than this.
+  // operators have higher precedence than this.
   static auto ForType() -> PrecedenceGroup;
 
   // Look up the operator information of the given prefix operator token, or

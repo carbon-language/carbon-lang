@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() -> bool { return true; }
+fn G() -> bool { return true; }
+
+fn And() -> bool {
+  return F() and G();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
@@ -71,10 +79,36 @@
 // CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn F() -> bool { return true; }
-fn G() -> bool { return true; }
-
-fn And() -> bool {
-  return F() and G();
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @F
+// CHECK:STDOUT:   %.loc8 = fn_decl @G
+// CHECK:STDOUT:   %.loc10 = fn_decl @And
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7: bool = bool_literal true
+// CHECK:STDOUT:   return %.loc7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc8: bool = bool_literal true
+// CHECK:STDOUT:   return %.loc8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @And() -> bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_11: bool = call @F()
+// CHECK:STDOUT:   %.loc11_14.1: bool = bool_literal false
+// CHECK:STDOUT:   if %.loc11_11 br !and.rhs else br !and.result(%.loc11_14.1)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !and.rhs:
+// CHECK:STDOUT:   %.loc11_19: bool = call @G()
+// CHECK:STDOUT:   br !and.result(%.loc11_19)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !and.result:
+// CHECK:STDOUT:   %.loc11_14.2: bool = block_arg !and.result
+// CHECK:STDOUT:   return %.loc11_14.2
+// CHECK:STDOUT: }

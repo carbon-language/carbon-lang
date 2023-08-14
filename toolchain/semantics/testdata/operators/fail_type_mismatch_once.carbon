@@ -3,6 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn Main() -> i32 {
+  // The following line has two mismatches, but after the first, it shouldn't
+  // keep erroring.
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+3]]:13: Cannot implicitly convert from `i32` to `f64`.
+  // CHECK:STDERR:   return 12 + 3.4 + 12;
+  // CHECK:STDERR:             ^
+  return 12 + 3.4 + 12;
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
@@ -29,8 +39,8 @@
 // CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type1},
 // CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: nodeError, arg1: node+2, type: typeError},
 // CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int1, type: type0},
-// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: node+3, arg1: node+4, type: typeError},
-// CHECK:STDOUT:   {kind: ReturnExpression, arg0: node+5},
+// CHECK:STDOUT:   {kind: BinaryOperatorAdd, arg0: nodeError, arg1: node+4, type: typeError},
+// CHECK:STDOUT:   {kind: ReturnExpression, arg0: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
 // CHECK:STDOUT:   [
@@ -47,12 +57,17 @@
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn Main() -> i32 {
-  // The following line has two mismatches, but after the first, it shouldn't
-  // keep erroring.
-  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+3]]:13: Cannot implicitly convert from `i32` to `f64`.
-  // CHECK:STDERR:   return 12 + 3.4 + 12;
-  // CHECK:STDERR:             ^
-  return 12 + 3.4 + 12;
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @Main
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Main() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc13_10: i32 = int_literal 12
+// CHECK:STDOUT:   %.loc13_15: f64 = real_literal 34e-1
+// CHECK:STDOUT:   %.loc13_13: <error> = add <error>, %.loc13_15
+// CHECK:STDOUT:   %.loc13_21: i32 = int_literal 12
+// CHECK:STDOUT:   %.loc13_19: <error> = add <error>, %.loc13_21
+// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }

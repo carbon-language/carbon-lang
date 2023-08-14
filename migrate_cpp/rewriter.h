@@ -174,7 +174,7 @@ class RewriteBuilder : public clang::RecursiveASTVisitor<RewriteBuilder> {
 };
 
 // An `ASTConsumer` which, when executed, populates a `std::string` with the
-// text of a Carbon source file which is a best approximation of of the
+// text of a Carbon source file which is a best approximation of the
 // semantics of the corresponding C++ translation unit defined by the consumed
 // AST.
 class MigrationConsumer : public clang::ASTConsumer {
@@ -193,7 +193,7 @@ class MigrationConsumer : public clang::ASTConsumer {
 
 // An `ASTFrontendAction` which constructs a `MigrationConsumer` and invokes it
 // on an AST, populating a `std::string` with the text of a Carbon source file
-// which is a best approximation of of the semantics of the corresponding C++
+// which is a best approximation of the semantics of the corresponding C++
 // translation unit defined by the consumed AST.
 class MigrationAction : public clang::ASTFrontendAction {
  public:
