@@ -4,6 +4,8 @@
 
 #include "toolchain/lowering/lowering_context.h"
 
+#include <cstdint>
+
 #include "common/vlog.h"
 #include "toolchain/lowering/lowering_function_context.h"
 #include "toolchain/semantics/semantics_ir.h"
@@ -144,6 +146,16 @@ auto LoweringContext::BuildType(SemanticsNodeId node_id) -> llvm::Type* {
 
   auto node = semantics_ir_->GetNode(node_id);
   switch (node.kind()) {
+    case SemanticsNodeKind::ArrayType: {
+      auto [bound_node_id, type_id] = node.GetAsArrayType();
+      auto bound_value = semantics_ir_->GetArrayBoundValue(bound_node_id);
+      llvm::SmallVector<llvm::Type*> subtypes;
+      subtypes.reserve(bound_value);
+      for (uint64_t i = 0; i < bound_value; i++) {
+        subtypes.push_back(GetType(type_id));
+      }
+      return llvm::StructType::get(*llvm_context_, subtypes);
+    }
     case SemanticsNodeKind::ConstType:
       return GetType(node.GetAsConstType());
     case SemanticsNodeKind::PointerType:

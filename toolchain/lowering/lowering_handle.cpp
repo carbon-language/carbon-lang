@@ -24,16 +24,21 @@ auto LoweringHandleAddressOf(LoweringFunctionContext& context,
   context.SetLocal(node_id, context.GetLocal(node.GetAsAddressOf()));
 }
 
-auto LoweringHandleArrayType(LoweringFunctionContext& /*context*/,
-                             SemanticsNodeId /*node_id*/, SemanticsNode node)
+auto LoweringHandleArrayValue(LoweringFunctionContext& context,
+                              SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
-}
+  auto* llvm_type = context.GetType(node.type_id());
+  auto* alloca =
+      context.builder().CreateAlloca(llvm_type, /*ArraySize=*/nullptr, "array");
+  context.SetLocal(node_id, alloca);
+  // TODO: handle cases such as varstorage & call.
+  auto refs = context.semantics_ir().GetNodeBlock(
+      context.semantics_ir().GetNode(node.GetAsArrayValue()).GetAsTupleValue());
 
-auto LoweringHandleArrayValue(LoweringFunctionContext& /*context*/,
-                              SemanticsNodeId /*node_id*/, SemanticsNode node)
-    -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
+    auto* gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
+    context.builder().CreateStore(context.GetLocal(refs[i]), gep);
+  }
 }
 
 auto LoweringHandleAssign(LoweringFunctionContext& context,
@@ -264,7 +269,6 @@ auto LoweringHandleTupleValue(LoweringFunctionContext& context,
   auto* alloca =
       context.builder().CreateAlloca(llvm_type, /*ArraySize=*/nullptr, "tuple");
   context.SetLocal(node_id, alloca);
-
   auto refs = context.semantics_ir().GetNodeBlock(node.GetAsTupleValue());
   auto type_refs = context.semantics_ir().GetTypeBlock(
       context.semantics_ir()
