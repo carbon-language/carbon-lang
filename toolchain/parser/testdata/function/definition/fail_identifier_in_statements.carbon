@@ -3,6 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn F() {
+  // Note: this might become valid depending on the expression syntax. This test
+  // shouldn't be taken as a sign it should remain invalid.
+  bar
+// CHECK:STDERR: fail_identifier_in_statements.carbon:[[@LINE+3]]:1: Expected `;` after expression statement.
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'F'},
@@ -13,12 +23,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDefinition', text: '}', has_error: yes, subtree_size: 7},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-fn F() {
-  // Note: this might become valid depending on the expression syntax. This test
-  // shouldn't be taken as a sign it should remain invalid.
-  bar
-// CHECK:STDERR: fail_identifier_in_statements.carbon:[[@LINE+3]]:1: Expected `;` after expression statement.
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-}

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 5
 
 package ExplorerTest api;
 
@@ -19,3 +18,5 @@ impl i32 as HasTypeAndValue where .T = i32 and .V = 5 {}
 fn Main() -> i32 {
   return F(i32);
 }
+
+// CHECK:STDOUT: result: 5

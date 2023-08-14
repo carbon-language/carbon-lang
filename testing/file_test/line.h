@@ -19,6 +19,8 @@ class FileTestLineBase {
   // Prints the autoupdated line.
   virtual auto Print(llvm::raw_ostream& out) const -> void = 0;
 
+  virtual auto is_blank() const -> bool = 0;
+
   auto line_number() const -> int { return line_number_; }
 
  private:
@@ -32,6 +34,8 @@ class FileTestLine : public FileTestLineBase {
       : FileTestLineBase(line_number), line_(line) {}
 
   auto Print(llvm::raw_ostream& out) const -> void override { out << line_; }
+
+  auto is_blank() const -> bool override { return line_.empty(); }
 
   auto indent() const -> llvm::StringRef {
     return line_.substr(0, line_.find_first_not_of(" \n"));

@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_with_identifier_as_param.carbon:[[@LINE+3]]:11: Expected parameter declaration.
+// CHECK:STDERR: fn foo(bar);
+// CHECK:STDERR:           ^
+fn foo(bar);
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:   {kind: 'Name', text: 'foo'},
@@ -14,8 +20,3 @@
 // CHECK:STDOUT: {kind: 'FunctionDeclaration', text: ';', subtree_size: 8},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_with_identifier_as_param.carbon:[[@LINE+3]]:11: Expected parameter declaration.
-// CHECK:STDERR: fn foo(bar);
-// CHECK:STDERR:           ^
-fn foo(bar);

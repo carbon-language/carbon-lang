@@ -3,6 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+constraint Foo {
+  // CHECK:STDERR: fail_no_impl_allowed.carbon:[[@LINE+3]]:39: Method implementations are not allowed in interfaces.
+  // CHECK:STDERR:   fn Add[self: Self](b: Self) -> Self {}
+  // CHECK:STDERR:                                       ^
+  fn Add[self: Self](b: Self) -> Self {}
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'NamedConstraintIntroducer', text: 'constraint'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'Foo'},
@@ -25,10 +33,3 @@
 // CHECK:STDOUT: {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 19},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-constraint Foo {
-  // CHECK:STDERR: fail_no_impl_allowed.carbon:[[@LINE+3]]:39: Method implementations are not allowed in interfaces.
-  // CHECK:STDERR:   fn Add[self: Self](b: Self) -> Self {}
-  // CHECK:STDERR:                                       ^
-  fn Add[self: Self](b: Self) -> Self {}
-}

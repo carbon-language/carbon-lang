@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+// CHECK:STDERR: fail_mix_value_and_type.carbon:[[@LINE+3]]:17: Expected `.field = value`.
+// CHECK:STDERR: var x: {.a = 0, b: i32} = {};
+// CHECK:STDERR:                 ^
+var x: {.a = 0, b: i32} = {};
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:   {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'x'},
@@ -21,8 +27,3 @@
 // CHECK:STDOUT: {kind: 'VariableDeclaration', text: ';', subtree_size: 15},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-// CHECK:STDERR: fail_mix_value_and_type.carbon:[[@LINE+3]]:17: Expected `.field = value`.
-// CHECK:STDERR: var x: {.a = 0, b: i32} = {};
-// CHECK:STDERR:                 ^
-var x: {.a = 0, b: i32} = {};

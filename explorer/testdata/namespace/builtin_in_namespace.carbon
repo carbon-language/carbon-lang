@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 2
 
 package ExplorerTest api;
 
@@ -16,3 +15,5 @@ interface Namespace.AddWith {}
 fn F[T:! AddWith(i32) where .Result = i32](n: T) -> i32 { return n + 1; }
 
 fn Main() -> i32 { return F(1); }
+
+// CHECK:STDOUT: result: 2

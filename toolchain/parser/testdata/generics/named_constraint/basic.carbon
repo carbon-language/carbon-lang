@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+constraint Foo {
+  fn Baz();
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'NamedConstraintIntroducer', text: 'constraint'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'Foo'},
@@ -15,7 +20,3 @@
 // CHECK:STDOUT: {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-constraint Foo {
-  fn Baz();
-}

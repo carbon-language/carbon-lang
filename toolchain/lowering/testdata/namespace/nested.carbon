@@ -3,18 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: ; ModuleID = 'nested.carbon'
-// CHECK:STDOUT: source_filename = "nested.carbon"
-// CHECK:STDOUT:
-// CHECK:STDOUT: define void @Wiz() {
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define void @Baz() {
-// CHECK:STDOUT:   call void @Wiz()
-// CHECK:STDOUT:   %TupleLiteralValue = alloca {}, align 8
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
 
 namespace Foo;
 namespace Foo.Bar;
@@ -25,3 +13,16 @@ fn Foo.Bar.Wiz() {
 fn Foo.Bar.Baz() {
   Foo.Bar.Wiz();
 }
+
+// CHECK:STDOUT: ; ModuleID = 'nested.carbon'
+// CHECK:STDOUT: source_filename = "nested.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @Wiz() {
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @Baz() {
+// CHECK:STDOUT:   call void @Wiz()
+// CHECK:STDOUT:   %call.result = alloca {}, align 8
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }

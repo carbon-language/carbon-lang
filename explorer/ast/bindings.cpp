@@ -37,21 +37,37 @@ void Bindings::Add(Nonnull<const GenericBinding*> binding,
   }
 }
 
+void Bindings::Print(llvm::raw_ostream& out) const {
+  std::vector<std::pair<Nonnull<const GenericBinding*>, Nonnull<const Value*>>>
+      args(args_.begin(), args_.end());
+
+  std::vector<std::pair<Nonnull<const ImplBinding*>, Nonnull<const Value*>>>
+      witnesses(witnesses_.begin(), witnesses_.end());
+
+  std::stable_sort(args.begin(), args.end(), [](const auto& a, const auto& b) {
+    return a.first->index() < b.first->index();
+  });
+
+  std::stable_sort(
+      witnesses.begin(), witnesses.end(), [](const auto& a, const auto& b) {
+        return a.first->type_var()->index() < b.first->type_var()->index();
+      });
+
+  llvm::ListSeparator sep;
+  out << " >  bindings args: [";
+  for (const auto& [binding, value] : args) {
+    out << sep << "`" << *binding << "`: `" << *value << "`";
+  }
+  out << "]\n >  bindings witnesses: [";
+  for (const auto& [binding, value] : witnesses) {
+    out << sep << "`" << *binding << "`: `" << *value << "`";
+  }
+  out << "]";
+};
+
 auto Bindings::None() -> Nonnull<const Bindings*> {
   static Nonnull<const Bindings*> bindings = new Bindings;
   return bindings;
-}
-
-void Bindings::Print(llvm::raw_ostream& out) const {
-  out << "{";
-  llvm::ListSeparator sep;
-  for (const auto& [name, value] : args_) {
-    out << sep << *name << " -> " << *value;
-  }
-  for (const auto& [name, value] : witnesses_) {
-    out << sep << *name << " -> " << *value;
-  }
-  out << "}";
 }
 
 auto Bindings::SymbolicIdentity(

@@ -3,6 +3,18 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+fn A() -> i32 { return 1; }
+fn B() -> i32 { return 2; }
+
+fn F() -> i32 {
+  return if true then A() else B();
+}
+
+fn G() -> i32 {
+  return if false then A() else B();
+}
+
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
 // CHECK:STDOUT:   {name: str0, param_refs: block0, return_type: type0, body: {block2}}},
@@ -108,14 +120,58 @@
 // CHECK:STDOUT:     node+25,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT: ]
-
-fn A() -> i32 { return 1; }
-fn B() -> i32 { return 2; }
-
-fn F() -> i32 {
-  return if true then A() else B();
-}
-
-fn G() -> i32 {
-  return if false then A() else B();
-}
+// CHECK:STDOUT:
+// CHECK:STDOUT: package {
+// CHECK:STDOUT:   %.loc7 = fn_decl @A
+// CHECK:STDOUT:   %.loc8 = fn_decl @B
+// CHECK:STDOUT:   %.loc10 = fn_decl @F
+// CHECK:STDOUT:   %.loc14 = fn_decl @G
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc7: i32 = int_literal 1
+// CHECK:STDOUT:   return %.loc7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc8: i32 = int_literal 2
+// CHECK:STDOUT:   return %.loc8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc11_13: bool = bool_literal true
+// CHECK:STDOUT:   if %.loc11_13 br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.then:
+// CHECK:STDOUT:   %.loc11_24: i32 = call @A()
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_24)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.else:
+// CHECK:STDOUT:   %.loc11_33: i32 = call @B()
+// CHECK:STDOUT:   br !if.expr.result(%.loc11_33)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.result:
+// CHECK:STDOUT:   %.loc11_10: i32 = block_arg !if.expr.result
+// CHECK:STDOUT:   return %.loc11_10
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() -> i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc15_13: bool = bool_literal false
+// CHECK:STDOUT:   if %.loc15_13 br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.then:
+// CHECK:STDOUT:   %.loc15_25: i32 = call @A()
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_25)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.else:
+// CHECK:STDOUT:   %.loc15_34: i32 = call @B()
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_34)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !if.expr.result:
+// CHECK:STDOUT:   %.loc15_10: i32 = block_arg !if.expr.result
+// CHECK:STDOUT:   return %.loc15_10
+// CHECK:STDOUT: }

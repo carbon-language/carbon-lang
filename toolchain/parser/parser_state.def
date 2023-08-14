@@ -52,6 +52,28 @@ CARBON_PARSER_STATE(IndexExpression)
 //   (state done)
 CARBON_PARSER_STATE(IndexExpressionFinish)
 
+// Handles an array expression `[T; N]`.
+//
+// Always:
+//   1. Expression
+//   2. ArrayExpressionSemi
+CARBON_PARSER_STATE(ArrayExpression)
+
+// Handles ';' in an array expression `[T; N]`.
+//
+// If `CloseSquareBracket`:
+//   1. ArrayExpressionFinish
+// Else:
+//   1. Expression
+//   2. ArrayExpressionFinish
+CARBON_PARSER_STATE(ArrayExpressionSemi)
+
+// Handles finishing the array expression.
+//
+// Always:
+//   (state done)
+CARBON_PARSER_STATE(ArrayExpressionFinish)
+
 // Handles the `{` of a brace expression.
 //
 // If `CloseCurlyBrace`:
@@ -259,6 +281,9 @@ CARBON_PARSER_STATE(Expression)
 //   2. ExpressionInPostfixLoop
 // If `OpenParen`:
 //   1. ParenExpression
+//   2. ExpressionInPostfixLoop
+// If `OpenSquareBracket`:
+//   1. ArrayExpression
 //   2. ExpressionInPostfixLoop
 // Else:
 //   (state done)

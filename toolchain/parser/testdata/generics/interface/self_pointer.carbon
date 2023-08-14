@@ -3,6 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+
+interface Foo {
+  fn Sub[addr self: Self*](b: Self) -> Self;
+  fn Sub[addr self: foo*](b: Self) -> Self;
+}
+
 // CHECK:STDOUT: [
 // CHECK:STDOUT:     {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:     {kind: 'Name', text: 'Foo'},
@@ -44,8 +50,3 @@
 // CHECK:STDOUT: {kind: 'InterfaceDefinition', text: '}', subtree_size: 38},
 // CHECK:STDOUT: {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT: ]
-
-interface Foo {
-  fn Sub[addr self: Self*](b: Self) -> Self;
-  fn Sub[addr self: foo*](b: Self) -> Self;
-}
