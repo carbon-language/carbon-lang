@@ -18,6 +18,7 @@ fn Main() -> i32 {
 
 // CHECK:STDOUT: * * * * * * * * * *  starting execution  * * * * * * * * * *
 // CHECK:STDOUT: ------------------------------------------------------------
+// CHECK:STDOUT:
 // CHECK:STDOUT: - - - - -  initializing globals  - - - - -
 // CHECK:STDOUT: ------------------------------------------
 // CHECK:STDOUT: >[] stack-push: DeclarationAction pos: 0 `class T` (phase_execution.carbon:7)
@@ -41,6 +42,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: <[] stack-pop:  DeclarationAction pos: 0 `fn Main` (phase_execution.carbon:12)
+// CHECK:STDOUT:
 // CHECK:STDOUT: - - - - -  calling main function  - - - - -
 // CHECK:STDOUT: -------------------------------------------
 // CHECK:STDOUT: >[] stack-push: ValueExpressionAction pos: 0 `Main()` (<Main()>:0)
