@@ -132,6 +132,22 @@ class TraceStream {
   // Format utility methods
   void Heading(std::string_view heading) const {
     CARBON_CHECK(is_enabled() && stream_);
+
+    // To avoid adding blank lines for first section.
+    size_t first_allowed_phase_index = allowed_phases_.size();
+    for (size_t i = 0; i < allowed_phases_.size(); ++i) {
+      if (allowed_phases_[i]) {
+        first_allowed_phase_index = i;
+        break;
+      }
+    }
+
+    if (first_allowed_phase_index != static_cast<size_t>(current_phase_)) {
+      // Add two blank lines before heading for vertical gap between different
+      // sections.
+      **stream_ << "\n\n";
+    }
+
     const std::string_view stars = "* * * * * * * * * *";
     const std::string dashed_line(stars.size() * 2 + heading.size() + 4, '-');
     **stream_ << stars << "  " << heading << "  " << stars << "\n"
@@ -140,6 +156,7 @@ class TraceStream {
 
   void SubHeading(std::string_view heading) const {
     CARBON_CHECK(is_enabled() && stream_);
+    **stream_ << "\n";
     const std::string_view dashes = "- - - - -";
     const std::string dashed_line(dashes.size() * 2 + heading.size() + 4, '-');
     **stream_ << dashes << "  " << heading << "  " << dashes << "\n"
