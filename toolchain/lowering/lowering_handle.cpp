@@ -31,14 +31,6 @@ auto LoweringHandleArrayValue(LoweringFunctionContext& context,
   auto* alloca =
       context.builder().CreateAlloca(llvm_type, /*ArraySize=*/nullptr, "array");
   context.SetLocal(node_id, alloca);
-  // TODO: handle cases such as varstorage & call.
-  auto refs = context.semantics_ir().GetNodeBlock(
-      context.semantics_ir().GetNode(node.GetAsArrayValue()).GetAsTupleValue());
-
-  for (int i = 0; i < static_cast<int>(refs.size()); ++i) {
-    auto* gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
-    context.builder().CreateStore(context.GetLocal(refs[i]), gep);
-  }
 }
 
 auto LoweringHandleAssign(LoweringFunctionContext& context,
