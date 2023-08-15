@@ -25,7 +25,7 @@ cc_binary(
         "//common:bazel_working_dir",
         "//common:error",
         "//explorer/ast",
-        "//explorer/common:arena",
+        "//explorer/base:arena",
         "//explorer/syntax",
         "//testing/fuzzing:carbon_cc_proto",
         "@com_google_protobuf//:protobuf_headers",

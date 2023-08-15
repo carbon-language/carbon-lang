@@ -11,7 +11,7 @@
 
 #include "common/check.h"
 #include "explorer/ast/ast_rtti.h"
-#include "explorer/common/arena.h"
+#include "explorer/base/arena.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Casting.h"
 

@@ -5,8 +5,8 @@
 #include "explorer/interpreter/pattern_match.h"
 
 #include "explorer/ast/value.h"
-#include "explorer/common/arena.h"
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/arena.h"
+#include "explorer/base/trace_stream.h"
 #include "explorer/interpreter/action.h"
 #include "llvm/Support/Casting.h"
 

@@ -7,7 +7,7 @@
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/return_term.h"
 #include "explorer/ast/statement.h"
-#include "explorer/common/error_builders.h"
+#include "explorer/base/error_builders.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
 

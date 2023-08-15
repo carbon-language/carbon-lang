@@ -9,7 +9,7 @@
 
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/library_name.h"
-#include "explorer/common/nonnull.h"
+#include "explorer/base/nonnull.h"
 
 namespace Carbon {
 

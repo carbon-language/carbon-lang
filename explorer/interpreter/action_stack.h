@@ -12,7 +12,7 @@
 #include "common/ostream.h"
 #include "explorer/ast/statement.h"
 #include "explorer/ast/value.h"
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/trace_stream.h"
 #include "explorer/interpreter/action.h"
 
 namespace Carbon {

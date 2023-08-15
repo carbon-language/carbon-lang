@@ -74,8 +74,8 @@
   #include "explorer/ast/expression_category.h"
   #include "explorer/ast/paren_contents.h"
   #include "explorer/ast/pattern.h"
-  #include "explorer/common/arena.h"
-  #include "explorer/common/nonnull.h"
+  #include "explorer/base/arena.h"
+  #include "explorer/base/nonnull.h"
   #include "explorer/syntax/bison_wrap.h"
 
   namespace Carbon {

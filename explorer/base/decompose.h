@@ -4,8 +4,8 @@
 //
 // Utilities for types that support the `Decompose` API.
 
-#ifndef CARBON_EXPLORER_COMMON_DECOMPOSE_H_
-#define CARBON_EXPLORER_COMMON_DECOMPOSE_H_
+#ifndef CARBON_EXPLORER_BASE_DECOMPOSE_H_
+#define CARBON_EXPLORER_BASE_DECOMPOSE_H_
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Hashing.h"
@@ -51,4 +51,4 @@ class HashFromDecompose {
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_COMMON_DECOMPOSE_H_
+#endif  // CARBON_EXPLORER_BASE_DECOMPOSE_H_

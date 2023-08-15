@@ -20,8 +20,8 @@
 #include "explorer/ast/return_term.h"
 #include "explorer/ast/statement.h"
 #include "explorer/ast/value_node.h"
-#include "explorer/common/nonnull.h"
-#include "explorer/common/source_location.h"
+#include "explorer/base/nonnull.h"
+#include "explorer/base/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"
 

@@ -86,7 +86,7 @@ cc_library(
         ":source_location",
         "//common:check",
         "//common:ostream",
-        "//explorer/common:nonnull",
+        "//explorer/base:nonnull",
         "@llvm-project//llvm:Support",
     ],
 )

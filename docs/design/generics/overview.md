@@ -51,7 +51,7 @@ supports both
 [checked and template](terminology.md#checked-versus-template-parameters)
 generics.
 
-Template generics support a similar model as C++ templates, to help with interop
+Template generics provide a similar model to C++ templates, to help with interop
 and migration. They can be more convenient to write, and support some use cases,
 like [metaprogramming](https://en.wikipedia.org/wiki/Metaprogramming), that are
 difficult with checked generics.
@@ -87,7 +87,7 @@ Summary of how Carbon generics work:
     and other entities for types to implement.
 -   Types must explicitly _implement_ interfaces to indicate that they support
     their functionality. A given type may implement an interface at most once.
--   Implementations may be declared inline in the body of a class definition, or
+-   Implementations may be declared inline in the body of a class definition or
     out-of-line.
 -   Types may _extend_ an implementation declared inline, in which case you can
     directly call the interface's methods on those types.
@@ -97,16 +97,15 @@ Summary of how Carbon generics work:
 -   Interfaces may be used as the type of a generic parameter. Interfaces are
     _facet types_, whose values are the subset of all types that implement the
     interface. Facet types in general specify the capabilities and requirements
-    of the type. The value of a interface is called a _facet_, and are not
+    of the type. The value of a interface is called a _facet_. Facets are not
     types, but are usable as types.
 -   With a template generic, the concrete argument value used by the caller is
     used for name lookup and typechecking. With checked generics, that is all
     done with the declared restrictions expressed as the types of bindings in
     the declaration. Inside the body of a checked generic with a facet
     parameter, the API of the facet is just the names defined by the facet type.
--   _Deduced parameters_ are parameters whose values are determined by the the
-    types of the explicit arguments. Generic facet parameters are typically
-    deduced.
+-   _Deduced parameters_ are parameters whose values are determined by the types
+    of the explicit arguments. Generic facet parameters are typically deduced.
 -   A function with a generic parameter can have the same function body as an
     unparameterized one. Functions can freely mix checked, template, and regular
     parameters.
@@ -369,12 +368,13 @@ You may also refer to any of the methods of interfaces required by the facet
 type using a
 [qualified member access expression](#accessing-members-of-interfaces).
 
-A function can have a mix of checked, template, and regular parameters. A
-checked parameter is defined using a symbolic binding pattern, a template
-parameter using a template binding pattern, and a regular parameter using a
-runtime binding pattern. Likewise, it's allowed to pass a symbolic or template
-binding or value to a generic or regular parameter. _We have decided to support
-passing a symbolic value to a template parameter, see
+A function can have a mix of checked, template, and regular parameters. Each
+kind of parameter is defined using a different syntax: a checked parameter is
+uses a symbolic binding pattern, a template parameter uses a template binding
+pattern, and a regular parameter uses a runtime binding pattern. Likewise, it's
+allowed to pass a symbolic or template constant value to a checked or regular
+parameter. _We have decided to support passing a symbolic value to a template
+parameter, see
 [leads issue #2153: Checked generics calling templates](https://github.com/carbon-language/carbon-lang/issues/2153),
 but incorporating it into the design is future work._
 

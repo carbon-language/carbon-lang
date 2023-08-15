@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_COMMON_TRACE_STREAM_H_
-#define CARBON_EXPLORER_COMMON_TRACE_STREAM_H_
+#ifndef CARBON_EXPLORER_BASE_TRACE_STREAM_H_
+#define CARBON_EXPLORER_BASE_TRACE_STREAM_H_
 
 #include <bitset>
 #include <optional>
@@ -13,8 +13,8 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
-#include "explorer/common/nonnull.h"
-#include "explorer/common/source_location.h"
+#include "explorer/base/nonnull.h"
+#include "explorer/base/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
 
 namespace Carbon {
@@ -205,4 +205,4 @@ class SetFileContext {
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_COMMON_TRACE_STREAM_H_
+#endif  // CARBON_EXPLORER_BASE_TRACE_STREAM_H_

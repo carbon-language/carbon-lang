@@ -2,11 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_COMMON_ERROR_BUILDERS_H_
-#define CARBON_EXPLORER_COMMON_ERROR_BUILDERS_H_
+#ifndef CARBON_EXPLORER_BASE_ERROR_BUILDERS_H_
+#define CARBON_EXPLORER_BASE_ERROR_BUILDERS_H_
 
 #include "common/error.h"
-#include "explorer/common/source_location.h"
+#include "explorer/base/source_location.h"
 
 namespace Carbon {
 
@@ -23,4 +23,4 @@ inline auto ProgramError(SourceLocation loc) -> ErrorBuilder {
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_COMMON_ERROR_BUILDERS_H_
+#endif  // CARBON_EXPLORER_BASE_ERROR_BUILDERS_H_
