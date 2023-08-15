@@ -22,10 +22,16 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @Run() {
-// CHECK:STDOUT:   %var = alloca { i32 }, align 8
+// CHECK:STDOUT:   %var = alloca [1 x i32], align 4
 // CHECK:STDOUT:   %F = call { i32 } @F()
-// CHECK:STDOUT:   %array = alloca { i32 }, align 8
-// CHECK:STDOUT:   %1 = load { i32 }, ptr %array, align 4
-// CHECK:STDOUT:   store { i32 } %1, ptr %var, align 4
+// CHECK:STDOUT:   %array = alloca [1 x i32], align 4
+// CHECK:STDOUT:   %as_tuple = alloca { i32 }, align 8
+// CHECK:STDOUT:   store { i32 } %F, ptr %as_tuple, align 4
+// CHECK:STDOUT:   %1 = getelementptr inbounds { i32 }, ptr %as_tuple, i32 0, i32 0
+// CHECK:STDOUT:   %2 = load i32, ptr %1, align 4
+// CHECK:STDOUT:   %3 = getelementptr inbounds [1 x i32], ptr %array, i32 0, i32 0
+// CHECK:STDOUT:   store i32 %2, ptr %3, align 4
+// CHECK:STDOUT:   %4 = load [1 x i32], ptr %array, align 4
+// CHECK:STDOUT:   store [1 x i32] %4, ptr %var, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
