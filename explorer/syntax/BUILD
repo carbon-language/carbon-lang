@@ -16,7 +16,7 @@ cc_test(
     deps = [
         ":syntax",
         "//explorer/base:arena",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -148,7 +148,7 @@ cc_test(
         ":parse_test_matchers",
         ":syntax",
         "//explorer/ast:ast_test_matchers",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )

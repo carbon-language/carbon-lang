@@ -117,8 +117,8 @@ cc_test(
     size = "small",
     srcs = ["semantics_ir_test.cpp"],
     deps = [
-        "//testing/util:gtest_main",
-        "//testing/util:test_raw_ostream",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
         "//toolchain/base:yaml_test_helpers",
         "//toolchain/driver",
         "@com_google_googletest//:gtest",
