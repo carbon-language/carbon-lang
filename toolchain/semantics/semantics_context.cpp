@@ -96,24 +96,6 @@ auto SemanticsContext::DiagnoseNameNotFound(ParseTree::Node parse_node,
   emitter_->Emit(parse_node, NameNotFound, semantics_ir_->GetString(name_id));
 }
 
-auto SemanticsContext::DiagnoseOutOfBounds(ParseTree::Node parse_node,
-                                           const llvm::APInt& bound,
-                                           SemanticsNode node) -> void {
-  CARBON_DIAGNOSTIC(OutOfBoundsAccess, Error,
-                    "Index `{0}` is past the end of `{1}`.", llvm::APSInt,
-                    std::string);
-  emitter_->Emit(parse_node, OutOfBoundsAccess,
-                 llvm::APSInt(bound, /*isUnsigned=*/true),
-                 semantics_ir_->StringifyType(node.type_id()));
-}
-
-auto SemanticsContext::DiagnoseUndeterministicType(ParseTree::Node parse_node)
-    -> void {
-  CARBON_DIAGNOSTIC(NondeterministicType, Error,
-                    "Type cannot be determined at compile time.");
-  emitter_->Emit(parse_node, NondeterministicType);
-}
-
 auto SemanticsContext::AddNameToLookup(ParseTree::Node name_node,
                                        SemanticsStringId name_id,
                                        SemanticsNodeId target_id) -> void {

@@ -62,13 +62,6 @@ class SemanticsContext {
   auto DiagnoseNameNotFound(ParseTree::Node parse_node,
                             SemanticsStringId name_id) -> void;
 
-  // Prints a diagnostic for out of bounds access.
-  auto DiagnoseOutOfBounds(ParseTree::Node parse_node, const llvm::APInt& bound,
-                           SemanticsNode node) -> void;
-
-  // Prints a diagnostic for non int type index.
-  auto DiagnoseUndeterministicType(ParseTree::Node parse_node) -> void;
-
   // Pushes a new scope onto scope_stack_.
   auto PushScope() -> void;
 
