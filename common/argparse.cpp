@@ -7,7 +7,6 @@
 #include <initializer_list>
 #include <memory>
 
-#include "llvm/ADT/Sequence.h"
 #include "llvm/Support/FormatVariadic.h"
 
 namespace Carbon {
@@ -22,6 +21,7 @@ auto CommandLine::operator<<(llvm::raw_ostream& output, ParseResult result)
     case ParseResult::Success:
       return output << "Success";
   }
+  CARBON_FATAL() << "Corrupt parse result!";
 }
 
 auto CommandLine::operator<<(llvm::raw_ostream& output, ArgKind kind)
@@ -745,8 +745,8 @@ class CommandLine::Parser {
   ShortOptionTableT short_option_table_;
   SubcommandMapT subcommand_map_;
 
-  int positional_arg_index = 0;
-  bool appending_to_positional_arg = false;
+  int positional_arg_index_ = 0;
+  bool appending_to_positional_arg_ = false;
 
   ActionT arg_meta_action_;
 };
@@ -1049,7 +1049,7 @@ auto CommandLine::Parser::FinalizeParsedOptions() -> bool {
 
 auto CommandLine::Parser::ParsePositionalArg(llvm::StringRef unparsed_arg)
     -> bool {
-  if (static_cast<size_t>(positional_arg_index) >=
+  if (static_cast<size_t>(positional_arg_index_) >=
       command_->positional_args.size()) {
     errors_ << "ERROR: Completed parsing all "
             << command_->positional_args.size()
@@ -1059,16 +1059,16 @@ auto CommandLine::Parser::ParsePositionalArg(llvm::StringRef unparsed_arg)
     return false;
   }
 
-  const Arg& arg = *command_->positional_args[positional_arg_index];
+  const Arg& arg = *command_->positional_args[positional_arg_index_];
 
   // Mark that we'll keep appending here until a `--` marker. When already
   // appending this is redundant but harmless.
-  appending_to_positional_arg = arg.is_append;
-  if (!appending_to_positional_arg) {
+  appending_to_positional_arg_ = arg.is_append;
+  if (!appending_to_positional_arg_) {
     // If we're not continuing to append to a current positional arg,
     // increment the positional arg index to find the next argument we
     // should use here.
-    ++positional_arg_index;
+    ++positional_arg_index_;
   }
 
   return ParseArg(arg, /*short_spelling=*/false, unparsed_arg);
@@ -1113,16 +1113,16 @@ auto CommandLine::Parser::FinalizeParse() -> ParseResult {
 
   // If we were appending to a positional argument, mark that as complete.
   llvm::ArrayRef positional_args = command_->positional_args;
-  if (appending_to_positional_arg) {
-    CARBON_CHECK(static_cast<size_t>(positional_arg_index) <
+  if (appending_to_positional_arg_) {
+    CARBON_CHECK(static_cast<size_t>(positional_arg_index_) <
                  positional_args.size())
         << "Appending to a positional argument with an invalid index: "
-        << positional_arg_index;
-    ++positional_arg_index;
+        << positional_arg_index_;
+    ++positional_arg_index_;
   }
 
   // See if any positional args are required and unparsed.
-  auto unparsed_positional_args = positional_args.slice(positional_arg_index);
+  auto unparsed_positional_args = positional_args.slice(positional_arg_index_);
   if (!unparsed_positional_args.empty()) {
     // There are un-parsed positional arguments, make sure they aren't required.
     const Arg& missing_arg = *unparsed_positional_args.front();
@@ -1180,9 +1180,9 @@ auto CommandLine::Parser::ParsePositionalSuffix(
       continue;
     }
 
-    if (appending_to_positional_arg || empty_positional) {
-      ++positional_arg_index;
-      if (static_cast<size_t>(positional_arg_index) >=
+    if (appending_to_positional_arg_ || empty_positional) {
+      ++positional_arg_index_;
+      if (static_cast<size_t>(positional_arg_index_) >=
           command_->positional_args.size()) {
         errors_
             << "ERROR: Completed parsing all "
@@ -1192,7 +1192,7 @@ auto CommandLine::Parser::ParsePositionalSuffix(
         return false;
       }
     }
-    appending_to_positional_arg = false;
+    appending_to_positional_arg_ = false;
     empty_positional = true;
   }
 
@@ -1229,7 +1229,7 @@ auto CommandLine::Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
                    "positional arguments to parse.\n";
         return ParseResult::Error;
       }
-      if (static_cast<size_t>(positional_arg_index) >=
+      if (static_cast<size_t>(positional_arg_index_) >=
           command_->positional_args.size()) {
         errors_ << "ERROR: Switched to purely positional arguments with a `--` "
                    "argument despite already having parsed all positional "
@@ -1415,7 +1415,7 @@ void CommandLine::CommandBuilder::AddSubcommand(
     const CommandInfo& info, llvm::function_ref<void(CommandBuilder&)> build) {
   CARBON_CHECK(IsValidName(info.name))
       << "Invalid subcommand name: " << info.name;
-  CARBON_CHECK(subcommand_names.insert(info.name).second)
+  CARBON_CHECK(subcommand_names_.insert(info.name).second)
       << "Added a duplicate subcommand: " << info.name;
   CARBON_CHECK(command_.positional_args.empty())
       << "Cannot add subcommands to a command with a positional argument.";
@@ -1462,7 +1462,7 @@ auto CommandLine::CommandBuilder::AddArgImpl(const ArgInfo& info,
                                              Arg::Kind kind) -> Arg& {
   CARBON_CHECK(IsValidName(info.name))
       << "Invalid argument name: " << info.name;
-  CARBON_CHECK(arg_names.insert(info.name).second)
+  CARBON_CHECK(arg_names_.insert(info.name).second)
       << "Added a duplicate argument name: " << info.name;
 
   command_.options.emplace_back(new Arg(info));
