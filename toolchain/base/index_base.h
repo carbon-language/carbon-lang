@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_COMMON_INDEX_BASE_H_
-#define CARBON_TOOLCHAIN_COMMON_INDEX_BASE_H_
+#ifndef CARBON_TOOLCHAIN_BASE_INDEX_BASE_H_
+#define CARBON_TOOLCHAIN_BASE_INDEX_BASE_H_
 
 #include <type_traits>
 
@@ -80,4 +80,4 @@ auto operator>=(IndexType lhs, IndexType rhs) -> bool {
 
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_COMMON_INDEX_BASE_H_
+#endif  // CARBON_TOOLCHAIN_BASE_INDEX_BASE_H_
