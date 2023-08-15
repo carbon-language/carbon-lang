@@ -24,8 +24,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 
-namespace Carbon {
-
 // # Command-line argument parsing library.
 //
 // This is a collection of tools to describe both simple and reasonably complex
@@ -219,7 +217,7 @@ namespace Carbon {
 // - Finish adding support for setting and printing version information.
 // - Add short option counting support (`-vvv` -> `--verbose=3`).
 //
-namespace CommandLine {
+namespace Carbon::CommandLine {
 
 // Forward declare some implementation detail classes and classes that are
 // friended.
@@ -671,12 +669,10 @@ auto Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args,
            const CommandInfo& command_info,
            llvm::function_ref<void(CommandBuilder&)> build) -> ParseResult;
 
-}  // namespace CommandLine
-
 // Implementation details only below.
 
 // The internal representation of a parsable argument description.
-struct CommandLine::Arg {
+struct Arg {
   using Kind = ArgKind;
   using ValueActionT =
       std::function<bool(const Arg& arg, llvm::StringRef value_string)>;
@@ -727,7 +723,7 @@ struct CommandLine::Arg {
 
 // The internal representation of a parsable command description, including its
 // options, positional arguments, and subcommands.
-struct CommandLine::Command {
+struct Command {
   using Kind = CommandBuilder::Kind;
 
   explicit Command(const CommandInfo& info, Command* parent = nullptr);
@@ -745,13 +741,13 @@ struct CommandLine::Command {
 };
 
 template <typename T>
-void CommandLine::ArgBuilder::MetaAction(T action) {
+void ArgBuilder::MetaAction(T action) {
   CARBON_CHECK(!arg_.meta_action) << "Cannot set a meta action twice!";
   arg_.meta_action = std::move(action);
 }
 
 template <typename T>
-auto CommandLine::OneOfArgBuilder::OneOfValueT<T>::Default(
+auto OneOfArgBuilder::OneOfValueT<T>::Default(
     bool is_default) && -> OneOfValueT {
   OneOfValueT result = std::move(*this);
   result.is_default = is_default;
@@ -759,18 +755,18 @@ auto CommandLine::OneOfArgBuilder::OneOfValueT<T>::Default(
 }
 
 template <typename T>
-CommandLine::OneOfArgBuilder::OneOfValueT<T>::OneOfValueT(llvm::StringRef str,
+OneOfArgBuilder::OneOfValueT<T>::OneOfValueT(llvm::StringRef str,
                                                           T value)
     : str(str), value(std::move(value)) {}
 
 template <typename T>
-auto CommandLine::OneOfArgBuilder::OneOfValue(llvm::StringRef str, T value)
+auto OneOfArgBuilder::OneOfValue(llvm::StringRef str, T value)
     -> OneOfValueT<T> {
   return OneOfValueT<T>(str, value);
 }
 
 template <typename T, typename U, size_t N>
-void CommandLine::OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N],
+void OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N],
                                             T* result) {
   static_assert(N > 0, "Must include at least one value.");
   arg_.is_append = false;
@@ -780,7 +776,7 @@ void CommandLine::OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N],
 }
 
 template <typename T, typename U, size_t N>
-void CommandLine::OneOfArgBuilder::AppendOneOf(
+void OneOfArgBuilder::AppendOneOf(
     const OneOfValueT<U> (&values)[N], llvm::SmallVectorImpl<T>* sequence) {
   static_assert(N > 0, "Must include at least one value.");
   arg_.is_append = true;
@@ -801,7 +797,7 @@ void CommandLine::OneOfArgBuilder::AppendOneOf(
 // lambdas that do the type-aware operations and storing those into type-erased
 // function objects.
 template <typename U, size_t N, typename MatchT, size_t... Indices>
-void CommandLine::OneOfArgBuilder::OneOfImpl(
+void OneOfArgBuilder::OneOfImpl(
     const OneOfValueT<U> (&input_values)[N], MatchT match,
     std::index_sequence<Indices...> /*indices*/) {
   std::array<llvm::StringRef, N> value_strings = {input_values[Indices].str...};
@@ -857,6 +853,6 @@ void CommandLine::OneOfArgBuilder::OneOfImpl(
   }
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::CommandLine
 
 #endif  // CARBON_COMMON_ARGPARSE_H_

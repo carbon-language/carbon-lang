@@ -9,9 +9,9 @@
 
 #include "llvm/Support/FormatVariadic.h"
 
-namespace Carbon {
+namespace Carbon::CommandLine {
 
-auto CommandLine::operator<<(llvm::raw_ostream& output, ParseResult result)
+auto operator<<(llvm::raw_ostream& output, ParseResult result)
     -> llvm::raw_ostream& {
   switch (result) {
     case ParseResult::Error:
@@ -24,7 +24,7 @@ auto CommandLine::operator<<(llvm::raw_ostream& output, ParseResult result)
   CARBON_FATAL() << "Corrupt parse result!";
 }
 
-auto CommandLine::operator<<(llvm::raw_ostream& output, ArgKind kind)
+auto operator<<(llvm::raw_ostream& output, ArgKind kind)
     -> llvm::raw_ostream& {
   switch (kind) {
     case ArgKind::Flag:
@@ -43,7 +43,7 @@ auto CommandLine::operator<<(llvm::raw_ostream& output, ArgKind kind)
   CARBON_FATAL() << "Corrupt argument kind!";
 }
 
-auto CommandLine::operator<<(llvm::raw_ostream& output, CommandKind kind)
+auto operator<<(llvm::raw_ostream& output, CommandKind kind)
     -> llvm::raw_ostream& {
   switch (kind) {
     case CommandKind::Invalid:
@@ -57,9 +57,9 @@ auto CommandLine::operator<<(llvm::raw_ostream& output, CommandKind kind)
   }
   CARBON_FATAL() << "Corrupt command kind!";
 }
-CommandLine::Arg::Arg(const ArgInfo& info) : info(info) {}
+Arg::Arg(const ArgInfo& info) : info(info) {}
 
-CommandLine::Arg::~Arg() {
+Arg::~Arg() {
   switch (kind) {
     case Kind::Flag:
     case Kind::Integer:
@@ -78,10 +78,10 @@ CommandLine::Arg::~Arg() {
   }
 }
 
-CommandLine::Command::Command(const CommandInfo& info, Command* parent)
+Command::Command(const CommandInfo& info, Command* parent)
     : info(info), parent(parent) {}
 
-class CommandLine::MetaPrinter {
+class MetaPrinter {
  public:
   explicit MetaPrinter(llvm::raw_ostream& out) : out_(out) {}
 
@@ -110,7 +110,7 @@ class CommandLine::MetaPrinter {
   // Width limit for the leaf command options in usage rendering.
   static constexpr int MaxLeafOptionUsageWidth = 16;
 
-  static constexpr CommandLine::CommandInfo HelpCommandInfo = {
+  static constexpr CommandInfo HelpCommandInfo = {
       .name = "help",
       .help = R"""(
 Prints help information for the command, including a description, command line
@@ -120,7 +120,7 @@ usage, and details of each subcommand and option that can be provided.
 Prints help information.
 )""",
   };
-  static constexpr CommandLine::ArgInfo HelpArgInfo = {
+  static constexpr ArgInfo HelpArgInfo = {
       .name = "help",
       .value_name = "(full|short)",
       .help = R"""(
@@ -132,7 +132,7 @@ usage, and details of each option that can be provided.
 
   // Provide a customized description for help on a subcommand to avoid
   // confusion with the top-level help.
-  static constexpr CommandLine::CommandInfo SubHelpCommandInfo = {
+  static constexpr CommandInfo SubHelpCommandInfo = {
       .name = "help",
       .help = R"""(
 Prints help information for the subcommand, including a description, command
@@ -143,7 +143,7 @@ provided.
 Prints subcommand help information.
 )""",
   };
-  static constexpr CommandLine::ArgInfo SubHelpArgInfo = {
+  static constexpr ArgInfo SubHelpArgInfo = {
       .name = "help",
       .value_name = "(full|short)",
       .help = R"""(
@@ -153,13 +153,13 @@ line usage, and details of each option that can be provided.
       .help_short = SubHelpCommandInfo.help_short,
   };
 
-  static constexpr CommandLine::CommandInfo VersionCommandInfo = {
+  static constexpr CommandInfo VersionCommandInfo = {
       .name = "version",
       .help = R"""(
 Prints the version of this command.
 )""",
   };
-  static constexpr CommandLine::ArgInfo VersionArgInfo = {
+  static constexpr ArgInfo VersionArgInfo = {
       .name = "version",
       .help = VersionCommandInfo.help,
   };
@@ -200,7 +200,7 @@ Prints the version of this command.
   bool short_help_ = false;
 };
 
-void CommandLine::MetaPrinter::RegisterWithCommand(const Command& command,
+void MetaPrinter::RegisterWithCommand(const Command& command,
                                                    CommandBuilder& builder) {
   bool is_subcommand = command.parent;
   bool has_subcommands = !command.subcommands.empty();
@@ -245,7 +245,7 @@ void CommandLine::MetaPrinter::RegisterWithCommand(const Command& command,
   }
 }
 
-void CommandLine::MetaPrinter::PrintHelp(const Command& command) const {
+void MetaPrinter::PrintHelp(const Command& command) const {
   // TODO: begin using the short setting to customize the output.
   (void)short_help_;
 
@@ -280,7 +280,7 @@ void CommandLine::MetaPrinter::PrintHelp(const Command& command) const {
   out_ << "\n";
 }
 
-void CommandLine::MetaPrinter::PrintVersion(const Command& command) const {
+void MetaPrinter::PrintVersion(const Command& command) const {
   CARBON_CHECK(!command.info.version.empty())
       << "Printing should not be enabled without a version string configured.";
   PrintRawVersion(command, /*indent=*/"");
@@ -291,7 +291,7 @@ void CommandLine::MetaPrinter::PrintVersion(const Command& command) const {
   }
 }
 
-void CommandLine::MetaPrinter::PrintSubcommands(const Command& command) const {
+void MetaPrinter::PrintSubcommands(const Command& command) const {
   for (const auto& subcommand :
        llvm::ArrayRef(command.subcommands).drop_back()) {
     out_ << "'" << subcommand->info.name << "', ";
@@ -302,13 +302,13 @@ void CommandLine::MetaPrinter::PrintSubcommands(const Command& command) const {
   out_ << "'" << command.subcommands.back()->info.name << "'";
 }
 
-void CommandLine::MetaPrinter::PrintRawVersion(const Command& command,
+void MetaPrinter::PrintRawVersion(const Command& command,
                                                llvm::StringRef indent) const {
   // Newlines are trimmed from the version string an a closing newline added but
   // no other formatting is performed.
   out_ << indent << command.info.version.trim('\n') << "\n";
 }
-void CommandLine::MetaPrinter::PrintRawBuildInfo(const Command& command,
+void MetaPrinter::PrintRawBuildInfo(const Command& command,
                                                  llvm::StringRef indent) const {
   // Print the build info line-by-line without any wrapping in case it
   // contains line-oriented formatted text, but drop leading and trailing blank
@@ -320,7 +320,7 @@ void CommandLine::MetaPrinter::PrintRawBuildInfo(const Command& command,
   }
 }
 
-void CommandLine::MetaPrinter::PrintTextBlock(llvm::StringRef indent,
+void MetaPrinter::PrintTextBlock(llvm::StringRef indent,
                                               llvm::StringRef text) const {
   // Strip leading and trailing newlines to make it easy to use multiline raw
   // string literals that will naturally have those.
@@ -396,7 +396,7 @@ void CommandLine::MetaPrinter::PrintTextBlock(llvm::StringRef indent,
   }
 }
 
-void CommandLine::MetaPrinter::PrintArgValueUsage(const Arg& arg) const {
+void MetaPrinter::PrintArgValueUsage(const Arg& arg) const {
   if (!arg.info.value_name.empty()) {
     out_ << arg.info.value_name;
     return;
@@ -413,7 +413,7 @@ void CommandLine::MetaPrinter::PrintArgValueUsage(const Arg& arg) const {
   out_ << "...";
 }
 
-void CommandLine::MetaPrinter::PrintOptionUsage(const Arg& option) const {
+void MetaPrinter::PrintOptionUsage(const Arg& option) const {
   if (option.kind == Arg::Kind::Flag) {
     out_ << "--" << (option.default_flag ? "no-" : "") << option.info.name;
     return;
@@ -428,12 +428,12 @@ void CommandLine::MetaPrinter::PrintOptionUsage(const Arg& option) const {
   }
 }
 
-void CommandLine::MetaPrinter::PrintOptionShortName(const Arg& arg) const {
+void MetaPrinter::PrintOptionShortName(const Arg& arg) const {
   CARBON_CHECK(!arg.info.short_name.empty()) << "No short name to use.";
   out_ << "-" << arg.info.short_name;
 }
 
-void CommandLine::MetaPrinter::PrintArgShortValues(const Arg& arg) const {
+void MetaPrinter::PrintArgShortValues(const Arg& arg) const {
   CARBON_CHECK(arg.kind == Arg::Kind::OneOf)
       << "Only one-of arguments have interesting value snippets to print.";
   llvm::ListSeparator sep;
@@ -441,7 +441,7 @@ void CommandLine::MetaPrinter::PrintArgShortValues(const Arg& arg) const {
     out_ << sep << value_string;
   }
 }
-void CommandLine::MetaPrinter::PrintArgLongValues(
+void MetaPrinter::PrintArgLongValues(
     const Arg& arg, llvm::StringRef indent) const {
   out_ << indent << "Possible values:\n";
   // TODO: It would be good to add help text for each value and then print it
@@ -456,7 +456,7 @@ void CommandLine::MetaPrinter::PrintArgLongValues(
   }
 }
 
-void CommandLine::MetaPrinter::PrintArgHelp(const Arg& arg,
+void MetaPrinter::PrintArgHelp(const Arg& arg,
                                             llvm::StringRef indent) const {
   // Print out the main help text.
   PrintTextBlock(indent, arg.info.help);
@@ -488,7 +488,7 @@ void CommandLine::MetaPrinter::PrintArgHelp(const Arg& arg,
   }
 }
 
-void CommandLine::MetaPrinter::PrintRawUsageCommandAndOptions(
+void MetaPrinter::PrintRawUsageCommandAndOptions(
     const Command& command, int max_option_width) const {
   // Recursively print parent usage first with a compressed width.
   if (command.parent) {
@@ -545,7 +545,7 @@ void CommandLine::MetaPrinter::PrintRawUsageCommandAndOptions(
   }
 }
 
-void CommandLine::MetaPrinter::PrintRawUsage(const Command& command,
+void MetaPrinter::PrintRawUsage(const Command& command,
                                              llvm::StringRef indent) const {
   if (!command.info.usage.empty()) {
     PrintTextBlock(indent, command.info.usage);
@@ -592,7 +592,7 @@ void CommandLine::MetaPrinter::PrintRawUsage(const Command& command,
   }
 }
 
-void CommandLine::MetaPrinter::PrintUsage(const Command& command) const {
+void MetaPrinter::PrintUsage(const Command& command) const {
   if (!command.parent) {
     out_ << "Usage:\n";
   } else {
@@ -601,7 +601,7 @@ void CommandLine::MetaPrinter::PrintUsage(const Command& command) const {
   PrintRawUsage(command, "  ");
 }
 
-void CommandLine::MetaPrinter::PrintHelpSubcommands(
+void MetaPrinter::PrintHelpSubcommands(
     const Command& command) const {
   bool first_subcommand = true;
   for (const auto& subcommand : command.subcommands) {
@@ -622,7 +622,7 @@ void CommandLine::MetaPrinter::PrintHelpSubcommands(
   }
 }
 
-void CommandLine::MetaPrinter::PrintHelpPositionalArgs(
+void MetaPrinter::PrintHelpPositionalArgs(
     const Command& command) const {
   bool first_positional_arg = true;
   for (const auto& positional_arg : command.positional_args) {
@@ -644,7 +644,7 @@ void CommandLine::MetaPrinter::PrintHelpPositionalArgs(
   }
 }
 
-void CommandLine::MetaPrinter::PrintHelpOptions(const Command& command) const {
+void MetaPrinter::PrintHelpOptions(const Command& command) const {
   bool first_option = true;
   for (const auto& option : command.options) {
     if (option->is_help_hidden) {
@@ -675,7 +675,7 @@ void CommandLine::MetaPrinter::PrintHelpOptions(const Command& command) const {
   }
 }
 
-class CommandLine::Parser {
+class Parser {
  public:
   explicit Parser(llvm::raw_ostream& out, llvm::raw_ostream& errors,
                   const CommandInfo& command_info,
@@ -751,7 +751,7 @@ class CommandLine::Parser {
   ActionT arg_meta_action_;
 };
 
-void CommandLine::Parser::PopulateMaps(const Command& command) {
+void Parser::PopulateMaps(const Command& command) {
   option_map_.clear();
   for (const auto& option : command.options) {
     option_map_.insert({option->info.name, {option.get(), false}});
@@ -775,7 +775,7 @@ void CommandLine::Parser::PopulateMaps(const Command& command) {
   }
 }
 
-void CommandLine::Parser::SetOptionDefault(const Arg& option) {
+void Parser::SetOptionDefault(const Arg& option) {
   CARBON_CHECK(option.has_default) << "No default value available!";
   switch (option.kind) {
     case Arg::Kind::Flag:
@@ -797,7 +797,7 @@ void CommandLine::Parser::SetOptionDefault(const Arg& option) {
   }
 }
 
-auto CommandLine::Parser::ParseNegatedFlag(const Arg& flag,
+auto Parser::ParseNegatedFlag(const Arg& flag,
                                            std::optional<llvm::StringRef> value)
     -> bool {
   if (flag.kind != Arg::Kind::Flag) {
@@ -814,7 +814,7 @@ auto CommandLine::Parser::ParseNegatedFlag(const Arg& flag,
   return true;
 }
 
-auto CommandLine::Parser::ParseFlag(const Arg& flag,
+auto Parser::ParseFlag(const Arg& flag,
                                     std::optional<llvm::StringRef> value)
     -> bool {
   CARBON_CHECK(flag.kind == Arg::Kind::Flag) << "Incorrect kind: " << flag.kind;
@@ -831,7 +831,7 @@ auto CommandLine::Parser::ParseFlag(const Arg& flag,
   return true;
 }
 
-auto CommandLine::Parser::ParseIntegerArgValue(const Arg& arg,
+auto Parser::ParseIntegerArgValue(const Arg& arg,
                                                llvm::StringRef value) -> bool {
   CARBON_CHECK(arg.kind == Arg::Kind::Integer)
       << "Incorrect kind: " << arg.kind;
@@ -850,7 +850,7 @@ auto CommandLine::Parser::ParseIntegerArgValue(const Arg& arg,
   return true;
 }
 
-auto CommandLine::Parser::ParseStringArgValue(const Arg& arg,
+auto Parser::ParseStringArgValue(const Arg& arg,
                                               llvm::StringRef value) -> bool {
   CARBON_CHECK(arg.kind == Arg::Kind::String) << "Incorrect kind: " << arg.kind;
   if (!arg.is_append) {
@@ -861,7 +861,7 @@ auto CommandLine::Parser::ParseStringArgValue(const Arg& arg,
   return true;
 }
 
-auto CommandLine::Parser::ParseOneOfArgValue(const Arg& arg,
+auto Parser::ParseOneOfArgValue(const Arg& arg,
                                              llvm::StringRef value) -> bool {
   CARBON_CHECK(arg.kind == Arg::Kind::OneOf) << "Incorrect kind: " << arg.kind;
   if (!arg.value_action(arg, value)) {
@@ -882,7 +882,7 @@ auto CommandLine::Parser::ParseOneOfArgValue(const Arg& arg,
   return true;
 }
 
-auto CommandLine::Parser::ParseArg(const Arg& arg, bool short_spelling,
+auto Parser::ParseArg(const Arg& arg, bool short_spelling,
                                    std::optional<llvm::StringRef> value,
                                    bool negated_name) -> bool {
   // If this argument has a meta action, replace the current meta action with
@@ -939,7 +939,7 @@ auto CommandLine::Parser::ParseArg(const Arg& arg, bool short_spelling,
   }
 }
 
-auto CommandLine::Parser::SplitValue(llvm::StringRef& unparsed_arg)
+auto Parser::SplitValue(llvm::StringRef& unparsed_arg)
     -> std::optional<llvm::StringRef> {
   // Split out a value if present.
   std::optional<llvm::StringRef> value;
@@ -951,7 +951,7 @@ auto CommandLine::Parser::SplitValue(llvm::StringRef& unparsed_arg)
   return value;
 }
 
-auto CommandLine::Parser::ParseLongOption(llvm::StringRef unparsed_arg)
+auto Parser::ParseLongOption(llvm::StringRef unparsed_arg)
     -> bool {
   CARBON_CHECK(unparsed_arg.starts_with("--") && unparsed_arg.size() > 2)
       << "Must only be called on a potential long option.";
@@ -977,7 +977,7 @@ auto CommandLine::Parser::ParseLongOption(llvm::StringRef unparsed_arg)
   return ParseArg(option, /*short_spelling=*/false, value, negated_name);
 }
 
-auto CommandLine::Parser::ParseShortOptionSeq(llvm::StringRef unparsed_arg)
+auto Parser::ParseShortOptionSeq(llvm::StringRef unparsed_arg)
     -> bool {
   CARBON_CHECK(unparsed_arg.starts_with("-") && unparsed_arg.size() > 1)
       << "Must only be called on a potential short option sequence.";
@@ -1011,7 +1011,7 @@ auto CommandLine::Parser::ParseShortOptionSeq(llvm::StringRef unparsed_arg)
   return true;
 }
 
-auto CommandLine::Parser::FinalizeParsedOptions() -> bool {
+auto Parser::FinalizeParsedOptions() -> bool {
   llvm::SmallVector<const Arg*> missing_options;
   for (const auto& option_entry : option_map_) {
     const Arg* option = option_entry.second.getPointer();
@@ -1047,7 +1047,7 @@ auto CommandLine::Parser::FinalizeParsedOptions() -> bool {
   return false;
 }
 
-auto CommandLine::Parser::ParsePositionalArg(llvm::StringRef unparsed_arg)
+auto Parser::ParsePositionalArg(llvm::StringRef unparsed_arg)
     -> bool {
   if (static_cast<size_t>(positional_arg_index_) >=
       command_->positional_args.size()) {
@@ -1074,7 +1074,7 @@ auto CommandLine::Parser::ParsePositionalArg(llvm::StringRef unparsed_arg)
   return ParseArg(arg, /*short_spelling=*/false, unparsed_arg);
 }
 
-auto CommandLine::Parser::ParseSubcommand(llvm::StringRef unparsed_arg)
+auto Parser::ParseSubcommand(llvm::StringRef unparsed_arg)
     -> bool {
   auto subcommand_it = subcommand_map_.find(unparsed_arg);
   if (subcommand_it == subcommand_map_.end()) {
@@ -1097,7 +1097,7 @@ auto CommandLine::Parser::ParseSubcommand(llvm::StringRef unparsed_arg)
   return true;
 }
 
-auto CommandLine::Parser::FinalizeParse() -> ParseResult {
+auto Parser::FinalizeParse() -> ParseResult {
   // If an argument action is provided, we run that and consider the parse
   // meta-successful rather than verifying required arguments were provided and
   // the (sub)command action.
@@ -1158,7 +1158,7 @@ auto CommandLine::Parser::FinalizeParse() -> ParseResult {
   }
 }
 
-auto CommandLine::Parser::ParsePositionalSuffix(
+auto Parser::ParsePositionalSuffix(
     llvm::ArrayRef<llvm::StringRef> unparsed_args) -> bool {
   CARBON_CHECK(!command_->positional_args.empty())
       << "Cannot do positional suffix parsing without positional arguments!";
@@ -1199,7 +1199,7 @@ auto CommandLine::Parser::ParsePositionalSuffix(
   return true;
 }
 
-CommandLine::Parser::Parser(llvm::raw_ostream& out, llvm::raw_ostream& errors,
+Parser::Parser(llvm::raw_ostream& out, llvm::raw_ostream& errors,
                             const CommandInfo& command_info,
                             llvm::function_ref<void(CommandBuilder&)> build)
     : meta_printer_(out),
@@ -1213,7 +1213,7 @@ CommandLine::Parser::Parser(llvm::raw_ostream& out, llvm::raw_ostream& errors,
   command_ = &root_command_;
 }
 
-auto CommandLine::Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
+auto Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
     -> ParseResult {
   PopulateMaps(*command_);
 
@@ -1285,50 +1285,50 @@ auto CommandLine::Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
   return FinalizeParse();
 }
 
-void CommandLine::ArgBuilder::Required(bool is_required) {
+void ArgBuilder::Required(bool is_required) {
   arg_.is_required = is_required;
 }
 
-void CommandLine::ArgBuilder::HelpHidden(bool is_help_hidden) {
+void ArgBuilder::HelpHidden(bool is_help_hidden) {
   arg_.is_help_hidden = is_help_hidden;
 }
 
-CommandLine::ArgBuilder::ArgBuilder(Arg& arg) : arg_(arg) {}
+ArgBuilder::ArgBuilder(Arg& arg) : arg_(arg) {}
 
-void CommandLine::FlagBuilder::Default(bool flag_value) {
+void FlagBuilder::Default(bool flag_value) {
   arg_.has_default = true;
   arg_.default_flag = flag_value;
 }
 
-void CommandLine::FlagBuilder::Set(bool* flag) { arg_.flag_storage = flag; }
+void FlagBuilder::Set(bool* flag) { arg_.flag_storage = flag; }
 
-void CommandLine::IntegerArgBuilder::Default(int integer_value) {
+void IntegerArgBuilder::Default(int integer_value) {
   arg_.has_default = true;
   arg_.default_integer = integer_value;
 }
 
-void CommandLine::IntegerArgBuilder::Set(int* integer) {
+void IntegerArgBuilder::Set(int* integer) {
   arg_.is_append = false;
   arg_.integer_storage = integer;
 }
 
-void CommandLine::IntegerArgBuilder::Append(
+void IntegerArgBuilder::Append(
     llvm::SmallVectorImpl<int>* sequence) {
   arg_.is_append = true;
   arg_.integer_sequence = sequence;
 }
 
-void CommandLine::StringArgBuilder::Default(llvm::StringRef string_value) {
+void StringArgBuilder::Default(llvm::StringRef string_value) {
   arg_.has_default = true;
   arg_.default_string = string_value;
 }
 
-void CommandLine::StringArgBuilder::Set(llvm::StringRef* string) {
+void StringArgBuilder::Set(llvm::StringRef* string) {
   arg_.is_append = false;
   arg_.string_storage = string;
 }
 
-void CommandLine::StringArgBuilder::Append(
+void StringArgBuilder::Append(
     llvm::SmallVectorImpl<llvm::StringRef>* sequence) {
   arg_.is_append = true;
   arg_.string_sequence = sequence;
@@ -1354,7 +1354,7 @@ static auto IsValidName(llvm::StringRef name) -> bool {
   return !name.starts_with("no-");
 }
 
-void CommandLine::CommandBuilder::AddFlag(
+void CommandBuilder::AddFlag(
     const ArgInfo& info, llvm::function_ref<void(FlagBuilder&)> build) {
   FlagBuilder builder(AddArgImpl(info, Arg::Kind::Flag));
   // All boolean flags have an implicit default of `false`, although it can be
@@ -1363,31 +1363,31 @@ void CommandLine::CommandBuilder::AddFlag(
   build(builder);
 }
 
-void CommandLine::CommandBuilder::AddIntegerOption(
+void CommandBuilder::AddIntegerOption(
     const ArgInfo& info, llvm::function_ref<void(IntegerArgBuilder&)> build) {
   IntegerArgBuilder builder(AddArgImpl(info, Arg::Kind::Integer));
   build(builder);
 }
 
-void CommandLine::CommandBuilder::AddStringOption(
+void CommandBuilder::AddStringOption(
     const ArgInfo& info, llvm::function_ref<void(StringArgBuilder&)> build) {
   StringArgBuilder builder(AddArgImpl(info, Arg::Kind::String));
   build(builder);
 }
 
-void CommandLine::CommandBuilder::AddOneOfOption(
+void CommandBuilder::AddOneOfOption(
     const ArgInfo& info, llvm::function_ref<void(OneOfArgBuilder&)> build) {
   OneOfArgBuilder builder(AddArgImpl(info, Arg::Kind::OneOf));
   build(builder);
 }
 
-void CommandLine::CommandBuilder::AddMetaActionOption(
+void CommandBuilder::AddMetaActionOption(
     const ArgInfo& info, llvm::function_ref<void(ArgBuilder&)> build) {
   ArgBuilder builder(AddArgImpl(info, Arg::Kind::MetaActionOnly));
   build(builder);
 }
 
-void CommandLine::CommandBuilder::AddIntegerPositionalArg(
+void CommandBuilder::AddIntegerPositionalArg(
     const ArgInfo& info, llvm::function_ref<void(IntegerArgBuilder&)> build) {
   AddPositionalArgImpl(info, Arg::Kind::Integer, [build](Arg& arg) {
     IntegerArgBuilder builder(arg);
@@ -1395,7 +1395,7 @@ void CommandLine::CommandBuilder::AddIntegerPositionalArg(
   });
 }
 
-void CommandLine::CommandBuilder::AddStringPositionalArg(
+void CommandBuilder::AddStringPositionalArg(
     const ArgInfo& info, llvm::function_ref<void(StringArgBuilder&)> build) {
   AddPositionalArgImpl(info, Arg::Kind::String, [build](Arg& arg) {
     StringArgBuilder builder(arg);
@@ -1403,7 +1403,7 @@ void CommandLine::CommandBuilder::AddStringPositionalArg(
   });
 }
 
-void CommandLine::CommandBuilder::AddOneOfPositionalArg(
+void CommandBuilder::AddOneOfPositionalArg(
     const ArgInfo& info, llvm::function_ref<void(OneOfArgBuilder&)> build) {
   AddPositionalArgImpl(info, Arg::Kind::OneOf, [build](Arg& arg) {
     OneOfArgBuilder builder(arg);
@@ -1411,7 +1411,7 @@ void CommandLine::CommandBuilder::AddOneOfPositionalArg(
   });
 }
 
-void CommandLine::CommandBuilder::AddSubcommand(
+void CommandBuilder::AddSubcommand(
     const CommandInfo& info, llvm::function_ref<void(CommandBuilder&)> build) {
   CARBON_CHECK(IsValidName(info.name))
       << "Invalid subcommand name: " << info.name;
@@ -1426,11 +1426,11 @@ void CommandLine::CommandBuilder::AddSubcommand(
   builder.Finalize();
 }
 
-void CommandLine::CommandBuilder::HelpHidden(bool is_help_hidden) {
+void CommandBuilder::HelpHidden(bool is_help_hidden) {
   command_.is_help_hidden = is_help_hidden;
 }
 
-void CommandLine::CommandBuilder::RequiresSubcommand() {
+void CommandBuilder::RequiresSubcommand() {
   CARBON_CHECK(!command_.subcommands.empty())
       << "Cannot require subcommands unless there are subcommands.";
   CARBON_CHECK(command_.positional_args.empty())
@@ -1440,25 +1440,25 @@ void CommandLine::CommandBuilder::RequiresSubcommand() {
   command_.kind = Kind::RequiresSubcommand;
 }
 
-void CommandLine::CommandBuilder::Do(ActionT action) {
+void CommandBuilder::Do(ActionT action) {
   CARBON_CHECK(command_.kind == Kind::Invalid)
       << "Already established the kind of this command as: " << command_.kind;
   command_.kind = Kind::Action;
   command_.action = std::move(action);
 }
 
-void CommandLine::CommandBuilder::Meta(ActionT action) {
+void CommandBuilder::Meta(ActionT action) {
   CARBON_CHECK(command_.kind == Kind::Invalid)
       << "Already established the kind of this command as: " << command_.kind;
   command_.kind = Kind::MetaAction;
   command_.action = std::move(action);
 }
 
-CommandLine::CommandBuilder::CommandBuilder(Command& command,
+CommandBuilder::CommandBuilder(Command& command,
                                             MetaPrinter& meta_printer)
     : command_(command), meta_printer_(meta_printer) {}
 
-auto CommandLine::CommandBuilder::AddArgImpl(const ArgInfo& info,
+auto CommandBuilder::AddArgImpl(const ArgInfo& info,
                                              Arg::Kind kind) -> Arg& {
   CARBON_CHECK(IsValidName(info.name))
       << "Invalid argument name: " << info.name;
@@ -1471,7 +1471,7 @@ auto CommandLine::CommandBuilder::AddArgImpl(const ArgInfo& info,
   return arg;
 }
 
-void CommandLine::CommandBuilder::AddPositionalArgImpl(
+void CommandBuilder::AddPositionalArgImpl(
     const ArgInfo& info, Arg::Kind kind, llvm::function_ref<void(Arg&)> build) {
   CARBON_CHECK(IsValidName(info.name))
       << "Invalid argument name: " << info.name;
@@ -1493,11 +1493,11 @@ void CommandLine::CommandBuilder::AddPositionalArgImpl(
   }
 }
 
-void CommandLine::CommandBuilder::Finalize() {
+void CommandBuilder::Finalize() {
   meta_printer_.RegisterWithCommand(command_, *this);
 }
 
-auto CommandLine::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args,
+auto Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args,
                         llvm::raw_ostream& out, llvm::raw_ostream& errors,
                         const CommandInfo& command_info,
                         llvm::function_ref<void(CommandBuilder&)> build)
@@ -1510,4 +1510,4 @@ auto CommandLine::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args,
   return parser.Parse(unparsed_args);
 }
 
-}  // namespace Carbon
+}  // namespace Carbon::CommandLine
