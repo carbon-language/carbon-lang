@@ -151,15 +151,16 @@ class TraceStream {
     const std::string_view stars = "* * * * * * * * * *";
     const std::string dashed_line(stars.size() * 2 + heading.size() + 4, '-');
     *this << stars << "  " << heading << "  " << stars << "\n"
-              << dashed_line << "\n";
+          << dashed_line << "\n";
   }
 
   void SubHeading(std::string_view sub_heading) const {
     add_blank_lines(1);
     const std::string_view dashes = "- - - - -";
-    const std::string dashed_line(dashes.size() * 2 + sub_heading.size() + 4, '-');
+    const std::string dashed_line(dashes.size() * 2 + sub_heading.size() + 4,
+                                  '-');
     *this << dashes << "  " << sub_heading << "  " << dashes << "\n"
-              << dashed_line << "\n";
+          << dashed_line << "\n";
   }
 
  private:
