@@ -56,29 +56,30 @@ auto SemanticsHandleIndexExpression(SemanticsContext& context,
                           parse_node, type_id, name_node_id, index_node_id));
       return true;
     }
-  } else if (name_type_node.kind() == SemanticsNodeKind::TupleType &&
-             index_node.kind() == SemanticsNodeKind::IntegerLiteral) {
-    const auto& index_val = context.semantics_ir().GetIntegerLiteral(
-        index_node.GetAsIntegerLiteral());
-    auto type_block =
-        context.semantics_ir().GetTypeBlock(name_type_node.GetAsTupleType());
+  } else if (name_type_node.kind() == SemanticsNodeKind::TupleType) {
+    if (index_node.kind() == SemanticsNodeKind::IntegerLiteral) {
+      const auto& index_val = context.semantics_ir().GetIntegerLiteral(
+          index_node.GetAsIntegerLiteral());
+      auto type_block =
+          context.semantics_ir().GetTypeBlock(name_type_node.GetAsTupleType());
 
-    if (index_val.uge(static_cast<uint64_t>(type_block.size()))) {
-      context.emitter().Emit(
-          parse_node, OutOfBoundsAccess,
-          llvm::APSInt(index_val, /*isUnsigned=*/true),
-          context.semantics_ir().StringifyType(name_node.type_id()));
+      if (index_val.uge(static_cast<uint64_t>(type_block.size()))) {
+        context.emitter().Emit(
+            parse_node, OutOfBoundsAccess,
+            llvm::APSInt(index_val, /*isUnsigned=*/true),
+            context.semantics_ir().StringifyType(name_node.type_id()));
+      } else {
+        context.AddNodeAndPush(
+            parse_node, SemanticsNode::TupleIndex::Make(
+                            parse_node, type_block[index_val.getZExtValue()],
+                            name_node_id, index_node_id));
+        return true;
+      }
     } else {
-      context.AddNodeAndPush(
-          parse_node, SemanticsNode::TupleIndex::Make(
-                          parse_node, type_block[index_val.getZExtValue()],
-                          name_node_id, index_node_id));
-      return true;
+      CARBON_DIAGNOSTIC(NondeterministicType, Error,
+                        "Type cannot be determined at compile time.");
+      context.emitter().Emit(parse_node, NondeterministicType);
     }
-  } else if (index_node.kind() != SemanticsNodeKind::IntegerLiteral) {
-    CARBON_DIAGNOSTIC(NondeterministicType, Error,
-                      "Type cannot be determined at compile time.");
-    context.emitter().Emit(parse_node, NondeterministicType);
   } else if (name_type_id != SemanticsNodeId::BuiltinError) {
     CARBON_DIAGNOSTIC(InvalidIndexExpression, Error,
                       "Invalid index expression.");
