@@ -755,8 +755,7 @@ auto OneOfArgBuilder::OneOfValueT<T>::Default(
 }
 
 template <typename T>
-OneOfArgBuilder::OneOfValueT<T>::OneOfValueT(llvm::StringRef str,
-                                                          T value)
+OneOfArgBuilder::OneOfValueT<T>::OneOfValueT(llvm::StringRef str, T value)
     : str(str), value(std::move(value)) {}
 
 template <typename T>
@@ -766,8 +765,7 @@ auto OneOfArgBuilder::OneOfValue(llvm::StringRef str, T value)
 }
 
 template <typename T, typename U, size_t N>
-void OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N],
-                                            T* result) {
+void OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N], T* result) {
   static_assert(N > 0, "Must include at least one value.");
   arg_.is_append = false;
   OneOfImpl(
@@ -776,8 +774,8 @@ void OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N],
 }
 
 template <typename T, typename U, size_t N>
-void OneOfArgBuilder::AppendOneOf(
-    const OneOfValueT<U> (&values)[N], llvm::SmallVectorImpl<T>* sequence) {
+void OneOfArgBuilder::AppendOneOf(const OneOfValueT<U> (&values)[N],
+                                  llvm::SmallVectorImpl<T>* sequence) {
   static_assert(N > 0, "Must include at least one value.");
   arg_.is_append = true;
   OneOfImpl(
@@ -797,9 +795,9 @@ void OneOfArgBuilder::AppendOneOf(
 // lambdas that do the type-aware operations and storing those into type-erased
 // function objects.
 template <typename U, size_t N, typename MatchT, size_t... Indices>
-void OneOfArgBuilder::OneOfImpl(
-    const OneOfValueT<U> (&input_values)[N], MatchT match,
-    std::index_sequence<Indices...> /*indices*/) {
+void OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
+                                MatchT match,
+                                std::index_sequence<Indices...> /*indices*/) {
   std::array<llvm::StringRef, N> value_strings = {input_values[Indices].str...};
   std::array<U, N> values = {input_values[Indices].value...};
 
