@@ -9,8 +9,8 @@
 
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/value.h"
-#include "explorer/common/arena.h"
-#include "explorer/common/error_builders.h"
+#include "explorer/base/arena.h"
+#include "explorer/base/error_builders.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"

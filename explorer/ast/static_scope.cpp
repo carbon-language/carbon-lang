@@ -7,7 +7,7 @@
 #include <optional>
 
 #include "common/ostream.h"
-#include "explorer/common/error_builders.h"
+#include "explorer/base/error_builders.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Support/Error.h"
 

@@ -14,7 +14,7 @@ cc_library(
     deps = [
         "//common:check",
         "//common:error",
-        "//explorer/common:trace_stream",
+        "//explorer/base:trace_stream",
         "//explorer/interpreter:exec_program",
         "//explorer/interpreter:stack_space",
         "//explorer/syntax",

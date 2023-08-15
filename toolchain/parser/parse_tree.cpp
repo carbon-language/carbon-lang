@@ -11,7 +11,7 @@
 #include "common/error.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
-#include "toolchain/common/pretty_stack_trace_function.h"
+#include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/lexer/tokenized_buffer.h"
 #include "toolchain/parser/parse_node_kind.h"
 #include "toolchain/parser/parser_context.h"

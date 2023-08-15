@@ -7,8 +7,8 @@
 #include "common/check.h"
 #include "common/error.h"
 #include "explorer/ast/value.h"
-#include "explorer/common/error_builders.h"
-#include "explorer/common/source_location.h"
+#include "explorer/base/error_builders.h"
+#include "explorer/base/source_location.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Error.h"
 

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/common/yaml_test_helpers.h"
+#include "toolchain/base/yaml_test_helpers.h"
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/YAMLParser.h"

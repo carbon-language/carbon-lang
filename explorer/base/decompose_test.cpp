@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "explorer/common/decompose.h"
+#include "explorer/base/decompose.h"
 
 #include <gtest/gtest.h>
 

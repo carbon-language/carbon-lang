@@ -47,7 +47,7 @@ cc_test(
         ":driver",
         "//testing/util:gtest_main",
         "//testing/util:test_raw_ostream",
-        "//toolchain/common:yaml_test_helpers",
+        "//toolchain/base:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
         "@com_google_googletest//:gtest",

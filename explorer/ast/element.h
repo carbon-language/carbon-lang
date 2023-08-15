@@ -11,8 +11,8 @@
 
 #include "common/ostream.h"
 #include "explorer/ast/ast_rtti.h"
-#include "explorer/common/decompose.h"
-#include "explorer/common/nonnull.h"
+#include "explorer/base/decompose.h"
+#include "explorer/base/nonnull.h"
 #include "llvm/ADT/PointerUnion.h"
 
 namespace Carbon {
