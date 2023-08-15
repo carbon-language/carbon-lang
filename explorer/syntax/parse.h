@@ -9,8 +9,8 @@
 #include <variant>
 
 #include "explorer/ast/ast.h"
-#include "explorer/common/arena.h"
-#include "explorer/common/source_location.h"
+#include "explorer/base/arena.h"
+#include "explorer/base/source_location.h"
 #include "llvm/Support/VirtualFileSystem.h"
 
 namespace Carbon {

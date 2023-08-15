@@ -10,7 +10,7 @@
 #define CARBON_EXPLORER_INTERPRETER_EXEC_PROGRAM_H_
 
 #include "explorer/ast/ast.h"
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/trace_stream.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace Carbon {

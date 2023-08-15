@@ -8,8 +8,8 @@
 #include <string_view>
 
 #include "explorer/ast/declaration.h"
-#include "explorer/common/arena.h"
-#include "explorer/common/nonnull.h"
+#include "explorer/base/arena.h"
+#include "explorer/base/nonnull.h"
 #include "llvm/Support/VirtualFileSystem.h"
 
 namespace Carbon {

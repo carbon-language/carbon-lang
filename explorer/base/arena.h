@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_COMMON_ARENA_H_
-#define CARBON_EXPLORER_COMMON_ARENA_H_
+#ifndef CARBON_EXPLORER_BASE_ARENA_H_
+#define CARBON_EXPLORER_BASE_ARENA_H_
 
 #include <any>
 #include <map>
@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-#include "explorer/common/nonnull.h"
+#include "explorer/base/nonnull.h"
 #include "llvm/ADT/Hashing.h"
 
 namespace Carbon {
@@ -277,4 +277,4 @@ char Arena::TypeId<T>::id = 1;
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_COMMON_ARENA_H_
+#endif  // CARBON_EXPLORER_BASE_ARENA_H_

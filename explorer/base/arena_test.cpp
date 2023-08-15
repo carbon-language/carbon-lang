@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "explorer/common/arena.h"
+#include "explorer/base/arena.h"
 
 #include <gtest/gtest.h>
 

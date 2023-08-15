@@ -13,7 +13,7 @@
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/value.h"
-#include "explorer/common/arena.h"
+#include "explorer/base/arena.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon::Testing {
