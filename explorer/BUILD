@@ -24,7 +24,7 @@ cc_library(
     deps = [
         "//common:error",
         "//common:ostream",
-        "//explorer/common:trace_stream",
+        "//explorer/base:trace_stream",
         "//explorer/parse_and_execute",
         "@llvm-project//llvm:Support",
     ],

@@ -8,9 +8,9 @@
 #include "common/error.h"
 #include "explorer/ast/address.h"
 #include "explorer/ast/value_node.h"
-#include "explorer/common/arena.h"
-#include "explorer/common/nonnull.h"
-#include "explorer/common/source_location.h"
+#include "explorer/base/arena.h"
+#include "explorer/base/nonnull.h"
+#include "explorer/base/source_location.h"
 
 namespace Carbon {
 

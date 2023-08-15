@@ -10,7 +10,7 @@
 #include "explorer/ast/ast.h"
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
-#include "explorer/common/nonnull.h"
+#include "explorer/base/nonnull.h"
 #include "explorer/interpreter/stack_space.h"
 
 using llvm::cast;

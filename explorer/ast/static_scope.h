@@ -10,9 +10,9 @@
 
 #include "common/error.h"
 #include "explorer/ast/value_node.h"
-#include "explorer/common/nonnull.h"
-#include "explorer/common/source_location.h"
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/nonnull.h"
+#include "explorer/base/source_location.h"
+#include "explorer/base/trace_stream.h"
 #include "llvm/ADT/StringMap.h"
 
 namespace Carbon {

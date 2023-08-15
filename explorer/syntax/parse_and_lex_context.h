@@ -8,7 +8,7 @@
 #include <variant>
 
 #include "explorer/ast/ast.h"
-#include "explorer/common/source_location.h"
+#include "explorer/base/source_location.h"
 #include "explorer/syntax/parser.h"  // from parser.ypp
 
 namespace Carbon {

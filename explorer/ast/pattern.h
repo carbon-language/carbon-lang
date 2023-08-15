@@ -17,7 +17,7 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/expression_category.h"
 #include "explorer/ast/value_node.h"
-#include "explorer/common/source_location.h"
+#include "explorer/base/source_location.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLFunctionalExtras.h"
 

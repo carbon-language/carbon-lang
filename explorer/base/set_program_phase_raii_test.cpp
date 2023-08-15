@@ -5,7 +5,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/trace_stream.h"
 
 namespace Carbon::Testing {
 namespace {

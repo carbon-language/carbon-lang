@@ -6,9 +6,9 @@
 #include "common/error.h"
 #include "explorer/ast/declaration.h"
 #include "explorer/ast/value.h"
-#include "explorer/common/error_builders.h"
-#include "explorer/common/nonnull.h"
-#include "explorer/common/source_location.h"
+#include "explorer/base/error_builders.h"
+#include "explorer/base/nonnull.h"
+#include "explorer/base/source_location.h"
 #include "explorer/interpreter/type_checker.h"
 
 namespace Carbon {

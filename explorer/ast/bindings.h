@@ -10,7 +10,7 @@
 
 #include "common/ostream.h"
 #include "explorer/ast/clone_context.h"
-#include "explorer/common/nonnull.h"
+#include "explorer/base/nonnull.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringExtras.h"
 
