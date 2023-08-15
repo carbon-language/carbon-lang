@@ -37,6 +37,9 @@ auto LoweringHandleArrayValue(LoweringFunctionContext& context,
   auto* tuple_type =
       context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
 
+  // For return values or call instructions, the tuple is not in the memory so
+  // it cannot be accessed directly to create the array value. Hence, we are
+  // creating a store in this block.
   if (!tuple_value->getType()->isPointerTy()) {
     tuple_value = context.builder().CreateAlloca(
         tuple_type, /*ArraySize=*/nullptr, "as_tuple");
@@ -45,10 +48,12 @@ auto LoweringHandleArrayValue(LoweringFunctionContext& context,
   }
 
   for (uint64_t i = 0; i < array_size; i++) {
+    // Extracting values from tuple and loading them to the memory.
     auto* tuple_gep =
         context.builder().CreateStructGEP(tuple_type, tuple_value, i);
     auto* load_inst = context.builder().CreateLoad(
         llvm_type->getArrayElementType(), tuple_gep);
+    // Initializing the array with values.
     auto* array_gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
     context.builder().CreateStore(load_inst, array_gep);
   }
