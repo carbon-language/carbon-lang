@@ -24,8 +24,7 @@ auto operator<<(llvm::raw_ostream& output, ParseResult result)
   CARBON_FATAL() << "Corrupt parse result!";
 }
 
-auto operator<<(llvm::raw_ostream& output, ArgKind kind)
-    -> llvm::raw_ostream& {
+auto operator<<(llvm::raw_ostream& output, ArgKind kind) -> llvm::raw_ostream& {
   switch (kind) {
     case ArgKind::Flag:
       return output << "Boolean";
@@ -201,7 +200,7 @@ Prints the version of this command.
 };
 
 void MetaPrinter::RegisterWithCommand(const Command& command,
-                                                   CommandBuilder& builder) {
+                                      CommandBuilder& builder) {
   bool is_subcommand = command.parent;
   bool has_subcommands = !command.subcommands.empty();
 
@@ -303,13 +302,13 @@ void MetaPrinter::PrintSubcommands(const Command& command) const {
 }
 
 void MetaPrinter::PrintRawVersion(const Command& command,
-                                               llvm::StringRef indent) const {
+                                  llvm::StringRef indent) const {
   // Newlines are trimmed from the version string an a closing newline added but
   // no other formatting is performed.
   out_ << indent << command.info.version.trim('\n') << "\n";
 }
 void MetaPrinter::PrintRawBuildInfo(const Command& command,
-                                                 llvm::StringRef indent) const {
+                                    llvm::StringRef indent) const {
   // Print the build info line-by-line without any wrapping in case it
   // contains line-oriented formatted text, but drop leading and trailing blank
   // lines.
@@ -321,7 +320,7 @@ void MetaPrinter::PrintRawBuildInfo(const Command& command,
 }
 
 void MetaPrinter::PrintTextBlock(llvm::StringRef indent,
-                                              llvm::StringRef text) const {
+                                 llvm::StringRef text) const {
   // Strip leading and trailing newlines to make it easy to use multiline raw
   // string literals that will naturally have those.
   text = text.trim('\n');
@@ -441,8 +440,8 @@ void MetaPrinter::PrintArgShortValues(const Arg& arg) const {
     out_ << sep << value_string;
   }
 }
-void MetaPrinter::PrintArgLongValues(
-    const Arg& arg, llvm::StringRef indent) const {
+void MetaPrinter::PrintArgLongValues(const Arg& arg,
+                                     llvm::StringRef indent) const {
   out_ << indent << "Possible values:\n";
   // TODO: It would be good to add help text for each value and then print it
   // here.
@@ -456,8 +455,7 @@ void MetaPrinter::PrintArgLongValues(
   }
 }
 
-void MetaPrinter::PrintArgHelp(const Arg& arg,
-                                            llvm::StringRef indent) const {
+void MetaPrinter::PrintArgHelp(const Arg& arg, llvm::StringRef indent) const {
   // Print out the main help text.
   PrintTextBlock(indent, arg.info.help);
 
@@ -488,8 +486,8 @@ void MetaPrinter::PrintArgHelp(const Arg& arg,
   }
 }
 
-void MetaPrinter::PrintRawUsageCommandAndOptions(
-    const Command& command, int max_option_width) const {
+void MetaPrinter::PrintRawUsageCommandAndOptions(const Command& command,
+                                                 int max_option_width) const {
   // Recursively print parent usage first with a compressed width.
   if (command.parent) {
     PrintRawUsageCommandAndOptions(*command.parent, MaxParentOptionUsageWidth);
@@ -546,7 +544,7 @@ void MetaPrinter::PrintRawUsageCommandAndOptions(
 }
 
 void MetaPrinter::PrintRawUsage(const Command& command,
-                                             llvm::StringRef indent) const {
+                                llvm::StringRef indent) const {
   if (!command.info.usage.empty()) {
     PrintTextBlock(indent, command.info.usage);
     return;
@@ -601,8 +599,7 @@ void MetaPrinter::PrintUsage(const Command& command) const {
   PrintRawUsage(command, "  ");
 }
 
-void MetaPrinter::PrintHelpSubcommands(
-    const Command& command) const {
+void MetaPrinter::PrintHelpSubcommands(const Command& command) const {
   bool first_subcommand = true;
   for (const auto& subcommand : command.subcommands) {
     if (subcommand->is_help_hidden) {
@@ -622,8 +619,7 @@ void MetaPrinter::PrintHelpSubcommands(
   }
 }
 
-void MetaPrinter::PrintHelpPositionalArgs(
-    const Command& command) const {
+void MetaPrinter::PrintHelpPositionalArgs(const Command& command) const {
   bool first_positional_arg = true;
   for (const auto& positional_arg : command.positional_args) {
     if (positional_arg->is_help_hidden) {
@@ -798,8 +794,7 @@ void Parser::SetOptionDefault(const Arg& option) {
 }
 
 auto Parser::ParseNegatedFlag(const Arg& flag,
-                                           std::optional<llvm::StringRef> value)
-    -> bool {
+                              std::optional<llvm::StringRef> value) -> bool {
   if (flag.kind != Arg::Kind::Flag) {
     errors_ << "ERROR: Cannot use a negated flag name by prefixing it with "
                "'no-' when it isn't a boolean flag argument.\n";
@@ -814,8 +809,7 @@ auto Parser::ParseNegatedFlag(const Arg& flag,
   return true;
 }
 
-auto Parser::ParseFlag(const Arg& flag,
-                                    std::optional<llvm::StringRef> value)
+auto Parser::ParseFlag(const Arg& flag, std::optional<llvm::StringRef> value)
     -> bool {
   CARBON_CHECK(flag.kind == Arg::Kind::Flag) << "Incorrect kind: " << flag.kind;
   if (!value || *value == "true") {
@@ -831,8 +825,8 @@ auto Parser::ParseFlag(const Arg& flag,
   return true;
 }
 
-auto Parser::ParseIntegerArgValue(const Arg& arg,
-                                               llvm::StringRef value) -> bool {
+auto Parser::ParseIntegerArgValue(const Arg& arg, llvm::StringRef value)
+    -> bool {
   CARBON_CHECK(arg.kind == Arg::Kind::Integer)
       << "Incorrect kind: " << arg.kind;
   int integer_value;
@@ -850,8 +844,8 @@ auto Parser::ParseIntegerArgValue(const Arg& arg,
   return true;
 }
 
-auto Parser::ParseStringArgValue(const Arg& arg,
-                                              llvm::StringRef value) -> bool {
+auto Parser::ParseStringArgValue(const Arg& arg, llvm::StringRef value)
+    -> bool {
   CARBON_CHECK(arg.kind == Arg::Kind::String) << "Incorrect kind: " << arg.kind;
   if (!arg.is_append) {
     *arg.string_storage = value;
@@ -861,8 +855,7 @@ auto Parser::ParseStringArgValue(const Arg& arg,
   return true;
 }
 
-auto Parser::ParseOneOfArgValue(const Arg& arg,
-                                             llvm::StringRef value) -> bool {
+auto Parser::ParseOneOfArgValue(const Arg& arg, llvm::StringRef value) -> bool {
   CARBON_CHECK(arg.kind == Arg::Kind::OneOf) << "Incorrect kind: " << arg.kind;
   if (!arg.value_action(arg, value)) {
     errors_ << "ERROR: Option '--" << arg.info.name << "=";
@@ -883,8 +876,8 @@ auto Parser::ParseOneOfArgValue(const Arg& arg,
 }
 
 auto Parser::ParseArg(const Arg& arg, bool short_spelling,
-                                   std::optional<llvm::StringRef> value,
-                                   bool negated_name) -> bool {
+                      std::optional<llvm::StringRef> value, bool negated_name)
+    -> bool {
   // If this argument has a meta action, replace the current meta action with
   // it.
   if (arg.meta_action) {
@@ -951,8 +944,7 @@ auto Parser::SplitValue(llvm::StringRef& unparsed_arg)
   return value;
 }
 
-auto Parser::ParseLongOption(llvm::StringRef unparsed_arg)
-    -> bool {
+auto Parser::ParseLongOption(llvm::StringRef unparsed_arg) -> bool {
   CARBON_CHECK(unparsed_arg.starts_with("--") && unparsed_arg.size() > 2)
       << "Must only be called on a potential long option.";
 
@@ -977,8 +969,7 @@ auto Parser::ParseLongOption(llvm::StringRef unparsed_arg)
   return ParseArg(option, /*short_spelling=*/false, value, negated_name);
 }
 
-auto Parser::ParseShortOptionSeq(llvm::StringRef unparsed_arg)
-    -> bool {
+auto Parser::ParseShortOptionSeq(llvm::StringRef unparsed_arg) -> bool {
   CARBON_CHECK(unparsed_arg.starts_with("-") && unparsed_arg.size() > 1)
       << "Must only be called on a potential short option sequence.";
 
@@ -1047,8 +1038,7 @@ auto Parser::FinalizeParsedOptions() -> bool {
   return false;
 }
 
-auto Parser::ParsePositionalArg(llvm::StringRef unparsed_arg)
-    -> bool {
+auto Parser::ParsePositionalArg(llvm::StringRef unparsed_arg) -> bool {
   if (static_cast<size_t>(positional_arg_index_) >=
       command_->positional_args.size()) {
     errors_ << "ERROR: Completed parsing all "
@@ -1074,8 +1064,7 @@ auto Parser::ParsePositionalArg(llvm::StringRef unparsed_arg)
   return ParseArg(arg, /*short_spelling=*/false, unparsed_arg);
 }
 
-auto Parser::ParseSubcommand(llvm::StringRef unparsed_arg)
-    -> bool {
+auto Parser::ParseSubcommand(llvm::StringRef unparsed_arg) -> bool {
   auto subcommand_it = subcommand_map_.find(unparsed_arg);
   if (subcommand_it == subcommand_map_.end()) {
     errors_ << "ERROR: Invalid subcommand '" << unparsed_arg
@@ -1200,8 +1189,8 @@ auto Parser::ParsePositionalSuffix(
 }
 
 Parser::Parser(llvm::raw_ostream& out, llvm::raw_ostream& errors,
-                            const CommandInfo& command_info,
-                            llvm::function_ref<void(CommandBuilder&)> build)
+               const CommandInfo& command_info,
+               llvm::function_ref<void(CommandBuilder&)> build)
     : meta_printer_(out),
       errors_(errors),
       error_meta_printer_(errors),
@@ -1285,9 +1274,7 @@ auto Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
   return FinalizeParse();
 }
 
-void ArgBuilder::Required(bool is_required) {
-  arg_.is_required = is_required;
-}
+void ArgBuilder::Required(bool is_required) { arg_.is_required = is_required; }
 
 void ArgBuilder::HelpHidden(bool is_help_hidden) {
   arg_.is_help_hidden = is_help_hidden;
@@ -1312,8 +1299,7 @@ void IntegerArgBuilder::Set(int* integer) {
   arg_.integer_storage = integer;
 }
 
-void IntegerArgBuilder::Append(
-    llvm::SmallVectorImpl<int>* sequence) {
+void IntegerArgBuilder::Append(llvm::SmallVectorImpl<int>* sequence) {
   arg_.is_append = true;
   arg_.integer_sequence = sequence;
 }
@@ -1354,8 +1340,8 @@ static auto IsValidName(llvm::StringRef name) -> bool {
   return !name.starts_with("no-");
 }
 
-void CommandBuilder::AddFlag(
-    const ArgInfo& info, llvm::function_ref<void(FlagBuilder&)> build) {
+void CommandBuilder::AddFlag(const ArgInfo& info,
+                             llvm::function_ref<void(FlagBuilder&)> build) {
   FlagBuilder builder(AddArgImpl(info, Arg::Kind::Flag));
   // All boolean flags have an implicit default of `false`, although it can be
   // overridden in the build callback.
@@ -1454,12 +1440,10 @@ void CommandBuilder::Meta(ActionT action) {
   command_.action = std::move(action);
 }
 
-CommandBuilder::CommandBuilder(Command& command,
-                                            MetaPrinter& meta_printer)
+CommandBuilder::CommandBuilder(Command& command, MetaPrinter& meta_printer)
     : command_(command), meta_printer_(meta_printer) {}
 
-auto CommandBuilder::AddArgImpl(const ArgInfo& info,
-                                             Arg::Kind kind) -> Arg& {
+auto CommandBuilder::AddArgImpl(const ArgInfo& info, Arg::Kind kind) -> Arg& {
   CARBON_CHECK(IsValidName(info.name))
       << "Invalid argument name: " << info.name;
   CARBON_CHECK(arg_names_.insert(info.name).second)
@@ -1498,10 +1482,9 @@ void CommandBuilder::Finalize() {
 }
 
 auto Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args,
-                        llvm::raw_ostream& out, llvm::raw_ostream& errors,
-                        const CommandInfo& command_info,
-                        llvm::function_ref<void(CommandBuilder&)> build)
-    -> ParseResult {
+           llvm::raw_ostream& out, llvm::raw_ostream& errors,
+           const CommandInfo& command_info,
+           llvm::function_ref<void(CommandBuilder&)> build) -> ParseResult {
   // Build a parser, which includes building the command description provided by
   // the user.
   Parser parser(out, errors, command_info, build);
