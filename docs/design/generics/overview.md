@@ -104,9 +104,8 @@ Summary of how Carbon generics work:
     done with the declared restrictions expressed as the types of bindings in
     the declaration. Inside the body of a checked generic with a facet
     parameter, the API of the facet is just the names defined by the facet type.
--   _Deduced parameters_ are parameters whose values are determined by the
-    types of the explicit arguments. Generic facet parameters are typically
-    deduced.
+-   _Deduced parameters_ are parameters whose values are determined by the types
+    of the explicit arguments. Generic facet parameters are typically deduced.
 -   A function with a generic parameter can have the same function body as an
     unparameterized one. Functions can freely mix checked, template, and regular
     parameters.
@@ -369,12 +368,13 @@ You may also refer to any of the methods of interfaces required by the facet
 type using a
 [qualified member access expression](#accessing-members-of-interfaces).
 
-A function can have a mix of checked, template, and regular parameters. A
-checked parameter is defined using a symbolic binding pattern, a template
-parameter using a template binding pattern, and a regular parameter using a
-runtime binding pattern. Likewise, it's allowed to pass a symbolic or template
-binding or value to a generic or regular parameter. _We have decided to support
-passing a symbolic value to a template parameter, see
+A function can have a mix of checked, template, and regular parameters. Each
+kind of parameter is defined using a different syntax: a checked parameter is
+uses a symbolic binding pattern, a template parameter uses a template binding
+pattern, and a regular parameter uses a runtime binding pattern. Likewise, it's
+allowed to pass a symbolic or template constant value to a checked or regular
+parameter. _We have decided to support passing a symbolic value to a template
+parameter, see
 [leads issue #2153: Checked generics calling templates](https://github.com/carbon-language/carbon-lang/issues/2153),
 but incorporating it into the design is future work._
 
