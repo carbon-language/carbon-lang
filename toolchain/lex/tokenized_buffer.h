@@ -232,6 +232,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns the text for an identifier.
   [[nodiscard]] auto GetIdentifierText(Identifier id) const -> llvm::StringRef;
 
+  // Returns the line and 1-based column number of the first character after
+  // this token.
+  [[nodiscard]] auto GetEndLocation(Token token) const -> std::pair<Line, int>;
+
   // Prints a description of the tokenized stream to the provided `raw_ostream`.
   //
   // It prints one line of information for each token in the buffer, including

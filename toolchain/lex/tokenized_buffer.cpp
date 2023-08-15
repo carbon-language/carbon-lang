@@ -479,9 +479,6 @@ class TokenizedBuffer::Lexer {
       set_indent_ = true;
     }
 
-    CloseInvalidOpenGroups(kind);
-
-    const char* location = source_text.begin();
     Token token = buffer_->AddToken(
         {.kind = kind, .token_line = current_line_, .column = current_column_});
     current_column_ += kind.fixed_spelling().size();
@@ -502,19 +499,14 @@ class TokenizedBuffer::Lexer {
 
     // Check that there is a matching opening symbol before we consume this as
     // a closing symbol.
-    if (open_groups_.empty()) {
-      closing_token_info.kind = TokenKind::Error;
-      closing_token_info.error_length = kind.fixed_spelling().size();
-
-      CARBON_DIAGNOSTIC(
-          UnmatchedClosing, Error,
-          "Closing symbol without a corresponding opening symbol.");
-      emitter_.Emit(location, UnmatchedClosing);
-      // Note that this still returns true as we do consume a symbol.
+    if (open_groups_.empty() ||
+        buffer_->GetTokenInfo(open_groups_.back()).kind.closing_symbol() !=
+            kind) {
+      has_mismatched_brackets_ = true;
       return token;
     }
 
-    // Finally can handle a normal closing symbol.
+    // Handle this matching closing symbol.
     Token opening_token = open_groups_.pop_back_val();
     TokenInfo& opening_token_info = buffer_->GetTokenInfo(opening_token);
     opening_token_info.closing_token = token;
@@ -569,45 +561,6 @@ class TokenizedBuffer::Lexer {
         buffer_->literal_int_storage_.size();
     buffer_->literal_int_storage_.push_back(std::move(suffix_value));
     return token;
-  }
-
-  // Closes all open groups that cannot remain open across the symbol `K`.
-  // Users may pass `Error` to close all open groups.
-  auto CloseInvalidOpenGroups(TokenKind kind) -> void {
-    if (!kind.is_closing_symbol() && kind != TokenKind::Error) {
-      return;
-    }
-
-    while (!open_groups_.empty()) {
-      Token opening_token = open_groups_.back();
-      TokenKind opening_kind = buffer_->GetTokenInfo(opening_token).kind;
-      if (kind == opening_kind.closing_symbol()) {
-        return;
-      }
-
-      open_groups_.pop_back();
-      CARBON_DIAGNOSTIC(
-          MismatchedClosing, Error,
-          "Closing symbol does not match most recent opening symbol.");
-      token_emitter_.Emit(opening_token, MismatchedClosing);
-
-      CARBON_CHECK(!buffer_->tokens().empty())
-          << "Must have a prior opening token!";
-      Token prev_token = buffer_->tokens().end()[-1];
-
-      // TODO: do a smarter backwards scan for where to put the closing
-      // token.
-      Token closing_token = buffer_->AddToken(
-          {.kind = opening_kind.closing_symbol(),
-           .has_trailing_space = buffer_->HasTrailingWhitespace(prev_token),
-           .is_recovery = true,
-           .token_line = current_line_,
-           .column = current_column_});
-      TokenInfo& opening_token_info = buffer_->GetTokenInfo(opening_token);
-      TokenInfo& closing_token_info = buffer_->GetTokenInfo(closing_token);
-      opening_token_info.closing_token = closing_token;
-      closing_token_info.opening_token = opening_token;
-    }
   }
 
   auto GetOrCreateIdentifier(llvm::StringRef text) -> Identifier {
@@ -701,10 +654,130 @@ class TokenizedBuffer::Lexer {
     return token;
   }
 
-  auto AddEndOfFileToken() -> void {
-    buffer_->AddToken({.kind = TokenKind::EndOfFile,
-                       .token_line = current_line_,
-                       .column = current_column_});
+  auto LexEndOfFile() -> LexResult {
+    // The end-of-file token is always considered to be whitespace.
+    NoteWhitespace();
+
+    return buffer_->AddToken({.kind = TokenKind::EndOfFile,
+                              .token_line = current_line_,
+                              .column = current_column_});
+  }
+
+  // If brackets didn't pair or nest properly, find a set of places to insert
+  // brackets to fix the nesting, issue suitable diagnostics, and update the
+  // token list to describe the fixes.
+  auto DiagnoseAndFixMismatchedBrackets() -> void {
+    if (!has_mismatched_brackets_ && open_groups_.empty()) {
+      return;
+    }
+
+    llvm::SmallVector<std::pair<int, TokenInfo>> new_tokens;
+
+    // Look for mismatched brackets and decide where to add tokens to fix them.
+    open_groups_.clear();
+    for (auto token : buffer_->tokens()) {
+      auto kind = buffer_->GetKind(token);
+      if (kind.is_opening_symbol()) {
+        open_groups_.push_back(token);
+        continue;
+      }
+
+      if (!kind.is_closing_symbol()) {
+        continue;
+      }
+
+      while (true) {
+        if (open_groups_.empty()) {
+          TokenInfo& token_info = buffer_->GetTokenInfo(token);
+          token_info.kind = TokenKind::Error;
+          token_info.error_length = kind.fixed_spelling().size();
+
+          CARBON_DIAGNOSTIC(
+              UnmatchedClosing, Error,
+              "Closing symbol without a corresponding opening symbol.");
+          token_emitter_.Emit(token, UnmatchedClosing);
+          break;
+        }
+
+        Token opening_token = open_groups_.pop_back_val();
+        TokenKind opening_kind = buffer_->GetTokenInfo(opening_token).kind;
+        if (kind == opening_kind.closing_symbol()) {
+          break;
+        }
+
+        CARBON_DIAGNOSTIC(
+            MismatchedClosing, Error,
+            "Closing symbol does not match most recent opening symbol.");
+        token_emitter_.Emit(opening_token, MismatchedClosing);
+
+        CARBON_CHECK(token.index != 0) << "Must have a prior opening token!";
+        Token prev_token = Token(token.index - 1);
+
+        // Find the end of the previous token, and add a matching closing token
+        // there. Note that new_token_column is a 1-based column number.
+        // TODO: Do a smarter scan for where to put the closing token, or
+        // whether to insert an opening token instead.
+        auto [new_token_line, new_token_column] =
+            buffer_->GetEndLocation(prev_token);
+        new_tokens.push_back(
+            {token.index,
+             {.kind = opening_kind.closing_symbol(),
+              .has_trailing_space = buffer_->HasTrailingWhitespace(prev_token),
+              .is_recovery = true,
+              .token_line = new_token_line,
+              .column = new_token_column - 1}});
+      }
+    }
+
+    // Diagnose any remaining unmatched opening symbols.
+    for (auto token : open_groups_) {
+      auto kind = buffer_->GetKind(token);
+      TokenInfo& token_info = buffer_->GetTokenInfo(token);
+      token_info.kind = TokenKind::Error;
+      token_info.error_length = kind.fixed_spelling().size();
+
+      CARBON_DIAGNOSTIC(
+          UnmatchedOpening, Error,
+          "Opening symbol without a corresponding closing symbol.");
+      token_emitter_.Emit(token, UnmatchedOpening);
+    }
+
+    // Merge the recovery tokens into the token list.
+    auto old_tokens = std::move(buffer_->token_infos_);
+    buffer_->token_infos_.clear();
+    buffer_->token_infos_.reserve(old_tokens.size() + new_tokens.size());
+
+    int old_tokens_offset = 0;
+    for (auto [next_offset, info] : new_tokens) {
+      buffer_->token_infos_.append(old_tokens.begin() + old_tokens_offset,
+                                   old_tokens.begin() + next_offset);
+      buffer_->token_infos_.push_back(info);
+      old_tokens_offset = next_offset;
+    }
+    buffer_->token_infos_.append(old_tokens.begin() + old_tokens_offset,
+                                 old_tokens.end());
+
+    // Update the token list with closing and opening tokens. Note that this
+    // must be done last, and must be redone for all tokens, because token
+    // indexes were changed in the previous step.
+    open_groups_.clear();
+    for (auto token : buffer_->tokens()) {
+      auto kind = buffer_->GetKind(token);
+      if (kind.is_opening_symbol()) {
+        open_groups_.push_back(token);
+      } else if (kind.is_closing_symbol()) {
+        CARBON_CHECK(!open_groups_.empty()) << "Failed to balance brackets";
+        auto opening_token = open_groups_.pop_back_val();
+
+        CARBON_CHECK(kind ==
+                     buffer_->GetTokenInfo(opening_token).kind.closing_symbol())
+            << "Failed to balance brackets";
+        TokenInfo& opening_token_info = buffer_->GetTokenInfo(opening_token);
+        TokenInfo& closing_token_info = buffer_->GetTokenInfo(token);
+        opening_token_info.closing_token = token;
+        closing_token_info.opening_token = opening_token;
+      }
+    }
   }
 
   auto AddStartOfFileToken() -> void {
@@ -818,6 +891,7 @@ class TokenizedBuffer::Lexer {
 
   int current_column_ = 0;
   bool set_indent_ = false;
+  bool has_mismatched_brackets_ = false;
 
   llvm::SmallVector<Token> open_groups_;
 };
@@ -868,11 +942,8 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
     CARBON_CHECK(result) << "Failed to form a token!";
   }
 
-  // The end-of-file token is always considered to be whitespace.
-  lexer.NoteWhitespace();
-
-  lexer.CloseInvalidOpenGroups(TokenKind::Error);
-  lexer.AddEndOfFileToken();
+  lexer.LexEndOfFile();
+  lexer.DiagnoseAndFixMismatchedBrackets();
 
   if (error_tracking_consumer.seen_error()) {
     buffer.has_errors_ = true;
@@ -1035,6 +1106,25 @@ auto TokenizedBuffer::GetIndentColumnNumber(Line line) const -> int {
 auto TokenizedBuffer::GetIdentifierText(Identifier identifier) const
     -> llvm::StringRef {
   return identifier_infos_[identifier.index].text;
+}
+
+auto TokenizedBuffer::GetEndLocation(Token token) const
+    -> std::pair<Line, int> {
+  Line line = GetLine(token);
+  int column = GetColumnNumber(token);
+  auto token_text = GetTokenText(token);
+
+  if (auto [before_newline, after_newline] = token_text.rsplit('\n');
+      before_newline.size() == token_text.size()) {
+    // Token fits on one line, advance the column number.
+    column += before_newline.size();
+  } else {
+    // Token contains newlines.
+    line.index += before_newline.count('\n') + 1;
+    column = 1 + after_newline.size();
+  }
+
+  return {line, column};
 }
 
 auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
