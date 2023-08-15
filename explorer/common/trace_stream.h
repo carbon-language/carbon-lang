@@ -23,7 +23,6 @@ class TraceStream;
 
 // Enumerates the phases of the program used for tracing and controlling which
 // program phases are included for tracing.
-// Members should be in sequence in which the phases are traced.
 enum class ProgramPhase {
   SourceProgram,               // Phase for the source program.
   NameResolution,              // Phase for name resolution.
@@ -106,6 +105,9 @@ class TraceStream {
   template <typename T>
   auto operator<<(T&& message) const -> llvm::raw_ostream& {
     CARBON_CHECK(is_enabled() && stream_);
+    if (is_trace_empty_) {
+      is_trace_empty_ = false;
+    }
     **stream_ << message;
     return **stream_;
   }
@@ -133,22 +135,9 @@ class TraceStream {
   // Format utility methods
   void Heading(std::string_view heading) const {
     CARBON_CHECK(is_enabled() && stream_);
-
-    // To avoid adding blank lines for first section.
-    size_t first_allowed_phase_index = allowed_phases_.size();
-    for (size_t i = 0; i < allowed_phases_.size(); ++i) {
-      if (allowed_phases_[i]) {
-        first_allowed_phase_index = i;
-        break;
-      }
-    }
-
-    if (first_allowed_phase_index != static_cast<size_t>(current_phase_)) {
-      // Add two blank lines before heading for vertical gap between different
-      // sections.
+    if (!is_trace_empty_) {
       **stream_ << "\n\n";
     }
-
     const std::string_view stars = "* * * * * * * * * *";
     const std::string dashed_line(stars.size() * 2 + heading.size() + 4, '-');
     **stream_ << stars << "  " << heading << "  " << stars << "\n"
@@ -166,6 +155,7 @@ class TraceStream {
 
  private:
   bool in_prelude_ = false;
+  mutable bool is_trace_empty_ = true;
   ProgramPhase current_phase_ = ProgramPhase::Unknown;
   std::optional<SourceLocation> source_loc_ = std::nullopt;
   std::optional<Nonnull<llvm::raw_ostream*>> stream_;
