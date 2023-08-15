@@ -20,7 +20,7 @@ cc_test(
     srcs = ["source_buffer_test.cpp"],
     deps = [
         ":source_buffer",
-        "//testing/util:gtest_main",
+        "//testing/base:gtest_main",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

@@ -46,9 +46,9 @@ cc_test(
     deps = [
         ":ast_to_proto_lib",
         "//explorer/syntax",
+        "//testing/base:test_raw_ostream",
         "//testing/fuzzing:carbon_cc_proto",
         "//testing/fuzzing:proto_to_carbon_lib",
-        "//testing/util:test_raw_ostream",
         "@com_google_googletest//:gtest",
         "@com_google_protobuf//:protobuf_headers",
     ],
@@ -80,8 +80,8 @@ cc_test(
     ],
     deps = [
         ":fuzzer_util",
+        "//testing/base:gtest_main",
         "//testing/fuzzing:proto_to_carbon_lib",
-        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
         "@com_google_protobuf//:protobuf_headers",
         "@llvm-project//llvm:Support",
