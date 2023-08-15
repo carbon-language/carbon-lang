@@ -139,14 +139,16 @@ class TraceStream {
   auto Pop() const -> llvm::raw_ostream& { return *this << "<[] "; }
   auto Not() const -> llvm::raw_ostream& { return *this << "-!- "; }
   auto Skip() const -> llvm::raw_ostream& { return *this << ">>> "; }
-  auto Source() const -> llvm::raw_ostream& { return *this << "*** "; }
+  auto Source() const -> llvm::raw_ostream& {
+    // add a blank line before prefix.
+    add_blank_lines(1);
+    return *this << "*** ";
+  }
 
   // Format utility methods
   void Heading(std::string_view heading) const {
     CARBON_CHECK(is_enabled() && stream_);
-    if (!is_trace_empty_) {
-      **stream_ << "\n\n";
-    }
+    add_blank_lines(2);
     const std::string_view stars = "* * * * * * * * * *";
     const std::string dashed_line(stars.size() * 2 + heading.size() + 4, '-');
     **stream_ << stars << "  " << heading << "  " << stars << "\n"
@@ -155,7 +157,7 @@ class TraceStream {
 
   void SubHeading(std::string_view heading) const {
     CARBON_CHECK(is_enabled() && stream_);
-    **stream_ << "\n";
+    add_blank_lines(1);
     const std::string_view dashes = "- - - - -";
     const std::string dashed_line(dashes.size() * 2 + heading.size() + 4, '-');
     **stream_ << dashes << "  " << heading << "  " << dashes << "\n"
