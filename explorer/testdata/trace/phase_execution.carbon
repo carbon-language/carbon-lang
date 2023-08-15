@@ -18,10 +18,12 @@ fn Main() -> i32 {
 
 // CHECK:STDOUT: * * * * * * * * * *  starting execution  * * * * * * * * * *
 // CHECK:STDOUT: ------------------------------------------------------------
+// CHECK:STDOUT:
 // CHECK:STDOUT: - - - - -  initializing globals  - - - - -
 // CHECK:STDOUT: ------------------------------------------
 // CHECK:STDOUT: >[] stack-push: DeclarationAction pos: 0 `class T` (phase_execution.carbon:7)
 // CHECK:STDOUT: ->> step DeclarationAction pos: 0 `class T` (phase_execution.carbon:7) --->
+// CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (phase_execution.carbon:7)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: class T {
@@ -30,6 +32,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: <[] stack-pop:  DeclarationAction pos: 0 `class T` (phase_execution.carbon:7)
 // CHECK:STDOUT: >[] stack-push: DeclarationAction pos: 0 `fn Main` (phase_execution.carbon:12)
 // CHECK:STDOUT: ->> step DeclarationAction pos: 0 `fn Main` (phase_execution.carbon:12) --->
+// CHECK:STDOUT:
 // CHECK:STDOUT: *** declaration at (phase_execution.carbon:12)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: fn Main ()-> i32 {
@@ -41,6 +44,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: <[] stack-pop:  DeclarationAction pos: 0 `fn Main` (phase_execution.carbon:12)
+// CHECK:STDOUT:
 // CHECK:STDOUT: - - - - -  calling main function  - - - - -
 // CHECK:STDOUT: -------------------------------------------
 // CHECK:STDOUT: >[] stack-push: ValueExpressionAction pos: 0 `Main()` (<Main()>:0)
@@ -61,6 +65,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: >[] stack-push: ScopeAction pos: 0  scope: [] (None)
 // CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `{var x: T = {}.(interface ImplicitAs(T = class T).Convert)();return 0;}` (phase_execution.carbon:12)
 // CHECK:STDOUT: ->> step StatementAction pos: 0 `{var x: T = {}.(interface ImplicitAs(T = class T).Convert)();return 0;}` (phase_execution.carbon:12) --->
+// CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (phase_execution.carbon:12)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: {
@@ -71,6 +76,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `var x: T = {}.(interface ImplicitAs(T = class T).Convert)();` (phase_execution.carbon:10)
 // CHECK:STDOUT: ->> step StatementAction pos: 0 `var x: T = {}.(interface ImplicitAs(T = class T).Convert)();` (phase_execution.carbon:10) --->
+// CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (phase_execution.carbon:10)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: var x: T = {}.(interface ImplicitAs(T = class T).Convert)();
@@ -111,6 +117,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: >[] stack-push: ScopeAction pos: 0  scope: [`self: Self`: `{}`] (None)
 // CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `{return __intrinsic_implicit_as_convert(self, U);}` (prelude.carbon:{{\d+}})
 // CHECK:STDOUT: ->> step StatementAction pos: 0 `{return __intrinsic_implicit_as_convert(self, U);}` (prelude.carbon:{{\d+}}) --->
+// CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (prelude.carbon:{{\d+}})
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: {
@@ -120,6 +127,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `return __intrinsic_implicit_as_convert(self, U);` (prelude.carbon:{{\d+}})
 // CHECK:STDOUT: ->> step StatementAction pos: 0 `return __intrinsic_implicit_as_convert(self, U);` (prelude.carbon:{{\d+}}) --->
+// CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (prelude.carbon:{{\d+}})
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: return __intrinsic_implicit_as_convert(self, U);
@@ -148,6 +156,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ->> step ValueExpressionAction pos: 1 `__intrinsic_implicit_as_convert(self, U)` results: [`T{}`]  (prelude.carbon:{{\d+}}) --->
 // CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `__intrinsic_implicit_as_convert(self, U)` results: [`T{}`]  (prelude.carbon:{{\d+}})
 // CHECK:STDOUT: ->> step StatementAction pos: 1 `return __intrinsic_implicit_as_convert(self, U);` results: [`T{}`]  (prelude.carbon:{{\d+}}) --->
+// CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (prelude.carbon:{{\d+}})
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: return __intrinsic_implicit_as_convert(self, U);
@@ -168,6 +177,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ->> step CleanUpAction pos: 0  scope: [] (stack cleanup:1) --->
 // CHECK:STDOUT: <[] stack-pop:  CleanUpAction pos: 0  scope: [] (stack cleanup:1)
 // CHECK:STDOUT: ->> step StatementAction pos: 1 `var x: T = {}.(interface ImplicitAs(T = class T).Convert)();` results: [`T{}`]  (phase_execution.carbon:10) --->
+// CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (phase_execution.carbon:10)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: var x: T = {}.(interface ImplicitAs(T = class T).Convert)();
@@ -177,6 +187,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:     from initializing expression with value `T{}`
 // CHECK:STDOUT: <[] stack-pop:  StatementAction pos: 1 `var x: T = {}.(interface ImplicitAs(T = class T).Convert)();` results: [`T{}`]  (phase_execution.carbon:10)
 // CHECK:STDOUT: ->> step StatementAction pos: 1 `{var x: T = {}.(interface ImplicitAs(T = class T).Convert)();return 0;}` scope: [`x: T`: `lval<Allocation(1)>`] (phase_execution.carbon:12) --->
+// CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (phase_execution.carbon:12)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: {
@@ -187,6 +198,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: >[] stack-push: StatementAction pos: 0 `return 0;` (phase_execution.carbon:11)
 // CHECK:STDOUT: ->> step StatementAction pos: 0 `return 0;` (phase_execution.carbon:11) --->
+// CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (phase_execution.carbon:11)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: return 0;
@@ -199,6 +211,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: ->> step ValueExpressionAction pos: 1 `0` results: [`0`]  (phase_execution.carbon:11) --->
 // CHECK:STDOUT: <[] stack-pop:  ValueExpressionAction pos: 1 `0` results: [`0`]  (phase_execution.carbon:11)
 // CHECK:STDOUT: ->> step StatementAction pos: 1 `return 0;` results: [`0`]  (phase_execution.carbon:11) --->
+// CHECK:STDOUT:
 // CHECK:STDOUT: *** statement at (phase_execution.carbon:11)
 // CHECK:STDOUT: ```
 // CHECK:STDOUT: return 0;
