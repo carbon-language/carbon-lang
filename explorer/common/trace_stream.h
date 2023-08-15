@@ -147,20 +147,18 @@ class TraceStream {
 
   // Format utility methods
   void Heading(std::string_view heading) const {
-    CARBON_CHECK(is_enabled() && stream_);
     add_blank_lines(2);
     const std::string_view stars = "* * * * * * * * * *";
     const std::string dashed_line(stars.size() * 2 + heading.size() + 4, '-');
-    **stream_ << stars << "  " << heading << "  " << stars << "\n"
+    *this << stars << "  " << heading << "  " << stars << "\n"
               << dashed_line << "\n";
   }
 
-  void SubHeading(std::string_view heading) const {
-    CARBON_CHECK(is_enabled() && stream_);
+  void SubHeading(std::string_view sub_heading) const {
     add_blank_lines(1);
     const std::string_view dashes = "- - - - -";
-    const std::string dashed_line(dashes.size() * 2 + heading.size() + 4, '-');
-    **stream_ << dashes << "  " << heading << "  " << dashes << "\n"
+    const std::string dashed_line(dashes.size() * 2 + sub_heading.size() + 4, '-');
+    *this << dashes << "  " << sub_heading << "  " << dashes << "\n"
               << dashed_line << "\n";
   }
 
