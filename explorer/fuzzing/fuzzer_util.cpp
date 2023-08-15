@@ -8,10 +8,10 @@
 
 #include "common/check.h"
 #include "common/error.h"
+#include "common/testing/fuzzing/proto_to_carbon.h"
 #include "explorer/parse_and_execute/parse_and_execute.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "testing/fuzzing/proto_to_carbon.h"
 #include "tools/cpp/runfiles/runfiles.h"
 
 namespace Carbon::Testing {

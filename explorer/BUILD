@@ -4,7 +4,7 @@
 
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
-load("//testing/file_test:rules.bzl", "file_test")
+load("//common/testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = [
     "//bazel/check_deps:__pkg__",
@@ -48,8 +48,8 @@ cc_library(
     deps = [
         ":main",
         "//common:check",
-        "//testing/file_test:file_test_base",
-        "//testing/util:test_raw_ostream",
+        "//common/testing/base:test_raw_ostream",
+        "//common/testing/file_test:file_test_base",
         "@com_google_absl//absl/flags:flag",
         "@com_googlesource_code_re2//:re2",
     ],

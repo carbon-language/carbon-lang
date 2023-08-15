@@ -2,13 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "testing/fuzzing/proto_to_carbon.h"
+#include "common/testing/fuzzing/proto_to_carbon.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "common/error.h"
-#include "testing/fuzzing/carbon.pb.h"
+#include "common/testing/fuzzing/carbon.pb.h"
 
 namespace Carbon::Testing {
 namespace {

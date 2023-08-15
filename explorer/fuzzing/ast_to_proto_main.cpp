@@ -13,11 +13,11 @@
 
 #include "common/bazel_working_dir.h"
 #include "common/error.h"
+#include "common/testing/fuzzing/carbon.pb.h"
 #include "explorer/ast/ast.h"
 #include "explorer/common/arena.h"
 #include "explorer/fuzzing/ast_to_proto.h"
 #include "explorer/syntax/parse.h"
-#include "testing/fuzzing/carbon.pb.h"
 
 namespace Carbon::Testing {
 

@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
-load("//testing/file_test:rules.bzl", "file_test")
-load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
+load("//common/testing/file_test:rules.bzl", "file_test")
+load("//common/testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -45,8 +45,8 @@ cc_test(
     srcs = ["driver_test.cpp"],
     deps = [
         ":driver",
-        "//testing/util:gtest_main",
-        "//testing/util:test_raw_ostream",
+        "//common/testing/base:gtest_main",
+        "//common/testing/base:test_raw_ostream",
         "//toolchain/base:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
@@ -62,7 +62,7 @@ cc_fuzz_test(
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
         ":driver",
-        "//testing/util:test_raw_ostream",
+        "//common/testing/base:test_raw_ostream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -73,7 +73,7 @@ cc_library(
     hdrs = ["driver_file_test_base.h"],
     deps = [
         ":driver",
-        "//testing/file_test:file_test_base",
+        "//common/testing/file_test:file_test_base",
         "@llvm-project//llvm:Support",
     ],
 )

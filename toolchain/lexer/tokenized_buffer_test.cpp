@@ -10,12 +10,12 @@
 #include <forward_list>
 #include <iterator>
 
+#include "common/testing/base/test_raw_ostream.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
-#include "testing/util/test_raw_ostream.h"
 #include "toolchain/base/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"

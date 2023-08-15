@@ -9,7 +9,7 @@
 
 #include <forward_list>
 
-#include "testing/util/test_raw_ostream.h"
+#include "common/testing/base/test_raw_ostream.h"
 #include "toolchain/base/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"

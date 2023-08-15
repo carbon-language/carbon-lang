@@ -6,8 +6,8 @@
 
 #include <gtest/gtest.h>
 
+#include "common/testing/base/test_raw_ostream.h"
 #include "explorer/common/source_location.h"
-#include "testing/util/test_raw_ostream.h"
 
 namespace Carbon::Testing {
 namespace {

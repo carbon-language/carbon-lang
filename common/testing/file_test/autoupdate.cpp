@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "testing/file_test/autoupdate.h"
+#include "common/testing/file_test/autoupdate.h"
 
 #include <fstream>
 

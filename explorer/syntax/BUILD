@@ -15,8 +15,8 @@ cc_test(
     srcs = ["parse_test.cpp"],
     deps = [
         ":syntax",
+        "//common/testing/base:gtest_main",
         "//explorer/common:arena",
-        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )
@@ -147,8 +147,8 @@ cc_test(
     deps = [
         ":parse_test_matchers",
         ":syntax",
+        "//common/testing/base:gtest_main",
         "//explorer/ast:ast_test_matchers",
-        "//testing/util:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )

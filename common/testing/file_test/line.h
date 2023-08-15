@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TESTING_FILE_TEST_LINE_H_
-#define CARBON_TESTING_FILE_TEST_LINE_H_
+#ifndef CARBON_COMMON_TESTING_FILE_TEST_LINE_H_
+#define CARBON_COMMON_TESTING_FILE_TEST_LINE_H_
 
 #include "common/ostream.h"
 #include "llvm/ADT/StringRef.h"
@@ -47,4 +47,4 @@ class FileTestLine : public FileTestLineBase {
 
 }  // namespace Carbon::Testing
 
-#endif  // CARBON_TESTING_FILE_TEST_LINE_H_
+#endif  // CARBON_COMMON_TESTING_FILE_TEST_LINE_H_

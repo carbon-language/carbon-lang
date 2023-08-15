@@ -7,10 +7,10 @@
 
 #include <string>
 
+#include "common/testing/base/test_raw_ostream.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
-#include "testing/util/test_raw_ostream.h"
 #include "toolchain/base/yaml_test_helpers.h"
 #include "toolchain/driver/driver.h"
 

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("//bazel/sh_run:rules.bzl", "glob_sh_run")
-load("//testing/file_test:rules.bzl", "file_test")
+load("//common/testing/file_test:rules.bzl", "file_test")
 
 package(default_visibility = ["//visibility:public"])
 

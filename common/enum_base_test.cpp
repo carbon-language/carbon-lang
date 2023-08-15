@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-#include "testing/util/test_raw_ostream.h"
+#include "common/testing/base/test_raw_ostream.h"
 
 namespace Carbon {
 

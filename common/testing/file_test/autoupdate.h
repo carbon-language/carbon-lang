@@ -2,14 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TESTING_FILE_TEST_AUTOUPDATE_H_
-#define CARBON_TESTING_FILE_TEST_AUTOUPDATE_H_
+#ifndef CARBON_COMMON_TESTING_FILE_TEST_AUTOUPDATE_H_
+#define CARBON_COMMON_TESTING_FILE_TEST_AUTOUPDATE_H_
 
 #include <filesystem>
 
+#include "common/testing/file_test/line.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "testing/file_test/line.h"
 
 namespace Carbon::Testing {
 
@@ -36,4 +36,4 @@ auto AutoupdateFileTest(
 
 }  // namespace Carbon::Testing
 
-#endif  // CARBON_TESTING_FILE_TEST_AUTOUPDATE_H_
+#endif  // CARBON_COMMON_TESTING_FILE_TEST_AUTOUPDATE_H_

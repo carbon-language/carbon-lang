@@ -39,7 +39,7 @@ cc_test(
     srcs = ["test_raw_ostream_test.cpp"],
     deps = [
         ":test_raw_ostream",
-        "//testing/util:gtest_main",
+        "//common/testing/base:gtest_main",
         "@com_google_googletest//:gtest",
     ],
 )

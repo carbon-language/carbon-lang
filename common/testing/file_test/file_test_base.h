@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TESTING_FILE_TEST_FILE_TEST_BASE_H_
-#define CARBON_TESTING_FILE_TEST_FILE_TEST_BASE_H_
+#ifndef CARBON_COMMON_TESTING_FILE_TEST_FILE_TEST_BASE_H_
+#define CARBON_COMMON_TESTING_FILE_TEST_FILE_TEST_BASE_H_
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -13,10 +13,10 @@
 
 #include "common/error.h"
 #include "common/ostream.h"
+#include "common/testing/file_test/autoupdate.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "testing/file_test/autoupdate.h"
 
 namespace Carbon::Testing {
 
@@ -173,4 +173,4 @@ extern auto GetFileTestFactory() -> FileTestFactory;
 
 }  // namespace Carbon::Testing
 
-#endif  // CARBON_TESTING_FILE_TEST_FILE_TEST_BASE_H_
+#endif  // CARBON_COMMON_TESTING_FILE_TEST_FILE_TEST_BASE_H_

@@ -8,11 +8,11 @@
 #include <cstdio>
 #include <fstream>
 
+#include "common/testing/file_test/file_test_base.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
-#include "testing/file_test/file_test_base.h"
 #include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {

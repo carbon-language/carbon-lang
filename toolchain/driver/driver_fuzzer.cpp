@@ -7,10 +7,10 @@
 #include <numeric>
 #include <string>
 
+#include "common/testing/base/test_raw_ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
-#include "testing/util/test_raw_ostream.h"
 #include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {
