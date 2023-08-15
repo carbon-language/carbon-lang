@@ -101,6 +101,15 @@ class TraceStream {
 
   auto current_phase() const -> ProgramPhase { return current_phase_; }
 
+  auto add_blank_lines(int num_blank_lines) const -> void {
+    CARBON_CHECK(is_enabled() && stream_);
+    if (!is_trace_empty_) {
+      for (int i = 0; i < num_blank_lines; ++i) {
+        **stream_ << "\n";
+      }
+    }
+  }
+
   // Outputs a trace message. Requires is_enabled.
   template <typename T>
   auto operator<<(T&& message) const -> llvm::raw_ostream& {
