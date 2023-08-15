@@ -51,7 +51,7 @@ supports both
 [checked and template](terminology.md#checked-versus-template-parameters)
 generics.
 
-Template generics support a similar model as C++ templates, to help with interop
+Template generics provide a similar model to C++ templates, to help with interop
 and migration. They can be more convenient to write, and support some use cases,
 like [metaprogramming](https://en.wikipedia.org/wiki/Metaprogramming), that are
 difficult with checked generics.
@@ -87,7 +87,7 @@ Summary of how Carbon generics work:
     and other entities for types to implement.
 -   Types must explicitly _implement_ interfaces to indicate that they support
     their functionality. A given type may implement an interface at most once.
--   Implementations may be declared inline in the body of a class definition, or
+-   Implementations may be declared inline in the body of a class definition or
     out-of-line.
 -   Types may _extend_ an implementation declared inline, in which case you can
     directly call the interface's methods on those types.
@@ -97,14 +97,14 @@ Summary of how Carbon generics work:
 -   Interfaces may be used as the type of a generic parameter. Interfaces are
     _facet types_, whose values are the subset of all types that implement the
     interface. Facet types in general specify the capabilities and requirements
-    of the type. The value of a interface is called a _facet_, and are not
+    of the type. The value of a interface is called a _facet_. Facets are not
     types, but are usable as types.
 -   With a template generic, the concrete argument value used by the caller is
     used for name lookup and typechecking. With checked generics, that is all
     done with the declared restrictions expressed as the types of bindings in
     the declaration. Inside the body of a checked generic with a facet
     parameter, the API of the facet is just the names defined by the facet type.
--   _Deduced parameters_ are parameters whose values are determined by the the
+-   _Deduced parameters_ are parameters whose values are determined by the
     types of the explicit arguments. Generic facet parameters are typically
     deduced.
 -   A function with a generic parameter can have the same function body as an
