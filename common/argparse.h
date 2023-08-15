@@ -21,6 +21,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/Support/Allocator.h"
 
 namespace Carbon {
@@ -648,8 +649,8 @@ class CommandBuilder {
   Command& command_;
   MetaPrinter& meta_printer_;
 
-  llvm::SmallDenseSet<llvm::StringRef> arg_names;
-  llvm::SmallDenseSet<llvm::StringRef> subcommand_names;
+  llvm::SmallDenseSet<llvm::StringRef> arg_names_;
+  llvm::SmallDenseSet<llvm::StringRef> subcommand_names_;
 };
 
 // Builds a description of a command and then parses the provided arguments
@@ -815,7 +816,7 @@ void CommandLine::OneOfArgBuilder::OneOfImpl(
   // by index.
   new (&arg_.value_action) Arg::ValueActionT(
       [values, match](const Arg& arg, llvm::StringRef value_string) -> bool {
-        for (int i = 0; i < static_cast<int>(N); ++i) {
+        for (int i : llvm::seq<int>(0, N)) {
           if (value_string == arg.value_strings[i]) {
             match(values[i]);
             return true;
