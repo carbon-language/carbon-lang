@@ -11,12 +11,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Basics](#basics)
--   [Run-time expression and statement semantics](#run-time-expression-and-statement-semantics)
+-   [Expression and statement semantics](#expression-and-statement-semantics)
 -   [Typechecking expressions and statements](#typechecking-expressions-and-statements)
     -   [Generalized tuple types](#generalized-tuple-types)
     -   [Iterative typechecking](#iterative-typechecking)
     -   [In-place typechecking](#in-place-typechecking)
--   [Run-time pattern semantics](#run-time-pattern-semantics)
+-   [Pattern semantics](#pattern-semantics)
 -   [Typechecking pattern matching](#typechecking-pattern-matching)
     -   [Identifying potential matchings](#identifying-potential-matchings)
     -   [The type-checking algorithm](#the-type-checking-algorithm)
@@ -57,7 +57,9 @@ rooted at any of these operations is called a _pack expansion_. The operand of
 A pack expansion must contain one or more _expansion arguments_, which are
 marked by `expand` or `each`. `expand` is a prefix unary expression operator
 with the same precedence as `*`. The operand of `each` is always an identifier
-name, not an expression, so it does not have a precedence.
+name, not an expression, so it does not have a precedence. For example, in the
+loop condition `...and expand iters != each vector.End()` in the body of `Zip`,
+`expand iters` and `each vector` are expansion arguments.
 
 The _arity_ of an expansion argument is a compile-time value representing the
 number of elements it evaluates to. Every pack expansion must contain at least
@@ -68,17 +70,18 @@ pattern. In particular, this means that the expansion arguments of a `...{`
 expansion must be expressions.
 
 > **Open question:** Is it possible to drop that requirement, and support code
-> like `let each x: ElementTypes = *expand iters;` within a `...{` expansion?
+> like `let each x: ElementType = *expand iters;` within a `...{` expansion?
 
 Pack expansions can be nested only if the inner expansion is within one of the
 outer expansion's arguments. For example,
-`(..., expand vectors: (..., Vector(expand ElementTypes)))`, which is an
+`(..., expand vectors: (..., Vector(each ElementType)))`, which is an
 alternative way of writing the parameter list of `Zip` to avoid using an `each`
 binding in the signature. We may further relax the restriction on nesting in the
 future.
 
-A pack expansion can be thought of as a kind of loop, where the expansion body
-is implicitly parameterized by an integer value called the _pack index_, which
+A pack expansion can be thought of as a kind of loop that executes at compile
+time (specifically, monomorphization time), where the expansion body is
+implicitly parameterized by an integer value called the _pack index_, which
 ranges from 0 to one less than the arity of the expansion. The pack index is
 implicitly used as a subscript on the expansion arguments. This is easiest to
 see with `...{}`. For example, if `a`, `x`, and `y` are tuples of size 3, then
@@ -130,13 +133,14 @@ declared by a variadic binding can only be used inside a pack expansion, where
 it acts as an expansion argument whose elements are the bound values. It must be
 prefixed by `each` at the point of use.
 
-## Run-time expression and statement semantics
+## Expression and statement semantics
 
 In all of the following, N is the arity of the pack expansion being discussed,
-and `$I` is a notional variable representing the pack index. These are run-time
-semantics, so the value of N is a known integer constant. Although the value of
-`$I` can vary during execution, it is nevertheless treated as a constant; for
-example, it can be used to index a tuple.
+and `$I` is a notional variable representing the pack index. These semantics are
+implemented at monomorphization time, so the value of N is a known integer
+constant. Although the value of `$I` can vary during execution, it is
+nevertheless treated as a constant; for example, it can be used to index a
+tuple.
 
 A statement of the form "`...{` _block-contents_ `}`" is evaluated by executing
 _block-contents_ N times, with `$I` ranging from 0 to N - 1.
@@ -214,7 +218,7 @@ Without loss of generality, we can assume that every expansion argument is a
 tuple: if it's a variadic binding with declared type `T` and arity N, we can
 treat it as having a generalized tuple type with one component, `<T, N>`.
 
-Since the run-time semantics of an expansion are defined in terms of a notional
+Since the execution semantics of an expansion are defined in terms of a notional
 rewritten form where we simultaneously iterate over the expansion arguments, in
 principle we can typecheck the expansion by typechecking the rewritten form.
 However, the rewritten form usually would not typecheck as ordinary Carbon code,
@@ -262,17 +266,17 @@ requirements as explicit rules:
     -   Otherwise, the type of the element is appended to the literal's type.
 
 Note that this "vectorized" approach to typechecking does not change the
-run-time semantics: the iterations of a pack expansion are still sequenced one
+execution semantics: the iterations of a pack expansion are still sequenced one
 after another. As a result, a pack type is never the type of any run-time value.
 
-## Run-time pattern semantics
+## Pattern semantics
 
 `,...` expansions can also appear in patterns. The semantics are chosen to
 follow the general principle that pattern matching is the inverse of expression
 evaluation, so for example if the pattern `(..., expand x: auto)` matches some
 scrutinee value `s`, the expression `(..., expand x)` should be equal to `s`.
-These are run-time semantics, so all types are known constants, and all tuple
-elements are singular.
+These semantics are implemented at monomorphization time, so all types are known
+constants, and all tuple elements are singular.
 
 A tuple pattern can contain no more than one subpattern of the form "`...,`
 _operand_". When such a subpattern is present, the N elements of the pattern
@@ -507,12 +511,16 @@ monomorphization.
 
 ## Alternatives considered
 
--   [Decouple variadics from arrays](/proposals/p2240.md#decouple-variadics-from-arrays)
+-   [Support variadic variable declaration statements](/proposals/p2240.md#support-variadic-variable-declaration-statements)
+-   [Support array expansion arguments](/proposals/p2240.md#support-array-expansion-arguments)
+-   [Omit variadic bindings](/proposals/p2240.md#omit-variadic-bindings)
+    -   [Disallow pack-type bindings](/proposals/p2240.md#disallow-pack-type-bindings)
 -   [Fold expressions](/proposals/p2240.md#fold-expressions)
 -   [Allow multiple `...,` patterns in a tuple pattern](/proposals/p2240.md#allow-multiple--patterns-in-a-tuple-pattern)
 -   [Allow nested pack expansions](/proposals/p2240.md#allow-nested-pack-expansions)
--   [Disallow named packs](/proposals/p2240.md#disallow-named-packs)
--   [Use postfix instead of prefix operators](/proposals/p2240.md#use-postfix-instead-of-prefix-operators)
+-   [Use postfix instead of prefix `...`](/proposals/p2240.md#use-postfix-instead-of-prefix-)
+-   [Require parentheses around `each`](/proposals/p2240.md#require-parentheses-around-each)
+-   [Keyword syntax](/proposals/p2240.md#keyword-syntax)
 
 ## References
 
