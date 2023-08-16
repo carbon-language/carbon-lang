@@ -60,6 +60,14 @@ class LoweringFunctionContext {
     CARBON_CHECK(added) << "Duplicate local insert: " << node_id;
   }
 
+  auto GetValueForPoiterTY(llvm::Type* llvm_type, llvm::Value* val,
+                           unsigned idx, const llvm::Twine& name = "")
+      -> llvm::Value* {
+    return val->getType()->isPointerTy()
+               ? builder().CreateStructGEP(llvm_type, val, idx, name)
+               : builder().CreateExtractValue(val, idx);
+  }
+
   // Gets a callable's function.
   auto GetFunction(SemanticsFunctionId function_id) -> llvm::Function* {
     return lowering_context_->GetFunction(function_id);

@@ -24,10 +24,23 @@ auto LoweringHandleAddressOf(LoweringFunctionContext& context,
   context.SetLocal(node_id, context.GetLocal(node.GetAsAddressOf()));
 }
 
-auto LoweringHandleArrayIndex(LoweringFunctionContext& /*context*/,
-                              SemanticsNodeId /*node_id*/, SemanticsNode node)
+auto LoweringHandleArrayIndex(LoweringFunctionContext& context,
+                              SemanticsNodeId node_id, SemanticsNode node)
     -> void {
-  CARBON_FATAL() << "TODO: Add support: " << node;
+  auto [array_node_id, index_node_id] = node.GetAsTupleIndex();
+  auto* array_value = context.GetLocal(array_node_id);
+  auto* llvm_type =
+      context.GetType(context.semantics_ir().GetNode(array_node_id).type_id());
+  auto index_node = context.semantics_ir().GetNode(index_node_id);
+  const auto index = context.semantics_ir()
+                         .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
+                         .getZExtValue();
+  // checking for out of bound access as semantics does not check this always.
+  if (index < llvm_type->getArrayNumElements()) {
+    context.SetLocal(node_id,
+                     context.GetValueForPoiterTY(llvm_type, array_value, index,
+                                                 "array.index"));
+  }
 }
 
 auto LoweringHandleArrayValue(LoweringFunctionContext& context,
