@@ -107,13 +107,7 @@ auto TokenKind::fixed_spelling() const -> llvm::StringRef {
 auto TokenKind::expected_parse_tree_size() const -> int {
   static constexpr int8_t Table[] = {
 #define CARBON_TOKEN(Name) 1,
-// CARBON_TOKEN_WITH_VIRTUAL_NODE wraps CARBON_TOKEN, so needs to be written
-// as-is.
-// TODO: Consider changing the macro setup to avoid the lint issue, e.g. so that
-// CARBON_KEYWORD_TOKEN would be called by a macro that could be replaced,
-// instead of wrapped.
-// NOLINTNEXTLINE(bugprone-macro-parentheses)
-#define CARBON_TOKEN_WITH_VIRTUAL_NODE(size) 1 + size
+#define CARBON_TOKEN_WITH_VIRTUAL_NODE(size) 2,
 #include "toolchain/lexer/token_kind.def"
   };
   return Table[AsInt()];
