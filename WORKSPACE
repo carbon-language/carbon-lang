@@ -4,7 +4,7 @@
 
 workspace(name = "carbon")
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_jar")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
 skylib_version = "1.3.0"
@@ -300,3 +300,14 @@ http_archive(
 load("@rules_tree_sitter//tree_sitter:tree_sitter.bzl", "tree_sitter_register_toolchains")
 
 tree_sitter_register_toolchains()
+
+###############################################################################
+# bazel-diff
+###############################################################################
+
+http_jar(
+    name = "bazel_diff",
+    urls = [
+        "https://github.com/Tinder/bazel-diff/releases/download/4.3.0/bazel-diff_deploy.jar",
+    ],
+)

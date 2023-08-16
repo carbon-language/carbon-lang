@@ -174,6 +174,21 @@ jobs:
         if: steps.filter.outputs.ignore == 'false'
         run: df -h
 
+      # Compute the set of possible rules impacted by this change using
+      # Bazel-based diffing.
+      # TODO: This isn't used yet until we are confident it is computing the
+      # correct baseline git reference and target set.
+      - name: Compute impacted targets
+        if: steps.filter.outputs.ignore == 'false'
+        run: |
+          {
+            echo 'BAZEL_DIFF_TARGETS<<EOF'
+            ./scripts/bazel_diff.py \
+              --baseline=${{ github.head_ref }} \
+              --current=${{ github.event.pull_request.head.sha || github.ref }}
+            echo EOF
+          } >> "$GITHUB_ENV"
+
       # Build all targets first to isolate build failures.
       - name: Build (${{ matrix.build_mode }})
         if: steps.filter.outputs.ignore == 'false'
