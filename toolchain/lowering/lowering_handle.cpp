@@ -41,25 +41,25 @@ auto LoweringHandleArrayValue(LoweringFunctionContext& context,
   auto* tuple_value = context.GetLocal(tuple_node_id);
 
   for (int i = 0; i < static_cast<int>(llvm_type->getArrayNumElements()); ++i) {
-    if (!tuple_value->getType()->isPointerTy()) {
-      // Non pointer types such as call or return, using extract value as gep
-      // cannot be used.
-      auto* gep = context.builder().CreateExtractValue(tuple_value, i);
-      // Initializing the array with values.
-      context.builder().CreateStore(
-          gep, context.builder().CreateStructGEP(llvm_type, alloca, i));
-    } else {
+    llvm::Value* array_element_value;
+    if (tuple_value->getType()->isPointerTy()) {
       // Extracting values from tuple and loading them to the memory.
       auto* gep = context.builder().CreateStructGEP(
           context.GetType(
               context.semantics_ir().GetNode(tuple_node_id).type_id()),
           tuple_value, i);
-      auto* load_gep =
+      array_element_value =
           context.builder().CreateLoad(llvm_type->getArrayElementType(), gep);
-      // Initializing the array with values.
-      context.builder().CreateStore(
-          load_gep, context.builder().CreateStructGEP(llvm_type, alloca, i));
+    } else {
+      // For non pointer types such as call or return, using extract value as
+      // gep cannot be used.
+      array_element_value =
+          context.builder().CreateExtractValue(tuple_value, i);
     }
+    // Initializing the array with values.
+    context.builder().CreateStore(
+        array_element_value,
+        context.builder().CreateStructGEP(llvm_type, alloca, i));
   }
 }
 
