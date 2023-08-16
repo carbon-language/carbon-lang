@@ -13,9 +13,9 @@ cc_library(
 )
 
 cc_library(
-    name = "argparse",
-    srcs = ["argparse.cpp"],
-    hdrs = ["argparse.h"],
+    name = "command_line",
+    srcs = ["command_line.cpp"],
+    hdrs = ["command_line.h"],
     deps = [
         ":check",
         ":ostream",
@@ -24,10 +24,10 @@ cc_library(
 )
 
 cc_test(
-    name = "argparse_test",
-    srcs = ["argparse_test.cpp"],
+    name = "command_line_test",
+    srcs = ["command_line_test.cpp"],
     deps = [
-        ":argparse",
+        ":command_line",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "@com_google_googletest//:gtest",
