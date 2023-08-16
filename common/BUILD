@@ -13,6 +13,29 @@ cc_library(
 )
 
 cc_library(
+    name = "command_line",
+    srcs = ["command_line.cpp"],
+    hdrs = ["command_line.h"],
+    deps = [
+        ":check",
+        ":ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "command_line_test",
+    srcs = ["command_line_test.cpp"],
+    deps = [
+        ":command_line",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
+        "@com_google_googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "check",
     srcs = [
         "check_internal.cpp",
