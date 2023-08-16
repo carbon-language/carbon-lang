@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_COMMON_ARGPARSE_H_
-#define CARBON_COMMON_ARGPARSE_H_
+#ifndef CARBON_COMMON_COMMAND_LINE_H_
+#define CARBON_COMMON_COMMAND_LINE_H_
 
 #include <initializer_list>
 #include <memory>
@@ -853,4 +853,4 @@ void OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
 
 }  // namespace Carbon::CommandLine
 
-#endif  // CARBON_COMMON_ARGPARSE_H_
+#endif  // CARBON_COMMON_COMMAND_LINE_H_
