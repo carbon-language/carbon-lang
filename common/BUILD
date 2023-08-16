@@ -28,8 +28,8 @@ cc_test(
     srcs = ["argparse_test.cpp"],
     deps = [
         ":argparse",
-        "//testing/util:gtest_main",
-        "//testing/util:test_raw_ostream",
+        "//testing/base:gtest_main",
+        "//testing/base:test_raw_ostream",
         "@com_google_googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

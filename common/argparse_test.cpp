@@ -8,7 +8,7 @@
 #include <gtest/gtest.h>
 
 #include "llvm/Support/FormatVariadic.h"
-#include "testing/util/test_raw_ostream.h"
+#include "testing/base/test_raw_ostream.h"
 
 namespace Carbon::Testing {
 namespace {
