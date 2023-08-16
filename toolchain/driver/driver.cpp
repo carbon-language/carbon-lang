@@ -4,7 +4,7 @@
 
 #include "toolchain/driver/driver.h"
 
-#include "common/argparse.h"
+#include "common/command_line.h"
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/ScopeExit.h"

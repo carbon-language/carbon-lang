@@ -14,7 +14,7 @@ cc_library(
     hdrs = ["driver.h"],
     textual_hdrs = ["flags.def"],
     deps = [
-        "//common:argparse",
+        "//common:command_line",
         "//common:vlog",
         "//toolchain/codegen",
         "//toolchain/diagnostics:diagnostic_emitter",
