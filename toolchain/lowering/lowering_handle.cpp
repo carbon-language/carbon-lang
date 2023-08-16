@@ -31,31 +31,29 @@ auto LoweringHandleArrayValue(LoweringFunctionContext& context,
   auto* alloca =
       context.builder().CreateAlloca(llvm_type, /*ArraySize=*/nullptr, "array");
   context.SetLocal(node_id, alloca);
-  auto array_size = llvm_type->getArrayNumElements();
   auto tuple_node_id = node.GetAsArrayValue();
   auto* tuple_value = context.GetLocal(tuple_node_id);
-  auto* tuple_type =
-      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
 
-  // For return values or call instructions, the tuple is not in the memory so
-  // it cannot be accessed directly to create the array value. Hence, we are
-  // creating a store in this block.
-  if (!tuple_value->getType()->isPointerTy()) {
-    tuple_value = context.builder().CreateAlloca(
-        tuple_type, /*ArraySize=*/nullptr, "as_tuple");
-    context.builder().CreateStore(context.GetLocalLoaded(tuple_node_id),
-                                  tuple_value);
-  }
-
-  for (uint64_t i = 0; i < array_size; i++) {
-    // Extracting values from tuple and loading them to the memory.
-    auto* tuple_gep =
-        context.builder().CreateStructGEP(tuple_type, tuple_value, i);
-    auto* load_inst = context.builder().CreateLoad(
-        llvm_type->getArrayElementType(), tuple_gep);
-    // Initializing the array with values.
-    auto* array_gep = context.builder().CreateStructGEP(llvm_type, alloca, i);
-    context.builder().CreateStore(load_inst, array_gep);
+  for (int i = 0; i < static_cast<int>(llvm_type->getArrayNumElements()); ++i) {
+    if (!tuple_value->getType()->isPointerTy()) {
+      // Non pointer types such as call or return, using extract value as gep
+      // cannot be used.
+      auto* gep = context.builder().CreateExtractValue(tuple_value, i);
+      // Initializing the array with values.
+      context.builder().CreateStore(
+          gep, context.builder().CreateStructGEP(llvm_type, alloca, i));
+    } else {
+      // Extracting values from tuple and loading them to the memory.
+      auto* gep = context.builder().CreateStructGEP(
+          context.GetType(
+              context.semantics_ir().GetNode(tuple_node_id).type_id()),
+          tuple_value, i);
+      auto* load_gep =
+          context.builder().CreateLoad(llvm_type->getArrayElementType(), gep);
+      // Initializing the array with values.
+      context.builder().CreateStore(
+          load_gep, context.builder().CreateStructGEP(llvm_type, alloca, i));
+    }
   }
 }
 
