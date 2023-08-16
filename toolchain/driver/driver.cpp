@@ -159,11 +159,10 @@ default is textual assembly and this flag is ignored.
         {
             .name = "force-obj-output",
             .help = R"""(
-Force writing a binary object file, even when writing to stdout.
+Force binary object output, even with `--output=-`.
 
-This flag is only used when the code generation output file is set to stdout. In
-that case, it will override the forced default of textual assembly and output a
-binary output.
+When `--output=-` is set, the default is textual assembly; this forces printing
+of a binary object file instead. Ignored for other `--output` values.
 )""",
         },
         [&](auto& arg_b) { arg_b.Set(&force_obj_output); });
@@ -340,7 +339,48 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   llvm_unreachable("All subcommands handled!");
 }
 
+auto Driver::ValidateCompileOptions(const CompileOptions& options) const -> bool {
+  using Phase = CompileOptions::Phase;
+  switch (options.phase) {
+    case Phase::Lex:
+      if (options.dump_parse_tree) {
+        error_stream_ << "ERROR: Requested dumping the parse tree but compile "
+                         "phase is limited to '"
+                      << options.phase << "'\n";
+        return false;
+      }
+      [[clang::fallthrough]];
+    case Phase::Parse:
+      if (options.dump_semantics_ir) {
+        error_stream_ << "ERROR: Requested dumping the semantics IR but "
+                         "compile phase is limited to '"
+                      << options.phase << "'\n";
+        return false;
+      }
+      [[clang::fallthrough]];
+    case Phase::Check:
+      if (options.dump_llvm_ir) {
+        error_stream_ << "ERROR: Requested dumping the LLVM IR but compile "
+                         "phase is limited to '"
+                      << options.phase << "'\n";
+        return false;
+      }
+      [[clang::fallthrough]];
+    case Phase::Lower:
+    case Phase::CodeGen:
+      // Everything can be dumped in these phases.
+      break;
+  }
+  return true;
+}
+
 auto Driver::Compile(const CompileOptions& options) -> bool {
+  using Phase = CompileOptions::Phase;
+
+  if (!ValidateCompileOptions(options)) {
+    return false;
+  }
+
   StreamDiagnosticConsumer stream_consumer(error_stream_);
   DiagnosticConsumer* consumer = &stream_consumer;
   std::unique_ptr<SortingDiagnosticConsumer> sorting_consumer;
@@ -363,43 +403,9 @@ auto Driver::Compile(const CompileOptions& options) -> bool {
   }
   CARBON_VLOG() << "*** file:\n```\n" << source->text() << "\n```\n";
 
-  bool has_errors = false;
-
-  using Phase = CompileOptions::Phase;
-  switch (options.phase) {
-    case Phase::Lex:
-      if (options.dump_parse_tree) {
-        error_stream_ << "ERROR: Requested dumping the parse tree but compile "
-                         "phase is limited to '"
-                      << options.phase << "'\n";
-        has_errors = true;
-      }
-      [[clang::fallthrough]];
-    case Phase::Parse:
-      if (options.dump_semantics_ir) {
-        error_stream_ << "ERROR: Requested dumping the semantics IR but "
-                         "compile phase is limited to '"
-                      << options.phase << "'\n";
-        has_errors = true;
-      }
-      [[clang::fallthrough]];
-    case Phase::Check:
-      if (options.dump_llvm_ir) {
-        error_stream_ << "ERROR: Requested dumping the LLVM IR but compile "
-                         "phase is limited to '"
-                      << options.phase << "'\n";
-        has_errors = true;
-      }
-      [[clang::fallthrough]];
-    case Phase::Lower:
-    case Phase::CodeGen:
-      // Everything can be dumped in these phases.
-      break;
-  }
-
   CARBON_VLOG() << "*** TokenizedBuffer::Lex ***\n";
   auto tokenized_source = TokenizedBuffer::Lex(*source, *consumer);
-  has_errors |= tokenized_source.has_errors();
+  bool has_errors = tokenized_source.has_errors();
   CARBON_VLOG() << "*** TokenizedBuffer::Lex done ***\n";
   if (options.dump_tokens) {
     CARBON_VLOG() << "Finishing output.";
