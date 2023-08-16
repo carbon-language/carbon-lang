@@ -92,7 +92,7 @@ class SemanticsContext {
   // reconvergence of control flow, and pushes the new block onto the node
   // block stack.
   auto AddConvergenceBlockAndPush(
-      ParseTree::Node parse_tree,
+      ParseTree::Node parse_node,
       std::initializer_list<SemanticsNodeBlockId> blocks) -> void;
 
   // Adds branches from the given list of blocks and values to a new block, for

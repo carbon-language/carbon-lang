@@ -640,8 +640,9 @@ auto SemanticsContext::GetUnqualifiedType(SemanticsTypeId type_id)
     -> SemanticsTypeId {
   SemanticsNode type_node =
       semantics_ir_->GetNode(semantics_ir_->GetTypeAllowBuiltinTypes(type_id));
-  if (type_node.kind() == SemanticsNodeKind::ConstType)
+  if (type_node.kind() == SemanticsNodeKind::ConstType) {
     return type_node.GetAsConstType();
+  }
   return type_id;
 }
 
