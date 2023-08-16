@@ -2,6 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_cc//cc:defs.bzl", "cc_test")
+
 """Rules for building fuzz tests."""
 
 def file_test(name, tests, data = [], args = [], **kwargs):
@@ -18,7 +20,7 @@ def file_test(name, tests, data = [], args = [], **kwargs):
       args: Passed to cc_test.
       **kwargs: Passed to cc_test.
     """
-    native.cc_test(
+    cc_test(
         name = name,
         data = tests + data,
         args = ["--file_tests=" + ",".join([
