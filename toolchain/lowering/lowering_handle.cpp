@@ -273,15 +273,23 @@ auto LoweringHandleTupleIndex(LoweringFunctionContext& context,
                               SemanticsNodeId node_id, SemanticsNode node)
     -> void {
   auto [tuple_node_id, index_node_id] = node.GetAsTupleIndex();
-  auto* llvm_type =
-      context.GetType(context.semantics_ir().GetNode(tuple_node_id).type_id());
+  auto* tuple_value = context.GetLocal(tuple_node_id);
   auto index_node = context.semantics_ir().GetNode(index_node_id);
   const auto index = context.semantics_ir()
                          .GetIntegerLiteral(index_node.GetAsIntegerLiteral())
                          .getZExtValue();
-  auto* gep = context.builder().CreateStructGEP(
-      llvm_type, context.GetLocal(tuple_node_id), index, "tuple.index");
-  context.SetLocal(node_id, gep);
+  llvm::Value* value;
+  if (tuple_value->getType()->isPointerTy()) {
+    auto* llvm_type = context.GetType(
+        context.semantics_ir().GetNode(tuple_node_id).type_id());
+    value = context.builder().CreateStructGEP(llvm_type, tuple_value, index,
+                                              "tuple.index");
+  } else {
+    // For non pointer types such as call or return, using extract value as
+    // gep cannot be used.
+    value = context.builder().CreateExtractValue(tuple_value, index);
+  }
+  context.SetLocal(node_id, value);
 }
 
 auto LoweringHandleTupleValue(LoweringFunctionContext& context,
