@@ -11,8 +11,8 @@ fn Run() -> i32 {
   return 0;
 }
 
-// CHECK:STDOUT: ; ModuleID = 'member_access.carbon'
-// CHECK:STDOUT: source_filename = "member_access.carbon"
+// CHECK:STDOUT: ; ModuleID = 'tuple_element_access.carbon'
+// CHECK:STDOUT: source_filename = "tuple_element_access.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: %type = type {}
 // CHECK:STDOUT:
