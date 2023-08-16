@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: -v compile --phase=check --dump-raw-semantics-ir %s
+// ARGS: -v compile --phase=check %s
 //
 // Only checks a couple statements in order to minimize manual update churn.
 // NOAUTOUPDATE
