@@ -14,8 +14,8 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, return_slot: node+4, body: {block5}}},
-// CHECK:STDOUT:   {name: str2, param_refs: block7, return_type: type3, return_slot: node+15, body: {block9}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, return_slot: node+4, body: {block4}}},
+// CHECK:STDOUT:   {name: str2, param_refs: block6, return_type: type3, return_slot: node+15, body: {block7}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -63,19 +63,15 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+13,
-// CHECK:STDOUT:     node+14,
 // CHECK:STDOUT:     node+16,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
@@ -87,12 +83,12 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     node+10,
 // CHECK:STDOUT:     node+11,
 // CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:     node+13,
+// CHECK:STDOUT:     node+14,
+// CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+12,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+15,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+17,
@@ -102,11 +98,8 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc7_23: type = ptr_type i32
-// CHECK:STDOUT:   %.loc7_1 = fn_decl @Ptr
-// CHECK:STDOUT:   %.loc11_32: type = const_type i32
-// CHECK:STDOUT:   %.loc11_42: type = ptr_type const i32
-// CHECK:STDOUT:   %.loc11_1 = fn_decl @ConstPtr
+// CHECK:STDOUT:   %.loc7 = fn_decl @Ptr
+// CHECK:STDOUT:   %.loc11 = fn_decl @ConstPtr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Ptr(%p: i32*) -> %return: i32* {

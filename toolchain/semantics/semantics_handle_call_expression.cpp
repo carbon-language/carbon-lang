@@ -47,9 +47,10 @@ auto SemanticsHandleCallExpression(SemanticsContext& context,
   // tuple type. Otherwise, add a location for the return slot to the arguments.
   // The actual return slot location will be filled in by
   // `SemanticsContext::MarkInitializerFor`.
-  if (type_id == SemanticsTypeId::Invalid) {
+  if (!type_id.is_valid()) {
     type_id = context.CanonicalizeTupleType(call_expr_parse_node, {});
-  } else {
+  }
+  if (callable.return_slot_id.is_valid()) {
     if (refs_id == SemanticsNodeBlockId::Empty) {
       refs_id = context.semantics_ir().AddNodeBlock();
     }

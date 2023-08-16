@@ -67,15 +67,15 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:     node+1,
 // CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:     node+5,
-// CHECK:STDOUT:     node+12,
+// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+3,
-// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+12,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
@@ -105,10 +105,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc7_12: type = stub_reference i32
-// CHECK:STDOUT:   %.loc7_16.1: type = tuple_type (type)
-// CHECK:STDOUT:   %.loc7_16.2: (type,) = tuple_value (%.loc7_12)
-// CHECK:STDOUT:   %.loc7_1 = fn_decl @F
+// CHECK:STDOUT:   %.loc7 = fn_decl @F
 // CHECK:STDOUT:   %.loc9 = fn_decl @Run
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

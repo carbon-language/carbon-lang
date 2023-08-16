@@ -11,15 +11,35 @@ namespace Carbon {
 // definition syntax.
 static auto BuildFunctionDeclaration(SemanticsContext& context)
     -> std::pair<SemanticsFunctionId, SemanticsNodeId> {
+  // TODO: This contains the IR block for the parameters and return type. At
+  // present, it's just loose, but it's not strictly required for parameter
+  // refs; we should either stop constructing it completely or, if it turns out
+  // to be needed, store it. Note, the underlying issue is that the LLVM IR has
+  // nowhere clear to emit, so changing storage would require addressing that
+  // problem. For comparison with function calls, the IR needs to be emitted
+  // prior to the call.
+  context.node_block_stack().Pop();
+
   auto return_type_id = SemanticsTypeId::Invalid;
   auto return_slot_id = SemanticsNodeId::Invalid;
   if (context.parse_tree().node_kind(context.node_stack().PeekParseNode()) ==
       ParseNodeKind::ReturnType) {
     return_slot_id = context.node_stack().Pop<ParseNodeKind::ReturnType>();
-    // TODO: Consider removing return_type_id from SemanticsFunction, as it can
-    // be derived from the return_slot_id.
     return_type_id = context.semantics_ir().GetNode(return_slot_id).type_id();
+
+    // If the function has an explicit return type of `()`, it has no return
+    // slot, to keep the IR for explicit and implicit non-value-returning
+    // functions consistent.
+    auto return_type = context.semantics_ir().GetNode(
+        context.semantics_ir().GetTypeAllowBuiltinTypes(return_type_id));
+    if (return_type.kind() == SemanticsNodeKind::TupleType &&
+        context.semantics_ir()
+            .GetTypeBlock(return_type.GetAsTupleType())
+            .empty()) {
+      return_slot_id = SemanticsNodeId::Invalid;
+    }
   }
+
   SemanticsNodeBlockId param_refs_id =
       context.node_stack().Pop<ParseNodeKind::ParameterList>();
   auto name_context = context.declaration_name_stack().Pop();
@@ -106,6 +126,9 @@ auto SemanticsHandleFunctionDefinitionStart(SemanticsContext& context,
 
 auto SemanticsHandleFunctionIntroducer(SemanticsContext& context,
                                        ParseTree::Node parse_node) -> bool {
+  // Create a node block to hold the nodes created as part of the function
+  // signature, such as parameter and return types.
+  context.node_block_stack().Push();
   // Push the bracketing node.
   context.node_stack().Push(parse_node);
   // A name should always follow.
@@ -115,21 +138,12 @@ auto SemanticsHandleFunctionIntroducer(SemanticsContext& context,
 
 auto SemanticsHandleReturnType(SemanticsContext& context,
                                ParseTree::Node parse_node) -> bool {
-  // TODO: Like the function parameters, the return slot and any conversion
-  // nodes needed for its type are added to an unreferenced node block. We
-  // should either stop constructing this block or store it somewhere.
-  //
-  // See also SemanticsHandleParameterList.
-  context.node_block_stack().Push();
-
   // Propagate the type expression.
   auto [type_parse_node, type_node_id] =
       context.node_stack().PopExpressionWithParseNode();
   auto type_id = context.ExpressionAsType(type_parse_node, type_node_id);
   context.AddNodeAndPush(parse_node,
                          SemanticsNode::VarStorage::Make(parse_node, type_id));
-
-  context.node_block_stack().Pop();
   return true;
 }
 

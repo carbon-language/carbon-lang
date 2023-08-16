@@ -53,7 +53,7 @@ auto SemanticsHandleReturnStatement(SemanticsContext& context,
           .Build(parse_node, ReturnStatementDisallowExpression)
           .Note(fn_node.parse_node(), ReturnStatementImplicitNote)
           .Emit();
-    } else {
+    } else if (callable.return_slot_id.is_valid()) {
       arg = context.Initialize(parse_node, callable.return_slot_id, arg);
     }
 

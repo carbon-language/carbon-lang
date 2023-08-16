@@ -453,8 +453,10 @@ class SemanticsIRFormatter {
     out_ << ")";
     if (fn.return_type_id.is_valid()) {
       out_ << " -> ";
-      FormatNodeName(fn.return_slot_id);
-      out_ << ": ";
+      if (fn.return_slot_id.is_valid()) {
+        FormatNodeName(fn.return_slot_id);
+        out_ << ": ";
+      }
       FormatType(fn.return_type_id);
     }
 

@@ -40,8 +40,10 @@ struct SemanticsFunction {
   // The return type. This will be invalid if the return type wasn't specified.
   SemanticsTypeId return_type_id;
   // The storage for the return value, which is a reference expression whose
-  // type is the return type of the function. Will be invalid if the return type
-  // wasn't specified.
+  // type is the return type of the function. Will be invalid if the function
+  // doesn't have a return slot. If this is valid, a call to the function is
+  // expected to have an additional final argument corresponding to the return
+  // slot.
   SemanticsNodeId return_slot_id;
   // A list of the statically reachable code blocks in the body of the
   // function, in lexical order. The first block is the entry block. This will

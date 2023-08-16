@@ -45,13 +45,13 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+4,
@@ -69,8 +69,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc7_22: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %.loc7_1 = fn_decl @Main
+// CHECK:STDOUT:   %.loc7 = fn_decl @Main
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> %return: {.a: i32} {

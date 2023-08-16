@@ -11,7 +11,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, return_slot: node+8, body: {block5}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type1, return_slot: node+8, body: {block4}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -61,16 +61,14 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+9,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+10,
@@ -84,8 +82,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc8_41: type = const_type i32
-// CHECK:STDOUT:   %.loc8_1 = fn_decl @F
+// CHECK:STDOUT:   %.loc8 = fn_decl @F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%p: const (const (const i32*)*)) -> %return: const i32 {

@@ -136,7 +136,7 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:   {kind: VarStorage, type: type0},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function0},
 // CHECK:STDOUT:   {kind: StructTypeField, arg0: str2, arg1: type0},
-// CHECK:STDOUT:   {kind: StructType, arg0: block3, type: typeTypeType},
+// CHECK:STDOUT:   {kind: StructType, arg0: block4, type: typeTypeType},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function1},
 // CHECK:STDOUT:   {kind: FunctionDeclaration, arg0: function2},
@@ -210,8 +210,6 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:     node+2,
-// CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:     node+6,
 // CHECK:STDOUT:     node+34,
@@ -221,9 +219,11 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+2,
+// CHECK:STDOUT:     node+3,
+// CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+4,
+// CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+7,
@@ -315,8 +315,7 @@ fn AddressOfTupleElementValue() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
 // CHECK:STDOUT:   %.loc7 = fn_decl @G
-// CHECK:STDOUT:   %.loc9_19: type = struct_type {.a: i32}
-// CHECK:STDOUT:   %.loc9_1 = fn_decl @H
+// CHECK:STDOUT:   %.loc9 = fn_decl @H
 // CHECK:STDOUT:   %.loc11 = fn_decl @AddressOfLiteral
 // CHECK:STDOUT:   %.loc38 = fn_decl @AddressOfOperator
 // CHECK:STDOUT:   %.loc53 = fn_decl @AddressOfCall

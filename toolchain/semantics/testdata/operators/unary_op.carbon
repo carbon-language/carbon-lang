@@ -10,7 +10,7 @@ fn Not(b: bool) -> bool {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type0, return_slot: node+2, body: {block5}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type0, return_slot: node+2, body: {block4}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -41,12 +41,10 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+0,
 // CHECK:STDOUT:     node+1,
+// CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+1,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+2,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+3,

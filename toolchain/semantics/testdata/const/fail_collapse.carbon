@@ -16,7 +16,7 @@ fn G(p: const (const i32)**) -> i32** {
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
-// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type5, return_slot: node+8, body: {block5}}},
+// CHECK:STDOUT:   {name: str0, param_refs: block2, return_type: type5, return_slot: node+8, body: {block4}}},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT: ]
@@ -60,17 +60,15 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     node+3,
 // CHECK:STDOUT:     node+4,
 // CHECK:STDOUT:     node+5,
+// CHECK:STDOUT:     node+6,
+// CHECK:STDOUT:     node+7,
+// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+5,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+6,
-// CHECK:STDOUT:     node+7,
 // CHECK:STDOUT:     node+9,
-// CHECK:STDOUT:   ],
-// CHECK:STDOUT:   [
-// CHECK:STDOUT:     node+8,
 // CHECK:STDOUT:   ],
 // CHECK:STDOUT:   [
 // CHECK:STDOUT:     node+10,
@@ -79,9 +77,7 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT: ]
 // CHECK:STDOUT:
 // CHECK:STDOUT: package {
-// CHECK:STDOUT:   %.loc10_36: type = ptr_type i32
-// CHECK:STDOUT:   %.loc10_37: type = ptr_type i32*
-// CHECK:STDOUT:   %.loc10_1 = fn_decl @G
+// CHECK:STDOUT:   %.loc10 = fn_decl @G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p: const i32**) -> %return: i32** {
