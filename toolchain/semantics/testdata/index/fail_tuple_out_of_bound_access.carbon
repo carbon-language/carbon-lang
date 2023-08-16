@@ -5,10 +5,10 @@
 // AUTOUPDATE
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:19: Type cannot be determined at compile time.
-// CHECK:STDERR: var b: i32 = a[2.6];
-// CHECK:STDERR:                   ^
-var b: i32 = a[2.6];
+// CHECK:STDERR: fail_tuple_out_of_bound_access.carbon:[[@LINE+3]]:17: Index `2` is past the end of `(i32, i32) as type`.
+// CHECK:STDERR: var b: i32 = a[2];
+// CHECK:STDERR:                 ^
+var b: i32 = a[2];
 
 // CHECK:STDOUT: cross_reference_irs_size: 1
 // CHECK:STDOUT: functions: [
@@ -16,9 +16,9 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT: integer_literals: [
 // CHECK:STDOUT:   12,
 // CHECK:STDOUT:   6,
+// CHECK:STDOUT:   2,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: real_literals: [
-// CHECK:STDOUT:   {mantissa: 26, exponent: -1, is_decimal: 1},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: strings: [
 // CHECK:STDOUT:   a,
@@ -28,7 +28,6 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   node+2,
 // CHECK:STDOUT:   nodeIntegerType,
 // CHECK:STDOUT:   node+4,
-// CHECK:STDOUT:   nodeFloatingPointType,
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: type_blocks: [
 // CHECK:STDOUT:   [
@@ -56,7 +55,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   {kind: Assign, arg0: node+5, arg1: node+11},
 // CHECK:STDOUT:   {kind: VarStorage, type: type1},
 // CHECK:STDOUT:   {kind: BindName, arg0: str1, arg1: node+13, type: type1},
-// CHECK:STDOUT:   {kind: RealLiteral, arg0: real0, type: type3},
+// CHECK:STDOUT:   {kind: IntegerLiteral, arg0: int2, type: type1},
 // CHECK:STDOUT:   {kind: Assign, arg0: node+13, arg1: nodeError},
 // CHECK:STDOUT: ]
 // CHECK:STDOUT: node_blocks: [
@@ -105,6 +104,6 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %.loc7_27: (i32, i32) = tuple_value (%.loc7_22.2, %.loc7_26.2)
 // CHECK:STDOUT:   assign %a, %.loc7_27
 // CHECK:STDOUT:   %b: i32 = var
-// CHECK:STDOUT:   %.loc11: f64 = real_literal 26e-1
+// CHECK:STDOUT:   %.loc11: i32 = int_literal 2
 // CHECK:STDOUT:   assign %b, <error>
 // CHECK:STDOUT: }

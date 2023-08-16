@@ -9,8 +9,8 @@
 #include <unordered_map>
 
 #include "explorer/ast/ast.h"
-#include "explorer/common/nonnull.h"
-#include "explorer/common/trace_stream.h"
+#include "explorer/base/nonnull.h"
+#include "explorer/base/trace_stream.h"
 
 namespace Carbon {
 

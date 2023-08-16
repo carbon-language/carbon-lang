@@ -20,10 +20,10 @@ cc_library(
         "//common:error",
         "//common:ostream",
         "//explorer/ast",
-        "//explorer/common:arena",
-        "//explorer/common:error_builders",
-        "//explorer/common:nonnull",
-        "//explorer/common:source_location",
+        "//explorer/base:arena",
+        "//explorer/base:error_builders",
+        "//explorer/base:nonnull",
+        "//explorer/base:source_location",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -43,7 +43,7 @@ cc_library(
         "//common:error",
         "//common:ostream",
         "//explorer/ast",
-        "//explorer/common:trace_stream",
+        "//explorer/base:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -51,7 +51,7 @@ cc_library(
 cc_library(
     name = "dictionary",
     hdrs = ["dictionary.h"],
-    deps = ["//explorer/common:arena"],
+    deps = ["//explorer/base:arena"],
 )
 
 cc_library(
@@ -68,8 +68,8 @@ cc_library(
         "//common:error",
         "//common:ostream",
         "//explorer/ast",
-        "//explorer/common:arena",
-        "//explorer/common:trace_stream",
+        "//explorer/base:arena",
+        "//explorer/base:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -85,10 +85,10 @@ cc_library(
         "//common:error",
         "//common:ostream",
         "//explorer/ast",
-        "//explorer/common:error_builders",
-        "//explorer/common:nonnull",
-        "//explorer/common:source_location",
-        "//explorer/common:trace_stream",
+        "//explorer/base:error_builders",
+        "//explorer/base:nonnull",
+        "//explorer/base:source_location",
+        "//explorer/base:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -99,9 +99,9 @@ cc_library(
     deps = [
         "//common:error",
         "//explorer/ast",
-        "//explorer/common:arena",
-        "//explorer/common:nonnull",
-        "//explorer/common:source_location",
+        "//explorer/base:arena",
+        "//explorer/base:nonnull",
+        "//explorer/base:source_location",
     ],
 )
 
@@ -125,10 +125,10 @@ cc_library(
         "//common:ostream",
         "//explorer/ast",
         "//explorer/ast:expression_category",
-        "//explorer/common:arena",
-        "//explorer/common:error_builders",
-        "//explorer/common:source_location",
-        "//explorer/common:trace_stream",
+        "//explorer/base:arena",
+        "//explorer/base:error_builders",
+        "//explorer/base:source_location",
+        "//explorer/base:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -140,9 +140,9 @@ cc_library(
     deps = [
         "//common:check",
         "//explorer/ast",
-        "//explorer/common:error_builders",
-        "//explorer/common:nonnull",
-        "//explorer/common:trace_stream",
+        "//explorer/base:error_builders",
+        "//explorer/base:nonnull",
+        "//explorer/base:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -156,8 +156,8 @@ cc_library(
         "//common:check",
         "//explorer/ast",
         "//explorer/ast:static_scope",
-        "//explorer/common:arena",
-        "//explorer/common:trace_stream",
+        "//explorer/base:arena",
+        "//explorer/base:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -180,7 +180,7 @@ cc_library(
         ":action",
         "//common:error",
         "//explorer/ast",
-        "//explorer/common:nonnull",
+        "//explorer/base:nonnull",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -216,11 +216,11 @@ cc_library(
         "//common:error",
         "//common:ostream",
         "//explorer/ast",
-        "//explorer/common:arena",
-        "//explorer/common:error_builders",
-        "//explorer/common:nonnull",
-        "//explorer/common:source_location",
-        "//explorer/common:trace_stream",
+        "//explorer/base:arena",
+        "//explorer/base:error_builders",
+        "//explorer/base:nonnull",
+        "//explorer/base:source_location",
+        "//explorer/base:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -238,9 +238,9 @@ cc_library(
         "//common:check",
         "//explorer/ast",
         "//explorer/ast:static_scope",
-        "//explorer/common:error_builders",
-        "//explorer/common:nonnull",
-        "//explorer/common:trace_stream",
+        "//explorer/base:error_builders",
+        "//explorer/base:nonnull",
+        "//explorer/base:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -268,7 +268,7 @@ cc_library(
         "//common:ostream",
         "//explorer/ast",
         "//explorer/ast:expression_category",
-        "//explorer/common:nonnull",
+        "//explorer/base:nonnull",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -283,7 +283,7 @@ cc_library(
     ],
     deps = [
         "//explorer/ast",
-        "//explorer/common:nonnull",
+        "//explorer/base:nonnull",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -299,10 +299,10 @@ cc_library(
     deps = [
         ":action",
         "//explorer/ast",
-        "//explorer/common:arena",
-        "//explorer/common:nonnull",
-        "//explorer/common:source_location",
-        "//explorer/common:trace_stream",
+        "//explorer/base:arena",
+        "//explorer/base:nonnull",
+        "//explorer/base:source_location",
+        "//explorer/base:trace_stream",
         "@llvm-project//llvm:Support",
     ],
 )

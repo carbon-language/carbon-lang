@@ -6,7 +6,7 @@
 
 #include "common/check.h"
 #include "explorer/ast/declaration.h"
-#include "explorer/common/arena.h"
+#include "explorer/base/arena.h"
 #include "llvm/Support/Casting.h"
 
 namespace Carbon {

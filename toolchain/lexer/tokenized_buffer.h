@@ -17,7 +17,7 @@
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/raw_ostream.h"
-#include "toolchain/common/index_base.h"
+#include "toolchain/base/index_base.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/token_kind.h"
 #include "toolchain/source/source_buffer.h"

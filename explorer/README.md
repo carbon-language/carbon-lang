@@ -41,19 +41,19 @@ RTTI switches, so that the compiler can help ensure the code is updated when a
 new type is added.
 
 `explorer` never uses plain pointer types directly. Instead, we use the
-[`Nonnull<T*>`](common/nonnull.h) alias for pointers that are not nullable, or
+[`Nonnull<T*>`](base/nonnull.h) alias for pointers that are not nullable, or
 `std::optional<Nonnull<T*>>` for pointers that are nullable.
 
 Many of the most commonly-used objects in `explorer` have lifetimes that are
 tied to the lifespan of the entire Carbon program. We manage the lifetimes of
-those objects by allocating them through an [`Arena`](common/arena.h) object,
+those objects by allocating them through an [`Arena`](base/arena.h) object,
 which can allocate objects of arbitrary types, and retains ownership of them. As
 of this writing, all of `explorer` uses a single `Arena` object, we may
 introduce multiple `Arena`s for different lifetime groups in the future.
 
 For simplicity, `explorer` generally treats all errors as fatal. Errors caused
 by bugs in the user-provided Carbon code should be reported with the error
-builders in [`error_builders.h`](common/error_builders.h). Errors caused by bugs
+builders in [`error_builders.h`](base/error_builders.h). Errors caused by bugs
 in `explorer` itself should be reported with
 [`CHECK` or `FATAL`](../common/check.h).
 

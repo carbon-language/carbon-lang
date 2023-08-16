@@ -8,7 +8,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/SaveAndRestore.h"
-#include "toolchain/common/pretty_stack_trace_function.h"
+#include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/parser/parse_tree_node_location_translator.h"
 #include "toolchain/semantics/semantics_builtin_kind.h"
 #include "toolchain/semantics/semantics_context.h"
@@ -222,6 +222,7 @@ static auto GetTypePrecedence(SemanticsNodeKind kind) -> int {
       return 0;
 
     case SemanticsNodeKind::AddressOf:
+    case SemanticsNodeKind::ArrayIndex:
     case SemanticsNodeKind::ArrayValue:
     case SemanticsNodeKind::Assign:
     case SemanticsNodeKind::BinaryOperatorAdd:
@@ -376,6 +377,7 @@ auto SemanticsIR::StringifyType(SemanticsTypeId type_id,
         break;
       }
       case SemanticsNodeKind::AddressOf:
+      case SemanticsNodeKind::ArrayIndex:
       case SemanticsNodeKind::ArrayValue:
       case SemanticsNodeKind::Assign:
       case SemanticsNodeKind::BinaryOperatorAdd:
@@ -478,6 +480,12 @@ auto GetSemanticsExpressionCategory(const SemanticsIR& semantics_ir,
       case SemanticsNodeKind::TupleType:
       case SemanticsNodeKind::UnaryOperatorNot:
         return SemanticsExpressionCategory::Value;
+
+      case SemanticsNodeKind::ArrayIndex: {
+        auto [base_id, index_id] = node.GetAsArrayIndex();
+        node_id = base_id;
+        continue;
+      }
 
       case SemanticsNodeKind::StructAccess: {
         auto [base_id, member_index] = node.GetAsStructAccess();

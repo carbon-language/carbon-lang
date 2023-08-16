@@ -11,7 +11,7 @@
 #include "explorer/ast/expression.h"
 #include "explorer/ast/pattern.h"
 #include "explorer/ast/statement.h"
-#include "explorer/common/arena.h"
+#include "explorer/base/arena.h"
 
 namespace Carbon::Testing {
 namespace {

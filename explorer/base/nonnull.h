@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_EXPLORER_COMMON_NONNULL_H_
-#define CARBON_EXPLORER_COMMON_NONNULL_H_
+#ifndef CARBON_EXPLORER_BASE_NONNULL_H_
+#define CARBON_EXPLORER_BASE_NONNULL_H_
 
 #include <type_traits>
 
@@ -19,4 +19,4 @@ using Nonnull = T _Nonnull;
 
 }  // namespace Carbon
 
-#endif  // CARBON_EXPLORER_COMMON_NONNULL_H_
+#endif  // CARBON_EXPLORER_BASE_NONNULL_H_

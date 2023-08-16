@@ -24,7 +24,7 @@ cc_library(
     deps = [
         "//common:error",
         "//common:ostream",
-        "//explorer/common:trace_stream",
+        "//explorer/base:trace_stream",
         "//explorer/parse_and_execute",
         "@llvm-project//llvm:Support",
     ],
@@ -48,8 +48,8 @@ cc_library(
     deps = [
         ":main",
         "//common:check",
+        "//testing/base:test_raw_ostream",
         "//testing/file_test:file_test_base",
-        "//testing/util:test_raw_ostream",
         "@com_google_absl//absl/flags:flag",
         "@com_googlesource_code_re2//:re2",
     ],
